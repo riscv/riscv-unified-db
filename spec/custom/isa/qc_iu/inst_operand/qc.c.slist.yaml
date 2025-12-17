@@ -1,0 +1,33 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_operand_schema-0.9.0.json
+
+$schema: inst_operand_schema-0.9.0.json#
+kind: instruction_operand
+name: qc.c.slist
+
+varName: slist
+displayName: sync mask
+location: 9-7
+transform(var): |
+  (var == 0) ? 0 : ((slist < 6) ? (5'd1 << (var - 1)) : ((var == 6) ? 15 : 31))
+assembly(var, abi_names): |
+  if (var == 0) {
+    return "";
+  } else if (var == 1) {
+    return "d1";
+  } else if (var == 2) {
+    return "d2";
+  } else if (var == 4) {
+    return "d3";
+  } else if (var == 8) {
+    return "d4";
+  } else if (var == 16) {
+    return "d5";
+  } else if (var == 15) {
+    return "d1,d2,d3,d4";
+  } else if (var == 31) {
+    return "d1,d2,d3,d4,d5";
+  }
+type: { $ref: inst_operand_type/uimm.yaml# }

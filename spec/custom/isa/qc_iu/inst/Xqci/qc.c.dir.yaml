@@ -8,21 +8,29 @@ kind: instruction
 name: qc.c.dir
 long_name: Disable interrupts (Register)
 description: |
-  Globally disable interrupts, write previous value of `mstatus` to `rd`.
-  Equivalent to "csrrci `rd`, `mstatus`, 8".
-  Instruction encoded in CI instruction format.
+  Globally disable interrupts, write previous value of `mstatus` to `xd`.
+  Equivalent to "csrrci `xd`, `mstatus`, 8".
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqciint
 assembly: xd
-encoding:
-  match: 0001-----0000010
-  variables:
-    - name: rd
-      location: 11-7
-      not: 0
+format:
+  size: 16
+  operands:
+    - { $ref: inst_operand/xd-n0.yaml# }
+  opcodes:
+    - displayName: funct3
+      location: 15-13
+      value: 0b000
+    - displayName: f
+      location: 12
+      value: 0b1
+    - displayName: funct5
+      value: 0b00000
+      location: 6-2
+    - { $ref: inst_opcode/c2.yaml# }
 access:
   s: always
   u: always
@@ -33,4 +41,4 @@ operation(): |
   CSR[mstatus].MIE = 0;
   XReg pre_qc_mcause = CSR[qc.mcause].sw_read();
   CSR[qc.mcause].sw_write(pre_qc_mcause & ~(32'b1<<26));
-  X[rd] = pre_mstatus;
+  X[xd] = pre_mstatus;

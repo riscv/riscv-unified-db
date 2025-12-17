@@ -8,20 +8,28 @@ kind: instruction
 name: qc.c.clrint
 long_name: Clear interrupt (Register)
 description: |
-  Clear interrupt, interrupt number is in `rs1`.
-  Instruction encoded in CI instruction format.
+  Clear interrupt, interrupt number is in `int`.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqciint
 assembly: xs1
-encoding:
-  match: 0001-----0001110
-  variables:
-    - name: rs1
-      location: 11-7
-      not: 0
+format:
+  size: 16
+  operands:
+    - $ref: inst_operand/qc.c.int-n0.yaml#
+  opcodes:
+    - displayName: funct3
+      value: 0b000
+      location: 15-13
+    - displayName: f
+      location: 12
+      value: 0b1
+    - displayName: funct5
+      location: 6-2
+      value: 0b00011
+    - { $ref: inst_opcode/c2.yaml# }
 access:
   s: always
   u: always
@@ -30,7 +38,7 @@ access:
 operation(): |
   Bits<12> MCLICIP0_ADDR = CSR[qc.mclicip0].address();
 
-  XReg idx = rs1 / 32;
-  XReg bit = rs1 % 32;
+  XReg idx = int / 32;
+  XReg bit = int % 32;
   Csr pre_csr = direct_csr_lookup(MCLICIP0_ADDR + idx);
   csr_sw_write(pre_csr, csr_sw_read(pre_csr) & ~(32'b1 << bit));

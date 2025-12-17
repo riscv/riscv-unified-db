@@ -21,7 +21,15 @@ extensions:
   $remove: Zifencei # Not allowed as an option for Unpriv ISA (only available in Priv ISA).
   A:
     presence: mandatory
+  Zaamo:
+    presence: mandatory
+  Zalrsc:
+    presence: mandatory
   C:
+    presence: mandatory
+  Zca:
+    presence: mandatory
+  Zcd:
     presence: mandatory
   D:
     presence: mandatory

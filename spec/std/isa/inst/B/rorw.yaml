@@ -1,9 +1,9 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+# yaml-language-server: $schema=../../../../schemas/inst_schema-0.9.0.json
 
-$schema: "inst_schema.json#"
+$schema: inst_schema-0.9.0.json#
 kind: instruction
 name: rorw
 long_name: Rotate right word (Register)
@@ -20,16 +20,19 @@ definedBy:
           - name: Zbkb
 assembly: xd, xs1, xs2
 format:
-  $inherits:
-    - inst_subtype/R/R-x.yaml#/data
+  size: 32
+  operands:
+    - $ref: inst_operand/xs2.yaml#
+    - $ref: inst_operand/xs1.yaml#
+    - $ref: inst_operand/xd.yaml#
   opcodes:
-    funct7:
-      display_name: RORW
+    - displayName: funct7
+      location: 31-25
       value: 0b0110000
-    funct3:
-      display_name: RORW
+    - displayName: funct3
+      location: 14-12
       value: 0b101
-    opcode: { $inherits: inst_opcode/OP-32.yaml#/data }
+    - $ref: inst_opcode/op-32.yaml#
 access:
   s: always
   u: always

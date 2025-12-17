@@ -8,25 +8,26 @@ kind: instruction
 name: qc.shlusat
 long_name: Saturating unsigned left shift
 description: |
-  Left shift `rs1` by the value of `rs2`, and saturate the unsigned result.
-  Instruction encoded in R instruction format.
+  Left shift `xs1` by the value of `xs2`, and saturate the unsigned result.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcia
-encoding:
-  match: 0001100----------011-----0001011
-  variables:
-    - name: rs1
-      location: 19-15
-      not: 0
-    - name: rs2
-      location: 24-20
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.xs1-n0.yaml#
+    - $ref: inst_operand/qc.xs2-n0.yaml#
+    - $ref: inst_operand/xd-n0.yaml#
+  opcodes:
+    - displayName: funct7
+      location: 31-25
+      value: 0b0001100
+    - displayName: funct3
+      location: 14-12
+      value: 0b011
+    - $ref: inst_opcode/custom-0.yaml#
 assembly: xd, xs1, xs2
 access:
   s: always
@@ -34,12 +35,12 @@ access:
   vs: always
   vu: always
 operation(): |
-  Bits<MXLEN`*2> zext_double_width_rs1 = {{xlen(){1'b0}}, X[rs1]};
-  Bits<MXLEN`*2> shifted_value = zext_double_width_rs1 << X[rs2][4:0];
+  Bits<MXLEN`*2> zext_double_width_xs1 = {{xlen(){1'b0}}, X[xs1]};
+  Bits<MXLEN`*2> shifted_value = zext_double_width_xs1 << X[xs2][4:0];
   Bits<MXLEN`*2> largest_unsigned_value = {{xlen(){1'b0}}, {xlen(){1'b1}}};
 
   if (shifted_value > largest_unsigned_value) {
-    X[rd] = largest_unsigned_value[(xlen() - 1):0];
+    X[xd] = largest_unsigned_value[(xlen() - 1):0];
   } else {
-    X[rd] = shifted_value[(xlen() - 1):0];
+    X[xd] = shifted_value[(xlen() - 1):0];
   }

@@ -8,27 +8,35 @@ kind: instruction
 name: qc.c.eir
 long_name: Restore interrupts (Register)
 description: |
-  Globally restore interrupts, write bit 3 of rs1 to `mstatus.MIE` and `qc.mcause.MIE`.
-  Instruction encoded in CI instruction format.
+  Globally restore interrupts, write bit 3 of xs1 to `mstatus.MIE` and `qc.mcause.MIE`.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqciint
 assembly: xs1
-encoding:
-  match: 0001-----0000110
-  variables:
-    - name: rs1
-      location: 11-7
-      not: 0
+format:
+  size: 16
+  operands:
+    - { $ref: inst_operand/xs1.c-n0.yaml# }
+  opcodes:
+    - displayName: funct3
+      location: 15-13
+      value: 0b000
+    - displayName: f
+      location: 12
+      value: 0b1
+    - displayName: funct5
+      value: 0b00001
+      location: 6-2
+    - { $ref: inst_opcode/c2.yaml# }
 access:
   s: always
   u: always
   vs: always
   vu: always
 operation(): |
-  Bits<1> mie_val = (X[rs1] >> 3) & 1;
+  Bits<1> mie_val = (X[xs1] >> 3) & 1;
   CSR[mstatus].MIE = mie_val;
   XReg pre_qc_mcause = CSR[qc.mcause].sw_read();
   XReg pre_qc_mcause_masked = pre_qc_mcause & ~(32'b1<<26);

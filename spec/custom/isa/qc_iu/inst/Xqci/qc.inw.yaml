@@ -8,31 +8,31 @@ kind: instruction
 name: qc.inw
 long_name: Input word from non-memory-mapped device
 description: |
-  Input 32 bits of data into register `rd` from a non-memory-mapped device.
+  Input 32 bits of data into register `xd` from a non-memory-mapped device.
   Such devices have own address space, unrelated to memory map.
-  Device space address formed by adding `rs1` to  to a unsigned offset `imm`.
-  Instruction encoded in I instruction format.
+  Device space address formed by adding `xs1` to  to a unsigned offset `uimm`.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqciio
-assembly: xd, imm(xs1)
-encoding:
-  match: -----------------101-----0001011
-  variables:
-    - name: imm
-      location: 31-20
-      left_shift: 2
-    - name: rs1
-      location: 19-15
-    - name: rd
-      location: 11-7
+assembly: xd, uimm(xs1)
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.uimm15.yaml#
+    - $ref: inst_operand/xs1.yaml#
+    - $ref: inst_operand/xd.yaml#
+  opcodes:
+    - displayName: funct3
+      location: 14-12
+      value: 0b101
+    - $ref: inst_opcode/custom-0.yaml#
 access:
   s: always
   u: always
   vs: always
   vu: always
 operation(): |
-  XReg device_address = X[rs1] + imm;
-  X[rd] = read_device_32(device_address);
+  XReg device_address = X[xs1] + uimm;
+  X[xd] = read_device_32(device_address);

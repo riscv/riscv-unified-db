@@ -1,0 +1,253 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+
+  "$defs": {
+    "encoding": {
+      "type": "object",
+      "required": ["format"],
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "$ref": "#/$defs/format"
+        },
+        "when": {
+          "$comment": "TODO: make a conditional when merged",
+          "type": "object"
+        }
+      }
+    },
+    "format": {
+      "type": "object",
+      "required": ["size", "opcodes"],
+      "properties": {
+        "size": {
+          "enum": [16, 32, 48, 64]
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["$ref"],
+            "additionalProperties": false,
+            "properties": {
+              "$ref": {
+                "type": "string",
+                "pattern": "^inst_operand/.*\\.yaml#$"
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "opcodes": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["location", "value"],
+                "properties": {
+                  "location": {
+                    "$ref": "schema_defs.json#/$defs/field_location"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "$ref": "schema_defs.json#/$defs/integer"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": ["$ref"],
+                "additionalProperties": false,
+                "properties": {
+                  "$ref": {
+                    "type": "string",
+                    "pattern": "^inst_opcode/.*\\.yaml#$"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "type": "object",
+  "required": [
+    "$schema",
+    "kind",
+    "name",
+    "long_name",
+    "description",
+    "definedBy",
+    "access",
+    "assembly"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "const": "inst_schema-0.9.0.json#",
+      "description": "Path to schema, relative to <UDB ROOT>/schemas"
+    },
+    "kind": {
+      "const": "instruction"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9.]+$",
+      "description": "Instruction mnemonic (must be lowercase)"
+    },
+    "long_name": {
+      "type": "string",
+      "description": "One line description of the instruction"
+    },
+    "description": {
+      "$ref": "schema_defs.json#/$defs/spec_text",
+      "description": "Detailed description of the instruction"
+    },
+    "definedBy": {
+      "$ref": "schema_defs.json#/$defs/condition",
+      "description": "Condition(s) that must be met for the instruction be to be defined"
+    },
+
+    "hints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "$ref": {
+            "type": "string",
+            "format": "uri-reference",
+            "pattern": "^inst/.+\\.yaml#.*$",
+            "description": "Ref to an instruction that is using a HINT codepoint(s) of this instruction"
+          }
+        },
+        "required": ["$ref"],
+        "additionalProperties": false
+      },
+      "description": "List of HINTs that use this instruction's codepoints"
+    },
+    "base": {
+      "enum": [32, 64],
+      "description": "When present, instruction is only defined for RV32 or RV64 base"
+    },
+    "access": {
+      "type": "object",
+      "required": ["s", "u", "vs", "vu"],
+      "properties": {
+        "m": {
+          "enum": ["always", "sometimes", "never"],
+          "default": "always"
+        },
+        "s": {
+          "enum": ["always", "sometimes", "never"],
+          "default": "always"
+        },
+        "u": {
+          "enum": ["always", "sometimes", "never"],
+          "default": "always"
+        },
+        "vs": {
+          "enum": ["always", "sometimes", "never"],
+          "default": "always"
+        },
+        "vu": {
+          "enum": ["always", "sometimes", "never"],
+          "default": "always"
+        }
+      }
+    },
+    "access_detail": {
+      "type": "string",
+      "description": "Extra detail about access when at least one mode is 'sometimes'"
+    },
+    "operation()": {
+      "type": "string",
+      "description": "Functional description of the instruction using IDL language"
+    },
+    "sail()": {
+      "type": "string",
+      "description": "Functional description of the instruction using Sail"
+    },
+    "cert_normative_rules": {
+      "$ref": "schema_defs.json#/$defs/cert_normative_rules"
+    },
+    "cert_test_procedures": {
+      "$ref": "schema_defs.json#/$defs/cert_test_procedures"
+    },
+    "assembly": {
+      "type": "string",
+      "description": "Assembly format of the instruction. Can use decode variables"
+    },
+    "data_independent_timing": {
+      "type": "boolean",
+      "description": "Whether or not the instruction must execute with data-independent timing when the Zkt extension is supported",
+      "default": false
+    },
+    "pseudoinstructions": {
+      "description": "Variations of this instruction that form a pseudoinstruction",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "when": {
+            "type": "string",
+            "description": "Condition when the instruction has an alias"
+          },
+          "to": {
+            "type": "string",
+            "description": "pseudoinstruction format"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "format": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/format"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["if", "then"],
+            "additionalProperties": false,
+            "properties": {
+              "if": {
+                "$ref": "schema_defs.json#/$defs/condition"
+              },
+              "then": {
+                "$ref": "#/$defs/format"
+              }
+            }
+          },
+          "minItems": 2
+        }
+      ]
+    },
+    "encoding": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/encoding"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/encoding"
+          }
+        }
+      ]
+    },
+    "$source": {
+      "type": "string"
+    }
+  }
+}

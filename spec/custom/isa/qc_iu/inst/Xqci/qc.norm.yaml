@@ -8,25 +8,31 @@ kind: instruction
 name: qc.norm
 long_name: Signed Normalization
 description: |
-  Signed normalization of `rs1`.
+  Signed normalization of `xs1`.
   Exponent written in bits[7:0] of the result.
   Mantissa written in bits[31:8] of the result.
-  Write result to `rd`.
-  Instruction encoded in I instruction format.
+  Write result to `xd`.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcia
-encoding:
-  match: 000011100000-----011-----0001011
-  variables:
-    - name: rs1
-      location: 19-15
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.xs1-n0.yaml#
+    - $ref: inst_operand/xd-n0.yaml#
+  opcodes:
+    - displayName: funct7
+      location: 31-25
+      value: 0b0000111
+    - displayName: funct5
+      location: 24-20
+      value: 0b00000
+    - displayName: funct3
+      location: 14-12
+      value: 0b011
+    - $ref: inst_opcode/custom-0.yaml#
 assembly: xd, xs1
 access:
   s: always
@@ -34,8 +40,8 @@ access:
   vs: always
   vu: always
 operation(): |
-  XReg clz = (xlen() - 1) - $signed(highest_set_bit(X[rs1]));
-  XReg clo = (xlen() - 1) - $signed(highest_set_bit(~X[rs1]));
-  XReg mnt = (X[rs1][31] == 1) ? (X[rs1] << (clo - 1)) : (X[rs1] << (clz - 1));
-  XReg exp = (X[rs1][31] == 1) ? (-(clo - 1)) : (-(clz - 1));
-  X[rd] = {mnt[31:8],exp[7:0]};
+  XReg clz = (xlen() - 1) - $signed(highest_set_bit(X[xs1]));
+  XReg clo = (xlen() - 1) - $signed(highest_set_bit(~X[xs1]));
+  XReg mnt = (X[xs1][31] == 1) ? (X[xs1] << (clo - 1)) : (X[xs1] << (clz - 1));
+  XReg exp = (X[xs1][31] == 1) ? (-(clo - 1)) : (-(clz - 1));
+  X[xd] = {mnt[31:8],exp[7:0]};

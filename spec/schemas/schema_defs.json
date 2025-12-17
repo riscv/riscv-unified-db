@@ -760,6 +760,8 @@
     },
 
     "xlen_condition": {
+      "description": "A condition that _xlen_ equal a specific value.\nIn this context, _xlen_ is the effective value of XLEN at runtime, which may differ from `MXLEN` due to runtime settings like `mstatus.SXL`.",
+      "examples": [{ "xlen": 32 }, { "xlen": 64 }],
       "type": "object",
       "required": ["xlen"],
       "properties": {
@@ -771,6 +773,25 @@
     },
 
     "condition": {
+      "description": "The 'condition' schema represents constraints on extensions, parameters, and/or xlen.\nConditions are used in many places within UDB to describe when something is defined (e.g., when Zca is implemented) or to restrict values (e.g., when Shvstvala is implemented, REPORT_VA_IN_VSTVAL_ON_BREAKPOINT must be true).\n\nConditions can be represented in one of two, equivalent, forms.\nFirst, a condition can be represented using YAML/JSON, as described in 'yaml_condition'.\nSecond, a condition can be represented using a _subset_ of IDL as described in 'idl_condition'.\nThe two forms are interchangeable.\n\n[NOTE]\nUDB supports mixing and matching conditions so that hand-written data can use whichever form is easiest to produce by hand.\nBy generating both forms in the resolved data, downstream users only need to interpret one form for machine-driven use of the data.",
+      "examples": [
+        {
+          "extension": { "name": "Zca" }
+        },
+        {
+          "extension": { "name": "Zca", "version": ">= 1.0" }
+        },
+        {
+          "allOf": [
+            {
+              "extension": { "name": "Zca" }
+            },
+            {
+              "xlen": 32
+            }
+          ]
+        }
+      ],
       "oneOf": [
         {
           "$ref": "#/$defs/yaml_condition"
@@ -826,6 +847,14 @@
           "$ref": "#/$defs/extension_requirement_list_item"
         }
       ]
+    },
+    "idl_expression": {
+      "type": "string",
+      "description": "IDL expression"
+    },
+    "idl_function_body": {
+      "type": "string",
+      "description": "IDL function body"
     },
 
     "uint32": {

@@ -1,0 +1,13 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_operand_schema-0.9.0.json
+
+$schema: inst_operand_schema-0.9.0.json#
+kind: instruction_operand
+name: qc.xs3
+
+location: 11-7
+varName: xs3
+displayName: xs3
+type: { $ref: inst_operand_type/x_src_reg.yaml# }

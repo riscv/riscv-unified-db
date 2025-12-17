@@ -17,8 +17,22 @@ definedBy:
     - extension:
         name: Xqciint
 assembly: ""
-encoding:
-  match: "0001101110010010"
+format:
+  size: 16
+  opcodes:
+    - displayName: funct3
+      value: 0b000
+      location: 15-13
+    - displayName: f
+      location: 12
+      value: 0b1
+    - displayName: funct5
+      location: 11-7
+      value: 0b10111
+    - displayName: funct5
+      location: 6-2
+      value: 0b00100
+    - { $ref: inst_opcode/c2.yaml# }
 access:
   s: always
   u: always

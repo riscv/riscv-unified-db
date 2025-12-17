@@ -8,7 +8,7 @@ kind: instruction
 name: qc.ext
 long_name: Extract bits signed
 description: |
-  Extract a subset of bits from `rs1` into `rd`, and sign-extend the result.
+  Extract a subset of bits from `xs1` into `xd`, and sign-extend the result.
   The width of the subset is determined by (`width_minus1` + 1) (1..32),
   and the offset of the subset is determined by `shamt`.
   Instruction encoded in I instruction format.
@@ -17,20 +17,22 @@ definedBy:
     - xlen: 32
     - extension:
         name: Xqcibm
-encoding:
-  match: 01---------------010-----0001011
-  variables:
-    - name: width_minus1
-      location: 29-25
-    - name: shamt
-      location: 24-20
-    - name: rs1
-      location: 19-15
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
-assembly: xd, xs1, width, shamt
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.width_minus1.yaml#
+    - $ref: inst_operand/shamt5.yaml#
+    - $ref: inst_operand/qc.xs1-n0.yaml#
+    - $ref: inst_operand/xd-n0.yaml#
+  opcodes:
+    - displayName: funct2
+      location: 31-30
+      value: 0b01
+    - displayName: funct3
+      location: 14-12
+      value: 0b010
+    - $ref: inst_opcode/custom-0.yaml#
+assembly: xd, xs1, width_minus1, shamt
 access:
   s: always
   u: always
@@ -38,5 +40,5 @@ access:
   vu: always
 operation(): |
   XReg width = width_minus1 + 1;
-  XReg unsigned_extraction = (X[rs1] >> shamt) & ((32'b1 << width) - 1);
-  X[rd] = sext(unsigned_extraction, width);
+  XReg unsigned_extraction = (X[xs1] >> shamt) & ((32'b1 << width) - 1);
+  X[xd] = sext(unsigned_extraction, width);

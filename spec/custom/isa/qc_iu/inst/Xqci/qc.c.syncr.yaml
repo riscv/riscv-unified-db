@@ -21,11 +21,24 @@ definedBy:
     - extension:
         name: Xqcisync
 assembly: slist
-encoding:
-  match: "100001---0000001"
-  variables:
-    - name: slist
-      location: 9-7
+format:
+  size: 16
+  operands:
+    - { $ref: inst_operand/qc.c.slist.yaml# }
+  opcodes:
+    - displayName: funct3
+      value: 0b100
+      location: 15-13
+    - displayName: f
+      location: 12
+      value: 0b0
+    - displayName: funct2
+      location: 11-10
+      value: 0b01
+    - displayName: funct5
+      location: 6-2
+      value: 0b00000
+    - { $ref: inst_opcode/c1.yaml# }
 access:
   s: always
   u: always

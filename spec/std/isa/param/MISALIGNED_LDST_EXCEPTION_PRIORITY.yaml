@@ -10,8 +10,12 @@ long_name: |
   The relative priority of a load/store/AMO exception vs. load/store/AMO page-fault
   or access-fault exceptions.
 definedBy:
-  extension:
-    name: Sm
+  allOf:
+    - extension:
+        name: Sm
+    - param:
+        name: MISALIGNED_LDST
+        equal: true
 description: |
   The relative priority of a load/store/AMO exception vs. load/store/AMO page-fault
   or access-fault exceptions.

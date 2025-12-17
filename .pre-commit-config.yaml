@@ -53,7 +53,7 @@ repos:
         stages: [pre-commit]
         alias: check-jsonschema-inst
         files: ^spec/std/isa/inst/.*\.(yaml|yml)$
-        args: ["--schemafile", "spec/schemas/inst_schema.json"]
+        args: ["--schemafile", "spec/schemas/any_inst_schema.json"]
       - id: check-jsonschema
         name: Validate CSR files with jsonschema
         stages: [pre-commit]

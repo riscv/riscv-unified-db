@@ -16,6 +16,21 @@ definedBy:
     - extension:
         name: Xqcisync
 assembly: imm
+format:
+  size: 16
+  operands:
+    - $ref: inst_operand/qc.c.uimm5-n0.yaml#
+  opcodes:
+    - displayName: funct3
+      value: 0b000
+      location: 15-13
+    - displayName: f
+      location: 12
+      value: 0b0
+    - displayName: funct5
+      location: 11-7
+      value: 0b00000
+    - { $ref: inst_opcode/c2.yaml# }
 encoding:
   match: "000000000-----10"
   variables:

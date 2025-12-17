@@ -21,8 +21,22 @@ access:
   u: never
   vs: never
   vu: never
-encoding:
-  match: "0001100110010010"
+format:
+  size: 16
+  opcodes:
+    - displayName: funct3
+      value: 0b000
+      location: 15-13
+    - displayName: f
+      location: 12
+      value: 0b1
+    - displayName: funct5
+      location: 11-7
+      value: 0b10011
+    - displayName: funct5
+      location: 6-2
+      value: 0b00100
+    - { $ref: inst_opcode/c2.yaml# }
 operation(): |
   XReg qc_mcause_val = CSR[qc.mcause].sw_read();
   XReg qc_mcause_val_masked = qc_mcause_val & ~(32'b1<<26) & ~(32'b1<<28) & ~(32'b1<<30) & ~(32'b1111<<12) & ~(32'b1111<<20);

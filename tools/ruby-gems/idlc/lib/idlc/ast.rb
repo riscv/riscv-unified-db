@@ -69,7 +69,7 @@ module Idl
 
     # @return [String] The IDL source of this node
     sig { returns(String) }
-    attr_reader :text_value
+    def text_value = @text_value
 
     # @return [AstNode] The parent node
     # @return [nil] if this is the root of the tree
@@ -207,7 +207,10 @@ module Idl
       @input_file = nil
       @starting_line = 0
       @interval = interval
-      @text_value = input[interval]
+      @text_value =
+        unless @input.nil? || @interval.nil?
+          @input[@interval]
+        end
       @children = children
       @parent = nil # will be set later unless this is the root
       @children.each { |child| child.instance_variable_set(:@parent, self) }
@@ -248,7 +251,7 @@ module Idl
     # @return [Integer] the current line number
     sig { returns(Integer) }
     def lineno
-      T.must(input[0..interval.first]).count("\n") + 1 + (@starting_line.nil? ? 0 : @starting_line)
+      T.must(T.must(input)[0..T.must(interval).first]).count("\n") + 1 + (@starting_line.nil? ? 0 : @starting_line)
     end
 
     # @return [AstNode] the first ancestor that is_a?(+klass+)
@@ -274,27 +277,27 @@ module Idl
     sig { returns(LinesDescriptor) }
     def lines_around
       cnt = 0
-      interval_start = interval.min
+      interval_start = T.must(interval).min
       while cnt < 2
-        cnt += 1 if input[interval_start] == "\n"
+        cnt += 1 if T.must(input)[T.must(interval_start)] == "\n"
         break if interval_start.zero?
 
         interval_start -= 1
       end
 
       cnt = 0
-      interval_end = interval.max
+      interval_end = T.must(interval).max
       while cnt < 3
-        cnt += 1 if input[interval_end] == "\n"
-        break if interval_end >= (input.size - 1)
+        cnt += 1 if T.must(input)[interval_end] == "\n"
+        break if interval_end >= (T.must(input).size - 1)
         break if cnt == 3
 
         interval_end += 1
       end
 
       LinesDescriptor.new(
-        lines: T.must(input[interval_start..interval_end]),
-        problem_interval: (interval.min - interval_start..interval.max - interval_start),
+        lines: T.must(T.must(input)[interval_start..interval_end]),
+        problem_interval: (T.must(interval).min - interval_start..T.must(interval).max - interval_start),
         lines_interval: (interval_start + 1)..interval_end
       )
     end
@@ -341,7 +344,7 @@ module Idl
           ].join("")
         end
 
-      starting_lineno = T.must(input[0..lines_interval.min]).count("\n")
+      starting_lineno = T.must(T.must(input)[0..lines_interval.min]).count("\n")
       lines = lines.lines.map do |line|
         starting_lineno += 1
         "#{@starting_line + starting_lineno - 1}: #{line}"
@@ -436,6 +439,16 @@ module Idl
 
       @children.each { |child| child.freeze_tree(global_symtab) }
       freeze
+    end
+
+    sig { returns(AstNode) }
+    def deep_dup
+      ast = dup
+      ast.instance_variable_set(:@children, [])
+      @children.each do |child|
+        ast.instance_variable_get(:@children) << child.deep_dup
+      end
+      ast
     end
 
     # @return [String] A string representing the path to this node in the tree
@@ -750,6 +763,9 @@ module Idl
 
     sig { override.params(symtab: SymbolTable).void }
     def type_check(symtab); end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = raise "not implemented"
   end
 
   class TrueExpressionSyntaxNode < SyntaxNode

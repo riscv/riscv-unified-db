@@ -8,23 +8,30 @@ kind: instruction
 name: qc.compress3
 long_name: Bit compression (every 3rd bit)
 description: |
-  Bit compression (every 3rd bit) of `rs1`, zero-pad bits [31:11] of the result.
-  Write result to `rd`.
+  Bit compression (every 3rd bit) of `xs1`, zero-pad bits [31:11] of the result.
+  Write result to `xd`.
   Instruction encoded in I instruction format.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcibm
-encoding:
-  match: 000000100000-----011-----0001011
-  variables:
-    - name: rs1
-      location: 19-15
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
+format:
+  size: 32
+  operands:
+    - { $ref: inst_operand/qc.xs1-n0.yaml# }
+    - { $ref: inst_operand/xd-n0.yaml# }
+  opcodes:
+    - displayName: funct7
+      location: 31-25
+      value: 0b0000001
+    - displayName: funct5
+      location: 24-20
+      value: 0b00000
+    - displayName: funct3
+      location: 14-12
+      value: 0b011
+    - { $ref: inst_opcode/custom-0.yaml# }
 assembly: xd, xs1
 access:
   s: always
@@ -32,6 +39,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  XReg b0 = {X[rs1][21],X[rs1][18],X[rs1][15],X[rs1][12],X[rs1][9],X[rs1][6],X[rs1][3],X[rs1][0]};
-  XReg b1 = {5'b0,X[rs1][30],X[rs1][27],X[rs1][24]};
-  X[rd] = {21'b0,b1[2:0],b0[7:0]};
+  XReg b0 = {X[xs1][21],X[xs1][18],X[xs1][15],X[xs1][12],X[xs1][9],X[xs1][6],X[xs1][3],X[xs1][0]};
+  XReg b1 = {5'b0,X[xs1][30],X[xs1][27],X[xs1][24]};
+  X[xd] = {21'b0,b1[2:0],b0[7:0]};

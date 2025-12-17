@@ -15,19 +15,17 @@ definedBy:
     - xlen: 32
     - extension:
         name: Xqcibi
-encoding:
-  match: -----------------101-----1111011
-  variables:
-    - name: offset
-      location: 31|7|30-25|11-8
-      left_shift: 1
-      sign_extend: true
-    - name: imm
-      location: 24-20
-      not: 0
-    - name: rs1
-      location: 19-15
-      not: 0
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.xs1-n0.yaml#
+    - $ref: inst_operand/qc.simm5-n0.yaml#
+    - $ref: inst_operand/b-offset.yaml#
+  opcodes:
+    - displayName: funct3
+      location: 14-12
+      value: 0b101
+    - $ref: inst_opcode/custom-3.yaml#
 assembly: xs1, imm, offset
 access:
   s: always
@@ -35,6 +33,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  if ($signed(X[rs1]) >= $signed(imm)) {
+  if ($signed(X[xs1]) >= $signed(imm)) {
     jump_halfword($pc + $signed(offset));
   }

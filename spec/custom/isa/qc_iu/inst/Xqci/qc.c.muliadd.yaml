@@ -8,22 +8,23 @@ kind: instruction
 name: qc.c.muliadd
 long_name: Multiply and accumulate (Immediate)
 description: |
-  Increments `rd` by the multiplication of `rs1` and an unsigned immediate
-  Instruction encoded in CL instruction format.
+  Increments `xd` by the multiplication of `xs1` and an unsigned immediate
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqciac
-encoding:
-  match: 001-----------10
-  variables:
-    - name: uimm
-      location: 5|12-10|6
-    - name: rs1
-      location: 9-7
-    - name: rd
-      location: 4-2
+format:
+  size: 16
+  operands:
+    - { $ref: inst_operand/qc.c.xdp-rw.yaml# }
+    - { $ref: inst_operand/xs1p.yaml# }
+    - { $ref: inst_operand/qc.c.uimm5.yaml# }
+  opcodes:
+    - displayName: funct3
+      value: 0b001
+      location: 15-13
+    - { $ref: inst_opcode/c2.yaml# }
 assembly: xd, xs1, uimm
 access:
   s: always
@@ -31,7 +32,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  XReg reg = creg2reg(rd);
   XReg src = creg2reg(rs1);
-  XReg orig_val = X[reg];
-  X[reg] = orig_val + (X[src] * uimm);
+  XReg orig_val = X[xd];
+  X[xd] = orig_val + (X[xs1] * uimm);

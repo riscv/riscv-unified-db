@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Instruction Operand Type Schema",
+  "description": "Schema for instruction operand type definitions",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "kind", "name", "displayName", "type"],
+  "properties": {
+    "$schema": {
+      "const": "inst_operand_type_schema-0.9.0.json#"
+    },
+    "kind": {
+      "const": "instruction_operand_type"
+    },
+    "name": {
+      "type": "string"
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "type": {
+      "enum": [
+        "register_reference",
+        "register_reference_list",
+        "immediate",
+        "shift_amount",
+        "interrupt"
+      ]
+    },
+    "$source": { "type": "string" },
+    "register_file": true,
+    "access": true,
+    "signed": true
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "register_reference"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "register_file": {
+            "enum": ["X", "F", "V"]
+          },
+          "access": {
+            "enum": ["R", "W", "RW"],
+            "description": "Register access type: R - Read only (src) , W - Write only (dst), RW - Read/write (srcdst)"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": { "const": "immediate" }
+        }
+      },
+      "then": {
+        "required": ["signed"],
+        "properties": {
+          "signed": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  ]
+}

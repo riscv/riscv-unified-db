@@ -8,41 +8,43 @@ kind: instruction
 name: qc.insbri
 long_name: Insert bits (Immediate)
 description: |
-  Insertion of a subset of bits of an `imm` into `rd`.
-  The width of the subset is determined by `rs1` bits [21:16] (0..32),
-  and the offset of the subset is determined by `rs1` bits [4:0].
+  Insertion of a subset of bits of an `simm` into `xd`.
+  The width of the subset is determined by `xs1` bits [21:16] (0..32),
+  and the offset of the subset is determined by `xs1` bits [4:0].
   In case when width == 0, the destination register is left unchanged.
-  In case when `rs1` bit [21] == 1 width is enforced to 32.
-  Instruction encoded in I instruction format.
+  In case when `xs1` bit [21] == 1 width is enforced to 32.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcibm
-encoding:
-  match: 1----------------000-----0001011
-  variables:
-    - name: imm
-      location: 30-20
-    - name: rs1
-      location: 19-15
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
-assembly: xd, xs1, imm
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.simm11.yaml#
+    - $ref: inst_operand/qc.xs1-n0.yaml#
+    - $ref: inst_operand/qc.xd-n0-rw.yaml#
+  opcodes:
+    - displayName: f1
+      location: 31
+      value: 0b1
+    - displayName: funct3
+      location: 14-12
+      value: 0b000
+    - $ref: inst_opcode/custom-0.yaml#
+assembly: xd, xs1, simm
 access:
   s: always
   u: always
   vs: always
   vu: always
 operation(): |
-  XReg width_bits = X[rs1][21:16];
+  XReg width_bits = X[xs1][21:16];
   XReg width = (width_bits > 32) ? 32 : width_bits;
-  XReg shamt = X[rs1][4:0];
+  XReg shamt = X[xs1][4:0];
   if (width > 0) {
     XReg mask = ((32'b1 << width) - 1) << shamt;
-    XReg orig_val = X[rd];
-    XReg src = $signed(imm);
-    X[rd] = (orig_val & ~mask) | ((src << shamt) & mask);
+    XReg orig_val = X[xd];
+    XReg src = $signed(simm);
+    X[xd] = (orig_val & ~mask) | ((src << shamt) & mask);
   }

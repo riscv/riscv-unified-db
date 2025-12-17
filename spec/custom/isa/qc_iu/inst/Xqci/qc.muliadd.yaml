@@ -8,30 +8,29 @@ kind: instruction
 name: qc.muliadd
 long_name: Multiply and accumulate (Immediate)
 description: |
-  Increments `rd` by the multiplication of `rs1` and a signed immediate `imm`.
-  Instruction encoded in I instruction format.
+  Increments `xd` by the multiplication of `xs1` and a signed immediate `simm`.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqciac
-encoding:
-  match: -----------------110-----0001011
-  variables:
-    - name: imm
-      location: 31-20
-    - name: rs1
-      location: 19-15
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
-assembly: xd, xs1, imm
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/i-simm12.yaml#
+    - $ref: inst_operand/qc.xs1-n0.yaml#
+    - $ref: inst_operand/qc.xd-n0-rw.yaml#
+  opcodes:
+    - displayName: funct3
+      location: 14-12
+      value: 0b110
+    - $ref: inst_opcode/custom-0.yaml#
+assembly: xd, xs1, simm
 access:
   s: always
   u: always
   vs: always
   vu: always
 operation(): |
-  XReg orig_val = X[rd];
-  X[rd] = orig_val + (X[rs1] * sext(imm,12));
+  XReg orig_val = X[xd];
+  X[xd] = orig_val + (X[xs1] * sext(simm,12));

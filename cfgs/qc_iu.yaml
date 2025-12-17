@@ -8,6 +8,7 @@ arch_overlay: qc_iu
 description: Configuration with the Xqci and Xqccmp custom extensions.
 implemented_extensions:
   - { name: Sm, version: "= 1.13" }
+  - { name: Smpmp, version: "= 1.13" }
   - { name: Smhpm, version: "= 1.13" }
   - { name: Smrnmi, version: "= 1.0" }
   - { name: Smdbltrp, version: "= 1.0" }
@@ -15,9 +16,10 @@ implemented_extensions:
   - { name: I, version: "= 2.1" }
   - { name: M, version: "= 2.0" }
   - { name: B, version: "= 1.0" }
-  - { name: Zbs, version: "= 1.0" }
-  - { name: Zbb, version: "= 1.0" }
   - { name: Zba, version: "= 1.0" }
+  - { name: Zbb, version: "= 1.0" }
+  - { name: Zbs, version: "= 1.0" }
+  - { name: C, version: "= 2.0" }
   - { name: Zca, version: "= 1.0" }
   - { name: Zcb, version: "= 1.0" }
   - { name: Zicntr, version: "= 2.0" }
@@ -47,10 +49,13 @@ params:
   MXLEN: 32
   PHYS_ADDR_WIDTH: 32
   MARCHID_IMPLEMENTED: true
-  ARCH_ID_VALUE: 1
+  ARCH_ID_VALUE: 1 # TODO
+  MIMPID_IMPLEMENTED: true
+  IMP_ID_VALUE: 0 # TODO
   CONFIG_PTR_ADDRESS: 0
   HPM_EVENTS: []
   MTVEC_MODES: [0, 1]
+  MTVEC_ACCESS: rw
   HPM_COUNTER_EN:
     - false # CY
     - false # empty
@@ -118,16 +123,14 @@ params:
     - false # HPM30
     - false # HPM31
   MUTABLE_MISA_B: false
+  MUTABLE_MISA_C: false
   MUTABLE_MISA_M: false
   PRECISE_SYNCHRONOUS_EXCEPTIONS: true
   TRAP_ON_ECALL_FROM_M: true
   TRAP_ON_EBREAK: true
-  MIMPID_IMPLEMENTED: true
-  IMP_ID_VALUE: 0 # TODO
   VENDOR_ID_BANK: 0 # TODO
   VENDOR_ID_OFFSET: 0 # TODO
   MISALIGNED_LDST: false
-  MISALIGNED_LDST_EXCEPTION_PRIORITY: low
   TRAP_ON_ILLEGAL_WLRL: true
   TRAP_ON_UNIMPLEMENTED_INSTRUCTION: true
   TRAP_ON_RESERVED_INSTRUCTION: true
@@ -146,7 +149,6 @@ params:
   PMA_GRANULARITY: 12
   M_MODE_ENDIANNESS: little
   MISA_CSR_IMPLEMENTED: true
-  MTVEC_ACCESS: rw
   MTVEC_ILLEGAL_WRITE_BEHAVIOR: retain
   MTVEC_BASE_ALIGNMENT_DIRECT: 4
   MTVEC_BASE_ALIGNMENT_VECTORED: 4

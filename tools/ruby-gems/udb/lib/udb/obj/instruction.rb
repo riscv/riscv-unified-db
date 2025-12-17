@@ -8,107 +8,13 @@
 
 require_relative "database_obj"
 require_relative "certifiable_obj"
+require_relative "../fields"
 require_relative "../presence"
 require "udb_helpers/backend_helpers"
 require "awesome_print"
 
 module Udb
-  class InstructionType < TopLevelDatabaseObject
-    sig {
-      params(
-        data: T::Hash[String, T.untyped],
-        data_path: T.any(String, Pathname),
-        arch: ConfiguredArchitecture
-      ).void
-    }
-    def initialize(data, data_path, arch)
-      super(data, data_path, arch)
-    end
-
-    def length = @data["length"]
-    def size = length
-  end
-
-  class InstructionSubtype < TopLevelDatabaseObject
-    class Opcode
-      extend T::Sig
-
-      sig { returns(String) }
-      attr_reader :name
-
-      sig { returns(Range) }
-      attr_reader :range
-
-      sig { params(name: String, range: Range).void }
-      def initialize(name, range)
-        @name = name
-        @range = range
-      end
-
-      sig { params(other: T.any(Opcode, Instruction::DecodeVariable)).returns(T::Boolean) }
-      def overlaps?(other)
-        if other.is_a?(Opcode)
-          range.eql?(other.range) || range.cover?(other.range.first) || other.range.cover?(range.first)
-        else
-          other.location_bits.any? { |i| range.cover?(i) }
-        end
-      end
-    end
-
-    sig {
-      params(
-        data: T::Hash[String, T.untyped],
-        data_path: T.any(String, Pathname),
-        arch: ConfiguredArchitecture
-      ).void
-    }
-    def initialize(data, data_path, arch)
-      super(data, data_path, arch)
-    end
-
-    sig { returns(InstructionType) }
-    def type
-      @type ||= @arch.ref(@data["data"]["type"]["$ref"])
-    end
-
-    sig { returns(T::Array[Instruction::DecodeVariable]) }
-    def variables
-      @variables ||=
-        if @data["data"].key?("variables")
-          @data["data"]["variables"].map { |var_name, var_data| Instruction::DecodeVariable.new(var_name, var_data) }
-        else
-          []
-        end
-    end
-
-    sig { returns(T::Array[Instruction::Encoding::Field]) }
-    def opcodes
-      @opcodes ||=
-        @data["data"]["opcodes"].map do |opcode_name, opcode_data|
-          next if opcode_name[0] == "$"
-
-          raise "unexpected: opcode field is not contiguous" if opcode_data["location"].include?("|")
-
-          loc = opcode_data["location"]
-          range =
-            if loc =~ /^([0-9]+)$/
-              bit = ::Regexp.last_match(1)
-              bit.to_i..bit.to_i
-            elsif loc =~ /^([0-9]+)-([0-9]+)$/
-              msb = ::Regexp.last_match(1)
-              lsb = ::Regexp.last_match(2)
-              raise "range must be specified 'msb-lsb'" unless msb.to_i >= lsb.to_i
-
-              lsb.to_i..msb.to_i
-            else
-              raise "location format error"
-            end
-          Instruction::Encoding::Field.new(opcode_name, range)
-        end.reject(&:nil?)
-    end
-  end
-
-# model of a specific instruction in a specific base (RV32/RV64)
+  # model of a specific instruction in a specific base (RV32/RV64)
   class Instruction < TopLevelDatabaseObject
     # Add all methods in this module to this type of database object.
     include CertifiableObject
@@ -116,6 +22,254 @@ module Udb
 
     class MemoizedState < T::Struct
       prop :reachable_functions, T.nilable(T::Hash[Integer, Idl::FunctionDefAst])
+    end
+
+    class Format
+      extend T::Sig
+      include Helpers::WavedromUtil
+
+      attr_reader :inst
+
+      class Opcode < Udb::EncodingField
+        extend T::Sig
+
+        sig { params(data: T::Hash[String, T.untyped], format: Format).void }
+        def initialize(data, format)
+          if data.key?("$ref")
+            @data = format.inst.cfg_arch.ref(data.fetch("$ref")).data
+          else
+            @data = data
+          end
+          super(@data.fetch("location"))
+          @format = format
+        end
+
+        sig { returns(String) }
+        def display_name
+          T.cast(@data.fetch("displayName"), String)
+        end
+
+        sig { returns(Integer) }
+        def value
+          @data.fetch("value")
+        end
+
+        sig { returns(Udb::EncodingField) }
+        def location
+          self
+        end
+
+        def opcode? = true
+      end
+
+      sig { params(data: T::Hash[String, T.untyped], inst: Instruction).void }
+      def initialize(data, inst)
+        @data = data
+        @inst = inst
+      end
+
+      sig { returns(T::Array[Opcode]) }
+      def opcodes
+        @opcodes ||=
+          @data.fetch("opcodes").map do |o|
+            Opcode.new(o, self)
+          end
+      end
+
+      sig { returns(T::Array[InstructionOperand]) }
+      def operands
+        @operands ||=
+          if @data.key?("operands")
+            @data.fetch("operands").map { |o| @inst.cfg_arch.ref(o.fetch("$ref")) }
+          else
+            []
+          end
+      end
+
+      sig { returns(Integer) }
+      def size
+        @data.fetch("size")
+      end
+
+      # @return format, as a string of 0,1 and -,
+      # @example Format of `sd`
+      #      sd.match #=> '-----------------011-----0100011'
+      sig { returns(String) }
+      def match
+        str = "-" * size
+
+        opcodes.each do |opcode|
+          str[size - opcode.range.end - 1, opcode.range.size] =
+            opcode.value.to_s(2).rjust(T.must(opcode.range.size), "0")
+        end
+
+        str
+      end
+
+      sig { params(format1_match: String, format2_match: String).returns(T::Boolean) }
+      def self.overlapping_format_match?(format1_match, format2_match)
+        format1_match.size.times.all? do |i|
+          rev_idx = (format1_match.size - 1) - i
+          other_rev_idx = (format2_match.size - 1) - i
+          format1_match[rev_idx] == "-" \
+            || (i >= format2_match.size) \
+            || (format1_match[rev_idx] == format2_match[other_rev_idx])
+        end
+      end
+
+      sig { params(other_format: T.any(Format, Encoding), check_other: T::Boolean).returns(T::Boolean) }
+      def indistinguishable?(other_format, check_other: true)
+        same =
+          if other_format.is_a?(Format)
+            T.let(Format.overlapping_format_match?(match, other_format.match), T::Boolean)
+          else
+            T.let(Format.overlapping_format_match?(match, other_format.format), T::Boolean)
+          end
+
+        if same
+          # the mask can't be distinguished; is there one or more exclusions that distinguishes them?
+
+          # we have to check all combinations of dvs with exclusions, and their values
+          exclusion_operands = operands.reject { |operand| operand.excludes.empty? }
+          exclusion_operand_values = []
+          def expand(exclusion_operands, exclusion_operand_values, base, idx)
+            other_operand = exclusion_operands[idx]
+            other_operand.excludes.each do |other_exclusion_value|
+              exclusion_operand_values << base + [[other_operand, other_exclusion_value]]
+              if (idx + 1) < exclusion_operands.size
+                expand(exclusion_operands, exclusion_operand_values, exclusion_operand_values.last, idx + 1)
+              end
+            end
+          end
+          exclusion_operands.each_index do |idx|
+            expand(exclusion_operands, exclusion_operand_values, [], idx)
+          end
+
+          exclusion_operand_values.each do |operand_values|
+            repl_format = match.dup
+            operand_values.each do |operand_and_value|
+              repl_format = T.cast(operand_and_value.fetch(0), InstructionOperand).encoding_repl(repl_format, operand_and_value[1])
+            end
+
+            m =
+              if (other_format.is_a?(Format))
+                other_format.match
+              else
+                other_format.format
+              end
+            if Format.overlapping_format_match?(repl_format, m)
+              same = false
+              break
+            end
+          end
+        end
+
+        check_other ? same || other_format.indistinguishable?(self, check_other: false) : same
+      end
+
+      def self.validate(data, inst)
+        cfg_arch = inst.cfg_arch
+        data.fetch("opcodes").each do |o|
+          if o.key?("$ref")
+            opcode = cfg_arch.ref(o.fetch("$ref"))
+            if opcode.nil?
+              raise Udb::TopLevelDatabaseObject::SchemaValidationError.new(
+                inst.data_path,
+                "Opcode reference not found: #{o.fetch("$ref")}"
+              )
+            end
+          end
+        end
+
+        f = Format.new(data, inst)
+        f.opcodes.each do |opcode|
+          if opcode.range.max >= f.size
+            raise Udb::TopLevelDatabaseObject::SchemaValidationError.new(
+              inst.data_path,
+              "Opcode #{opcode.display_name} extends beyond the instruction encoding size"
+            )
+          end
+        end
+
+        opcodes_and_operands = f.opcodes + f.operands
+        opcodes_and_operands.each_with_index do |o, idx|
+          (idx + 1...opcodes_and_operands.size).each do |i|
+            o1 = o.is_a?(InstructionOperand) ? o.location : o
+            o2 = opcodes_and_operands.fetch(i)
+            o2 = o2.location if o2.is_a?(InstructionOperand)
+            if o1.overlaps?(o2)
+              raise Udb::TopLevelDatabaseObject::SchemaValidationError.new(
+                inst.data_path,
+                "#{o} overlaps with #{opcodes_and_operands[i]}"
+              )
+            end
+          end
+        end
+
+        # makes sure every bit is accounted for
+        f.size.times do |i|
+          covered =
+            f.opcodes.any? { |opcode| opcode.range.cover?(i) } || \
+            f.operands.any? { |operand| operand.location.include?(i) }
+          raise "In instruction format #{name}, there is no opcode or variable at bit #{i}" unless covered
+        end
+
+        total_o_size = opcodes_and_operands.reduce(0) { |sum, o| sum + (o.is_a?(Opcode) ? o.size : o.size_in_encoding) }
+        unless total_o_size == f.size
+          raise Udb::TopLevelDatabaseObject::SchemaValidationError.new(
+            @data_path,
+            "size of opcodes and operands (#{total_o_size}) does not add to instruction format size (#{f.size})"
+          )
+        end
+
+      end
+
+      # Generates a wavedrom description of the instruction format
+      # @return The wavedrom JSON description
+      sig { returns(T::Hash[String, T.untyped]) }
+      def wavedrom_desc
+        desc = {
+          "reg" => []
+        }
+        display_fields = opcodes
+        display_fields += operands.map(&:grouped_fields).flatten
+
+        display_fields.sort { |a, b| b.range.last <=> a.range.last }.reverse_each do |e|
+          if e.opcode?
+            o = T.cast(e, Opcode)
+            desc["reg"] << {
+              "bits" => o.range.size,
+              "name" => o.value,
+              "type" => 2,
+              "attr" => o.display_name
+            }
+          else
+            o = T.cast(e, InstructionOperand::Field)
+            desc["reg"] << {
+              "bits" => o.range.size,
+              "name" => o.pretty_name,
+              "type" => 4,
+              "attr" => o.var_name
+            }
+          end
+        end
+
+        desc
+      end
+
+      # return the wavedrom description suitable for inclusion in asciidoc
+      sig { returns(String) }
+      def processed_wavedrom_desc
+        data = wavedrom_desc
+        processed_data = process_wavedrom(data)
+        fix_entities(json_dump_with_hex_literals(processed_data))
+      end
+
+    end
+
+    class ConditionalFormat < T::Struct
+      prop :format, Format
+      prop :cond, AbstractCondition
     end
 
     sig { override.params(data: T::Hash[String, T.untyped], data_path: T.any(String, Pathname), arch: ConfiguredArchitecture).void }
@@ -131,7 +285,7 @@ module Udb
     end
 
     sig { returns(T::Boolean) }
-    def has_type? = @data.key?("format")
+    def has_format? = @data.key?("format")
 
     sig { params(base: Integer).returns(InstructionType) }
     def type(base)
@@ -171,7 +325,7 @@ module Udb
       @subtype[base]
     end
 
-    class Opcode < InstructionSubtype::Opcode
+    class Opcode
       extend T::Sig
 
       sig { returns(Integer) }
@@ -228,14 +382,14 @@ module Udb
     def encoding_format(base)
       raise ArgumentError, "base must be 32 or 64" unless [32, 64].include?(base)
 
-      if has_type?
-        mask = "-" * type(base).length
-
-        opcodes(base).each do |opcode|
-          mask[type(base).length - opcode.range.end - 1, opcode.range.size] = opcode.value.to_s(2).rjust(T.must(opcode.range.size), "0")
-        end
-
-        mask
+      if has_format?
+        f =
+          if formats.size > 1
+            format_for(Condition.new({ "xlen" => base }, cfg_arch))
+          else
+            format
+          end
+        f.match
       else
         @encoding_format ||=
           if @data["encoding"].key?("RV32")
@@ -325,13 +479,13 @@ module Udb
     def validate(resolver)
       super(resolver)
 
-      if has_type?
-        if @data["format"]["RV32"].nil?
-          b = base.nil? ? 64 : T.cast(base, Integer)
-          Instruction.validate_encoding(self, b)
+      if has_format?
+        if @data.fetch("format").key?("if")
+          @data.fetch("format").each do |f|
+            Format.validate(f.fetch("then"), self)
+          end
         else
-          Instruction.validate_encoding(self, 32)
-          Instruction.validate_encoding(self, 64)
+          Format.validate(@data.fetch("format"), self)
         end
       else
         if @data["encoding"]["RV32"].nil?
@@ -426,13 +580,24 @@ module Udb
         "__effective_xlen",
         Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 7), effective_xlen)
       )
-      encoding(effective_xlen).decode_variables.each do |d|
-        qualifiers = [:const]
-        qualifiers << :signed if d.sext?
-        width = d.size
+      if has_format?
+        format_for(Condition.new({ "xlen" => effective_xlen }, cfg_arch)).operands.each do |operand|
+          qualifiers = [:const]
+          qualifiers << :signed if operand.signed?
+          width = operand.size
 
-        var = Idl::Var.new(d.name, Idl::Type.new(:bits, qualifiers:, width:), decode_var: true)
-        symtab.add(d.name, var)
+          var = Idl::Var.new(operand.var_name, Idl::Type.new(:bits, qualifiers:, width:), decode_var: true)
+          symtab.add(operand.var_name, var)
+        end
+      else
+        encoding(effective_xlen).decode_variables.each do |d|
+          qualifiers = [:const]
+          qualifiers << :signed if d.sext?
+          width = d.size
+
+          var = Idl::Var.new(d.name, Idl::Type.new(:bits, qualifiers:, width:), decode_var: true)
+          symtab.add(d.name, var)
+        end
       end
 
       symtab
@@ -820,6 +985,9 @@ module Udb
         @sext
       end
 
+      # for temporary compatibility with InstructionOperand
+      def signed? = false
+
       sig { params(other: T.any(Instruction::Opcode, DecodeVariable)).returns(T::Boolean) }
       def overlaps?(other)
         if other.is_a?(Instruction::Opcode)
@@ -858,6 +1026,8 @@ module Udb
 
     # represents an instruction encoding
     class Encoding
+      extend T::Sig
+
       # @return [String] format, as a string of 0,1 and -,
       # @example Format of `sd`
       #      sd.format #=> '-----------------011-----0100011'
@@ -911,8 +1081,14 @@ module Udb
       end
 
       # @return [Boolean] true if self and other_encoding cannot be distinguished, i.e., they share the same encoding
+      sig { params(other_encoding: T.any(Encoding, Format), check_other: T::Boolean).returns(T::Boolean) }
       def indistinguishable?(other_encoding, check_other: true)
-        other_format = other_encoding.format
+        other_format =
+          if other_encoding.is_a?(Encoding)
+            other_encoding.format
+          else
+            other_encoding.match
+          end
         same = Encoding.overlapping_format?(format, other_format)
 
         if same
@@ -995,13 +1171,8 @@ module Udb
 
     def load_encoding
       @encodings = {}
-      if has_type?
-        if !base.nil?
-          @encodings[base] = Encoding.new(encoding_format(T.must(base)), subtype(T.must(base)).variables)
-        else
-          @encodings[32] = Encoding.new(encoding_format(32), subtype(32).variables)
-          @encodings[64] = Encoding.new(encoding_format(64), subtype(64).variables)
-        end
+      if has_format?
+        # do nothing
       else
         if @data["encoding"].key?("RV32")
           # there are different encodings for RV32/RV64
@@ -1019,8 +1190,8 @@ module Udb
 
     # @return [Boolean] whether or not this instruction has different encodings depending on XLEN
     def multi_encoding?
-      if has_type?
-        @data["format"].key?("RV32")
+      if has_format?
+        formats.size > 1
       else
         @data.key?("encoding") && @data["encoding"].key?("RV32")
       end
@@ -1029,7 +1200,21 @@ module Udb
     # @return [Boolean] true if self and other_inst have indistinguishable encodings and can be simultaneously implemented in some design
     def bad_encoding_conflict?(xlen, other_inst)
       return false if !defined_in_base?(xlen) || !other_inst.defined_in_base?(xlen)
-      return false unless encoding(xlen).indistinguishable?(other_inst.encoding(xlen))
+
+      c = Condition.new({ "xlen" => xlen }, cfg_arch)
+      if has_format?
+        if other_inst.has_format?
+          return false unless format_for(c).indistinguishable?(other_inst.format_for(c))
+        else
+          return false unless format_for(c).indistinguishable?(other_inst.encoding(xlen))
+        end
+      else
+        if other_inst.has_format?
+          return false unless encoding(xlen).indistinguishable?(other_inst.format_for(c))
+        else
+          return false unless encoding(xlen).indistinguishable?(other_inst.encoding(xlen))
+        end
+      end
 
       # ok, so they have the same encoding. can they be present at the same time?
       return false if !defined_by_condition.compatible?(other_inst.defined_by_condition)
@@ -1053,7 +1238,13 @@ module Udb
         next unless other_inst.defined_in_base?(xlen)
         next if other_inst == self
 
-        next unless encoding(xlen).indistinguishable?(other_inst.encoding(xlen))
+        if has_format?
+          f1 = format_for(Condition.new({ "xlen" => xlen }, cfg_arch))
+          f2 = other_inst.format_for(Condition.new({ "xlen" => xlen }, cfg_arch))
+          next unless f1.indistinguishable?(f2)
+        else
+          next unless encoding(xlen).indistinguishable?(other_inst.encoding(xlen))
+        end
 
         # is this a hint?
         next if hints.include?(other_inst) || other_inst.hints.include?(self)
@@ -1109,36 +1300,100 @@ module Udb
     def encoding(base)
       raise "#{name} is not defined in #{base}" unless defined_in_base?(base)
 
+      raise "use format instead" if has_format?
+
       load_encoding if @encodings.nil?
 
       @encodings[base]
     end
 
+    sig { returns(T::Array[ConditionalFormat]) }
+    def formats
+      @formats ||=
+        if @data.fetch("format").is_a?(Array)
+          @data.fetch("format").map do |f|
+            ConditionalFormat.new(
+              format: Format.new(f.fetch("then"), self),
+              cond: Condition.new(f.fetch("if"), cfg_arch)
+            )
+          end
+        else
+          [
+            ConditionalFormat.new(
+              format: Format.new(@data.fetch("format"), self),
+              cond: AlwaysTrueCondition.new(cfg_arch)
+            )
+          ]
+        end
+    end
+
+    sig { returns(Format) }
+    def format
+      raise "There is more than one format for #{name}. Use #format_for instead." unless formats.size == 1
+
+      formats.fetch(0).format
+    end
+
+    sig { params(cond: AbstractCondition).returns(Format) }
+    def format_for(cond)
+      formats.each do |cond_format|
+        if (cond & -cond_format.cond).unsatisfiable?
+          return cond_format.format
+        end
+      end
+      raise "No format for #{name} is satified by '#{cond}'"
+    end
+
+
     # @return [Integer] the width of the encoding
     sig { returns(Integer) }
     def encoding_width
-      if defined_in_base?(32) && defined_in_base?(64)
-        raise "unexpected: encodings are different sizes" unless encoding(32).size == encoding(64).size
+      @encoding_width ||=
+        if defined_in_base?(32) && defined_in_base?(64)
+          if has_format?
+            f32 = format_for(Condition.new({ "xlen" => 32 }, cfg_arch))
+            f64 = format_for(Condition.new({ "xlen" => 64 }, cfg_arch))
+            raise "unexpected: encodings are different sizes" unless f32.size == f64.size
 
-        encoding(64).size
-      elsif defined_in_base?(32)
-        encoding(32).size
-      else
-        raise "unexpected" unless defined_in_base?(64)
+            f64.size
+          else
+            raise "unexpected: encodings are different sizes" unless encoding(32).size == encoding(64).size
 
-        encoding(64).size
-      end
+            encoding(64).size
+          end
+        elsif defined_in_base?(32)
+          if has_format?
+            f32 = format_for(Condition.new({ "xlen" => 32 }, cfg_arch))
+            f32.size
+          else
+            encoding(32).size
+          end
+        else
+          raise "unexpected" unless defined_in_base?(64)
+
+          if has_format?
+            f64 = format_for(Condition.new({ "xlen" => 64 }, cfg_arch))
+          else
+            encoding(64).size
+          end
+        end
 
     end
 
     # @return [Integer] the largest encoding width of the instruction, in any XLEN for which this instruction is valid
     sig { returns(Integer) }
     def max_encoding_width
-      [(rv32? ? encoding(32).size : 0), (rv64? ? encoding(64).size : 0)].max
+      if has_format?
+        [(rv32? ? format_for(Condition.new({ "xlen" => 32 }, cfg_arch)).size : 0), (rv64? ? format_for(Condition.new({ "xlen" => 64 }, cfg_arch)).size : 0)].max
+      else
+        [(rv32? ? encoding(32).size : 0), (rv64? ? encoding(64).size : 0)].max
+      end
     end
 
     # @return [Array<DecodeVariable>] The decode variables
     def decode_variables(base)
+      raise "use format.operands" if has_format?
+
       encoding(base).decode_variables
     end
 
@@ -1155,11 +1410,38 @@ module Udb
       desc = {
         "reg" => []
       }
-      display_fields = encoding(base).opcode_fields
-      display_fields += encoding(base).decode_variables.map(&:grouped_encoding_fields).flatten
+      display_fields =
+        if has_format?
+          format_for(Condition.new({ "xlen" => base }, cfg_arch)).opcodes
+        else
+          T.must(encoding(base).opcode_fields)
+        end
+      if has_format?
+        display_fields += format_for(Condition.new({ "xlen" => base }, cfg_arch)).operands.map(&:grouped_fields).flatten
+      else
+        display_fields += encoding(base).decode_variables.map(&:grouped_encoding_fields).flatten
+      end
 
       display_fields.sort { |a, b| b.range.last <=> a.range.last }.reverse_each do |e|
-        desc["reg"] << { "bits" => e.range.size, "name" => e.name, "type" => (e.opcode? ? 2 : 4) }
+        if has_format?
+          if e.opcode?
+            desc["reg"] << {
+              "bits" => e.range.size,
+              "name" => e.value,
+              "type" => 2,
+              "attr" => e.display_name
+            }
+          else
+            desc["reg"] << {
+              "bits" => e.range.size,
+              "name" => e.pretty_name,
+              "type" => 4,
+              "attr" => e.var_name
+            }
+          end
+        else
+          desc["reg"] << { "bits" => e.range.size, "name" => e.name, "type" => (e.opcode? ? 2 : 4) }
+        end
       end
 
       desc
@@ -1272,11 +1554,14 @@ module Udb
     sig { returns(T::Array[Profile]) }
     def profiles_mandating_inst
       @profiles_mandating_inst ||=
+        # cfg_arch.profiles.select { |profile| profile.mandatory_instruction?(self) }
         cfg_arch.profiles.select do |profile|
-          profile.mandatory_ext_reqs.any? do |ext_req|
-            defined_by_condition.satisfiability_depends_on_ext_req?(ext_req.ext_req)
-          end
-        end
+          next if profile.mandatory_ext_reqs.none? { |ext_req| defined_by_condition.mentions?(ext_req.ext_req) }
+
+          (profile.mandatory_condition & -defined_by_condition).unsatisfiable?
+        end.compact
+      # puts "#{name}: #{@profiles_mandating_inst.map(&:name)}"
+      # @profiles_mandating_inst
     end
 
     # return a list of profiles in which this instruction is explicitly optional
@@ -1284,10 +1569,15 @@ module Udb
     def profiles_optioning_inst
       @profiles_optioning_inst ||=
         cfg_arch.profiles.select do |profile|
+          next if profiles_mandating_inst.include?(profile)
+
           profile.optional_ext_reqs.any? do |ext_req|
-            defined_by_condition.satisfiability_depends_on_ext_req?(ext_req.ext_req)
+            next unless defined_by_condition.mentions?(ext_req.ext_req)
+            (profile.mandatory_condition & ext_req.to_condition & -defined_by_condition).unsatisfiable?
           end
         end
+      puts "#{name} (optional): #{@profiles_optioning_inst.map(&:name)}"
+      @profiles_optioning_inst
     end
   end
 

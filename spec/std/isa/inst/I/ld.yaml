@@ -1,9 +1,9 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+# yaml-language-server: $schema=../../../../schemas/inst_schema-0.9.0.json
 
-$schema: "inst_schema.json#"
+$schema: inst_schema-0.9.0.json#
 kind: instruction
 name: ld
 long_name: Load doubleword
@@ -11,55 +11,59 @@ description: |
   For RV64, load 64 bits of data into register `xd` from an
   address formed by adding `xs1` to a signed offset.
 
-  <% if ext?(:Zilsd) %>
   For RV32, Loads a 64-bit value into registers xd and xd+1.
   The effective address is obtained by adding
   register xs1 to the sign-extended 12-bit offset.
-  <% end %>
 
 definedBy:
-  extension:
-    anyOf:
-      - name: I
-      - name: Zilsd
+  anyOf:
+    - allOf:
+        - extension:
+            name: I
+        - xlen: 64
+    - extension:
+        name: Zilsd
 assembly: xd, imm(xs1)
-encoding:
-  RV32:
-    match: -----------------011-----0000011
-    variables:
-      - name: imm
-        location: 31-20
-      - name: xs1
-        location: 19-15
-      - name: xd
-        location: 11-7
-        not: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31]
-  RV64:
-    match: -----------------011-----0000011
-    variables:
-      - name: imm
-        location: 31-20
-      - name: xs1
-        location: 19-15
-      - name: xd
-        location: 11-7
+format:
+  - if:
+      xlen: 32
+    then:
+      size: 32
+      operands:
+        - $ref: inst_operand/xs1.yaml#
+        - $ref: inst_operand/xd-even.yaml#
+        - $ref: inst_operand/i-offset.yaml#
+      opcodes:
+        - displayName: funct3
+          location: 14-12
+          value: 0b011
+        - $ref: inst_opcode/load.yaml#
+  - if:
+      xlen: 64
+    then:
+      size: 32
+      operands:
+        - $ref: inst_operand/xs1.yaml#
+        - $ref: inst_operand/xd.yaml#
+        - $ref: inst_operand/i-offset.yaml#
+      opcodes:
+        - displayName: funct3
+          location: 14-12
+          value: 0b011
+        - $ref: inst_opcode/load.yaml#
 access:
   s: always
   u: always
   vs: always
   vu: always
 operation(): |
-  XReg virtual_address = X[xs1] + $signed(imm);
+  XReg virtual_address = X[xs1] + $signed(offset);
 
   if (xlen() == 32) {
-    if (implemented?(ExtensionName::Zilsd)) {
-      Bits<64> data = read_memory<64>(virtual_address, $encoding);
+    Bits<64> data = read_memory<64>(virtual_address, $encoding);
 
-      X[xd] = data[31:0];
-      X[xd+1] = data[63:32];
-    } else {
-      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-    }
+    X[xd] = data[31:0];
+    X[xd+1] = data[63:32];
   } else {
     X[xd] = read_memory<64>(virtual_address, $encoding);
   }

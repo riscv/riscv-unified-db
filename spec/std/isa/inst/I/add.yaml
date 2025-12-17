@@ -1,9 +1,9 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+# yaml-language-server: $schema=../../../../schemas/inst_schema-0.9.0.json
 
-$schema: "inst_schema.json#"
+$schema: inst_schema-0.9.0.json#
 kind: instruction
 name: add
 long_name: Integer add
@@ -14,15 +14,29 @@ definedBy:
   extension:
     name: I
 assembly: xd, xs1, xs2
-encoding:
-  match: 0000000----------000-----0110011
-  variables:
-    - name: xs2
-      location: 24-20
-    - name: xs1
-      location: 19-15
-    - name: xd
-      location: 11-7
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/xs2.yaml#
+    - $ref: inst_operand/xs1.yaml#
+    - $ref: inst_operand/xd.yaml#
+  opcodes:
+    - displayName: funct7
+      location: 31-25
+      value: 0b0000000
+    - displayName: funct3
+      location: 14-12
+      value: 0b000
+    - $ref: inst_opcode/op.yaml#
+# encoding:
+#   match: 0000000----------000-----0110011
+#   variables:
+#     - name: xs2
+#       location: 24-20
+#     - name: xs1
+#       location: 19-15
+#     - name: xd
+#       location: 11-7
 access:
   s: always
   u: always

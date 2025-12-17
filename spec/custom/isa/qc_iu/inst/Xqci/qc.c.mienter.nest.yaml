@@ -23,8 +23,22 @@ access:
   u: never
   vs: never
   vu: never
-encoding:
-  match: "0001100010010010"
+format:
+  size: 16
+  opcodes:
+    - displayName: funct3
+      value: 0b000
+      location: 15-13
+    - displayName: f
+      location: 12
+      value: 0b1
+    - displayName: funct5
+      location: 11-7
+      value: 0b10001
+    - displayName: funct5
+      location: 6-2
+      value: 0b00100
+    - { $ref: inst_opcode/c2.yaml# }
 operation(): |
   XReg virtual_address = get_and_validate_stack_pointer(X[2], $encoding);
   XReg mepc_val = CSR[mepc].sw_read();

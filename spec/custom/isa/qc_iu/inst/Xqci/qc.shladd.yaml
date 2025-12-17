@@ -8,8 +8,7 @@ kind: instruction
 name: qc.shladd
 long_name: Shift left and add (immediate)
 description: |
-  Left shift _rs1_ by _shamt_ and add the value in _rs2_.
-  Instruction encoded in R instruction format.
+  Left shift `xs1` by `shamt` and add the value in `xs2`.
 definedBy:
   allOf:
     - xlen: 32
@@ -18,21 +17,21 @@ definedBy:
           - name: Xqci
             version: "<= 0.2"
           - name: Xqciac
-encoding:
-  match: 01---------------011-----0001011
-  variables:
-    - name: shamt
-      location: 29-25
-      not: [0, 1, 2, 3]
-    - name: rs2
-      location: 24-20
-      not: 0
-    - name: rs1
-      location: 19-15
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.shamt5-gte3.yaml#
+    - $ref: inst_operand/qc.xs2-n0.yaml#
+    - $ref: inst_operand/qc.xs1-n0.yaml#
+    - $ref: inst_operand/xd-n0.yaml#
+  opcodes:
+    - displayName: funct2
+      location: 31-30
+      value: 0b01
+    - displayName: funct3
+      location: 14-12
+      value: 0b011
+    - $ref: inst_opcode/custom-0.yaml#
 assembly: xd, xs1, xs2, shamt
 access:
   s: always
@@ -40,4 +39,4 @@ access:
   vs: always
   vu: always
 operation(): |
-  X[rd] = (X[rs1] << shamt) + X[rs2];
+  X[xd] = (X[xs1] << shamt) + X[xs2];

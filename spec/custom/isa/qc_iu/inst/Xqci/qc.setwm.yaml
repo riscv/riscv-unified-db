@@ -8,37 +8,38 @@ kind: instruction
 name: qc.setwm
 long_name: Set word multiple (Register)
 description: |
-  Stores the value of `rs3` multiple times into the address starting at (`rs1` + `imm`).
-  The number of writes is in `rs2` bits [4:0] (0..31).
-  Instruction encoded in R instruction format.
+  Stores the value of `xs3` multiple times into the address starting at (`xs1` + `uimm`).
+  The number of writes is in `xs2` bits [4:0] (0..31).
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcilsm
-encoding:
-  match: 10---------------111-----0101011
-  variables:
-    - name: imm
-      location: 29-25
-      left_shift: 2
-    - name: rs1
-      location: 19-15
-    - name: rs2
-      location: 24-20
-      not: 0
-    - name: rs3
-      location: 11-7
-assembly: xs3, xs2, imm(xs1)
+format:
+  size: 32
+  operands:
+    - { $ref: inst_operand/qc.uimm8.yaml# }
+    - { $ref: inst_operand/qc.xs2-n0.yaml# }
+    - { $ref: inst_operand/xs1.yaml# }
+    - { $ref: inst_operand/qc.xs3.yaml# }
+  opcodes:
+    - displayName: funct2
+      location: 31-30
+      value: 0b10
+    - displayName: funct3
+      location: 14-12
+      value: 0b111
+    - { $ref: inst_opcode/custom-1.yaml# }
+assembly: xs3, xs2, uimm(xs1)
 access:
   s: always
   u: always
   vs: always
   vu: always
 operation(): |
-  XReg vaddr = X[rs1] + imm;
-  Bits<32> write_value = X[rs3][31:0];
-  XReg num_words = X[rs2][4:0];
+  XReg vaddr = X[xs1] + uimm;
+  Bits<32> write_value = X[xs3][31:0];
+  XReg num_words = X[xs2][4:0];
   for (U32 i = 0; i < num_words; i++) {
     write_memory<32>(vaddr, write_value, $encoding);
     vaddr = vaddr + 4;

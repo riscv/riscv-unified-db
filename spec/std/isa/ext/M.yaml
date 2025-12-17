@@ -24,3 +24,6 @@ description: |
   divide operations are either infrequent or better handled in attached
   accelerators.
   ====
+requirements:
+  extension:
+    name: Zmmul

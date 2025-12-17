@@ -79,6 +79,66 @@
         }
       }
     },
+    "format": {
+      "type": "object",
+      "required": ["size", "opcodes"],
+      "properties": {
+        "size": {
+          "enum": [16, 32, 48, 64]
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["$ref"],
+            "additionalProperties": false,
+            "properties": {
+              "$ref": {
+                "type": "string",
+                "pattern": "^inst_operand/.*\\.yaml#$"
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "opcodes": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["location", "value"],
+                "properties": {
+                  "location": {
+                    "$ref": "schema_defs.json#/$defs/field_location"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "$ref": "schema_defs.json#/$defs/integer"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": ["$ref"],
+                "additionalProperties": false,
+                "properties": {
+                  "$ref": {
+                    "type": "string",
+                    "pattern": "^inst_opcode/.*\\.yaml#$"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
     "fully_resolved_format": {
       "$comment": "Fully resolved format; $child_of must exist, and all properties must be present",
       "required": ["$child_of", "type", "subtype", "opcodes"],
@@ -429,6 +489,9 @@
         "format": {
           "type": "object",
           "oneOf": [
+            {
+              "$ref": "#/$defs/format"
+            },
             {
               "$ref": "#/$defs/fully_resolved_format"
             },

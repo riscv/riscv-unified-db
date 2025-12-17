@@ -17,14 +17,22 @@ definedBy:
     - extension:
         name: Xqcibm
 assembly: xd, shamt
-encoding:
-  match: 100101--------01
-  variables:
-    - name: shamt
-      location: 6-2
-      not: 0
-    - name: rd
-      location: 9-7
+format:
+  size: 16
+  operands:
+    - $ref: inst_operand/qc.c.shamt5-n0.yaml#
+    - $ref: inst_operand/xdp-xs1p.yaml#
+  opcodes:
+    - displayName: funct3
+      location: 15-13
+      value: 0b100
+    - displayName: f
+      location: 12
+      value: 0b1
+    - displayName: funct2
+      location: 11-10
+      value: 0b01
+    - $ref: inst_opcode/c1.yaml#
 access:
   s: always
   u: always
@@ -32,5 +40,5 @@ access:
   vu: always
 operation(): |
   XReg index = shamt & (xlen() - 1);
-  XReg reg = creg2reg(rd);
+  XReg reg = xd_xs1;
   X[reg] = X[reg] | (MXLEN'b1 << index);

@@ -38,6 +38,12 @@ extensions:
   V:
     presence: mandatory
 
+  Zve64d:
+    presence: mandatory
+
+  Zvl128b:
+    presence: mandatory
+
   Zvfhmin:
     presence: mandatory
 

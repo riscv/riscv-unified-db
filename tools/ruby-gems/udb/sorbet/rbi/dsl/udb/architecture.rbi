@@ -39,6 +39,24 @@ class Udb::Architecture
   sig { returns(T::Hash[String, Udb::Instruction]) }
   def instruction_hash; end
 
+  sig { params(name: String).returns(T.nilable(Udb::InstructionOpcode)) }
+  def instruction_opcode(name); end
+
+  sig { returns(T::Hash[String, Udb::InstructionOpcode]) }
+  def instruction_opcode_hash; end
+
+  sig { returns(T::Array[Udb::InstructionOpcode]) }
+  def instruction_opcodes; end
+
+  sig { params(name: String).returns(T.nilable(Udb::InstructionOperand)) }
+  def instruction_operand(name); end
+
+  sig { returns(T::Hash[String, Udb::InstructionOperand]) }
+  def instruction_operand_hash; end
+
+  sig { returns(T::Array[Udb::InstructionOperand]) }
+  def instruction_operands; end
+
   sig { params(name: String).returns(T.nilable(Udb::InstructionSubtype)) }
   def instruction_subtype(name); end
 

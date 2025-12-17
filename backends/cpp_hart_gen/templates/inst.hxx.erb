@@ -37,7 +37,18 @@
       else
         ops[0]
       end
-    ops
+    if dv.respond_to?(:transform_ast) && !dv.transform_ast.nil?
+      symtab = cfg_arch.symtab.global_clone
+      symtab.push
+      symtab.add("var", Idl::Var.new("var", Idl::Type.new(:bits, width: dv.size_in_encoding, qualifiers: [:const, :known])))
+      stmts = ["_Bits<#{dv.size_in_encoding}, false> var = #{ops};"]
+      stmts << "_Bits<#{dv.size}, #{dv.signed?}> transformed_var = #{dv.transform_ast.gen_cpp(symtab)};"
+      symtab.release
+      stmts << "return transformed_var;"
+      stmts.join("\n")
+    else
+      "return #{ops};"
+    end
   end
 -%>
 
@@ -113,28 +124,32 @@ namespace udb {
     // Decode variables
     //
     <%- if needs_rv32 && needs_rv64 -%>
-    <%- inst.decode_variables(32).each do |dv| -%>
+    <%- operands32 = inst.has_format? ? inst.format_for(Condition.new({ "xlen" => 32}, cfg_arch)) : inst.decode_variables(32) -%>
+    <%- operands32.each do |dv| -%>
     template <unsigned _XLEN = XLEN>
-    Bits<<%= dv.size %>> <%= dv.name %>() const requires (_XLEN==32) {
-      return <%= extract_decode(dv,inst) %>;
+    _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= dv.name %>() const requires (_XLEN==32) {
+      <%= extract_decode(dv, inst, 32) %>
     }
     <%- end -%>
-    <%- inst.decode_variables(64).each do |dv| -%>
+    <%- operands64 = inst.has_format? ? inst.format_for(Condition.new({ "xlen" => 64}, cfg_arch)) : inst.decode_variables(64) -%>
+    <%- operands64.each do |dv| -%>
     template <unsigned _XLEN = XLEN>
-    Bits<<%= dv.size %>> <%= dv.name %>() const requires (_XLEN==64) {
-      return <%= extract_decode(dv,inst) %>;
+    _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= dv.name %>() const requires (_XLEN==64) {
+      <%= extract_decode(dv, inst, 64) %>
     }
     <%- end -%>
     <%- elsif needs_rv32 -%>
-    <%- inst.decode_variables(32).each do |dv| -%>
-    Bits<<%= dv.size %>> <%= dv.name %>() const {
-      return <%= extract_decode(dv,inst) %>;
+    <%- operands32 = inst.has_format? ? inst.format_for(Condition.new({ "xlen" => 32}, cfg_arch)) : inst.decode_variables(32) -%>
+    <%- operands32.each do |dv| -%>
+    _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= dv.name %>() const {
+      <%= extract_decode(dv, inst, 32) %>
     }
     <%- end -%>
     <%- else -%>
+    <%- operands64 = inst.has_format? ? inst.format_for(Condition.new({ "xlen" => 64}, cfg_arch)) : inst.decode_variables(64) -%>
     <%- inst.decode_variables(64).each do |dv| -%>
-    Bits<<%= dv.size %>> <%= dv.name %>() const {
-      return <%= extract_decode(dv,inst) %>;
+    _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= dv.name %>() const {
+      <%= extract_decode(dv, inst, 64) %>
     }
     <%- end -%>
     <%- end -%>

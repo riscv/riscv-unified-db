@@ -8,26 +8,33 @@ kind: instruction
 name: qc.cto
 long_name: Count trailing ones
 description: |
-  Count the number of ones before the first zero in `rs1`, starting from the LSB
+  Count the number of ones before the first zero in `xs1`, starting from the LSB
   and progressing to the MSB.
   Accordingly, if the input is ~0, the output is XLEN, and if the least-significant
   bit of the input is a 0, the output is 0.
-  Output written to `rd`.
+  Output written to `xd`.
   Instruction encoded in I instruction format.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcibm
-encoding:
-  match: 000010100000-----011-----0001011
-  variables:
-    - name: rs1
-      location: 19-15
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
+format:
+  size: 32
+  operands:
+    - { $ref: inst_operand/qc.xs1-n0.yaml# }
+    - { $ref: inst_operand/xd-n0.yaml# }
+  opcodes:
+    - displayName: funct7
+      location: 31-25
+      value: 0b0000101
+    - displayName: funct5
+      location: 24-20
+      value: 0b00000
+    - displayName: funct3
+      location: 14-12
+      value: 0b011
+    - { $ref: inst_opcode/custom-0.yaml# }
 assembly: xd, xs1
 access:
   s: always
@@ -35,4 +42,4 @@ access:
   vs: always
   vu: always
 operation(): |
-  X[rd] = lowest_set_bit(~X[rs1]);
+  X[xd] = lowest_set_bit(~X[xs1]);

@@ -1,0 +1,12 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/inst_opcode_schema-0.9.0.json
+
+$schema: inst_opcode_schema-0.9.0.json#
+kind: instruction_opcode
+name: c0
+
+location: 1-0
+displayName: C0
+value: 0b00

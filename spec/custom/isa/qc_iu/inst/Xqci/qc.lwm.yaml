@@ -8,39 +8,39 @@ kind: instruction
 name: qc.lwm
 long_name: Load word multiple
 description: |
-  Loads multiple words starting from address (`rs1` + `imm`) to registers, starting from `rd`.
-  The number of words is in `rs2` bits [4:0].
-  Instruction encoded in R instruction format.
+  Loads multiple words starting from address (`xs1` + `uimm`) to registers, starting from `xd`.
+  The number of words is in `xs2` bits [4:0].
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcilsm
-encoding:
-  match: 00---------------111-----0001011
-  variables:
-    - name: imm
-      location: 29-25
-      left_shift: 2
-    - name: rs1
-      location: 19-15
-    - name: rs2
-      location: 24-20
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
-assembly: xd, xs2, imm(xs1)
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.uimm8.yaml#
+    - $ref: inst_operand/qc.xs2-n0.yaml#
+    - $ref: inst_operand/xs1.yaml#
+    - $ref: inst_operand/xd-n0.yaml#
+  opcodes:
+    - displayName: funct2
+      location: 31-30
+      value: 0b00
+    - displayName: funct3
+      location: 14-12
+      value: 0b111
+    - $ref: inst_opcode/custom-0.yaml#
+assembly: xd, xs2, uimm(xs1)
 access:
   s: always
   u: always
   vs: always
   vu: always
 operation(): |
-  XReg vaddr = X[rs1] + imm;
-  XReg num_words = X[rs2][4:0];
-  raise (ExceptionCode::IllegalInstruction, effective_ldst_mode(), $encoding) if ((rd + num_words) > 32);
+  XReg vaddr = X[xs1] + uimm;
+  XReg num_words = X[xs2][4:0];
+  raise (ExceptionCode::IllegalInstruction, effective_ldst_mode(), $encoding) if ((xd + num_words) > 32);
   for (U32 i = 0; i < num_words; i++) {
-    X[rd + i] = read_memory<32>(vaddr, $encoding);
+    X[xd + i] = read_memory<32>(vaddr, $encoding);
     vaddr = vaddr + 4;
   }

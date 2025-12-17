@@ -651,7 +651,7 @@ module Udb
 
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking possible instructions [:bar]", total: insts.size, output: $stdout)
+          TTY::ProgressBar.new("type checking possible instructions [:bar] :current/:total", total: insts.size, output: $stdout)
         end
 
       possible_instructions.each do |inst|
@@ -661,12 +661,16 @@ module Udb
         elsif @mxlen == 64
           inst.type_checked_operation_ast(64) if inst.rv64?
           inst.type_checked_operation_ast(32) if possible_xlens.include?(32) && inst.rv32?
+        else
+          # mxlen is unknown!
+          inst.type_checked_operation_ast(64) if inst.rv64?
+          inst.type_checked_operation_ast(32) if inst.rv32?
         end
       end
 
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking CSRs [:bar]", total: possible_csrs.size, output: $stdout)
+          TTY::ProgressBar.new("type checking CSRs [:bar] :current/:total", total: possible_csrs.size, output: $stdout)
         end
 
       possible_csrs.each do |csr|
@@ -1116,7 +1120,7 @@ module Udb
         elsif @config.partially_configured?
           bar =
             if show_progress
-              TTY::ProgressBar.new("determining possible CSRs [:bar]", total: csrs.size, output: $stdout)
+              Udb.create_progressbar("determining possible CSRs [:bar]", total: csrs.size, output: $stdout)
             end
           csrs.select do |csr|
             bar.advance if show_progress
@@ -1134,6 +1138,13 @@ module Udb
       unless fully_configured?
         raise ArgumentError, "implemented_instructions is only defined for fully configured systems"
       end
+
+      pb =
+        Udb.create_progressbar(
+          "determining implemented instructions [:bar] :current/:total",
+          total: instructions.size,
+          clear: true
+        )
 
       @implemented_instructions ||=
         instructions.select do |inst|
@@ -1174,7 +1185,7 @@ module Udb
         elsif @config.partially_configured?
           bar =
             if show_progress
-              TTY::ProgressBar.new("determining possible instructions [:bar]", total: instructions.size, output: $stdout)
+              TTY::ProgressBar.new("determining possible instructions [:bar] :current/:total", total: instructions.size, output: $stdout)
             end
           instructions.select do |inst|
             bar.advance if show_progress

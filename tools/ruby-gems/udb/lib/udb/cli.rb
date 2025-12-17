@@ -406,8 +406,8 @@ module Udb
         matches[xlen] = cfg_arch.instructions.select do |i|
           next unless i.defined_in_base?(xlen)
 
-          opcode_mask = i.encoding(xlen).format.gsub(/[01]/, "1").gsub("-", "0").to_i(2)
-          match = i.encoding(xlen).format.gsub("-", "0").to_i(2)
+          opcode_mask = i.encoding_format(xlen).gsub(/[01]/, "1").gsub("-", "0").to_i(2)
+          match = i.encoding_format(xlen).gsub("-", "0").to_i(2)
           (opcode_mask & encoding) == match
         end
 

@@ -18,8 +18,22 @@ definedBy:
     - extension:
         name: Xqcisim
 assembly: ""
-encoding:
-  match: "0000000000000010"
+format:
+  size: 16
+  opcodes:
+    - displayName: funct3
+      location: 15-13
+      value: 0b000
+    - displayName: f
+      location: 12
+      value: 0b0
+    - displayName: funct5
+      location: 11-7
+      value: 0b00000
+    - displayName: funct5
+      location: 6-2
+      value: 0b00000
+    - { $ref: inst_opcode/c2.yaml# }
 access:
   s: always
   u: always

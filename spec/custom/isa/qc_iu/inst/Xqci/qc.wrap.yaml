@@ -8,26 +8,28 @@ kind: instruction
 name: qc.wrap
 long_name: Wraparound (Register)
 description: |
-  If `rs1` >= `rs2` perform subtraction between `rs1` and `rs2`.
-  If `rs1` < 0, perform addition between `rs1` and `rs2`,
-  else, select `rs1`. The result is stored in `rd`.
-  Instruction encoded in R instruction format.
+  If `xs1` >= `xs2` perform subtraction between `xs1` and `xs2`.
+  If `xs1` < 0, perform addition between `xs1` and `xs2`,
+  else, select `xs1`. The result is stored in `xd`.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcia
-encoding:
-  match: 0010010----------011-----0001011
-  variables:
-    - name: rs1
-      location: 19-15
-    - name: rs2
-      location: 24-20
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.xs2-n0.yaml#
+    - $ref: inst_operand/xs1.yaml#
+    - $ref: inst_operand/xd-n0.yaml#
+  opcodes:
+    - displayName: funct7
+      location: 31-25
+      value: 0b0010010
+    - displayName: funct3
+      location: 14-12
+      value: 0b011
+    - $ref: inst_opcode/custom-0.yaml#
 assembly: xd, xs1, xs2
 access:
   s: always
@@ -35,9 +37,9 @@ access:
   vs: always
   vu: always
 operation(): |
-  XReg rs1_value = X[rs1];
-  X[rd] = ($signed(rs1_value) >= $signed(X[rs2]))
-    ? rs1_value - X[rs2]
-    : (($signed(rs1_value) < 's0)
-       ? (rs1_value + X[rs2])
-       : rs1_value);
+  XReg xs1_value = X[xs1];
+  X[xd] = ($signed(xs1_value) >= $signed(X[xs2]))
+    ? xs1_value - X[xs2]
+    : (($signed(xs1_value) < 's0)
+       ? (xs1_value + X[xs2])
+       : xs1_value);

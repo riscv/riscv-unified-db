@@ -8,33 +8,35 @@ kind: instruction
 name: qc.lrh
 long_name: Load indexed halfword
 description: |
-  Load 16 bits of data into register `rd` from an
-  address formed by adding `rs1` to `rs2`, shifted by `shamt`.
+  Load 16 bits of data into register `xd` from an
+  address formed by adding `xs1` to `xs2`, shifted by `shamt`.
   Sign extend the result.
-  Instruction encoded in R instruction format.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcisls
 assembly: xd, xs1, xs2, shamt
-encoding:
-  match: 1001-------------111-----0001011
-  variables:
-    - name: shamt
-      location: 27-25
-    - name: rs1
-      location: 19-15
-    - name: rs2
-      location: 24-20
-      not: 0
-    - name: rd
-      location: 11-7
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.shamt3.yaml#
+    - $ref: inst_operand/qc.xs2-n0.yaml#
+    - $ref: inst_operand/xs1.yaml#
+    - $ref: inst_operand/xd.yaml#
+  opcodes:
+    - displayName: funct4
+      location: 31-28
+      value: 0b1001
+    - displayName: funct3
+      location: 14-12
+      value: 0b111
+    - $ref: inst_opcode/custom-0.yaml#
 access:
   s: always
   u: always
   vs: always
   vu: always
 operation(): |
-  XReg virtual_address = X[rs1] + (X[rs2] << shamt);
-  X[rd] = sext(read_memory<16>(virtual_address, $encoding), 16);
+  XReg virtual_address = X[xs1] + (X[xs2] << shamt);
+  X[xd] = sext(read_memory<16>(virtual_address, $encoding), 16);

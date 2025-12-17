@@ -8,28 +8,27 @@ kind: instruction
 name: qc.mvne
 long_name: Conditional move if not equal (Register)
 description: |
-  Move `rs3` to `rd` if the value in `rs1` is not equal to value `rs2`.
-  Instruction encoded in R4 instruction format.
+  Move `xs3` to `xd` if the value in `xs1` is not equal to value `xs2`.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcicm
-encoding:
-  match: -----00----------001-----1011011
-  variables:
-    - name: rs1
-      location: 19-15
-      not: 0
-    - name: rs2
-      location: 24-20
-      not: 0
-    - name: rs3
-      location: 31-27
-      not: 0
-    - name: rd
-      location: 11-7
-      not: 0
+format:
+  size: 32
+  operands:
+    - { $ref: inst_operand/qc.r4-xs3-n0.yaml# }
+    - { $ref: inst_operand/qc.xs2-n0.yaml# }
+    - { $ref: inst_operand/qc.xs1-n0.yaml# }
+    - { $ref: inst_operand/qc.xd-n0-rw.yaml# }
+  opcodes:
+    - displayName: funct2
+      location: 26-25
+      value: 0b00
+    - displayName: funct3
+      location: 14-12
+      value: 0b001
+    - { $ref: inst_opcode/custom-2.yaml# }
 assembly: xd, xs1, xs2, xs3
 access:
   s: always
@@ -37,6 +36,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  if (X[rs1] != X[rs2]) {
-    X[rd] = X[rs3];
+  if (X[xs1] != X[xs2]) {
+    X[xd] = X[xs3];
   }

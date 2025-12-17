@@ -10,7 +10,7 @@ long_name: M-mode extensions for version 23 of the 64-bit Bespoke Apps Processor
 marketing_name: RVB23M64
 mode: M
 base: 64
-release: { $ref: profile_release/RVB23.yaml# }
+release: { $ref: profile_release/RVB23M.yaml# }
 introduction: |
   The RVB23M64 profile specifies the ISA features available to machine-mode
   execution environments in 64-bit applications processors.

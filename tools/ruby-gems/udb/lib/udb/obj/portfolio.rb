@@ -27,7 +27,8 @@ module Udb
     def_delegators :@ext_req,
       :name,
       :satisfying_versions, :min_satisfying_ext_ver, :satisfied_by?,
-      :extension, :to_s, :to_s_pretty, :requirement_specs, :requirement_specs_to_s_pretty
+      :extension, :to_s, :to_s_pretty, :requirement_specs, :requirement_specs_to_s_pretty,
+      :to_condition
 
     attr_reader :ext_req, :note, :req_id, :presence
 
@@ -152,6 +153,36 @@ module Udb
       end
 
       @mandatory_ext_reqs = @mandatory_ext_reqs.uniq(&:name).sort_by(&:name)
+    end
+
+    sig { returns(AbstractCondition) }
+    def mandatory_condition
+      @mandatory_condition ||=
+        begin
+          reqs = portfolios.map do |portfolio|
+            Condition.conjunction(portfolio.mandatory_ext_reqs.map(&:to_condition), portfolio.cfg_arch)
+          end
+          if reqs.size == 1
+            reqs.fetch(0)
+          else
+            Condition.conjunction(reqs, portfolios.fetch(0).cfg_arch)
+          end
+        end
+    end
+
+    sig { returns(AbstractCondition) }
+    def optional_condition
+      @optional_condition ||=
+        begin
+          reqs = portfolios.map do |portfolio|
+            Condition.conjunction(portfolio.optional_ext_reqs.map(&:to_condition), portfolio.cfg_arch)
+          end
+          if reqs.size == 1
+            reqs.fetch(0)
+          else
+            Condition.conjunction(reqs, portfolios.fetch(0).cfg_arch)
+          end
+        end
     end
 
     # @return [Array<ExtensionRequirement>] Sorted list of all optional extension requirements listed by the group.
@@ -625,6 +656,53 @@ module Udb
 
     def mandatory_ext_reqs = in_scope_ext_reqs(Presence::Mandatory)
     def optional_ext_reqs = in_scope_ext_reqs(Presence::Option)
+
+    sig { returns(AbstractCondition) }
+    def mandatory_condition
+      @mandatory_condition ||=
+        begin
+          Condition.conjunction(
+            [
+              Condition.new({ "xlen" => base }, cfg_arch),
+              Condition.conjunction(mandatory_ext_reqs.map(&:to_condition), cfg_arch)
+            ],
+            cfg_arch
+          )
+        end
+    end
+
+    sig { returns(T::Array[Instruction]) }
+    def mandatory_instructions
+      @mandatory_instructions ||=
+        begin
+          pb = Udb.create_progressbar("Discovering mandatory insts for #{name} [:bar] :current/:total", total: cfg_arch.instructions.size, clear: true)
+          cfg_arch.instructions.select do |inst|
+            pb.advance
+            next unless mandatory_ext_reqs.any? { |ext_req| inst.defined_by_condition.mentions?(ext_req.ext_req) }
+            (mandatory_condition & -inst.defined_by_condition).unsatisfiable?
+          end
+        end
+    end
+
+    sig { params(inst: Instruction).returns(T::Boolean) }
+    def mandatory_instruction?(inst)
+      @mandatory_instructions_set ||= Set.new(mandatory_instructions)
+      @mandatory_instructions_set.include?(inst)
+    end
+
+    sig { returns(AbstractCondition) }
+    def optional_condition
+      @optional_condition ||=
+        begin
+          Condition.conjunction(
+            [
+              mandatory_condition,
+              Condition.disjunction(optional_ext_reqs.map(&:to_condition), cfg_arch)
+            ],
+            cfg_arch
+          )
+        end
+    end
 
     sig {
       params(

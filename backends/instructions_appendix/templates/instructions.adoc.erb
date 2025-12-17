@@ -12,109 +12,199 @@
 <% instructions.sort_by(&:name).each do |inst| %>
 <%- pb.advance -%>
 <%= anchor_for_udb_doc_inst(inst.name) %>
-== <%= inst.name %>
+== `<%= inst.name %>`
 
 Synopsis::
 <%= inst.long_name %>
 
-Base::
+Defined by::
 
-[cols="1,1"]
+[cols="1,1",separator="$"]
 |===
-| RV32 | RV64
+$ RV32 $ RV64
 
-|<%= (inst.defined_by_condition & Udb::Condition::Xlen32).satisfiable? ? " &#x2713;" : "" %>
-|<%= (inst.defined_by_condition & Udb::Condition::Xlen64).satisfiable? ? " &#x2713;" : "" %>
+$<%= (inst.defined_by_condition & Udb::Condition::Xlen32).satisfiable? ? inst.defined_by_condition.reduce_for_xlen(32).to_asciidoc : "-- not possible --" %>
+$<%= (inst.defined_by_condition & Udb::Condition::Xlen64).satisfiable? ? inst.defined_by_condition.reduce_for_xlen(64).to_asciidoc : "-- not possible --" %>
 |===
+
+Profiles::
+
+<%- mand = inst.profiles_mandating_inst.select { |p| p.state == "ratified" } -%>
+<%- opt = inst.profiles_optioning_inst.select { |p| p.state == "ratified" } -%>
+<%- if mand.empty? && opt.empty? -%>
+<%= inst.name %> is not included in any profiles.
+<%- else -%>
+[cols="<%= Array.new(cfg_arch.profiles.count { |p| p.state == "ratified" }, "1").join(",") %>"]
+|===
+<%-   cfg_arch.profile_families.each do |family| -%>
+<%-     next if family.profile_releases.none? { |r| r.state == "ratified" } -%>
+<%= family.profile_releases.map { |r| r.state != "ratified" ? 0 : r.profiles.size }.reduce(:+) %>+^h| <%= family.name %>
+<%-   end -%>
+
+<%-   cfg_arch.profile_families.each do |family| -%>
+<%-     family.profile_releases.each do |release| -%>
+<%- next unless release.state == "ratified" -%>
+<%= release.profiles.size %>+^h| <%= release.name.gsub(family.name, "") %>
+<%-     end -%>
+<%-   end -%>
+
+<%-   cfg_arch.profile_families.each do |family| -%>
+<%-     family.profile_releases.each do |release| -%>
+<%- next unless release.state == "ratified" -%>
+<%-       release.profiles.each do |profile| -%>
+h| <%= profile.name.gsub(release.name, "") %>
+<%-       end -%>
+<%-     end -%>
+<%-   end -%>
+
+<%-   cfg_arch.profile_families.each do |family| -%>
+<%-     family.profile_releases.each do |release| -%>
+<%- next unless release.state == "ratified" -%>
+<%-       release.profiles.each do |profile| -%>
+| <%= inst.profiles_mandating_inst.include?(profile) ? 'm' : (inst.profiles_optioning_inst.include?(profile) ? 'o' : '') %>
+<%-       end -%>
+<%-     end -%>
+<%-   end -%>
+
+|===
+<%- end -%>
 
 Assembly::
-<%= inst.fix_entities("#{inst.name.downcase}#{inst.assembly.to_s.strip == '' ? '' : ' ' + inst.assembly}") %>
+`<%= inst.fix_entities("#{inst.name.downcase}#{inst.assembly.to_s.strip == '' ? '' : ' ' + inst.assembly}") %>`
 
 Encoding::
++
 <%- if inst.multi_encoding? -%>
+<%-   if inst.has_format? -%>
+[NOTE]
+This instruction has different encodings.
+<%-   else -%>
 [NOTE]
 This instruction has different encodings in RV32 and RV64
-
-RV32::
+<%-   end -%>
++
+<%-   if inst.has_format? -%>
+<%-     inst.formats.each do |cformat| -%>
+When <%=       cformat.cond.to_asciidoc.gsub("xlen+++()+++", "XLEN") %>:::
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+<%=       cformat.format.processed_wavedrom_desc %>
+....
++
+<%-     end -%>
+<%-   else -%>
+RV32:::
++
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
 <%= inst.processed_wavedrom_desc(32) %>
 ....
-
-RV64::
++
+RV64:::
++
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
 <%= inst.processed_wavedrom_desc(64) %>
 ....
++
+<%-   end -%>
 <%- else -%>
++
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
 <%= inst.processed_wavedrom_desc(inst.base.nil? ? 64 : inst.base) %>
 ....
 <%- end -%>
++
 
 Description::
-<%= inst.fix_entities(inst.description) %>
+<%= inst.fix_entities(inst.description).gsub("\n\n", "\n+\n") %>
 
-Decode Variables::
-<%- if inst.multi_encoding? ? (inst.decode_variables(32).empty? && inst.decode_variables(64).empty?) : inst.decode_variables(inst.base.nil? ? 64 : inst.base).empty? -%>
-<%= inst.name %> has no decode variables.
-<%- else -%>
-<%- if inst.multi_encoding? -%>
-<%- unless inst.decode_variables(32).empty? -%>
-*RV32:*
-
-[width="100%", cols="1,2", options="header"]
-|===
-|Variable Name |Location
-<%- inst.decode_variables(32).each do |d| -%>
-|<%= d.name %> |<%= d.extract %>
-<%- end -%>
-|===
-<%- end -%>
-<%- unless inst.decode_variables(64).empty? -%>
-
-*RV64:*
-
-[width="100%", cols="1,2", options="header"]
-|===
-|Variable Name |Location
-<%- inst.decode_variables(64).each do |d| -%>
-|<%= d.name %> |<%= d.extract %>
-<%- end -%>
-|===
-<%- end -%>
-<%- else -%>
-[width="100%", cols="1,2", options="header"]
-|===
-|Variable Name |Location
-<%- inst.decode_variables(inst.base.nil? ? 64 : inst.base).each do |d| -%>
-|<%= d.name %> |<%= d.extract %>
-<%- end -%>
-|===
-<%- end -%>
-<%- end -%>
-
-Included in::
-
-<%- unless inst.unconditional_extension_requirements.empty? -%>
-
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
-
-<%-   inst.unconditional_extension_requirements.each do |ext_req| -%>
-| *<%= ext_req.name %>*
-| <%= inst.fix_entities(ext_req.requirement_specs_to_s_pretty) %>
+Operands::
+<%- no_operands = -%>
+<%-   if inst.has_format? -%>
+<%-     inst.formats.all? { |cf| cf.format.opcodes.empty? } -%>
+<%-   else -%>
+<%-     inst.multi_encoding? ? (inst.decode_variables(32).empty? && inst.decode_variables(64).empty?) : inst.decode_variables(inst.base.nil? ? 64 : inst.base).empty? -%>
 <%-   end -%>
+<%- if no_operands -%>
+<%=   inst.name %> has no operands.
+<%- else -%>
+<%-   if inst.multi_encoding? -%>
+<%-     if inst.has_format? -%>
+<%-       inst.formats.each do |cformat| -%>
+<%-         has_exclusions = !cformat.format.operands.all? { |o| o.excludes.empty? && o.dissimilar.nil? } -%>
++
+When <%= cformat.cond.to_asciidoc.gsub("xlen+++()+++", "XLEN") %>:::
++
+[width="100%", cols="1,2<%= has_exclusions ? ",2" : "" %>", options="header"]
 |===
-
+|Name |Location<%- if has_exclusions -%> |Exclusions<% end %>
+<%-       cformat.format.operands.each do |d| -%>
+<%-         exclusions = (d.excludes + [d.dissimilar]).compact -%>
+|<%= d.var_name %>
+|<%= d.decode_idl %>
+<%- if has_exclusions -%> | <%= exclusions.empty? ? "" : (exclusions.size == 1 ? "≠ #{exclusions.fetch(0)}" : "none of: {#{exclusions.join(", ")}}") %><%- end -%>
+<%       end %>
+|===
+<%-       end -%>
+<%-     else -%>
+<%-       operands32 = inst.decode_variables(32) -%>
+<%-       unless operands32.empty? -%>
+RV32:::
++
+[width="100%", cols="1,2", options="header"]
+|===
+|Name |Location
+<%-         operands32.each do |d| -%>
+|<%= d.name %> |<%= d.extract %>
+<%-         end -%>
+<%-       end -%>
+|===
+<%-       operands64 = inst.decode_variables(64) -%>
+<%-       unless operands64.empty? -%>
++
+RV64:::
++
+[width="100%", cols="1,2", options="header"]
+|===
+|Name |Location
+<%-         operands64.each do |d| -%>
+|<%= d.name %> |<%= d.extract %>
+<%-         end -%>
+|===
+<%-       end -%>
+<%-     end # has_format -%>
+<%-   else # not a multi-encoding-%>
+<%-     operands = inst.has_format? ? inst.format.operands : inst.decode_variables(inst.base.nil? ? 64 : inst.base) -%>
++
+[width="100%", cols="1,2", options="header"]
+|===
+|Name |Location
+<%-     operands.each do |d| -%>
+<%-       if inst.has_format? -%>
+|<%= d.var_name %> |<%= d.decode_idl %>
+<%-       else -%>
+|<%= d.name %> |<%= d.extract %>
+<%-       end -%>
+<%-     end -%>
+|===
+<%-   end -%>
 <%- end -%>
 
-<%- unless inst.other_requirements.empty? -%>
-<%- if inst.unconditional_extension_requirements.empty? -%>This<%- else -%>Additionally, this<%- end -%> instruction requires the following:
-
-<%= inst.other_requirements.map(&:to_asciidoc).join("\n") %>
+<%- if inst.key?("operation()") -%>
+Operation::
++
+<%- if inst.data_independent_timing? -%>
+[IMPORTANT]
+This instruction must have data-independent timing when extension `Zkt` is enabled.
++
+<%- end -%>
+[source,idl,subs="specialchars,macros"]
+----
+<%= inst.fix_entities(inst.operation_ast.gen_adoc) %>
+----
 <%- end -%>
 
 <%- end -%>

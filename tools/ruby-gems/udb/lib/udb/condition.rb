@@ -1009,6 +1009,30 @@ module Udb
       LogicCondition.new(to_logic_tree(expand:).replace_terms(cb), @cfg_arch)
     end
 
+    sig { params(xlen: Integer).returns(AbstractCondition) }
+    def reduce_for_xlen(xlen)
+      return self unless mentions_xlen?(expand: false)
+
+      cb = LogicNode.make_replace_cb do |node|
+        if node.type == LogicNodeType::Term
+          term = node.children.fetch(0)
+          if term.is_a?(XlenTerm)
+            if term.xlen == xlen
+              next LogicNode::True
+            else
+              next LogicNode::False
+            end
+          elsif term.is_a?(ExtensionTerm)
+            if (term.to_condition(@cfg_arch) & Condition.new({ "xlen" => xlen }, @cfg_arch)).unsatisfiable?
+              next LogicNode::False
+            end
+          end
+        end
+        node
+      end
+      LogicCondition.new(to_logic_tree(expand: false).replace_terms(cb), @cfg_arch).minimize(expand: false)
+    end
+
     sig { override.returns(T.any(T::Hash[String, T.untyped], T::Boolean)) }
     def to_h
       to_logic_tree(expand: false).to_h

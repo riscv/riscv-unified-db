@@ -8,28 +8,30 @@ kind: instruction
 name: qc.insbi
 long_name: Insert bits (Immediate)
 description: |
-  Insertion of a subset of bits of an `imm` into `rd`.
+  Insertion of a subset of bits of an `simm` into `xd`.
   The width of the subset is determined by (`width_minus1` + 1) (1..32),
   and the offset of the subset is determined by `shamt`.
-  Instruction encoded in I instruction format.
 definedBy:
   allOf:
     - xlen: 32
     - extension:
         name: Xqcibm
-encoding:
-  match: 00---------------001-----0001011
-  variables:
-    - name: width_minus1
-      location: 29-25
-    - name: shamt
-      location: 24-20
-    - name: imm
-      location: 19-15
-    - name: rd
-      location: 11-7
-      not: 0
-assembly: xd, imm, width, shamt
+format:
+  size: 32
+  operands:
+    - $ref: inst_operand/qc.width_minus1.yaml#
+    - $ref: inst_operand/shamt5.yaml#
+    - $ref: inst_operand/qc.simm5.yaml#
+    - $ref: inst_operand/qc.xd-n0-rw.yaml#
+  opcodes:
+    - displayName: funct2
+      location: 31-30
+      value: 0b00
+    - displayName: funct3
+      location: 14-12
+      value: 0b001
+    - $ref: inst_opcode/custom-0.yaml#
+assembly: xd, simm, width_minus1, shamt
 access:
   s: always
   u: always
@@ -38,6 +40,6 @@ access:
 operation(): |
   XReg width = width_minus1 + 1;
   XReg mask = ((32'b1 << width) - 1) << shamt;
-  XReg orig_val = X[rd];
-  XReg src = $signed(imm);
-  X[rd] = (orig_val & ~mask) | ((src << shamt) & mask);
+  XReg orig_val = X[xd];
+  XReg src = $signed(simm);
+  X[xd] = (orig_val & ~mask) | ((src << shamt) & mask);

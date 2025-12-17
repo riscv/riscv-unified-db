@@ -196,6 +196,8 @@ module Udb
       @data["base"]
     end
 
+    def state = profile_release.state
+
     def all_in_scope_params
       [Portfolio::InScopeParameter.new(@cfg_arch.param("MXLEN"), { "const" => @data["base"] }, "")]
     end
