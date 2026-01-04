@@ -17,3 +17,6 @@
 [submodule "ext/rbi-central"]
 	path = ext/rbi-central
 	url = https://github.com/Shopify/rbi-central
+[submodule "tools/hf_chatbot"]
+	path = tools/hf_chatbot
+	url = https://huggingface.co/spaces/AFOliveira/riscv-isa-chatbot
