@@ -6,6 +6,7 @@
     "helpers:pinGitHubActionDigestsToSemver",
     "schedule:nonOfficeHours"
   ],
+  "ignorePaths": [".github/workflows/regress.yml"],
   "labels": ["dependencies"],
   "lockFileMaintenance": {
     "enabled": true
@@ -25,6 +26,20 @@
           "matchStrings": ["(?<version>[^\\s]+)"]
         }
       ]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "tools/test/*-tests.yaml",
+        "tools/test/regress-gh-template.yaml"
+      ],
+      "matchStrings": [
+        "(?:^|\\r\\n|\\r|\\n|$)\\s+uses:\\s+(?<packageName>.+/.+)@(?<currentDigest>[0-9a-fA-F]+?)\\s*(# (?<currentValue>.*?))?(?:^|\\r\\n|\\r|\\n|$)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "registryUrlTemplate": "https://github.com"
     }
   ],
   "git-submodules": {
