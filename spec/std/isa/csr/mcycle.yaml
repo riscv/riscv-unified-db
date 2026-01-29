@@ -9,9 +9,7 @@ name: mcycle
 long_name: Machine Cycle Counter
 definedBy:
   extension:
-    allOf:
-      - name: Sm
-      - name: Zicntr
+    name: Sm
 address: 0xB00
 writable: true
 description: |
