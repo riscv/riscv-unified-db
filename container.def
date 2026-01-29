@@ -28,6 +28,8 @@ tools/ruby-gems/udb_helpers/lib/udb_helpers/version.rb /opt/tools/ruby-gems/udb_
 tools/ruby-gems/idlc/bin/idlc /workspace/bin/container
 tools/ruby-gems/udb/bin/udb /workspace/bin/container
 tools/ruby-gems/udb-gen/bin/udb-gen /workspace/bin/container
+%labels
+org.opencontainers.image.source=https://github.com/riscv-software-src/riscv-unified-db
 %post -c /bin/bash
 
 DEBIAN_FRONTEND=noninteractive

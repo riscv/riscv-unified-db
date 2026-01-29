@@ -5,6 +5,8 @@ cd "$ROOT" || exit
 
 CONTAINER_TAG=$(cat "${ROOT}/bin/.container-tag")
 
+REGISTRY=${REGISTRY:="gchr.io"}
+
 # shellcheck source=.functions.sh
 source "${ROOT}/bin/.functions.sh"
 
@@ -84,7 +86,7 @@ if [ -v GITHUB_ACTIONS ] && [ "${CONTAINER_TYPE}" == "singularity" ]; then
 elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
     if ! ${CONTAINER_TYPE} images "riscvintl/udb:${CONTAINER_TAG}" | grep -q udb ; then
         echo "Image not found locally. Attempting to pull from registry..."
-        if ${CONTAINER_TYPE} pull "docker.io/riscvintl/udb:${CONTAINER_TAG}" 2>/dev/null; then
+        if ${CONTAINER_TYPE} pull "$REGISTRY/riscvintl/udb:${CONTAINER_TAG}" 2>/dev/null; then
             echo "Successfully pulled image from registry."
         else
             echo "Could not pull image from registry. Building locally..."
@@ -146,7 +148,7 @@ elif [ "${CONTAINER_TYPE}" == "singularity" ]; then
       if [ ! -d "${ROOT}/.singularity" ]; then
         mkdir -p "${ROOT}/.singularity"
       fi
-      singularity pull "${CONTAINER_PATH}" "oras://docker.io/riscvintl/spec-generator:$CONTAINER_TAG"
+      singularity pull "${CONTAINER_PATH}" "oras://$REGISTRY/riscvintl/spec-generator:$CONTAINER_TAG"
     fi
     if [ -v UDB_CONTAINER_BIND ]; then
       EXTRA_BIND="--bind ${UDB_CONTAINER_BIND}:${UDB_CONTAINER_BIND}"
