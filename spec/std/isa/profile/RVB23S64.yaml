@@ -194,7 +194,7 @@ extensions:
       The set of augmented hypervisor extensions: H, Ssstateen,
       Shcounterenw, Shvstvala, Shtvala, Shvstvecd, Shvsatpa, Shgatpa
 
-  # TODO: See https://github.com/riscv-software-src/riscv-unified-db/issues/373
+  # TODO: See https://github.com/riscv/riscv-unified-db/issues/373
   #  __NEED_AN_EXTENSION_NAME_HERE__:
   #    presence:
   #      optional: expansion
