@@ -113,8 +113,11 @@ elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ];
     fi
     if ! [ -v GITHUB_ACTIONS ]; then
       # create empty home directory (used as location to cache files by several tools)
+      if ! [ -d "${ROOT}"/.docker-home ]; then
+        mkdir "${ROOT}"/.docker-home
+      fi
       CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e HOME"
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} --tmpfs ${HOME}"
+      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${ROOT}/.docker-home:${HOME}"
     fi
 
     mkdir -p "${ROOT}/.cache"
