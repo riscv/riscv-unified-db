@@ -153,9 +153,9 @@ jobs:
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create \
-            --tag riscvintl/udb:${{ env.TAG }} \
-            $(printf 'riscvintl/udb@sha256:%s ' *)
+            --tag ghcr.io/riscvintl/udb:${{ env.TAG }} \
+            $(printf 'ghcr.io/riscvintl/udb@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect riscvintl/udb:${{ env.TAG }}
+          docker buildx imagetools inspect ghcr.io/riscvintl/udb:${{ env.TAG }}
