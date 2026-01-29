@@ -1,6 +1,6 @@
 image::doc/udb.svg[UDB banner]
 
-image::https://api.reuse.software/badge/github.com/riscv-software-src/riscv-unified-db[REUSE status, link="https://api.reuse.software/info/github.com/riscv-software-src/riscv-unified-db"]
+image::https://api.reuse.software/badge/github.com/riscv/riscv-unified-db[REUSE status, link="https://api.reuse.software/info/github.com/riscv/riscv-unified-db"]
 
 
 [WARNING]
@@ -17,7 +17,7 @@ That said, the following data has been validated against third-party sources:
 
 == Quick links
 
-* https://riscv-software-src.github.io/riscv-unified-db/index.html[The latest UDB-generated **UNOFFICIAL** RISC-V specifications].
+* https://riscv.github.io/riscv-unified-db/index.html[The latest UDB-generated **UNOFFICIAL** RISC-V specifications].
 * UDB Documentation
 ** xref:doc/schemas.adoc[Schema documentation]
 ** xref:doc/idl.adoc[ISA Description Language (IDL)]

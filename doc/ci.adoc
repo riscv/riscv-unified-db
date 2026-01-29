@@ -35,7 +35,7 @@ The tests are specified in xref:.github/workflows/regress.yml[`.github/workflows
 ==== Deployment Tests / Actions
 
 The second group of tests run when a PR enters the merge queue.
-They generate artifacts that are deployed to https://riscv-software-src.github.io/riscv-unified-db/[GitHub pages].
+They generate artifacts that are deployed to https://riscv.github.io/riscv-unified-db/[GitHub pages].
 If any test in the second group fails, a PR is removed from the merge queue.
 While in the merge queue, the CI tests generate artifacts but do not upload/update pages yet.
 The upload occurs after the PR merges to main and the test runs again.
