@@ -262,7 +262,7 @@ jobs:
         path: "${{ runner.temp }}"
     - name: Load image
       run: docker load --input ${{ runner.temp }}/docker_image.tar
-    - name: Run idlxc unit tests
+    - name: Run idlc unit tests
       run: "./do test:idlc:unit"
     - name: Upload idlc coverage reports to Codecov
       uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
@@ -542,7 +542,7 @@ jobs:
       run: docker load --input ${{ runner.temp }}/docker_image.tar
     - name: Run cpp unit tests
       run: "./do test:cpp_hart CONFIG=rv64 JOBS=4 BUILD_TYPE=debug"
-  regress-riscv-tests:
+  regress-riscv-tests-32:
     runs-on: ubuntu-latest
     needs: build-container
     steps:
@@ -641,7 +641,7 @@ jobs:
     - regress-gen-c-header
     - regress-gen-sverilog
     - regress-cpp-unit
-    - regress-riscv-tests
+    - regress-riscv-tests-32
     - regress-riscv-tests-64
     - regress-xqci-doc
     - regress-profile-extensions

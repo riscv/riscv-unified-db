@@ -20,7 +20,7 @@ repos:
       - id: end-of-file-fixer
         stages: [pre-commit]
         # Exclude reference and generated files
-        exclude: (cfgs/profile.*|.*\.golden\.adoc$|.*\.svg|amo.*\.yaml$)
+        exclude: (cfgs/profile.*|.*\.golden\.adoc$|.*\.svg|amo.*\.yaml|\.github/workflows/regress\.yml$)
       - id: trailing-whitespace
         stages: [pre-commit]
         args: [--markdown-linebreak-ext=md]
@@ -162,11 +162,11 @@ repos:
           ./bin/chore gen -f regress
           ||
           (
-          echo "Generated file .github/workflows/regress.yml changed.";
-          echo "Run";
-          echo "";
-          echo "  git add .github/workflows/regress.yml";
-          echo "";
+          echo "Generated file .github/workflows/regress.yml changed." 1>&2;
+          echo "Run" 1>&2;
+          echo "" 1>&2;
+          echo "  git add .github/workflows/regress.yml" 1>&2;
+          echo "" 1>&2;
           echo "and commit again." 1>&2;
           false
           )

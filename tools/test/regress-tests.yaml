@@ -10,7 +10,7 @@ tests:
       - unit
       - smoke
     test:
-      - name: Run idlxc unit tests
+      - name: Run idlc unit tests
         run: ./do test:idlc:unit
     gh_post:
       - name: Upload idlc coverage reports to Codecov
@@ -147,7 +147,7 @@ tests:
       - name: Run cpp unit tests
         run: ./do test:cpp_hart CONFIG=rv64 JOBS=4 BUILD_TYPE=debug
 
-  regress-riscv-tests:
+  regress-riscv-tests-32:
     gh_pre:
       - name: check out riscv-tests
         run: git submodule update --init ext/riscv-tests

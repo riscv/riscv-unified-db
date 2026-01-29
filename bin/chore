@@ -74,7 +74,9 @@ do_gen_regress() {
     local sha_before
     sha_before=$(sha256sum "$ROOT"/.github/workflows/regress.yml)
   fi
+  rm .github/workflows/regress.yml
   $RUBY tools/test/gen_regress.rb
+  chmod -wx .github/workflows/regress.yml
   if [ $fail_on_change -eq 1 ]; then
     local sha_after
     sha_after=$(sha256sum "$ROOT"/.github/workflows/regress.yml)
@@ -128,23 +130,17 @@ do_update_gems() {
   # and sorbet definitions
   cd "${ROOT}"/../tools/ruby-gems/idlc || exit 1
   bundle update --bundler --ruby
-  bundle exec tapioca gems --all
-  bundle exec tapioca dsl
-  bundle exec tapioca annotations
+  do_ruby_type_def "idlc"
   cd - || exit 1
 
   cd "${ROOT}"/../tools/ruby-gems/udb || exit 1
   bundle update --bundler --ruby
-  bundle exec tapioca gems --all
-  bundle exec tapioca dsl
-  bundle exec tapioca annotations
+  do_ruby_type_def "udb"
   cd - || exit 1
 
   cd "${ROOT}"/../tools/ruby-gems/udb-gen || exit 1
   bundle update --bundler --ruby
-  bundle exec tapioca gems --all
-  bundle exec tapioca dsl
-  bundle exec tapioca annotations
+  do_ruby_type_def "udb-gen"
   cd - || exit 1
 
   bundle update --bundler --ruby
