@@ -71,18 +71,6 @@ jobs:
           TAG=$(cat bin/.container-tag)
           echo "TAG=$TAG" >> $GITHUB_ENV
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          # list of Docker images to use as base name for tags
-          images: |
-            riscvintl/udb
-            ghcr.io/riscvintl/udb
-          # generate Docker tags based on the following events/attributes
-          tags: |
-            type=sha
-
       - name: Login to Docker Hub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
@@ -106,8 +94,7 @@ jobs:
           file: ./.devcontainer/Dockerfile
           platforms: ${{ matrix.platform }}
           outputs: type=image,name=riscvintl/udb,push-by-digest=true,name-canonical=true,push=true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: docker.io/riscvintl/udb,ghcr.io/riscvintl/udb
 
       - name: Export digest
         run: |
