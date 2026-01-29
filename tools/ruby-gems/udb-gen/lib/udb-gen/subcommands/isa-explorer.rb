@@ -48,7 +48,7 @@ module UdbGen
           { name: "Extension Name", formatter: "link", sorter: "alphanum", headerFilter: true, frozen: true, formatterParams:
             {
             labelField: "Extension Name",
-            urlPrefix: "https://riscv-software-src.github.io/riscv-unified-db/manual/html/isa/isa_20240411/exts/"
+            urlPrefix: "https://riscv.github.io/riscv-unified-db/manual/html/isa/isa_20240411/exts/"
             }
           },
           { name: "Description", formatter: "textarea", sorter: "alphanum", headerFilter: true },
@@ -133,7 +133,7 @@ module UdbGen
           { name: "Instruction Name", formatter: "link", sorter: "alphanum", headerFilter: true, frozen: true, formatterParams:
             {
             labelField: "Instruction Name",
-            urlPrefix: "https://riscv-software-src.github.io/riscv-unified-db/manual/html/isa/isa_20240411/insts/"
+            urlPrefix: "https://riscv.github.io/riscv-unified-db/manual/html/isa/isa_20240411/insts/"
             }
           },
           { name: "Description", formatter: "textarea", sorter: "alphanum", headerFilter: true },
@@ -184,7 +184,7 @@ module UdbGen
           { name: "CSR Name", formatter: "link", sorter: "alphanum", headerFilter: true, frozen: true, formatterParams:
             {
             labelField: "CSR Name",
-            urlPrefix: "https://riscv-software-src.github.io/riscv-unified-db/manual/html/isa/isa_20240411/csrs/"
+            urlPrefix: "https://riscv.github.io/riscv-unified-db/manual/html/isa/isa_20240411/csrs/"
             }
           },
           { name: "Address", formatter: "textarea", sorter: "number", headerFilter: true },
@@ -532,7 +532,7 @@ module UdbGen
 
       js_table = IsaExplorerGen.gen_js_ext_table(cfg_arch, params[:skip])
 
-      template_path = Pathname.new(Gem.loaded_specs["udb-gen"].full_gem_path) / "templates" / "ext-browser.html.erb"
+      template_path = Pathname.new(Gem.loaded_specs["udb-gen"].full_gem_path) / "templates" / "isa-explorer" / "ext-browser.html.erb"
 
       erb = ERB.new(template_path.read, trim_mode: "-")
       erb.filename = template_path.to_s
@@ -558,7 +558,7 @@ module UdbGen
 
       js_table = IsaExplorerGen.gen_js_inst_table(cfg_arch, params[:skip])
 
-      template_path = Pathname.new(Gem.loaded_specs["udb-gen"].full_gem_path) / "templates" / "inst-browser.html.erb"
+      template_path = Pathname.new(Gem.loaded_specs["udb-gen"].full_gem_path) / "templates" / "isa-explorer" / "inst-browser.html.erb"
 
       erb = ERB.new(template_path.read, trim_mode: "-")
       erb.filename = template_path.to_s
@@ -584,7 +584,7 @@ module UdbGen
 
       js_table = IsaExplorerGen.gen_js_csr_table(cfg_arch, params[:skip])
 
-      template_path = Pathname.new(Gem.loaded_specs["udb-gen"].full_gem_path) / "templates" / "csr-browser.html.erb"
+      template_path = Pathname.new(Gem.loaded_specs["udb-gen"].full_gem_path) / "templates" / "isa-explorer" / "csr-browser.html.erb"
 
       erb = ERB.new(template_path.read, trim_mode: "-")
       erb.filename = template_path.to_s

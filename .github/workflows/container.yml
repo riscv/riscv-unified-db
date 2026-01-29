@@ -47,6 +47,7 @@ jobs:
       - name: Upload singularity container
         run: |
           singularity registry login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }} oras://docker.io
+          singularity push .singularity/image.sif oras://gchr.io/riscvintl/spec-generator:${{ env.TAG }}
           singularity push .singularity/image.sif oras://docker.io/riscvintl/spec-generator:${{ env.TAG }}
 
   build-docker-container:
@@ -129,6 +130,24 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            --tag riscvintl/udb:${{ env.TAG }} \
+            $(printf 'riscvintl/udb@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect riscvintl/udb:${{ env.TAG }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create manifest list and push
         working-directory: /tmp/digests

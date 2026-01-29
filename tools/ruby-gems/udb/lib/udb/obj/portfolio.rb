@@ -745,7 +745,7 @@ module Udb
 
     # @param design [Design] The design
     # @return [Array<ExceptionCode>] Unsorted list of all in-scope exception codes.
-    # TODO: See https://github.com/riscv-software-src/riscv-unified-db/issues/291
+    # TODO: See https://github.com/riscv/riscv-unified-db/issues/291
     # TODO: Still needs work and haven't created in_scope_interrupt_codes yet.
     # TODO: Extensions should provide conditional information ("when" statements?)
     #       that we evaluate here to determine if a particular exception code can

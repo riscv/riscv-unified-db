@@ -27,7 +27,7 @@ path = [
 ]
 SPDX-FileCopyrightText = [
     "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.",
-    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv-software-src/riscv-unified-db>",
+    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv/riscv-unified-db>",
 ]
 SPDX-License-Identifier = "BSD-3-Clause-Clear"
 
@@ -51,7 +51,7 @@ path = [
 precedence = "aggregate"
 SPDX-FileCopyrightText = [
     "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.  ",
-    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv-software-src/riscv-unified-db>",
+    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv/riscv-unified-db>",
     # For import isa-manual docs: https://github.com/riscv/riscv-isa-manual
     "2017-2025 Contributors to the RISCV ISA Manual <https://github.com/riscv/riscv-isa-manual>",
 ]
