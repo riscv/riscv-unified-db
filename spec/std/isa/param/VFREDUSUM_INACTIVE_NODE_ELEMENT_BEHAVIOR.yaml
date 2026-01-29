@@ -14,4 +14,4 @@ schema:
   enum: ["additive_identity", "copy"]
 definedBy:
   extension:
-    name: V
+    name: Zvl32b

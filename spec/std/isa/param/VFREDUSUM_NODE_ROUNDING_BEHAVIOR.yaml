@@ -14,4 +14,4 @@ schema:
   enum: ["SEW_precision", "custom"]
 definedBy:
   extension:
-    name: V
+    name: Zvl32b

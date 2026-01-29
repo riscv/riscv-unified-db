@@ -14,4 +14,4 @@ schema:
   enum: ["1_stride", "2_stride", "4_stride", "custom"]
 definedBy:
   extension:
-    name: V
+    name: Zvl32b

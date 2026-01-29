@@ -14,4 +14,4 @@ schema:
   enum: ["no_unrequired_supported", "custom"]
 definedBy:
   extension:
-    name: V
+    name: Zvl32b

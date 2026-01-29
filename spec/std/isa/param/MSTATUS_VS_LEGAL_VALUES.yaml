@@ -39,5 +39,5 @@ requirements:
 definedBy:
   extension:
     anyOf:
-      - name: V
+      - name: Zvl32b
       - name: S

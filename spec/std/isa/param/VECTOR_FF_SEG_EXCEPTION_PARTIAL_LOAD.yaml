@@ -14,4 +14,4 @@ schema:
   enum: ["no_subsegment_loaded", "custom"]
 definedBy:
   extension:
-    name: V
+    name: Zvl32b

@@ -22,4 +22,4 @@ schema:
 #      reason: Index EEW must not exceed ELEN
 definedBy:
   extension:
-    name: V
+    name: Zvl32b

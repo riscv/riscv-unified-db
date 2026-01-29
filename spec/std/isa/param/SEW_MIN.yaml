@@ -19,4 +19,4 @@ schema:
 #      reason: SEW_MIN <= ELEN
 definedBy:
   extension:
-    name: V
+    name: Zvl32b

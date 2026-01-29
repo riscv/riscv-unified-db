@@ -14,4 +14,4 @@ schema:
   enum: ["never", "always", "custom"]
 definedBy:
   extension:
-    name: V
+    name: Zvl32b
