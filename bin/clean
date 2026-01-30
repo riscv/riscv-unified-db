@@ -3,3 +3,5 @@
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 
 rm -rf "${ROOT}"/.stamps "${ROOT}"/gen
+make -C "${ROOT}"/tests/isa clean
+make -C "${ROOT}"/tests/isa XLEN=32 clean
