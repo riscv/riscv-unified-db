@@ -8,7 +8,9 @@ $schema: param_schema.json#
 kind: parameter
 name: VFREDUSUM_FINAL_NODE_ELEMENT_BEHAVIOR
 description: |
-  An implementation is allowed to add an additional additive identity to the final result.
+  Implementations are permitted to insert an additional additive identity
+  into the final reduction result, which may affect the final outcome
+  when no active elements are present.
 long_name: TODO
 schema:
   type: string

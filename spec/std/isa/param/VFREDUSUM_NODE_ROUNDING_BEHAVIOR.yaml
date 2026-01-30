@@ -8,7 +8,12 @@ $schema: param_schema.json#
 kind: parameter
 name: VFREDUSUM_NODE_ROUNDING_BEHAVIOR
 description: |
-  Each operator first computes an exact sum as a RISC-V scalar floating-point addition with infinite exponent range and precision, then converts this exact sum to a floating-point format with range and precision each at least as great as the element floating-point format indicated by SEW, rounding using the currently active floating-point dynamic rounding mode and raising exception flags as necessary. A different floating-point range and precision may be chosen for the result of each operator.
+  Each reduction operator computes an exact sum using an ideal scalar
+  floating-point addition, then converts that result into a floating-
+  point format with range and precision at least as large as the element
+  SEW, rounding with the current dynamic rounding mode and raising
+  exceptions as needed. Implementations may choose the exact range and
+  precision per operator.
 long_name: TODO
 schema:
   type: string

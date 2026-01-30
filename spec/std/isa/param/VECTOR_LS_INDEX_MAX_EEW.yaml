@@ -8,7 +8,9 @@ $schema: param_schema.json#
 kind: parameter
 name: VECTOR_LS_INDEX_MAX_EEW
 description: |
-  A profile may place an upper limit on the maximum supported index EEW (e.g., only up to XLEN) smaller than ELEN.
+  A profile may place an upper limit on the maximum supported index EEW
+  used by vector load/store indexing. For example, some profiles may
+  limit indexing to sizes no larger than XLEN or a fixed EEW value.
 long_name: TODO
 schema:
   type: string

@@ -8,7 +8,10 @@ $schema: param_schema.json#
 kind: parameter
 name: VFREDUSUM_INACTIVE_NODE_ELEMENT_BEHAVIOR
 description: |
-  A node where one input is derived only from elements masked-off or beyond the active vector length may either treat that input as the additive identity of the appropriate EEW or simply copy the other input to its output.
+  A reduction node that receives an input derived solely from masked-off
+  elements or elements beyond `vl` may either treat that input as the
+  additive identity for the appropriate element width or copy the other
+  input through unchanged to the node output.
 long_name: TODO
 schema:
   type: string

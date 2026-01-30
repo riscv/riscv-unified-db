@@ -8,7 +8,10 @@ $schema: param_schema.json#
 kind: parameter
 name: LEGAL_VSTART
 description: |
-  Implementations are permitted to raise illegal-instruction exceptions when attempting to execute a vector instruction with a value of vstart that the implementation can never produce when executing that same instruction with the same vtype setting.
+  Implementations may raise illegal-instruction exceptions for vector
+  instructions that specify a `vstart` value the implementation can never
+  produce under the same `vtype` configuration (e.g., due to restrictions
+  on supported strides or alignments).
 long_name: TODO
 schema:
   type: string

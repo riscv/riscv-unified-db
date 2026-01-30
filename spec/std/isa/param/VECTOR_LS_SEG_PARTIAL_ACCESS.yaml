@@ -8,7 +8,9 @@ $schema: param_schema.json#
 kind: parameter
 name: VECTOR_LS_SEG_PARTIAL_ACCESS
 description: |
-  If a trap occurs during access to a segment, it is implementation-defined whether a subset of the faulting segment's accesses are performed before the trap is taken.
+  If a trap occurs during access to a segment, it is implementation-defined
+  whether some, all, or none of that segment's element accesses are
+  performed before the trap is taken.
 long_name: TODO
 schema:
   type: boolean

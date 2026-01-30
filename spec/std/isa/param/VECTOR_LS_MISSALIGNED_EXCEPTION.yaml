@@ -6,9 +6,11 @@
 
 $schema: param_schema.json#
 kind: parameter
-name: VECTOR_LS_MISSALIGNED_EXCEPTION
+name: VECTOR_LS_MISALIGNED_LEGAL
 description: |
-  If an element accessed by a vector memory instruction is not naturally aligned to the size of the element, either the element is transferred successfully or an address misaligned exception is raised on that element. Support for misaligned vector memory accesses is independent of an implementation's support for misaligned scalar memory accesses.
+  If an element accessed by a vector memory instruction is not naturally aligned to the size of the element,
+  either the element is transferred successfully or an address misaligned exception is raised on that element.
+  Support for misaligned vector memory accesses is independent of an implementation's support for misaligned scalar memory accesses.
 long_name: TODO
 schema:
   type: boolean

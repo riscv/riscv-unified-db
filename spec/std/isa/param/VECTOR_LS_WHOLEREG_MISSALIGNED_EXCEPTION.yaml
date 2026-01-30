@@ -6,9 +6,12 @@
 
 $schema: param_schema.json#
 kind: parameter
-name: VECTOR_LS_WHOLEREG_MISSALIGNED_EXCEPTION
+name: VECTOR_LS_WHOLEREG_MISALIGNED_LEGAL
 description: |
-  Implementations are allowed to raise a misaligned address exception on whole register loads and stores if the base address is not naturally aligned to the larger of the size of the encoded EEW in bytes (EEW/8) or the implementation's smallest supported SEW size in bytes (SEW_MIN/8).
+  Implementations may raise a misaligned address exception for whole-register
+  loads/stores if the base address is not aligned to the maximum of the
+  encoded EEW size (in bytes) or the implementation's smallest supported
+  SEW (in bytes).
 long_name: TODO
 schema:
   type: boolean

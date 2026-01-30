@@ -8,7 +8,10 @@ $schema: param_schema.json#
 kind: parameter
 name: RESERVED_VSET_X0X0_VILL_SET
 description: |
-  When rs1=x0 and rd=x0, the instructions operate as if the current vector length in vl is used as the AVL. Use of the vset instructions is also reserved if vill was 1 beforehand. Implementations may set vill in either case.
+  When rs1 = x0 and rd = x0, vset instructions act as if the current
+  vector length in `vl` is used as the AVL. If `vill` is set or the
+  configuration is reserved, implementations may set `vill` to indicate
+  unsupported use of these encodings.
 long_name: TODO
 schema:
   type: string

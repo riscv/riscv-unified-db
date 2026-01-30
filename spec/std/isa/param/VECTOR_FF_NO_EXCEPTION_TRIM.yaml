@@ -8,7 +8,9 @@ $schema: param_schema.json#
 kind: parameter
 name: VECTOR_FF_NO_EXCEPTION_TRIM
 description: |
-  Even when an exception is not raised, implementations are permitted to process fewer than vl elements and reduce vl accordingly, but if vstart=0 and vl>0, then at least one element must be processed.
+  Implementations may process fewer than `vl` elements and reduce `vl`
+  even when no exception occurs. However, if `vstart` == 0 and `vl` > 0,
+  at least one element must be processed.
 long_name: TODO
 schema:
   type: boolean

@@ -8,7 +8,9 @@ $schema: param_schema.json#
 kind: parameter
 name: IMPRECISE_VECTOR_TRAP_SETTABLE
 description: |
-  Some profiles may choose to provide a privileged mode bit to select between precise and imprecise vector traps.
+  Some profiles may provide a privileged configuration bit that selects
+  between precise and imprecise vector trap behavior, allowing flexibility
+  in how traps and partial updates are reported.
 long_name: TODO
 schema:
   type: boolean

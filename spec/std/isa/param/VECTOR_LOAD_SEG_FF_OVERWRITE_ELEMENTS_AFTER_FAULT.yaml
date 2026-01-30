@@ -8,7 +8,10 @@ $schema: param_schema.json#
 kind: parameter
 name: VECTOR_LOAD_SEG_FF_OVERWRITE_ELEMENTS_AFTER_FAULT
 description: |
-  These instructions may overwrite destination vector register group elements past the point at which a trap is reported or past the point at which vector length is trimmed.
+  Fault-only-first segment load instructions may overwrite destination
+  vector register group elements beyond the point where a trap is
+  reported or where `vl` is trimmed; the exact values written may be
+  implementation-defined.
 long_name: TODO
 schema:
   type: string

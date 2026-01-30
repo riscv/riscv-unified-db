@@ -8,7 +8,11 @@ $schema: param_schema.json#
 kind: parameter
 name: VECTOR_FF_UPDATE_PAST_TRIM
 description: |
-  Fault-only-first load instructions may update active destination elements past the element that causes trimming of the vector length (but not past the original vector length). The values of these spurious updates do not have to correspond to the values in memory at the addressed memory locations. Non-idempotent memory locations can only be accessed when it is known the corresponding element load operation will not be restarted due to a trap or vector-length trimming.
+  Fault-only-first (FF) load instructions may update active destination
+  elements beyond the index that causes vector-length trimming, but not
+  past the original `vl`. These spurious updates need not reflect the
+  true memory contents; non-idempotent memory should only be accessed
+  when the load is guaranteed not to be retried.
 long_name: TODO
 schema:
   type: string

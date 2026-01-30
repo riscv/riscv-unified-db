@@ -8,7 +8,9 @@ $schema: param_schema.json#
 kind: parameter
 name: VSSTATUS_VS_EXISTS
 description: |
-  For implementations with a writable misa.V field, the vsstatus.VS field may exist even if misa.V is clear.
+  Some implementations provide a `vsstatus.VS` field even when the `misa.V`
+  bit is clear. This parameter indicates whether `vsstatus.VS` exists
+  independently of the `misa.V` setting.
 long_name: TODO
 schema:
   type: boolean

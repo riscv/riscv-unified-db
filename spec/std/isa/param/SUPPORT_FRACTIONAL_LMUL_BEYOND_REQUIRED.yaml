@@ -8,7 +8,10 @@ $schema: param_schema.json#
 kind: parameter
 name: SUPPORT_FRACTIONAL_LMUL_BEYOND_REQUIRED
 description: |
-  For a given supported fractional LMUL setting, implementations must support SEW settings between SEW_MIN and LMUL * ELEN, inclusive.
+  For a given supported fractional LMUL setting, implementations must
+  provide support for SEW settings covering the range from SEW_MIN
+  up to LMUL * ELEN, inclusive. This ensures types narrower than the
+  maximum SEW are supported when fractional LMULs are selected.
 long_name: TODO
 schema:
   type: string

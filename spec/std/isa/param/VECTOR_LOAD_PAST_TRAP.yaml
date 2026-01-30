@@ -8,7 +8,9 @@ $schema: param_schema.json#
 kind: parameter
 name: VECTOR_LOAD_PAST_TRAP
 description: |
-  Load instructions may overwrite active destination vector register group elements past the element index at which the trap is reported.
+  Vector load instructions may overwrite active destination vector register
+  group elements past the element index where a trap is reported; the
+  behavior for elements beyond the trap index is implementation-defined.
 long_name: TODO
 schema:
   type: boolean

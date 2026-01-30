@@ -8,7 +8,11 @@ $schema: param_schema.json#
 kind: parameter
 name: VECTOR_FF_SEG_EXCEPTION_PARTIAL_LOAD
 description: |
-  For fault-only-first segment loads, if an exception is detected partway through accessing the zeroth segment, the trap is taken. If an exception is detected partway through accessing a subsequent segment, vl is reduced to the index of that segment. In both cases, it is implementation-defined whether a subset of the segment is loaded.
+  For fault-only-first segment loads, if an exception occurs partway
+  through the zeroth segment, the trap is taken. If it occurs in a
+  subsequent segment, `vl` may be reduced to the index of that segment.
+  It is implementation-defined whether a partial subset of the segment
+  is loaded before the trap.
 long_name: TODO
 schema:
   type: string
