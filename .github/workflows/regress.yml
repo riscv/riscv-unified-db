@@ -248,6 +248,12 @@ jobs:
         path: |
           tools/eclipse/udb-vscode/.vscode-test/**/*
           tools/eclipse/udb-vscode/out/test/**/*
+  builds-done:
+    name: Artifact build complete
+    runs-on: ubuntu-latest
+    steps:
+    - name: Succeed
+      run: exit 0
   regress-idlc-unit:
     runs-on: ubuntu-latest
     needs: build-container
@@ -652,6 +658,7 @@ jobs:
     - call-deploy
     - java-tests
     - vscode-tests
+    - builds-done
     if: "${{ always() }}"
     steps:
     - name: exit failure

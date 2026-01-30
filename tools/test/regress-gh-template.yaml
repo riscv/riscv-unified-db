@@ -261,3 +261,9 @@ jobs:
           path: |
             tools/eclipse/udb-vscode/.vscode-test/**/*
             tools/eclipse/udb-vscode/out/test/**/*
+  builds-done:
+    name: Artifact build complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Succeed
+        run: exit 0
