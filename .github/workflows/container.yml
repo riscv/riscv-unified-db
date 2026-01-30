@@ -29,16 +29,7 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .singularity/image.sif
-          key: ${{ hashFiles('container.def', 'bin/.container-tag') }}
-
-      - name: Get gems and node files from cache
-        id: cache-bundle-npm
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            .home/.gems
-            node_modules
-          key: ${{ hashFiles('Gemfile.lock') }}-${{ hashFiles('package-lock.json') }}
+          key: ${{ hashFiles('container.def', 'bin/.container-tag') }}-${{ matrix.runner }}
 
       - if: ${{ steps.cache-sif.outputs.cache-hit != 'true' }}
         name: Build container
@@ -94,6 +85,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           outputs: type=image,"name=docker.io/riscvintl/udb,ghcr.io/riscv/udb",push-by-digest=true,name-canonical=true,push=true
           tags: docker.io/riscvintl/udb,ghcr.io/riscv/udb
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Export digest
         run: |
@@ -141,6 +134,8 @@ jobs:
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
+          CONTAINER_NAME=$(printf 'riscvintl/udb@sha256:%s ' *)
+          echo "CONTAINER_NAME=$CONTAINER_NAME" >> $GITHUB_ENV
           docker buildx imagetools create \
             --tag riscvintl/udb:${{ env.TAG }} \
             $(printf 'riscvintl/udb@sha256:%s ' *)
@@ -166,3 +161,8 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ghcr.io/riscv/udb:${{ env.TAG }}
+
+      - name: Remove intermediate containers
+        run: |
+          docker image rm ${{ env.CONTAINER_NAME }}
+

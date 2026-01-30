@@ -38,7 +38,7 @@ jobs:
         push: false
         file: "./.devcontainer/Dockerfile"
         platforms: linux/amd64
-        tags: riscvintl/udb:${{ env.TAG }}
+        tags: ghcr.io/riscv/udb:${{ env.TAG }}
         outputs: type=docker,dest=${{ runner.temp }}/docker_image.tar
         cache-from: type=gha
         cache-to: type=gha,mode=max
@@ -99,9 +99,9 @@ jobs:
         ruby-version: '3.2'
     - name: Find configuration files
       id: configs
-      run: >
-        ruby -e "puts 'configs=[\"' + Dir.glob('cfgs/*.yaml').map { |f| File.basename(f, '.yaml') }.join('\",
-        \"') + '\"]'" >> "$GITHUB_OUTPUT"
+      run: 'ruby -e "puts ''configs=[\"'' + Dir.glob(''cfgs/*.yaml'').map { |f| File.basename(f, ''.yaml'') }.join(''\", \"'') + ''\"]''" >> "$GITHUB_OUTPUT"
+
+        '
   regress-udb-cov-report:
     runs-on: ubuntu-latest
     needs:
@@ -205,8 +205,7 @@ jobs:
     - name: Build & test (whole reactor)
       working-directory: tools/eclipse/dev/org.xtext.udb.parent
       env:
-        MAVEN_OPTS: >-
-          -Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 -Djdk.xml.entityExpansionLimit=0
+        MAVEN_OPTS: "-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 -Djdk.xml.entityExpansionLimit=0"
       run: mvn -B -U -Dheadless=true verify
     - name: Archive surefire reports (always)
       if: always()
@@ -466,8 +465,7 @@ jobs:
     - name: Update ownership of coverage files
       run: sudo chown -R $USER:$USER tools/ruby-gems/udb/coverage
     - name: Rename coverage file
-      run: >-
-        mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
+      run: mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
     - name: Save coverage report
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
@@ -654,6 +652,11 @@ jobs:
     - call-deploy
     - java-tests
     - vscode-tests
+    if: "${{ always() }}"
     steps:
+    - name: exit failure
+      if: "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}"
+      run: exit 1
     - name: exit success
+      if: "${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}"
       run: exit 0
