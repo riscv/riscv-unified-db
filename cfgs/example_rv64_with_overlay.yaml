@@ -433,7 +433,7 @@ params:
   # the extension can be disabled in the `misa.U` bit.
   MUTABLE_MISA_U: false
 
-  # when the V extensions is supported, indicates whether or not
+  # When the V extensions is supported, indicates whether or not
   # the extension can be disabled in the `misa.V` bit.
   MUTABLE_MISA_V: false
   SEW_MIN: 8 # minimum element width (bits)
