@@ -5,7 +5,15 @@ cd "$ROOT" || exit
 
 CONTAINER_TAG=$(cat "${ROOT}/bin/.container-tag")
 
-REGISTRY=${REGISTRY:="gchr.io"}
+REGISTRY=${REGISTRY:="ghcr.io"}
+if [ "$REGISTRY" == "ghcr.io" ]; then
+  OWNER=riscv
+elif [ "$REGISTRY" == "docker.io" ]; then
+  OWNER=riscvintl
+else
+  echo "Bad registry: ${REGISTRY}" 1>&2
+  exit 1
+fi
 
 # shellcheck source=.functions.sh
 source "${ROOT}/bin/.functions.sh"
@@ -86,13 +94,13 @@ if [ -v GITHUB_ACTIONS ] && [ "${CONTAINER_TYPE}" == "singularity" ]; then
     sudo /bin/bash -c "echo \"kernel.apparmor_restrict_unprivileged_userns = 0\" >/etc/sysctl.d/99-userns.conf"
     sudo sysctl --system
 elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
-    if ! ${CONTAINER_TYPE} images "riscvintl/udb:${CONTAINER_TAG}" | grep -q udb ; then
+    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" | grep -q udb ; then
         echo "Image not found locally. Attempting to pull from registry..."
-        if ${CONTAINER_TYPE} pull "$REGISTRY/riscvintl/udb:${CONTAINER_TAG}" 2>/dev/null; then
+        if ${CONTAINER_TYPE} pull "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" 2>/dev/null; then
             echo "Successfully pulled image from registry."
         else
             echo "Could not pull image from registry. Building locally..."
-            ${CONTAINER_TYPE} build -t "riscvintl/udb:${CONTAINER_TAG}" -f .devcontainer/Dockerfile .
+            ${CONTAINER_TYPE} build -t "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" -f .devcontainer/Dockerfile .
         fi
     fi
     if [ "${CONTAINER_TYPE}" == "podman" ]; then
@@ -142,9 +150,9 @@ elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ];
     fi
 
     if [ -t 1 ] && [ -t 0 ]; then
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm -it ${CONTAINER_RUN_FLAGS} -w ${ROOT} riscvintl/udb:${CONTAINER_TAG}"
+      CONTAINER_BASE="${CONTAINER_TYPE} run --rm -it ${CONTAINER_RUN_FLAGS} -w ${ROOT} $REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
     else
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} riscvintl/udb:${CONTAINER_TAG}"
+      CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} $REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
     fi
 elif [ "${CONTAINER_TYPE}" == "singularity" ]; then
     CONTAINER_PATH=${ROOT}/.singularity/image-$CONTAINER_TAG.sif
@@ -153,7 +161,7 @@ elif [ "${CONTAINER_TYPE}" == "singularity" ]; then
       if [ ! -d "${ROOT}/.singularity" ]; then
         mkdir -p "${ROOT}/.singularity"
       fi
-      singularity pull "${CONTAINER_PATH}" "oras://$REGISTRY/riscvintl/spec-generator:$CONTAINER_TAG"
+      singularity pull "${CONTAINER_PATH}" "oras://$REGISTRY/$OWNER/spec-generator:$CONTAINER_TAG"
     fi
     if [ -v UDB_CONTAINER_BIND ]; then
       EXTRA_BIND="--bind ${UDB_CONTAINER_BIND}:${UDB_CONTAINER_BIND}"
