@@ -93,7 +93,7 @@ jobs:
         with:
           file: ./.devcontainer/Dockerfile
           platforms: ${{ matrix.platform }}
-          outputs: type=image,\"name=docker.io/riscvintl/udb,ghcr.io/riscv/udb\",push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,"name=docker.io/riscvintl/udb,ghcr.io/riscv/udb",push-by-digest=true,name-canonical=true,push=true
           tags: docker.io/riscvintl/udb,ghcr.io/riscv/udb
 
       - name: Export digest
