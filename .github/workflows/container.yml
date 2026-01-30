@@ -47,7 +47,7 @@ jobs:
       - name: Upload singularity container
         run: |
           singularity registry login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }} oras://docker.io
-          singularity push .singularity/image.sif oras://gchr.io/riscvintl/spec-generator:${{ env.TAG }}
+          singularity push .singularity/image.sif oras://gchr.io/riscv/spec-generator:${{ env.TAG }}
           singularity push .singularity/image.sif oras://docker.io/riscvintl/spec-generator:${{ env.TAG }}
 
   build-docker-container:
@@ -93,8 +93,8 @@ jobs:
         with:
           file: ./.devcontainer/Dockerfile
           platforms: ${{ matrix.platform }}
-          outputs: type=image,name=riscvintl/udb,push-by-digest=true,name-canonical=true,push=true
-          tags: docker.io/riscvintl/udb,ghcr.io/riscvintl/udb
+          outputs: type=image,\"name=docker.io/riscvintl/udb,ghcr.io/riscv/udb\",push-by-digest=true,name-canonical=true,push=true
+          tags: docker.io/riscvintl/udb,ghcr.io/riscv/udb
 
       - name: Export digest
         run: |
@@ -161,9 +161,9 @@ jobs:
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create \
-            --tag ghcr.io/riscvintl/udb:${{ env.TAG }} \
-            $(printf 'ghcr.io/riscvintl/udb@sha256:%s ' *)
+            --tag ghcr.io/riscv/udb:${{ env.TAG }} \
+            $(printf 'ghcr.io/riscv/udb@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ghcr.io/riscvintl/udb:${{ env.TAG }}
+          docker buildx imagetools inspect ghcr.io/riscv/udb:${{ env.TAG }}
