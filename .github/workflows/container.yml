@@ -165,4 +165,3 @@ jobs:
       - name: Remove intermediate containers
         run: |
           docker image rm ${{ env.CONTAINER_NAME }}
-
