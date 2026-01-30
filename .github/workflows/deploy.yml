@@ -32,6 +32,7 @@ env:
   DEPLOY_DIR: _site
 jobs:
   builds-done:
+    name: Artifact build complete
     runs-on: ubuntu-latest
     needs:
       - build-reuse-manifest
