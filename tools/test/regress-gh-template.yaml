@@ -195,11 +195,6 @@ jobs:
           name: riscv-json
           path: ext/llvm-project/riscv.json
 
-  call-deploy:
-    uses: ./.github/workflows/deploy.yml
-    with:
-      dry-run: true
-
   java-tests:
     name: Java (Xtext) tests
     runs-on: ubuntu-latest

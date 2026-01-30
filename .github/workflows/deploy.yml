@@ -19,11 +19,6 @@ on:
   merge_group:
     types: [checks_requested]
   workflow_dispatch:
-  workflow_call:
-    inputs:
-      dry-run:
-        required: true
-        type: boolean
   push:
     branches:
       - main
@@ -67,7 +62,7 @@ jobs:
     if: "${{ always() }}"
     steps:
     - name: exit failure
-      if: "${{ ((github.event_name == 'merge_queue') || (inputs.dry-run == false)) && contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}"
+      if: "${{ (github.event_name == 'merge_queue') && contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}"
       run: exit 1
     - name: exit success
       if: "${{ github.event_name == 'push' || (!contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')) }}"
