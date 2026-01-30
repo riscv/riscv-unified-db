@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-# SPDX-FileCopyrightText: 2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv-software-src/riscv-unified-db>
+# SPDX-FileCopyrightText: 2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv/riscv-unified-db>
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 import os

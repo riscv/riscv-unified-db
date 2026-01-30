@@ -1,4 +1,5 @@
 FROM ubuntu:24.04
+LABEL org.opencontainers.image.source=https://github.com/riscv/riscv-unified-db
 
 ENV DEBIAN_FRONTEND=noninteractive
 

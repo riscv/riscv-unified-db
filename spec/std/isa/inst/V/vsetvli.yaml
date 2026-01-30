@@ -10,7 +10,7 @@ long_name: Vector Set Vector Type and Vector Length Immediate
 description: Set the vtype and vl CSRs, and write the new value of vl into rd.
 definedBy:
   extension:
-    name: V
+    name: Zvl32b
 assembly: xd, xs1, vtypei
 encoding:
   match: 0----------------111-----1010111
@@ -59,39 +59,39 @@ operation(): |
     XReg avl = X[xs1];
     XReg ceil_avl_over_two = (avl + 1) / 2;
 
-    if (xs1 == 0) {
-      if (xd != 0) {
-        # rs1 == x0, rd != x0: set vl to VLMAX
+    # Determine vl based on xs1 (AVL source) and xd (destination)
+    if (xs1 == 0 && xd != 0) {
+      # rs1 == x0, rd != x0: set vl to VLMAX
+      CSR[vl].VALUE = vlmax;
+    } else if (xs1 == 0) {
+      # rs1 == x0, rd == x0: keep existing vl, but check LMUL/SEW ratio
+      XReg old_ratio = old_state.log2_sew - old_state.log2_lmul;
+      XReg new_ratio = state.log2_sew - state.log2_lmul;
+      if (new_ratio != old_ratio) {
+        # Ratio changed - set vill and clear vl
+        CSR[vtype].VILL = 1;
+        CSR[vtype].VMA = 0;
+        CSR[vtype].VTA = 0;
+        CSR[vtype].VSEW = 0;
+        CSR[vtype].VLMUL = 0;
+        CSR[vl].VALUE = 0;
+      }
+      # else: keep vl unchanged
+    } else if (avl <= vlmax) {
+      # Normal stripmining: AVL <= VLMAX
+      CSR[vl].VALUE = avl;
+    } else if (avl < 2 * vlmax) {
+      # VLMAX < AVL < 2*VLMAX: implementation-defined behavior
+      if (RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX == "ceil(AVL/2)") {
+        CSR[vl].VALUE = ceil_avl_over_two;
+      } else if (RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX == "VLMAX") {
         CSR[vl].VALUE = vlmax;
       } else {
-        # rs1 == x0, rd == x0: keep existing vl, but check LMUL/SEW ratio
-        XReg old_ratio = old_state.log2_sew - old_state.log2_lmul;
-        XReg new_ratio = state.log2_sew - state.log2_lmul;
-        if (new_ratio != old_ratio) {
-          # Ratio changed - set vill and clear vl
-          CSR[vtype].VILL = 1;
-          CSR[vtype].VMA = 0;
-          CSR[vtype].VTA = 0;
-          CSR[vtype].VSEW = 0;
-          CSR[vtype].VLMUL = 0;
-          CSR[vl].VALUE = 0;
-        }
-        # else: keep vl unchanged
+        unpredictable("Implementations may choose a custom value for vl in the case AVL < (2*VLMAX), so long as ceil(AVL/2) <= vl <= VLMAX");
       }
     } else {
-      if (avl <= vlmax) {
-        CSR[vl].VALUE = avl;
-      } else if (avl < 2*vlmax) {
-        if (RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX == "ceil(AVL/2)") {
-          CSR[vl].VALUE = ceil_avl_over_two;
-        } else if (RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX == "VLMAX") {
-          CSR[vl].VALUE = vlmax;
-        } else {
-          unpredictable("Implementations may choose a custom value for vl in the case AVL < (2*VLMAX), so long as ceil(AVL/2) <= vl <= VLMAX");
-        }
-      } else {
-        CSR[vl].VALUE = vlmax;
-      }
+      # AVL >= 2*VLMAX: set vl to VLMAX
+      CSR[vl].VALUE = vlmax;
     }
   }
   X[xd] = CSR[vl].VALUE;

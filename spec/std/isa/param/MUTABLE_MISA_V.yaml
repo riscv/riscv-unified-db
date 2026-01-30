@@ -12,4 +12,6 @@ schema:
   type: boolean
 definedBy:
   extension:
-    name: Zvl32b
+    allOf:
+      - name: V
+      - name: Sm
