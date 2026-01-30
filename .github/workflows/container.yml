@@ -48,8 +48,6 @@ jobs:
         run: |
           singularity registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} oras://ghcr.io
           singularity push .singularity/image.sif oras://ghcr.io/riscv/spec-generator:${{ env.TAG }}
-          singularity registry login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }} oras://docker.io
-          singularity push .singularity/image.sif oras://docker.io/riscvintl/spec-generator:${{ env.TAG }}
 
   build-docker-container:
     env:
