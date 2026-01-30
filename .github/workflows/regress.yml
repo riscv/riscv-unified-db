@@ -658,5 +658,5 @@ jobs:
       if: "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}"
       run: exit 1
     - name: exit success
-      if: "${{ !contains(needs.*.result, 'failure') && !contains(contains(needs.*.result, 'cancelled')) }}"
+      if: "${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}"
       run: exit 0

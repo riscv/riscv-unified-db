@@ -62,7 +62,7 @@ regress_yaml["jobs"]["regress-complete"] = {
     },
     {
       "name" => "exit success",
-      "if" => "${{ !contains(needs.*.result, 'failure') && !contains(contains(needs.*.result, 'cancelled')) }}",
+      "if" => "${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}",
       "run" => "exit 0"
     }
   ]
