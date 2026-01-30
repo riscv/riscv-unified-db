@@ -53,9 +53,16 @@ end
 regress_yaml["jobs"]["regress-complete"] = {
   "runs-on" => "ubuntu-latest",
   "needs" => tests["tests"].keys + (regress_template_yaml["jobs"].keys - ["build-container", "never-runs"]),
+  "if" => "${{ always() }}",
   "steps" => [
     {
+      "name" => "exit failure",
+      "if" => "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}",
+      "run" => "exit 1"
+    },
+    {
       "name" => "exit success",
+      "if" => "${{ !contains(needs.*.result, 'failure') && !contains(contains(needs.*.result, 'cancelled')) }}",
       "run" => "exit 0"
     }
   ]
