@@ -44,7 +44,7 @@ jobs:
           push: false
           file: ./.devcontainer/Dockerfile
           platforms: linux/amd64
-          tags: riscvintl/udb:${{ env.TAG }}
+          tags: ghcr.io/riscv/udb:${{ env.TAG }}
           outputs: type=docker,dest=${{ runner.temp }}/docker_image.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
