@@ -9,10 +9,15 @@ on:
   # Also if you change the configuration in a PR, the changes will not be reflected for the current
   # PR – only subsequent ones after the changes are in the main branch.
   pull_request_target:
+    branches:
+      - main
     types:
       - opened
       - edited
       - reopened
+  merge_group:
+    types:
+    - checks_requested
 
 jobs:
   main:
