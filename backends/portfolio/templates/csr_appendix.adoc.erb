@@ -145,7 +145,6 @@ Reset value: ::
 
 <% if defined?(gen_ctp_content) && gen_ctp_content -%>
 <%= portfolio_design.include_erb("normative_rules.adoc.erb", { "db_obj" => field, "org" => "appendix", "use_description_list" => true }) %>
-<%= portfolio_design.include_erb("test_procedures.adoc.erb", { "db_obj" => field, "org" => "appendix", "use_description_list" => true }) %>
 <% end # if gen_ctp_content -%>
 
 ****
