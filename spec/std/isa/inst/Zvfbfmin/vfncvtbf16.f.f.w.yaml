@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfncvtbf16.f.f.w
-long_name: No synopsis available
+long_name: Vector narrowing single-precision to BFloat16 conversion
 description: |
-  No description available.
+  Converts each single-precision floating-point element in vector register vs2 to BFloat16 format, storing results in vector register vd according to mask vm. This is a narrowing conversion that compresses 32-bit single-precision values to 16-bit BFloat16 values.
 definedBy:
   extension:
     name: Zvfbfmin

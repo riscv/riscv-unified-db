@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwcvtbf16.f.f.v
-long_name: No synopsis available
+long_name: Vector widening BFloat16 to single-precision conversion
 description: |
-  No description available.
+  Converts each BFloat16 element in vector register vs2 to single-precision floating-point format, storing results in vector register vd according to mask vm. This is a widening conversion that expands 16-bit BFloat16 values to 32-bit single-precision values.
 definedBy:
   extension:
     name: Zvfbfmin
