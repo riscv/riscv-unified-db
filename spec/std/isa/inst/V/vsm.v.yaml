@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsm.v
-long_name: No synopsis available
+long_name: Vector store mask
 description: |
-  No description available.
+  Stores a vector mask from vector register vs2 to memory starting at address in xs1 register. This operation is used to save vector masks for later restoration.
 definedBy:
   extension:
     name: Zvl32b

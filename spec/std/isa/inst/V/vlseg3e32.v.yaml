@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vlseg3e32.v
-long_name: No synopsis available
+long_name: Vector segmented load 3 elements of 32 bits
 description: |
-  No description available.
+  Loads 3 segments of 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. The effective element width is 32 bits regardless of SEW setting.
 definedBy:
   extension:
     name: Zvl32b
