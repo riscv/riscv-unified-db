@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsll.vv
-long_name: No synopsis available
+long_name: Vector shift left logical
 description: |
-  No description available.
+  Performs logical left shift on elements from vs2 using shift amounts from vs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
 definedBy:
   extension:
     name: Zvl32b
