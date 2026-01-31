@@ -19,6 +19,7 @@ class RegisterFile < TopLevelDatabaseObject
       enums do
         Zero = new("zero")
         ReturnAddress = new("return_address")
+        AlternateLinkRegister = new("alternate_link_register")
         StackPointer = new("stack_pointer")
         GlobalPointer = new("global_pointer")
         ThreadPointer = new("thread_pointer")

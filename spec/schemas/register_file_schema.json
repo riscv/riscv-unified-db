@@ -53,6 +53,7 @@
             "enum": [
               "zero",
               "return_address",
+              "alternate_link_register",
               "stack_pointer",
               "global_pointer",
               "thread_pointer",

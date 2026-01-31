@@ -46,7 +46,7 @@ registers:
   - name: x5
     abi_mnemonics: [t0]
     caller_saved: true
-    roles: [temporary, return_address]
+    roles: [temporary, alternate_link_register]
     description: Temporary register / linkage scratch.
   - name: x6
     abi_mnemonics: [t1]
