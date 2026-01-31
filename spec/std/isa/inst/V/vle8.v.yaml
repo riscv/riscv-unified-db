@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vle8.v
-long_name: No synopsis available
+long_name: Vector load 8-bit elements
 description: |
-  No description available.
+  Loads 8-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. The effective element width is 8 bits regardless of SEW setting. Supports vector masking and follows vector tail policy.
 definedBy:
   extension:
     name: Zvl32b
