@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vssra.vv
-long_name: No synopsis available
+long_name: "Vector signed shift right arithmetic"
 description: |
-  No description available.
+  Performs signed arithmetic right shift on elements from vector register vs2 by shift amounts from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit.
 definedBy:
   extension:
     name: Zvl32b

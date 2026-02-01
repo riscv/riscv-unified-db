@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsext.vf4
-long_name: No synopsis available
+long_name: "Vector sign-extend by factor of 4"
 description: |
-  No description available.
+  Sign-extends elements from vector register vs2 by a factor of 4 and stores results in vector register vd, using vector mask vm. The operation extends SEW to 4×SEW.
 definedBy:
   extension:
     name: Zvl32b
