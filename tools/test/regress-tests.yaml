@@ -14,7 +14,7 @@ tests:
         run: ./do test:idlc:unit
     gh_post:
       - name: Upload idlc coverage reports to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
