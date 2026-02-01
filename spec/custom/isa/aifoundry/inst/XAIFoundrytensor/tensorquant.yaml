@@ -1,0 +1,32 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: tensorquant
+long_name: TensorQuant
+description: |
+  Perform quantization or other transformations on the A matrix in scratchpad. Used to
+  convert between data formats for efficient tensor operations.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundrytensor
+base: 32
+encoding:
+  match: 0010110----------111-----0001011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: xd, xs1, xs2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: maskor
+long_name: Mask register OR
+description: |
+  Perform bitwise OR of two mask registers, writing the result to the
+  destination mask register. md = ms1 OR ms2.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundrymask
+base: 32
+encoding:
+  match: 000001000000-----111-----1111011
+  variables:
+    - name: ms2
+      location: 22-20
+    - name: ms1
+      location: 17-15
+    - name: md
+      location: 9-7
+assembly: md, ms1, ms2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

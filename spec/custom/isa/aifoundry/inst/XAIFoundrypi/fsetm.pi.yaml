@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fsetm.pi
+long_name: Set mask from packed integer comparison
+description: |
+  Set mask register from a packed integer comparison of the two source
+  registers. The result is written to a mask destination register with one
+  bit per lane indicating the comparison outcome.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundrypi
+base: 32
+encoding:
+  match: 1010001----------110-----1111011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: md, fs1, fs2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

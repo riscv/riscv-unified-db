@@ -1,0 +1,33 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: cachelock
+long_name: Cache Lock
+description: |
+  Lock a cache line to prevent eviction. The line at the specified address is zeroed and
+  locked into L1. Encoded as a CSR write to ucache_control or mcache_control with
+  CacheOp=Lock.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundrycache
+base: 32
+encoding:
+  match: -----------------001-----1110011
+  variables:
+    - name: csr
+      location: 31-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: xd, csr, xs1
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

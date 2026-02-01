@@ -1,0 +1,30 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: XAIFoundryipi
+type: unprivileged
+long_name: AI Foundry Inter-Processor Interrupt extension
+company:
+  name: AI Foundry
+  url: https://github.com/aifoundry-org
+versions:
+- version: "1.0.0"
+  state: development
+  ratification_date: null
+  contributors:
+  - name: Gianluca Guida
+    company: AI Foundry
+description: |
+  The Inter-Processor Interrupt (IPI) extension provides a mechanism for sending
+  interrupts between ET-Minion cores within the ET-SoC-1.
+
+  IPIs are triggered via the IPI_TRIGGER ESR (memory-mapped at address 0x01_C034_0090)
+  and cleared via the IPI_TRIGGER_CLEAR ESR (address 0x01_C034_0098).
+
+  These are Esperanto System Registers (ESRs), which are memory-mapped registers
+  (not CSR-space registers). They are accessed via normal load/store operations
+  to their physical addresses.

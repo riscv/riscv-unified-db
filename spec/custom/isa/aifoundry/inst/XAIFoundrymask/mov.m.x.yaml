@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: mov.m.x
+long_name: Move single mask register to integer register
+description: |
+  Move the contents of a single mask register ms1 to the integer destination
+  register rd, zero-extended to fill the full register width.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundrymask
+base: 32
+encoding:
+  match: 000110000000-----111-----1111011
+  variables:
+    - name: ms1
+      location: 17-15
+    - name: rd
+      location: 11-7
+assembly: xd, ms1
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

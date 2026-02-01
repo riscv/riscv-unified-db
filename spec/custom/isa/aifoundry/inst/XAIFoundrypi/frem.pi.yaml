@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: frem.pi
+long_name: Packed integer remainder signed
+description: |
+  Perform element-wise signed integer remainder across all 8 INT32 lanes
+  of the packed integer source registers, writing the remainder to the
+  destination packed integer register. Software emulated via trap to M-mode.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundrypi
+base: 32
+encoding:
+  match: 0010011------------------1111011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rm
+      location: 14-12
+    - name: rd
+      location: 11-7
+assembly: fd, fs1, fs2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

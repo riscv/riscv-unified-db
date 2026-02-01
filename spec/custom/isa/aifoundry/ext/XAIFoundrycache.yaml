@@ -1,0 +1,43 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: XAIFoundrycache
+type: unprivileged
+long_name: AI Foundry Cache Control extension
+company:
+  name: AI Foundry
+  url: https://github.com/aifoundry-org
+versions:
+- version: "1.0.0"
+  state: development
+  ratification_date: null
+  contributors:
+  - name: Gianluca Guida
+    company: AI Foundry
+description: |
+  The Cache Control extension provides instructions and CSRs for managing the ET-Minion's
+  data cache hierarchy.
+
+  Each ET-Minion core has a 4 KB L1 data cache (16-set, 4-way, 64-byte lines) that can
+  be configured as:
+
+  * Shared mode (C0): dynamically shared between the two hardware threads
+  * Split mode (C1): hard-partitioned, each thread gets 2 KB
+  * Scratchpad mode (C2): 1 KB cache + 3 KB scratchpad (only in split mode)
+
+  Cache configuration is controlled via the `mcache_control` (M-mode) and `ucache_control`
+  (U-mode, restricted view) CSRs.
+
+  Cache control operations are encoded as CSR writes and include:
+
+  * Flush: write back dirty lines to next cache level
+  * Invalidate: discard cache lines without writeback
+  * FlushInvalidate: write back then invalidate
+  * Lock: lock cache lines to prevent eviction
+  * Prefetch: bring data into cache from memory
+
+  These operations can target L1, L2, L3, or memory levels.

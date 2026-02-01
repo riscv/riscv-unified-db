@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fnmsub.ps
+long_name: Packed single negated fused multiply-subtract
+description: |
+  Packed single negated fused multiply-subtract: fd[i] = -(fs1[i]*fs2[i]) + fs3[i].
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundryps
+base: 32
+encoding:
+  match: -----10------------------1011011
+  variables:
+    - name: rs3
+      location: 31-27
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rm
+      location: 14-12
+    - name: rd
+      location: 11-7
+assembly: fd, fs1, fs2, fs3
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

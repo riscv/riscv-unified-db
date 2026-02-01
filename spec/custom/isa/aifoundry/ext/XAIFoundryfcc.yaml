@@ -1,0 +1,32 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: XAIFoundryfcc
+type: unprivileged
+long_name: AI Foundry Fast Credit Counter extension
+company:
+  name: AI Foundry
+  url: https://github.com/aifoundry-org
+versions:
+- version: "1.0.0"
+  state: development
+  ratification_date: null
+  contributors:
+  - name: Gianluca Guida
+    company: AI Foundry
+description: |
+  The Fast Credit Counter (FCC) extension provides hardware credit-based flow control
+  for inter-core synchronization within a Shire.
+
+  Credit counters are incremented via the CREDINC0-CREDINC3 Esperanto System Registers
+  (ESRs, memory-mapped) and read/decremented via the FCC and FCCNB CSRs.
+
+  * `FCC` CSR: Read blocks until the credit counter is non-zero, then decrements it.
+  * `FCCNB` CSR: Non-blocking read; returns the current counter value without blocking.
+
+  The CREDINC ESRs are memory-mapped registers at Shire-specific addresses and are used
+  by other cores to send credits to a target core.

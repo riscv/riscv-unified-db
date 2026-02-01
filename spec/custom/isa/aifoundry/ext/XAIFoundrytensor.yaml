@@ -1,0 +1,56 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: XAIFoundrytensor
+type: unprivileged
+long_name: AI Foundry Tensor extension
+company:
+  name: AI Foundry
+  url: https://github.com/aifoundry-org
+versions:
+- version: "1.0.0"
+  state: development
+  ratification_date: null
+  contributors:
+  - name: Gianluca Guida
+    company: AI Foundry
+  requires:
+    allOf:
+    - name: XAIFoundryps
+      version: ">= 1.0.0"
+description: |
+  The Tensor extension adds matrix multiply and related tensor operations to the ET-Minion
+  core's Vector Processing Unit (VPU).
+
+  Tensor operations are multi-cycle state-machine operations that perform matrix
+  computations using the VPU's 8 lanes. Matrices are stored in the L1 scratchpad
+  (A matrix in row-major, B matrix in column-major) and results accumulate in
+  FP registers.
+
+  The extension provides:
+
+  * *Tensor Load*: Load data from memory to L1 scratchpad, with support for
+    interleaving (8/16-bit) and transposition (8/16/32-bit).
+  * *Tensor Load L2 SCP*: Load data into the L2 scratchpad.
+  * *Tensor FMA16A32*: FP16 matrix multiply accumulating into FP32.
+  * *Tensor IMA8A32*: INT8 matrix multiply accumulating into INT32.
+  * *Tensor FMA32*: FP32 matrix multiply accumulating into FP32.
+  * *Tensor Quant*: Matrix A transformations (quantization).
+  * *Tensor Store*: Store matrix A from scratchpad to memory.
+  * *Tensor Store from SCP*: Store data directly from L1 scratchpad.
+  * *Tensor Send/Recv*: Transfer values between FP registers and the tensor unit.
+  * *Tensor Reduce*: Reduction operations on FP register values.
+  * *Tensor Broadcast*: Broadcast from FP registers to tensor unit.
+  * *Tensor Wait*: Wait for tensor operations to complete.
+
+  The extension also defines several CSRs:
+
+  * `tensor_mask` (0x805): Mask for tensor operations
+  * `tensor_conv_size` (0x802): Convolution size parameters
+  * `tensor_conv_ctrl` (0x803): Convolution control
+  * `tensor_coop` (0x804): Cooperative tensor load control
+  * `tensor_error` (0x808): Error status for tensor operations

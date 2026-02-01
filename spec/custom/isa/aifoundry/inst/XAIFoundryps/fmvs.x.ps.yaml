@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fmvs.x.ps
+long_name: Move PS element to integer register sign-extended
+description: |
+  Move element idx from PS register to integer register rd, sign-extended.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundryps
+base: 32
+encoding:
+  match: 111000000--------010-----1111011
+  variables:
+    - name: idx
+      location: 22-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: xd, fs1, idx
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

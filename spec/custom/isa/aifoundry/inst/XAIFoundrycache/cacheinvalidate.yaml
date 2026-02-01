@@ -1,0 +1,33 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: cacheinvalidate
+long_name: Cache Invalidate
+description: |
+  Invalidate cache lines without writeback. Encoded as a CSR write to ucache_control or
+  mcache_control with CacheOp=Invalidate. Discards cache lines at the specified cache
+  level without writing dirty data back to the next level.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundrycache
+base: 32
+encoding:
+  match: -----------------001-----1110011
+  variables:
+    - name: csr
+      location: 31-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: xd, csr, xs1
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

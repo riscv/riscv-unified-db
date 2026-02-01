@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: bitmixb
+long_name: Bit mix of lower 24 bits
+description: |
+  Bit mix of lower 24 bits from two source registers.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundryps
+base: 32
+encoding:
+  match: 0111100----------000-----1111011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: fd, fs1, fs2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

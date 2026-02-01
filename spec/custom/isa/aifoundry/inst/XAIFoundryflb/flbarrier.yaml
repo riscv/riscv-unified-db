@@ -1,0 +1,29 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: flbarrier
+long_name: FLBarrier
+description: |
+  Execute a barrier synchronization among all participating ET-Minion cores within the
+  Shire. The core stalls until all cores in the barrier group have executed FLBarrier.
+  The barrier group is configured via Shire ESR registers.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundryflb
+base: 32
+encoding:
+  match: 00000000000000000111-----0001011
+  variables:
+    - name: rd
+      location: 11-7
+assembly: xd
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

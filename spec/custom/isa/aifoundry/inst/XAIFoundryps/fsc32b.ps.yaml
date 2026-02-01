@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fsc32b.ps
+long_name: Scatter bytes to 32-byte aligned block
+description: |
+  Scatter bytes to a 32-byte aligned block.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundryps
+base: 32
+encoding:
+  match: 1101010----------001-----0001011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rs3
+      location: 11-7
+assembly: fs3, fs2(xs1)
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fltm.pi
+long_name: Packed integer less-than to mask
+description: |
+  Perform element-wise signed less-than comparison across all 8 INT32 lanes
+  of the packed integer source registers, writing the result to a mask
+  destination register with one bit per lane.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundrypi
+base: 32
+encoding:
+  match: 1010001----------101-----1111011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: md, fs1, fs2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

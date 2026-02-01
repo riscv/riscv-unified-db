@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fschl.ps
+long_name: Scatter halfword local PS
+description: |
+  Scatter halfwords to local memory using per-lane addresses.
+definedBy:
+  anyOf:
+    - XAIFoundry
+    - XAIFoundryamo
+base: 32
+encoding:
+  match: 1101010----------001-----0001011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rs3
+      location: 11-7
+assembly: fs3, fs2(xs1)
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
