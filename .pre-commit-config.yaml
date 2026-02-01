@@ -97,7 +97,7 @@ repos:
       #   args: ["--schemafile", "spec/schemas/manual_version_schema.json"]
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: "v20.1.0"
+    rev: "v20.1.8"
     hooks:
       - id: clang-format
         stages: [pre-commit]
