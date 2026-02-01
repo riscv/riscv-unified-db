@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vxor.vi
-long_name: No synopsis available
+long_name: "Vector bitwise XOR with immediate"
 description: |
-  No description available.
+  Performs bitwise XOR operation on elements from vector register vs2 and immediate value and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
     name: Zvl32b
