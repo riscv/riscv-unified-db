@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vlsseg2e64.v
-long_name: No synopsis available
+long_name: "Vector strided load 2 elements of 64 bits"
 description: |
-  No description available.
+  Loads 2 segments of 64-bit elements from memory starting at address in xs1 register with stride, using vector mask vm, and stores results in vector register vd. The effective element width is 64 bits.
 definedBy:
   extension:
     name: Zvl32b
