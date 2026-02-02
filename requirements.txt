@@ -1,4 +1,4 @@
-pre_commit==4.0.1
+pre_commit==4.5.1
 check-jsonschema==0.36.1
 jsonschema==4.26.0
 tqdm==4.67.2
