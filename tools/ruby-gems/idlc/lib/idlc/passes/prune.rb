@@ -18,9 +18,9 @@ end
 
 def create_bool_literal(value)
   if value
-    Idl::IdAst.new("true", 0..4)
+    Idl::IdAst.new("true", 0..4, "true")
   else
-    Idl::IdAst.new("false", 0..5)
+    Idl::IdAst.new("false", 0..5, "false")
   end
 end
 

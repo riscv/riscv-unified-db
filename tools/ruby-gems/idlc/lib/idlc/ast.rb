@@ -8729,8 +8729,10 @@ end,
       stmts.all? { |stmt| stmt.const_eval?(symtab) }
     end
 
-    def stmts = @children
+    sig { returns(T::Array[StatementAst]) }
+    def stmts = T.cast(@children, T::Array[StatementAst])
 
+    sig { params(input: String, interval: T::Range[Integer], body_stmts: T::Array[StatementAst]).void }
     def initialize(input, interval, body_stmts)
       if body_stmts.empty?
         super("", 0...0, EMPTY_ARRAY)
@@ -8880,7 +8882,9 @@ end,
     sig { returns(IfBodyAst) }
     def body = T.cast(@children.fetch(1), IfBodyAst)
 
-    def initialize(input, interval, cond, body)
+    sig { params(input: String, interval: T::Range[Integer], body_interval: T::Range[Integer], cond: RvalueAst, body_stmts: T::Array[StatementAst]).void }
+    def initialize(input, interval, body_interval, cond, body_stmts)
+      body = IfBodyAst.new(input, body_interval, body_stmts)
       super(input, interval, [cond, body])
     end
 
@@ -8946,10 +8950,12 @@ end,
 
       input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
       interval = interval_from_source_yaml(yaml.fetch("source"))
+      body = AstNode.from_h(yaml.fetch("body"), source_mapper)
       ElseIfAst.new(
         input, interval,
+        body.interval,
         AstNode.from_h(yaml.fetch("condition"), source_mapper),
-        AstNode.from_h(yaml.fetch("body"), source_mapper)
+        body.stmts
       )
     end
   end
@@ -8968,7 +8974,7 @@ end,
             stmts << e.e.to_ast
           end
           elseif_body = IfBodyAst.new(input, eif.body.interval, stmts)
-          eifs << ElseIfAst.new(input, eif.interval, eif.expression.to_ast, elseif_body)
+          eifs << ElseIfAst.new(input, eif.interval, elseif_body.interval, eif.expression.to_ast, elseif_body.stmts)
         end
       end
       final_else_stmts = T.let([], T::Array[AstNode])
