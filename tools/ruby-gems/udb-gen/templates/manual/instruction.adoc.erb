@@ -58,7 +58,7 @@ RV64::
 [source,idl]
 ----
 <%- if inst.has_format? %>
-<%-   inst.format.format_for(Condition.new({ "xlen" => inst.base.nil? ? 64 : inst.base}, cfg_arch)).operands.each do |operand| -%>
+<%-   inst.format_for(Udb::Condition.new({ "xlen" => inst.base.nil? ? 64 : inst.base}, cfg_arch)).operands.each do |operand| -%>
 <%=     operand.signed? ? 'signed ' : '' %>Bits<<%= operand.size %> <%= operand.name %> = <%= operand.decode_idl %>;
 <%-   end -%>
 <%- else -%>

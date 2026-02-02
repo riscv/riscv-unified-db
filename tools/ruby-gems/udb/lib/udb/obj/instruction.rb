@@ -1522,7 +1522,6 @@ module Udb
             (profile.mandatory_condition & ext_req.to_condition & -defined_by_condition).unsatisfiable?
           end
         end
-      puts "#{name} (optional): #{@profiles_optioning_inst.map(&:name)}"
       @profiles_optioning_inst
     end
   end
