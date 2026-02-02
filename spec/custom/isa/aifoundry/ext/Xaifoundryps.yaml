@@ -1,0 +1,60 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Xaifoundryps
+type: unprivileged
+long_name: AI Foundry Packed Single (PS) SIMD extension
+company:
+  name: AI Foundry
+  url: https://github.com/aifoundry-org
+versions:
+- version: "1.0.0"
+  state: development
+  ratification_date: null
+  contributors:
+  - name: Gianluca Guida
+    company: AI Foundry
+  requires:
+    allOf:
+    - name: F
+      version: ">= 2.2.0"
+    - name: Xaifoundrymask
+      version: ">= 1.0.0"
+description: |
+  The Packed Single (PS) extension adds SIMD instructions that operate on 8 x FP32 values
+  packed within 256-bit floating-point registers.
+
+  The extension widens the RISC-V floating-point registers from 32 bits (FLEN=32 for RV64F)
+  to 256 bits (FLEN=256), so each FP register holds 8 elements of 32 bits each (e0 through e7).
+
+  All PS instructions execute under the control of the m0 mask register. When a bit in m0
+  is clear, the corresponding lane's result is zero.
+
+  Scalar floating-point operations (RV64F) operate on the low 32 bits (e0) and set
+  bits 255:32 to zero.
+
+  The PS extension includes:
+
+  * Load/Store: FLQ2, FSQ2, FLW.PS, FSW.PS
+  * Broadcast: FBC.PS, FBCX.PS, FBCI.PS
+  * Gather/Scatter: FGW.PS, FGH.PS, FGB.PS, FSCW.PS, FSCH.PS, FSCB.PS
+  * Restricted Gather/Scatter: FG32W.PS, FG32H.PS, FG32B.PS, FSC32W.PS, FSC32H.PS, FSC32B.PS
+  * Arithmetic: FADD.PS, FSUB.PS, FMUL.PS, FDIV.PS, FMIN.PS, FMAX.PS, FSQRT.PS
+  * FMA: FMADD.PS, FMSUB.PS, FNMADD.PS, FNMSUB.PS
+  * Conditional: FCMOV.PS, FCMOVM.PS
+  * Convert: FCVT.PW.PS, FCVT.PWU.PS, FCVT.PS.PW, FCVT.PS.PWU, and many more format conversions
+  * Sign manipulation: FSGNJ.PS, FSGNJN.PS, FSGNJX.PS
+  * Move: FMVZ.X.PS, FMVS.X.PS
+  * Compare: FEQ.PS, FLE.PS, FLT.PS, FEQM.PS, FLEM.PS, FLTM.PS, FCLASS.PS
+  * Transcendental: FSIN.PS, FEXP.PS, FLOG.PS, FRCP.PS, FRSQ.PS
+  * Misc: FSWIZZ.PS, FFRC.PS, FROUND.PS, CUBEFACE.PS, CUBEFACEIDX.PS, BITMIXB
+
+  Note: FDIV.PS, FSQRT.PS, FRSQ.PS, and FSIN.PS have no hardware implementation
+  and trap to M-mode (cause 30) for software emulation.
+
+  Input denormals are flushed to zero; the InputDenorm sticky flag (fcsr[31] / fflags[31])
+  is set when this occurs.

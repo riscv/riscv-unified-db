@@ -1,0 +1,28 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Xaifoundryflb
+type: unprivileged
+long_name: AI Foundry Fast Local Barrier extension
+company:
+  name: AI Foundry
+  url: https://github.com/aifoundry-org
+versions:
+- version: "1.0.0"
+  state: development
+  ratification_date: null
+  contributors:
+  - name: Gianluca Guida
+    company: AI Foundry
+description: |
+  The Fast Local Barrier (FLB) extension provides a hardware barrier synchronization
+  mechanism for the 32 ET-Minion cores within a single Shire.
+
+  The `FLBarrier` instruction allows a core to participate in a barrier and wait until
+  all participating cores have reached the barrier point. This is implemented in the
+  Shire's Uncacheable Block (UC) hardware and is much faster than software-based
+  barrier implementations using memory-mapped synchronization.

@@ -1,0 +1,45 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Xaifoundryamo
+type: unprivileged
+long_name: AI Foundry Local/Global Atomic extension
+company:
+  name: AI Foundry
+  url: https://github.com/aifoundry-org
+versions:
+- version: "1.0.0"
+  state: development
+  ratification_date: null
+  contributors:
+  - name: Gianluca Guida
+    company: AI Foundry
+  requires:
+    allOf:
+    - name: Xaifoundryps
+      version: ">= 1.0.0"
+    - name: Xaifoundrypi
+      version: ">= 1.0.0"
+description: |
+  The Atomic extension adds local and global atomic operations for the ET-SoC-1.
+
+  The ET-SoC-1 distinguishes between two types of atomic operations:
+
+  * *Local* atomics (suffix `L`): resolved at the Shire Cache level.
+    These operate within the 32-core Shire and are faster but have limited scope.
+  * *Global* atomics (suffix `G`): resolved at the Memory Controller level.
+    These operate across the entire chip and are used for inter-Shire synchronization.
+
+  The extension provides atomic operations on:
+
+  * Packed Single (PS) vectors: load/store/gather/scatter with local/global variants
+  * Packed Integer (PI) vectors: AMO operations (add, swap, and, or, xor, min, max)
+    with local/global variants
+  * Packed Single (PS) FP: AMO min/max with local/global variants
+  * Scalar word (W) and doubleword (D): AMO operations (swap, add, xor, and, or,
+    min, max, minu, maxu, compare-and-swap) with local/global variants
+  * Sub-word stores: SBL, SHL (local byte/halfword store), SBG, SHG (global)

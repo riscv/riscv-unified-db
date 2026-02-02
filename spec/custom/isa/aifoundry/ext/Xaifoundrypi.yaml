@@ -1,0 +1,43 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Xaifoundrypi
+type: unprivileged
+long_name: AI Foundry Packed Integer (PI) SIMD extension
+company:
+  name: AI Foundry
+  url: https://github.com/aifoundry-org
+versions:
+- version: "1.0.0"
+  state: development
+  ratification_date: null
+  contributors:
+  - name: Gianluca Guida
+    company: AI Foundry
+  requires:
+    allOf:
+    - name: F
+      version: ">= 2.2.0"
+    - name: Xaifoundrymask
+      version: ">= 1.0.0"
+description: |
+  The Packed Integer (PI) extension adds SIMD instructions that interpret the 256-bit
+  floating-point registers as containing 8 x INT32/UINT32 values.
+
+  All PI instructions execute under the control of the m0 mask register.
+
+  The PI extension includes:
+
+  * Broadcast: FBCI.PI
+  * Arithmetic: FADD.PI, FADDI.PI, FSUB.PI, FMUL.PI, FMULH.PI, FMULHU.PI
+  * Division: FDIV.PI, FDIVU.PI, FREM.PI, FREMU.PI (all software-emulated via trap to M-mode)
+  * Min/Max: FMIN.PI, FMAX.PI, FMINU.PI, FMAXU.PI
+  * Logical: FAND.PI, FANDI.PI, FOR.PI, FNOT.PI, FXOR.PI
+  * Saturation: FSAT8.PI, FSATU8.PI
+  * Shift: FSLL.PI, FSLLI.PI, FSRL.PI, FSRLI.PI, FSRA.PI, FSRAI.PI
+  * Compare: FEQ.PI, FLE.PI, FLT.PI, FLTU.PI, FLTM.PI, FSETM.PI
+  * Pack: FPACKREPH.PI, FPACKREPB.PI, PACKB

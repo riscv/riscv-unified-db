@@ -1,0 +1,93 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Xaifoundry
+type: unprivileged
+long_name: AI Foundry ET-SoC-1 Esperanto custom extensions
+company:
+  name: AI Foundry
+  url: https://github.com/aifoundry-org
+versions:
+- version: "1.0.0"
+  state: development
+  ratification_date: null
+  contributors:
+  - name: Gianluca Guida
+    company: AI Foundry
+  implies:
+  - { name: Xaifoundryps, version: "1.0.0" }
+  - { name: Xaifoundrypi, version: "1.0.0" }
+  - { name: Xaifoundrymask, version: "1.0.0" }
+  - { name: Xaifoundryamo, version: "1.0.0" }
+  - { name: Xaifoundrytensor, version: "1.0.0" }
+  - { name: Xaifoundrycache, version: "1.0.0" }
+  - { name: Xaifoundryflb, version: "1.0.0" }
+  - { name: Xaifoundryfcc, version: "1.0.0" }
+  - { name: Xaifoundryipi, version: "1.0.0" }
+  requires:
+    allOf:
+    - name: I
+      version: ">= 2.1.0"
+    - name: M
+      version: ">= 2.0.0"
+    - name: F
+      version: ">= 2.2.0"
+    - name: C
+      version: ">= 2.0.0"
+    - name: Zicsr
+      version: ">= 2.0.0"
+    - name: Zifencei
+      version: ">= 2.0.0"
+description: |
+  The AI Foundry ET-SoC-1 extensions are the custom RISC-V instruction set extensions
+  originally designed by Esperanto Technologies for the ET-SoC-1 manycore AI accelerator chip,
+  now open-sourced under the AI Foundry umbrella.
+
+  The ET-SoC-1 contains 1,088 in-order ET-Minion cores (RV64IMFC + custom extensions),
+  four out-of-order ET-Maxion cores, and one Service Processor core.
+
+  Each ET-Minion core includes an 8-lane SIMD vector/tensor processing unit (VPU) that
+  extends the floating-point registers from 32 bits to 256 bits (8 x 32-bit lanes), and adds
+  8 mask registers (m0-m7) of 8 bits each.
+
+  The custom extensions are organized into the following sub-extensions:
+
+  * *Xaifoundryps* -- Packed Single (PS) instructions for 8xFP32 SIMD operations
+  * *Xaifoundrypi* -- Packed Integer (PI) instructions for 8xINT32 SIMD operations
+  * *Xaifoundrymask* -- Mask register operations (m0-m7)
+  * *Xaifoundryamo* -- Local and Global atomic operations
+  * *Xaifoundrytensor* -- Tensor/matrix multiply operations
+  * *Xaifoundrycache* -- Cache control operations
+  * *Xaifoundryflb* -- Fast Local Barrier synchronization
+  * *Xaifoundryfcc* -- Fast Credit Counter synchronization
+  * *Xaifoundryipi* -- Inter-Processor Interrupt facility
+
+  The ET-Minion core implements RISC-V privileged architecture v1.11 with the following
+  deviations:
+
+  * Performance counters are shared across 8 cores in a PMU unit, not per-hart.
+    `minstret` and `mcycle` CSRs always return 0.
+  * The `satp` CSR is shared between both hardware threads of a core.
+  * `mtvec`/`stvec` must be aligned to 4 KB.
+  * WFI in U-mode always causes an illegal instruction exception.
+  * No hardware division or square root -- these instructions trap to M-mode
+    (cause 30, "M-code emulation") for software emulation.
+  * Input denormals are flushed to zero in hardware.
+exception_codes:
+  - num: 30
+    name: M-code emulation
+    var: CAUSE_MCODE_EMULATION
+interrupt_codes:
+  - num: 16
+    name: Bad IPI redirect
+    var: CAUSE_MBAD_RED
+  - num: 19
+    name: I-cache ECC counter overflow
+    var: CAUSE_MIECO
+  - num: 23
+    name: Bus error
+    var: CAUSE_BUS_ERROR
