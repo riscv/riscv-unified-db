@@ -314,6 +314,42 @@ The following <%= csr_list.size %> CSRs are affected by this extension.
 
 <%- end # unless csrs.empty? -%>
 
+<%- unless ext.mmrs.empty? -%>
+<<<
+== MMR summary
+
+<%- mmr_list = ext.mmrs.select { |mmr| versions.any? { |ext_ver| mmr.affected_by?(ext_ver) } } -%>
+
+The following <%= mmr_list.size %> memory-mapped register(s) are affected by this extension.
+
+[%autowidth]
+|===
+| MMR | Name | Physical Address <%- if versions.size > 1 -%>| <%= versions.map { |v| "v#{v.version}" }.join(" | ") %><%- end -%>
+
+<%- mmr_list.each do |mmr| -%>
+| xref:mmrs-<%= mmr.name.gsub('.', '_') %>[<%= mmr.name %>]
+| <%= mmr.long_name %>
+| <%= "0x#{mmr.physical_address.to_s(16).upcase}" %>
+<%- if versions.size > 1 -%>
+| <%= ext.versions.map { |v| mmr.affected_by?(v) ? "&#x2713;" : "" }.join(" | ") %>
+<%- end -%>
+<%- end -%>
+
+|===
+
+<<<
+[#mmrs,reftext="MMRs (in alphabetical order)"]
+== MMRs (in alphabetical order)
+
+<%- ext.mmrs.each do |mmr| -%>
+<<<
+:leveloffset: +2
+<%= partial "common_templates/adoc/mmr.adoc.erb", { mmr: mmr, cfg_arch: cfg_arch } %>
+:leveloffset: -2
+<%- end -%>
+
+<%- end # unless mmrs.empty? -%>
+
 <%- unless ext.instructions.empty? -%>
 <<<
 [#insns,reftext="Instructions (in alphabetical order)"]

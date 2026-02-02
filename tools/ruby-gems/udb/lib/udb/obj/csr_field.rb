@@ -21,8 +21,8 @@ class CsrField < DatabaseObject
 
   include Idl::CsrField
 
-  # @return [Csr] The Csr that defines this field
-  sig { returns(Csr) }
+  # @return [Csr, Mmr] The Csr or Mmr that defines this field
+  sig { returns(T.any(Csr, Mmr)) }
   attr_reader :parent
 
   # @!attribute field
@@ -36,9 +36,9 @@ class CsrField < DatabaseObject
   sig { returns(T.nilable(Integer)) }
   def base = @data["base"]
 
-  # @param parent_csr [Csr] The Csr that defined this field
+  # @param parent_csr [Csr, Mmr] The Csr or Mmr that defined this field
   # @param field_data [Hash<String,Object>] Field data from the arch spec
-  sig { params(parent_csr: Csr, field_name: String, field_data: T::Hash[String, T.untyped]).void }
+  sig { params(parent_csr: T.any(Csr, Mmr), field_name: String, field_data: T::Hash[String, T.untyped]).void }
   def initialize(parent_csr, field_name, field_data)
     super(field_data, parent_csr.data_path, parent_csr.arch, DatabaseObject::Kind::CsrField, name: field_name)
     @parent = parent_csr

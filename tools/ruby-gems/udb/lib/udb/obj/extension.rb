@@ -137,6 +137,11 @@ class Extension < TopLevelDatabaseObject
     @csrs ||= cfg_arch.csrs.select { |csr| versions.any? { |v| csr.defined_by_condition.possibly_satisfied_by?(v) } }
   end
 
+  # @return [Array<Mmr>] the list of MMRs implemented by *any version* of this extension (may be empty)
+  def mmrs
+    @mmrs ||= cfg_arch.mmrs.select { |mmr| versions.any? { |v| mmr.defined_by_condition.possibly_satisfied_by?(v) } }
+  end
+
   # return the set of reachable functions from any of this extensions's CSRs or instructions in the given evaluation context
   #
   # @return [Array<Idl::FunctionDefAst>] Array of IDL functions reachable from any instruction or CSR in the extension
