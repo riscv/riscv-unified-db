@@ -1,0 +1,31 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fbc.ps
+long_name: Broadcast
+description: |
+  Load a 32-bit word from memory at rs1+imm and broadcast to all 8 elements of the destination PS register.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundryps
+base: 32
+encoding:
+  match: -----------------000-----0001011
+  variables:
+    - name: imm
+      location: 31-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: fd, imm(xs1)
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

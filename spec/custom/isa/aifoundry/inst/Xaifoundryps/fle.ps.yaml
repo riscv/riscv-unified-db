@@ -1,0 +1,31 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fle.ps
+long_name: Packed single compare less-or-equal
+description: |
+  Packed single compare less-or-equal.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundryps
+base: 32
+encoding:
+  match: 1010000----------000-----1111011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: xd, fs1, fs2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

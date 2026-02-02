@@ -1,0 +1,31 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: frsq.ps
+long_name: Packed single reciprocal square root
+description: |
+  Packed single reciprocal square root. Software emulated.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundryps
+base: 32
+encoding:
+  match: 011100000000-------------1111011
+  variables:
+    - name: rs1
+      location: 19-15
+    - name: rm
+      location: 14-12
+    - name: rd
+      location: 11-7
+assembly: fd, fs1
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

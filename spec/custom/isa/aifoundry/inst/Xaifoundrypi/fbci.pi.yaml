@@ -1,0 +1,30 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fbci.pi
+long_name: Broadcast immediate to packed integer lanes
+description: |
+  Broadcast a 20-bit immediate value to all 8 INT32 lanes of the destination
+  packed integer register.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundrypi
+base: 32
+encoding:
+  match: -------------------------0111111
+  variables:
+    - name: imm
+      location: 31-12
+    - name: rd
+      location: 11-7
+assembly: fd, imm
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

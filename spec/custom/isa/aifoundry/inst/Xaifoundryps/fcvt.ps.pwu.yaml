@@ -1,0 +1,31 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fcvt.ps.pwu
+long_name: Convert unsigned INT32 to FP32
+description: |
+  Convert 8 unsigned INT32 to FP32.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundryps
+base: 32
+encoding:
+  match: 1101000--00001-----------1111011
+  variables:
+    - name: rs1
+      location: 19-15
+    - name: rm
+      location: 14-12
+    - name: rd
+      location: 11-7
+assembly: fd, fs1
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

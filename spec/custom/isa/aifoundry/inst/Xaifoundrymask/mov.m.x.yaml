@@ -1,0 +1,33 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: mov.m.x
+long_name: Move single mask register to integer register
+description: |
+  Move eight least significant bits from integer register ORed with 8-bit
+  immediate to mask register. The immediate is split: bits 7:3 encoded in
+  instruction bits 24:20, bits 2:0 in instruction bits 14:12.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundrymask
+base: 32
+encoding:
+  match: 1101011-------------000001111011
+  variables:
+    - name: imm_hi
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: imm_lo
+      location: 14-12
+assembly: md, xs1, imm
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

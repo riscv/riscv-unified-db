@@ -1,0 +1,31 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: tensorsend
+long_name: TensorSend
+description: |
+  Send values from floating-point registers to the tensor execution unit for processing.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundrytensor
+base: 32
+encoding:
+  match: 0011100----------111-----0001011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: xd, xs1, xs2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

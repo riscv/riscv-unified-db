@@ -1,0 +1,34 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: amomaxg.w
+long_name: Atomic max global word
+description: |
+  Atomically compute the signed maximum of a 32-bit word in global memory via
+  memory controller and the value in rs2. The original memory value is loaded into rd.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundryamo
+base: 32
+encoding:
+  match: 10100-1----------010-----0101011
+  variables:
+    - name: aq
+      location: 26
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: xd, xs2, (xs1)
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

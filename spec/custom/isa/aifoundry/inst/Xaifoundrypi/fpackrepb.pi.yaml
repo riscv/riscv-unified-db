@@ -1,0 +1,30 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fpackrepb.pi
+long_name: Pack and replicate byte
+description: |
+  Pack and replicate byte values from the packed integer source register,
+  writing the result to the destination packed integer register.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundrypi
+base: 32
+encoding:
+  match: 010000100000-----001-----1111011
+  variables:
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: fd, fs1
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

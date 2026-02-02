@@ -1,0 +1,33 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: flt.pi
+long_name: Packed integer compare less-than signed
+description: |
+  Perform element-wise signed less-than comparison across all 8 INT32 lanes
+  of the packed integer source registers. The result is written to the packed
+  destination register (all 1s or all 0s per lane).
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundrypi
+base: 32
+encoding:
+  match: 1010001----------001-----1111011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: fd, fs1, fs2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

@@ -1,0 +1,32 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: maskand
+long_name: Mask register AND
+description: |
+  Perform bitwise AND of two mask registers, writing the result to the
+  destination mask register. md = ms1 AND ms2.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundrymask
+base: 32
+encoding:
+  match: 000000000000-----111-----1111011
+  variables:
+    - name: ms2
+      location: 22-20
+    - name: ms1
+      location: 17-15
+    - name: md
+      location: 9-7
+assembly: md, ms1, ms2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

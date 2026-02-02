@@ -1,0 +1,31 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: shl
+long_name: Store halfword local
+description: |
+  Store a halfword to local memory.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundryamo
+base: 32
+encoding:
+  match: 0000000----------001-----0101011
+  variables:
+    - name: rs2
+      location: 24-20
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: xs2, (xs1)
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always

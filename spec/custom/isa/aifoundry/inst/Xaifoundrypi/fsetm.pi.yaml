@@ -1,0 +1,30 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: fsetm.pi
+long_name: Set mask from packed integer comparison
+description: |
+  Set mask register bits based on packed integer source elements. Each mask bit
+  is set if the corresponding source element is non-zero.
+definedBy:
+  anyOf:
+    - Xaifoundry
+    - Xaifoundrypi
+base: 32
+encoding:
+  match: 101000100000-----110-----1111011
+  variables:
+    - name: rs1
+      location: 19-15
+    - name: rd
+      location: 11-7
+assembly: md, fs1
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
