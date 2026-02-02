@@ -36,7 +36,7 @@ repos:
         stages: [pre-commit]
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.5.3
+    rev: v3.8.1
     hooks:
       - id: prettier
         stages: [pre-commit]
