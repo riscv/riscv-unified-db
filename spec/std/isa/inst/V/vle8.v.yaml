@@ -11,7 +11,7 @@ description: |
   Move 8-bit values from memory to vector registers.
 definedBy:
   extension:
-    name: V
+    name: Zvl32b
 assembly: vd, (xs1), vm
 encoding:
   match: 000000-00000-----000-----0000111

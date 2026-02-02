@@ -28,7 +28,7 @@ mandatory_extensions:
 - name: M
   version: "~> 2.0"
 - name: U
-  version: "~> 2.0"
+  version: "~> 1.0"
 - name: Za128rs
   version: "~> 1.0"
 - name: Za64rs
@@ -91,6 +91,12 @@ non_mandatory_extensions:
 - name: Zama16b
   version: "~> 1.0"
 - name: Zbc
+  version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
+  version: "~> 1.0"
+- name: Zcf
   version: "~> 1.0"
 - name: Zfbfmin
   version: "~> 1.0"

@@ -1,0 +1,20 @@
+# Copyright (C) 2025-26 Harvey Mudd College
+# Author: James Kaden Cassidy (kacassidy@hmc.edu)
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: VILL_SET_ON_RESERVED_VTYPE
+description: |
+  Use of vtype encodings with LMUL < SEW_MIN/ELEN is reserved. Implementations
+  may set the `vill` status bit to indicate such vtype encodings are
+  unsupported, providing a software-visible indication of invalid vtype
+  selections.
+long_name: TODO
+schema:
+  type: boolean
+definedBy:
+  extension:
+    name: Zvl32b
