@@ -1,0 +1,29 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/mmr_schema.json
+
+$schema: mmr_schema.json#
+kind: mmr
+name: ipi_trigger
+long_name: Inter-Processor Interrupt Trigger
+description: |
+  Memory-mapped register used to trigger inter-processor interrupts (IPIs)
+  between ET-Minion cores within the ET-SoC-1.
+
+  Writing a 1 to bit 0 triggers an IPI to the target core.
+  The target core is determined by the physical address mapping.
+
+  This is an Esperanto System Register (ESR), accessed via normal
+  load/store operations to its physical address.
+definedBy: Xaifoundryipi
+physical_address: 0x01C0340090
+length: 64
+writable: true
+fields:
+  TRIGGER:
+    location: 63-0
+    description: |
+      Write 1 to corresponding bit to trigger an IPI to that hart.
+    type: RW
+    reset_value: 0

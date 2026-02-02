@@ -1,0 +1,23 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/mmr_schema.json
+
+$schema: mmr_schema.json#
+kind: mmr
+name: fast_local_barrier29
+long_name: Fast Local Barrier 29
+description: |
+  Memory-mapped register for fast local barrier 29. Used for low-latency
+  barrier synchronization between ET-Minion cores within a Shire.
+definedBy: Xaifoundryflb
+physical_address: 0x01C00401E8
+length: 64
+writable: true
+fields:
+  STATE:
+    location: 7-0
+    description: |
+      Barrier state.
+    type: RW
+    reset_value: 0

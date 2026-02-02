@@ -1,0 +1,23 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/mmr_schema.json
+
+$schema: mmr_schema.json#
+kind: mmr
+name: ipi_trigger_clear
+long_name: Inter-Processor Interrupt Trigger Clear
+description: |
+  Memory-mapped register used to clear pending inter-processor interrupts.
+  Writing a 1 to a bit clears the corresponding IPI.
+definedBy: Xaifoundryipi
+physical_address: 0x01C0340098
+length: 64
+writable: true
+fields:
+  CLEAR:
+    location: 63-0
+    description: |
+      Write 1 to clear corresponding IPI.
+    type: RW
+    reset_value: 0

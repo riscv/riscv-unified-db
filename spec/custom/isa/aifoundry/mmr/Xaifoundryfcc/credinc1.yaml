@@ -1,0 +1,23 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/mmr_schema.json
+
+$schema: mmr_schema.json#
+kind: mmr
+name: credinc1
+long_name: Credit Increment Register 1
+description: |
+  Memory-mapped register to increment fast credit counter 1.
+  Writing to this register adds credits to the specified counter.
+definedBy: Xaifoundryfcc
+physical_address: 0x01C0040208
+length: 64
+writable: true
+fields:
+  VALUE:
+    location: 63-0
+    description: |
+      Credit increment value (write-only).
+    type: RW
+    reset_value: 0

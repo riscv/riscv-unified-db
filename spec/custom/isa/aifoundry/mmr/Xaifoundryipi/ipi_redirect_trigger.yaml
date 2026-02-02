@@ -1,0 +1,23 @@
+# Copyright (c) AI Foundry
+# SPDX-License-Identifier: BSD-3-Clause
+
+# yaml-language-server: $schema=../../../../schemas/mmr_schema.json
+
+$schema: mmr_schema.json#
+kind: mmr
+name: ipi_redirect_trigger
+long_name: Inter-Processor Interrupt Redirect Trigger
+description: |
+  Memory-mapped register for IPI redirect trigger. Writing a 1 to a bit
+  triggers a redirected IPI to the corresponding hart.
+definedBy: Xaifoundryipi
+physical_address: 0x01C0040080
+length: 64
+writable: true
+fields:
+  TRIGGER:
+    location: 63-0
+    description: |
+      IPI redirect trigger bitmask.
+    type: RW
+    reset_value: 0
