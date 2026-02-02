@@ -40,6 +40,12 @@ extensions:
   A:
     presence: optional
     version: "~> 2.1"
+  Zaamo:
+    presence: optional
+    version: "~> 1.0"
+  Zalrsc:
+    presence: optional
+    version: "~> 1.0"
   C:
     presence: optional
     version: "~> 2.0"

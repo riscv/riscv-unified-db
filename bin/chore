@@ -30,6 +30,7 @@ gen_subcmd_usage() {
   echo ""
   echo "  all:           Generate all development artifacts"
   echo "  container-def: Generate Singularity container def from Dockerfile"
+  echo "  profile-cfgs:  Generate config files for profiles"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
   echo ""
@@ -107,9 +108,16 @@ do_gen_container_def() {
   chmod 444 container.def
 }
 
+do_gen_profile_cfgs() {
+  rm -rf cfgs/profile/*
+  ./do gen:cfg
+  chmod 444 cfgs/profile/*
+}
+
 do_gen_all() {
   do_gen_regress
   do_gen_container_def
+  do_gen_profile_cfgs
 }
 
 increment_minor_version() {
@@ -233,6 +241,10 @@ case "$subcommand" in
         ;;
       container-def )
         do_gen_container_def
+        exit 0
+        ;;
+      profile-cfgs )
+        do_gen_profile_cfgs
         exit 0
         ;;
       regress )

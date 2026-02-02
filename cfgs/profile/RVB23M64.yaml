@@ -65,6 +65,10 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za64rs
   version: "~> 1.0"
+- name: Zaamo
+  version: "~> 1.0"
+- name: Zalrsc
+  version: "~> 1.0"
 - name: Zawrs
   version: "~> 1.0"
 - name: Zba

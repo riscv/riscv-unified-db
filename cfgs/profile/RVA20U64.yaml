@@ -29,6 +29,10 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za128rs
   version: "~> 1.0"
+- name: Zaamo
+  version: "~> 1.0"
+- name: Zalrsc
+  version: "~> 1.0"
 - name: Ziccamoa
   version: "~> 1.0"
 - name: Ziccif
