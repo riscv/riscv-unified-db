@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../schemas/config_schema.json
+---
+$schema: config_schema.json#
+kind: architecture configuration
+type: partially configured
+name: aifoundry
+arch_overlay: aifoundry
+description: Configuration for AI Foundry ET-SoC-1 custom extensions.
+mandatory_extensions:
+  - name: "I"
+    version: ">= 2.1.0"
+  - name: "M"
+    version: ">= 2.0.0"
+  - name: "F"
+    version: ">= 2.2.0"
+  - name: "C"
+    version: ">= 2.0.0"
+  - name: "Zicsr"
+    version: ">= 2.0.0"
+  - name: "Zifencei"
+    version: ">= 2.0.0"
+  - name: "Xaifoundry"
+    version: ">= 1.0.0"
+params:
+  MXLEN: 64
