@@ -7224,8 +7224,7 @@ end,
     sig { returns(IfBodyAst) }
     def body = T.cast(@children.fetch(1), IfBodyAst)
 
-    def initialize(input, interval, body_interval, cond, body_stmts)
-      body = IfBodyAst.new(input, body_interval, body_stmts)
+    def initialize(input, interval, cond, body)
       super(input, interval, [cond, body])
     end
 
@@ -7291,7 +7290,8 @@ end,
           eif.body.elements.each do |e|
             stmts << e.e.to_ast
           end
-          eifs << ElseIfAst.new(input, eif.interval, eif.body.interval, eif.expression.to_ast, stmts)
+          body = IfBodyAst.new(input, eif.body.interval, stmts)
+          eifs << ElseIfAst.new(input, eif.interval, eif.expression.to_ast, body)
         end
       end
       final_else_stmts = T.let([], T::Array[AstNode])

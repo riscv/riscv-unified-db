@@ -1335,6 +1335,7 @@ module Udb
 
           if has_format?
             f64 = format_for(Condition.new({ "xlen" => 64 }, cfg_arch))
+            f64.size
           else
             encoding(64).size
           end
