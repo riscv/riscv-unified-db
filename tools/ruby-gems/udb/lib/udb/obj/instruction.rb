@@ -287,15 +287,19 @@ module Udb
     sig { returns(T::Boolean) }
     def has_format? = @data.key?("format")
 
-    class Opcode
+    class Opcode < Udb::EncodingField
       extend T::Sig
 
       sig { returns(Integer) }
       attr_reader :value
 
+      sig { returns(String) }
+      attr_reader :name
+
       sig { params(name: String, range: Range, value: Integer).void }
       def initialize(name, range, value)
-        super(name, range)
+        super(range)
+        @name = name
         @value = value
       end
 
@@ -389,27 +393,6 @@ module Udb
         end
       end
       bits
-    end
-
-    sig { params(inst: Instruction, base: Integer).void }
-    def self.validate_encoding(inst, base)
-      # make sure there is no overlap between variables/opcodes
-      (inst.opcodes(base) + inst.decode_variables(base)).combination(2) do |field1, field2|
-        raise "In instruction #{inst.name}, #{field1.name} and #{field2.name} overlap" if field1.overlaps?(field2)
-      end
-
-      # makes sure every bit is accounted for
-      inst.type(base).length.times do |i|
-        covered =
-          inst.opcodes(base).any? { |opcode| opcode.range.cover?(i) } || \
-          inst.decode_variables(base).any? { |var| var.location_bits.include?(i) }
-        raise "In instruction #{inst.name}, there is no opcode or variable at bit #{i}" unless covered
-      end
-
-      # make sure opcode values fit
-      inst.opcodes(base).each do |opcode|
-        raise "In instruction #{inst.name}, opcode #{opcode.name}, value #{opcode.value} does not fit in #{opcode.range}" unless T.must(opcode.range.size) >= opcode.value.bit_length
-      end
     end
 
     def self.deprecated_validate_encoding(encoding, inst_name)
