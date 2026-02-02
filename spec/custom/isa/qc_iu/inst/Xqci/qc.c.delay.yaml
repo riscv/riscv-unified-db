@@ -31,16 +31,10 @@ format:
       location: 11-7
       value: 0b00000
     - { $ref: inst_opcode/c2.yaml# }
-encoding:
-  match: "000000000-----10"
-  variables:
-    - name: imm
-      location: 6-2
-      not: 0
 access:
   s: always
   u: always
   vs: always
   vu: always
 operation(): |
-  delay(imm);
+  delay(uimm);

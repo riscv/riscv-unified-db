@@ -20,7 +20,7 @@ format:
   size: 16
   operands:
     - { $ref: inst_operand/xs1-xd-n0.yaml# }
-    - { $ref: inst_operand/qc.c.width_minu1-n0.yaml# }
+    - { $ref: inst_operand/qc.c.width_minus1-n0.yaml# }
   opcodes:
     - displayName: funct3
       location: 15-13

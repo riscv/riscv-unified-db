@@ -8,10 +8,9 @@ kind: instruction
 name: qc.outw
 long_name: Output word to non-memory-mapped device
 description: |
-  Output 32 bits of data from register `rs3` to a non-memory-mapped device.
+  Output 32 bits of data from register `xs3` to a non-memory-mapped device.
   Such devices have own address space, unrelated to memory map.
-  Device space address formed by adding `rs1` to  to a unsigned offset `uimm`.
-  Instruction encoded in I instruction format.
+  Device space address formed by adding `xs1` to  to a unsigned offset `uimm`.
 definedBy:
   allOf:
     - xlen: 32
@@ -23,7 +22,7 @@ format:
   operands:
     - $ref: inst_operand/qc.uimm15.yaml#
     - $ref: inst_operand/xs1.yaml#
-    - $ref: inst_operand/qc.rs3.yaml#
+    - $ref: inst_operand/qc.xs3.yaml#
   opcodes:
     - displayName: funct3
       location: 14-12
@@ -35,5 +34,5 @@ access:
   vs: always
   vu: always
 operation(): |
-  XReg device_address = X[rs1] + uimm;
-  write_device_32(device_address, X[rs3]);
+  XReg device_address = X[xs1] + uimm;
+  write_device_32(device_address, X[xs3]);

@@ -80,7 +80,13 @@ module Udb
       def operands
         @operands ||=
           if @data.key?("operands")
-            @data.fetch("operands").map { |o| @inst.cfg_arch.ref(o.fetch("$ref")) }
+            @data.fetch("operands").map do |o|
+              ptr = @inst.cfg_arch.ref(o.fetch("$ref"))
+              if ptr.nil?
+                raise "Broken operand $ref in '#{@inst.name}': #{o.fetch("$ref")}"
+              end
+              T.cast(ptr, InstructionOperand)
+            end
           else
             []
           end
@@ -528,7 +534,6 @@ module Udb
       if has_format?
         format_for(Condition.new({ "xlen" => effective_xlen }, cfg_arch)).operands.each do |operand|
           qualifiers = [:const]
-          qualifiers << :signed if operand.signed?
           width = operand.size
 
           var = Idl::Var.new(operand.var_name, Idl::Type.new(:bits, qualifiers:, width:), decode_var: true)

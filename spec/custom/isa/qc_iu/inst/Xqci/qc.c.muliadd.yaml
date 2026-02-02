@@ -32,6 +32,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  XReg src = creg2reg(rs1);
+  XReg src = xs1;
   XReg orig_val = X[xd];
   X[xd] = orig_val + (X[xs1] * uimm);
