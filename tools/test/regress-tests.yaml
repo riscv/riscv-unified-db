@@ -14,7 +14,7 @@ tests:
         run: ./do test:idlc:unit
     gh_post:
       - name: Upload idlc coverage reports to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
@@ -120,7 +120,7 @@ tests:
       - name: Rename coverage file
         run: mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
       - name: Save coverage report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: udb-${{ matrix.test }}-cov
           path: tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json

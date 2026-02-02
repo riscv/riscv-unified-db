@@ -5,7 +5,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-ast
         stages: [pre-commit]
@@ -36,7 +36,7 @@ repos:
         stages: [pre-commit]
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.5.3
+    rev: v3.8.1
     hooks:
       - id: prettier
         stages: [pre-commit]
@@ -97,7 +97,7 @@ repos:
       #   args: ["--schemafile", "spec/schemas/manual_version_schema.json"]
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: "v20.1.0"
+    rev: "v20.1.8"
     hooks:
       - id: clang-format
         stages: [pre-commit]
@@ -107,7 +107,7 @@ repos:
         # WIll RE-ENABLE WHEN NEXT PATCH COMES THROUGH
         exclude: backends/cpp_hart_gen
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.11
+    rev: v0.14.14
     hooks:
       - id: ruff-check
         stages: [pre-commit]
@@ -134,7 +134,7 @@ repos:
           - --case-indent
 
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v5.0.2
+    rev: v5.1.1
     hooks:
       - id: reuse-lint-file
         exclude: COMMIT_EDITMSG|MERGE_MSG
@@ -171,6 +171,6 @@ repos:
           '
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 42.52.2
+    rev: 43.2.0
     hooks:
       - id: renovate-config-validator

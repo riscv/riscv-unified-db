@@ -1,19 +1,19 @@
 {
   "name": "spec-generator",
   "dependencies": {
-    "@antora/cli": "3.1.7",
-    "@antora/lunr-extension": "1.0.0-alpha.8",
-    "@antora/site-generator": "3.1.7",
+    "@antora/cli": "3.1.14",
+    "@antora/lunr-extension": "1.0.0-alpha.12",
+    "@antora/site-generator": "3.1.14",
     "@asciidoctor/tabs": "v1.0.0-beta.6",
     "@cloudflare/doca": "^0.1.3",
     "@cloudflare/doca-default-theme": "^0.1.1",
-    "@commitlint/cli": "19.8.0",
-    "@commitlint/config-conventional": "19.8.0",
-    "asciidoctor-kroki": "0.17.0",
+    "@commitlint/cli": "19.8.1",
+    "@commitlint/config-conventional": "19.8.1",
+    "asciidoctor-kroki": "0.18.1",
     "asciidoctor-mathjax": "^0.0.5",
     "bytefield-svg": "^1.8.0",
     "corepack": "^0.34.0",
-    "prettier": "3.4.2",
+    "prettier": "3.8.1",
     "wavedrom-cli": "^3.1.1"
   }
 }

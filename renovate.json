@@ -26,6 +26,11 @@
           "matchStrings": ["(?<version>[^\\s]+)"]
         }
       ]
+    },
+    {
+      "matchManagers": ["git-submodules"],
+      "matchPackageNames": ["llvm/llvm-project"],
+      "schedule": ["on saturday"]
     }
   ],
   "customManagers": [

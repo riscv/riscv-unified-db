@@ -30,11 +30,9 @@ versions:
             version: "= 1.0.0"
           - name: Zbkx
             version: "= 1.0.0"
-          - name: Zkne
+          - name: Zksed
             version: "= 1.0.0"
-          - name: Zknd
-            version: "= 1.0.0"
-          - name: Zknh
+          - name: Zksh
             version: "= 1.0.0"
 
   - version: "1.0.1"
@@ -49,9 +47,7 @@ versions:
             version: "= 1.0.1"
           - name: Zbkx
             version: "= 1.0.1"
-          - name: Zkne
+          - name: Zksed
             version: "= 1.0.1"
-          - name: Zknd
-            version: "= 1.0.1"
-          - name: Zknh
+          - name: Zksh
             version: "= 1.0.1"

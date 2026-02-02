@@ -1,0 +1,21 @@
+# Copyright (C) 2025-26 Harvey Mudd College
+# Author: James Kaden Cassidy (kacassidy@hmc.edu)
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: LEGAL_VSTART
+description: |
+  Implementations may raise illegal-instruction exceptions for vector
+  instructions that specify a `vstart` value the implementation can never
+  produce under the same `vtype` configuration (e.g., due to restrictions
+  on supported strides or alignments).
+long_name: TODO
+schema:
+  type: string
+  enum: ["1_stride", "2_stride", "4_stride", "custom"]
+definedBy:
+  extension:
+    name: Zvl32b

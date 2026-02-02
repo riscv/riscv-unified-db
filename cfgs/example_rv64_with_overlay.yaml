@@ -433,10 +433,30 @@ params:
   # the extension can be disabled in the `misa.U` bit.
   MUTABLE_MISA_U: false
 
-  # when the V extensions is supported, indicates whether or not
+  # When the V extensions is supported, indicates whether or not
   # the extension can be disabled in the `misa.V` bit.
   MUTABLE_MISA_V: false
-
+  SEW_MIN: 8 # minimum element width (bits)
+  SUPPORT_FRACTIONAL_LMUL_BEYOND_REQUIRED: "no_unrequired_supported" # extra fractional LMUL support
+  VILL_SET_ON_RESERVED_VTYPE: true # set `vill` on reserved vtype encodings
+  RESERVED_VSET_X0X0_VILL_SET: "always" # whether `vill` is set when vset rs1=x0 rd=x0
+  RESERVED_VSET_X0X0_VLMAX_CHANGE: "always" # whether vset x0,x0 that changes VLMAX sets `vill`
+  VECTOR_LS_INDEX_MAX_EEW: "XLEN" # max index EEW for vector loads/stores
+  VECTOR_FF_UPDATE_PAST_TRIM: "update_none" # whether FF loads update elements past trim
+  VECTOR_FF_SEG_EXCEPTION_PARTIAL_LOAD: "no_subsegment_loaded" # partial segment load behavior on exception
+  VECTOR_LS_MISALIGNED_LEGAL: true # allow misaligned element accesses
+  VECTOR_LOAD_PAST_TRAP: false # allow loads to overwrite elements past trap index
+  VECTOR_LOAD_SEG_FF_OVERWRITE_ELEMENTS_AFTER_FAULT: "no_overwrite" # overwrite behavior after fault
+  VECTOR_LS_SEG_PARTIAL_ACCESS: false # allow subset of segment to be loaded before trap
+  LEGAL_VSTART: "1_stride" # allowed vstart stride values
+  VECTOR_LS_WHOLEREG_MISALIGNED_LEGAL: true # allow misaligned whole-register loads/stores
+  VSSTATUS_VS_EXISTS: true # whether vsstatus.VS exists even if misa.V clear
+  VECTOR_FF_NO_EXCEPTION_TRIM: false # allow trimming vl without raising exception
+  VFREDUSUM_NAN: "no_change" # NaN handling in reductions when no elements active
+  VFREDUSUM_NODE_ROUNDING_BEHAVIOR: "SEW_precision" # per-node rounding behavior in reductions
+  VFREDUSUM_INACTIVE_NODE_ELEMENT_BEHAVIOR: "additive_identity" # how inactive inputs are treated
+  VFREDUSUM_FINAL_NODE_ELEMENT_BEHAVIOR: "additive_identity" # final node additive identity behavior
+  IMPRECISE_VECTOR_TRAP_SETTABLE: false # whether imprecise vector traps are selectable
   # size of a cache block, in bytes
   CACHE_BLOCK_SIZE: 64
 

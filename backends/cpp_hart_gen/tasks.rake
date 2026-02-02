@@ -392,8 +392,14 @@ end
 task checkout_riscv_tests: "#{$root}/ext/riscv-tests/env/LICENSE"
 
 task build_riscv_tests: "checkout_riscv_tests" do
+  configs_name, build_name = configs_build_name
+
   Dir.chdir "#{$root}/tests/isa" do
-    sh "make"
+    if configs_name[0] == "rv32"
+      sh "make XLEN=32"
+    else
+      sh "make"
+    end
   end
 end
 
@@ -505,12 +511,13 @@ namespace :test do
   end
 
   task riscv_vector_tests: ["build_riscv_tests", "build:iss"] do
-    _, build_name = configs_build_name
+    configs_name, build_name = configs_build_name
 
     # These extensions to the riscv-tests suite have binaries under a different diretcory
-    rv32uvTests = ["vsetivli", "vsetvl", "vsetvli_rs1_eq_zero", "vsetvli_vl_lt_vlmax"]
-    rv32uvTests.each do |t|
-      sh "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m rv32 -c #{$root}/cfgs/rv32-vector.yaml tests/isa/rv32uv-p-#{t}"
+    # uvTests are common for rv32/64
+    uvTests = ["vsetivli", "vsetvl", "vsetvli_rs1_eq_zero", "vsetvli_vl_lt_vlmax"]
+    uvTests.each do |t|
+      sh "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-vector.yaml tests/isa/#{configs_name[0]}uv-p-#{t}"
     end
   end
 end
