@@ -16,6 +16,24 @@ description: |
   The `fadd.d` instruction is analogous to `fadd.s` and performs double-precision floating-point addition of
   `fs1` and `fs2` and writes the final result to `fd`.
 assembly: fd, fs1, fs2, rm
+operands:
+  - type: register
+    reg_file: fpr
+    offset: ""
+    source: false
+    destination: true
+  - type: register
+    reg_file: fpr
+    offset: ""
+    source: true
+    destination: false
+  - type: register
+    reg_file: fpr
+    offset: ""
+    source: true
+    destination: false
+  - type: frm
+    possible_values: ["RNE", "RTZ", "RDN", "RUP", "RMM", "DYN"]
 encoding:
   match: 0000001------------------1010011
   variables:

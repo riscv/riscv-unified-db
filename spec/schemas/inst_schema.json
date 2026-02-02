@@ -390,6 +390,151 @@
       "type": "string",
       "description": "Assembly format of the instruction. Can use decode variables"
     },
+    "operands": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "description": "Register with optional dereference and immediate offset",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "register"
+              },
+              "reg_file": {
+                "enum": ["gpr", "fpr", "vr", "sp", "csr"],
+                "default": "gpr"
+              },
+              "offset": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "default": false
+              },
+              "source": {
+                "type": "boolean",
+                "default": true
+              },
+              "destination": {
+                "type": "boolean",
+                "default": false
+              },
+              "possible_values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "type",
+              "reg_file",
+              "offset",
+              "source",
+              "destination"
+            ]
+          },
+          {
+            "description": "Immediate",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "immediate"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": ["type", "name"]
+          },
+          {
+            "description": "Floating-point Rounding Mode",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "frm"
+              },
+              "possible_values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": ["RNE", "RTZ", "RDN", "RUP", "RMM", "DYN"]
+              }
+            },
+            "required": ["type", "possible_values"]
+          },
+          {
+            "description": "FENCE scope",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "fence_scope"
+              },
+              "possible_values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": [
+                  "I",
+                  "O",
+                  "R",
+                  "W",
+                  "IO",
+                  "IR",
+                  "IW",
+                  "OR",
+                  "OW",
+                  "RW",
+                  "IOR",
+                  "IOW",
+                  "IRW",
+                  "ORW",
+                  "IORW"
+                ]
+              }
+            },
+            "required": ["type", "possible_values"]
+          },
+          {
+            "description": "Register list (for PUSH/POP)",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "reg_list"
+              },
+              "possible_values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": [
+                  "ra",
+                  "ra,s0",
+                  "ra,s0-s1",
+                  "ra,s0-s2",
+                  "ra,s0-s3",
+                  "ra,s0-s4",
+                  "ra,s0-s5",
+                  "ra,s0-s6",
+                  "ra,s0-s7",
+                  "ra,s0-s8",
+                  "ra,s0-s9",
+                  "ra,s0-s11"
+                ]
+              }
+            },
+            "required": ["type", "possible_values"]
+          }
+        ]
+      }
+    },
     "data_independent_timing": {
       "type": "boolean",
       "description": "Whether or not the instruction must execute with data-independent timing when the Zkt extension is supported",

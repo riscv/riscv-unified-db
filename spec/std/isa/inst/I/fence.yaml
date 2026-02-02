@@ -127,6 +127,45 @@ definedBy:
   extension:
     name: I
 assembly: pred, succ
+operands:
+  - type: fence_scope
+    possible_values:
+      [
+        "I",
+        "O",
+        "R",
+        "W",
+        "IO",
+        "IR",
+        "IW",
+        "OR",
+        "OW",
+        "RW",
+        "IOR",
+        "IOW",
+        "IRW",
+        "ORW",
+        "IORW",
+      ]
+  - type: fence_scope
+    possible_values:
+      [
+        "I",
+        "O",
+        "R",
+        "W",
+        "IO",
+        "IR",
+        "IW",
+        "OR",
+        "OW",
+        "RW",
+        "IOR",
+        "IOW",
+        "IRW",
+        "ORW",
+        "IORW",
+      ]
 encoding:
   match: "-----------------000-----0001111"
   variables:
