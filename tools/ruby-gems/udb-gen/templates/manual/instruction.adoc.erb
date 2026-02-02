@@ -59,11 +59,11 @@ RV64::
 ----
 <%- if inst.has_format? %>
 <%-   inst.format_for(Udb::Condition.new({ "xlen" => inst.base.nil? ? 64 : inst.base}, cfg_arch)).operands.each do |operand| -%>
-<%=     operand.signed? ? 'signed ' : '' %>Bits<<%= operand.size %> <%= operand.name %> = <%= operand.decode_idl %>;
+Bits<<%= operand.size %> <%= operand.name %> = <%= operand.decode_idl %>;
 <%-   end -%>
 <%- else -%>
 <%-   inst.decode_variables(inst.base.nil? ? 64 : inst.base).each do |d| -%>
-<%=     d.sext? ? 'signed ' : '' %>Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
+Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
 <%-   end -%>
 <%- end -%>
 ----

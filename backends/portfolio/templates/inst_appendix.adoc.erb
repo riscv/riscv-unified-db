@@ -109,34 +109,65 @@ RV64::
 
 ==== Decode Variables
 
-<% if inst.multi_encoding? -%>
+<% if inst.has_format? -%>
+
+<%   if inst.formats.size == 1 -%>
+[source.idl]
+----
+<%     inst.format.operands.each do |operand| -%>
+Bits<<%= operand.size %>> <%= operand.name %> = <%= operand.decode_idl %>;
+<%     end -%>
+----
+<%   else -%>
+
+[tabs]
+====
+<%     inst.formats.each do |cformat| -%>
+<%= cformat.cond.to_asciidoc %>::
++
+[source,idl]
+----
+<%       cformat.format.operands.each do |operand| -%>
+Bits<<%= operand.size %>> <%= operand.name %> = <%= operand.decode_idl %>;
+<%     end -%>
+----
+<%     end -%>
+====
+
+<%   end -%>
+
+<% else -%>
+
+<%   if inst.multi_encoding? -%>
 [tabs]
 ====
 RV32::
 +
 [source.idl]
 ----
-<% inst.decode_variables(32).each do |d| -%>
-<%= d.sext? ? 'signed ' : '' %>Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
-<% end -%>
+<%     inst.decode_variables(32).each do |d| -%>
+Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
+<%     end -%>
 ----
 
 RV64::
 +
 [source,idl]
 ----
-<% inst.decode_variables(64).each do |d| -%>
-<%= d.sext? ? 'signed ' : '' %>Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
-<% end -%>
+<%     inst.decode_variables(64).each do |d| -%>
+Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
+<%     end -%>
 ----
 ====
-<% else -%>
+<%   else -%>
 [source,idl]
 ----
-<% inst.decode_variables(inst.base.nil? ? 32 : inst.base).each do |d| -%>
-<%= d.sext? ? 'signed ' : '' %>Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
-<% end -%>
+<%     inst.decode_variables(inst.base.nil? ? 32 : inst.base).each do |d| -%>
+Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
+<%     end -%>
 ----
+<%   end -%>
+
 <% end -%>
 
 <% if inst.key?("operation()") -%>
