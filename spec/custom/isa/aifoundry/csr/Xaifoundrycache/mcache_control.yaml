@@ -1,0 +1,35 @@
+# Copyright (c) AI Foundry and/or its affiliates.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: mcache_control
+long_name: Machine Cache Control
+address: 0x7C0
+priv_mode: M
+length: 64
+writable: true
+description: |
+  Controls and tracks the operating state of the ET-Minion's L1 data cache.
+  Configures cache mode (shared/split/scratchpad) and cache control operations
+  (flush, invalidate, lock, prefetch).
+definedBy:
+  anyOf:
+    - name: Xaifoundry
+    - name: Xaifoundrycache
+fields:
+  D1Split:
+    location: 0
+    type: RW
+    reset_value: 0
+    description: |
+      L1 data cache split control. 0=shared between two harts,
+      1=hard-partitioned per hart.
+  ScpEnable:
+    location: 1
+    type: RW
+    reset_value: 0
+    description: |
+      Scratchpad enable. 0=disabled, 1=enabled (only effective when D1Split=1).

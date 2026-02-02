@@ -1,0 +1,31 @@
+# Copyright (c) AI Foundry and/or its affiliates.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: tensor_conv_ctrl
+long_name: Tensor Convolution Control
+address: 0x803
+priv_mode: U
+length: 64
+writable: true
+description: |
+  Controls the convolution behavior for tensor load operations. Configures
+  stride, padding, and other convolution parameters.
+definedBy:
+  anyOf:
+    - name: Xaifoundry
+    - name: Xaifoundrytensor
+fields:
+  COLSTART:
+    location: 15-0
+    type: RW
+    reset_value: 0
+    description: Starting column offset (signed).
+  ROWSTART:
+    location: 47-32
+    type: RW
+    reset_value: 0
+    description: Starting row offset (signed).

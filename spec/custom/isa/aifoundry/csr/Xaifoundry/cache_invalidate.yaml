@@ -1,0 +1,30 @@
+# Copyright (c) AI Foundry and/or its affiliates.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: cache_invalidate
+long_name: Cache Invalidate Control
+address: 0x7D0
+priv_mode: M
+length: 64
+writable: true
+description: |
+  Writing to this CSR triggers cache invalidation operations.
+definedBy:
+  anyOf:
+    - name: Xaifoundry
+    - name: Xaifoundrycache
+fields:
+  ICACHE:
+    location: 0
+    type: RW
+    reset_value: 0
+    description: Write 1 to invalidate instruction cache.
+  TLB:
+    location: 1
+    type: RW
+    reset_value: 0
+    description: Write 1 to invalidate data TLB, instruction TLB, and PTW cache.

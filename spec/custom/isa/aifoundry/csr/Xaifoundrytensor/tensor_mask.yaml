@@ -1,0 +1,27 @@
+# Copyright (c) AI Foundry and/or its affiliates.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: tensor_mask
+long_name: Tensor Operation Mask
+address: 0x805
+priv_mode: U
+length: 64
+writable: true
+description: |
+  Provides a bitmask for tensor and cache control operations. When enabled via
+  the instruction's control field bit 63, individual operations in a multi-line
+  sequence can be selectively skipped.
+definedBy:
+  anyOf:
+    - name: Xaifoundry
+    - name: Xaifoundrytensor
+fields:
+  MASK:
+    location: 15-0
+    type: RW
+    reset_value: 0
+    description: One bit per tensor row.

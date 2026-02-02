@@ -1,0 +1,62 @@
+# Copyright (c) AI Foundry and/or its affiliates.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: tensor_error
+long_name: Tensor Error Status
+address: 0x808
+priv_mode: U
+length: 64
+writable: true
+description: |
+  Records error conditions during execution of tensor and cache management
+  operations. Software should check this register after tensor operations
+  complete.
+definedBy:
+  anyOf:
+    - name: Xaifoundry
+    - name: Xaifoundrytensor
+fields:
+  IV:
+    location: 1
+    type: RW-H
+    reset_value: 0
+    description: Illegal tensor_load CMD/TENB value.
+  FCCO:
+    location: 3
+    type: RW-H
+    reset_value: 0
+    description: Fast credit counter overflow.
+  L1SCPDIS:
+    location: 4
+    type: RW-H
+    reset_value: 0
+    description: Tensor instruction while L1 scratchpad disabled.
+  LF:
+    location: 5
+    type: RW-H
+    reset_value: 0
+    description: LockSW failed to lock cache line.
+  ITP:
+    location: 6
+    type: RW-H
+    reset_value: 0
+    description: Illegal TensorLoadB/TensorFMA pairing.
+  TMF:
+    location: 7
+    type: RW-H
+    reset_value: 0
+    description: Tensor/cache management memory exception.
+  INVT:
+    location: 8
+    type: RW-H
+    reset_value: 0
+    description: Illegal SIZE/COOP in tensor_store.
+  ILLT:
+    location: 9
+    type: RW-H
+    reset_value: 0
+    description: Illegal tensor_reduce TARGET/FUNCT.

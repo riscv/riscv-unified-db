@@ -1,0 +1,28 @@
+# Copyright (c) AI Foundry and/or its affiliates.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: gsc_progress
+long_name: Gather/Scatter Progress
+address: 0x840
+priv_mode: U
+length: 64
+writable: true
+description: |
+  3-bit read/write register tracking the next element to be processed by a
+  Gather or Scatter SIMD operation. When a gather/scatter traps midway, this
+  register holds the index of the first unprocessed element. Set to 0 on
+  successful completion.
+definedBy:
+  anyOf:
+    - name: Xaifoundry
+    - name: Xaifoundryps
+fields:
+  PROGRESS:
+    location: 2-0
+    type: RW
+    reset_value: 0
+    description: Next element index for gather/scatter.

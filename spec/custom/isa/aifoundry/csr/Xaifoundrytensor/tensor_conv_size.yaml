@@ -1,0 +1,41 @@
+# Copyright (c) AI Foundry and/or its affiliates.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: tensor_conv_size
+long_name: Tensor Convolution Size
+address: 0x802
+priv_mode: U
+length: 64
+writable: true
+description: |
+  Configures the convolution size parameters for tensor load operations.
+  Controls the dimensions used in convolution-style data access patterns.
+definedBy:
+  anyOf:
+    - name: Xaifoundry
+    - name: Xaifoundrytensor
+fields:
+  NCOL:
+    location: 15-0
+    type: RW
+    reset_value: 0
+    description: Number of columns.
+  SCOL:
+    location: 31-24
+    type: RW
+    reset_value: 0
+    description: Column step (signed).
+  NROW:
+    location: 47-32
+    type: RW
+    reset_value: 0
+    description: Number of rows.
+  SROW:
+    location: 63-56
+    type: RW
+    reset_value: 0
+    description: Row step (signed).

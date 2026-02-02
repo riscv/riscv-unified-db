@@ -1,0 +1,43 @@
+# Copyright (c) AI Foundry and/or its affiliates.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: ucache_control
+long_name: User Cache Control
+address: 0x8C0
+priv_mode: U
+length: 64
+writable: true
+description: |
+  User-level restricted view of mcache_control. Only allows changing the
+  ScpEnable bit (and only from thread 0 when D1Split=1) and the CacheOp
+  control fields.
+definedBy:
+  anyOf:
+    - name: Xaifoundry
+    - name: Xaifoundrycache
+fields:
+  D1Split:
+    location: 0
+    type: RO-H
+    reset_value: 0
+    description: Read-only shadow of mcache_control.D1Split.
+  ScpEnable:
+    location: 1
+    type: RW
+    reset_value: 0
+    description: |
+      Scratchpad enable (writes ignored if D1Split=0 or from thread 1).
+  RepRate:
+    location: 4-2
+    type: RW
+    reset_value: 0
+    description: Cache op repeat rate (log2 cycles).
+  CacheOpMax:
+    location: 10-6
+    type: RW
+    reset_value: 0
+    description: Max outstanding cache ops.

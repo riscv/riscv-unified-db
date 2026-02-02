@@ -1,0 +1,26 @@
+# Copyright (c) AI Foundry and/or its affiliates.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: fcc
+long_name: Fast Credit Counter (Blocking)
+address: 0x821
+priv_mode: U
+length: 64
+writable: true
+description: |
+  Fast Credit Counter (Blocking). Write stalls until credit available, then
+  decrements. Used for credit-based inter-core flow control within a Shire.
+definedBy:
+  anyOf:
+    - name: Xaifoundry
+    - name: Xaifoundryfcc
+fields:
+  COUNT:
+    location: 0
+    type: RW
+    reset_value: 0
+    description: Credit counter (write stalls until credit available, then decrements).
