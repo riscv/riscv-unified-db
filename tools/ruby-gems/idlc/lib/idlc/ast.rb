@@ -207,10 +207,7 @@ module Idl
       @input_file = nil
       @starting_line = 0
       @interval = interval
-      @text_value =
-        unless @input.nil? || @interval.nil?
-          @input[@interval]
-        end
+      @text_value = @input[@interval]
       @children = children
       @parent = nil # will be set later unless this is the root
       @children.each { |child| child.instance_variable_set(:@parent, self) }
@@ -763,9 +760,6 @@ module Idl
 
     sig { override.params(symtab: SymbolTable).void }
     def type_check(symtab); end
-
-    sig { override.returns(T::Hash[String, T.untyped]) }
-    def to_h = raise "not implemented"
   end
 
   class TrueExpressionSyntaxNode < SyntaxNode

@@ -287,44 +287,6 @@ module Udb
     sig { returns(T::Boolean) }
     def has_format? = @data.key?("format")
 
-    sig { params(base: Integer).returns(InstructionType) }
-    def type(base)
-      @type ||= {
-        32 =>
-          if @data["format"].key?("RV32")
-            @arch.ref(@data["format"]["RV32"]["type"]["$ref"])
-          else
-            @arch.ref(@data["format"]["type"]["$ref"])
-          end,
-        64 =>
-          if @data["format"].key?("RV64")
-            @arch.ref(@data["format"]["RV64"]["type"]["$ref"])
-          else
-            @arch.ref(@data["format"]["type"]["$ref"])
-          end
-      }
-      @type[base]
-    end
-
-    sig { params(base: Integer).returns(InstructionSubtype) }
-    def subtype(base)
-      @subtype ||= {
-        32 =>
-          if @data["format"].key?("RV32")
-            @arch.ref(@data["format"]["RV32"]["subtype"]["$ref"])
-          else
-            @arch.ref(@data["format"]["subtype"]["$ref"])
-          end,
-        64 =>
-          if @data["format"].key?("RV64")
-            @arch.ref(@data["format"]["RV64"]["subtype"]["$ref"])
-          else
-            @arch.ref(@data["format"]["subtype"]["$ref"])
-          end
-      }
-      @subtype[base]
-    end
-
     class Opcode
       extend T::Sig
 
