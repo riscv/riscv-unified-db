@@ -102,6 +102,8 @@ module Udb
     sig { returns(EncodingLocation) }
     def location = @location ||= EncodingLocation.new(@data.fetch("location"))
 
+    def encoding_fields = location.fields
+
     sig {
       params(other: T.any(InstructionOperand, EncodingField, EncodingLocation))
       .returns(T::Boolean)

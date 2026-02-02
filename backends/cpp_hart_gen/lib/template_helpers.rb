@@ -16,7 +16,12 @@ module Udb
   class Instruction
     def assembly_fmt(xlen)
       fmt = assembly.dup
-      dvs = encoding(xlen).decode_variables
+      dvs =
+        if has_format?
+          format_for(Udb::Condition.new({ "xlen" => xlen }, cfg_arch)).operands
+        else
+          encoding(xlen).decode_variables
+        end
       dvs.each do |dv|
         fmt.gsub!(dv.name, "{}")
       end
@@ -25,7 +30,12 @@ module Udb
 
     def assembly_fmt_args(xlen)
       args = []
-      dvs = encoding(xlen).decode_variables
+      dvs =
+        if has_format?
+          format_for(Udb::Condition.new({ "xlen" => xlen }, cfg_arch)).operands
+        else
+          encoding(xlen).decode_variables
+        end
       dvs.each do |dv|
         if dv.name[0] == "x" || dv.name[0] == "r"
           args << "Reg(#{dv.name}()).to_string()"

@@ -3,6 +3,8 @@
 
 require "sorbet-runtime"
 
+require "udb/condition"
+
 class DecodeGen
   extend T::Sig
 
@@ -116,11 +118,16 @@ class DecodeGen
     variable_insts = []
 
     tree.insts.each do |inst|
-      inst_format = inst.encoding(xlen).format
+      inst_format =
+        if inst.has_format?
+          inst.format_for(Udb::Condition.new({ "xlen" => xlen }, inst.cfg_arch)).match
+        else
+          inst.encoding(xlen).format
+        end
       if inst_format.reverse[cur_range].match?(/^[01]+$/)
         # puts "#{inst.name} has opcode bit(s) in #{cur_range} (#{inst_format.reverse[cur_range].reverse})"
         # whole range is opcode bits
-        if inst_format.gsub("0", "1") == tree.mask(cur_range).to_s(2).gsub("0", "-").rjust(inst.encoding(xlen).size, "-")
+        if inst_format.gsub("0", "1") == tree.mask(cur_range).to_s(2).gsub("0", "-").rjust(inst_format.size, "-")
           done_insts[inst_format.reverse[cur_range]] = inst
         else
           in_progress_groups[inst_format.reverse[cur_range]] ||= []
@@ -254,8 +261,14 @@ class DecodeGen
   sig { params(node: DecodeTreeNode, inst_list: T::Array[Udb::Instruction], xlen: Integer).returns(T::Boolean) }
   def needs_long_form?(node, inst_list, xlen)
     node.children.any? do |child|
+      operand_has_exclusion =
+        if child.insts[0].has_format?
+          child.insts[0].format_for(Udb::Condition.new({ "xlen" => xlen }, child.insts[0].cfg_arch)).operands.any? { |operand| !operand.excludes.empty? }
+        else
+          child.insts[0].encoding(xlen).decode_variables.any? { |dv| !dv.excludes.empty? }
+        end
       needs_to_check_dv = child.type == DecodeTreeNode::ENDPOINT_TYPE \
-        && child.insts[0].encoding(xlen).decode_variables.any? { |dv| !dv.excludes.empty? }
+        && operand_has_exclusion
       needs_to_check_hint = has_hints?(child, inst_list, xlen)
 
       needs_to_check_implemented?(child.insts[0]) || needs_to_check_dv || needs_to_check_hint
@@ -275,13 +288,25 @@ class DecodeGen
         els = ""
         node.children.each do |child|
           code += comment_tree(child, indent + 2)
+          operand_has_exclusion =
+            if child.insts[0].has_format?
+              child.insts[0].format_for(Udb::Condition.new({ "xlen" => xlen }, child.insts[0].cfg_arch)).operands.any? { |operand| !operand.excludes.empty? }
+            else
+              child.insts[0].encoding(xlen).decode_variables.any? { |dv| !dv.excludes.empty? }
+            end
           has_not = child.type == DecodeTreeNode::ENDPOINT_TYPE \
-            && child.insts[0].encoding(xlen).decode_variables.any? { |dv| !dv.excludes.empty? }
+            && operand_has_exclusion
           has_hints = has_hints?(child, inst_list, xlen)
           conds = []
           if has_not
             # some field(s) in the instruction have prohibited values ('not:' in the yaml)
-            child.insts[0].encoding(xlen).decode_variables.each do |dv|
+            operands =
+              if child.insts[0].has_format?
+                child.insts[0].format_for(Udb::Condition.new({ "xlen" => xlen }, child.insts[0].cfg_arch)).operands
+              else
+                child.insts[0].encoding(xlen).decode_variables
+              end
+            operands.each do |dv|
               next if dv.excludes.empty?
 
               dv_val = extract_dv(dv, encoding_var_name)
@@ -291,8 +316,14 @@ class DecodeGen
           if has_hints
             impl_hints = child.insts[0].hints.select { |hint_inst| hint_inst.defined_in_base?(xlen) && inst_list.include?(hint_inst) }
             impl_hints.each do |hint_inst|
-              mask = hint_inst.encoding(xlen).format.gsub("0", "1").gsub("-", "0")
-              value = hint_inst.encoding(xlen).format.gsub("-", "0")
+              match =
+                if hint_inst.has_format?
+                  hint_inst.format_for(Udb::Condition.new({ "xlen" => xlen }, hint_inst.cfg_arch)).match
+                else
+                  hint_inst.encoding(xlen).format
+                end
+              mask = match.gsub("0", "1").gsub("-", "0")
+              value = match.gsub("-", "0")
               conds << ("((#{encoding_var_name} & 0b#{mask}_b) != 0b#{value}_b)")
             end
           end
@@ -381,9 +412,21 @@ class DecodeGen
     tree.children.each do |child|
       if child.type == DecodeTreeNode::ENDPOINT_TYPE
         matches = tree.children.select do |other_child|
+          match =
+            if child.insts[0].has_format?
+              child.insts[0].format_for(Udb::Condition.new({ "xlen" => xlen }, child.insts[0].cfg_arch)).match
+            else
+              child.insts[0].encoding(xlen).format
+            end
+          other_match =
+            if other_child.insts[0].has_format?
+              other_child.insts[0].format_for(Udb::Condition.new({ "xlen" => xlen }, other_child.insts[0].cfg_arch)).match
+            else
+              other_child.insts[0].encoding(xlen).format
+            end
           other_child.type == DecodeTreeNode::ENDPOINT_TYPE \
           && child != other_child \
-          && child.insts[0].encoding(xlen).format == other_child.insts[0].encoding(xlen).format
+          && match == other_match
         end
         unless matches.empty?
           # puts "#{child.insts[0].name} identical to #{ matches.map { |n| n.insts[0].name }.join(', ')}"
