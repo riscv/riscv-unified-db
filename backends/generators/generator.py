@@ -19,7 +19,7 @@ def check_requirement(req, exts):
     return False
 
 
-def build_match_from_format(format_field):
+def build_match_from_format(format_field, root_dir):
     """
     Build a match string from the format field in the new schema.
     """
@@ -31,7 +31,7 @@ def build_match_from_format(format_field):
 
     opcodes = format_field["opcodes"]
     # Check opcodes
-    for field_data in opcodes.values():
+    for field_data in opcodes:
         if isinstance(field_data, dict) and "location" in field_data:
             if isinstance(field_data["location"], str):
                 try:
@@ -52,42 +52,24 @@ def build_match_from_format(format_field):
             else:
                 raise ValueError(f"Unknown location format: {field_data['location']}")
 
-    if "variables" in format_field:
-        variables = format_field["variables"]
-        # Check variables
-        for var_data in variables.values():
-            if isinstance(var_data, dict) and "location" in var_data:
-                if isinstance(var_data["location"], str):
-                    try:
-                        location = var_data["location"]
-                        if "-" in location:
-                            high = int(location.split("-")[0])
-                        else:
-                            high = int(location)
-                        valid_locations.append(high)
-                    except (ValueError, IndexError):
-                        raise ValueError(f"Invalid location format: {var_data['location']}")
-                elif isinstance(var_data["location"], int):
-                    try:
-                        valid_locations.append(var_data["location"])
-                    except (ValueError, IndexError):
-                        raise ValueError(f"Invalid location format: {var_data['location']}")
-                else:
-                    raise ValueError(f"Invalid location format: {var_data['location']}")
-
     if not valid_locations:
         raise ValueError("No valid bit locations found in format field")
 
-    max_bit = max(valid_locations)
+    max_bit = format_field["size"] - 1
 
     # Set instruction width based on maximum bit position
     width = max_bit + 1
     match_bits = ["-"] * width
 
     # Populate match string with opcode bits
-    for field_data in opcodes.values():
+    for field_data in opcodes:
         if isinstance(field_data, dict):
             try:
+                if "$ref" in field_data:
+                    with open(
+                        f"{root_dir}/../{field_data['$ref'].replace('#', '')}", encoding="utf-8"
+                    ) as f:
+                        field_data = yaml.safe_load(f)
                 location = field_data["location"]
                 if isinstance(location, str) and "-" in location:
                     high, low = map(int, location.split("-"))
@@ -266,7 +248,7 @@ def load_instructions(root_dir, enabled_extensions, include_all=False, target_ar
                     continue
 
                 # Try to build a match string from the format field
-                match_string = build_match_from_format(format_field)
+                match_string = build_match_from_format(format_field, root_dir)
                 if not match_string:
                     logging.error(
                         f"Could not build encoding from format field in instruction {name} in {path}"
