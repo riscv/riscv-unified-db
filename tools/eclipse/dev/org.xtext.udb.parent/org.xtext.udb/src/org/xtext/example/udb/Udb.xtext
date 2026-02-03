@@ -23,7 +23,7 @@ Model:
 	fields = Fields? &
 	swRead = SwRead? &
 	source = Source? &
-	certNormativeRules = CertNormativeRules? &
+	certNormativeRules = CertNormativeRules?
 ;
 
 // This is so we can directly copy+paste from a UDB .yaml file
