@@ -37,12 +37,13 @@ module Udb
           encoding(xlen).decode_variables
         end
       dvs.each do |dv|
-        if dv.name[0] == "x" || dv.name[0] == "r"
-          args << "Reg(#{dv.name}()).to_string()"
-        elsif dv.name[0] == "f"
-          args << "Reg(#{dv.name}(), true).to_string()"
+        var_name = has_format? ? dv.var_name : dv.name
+        if var_name[0] == "x" || var_name[0] == "r"
+          args << "Reg(#{var_name}()).to_string()"
+        elsif var_name[0] == "f"
+          args << "Reg(#{var_name}(), true).to_string()"
         else
-          args << "#{dv.name}()"
+          args << "#{var_name}()"
         end
       end
       if args.empty?

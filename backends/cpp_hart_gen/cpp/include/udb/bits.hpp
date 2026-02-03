@@ -540,7 +540,7 @@ namespace udb {
     }
     template <bool _Signed = Signed>
       requires(_Signed == true)
-    constexpr _Bits<N, true> &make_signed() const {
+    constexpr const _Bits<N, true> &make_signed() const {
       return *this;
     }
 
@@ -1109,7 +1109,7 @@ namespace udb {
 
     template <unsigned msb, unsigned lsb>
       requires ((lsb >= 0) && (msb >= lsb) && (msb <= N))
-    constexpr _Bits<msb - lsb + 1, false> extract() const {
+    constexpr const _Bits<msb - lsb + 1, false> extract() const {
       return _Bits<msb - lsb + 1, false>{m_val >> lsb};  // masking will happen in the constructor
     }
 
@@ -1117,7 +1117,7 @@ namespace udb {
       template <unsigned, bool> class MsbType, unsigned MsbN,
       template <unsigned, bool> class LsbType, unsigned LsbN
     >
-    constexpr _Bits<N, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
+    constexpr const _Bits<N, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
       udb_assert(msb >= lsb, "Negative range is not allowed");
       udb_assert(lsb.get() <= N, "Extract out of range");
 
@@ -2225,7 +2225,7 @@ namespace udb {
 
     template <unsigned msb, unsigned lsb>
       requires ((lsb >= 0) && (msb >= lsb) && (msb <= MaxN))
-    constexpr _Bits<msb - lsb + 1, false> extract() const {
+    constexpr const _Bits<msb - lsb + 1, false> extract() const {
       udb_assert(msb < width(), "Out of range extraction");
       return _Bits<msb - lsb + 1, false>{m_val >> lsb};  // masking will happen in the constructor
     }
@@ -2234,7 +2234,7 @@ namespace udb {
       template <unsigned, bool> class MsbType, unsigned MsbN,
       template <unsigned, bool> class LsbType, unsigned LsbN
     >
-    constexpr _RuntimeBits<MaxN, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
+    constexpr const _RuntimeBits<MaxN, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
       udb_assert(msb >= lsb, "Negative range is not allowed");
       udb_assert(lsb.get() <= width(), "Extract out of range");
 
@@ -2801,7 +2801,7 @@ namespace udb {
     }
 
     template <unsigned msb, unsigned lsb>
-    constexpr _PossiblyUnknownBits<msb - lsb + 1, false> extract() const {
+    constexpr const _PossiblyUnknownBits<msb - lsb + 1, false> extract() const {
       static_assert(msb >= lsb);
       return _PossiblyUnknownBits<msb - lsb + 1, false>{m_val.template extract<msb, lsb>(), m_unknown_mask.template extract<msb, lsb>()};
     }
@@ -2810,7 +2810,7 @@ namespace udb {
       template <unsigned, bool> class MsbType, unsigned MsbN,
       template <unsigned, bool> class LsbType, unsigned LsbN
     >
-    constexpr _PossiblyUnknownRuntimeBits<constmax_v<MsbN, LsbN>, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
+    constexpr const _PossiblyUnknownRuntimeBits<constmax_v<MsbN, LsbN>, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
       udb_assert(msb >= lsb, "Negative range is not allowed");
       udb_assert(lsb.get() <= width(), "Extract out of range");
 
@@ -3363,7 +3363,7 @@ namespace udb {
 
     template <unsigned msb, unsigned lsb>
       requires ((lsb >= 0) && (msb >= lsb) && (msb <= MaxN))
-    constexpr _PossiblyUnknownBits<msb - lsb + 1, false> extract() const {
+    constexpr const _PossiblyUnknownBits<msb - lsb + 1, false> extract() const {
       udb_assert(msb < width(), "Extract out of range");
       return m_val.template extract<msb, lsb>();
     }
@@ -3372,7 +3372,7 @@ namespace udb {
       template <unsigned, bool> class MsbType, unsigned MsbN,
       template <unsigned, bool> class LsbType, unsigned LsbN
     >
-    constexpr _PossiblyUnknownRuntimeBits<MaxN, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
+    constexpr const _PossiblyUnknownRuntimeBits<MaxN, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
       udb_assert(msb >= lsb, "Negative range is not allowed");
       udb_assert(lsb.get() <= width(), "Extract out of range");
 

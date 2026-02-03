@@ -127,28 +127,28 @@ namespace udb {
     <%- operands32 = inst.has_format? ? inst.format_for(Udb::Condition.new({ "xlen" => 32}, cfg_arch)).operands : inst.decode_variables(32) -%>
     <%- operands32.each do |dv| -%>
     template <unsigned _XLEN = XLEN>
-    _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= dv.name %>() const requires (_XLEN==32) {
+    const _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= inst.has_format? ? dv.var_name : dv.name %>() const requires (_XLEN==32) {
       <%= extract_decode(dv, inst) %>
     }
     <%- end -%>
     <%- operands64 = inst.has_format? ? inst.format_for(Udb::Condition.new({ "xlen" => 64}, cfg_arch)).operands : inst.decode_variables(64) -%>
     <%- operands64.each do |dv| -%>
     template <unsigned _XLEN = XLEN>
-    _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= dv.name %>() const requires (_XLEN==64) {
+    const _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= inst.has_format? ? dv.var_name : dv.name %>() const requires (_XLEN==64) {
       <%= extract_decode(dv, inst) %>
     }
     <%- end -%>
     <%- elsif needs_rv32 -%>
     <%- operands32 = inst.has_format? ? inst.format_for(Udb::Condition.new({ "xlen" => 32}, cfg_arch)).operands : inst.decode_variables(32) -%>
     <%- operands32.each do |dv| -%>
-    _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= dv.name %>() const {
+    const _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= inst.has_format? ? dv.var_name : dv.name %>() const {
       <%= extract_decode(dv, inst) %>
     }
     <%- end -%>
     <%- else -%>
     <%- operands64 = inst.has_format? ? inst.format_for(Udb::Condition.new({ "xlen" => 64}, cfg_arch)).operands : inst.decode_variables(64) -%>
     <%- operands64.each do |dv| -%>
-    _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= dv.name %>() const {
+    const _Bits<<%= dv.size %>, <%= dv.signed? %>> <%= inst.has_format? ? dv.var_name : dv.name %>() const {
       <%= extract_decode(dv, inst) %>
     }
     <%- end -%>

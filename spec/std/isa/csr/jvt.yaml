@@ -57,13 +57,10 @@ fields:
 
         unimplemented_csr($encoding);
       }
-      else {
-        if (JVT_BASE_TYPE == "custom") {
-          unpredictable("jvt.BASE has custom behavior");
-        } else {
-          return csr_value.BASE & (JVT_BASE_MASK >> 6);
-        }
-        return csr_value.BASE == 0 ? 0 : UNDEFINED_LEGAL_DETERMINISTIC;
+      if (JVT_BASE_TYPE == "custom") {
+        unpredictable("jvt.BASE has custom behavior");
+      } else {
+        return csr_value.BASE & (JVT_BASE_MASK >> 6);
       }
   MODE:
     location: 5-0
