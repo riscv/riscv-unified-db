@@ -343,6 +343,14 @@ module Udb
         end
       end
 
+      # for all mandatory extensions, check that the requirements are met by other mandatory extensions
+      # and/or parameters
+      mandatory_extension_reqs.each do |ext_req|
+        unless ext_req.requirements_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
+          reasons << "Requirements for #{ext_req} are not met: #{ext_req.requirements_condition.to_s_with_value(self, expand: false)}"
+        end
+      end
+
       # check that provided param values are defined and match the schema
       config.param_values.each do |param_name, param_value|
         p = param(param_name)

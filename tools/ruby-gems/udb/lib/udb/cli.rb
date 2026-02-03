@@ -83,12 +83,13 @@ module Udb
       method_option :gen, type: :string, desc: "Path to folder used for generation", default: Udb.default_gen_path.to_s
       def cfg(name_or_path)
         raise ArgumentError, "Spec directory does not exist: #{options[:std]}" unless File.directory?(options[:std])
-
         cfg_file =
           if File.file?(name_or_path)
             Pathname.new(name_or_path)
           elsif File.file?("#{options[:config_dir]}/#{name_or_path}.yaml")
             Pathname.new("#{options[:config_dir]}/#{name_or_path}.yaml")
+          elsif File.file?("#{options[:config_dir]}/profile/#{name_or_path}.yaml")
+            Pathname.new("#{options[:config_dir]}/profile/#{name_or_path}.yaml")
           else
             raise ArgumentError, "Cannot find config: #{name_or_path}"
           end
