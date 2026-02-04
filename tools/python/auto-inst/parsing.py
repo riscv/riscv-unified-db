@@ -4,9 +4,10 @@
 
 import os
 import re
-import yaml
 from pathlib import Path
+
 import pytest
+import yaml
 
 yaml_instructions = {}
 REPO_DIRECTORY = None
@@ -18,7 +19,7 @@ def safe_get(data, key, default=""):
         if isinstance(data, dict):
             return data.get(key, default)
         return default
-    except:
+    except Exception:
         return default
 
 
@@ -77,7 +78,7 @@ def load_inherited_variable(var_path, repo_dir):
 
         return data
     except Exception as e:
-        print(f"Error loading inherited variable {var_path}: {str(e)}")
+        print(f"Error loading inherited variable {var_path}: {e!s}")
         return None
 
 
@@ -154,9 +155,7 @@ def compare_yaml_json_encoding(
     if not json_encoding_str:
         return ["No JSON encoding available for comparison."]
 
-    expected_length = (
-        16 if instr_name.lower().startswith(("c_", "c.", "cm_", "cm.")) else 32
-    )
+    expected_length = 16 if instr_name.lower().startswith(("c_", "c.", "cm_", "cm.")) else 32
 
     yaml_pattern_str = yaml_match.replace("-", ".")
     if len(yaml_pattern_str) != expected_length:
@@ -186,7 +185,7 @@ def compare_yaml_json_encoding(
 
     if bit_index != -1:
         return [
-            f"JSON encoding does not appear to be {expected_length} bits. Ends at bit {bit_index+1}."
+            f"JSON encoding does not appear to be {expected_length} bits. Ends at bit {bit_index + 1}."
         ]
 
     normalized_json_bits = []
@@ -219,9 +218,7 @@ def compare_yaml_json_encoding(
                 )
         else:
             if json_bit_str in ["0", "1"]:
-                differences.append(
-                    f"Bit {b}: YAML variable bit but JSON is fixed '{json_bit_str}'"
-                )
+                differences.append(f"Bit {b}: YAML variable bit but JSON is fixed '{json_bit_str}'")
 
     for var_name, ranges in yaml_var_positions.items():
         for high, low in ranges:
@@ -240,9 +237,7 @@ def compare_yaml_json_encoding(
                     json_var_fields.append("?")
 
             field_names = set(
-                re.findall(
-                    r"([A-Za-z0-9]+)(?:\[\d+\]|\[\?\])?", " ".join(json_var_fields)
-                )
+                re.findall(r"([A-Za-z0-9]+)(?:\[\d+\]|\[\?\])?", " ".join(json_var_fields))
             )
             if len(field_names) == 0:
                 differences.append(
