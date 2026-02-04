@@ -424,31 +424,37 @@ end
   end
 end
 
+def gen_arch_file(f)
+  FileUtils.rm_f f
+  Rake::Task[f].invoke
+  FileUtils.chmod 0444, f
+end
+
 namespace :gen do
   desc "Generate architecture files from layouts"
   task :arch do
     (3..31).each do |hpm_num|
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}h.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}h.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}h.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}h.yaml")
 
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}h.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}h.yaml")
     end
 
-    Rake::Task["#{$resolver.std_path}/csr/I/mcounteren.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/S/scounteren.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/Sscofpmf/scountovf.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/H/hcounteren.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/Zicntr/mcountinhibit.yaml"].invoke
+    gen_arch_file("#{$resolver.std_path}/csr/I/mcounteren.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/S/scounteren.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/Sscofpmf/scountovf.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/H/hcounteren.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/Zicntr/mcountinhibit.yaml")
 
     (0..63).each do |pmpaddr_num|
-      Rake::Task["#{$resolver.std_path}/csr/I/pmpaddr#{pmpaddr_num}.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/I/pmpaddr#{pmpaddr_num}.yaml")
     end
 
     (0..15).each do |pmpcfg_num|
-      Rake::Task["#{$resolver.std_path}/csr/I/pmpcfg#{pmpcfg_num}.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/I/pmpcfg#{pmpcfg_num}.yaml")
     end
 
     # Generate AMO instruction files
@@ -456,7 +462,7 @@ namespace :gen do
       ["b", "h", "w", "d"].each do |size|
         extension_dir = %w[b h].include?(size) ? "Zabha" : "Zaamo"
         ["", ".aq", ".rl", ".aqrl"].each do |suffix|
-          Rake::Task["#{$resolver.std_path}/inst/#{extension_dir}/#{op}.#{size}#{suffix}.yaml"].invoke
+          gen_arch_file("#{$resolver.std_path}/inst/#{extension_dir}/#{op}.#{size}#{suffix}.yaml")
         end
       end
     end
@@ -467,7 +473,7 @@ namespace :gen do
         # Determine target extension directory based on size
         extension_dir = %w[w d q].include?(size) ? "Zacas" : "Zabha"
 
-        Rake::Task["#{$resolver.std_path}/inst/#{extension_dir}/amocas.#{size}#{suffix}.yaml"].invoke
+        gen_arch_file("#{$resolver.std_path}/inst/#{extension_dir}/amocas.#{size}#{suffix}.yaml")
       end
     end
   end
@@ -515,35 +521,12 @@ namespace :gen do
     exit(1)
   end
 
-  desc "Generate config files for profiles"
+  desc "Generate strict config files for profiles"
   task :cfg do
     cfg_arch = $resolver.cfg_arch_for("_")
     FileUtils.mkdir_p $resolver.cfgs_path / "profile"
     cfg_arch.profiles.each do |profile|
       path = $resolver.cfgs_path / "profile" / "#{profile.name}.yaml"
-      FileUtils.rm_f path
-      File.write(
-        path,
-        <<~YAML.strip.concat("\n")
-          # SPDX-License-Identifier: CC0-1.0
-
-          # AUTO-GENERATED FILE. DO NOT EDIT
-          # To regenerate, run `./do gen:cfg` in the UDB root directory
-          # The data comes from the UDB profile definitions in spec/std/isa/profile/
-
-          #{YAML.dump(profile.to_config)}
-        YAML
-      )
-      File.chmod(0444, path)
-    end
-  end
-
-  desc "Generate strict config files for profiles"
-  task :strict_cfg do
-    cfg_arch = $resolver.cfg_arch_for("_")
-    FileUtils.mkdir_p $resolver.cfgs_path / "profile"
-    cfg_arch.profiles.each do |profile|
-      path = $resolver.cfgs_path / "profile" / "#{profile.name}-strict.yaml"
       FileUtils.rm_f path
       File.write(
         path,

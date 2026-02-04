@@ -102,9 +102,9 @@ tests:
   regress-profile-strict-cfg:
     test:
       - name: Generate strict profile configs
-        run: ./do gen:strict_cfg
+        run: ./do gen:cfg
       - name: See if anything changed
-        run: (git status --pocelain | grep " M") && ($? == 1)
+        run: (git status --porcelain | grep "[ |?][M|?]") && ($? == 1)
 
   regress-udb-unit-test:
     tags:

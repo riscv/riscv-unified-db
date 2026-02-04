@@ -33,6 +33,7 @@ gen_subcmd_usage() {
   echo "  profile-cfgs:  Generate config files for profiles"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
+  echo "  spec           Generate all spec files that are created from layouts"
   echo ""
 }
 
@@ -111,13 +112,17 @@ do_gen_container_def() {
 do_gen_profile_cfgs() {
   # note that the Rake tasks makes the file read-only
   ./do gen:cfg
-  ./do gen:strict_cfg
+}
+
+do_gen_spec() {
+  ./do gen:arch
 }
 
 do_gen_all() {
   do_gen_regress
   do_gen_container_def
   do_gen_profile_cfgs
+  do_gen_spec
 }
 
 increment_minor_version() {
@@ -273,6 +278,10 @@ case "$subcommand" in
           esac
         done
         do_ruby_type_def "$gem"
+        exit 0
+        ;;
+      spec )
+        do_gen_spec
         exit 0
         ;;
       * )

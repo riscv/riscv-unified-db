@@ -27,6 +27,8 @@ mandatory_extensions:
   version: "~> 2.0"
 - name: S
   version: "~> 1.11"
+- name: Sm
+  version: "~> 1.11.0"
 - name: Ssccptr
   version: "~> 1.0"
 - name: Sstvala
@@ -43,6 +45,14 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za128rs
   version: "~> 1.0"
+- name: Zaamo
+  version: "~> 1.0.0"
+- name: Zalrsc
+  version: "~> 1.0.0"
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
+  version: "~> 1.0"
 - name: Ziccamoa
   version: "~> 1.0"
 - name: Ziccif
@@ -53,6 +63,8 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zicntr
   version: "~> 2.0"
+- name: Zicsr
+  version: "~> 2.0.0"
 - name: Zifencei
   version: "~> 2.0"
 non_mandatory_extensions:

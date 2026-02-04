@@ -150,15 +150,6 @@ repos:
 
   - repo: local
     hooks:
-      - id: profilecfg
-        name: generate non-strict proflie configs
-        files: (spec/std/isa/profile/.*\.yaml)$
-        pass_filenames: false
-        language: system
-        entry: ./do gen:cfg
-
-  - repo: local
-    hooks:
       - id: regress
         name: generate regress.yml
         files: (tools/test/gen_regress\.rb|tools/test/regress-tests.yaml|tools/test/regress-gh-template.yaml)
