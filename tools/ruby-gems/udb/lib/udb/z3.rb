@@ -405,7 +405,7 @@ module Udb
       end
     end
 
-    sig { params(val: T.any(Integer, String, T::Boolean)).returns(Z3::BoolExpr) }
+    sig { params(val: T.any(Integer, String, T::Boolean, T::Array[Integer], T::Array[String], T::Array[T::Boolean])).returns(Z3::BoolExpr) }
     def !=(val)
       if val.is_a?(String)
         @term != val.hash

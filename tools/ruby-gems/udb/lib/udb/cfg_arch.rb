@@ -409,7 +409,7 @@ module Udb
         end
       end
 
-      unless config.requirements.nil?
+      unless T.cast(config, PartialConfig).requirements.nil?
         unless (to_condition).satisfiable?
           to_condition.to_logic_tree(expand: true).minimal_unsat_subsets.each do |min|
             reasons << "Requirements cannot be met. This is not satisfiable: #{min.to_s(format: LogicNode::LogicSymbolFormat::C)}"
@@ -1268,8 +1268,9 @@ module Udb
                 self
               )
             )
-            unless @config.requirements.nil?
-              c = (c & Condition.new(@config.requirements, self))
+            reqs = T.cast(@config, PartialConfig).requirements
+            unless reqs.nil?
+              c = (c & Condition.new(reqs, self))
             end
             c
           end
@@ -1303,8 +1304,9 @@ module Udb
                 self
               )
             )
-            unless @config.requirements.nil?
-              c = (c & Condition.new(@config.requirements, self))
+            reqs = T.cast(@config, PartialConfig).requirements
+            unless reqs.nil?
+              c = (c & Condition.new(reqs, self))
             end
             c
           end
