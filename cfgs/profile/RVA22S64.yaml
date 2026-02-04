@@ -14,7 +14,7 @@ params:
   MXLEN: 64
 mandatory_extensions:
 - name: A
-  version: "~> 2.1.0"
+  version: "~> 2.1"
 - name: B
   version: "~> 1.0.0"
 - name: C
@@ -59,10 +59,6 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zbs
   version: "~> 1.0"
-- name: Zca
-  version: "~> 1.0"
-- name: Zcd
-  version: "~> 1.0"
 - name: Zfhmin
   version: "~> 1.0"
 - name: Zic64b
@@ -82,8 +78,6 @@ mandatory_extensions:
 - name: Ziccrse
   version: "~> 1.0"
 - name: Zicntr
-  version: "~> 2.0"
-- name: Zicsr
   version: "~> 2.0"
 - name: Zifencei
   version: "~> 2.0"
@@ -109,6 +103,10 @@ non_mandatory_extensions:
 - name: Svnapot
   version: "~> 1.0"
 - name: V
+  version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
   version: "~> 1.0"
 - name: Zcf
   version: "~> 1.0"

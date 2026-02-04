@@ -21,25 +21,16 @@ extensions:
   $remove: Zifencei # Not allowed as an option for Unpriv ISA (only available in Priv ISA).
   A:
     presence: mandatory
-    version: ~> 2.1.0
+    version: ~> 2.1
   C:
     presence: mandatory
     version: ~> 2.0
-  Zca:
-    presence: mandatory
-    version: ~> 1.0
-  Zcd:
-    presence: mandatory
-    version: ~> 1.0
   D:
     presence: mandatory
     version: ~> 2.2.0
   F:
     presence: mandatory
     version: ~> 2.2.0
-  Zicsr:
-    presence: mandatory
-    version: ~> 2.0
   M:
     presence: mandatory
     version: ~> 2.0
@@ -116,8 +107,5 @@ recommendations:
 
 requirements:
   param:
-    allOf:
-      - name: U_MODE_ENDIANNESS
-        equal: little
-      - name: MISALIGNED_LDST
-        equal: true
+    name: U_MODE_ENDIANNESS
+    equal: little

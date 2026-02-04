@@ -8,14 +8,11 @@
 "$schema": config_schema.json#
 kind: architecture configuration
 type: partially configured
-name: RVI20U64
+name: RVA20U64
 description:
 params:
   MXLEN: 64
 mandatory_extensions:
-- name: I
-  version: "~> 2.1"
-non_mandatory_extensions:
 - name: A
   version: "~> 2.1"
 - name: C
@@ -24,18 +21,45 @@ non_mandatory_extensions:
   version: "~> 2.2.0"
 - name: F
   version: "~> 2.2.0"
+- name: I
+  version: "~> 2.1"
 - name: M
   version: "~> 2.0"
+- name: U
+  version: "~> 1.0"
+- name: Za128rs
+  version: "~> 1.0"
+- name: Zaamo
+  version: "~> 1.0.0"
+- name: Zalrsc
+  version: "~> 1.0.0"
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
+  version: "~> 1.0"
+- name: Ziccamoa
+  version: "~> 1.0"
+- name: Ziccif
+  version: "~> 1.0"
+- name: Zicclsm
+  version: "~> 1.0"
+- name: Ziccrse
+  version: "~> 1.0"
+- name: Zicntr
+  version: "~> 2.0"
+- name: Zicsr
+  version: "~> 2.0.0"
+non_mandatory_extensions:
 - name: Zca
   version: "~> 1.0"
 - name: Zcd
   version: "~> 1.0"
 - name: Zcf
   version: "~> 1.0"
-- name: Zicntr
-  version: "~> 2.0"
-- name: Zifencei
-  version: "~> 2.0"
 - name: Zihpm
   version: "~> 2.0"
 additional_extensions: true
+requirements:
+  param:
+    name: U_MODE_ENDIANNESS
+    equal: little

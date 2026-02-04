@@ -40,47 +40,11 @@ extensions:
     presence: mandatory
     version: ~> 1.0
 
-  Zve64d:
-    presence: mandatory
-    version: ~> 1.0
-
-  Zve64f:
-    presence: mandatory
-    version: ~> 1.0
-
-  Zve64x:
-    presence: mandatory
-    version: ~> 1.0
-
-  Zve32f:
-    presence: mandatory
-    version: ~> 1.0
-
-  Zve32x:
-    presence: mandatory
-    version: ~> 1.0
-
-  Zvl128b:
-    presence: mandatory
-    version: ~> 1.0
-
-  Zvl64b:
-    presence: mandatory
-    version: ~> 1.0
-
-  Zvl32b:
-    presence: mandatory
-    version: ~> 1.0
-
   Zvfhmin:
     presence: mandatory
     version: ~> 1.0
 
   Zvbb:
-    presence: mandatory
-    version: ~> 1.0
-
-  Zvkb:
     presence: mandatory
     version: ~> 1.0
 
@@ -111,41 +75,3 @@ extensions:
   #--------------------------------------------
   # (there are no Transitory expansion options in RVA23U64)
   #--------------------------------------------
-
-requirements:
-  param:
-    allOf:
-      - name: VLEN
-        greaterThanOrEqual: 128
-      - name: U_MODE_ENDIANNESS
-        equal: little
-      - name: MISALIGNED_LDST
-        equal: true
-      - name: MTVEC_BASE_ALIGNMENT_DIRECT
-        equal: 4
-      - name: MTVEC_MODES
-        equal: [0, 1]
-      - name: PRECISE_SYNCHRONOUS_EXCEPTIONS
-        equal: true
-      - name: TRAP_ON_ECALL_FROM_M
-        equal: true
-      - name: TRAP_ON_EBREAK
-        equal: true
-      - name: REPORT_VA_IN_MTVAL_ON_BREAKPOINT
-        equal: true
-      - name: REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT
-        equal: true
-      - name: REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT
-        equal: true
-      - name: REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT
-        equal: true
-      - name: REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION
-        equal: true
-      - name: M_MODE_ENDIANNESS
-        equal: little
-      - name: MXLEN
-        equal: 64
-      - name: NUM_PMP_ENTRIES
-        greaterThanOrEqual: 4
-      - name: PMP_GRANULARITY
-        lessThanOrEqual: 12

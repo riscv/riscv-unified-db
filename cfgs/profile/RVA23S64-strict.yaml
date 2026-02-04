@@ -8,7 +8,7 @@
 "$schema": config_schema.json#
 kind: architecture configuration
 type: partially configured
-name: RVB23S64
+name: RVA23S64
 description:
 params:
   MXLEN: 64
@@ -23,18 +23,42 @@ mandatory_extensions:
   version: "~> 2.2.0"
 - name: F
   version: "~> 2.2.0"
+- name: H
+  version: "~> 1.0.0"
 - name: I
   version: "~> 2.1"
 - name: M
   version: "~> 2.0"
 - name: S
-  version: "~> 1.13"
+  version: "~> 1.11"
+- name: Sha
+  version: "~> 1.0"
+- name: Shcounterenw
+  version: "~> 1.0.0"
+- name: Shgatpa
+  version: "~> 1.0.0"
+- name: Shtvala
+  version: "~> 1.0.0"
+- name: Shvsatpa
+  version: "~> 1.0.0"
+- name: Shvstvala
+  version: "~> 1.0.0"
+- name: Shvstvecd
+  version: "~> 1.0.0"
+- name: Sm
+  version: "~> 1.11.0"
+- name: Smhpm
+  version: "~> 1.11.0"
 - name: Ssccptr
   version: "~> 1.0"
 - name: Sscofpmf
   version: "~> 1.0"
 - name: Sscounterenw
   version: "~> 1.0"
+- name: Ssnpm
+  version: "~> 1.0"
+- name: Ssstateen
+  version: "~> 1.0.0"
 - name: Sstc
   version: "~> 1.0"
 - name: Sstvala
@@ -43,8 +67,10 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Ssu64xl
   version: "~> 1.0"
-- name: Sv39
+- name: Supm
   version: "~> 1.0"
+- name: Sv39
+  version: "~> 1.11"
 - name: Svade
   version: "~> 1.0"
 - name: Svbare
@@ -57,26 +83,38 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: U
   version: "~> 1.0"
+- name: V
+  version: "~> 1.0"
 - name: Za128rs
   version: "~> 1.0"
 - name: Za64rs
   version: "~> 1.0"
+- name: Zaamo
+  version: "~> 1.0.0"
+- name: Zalrsc
+  version: "~> 1.0.0"
 - name: Zawrs
-  version: "~> 1.0"
+  version: "~> 1.0.1"
 - name: Zba
   version: "~> 1.0"
 - name: Zbb
   version: "~> 1.0"
 - name: Zbs
   version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0"
 - name: Zcb
+  version: "~> 1.0"
+- name: Zcd
   version: "~> 1.0"
 - name: Zcmop
   version: "~> 1.0"
 - name: Zfa
   version: "~> 1.0"
+- name: Zfhmin
+  version: "~> 1.0"
 - name: Zic64b
-  version: "= 1.0"
+  version: "~> 1.0.0"
 - name: Zicbom
   version: "~> 1.0"
 - name: Zicbop
@@ -95,8 +133,10 @@ mandatory_extensions:
   version: "~> 2.0"
 - name: Zicond
   version: "~> 1.0"
+- name: Zicsr
+  version: "~> 2.0.0"
 - name: Zifencei
-  version: "~> 1.0"
+  version: "~> 2.0"
 - name: Zihintntl
   version: "~> 1.0"
 - name: Zihintpause
@@ -107,12 +147,32 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zkt
   version: "~> 1.0"
+- name: Zvbb
+  version: "~> 1.0"
+- name: Zve32f
+  version: "~> 1.0.0"
+- name: Zve32x
+  version: "~> 1.0.0"
+- name: Zve64d
+  version: "~> 1.0.0"
+- name: Zve64f
+  version: "~> 1.0.0"
+- name: Zve64x
+  version: "~> 1.0.0"
+- name: Zvfhmin
+  version: "~> 1.0"
+- name: Zvkb
+  version: "~> 1.0.0"
+- name: Zvkt
+  version: "~> 1.0"
+- name: Zvl128b
+  version: "~> 1.0.0"
+- name: Zvl32b
+  version: "~> 1.0.0"
+- name: Zvl64b
+  version: "~> 1.0.0"
 non_mandatory_extensions:
 - name: Sdtrig
-  version: "~> 1.0"
-- name: Sha
-  version: "~> 1.0"
-- name: Ssnpm
   version: "~> 1.0"
 - name: Sspm
   version: "~> 1.0"
@@ -132,14 +192,6 @@ non_mandatory_extensions:
   version: "~> 1.0"
 - name: Zcf
   version: "~> 1.0"
-- name: Zfh
-  version: "~> 1.0"
-- name: Zfhmin
-  version: "~> 1.0"
-- name: Zkn
-  version: "~> 1.0"
 - name: Zkr
-  version: "~> 1.0"
-- name: Zks
   version: "~> 1.0"
 additional_extensions: true

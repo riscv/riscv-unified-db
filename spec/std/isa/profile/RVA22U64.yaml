@@ -23,9 +23,6 @@ extensions:
     version: "~>1.0"
     note: |
       Reservation sets are contiguous, naturally aligned, and a maximum of 64 bytes
-  Za128rs:
-    presence: mandatory
-    version: "~>1.0"
   Zihpm:
     presence: mandatory
     version: "~> 2.0"
@@ -141,7 +138,3 @@ extra_notes:
     text: |
       The Zfinx, Zdinx, Zhinx, Zhinxmin extensions are incompatible
       with the profile mandates to support the F and D extensions.
-requirements:
-  param:
-    name: CACHE_BLOCK_SIZE
-    equal: 64

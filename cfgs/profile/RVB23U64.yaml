@@ -14,7 +14,7 @@ params:
   MXLEN: 64
 mandatory_extensions:
 - name: A
-  version: "~> 2.1.0"
+  version: "~> 2.1"
 - name: B
   version: "~> 1.0.0"
 - name: C
@@ -41,11 +41,7 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zbs
   version: "~> 1.0"
-- name: Zca
-  version: "~> 1.0"
 - name: Zcb
-  version: "~> 1.0"
-- name: Zcd
   version: "~> 1.0"
 - name: Zcmop
   version: "~> 1.0"
@@ -71,8 +67,6 @@ mandatory_extensions:
   version: "~> 2.0"
 - name: Zicond
   version: "~> 1.0"
-- name: Zicsr
-  version: "~> 2.0"
 - name: Zihintntl
   version: "~> 1.0"
 - name: Zihintpause
@@ -95,6 +89,10 @@ non_mandatory_extensions:
 - name: Zama16b
   version: "~> 1.0"
 - name: Zbc
+  version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
   version: "~> 1.0"
 - name: Zcf
   version: "~> 1.0"

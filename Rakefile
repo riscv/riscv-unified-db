@@ -519,7 +519,6 @@ namespace :gen do
   task :cfg do
     cfg_arch = $resolver.cfg_arch_for("_")
     FileUtils.mkdir_p $resolver.cfgs_path / "profile"
-    Dir.glob($resolver.cfgs_path / "profile" / "*.yaml").each { |f| FileUtils.rm_f f }
     cfg_arch.profiles.each do |profile|
       path = $resolver.cfgs_path / "profile" / "#{profile.name}.yaml"
       FileUtils.rm_f path
@@ -543,7 +542,6 @@ namespace :gen do
   task :strict_cfg do
     cfg_arch = $resolver.cfg_arch_for("_")
     FileUtils.mkdir_p $resolver.cfgs_path / "profile"
-    Dir.glob($resolver.cfgs_path / "profile" / "*.yaml").each { |f| FileUtils.rm_f f }
     cfg_arch.profiles.each do |profile|
       path = $resolver.cfgs_path / "profile" / "#{profile.name}-strict.yaml"
       FileUtils.rm_f path

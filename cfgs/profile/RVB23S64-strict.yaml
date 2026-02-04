@@ -28,7 +28,11 @@ mandatory_extensions:
 - name: M
   version: "~> 2.0"
 - name: S
-  version: "~> 1.13"
+  version: "~> 1.11"
+- name: Sm
+  version: "~> 1.11.0"
+- name: Smhpm
+  version: "~> 1.11.0"
 - name: Ssccptr
   version: "~> 1.0"
 - name: Sscofpmf
@@ -44,7 +48,7 @@ mandatory_extensions:
 - name: Ssu64xl
   version: "~> 1.0"
 - name: Sv39
-  version: "~> 1.0"
+  version: "~> 1.11"
 - name: Svade
   version: "~> 1.0"
 - name: Svbare
@@ -61,22 +65,30 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za64rs
   version: "~> 1.0"
+- name: Zaamo
+  version: "~> 1.0.0"
+- name: Zalrsc
+  version: "~> 1.0.0"
 - name: Zawrs
-  version: "~> 1.0"
+  version: "~> 1.0.1"
 - name: Zba
   version: "~> 1.0"
 - name: Zbb
   version: "~> 1.0"
 - name: Zbs
   version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0"
 - name: Zcb
+  version: "~> 1.0"
+- name: Zcd
   version: "~> 1.0"
 - name: Zcmop
   version: "~> 1.0"
 - name: Zfa
   version: "~> 1.0"
 - name: Zic64b
-  version: "= 1.0"
+  version: "~> 1.0.0"
 - name: Zicbom
   version: "~> 1.0"
 - name: Zicbop
@@ -95,8 +107,10 @@ mandatory_extensions:
   version: "~> 2.0"
 - name: Zicond
   version: "~> 1.0"
+- name: Zicsr
+  version: "~> 2.0.0"
 - name: Zifencei
-  version: "~> 1.0"
+  version: "~> 2.0"
 - name: Zihintntl
   version: "~> 1.0"
 - name: Zihintpause

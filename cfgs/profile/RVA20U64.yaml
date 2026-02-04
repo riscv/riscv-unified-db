@@ -14,7 +14,7 @@ params:
   MXLEN: 64
 mandatory_extensions:
 - name: A
-  version: "~> 2.1.0"
+  version: "~> 2.1"
 - name: C
   version: "~> 2.0"
 - name: D
@@ -29,10 +29,6 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za128rs
   version: "~> 1.0"
-- name: Zca
-  version: "~> 1.0"
-- name: Zcd
-  version: "~> 1.0"
 - name: Ziccamoa
   version: "~> 1.0"
 - name: Ziccif
@@ -43,9 +39,11 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zicntr
   version: "~> 2.0"
-- name: Zicsr
-  version: "~> 2.0"
 non_mandatory_extensions:
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
+  version: "~> 1.0"
 - name: Zcf
   version: "~> 1.0"
 - name: Zihpm
@@ -53,8 +51,5 @@ non_mandatory_extensions:
 additional_extensions: true
 requirements:
   param:
-    allOf:
-    - name: U_MODE_ENDIANNESS
-      equal: little
-    - name: MISALIGNED_LDST
-      equal: true
+    name: U_MODE_ENDIANNESS
+    equal: little
