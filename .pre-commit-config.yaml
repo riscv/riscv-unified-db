@@ -150,6 +150,15 @@ repos:
 
   - repo: local
     hooks:
+      - id: specgen
+        name: generate spec files from layouts
+        files: (spec/.*\.layout)
+        pass_filenames: false
+        language: system
+        entry: ./bin/chore gen spec
+
+  - repo: local
+    hooks:
       - id: regress
         name: generate regress.yml
         files: (tools/test/gen_regress\.rb|tools/test/regress-tests.yaml|tools/test/regress-gh-template.yaml)
