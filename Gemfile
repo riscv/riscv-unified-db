@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-ruby "~> 3.2"
+ruby ">= 3.2"
 
 # local gems in UDB
 gem "idlc", path: "tools/ruby-gems/idlc"

@@ -306,21 +306,30 @@ module Udb
               total: cfg_arch.csrs.size,
               clear: true
             )
-          cfg_arch.csrs.select do |csr|
-            pb.advance
-            csr_defined = csr.defined_by_condition
-            next unless csr_defined.mentions?(self)
-            requirement_met = to_condition
-            preconditions_met = requirements_condition
+        cfg_arch.csrs.select do |csr|
+          pb.advance
+          csr_defined = csr.defined_by_condition
+          next unless csr_defined.mentions?(self)
 
-            # csr is defined exclusively by self if:
-            (
-              (-csr_defined & requirement_met) # it must be defined when self is met, and
-            ).unsatisfiable? &
-            (
-              (-csr_defined & preconditions_met)  # it may not be defined when only self's requirements are met
-            ).satisfiable?
+          requirement_met = to_condition
+          preconditions_met = requirements_condition
+
+          if csr.defined_in_base32? && !csr.defined_in_base64?
+            requirement_met &= Condition::Xlen32 
+            preconditions_met &= Condition::Xlen32
+          elsif !csr.defined_in_base32? && csr.defined_in_base64?
+            requirement_met &= Condition::Xlen64
+            preconditions_met &= Condition::Xlen64
           end
+
+          # csr is defined exclusively by self if:
+          (
+            (-csr_defined & requirement_met) # it must be defined when self is met, and
+          ).unsatisfiable? &
+          (
+            (-csr_defined & preconditions_met)  # it may not be defined when only self's requirements are met
+          ).satisfiable?
+        end
         end
     end
 
