@@ -9,7 +9,7 @@ description: |
   the Programmer's Reference Manual generation capabilities.
 
 params:
-  MXLEN: 32
+  xlen: 32
 
 mandatory_extensions:
   - name: "I"

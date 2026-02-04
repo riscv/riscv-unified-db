@@ -22,7 +22,7 @@ implemented_extensions:
   - [Sv32, "1.11.0"]
 
 params:
-  MXLEN: 32
+  xlen: 32
   MARCHID_IMPLEMENTED: true
   ARCH_ID_VALUE: 1
   MIMPID_IMPLEMENTED: true

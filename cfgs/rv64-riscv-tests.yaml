@@ -22,7 +22,7 @@ implemented_extensions:
   - [Zca, "1.0.0"]
 
 params:
-  MXLEN: 64
+  xlen: 64
   MARCHID_IMPLEMENTED: true
   ARCH_ID_VALUE: 1
   MIMPID_IMPLEMENTED: true

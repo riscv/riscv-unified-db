@@ -251,7 +251,7 @@ class TestConditions < Minitest::Test
 
   def test_single_param_req
     cond_str = <<~COND
-      idl(): (MXLEN == 32) -> LITTLE_IS_BETTER;
+      idl(): (xlen() == 32) -> LITTLE_IS_BETTER;
       reason: because
     COND
 

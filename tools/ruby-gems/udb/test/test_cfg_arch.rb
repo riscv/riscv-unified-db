@@ -37,7 +37,7 @@ class TestCfgArch < Minitest::Test
       name: rv32
       description: A generic RV32 system; only MXLEN is known
       params:
-        MXLEN: 31
+        xlen: 31
         NOT_A: false
         CACHE_BLOCK_SIZE: 64
 
@@ -66,7 +66,7 @@ class TestCfgArch < Minitest::Test
       refute result.valid
       assert_includes result.reasons, "Extension requirement can never be met (no match in the database): Znotanextension "
       assert_includes result.reasons, "Extension requirement can never be met (no match in the database): D = 50"
-      assert_includes result.reasons, "Parameter value violates the schema: 'MXLEN' = '31'"
+      assert_includes result.reasons, "Parameter value violates the schema: 'xlen' = '31'"
       assert_includes result.reasons, "Parameter has no definition: 'NOT_A'"
       assert_includes result.reasons, "Parameter is not defined by this config: 'CACHE_BLOCK_SIZE'. Needs (Zicbom>=0 || Zicbop>=0 || Zicboz>=0)"
       assert result.reasons.any? { |r| r =~ /Mandatory extension requirements conflict: This is not satisfiable: / }
@@ -88,7 +88,7 @@ class TestCfgArch < Minitest::Test
       params:
 
         # bad params
-        MXLEN: 31
+        xlen: 31
         NOT_A: false
         CACHE_BLOCK_SIZE: 64
 
@@ -150,7 +150,7 @@ class TestCfgArch < Minitest::Test
       name: rv32
       description: A generic RV32 system; only MXLEN is known
       params:
-        MXLEN: 32
+        xlen: 32
       mandatory_extensions:
         - name: "I"
           version: ">= 0"
@@ -213,7 +213,7 @@ class TestCfgArch < Minitest::Test
       name: rv64_no32
       description: A generic RV64 system, no RV32 possible
       params:
-        MXLEN: 64
+        xlen: 64
         SXLEN: [64]
         UXLEN: [64]
       mandatory_extensions:

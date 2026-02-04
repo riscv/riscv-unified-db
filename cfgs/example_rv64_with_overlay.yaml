@@ -54,7 +54,7 @@ implemented_extensions:
   - [Zicbom, "1.0.0"]
 
 params:
-  MXLEN: 64
+  xlen: 64
 
   VLEN: 128
 

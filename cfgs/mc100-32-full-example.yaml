@@ -15,7 +15,7 @@ implemented_extensions:
   - [Zicntr, "2.0"]
   - [Smrnmi, "1.0"]
 params:
-  MXLEN: 32
+  xlen: 32
   MARCHID_IMPLEMENTED: true
   ARCH_ID_VALUE: 1
   MIMPID_IMPLEMENTED: true

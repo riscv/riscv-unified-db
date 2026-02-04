@@ -156,7 +156,7 @@ module Udb
             }
           end
         }
-        data.fetch("params")["MXLEN"] = portfolio_grp.max_base
+        data.fetch("params")["xlen"] = portfolio_grp.max_base
         freeze_data(data)
         PartialConfig.send(:new, data, info)
       else
@@ -219,9 +219,14 @@ module Udb
 
       @param_values = @data.key?("params") ? @data["params"] : [].freeze
 
-      @mxlen = @data.dig("params", "MXLEN")
+      @mxlen = @data.dig("params", "xlen")
       if @mxlen.nil?
-        Udb.logger.error "Must set MXLEN for a configured config"
+        # TODO: This fallback is for transition, eventually remove
+        @mxlen = @data.dig("params", "MXLEN")
+      end
+
+      if @mxlen.nil?
+        Udb.logger.error "Must set xlen for a configured config"
         raise InvalidConfigError
       end
 
@@ -294,9 +299,15 @@ module Udb
 
       @param_values = @data["params"]
 
-      @mxlen = @data.dig("params", "MXLEN").freeze
+      @mxlen = @data.dig("params", "xlen")
       if @mxlen.nil?
-        Udb.logger.error "Must set MXLEN for a configured config"
+        # TODO: This fallback is for transition, eventually remove
+        @mxlen = @data.dig("params", "MXLEN")
+      end
+
+      @mxlen.freeze
+      if @mxlen.nil?
+        Udb.logger.error "Must set xlen for a configured config"
         raise InvalidConfigError
       end
     end

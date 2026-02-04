@@ -151,7 +151,7 @@ module Udb
     def in_scope_extensions = portfolio_grp.in_scope_extensions
 
     def all_in_scope_params
-      [Portfolio::InScopeParameter.new(@cfg_arch.param("MXLEN"), { "const" => @data["base"] }, "")]
+      []
     end
 
     # @return [String] Given an extension +ext_name+, return the presence as a string.
@@ -197,7 +197,7 @@ module Udb
     end
 
     def all_in_scope_params
-      [Portfolio::InScopeParameter.new(@cfg_arch.param("MXLEN"), { "const" => @data["base"] }, "")]
+      []
     end
 
     # Too complicated to put in profile ERB template.

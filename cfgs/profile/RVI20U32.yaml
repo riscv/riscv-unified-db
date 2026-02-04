@@ -11,7 +11,7 @@ type: partially configured
 name: RVI20U32
 description:
 params:
-  MXLEN: 32
+  xlen: 32
 mandatory_extensions:
 - name: I
   version: "~> 2.1"

@@ -44,7 +44,7 @@ implemented_extensions:
   - { name: Xqcisls, version: "= 0.2.0" }
   - { name: Xqcisync, version: "= 0.3.0" }
 params:
-  MXLEN: 32
+  xlen: 32
   PHYS_ADDR_WIDTH: 32
   MARCHID_IMPLEMENTED: true
   ARCH_ID_VALUE: 1

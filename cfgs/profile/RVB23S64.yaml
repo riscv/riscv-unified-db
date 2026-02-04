@@ -11,7 +11,7 @@ type: partially configured
 name: RVB23S64
 description:
 params:
-  MXLEN: 64
+  xlen: 64
 mandatory_extensions:
 - name: A
   version: "~> 2.1"
