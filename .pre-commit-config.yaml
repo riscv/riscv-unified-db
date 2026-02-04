@@ -179,6 +179,15 @@ repos:
           )
           '
 
+  - repo: local
+    hooks:
+      - id: profileexts
+        name: generate golden profile extensions
+        files: (spec/.*)
+        pass_filenames: false
+        language: system
+        entry: ./do chore:update_golden_profile_extensions
+
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 43.2.0
     hooks:
