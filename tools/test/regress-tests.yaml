@@ -92,12 +92,12 @@ tests:
   regress-gen-certificate:
     test:
       - name: Generate extension PDF
-        run: ./do gen:proc_crd_pdf[MockProcessor]
+        run: ./do gen:proc_crd_pdf[RVI20-32]
 
   regress-gen-profile:
     test:
       - name: Generate extension PDF
-        run: ./do gen:profile_release_pdf[Mock]
+        run: ./do gen:profile_release_pdf[RVI20]
 
   regress-profile-strict-cfg:
     test:
