@@ -109,9 +109,9 @@ do_gen_container_def() {
 }
 
 do_gen_profile_cfgs() {
-  rm -rf cfgs/profile/*
+  # note that the Rake tasks makes the file read-only
   ./do gen:cfg
-  chmod 444 cfgs/profile/*
+  ./do gen:strict_cfg
 }
 
 do_gen_all() {

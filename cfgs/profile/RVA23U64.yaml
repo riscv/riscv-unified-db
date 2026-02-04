@@ -14,15 +14,15 @@ params:
   MXLEN: 64
 mandatory_extensions:
 - name: A
-  version: "~> 2.1"
+  version: "~> 2.1.0"
 - name: B
   version: "~> 1.0.0"
 - name: C
   version: "~> 2.0"
 - name: D
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: F
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: I
   version: "~> 2.1"
 - name: M
@@ -37,10 +37,6 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za64rs
   version: "~> 1.0"
-- name: Zaamo
-  version: "~> 1.0"
-- name: Zalrsc
-  version: "~> 1.0"
 - name: Zawrs
   version: "~> 1.0"
 - name: Zba
@@ -49,7 +45,11 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zbs
   version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0"
 - name: Zcb
+  version: "~> 1.0"
+- name: Zcd
   version: "~> 1.0"
 - name: Zcmop
   version: "~> 1.0"
@@ -91,9 +91,27 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zvbb
   version: "~> 1.0"
+- name: Zve32f
+  version: "~> 1.0"
+- name: Zve32x
+  version: "~> 1.0"
+- name: Zve64d
+  version: "~> 1.0"
+- name: Zve64f
+  version: "~> 1.0"
+- name: Zve64x
+  version: "~> 1.0"
 - name: Zvfhmin
   version: "~> 1.0"
+- name: Zvkb
+  version: "~> 1.0"
 - name: Zvkt
+  version: "~> 1.0"
+- name: Zvl128b
+  version: "~> 1.0"
+- name: Zvl32b
+  version: "~> 1.0"
+- name: Zvl64b
   version: "~> 1.0"
 non_mandatory_extensions:
 - name: Zabha
@@ -103,10 +121,6 @@ non_mandatory_extensions:
 - name: Zama16b
   version: "~> 1.0"
 - name: Zbc
-  version: "~> 1.0"
-- name: Zca
-  version: "~> 1.0"
-- name: Zcd
   version: "~> 1.0"
 - name: Zcf
   version: "~> 1.0"
@@ -133,3 +147,42 @@ non_mandatory_extensions:
 - name: Zvksg
   version: "~> 1.0"
 additional_extensions: true
+requirements:
+  param:
+    allOf:
+    - name: VLEN
+      greaterThanOrEqual: 128
+    - name: U_MODE_ENDIANNESS
+      equal: little
+    - name: MISALIGNED_LDST
+      equal: true
+    - name: MTVEC_BASE_ALIGNMENT_DIRECT
+      equal: 4
+    - name: MTVEC_MODES
+      equal:
+      - 0
+      - 1
+    - name: PRECISE_SYNCHRONOUS_EXCEPTIONS
+      equal: true
+    - name: TRAP_ON_ECALL_FROM_M
+      equal: true
+    - name: TRAP_ON_EBREAK
+      equal: true
+    - name: REPORT_VA_IN_MTVAL_ON_BREAKPOINT
+      equal: true
+    - name: REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT
+      equal: true
+    - name: REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT
+      equal: true
+    - name: REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT
+      equal: true
+    - name: REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION
+      equal: true
+    - name: M_MODE_ENDIANNESS
+      equal: little
+    - name: MXLEN
+      equal: 64
+    - name: NUM_PMP_ENTRIES
+      greaterThanOrEqual: 4
+    - name: PMP_GRANULARITY
+      lessThanOrEqual: 12

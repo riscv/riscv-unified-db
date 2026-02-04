@@ -14,15 +14,15 @@ params:
   MXLEN: 64
 mandatory_extensions:
 - name: A
-  version: "~> 2.1"
+  version: "~> 2.1.0"
 - name: B
   version: "~> 1.0.0"
 - name: C
   version: "~> 2.0"
 - name: D
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: F
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: I
   version: "~> 2.1"
 - name: M
@@ -69,10 +69,6 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za64rs
   version: "~> 1.0"
-- name: Zaamo
-  version: "~> 1.0"
-- name: Zalrsc
-  version: "~> 1.0"
 - name: Zawrs
   version: "~> 1.0"
 - name: Zba
@@ -81,7 +77,11 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zbs
   version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0"
 - name: Zcb
+  version: "~> 1.0"
+- name: Zcd
   version: "~> 1.0"
 - name: Zcmop
   version: "~> 1.0"
@@ -125,9 +125,27 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zvbb
   version: "~> 1.0"
+- name: Zve32f
+  version: "~> 1.0"
+- name: Zve32x
+  version: "~> 1.0"
+- name: Zve64d
+  version: "~> 1.0"
+- name: Zve64f
+  version: "~> 1.0"
+- name: Zve64x
+  version: "~> 1.0"
 - name: Zvfhmin
   version: "~> 1.0"
+- name: Zvkb
+  version: "~> 1.0"
 - name: Zvkt
+  version: "~> 1.0"
+- name: Zvl128b
+  version: "~> 1.0"
+- name: Zvl32b
+  version: "~> 1.0"
+- name: Zvl64b
   version: "~> 1.0"
 non_mandatory_extensions:
 - name: Sdtrig
@@ -143,10 +161,6 @@ non_mandatory_extensions:
 - name: Svadu
   version: "~> 1.0"
 - name: Svvptc
-  version: "~> 1.0"
-- name: Zca
-  version: "~> 1.0"
-- name: Zcd
   version: "~> 1.0"
 - name: Zcf
   version: "~> 1.0"

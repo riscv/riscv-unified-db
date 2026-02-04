@@ -19,13 +19,11 @@ versions:
       - name: Unknown
         email: unknown@void.segfault
         company: Unknown
-    requirements:
-      extension:
-        allOf:
-          - name: Zaamo
-            version: "= 1.0.0"
-          - name: Zalrsc
-            version: "= 1.0.0"
+requirements:
+  extension:
+    allOf:
+      - name: Zaamo
+      - name: Zalrsc
 description: |
 
   The atomic-instruction extension, named `A`, contains

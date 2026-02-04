@@ -41,7 +41,7 @@ module Udb
         presence: T.nilable(Presence)
       ).void
     }
-    def initialize(name, requirements, arch:, note:, req_id:, presence:)
+    def initialize(name, requirements, arch:, note: nil, req_id: nil, presence: nil)
       @ext_req = arch.extension_requirement(name, requirements)
       @note = note
       @req_id = req_id
@@ -440,9 +440,9 @@ module Udb
         end
     end
 
-    sig { returns(T::Hash[String, T.untyped]) }
-    def to_config
-      {
+    sig { params(mandatory: T::Array[PortfolioExtensionRequirement]).returns(T::Hash[String, T.untyped]) }
+    def to_config(mandatory: mandatory_ext_reqs)
+      c = {
         "$schema" => "config_schema.json#",
         "kind" => "architecture configuration",
         "type" => "partially configured",
@@ -455,7 +455,7 @@ module Udb
             nil
           end
         end.compact.to_h,
-        "mandatory_extensions" => mandatory_ext_reqs.map do |ext_req|
+        "mandatory_extensions" => mandatory.map do |ext_req|
           {
             "name" => ext_req.name,
             "version" => \
@@ -479,6 +479,29 @@ module Udb
         end,
         "additional_extensions" => true
       }
+      c["requirements"] = requirements_condition.to_h unless requirements_condition.empty?
+      c
+    end
+
+    # @return portfolio in config form, with requirements of mandatory extensions expanded
+    sig { returns(T::Hash[String, T.untyped]) }
+    def to_strict_config
+      strict_mandatory_ext_reqs = T.let([], T::Array[PortfolioExtensionRequirement])
+
+      to_cfg_arch.extensions.each do |ext|
+        if (-ext.to_ext_req.to_condition & to_cfg_arch.to_condition).unsatisfiable?
+          # what's the minimum?
+          min_ext_ver = ext.versions.find do |ext_ver|
+            compat_with_ext_ver = Condition.new({ "extension" => { "name" => ext.name, "version" => "~> #{ext_ver.version_str}" } }, cfg_arch)
+            (-compat_with_ext_ver & to_cfg_arch.to_condition).unsatisfiable?
+          end
+          raise "condition problem: ext is required but none of the versions are" if min_ext_ver.nil?
+
+          strict_mandatory_ext_reqs << PortfolioExtensionRequirement.new(ext.name, "~> #{min_ext_ver.version_str}", arch: cfg_arch)
+        end
+      end
+
+      to_config(mandatory: strict_mandatory_ext_reqs)
     end
 
     # returns a config arch that treats the Portfolio like a partial config
@@ -525,6 +548,7 @@ module Udb
             end,
             "additional_extensions" => true
           }
+        contents["requirements"] = requirements_condition.to_h unless requirements_condition.empty?
         Tempfile.create do |f|
           f.write YAML.dump(contents)
           f.fsync
@@ -532,6 +556,16 @@ module Udb
           @cfg_arch.config.info.resolver.cfg_arch_for(Pathname.new f.path)
         end
       end
+    end
+
+    sig { returns(AbstractCondition) }
+    def requirements_condition
+      @requirements_condition ||=
+        if @data.key?("requirements")
+          Condition.new(@data.fetch("requirements"), cfg_arch)
+        else
+          AlwaysTrueCondition.new(cfg_arch)
+        end
     end
 
     # @return [String] Given an instruction +inst_name+, return the presence as a string.
@@ -739,8 +773,7 @@ module Udb
 
       return @in_scope_csrs unless @in_scope_csrs.nil?
 
-      @in_scope_csrs =
-        in_scope_min_satisfying_extension_versions.map { |ext_ver| ext_ver.in_scope_csrs(design.possible_xlens) }.flatten.uniq
+      @in_scope_csrs = to_cfg_arch.in_scope_csrs(show_progress: true)
     end
 
     # @param design [Design] The design

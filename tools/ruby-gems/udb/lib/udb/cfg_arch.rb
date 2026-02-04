@@ -262,6 +262,10 @@ module Udb
       # check extension requirements
       reasons = []
 
+      if to_condition.satisfiable?
+        return ValidationResult.new(valid: true, reasons:)
+      end
+
       explicitly_implemented_extension_versions.each do |ext_ver|
         unless ext_ver.valid?
           reasons << "Extension version has no definition: #{ext_ver}"
@@ -318,10 +322,48 @@ module Udb
     end
     private :full_config_valid?
 
+    # returns whether or not the partial config transitively lists all requirements of
+    # mandatory extensions (as other mandatory extension and/or parameters)
+    #
+    # For example:
+    #   ----
+    #   mandatory_extensions:
+    #     - name: A
+    #   ----
+    #   is not strictly specified
+    #
+    #   but
+    #   ----
+    #   mandatory_extensions:
+    #     - name: A
+    #     - name: Zaamo
+    #     - name: Zalrsc
+    #   ---
+    #   is
+    sig { returns(ValidationResult) }
+    def partial_config_strictly_specified?
+      raise "not a partial config" unless partially_configured?
+
+      v = partial_config_valid?
+
+      reasons = []
+      mandatory_extension_reqs.each do |ext_req|
+        if ext_req.requirements_condition.satisfied_by_cfg_arch?(self) != SatisfiedResult::Yes
+          reasons << "Requirement of #{ext_req} are not met: #{ext_req.requirements_condition.to_s_with_value(self, expand: false)}"
+        end
+      end
+
+      ValidationResult.new(valid: v.valid & reasons.empty?, reasons: v.reasons + reasons)
+    end
+
     # @api private
     sig { returns(ValidationResult) }
     def partial_config_valid?
       reasons = []
+
+      if (to_condition).satisfiable?
+        return ValidationResult.new(valid: true, reasons: [])
+      end
 
       mandatory_extension_reqs.each do |ext_req|
         unless ext_req.valid?
@@ -340,14 +382,6 @@ module Udb
       unless mandatory_cond.satisfiable?
         mandatory_cond.to_logic_tree(expand: true).minimal_unsat_subsets.each do |min|
           reasons << "Mandatory extension requirements conflict: This is not satisfiable: #{min.to_s(format: LogicNode::LogicSymbolFormat::C)}"
-        end
-      end
-
-      # for all mandatory extensions, check that the requirements are met by other mandatory extensions
-      # and/or parameters
-      mandatory_extension_reqs.each do |ext_req|
-        unless ext_req.requirements_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
-          reasons << "Requirements for #{ext_req} are not met: #{ext_req.requirements_condition.to_s_with_value(self, expand: false)}"
         end
       end
 
@@ -372,6 +406,14 @@ module Udb
 
         if p.requirements_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::No
           reasons << "Parameter requirements cannot be met: '#{param_name}'. Needs: #{p.requirements_condition}"
+        end
+      end
+
+      unless config.requirements.nil?
+        unless (to_condition).satisfiable?
+          to_condition.to_logic_tree(expand: true).minimal_unsat_subsets.each do |min|
+            reasons << "Requirements cannot be met. This is not satisfiable: #{min.to_s(format: LogicNode::LogicSymbolFormat::C)}"
+          end
         end
       end
 
@@ -881,6 +923,25 @@ module Udb
         end
     end
 
+    # @return List of all mandatory extension requirements (not transitive)
+    sig { returns(T::Array[ExtensionRequirement]) }
+    def non_mandatory_extension_reqs
+      @non_mandatory_extension_reqs ||=
+        begin
+          raise "Only partial configs have non-mandatory extension requirements" unless @config.is_a?(PartialConfig)
+
+          @config.non_mandatory_extensions.map do |e|
+            ename = T.cast(e["name"], String)
+
+            if e["version"].nil?
+              extension_requirement(ename, ">= 0")
+            else
+              extension_requirement(ename, e.fetch("version"))
+            end
+          end
+        end
+    end
+
     # list of all the extension versions that optional, i.e:
     # lis of all the extension versions would not fufill a mandatory requirement and are not prhohibited
     sig { returns(T::Array[ExtensionRequirement]) }
@@ -1135,6 +1196,120 @@ module Udb
         end
     end
     alias not_prohibited_csrs possible_csrs
+
+    sig { params(show_progress: T::Boolean).returns(T::Array[Csr]) }
+    def csrs_that_must_be_implemented(show_progress: false)
+      @csrs_that_must_be_implemented ||=
+        if @config.fully_configured?
+          implemented_csrs
+        elsif @config.partially_configured?
+          bar =
+            if show_progress
+              Udb.create_progressbar("determining CSRs that must be implemented [:bar]", total: csrs.size, output: $stdout)
+            end
+          csrs.select do |csr|
+            bar.advance if show_progress
+            (-csr.defined_by_condition & to_condition).unsatisfiable?
+          end
+        else
+          []
+        end
+    end
+
+    # CSRs that are defined by mentioned extensions in the config
+    #
+    # For a full config, this is CSRs defined by the implemented extensions
+    #
+    # For a partial config, this is CSRs defined by the mandatory or
+    # non-mandatory extensions
+    sig { params(show_progress: T::Boolean).returns(T::Array[Csr]) }
+    def in_scope_csrs(show_progress: false)
+      @mentioned_csrs ||=
+        if @config.fully_configured?
+          implemented_csrs
+        elsif @config.partially_configured?
+          bar =
+            if show_progress
+              Udb.create_progressbar("determining in scope CSRs [:bar]", total: csrs.size, output: $stdout)
+            end
+          csrs.select do |csr|
+            bar.advance if show_progress
+            (-csr.defined_by_condition & in_scope_condition).unsatisfiable?
+          end
+        else
+          []
+        end
+    end
+
+    # represent the config as a Condition
+    sig { returns(Condition) }
+    def to_condition
+      @condition ||=
+        begin
+          if fully_configured?
+            (
+              Condition.conjunction(implemented_extension_versions.map(&:to_condition), self) \
+              & \
+              Condition.conjunction(
+                params_with_value.map do |pv|
+                  Condition.new({ "param" => { "name" => pv.name, "equal" => pv.value } }, self)
+                end,
+                self
+              )
+            )
+          elsif partially_configured?
+            c = (
+              Condition.conjunction(mandatory_extension_reqs.map(&:to_condition), self) \
+              & \
+              Condition.conjunction(
+                params_with_value.map do |pv|
+                  Condition.new({ "param" => { "name" => pv.name, "equal" => pv.value } }, self)
+                end,
+                self
+              )
+            )
+            unless @config.requirements.nil?
+              c = (c & Condition.new(@config.requirements, self))
+            end
+            c
+          end
+        end
+    end
+
+    # a condition where both mandatory and non-mandatory extensions are required
+    sig { returns(Condition) }
+    def in_scope_condition
+      @condition ||=
+        begin
+          if fully_configured?
+            (
+              Condition.conjunction(implemented_extension_versions.map(&:to_condition), self) \
+              & \
+              Condition.conjunction(
+                params_with_value.map do |pv|
+                  Condition.new({ "param" => { "name" => pv.name, "equal" => pv.value } }, self)
+                end,
+                self
+              )
+            )
+          elsif partially_configured?
+            c = (
+              Condition.conjunction(mandatory_extension_reqs.map(&:to_condition) + non_mandatory_extension_reqs.map(&:to_condition), self) \
+              & \
+              Condition.conjunction(
+                params_with_value.map do |pv|
+                  Condition.new({ "param" => { "name" => pv.name, "equal" => pv.value } }, self)
+                end,
+                self
+              )
+            )
+            unless @config.requirements.nil?
+              c = (c & Condition.new(@config.requirements, self))
+            end
+            c
+          end
+        end
+    end
 
     # @return List of all implemented instructions, sorted by name
     sig { returns(T::Array[Instruction]) }

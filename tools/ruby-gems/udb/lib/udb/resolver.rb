@@ -103,13 +103,21 @@ module Udb
     # path to merged spec (merged with custom overley, but prior to resolution)
     sig { params(cfg_path_or_name: T.any(String, Pathname)).returns(Pathname) }
     def merged_spec_path(cfg_path_or_name)
-      @gen_path / "spec" / cfg_info(cfg_path_or_name).name
+      if cfg_info(cfg_path_or_name).overlay_path.nil?
+        @gen_path / "spec" / "_"
+      else
+        @gen_path / "spec" / cfg_info(cfg_path_or_name).name
+      end
     end
 
     # path to merged and resolved spec
     sig { params(cfg_path_or_name: T.any(String, Pathname)).returns(Pathname) }
     def resolved_spec_path(cfg_path_or_name)
-      @gen_path / "resolved_spec" / cfg_info(cfg_path_or_name).name
+      if cfg_info(cfg_path_or_name).overlay_path.nil?
+        @gen_path / "resolved_spec" / "_"
+      else
+        @gen_path / "resolved_spec" / cfg_info(cfg_path_or_name).name
+      end
     end
 
     # path to a python binary
@@ -304,14 +312,26 @@ module Udb
             raise "Cannot resolve path to overlay (#{config_yaml["arch_overlay"]})"
           end
 
+        merged_spec_path =
+          if overlay_path.nil?
+            @gen_path / "spec" / "_"
+          else
+            @gen_path / "spec" / config_yaml["name"]
+          end
+        resolved_spec_path =
+          if overlay_path.nil?
+            @gen_path / "resolved_spec" / "_"
+          else
+            @gen_path / "resolved_spec" / config_yaml["name"]
+          end
         info = ConfigInfo.new(
           name: config_yaml["name"],
           path: config_path,
           overlay_path:,
           unresolved_yaml: config_yaml,
           spec_path: std_path,
-          merged_spec_path: @gen_path / "spec" / config_yaml["name"],
-          resolved_spec_path: @gen_path / "resolved_spec" / config_yaml["name"],
+          merged_spec_path:,
+          resolved_spec_path:,
           resolver: self
         )
         @cfg_info[config_path] = info

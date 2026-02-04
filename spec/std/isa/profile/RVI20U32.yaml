@@ -8,7 +8,7 @@ kind: profile
 name: RVI20U32
 long_name: U-mode extensions for version 20 of a 32-bit processor
 marketing_name: RVI20U32
-mode: Unpriv
+mode: U
 base: 32
 release: { $ref: profile_release/RVI20.yaml# }
 introduction: |
@@ -40,12 +40,6 @@ extensions:
   A:
     presence: optional
     version: "~> 2.1"
-  Zaamo:
-    presence: optional
-    version: "~> 1.0"
-  Zalrsc:
-    presence: optional
-    version: "~> 1.0"
   C:
     presence: optional
     version: "~> 2.0"

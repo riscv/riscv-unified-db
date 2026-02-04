@@ -17,19 +17,15 @@ mandatory_extensions:
   version: "~> 2.1"
 non_mandatory_extensions:
 - name: A
-  version: "~> 2.1"
+  version: "~> 2.1.0"
 - name: C
   version: "~> 2.0"
 - name: D
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: F
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: M
   version: "~> 2.0"
-- name: Zaamo
-  version: "~> 1.0"
-- name: Zalrsc
-  version: "~> 1.0"
 - name: Zca
   version: "~> 1.0"
 - name: Zcd

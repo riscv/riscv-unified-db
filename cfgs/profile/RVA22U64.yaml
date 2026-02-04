@@ -14,15 +14,15 @@ params:
   MXLEN: 64
 mandatory_extensions:
 - name: A
-  version: "~> 2.1"
+  version: "~> 2.1.0"
 - name: B
   version: "~> 1.0.0"
 - name: C
   version: "~> 2.0"
 - name: D
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: F
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: I
   version: "~> 2.1"
 - name: M
@@ -33,15 +33,15 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za64rs
   version: "~> 1.0"
-- name: Zaamo
-  version: "~> 1.0"
-- name: Zalrsc
-  version: "~> 1.0"
 - name: Zba
   version: "~> 1.0"
 - name: Zbb
   version: "~> 1.0"
 - name: Zbs
+  version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
   version: "~> 1.0"
 - name: Zfhmin
   version: "~> 1.0"
@@ -74,10 +74,6 @@ mandatory_extensions:
 non_mandatory_extensions:
 - name: V
   version: "~> 1.0"
-- name: Zca
-  version: "~> 1.0"
-- name: Zcd
-  version: "~> 1.0"
 - name: Zcf
   version: "~> 1.0"
 - name: Zfh
@@ -87,3 +83,7 @@ non_mandatory_extensions:
 - name: Zks
   version: "~> 1.0"
 additional_extensions: true
+requirements:
+  param:
+    name: CACHE_BLOCK_SIZE
+    equal: 64

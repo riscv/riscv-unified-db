@@ -381,13 +381,25 @@ module Udb
 
     sig { params(idx: Integer).returns(T.any(Z3::BoolExpr, Z3::IntExpr, Z3::BitvecExpr)) }
     def [](idx)
+      if @idx_term.nil?
+        raise "#{@name} is not an array parameter"
+      end
       @term[idx]
     end
 
-    sig { params(val: T.any(Integer, String, T::Boolean)).returns(Z3::BoolExpr) }
+    sig { params(val: T.any(Integer, String, T::Boolean, T::Array[Integer], T::Array[String], T::Array[T::Boolean])).returns(Z3::BoolExpr) }
     def ==(val)
       if val.is_a?(String)
         @term == val.hash
+      elsif val.is_a?(Array)
+        exprs = val.each_index.map do |i|
+          if val[i].is_a?(String)
+            @term[i] == val[i].hash
+          else
+            @term[i] == val[i]
+          end
+        end
+        T.unsafe(Z3).And(*exprs)
       else
         @term == val
       end
@@ -397,6 +409,15 @@ module Udb
     def !=(val)
       if val.is_a?(String)
         @term != val.hash
+      elsif val.is_a?(Array)
+        exprs = val.each_index.map do |i|
+          if val[i].is_a?(String)
+            @term[i] != val[i].hash
+          else
+            @term[i] != val[i]
+          end
+        end
+        T.unsafe(Z3).Or(*exprs)
       else
         @term != val
       end

@@ -11,7 +11,7 @@ definedBy:
   allOf:
     - xlen: 32
     - extension:
-        name: Zicntr
+        name: Sm
 address: 0xB80
 writable: true
 description: |

@@ -907,7 +907,20 @@ module Udb
                 : SatisfiedResult::No
             elsif term.is_a?(ParameterTerm)
               if cfg_arch.param_values.key?(term.name)
-                term.eval(cfg_arch)
+                result = term.eval(cfg_arch)
+                if result == SatisfiedResult::Maybe
+                  # this might just mean we don't know the value.
+                  # however, given the parameter schema and constraints, we could know that term is
+                  # always false
+                  if (Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
+                    result = SatisfiedResult::No
+
+                  # or always true
+                  elsif (-Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
+                    result = SatisfiedResult::Yes
+                  end
+                end
+                result
               else
                 SatisfiedResult::No
               end
@@ -943,7 +956,20 @@ module Udb
                 SatisfiedResult::No
               end
             elsif term.is_a?(ParameterTerm)
-              term.eval(cfg_arch)
+              result = term.eval(cfg_arch)
+              if result == SatisfiedResult::Maybe
+                # this might just mean we don't know the value.
+                # however, given the parameter schema and constraints, we could know that term is
+                # always false
+                if (Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
+                  result = SatisfiedResult::No
+
+                # or always true
+                elsif (-Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
+                  result = SatisfiedResult::Yes
+                end
+              end
+              result
             elsif term.is_a?(FreeTerm)
               raise "unreachable"
             elsif term.is_a?(XlenTerm)

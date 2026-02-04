@@ -190,6 +190,7 @@ extensions:
   Sha:
     presence:
       optional: expansion
+    version: ~> 1.0
     note: |
       The set of augmented hypervisor extensions: H, Ssstateen,
       Shcounterenw, Shvstvala, Shtvala, Shvstvecd, Shvsatpa, Shgatpa

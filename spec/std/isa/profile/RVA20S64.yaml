@@ -70,7 +70,7 @@ extensions:
     version: "~> 1.0"
     note: |
       Ssu64xl is a new extension name introduced with RVA20.
-param_constraints:
-  U_MODE_ENDIANNESS:
-    schema:
-      const: little
+requirements:
+  param:
+    name: U_MODE_ENDIANNESS
+    equal: little
