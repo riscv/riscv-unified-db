@@ -28,12 +28,13 @@ gen_subcmd_usage() {
   echo ""
   echo "Commands:"
   echo ""
-  echo "  all:           Generate all development artifacts"
-  echo "  container-def: Generate Singularity container def from Dockerfile"
-  echo "  profile-cfgs:  Generate config files for profiles"
-  echo "  regress:       Generate .github/workflows/regress.yml"
-  echo "  ruby-type-def: Generate Ruby type signatutres"
-  echo "  spec           Generate all spec files that are created from layouts"
+  echo "  all:                  Generate all development artifacts"
+  echo "  container-def:        Generate Singularity container def from Dockerfile"
+  echo "  profile-cfgs:         Generate config files for profiles"
+  echo "  golden-profile-exts:  Generate config files for profiles"
+  echo "  regress:              Generate .github/workflows/regress.yml"
+  echo "  ruby-type-def:        Generate Ruby type signatutres"
+  echo "  spec                  Generate all spec files that are created from layouts"
   echo ""
 }
 
@@ -118,10 +119,15 @@ do_gen_spec() {
   ./do gen:arch
 }
 
+do_gen_golden_profile_exts() {
+  ./do chore:update_golden_profile_extensions
+}
+
 do_gen_all() {
   do_gen_regress
   do_gen_container_def
   do_gen_profile_cfgs
+  do_gen_golden_profile_exts
   do_gen_spec
 }
 
@@ -246,6 +252,10 @@ case "$subcommand" in
         ;;
       container-def )
         do_gen_container_def
+        exit 0
+        ;;
+      golden-profile-exts )
+        do_gen_golden_profile_exts
         exit 0
         ;;
       profile-cfgs )
