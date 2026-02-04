@@ -6,9 +6,14 @@
 $schema: inst_schema.json#
 kind: instruction
 name: hfence.vvma
-long_name: No synopsis available
+long_name: Hypervisor fence guest virtual address
 description: |
-  No description available.
+  Invalidates any address-translation cache entries that a subsequent
+  implicit memory access to guest virtual memory may use. The instruction
+  applies to guest virtual addresses within the range specified by `xs1`
+  and `xs2`, for all address spaces if `xs2`=0, or for the address space
+  identified by the ASID in `xs2` otherwise. Only entries for the current
+  virtual machine (as identified by hgatp.VMID) are affected.
 definedBy:
   extension:
     name: H

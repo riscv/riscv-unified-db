@@ -6,9 +6,12 @@
 $schema: inst_schema.json#
 kind: instruction
 name: hlvx.wu
-long_name: No synopsis available
+long_name: Hypervisor load word unsigned, executable
 description: |
-  No description available.
+  Load 32 bits of data into register `xd` from guest physical memory at the
+  address in `xs1`, as though V=1, with execute permission check instead of
+  read permission. Zero-extend the result to XLEN bits. This instruction is
+  used to fetch instructions from guest memory for emulation purposes.
 definedBy:
   extension:
     name: H

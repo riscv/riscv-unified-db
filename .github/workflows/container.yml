@@ -26,19 +26,10 @@ jobs:
 
       - name: Get container from cache
         id: cache-sif
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .singularity/image.sif
-          key: ${{ hashFiles('container.def', 'bin/.container-tag') }}
-
-      - name: Get gems and node files from cache
-        id: cache-bundle-npm
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            .home/.gems
-            node_modules
-          key: ${{ hashFiles('Gemfile.lock') }}-${{ hashFiles('package-lock.json') }}
+          key: ${{ hashFiles('container.def', 'bin/.container-tag') }}-${{ matrix.runner }}
 
       - if: ${{ steps.cache-sif.outputs.cache-hit != 'true' }}
         name: Build container
@@ -46,8 +37,8 @@ jobs:
 
       - name: Upload singularity container
         run: |
-          singularity registry login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }} oras://docker.io
-          singularity push .singularity/image.sif oras://docker.io/riscvintl/spec-generator:${{ env.TAG }}
+          singularity registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} oras://ghcr.io
+          singularity push .singularity/image.sif oras://ghcr.io/riscv/spec-generator:${{ env.TAG }}
 
   build-docker-container:
     env:
@@ -71,21 +62,31 @@ jobs:
           echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Login to Docker Hub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Build and push by digest
         id: build
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           file: ./.devcontainer/Dockerfile
           platforms: ${{ matrix.platform }}
-          outputs: type=image,name=riscvintl/udb,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,"name=docker.io/riscvintl/udb,ghcr.io/riscv/udb",push-by-digest=true,name-canonical=true,push=true
+          tags: docker.io/riscvintl/udb,ghcr.io/riscv/udb
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Export digest
         run: |
@@ -94,7 +95,7 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: digests-${{ matrix.runner }}
           path: /tmp/digests/*
@@ -110,7 +111,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Download digests
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: digests-*
           merge-multiple: true
@@ -122,10 +123,10 @@ jobs:
           echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to Docker Hub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -140,3 +141,23 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect riscvintl/udb:${{ env.TAG }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          CONTAINER_NAME=$(printf 'ghcr.io/riscv/udb@sha256:%s ' *)
+          echo "CONTAINER_NAME=$CONTAINER_NAME" >> $GITHUB_ENV
+          docker buildx imagetools create \
+            --tag ghcr.io/riscv/udb:${{ env.TAG }} \
+            $(printf 'ghcr.io/riscv/udb@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ghcr.io/riscv/udb:${{ env.TAG }}

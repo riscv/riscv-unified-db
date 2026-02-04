@@ -8,7 +8,24 @@ kind: extension
 name: Zve32x
 long_name: Vector Extension for Minimal Vector Register Length of 32 Bits
 description: |
-  TBD - See GitHub issue 616
+  The Zve32x extension provides support for vector integer operations with a
+  maximum element width (ELEN) of 32 bits. This is a base embedded vector
+  extension that excludes floating-point vector operations.
+
+  Zve32x includes:
+
+  * All vector load and store instructions
+  * All vector integer instructions
+  * All vector fixed-point arithmetic instructions
+  * All vector mask instructions
+  * All vector permutation instructions
+  * Vector integer reduction instructions
+
+  Zve32x excludes all vector floating-point instructions and does not require
+  implementation of the F extension.
+
+  This extension is intended for embedded processors that need vector
+  operations but do not require floating-point support.
 type: unprivileged
 versions:
   - version: "1.0.0"

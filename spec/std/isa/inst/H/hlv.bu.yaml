@@ -6,9 +6,10 @@
 $schema: inst_schema.json#
 kind: instruction
 name: hlv.bu
-long_name: No synopsis available
+long_name: Hypervisor load byte unsigned
 description: |
-  No description available.
+  Load 8 bits of data into register `xd` from guest physical memory at the
+  address in `xs1`, as though V=1. Zero-extend the result to XLEN bits.
 definedBy:
   extension:
     name: H

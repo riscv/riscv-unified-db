@@ -727,7 +727,7 @@ module Udb
       return @in_scope_instructions unless @in_scope_instructions.nil?
 
       @in_scope_instructions =
-        in_scope_min_satisfying_extension_versions.map { |ext_ver| ext_ver.in_scope_instructions(design) }.flatten.uniq.sort
+        in_scope_min_satisfying_extension_versions.map { |ext_ver| ext_ver.in_scope_instructions(design.possible_xlens) }.flatten.uniq.sort
     end
 
     # @param design [Design] The design
@@ -740,12 +740,12 @@ module Udb
       return @in_scope_csrs unless @in_scope_csrs.nil?
 
       @in_scope_csrs =
-        in_scope_min_satisfying_extension_versions.map { |ext_ver| ext_ver.in_scope_csrs(design) }.flatten.uniq
+        in_scope_min_satisfying_extension_versions.map { |ext_ver| ext_ver.in_scope_csrs(design.possible_xlens) }.flatten.uniq
     end
 
     # @param design [Design] The design
     # @return [Array<ExceptionCode>] Unsorted list of all in-scope exception codes.
-    # TODO: See https://github.com/riscv-software-src/riscv-unified-db/issues/291
+    # TODO: See https://github.com/riscv/riscv-unified-db/issues/291
     # TODO: Still needs work and haven't created in_scope_interrupt_codes yet.
     # TODO: Extensions should provide conditional information ("when" statements?)
     #       that we evaluate here to determine if a particular exception code can

@@ -328,7 +328,7 @@ class TestYamlLoader < Minitest::Test
     assert_nil doc
   end
 
-  # Commented out until https://github.com/riscv-software-src/riscv-unified-db/issues/369 is fixed.
+  # Commented out until https://github.com/riscv/riscv-unified-db/issues/369 is fixed.
 #   def test_copy_in_the_same_document
 #     yaml = <<~YAML
 #       $defs:

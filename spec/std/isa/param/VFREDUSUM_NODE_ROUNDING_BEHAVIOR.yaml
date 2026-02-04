@@ -1,0 +1,23 @@
+# Copyright (C) 2025-26 Harvey Mudd College
+# Author: James Kaden Cassidy (kacassidy@hmc.edu)
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: VFREDUSUM_NODE_ROUNDING_BEHAVIOR
+description: |
+  Each reduction operator computes an exact sum using an ideal scalar
+  floating-point addition, then converts that result into a floating-
+  point format with range and precision at least as large as the element
+  SEW, rounding with the current dynamic rounding mode and raising
+  exceptions as needed. Implementations may choose the exact range and
+  precision per operator.
+long_name: TODO
+schema:
+  type: string
+  enum: ["SEW_precision", "custom"]
+definedBy:
+  extension:
+    name: Zvl32b
