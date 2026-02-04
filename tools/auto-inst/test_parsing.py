@@ -154,7 +154,7 @@ class TestInstructionEncoding:
                 json_key = self._find_matching_instruction(parent_name)
                 if json_key:
                     allow_refinement = True
-                    # print(f"Checking hint {instr_name} against parent {parent_name}")
+
 
         if not json_key:
             pytest.skip(f"No matching JSON instruction found for {instr_name}")
