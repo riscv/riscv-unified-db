@@ -132,7 +132,7 @@ def load_yaml_encoding(instr_name):
                 yaml_file_path = None
 
     if not yaml_file_path or not os.path.isfile(yaml_file_path):
-        return None, None
+        return None, None, None
 
     with open(yaml_file_path) as yf:
         ydata = yaml.safe_load(yf)
@@ -140,12 +140,13 @@ def load_yaml_encoding(instr_name):
     encoding = safe_get(ydata, "encoding", {})
     yaml_match = safe_get(encoding, "match", None)
     yaml_vars = safe_get(encoding, "variables", [])
+    hints = safe_get(ydata, "hints", [])
 
-    return yaml_match, yaml_vars
+    return yaml_match, yaml_vars, hints
 
 
 def compare_yaml_json_encoding(
-    instr_name, yaml_match, yaml_vars, json_encoding_str, repo_dir
+    instr_name, yaml_match, yaml_vars, json_encoding_str, repo_dir, allow_refinement=False
 ):
     """Compare the YAML encoding with the JSON encoding."""
     if not yaml_match:
@@ -207,9 +208,11 @@ def compare_yaml_json_encoding(
 
         if yaml_bit in ["0", "1"]:
             if json_bit_str not in ["0", "1"]:
-                differences.append(
-                    f"Bit {b}: YAML expects fixed bit '{yaml_bit}' but JSON has '{json_bit_str}'"
-                )
+                if not allow_refinement:
+                    differences.append(
+                        f"Bit {b}: YAML expects fixed bit '{yaml_bit}' but JSON has '{json_bit_str}'"
+                    )
+                # If allow_refinement is True, we allow Fixed YAML vs Variable JSON (refinement).
             elif json_bit_str != yaml_bit:
                 differences.append(
                     f"Bit {b}: YAML expects '{yaml_bit}' but JSON has '{json_bit_str}'"
@@ -268,11 +271,12 @@ def get_yaml_instructions(repo_directory):
 
     instructions_with_encodings = {}
     for instr_name_lower, path in yaml_instructions.items():
-        yaml_match, yaml_vars = load_yaml_encoding(instr_name_lower)
+        yaml_match, yaml_vars, hints = load_yaml_encoding(instr_name_lower)
         instructions_with_encodings[instr_name_lower] = {
             "category": path,
             "yaml_match": yaml_match,
             "yaml_vars": yaml_vars,
+            "hints": hints,
         }
 
     return instructions_with_encodings
