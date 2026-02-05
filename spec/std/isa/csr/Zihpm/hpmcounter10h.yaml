@@ -15,20 +15,7 @@ writable: false
 description: |
   Alias for M-mode CSR `mhpmcounter10h`.
 
-  Privilege mode access is controlled with `mcounteren.HPM10`, `scounteren.HPM10`, and `hcounteren.HPM10` as follows:
-
-  [%autowidth,cols="1,1,1,1,1,1,1",separator="!"]
-  !===
-  .2+h![.rotate]#`mcounteren.HPM10`# .2+h! [.rotate]#`scounteren.HPM10`# .2+h! [.rotate]#`hcounteren.HPM10`#
-  4+^.>h! `hpmcounter10h` behavior
-  .^h! S-mode .^h! U-mode .^h! VS-mode .^h! VU-mode
-
-  ! 0 ! - ! - ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction`
-  ! 1 ! 0 ! 0 ! read-only ! `IllegalInstruction` ! `VirtualInstruction` ! `VirtualInstruction`
-  ! 1 ! 1 ! 0 ! read-only ! read-only ! `VirtualInstruction` ! `VirtualInstruction`
-  ! 1 ! 0 ! 1 ! read-only ! `IllegalInstruction` ! read-only ! `VirtualInstruction`
-  ! 1 ! 1 ! 1 ! read-only ! read-only ! read-only ! read-only
-  !===
+  See `mhpmcounter10h` for information on privilege mode access control.
 priv_mode: U
 length: 32
 definedBy:
