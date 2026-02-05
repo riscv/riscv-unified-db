@@ -105,7 +105,7 @@ module Udb
     def merged_spec_path(cfg_path_or_name)
       op = cfg_info(cfg_path_or_name).overlay_path
       if op.nil?
-        @gen_path / "spec" / "std"
+        @gen_path / "spec" / "_"
       else
         @gen_path / "spec" / op.basename
       end
@@ -118,7 +118,7 @@ module Udb
       # @gen_path / "resolved_spec" / cfg_info(cfg_path_or_name).name
       op = cfg_info(cfg_path_or_name).overlay_path
       if op.nil?
-        @gen_path / "resolved_spec" / "std"
+        @gen_path / "resolved_spec" / "_"
       else
         @gen_path / "resolved_spec" / op.basename
       end
@@ -336,8 +336,8 @@ module Udb
           overlay_path:,
           unresolved_yaml: config_yaml,
           spec_path: std_path,
-          merged_spec_path: @gen_path / "spec" / (overlay_path.nil? ? "std" : File.basename(overlay_path)),
-          resolved_spec_path: @gen_path / "resolved_spec" / (overlay_path.nil? ? "std" : File.basename(overlay_path)),
+          merged_spec_path: @gen_path / "spec" / (overlay_path.nil? ? "_" : File.basename(overlay_path)),
+          resolved_spec_path: @gen_path / "resolved_spec" / (overlay_path.nil? ? "_" : File.basename(overlay_path)),
           resolver: self
         )
         @cfg_info[config_path] = info
