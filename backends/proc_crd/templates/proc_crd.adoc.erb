@@ -62,7 +62,7 @@ The specific rules for updating the version number of a CRD are as follows:
 === Requirements Terminology
 
 .Requirement Types
-[%autowidth]
+[cols="1,6"]
 |===
 | Term | Meaning
 
@@ -153,16 +153,16 @@ The <%= proc_cert_model.name %> certificate doesn't cover their behaviors.
 <% if ext_reqs.empty? -%>
 None
 <% else -%>
-The <%= proc_cert_model.name %> certificate has <%= ext_reqs.size %> <%= presence_obj.to_s_concise %> extensions.
+The <%= proc_cert_model.name %> certificate has <%= ext_reqs.size %> <%= presence_obj.to_s_concise %> extension<%= ext_reqs.size == 1 ? "" : "s" %>.
 
-[%autowidth]
+[cols="2,1,1,4,4"]
 |===
 | Requirement ID | Extension | Version | Long Name | Note
 
 <% ext_reqs.each do |ext_req| -%>
 <% ext = arch.extension(ext_req.name) -%>
 | <%= ext_req.req_id %>
-| <%= link_to_udb_doc_ext(ext_req.name) %>
+| <%= ext_req.name %>
 | <%= ext_req.requirement_specs.map(&:to_s).join(", ") %>
 | <%= ext.nil? ? "" : ext.long_name %>
 | <%= ext_req.note.nil? ? "" : ext_req.note %>
@@ -203,7 +203,7 @@ If the "Allowed Value(s)" is "Any" then any value allowed by the type is accepta
 <% if portfolio_design.all_in_scope_params.empty? -%>
 None
 <% else -%>
-The <%= proc_cert_model.name %> certificate has <%= portfolio_design.all_in_scope_params.size %> IN-SCOPE parameters.
+The <%= proc_cert_model.name %> certificate has <%= portfolio_design.all_in_scope_params.size %> IN-SCOPE parameter<%= portfolio_design.all_in_scope_params.size == 1 ? "" : "s" %>.
 
 [cols="4,2,1,1,2"]
 |===
@@ -230,7 +230,7 @@ doesn't cover the behavior of the associated RISC-V standard as a function of th
 <% if portfolio_design.all_out_of_scope_params.empty? -%>
 None
 <% else -%>
-The <%= proc_cert_model.name %> certificate has <%= portfolio_design.all_out_of_scope_params.size %> OUT-OF-SCOPE parameters.
+The <%= proc_cert_model.name %> certificate has <%= portfolio_design.all_out_of_scope_params.size %> OUT-OF-SCOPE parameter<%= portfolio_design.all_out_of_scope_params.size == 1 ? "" : "s" %>.
 
 [%autowidth]
 |===
@@ -256,7 +256,7 @@ The <%= proc_cert_model.name %> certificate has up to <%= portfolio_design.in_sc
 | Name | Long Name
 
 <% portfolio_design.in_scope_instructions.each do |inst| -%>
-| <%= link_to_udb_doc_inst(inst.name) %>
+| <%= inst.name %>
 | <%= inst.long_name %>
 <% end # do -%>
 |===
@@ -276,7 +276,7 @@ The <%= proc_cert_model.name %> certificate has up to <%= portfolio_design.in_sc
 | <%= link_to_udb_doc_csr(csr.name) %>
 | <%= csr.long_name %>
 | <%= "0x#{csr.address.to_s(16)}" %>
-| <%= csr.priv_mode %>
+| <%= csr.priv_mode == "U" ? "Any" : csr.priv_mode %>
 | <%= csr.defining_extension_requirements.map(&:to_s).join(", ") %>
 <% end # do -%>
 |===
@@ -289,7 +289,7 @@ The <%= proc_cert_model.name %> certificate has up to <%= portfolio_design.in_sc
 
 <% portfolio_design.in_scope_csrs.sort_by!(&:address).each do |csr| -%>
 | <%= "0x#{csr.address.to_s(16)}" %>
-| <%= csr.priv_mode %>
+| <%= csr.priv_mode == "U" ? "Any" : csr.priv_mode %>
 | <%= link_to_udb_doc_csr(csr.name) %>
 | <%= csr.long_name %>
 | <%= csr.defining_extension_requirements.map(&:to_s).join(", ") %>
@@ -330,7 +330,4 @@ Requirement <%= req.name %> only apply when <%= req.when_pretty %>.
 <% end # unless requirement_groups.empty? -%>
 
 // Appendices
-<%= portfolio_design.include_erb("ext_appendix.adoc.erb") %>
-<%= portfolio_design.include_erb("inst_appendix.adoc.erb") %>
 <%= portfolio_design.include_erb("csr_appendix.adoc.erb") %>
-<%= portfolio_design.include_erb("idl_func_appendix.adoc.erb") %>

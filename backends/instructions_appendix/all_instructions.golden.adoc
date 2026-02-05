@@ -26009,7 +26009,7 @@ Included in::
 == hfence.gvma
 
 Synopsis::
-No synopsis available
+Hypervisor fence guest-physical address
 
 Base::
 
@@ -26031,7 +26031,11 @@ Encoding::
 ....
 
 Description::
-No description available.
+Invalidates any address-translation cache entries that a subsequent
+implicit memory access to guest physical memory may use. The instruction
+applies to any guest physical addresses within the range specified by
+`xs1` and `xs2`, for all address spaces if `xs2`=0, or for the address
+space identified by the VMID in `xs2` otherwise.
 
 
 Decode Variables::
@@ -26060,7 +26064,7 @@ Included in::
 == hfence.vvma
 
 Synopsis::
-No synopsis available
+Hypervisor fence guest virtual address
 
 Base::
 
@@ -26082,7 +26086,12 @@ Encoding::
 ....
 
 Description::
-No description available.
+Invalidates any address-translation cache entries that a subsequent
+implicit memory access to guest virtual memory may use. The instruction
+applies to guest virtual addresses within the range specified by `xs1`
+and `xs2`, for all address spaces if `xs2`=0, or for the address space
+identified by the ASID in `xs2` otherwise. Only entries for the current
+virtual machine (as identified by hgatp.VMID) are affected.
 
 
 Decode Variables::
@@ -26219,7 +26228,7 @@ Included in::
 == hlv.b
 
 Synopsis::
-No synopsis available
+Hypervisor load byte
 
 Base::
 
@@ -26241,7 +26250,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 8 bits of data into register `xd` from guest physical memory at the
+address in `xs1`, as though V=1. Sign-extend the result to XLEN bits.
 
 
 Decode Variables::
@@ -26270,7 +26280,7 @@ Included in::
 == hlv.bu
 
 Synopsis::
-No synopsis available
+Hypervisor load byte unsigned
 
 Base::
 
@@ -26292,7 +26302,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 8 bits of data into register `xd` from guest physical memory at the
+address in `xs1`, as though V=1. Zero-extend the result to XLEN bits.
 
 
 Decode Variables::
@@ -26321,7 +26332,7 @@ Included in::
 == hlv.d
 
 Synopsis::
-No synopsis available
+Hypervisor load doubleword
 
 Base::
 
@@ -26343,7 +26354,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 64 bits of data into register `xd` from guest physical memory at the
+address in `xs1`, as though V=1.
 
 
 Decode Variables::
@@ -26375,7 +26387,7 @@ xlen+++()+++ == 64
 == hlv.h
 
 Synopsis::
-No synopsis available
+Hypervisor load halfword
 
 Base::
 
@@ -26397,7 +26409,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 16 bits of data into register `xd` from guest physical memory at the
+address in `xs1`, as though V=1. Sign-extend the result to XLEN bits.
 
 
 Decode Variables::
@@ -26426,7 +26439,7 @@ Included in::
 == hlv.hu
 
 Synopsis::
-No synopsis available
+Hypervisor load halfword unsigned
 
 Base::
 
@@ -26448,7 +26461,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 16 bits of data into register `xd` from guest physical memory at the
+address in `xs1`, as though V=1. Zero-extend the result to XLEN bits.
 
 
 Decode Variables::
@@ -26477,7 +26491,7 @@ Included in::
 == hlv.w
 
 Synopsis::
-No synopsis available
+Hypervisor load word
 
 Base::
 
@@ -26499,7 +26513,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 32 bits of data into register `xd` from guest physical memory at the
+address in `xs1`, as though V=1. Sign-extend the result to XLEN bits.
 
 
 Decode Variables::
@@ -26528,7 +26543,7 @@ Included in::
 == hlv.wu
 
 Synopsis::
-No synopsis available
+Hypervisor load word unsigned
 
 Base::
 
@@ -26550,7 +26565,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 32 bits of data into register `xd` from guest physical memory at the
+address in `xs1`, as though V=1. Zero-extend the result to XLEN bits.
 
 
 Decode Variables::
@@ -26582,7 +26598,7 @@ xlen+++()+++ == 64
 == hlvx.hu
 
 Synopsis::
-No synopsis available
+Hypervisor load halfword unsigned, executable
 
 Base::
 
@@ -26604,7 +26620,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 16 bits of data into register `xd` from guest physical memory at the
+address in `xs1`, as though V=1, with execute permission check instead of
+read permission. Zero-extend the result to XLEN bits. This instruction is
+used to fetch instructions from guest memory for emulation purposes.
 
 
 Decode Variables::
@@ -26633,7 +26652,7 @@ Included in::
 == hlvx.wu
 
 Synopsis::
-No synopsis available
+Hypervisor load word unsigned, executable
 
 Base::
 
@@ -26655,7 +26674,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 32 bits of data into register `xd` from guest physical memory at the
+address in `xs1`, as though V=1, with execute permission check instead of
+read permission. Zero-extend the result to XLEN bits. This instruction is
+used to fetch instructions from guest memory for emulation purposes.
 
 
 Decode Variables::
@@ -26684,7 +26706,7 @@ Included in::
 == hsv.b
 
 Synopsis::
-No synopsis available
+Hypervisor store byte
 
 Base::
 
@@ -26706,7 +26728,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store 8 bits of data from register `xs2` to guest physical memory at the
+address in `xs1`, as though V=1.
 
 
 Decode Variables::
@@ -26735,7 +26758,7 @@ Included in::
 == hsv.d
 
 Synopsis::
-No synopsis available
+Hypervisor store doubleword
 
 Base::
 
@@ -26757,7 +26780,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store 64 bits of data from register `xs2` to guest physical memory at the
+address in `xs1`, as though V=1.
 
 
 Decode Variables::
@@ -26789,7 +26813,7 @@ xlen+++()+++ == 64
 == hsv.h
 
 Synopsis::
-No synopsis available
+Hypervisor store halfword
 
 Base::
 
@@ -26811,7 +26835,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store 16 bits of data from register `xs2` to guest physical memory at the
+address in `xs1`, as though V=1.
 
 
 Decode Variables::
@@ -26840,7 +26865,7 @@ Included in::
 == hsv.w
 
 Synopsis::
-No synopsis available
+Hypervisor store word
 
 Base::
 
@@ -26862,7 +26887,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store 32 bits of data from register `xs2` to guest physical memory at the
+address in `xs1`, as though V=1.
 
 
 Decode Variables::

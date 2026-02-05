@@ -6,9 +6,13 @@
 $schema: inst_schema.json#
 kind: instruction
 name: hfence.gvma
-long_name: No synopsis available
+long_name: Hypervisor fence guest-physical address
 description: |
-  No description available.
+  Invalidates any address-translation cache entries that a subsequent
+  implicit memory access to guest physical memory may use. The instruction
+  applies to any guest physical addresses within the range specified by
+  `xs1` and `xs2`, for all address spaces if `xs2`=0, or for the address
+  space identified by the VMID in `xs2` otherwise.
 definedBy:
   extension:
     name: H

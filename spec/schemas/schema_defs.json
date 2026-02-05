@@ -368,34 +368,6 @@
       },
       "additionalProperties": false
     },
-    "cert_test_procedures": {
-      "description": "Procedure test must follow to test certification normative rules",
-      "type": "array",
-      "required": ["id", "name", "description", "normative_rules"],
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "test_file_name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "normative_rules": {
-          "type": "array",
-          "description": "List of certification normative rule IDs to be validated",
-          "items": {
-            "type": "string"
-          }
-        },
-        "steps": {
-          "description": "List of steps typically using Asciidoc unordered lists",
-          "type": "string"
-        },
-        "additionalProperties": false
-      }
-    },
     "encoding_match": {
       "oneOf": [
         {

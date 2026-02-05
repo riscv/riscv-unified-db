@@ -6,9 +6,10 @@
 $schema: inst_schema.json#
 kind: instruction
 name: hlv.d
-long_name: No synopsis available
+long_name: Hypervisor load doubleword
 description: |
-  No description available.
+  Load 64 bits of data into register `xd` from guest physical memory at the
+  address in `xs1`, as though V=1.
 definedBy:
   allOf:
     - xlen: 64
