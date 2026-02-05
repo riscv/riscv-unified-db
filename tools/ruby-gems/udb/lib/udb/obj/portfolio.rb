@@ -23,6 +23,7 @@ module Udb
   class PortfolioExtensionRequirement
     extend T::Sig
     extend Forwardable
+    include Comparable
 
     def_delegators :@ext_req,
       :name,
@@ -46,6 +47,18 @@ module Udb
       @note = note
       @req_id = req_id
       @presence = presence
+    end
+
+    sig { params(other: T.any(PortfolioExtensionRequirement, ExtensionRequirement)).returns(T.nilable(Integer)) }
+    def <=>(other)
+      case other
+      when PortfolioExtensionRequirement
+        @ext_req <=> other.ext_req
+      when ExtensionRequirement
+        @ext_req <=> other
+      else
+        nil
+      end
     end
   end
 
@@ -448,14 +461,14 @@ module Udb
         "type" => "partially configured",
         "name" => name,
         "description" => description,
-        "params" => all_in_scope_params.map do |p|
+        "params" => all_in_scope_params.sort.map do |p|
           if p.single_value?
             [p.name, p.value]
           else
             nil
           end
         end.compact.to_h,
-        "mandatory_extensions" => mandatory.map do |ext_req|
+        "mandatory_extensions" => mandatory.sort.map do |ext_req|
           {
             "name" => ext_req.name,
             "version" => \
@@ -466,7 +479,7 @@ module Udb
               end
           }
         end,
-        "non_mandatory_extensions" => optional_ext_reqs.map do |ext_req|
+        "non_mandatory_extensions" => optional_ext_reqs.sort.map do |ext_req|
           {
             "name" => ext_req.name,
             "version" => \
@@ -486,18 +499,21 @@ module Udb
     # @return portfolio in config form, with requirements of mandatory extensions expanded
     sig { returns(T::Hash[String, T.untyped]) }
     def to_strict_config
-      strict_mandatory_ext_reqs = T.let([], T::Array[PortfolioExtensionRequirement])
+      strict_mandatory_ext_reqs = mandatory_ext_reqs
 
       to_cfg_arch.extensions.each do |ext|
+        next if mandatory_ext_reqs.any? { |e| e.name == ext.name }
+
         if (-ext.to_ext_req.to_condition & to_cfg_arch.to_condition).unsatisfiable?
           # what's the minimum?
           min_ext_ver = ext.versions.find do |ext_ver|
-            compat_with_ext_ver = Condition.new({ "extension" => { "name" => ext.name, "version" => "~> #{ext_ver.version_str}" } }, cfg_arch)
-            (-compat_with_ext_ver & to_cfg_arch.to_condition).unsatisfiable?
+            compat_with_ext_ver = Condition.new({ "extension" => { "name" => ext.name, "version" => "= #{ext_ver.version_str}" } }, to_cfg_arch)
+            c = (compat_with_ext_ver & to_cfg_arch.to_condition)
+            c.satisfiable?
           end
           raise "condition problem: ext is required but none of the versions are" if min_ext_ver.nil?
 
-          strict_mandatory_ext_reqs << PortfolioExtensionRequirement.new(ext.name, "~> #{min_ext_ver.version_str}", arch: cfg_arch)
+          strict_mandatory_ext_reqs << PortfolioExtensionRequirement.new(ext.name, "~> #{min_ext_ver.version_str}", arch: to_cfg_arch)
         end
       end
 

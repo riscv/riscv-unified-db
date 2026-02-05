@@ -39,3 +39,10 @@ non_mandatory_extensions:
 - name: Zihpm
   version: "~> 2.0"
 additional_extensions: true
+requirements:
+  param:
+    allOf:
+    - name: U_MODE_ENDIANNESS
+      equal: little
+    - name: UXLEN
+      includes: 32

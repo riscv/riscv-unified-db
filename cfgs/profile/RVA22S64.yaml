@@ -28,9 +28,9 @@ mandatory_extensions:
 - name: M
   version: "~> 2.0"
 - name: S
-  version: "~> 1.11"
+  version: "~> 1.12"
 - name: Sm
-  version: "~> 1.11.0"
+  version: "~> 1.13.0"
 - name: Ssccptr
   version: "~> 1.0"
 - name: Sscounterenw
@@ -40,7 +40,7 @@ mandatory_extensions:
 - name: Sstvecd
   version: "~> 1.0"
 - name: Sv39
-  version: "~> 1.11"
+  version: "~> 1.0"
 - name: Svade
   version: "~> 1.0"
 - name: Svbare
@@ -66,13 +66,13 @@ mandatory_extensions:
 - name: Zbs
   version: "~> 1.0"
 - name: Zca
-  version: "~> 1.0"
+  version: "~> 1.0.0"
 - name: Zcd
-  version: "~> 1.0"
+  version: "~> 1.0.0"
 - name: Zfhmin
   version: "~> 1.0"
 - name: Zic64b
-  version: "~> 1.0.0"
+  version: "= 1.0"
 - name: Zicbom
   version: "~> 1.0"
 - name: Zicbop
@@ -90,7 +90,7 @@ mandatory_extensions:
 - name: Zicntr
   version: "~> 2.0"
 - name: Zicsr
-  version: "~> 2.0.0"
+  version: "~> 2.0"
 - name: Zifencei
   version: "~> 2.0"
 - name: Zihintpause
@@ -109,9 +109,9 @@ non_mandatory_extensions:
 - name: Ssu64xl
   version: "~> 1.0"
 - name: Sv48
-  version: "~> 1.12"
+  version: "~> 1.0"
 - name: Sv57
-  version: "~> 1.12"
+  version: "~> 1.0"
 - name: Svnapot
   version: "~> 1.0"
 - name: V
@@ -131,3 +131,14 @@ non_mandatory_extensions:
 - name: Zks
   version: "~> 1.0"
 additional_extensions: true
+requirements:
+  param:
+    allOf:
+    - name: U_MODE_ENDIANNESS
+      equal: little
+    - name: S_MODE_ENDIANNESS
+      equal: little
+    - name: SXLEN
+      includes: 64
+    - name: UXLEN
+      includes: 64

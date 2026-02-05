@@ -271,3 +271,10 @@ extensions:
   #--------------------------------------------
   # (there are no Transitory expansion options in RVB23)
   #--------------------------------------------
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: UXLEN
+        includes: 64

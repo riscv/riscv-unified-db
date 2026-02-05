@@ -3,9 +3,8 @@
 Configs in `cfg/profile` are generated from the specifications in `spec/std/isa/profile`.
 They are partial configurations that represent a profile-compliant implementation.
 
-For each profile, two configurations are provided:
+The profile configurations are _strict_.
+That is, they list the extension/params listed in the profile spec,
+plus any extensions/params that are required transitively (e.g., A requires Zaamo and Zalrsc)
 
-* PROFILE_NAME.yaml: A partial configuration representing just the extensions/params listed in the profile spec
-* PROFILE_NAME-strict.yaml: A _strict_ profile configuration representing the extension/params listed in the profile spec, plus any extensions/params that are required transitively (e.g., A requires Zaamo and Zalrsc)
-
-The strict configs are compatible with the non-strict configs (simply more expressive).
+The strict configs are compatible with non-strict configs (simply more expressive).

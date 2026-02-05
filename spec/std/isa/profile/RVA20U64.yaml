@@ -40,6 +40,9 @@ extensions:
   Zicntr:
     presence: mandatory
     version: "~> 2.0"
+  Zicsr:
+    presence: mandatory
+    version: "~> 2.0"
   Ziccif:
     presence: mandatory
     version: "~> 1.0"
@@ -107,5 +110,8 @@ recommendations:
 
 requirements:
   param:
-    name: U_MODE_ENDIANNESS
-    equal: little
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: UXLEN
+        includes: 64

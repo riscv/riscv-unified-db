@@ -186,7 +186,7 @@ repos:
         files: (spec/.*)
         pass_filenames: false
         language: system
-        entry: ./do chore:update_golden_profile_extensions
+        entry: ./bin/chore gen golden-profile-exts
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 43.2.6

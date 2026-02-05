@@ -138,3 +138,10 @@ extra_notes:
     text: |
       The Zfinx, Zdinx, Zhinx, Zhinxmin extensions are incompatible
       with the profile mandates to support the F and D extensions.
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: UXLEN
+        includes: 64

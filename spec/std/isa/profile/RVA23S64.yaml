@@ -55,3 +55,14 @@ extensions:
     presence: mandatory
     version: ~> 1.0
   # collection of Hypervisor extensions
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: S_MODE_ENDIANNESS
+        equal: little
+      - name: SXLEN
+        includes: 64
+      - name: UXLEN
+        includes: 64
