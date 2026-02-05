@@ -8,7 +8,14 @@ kind: extension
 name: Zvl1024b
 long_name: Vector register length must be at least 1024 bits
 description: |
-  TBD - See GitHub issue 616
+  The Zvl1024b extension requires the implementation to have a vector register
+  length (VLEN) of at least 1024 bits.
+
+  The Zvl*b extensions are a family of extensions that specify minimum vector
+  register lengths. They allow software to determine the minimum VLEN supported
+  by an implementation without needing to probe at runtime.
+
+  With VLEN=1024 and SEW=8 bits, VLMAX is 128 elements (with LMUL=1).
 type: unprivileged
 versions:
   - version: "1.0.0"

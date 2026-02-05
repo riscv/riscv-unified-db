@@ -1,3 +1,5 @@
+// If this certificate only has U-mode, then that is the UDB way of saying modes aren't relevant (called Unprivileged in ISA manual).
+<% unless proc_cert_model.in_scope_priv_modes == ["U"] -%>
 === Privileged Modes
 
 |===
@@ -11,3 +13,4 @@
 | <% if proc_cert_model.in_scope_priv_modes.include?('VU') -%> IN-SCOPE <% else -%> OUT-OF-SCOPE <% end -%>
 
 |===
+<% end -%>
