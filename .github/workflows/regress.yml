@@ -463,7 +463,7 @@ jobs:
     - name: Generate strict profile configs
       run: "./do gen:cfg"
     - name: See if anything changed
-      run: (git status --porcelain | grep "[ |?][M|?]") && ($? == 1)
+      run: git diff-index --quiet HEAD --
   regress-udb-unit-test:
     runs-on: ubuntu-latest
     needs: build-container
