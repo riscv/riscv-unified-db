@@ -42941,7 +42941,7 @@ Included in::
 == vle8.v
 
 Synopsis::
-No synopsis available
+Vector 8-bit unit-stride load
 
 Base::
 
@@ -42963,7 +42963,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Move 8-bit values from memory to vector registers.
 
 
 Decode Variables::
@@ -58519,7 +58519,7 @@ Included in::
 == vse8.v
 
 Synopsis::
-No synopsis available
+Vector 8-bit unit-stride store
 
 Base::
 
@@ -58541,7 +58541,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Move 8-bit values from vector registers to memory.
 
 
 Decode Variables::
