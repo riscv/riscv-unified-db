@@ -8732,7 +8732,7 @@ end,
     sig { returns(T::Array[StatementAst]) }
     def stmts = T.cast(@children, T::Array[StatementAst])
 
-    sig { params(input: String, interval: T::Range[Integer], body_stmts: T::Array[StatementAst]).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), body_stmts: T::Array[StatementAst]).void }
     def initialize(input, interval, body_stmts)
       if body_stmts.empty?
         super("", 0...0, EMPTY_ARRAY)
@@ -8882,7 +8882,7 @@ end,
     sig { returns(IfBodyAst) }
     def body = T.cast(@children.fetch(1), IfBodyAst)
 
-    sig { params(input: String, interval: T::Range[Integer], body_interval: T::Range[Integer], cond: RvalueAst, body_stmts: T::Array[StatementAst]).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), body_interval: T.nilable(T::Range[Integer]), cond: RvalueAst, body_stmts: T::Array[StatementAst]).void }
     def initialize(input, interval, body_interval, cond, body_stmts)
       body = IfBodyAst.new(input, body_interval, body_stmts)
       super(input, interval, [cond, body])
@@ -8950,11 +8950,11 @@ end,
 
       input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
       interval = interval_from_source_yaml(yaml.fetch("source"))
-      body = AstNode.from_h(yaml.fetch("body"), source_mapper)
+      body = T.cast(AstNode.from_h(yaml.fetch("body"), source_mapper), IfBodyAst)
       ElseIfAst.new(
         input, interval,
         body.interval,
-        AstNode.from_h(yaml.fetch("condition"), source_mapper),
+        T.cast(AstNode.from_h(yaml.fetch("condition"), source_mapper), RvalueAst),
         body.stmts
       )
     end
@@ -8962,7 +8962,7 @@ end,
 
   class IfSyntaxNode < SyntaxNode
     def to_ast
-      if_body_stmts = T.let([], T::Array[AstNode])
+      if_body_stmts = T.let([], T::Array[StatementAst])
       send(:if_body).elements.each do |e|
         if_body_stmts << e.e.to_ast
       end
@@ -8977,7 +8977,7 @@ end,
           eifs << ElseIfAst.new(input, eif.interval, elseif_body.interval, eif.expression.to_ast, elseif_body.stmts)
         end
       end
-      final_else_stmts = T.let([], T::Array[AstNode])
+      final_else_stmts = T.let([], T::Array[StatementAst])
       unless send(:final_else).empty?
         send(:final_else).body.elements.each do |e|
           final_else_stmts << e.e.to_ast
