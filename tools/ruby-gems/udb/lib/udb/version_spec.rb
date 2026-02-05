@@ -279,7 +279,7 @@ module Udb
             matching_ver = ext.versions.find { |v| v.version_spec == @version_spec }
             if matching_ver.nil?
               # no exact match, just take the smallest that is >
-              matching_ver = ext_versions.find { |v| v.version_spec > @version_spec }
+              matching_ver = ext.versions.find { |v| v.version_spec > @version_spec }
               if matching_ver.nil?
                 return false
               end

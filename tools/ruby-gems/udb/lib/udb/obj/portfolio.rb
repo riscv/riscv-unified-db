@@ -56,8 +56,6 @@ module Udb
         @ext_req <=> other.ext_req
       when ExtensionRequirement
         @ext_req <=> other
-      else
-        nil
       end
     end
   end
