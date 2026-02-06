@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vsseg3e16.v
-long_name: No synopsis available
+long_name: Vector segmented store 3 elements of 16 bits
 description: |
-  No description available.
+  Stores 3 segments of 16-bit elements from vector register vs2 to memory starting at address in xs1 register, using vector mask vm. The effective element width is 16 bits regardless of SEW setting.
 definedBy:
   extension:
     name: Zvl32b

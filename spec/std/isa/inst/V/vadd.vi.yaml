@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vadd.vi
-long_name: No synopsis available
+long_name: Vector-immediate integer addition
 description: |
-  No description available.
+  Adds immediate value to elements from vector register vs2 according to mask vm and stores results in vector register vd. Element width is determined by SEW setting.
 definedBy:
   extension:
     name: Zvl32b

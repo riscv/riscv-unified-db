@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmv.v.f
-long_name: No synopsis available
+long_name: "Vector floating-point to vector move"
 description: |
-  No description available.
+  Moves floating-point element from scalar register fs1 to vector register vd, using vector mask vm. This operation creates a vector with a single floating-point value.
 definedBy:
   extension:
     name: Zvl32b

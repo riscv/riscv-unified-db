@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsub.vv
-long_name: No synopsis available
+long_name: Vector-vector integer subtraction
 description: |
-  No description available.
+  Subtracts corresponding elements of vs1 from vs2 according to mask vm and stores results in vd. Element width is determined by SEW setting.
 definedBy:
   extension:
     name: Zvl32b

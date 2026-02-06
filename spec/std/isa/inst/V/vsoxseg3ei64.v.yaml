@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vsoxseg3ei64.v
-long_name: No synopsis available
+long_name: "Vector ordered store 3 elements of 64 bits with index"
 description: |
-  No description available.
+  Stores 3 segments of 64-bit elements from vector register vs2 to memory using ordered access pattern with index register vs1, starting at address in xs1 register, using vector mask vm. The effective element width is 64 bits.
 definedBy:
   extension:
     name: Zvl32b

@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vlsseg7e16.v
-long_name: No synopsis available
+long_name: "Vector strided load 7 elements of 16 bits"
 description: |
-  No description available.
+  Loads 7 segments of 16-bit elements from memory starting at address in xs1 register with stride, using vector mask vm, and stores results in vector register vd. The effective element width is 16 bits.
 definedBy:
   extension:
     name: Zvl32b

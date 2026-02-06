@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vs4r.v
-long_name: No synopsis available
+long_name: "Vector store 4 elements"
 description: |
-  No description available.
+  Stores 4 elements from vector register vs2 to memory starting at address in xs1 register, using vector mask vm. This operation stores elements with register stride.
 definedBy:
   extension:
     name: Zvl32b

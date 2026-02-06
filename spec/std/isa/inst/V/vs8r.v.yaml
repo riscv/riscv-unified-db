@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vs8r.v
-long_name: No synopsis available
+long_name: Vector store 8 elements with register stride
 description: |
-  No description available.
+  Stores 8 segments of elements from vector register vs2 to memory starting at address in xs1 register with stride in xs2, using vector mask vm. The effective element width is determined by SEW setting.
 definedBy:
   extension:
     name: Zvl32b

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmv.v.v
-long_name: No synopsis available
+long_name: "Vector register move"
 description: |
-  No description available.
+  Copies elements from vector register vs2 to vector register vd, using vector mask vm. This operation performs a simple register-to-register copy.
 definedBy:
   extension:
     name: Zvl32b

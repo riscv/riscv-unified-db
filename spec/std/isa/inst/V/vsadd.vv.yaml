@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsadd.vv
-long_name: No synopsis available
+long_name: "Vector unsigned addition"
 description: |
-  No description available.
+  Performs unsigned addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
 definedBy:
   extension:
     name: Zvl32b

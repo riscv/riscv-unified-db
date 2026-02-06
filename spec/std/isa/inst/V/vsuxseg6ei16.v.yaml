@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vsuxseg6ei16.v
-long_name: No synopsis available
+long_name: Vector unordered store 6 elements of 16 bits with index
 description: |
-  No description available.
+  Stores 6 segments of 16-bit elements from vector register vs2 to memory using unordered access pattern with index register vs1, starting at address in xs1 register, using vector mask vm. The effective element width is 16 bits.
 definedBy:
   extension:
     name: Zvl32b

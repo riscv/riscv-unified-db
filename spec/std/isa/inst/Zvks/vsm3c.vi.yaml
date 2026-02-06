@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsm3c.vi
-long_name: No synopsis available
+long_name: Vector SM3 compression with immediate
 description: |
-  No description available.
+  Performs SM3 compression operation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This is used in the SM3 hash function compression phase.
 definedBy:
   extension:
     name: Zvksh
