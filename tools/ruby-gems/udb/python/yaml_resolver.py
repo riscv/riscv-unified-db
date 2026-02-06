@@ -455,13 +455,16 @@ def _resolve(obj, obj_path, obj_file_path, doc_obj, arch_root, do_checks, compil
                         if key == "operation()"
                         else ("constraint_body" if key == "idl()" else "function_body")
                     )
-                    with tempfile.NamedTemporaryFile(
-                        mode="w+t", delete=True, suffix=".idl"
-                    ) as temp_file:
+                    with (
+                        tempfile.NamedTemporaryFile(
+                            mode="w+t", delete=True, suffix=".idl"
+                        ) as temp_file,
+                        tempfile.NamedTemporaryFile(mode="w+", delete=True) as ast_tmp_file,
+                    ):
                         temp_file.write(obj[key] + "\n")
                         temp_file.flush()
                         result = subprocess.run(
-                            f"./bin/idlc compile --format yaml --root {r} {temp_file.name}",
+                            f"./bin/idlc compile --format yaml --root {r} {temp_file.name} -o {ast_tmp_file.name}",
                             shell=True,
                             capture_output=True,
                             text=True,
@@ -472,7 +475,7 @@ def _resolve(obj, obj_path, obj_file_path, doc_obj, arch_root, do_checks, compil
                                 file=sys.stderr,
                             )
                             exit(1)
-                        obj[key[:-2] + "_ast"] = result.stdout
+                        obj[key[:-2] + "_ast"] = read_yaml(ast_tmp_file.name)
 
         return obj
 
