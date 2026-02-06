@@ -10936,7 +10936,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}
+|imm |sext({$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0})
 |xs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
@@ -11175,7 +11175,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}
+|imm |sext({$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0})
 |xs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
@@ -27001,7 +27001,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |$encoding[31:20]
+|imm |sext($encoding[31:20])
 |xs1 |$encoding[19:15]
 |xd |$encoding[11:7]
 |===
