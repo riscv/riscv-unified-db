@@ -5,7 +5,7 @@
 # frozen_string_literal: true
 
 require_relative "database_obj"
-require_relative "../req_expression"
+require_relative "../condition"
 
 module Udb
 
@@ -82,18 +82,18 @@ class RegisterFile < TopLevelDatabaseObject
     sig { returns(T.nilable(String)) }
     def sw_write = arch_write
 
-    sig { returns(T.nilable(ExtensionRequirementExpression)) }
+    sig { returns(T.nilable(AbstractCondition)) }
     def defined_by_condition
       return nil unless @data.key?("definedBy")
 
-      @defined_by_condition ||= ExtensionRequirementExpression.new(@data.fetch("definedBy"), @file.arch)
+      @defined_by_condition ||= Condition.new(@data.fetch("definedBy"), @file.arch)
     end
 
-    sig { returns(T.nilable(ExtensionRequirementExpression)) }
+    sig { returns(T.nilable(Condition)) }
     def when_condition
       return nil unless @data.key?("when")
 
-      @when_condition ||= ExtensionRequirementExpression.new(@data.fetch("when"), @file.arch)
+      @when_condition ||= Condition.new(@data.fetch("when"), @file.arch)
     end
   end
 
