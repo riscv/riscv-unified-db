@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwmaccu.vx
-long_name: No synopsis available
+long_name: "Vector widening unsigned multiply-add with scalar"
 description: |
-  No description available.
+  Performs widening unsigned multiplication on elements from vector register vs2 and scalar register xs1, adds the result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
 definedBy:
   extension:
     name: Zvl32b

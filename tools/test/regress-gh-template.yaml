@@ -36,10 +36,10 @@ jobs:
           echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Build and export
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           push: false
           file: ./.devcontainer/Dockerfile
@@ -50,7 +50,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Upload container
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: docker_image
           path: ${{ runner.temp }}/docker_image.tar
@@ -61,7 +61,7 @@ jobs:
     if: "false"
     steps:
       - name: Use download-artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
 
   regress-pre-commit:
     runs-on: ubuntu-latest
@@ -80,7 +80,7 @@ jobs:
       - name: Clone Github Repo Action
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Download docker image
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: docker_image
           path: ${{ runner.temp }}
@@ -91,7 +91,7 @@ jobs:
         run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
       - name: Restore cache RISC-V JSON
         id: cache-riscv
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ext/llvm-project/riscv.json
           key: ${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}
@@ -120,7 +120,7 @@ jobs:
       - name: Clone Github Repo Action
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Download docker image
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: docker_image
           path: ${{ runner.temp }}
@@ -136,7 +136,7 @@ jobs:
       - name: Collate coverage
         run: ./do chore:udb:collate_cov[_cov/udb]
       - name: Upload udb coverage reports to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
@@ -156,7 +156,7 @@ jobs:
         run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
       - name: Cache RISC-V JSON
         id: cache-riscv
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ext/llvm-project/riscv.json
           key: ${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}
@@ -190,7 +190,7 @@ jobs:
       - name: Show riscv.json output
         run: ls -l ext/llvm-project/riscv.json
       - name: Upload RISC-V JSON as Artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: riscv-json
           path: ext/llvm-project/riscv.json
@@ -209,7 +209,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Setup Temurin JDK 21
-        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: temurin
           java-version: "21"
@@ -221,7 +221,7 @@ jobs:
         run: mvn -B -U -Dheadless=true verify
       - name: Archive surefire reports (always)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: surefire-reports
           path: |
@@ -243,7 +243,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: tools/eclipse/udb-vscode/package-lock.json
       - name: Setup Temurin JDK 21 (for LS)
-        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: temurin
           java-version: "21"
@@ -255,7 +255,7 @@ jobs:
         run: xvfb-run -a npm test
       - name: Archive VS Code test logs (always)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: vscode-test-logs
           path: |

@@ -26,6 +26,12 @@ non_mandatory_extensions:
   version: "~> 2.2"
 - name: M
   version: "~> 2.0"
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
+  version: "~> 1.0"
+- name: Zcf
+  version: "~> 1.0"
 - name: Zicntr
   version: "~> 2.0"
 - name: Zifencei

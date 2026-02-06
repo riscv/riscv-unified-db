@@ -2085,85 +2085,12 @@ class Udb::CertNormativeRule
   def id; end
 end
 
-# source://udb//../../udb/lib/udb/cert_test_procedure.rb#11
-class Udb::CertTestProcedure
-  # source://udb//../../udb/lib/udb/cert_test_procedure.rb#33
-  sig do
-    params(
-      data: T::Hash[::String, T.untyped],
-      db_obj: T.any(::Udb::Csr, ::Udb::CsrField, ::Udb::Extension, ::Udb::Instruction)
-    ).void
-  end
-  def initialize(data, db_obj); end
-
-  # @return [Array<CertNormativeRule>]
-  #
-  # source://udb//../../udb/lib/udb/cert_test_procedure.rb#48
-  def cert_normative_rules; end
-
-  # @return [String] String (likely multiline) of certification test procedure steps using Asciidoc lists
-  #
-  # source://udb//../../udb/lib/udb/cert_test_procedure.rb#61
-  def cert_steps; end
-
-  # Description of test procedure (could be multiple lines).
-  #
-  # source://udb//../../udb/lib/udb/cert_test_procedure.rb#20
-  sig { returns(::String) }
-  def description; end
-
-  # source://udb//../../udb/lib/udb/cert_test_procedure.rb#16
-  sig { returns(::String) }
-  def id; end
-
-  # What kind of database object is this?
-  #
-  # source://udb//../../udb/lib/udb/cert_test_procedure.rb#24
-  sig { returns(::String) }
-  def kind; end
-
-  # Name of test file that implements this test procedure. Could be nil.
-  #
-  # source://udb//../../udb/lib/udb/cert_test_procedure.rb#28
-  sig { returns(T.nilable(::String)) }
-  def test_file_name; end
-end
-
 # source://udb//../../udb/lib/udb/obj/certifiable_obj.rb#10
 module Udb::CertifiableObject
-  # @param id [String] Unique ID for the normative rule
-  # @return [CertNormativeRule]
-  # @return [nil] if there is no certification normative ruleed with ID of +id+
-  #
-  # source://udb//../../udb/lib/udb/obj/certifiable_obj.rb#36
-  def cert_coverage_point(id); end
-
-  # @return [Hash<String, CertNormativeRule>] Hash with ID as key of all normative rules defined by database object
-  #
-  # source://udb//../../udb/lib/udb/obj/certifiable_obj.rb#23
-  def cert_coverage_point_hash; end
-
   # @return [Array<CertNormativeRule>]
   #
   # source://udb//../../udb/lib/udb/obj/certifiable_obj.rb#12
   def cert_normative_rules; end
-
-  # @param id [String] Unique ID for test procedure
-  # @return [CertTestProcedure]
-  # @return [nil] if there is no certification test procedure with ID +id+
-  #
-  # source://udb//../../udb/lib/udb/obj/certifiable_obj.rb#65
-  def cert_test_procedure(id); end
-
-  # @return [Hash<String, CertTestProcedure>] Hash of all normative rules defined by database object
-  #
-  # source://udb//../../udb/lib/udb/obj/certifiable_obj.rb#52
-  def cert_test_procedure_hash; end
-
-  # @return [Array<CertTestProcedure>]
-  #
-  # source://udb//../../udb/lib/udb/obj/certifiable_obj.rb#41
-  def cert_test_procedures; end
 end
 
 # source://udb//../../udb/lib/udb/obj/exception_code.rb#13

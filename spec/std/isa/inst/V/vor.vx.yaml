@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vor.vx
-long_name: No synopsis available
+long_name: "Vector bitwise OR with scalar"
 description: |
-  No description available.
+  Performs bitwise OR operation on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
     name: Zvl32b

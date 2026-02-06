@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vnclipu.wi
-long_name: No synopsis available
+long_name: "Vector widening unsigned clip with immediate"
 description: |
-  No description available.
+  Performs widening unsigned clip operation on elements from vector register vs2 using immediate clip value and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
 definedBy:
   extension:
     name: Zvl32b

@@ -8,7 +8,21 @@ kind: extension
 name: Zve64x
 long_name: Vector Extension for Minimal Vector Register Length of 64 Bits
 description: |
-  TBD - See GitHub issue 616
+  The Zve64x extension provides support for vector integer operations with a
+  maximum element width (ELEN) of 64 bits. This is a base embedded vector
+  extension that excludes floating-point vector operations.
+
+  Zve64x includes all functionality of Zve32x plus:
+
+  * Support for 64-bit integer vector elements (SEW=64)
+  * 64-bit vector load and store instructions
+  * All vector integer instructions operating on 64-bit elements
+
+  Zve64x excludes all vector floating-point instructions and does not require
+  implementation of the F or D extensions.
+
+  This extension is intended for embedded processors that need 64-bit vector
+  integer operations but do not require floating-point support.
 type: unprivileged
 versions:
   - version: "1.0.0"

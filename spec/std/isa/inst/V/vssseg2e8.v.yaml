@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vssseg2e8.v
-long_name: No synopsis available
+long_name: "Vector strided store 2 elements of 8 bits"
 description: |
-  No description available.
+  Stores 2 segments of 8-bit elements from vector register vs2 to memory starting at address in xs1 register with stride, using vector mask vm. The effective element width is 8 bits.
 definedBy:
   extension:
     name: Zvl32b

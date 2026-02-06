@@ -48,7 +48,7 @@ mandatory_extensions:
 - name: Svpbmt
   version: "~> 1.0"
 - name: U
-  version: "~> 2.0"
+  version: "~> 1.0"
 - name: Za128rs
   version: "~> 1.0"
 - name: Za64rs
@@ -105,6 +105,12 @@ non_mandatory_extensions:
 - name: Svnapot
   version: "~> 1.0"
 - name: V
+  version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
+  version: "~> 1.0"
+- name: Zcf
   version: "~> 1.0"
 - name: Zfh
   version: "~> 1.0"

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vssub.vv
-long_name: No synopsis available
+long_name: "Vector subtraction"
 description: |
-  No description available.
+  Performs subtraction on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
     name: Zvl32b

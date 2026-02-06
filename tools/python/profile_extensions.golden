@@ -47,7 +47,7 @@ RVA20U64:
 - F ~> 2.2 mandatory
 - I ~> 2.1 mandatory
 - M ~> 2.0 mandatory
-- U ~> 2.0 mandatory
+- U ~> 1.0 mandatory
 - Za128rs ~> 1.0 mandatory
 - Ziccamoa ~> 1.0 mandatory
 - Ziccif ~> 1.0 mandatory
@@ -77,7 +77,7 @@ RVA22S64:
 - Svbare ~> 1.0 mandatory
 - Svinval ~> 1.0 mandatory
 - Svpbmt ~> 1.0 mandatory
-- U ~> 2.0 mandatory
+- U ~> 1.0 mandatory
 - Za128rs ~> 1.0 mandatory
 - Za64rs ~>1.0 mandatory
 - Zba ~> 1.0 mandatory
@@ -121,7 +121,7 @@ RVA22U64:
 - F ~> 2.2 mandatory
 - I ~> 2.1 mandatory
 - M ~> 2.0 mandatory
-- U ~> 2.0 mandatory
+- U ~> 1.0 mandatory
 - Za128rs ~> 1.0 mandatory
 - Za64rs ~>1.0 mandatory
 - Zba ~> 1.0 mandatory
@@ -175,7 +175,7 @@ RVA23M64:
 - Svinval ~>1.0 mandatory
 - Svnapot ~>1.0 mandatory
 - Svpbmt ~>1.0 mandatory
-- U ~> 2.0 mandatory
+- U ~> 1.0 mandatory
 - V ~> 1.0 mandatory
 - Za128rs ~> 1.0 mandatory
 - Za64rs ~>1.0 mandatory
@@ -246,7 +246,7 @@ RVA23S64:
 - Svinval ~>1.0 mandatory
 - Svnapot ~>1.0 mandatory
 - Svpbmt ~>1.0 mandatory
-- U ~> 2.0 mandatory
+- U ~> 1.0 mandatory
 - V ~> 1.0 mandatory
 - Za128rs ~> 1.0 mandatory
 - Za64rs ~>1.0 mandatory
@@ -298,7 +298,7 @@ RVA23U64:
 - I ~> 2.1 mandatory
 - M ~> 2.0 mandatory
 - Supm ~>1.0 mandatory
-- U ~> 2.0 mandatory
+- U ~> 1.0 mandatory
 - V ~> 1.0 mandatory
 - Za128rs ~> 1.0 mandatory
 - Za64rs ~>1.0 mandatory
@@ -371,7 +371,7 @@ RVB23M64:
 - Svinval ~>1.0 mandatory
 - Svnapot ~>1.0 mandatory
 - Svpbmt ~>1.0 mandatory
-- U ~> 2.0 mandatory
+- U ~> 1.0 mandatory
 - Za128rs ~> 1.0 mandatory
 - Za64rs ~>1.0 mandatory
 - Zawrs ~>1.0 mandatory
@@ -437,7 +437,7 @@ RVB23S64:
 - Svinval ~>1.0 mandatory
 - Svnapot ~>1.0 mandatory
 - Svpbmt ~>1.0 mandatory
-- U ~> 2.0 mandatory
+- U ~> 1.0 mandatory
 - Za128rs ~> 1.0 mandatory
 - Za64rs ~>1.0 mandatory
 - Zawrs ~>1.0 mandatory
@@ -489,7 +489,7 @@ RVB23U64:
 - F ~> 2.2 mandatory
 - I ~> 2.1 mandatory
 - M ~> 2.0 mandatory
-- U ~> 2.0 mandatory
+- U ~> 1.0 mandatory
 - Za128rs ~> 1.0 mandatory
 - Za64rs ~>1.0 mandatory
 - Zawrs ~>1.0 mandatory

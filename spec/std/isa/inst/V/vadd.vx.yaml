@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vadd.vx
-long_name: No synopsis available
+long_name: Vector-scalar integer addition
 description: |
-  No description available.
+  Adds elements from vector register vs2 to scalar register rs1 according to mask vm and stores results in vector register vd. Element width is determined by SEW setting.
 definedBy:
   extension:
     name: Zvl32b

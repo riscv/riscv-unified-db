@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vadc.vim
-long_name: No synopsis available
+long_name: "Vector add with carry and masked"
 description: |
-  No description available.
+  Performs addition on elements from vector register vs2 and immediate value, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm. This variant includes additional masking behavior.
 definedBy:
   extension:
     name: Zvl32b

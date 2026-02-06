@@ -6,9 +6,10 @@
 $schema: inst_schema.json#
 kind: instruction
 name: hsv.h
-long_name: No synopsis available
+long_name: Hypervisor store halfword
 description: |
-  No description available.
+  Store 16 bits of data from register `xs2` to guest physical memory at the
+  address in `xs1`, as though V=1.
 definedBy:
   extension:
     name: H

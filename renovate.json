@@ -26,6 +26,15 @@
           "matchStrings": ["(?<version>[^\\s]+)"]
         }
       ]
+    },
+    {
+      "matchPackageNames": ["ruff", "astral-sh/ruff-pre-commit"],
+      "groupName": "ruff"
+    },
+    {
+      "matchManagers": ["git-submodules"],
+      "matchPackageNames": ["ext/llvm-project"],
+      "schedule": ["on saturday"]
     }
   ],
   "customManagers": [

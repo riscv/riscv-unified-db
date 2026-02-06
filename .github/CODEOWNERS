@@ -3,3 +3,6 @@
 
 # eclipse Xtext project owned by Ajit Dingankar
 tools/eclipse @adingank-qualcomm @dhower-qc
+
+# Renovate owned by Jordan Carlin
+renovate.json @jordancarlin

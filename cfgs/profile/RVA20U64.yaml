@@ -26,7 +26,7 @@ mandatory_extensions:
 - name: M
   version: "~> 2.0"
 - name: U
-  version: "~> 2.0"
+  version: "~> 1.0"
 - name: Za128rs
   version: "~> 1.0"
 - name: Ziccamoa
@@ -42,6 +42,12 @@ mandatory_extensions:
 - name: Zicsr
   version: "~> 2.0"
 non_mandatory_extensions:
+- name: Zca
+  version: "~> 1.0"
+- name: Zcd
+  version: "~> 1.0"
+- name: Zcf
+  version: "~> 1.0"
 - name: Zihpm
   version: "~> 2.0"
 additional_extensions: true

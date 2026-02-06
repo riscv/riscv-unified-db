@@ -7,7 +7,6 @@
 module Udb; end
 
 require_relative "udb/cert_normative_rule"
-require_relative "udb/cert_test_procedure"
 require_relative "udb/doc_link"
 require_relative "udb/condition"
 require_relative "udb/schema"

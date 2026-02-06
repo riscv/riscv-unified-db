@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwmul.vx
-long_name: No synopsis available
+long_name: "Vector widening signed multiplication with scalar"
 description: |
-  No description available.
+  Performs signed multiplication on elements from vector register vs2 and scalar register xs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
 definedBy:
   extension:
     name: Zvl32b

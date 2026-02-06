@@ -7,7 +7,7 @@
 $schema: csr_schema.json#
 kind: csr
 name: hpmcounter<%= hpm_num %>h
-long_name: User-mode Hardware Performance Counter <%= hpm_num - 3 %>, high half
+long_name: Unprivileged Hardware Performance Counter <%= hpm_num - 3 %>, high half
 address: 0x<%= (0xC83 + (hpm_num - 3)).to_s(16).upcase %>
 writable: false
 description: |
