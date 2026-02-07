@@ -49,18 +49,19 @@
           "description": "Configuration-dependent value of the state after reset. Can be UNDEFINED_LEGAL for the generic architecture spec, but must have an integer value for the implementation spec.",
           "type": "string"
         },
+        "reset_value_ast": {
+          "type": "object"
+        },
         "sw_write(csr_value)": {
           "type": "string",
           "description": "Function implementing custom write behavior for the CSR. Given a 'value', return either the value to be written in the field or false if the write would be illegal. 'value' is the value of the entire CSR, which is sometimes needed to detect illegal writes"
         },
+        "sw_write_ast": {
+          "type": "object"
+        },
         "legal?(csr_value)": {
           "type": "string",
           "description": "Function that returns whether or not an attempted value for the field is legal. The csr_value parameter is the *entire* attempted CSR write value. Fields within the attempted write value can be accessed with a dot operator (e.g., csr_value.SXL, csr_value.VGEIN, ...)"
-        },
-        "base": {
-          "type": "integer",
-          "enum": [32, 64],
-          "description": "When a CSR field is only defined in RV32, or RV64, the base that defines it. When defined in both, this field should be absent."
         },
         "description": {
           "$ref": "schema_defs.json#/$defs/spec_text",
@@ -73,6 +74,9 @@
         "type()": {
           "type": "string",
           "description": "Function that returns a configuration-dependent type. The return value should be a CsrFieldType enum, and must be compile-time-known."
+        },
+        "type_ast": {
+          "type": "object"
         },
         "alias": {
           "oneOf": [
@@ -99,7 +103,7 @@
           "description": "When specified, indicates that this field aliases (a portion of) another CSR field"
         },
         "definedBy": {
-          "$ref": "schema_defs.json#/$defs/requires_entry",
+          "$ref": "schema_defs.json#/$defs/condition",
           "description": "Where this field is defined: indicates that the field is only present if the extension(s) are implemented. If definedBy is not given, defaults to the definedBy field of the parent CSR"
         },
         "affectedBy": {
@@ -120,9 +124,6 @@
         },
         "cert_normative_rules": {
           "$ref": "schema_defs.json#/$defs/cert_normative_rules"
-        },
-        "cert_test_procedures": {
-          "$ref": "schema_defs.json#/$defs/cert_test_procedures"
         }
       },
 
@@ -209,11 +210,6 @@
         "name": {
           "$ref": "schema_defs.json#/$defs/csr_name"
         },
-        "base": {
-          "type": "integer",
-          "enum": [32, 64],
-          "description": "When a CSR is only defined in RV32, or RV64, the base that defines it. When defined in both, this field should be absent."
-        },
         "long_name": {
           "type": "string",
           "description": "One line description for the CSR"
@@ -223,7 +219,7 @@
           "description": "Function of the field"
         },
         "definedBy": {
-          "$ref": "schema_defs.json#/$defs/requires_entry",
+          "$ref": "schema_defs.json#/$defs/condition",
           "description": "Extension(s) that define the CSR"
         },
         "address": {
@@ -273,15 +269,15 @@
           "type": "string",
           "description": "Function that returns the value of the CSR when read by software (i.e., a Zicsr instruction). If not specified, the value last written (through hw_write) is returned."
         },
+        "sw_read_ast": {
+          "type": "object"
+        },
         "$source": {
           "description": "Path to the source file this definition came from; used by downstream tooling -- not expected to be in handwritten files",
           "type": "string"
         },
         "cert_normative_rules": {
           "$ref": "schema_defs.json#/$defs/cert_normative_rules"
-        },
-        "cert_test_procedures": {
-          "$ref": "schema_defs.json#/$defs/cert_test_procedures"
         }
       },
       "additionalProperties": false,

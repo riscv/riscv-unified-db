@@ -6,10 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vcpop.v
-long_name: No synopsis available
+long_name: Vector population count
 description: |
-  No description available.
-definedBy: Zvbb
+  Counts the number of set bits (population count) in each element of vector register vs2, storing results in vector register vd according to mask vm.
+definedBy:
+  extension:
+    name: Zvbb
 assembly: vd, vs2, vm
 encoding:
   match: 010010------01110010-----1010111

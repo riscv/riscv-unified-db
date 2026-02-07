@@ -6,10 +6,13 @@
 $schema: inst_schema.json#
 kind: instruction
 name: hlv.w
-long_name: No synopsis available
+long_name: Hypervisor load word
 description: |
-  No description available.
-definedBy: H
+  Load 32 bits of data into register `xd` from guest physical memory at the
+  address in `xs1`, as though V=1. Sign-extend the result to XLEN bits.
+definedBy:
+  extension:
+    name: H
 assembly: xd, xs1
 encoding:
   match: 011010000000-----100-----1110011

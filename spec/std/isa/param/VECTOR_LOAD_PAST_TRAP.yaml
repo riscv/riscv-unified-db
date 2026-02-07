@@ -1,0 +1,19 @@
+# Copyright (C) 2025-26 Harvey Mudd College
+# Author: James Kaden Cassidy (kacassidy@hmc.edu)
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: VECTOR_LOAD_PAST_TRAP
+description: |
+  Vector load instructions may overwrite active destination vector register
+  group elements past the element index where a trap is reported; the
+  behavior for elements beyond the trap index is implementation-defined.
+long_name: TODO
+schema:
+  type: boolean
+definedBy:
+  extension:
+    name: Zvl32b

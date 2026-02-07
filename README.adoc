@@ -1,6 +1,6 @@
 image::doc/udb.svg[UDB banner]
 
-image::https://api.reuse.software/badge/github.com/riscv-software-src/riscv-unified-db[REUSE status, link="https://api.reuse.software/info/github.com/riscv-software-src/riscv-unified-db"]
+image::https://api.reuse.software/badge/github.com/riscv/riscv-unified-db[REUSE status, link="https://api.reuse.software/info/github.com/riscv/riscv-unified-db"]
 
 
 [WARNING]
@@ -17,7 +17,7 @@ That said, the following data has been validated against third-party sources:
 
 == Quick links
 
-* https://riscv-software-src.github.io/riscv-unified-db/index.html[The latest UDB-generated **UNOFFICIAL** RISC-V specifications].
+* https://riscv.github.io/riscv-unified-db/index.html[The latest UDB-generated **UNOFFICIAL** RISC-V specifications].
 * UDB Documentation
 ** xref:doc/schemas.adoc[Schema documentation]
 ** xref:doc/idl.adoc[ISA Description Language (IDL)]
@@ -82,22 +82,11 @@ You can start a GitHub Codespace for this repository by clicking the "Code" butt
 
 === Tasks
 
-UnifiedDB uses https://github.com/ruby/rake[Rake], a Ruby-based Makefile alternative, to manage tasks.
-For convenience, running Rake inside the container is encapsulated in `do`. For example:
-
 [source,bash]
 ----
-./do --tasks                 # list all documented tasks
-./do --desc gen:html_manual  # describe the 'gen:html_manual' task in more detail
+./bin/regress -h             # get help on running regression tests
 
-./do test:smoke              # run smoke tests
+./bin/generate -h            # get help on generating content from UDB
 
-# generate all versions of ISA manual, as an Antora static website
-./do gen:html_manual MANUAL_NAME=isa VERSIONS=all
-
-# regenerate yaml files for the unresolved architecture
-./do gen:arch
-
-# generate an implementation-specific spec for the 'example_rv64_with_overlay' config
-./do gen:resolved_arch CFG=example_rv64_with_overlay
+./bin/chore -h               # get help on running repository development chores
 ----

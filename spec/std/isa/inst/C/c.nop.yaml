@@ -16,6 +16,9 @@ definedBy:
     - C
     - Zca
 assembly: "c.nop imm"
+  extension:
+    name: Zca
+assembly: ""
 encoding:
   match: "000-00000-----01"
   variables:

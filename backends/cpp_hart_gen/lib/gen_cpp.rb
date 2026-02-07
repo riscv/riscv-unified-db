@@ -9,8 +9,26 @@ require_relative "control_flow_pass"
 require_relative "written_pass"
 require "idlc/type"
 
+module Udb
+  class Csr < TopLevelDatabaseObject
+    def cxx_name = @cxx_name = name.gsub(".", "_")
+  end
+end
+
 module Idl
   class Type
+    def to_cxx_no_qualifiers_constexpr(v)
+      t = to_cxx_no_qualifiers
+      c = t.gsub("std::string", "std::string_view")
+      if v.is_a?(Array)
+        if c =~ /.*std::vector<(.*)>.*/
+          subt = $1
+          c = "std::array<#{subt}, #{v.size}>"
+        end
+      end
+      c
+    end
+
     def to_cxx_no_qualifiers
       case @kind
       when :bits
@@ -138,8 +156,10 @@ end
 
 module Idl
   class AstNode
-    sig { abstract.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
-    def gen_cpp(symtab, indent = 0, indent_spaces: 2); end
+    sig { overridable.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
+    def gen_cpp(symtab, indent = 0, indent_spaces: 2)
+      raise "Need to implement #{self.class.name}#gen_cpp"
+    end
   end
 
   class NoopAst < AstNode
@@ -147,16 +167,24 @@ module Idl
     def gen_cpp(symtab, indent = 0, indent_spaces: 2) = ";"
   end
 
+  class ArrayIncludesAst < AstNode
+    sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
+    def gen_cpp(symtab, indent = 0, indent_spaces: 2)
+      "#{' ' * indent}_array_includes(#{ary.gen_cpp(symtab, 0, indent_spaces:)}, #{expr.gen_cpp(symtab, 0, indent_spaces:)})"
+    end
+  end
+
   class AryRangeAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
       expression = nil
       value_result = value_try do
-        # see if msb, lsb is compile-time-known
-        _ = msb.value(symtab)
-        _ = lsb.value(symtab)
-        expression = "bit_insert<#{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}>(#{variable.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)})"
+        # see if msb and lsb are compile-time-known
+        msb_val = msb.value(symtab)
+        lsb_val = lsb.value(symtab)
+        expression = "#{variable.gen_cpp(symtab, 0, indent_spaces:)} = bit_insert<#{msb_val}, #{lsb_val}, #{variable.type(symtab).width}>(#{variable.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)})"
       end
+
       value_else(value_result) do
         expression = "bit_insert(#{variable.gen_cpp(symtab)}, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)})"
       end
@@ -276,12 +304,14 @@ module Idl
       else
         if function_name == "sw_read"
           if symtab.multi_xlen? && csr_def(symtab).format_changes_with_xlen?
-            "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_obj.name})._#{function_name}(__UDB_XLEN)"
+            "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_obj.cxx_name})._#{function_name}(__UDB_XLEN)"
           else
-            "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_obj.name})._#{function_name}()"
+            "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_obj.cxx_name})._#{function_name}()"
           end
+        elsif function_name == "address"
+          "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_obj.cxx_name})._address()"
         else
-          "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_obj.name}).#{function_name.gsub('?', '_Q_')}(#{args_cpp.join(', ')})"
+          "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_obj.cxx_name}).#{function_name.gsub('?', '_Q_')}(#{args_cpp.join(', ')})"
         end
       end
     end
@@ -434,7 +464,7 @@ module Idl
       if csr_obj.nil?
         "#{' ' * indent}__UDB_CSR_BY_ADDR(#{csr.idx_expr.gen_cpp(symtab, 0, indent_spaces:)}).sw_write(#{expression.gen_cpp(symtab, 0, indent_spaces:)}, __UDB_XLEN)"
       else
-        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_obj.name}).sw_write(#{expression.gen_cpp(symtab, 0, indent_spaces:)}, __UDB_XLEN)"
+        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_obj.cxx_name}).sw_write(#{expression.gen_cpp(symtab, 0, indent_spaces:)}, __UDB_XLEN)"
       end
     end
   end
@@ -510,9 +540,9 @@ module Idl
 
       field  = csr_field.field_def(symtab)
       if symtab.multi_xlen? && field.dynamic_location?
-        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_field.csr_name}).#{field.name}()._hw_write(#{write_value.gen_cpp(symtab, 0, indent_spaces:)}, __UDB_XLEN)"
+        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_field.csr_obj(symtab).cxx_name}).#{field.name}()._hw_write(#{write_value.gen_cpp(symtab, 0, indent_spaces:)}, __UDB_XLEN)"
       else
-        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_field.csr_name}).#{field.name}()._hw_write(#{write_value.gen_cpp(symtab, 0, indent_spaces:)})"
+        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_field.csr_obj(symtab).cxx_name}).#{field.name}()._hw_write(#{write_value.gen_cpp(symtab, 0, indent_spaces:)})"
       end
     end
   end
@@ -572,6 +602,20 @@ module Idl
           "#{' ' * indent}_PossiblyUnknownBits<#{t.width}, #{t.signed?}>(\"#{v}\"_xb)"
         end
       end
+    end
+  end
+
+  class TrueExpressionAst < AstNode
+    sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
+    def gen_cpp(symtab, indent = 0, indent_spaces: 2)
+      "#{' ' * indent}true"
+    end
+  end
+
+  class FalseExpressionAst < AstNode
+    sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
+    def gen_cpp(symtab, indent = 0, indent_spaces: 2)
+      "#{' ' * indent}false"
     end
   end
 
@@ -945,7 +989,7 @@ module Idl
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
       cpp = <<~IF
         if (#{condition.gen_cpp(symtab, 0, indent_spaces:)}) {
-        #{action.gen_cpp(symtab, indent_spaces, indent_spaces:)};
+          #{action.gen_cpp(symtab, indent_spaces, indent_spaces:)};
         }
       IF
       cpp.lines.map { |l| "#{' ' * indent}#{l}" }.join("")
@@ -962,16 +1006,7 @@ module Idl
   class FunctionCallExpressionAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      if name == "ary_includes?"
-        # special case
-        if arg_nodes[0].type(symtab).width == :unknown
-          # vector
-          "__UDB_FUNC_CALL ary_includes_Q_(#{arg_nodes[0].gen_cpp(symtab, 0)}, #{arg_nodes[1].gen_cpp(symtab, 0)})"
-        else
-          # array
-          "__UDB_CONSTEXPR_FUNC_CALL template ary_includes_Q_<#{arg_nodes[0].type(symtab).width}>(#{arg_nodes[0].gen_cpp(symtab, 0)}, #{arg_nodes[1].gen_cpp(symtab, 0)})"
-        end
-      elsif name == "implemented?"
+      if name == "implemented?"
         "__UDB_FUNC_CALL template _implemented_Q_<#{arg_nodes[0].gen_cpp(symtab, 0)}>()"
       elsif name == "implemented_version?"
         "__UDB_FUNC_CALL template _implemented_version_Q_<#{arg_nodes[0].gen_cpp(symtab, 0)}, #{arg_nodes[1].text_value}>()"
@@ -999,7 +1034,13 @@ module Idl
   class ArraySizeAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      "#{' ' * indent}(#{expression.gen_cpp(symtab, 0, indent_spaces:)}).size()"
+      value_try do
+        sz = expression.value(symtab).size
+        return "#{sz}_b"
+      end
+
+      # size isn't known at compile time.
+      "#{' ' * indent}_Bits<sizeof(std::size_t)*8, false>((#{expression.gen_cpp(symtab, 0, indent_spaces:)}).size())"
     end
   end
 
@@ -1013,7 +1054,7 @@ module Idl
   class CsrFieldReadExpressionAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_def(symtab).name}).#{@field_name}()._hw_read()"
+      "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr_def(symtab).cxx_name}).#{@field_name}()._hw_read()"
     end
   end
 
@@ -1022,9 +1063,9 @@ module Idl
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
       csr = csr_def(symtab)
       if symtab.multi_xlen? && csr.format_changes_with_xlen?
-        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr.name})._hw_read(__UDB_XLEN)"
+        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr.cxx_name})._hw_read(__UDB_XLEN)"
       else
-        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr.name})._hw_read()"
+        "#{' ' * indent}__UDB_CSR_BY_NAME(#{csr.cxx_name})._hw_read()"
       end
     end
   end
