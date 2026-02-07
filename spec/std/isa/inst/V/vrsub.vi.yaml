@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vrsub.vi
-long_name: No synopsis available
+long_name: "Vector reverse subtract with immediate"
 description: |
-  No description available.
+  Performs reverse subtraction on elements from immediate value and vector register vs2 and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: V
+    name: Zvl32b
 assembly: vd, vs2, imm, vm
 encoding:
   match: 000011-----------011-----1010111

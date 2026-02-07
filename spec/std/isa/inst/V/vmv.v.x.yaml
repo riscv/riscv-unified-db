@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmv.v.x
-long_name: No synopsis available
+long_name: "Vector scalar to vector move"
 description: |
-  No description available.
+  Broadcasts scalar register xs1 to all elements of vector register vd, using vector mask vm. This operation creates a vector with identical elements.
 definedBy:
   extension:
-    name: V
+    name: Zvl32b
 assembly: vd, xs1
 encoding:
   match: 010111100000-----100-----1010111

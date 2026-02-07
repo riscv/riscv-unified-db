@@ -6,12 +6,12 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vlseg7e16.v
-long_name: No synopsis available
+long_name: "Vector segmented load 7 elements of 16 bits"
 description: |
-  No description available.
+  Loads 7 segments of 16-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. The effective element width is 16 bits regardless of SEW setting.
 definedBy:
   extension:
-    name: V
+    name: Zvl32b
 assembly: vd, (xs1), vm
 encoding:
   match: 110000-00000-----101-----0000111

@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmerge.vvm
-long_name: No synopsis available
+long_name: Vector merge with mask
 description: |
-  No description available.
+  Merges elements from vs1 and vs2 using mask register v0 and stores results in vd. Where mask bits are set, elements from vs1 are selected; otherwise elements from vs2 are selected.
 definedBy:
   extension:
-    name: V
+    name: Zvl32b
 assembly: vd, vs2, vs1, v0
 encoding:
   match: 0101110----------000-----1010111

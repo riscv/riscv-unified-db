@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vgmul.vv
-long_name: No synopsis available
+long_name: Vector Galois field multiply
 description: |
-  No description available.
+  Performs a Galois field multiply operation on vector register vs2 with vector register vs1, storing results in vector register vd according to mask vm. This instruction is used in cryptographic algorithms and error correction codes.
 definedBy:
   extension:
     name: Zvkg

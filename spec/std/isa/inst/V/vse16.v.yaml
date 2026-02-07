@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vse16.v
-long_name: No synopsis available
+long_name: Vector store 16-bit elements
 description: |
-  No description available.
+  Stores 16-bit elements from vector register vs3 to memory starting at address in xs1 register, using vector mask vm. The effective element width is 16 bits regardless of SEW setting.
 definedBy:
   extension:
-    name: V
+    name: Zvl32b
 assembly: vs3, (xs1), vm
 encoding:
   match: 000000-00000-----101-----0100111

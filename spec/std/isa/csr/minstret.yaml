@@ -51,4 +51,4 @@ fields:
     affectedBy: [Zicntr, Smcntrpmf, Smcdeleg, Ssccfg]
 definedBy:
   extension:
-    name: Zicntr
+    name: Sm

@@ -7,7 +7,7 @@ plugins {
 repositories { mavenCentral() }
 
 ext {
-  xtextVersion = '2.40.0'   // matches your workspace
+  xtextVersion = '2.41.0'   // matches your workspace
 }
 
 dependencies {
@@ -21,7 +21,7 @@ dependencies {
   implementation "org.eclipse.xtext:org.eclipse.xtext.xbase.ide:${xtextVersion}"
 
 
-  implementation "io.github.classgraph:classgraph:4.8.180"
+  implementation "io.github.classgraph:classgraph:4.8.184"
   implementation "aopalliance:aopalliance:1.0"
 }
 

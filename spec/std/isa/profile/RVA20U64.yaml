@@ -31,7 +31,7 @@ extensions:
     presence: mandatory
   U:
     presence: mandatory
-    version: "~> 2.0"
+    version: "~> 1.0"
   Zicsr:
     presence: mandatory
     version: "~> 2.0"

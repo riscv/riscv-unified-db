@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsm4r.vv
-long_name: No synopsis available
+long_name: Vector SM4 round function
 description: |
-  No description available.
+  Performs SM4 round function operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in SM4 block cipher encryption/decryption rounds.
 definedBy:
   extension:
     anyOf:
