@@ -1,0 +1,32 @@
+- name: cache_capacity
+  description: Total storage capacity of a cache (amount of data the cache can hold)
+  named: false
+  type: implementation-specific
+  constraints: []
+  source: Privileged Spec 19.3.1
+  justification: "The capacity and organization of a cache and the size of a cache block are both implementation-specific."
+
+- name: cache_organization
+  description: Structural organization of a cache (the spec indicates organization is implementation-specific without further details)
+  named: false
+  type: implementation-specific
+  constraints: []
+  source: Privileged Spec 19.3.1
+  justification: "The capacity and organization of a cache and the size of a cache block are both implementation-specific."
+
+- name: cache_block_size
+  description: Size of a cache block used to group contiguous memory locations
+  named: false
+  type: implementation-specific
+  constraints: []
+  source: Privileged Spec 19.3.1
+  justification: "The capacity and organization of a cache and the size of a cache block are both implementation-specific."
+
+- name: cache_block_size_uniformity
+  description: Constraint specifying that cache block size must be uniform across the system for initial CMO extensions
+  named: false
+  type: architectural-constraint
+  constraints:
+    - shall be uniform throughout the system (initial CMO extensions)
+  source: Privileged Spec 19.3.1
+  justification: "In the initial set of CMO extensions, the size of a cache block shall be uniform throughout the system."
