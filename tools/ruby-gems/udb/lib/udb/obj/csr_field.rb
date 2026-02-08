@@ -339,6 +339,9 @@ class CsrField < DatabaseObject
     # if there is no location_rv32, the the field never changes
     return false unless @data["location"].nil?
 
+    # MMR fields never have dynamic locations (no privilege modes)
+    return false unless csr.respond_to?(:modes_with_access)
+
     # the field changes *if* some mode with access can change XLEN
     csr.modes_with_access.any? { |mode| @cfg_arch.multi_xlen_in_mode?(mode) }
   end
