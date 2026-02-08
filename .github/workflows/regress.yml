@@ -480,6 +480,8 @@ jobs:
         - yaml_loader
         - cfg_arch
         - cfg
+        - mmr
+        - mmr_schema
   regress-gen-go:
     runs-on: ubuntu-latest
     needs: build-container

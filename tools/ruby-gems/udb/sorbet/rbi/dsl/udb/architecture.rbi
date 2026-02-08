@@ -87,6 +87,15 @@ class Udb::Architecture
   sig { returns(T::Array[Udb::Manual]) }
   def manuals; end
 
+  sig { params(name: String).returns(T.nilable(Udb::Mmr)) }
+  def mmr(name); end
+
+  sig { returns(T::Hash[String, Udb::Mmr]) }
+  def mmr_hash; end
+
+  sig { returns(T::Array[Udb::Mmr]) }
+  def mmrs; end
+
   sig { params(name: String).returns(T.nilable(Udb::Parameter)) }
   def param(name); end
 

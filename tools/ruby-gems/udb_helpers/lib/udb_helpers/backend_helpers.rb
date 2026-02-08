@@ -154,6 +154,19 @@ module Udb::Helpers::TemplateHelpers
     "%%UDB_DOC_LINK%csr_field;#{csr_name.sanitize}.#{field_name.sanitize};#{csr_name}.#{field_name}%%"
   end
 
+  # @return [String] A hyperlink to UDB MMR documentation
+  # @param mmr_name [String] Name of the MMR
+  def link_to_udb_doc_mmr(mmr_name)
+    "%%UDB_DOC_LINK%mmr;#{mmr_name.sanitize};#{mmr_name}%%"
+  end
+
+  # @return [String] A hyperlink to UDB MMR field documentation
+  # @param mmr_name [String] Name of the MMR
+  # @param field_name [String] Name of the MMR field
+  def link_to_udb_doc_mmr_field(mmr_name, field_name)
+    "%%UDB_DOC_LINK%mmr_field;#{mmr_name.sanitize}.#{field_name.sanitize};#{mmr_name}.#{field_name}%%"
+  end
+
   # @return [String] A hyperlink to UDB IDL function documentation
   # @param func_name [String] Name of the IDL function
   def link_to_udb_doc_idl_func(func_name)
@@ -211,6 +224,19 @@ module Udb::Helpers::TemplateHelpers
   # @param field_name [String] Name of the CSR field
   def anchor_for_udb_doc_csr_field(csr_name, field_name)
     "[#udb:doc:csr_field:#{csr_name.sanitize}:#{field_name.sanitize}]"
+  end
+
+  # @return [String] An anchor for UDB MMR documentation
+  # @param name [String] Name of the MMR
+  def anchor_for_udb_doc_mmr(name)
+    "[#udb:doc:mmr:#{name.sanitize}]"
+  end
+
+  # @return [String] An anchor for UDB MMR field documentation
+  # @param mmr_name [String] Name of the MMR
+  # @param field_name [String] Name of the MMR field
+  def anchor_for_udb_doc_mmr_field(mmr_name, field_name)
+    "[#udb:doc:mmr_field:#{mmr_name.sanitize}:#{field_name.sanitize}]"
   end
 
   # @return [String] An anchor for an IDL function documentation
@@ -289,6 +315,11 @@ module Udb::Helpers::AsciidocUtils
         when "csr_field"
           csr_name, field_name = name.split('.')
           "<<udb:doc:csr_field:#{csr_name}:#{field_name},#{link_text}>>"
+        when "mmr"
+          "<<udb:doc:mmr:#{name},#{link_text}>>"
+        when "mmr_field"
+          mmr_name, field_name = name.split('.')
+          "<<udb:doc:mmr_field:#{mmr_name}:#{field_name},#{link_text}>>"
         when "func"
           "<<udb:doc:func:#{name},#{link_text}>>"
         else

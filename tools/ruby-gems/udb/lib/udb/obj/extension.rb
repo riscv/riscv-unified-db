@@ -358,6 +358,35 @@ module Udb
       @csrs_that_must_be_implemented ||= csrs + implied_csrs
     end
 
+    # @return the list of MMRs implemented by *any version* of this extension (may be empty)
+    sig { returns(T::Array[Mmr]) }
+    def mmrs
+      @mmrs ||=
+        begin
+          pb =
+            Udb.create_progressbar(
+              "Finding mmrs for #{name} [:bar] :current/:total",
+              total: cfg_arch.mmrs.size,
+              clear: true
+            )
+          cfg_arch.mmrs.select do |mmr|
+            pb.advance
+            mmr_defined = mmr.defined_by_condition
+            next unless mmr_defined.mentions?(self)
+            requirement_met = to_condition
+            preconditions_met = requirements_condition
+
+            # mmr is defined exclusively by self if:
+            (
+              (-mmr_defined & requirement_met) # it must be defined when self is met, and
+            ).unsatisfiable? &
+            (
+              (-mmr_defined & preconditions_met)  # it may not be defined when only self's requirements are met
+            ).satisfiable?
+          end
+        end
+    end
+
     # return the set of reachable functions from any of this extensions's CSRs or instructions in the given evaluation context
     #
     # @return Array of IDL functions reachable from any instruction or CSR in the extension
