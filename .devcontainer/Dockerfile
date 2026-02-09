@@ -55,7 +55,7 @@ COPY .mise.toml /mise/config.toml
 RUN mise install rust
 RUN mise install
 RUN mise reshim
-RUN mkdir -p /mise/state && chmod -R 777 /mise/state
+RUN mkdir -p /mise/state && chmod -R 777 /mise
 
 # build/install eqntott
 RUN git clone --depth=1 https://github.com/TheProjecter/eqntott.git && \
