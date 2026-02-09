@@ -344,8 +344,8 @@ module Udb
           overlay_path:,
           unresolved_yaml: config_yaml,
           spec_path: std_path,
-          merged_spec_path: @gen_path / "spec" / (overlay_path.nil? ? "_" : File.basename(overlay_path)),
-          resolved_spec_path: @gen_path / "resolved_spec" / (overlay_path.nil? ? "_" : File.basename(overlay_path)),
+          merged_spec_path: @gen_path / "spec" / (overlay_path.nil? ? "_" : config_yaml["name"]),
+          resolved_spec_path: @gen_path / "resolved_spec" / (overlay_path.nil? ? "_" : config_yaml["name"]),
           resolver: self
         )
         @cfg_info[config_path] = info
