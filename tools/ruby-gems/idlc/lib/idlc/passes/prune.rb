@@ -13,14 +13,14 @@ require_relative "../ast"
 
 def create_int_literal(value)
   str = value <= 512 ? value.to_s : "0x#{value.to_s(16)}"
-  Idl::IntLiteralAst.new(str, 0...str.size)
+  Idl::IntLiteralAst.new(str, 0...str.size, str)
 end
 
 def create_bool_literal(value)
   if value
-    Idl::IdAst.new("true", 0..4)
+    Idl::IdAst.new("true", 0..4, "true")
   else
-    Idl::IdAst.new("false", 0..5)
+    Idl::IdAst.new("false", 0..5, "false")
   end
 end
 

@@ -189,6 +189,6 @@ repos:
         entry: ./bin/chore gen golden-profile-exts
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 43.2.6
+    rev: 43.4.2
     hooks:
       - id: renovate-config-validator

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vnclip.wx
-long_name: No synopsis available
+long_name: "Vector widening signed clip with scalar"
 description: |
-  No description available.
+  Performs widening signed clip operation on elements from vector register vs2 using scalar clip value from register xs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
 definedBy:
   extension:
     name: Zvl32b

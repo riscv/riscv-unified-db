@@ -385,6 +385,9 @@
           "type": "string",
           "description": "Functional description of the instruction using IDL language"
         },
+        "operation_ast": {
+          "type": "object"
+        },
         "sail()": {
           "type": "string",
           "description": "Functional description of the instruction using Sail"

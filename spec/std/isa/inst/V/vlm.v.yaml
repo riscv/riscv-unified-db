@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vlm.v
-long_name: No synopsis available
+long_name: Vector load mask
 description: |
-  No description available.
+  Loads a vector mask from memory starting at address in xs1 register and stores it in vector register vd. This operation is used to load previously saved vector masks.
 definedBy:
   extension:
     name: Zvl32b

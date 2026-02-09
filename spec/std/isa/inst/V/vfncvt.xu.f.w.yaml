@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfncvt.xu.f.w
-long_name: No synopsis available
+long_name: "Vector floating-point to unsigned integer widening conversion"
 description: |
-  No description available.
+  Converts floating-point elements from vector register vs2 to a wider unsigned integer format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 rounding rules.
 definedBy:
   extension:
     name: Zvl32b

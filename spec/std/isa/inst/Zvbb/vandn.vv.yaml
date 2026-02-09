@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vandn.vv
-long_name: No synopsis available
+long_name: Vector AND-NOT
 description: |
-  No description available.
+  Performs a bitwise AND operation between vector register vs2 and the bitwise NOT of vector register vs1, storing results in vector register vd according to mask vm.
 definedBy:
   extension:
     name: Zvbb

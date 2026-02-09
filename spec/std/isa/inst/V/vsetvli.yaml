@@ -6,8 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsetvli
-long_name: Vector Set Vector Type and Vector Length Immediate
-description: Set the vtype and vl CSRs, and write the new value of vl into rd.
+long_name: Set vector length immediate
+description: |
+  Sets the vector length register vl and vector type register vtype based on immediate values. Configures SEW, LMUL, and other vector parameters for subsequent vector operations.
 definedBy:
   extension:
     name: Zvl32b

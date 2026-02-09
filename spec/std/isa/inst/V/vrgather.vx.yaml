@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vrgather.vx
-long_name: No synopsis available
+long_name: "Vector register gather with scalar index"
 description: |
-  No description available.
+  Gathers elements from vector register vs2 using scalar index from register xs1 and stores results in vector register vd, using vector mask vm. This operation performs indexed element selection.
 definedBy:
   extension:
     name: Zvl32b

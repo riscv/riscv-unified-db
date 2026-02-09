@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsha2ms.vv
-long_name: No synopsis available
+long_name: Vector SHA-2 majority function
 description: |
-  No description available.
+  Performs the SHA-2 majority function (Maj) on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in SHA-256 and SHA-512 hash computations.
 definedBy:
   extension:
     name: Zvknha

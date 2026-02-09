@@ -2,14 +2,15 @@
 # SPDX-FileCopyrightText: 2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv/riscv-unified-db>
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-import pytest
 import json
 import os
+
+import pytest
 from parsing import (
+    compare_yaml_json_encoding,
     get_json_path,
     get_yaml_directory,
     get_yaml_instructions,
-    compare_yaml_json_encoding,
 )
 
 # Global variables to store loaded data
@@ -57,9 +58,22 @@ class TestInstructionEncoding:
     def setup_class(cls):
         """Setup class-level test data."""
         cls.yaml_instructions, cls.json_data, cls.repo_dir = load_test_data()
-        cls.rv_instructions = cls.json_data.get("!instanceof", {}).get(
-            "RVInstCommon", []
-        )
+        cls.rv_instructions = cls.json_data.get("!instanceof", {}).get("RVInstCommon", [])
+        cls.hint_map = cls._build_hint_map()
+
+    @classmethod
+    def _build_hint_map(cls):
+        """Build a map of hint instructions to their parent instructions."""
+        hint_map = {}
+        for parent_name, data in cls.yaml_instructions.items():
+            hints = data.get("hints", [])
+            for hint in hints:
+                ref = hint.get("$ref", "")
+                if ref:
+                    # Extract instruction name from ref (e.g., inst/Zicfilp/lpad.yaml# -> lpad)
+                    hint_name = os.path.splitext(os.path.basename(ref.split("#")[0]))[0]
+                    hint_map[hint_name.lower()] = parent_name
+        return hint_map
 
     def _find_matching_instruction(self, yaml_instr_name):
         """Find matching instruction in JSON data by comparing instruction names."""
@@ -95,14 +109,12 @@ class TestInstructionEncoding:
             inst = json_instr.get("Inst", [])
             for bit in inst:
                 if isinstance(bit, dict):
-                    encoding_bits.append(
-                        f"{bit.get('var', '?')}[{bit.get('index', '?')}]"
-                    )
+                    encoding_bits.append(f"{bit.get('var', '?')}[{bit.get('index', '?')}]")
                 else:
                     encoding_bits.append(str(bit))
             encoding_bits.reverse()
             return "".join(encoding_bits)
-        except:
+        except Exception:
             return ""
 
     def test_instruction_encoding(self, instr_name):
@@ -130,6 +142,16 @@ class TestInstructionEncoding:
 
         # Find matching JSON instruction
         json_key = self._find_matching_instruction(instr_name)
+        allow_refinement = False
+
+        if not json_key:
+            # Check if this instruction is a hint for another instruction
+            parent_name = self.hint_map.get(instr_name.lower())
+            if parent_name:
+                json_key = self._find_matching_instruction(parent_name)
+                if json_key:
+                    allow_refinement = True
+
         if not json_key:
             pytest.skip(f"No matching JSON instruction found for {instr_name}")
 
@@ -143,12 +165,11 @@ class TestInstructionEncoding:
             yaml_data.get("yaml_vars", []),
             json_encoding,
             self.repo_dir,
+            allow_refinement=allow_refinement,
         )
 
         # If there are differences, format them nicely and fail the test
-        if differences and differences != [
-            "No YAML match field available for comparison."
-        ]:
+        if differences and differences != ["No YAML match field available for comparison."]:
             error_msg = f"\nEncoding mismatch for instruction: {instr_name}\n"
             error_msg += f"name : {instr_name}\n"
             error_msg += f"JSON key: {json_key}\n"

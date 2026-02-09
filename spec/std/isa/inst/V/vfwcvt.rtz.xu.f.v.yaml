@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwcvt.rtz.xu.f.v
-long_name: No synopsis available
+long_name: "Vector floating-point to unsigned integer widening conversion with truncation"
 description: |
-  No description available.
+  Converts floating-point elements from vector register vs2 to a wider unsigned integer format using round-toward-zero mode and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
     name: Zvl32b

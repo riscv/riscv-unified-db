@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vloxseg8ei16.v
-long_name: No synopsis available
+long_name: Vector ordered load 8 elements of 16 bits with index
 description: |
-  No description available.
+  Loads 8 segments of 16-bit elements from memory using ordered access pattern with index register vs1, starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. The effective element width is 16 bits.
 definedBy:
   extension:
     name: Zvl32b

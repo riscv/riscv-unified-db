@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vssrl.vi
-long_name: No synopsis available
+long_name: Vector shift right logical by immediate
 description: |
-  No description available.
+  Performs a logical right shift on each element in vector register vs2 by the immediate shift amount, storing results in vector register vd according to mask vm. This is not a memory operation but a shift operation.
 definedBy:
   extension:
     name: Zvl32b
