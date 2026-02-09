@@ -1226,8 +1226,8 @@ module Udb
                 self
               )
             end
-            unless @config.prohibited_extensions.empty?
-              prohib = @config.prohibited_extensions.map { |e| extension_requirement(e["name"], e["version"]) }
+            unless T.cast(@config, PartialConfig).prohibited_extensions.empty?
+              prohib = T.cast(@config, PartialConfig).prohibited_extensions.map { |e| extension_requirement(T.cast(e.fetch("name"), String), e.fetch("version")) }
               c = c & -Condition.disjunction(prohib.map(&:to_condition), self)
             end
             reqs = T.cast(@config, PartialConfig).requirements
