@@ -721,6 +721,29 @@ module Udb
       ret
     end
 
+    def self.solver_for_cfg_arch(cfg_arch)
+      return @cfg_arch_solvers[cfg_arch] if @cfg_arch_solvers&.key?(cfg_arch)
+
+      @cfg_arch_solvers ||= {}
+
+      s = Z3Solver.new
+      cfg_arch.to_condition.to_logic_tree(expand: true).to_z3(cfg_arch, s)
+      expansion_clauses = cfg_arch.to_condition.expand_term_requirements(cfg_arch.to_condition.to_logic_tree(expand: false))
+      expansion_clauses.each do |clause|
+        s.assert clause.to_z3(cfg_arch, s)
+      end
+      @cfg_arch_solvers[cfg_arch] = s
+    end
+
+    def satisfiable_by_cfg_arch?(cfg_arch)
+      s = Condition.solver_for_cfg_arch(cfg_arch)
+      s.push
+      s.assert to_logic_tree(expand: false).to_z3(@cfg_arch, s)
+      result = s.satisfiable?
+      s.pop
+      result
+    end
+
     # is this condition satisfiable?
     sig { override.returns(T::Boolean) }
     def satisfiable?

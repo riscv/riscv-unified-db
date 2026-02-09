@@ -972,8 +972,8 @@ module Udb
         if @config.fully_configured?
           implemented_extension_versions.map { |ext_ver| ext_ver.ext }.uniq
         elsif @config.partially_configured?
-          # reject any extension in which all of the extension versions are prohibited
-          extensions.reject { |ext| (ext.versions - prohibited_extension_versions).empty? }
+          pb = Udb.create_progressbar("determining possible exts [:bar] :current/:total", total: extensions.size)
+          extensions.select { |e| pb.advance; (e.to_condition & to_condition).satisfiable? }
         else
           extensions
         end
@@ -994,48 +994,7 @@ module Udb
       @possible_extension_versions ||=
         begin
           if @config.partially_configured?
-            # collect all the explictly prohibited extensions
-            prohibited_ext_reqs =
-              T.cast(@config, PartialConfig).prohibited_extensions.map do |ext_req_yaml|
-                ExtensionRequirement.create_from_yaml(ext_req_yaml, self)
-              end
-            prohibition_condition =
-              Condition.conjunction(prohibited_ext_reqs.map(&:to_condition), self)
-
-            # collect all mandatory
-            mandatory_ext_reqs =
-              T.cast(@config, PartialConfig).mandatory_extensions.map do |ext_req_yaml|
-                ExtensionRequirement.create_from_yaml(ext_req_yaml, self)
-              end
-            mandatory_condition =
-              Condition.conjunction(mandatory_ext_reqs.map(&:to_condition), self)
-
-            if T.cast(@config, PartialConfig).additional_extensions_allowed?
-              # non-mandatory extensions are OK.
-              extensions.map(&:versions).flatten.select do |ext_ver|
-                # select all versions that can be satisfied simultaneous with
-                # the mandatory and !prohibition conditions
-                condition = ext_ver.to_condition & mandatory_condition & -prohibition_condition
-
-                # can't just call condition.could_be_satisfied_by_cfg_arch? here because
-                # that implementation calls possible_extension_versions (this function),
-                # and we'll get stuck in an infinite loop
-                #
-                # so, instead, we partially evaluate whatever parameters are known and then
-                # see if the formula is satisfiable
-                condition.partially_evaluate_for_params(self, expand: true).satisfiable?
-              end
-            else
-              # non-mandatory extensions are NOT allowed
-              # we want to return the list of extension versions implied by mandatory,
-              # minus any that are explictly prohibited
-              mandatory_extension_reqs.map(&:satisfying_versions).flatten.select do |ext_ver|
-                condition = -prohibition_condition & ext_ver.to_condition
-
-                # see comment above for why we don't call could_be_satisfied_by_cfg_arch?
-                condition.partially_evaluate_for_params(self, expand: true).satisfiable?
-              end
-            end
+            extension_versions.select { |ext_ver| (ext_ver.to_condition & to_condition).satisfiable? }
           elsif @config.fully_configured?
             # full config: only the implemented versions are possible
             implemented_extension_versions
@@ -1258,16 +1217,19 @@ module Udb
               )
             )
           elsif partially_configured?
-            c = (
-              Condition.conjunction(mandatory_extension_reqs.map(&:to_condition), self) \
-              & \
-              Condition.conjunction(
+            c = Condition.conjunction(mandatory_extension_reqs.map(&:to_condition), self)
+            unless params_with_value.empty?
+              c = c & Condition.conjunction(
                 params_with_value.map do |pv|
                   Condition.new({ "param" => { "name" => pv.name, "equal" => pv.value } }, self)
                 end,
                 self
               )
-            )
+            end
+            unless @config.prohibited_extensions.empty?
+              prohib = @config.prohibited_extensions.map { |e| extension_requirement(e["name"], e["version"]) }
+              c = c & -Condition.disjunction(prohib.map(&:to_condition), self)
+            end
             reqs = T.cast(@config, PartialConfig).requirements
             unless reqs.nil?
               c = (c & Condition.new(reqs, self))
