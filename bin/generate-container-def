@@ -4,7 +4,7 @@
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 # shellcheck source=setup
 source "$ROOT/bin/setup"
-SPYTHON=/opt/venv/bin/spython
+SPYTHON="uv run spython"
 
 rm -f container.def
 {

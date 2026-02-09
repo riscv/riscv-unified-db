@@ -90,7 +90,7 @@ do_gen_container_def() {
   source_setup
   cd "${ROOT}"/.. || exit 1
 
-  local spython=/opt/venv/bin/spython
+  local spython="uv run spython"
 
 
   rm -f container.def

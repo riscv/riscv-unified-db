@@ -124,10 +124,6 @@ module Udb
       end
     end
 
-    # path to a python binary
-    sig { returns(Pathname) }
-    attr_reader :python_path
-
     # create a new resolver.
     #
     # With no arguments, resolver will assume it exists in the riscv-unified-db repository
@@ -144,7 +140,6 @@ module Udb
         gen_path_override: T.nilable(Pathname),
         std_path_override: T.nilable(Pathname),
         custom_path_override: T.nilable(Pathname),
-        python_path_override: T.nilable(Pathname),
         quiet: T::Boolean,
         compile_idl: T::Boolean
       ).void
@@ -156,7 +151,6 @@ module Udb
       gen_path_override: nil,
       std_path_override: nil,
       custom_path_override: nil,
-      python_path_override: nil,
       quiet: false,
       compile_idl: false
     )
@@ -166,7 +160,6 @@ module Udb
       @gen_path = gen_path_override || (@repo_root / "gen")
       @std_path = std_path_override || (@repo_root / "spec" / "std" / "isa")
       @custom_path = custom_path_override || (@repo_root / "spec" / "custom" / "isa")
-      @python_path = python_path_override || Pathname.new("/opt") / "venv" / "bin" / "python3"
       @quiet = quiet
       @compile_idl = compile_idl
       @mutex = Thread::Mutex.new
@@ -247,7 +240,7 @@ module Udb
 
         if any_newer?(merged_spec_path(config_name) / ".stamp", deps)
           run [
-            python_path.to_s,
+            "uv", "run",
             "#{Udb.gem_path}/python/yaml_resolver.py",
             "merge",
             std_path.to_s,
@@ -269,7 +262,7 @@ module Udb
         if any_newer?(resolved_spec_path(config_name) / ".stamp", deps)
           if @compile_idl
             run [
-              python_path.to_s,
+              "uv", "run",
               "#{Udb.gem_path}/python/yaml_resolver.py",
               "resolve",
               "--compile_idl",
@@ -278,7 +271,7 @@ module Udb
             ]
           else
             run [
-              python_path.to_s,
+              "uv", "run",
               "#{Udb.gem_path}/python/yaml_resolver.py",
               "resolve",
               merged_spec_path(config_name).to_s,

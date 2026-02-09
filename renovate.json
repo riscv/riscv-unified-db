@@ -16,7 +16,8 @@
       "matchFileNames": [
         "package.json",
         "package-lock.json",
-        "requirements.txt"
+        "pyproject.toml",
+        "uv.lock"
       ],
       "bumpVersions": [
         {
