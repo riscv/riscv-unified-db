@@ -147,7 +147,8 @@
         "when()": {
           "type": "string",
           "description": "IDL boolean expression. When true, the text applies"
-        }
+        },
+        "when_ast": { "type": "object" }
       },
       "additionalProperties": false
     },
@@ -698,6 +699,9 @@
         "idl()": {
           "description": "IDL function containing one or more implications (e.g., A -> B).",
           "$ref": "#/$defs/idl"
+        },
+        "idl_ast": {
+          "type": "object"
         },
         "reason": {
           "description": "Why the constraint exists",
