@@ -159,11 +159,11 @@ class Cli
     end
   end
 
-  sig { void }
+  sig { params(tag_name: String).void }
   def cmd_run_tagged_tests(tag_name)
     nran = 0
     test_data.fetch("tests").each do |tname, tdata|
-      next unless tdata.key?("tag") && tdata.fetch("tags").include?(tag_name)
+      next unless tdata.key?("tags") && tdata.fetch("tags").include?(tag_name)
       nran += 1
       cmd_run_single_test(tname)
     end
