@@ -2,7 +2,7 @@
   "name": "spec-generator",
   "dependencies": {
     "@antora/cli": "3.1.14",
-    "@antora/lunr-extension": "1.0.0-alpha.12",
+    "@antora/lunr-extension": "1.0.0-alpha.13",
     "@antora/site-generator": "3.1.14",
     "@asciidoctor/tabs": "v1.0.0-beta.6",
     "@cloudflare/doca": "^0.1.3",
