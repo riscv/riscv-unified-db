@@ -214,6 +214,14 @@ module Udb
       (self & other).satisfiable?
     end
 
+    # return true if the condition could be satisfied by cfg_arch
+    sig { abstract.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def satisfiable_by_cfg_arch?(cfg_arch); end
+
+    # return true if the condition cannot be satisfied by cfg_arch
+    sig { abstract.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def unsatisfiable_by_cfg_arch?(cfg_arch); end
+
     # @return if the condition is, possibly is, or is definitely not satisfied by cfg_arch
     sig { abstract.params(_cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
     def satisfied_by_cfg_arch?(_cfg_arch); end
@@ -727,19 +735,55 @@ module Udb
       @cfg_arch_solvers ||= {}
 
       s = Z3Solver.new
-      cfg_arch.to_condition.to_logic_tree(expand: true).to_z3(cfg_arch, s)
-      expansion_clauses = cfg_arch.to_condition.expand_term_requirements(cfg_arch.to_condition.to_logic_tree(expand: false))
+      tree = cfg_arch.to_condition.to_logic_tree(expand: false)
+
+      s.assert tree.to_z3(cfg_arch, s)
+      # expansion_clauses = cfg_arch.to_condition.expand_term_requirements(cfg_arch.to_condition.to_logic_tree(expand: false))
+
+      # add definition of xlen
+      expansion_clauses = []
+      expansion_clauses << LogicNode.new(LogicNodeType::Xor, [LogicNode::Xlen32, LogicNode::Xlen64])
+      expansion_clauses << T.must(cfg_arch.param("MXLEN")).requirements_condition.to_logic_tree(expand: false)
+
       expansion_clauses.each do |clause|
         s.assert clause.to_z3(cfg_arch, s)
       end
+
+      s.push
+      pb = Udb.create_progressbar("checking sat for #{cfg_arch.name} [:bar]", total: nil, clear: true)
+      pid = fork {
+        loop do
+          sleep(1)
+          pb.advance
+        end
+      }
+      sat = s.satisfiable?
+      Process.kill("TERM", pid)
+      Process.wait(pid)
+      pb.finish
+      unless sat
+        raise "cfg_arch is not satisfiable: #{cfg_arch.name}\nAssertions:\n#{s.assertions.map(&:to_s).join("\n")}"
+      end
+
       @cfg_arch_solvers[cfg_arch] = s
     end
 
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
     def satisfiable_by_cfg_arch?(cfg_arch)
       s = Condition.solver_for_cfg_arch(cfg_arch)
       s.push
       s.assert to_logic_tree(expand: false).to_z3(@cfg_arch, s)
       result = s.satisfiable?
+      s.pop
+      result
+    end
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def unsatisfiable_by_cfg_arch?(cfg_arch)
+      s = Condition.solver_for_cfg_arch(cfg_arch)
+      s.push
+      s.assert to_logic_tree(expand: false).to_z3(@cfg_arch, s)
+      result = s.unsatisfiable?
       s.pop
       result
     end
@@ -1460,6 +1504,12 @@ module Udb
       true
     end
 
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def satisfiable_by_cfg_arch?(cfg_arch) = true
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def unsatisfiable_by_cfg_arch?(cfg_arch) = false
+
     sig { override.params(_cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
     def satisfied_by_cfg_arch?(_cfg_arch) = SatisfiedResult::Yes
 
@@ -1560,6 +1610,12 @@ module Udb
     def to_h
       false
     end
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def satisfiable_by_cfg_arch?(cfg_arch) = false
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def unsatisfiable_by_cfg_arch?(cfg_arch) = true
 
     sig { override.params(_cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
     def satisfied_by_cfg_arch?(_cfg_arch) = SatisfiedResult::No

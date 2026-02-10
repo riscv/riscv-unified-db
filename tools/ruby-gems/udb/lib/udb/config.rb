@@ -273,7 +273,7 @@ module Udb
         end
     end
 
-    sig { returns(T::Array[T::Hash[String, T.any(String, T::Array[String])]]) }
+    sig { returns(T::Array[T::Hash[String, T::Array[String]]]) }
     def prohibited_extensions
       @prohibited_extensions ||=
         if @data["prohibited_extensions"].nil?
@@ -281,7 +281,15 @@ module Udb
         else
           @data["prohibited_extensions"].map do |e|
             # convert the requirement to always be an array
-            { "name" => e["name"], "version" => e["version"].is_a?(String) ? [e["version"]] : e["version"] }
+            {
+              "name" => e["name"],
+              "version" =>
+                if e.key?("version")
+                  e["version"].is_a?(String) ? [e["version"]] : e["version"]
+                else
+                  ">=0"
+                end
+            }
           end
         end
     end

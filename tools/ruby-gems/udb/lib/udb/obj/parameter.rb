@@ -34,6 +34,12 @@ module Udb
       schema.to_pretty_s
     end
 
+    # return a condition that is satisfied when this parameter has a value in cfg_arch
+    sig { returns(AbstractCondition) }
+    def to_condition
+      @condition ||= Condition.new({ "param" => { "name" => name, "hasValue" => true } }, @cfg_arch)
+    end
+
     sig { returns(AbstractCondition) }
     def requirements_condition
       @requirements_condition ||=

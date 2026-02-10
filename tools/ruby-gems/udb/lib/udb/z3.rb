@@ -19,6 +19,7 @@ module Udb
 
     sig { params(solver: Z3Solver, name: String, sort: T.any(T.class_of(Z3::IntSort), T.class_of(Z3::BoolSort), T.class_of(Z3::BitvecSort)), max_n: Integer, bitvec_width: T.nilable(Integer)).void }
     def initialize(solver, name, sort, max_n, bitvec_width: nil)
+      @name = name
       @subtype_sort = sort
       @solver = solver
       @items = T.let([], T::Array[T.nilable(T.any(Z3::BitvecExpr, Z3::IntExpr, Z3::BoolExpr))])
@@ -329,8 +330,9 @@ module Udb
     def initialize(name, solver, schema_hsh)
       @name = name
       @solver = solver
+      @type = Z3ParameterTerm.detect_type(schema_hsh)
 
-      case Z3ParameterTerm.detect_type(schema_hsh)
+      case @type
       when :int
         @term = Z3.Bitvec(name, 64)   # width doesn't matter here, so just make it large
         Z3ParameterTerm.constrain_int(@solver, @term, schema_hsh)
@@ -341,7 +343,9 @@ module Udb
         @term = Z3.Int(name)
         Z3ParameterTerm.constrain_string(@solver, @term, schema_hsh)
       when :array
-        case Z3ParameterTerm.detect_array_subtype(schema_hsh)
+        @subtype = Z3ParameterTerm.detect_array_subtype(schema_hsh)
+
+        case @subtype
         when :int
           @term = Z3FiniteArray.new(@solver, name, Z3::BitvecSort, schema_hsh.fetch("maxItems"), bitvec_width: 64)
           Z3ParameterTerm.constrain_array(@solver, @term, schema_hsh, Z3ParameterTerm.method(:constrain_int))

@@ -223,6 +223,7 @@ class TestCfgArch < Minitest::Test
           version: ">= 0"
       prohibited_extensions:
         - name: H
+          version: ">= 0"
     YAML
     cfg_arch = nil
 

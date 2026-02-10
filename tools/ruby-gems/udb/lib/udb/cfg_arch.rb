@@ -222,8 +222,7 @@ module Udb
           pb =
             Udb.create_progressbar(
               "Compiling IDL for #{name} [:bar]",
-              clear: true,
-              frequency: 2
+              clear: true
             )
           @idl_compiler.pb = pb
           ast = @idl_compiler.compile_file(
@@ -973,7 +972,7 @@ module Udb
           implemented_extension_versions.map { |ext_ver| ext_ver.ext }.uniq
         elsif @config.partially_configured?
           pb = Udb.create_progressbar("determining possible exts [:bar] :current/:total", total: extensions.size)
-          extensions.select { |e| pb.advance; (e.to_condition & to_condition).satisfiable? }
+          extensions.select { |e| pb.advance; (e.to_condition).satisfiable_by_cfg_arch?(self) }
         else
           extensions
         end
@@ -994,7 +993,7 @@ module Udb
       @possible_extension_versions ||=
         begin
           if @config.partially_configured?
-            extension_versions.select { |ext_ver| (ext_ver.to_condition & to_condition).satisfiable? }
+            extension_versions.select { |ext_ver| ext_ver.to_condition.satisfiable_by_cfg_arch?(self) }
           elsif @config.fully_configured?
             # full config: only the implemented versions are possible
             implemented_extension_versions
@@ -1077,14 +1076,14 @@ module Udb
     sig { returns(T::Array[ExceptionCode]) }
     def implemented_exception_codes
       @implemented_exception_codes ||=
-        exception_codes.select { |code| code.defined_by_condition.satisfied_by_cfg_arch?(self) }
+        exception_codes.select { |code| code.defined_by_condition.satisfiable_by_cfg_arch?(self) }
     end
 
     # @return [Array<InteruptCode>] All interrupt codes known to be implemented
     sig { returns(T::Array[InterruptCode]) }
     def implemented_interrupt_codes
       @implemented_interupt_codes ||=
-        implemented_exception_codes.select { |code| code.defined_by_condition.satisfied_by_cfg_arch?(self) }
+        implemented_exception_codes.select { |code| code.defined_by_condition.satisfiable_by_cfg_arch?(self) }
     end
 
     # @return [Array<Idl::FunctionBodyAst>] List of all functions defined by the architecture
@@ -1148,7 +1147,7 @@ module Udb
             end
           csrs.select do |csr|
             bar.advance if show_progress
-            csr.defined_by_condition.satisfied_by_cfg_arch?(self) != SatisfiedResult::No
+            csr.defined_by_condition.satisfiable_by_cfg_arch?(self)
           end
         else
           csrs
@@ -1168,7 +1167,7 @@ module Udb
             end
           csrs.select do |csr|
             bar.advance if show_progress
-            (-csr.defined_by_condition & to_condition).unsatisfiable?
+            (-csr.defined_by_condition).unsatisfiable_by_cfg_arch?(self)
           end
         else
           []
@@ -1200,13 +1199,36 @@ module Udb
         end
     end
 
-    # represent the config as a Condition
+    # a condition representing the architecture, independent of the config
+    sig { returns(Condition) }
+    def arch_condition
+      @arch_condition ||=
+        begin
+          extension_version_conditions =
+            extension_versions.map do |ext_ver|
+              unless ext_ver.requirements_condition.empty?
+                ext_ver.to_condition.implies(ext_ver.requirements_condition)
+              end
+            end.compact
+          c = Condition.conjunction(extension_version_conditions, self)
+          params.each do |param|
+            unless param.requirements_condition.empty?
+              c = c & param.defined_by_condition.implies(param.requirements_condition)
+            end
+          end
+          c
+        end
+    end
+
+    # represent the config and architecture defintion as a Condition
     sig { returns(Condition) }
     def to_condition
       @condition ||=
         begin
           if fully_configured?
             (
+              arch_condition \
+              & \
               Condition.conjunction(implemented_extension_versions.map(&:to_condition), self) \
               & \
               Condition.conjunction(
@@ -1217,7 +1239,8 @@ module Udb
               )
             )
           elsif partially_configured?
-            c = Condition.conjunction(mandatory_extension_reqs.map(&:to_condition), self)
+            c = arch_condition
+            c = c & Condition.conjunction(mandatory_extension_reqs.map(&:to_condition), self)
             unless params_with_value.empty?
               c = c & Condition.conjunction(
                 params_with_value.map do |pv|
@@ -1227,7 +1250,9 @@ module Udb
               )
             end
             unless T.cast(@config, PartialConfig).prohibited_extensions.empty?
-              prohib = T.cast(@config, PartialConfig).prohibited_extensions.map { |e| extension_requirement(T.cast(e.fetch("name"), String), e.fetch("version")) }
+              prohib = T.cast(@config, PartialConfig).prohibited_extensions.map do |e|
+                extension_requirement(T.cast(e.fetch("name"), String), e.fetch("version"))
+              end
               c = c & -Condition.disjunction(prohib.map(&:to_condition), self)
             end
             reqs = T.cast(@config, PartialConfig).requirements
@@ -1235,6 +1260,8 @@ module Udb
               c = (c & Condition.new(reqs, self))
             end
             c
+          else
+            arch_condition
           end
         end
     end
@@ -1284,7 +1311,8 @@ module Udb
 
       @implemented_instructions ||=
         instructions.select do |inst|
-          inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
+          inst.defined_by_condition.satisfiable_by_cfg_arch?(self)
+          # inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
         end
     end
 
@@ -1294,14 +1322,14 @@ module Udb
     # @return [Array<Instruction>] List of all prohibited instructions, sorted by name
     sig { returns(T::Array[Instruction]) }
     def prohibited_instructions
-      # an instruction is prohibited if it is not defined by any .... TODO LEFT OFF HERE....
       @prohibited_instructions ||=
         if fully_configured?
-          instructions - implemented_instructions
+          (instructions - implemented_instructions).sort
         elsif partially_configured?
           instructions.select do |inst|
-            inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::No
-          end
+            inst.defined_by_condition.unsatisfiable_by_cfg_arch?(self)
+            # inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::No
+          end.sort
         else
           []
         end
@@ -1326,8 +1354,10 @@ module Udb
           instructions.select do |inst|
             bar.advance if show_progress
 
-            possible_xlens.any? { |xlen| inst.defined_in_base?(xlen) } && \
-              inst.defined_by_condition.satisfied_by_cfg_arch?(self) != SatisfiedResult::No
+            inst.defined_by_condition.satisfiable_by_cfg_arch?(self)
+
+            # possible_xlens.any? { |xlen| inst.defined_in_base?(xlen) } && \
+            #   inst.defined_by_condition.satisfied_by_cfg_arch?(self) != SatisfiedResult::No
           end
         else
           instructions
