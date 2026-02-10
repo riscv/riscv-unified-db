@@ -8,7 +8,21 @@ kind: extension
 name: Zve64d
 long_name: Vector Extension for Minimal Double-Precision Embedded Floating-Point
 description: |
-  TBD - See GitHub issue 616
+  The Zve64d extension adds double-precision vector floating-point support to
+  the Zve64f embedded vector extension. The maximum element width (ELEN) is
+  64 bits, supporting 64-bit integer and 64-bit double-precision floating-point
+  elements.
+
+  Zve64d includes all functionality of Zve64f plus:
+
+  * Double-precision vector floating-point instructions
+  * Double-precision vector floating-point reductions
+  * Vector floating-point conversion instructions between single and double precision
+
+  Zve64d requires the D (double-precision floating-point) extension.
+
+  This extension provides the full embedded vector floating-point capability
+  with support for both single and double precision operations.
 type: unprivileged
 versions:
   - version: "1.0.0"

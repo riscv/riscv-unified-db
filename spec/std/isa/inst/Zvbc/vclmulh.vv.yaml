@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vclmulh.vv
-long_name: No synopsis available
+long_name: Vector carry-less multiply high
 description: |
-  No description available.
+  Performs a carry-less multiply operation on each element in vector register vs2 with the corresponding element in vector register vs1, storing the high bits of the result in vector register vd according to mask vm.
 definedBy:
   extension:
     name: Zvbc

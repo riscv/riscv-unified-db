@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vaeskf2.vi
-long_name: No synopsis available
+long_name: Vector AES key schedule subsequent rounds
 description: |
-  No description available.
+  Performs subsequent rounds of AES key schedule computation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This instruction is used in AES key expansion after the first round.
 definedBy:
   extension:
     name: Zvkned

@@ -11,8 +11,9 @@ riscv_tests_dir := $(src_dir)/../../ext/riscv-tests
 
 ifeq ($(XLEN),64)
 include $(src_dir)/rv64uv/Makefrag
-endif
+else
 include $(src_dir)/rv32uv/Makefrag
+endif
 
 default: all
 
@@ -75,11 +76,11 @@ all: $(tests_dump) riscv_tests
 #------------------------------------------------------------
 # riscv-tests targets
 riscv_tests:
-	$(MAKE) -C $(riscv_tests_dir)/isa RISCV_GCC_OPTS='$(RISCV_GCC_OPTS)'
+	$(MAKE) -C $(riscv_tests_dir)/isa XLEN=$(XLEN) RISCV_GCC_OPTS='$(RISCV_GCC_OPTS)'
 
 #------------------------------------------------------------
 # Clean up
 
 clean:
-	$(MAKE) -C $(riscv_tests_dir)/isa clean
+	$(MAKE) -C $(riscv_tests_dir)/isa XLEN=$(XLEN) clean
 	rm -rf $(junk)

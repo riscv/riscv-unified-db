@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vrsub.vx
-long_name: No synopsis available
+long_name: "Vector reverse subtract with scalar"
 description: |
-  No description available.
+  Performs reverse subtraction on elements from scalar register xs1 and vector register vs2 and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: V
+    name: Zvl32b
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 000011-----------100-----1010111

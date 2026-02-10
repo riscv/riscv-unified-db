@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vaesem.vv
-long_name: No synopsis available
+long_name: Vector AES encryption mix columns
 description: |
-  No description available.
+  Performs AES encryption mix columns operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is the mix columns operation used in AES encryption.
 definedBy:
   extension:
     name: Zvkned

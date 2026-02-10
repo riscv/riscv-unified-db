@@ -13,14 +13,14 @@ require_relative "../ast"
 
 def create_int_literal(value)
   str = value <= 512 ? value.to_s : "0x#{value.to_s(16)}"
-  Idl::IntLiteralAst.new(str, 0...str.size)
+  Idl::IntLiteralAst.new(str, 0...str.size, str)
 end
 
 def create_bool_literal(value)
   if value
-    Idl::IdAst.new("true", 0..4)
+    Idl::IdAst.new("true", 0..4, "true")
   else
-    Idl::IdAst.new("false", 0..5)
+    Idl::IdAst.new("false", 0..5, "false")
   end
 end
 
@@ -468,6 +468,47 @@ module Idl
           true_expression.prune(symtab),
           false_expression.prune(symtab)
         )
+      end
+    end
+  end
+
+  class CsrFieldAssignmentAst < AstNode
+    def prune(symtab)
+      CsrFieldAssignmentAst.new(input, interval, csr_field.dup, write_value.prune(symtab))
+    end
+  end
+
+  class CsrFieldReadExpressionAst < AstNode
+    def prune(symtab)
+      value_result = value_try do
+        v = value(symtab)
+        return create_int_literal(v)
+      end
+      value_else(value_result) do
+        CsrFieldReadExpressionAst.new(input, interval, @csr.dup, @field_name)
+      end
+    end
+  end
+
+  class CsrReadExpressionAst < AstNode
+    def prune(symtab)
+      value_result = value_try do
+        v = value(symtab)
+        return create_int_literal(v)
+      end
+      value_else(value_result) do
+        CsrReadExpressionAst.new(input, interval, @csr_name)
+      end
+    end
+  end
+
+  class BitsCastAst < AstNode
+    def prune(symtab)
+      p = expr.prune(symtab)
+      if p.type(symtab).kind == :bits
+        return p
+      else
+        return BitsCastAst.new(input, interval, p)
       end
     end
   end
