@@ -515,7 +515,8 @@ namespace :test do
 
     # These extensions to the riscv-tests suite have binaries under a different diretcory
     # uvTests are common for rv32/64
-    uvTests = ["vsetivli", "vsetvl", "vsetvli_rs1_eq_zero", "vsetvli_vl_lt_vlmax"]
+    uvTests = ["vsetivli", "vsetvl", "vsetvli_rs1_eq_zero", "vsetvli_vl_lt_vlmax",
+                "vle8", "vmv_v_i", "vadd.vv"]
     uvTests.each do |t|
       sh "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-vector.yaml tests/isa/#{configs_name[0]}uv-p-#{t}"
     end
