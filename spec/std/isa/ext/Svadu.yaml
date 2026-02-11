@@ -122,12 +122,10 @@ versions:
       - name: Ved Shanbhogue
         company: Rivos, Inc.
 requirements:
-  # Svadu was defined with Sm 1.13
-  # it needs at least Sm 1.11 for menvcfg defintion
   allOf:
     - extension:
         name: Sm
-        version: ">= 1.13"
+        version: ">= 1.12"
     - anyOf:
       - extension:
           name: Sv32
