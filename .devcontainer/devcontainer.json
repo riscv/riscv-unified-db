@@ -30,6 +30,7 @@
         "mathematic.vscode-pdf",
         "ms-azuretools.vscode-containers",
         "redhat.vscode-yaml",
+        "Shopify.ruby-lsp",
         "tamasfe.even-better-toml",
         "timonwong.shellcheck",
         "zhwu95.riscv"
