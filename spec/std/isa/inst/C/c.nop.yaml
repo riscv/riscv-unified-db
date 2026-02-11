@@ -12,10 +12,6 @@ description: |
   C.NOP expands into `addi x0, x0, 0`.
   C.NOP with non-zero immediate values are HINTs.
 definedBy:
-  anyOf:
-    - C
-    - Zca
-assembly: "c.nop imm"
   extension:
     name: Zca
 assembly: ""
