@@ -14,15 +14,6 @@ end
 
 module Udb
 class Instruction
-  def assembly_fmt(xlen)
-    if name == "c.nop"
-      return (imm() == 0) ? "c.nop" : "c.nop {}"
-    end
-    fmt = assembly.dup
-    dvs = encoding(xlen).decode_variables
-    dvs.each do |dv|
-      fmt.gsub!(dv.name, "{}")
-  class Instruction
     def assembly_fmt(xlen)
       fmt = assembly.dup
       dvs = encoding(xlen).decode_variables
@@ -32,17 +23,6 @@ class Instruction
       fmt
     end
 
-  def assembly_fmt_args(xlen)
-    if name == "c.nop"
-      return (imm() == 0) ? "" : ", imm()"
-    end
-    args = []
-    dvs = encoding(xlen).decode_variables
-    dvs.each do |dv|
-      if dv.name[0] == "x" || dv.name[0] == "r"
-        args << "Reg(#{dv.name}()).to_string()"
-      elsif dv.name[0] == "f"
-        args << "Reg(#{dv.name}(), true).to_string()"
     def assembly_fmt_args(xlen)
       args = []
       dvs = encoding(xlen).decode_variables
@@ -62,7 +42,6 @@ class Instruction
       end
     end
   end
-end
 
 module Udb
 
