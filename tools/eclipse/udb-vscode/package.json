@@ -46,7 +46,7 @@
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
-    "@types/glob": "8.1.0",
+    "@types/glob": "9.0.0",
     "@types/mocha": "10.0.10",
     "@types/node": "24.10.12",
     "@types/vscode": "1.109.0",
