@@ -647,9 +647,7 @@ module Udb
     sig { returns(T::Array[Instruction]) }
     def directly_defined_instructions
       @instructions ||=
-        ext.instructions.select do |inst|
-          (inst.defined_by_condition & to_condition).satisfiable_by_cfg_arch?(@arch)
-        end
+        all_instructions_that_must_be_implemented - implied_instructions
     end
 
     # @api private
@@ -671,9 +669,7 @@ module Udb
           @arch.instructions.select do |i|
             pb.advance
 
-            next if directly_defined_instructions_set.include?(i)
-
-            (-i.defined_by_condition & to_condition).unsatisfiable_by_arch?(@cfg_arch)
+            (-i.defined_by_condition & requirements_condition).unsatisfiable_by_arch?(@arch)
           end
         end
     end
@@ -684,7 +680,19 @@ module Udb
     sig { returns(T::Array[Instruction]) }
     def all_instructions_that_must_be_implemented
       @all_instructions_that_must_be_implemented ||=
-        directly_defined_instructions + implied_instructions
+        begin
+          pb =
+            Udb.create_progressbar(
+              "Finding implied instructions for #{self} [:bar] :current/:total",
+              total: @arch.instructions.size,
+              clear: true
+            )
+          @arch.instructions.select do |i|
+            pb.advance
+
+            (-i.defined_by_condition & to_condition).unsatisfiable_by_arch?(@arch)
+          end
+        end
     end
 
     sig { returns(T::Set[Instruction]) }
