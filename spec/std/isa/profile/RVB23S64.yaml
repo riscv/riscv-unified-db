@@ -52,7 +52,7 @@ extensions:
   #########################################################################
   Zifencei:
     presence: mandatory
-    version: "~>1.0"
+    version: "~>2.0"
     note: |
       Instruction-Fetch fence instruction.
 
@@ -190,6 +190,7 @@ extensions:
   Sha:
     presence:
       optional: expansion
+    version: ~> 1.0
     note: |
       The set of augmented hypervisor extensions: H, Ssstateen,
       Shcounterenw, Shvstvala, Shtvala, Shvstvecd, Shvsatpa, Shgatpa
@@ -215,14 +216,14 @@ extensions:
   Sv48:
     presence:
       optional: expansion
-    version: "~>1.13"
+    version: "~>1.0"
     note: |
       Page-based 48-bit virtual-memory system
 
   Sv57:
     presence:
       optional: expansion
-    version: "~>1.13"
+    version: "~>1.0"
     note: |
       Page-based 57-bit virtual-memory system
 
@@ -297,3 +298,14 @@ recommendations:
   - text: |
       Implementations are strongly recommended to raise illegal-instruction
       exceptions on attempts to execute unimplemented opcodes.
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: S_MODE_ENDIANNESS
+        equal: little
+      - name: SXLEN
+        includes: 64
+      - name: UXLEN
+        includes: 64

@@ -12,12 +12,24 @@ versions:
 - version: "1.11.0"
   state: ratified
   ratification_date: 2019-06
+  requirements:
+    extension:
+      name: Sm
+      version: "= 1.11"
 - version: "1.12.0"
   state: ratified
   ratification_date: 2021-12
+  requirements:
+    extension:
+      name: Sm
+      version: "= 1.12"
 - version: "1.13.0"
   state: ratified
   ratification_date: 2024-10
+  requirements:
+    extension:
+      name: Sm
+      version: "= 1.13"
 requirements:
   extension:
     name: U

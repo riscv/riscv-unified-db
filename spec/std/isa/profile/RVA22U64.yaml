@@ -8,7 +8,7 @@ kind: profile
 name: RVA22U64
 long_name: U-mode extensions for version 22 of the 64-bit Apps Processor profile
 marketing_name: RVA22U64
-mode: Unpriv
+mode: U
 base: 64
 release: { $ref: profile_release/RVA22.yaml# }
 introduction: |
@@ -138,3 +138,10 @@ extra_notes:
     text: |
       The Zfinx, Zdinx, Zhinx, Zhinxmin extensions are incompatible
       with the profile mandates to support the F and D extensions.
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: UXLEN
+        includes: 64

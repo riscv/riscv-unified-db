@@ -38,7 +38,7 @@ extensions:
       Svbare is a new extension name introduced with RVA20.
   Sv39:
     presence: mandatory
-    version: "~> 1.11"
+    version: "~> 1.0"
   Svade:
     presence: mandatory
     version: "~> 1.0"
@@ -64,13 +64,20 @@ extensions:
       Sstvala is a new extension name introduced with RVA20.
   Sv48:
     presence: optional
-    version: "~> 1.11"
+    version: "~> 1.0"
   Ssu64xl:
     presence: optional
     version: "~> 1.0"
     note: |
       Ssu64xl is a new extension name introduced with RVA20.
-param_constraints:
-  U_MODE_ENDIANNESS:
-    schema:
-      const: little
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: S_MODE_ENDIANNESS
+        equal: little
+      - name: SXLEN
+        includes: 64
+      - name: UXLEN
+        includes: 64

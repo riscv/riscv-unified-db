@@ -92,12 +92,27 @@ tests:
   regress-gen-certificate:
     test:
       - name: Generate extension PDF
-        run: ./do gen:proc_crd_pdf[MockProcessor]
+        run: ./do gen:proc_crd_pdf[RVI20-32]
 
   regress-gen-profile:
     test:
       - name: Generate extension PDF
-        run: ./do gen:profile_release_pdf[Mock]
+        run: ./do gen:profile_release_pdf[RVI20]
+
+  regress-profile-strict-cfg:
+    test:
+      - name: Generate strict profile configs
+        run: ./bin/chore gen profile-cfgs
+      - name: See if anything changed
+        run: |
+          git diff-index --quiet HEAD -- || \
+          ( \
+          echo "Profile configs need to be regenerated."; \
+          echo "Run `./bin/chore gen profile-cfgs`, commit the changes, and push again."; \
+          echo "Changed files are"; \
+          git status; \
+          exit 1 \
+          )
 
   regress-udb-unit-test:
     tags:

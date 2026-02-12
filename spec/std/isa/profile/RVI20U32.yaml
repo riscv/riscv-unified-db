@@ -8,7 +8,7 @@ kind: profile
 name: RVI20U32
 long_name: U-mode extensions for version 20 of a 32-bit processor
 marketing_name: RVI20U32
-mode: Unpriv
+mode: U
 base: 32
 release: { $ref: profile_release/RVI20.yaml# }
 introduction: |
@@ -81,3 +81,10 @@ recommendations:
   - text: |
       Implementations are strongly recommended to raise illegal-instruction
       exceptions on attempts to execute unimplemented opcodes.
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: UXLEN
+        includes: 32
