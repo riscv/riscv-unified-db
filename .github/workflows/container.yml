@@ -5,41 +5,6 @@ on:
       - main
   workflow_dispatch:
 jobs:
-  publish-singularity-container:
-    env:
-      SINGULARITY: 1
-    strategy:
-      matrix:
-        runner: [ubuntu-24.04, ubuntu-24.04-arm]
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - name: Clone Github Repo Action
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Install singularity
-        run: sudo apt-get install -y singularity-container
-
-      - name: Get container tag
-        run: |
-          TAG=$(cat bin/.container-tag)
-          echo "TAG=$TAG" >> $GITHUB_ENV
-
-      - name: Get container from cache
-        id: cache-sif
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: .singularity/image.sif
-          key: ${{ hashFiles('container.def', 'bin/.container-tag') }}-${{ matrix.runner }}
-
-      - if: ${{ steps.cache-sif.outputs.cache-hit != 'true' }}
-        name: Build container
-        run: ./bin/build_container
-
-      - name: Upload singularity container
-        run: |
-          singularity registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} oras://ghcr.io
-          singularity push .singularity/image.sif oras://ghcr.io/riscv/spec-generator:${{ env.TAG }}
-
   build-docker-container:
     env:
       DOCKER: 1

@@ -141,15 +141,6 @@ repos:
 
   - repo: local
     hooks:
-      - id: singularity
-        name: generate container.def
-        files: (bin/generate|\.devcontainer/Dockerfile|container\.def)$
-        pass_filenames: false
-        language: system
-        entry: ./bin/chore gen container-def
-
-  - repo: local
-    hooks:
       - id: regress
         name: generate regress.yml
         files: (tools/test/gen_regress\.rb|tools/test/regress-tests.yaml|tools/test/regress-gh-template.yaml)

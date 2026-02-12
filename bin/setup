@@ -34,17 +34,13 @@ source "${ROOT}/bin/.functions.sh"
 # A docker container run using Podman. All commands on the host (using ./do or ./bin/*) are run in the context of a Docker image.
 # Podman provides a Docker-compatible CLI.
 #
-# = singularity
 #
-# An apptainer/singularity container. All commands on the host (using ./do or ./bin/*) are run in the context of an Apptainer/Singularity image.
-#
-#
-# ALL THREE CONTAINERS ARE (in theory) IDENTICAL. Which one you use is a preference of your setup and installed
+# BOTH CONTAINERS ARE (in theory) IDENTICAL. Which one you use is a preference of your setup and installed
 # software.
 
 CONTAINER_TYPE=$(get_container_type)
 
-if [ "${CONTAINER_TYPE}" != "docker" ] && [ "${CONTAINER_TYPE}" != "podman" ] && [ "${CONTAINER_TYPE}" != "singularity" ] && [ "${CONTAINER_TYPE}" != "native" ]; then
+if [ "${CONTAINER_TYPE}" != "docker" ] && [ "${CONTAINER_TYPE}" != "podman" ] && [ "${CONTAINER_TYPE}" != "native" ]; then
   echo "BAD CONTAINER TYPE: ${CONTAINER_TYPE}"
 fi
 
@@ -85,15 +81,7 @@ fi
 
 echo "Using ${CONTAINER_TYPE} environment"
 
-if [ -v GITHUB_ACTIONS ] && [ "${CONTAINER_TYPE}" == "singularity" ]; then
-    echo "Running in a GitHub Action"
-    CONTAINER_PATH=${ROOT}/.singularity/image.sif
-
-    # needed to get singularity working on Ubuntu 24.04
-    # see https://github.com/lima-vm/lima/issues/2319
-    sudo /bin/bash -c "echo \"kernel.apparmor_restrict_unprivileged_userns = 0\" >/etc/sysctl.d/99-userns.conf"
-    sudo sysctl --system
-elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
+if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
     if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" | grep -q udb ; then
         echo "Image not found locally. Attempting to pull from registry..."
         if ${CONTAINER_TYPE} pull "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" 2>/dev/null; then
@@ -154,18 +142,6 @@ elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ];
     else
       CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} $REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
     fi
-elif [ "${CONTAINER_TYPE}" == "singularity" ]; then
-    CONTAINER_PATH=${ROOT}/.singularity/image-$CONTAINER_TAG.sif
-    if [ ! -f "${CONTAINER_PATH}" ]; then
-      echo "Fetching container..."
-      if [ ! -d "${ROOT}/.singularity" ]; then
-        mkdir -p "${ROOT}/.singularity"
-      fi
-      singularity pull "${CONTAINER_PATH}" "oras://$REGISTRY/$OWNER/spec-generator:$CONTAINER_TAG"
-    fi
-    if [ -v UDB_CONTAINER_BIND ]; then
-      EXTRA_BIND="--bind ${UDB_CONTAINER_BIND}:${UDB_CONTAINER_BIND}"
-    fi
 elif [ "${CONTAINER_TYPE}" != "native" ]; then
     echo "Bad container type: ${CONTAINER_TYPE}" 1>&2
     exit 1
@@ -175,13 +151,6 @@ if [ "${CONTAINER_TYPE}" == "native" ]; then
     RUN=""
 elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
     RUN="${CONTAINER_BASE}"
-elif [ "${CONTAINER_TYPE}" == "singularity" ]; then
-    if [ -f "$ROOT/.git" ]; then
-        # if this is a worktree, need to add the parent git repo in, too
-        GIT_PATH=$(git rev-parse --git-common-dir | tr -d '\n' | xargs dirname)
-        GIT_BIND="--bind ${GIT_PATH}:${GIT_PATH}"
-    fi
-    RUN="singularity run ${GIT_BIND} ${EXTRA_BIND} ${CONTAINER_PATH}"
 else
     echo "Bad container type: ${CONTAINER_TYPE}" 1>&2
     exit 1
@@ -198,8 +167,7 @@ RAKE="${RUN} bundle exec rake"
 NPM="${RUN} npm"
 NPX="${RUN} npx"
 NODE="${RUN} node"
-PYTHON="${RUN} /opt/venv/bin/python3"
-PIP="${RUN} /opt/venv/bin/pip"
+PYTHON="${RUN} uv run python"
 BASH="${RUN} bash"
 GPP="${RUN} g++"
 GDB="${RUN} gdb"

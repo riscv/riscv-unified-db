@@ -8516,12 +8516,10 @@ class Udb::Resolver
       gen_path_override: T.nilable(::Pathname),
       std_path_override: T.nilable(::Pathname),
       custom_path_override: T.nilable(::Pathname),
-      python_path_override: T.nilable(::Pathname),
-      quiet: T::Boolean,
-      compile_idl: T::Boolean
+      quiet: T::Boolean
     ).void
   end
-  def initialize(repo_root = T.unsafe(nil), schemas_path_override: T.unsafe(nil), cfgs_path_override: T.unsafe(nil), gen_path_override: T.unsafe(nil), std_path_override: T.unsafe(nil), custom_path_override: T.unsafe(nil), python_path_override: T.unsafe(nil), quiet: T.unsafe(nil), compile_idl: T.unsafe(nil)); end
+  def initialize(repo_root = T.unsafe(nil), schemas_path_override: T.unsafe(nil), cfgs_path_override: T.unsafe(nil), gen_path_override: T.unsafe(nil), std_path_override: T.unsafe(nil), custom_path_override: T.unsafe(nil), quiet: T.unsafe(nil)); end
 
   # returns true if either +target+ does not exist, or if any of +deps+ are newer than +target+
   #
@@ -8567,13 +8565,7 @@ class Udb::Resolver
   sig { params(cfg_path_or_name: T.any(::Pathname, ::String)).returns(::Pathname) }
   def merged_spec_path(cfg_path_or_name); end
 
-  # path to a python binary
-  #
-  # source://udb//../../udb/lib/udb/resolver.rb#125
-  sig { returns(::Pathname) }
-  def python_path; end
-
-  # source://udb//../../udb/lib/udb/resolver.rb#259
+  # source://udb//../../udb/lib/udb/resolver.rb#248
   sig { params(config_yaml: T::Hash[::String, T.untyped]).void }
   def resolve_arch(config_yaml); end
 

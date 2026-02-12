@@ -28,17 +28,51 @@ on:
     branches:
       - main
 env:
-  SINGULARITY: 1
+  DOCKER: 1
   DEPLOY_DIR: _site
 jobs:
+  build-container:
+    if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone Github Repo Action
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - name: Get container tag
+      run: |
+        TAG=$(cat bin/.container-tag)
+        echo "TAG=$TAG" >> $GITHUB_ENV
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+    - name: Build and export
+      uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+      with:
+        push: false
+        file: "./.devcontainer/Dockerfile"
+        platforms: linux/amd64
+        tags: ghcr.io/riscv/udb:${{ env.TAG }}
+        outputs: type=docker,dest=${{ runner.temp }}/docker_image.tar
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    - name: Upload container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: docker_image
+        path: "${{ runner.temp }}/docker_image.tar"
+
   build-reuse-manifest:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: run reuse
         run: ./bin/reuse spdx -o reuse_bom.txt
       - name: Upload Reuse Manifest
@@ -51,11 +85,17 @@ jobs:
   build-udb-api-doc:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate UDB API Docs
         run: ./do gen:udb:api_doc
       - name: Upload UDB API Docs
@@ -69,11 +109,17 @@ jobs:
   resolve-unconfig:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Resolve unconfig
         run: ./do gen:resolved_arch COMPILE_IDL=1
       - name: Tar unconfig
@@ -89,11 +135,17 @@ jobs:
   build-isa-explorer-csr:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate ISA Explorer CSR
         run: ./bin/udb-gen isa-explorer -t csr-browser -o gen/isa_explorer/browser
       - name: Upload ISA Explorer CSR
@@ -106,11 +158,17 @@ jobs:
   build-isa-explorer-ext:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate ISA Explorer Extension
         run: ./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer/browser
       - name: Upload ISA Explorer Extension
@@ -123,11 +181,17 @@ jobs:
   build-isa-explorer-inst:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate ISA Explorer Instructions
         run: ./bin/udb-gen isa-explorer -t inst-browser -o gen/isa_explorer/browser
       - name: Upload ISA Explorer Instructions
@@ -140,11 +204,17 @@ jobs:
   build-isa-explorer-spreadsheet:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate ISA Explorer Spreadsheet
         run: ./bin/udb-gen isa-explorer -t xlsx -o gen/isa_explorer/spreadsheet
       - name: Upload ISA Explorer Spreadsheet
@@ -156,14 +226,20 @@ jobs:
   build-html-isa-manual:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     env:
       MANUAL_NAME: isa
       VERSIONS: all
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate HTML ISA manual
         run: ./bin/generate manual -v all -f html
       - name: Upload HTML ISA manual
@@ -175,11 +251,17 @@ jobs:
   build-html-cfg-isa-manual:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate HTML ISA manual for a config
         run: ./do gen:html[example_rv64_with_overlay]
       - name: Upload HTML ISA manual for a config
@@ -191,13 +273,19 @@ jobs:
   build-instruction-appendix:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: "true"
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate instruction appendix
         run: ./do gen:instruction_appendix
       - name: Upload instruction appendix
@@ -209,11 +297,17 @@ jobs:
   build-rvi20-profile:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate RVI20
         run: ./do gen:profile_release_pdf[RVI20]
       - name: Upload RVI20
@@ -225,11 +319,17 @@ jobs:
   build-rva20-profile:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate RVA20
         run: ./do gen:profile_release_pdf[RVA20]
       - name: Upload RVA20
@@ -241,11 +341,17 @@ jobs:
   build-rva22-profile:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate RVA22
         run: ./do gen:profile_release_pdf[RVA22]
       - name: Upload RVA22
@@ -257,11 +363,17 @@ jobs:
   build-rva23-profile:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate RVA23
         run: ./do gen:profile_release_pdf[RVA23]
       - name: Upload RVA23
@@ -273,11 +385,17 @@ jobs:
   build-rvb23-profile:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate RVB23
         run: ./do gen:profile_release_pdf[RVB23]
       - name: Upload RVB23
@@ -289,11 +407,17 @@ jobs:
   build-ac100-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate AC100 CRD
         run: ./do gen:proc_crd_pdf[AC100]
       - name: Upload AC100 CRD
@@ -305,11 +429,17 @@ jobs:
   build-ac200-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate AC200 CRD
         run: ./do gen:proc_crd_pdf[AC200]
       - name: Upload AC200 CRD
@@ -321,11 +451,17 @@ jobs:
   build-rvi20-32-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate RVI20-32 CRD
         run: ./do gen:proc_crd_pdf[RVI20-32]
       - name: Upload RVI20-32 CRD
@@ -337,11 +473,17 @@ jobs:
   build-rvi20-64-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate RVI20-64 CRD
         run: ./do gen:proc_crd_pdf[RVI20-64]
       - name: Upload RVI20-64 CRD
@@ -353,11 +495,17 @@ jobs:
   build-mc100-32-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate MC100-32 CRD
         run: ./do gen:proc_crd_pdf[MC100-32]
       - name: Upload MC100-32 CRD
@@ -369,11 +517,17 @@ jobs:
   build-mc100-64-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate MC100-64 CRD
         run: ./do gen:proc_crd_pdf[MC100-64]
       - name: Upload MC100-64 CRD
@@ -385,11 +539,17 @@ jobs:
   build-mc200-32-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate MC200-32 CRD
         run: ./do gen:proc_crd_pdf[MC200-32]
       - name: Upload MC200-32 CRD
@@ -401,11 +561,17 @@ jobs:
   build-mc200-64-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate MC200-64 CRD
         run: ./do gen:proc_crd_pdf[MC200-64]
       - name: Upload MC200-64 CRD
@@ -417,11 +583,17 @@ jobs:
   build-mc300-32-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate MC300-32 CRD
         run: ./do gen:proc_crd_pdf[MC300-32]
       - name: Upload MC300-32 CRD
@@ -433,11 +605,17 @@ jobs:
   build-mc300-64-crd:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate MC300-64 CRD
         run: ./do gen:proc_crd_pdf[MC300-64]
       - name: Upload MC300-64 CRD
@@ -449,11 +627,17 @@ jobs:
   build-rvi20-32-ctp:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate RVI20-32 CTP
         run: ./do gen:proc_ctp_pdf[RVI20-32]
       - name: Upload RVI20-32 CTP
@@ -465,11 +649,17 @@ jobs:
   build-rvi20-64-ctp:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate RVI20-64 CTP
         run: ./do gen:proc_ctp_pdf[RVI20-64]
       - name: Upload RVI20-64 CTP
@@ -481,11 +671,17 @@ jobs:
   build-mc100-32-ctp:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Generate MC100-32 CTP
         run: ./do gen:proc_ctp_pdf[MC100-32]
       - name: Upload MC100-32 CTP
@@ -497,11 +693,17 @@ jobs:
   build-idl-doc:
     if: (github.event_name == 'merge_queue') || (inputs.dry-run == false)
     runs-on: ubuntu-latest
+    needs: build-container
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
+      - name: Download docker image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker_image
+          path: "${{ runner.temp }}"
+      - name: Load image
+        run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: Build IDL doc
         run: ./bin/bundle exec asciidoctor -r idl_highlighter -a toc=left -a source-highlighter=rouge -o idl.html doc/idl.adoc
       - name: Upload IDL Doc

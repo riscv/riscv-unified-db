@@ -24,13 +24,16 @@
       "extensions": [
         "asciidoctor.asciidoctor-vscode",
         "castwide.solargraph",
+        "charliermarsh.ruff",
         "CraigMaslowski.erb",
         "HowerLimited.udb-extension-pack-vscode",
         "mathematic.vscode-pdf",
+        "ms-azuretools.vscode-containers",
         "redhat.vscode-yaml",
-        "zhwu95.riscv",
+        "Shopify.ruby-lsp",
+        "tamasfe.even-better-toml",
         "timonwong.shellcheck",
-        "ms-azuretools.vscode-containers"
+        "zhwu95.riscv"
       ]
     }
   },

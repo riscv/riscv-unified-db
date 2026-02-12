@@ -131,7 +131,7 @@ namespace :test do
   # "Run the cross-validation against LLVM"
   task :llvm do
     begin
-      sh "/opt/venv/bin/python3 -m pytest tools/python/auto-inst/test_parsing.py -v"
+      sh "uv run pytest tools/python/auto-inst/test_parsing.py -v"
     rescue => e
       raise unless e.message.include?("status (5)") # don't fail on skipped tests
     end

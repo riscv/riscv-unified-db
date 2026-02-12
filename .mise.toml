@@ -1,0 +1,17 @@
+# Tool versions managed by mise (https://mise.jdx.dev)
+# Used by both Docker and native development environments.
+# In Docker, this is copied into the mise config dir during image build.
+# For native setup: install mise, then run `mise install` from this directory.
+
+[tools]
+ruby = "3.4.8"
+python = "3.14.3"
+node = "24.13.1"
+uv = "0.10.2"
+cmake = "3.28"
+shellcheck = "0.11.0"
+"github-cli" = "2.86.0"
+rust = "1.93.0"
+
+[env]
+RUBY_YJIT_ENABLE = "1"

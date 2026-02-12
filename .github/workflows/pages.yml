@@ -17,15 +17,13 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
-      SINGULARITY: 1
+      DOCKER: 1
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: singularity setup
-        uses: ./.github/actions/singularity-setup
 
       - name: Make _site
         run: mkdir _site
