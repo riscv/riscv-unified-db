@@ -233,6 +233,9 @@ class TestCfgArch < Minitest::Test
       cfg_arch = @resolver.cfg_arch_for(Pathname.new f.path)
     end
 
+    refute Udb::Condition.new({ "xlen" => 32 }, cfg_arch).satisfiable_by_cfg_arch?(cfg_arch)
+    assert Udb::Condition.new({ "xlen" => 64 }, cfg_arch).satisfiable_by_cfg_arch?(cfg_arch)
+
     # make sure that RV32-only extensions are not possible
     refute_includes cfg_arch.possible_extension_versions.map(&:name), "Zilsd"
     refute_includes cfg_arch.possible_extensions.map(&:name), "Zilsd"

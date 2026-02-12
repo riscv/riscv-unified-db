@@ -214,13 +214,21 @@ module Udb
       (self & other).satisfiable?
     end
 
-    # return true if the condition could be satisfied by cfg_arch
+    # return true if the condition could be satisfied by cfg_arch (including known configuration)
     sig { abstract.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
     def satisfiable_by_cfg_arch?(cfg_arch); end
 
-    # return true if the condition cannot be satisfied by cfg_arch
+    # return true if the condition cannot be satisfied by cfg_arch (including known configuration)
     sig { abstract.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
     def unsatisfiable_by_cfg_arch?(cfg_arch); end
+
+    # return true if the condition could be satisfied by the architecture defintion (ignoring configuration)
+    sig { abstract.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def satisfiable_by_arch?(cfg_arch); end
+
+    # return true if the condition cannot be satisfied by the architecture defintion (ignoring configuration)
+    sig { abstract.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def unsatisfiable_by_arch?(cfg_arch); end
 
     # @return if the condition is, possibly is, or is definitely not satisfied by cfg_arch
     sig { abstract.params(_cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
@@ -729,16 +737,28 @@ module Udb
       ret
     end
 
-    def self.solver_for_cfg_arch(cfg_arch)
-      return @cfg_arch_solvers[cfg_arch] if @cfg_arch_solvers&.key?(cfg_arch)
+    def self.flatten_and(tree, solver, cfg_arch)
+      tree.node_children.each do |child|
+        if child.type == LogicNodeType::And
+          flatten_and(child, solver, cfg_arch)
+        else
+          solver.assert_as child.to_z3(cfg_arch, solver), child.to_s
+        end
+      end
+    end
+    private_class_method :flatten_and
 
-      @cfg_arch_solvers ||= {}
-
+    sig { params(tree: LogicNode, cfg_arch: ConfiguredArchitecture, name: String).returns(Z3Solver) }
+    def self.solver_for(tree, cfg_arch, name)
       s = Z3Solver.new
-      tree = cfg_arch.to_condition.to_logic_tree(expand: false)
+      if tree.type == LogicNodeType::And
+        # break the top levels into separate assertions
+        # to make the z3 unsat core output more helpful
+        flatten_and(tree, s, cfg_arch)
 
-      s.assert tree.to_z3(cfg_arch, s)
-      # expansion_clauses = cfg_arch.to_condition.expand_term_requirements(cfg_arch.to_condition.to_logic_tree(expand: false))
+      else
+        s.assert_as tree.to_z3(cfg_arch, s), name
+      end
 
       # add definition of xlen
       expansion_clauses = []
@@ -746,11 +766,17 @@ module Udb
       expansion_clauses << T.must(cfg_arch.param("MXLEN")).requirements_condition.to_logic_tree(expand: false)
 
       expansion_clauses.each do |clause|
-        s.assert clause.to_z3(cfg_arch, s)
+        if clause.type == LogicNodeType::And
+          clause.node_children.each do |child|
+            s.assert_as child.to_z3(cfg_arch, s), child.to_s
+          end
+        else
+          s.assert_as clause.to_z3(cfg_arch, s), clause.to_s
+        end
       end
 
       s.push
-      pb = Udb.create_progressbar("checking sat for #{cfg_arch.name} [:bar]", total: nil, clear: true)
+      pb = Udb.create_progressbar("checking sat for #{name} [:bar]", total: nil, clear: true)
       pid = fork {
         loop do
           sleep(1)
@@ -762,8 +788,86 @@ module Udb
       Process.wait(pid)
       pb.finish
       unless sat
-        raise "cfg_arch is not satisfiable: #{cfg_arch.name}\nAssertions:\n#{s.assertions.map(&:to_s).join("\n")}"
+        Udb.logger.error "#{name} is not satisfiable"
+        Udb.logger.error "Unsatisfiable core:"
+        core = Z3::LowLevel.solver_get_unsat_core(s.solver)
+        puts Z3::LowLevel.unpack_ast_vector(core)
+        exit 1
       end
+
+      s
+    end
+    private_class_method :solver_for
+
+    def unsat_arch_core(cfg_arch)
+      s = Condition.solver_for_arch(cfg_arch)
+      s.push
+      tree = to_logic_tree(expand: false)
+      if tree.type == LogicNodeType::And
+        tree.node_children.each do |child|
+          s.assert_as child.to_z3(cfg_arch, s), child.to_s
+        end
+      else
+        s.assert_as tree.to_z3(cfg_arch, s), tree.to_s
+      end
+      result = s.unsatisfiable?
+      if result
+        Udb.logger.error "Architecture condition is not satisfiable for #{cfg_arch.name}"
+        Udb.logger.error "Unsatisfiable core:"
+        core = Z3::LowLevel.solver_get_unsat_core(s.solver)
+        puts Z3::LowLevel.unpack_ast_vector(core)
+      end
+      s.pop
+      result
+    end
+
+    def z3_assertions(cfg_arch)
+      s = Condition.solver_for_arch(cfg_arch)
+      s.push
+      tree = to_logic_tree(expand: false)
+      if tree.type == LogicNodeType::And
+        tree.node_children.each do |child|
+          s.assert_as child.to_z3(cfg_arch, s), child.to_s
+        end
+      else
+        s.assert_as tree.to_z3(cfg_arch, s), tree.to_s
+      end
+      result = s.satisfiable?
+      assertions = s.assertions
+      s.pop
+      assertions
+    end
+
+    def sat_arch_model(cfg_arch)
+      s = Condition.solver_for_arch(cfg_arch)
+      s.push
+      tree = to_logic_tree(expand: false)
+      if tree.type == LogicNodeType::And
+        tree.node_children.each do |child|
+          s.assert_as child.to_z3(cfg_arch, s), child.to_s
+        end
+      else
+        s.assert_as tree.to_z3(cfg_arch, s), tree.to_s
+      end
+      result = s.satisfiable?
+      if result
+        m = s.model
+        s.pop
+        m
+      else
+        s.pop
+        nil
+      end
+    end
+
+    sig { params(cfg_arch: ConfiguredArchitecture).returns(Z3Solver) }
+    def self.solver_for_cfg_arch(cfg_arch)
+      return @cfg_arch_solvers[cfg_arch] if @cfg_arch_solvers&.key?(cfg_arch)
+
+      @cfg_arch_solvers ||= {}
+
+      tree = cfg_arch.to_condition.to_logic_tree(expand: false)
+      s = solver_for(tree, cfg_arch, "cfg_arch")
 
       @cfg_arch_solvers[cfg_arch] = s
     end
@@ -783,6 +887,38 @@ module Udb
       s = Condition.solver_for_cfg_arch(cfg_arch)
       s.push
       s.assert to_logic_tree(expand: false).to_z3(@cfg_arch, s)
+      result = s.unsatisfiable?
+      s.pop
+      result
+    end
+
+    sig { params(cfg_arch: ConfiguredArchitecture).returns(Z3Solver) }
+    def self.solver_for_arch(cfg_arch)
+      return @arch_solvers.fetch(cfg_arch) if @arch_solvers&.key?(cfg_arch)
+
+      @arch_solvers ||= {}
+
+      tree = cfg_arch.arch_condition.to_logic_tree(expand: false)
+      s = solver_for(tree, cfg_arch, "arch")
+
+      @arch_solvers[cfg_arch] = s
+    end
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def satisfiable_by_arch?(cfg_arch)
+      s = Condition.solver_for_arch(cfg_arch)
+      s.push
+      s.assert to_logic_tree(expand: false).to_z3(cfg_arch, s)
+      result = s.satisfiable?
+      s.pop
+      result
+    end
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def unsatisfiable_by_arch?(cfg_arch)
+      s = Condition.solver_for_arch(cfg_arch)
+      s.push
+      s.assert to_logic_tree(expand: false).to_z3(cfg_arch, s)
       result = s.unsatisfiable?
       s.pop
       result
@@ -1510,6 +1646,12 @@ module Udb
     sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
     def unsatisfiable_by_cfg_arch?(cfg_arch) = false
 
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def satisfiable_by_arch?(cfg_arch) = true
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def unsatisfiable_by_arch?(cfg_arch) = false
+
     sig { override.params(_cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
     def satisfied_by_cfg_arch?(_cfg_arch) = SatisfiedResult::Yes
 
@@ -1616,6 +1758,12 @@ module Udb
 
     sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
     def unsatisfiable_by_cfg_arch?(cfg_arch) = true
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def satisfiable_by_arch?(cfg_arch) = false
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def unsatisfiable_by_arch?(cfg_arch) = true
 
     sig { override.params(_cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
     def satisfied_by_cfg_arch?(_cfg_arch) = SatisfiedResult::No

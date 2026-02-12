@@ -304,7 +304,12 @@ module Udb
 
             config_path_or_name.realpath
           when String
-            (@cfgs_path / "#{config_path_or_name}.yaml").realpath
+            if (@cfgs_path / "#{config_path_or_name}.yaml").file?
+              (@cfgs_path / "#{config_path_or_name}.yaml").realpath
+            else
+              Udb.logger.error "Could not find config: #{config_path_or_name}"
+              exit 1
+            end
           else
             T.absurd(config_path_or_name)
           end
