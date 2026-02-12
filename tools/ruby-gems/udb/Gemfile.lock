@@ -6,6 +6,7 @@ PATH
       commander (~> 5)
       sorbet-runtime
       treetop (= 1.6.12)
+      tty-progressbar
 
 PATH
   remote: ../udb_helpers
@@ -231,4 +232,4 @@ DEPENDENCIES
   yard-sorbet
 
 BUNDLED WITH
-  4.0.4
+  4.0.6

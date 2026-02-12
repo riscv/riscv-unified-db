@@ -77,16 +77,20 @@ module Idl
 
       old_format = @pb.format unless @pb.nil?
       @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
-      pid = fork {
-        loop do
-          sleep 1
-          @pb.advance unless @pb.nil?
-        end
-      }
+      pid = unless @pb.nil?
+              fork {
+                loop do
+                  sleep 1
+                  @pb.advance unless @pb.nil?
+                end
+              }
+      end
       m = @parser.parse path.read
-      Process.kill("TERM", pid)
-      Process.wait(pid)
-      @pb.format = old_format unless @pb.nil?
+      unless @pb.nil?
+        Process.kill("TERM", T.must(pid))
+        Process.wait(T.must(pid))
+        @pb.format = old_format
+      end
 
       if m.nil?
         raise SyntaxError, <<~MSG

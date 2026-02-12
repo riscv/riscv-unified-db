@@ -12,6 +12,7 @@ PATH
       commander (~> 5)
       sorbet-runtime
       treetop (= 1.6.12)
+      tty-progressbar
 
 PATH
   remote: tools/ruby-gems/udb-gen
