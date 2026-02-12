@@ -41,7 +41,7 @@
       "type": "string"
     },
     "mode": {
-      "enum": ["M", "S", "U"]
+      "enum": ["M", "S", "U", "Unpriv"]
     },
     "release": {
       "type": "object",

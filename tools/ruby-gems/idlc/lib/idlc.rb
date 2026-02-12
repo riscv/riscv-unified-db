@@ -80,7 +80,7 @@ module Idl
       pid = fork {
         loop do
           sleep 1
-          @pb.advance
+          @pb.advance unless @pb.nil?
         end
       }
       m = @parser.parse path.read

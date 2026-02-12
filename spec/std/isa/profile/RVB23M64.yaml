@@ -56,70 +56,34 @@ extensions:
 
   # None
 
-param_constraints:
-  MTVEC_BASE_ALIGNMENT_DIRECT:
-    schema:
-      const: 4
-  MTVEC_BASE_ALIGNMENT_VECTORED: {} # Unconstrained
-  ARCH_ID_VALUE: {} # Unconstrained
-  IMP_ID_VALUE: {} # Unconstrained
-  VENDOR_ID_BANK: {} # Unconstrained
-  VENDOR_ID_OFFSET: {} # Unconstrained
-  MISA_CSR_IMPLEMENTED: {} # Unconstrained
-  MTVAL_WIDTH: {} # Unconstrained
-  MTVEC_MODES:
-    schema:
-      items:
-        enum: [0, 1]
-  PHYS_ADDR_WIDTH: {} # Unconstrained
-  PRECISE_SYNCHRONOUS_EXCEPTIONS:
-    schema:
-      const: true
-  TRAP_ON_ECALL_FROM_M:
-    schema:
-      const: true
-  TRAP_ON_EBREAK:
-    schema:
-      const: true
-  REPORT_VA_IN_MTVAL_ON_BREAKPOINT:
-    note: Not required when `ebreak` or `c.ebreak` instructions are executed.
-    schema:
-      const: true
-  REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT:
-    schema:
-      const: true
-  REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT:
-    schema:
-      const: true
-  REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT:
-    schema:
-      const: true
-  REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION:
-    schema:
-      const: true
-  M_MODE_ENDIANNESS:
-    schema:
-      const: little
-    # TODO: Uncomment when GitHub issue # is fixed.
-    #schema:
-    #- when:
-    #    version: "=1.0.0"
-    #    then:
-    #      const: little
-    #- when:
-    #    version: "=1.1.0"
-    #    then:
-    #      enum: [little, big]
-  MXLEN:
-    schema:
-      const: 64
-  CONFIG_PTR_ADDRESS:
-    schema:
-      const: 0xdeadbeef
-    note: "This parameter and its associated CSR shouldn't be here. See GitHub issue #53."
-  NUM_PMP_ENTRIES:
-    schema:
-      minimum: 4
-  PMP_GRANULARITY:
-    schema:
-      maximum: 12
+requirements:
+  param:
+    allOf:
+      - name: MTVEC_BASE_ALIGNMENT_DIRECT
+        equal: 4
+      - name: MTVEC_MODES
+        equal: [0, 1]
+      - name: PRECISE_SYNCHRONOUS_EXCEPTIONS
+        equal: true
+      - name: TRAP_ON_ECALL_FROM_M
+        equal: true
+      - name: TRAP_ON_EBREAK
+        equal: true
+      - name: REPORT_VA_IN_MTVAL_ON_BREAKPOINT
+        equal: true
+      - name: REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT
+        equal: true
+      - name: REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT
+        equal: true
+      - name: REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT
+        equal: true
+      - name: REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION
+        equal: true
+      - name: M_MODE_ENDIANNESS
+        equal: little
+      - name: MXLEN
+        equal: 64
+      - name: NUM_PMP_ENTRIES
+        greaterThanOrEqual: 4
+      - name: PMP_GRANULARITY
+        lessThanOrEqual: 12

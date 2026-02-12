@@ -1,16 +1,3 @@
-MP-S-64:
-- A = 2.1 mandatory
-- I ~> 2.1 mandatory
-- Svade any mandatory
-- Xmock ~> 0.9.9 mandatory
-- Zifencei = 2.0 {'optional': 'development'}
-- Zihpm = 2.0 {'optional': 'expansion'}
-- S = 1.12 {'optional': 'localized'}
-- Sv48 = 1.12 {'optional': 'transitory'}
-MP-U-64:
-- I ~> 2.1 mandatory
-- Svade any mandatory
-- A = 2.1 optional
 RVA20S64:
 - A ~> 2.1 mandatory
 - C ~> 2.0 mandatory
