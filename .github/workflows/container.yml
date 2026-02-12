@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install singularity
         run: sudo apt-get install -y singularity-container
@@ -54,7 +54,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Get container tag
         run: |
@@ -79,7 +79,7 @@ jobs:
 
       - name: Build and push by digest
         id: build
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@601a80b39c9405e50806ae38af30926f9d957c47 # v6.19.1
         with:
           file: ./.devcontainer/Dockerfile
           platforms: ${{ matrix.platform }}
@@ -108,7 +108,7 @@ jobs:
       - build-docker-container
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Download digests
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
