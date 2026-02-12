@@ -43,7 +43,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
     - name: Upload container
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: docker_image
         path: "${{ runner.temp }}/docker_image.tar"
@@ -180,7 +180,7 @@ jobs:
     - name: Show riscv.json output
       run: ls -l ext/llvm-project/riscv.json
     - name: Upload RISC-V JSON as Artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: riscv-json
         path: ext/llvm-project/riscv.json
@@ -209,7 +209,7 @@ jobs:
       run: mvn -B -U -Dheadless=true verify
     - name: Archive surefire reports (always)
       if: always()
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: surefire-reports
         path: |
@@ -242,7 +242,7 @@ jobs:
       run: xvfb-run -a npm test
     - name: Archive VS Code test logs (always)
       if: always()
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: vscode-test-logs
         path: |
@@ -467,7 +467,7 @@ jobs:
     - name: Rename coverage file
       run: mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
     - name: Save coverage report
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: udb-${{ matrix.test }}-cov
         path: tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
