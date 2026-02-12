@@ -18,23 +18,11 @@ class IdlParser < Treetop::Runtime::CompiledParser
     @starting_line = starting_line
   end
 
-  def set_pb(pb)
-    raise "Progressbar was already set" unless @pb.nil?
-
-    @pb = pb
-  end
-
-  def unset_pb
-    raise "No progressbar set" if @pb.nil?
-  end
-
   # alias instantiate_node so we can call it from the override
   alias idlc_instantiate_node instantiate_node
 
   # override instatiate_node so we can set the input file
   def instantiate_node(node_type, *args)
-    @pb.advance unless @pb.nil?
-
     node = T.unsafe(self).idlc_instantiate_node(node_type, *args)
     node.set_input_file(input_file, @starting_line.nil? ? 0 : @starting_line)
     node
@@ -71,13 +59,12 @@ module Idl
 
     # set a progressbar
     def pb=(pb)
-      @parser.set_pb(pb)
       @pb = pb
     end
 
     # unset a progressbar
     def unset_pb
-      @parser.unset_pb
+      @pb.finish unless @pb.nil?
       @pb = nil
     end
 
@@ -88,8 +75,18 @@ module Idl
         source_mapper[path.to_s] = path.read
       end
 
+      old_format = @pb.format unless @pb.nil?
       @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
+      pid = fork {
+        loop do
+          sleep 1
+          @pb.advance
+        end
+      }
       m = @parser.parse path.read
+      Process.kill("TERM", pid)
+      Process.wait(pid)
+      @pb.format = old_format unless @pb.nil?
 
       if m.nil?
         raise SyntaxError, <<~MSG

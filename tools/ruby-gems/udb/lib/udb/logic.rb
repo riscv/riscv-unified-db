@@ -434,11 +434,7 @@ module Udb
       when ParameterComparisonType::GreaterThanOrEqual
         T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) >= @yaml["greaterThanOrEqual"]
       when ParameterComparisonType::Includes
-        expr = T.cast(e, Z3ParameterTerm)[0] == @yaml["includes"]
-        T.cast(e, Z3ParameterTerm).max_items.times do |i|
-          expr = expr | (T.cast(e, Z3ParameterTerm)[i] == @yaml["includes"])
-        end
-        expr
+        T.cast(e, Z3ParameterTerm).has_value?(@yaml["includes"])
       when ParameterComparisonType::OneOf
         expr = e == @yaml["oneOf"][0]
         @yaml["oneOf"][1..].each do |v|
