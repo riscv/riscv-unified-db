@@ -101,6 +101,16 @@ ENV PATH="/opt/node/node_modules/.bin:$PATH"
 ENV IN_UDB_CONTAINER=true
 
 # install gems
+ENV BUNDLE_PATH=/usr/local/bundle
+ENV BUNDLE_BIN=/usr/local/bundle/bin
+ENV GEM_HOME=/usr/local/bundle
+ENV GEM_PATH=/usr/local/bundle
+ENV PATH="/usr/local/bundle/bin:$PATH"
+
+# Create the bundle directory
+RUN mkdir -p /usr/local/bundle \
+    && chmod 1777 /usr/local/bundle
+
 COPY Gemfile /opt/Gemfile
 COPY Gemfile.lock /opt/Gemfile.lock
 COPY tools/ruby-gems/idlc/idlc.gemspec /opt/tools/ruby-gems/idlc/
@@ -116,7 +126,8 @@ COPY tools/ruby-gems/udb-gen/lib/gem_versions.rb /opt/tools/ruby-gems/udb-gen/li
 COPY tools/ruby-gems/udb-gen/lib/udb-gen/version.rb /opt/tools/ruby-gems/udb-gen/lib/udb-gen/
 COPY tools/ruby-gems/udb_helpers/udb_helpers.gemspec /opt/tools/ruby-gems/udb_helpers/
 COPY tools/ruby-gems/udb_helpers/lib/udb_helpers/version.rb /opt/tools/ruby-gems/udb_helpers/lib/udb_helpers/
-RUN bundle install --gemfile /opt/Gemfile
+RUN bundle install --gemfile /opt/Gemfile --jobs $(nproc) \
+    && chmod -R a+rwX /usr/local/bundle
 
 # the binaries for gems need to be copied in
 RUN mkdir -p /workspace/bin/container
