@@ -61,7 +61,7 @@ jobs:
     if: "false"
     steps:
       - name: Use download-artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
 
   regress-pre-commit:
     runs-on: ubuntu-latest
@@ -80,7 +80,7 @@ jobs:
       - name: Clone Github Repo Action
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Download docker image
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: docker_image
           path: ${{ runner.temp }}
@@ -120,14 +120,14 @@ jobs:
       - name: Clone Github Repo Action
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Download docker image
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: docker_image
           path: ${{ runner.temp }}
       - name: Load image
         run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: download coverage
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           pattern: udb-*-cov
           path: _cov/udb
