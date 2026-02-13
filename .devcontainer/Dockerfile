@@ -8,6 +8,7 @@ WORKDIR /workspace
 # please keep pkgs sorted
 RUN apt-get update && \
   apt-get install -y --no-install-recommends --fix-missing \
+  bash-completion \
   build-essential \
   clang-format \
   clang-tidy \
@@ -29,6 +30,7 @@ RUN apt-get update && \
   libz3-dev \
   minisat \
   parallel \
+  ssh \
   sudo \
   zlib1g-dev \
   \
