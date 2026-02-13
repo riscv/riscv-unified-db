@@ -109,18 +109,16 @@ do_update_gems() {
   cd "${UDB_ROOT}"/tools/ruby-gems/idlc || exit 1
   bundle update --bundler --ruby
   do_ruby_type_def "idlc"
-  cd - || exit 1
 
   cd "${UDB_ROOT}"/tools/ruby-gems/udb || exit 1
   bundle update --bundler --ruby
   do_ruby_type_def "udb"
-  cd - || exit 1
 
   cd "${UDB_ROOT}"/tools/ruby-gems/udb-gen || exit 1
   bundle update --bundler --ruby
   do_ruby_type_def "udb-gen"
-  cd - || exit 1
 
+  cd "$UDB_ROOT" || exit 1
   bundle update --bundler --ruby
 
   # increment container-tag
