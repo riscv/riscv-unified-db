@@ -1085,14 +1085,6 @@ module Udb
 
       (self <=> other) == 0
     end
-
-    # test for logical equivalence
-    sig { params(other: ParameterTerm, cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
-    def equivalent?(other, cfg_arch)
-      return false unless other.name == name
-
-      LogicNode.new(LogicNodeType::Term, [self]).equivalent?(LogicNode.new(LogicNodeType::Term, [other]), cfg_arch)
-    end
   end
 
   # @api private
@@ -2997,20 +2989,6 @@ module Udb
       @memo.is_nested_cnf = ret
     end
 
-    sig { params(other: LogicNode, cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
-    def always_implies?(other, cfg_arch)
-      # can test that by seeing if the contradiction is satisfiable, i.e.:
-      # if self -> other , contradition would be self & not other
-      contradiction = LogicNode.new(
-        LogicNodeType::And,
-        [
-          self,
-          LogicNode.new(LogicNodeType::Not, [other])
-        ]
-      )
-      !contradiction.satisfiable?(cfg_arch)
-    end
-
     sig { params(cfg_arch: ConfiguredArchitecture, solver: Z3Solver).returns(Z3::BoolExpr) }
     def to_z3(cfg_arch, solver = Z3Solver.new)
       case @type
@@ -3100,15 +3078,6 @@ module Udb
               LogicNode.inc_z3_cache_hits
               return @@cache[cache_key]
             end
-
-            # c = self.cnf? ? self : equisat_cnf
-            # # raise "cnf error" unless c.cnf?
-
-            # if c.type == LogicNodeType::True
-            #   return true
-            # elsif c.type == LogicNodeType::False
-            #   return false
-            # end
 
             solver = Z3Solver.new
             solver.assert to_z3(cfg_arch, solver)

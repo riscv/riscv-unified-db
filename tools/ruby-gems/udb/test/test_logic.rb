@@ -1522,7 +1522,8 @@ class TestLogic < Minitest::Test
     when ":IMPLIES"
       LogicNode.new(LogicNodeType::If, [node_from_json(ary[1], terms), node_from_json(ary[2], terms)])
     when /[a-z]/
-      term = terms.key?(ary[0]) ? term.fetch(ary[0]) : FreeTerm.new
+      term = terms.key?(ary[0]) ? terms.fetch(ary[0]) : FreeTerm.new
+      terms[ary[0]] ||= term
       LogicNode.new(LogicNodeType::Term, [term])
     else
       raise "unhandled: #{ary[0]}"
@@ -1562,10 +1563,13 @@ class TestLogic < Minitest::Test
   bool_eqns = JSON.load_file(File.join(__dir__, "boolean_expressions.json"))
   bool_eqns.each_with_index do |json_eqn, index|
     define_method("test_random_#{index}") do
+      LogicNode.reset_stats
       node = node_from_json(json_eqn)
-      return if (node.terms.size > 20) # z3 is too slow
+      # return if (node.terms.size > 20) # z3 is too slow
       if node.satisfiable?(cfg_arch)
         # test all the transformations
+
+        assert_equal 1, LogicNode.num_brute_force_sat_solves + LogicNode.num_z3_sat_solves
 
         # nnf gets covered by equiv_cnf
         # nnf = node.nnf
@@ -1586,6 +1590,10 @@ class TestLogic < Minitest::Test
         assert node.equivalent?(sop, cfg_arch)
         assert sop.dnf?
       else
+        cnf = node.equisat_cnf
+        assert cnf.cnf?
+        assert node.equisatisfiable?(cnf, cfg_arch)
+
         min = node.minimize(LogicNode::CanonicalizationType::ProductOfSums)
         assert_equal \
           LogicNodeType::False,
