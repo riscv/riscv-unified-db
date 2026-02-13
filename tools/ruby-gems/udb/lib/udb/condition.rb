@@ -4,7 +4,6 @@
 # typed: true
 # frozen_string_literal: true
 
-require "minisat"
 require "sorbet-runtime"
 
 require "idlc/symbol_table"

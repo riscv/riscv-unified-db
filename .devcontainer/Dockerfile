@@ -27,7 +27,6 @@ RUN apt-get update && \
   libnewlib-dev \
   libyaml-dev \
   libz3-dev \
-  minisat \
   parallel \
   sudo \
   zlib1g-dev \

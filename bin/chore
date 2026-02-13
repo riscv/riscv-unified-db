@@ -73,7 +73,7 @@ do_gen_regress() {
     local sha_before
     sha_before=$(sha256sum "$ROOT"/.github/workflows/regress.yml)
   fi
-  rm .github/workflows/regress.yml
+  rm -f .github/workflows/regress.yml
   $RUBY tools/test/gen_regress.rb
   chmod -wx .github/workflows/regress.yml
   if [ $fail_on_change -eq 1 ]; then
@@ -87,6 +87,7 @@ do_gen_regress() {
 
 do_gen_all() {
   do_gen_regress
+  do_ruby_type_def all
 }
 
 increment_minor_version() {
@@ -151,7 +152,7 @@ do_ruby_type_def() {
       ;;
   esac
   for gem in "${gems[@]}"; do
-    cd "${ROOT}"/../tools/ruby-gems/"${gem}" || exit 1
+    cd "${ROOT}"/tools/ruby-gems/"${gem}" || exit 1
     bundle exec tapioca gems --all
     bundle exec tapioca dsl
     bundle exec tapioca annotations
