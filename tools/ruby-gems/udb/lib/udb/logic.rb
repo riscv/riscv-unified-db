@@ -3073,7 +3073,7 @@ module Udb
             LogicNode.inc_z3_sat_solves
 
             @@cache ||= {}
-            cache_key = hash
+            cache_key = [hash, cfg_arch.hash].hash
             if @@cache.key?(cache_key)
               LogicNode.inc_z3_cache_hits
               return @@cache[cache_key]
