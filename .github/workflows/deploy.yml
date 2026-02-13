@@ -54,7 +54,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
     - name: Upload container
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
       with:
         name: docker_image
         path: "${{ runner.temp }}/docker_image.tar"
