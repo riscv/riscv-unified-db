@@ -1450,21 +1450,6 @@ class Idl::UnaryOperatorExpressionAst < ::Idl::AstNode
   end
 end
 
-class MiniSat::Solver
-  def <<(_arg0); end
-  def [](_arg0); end
-  def add_clause(*_arg0); end
-  def clause_size; end
-  def new_var; end
-  def satisfied?; end
-  def simplify; end
-  def simplify_db; end
-  def solve(*_arg0); end
-  def solved?; end
-  def to_s; end
-  def var_size; end
-end
-
 # Custom error classes for non-ISA specification processing
 #
 # source://udb//../../udb/lib/udb/obj/non_isa_specification.rb#15
@@ -1563,7 +1548,7 @@ end
 #
 # @abstract It cannot be directly instantiated. Subclasses must implement the `abstract` methods below.
 #
-# source://udb//../../udb/lib/udb/condition.rb#24
+# source://udb//../../udb/lib/udb/condition.rb#23
 class Udb::AbstractCondition
   abstract!
 
@@ -1571,7 +1556,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#362
+  # source://udb//../../udb/lib/udb/condition.rb#361
   sig { abstract.params(other: ::Udb::AbstractCondition).returns(::Udb::AbstractCondition) }
   def &(other); end
 
@@ -1584,27 +1569,27 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#375
+  # source://udb//../../udb/lib/udb/condition.rb#374
   sig { abstract.returns(::Udb::AbstractCondition) }
   def -@; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#271
+  # source://udb//../../udb/lib/udb/condition.rb#270
   sig { params(other_condition: ::Udb::AbstractCondition).returns(T::Boolean) }
   def always_implies?(other_condition); end
 
   # is it possible for this condition and other to be simultaneously true?
   #
-  # source://udb//../../udb/lib/udb/condition.rb#213
+  # source://udb//../../udb/lib/udb/condition.rb#212
   sig { params(other: ::Udb::AbstractCondition).returns(T::Boolean) }
   def compatible?(other); end
 
   # for the given config arch, is condition satisfiable?
   #
-  # source://udb//../../udb/lib/udb/condition.rb#242
+  # source://udb//../../udb/lib/udb/condition.rb#241
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(T::Boolean) }
   def could_be_satisfied_by_cfg_arch?(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#256
+  # source://udb//../../udb/lib/udb/condition.rb#255
   sig { params(other_condition: ::Udb::AbstractCondition).returns(T::Boolean) }
   def covered_by?(other_condition); end
 
@@ -1613,7 +1598,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#129
+  # source://udb//../../udb/lib/udb/condition.rb#128
   sig { abstract.returns(T::Boolean) }
   def empty?; end
 
@@ -1621,7 +1606,7 @@ class Udb::AbstractCondition
   # this is true logical equivalence, not just syntatic equivalence, e.g.:
   #  (a || a) is equivalent to (a)
   #
-  # source://udb//../../udb/lib/udb/condition.rb#250
+  # source://udb//../../udb/lib/udb/condition.rb#249
   sig { params(other: ::Udb::AbstractCondition).returns(T::Boolean) }
   def equivalent?(other); end
 
@@ -1629,7 +1614,7 @@ class Udb::AbstractCondition
   #
   # if expand is true, expand the condition to include transitive requirements
   #
-  # source://udb//../../udb/lib/udb/condition.rb#187
+  # source://udb//../../udb/lib/udb/condition.rb#186
   sig { params(expand: T::Boolean).returns(T::Array[::Udb::ExtensionRequirement]) }
   def ext_req_terms(expand:); end
 
@@ -1637,7 +1622,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#281
+  # source://udb//../../udb/lib/udb/condition.rb#280
   sig { abstract.returns(T::Boolean) }
   def has_extension_requirement?; end
 
@@ -1645,7 +1630,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#277
+  # source://udb//../../udb/lib/udb/condition.rb#276
   sig { abstract.returns(T::Boolean) }
   def has_param?; end
 
@@ -1653,7 +1638,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#358
+  # source://udb//../../udb/lib/udb/condition.rb#357
   sig { abstract.params(expand: T::Boolean).returns(T::Array[::Udb::ConditionalExtensionRequirement]) }
   def implied_extension_conflicts(expand: T.unsafe(nil)); end
 
@@ -1690,7 +1675,7 @@ class Udb::AbstractCondition
   #   { ext_ver: Zc2, cond: !Zcond}
   #   ]
   #
-  # source://udb//../../udb/lib/udb/condition.rb#354
+  # source://udb//../../udb/lib/udb/condition.rb#353
   sig { abstract.params(expand: T::Boolean).returns(T::Array[::Udb::ConditionalExtensionRequirement]) }
   def implied_extension_requirements(expand: T.unsafe(nil)); end
 
@@ -1700,13 +1685,13 @@ class Udb::AbstractCondition
   #
   #  if a; then b
   #
-  # source://udb//../../udb/lib/udb/condition.rb#383
+  # source://udb//../../udb/lib/udb/condition.rb#382
   sig { params(other: ::Udb::AbstractCondition).returns(::Udb::AbstractCondition) }
   def implies(other); end
 
   # is this condition in any way affected by term?
   #
-  # source://udb//../../udb/lib/udb/condition.rb#149
+  # source://udb//../../udb/lib/udb/condition.rb#148
   sig do
     params(
       term: T.any(::Symbol, ::Udb::Extension, ::Udb::ExtensionRequirement, ::Udb::ExtensionVersion, ::Udb::Parameter, ::Udb::ParameterWithValue),
@@ -1715,7 +1700,7 @@ class Udb::AbstractCondition
   end
   def mentions?(term, expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#163
+  # source://udb//../../udb/lib/udb/condition.rb#162
   sig { params(expand: T::Boolean).returns(T::Boolean) }
   def mentions_xlen?(expand: T.unsafe(nil)); end
 
@@ -1725,7 +1710,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#287
+  # source://udb//../../udb/lib/udb/condition.rb#286
   sig { abstract.params(expand: T::Boolean).returns(::Udb::AbstractCondition) }
   def minimize(expand: T.unsafe(nil)); end
 
@@ -1733,13 +1718,13 @@ class Udb::AbstractCondition
   #
   # if expand is true, expand the condition to include transitive requirements
   #
-  # source://udb//../../udb/lib/udb/condition.rb#201
+  # source://udb//../../udb/lib/udb/condition.rb#200
   sig { params(expand: T::Boolean).returns(T::Array[::Udb::Parameter]) }
   def param_terms(expand:); end
 
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#222
+  # source://udb//../../udb/lib/udb/condition.rb#221
   sig do
     abstract
       .params(
@@ -1754,7 +1739,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#227
+  # source://udb//../../udb/lib/udb/condition.rb#226
   sig do
     abstract
       .params(
@@ -1766,13 +1751,13 @@ class Udb::AbstractCondition
 
   # is this condition only satisfied when xlen == 32?
   #
-  # source://udb//../../udb/lib/udb/condition.rb#171
+  # source://udb//../../udb/lib/udb/condition.rb#170
   sig { returns(T::Boolean) }
   def rv32_only?; end
 
   # is this condition only satisfied when xlen == 64?
   #
-  # source://udb//../../udb/lib/udb/condition.rb#178
+  # source://udb//../../udb/lib/udb/condition.rb#177
   sig { returns(T::Boolean) }
   def rv64_only?; end
 
@@ -1781,7 +1766,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#238
+  # source://udb//../../udb/lib/udb/condition.rb#237
   sig { abstract.params(_ext_req: ::Udb::ExtensionRequirement, include_requirements: T::Boolean).returns(T::Boolean) }
   def satisfiability_depends_on_ext_req?(_ext_req, include_requirements: T.unsafe(nil)); end
 
@@ -1789,13 +1774,13 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#141
+  # source://udb//../../udb/lib/udb/condition.rb#140
   sig { abstract.returns(T::Boolean) }
   def satisfiable?; end
 
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#219
+  # source://udb//../../udb/lib/udb/condition.rb#218
   sig { abstract.params(_cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::SatisfiedResult) }
   def satisfied_by_cfg_arch?(_cfg_arch); end
 
@@ -1805,7 +1790,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#233
+  # source://udb//../../udb/lib/udb/condition.rb#232
   sig { abstract.params(ext_req: ::Udb::ExtensionRequirement, include_requirements: T::Boolean).returns(T::Boolean) }
   def satisfied_by_ext_req?(ext_req, include_requirements: T.unsafe(nil)); end
 
@@ -1813,7 +1798,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#319
+  # source://udb//../../udb/lib/udb/condition.rb#318
   sig { abstract.returns(::String) }
   def to_asciidoc; end
 
@@ -1821,7 +1806,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#291
+  # source://udb//../../udb/lib/udb/condition.rb#290
   sig { abstract.returns(T.any(T::Boolean, T::Hash[::String, T.untyped])) }
   def to_h; end
 
@@ -1829,7 +1814,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#301
+  # source://udb//../../udb/lib/udb/condition.rb#300
   sig { abstract.params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
@@ -1837,14 +1822,14 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#133
+  # source://udb//../../udb/lib/udb/condition.rb#132
   sig { abstract.params(expand: T::Boolean).returns(::Udb::LogicNode) }
   def to_logic_tree(expand:); end
 
   # @abstract
   # @api private
   #
-  # source://udb//../../udb/lib/udb/condition.rb#137
+  # source://udb//../../udb/lib/udb/condition.rb#136
   sig { abstract.returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 
@@ -1853,7 +1838,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#306
+  # source://udb//../../udb/lib/udb/condition.rb#305
   sig { abstract.params(expand: T::Boolean).returns(::String) }
   def to_s(expand: T.unsafe(nil)); end
 
@@ -1861,7 +1846,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#310
+  # source://udb//../../udb/lib/udb/condition.rb#309
   sig { abstract.returns(::String) }
   def to_s_pretty; end
 
@@ -1870,13 +1855,13 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#315
+  # source://udb//../../udb/lib/udb/condition.rb#314
   sig { abstract.params(cfg_arch: ::Udb::ConfiguredArchitecture, expand: T::Boolean).returns(::String) }
   def to_s_with_value(cfg_arch, expand:); end
 
   # convert condition into UDB-compatible YAML string
   #
-  # source://udb//../../udb/lib/udb/condition.rb#295
+  # source://udb//../../udb/lib/udb/condition.rb#294
   sig { overridable.returns(::String) }
   def to_yaml; end
 
@@ -1884,7 +1869,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#145
+  # source://udb//../../udb/lib/udb/condition.rb#144
   sig { abstract.returns(T::Boolean) }
   def unsatisfiable?; end
 
@@ -1892,7 +1877,7 @@ class Udb::AbstractCondition
   #
   # @abstract
   #
-  # source://udb//../../udb/lib/udb/condition.rb#366
+  # source://udb//../../udb/lib/udb/condition.rb#365
   sig { abstract.params(other: ::Udb::AbstractCondition).returns(::Udb::AbstractCondition) }
   def |(other); end
 end
@@ -2002,49 +1987,49 @@ end
 # source://udb//../../udb/lib/udb/config.rb#33
 Udb::AbstractConfig::ParamValueType = T.type_alias { T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean) }
 
-# source://udb//../../udb/lib/udb/condition.rb#1483
+# source://udb//../../udb/lib/udb/condition.rb#1482
 class Udb::AlwaysFalseCondition < ::Udb::AbstractCondition
-  # source://udb//../../udb/lib/udb/condition.rb#1487
+  # source://udb//../../udb/lib/udb/condition.rb#1486
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).void }
   def initialize(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1564
+  # source://udb//../../udb/lib/udb/condition.rb#1563
   sig { override.params(other: ::Udb::AbstractCondition).returns(::Udb::AbstractCondition) }
   def &(other); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1574
+  # source://udb//../../udb/lib/udb/condition.rb#1573
   sig { override.returns(::Udb::AbstractCondition) }
   def -@; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1508
+  # source://udb//../../udb/lib/udb/condition.rb#1507
   sig { override.params(_other: T.untyped).returns(T::Boolean) }
   def compatible?(_other); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1492
+  # source://udb//../../udb/lib/udb/condition.rb#1491
   sig { override.returns(T::Boolean) }
   def empty?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1531
+  # source://udb//../../udb/lib/udb/condition.rb#1530
   sig { override.returns(T::Boolean) }
   def has_extension_requirement?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1537
+  # source://udb//../../udb/lib/udb/condition.rb#1536
   sig { override.returns(T::Boolean) }
   def has_param?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1560
+  # source://udb//../../udb/lib/udb/condition.rb#1559
   sig { override.params(expand: T::Boolean).returns(T::Array[::Udb::ConditionalExtensionRequirement]) }
   def implied_extension_conflicts(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1557
+  # source://udb//../../udb/lib/udb/condition.rb#1556
   sig { override.params(expand: T::Boolean).returns(T::Array[::Udb::ConditionalExtensionRequirement]) }
   def implied_extension_requirements(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1534
+  # source://udb//../../udb/lib/udb/condition.rb#1533
   sig { override.params(expand: T::Boolean).returns(::Udb::AbstractCondition) }
   def minimize(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1522
+  # source://udb//../../udb/lib/udb/condition.rb#1521
   sig do
     override
       .params(
@@ -2054,7 +2039,7 @@ class Udb::AlwaysFalseCondition < ::Udb::AbstractCondition
   end
   def partial_eval(ext_reqs: T.unsafe(nil), expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1519
+  # source://udb//../../udb/lib/udb/condition.rb#1518
   sig do
     override
       .params(
@@ -2064,106 +2049,106 @@ class Udb::AlwaysFalseCondition < ::Udb::AbstractCondition
   end
   def partially_evaluate_for_params(cfg_arch, expand:); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1528
+  # source://udb//../../udb/lib/udb/condition.rb#1527
   sig { override.params(ext_req: ::Udb::ExtensionRequirement, include_requirements: T::Boolean).returns(T::Boolean) }
   def satisfiability_depends_on_ext_req?(ext_req, include_requirements: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1579
+  # source://udb//../../udb/lib/udb/condition.rb#1578
   sig { override.returns(T::Boolean) }
   def satisfiable?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1516
+  # source://udb//../../udb/lib/udb/condition.rb#1515
   sig { override.params(_cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::SatisfiedResult) }
   def satisfied_by_cfg_arch?(_cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1525
+  # source://udb//../../udb/lib/udb/condition.rb#1524
   sig { override.params(ext_req: ::Udb::ExtensionRequirement, include_requirements: T::Boolean).returns(T::Boolean) }
   def satisfied_by_ext_req?(ext_req, include_requirements: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1554
+  # source://udb//../../udb/lib/udb/condition.rb#1553
   sig { override.returns(::String) }
   def to_asciidoc; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1511
+  # source://udb//../../udb/lib/udb/condition.rb#1510
   sig { override.returns(T.any(T::Boolean, T::Hash[::String, T.untyped])) }
   def to_h; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1540
+  # source://udb//../../udb/lib/udb/condition.rb#1539
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1495
+  # source://udb//../../udb/lib/udb/condition.rb#1494
   sig { override.params(expand: T::Boolean).returns(::Udb::LogicNode) }
   def to_logic_tree(expand:); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1503
+  # source://udb//../../udb/lib/udb/condition.rb#1502
   sig { override.returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1543
+  # source://udb//../../udb/lib/udb/condition.rb#1542
   sig { override.params(expand: T::Boolean).returns(::String) }
   def to_s(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1546
+  # source://udb//../../udb/lib/udb/condition.rb#1545
   sig { override.returns(::String) }
   def to_s_pretty; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1551
+  # source://udb//../../udb/lib/udb/condition.rb#1550
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture, expand: T::Boolean).returns(::String) }
   def to_s_with_value(cfg_arch, expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1582
+  # source://udb//../../udb/lib/udb/condition.rb#1581
   sig { override.returns(T::Boolean) }
   def unsatisfiable?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1569
+  # source://udb//../../udb/lib/udb/condition.rb#1568
   sig { override.params(other: ::Udb::AbstractCondition).returns(::Udb::AbstractCondition) }
   def |(other); end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#1381
+# source://udb//../../udb/lib/udb/condition.rb#1380
 class Udb::AlwaysTrueCondition < ::Udb::AbstractCondition
-  # source://udb//../../udb/lib/udb/condition.rb#1385
+  # source://udb//../../udb/lib/udb/condition.rb#1384
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).void }
   def initialize(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1462
+  # source://udb//../../udb/lib/udb/condition.rb#1461
   sig { override.params(other: ::Udb::AbstractCondition).returns(::Udb::AbstractCondition) }
   def &(other); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1472
+  # source://udb//../../udb/lib/udb/condition.rb#1471
   sig { override.returns(::Udb::AbstractCondition) }
   def -@; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1407
+  # source://udb//../../udb/lib/udb/condition.rb#1406
   sig { override.params(_other: T.untyped).returns(T::Boolean) }
   def compatible?(_other); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1390
+  # source://udb//../../udb/lib/udb/condition.rb#1389
   sig { override.returns(T::Boolean) }
   def empty?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1430
+  # source://udb//../../udb/lib/udb/condition.rb#1429
   sig { override.returns(T::Boolean) }
   def has_extension_requirement?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1436
+  # source://udb//../../udb/lib/udb/condition.rb#1435
   sig { override.returns(T::Boolean) }
   def has_param?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1459
+  # source://udb//../../udb/lib/udb/condition.rb#1458
   sig { override.params(expand: T::Boolean).returns(T::Array[::Udb::ConditionalExtensionRequirement]) }
   def implied_extension_conflicts(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1456
+  # source://udb//../../udb/lib/udb/condition.rb#1455
   sig { override.params(expand: T::Boolean).returns(T::Array[::Udb::ConditionalExtensionRequirement]) }
   def implied_extension_requirements(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1433
+  # source://udb//../../udb/lib/udb/condition.rb#1432
   sig { override.params(expand: T::Boolean).returns(::Udb::AbstractCondition) }
   def minimize(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1421
+  # source://udb//../../udb/lib/udb/condition.rb#1420
   sig do
     override
       .params(
@@ -2173,7 +2158,7 @@ class Udb::AlwaysTrueCondition < ::Udb::AbstractCondition
   end
   def partial_eval(ext_reqs: T.unsafe(nil), expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1418
+  # source://udb//../../udb/lib/udb/condition.rb#1417
   sig do
     override
       .params(
@@ -2183,66 +2168,66 @@ class Udb::AlwaysTrueCondition < ::Udb::AbstractCondition
   end
   def partially_evaluate_for_params(cfg_arch, expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1427
+  # source://udb//../../udb/lib/udb/condition.rb#1426
   sig { override.params(ext_req: ::Udb::ExtensionRequirement, include_requirements: T::Boolean).returns(T::Boolean) }
   def satisfiability_depends_on_ext_req?(ext_req, include_requirements: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1477
+  # source://udb//../../udb/lib/udb/condition.rb#1476
   sig { override.returns(T::Boolean) }
   def satisfiable?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1415
+  # source://udb//../../udb/lib/udb/condition.rb#1414
   sig { override.params(_cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::SatisfiedResult) }
   def satisfied_by_cfg_arch?(_cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1424
+  # source://udb//../../udb/lib/udb/condition.rb#1423
   sig { override.params(ext_req: ::Udb::ExtensionRequirement, include_requirements: T::Boolean).returns(T::Boolean) }
   def satisfied_by_ext_req?(ext_req, include_requirements: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1453
+  # source://udb//../../udb/lib/udb/condition.rb#1452
   sig { override.returns(::String) }
   def to_asciidoc; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1410
+  # source://udb//../../udb/lib/udb/condition.rb#1409
   sig { override.returns(T.any(T::Boolean, T::Hash[::String, T.untyped])) }
   def to_h; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1439
+  # source://udb//../../udb/lib/udb/condition.rb#1438
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1393
+  # source://udb//../../udb/lib/udb/condition.rb#1392
   sig { override.params(expand: T::Boolean).returns(::Udb::LogicNode) }
   def to_logic_tree(expand: T.unsafe(nil)); end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/condition.rb#1402
+  # source://udb//../../udb/lib/udb/condition.rb#1401
   sig { override.returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1442
+  # source://udb//../../udb/lib/udb/condition.rb#1441
   sig { override.params(expand: T::Boolean).returns(::String) }
   def to_s(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1445
+  # source://udb//../../udb/lib/udb/condition.rb#1444
   sig { override.returns(::String) }
   def to_s_pretty; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1450
+  # source://udb//../../udb/lib/udb/condition.rb#1449
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture, expand: T::Boolean).returns(::String) }
   def to_s_with_value(cfg_arch, expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1480
+  # source://udb//../../udb/lib/udb/condition.rb#1479
   sig { override.returns(T::Boolean) }
   def unsatisfiable?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1467
+  # source://udb//../../udb/lib/udb/condition.rb#1466
   sig { override.params(other: ::Udb::AbstractCondition).returns(::Udb::AbstractCondition) }
   def |(other); end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#19
+# source://udb//../../udb/lib/udb/condition.rb#18
 class Udb::Architecture
   # source://udb//../../udb/lib/udb/architecture.rb#72
   sig { params(arch_dir: T.any(::Pathname, ::String)).void }
@@ -2382,9 +2367,9 @@ end
 # represents a condition in the UDB data, which could include conditions involving
 # extensions and/or parameters
 #
-# source://udb//../../udb/lib/udb/condition.rb#391
+# source://udb//../../udb/lib/udb/condition.rb#390
 class Udb::Condition < ::Udb::AbstractCondition
-  # source://udb//../../udb/lib/udb/condition.rb#425
+  # source://udb//../../udb/lib/udb/condition.rb#424
   sig do
     params(
       yaml: T.any(T::Boolean, T::Hash[::String, T.untyped]),
@@ -2395,19 +2380,19 @@ class Udb::Condition < ::Udb::AbstractCondition
   end
   def initialize(yaml, cfg_arch, input_file: T.unsafe(nil), input_line: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1348
+  # source://udb//../../udb/lib/udb/condition.rb#1347
   sig { override.params(other: ::Udb::AbstractCondition).returns(::Udb::AbstractCondition) }
   def &(other); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1358
+  # source://udb//../../udb/lib/udb/condition.rb#1357
   sig { override.returns(::Udb::AbstractCondition) }
   def -@; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#434
+  # source://udb//../../udb/lib/udb/condition.rb#433
   sig { override.returns(T::Boolean) }
   def empty?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#627
+  # source://udb//../../udb/lib/udb/condition.rb#626
   sig do
     params(
       tree: ::Udb::LogicNode,
@@ -2417,29 +2402,29 @@ class Udb::Condition < ::Udb::AbstractCondition
   end
   def expand_term_requirements(tree, expansion_clauses = T.unsafe(nil), touched_terms = T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#526
+  # source://udb//../../udb/lib/udb/condition.rb#525
   sig { params(tree: ::Udb::LogicNode, expansion_clauses: T::Array[::Udb::LogicNode]).void }
   def expand_to_enforce_single_ext_ver(tree, expansion_clauses); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#805
+  # source://udb//../../udb/lib/udb/condition.rb#804
   sig { override.returns(T::Boolean) }
   def has_extension_requirement?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#800
+  # source://udb//../../udb/lib/udb/condition.rb#799
   sig { override.returns(T::Boolean) }
   def has_param?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1166
+  # source://udb//../../udb/lib/udb/condition.rb#1165
   sig { override.params(expand: T::Boolean).returns(T::Array[::Udb::ConditionalExtensionRequirement]) }
   def implied_extension_conflicts(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1092
+  # source://udb//../../udb/lib/udb/condition.rb#1091
   sig { override.params(expand: T::Boolean).returns(T::Array[::Udb::ConditionalExtensionRequirement]) }
   def implied_extension_requirements(expand: T.unsafe(nil)); end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/condition.rb#812
+  # source://udb//../../udb/lib/udb/condition.rb#811
   sig do
     params(
       blk: T.proc.params(term: T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)).returns(::Udb::SatisfiedResult)
@@ -2447,11 +2432,11 @@ class Udb::Condition < ::Udb::AbstractCondition
   end
   def make_cb_proc(&blk); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#737
+  # source://udb//../../udb/lib/udb/condition.rb#736
   sig { override.params(expand: T::Boolean).returns(::Udb::AbstractCondition) }
   def minimize(expand: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#997
+  # source://udb//../../udb/lib/udb/condition.rb#996
   sig do
     override
       .params(
@@ -2463,29 +2448,29 @@ class Udb::Condition < ::Udb::AbstractCondition
 
   # return a new condition where any parameter term with a known outcome is replaced with a true/false
   #
-  # source://udb//../../udb/lib/udb/condition.rb#818
+  # source://udb//../../udb/lib/udb/condition.rb#817
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture, expand: T::Boolean).returns(::Udb::Condition) }
   def partially_evaluate_for_params(cfg_arch, expand:); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#988
+  # source://udb//../../udb/lib/udb/condition.rb#987
   sig { override.params(ext_req: ::Udb::ExtensionRequirement, include_requirements: T::Boolean).returns(T::Boolean) }
   def satisfiability_depends_on_ext_req?(ext_req, include_requirements: T.unsafe(nil)); end
 
   # is this condition satisfiable?
   #
-  # source://udb//../../udb/lib/udb/condition.rb#726
+  # source://udb//../../udb/lib/udb/condition.rb#725
   sig { override.returns(T::Boolean) }
   def satisfiable?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#898
+  # source://udb//../../udb/lib/udb/condition.rb#897
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::SatisfiedResult) }
   def satisfied_by_cfg_arch?(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#972
+  # source://udb//../../udb/lib/udb/condition.rb#971
   sig { override.params(ext_req: ::Udb::ExtensionRequirement, include_requirements: T::Boolean).returns(T::Boolean) }
   def satisfied_by_ext_req?(ext_req, include_requirements: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#705
+  # source://udb//../../udb/lib/udb/condition.rb#704
   sig do
     type_parameters(:U)
       .params(
@@ -2494,58 +2479,58 @@ class Udb::Condition < ::Udb::AbstractCondition
   end
   def solver(&blk); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1087
+  # source://udb//../../udb/lib/udb/condition.rb#1086
   sig { override.returns(::String) }
   def to_asciidoc; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#644
+  # source://udb//../../udb/lib/udb/condition.rb#643
   def to_expanded_logic_tree_shallow; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1013
+  # source://udb//../../udb/lib/udb/condition.rb#1012
   sig { override.returns(T.any(T::Boolean, T::Hash[::String, T.untyped])) }
   def to_h; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1018
+  # source://udb//../../udb/lib/udb/condition.rb#1017
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#660
+  # source://udb//../../udb/lib/udb/condition.rb#659
   sig { override.params(expand: T::Boolean).returns(::Udb::LogicNode) }
   def to_logic_tree(expand:); end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/condition.rb#746
+  # source://udb//../../udb/lib/udb/condition.rb#745
   sig { override.returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1024
+  # source://udb//../../udb/lib/udb/condition.rb#1023
   sig { override.params(expand: T::Boolean).returns(::String) }
   def to_s(expand: T.unsafe(nil)); end
 
   # return the condition in a nice, human-readable form
   #
-  # source://udb//../../udb/lib/udb/condition.rb#1030
+  # source://udb//../../udb/lib/udb/condition.rb#1029
   sig { override.returns(::String) }
   def to_s_pretty; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1035
+  # source://udb//../../udb/lib/udb/condition.rb#1034
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture, expand: T::Boolean).returns(::String) }
   def to_s_with_value(cfg_arch, expand: T.unsafe(nil)); end
 
   # is this condition unsatisfiable?
   #
-  # source://udb//../../udb/lib/udb/condition.rb#732
+  # source://udb//../../udb/lib/udb/condition.rb#731
   sig { override.returns(T::Boolean) }
   def unsatisfiable?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1353
+  # source://udb//../../udb/lib/udb/condition.rb#1352
   sig { override.params(other: ::Udb::AbstractCondition).returns(::Udb::AbstractCondition) }
   def |(other); end
 
   private
 
-  # source://udb//../../udb/lib/udb/condition.rb#437
+  # source://udb//../../udb/lib/udb/condition.rb#436
   sig do
     params(
       term: ::Udb::ExtensionTerm,
@@ -2555,11 +2540,11 @@ class Udb::Condition < ::Udb::AbstractCondition
   end
   def expand_extension_term_requirements(term, expansion_clauses, touched_terms); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#453
+  # source://udb//../../udb/lib/udb/condition.rb#452
   sig { params(tree: ::Udb::LogicNode, expansion_clauses: T::Array[::Udb::LogicNode]).void }
   def expand_extension_version_ranges(tree, expansion_clauses); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#556
+  # source://udb//../../udb/lib/udb/condition.rb#555
   sig do
     params(
       term: ::Udb::ParameterTerm,
@@ -2569,22 +2554,22 @@ class Udb::Condition < ::Udb::AbstractCondition
   end
   def expand_parameter_term_requirements(term, expansion_clauses, touched_terms); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#592
+  # source://udb//../../udb/lib/udb/condition.rb#591
   sig { params(tree: ::Udb::LogicNode, expansion_clauses: T::Array[::Udb::LogicNode]).void }
   def expand_to_enforce_param_relations(tree, expansion_clauses); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#618
+  # source://udb//../../udb/lib/udb/condition.rb#617
   sig { params(tree: ::Udb::LogicNode, expansion_clauses: T::Array[::Udb::LogicNode]).void }
   def expand_xlen(tree, expansion_clauses); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#756
+  # source://udb//../../udb/lib/udb/condition.rb#755
   sig { overridable.params(yaml: T.any(T::Boolean, T::Hash[::String, T.untyped])).returns(::Udb::LogicNode) }
   def to_logic_tree_helper(yaml); end
 
   class << self
     # return a new Condition that the logical AND of conditions
     #
-    # source://udb//../../udb/lib/udb/condition.rb#1259
+    # source://udb//../../udb/lib/udb/condition.rb#1258
     sig do
       params(
         conditions: T::Array[::Udb::AbstractCondition],
@@ -2595,7 +2580,7 @@ class Udb::Condition < ::Udb::AbstractCondition
 
     # return a new Condition that the logical OR of conditions
     #
-    # source://udb//../../udb/lib/udb/condition.rb#1283
+    # source://udb//../../udb/lib/udb/condition.rb#1282
     sig do
       params(
         conditions: T::Array[::Udb::AbstractCondition],
@@ -2604,7 +2589,7 @@ class Udb::Condition < ::Udb::AbstractCondition
     end
     def disjunction(conditions, cfg_arch); end
 
-    # source://udb//../../udb/lib/udb/condition.rb#402
+    # source://udb//../../udb/lib/udb/condition.rb#401
     sig do
       params(
         cfg_arch: ::Udb::ConfiguredArchitecture,
@@ -2613,7 +2598,7 @@ class Udb::Condition < ::Udb::AbstractCondition
     end
     def join(cfg_arch, conds); end
 
-    # source://udb//../../udb/lib/udb/condition.rb#1330
+    # source://udb//../../udb/lib/udb/condition.rb#1329
     sig do
       params(
         condition: ::Udb::AbstractCondition,
@@ -2624,7 +2609,7 @@ class Udb::Condition < ::Udb::AbstractCondition
 
     # return a new Condition that the logical XOR of conditions
     #
-    # source://udb//../../udb/lib/udb/condition.rb#1307
+    # source://udb//../../udb/lib/udb/condition.rb#1306
     sig do
       params(
         conditions: T::Array[::Udb::AbstractCondition],
@@ -2633,15 +2618,15 @@ class Udb::Condition < ::Udb::AbstractCondition
     end
     def one_of(conditions, cfg_arch); end
 
-    # source://udb//../../udb/lib/udb/condition.rb#696
+    # source://udb//../../udb/lib/udb/condition.rb#695
     def solver; end
   end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#809
+# source://udb//../../udb/lib/udb/condition.rb#808
 Udb::Condition::EvalCallbackType = T.type_alias { T.proc.params(term: T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)).returns(::Udb::SatisfiedResult) }
 
-# source://udb//../../udb/lib/udb/condition.rb#412
+# source://udb//../../udb/lib/udb/condition.rb#411
 class Udb::Condition::MemoizedState < ::T::Struct
   prop :satisfied_by_cfg_arch, T::Hash[::Udb::ConfiguredArchitecture, ::Udb::SatisfiedResult]
 
@@ -2651,15 +2636,15 @@ class Udb::Condition::MemoizedState < ::T::Struct
   end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#1745
+# source://udb//../../udb/lib/udb/condition.rb#1744
 Udb::Condition::Xlen32 = T.let(T.unsafe(nil), Udb::XlenCondition)
 
-# source://udb//../../udb/lib/udb/condition.rb#1746
+# source://udb//../../udb/lib/udb/condition.rb#1745
 Udb::Condition::Xlen64 = T.let(T.unsafe(nil), Udb::XlenCondition)
 
 # an ExtensionRequirement that only applies when cond is true
 #
-# source://udb//../../udb/lib/udb/condition.rb#27
+# source://udb//../../udb/lib/udb/condition.rb#26
 class Udb::ConditionalExtensionRequirement < ::T::Struct
   prop :ext_req, ::Udb::ExtensionRequirement
   prop :cond, ::Udb::AbstractCondition
@@ -2672,7 +2657,7 @@ end
 
 # an ExtensionVersion that only applies when cond is true
 #
-# source://udb//../../udb/lib/udb/condition.rb#33
+# source://udb//../../udb/lib/udb/condition.rb#32
 class Udb::ConditionalExtensionVersion < ::T::Struct
   prop :ext_ver, ::Udb::ExtensionVersion
   prop :cond, ::Udb::AbstractCondition
@@ -2692,7 +2677,7 @@ class Udb::ConfigType < ::T::Enum
   end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#20
+# source://udb//../../udb/lib/udb/condition.rb#19
 class Udb::ConfiguredArchitecture < ::Udb::Architecture
   # Initialize a new configured architecture definition
   #
@@ -3267,9 +3252,9 @@ end
 
 # wrapper around an IDL function containing constraints
 #
-# source://udb//../../udb/lib/udb/condition.rb#39
+# source://udb//../../udb/lib/udb/condition.rb#38
 class Udb::Constraint
-  # source://udb//../../udb/lib/udb/condition.rb#54
+  # source://udb//../../udb/lib/udb/condition.rb#53
   sig do
     params(
       idl: ::String,
@@ -3281,29 +3266,29 @@ class Udb::Constraint
   end
   def initialize(idl, input_file:, input_line:, cfg_arch:, reason: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#68
+  # source://udb//../../udb/lib/udb/condition.rb#67
   sig { params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def eval(symtab); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#43
+  # source://udb//../../udb/lib/udb/condition.rb#42
   sig { returns(T.nilable(::String)) }
   def reason; end
 
   # convert into a pure UDB condition
   #
-  # source://udb//../../udb/lib/udb/condition.rb#74
+  # source://udb//../../udb/lib/udb/condition.rb#73
   sig { returns(T.any(T::Boolean, T::Hash[::String, T.untyped])) }
   def to_h; end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/condition.rb#92
+  # source://udb//../../udb/lib/udb/condition.rb#91
   sig { returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 
   # convert into a pure UDB condition
   #
-  # source://udb//../../udb/lib/udb/condition.rb#84
+  # source://udb//../../udb/lib/udb/condition.rb#83
   sig { returns(::String) }
   def to_yaml; end
 end
@@ -3825,7 +3810,7 @@ Udb::CsrField::TYPE_DESC_MAP = T.let(T.unsafe(nil), Hash)
 
 # a bunch of useful methods for both proper top-level DatabaseObject and sub-objects like CsrField
 #
-# source://udb//../../udb/lib/udb/condition.rb#17
+# source://udb//../../udb/lib/udb/condition.rb#16
 class Udb::DatabaseObject
   # source://udb//../../udb/lib/udb/obj/database_obj.rb#89
   sig do
@@ -4156,7 +4141,7 @@ end
 
 # Extension definition
 #
-# source://udb//../../udb/lib/udb/condition.rb#21
+# source://udb//../../udb/lib/udb/condition.rb#20
 class Udb::Extension < ::Udb::TopLevelDatabaseObject
   include ::Udb::CertifiableObject
   include ::Comparable
@@ -4325,13 +4310,13 @@ class Udb::Extension::ConditionallyApplicableParameter < ::T::Struct
   end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#1643
+# source://udb//../../udb/lib/udb/condition.rb#1642
 class Udb::ExtensionCondition < ::Udb::Condition
-  # source://udb//../../udb/lib/udb/condition.rb#1647
+  # source://udb//../../udb/lib/udb/condition.rb#1646
   sig { params(yaml: T::Hash[::String, T.untyped], cfg_arch: ::Udb::ConfiguredArchitecture).void }
   def initialize(yaml, cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1652
+  # source://udb//../../udb/lib/udb/condition.rb#1651
   sig { override.returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 
@@ -4340,18 +4325,18 @@ class Udb::ExtensionCondition < ::Udb::Condition
   # convert an ExtensionRequirement into a logic tree
   # if expand is true, also add requirements of the extension and all satisfing versions to the tree
   #
-  # source://udb//../../udb/lib/udb/condition.rb#1664
+  # source://udb//../../udb/lib/udb/condition.rb#1663
   sig { params(yaml: T::Hash[::String, T.untyped], cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::LogicNode) }
   def ext_req_to_logic_node(yaml, cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1678
+  # source://udb//../../udb/lib/udb/condition.rb#1677
   sig { override.params(yaml: T.any(T::Boolean, T::Hash[::String, T.untyped])).returns(::Udb::LogicNode) }
   def to_logic_tree_helper(yaml); end
 end
 
 # Represents an extension requirement, that is an extension name paired with version requirement(s)
 #
-# source://udb//../../udb/lib/udb/condition.rb#23
+# source://udb//../../udb/lib/udb/condition.rb#22
 class Udb::ExtensionRequirement
   # source://udb//../../udb/lib/udb/obj/extension.rb#1332
   sig do
@@ -4595,30 +4580,30 @@ end
 
 # a conditional list of extension requirements
 #
-# source://udb//../../udb/lib/udb/condition.rb#1825
+# source://udb//../../udb/lib/udb/condition.rb#1824
 class Udb::ExtensionRequirementList
-  # source://udb//../../udb/lib/udb/condition.rb#1836
+  # source://udb//../../udb/lib/udb/condition.rb#1835
   sig { params(yaml: T::Hash[::String, T.untyped], cfg_arch: ::Udb::ConfiguredArchitecture).void }
   def initialize(yaml, cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1856
+  # source://udb//../../udb/lib/udb/condition.rb#1855
   sig { params(yaml: T::Hash[::String, T.untyped], l: T::Array[::Udb::ConditionalExtensionRequirement]).void }
   def do_list(yaml, l); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1876
+  # source://udb//../../udb/lib/udb/condition.rb#1875
   sig { returns(T::Array[::Udb::ConditionalExtensionVersion]) }
   def implied_extension_versions; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1867
+  # source://udb//../../udb/lib/udb/condition.rb#1866
   sig { returns(T::Array[::Udb::ConditionalExtensionRequirement]) }
   def list; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1844
+  # source://udb//../../udb/lib/udb/condition.rb#1843
   sig { params(yaml: T::Hash[::String, T.untyped]).returns(::Udb::ConditionalExtensionRequirement) }
   def make_cond_ext_req(yaml); end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#1828
+# source://udb//../../udb/lib/udb/condition.rb#1827
 class Udb::ExtensionRequirementList::ParseState < ::T::Enum
   enums do
     Condition = new
@@ -4629,11 +4614,11 @@ end
 # a terminal for an Extension with a version specifier (a-la an ExtensionRequirement)
 # we don't use ExtensionRequirement for terminals just to keep LogicNode independent of the rest of UDB
 #
-# source://udb//../../udb/lib/udb/logic.rb#112
+# source://udb//../../udb/lib/udb/logic.rb#111
 class Udb::ExtensionTerm
   include ::Comparable
 
-  # source://udb//../../udb/lib/udb/logic.rb#145
+  # source://udb//../../udb/lib/udb/logic.rb#144
   sig do
     params(
       name: ::String,
@@ -4643,85 +4628,85 @@ class Udb::ExtensionTerm
   end
   def initialize(name, op, ver); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#258
+  # source://udb//../../udb/lib/udb/logic.rb#257
   sig { override.params(other: T.untyped).returns(T.nilable(::Integer)) }
   def <=>(other); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#142
+  # source://udb//../../udb/lib/udb/logic.rb#141
   sig { returns(::Udb::ExtensionTerm::ComparisonOp) }
   def comparison; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#291
+  # source://udb//../../udb/lib/udb/logic.rb#290
   sig { override.params(other: T.untyped).returns(T::Boolean) }
   def eql?(other); end
 
   # hash and eql? must be implemented to use ExtensionTerm as a Hash key
   #
-  # source://udb//../../udb/lib/udb/logic.rb#283
+  # source://udb//../../udb/lib/udb/logic.rb#282
   sig { override.returns(::Integer) }
   def hash; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#159
+  # source://udb//../../udb/lib/udb/logic.rb#158
   sig { returns(T::Boolean) }
   def matches_any_version?; end
 
   # return the maximum version possible that would satisfy this term
   #
-  # source://udb//../../udb/lib/udb/logic.rb#235
+  # source://udb//../../udb/lib/udb/logic.rb#234
   sig { returns(::Udb::VersionSpec) }
   def max_possible_version; end
 
   # return the minimum version possible that would satisfy this term
   #
-  # source://udb//../../udb/lib/udb/logic.rb#220
+  # source://udb//../../udb/lib/udb/logic.rb#219
   def min_possible_version; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#136
+  # source://udb//../../udb/lib/udb/logic.rb#135
   sig { returns(::String) }
   def name; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#209
+  # source://udb//../../udb/lib/udb/logic.rb#208
   sig { returns(::Udb::RequirementSpec) }
   def requirement_spec; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#177
+  # source://udb//../../udb/lib/udb/logic.rb#176
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::Condition) }
   def to_condition(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#164
+  # source://udb//../../udb/lib/udb/logic.rb#163
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::ExtensionRequirement) }
   def to_ext_req(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#170
+  # source://udb//../../udb/lib/udb/logic.rb#169
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::ExtensionVersion) }
   def to_ext_ver(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#192
+  # source://udb//../../udb/lib/udb/logic.rb#191
   sig { returns(T::Hash[::String, ::String]) }
   def to_h; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#200
+  # source://udb//../../udb/lib/udb/logic.rb#199
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#182
+  # source://udb//../../udb/lib/udb/logic.rb#181
   sig { override.returns(::String) }
   def to_s; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#187
+  # source://udb//../../udb/lib/udb/logic.rb#186
   sig { returns(::String) }
   def to_s_pretty; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#214
+  # source://udb//../../udb/lib/udb/logic.rb#213
   sig { params(solver: ::Udb::Z3Solver, cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Z3::BoolExpr) }
   def to_z3(solver, cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#139
+  # source://udb//../../udb/lib/udb/logic.rb#138
   sig { returns(::Udb::VersionSpec) }
   def version; end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#116
+# source://udb//../../udb/lib/udb/logic.rb#115
 class Udb::ExtensionTerm::ComparisonOp < ::T::Enum
   include ::Comparable
 
@@ -4736,16 +4721,16 @@ class Udb::ExtensionTerm::ComparisonOp < ::T::Enum
 
   # @return [Boolean]
   #
-  # source://udb//../../udb/lib/udb/logic.rb#119
+  # source://udb//../../udb/lib/udb/logic.rb#118
   def eql?(other); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#123
+  # source://udb//../../udb/lib/udb/logic.rb#122
   def hash; end
 end
 
 # A specific version of an extension
 #
-# source://udb//../../udb/lib/udb/condition.rb#22
+# source://udb//../../udb/lib/udb/condition.rb#21
 class Udb::ExtensionVersion
   include ::Comparable
 
@@ -5053,25 +5038,25 @@ end
 #
 # @api private
 #
-# source://udb//../../udb/lib/udb/logic.rb#1103
+# source://udb//../../udb/lib/udb/logic.rb#1102
 class Udb::FreeTerm
   include ::Comparable
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1113
+  # source://udb//../../udb/lib/udb/logic.rb#1112
   sig { void }
   def initialize; end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1142
+  # source://udb//../../udb/lib/udb/logic.rb#1146
   sig { override.params(other: T.untyped).returns(T.nilable(::Integer)) }
   def <=>(other); end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1162
+  # source://udb//../../udb/lib/udb/logic.rb#1166
   sig { override.params(other: T.untyped).returns(T::Boolean) }
   def eql?(other); end
 
@@ -5079,38 +5064,44 @@ class Udb::FreeTerm
   #
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1154
+  # source://udb//../../udb/lib/udb/logic.rb#1158
   sig { override.returns(::Integer) }
   def hash; end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1110
+  # source://udb//../../udb/lib/udb/logic.rb#1109
   sig { returns(::Integer) }
   def id; end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1131
+  # source://udb//../../udb/lib/udb/logic.rb#1135
   def to_h; end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1127
+  # source://udb//../../udb/lib/udb/logic.rb#1131
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1122
+  # source://udb//../../udb/lib/udb/logic.rb#1121
   sig { override.returns(::String) }
   def to_s; end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1134
+  # source://udb//../../udb/lib/udb/logic.rb#1138
   sig { returns(::String) }
   def to_s_pretty; end
+
+  # @api private
+  #
+  # source://udb//../../udb/lib/udb/logic.rb#1126
+  sig { returns(::Z3::BoolExpr) }
+  def to_z3; end
 end
 
 # This class represents a configuration that is "fully-configured" (e.g., SoC tapeout or fully-configured IP). #
@@ -5154,9 +5145,9 @@ class Udb::FullConfig < ::Udb::AbstractConfig
   def unconfigured?; end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#1749
+# source://udb//../../udb/lib/udb/condition.rb#1748
 class Udb::IdlCondition < ::Udb::Condition
-  # source://udb//../../udb/lib/udb/condition.rb#1763
+  # source://udb//../../udb/lib/udb/condition.rb#1762
   sig do
     params(
       yaml: T::Hash[::String, T.untyped],
@@ -5167,23 +5158,23 @@ class Udb::IdlCondition < ::Udb::Condition
   end
   def initialize(yaml, cfg_arch, input_file:, input_line:); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1770
+  # source://udb//../../udb/lib/udb/condition.rb#1769
   sig { returns(::Udb::Constraint) }
   def constraint; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1752
+  # source://udb//../../udb/lib/udb/condition.rb#1751
   sig { returns(::String) }
   def reason; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1785
+  # source://udb//../../udb/lib/udb/condition.rb#1784
   sig { override.returns(T.any(T::Boolean, T::Hash[::String, T.untyped])) }
   def to_h; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1788
+  # source://udb//../../udb/lib/udb/condition.rb#1787
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1780
+  # source://udb//../../udb/lib/udb/condition.rb#1779
   sig { override.returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 end
@@ -5862,17 +5853,17 @@ class Udb::LogLevel < ::T::Enum
   def rank; end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#1363
+# source://udb//../../udb/lib/udb/condition.rb#1362
 class Udb::LogicCondition < ::Udb::Condition
-  # source://udb//../../udb/lib/udb/condition.rb#1366
+  # source://udb//../../udb/lib/udb/condition.rb#1365
   sig { params(logic_node: ::Udb::LogicNode, cfg_arch: ::Udb::ConfiguredArchitecture).void }
   def initialize(logic_node, cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1373
+  # source://udb//../../udb/lib/udb/condition.rb#1372
   sig { override.returns(T::Boolean) }
   def empty?; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1376
+  # source://udb//../../udb/lib/udb/condition.rb#1375
   sig { override.returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 end
@@ -5881,7 +5872,7 @@ end
 #
 # source://udb//../../udb/lib/udb/eqn.rb#14
 class Udb::LogicNode
-  # source://udb//../../udb/lib/udb/logic.rb#1258
+  # source://udb//../../udb/lib/udb/logic.rb#1262
   sig do
     params(
       type: ::Udb::LogicNodeType,
@@ -5890,11 +5881,11 @@ class Udb::LogicNode
   end
   def initialize(type, children); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3031
-  sig { params(other: ::Udb::LogicNode).returns(T::Boolean) }
+  # source://udb//../../udb/lib/udb/logic.rb#3001
+  sig { params(other: T.untyped).returns(T.untyped) }
   def always_implies?(other); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1217
+  # source://udb//../../udb/lib/udb/logic.rb#1221
   sig do
     returns(T::Array[T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::LogicNode, ::Udb::ParameterTerm, ::Udb::XlenTerm)])
   end
@@ -5902,7 +5893,7 @@ class Udb::LogicNode
 
   # returns true iff tree is in Conjunctive Normal Form
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2800
+  # source://udb//../../udb/lib/udb/logic.rb#2804
   sig { returns(T::Boolean) }
   def cnf?; end
 
@@ -5910,25 +5901,25 @@ class Udb::LogicNode
   #
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2862
+  # source://udb//../../udb/lib/udb/logic.rb#2866
   sig { returns(T::Boolean) }
   def cnf_conjunction_term?; end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#3315
+  # source://udb//../../udb/lib/udb/logic.rb#3274
   sig { params(subformulae: T::Array[::Udb::LogicNode]).void }
   def collect_tseytin(subformulae); end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#3302
+  # source://udb//../../udb/lib/udb/logic.rb#3261
   sig { returns(::Udb::LogicNode) }
   def distribute_not; end
 
   # returns true iff tree is in Disjunctive Normal Form
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2834
+  # source://udb//../../udb/lib/udb/logic.rb#2838
   sig { returns(T::Boolean) }
   def dnf?; end
 
@@ -5936,11 +5927,11 @@ class Udb::LogicNode
   #
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2889
+  # source://udb//../../udb/lib/udb/logic.rb#2893
   sig { returns(T::Boolean) }
   def dnf_disjunctive_term?; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3223
+  # source://udb//../../udb/lib/udb/logic.rb#3182
   sig do
     params(
       tree: ::Udb::LogicNode,
@@ -5949,20 +5940,20 @@ class Udb::LogicNode
   end
   def do_to_eqntott(tree, term_map); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3697
+  # source://udb//../../udb/lib/udb/logic.rb#3656
   sig { override.params(other: T.untyped).returns(T::Boolean) }
   def eql?(other); end
 
   # coverts self to an equisatisfiable formula in Conjunctive Normal Form
   # and returns it as a new formula (self is unmodified)
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2773
+  # source://udb//../../udb/lib/udb/logic.rb#2777
   sig { returns(::Udb::LogicNode) }
   def equisat_cnf; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3166
-  sig { params(other: ::Udb::LogicNode).returns(T::Boolean) }
-  def equisatisfiable?(other); end
+  # source://udb//../../udb/lib/udb/logic.rb#3125
+  sig { params(other: ::Udb::LogicNode, cfg_arch: ::Udb::ConfiguredArchitecture).returns(T::Boolean) }
+  def equisatisfiable?(other, cfg_arch); end
 
   # coverts self to an equivalent formula in Conjunctive Normal Form
   # and returns it as a new formula (self is unmodified)
@@ -5970,21 +5961,21 @@ class Udb::LogicNode
   # iteratively uses Demorgan's Laws. May explode since the worst case
   # is exponential in the number of clauses
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2749
+  # source://udb//../../udb/lib/udb/logic.rb#2753
   sig { params(raise_on_explosion: T::Boolean).returns(::Udb::LogicNode) }
   def equiv_cnf(raise_on_explosion: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3176
-  sig { params(other: ::Udb::LogicNode).returns(T::Boolean) }
-  def equivalent?(other); end
+  # source://udb//../../udb/lib/udb/logic.rb#3135
+  sig { params(other: ::Udb::LogicNode, cfg_arch: ::Udb::ConfiguredArchitecture).returns(T::Boolean) }
+  def equivalent?(other, cfg_arch); end
 
   # minimize the function using espresso
   #
-  # source://udb//../../udb/lib/udb/logic.rb#3550
+  # source://udb//../../udb/lib/udb/logic.rb#3509
   sig { params(result_type: ::Udb::LogicNode::CanonicalizationType, exact: T::Boolean).returns(::Udb::LogicNode) }
   def espresso(result_type, exact); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1686
+  # source://udb//../../udb/lib/udb/logic.rb#1690
   sig do
     params(
       callback: T.proc.params(arg0: T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)).returns(::Udb::SatisfiedResult)
@@ -5992,56 +5983,56 @@ class Udb::LogicNode
   end
   def eval_cb(callback); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3461
+  # source://udb//../../udb/lib/udb/logic.rb#3420
   sig { params(dimacs: ::String).returns(::Udb::LogicNode) }
   def from_dimacs(dimacs); end
 
   # @example
   #   (A || B || C) => ((A || B) || C)
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2370
+  # source://udb//../../udb/lib/udb/logic.rb#2374
   sig { returns(::Udb::LogicNode) }
   def group_by_2; end
 
   # does each node have at most two children?
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2345
+  # source://udb//../../udb/lib/udb/logic.rb#2349
   sig { params(node: ::Udb::LogicNode).returns(T::Boolean) }
   def grouped_by_2?(node); end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#3694
+  # source://udb//../../udb/lib/udb/logic.rb#3653
   sig { override.returns(::Integer) }
   def hash; end
 
   # unlike #terms, this list will include leaves that are equivalent
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1373
+  # source://udb//../../udb/lib/udb/logic.rb#1377
   sig { returns(T::Array[T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)]) }
   def literals; end
 
   # Returns the value of attribute memo.
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1255
+  # source://udb//../../udb/lib/udb/logic.rb#1259
   def memo; end
 
   # Sets the attribute memo
   #
   # @param value the value to set the attribute memo to.
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1255
+  # source://udb//../../udb/lib/udb/logic.rb#1259
   def memo=(_arg0); end
 
   # return minimally unsatisfiable subsets of the unstatisfiable formula
   #
-  # source://udb//../../udb/lib/udb/logic.rb#3507
+  # source://udb//../../udb/lib/udb/logic.rb#3466
   sig { returns(T::Array[::Udb::LogicNode]) }
   def minimal_unsat_subsets; end
 
   # convert to either sum-of-products form or product-of-sums form and minimize the result
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1636
+  # source://udb//../../udb/lib/udb/logic.rb#1640
   sig { params(result_type: ::Udb::LogicNode::CanonicalizationType).returns(::Udb::LogicNode) }
   def minimize(result_type); end
 
@@ -6049,7 +6040,7 @@ class Udb::LogicNode
   # allows nested ANDs as long as there is no ancestor OR
   # allows nested ORs as long as there is no decendent AND
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2960
+  # source://udb//../../udb/lib/udb/logic.rb#2964
   sig { returns(T::Boolean) }
   def nested_cnf?; end
 
@@ -6057,28 +6048,28 @@ class Udb::LogicNode
   #
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2916
+  # source://udb//../../udb/lib/udb/logic.rb#2920
   sig { params(ancestor_or: T::Boolean).returns(T::Boolean) }
   def nested_cnf_conjunction_term?(ancestor_or); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#2216
+  # source://udb//../../udb/lib/udb/logic.rb#2220
   sig { returns(::Udb::LogicNode) }
   def nnf; end
 
   # @return [Boolean] true iff self is in Negation Normal Form
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2221
+  # source://udb//../../udb/lib/udb/logic.rb#2225
   def nnf?; end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1298
+  # source://udb//../../udb/lib/udb/logic.rb#1302
   sig { returns(T::Array[::Udb::LogicNode]) }
   def node_children; end
 
   # partially evalute -- replace anything known with true/false, and otherwise leave it alone
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1790
+  # source://udb//../../udb/lib/udb/logic.rb#1794
   sig do
     params(
       cb: T.proc.params(arg0: T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)).returns(::Udb::SatisfiedResult)
@@ -6096,67 +6087,67 @@ class Udb::LogicNode
   # false -> A                 => true
   # true  -> A                 => A
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2601
+  # source://udb//../../udb/lib/udb/logic.rb#2605
   sig { returns(::Udb::LogicNode) }
   def reduce; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1668
+  # source://udb//../../udb/lib/udb/logic.rb#1672
   sig { params(callback: T.proc.params(arg0: ::Udb::LogicNode).returns(::Udb::LogicNode)).returns(::Udb::LogicNode) }
   def replace_terms(callback); end
 
   # If ext_req is false, can this logic tree be satisfied?
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1325
+  # source://udb//../../udb/lib/udb/logic.rb#1329
   sig { params(ext_req: ::Udb::ExtensionRequirement).returns(T::Boolean) }
   def satisfiability_depends_on_ext_req?(ext_req); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3091
-  sig { returns(T::Boolean) }
-  def satisfiable?; end
+  # source://udb//../../udb/lib/udb/logic.rb#3063
+  sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(T::Boolean) }
+  def satisfiable?(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1349
+  # source://udb//../../udb/lib/udb/logic.rb#1353
   sig { returns(T::Array[T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)]) }
   def terms; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1360
+  # source://udb//../../udb/lib/udb/logic.rb#1364
   sig { returns(T::Array[T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)]) }
   def terms_no_antecendents; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1968
+  # source://udb//../../udb/lib/udb/logic.rb#1972
   sig { params(include_versions: T::Boolean).returns(::String) }
   def to_asciidoc(include_versions:); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3420
+  # source://udb//../../udb/lib/udb/logic.rb#3379
   sig { returns(::String) }
   def to_dimacs; end
 
   # return equation suitable for `eqntott` input
   #
-  # source://udb//../../udb/lib/udb/logic.rb#3256
+  # source://udb//../../udb/lib/udb/logic.rb#3215
   sig { returns(::Udb::LogicNode::EqntottResult) }
   def to_eqntott; end
 
   # convert to a UDB schema
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2043
+  # source://udb//../../udb/lib/udb/logic.rb#2047
   sig { params(term_determined: T::Boolean).returns(T.any(T::Boolean, T::Hash[::String, T.untyped])) }
   def to_h(term_determined = T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#2018
+  # source://udb//../../udb/lib/udb/logic.rb#2022
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1906
+  # source://udb//../../udb/lib/udb/logic.rb#1910
   sig { params(format: ::Udb::LogicNode::LogicSymbolFormat).returns(::String) }
   def to_s(format: T.unsafe(nil)); end
 
   # return a nice, human-readable form that may gloss over details
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1856
+  # source://udb//../../udb/lib/udb/logic.rb#1860
   sig { returns(::String) }
   def to_s_pretty; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1931
+  # source://udb//../../udb/lib/udb/logic.rb#1935
   sig do
     params(
       callback: T.proc.params(arg0: T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)).returns(::Udb::SatisfiedResult),
@@ -6165,46 +6156,35 @@ class Udb::LogicNode
   end
   def to_s_with_value(callback, format: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3045
+  # source://udb//../../udb/lib/udb/logic.rb#3015
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture, solver: ::Udb::Z3Solver).returns(::Z3::BoolExpr) }
   def to_z3(cfg_arch, solver = T.unsafe(nil)); end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#3401
+  # source://udb//../../udb/lib/udb/logic.rb#3360
   sig { returns(::Udb::LogicNode) }
   def tseytin; end
 
   # a free variable representing this formula
   #
-  # source://udb//../../udb/lib/udb/logic.rb#3389
+  # source://udb//../../udb/lib/udb/logic.rb#3348
   sig { returns(::Udb::LogicNode) }
   def tseytin_prop; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1214
+  # source://udb//../../udb/lib/udb/logic.rb#1218
   sig { returns(::Udb::LogicNodeType) }
   def type; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#3163
-  sig { returns(T::Boolean) }
-  def unsatisfiable?; end
+  # source://udb//../../udb/lib/udb/logic.rb#3122
+  sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(T::Boolean) }
+  def unsatisfiable?(cfg_arch); end
 
   private
 
-  # source://udb//../../udb/lib/udb/logic.rb#2997
-  sig do
-    params(
-      solver: ::MiniSat::Solver,
-      node: ::Udb::LogicNode,
-      term_map: T::Hash[T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm), ::MiniSat::Variable],
-      cur_or: T.nilable(T::Array[T.untyped])
-    ).void
-  end
-  def build_solver(solver, node, term_map, cur_or); end
-
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#3272
+  # source://udb//../../udb/lib/udb/logic.rb#3231
   sig { params(node: ::Udb::LogicNode).returns(::Udb::LogicNode) }
   def distribute_not_helper(node); end
 
@@ -6217,7 +6197,7 @@ class Udb::LogicNode
   # @example
   #   A || (B && C) => (A || B) && (A || C)
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2385
+  # source://udb//../../udb/lib/udb/logic.rb#2389
   sig do
     params(
       left: ::Udb::LogicNode,
@@ -6230,7 +6210,7 @@ class Udb::LogicNode
 
   # rewrite to Conjunctive Normal Form (i.e., product-of-sums) using Demorgan's laws
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2482
+  # source://udb//../../udb/lib/udb/logic.rb#2486
   sig do
     params(
       node: ::Udb::LogicNode,
@@ -6245,17 +6225,17 @@ class Udb::LogicNode
   # @example
   #   (A || B || C) => ((A || B) || C)
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2236
+  # source://udb//../../udb/lib/udb/logic.rb#2240
   sig { params(node: ::Udb::LogicNode).returns(::Udb::LogicNode) }
   def do_group_by_2(node); end
 
   # rewrite to Negation Normal Form
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2163
+  # source://udb//../../udb/lib/udb/logic.rb#2167
   sig { params(node: ::Udb::LogicNode).returns(::Udb::LogicNode) }
   def do_nnf(node); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#2122
+  # source://udb//../../udb/lib/udb/logic.rb#2126
   sig { params(node: ::Udb::LogicNode).returns(::Udb::LogicNode) }
   def do_nnf_for_not(node); end
 
@@ -6265,11 +6245,11 @@ class Udb::LogicNode
   # @example
   #   ((A || B) || C) => (A || B || C)
   #
-  # source://udb//../../udb/lib/udb/logic.rb#2536
+  # source://udb//../../udb/lib/udb/logic.rb#2540
   sig { params(node: ::Udb::LogicNode).returns(::Udb::LogicNode) }
   def flatten_cnf(node); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1513
+  # source://udb//../../udb/lib/udb/logic.rb#1517
   sig { params(result_type: ::Udb::LogicNode::CanonicalizationType).returns(::Udb::LogicNode) }
   def quine_mccluskey(result_type); end
 
@@ -6277,24 +6257,24 @@ class Udb::LogicNode
     # given a list of minterms/maxterms, each represented by a string of "0" and "1",
     # return the prime implicants, represented by a string of "0", "1", and "-"
     #
-    # source://udb//../../udb/lib/udb/logic.rb#1442
+    # source://udb//../../udb/lib/udb/logic.rb#1446
     sig { params(mterms: T::Array[::String], group_by: ::String).returns(::Udb::LogicNode::PrimeImplicantsResult) }
     def find_prime_implicants(mterms, group_by); end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1384
+    # source://udb//../../udb/lib/udb/logic.rb#1388
     sig { params(mterms: T::Array[::String], group_by: ::String).returns(T::Hash[::Integer, T::Array[::String]]) }
     def group_mterms(mterms, group_by); end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1190
+    # source://udb//../../udb/lib/udb/logic.rb#1194
     def inc_brute_force_sat_solves; end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1206
-    def inc_minisat_cache_hits; end
+    # source://udb//../../udb/lib/udb/logic.rb#1210
+    def inc_z3_cache_hits; end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1198
-    def inc_minisat_sat_solves; end
+    # source://udb//../../udb/lib/udb/logic.rb#1202
+    def inc_z3_sat_solves; end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1657
+    # source://udb//../../udb/lib/udb/logic.rb#1661
     sig do
       params(
         blk: T.proc.params(arg0: T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)).returns(::Udb::SatisfiedResult)
@@ -6302,7 +6282,7 @@ class Udb::LogicNode
     end
     def make_eval_cb(&blk); end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1663
+    # source://udb//../../udb/lib/udb/logic.rb#1667
     sig do
       params(
         blk: T.proc.params(arg0: ::Udb::LogicNode).returns(::Udb::LogicNode)
@@ -6310,16 +6290,16 @@ class Udb::LogicNode
     end
     def make_replace_cb(&blk); end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1186
+    # source://udb//../../udb/lib/udb/logic.rb#1190
     def num_brute_force_sat_solves; end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1202
-    def num_minisat_cache_hits; end
+    # source://udb//../../udb/lib/udb/logic.rb#1206
+    def num_z3_cache_hits; end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1194
-    def num_minisat_sat_solves; end
+    # source://udb//../../udb/lib/udb/logic.rb#1198
+    def num_z3_sat_solves; end
 
-    # source://udb//../../udb/lib/udb/logic.rb#1400
+    # source://udb//../../udb/lib/udb/logic.rb#1404
     sig do
       params(
         group1: T::Array[::String],
@@ -6330,17 +6310,17 @@ class Udb::LogicNode
 
     # @return [Boolean]
     #
-    # source://udb//../../udb/lib/udb/logic.rb#1428
+    # source://udb//../../udb/lib/udb/logic.rb#1432
     def prime_implicant_covers_mterm?(implicant, minterm); end
 
     # statistics counters
     #
-    # source://udb//../../udb/lib/udb/logic.rb#1176
+    # source://udb//../../udb/lib/udb/logic.rb#1180
     def reset_stats; end
   end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#1505
+# source://udb//../../udb/lib/udb/logic.rb#1509
 class Udb::LogicNode::CanonicalizationType < ::T::Enum
   enums do
     ProductOfSums = new
@@ -6348,10 +6328,10 @@ class Udb::LogicNode::CanonicalizationType < ::T::Enum
   end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#1211
+# source://udb//../../udb/lib/udb/logic.rb#1215
 Udb::LogicNode::ChildType = T.type_alias { T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::LogicNode, ::Udb::ParameterTerm, ::Udb::XlenTerm) }
 
-# source://udb//../../udb/lib/udb/logic.rb#1650
+# source://udb//../../udb/lib/udb/logic.rb#1654
 class Udb::LogicNode::ConditionalEndterm < ::T::Struct
   const :term, T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)
   const :cond, ::Udb::LogicNode
@@ -6362,7 +6342,7 @@ class Udb::LogicNode::ConditionalEndterm < ::T::Struct
   end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#3249
+# source://udb//../../udb/lib/udb/logic.rb#3208
 class Udb::LogicNode::EqntottResult < ::T::Struct
   const :eqn, ::String
   const :term_map, T::Hash[::String, T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)]
@@ -6373,16 +6353,16 @@ class Udb::LogicNode::EqntottResult < ::T::Struct
   end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#1655
+# source://udb//../../udb/lib/udb/logic.rb#1659
 Udb::LogicNode::EvalCallbackType = T.type_alias { T.proc.params(arg0: T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)).returns(::Udb::SatisfiedResult) }
 
-# source://udb//../../udb/lib/udb/logic.rb#1311
+# source://udb//../../udb/lib/udb/logic.rb#1315
 Udb::LogicNode::False = T.let(T.unsafe(nil), Udb::LogicNode)
 
-# source://udb//../../udb/lib/udb/logic.rb#1815
+# source://udb//../../udb/lib/udb/logic.rb#1819
 Udb::LogicNode::LOGIC_SYMBOLS = T.let(T.unsafe(nil), Hash)
 
-# source://udb//../../udb/lib/udb/logic.rb#1806
+# source://udb//../../udb/lib/udb/logic.rb#1810
 class Udb::LogicNode::LogicSymbolFormat < ::T::Enum
   enums do
     C = new
@@ -6396,7 +6376,7 @@ end
 # LogicNode type and children are frozen at construction so
 # we can safely remember and return these values
 #
-# source://udb//../../udb/lib/udb/logic.rb#1222
+# source://udb//../../udb/lib/udb/logic.rb#1226
 class Udb::LogicNode::MemoizedState < ::T::Struct
   prop :is_cnf, T.nilable(T::Boolean)
   prop :cnf_form, T.nilable(::Udb::LogicNode)
@@ -6414,7 +6394,7 @@ class Udb::LogicNode::MemoizedState < ::T::Struct
   end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#1394
+# source://udb//../../udb/lib/udb/logic.rb#1398
 class Udb::LogicNode::PairMintermsResult < ::T::Struct
   const :new_group, T::Array[::String]
   const :matched_mterms, T::Set[::String]
@@ -6425,7 +6405,7 @@ class Udb::LogicNode::PairMintermsResult < ::T::Struct
   end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#1434
+# source://udb//../../udb/lib/udb/logic.rb#1438
 class Udb::LogicNode::PrimeImplicantsResult < ::T::Struct
   const :essential, T::Array[::String]
   const :minimal, T::Array[::String]
@@ -6436,24 +6416,24 @@ class Udb::LogicNode::PrimeImplicantsResult < ::T::Struct
   end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#1661
+# source://udb//../../udb/lib/udb/logic.rb#1665
 Udb::LogicNode::ReplaceCallbackType = T.type_alias { T.proc.params(arg0: ::Udb::LogicNode).returns(::Udb::LogicNode) }
 
-# source://udb//../../udb/lib/udb/logic.rb#2470
+# source://udb//../../udb/lib/udb/logic.rb#2474
 class Udb::LogicNode::SizeExplosion < ::RuntimeError; end
 
-# source://udb//../../udb/lib/udb/logic.rb#1302
+# source://udb//../../udb/lib/udb/logic.rb#1306
 Udb::LogicNode::True = T.let(T.unsafe(nil), Udb::LogicNode)
 
-# source://udb//../../udb/lib/udb/logic.rb#1320
+# source://udb//../../udb/lib/udb/logic.rb#1324
 Udb::LogicNode::Xlen32 = T.let(T.unsafe(nil), Udb::LogicNode)
 
-# source://udb//../../udb/lib/udb/logic.rb#1321
+# source://udb//../../udb/lib/udb/logic.rb#1325
 Udb::LogicNode::Xlen64 = T.let(T.unsafe(nil), Udb::LogicNode)
 
 # node types in a boolean logic tree
 #
-# source://udb//../../udb/lib/udb/logic.rb#25
+# source://udb//../../udb/lib/udb/logic.rb#24
 class Udb::LogicNodeType < ::T::Enum
   enums do
     And = new
@@ -6768,17 +6748,17 @@ class Udb::NonIsaSpecification
   def valid_id_naming?(id); end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#1585
+# source://udb//../../udb/lib/udb/condition.rb#1584
 class Udb::ParamCondition < ::Udb::Condition
-  # source://udb//../../udb/lib/udb/condition.rb#1589
+  # source://udb//../../udb/lib/udb/condition.rb#1588
   sig { params(yaml: T::Hash[::String, T.untyped], cfg_arch: ::Udb::ConfiguredArchitecture).void }
   def initialize(yaml, cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1638
+  # source://udb//../../udb/lib/udb/condition.rb#1637
   sig { override.returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1599
+  # source://udb//../../udb/lib/udb/condition.rb#1598
   sig { params(yaml: T.any(T::Boolean, T::Hash[::String, T.untyped])).returns(::Udb::LogicNode) }
   def to_param_logic_tree_helper(yaml); end
 end
@@ -6907,85 +6887,85 @@ class Udb::Parameter::NoMatchingSchemaError < ::RuntimeError; end
 
 # a terminal for a Parameter test (e.g., MXLEN == 32)
 #
-# source://udb//../../udb/lib/udb/logic.rb#298
+# source://udb//../../udb/lib/udb/logic.rb#297
 class Udb::ParameterTerm
   include ::Comparable
 
-  # source://udb//../../udb/lib/udb/logic.rb#318
+  # source://udb//../../udb/lib/udb/logic.rb#317
   sig { params(yaml: T::Hash[::String, T.untyped]).void }
   def initialize(yaml); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1018
+  # source://udb//../../udb/lib/udb/logic.rb#1017
   sig { override.params(other: T.untyped).returns(T.nilable(::Integer)) }
   def <=>(other); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#479
+  # source://udb//../../udb/lib/udb/logic.rb#478
   sig { params(param_values: T::Hash[::String, T.untyped]).returns(::Udb::SatisfiedResult) }
   def _eval(param_values); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#335
+  # source://udb//../../udb/lib/udb/logic.rb#334
   sig { returns(T::Boolean) }
   def array_comparison?; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#385
+  # source://udb//../../udb/lib/udb/logic.rb#384
   sig { returns(::Udb::ParameterTerm::ParameterComparisonType) }
   def comparison_type; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#338
+  # source://udb//../../udb/lib/udb/logic.rb#337
   sig { returns(T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String)], T::Boolean)) }
   def comparison_value; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#1084
+  # source://udb//../../udb/lib/udb/logic.rb#1083
   sig { override.params(other: T.untyped).returns(T::Boolean) }
   def eql?(other); end
 
   # test for logical equivalence
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1092
-  sig { params(other: ::Udb::ParameterTerm).returns(T::Boolean) }
-  def equivalent?(other); end
+  # source://udb//../../udb/lib/udb/logic.rb#1091
+  sig { params(other: ::Udb::ParameterTerm, cfg_arch: ::Udb::ConfiguredArchitecture).returns(T::Boolean) }
+  def equivalent?(other, cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#514
+  # source://udb//../../udb/lib/udb/logic.rb#513
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::SatisfiedResult) }
   def eval(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#454
+  # source://udb//../../udb/lib/udb/logic.rb#453
   sig { params(value: T.untyped).returns(::Udb::SatisfiedResult) }
   def eval_value(value); end
 
   # hash and eql? must be implemented to use ParameterTerm as a Hash key
   #
-  # source://udb//../../udb/lib/udb/logic.rb#1076
+  # source://udb//../../udb/lib/udb/logic.rb#1075
   sig { override.returns(::Integer) }
   def hash; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#329
+  # source://udb//../../udb/lib/udb/logic.rb#328
   sig { returns(T.nilable(::Integer)) }
   def index; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#323
+  # source://udb//../../udb/lib/udb/logic.rb#322
   sig { returns(::String) }
   def name; end
 
   # return a negated version of self, or nil if no simple negation exists
   #
-  # source://udb//../../udb/lib/udb/logic.rb#344
+  # source://udb//../../udb/lib/udb/logic.rb#343
   sig { returns(T.nilable(::Udb::ParameterTerm)) }
   def negate; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#696
+  # source://udb//../../udb/lib/udb/logic.rb#695
   sig { returns(T::Boolean) }
   def param_is_array?; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#627
+  # source://udb//../../udb/lib/udb/logic.rb#626
   sig { returns(::String) }
   def param_to_s; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#528
+  # source://udb//../../udb/lib/udb/logic.rb#527
   sig { params(param_values: T::Hash[::String, T.untyped]).returns(::Udb::SatisfiedResult) }
   def partial_eval(param_values); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#326
+  # source://udb//../../udb/lib/udb/logic.rb#325
   sig { returns(::String) }
   def reason; end
 
@@ -6994,13 +6974,13 @@ class Udb::ParameterTerm
   # *note*: this is only one half of the relationship. to get the whole picture, need to use
   # self.relation_to(other_param) && other_param.relation_to(self)
   #
-  # source://udb//../../udb/lib/udb/logic.rb#705
+  # source://udb//../../udb/lib/udb/logic.rb#704
   sig { params(other_param: ::Udb::ParameterTerm).returns(T.nilable(::Udb::LogicNode)) }
   def relation_to(other_param); end
 
   # @api private
   #
-  # source://udb//../../udb/lib/udb/logic.rb#737
+  # source://udb//../../udb/lib/udb/logic.rb#736
   sig do
     params(
       other_param: ::Udb::ParameterTerm,
@@ -7010,39 +6990,39 @@ class Udb::ParameterTerm
   end
   def scalar_relation_to(other_param, self_implies_other, self_implies_not_other); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#332
+  # source://udb//../../udb/lib/udb/logic.rb#331
   sig { returns(T.nilable(T::Boolean)) }
   def size; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#598
+  # source://udb//../../udb/lib/udb/logic.rb#597
   def to_asciidoc; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#531
+  # source://udb//../../udb/lib/udb/logic.rb#530
   sig { returns(T::Hash[::String, T.untyped]) }
   def to_h; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#556
+  # source://udb//../../udb/lib/udb/logic.rb#555
   sig { params(cfg_arch: T.nilable(::Udb::ConfiguredArchitecture)).returns(::String) }
   def to_idl(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#551
+  # source://udb//../../udb/lib/udb/logic.rb#550
   sig { returns(::Udb::LogicNode) }
   def to_logic_node; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#641
+  # source://udb//../../udb/lib/udb/logic.rb#640
   sig { override.returns(::String) }
   def to_s; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#647
+  # source://udb//../../udb/lib/udb/logic.rb#646
   sig { returns(::String) }
   def to_s_pretty; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#408
+  # source://udb//../../udb/lib/udb/logic.rb#407
   sig { params(solver: ::Udb::Z3Solver, cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Z3::BoolExpr) }
   def to_z3(solver, cfg_arch); end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#302
+# source://udb//../../udb/lib/udb/logic.rb#301
 class Udb::ParameterTerm::ParameterComparisonType < ::T::Enum
   enums do
     Equal = new
@@ -7056,7 +7036,7 @@ class Udb::ParameterTerm::ParameterComparisonType < ::T::Enum
   end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#315
+# source://udb//../../udb/lib/udb/logic.rb#314
 Udb::ParameterTerm::ValueType = T.type_alias { T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String)], T::Boolean) }
 
 # source://udb//../../udb/lib/udb/obj/parameter.rb#229
@@ -8325,7 +8305,7 @@ class Udb::Resolver
   #
   # Any specific path can be overridden. If all paths are overridden, it doesn't matter what repo_root is.
   #
-  # source://udb//../../udb/lib/udb/resolver.rb#152
+  # source://udb//../../udb/lib/udb/resolver.rb#147
   sig do
     params(
       repo_root: ::Pathname,
@@ -8334,24 +8314,25 @@ class Udb::Resolver
       gen_path_override: T.nilable(::Pathname),
       std_path_override: T.nilable(::Pathname),
       custom_path_override: T.nilable(::Pathname),
-      quiet: T::Boolean
+      quiet: T::Boolean,
+      compile_idl: T::Boolean
     ).void
   end
-  def initialize(repo_root = T.unsafe(nil), schemas_path_override: T.unsafe(nil), cfgs_path_override: T.unsafe(nil), gen_path_override: T.unsafe(nil), std_path_override: T.unsafe(nil), custom_path_override: T.unsafe(nil), quiet: T.unsafe(nil)); end
+  def initialize(repo_root = T.unsafe(nil), schemas_path_override: T.unsafe(nil), cfgs_path_override: T.unsafe(nil), gen_path_override: T.unsafe(nil), std_path_override: T.unsafe(nil), custom_path_override: T.unsafe(nil), quiet: T.unsafe(nil), compile_idl: T.unsafe(nil)); end
 
   # returns true if either +target+ does not exist, or if any of +deps+ are newer than +target+
   #
-  # source://udb//../../udb/lib/udb/resolver.rb#182
+  # source://udb//../../udb/lib/udb/resolver.rb#175
   sig { params(target: ::Pathname, deps: T::Array[::Pathname]).returns(T::Boolean) }
   def any_newer?(target, deps); end
 
   # resolve the specification for a config, and return a ConfiguredArchitecture
   #
-  # source://udb//../../udb/lib/udb/resolver.rb#350
+  # source://udb//../../udb/lib/udb/resolver.rb#343
   sig { params(config_path_or_name: T.any(::Pathname, ::String)).returns(::Udb::ConfiguredArchitecture) }
   def cfg_arch_for(config_path_or_name); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#296
+  # source://udb//../../udb/lib/udb/resolver.rb#289
   sig { params(config_path_or_name: T.any(::Pathname, ::String)).returns(::Udb::Resolver::ConfigInfo) }
   def cfg_info(config_path_or_name); end
 
@@ -8373,7 +8354,7 @@ class Udb::Resolver
   sig { returns(::Pathname) }
   def gen_path; end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#229
+  # source://udb//../../udb/lib/udb/resolver.rb#222
   sig { params(config_yaml: T::Hash[::String, T.untyped]).void }
   def merge_arch(config_yaml); end
 
@@ -8383,14 +8364,14 @@ class Udb::Resolver
   sig { params(cfg_path_or_name: T.any(::Pathname, ::String)).returns(::Pathname) }
   def merged_spec_path(cfg_path_or_name); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#248
+  # source://udb//../../udb/lib/udb/resolver.rb#256
   sig { params(config_yaml: T::Hash[::String, T.untyped]).void }
   def resolve_arch(config_yaml); end
 
   # resolve config file and write it to gen_path
   # returns the config data
   #
-  # source://udb//../../udb/lib/udb/resolver.rb#205
+  # source://udb//../../udb/lib/udb/resolver.rb#198
   sig { params(config_path: ::Pathname).returns(T::Hash[::String, T.untyped]) }
   def resolve_config(config_path); end
 
@@ -8402,7 +8383,7 @@ class Udb::Resolver
 
   # run command in the shell. raise if exit is not zero
   #
-  # source://udb//../../udb/lib/udb/resolver.rb#192
+  # source://udb//../../udb/lib/udb/resolver.rb#185
   sig { params(cmd: T::Array[::String]).void }
   def run(cmd); end
 
@@ -8439,7 +8420,7 @@ class Udb::Resolver::ConfigInfo < ::T::Struct
   end
 end
 
-# source://udb//../../udb/lib/udb/condition.rb#100
+# source://udb//../../udb/lib/udb/condition.rb#99
 class Udb::SatisfiedResult < ::T::Enum
   enums do
     Maybe = new
@@ -8538,7 +8519,7 @@ class Udb::Schema
   def type_pretty_helper(hsh); end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#1169
+# source://udb//../../udb/lib/udb/logic.rb#1173
 Udb::TermType = T.type_alias { T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm) }
 
 # base class for any object defined in its own YAML file
@@ -8548,7 +8529,7 @@ Udb::TermType = T.type_alias { T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Ud
 #   kind:
 #   name:
 #
-# source://udb//../../udb/lib/udb/condition.rb#18
+# source://udb//../../udb/lib/udb/condition.rb#17
 class Udb::TopLevelDatabaseObject < ::Udb::DatabaseObject
   # source://udb//../../udb/lib/udb/obj/database_obj.rb#443
   sig do
@@ -8755,78 +8736,78 @@ end
 # source://udb//../../udb/lib/udb/version_spec.rb#41
 Udb::VersionSpec::VERSION_REGEX = T.let(T.unsafe(nil), Regexp)
 
-# source://udb//../../udb/lib/udb/condition.rb#1717
+# source://udb//../../udb/lib/udb/condition.rb#1716
 class Udb::XlenCondition < ::Udb::Condition
-  # source://udb//../../udb/lib/udb/condition.rb#1721
+  # source://udb//../../udb/lib/udb/condition.rb#1720
   sig { params(xlen: ::Integer).void }
   def initialize(xlen); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1737
+  # source://udb//../../udb/lib/udb/condition.rb#1736
   sig { override.returns(T.any(T::Boolean, T::Hash[::String, T.untyped])) }
   def to_h; end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1740
+  # source://udb//../../udb/lib/udb/condition.rb#1739
   sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/condition.rb#1726
+  # source://udb//../../udb/lib/udb/condition.rb#1725
   sig { override.returns(::Udb::LogicNode) }
   def to_logic_tree_internal; end
 end
 
-# source://udb//../../udb/lib/udb/logic.rb#39
+# source://udb//../../udb/lib/udb/logic.rb#38
 class Udb::XlenTerm
   include ::Comparable
 
-  # source://udb//../../udb/lib/udb/logic.rb#46
+  # source://udb//../../udb/lib/udb/logic.rb#45
   sig { params(xlen: ::Integer).void }
   def initialize(xlen); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#89
+  # source://udb//../../udb/lib/udb/logic.rb#88
   sig { override.params(other: T.untyped).returns(T.nilable(::Integer)) }
   def <=>(other); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#105
+  # source://udb//../../udb/lib/udb/logic.rb#104
   sig { override.params(other: T.untyped).returns(T::Boolean) }
   def eql?(other); end
 
   # hash and eql? must be implemented to use ExtensionTerm as a Hash key
   #
-  # source://udb//../../udb/lib/udb/logic.rb#97
+  # source://udb//../../udb/lib/udb/logic.rb#96
   sig { override.returns(::Integer) }
   def hash; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#69
+  # source://udb//../../udb/lib/udb/logic.rb#68
   sig { returns(::String) }
   def to_asciidoc; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#51
+  # source://udb//../../udb/lib/udb/logic.rb#50
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Udb::Condition) }
   def to_condition(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#72
+  # source://udb//../../udb/lib/udb/logic.rb#71
   sig { returns(T::Hash[::String, ::Integer]) }
   def to_h; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#79
+  # source://udb//../../udb/lib/udb/logic.rb#78
   sig { params(cfg_arch: ::Udb::ConfiguredArchitecture).returns(::String) }
   def to_idl(cfg_arch); end
 
-  # source://udb//../../udb/lib/udb/logic.rb#56
+  # source://udb//../../udb/lib/udb/logic.rb#55
   sig { override.returns(::String) }
   def to_s; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#66
+  # source://udb//../../udb/lib/udb/logic.rb#65
   sig { returns(::String) }
   def to_s_pretty; end
 
-  # source://udb//../../udb/lib/udb/logic.rb#61
+  # source://udb//../../udb/lib/udb/logic.rb#60
   sig { params(solver: ::Udb::Z3Solver).returns(::Z3::BoolExpr) }
   def to_z3(solver); end
 
   # Returns the value of attribute xlen.
   #
-  # source://udb//../../udb/lib/udb/logic.rb#43
+  # source://udb//../../udb/lib/udb/logic.rb#42
   def xlen; end
 end
 

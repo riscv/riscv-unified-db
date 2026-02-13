@@ -28,8 +28,6 @@ class Integer < ::Numeric
   def to_words(options = T.unsafe(nil)); end
 end
 
-Integer::GMP_VERSION = T.let(T.unsafe(nil), String)
-
 # source://numbers_and_words//lib/numbers_and_words/translations/base.rb#3
 module NumbersAndWords; end
 

@@ -134,6 +134,10 @@ if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; t
     fi
 
     if [ -v XDG_CACHE_HOME ]; then
+      if [ -d "$XDG_CACHE_HOME" ]; then
+        # this is a host directory, so map it in
+        CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${XDG_CACHE_HOME}:${XDG_CACHE_HOME}"
+      fi
       CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e XDG_CACHE_HOME"
     fi
 

@@ -2998,7 +2998,7 @@ module Udb
     end
 
     sig { params(other: LogicNode, cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
-    def always_implies?(other)
+    def always_implies?(other, cfg_arch)
       # can test that by seeing if the contradiction is satisfiable, i.e.:
       # if self -> other , contradition would be self & not other
       contradiction = LogicNode.new(

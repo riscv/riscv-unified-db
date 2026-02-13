@@ -25,7 +25,6 @@ PATH
       numbers_and_words
       ostruct
       pastel
-      ruby-minisat (>= 2.2.0.3)
       sorbet-runtime (= 0.6.12690)
       terminal-table
       thor
@@ -141,7 +140,6 @@ GEM
     rubocop-sorbet (0.11.0)
       lint_roller
       rubocop (>= 1.75.2)
-    ruby-minisat (2.2.0.3)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
     simplecov (0.22.0)
@@ -231,4 +229,4 @@ DEPENDENCIES
   yard-sorbet
 
 BUNDLED WITH
-  4.0.4
+  4.0.6

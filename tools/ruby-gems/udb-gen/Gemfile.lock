@@ -25,7 +25,6 @@ PATH
       numbers_and_words
       ostruct
       pastel
-      ruby-minisat (>= 2.2.0.3)
       sorbet-runtime (= 0.6.12690)
       terminal-table
       thor
@@ -111,7 +110,6 @@ GEM
       tsort
     regexp_parser (2.11.3)
     rexml (3.4.4)
-    ruby-minisat (2.2.0.3)
     rubyzip (3.2.2)
     securerandom (0.4.1)
     simpleidn (0.2.3)
@@ -199,4 +197,4 @@ DEPENDENCIES
   udb_helpers!
 
 BUNDLED WITH
-  4.0.4
+  4.0.6
