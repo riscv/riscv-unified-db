@@ -39,7 +39,7 @@ class Mmr < TopLevelDatabaseObject
     @data["long_name"]
   end
 
-  # @return [Integer] Length in bits of the register (always 32 or 64)
+  # @return [Integer] Length in bits of the register
   def length(_effective_xlen = nil)
     @data["length"]
   end

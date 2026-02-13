@@ -170,22 +170,34 @@ class TestMmrSchema < Minitest::Test
     assert_invalid(data, "missing length")
   end
 
-  # SHOULD FAIL: length is 16 (must be 32 or 64)
-  def test_invalid_length_16
-    data = valid_mmr.merge("length" => 16)
-    assert_invalid(data, "length is 16, not 32 or 64")
+  # SHOULD PASS: valid MMR with 8-bit length
+  def test_valid_mmr_8bit
+    data = valid_mmr.merge("length" => 8)
+    assert_valid(data, "8-bit MMR")
   end
 
-  # SHOULD FAIL: length is 128 (must be 32 or 64)
-  def test_invalid_length_128
+  # SHOULD PASS: valid MMR with 16-bit length
+  def test_valid_mmr_16bit
+    data = valid_mmr.merge("length" => 16)
+    assert_valid(data, "16-bit MMR")
+  end
+
+  # SHOULD PASS: valid MMR with 128-bit length
+  def test_valid_mmr_128bit
     data = valid_mmr.merge("length" => 128)
-    assert_invalid(data, "length is 128, not 32 or 64")
+    assert_valid(data, "128-bit MMR")
+  end
+
+  # SHOULD FAIL: length is 256 (must be 8, 16, 32, 64, or 128)
+  def test_invalid_length_256
+    data = valid_mmr.merge("length" => 256)
+    assert_invalid(data, "length is 256")
   end
 
   # SHOULD FAIL: length is a string
   def test_invalid_length_string
     data = valid_mmr.merge("length" => "MXLEN")
-    assert_invalid(data, "length is string 'MXLEN', MMRs must be fixed 32 or 64")
+    assert_invalid(data, "length is string 'MXLEN', MMRs must be a fixed integer")
   end
 
   # SHOULD FAIL: missing description
