@@ -21,7 +21,7 @@ gem "concurrent-ruby-ext"
 gem "json_schemer", "~> 1.0"
 gem "rake", "~> 13.0"
 gem "sorbet-runtime"
-gem "ttfunk", "1.7" # needed to avoid having asciidoctor-pdf dependencies pulling in a buggy version of ttunk (1.8)
+gem "ttfunk", "1.8.0" # needed to avoid having asciidoctor-pdf dependencies pulling in a buggy version of ttunk (1.8)
 gem "webrick"
 gem "write_xlsx"
 gem "yard"
