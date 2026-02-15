@@ -177,7 +177,7 @@ GEM
       pdf-reader (~> 2.0)
       prawn (~> 2.2)
     prettyprint (0.2.0)
-    prism (1.8.0)
+    prism (1.9.0)
     psych (5.3.1)
       date
       stringio
@@ -202,6 +202,7 @@ GEM
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
+    require-hooks (0.2.3)
     rexml (3.4.4)
     rouge (4.7.0)
     rubocop (1.82.1)
@@ -278,14 +279,15 @@ GEM
       unicode-display_width (>= 1.5, < 3.0)
       unicode_utils (~> 1.4)
     strings-ansi (0.2.0)
-    tapioca (0.16.11)
+    tapioca (0.17.10)
       benchmark
       bundler (>= 2.2.25)
       netrc (>= 0.11.0)
       parallel (>= 1.21.0)
-      rbi (~> 0.2)
+      rbi (>= 0.3.7)
+      require-hooks (>= 0.2.2)
       sorbet-static-and-runtime (>= 0.5.11087)
-      spoom (>= 1.2.0)
+      spoom (>= 1.7.9)
       thor (>= 1.2.0)
       yard-sorbet
     terminal-table (4.0.0)
@@ -360,7 +362,7 @@ DEPENDENCIES
   sorbet
   sorbet-runtime
   spoom
-  tapioca (= 0.16.11)
+  tapioca (= 0.17.10)
   ttfunk (= 1.7)
   udb!
   udb-gen!
