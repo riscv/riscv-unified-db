@@ -107,7 +107,7 @@ repos:
         # WIll RE-ENABLE WHEN NEXT PATCH COMES THROUGH
         exclude: backends/cpp_hart_gen
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.15.1
     hooks:
       - id: ruff-check
         stages: [pre-commit]
