@@ -109,13 +109,13 @@ do_update_gems() {
   # first, we update all the gems on the host, which will give us updated Gemfile.lock files
   # and sorbet definitions
   rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
-  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform=x86_64-linux,aarch64-linux
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
   rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
-  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform=x86_64-linux,aarch64-linux
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
   rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
-  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform=x86_64-linux,aarch64-linux
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
   rm "${UDB_ROOT}"/Gemfile.lock
-  $RUN bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform=x86_64-linux,aarch64-linux
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
 
   # increment container-tag
   new_version=$(increment_minor_version "$(cat bin/.container-tag)")
@@ -123,24 +123,27 @@ do_update_gems() {
 
   if [ "$CONTAINER_TYPE" == "native" ]; then
     bundle install
-    do_ruby_type_def "idlc"
-    do_ruby_type_def "udb"
-    do_ruby_type_def "udb-gen"
+    do_ruby_type_def idlc
+    do_ruby_type_def udb
+    do_ruby_type_def udb-gen
   else
     "$UDB_ROOT"/bin/build_container
     # need to run as a seperate process to pick up the new container
-    ./bin/chore gen ruby-type-def all
+    ./bin/chore gen ruby-type-def
   fi
 }
 
 do_ruby_type_def() {
+  gem=$1
+  echo "input: $gem"
+
   source "$UDB_ROOT"/bin/setup
 
-  gem=$1
+
   gems=()
   case "$gem" in
     all )
-      gems+=("udb" "idlc" "udb-gen")
+      gems=("udb" "idlc" "udb-gen")
       ;;
     udb )
       gems=("udb")
@@ -235,6 +238,12 @@ case "$subcommand" in
             ;;
           esac
         done
+        shift $((OPTIND - 1))
+        if [[ $# -gt 0 ]]; then
+            echo "Unexpected argument remaining: $*" >&2
+            gen_ruby_type_def_usage
+            exit 1
+        fi
         do_ruby_type_def "$gem"
         exit 0
         ;;

@@ -87,7 +87,7 @@ fi
 echo "Using ${CONTAINER_TYPE} environment"
 
 if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
-    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG} --format table" | grep -q udb ; then
+    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" --format table | grep -q udb ; then
         echo "Image not found locally. Attempting to pull from registry..."
         if ${CONTAINER_TYPE} pull "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" 2>/dev/null; then
             echo "Successfully pulled image from registry."
@@ -136,10 +136,6 @@ if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; t
 
     if [ -v PRE_COMMIT_HOME ]; then
       CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e PRE_COMMIT_HOME"
-    fi
-
-    if [ -v XDG_CACHE_HOME ]; then
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e XDG_CACHE_HOME"
     fi
 
     CONTAINER_NAME="$REGISTRY/$OWNER/udb:${CONTAINER_TAG}"

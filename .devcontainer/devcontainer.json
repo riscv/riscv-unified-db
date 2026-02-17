@@ -23,7 +23,6 @@
       },
       "extensions": [
         "asciidoctor.asciidoctor-vscode",
-        "castwide.solargraph",
         "charliermarsh.ruff",
         "CraigMaslowski.erb",
         "HowerLimited.udb-extension-pack-vscode",

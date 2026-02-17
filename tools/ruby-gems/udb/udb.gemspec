@@ -19,7 +19,6 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower", "James Ball"]
   s.email       = ["dhower@qti.qualcomm.com", "jamesball@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.platform    = Gem::Platform::RUBY
   s.files       = Dir["lib/**/*.rb", "LICENSE"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
@@ -32,7 +31,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.bindir = "bin"
   s.executables << "udb"
-  s.extensions = ["ext/z3/extconf.rb"]
 
   s.add_dependency "activesupport"
   s.add_dependency "asciidoctor"

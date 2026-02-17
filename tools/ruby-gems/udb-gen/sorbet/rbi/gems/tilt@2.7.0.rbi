@@ -540,6 +540,18 @@ class Tilt::PlainTemplate < ::Tilt::StaticTemplate
   def _prepare_output; end
 end
 
+# source://tilt//lib/tilt/prawn.rb#19
+class Tilt::PrawnTemplate < ::Tilt::Template
+  # source://tilt//lib/tilt/prawn.rb#27
+  def evaluate(scope, locals, &block); end
+
+  # source://tilt//lib/tilt/prawn.rb#35
+  def precompiled_template(locals); end
+
+  # source://tilt//lib/tilt/prawn.rb#22
+  def prepare; end
+end
+
 # source://tilt//lib/tilt/rdoc.rb#0
 class Tilt::RDocTemplate < ::Tilt::StaticTemplate
   private

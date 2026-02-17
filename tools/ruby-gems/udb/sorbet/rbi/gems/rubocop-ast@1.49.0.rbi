@@ -549,9 +549,6 @@ module RuboCop::AST::CollectionNode
   def minmax_by(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def nil_or_empty?(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
   def none?(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
@@ -687,16 +684,10 @@ module RuboCop::AST::CollectionNode
   def to_ary(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def to_figures(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
   def to_h(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
   def to_set(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def to_words(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
   def transpose(*_arg0, **_arg1, &_arg2); end

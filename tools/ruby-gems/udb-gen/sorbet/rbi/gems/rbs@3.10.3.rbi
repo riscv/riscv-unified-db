@@ -4814,6 +4814,82 @@ class RBS::Prototype::Runtime::ValueObjectBase
   def build_s_members; end
 end
 
+# source://rbs//lib/rdoc_plugin/parser.rb#6
+module RBS::RDocPlugin; end
+
+# source://rbs//lib/rdoc_plugin/parser.rb#7
+class RBS::RDocPlugin::Parser
+  # @return [Parser] a new instance of Parser
+  #
+  # source://rbs//lib/rdoc_plugin/parser.rb#11
+  def initialize(top_level, content); end
+
+  # Returns the value of attribute content.
+  #
+  # source://rbs//lib/rdoc_plugin/parser.rb#9
+  def content; end
+
+  # Sets the attribute content
+  #
+  # @param value the value to set the attribute content to.
+  #
+  # source://rbs//lib/rdoc_plugin/parser.rb#9
+  def content=(_arg0); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#94
+  def parse_attr_decl(decl:, context:, outer_name: T.unsafe(nil)); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#53
+  def parse_class_decl(decl:, context:, outer_name: T.unsafe(nil)); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#67
+  def parse_constant_decl(decl:, context:, outer_name: T.unsafe(nil)); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#125
+  def parse_extend_decl(decl:, context:, outer_name: T.unsafe(nil)); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#109
+  def parse_include_decl(decl:, context:, outer_name: T.unsafe(nil)); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#24
+  def parse_member(decl:, context:, outer_name: T.unsafe(nil)); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#88
+  def parse_method_alias_decl(decl:, context:, outer_name: T.unsafe(nil)); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#73
+  def parse_method_decl(decl:, context:, outer_name: T.unsafe(nil)); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#60
+  def parse_module_decl(decl:, context:, outer_name: T.unsafe(nil)); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#16
+  def scan; end
+
+  # Returns the value of attribute top_level.
+  #
+  # source://rbs//lib/rdoc_plugin/parser.rb#9
+  def top_level; end
+
+  # Sets the attribute top_level
+  #
+  # @param value the value to set the attribute top_level to.
+  #
+  # source://rbs//lib/rdoc_plugin/parser.rb#9
+  def top_level=(_arg0); end
+
+  private
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#149
+  def comment_string(with_comment); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#143
+  def construct_comment(context:, comment:); end
+
+  # source://rbs//lib/rdoc_plugin/parser.rb#154
+  def fully_qualified_name(outer_name:, decl:); end
+end
+
 # source://rbs//lib/rbs/errors.rb#447
 class RBS::RecursiveAliasDefinitionError < ::RBS::DefinitionError
   include ::RBS::DetailedMessageable
@@ -6927,4 +7003,10 @@ class RBS::Writer
 
   # source://rbs//lib/rbs/writer.rb#102
   def write_use_directive(dir); end
+end
+
+# source://rbs//lib/rdoc/discover.rb#8
+class RDoc::Parser::RBS < ::RDoc::Parser
+  # source://rbs//lib/rdoc/discover.rb#10
+  def scan; end
 end

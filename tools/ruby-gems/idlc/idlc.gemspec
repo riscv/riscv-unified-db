@@ -19,7 +19,6 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.platform    = Gem::Platform::RUBY
   s.files       = Dir["lib/**/*.rb", "LICENSE"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
@@ -35,15 +34,19 @@ Gem::Specification.new do |s|
 
   s.add_dependency "activesupport"
   s.add_dependency "commander", "~> 5"
+  s.add_dependency "pp"
   s.add_dependency "sorbet-runtime"
   s.add_dependency "treetop", "1.6.12"
 
   s.add_development_dependency "minitest"
+  s.add_development_dependency "rdbg"
   s.add_development_dependency "rouge"
   s.add_development_dependency "rubocop-github"
   s.add_development_dependency "rubocop-minitest"
   s.add_development_dependency "rubocop-performance"
   s.add_development_dependency "rubocop-sorbet"
+  s.add_development_dependency "ruby-lsp"
+  s.add_development_dependency "ruby-prof"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "simplecov-cobertura"
   s.add_development_dependency "sorbet", "= #{UdbGems::SORBET_VERSION}"
