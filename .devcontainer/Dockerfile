@@ -5,6 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /workspace
 
+ENV XDG_CACHE_HOME="/workspace/.cache"
+
 # please keep pkgs sorted
 RUN apt-get update && \
   apt-get install -y --no-install-recommends --fix-missing \
