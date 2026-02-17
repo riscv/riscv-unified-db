@@ -177,3 +177,12 @@ tests:
     test:
       - name: Test that local regress runner works
         run: ./bin/regress -n regress-sorbet
+
+  build-reuse-manifest:
+    gh_save_artifact:
+      - artifact-name: reuse-manifest
+        path: reuse_bom.txt
+    tags: [artifacts]
+    test:
+      - name: Create reuse manifest
+        run: ./bin/reuse spdx -o reuse_bom.txt
