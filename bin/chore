@@ -104,30 +104,38 @@ increment_minor_version() {
 }
 
 do_update_gems() {
+  source "$UDB_ROOT"/bin/setup
+
   # first, we update all the gems on the host, which will give us updated Gemfile.lock files
   # and sorbet definitions
-  cd "${UDB_ROOT}"/tools/ruby-gems/idlc || exit 1
-  bundle update --bundler --ruby
-  do_ruby_type_def "idlc"
-
-  cd "${UDB_ROOT}"/tools/ruby-gems/udb || exit 1
-  bundle update --bundler --ruby
-  do_ruby_type_def "udb"
-
-  cd "${UDB_ROOT}"/tools/ruby-gems/udb-gen || exit 1
-  bundle update --bundler --ruby
-  do_ruby_type_def "udb-gen"
-
-  cd "$UDB_ROOT" || exit 1
-  bundle update --bundler --ruby
+  rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform=x86_64-linux,aarch64-linux
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform=x86_64-linux,aarch64-linux
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform=x86_64-linux,aarch64-linux
+  rm "${UDB_ROOT}"/Gemfile.lock
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform=x86_64-linux,aarch64-linux
 
   # increment container-tag
   new_version=$(increment_minor_version "$(cat bin/.container-tag)")
   echo "$new_version" > bin/.container-tag
 
+  if [ "$CONTAINER_TYPE" == "native" ]; then
+    bundle install
+    do_ruby_type_def "idlc"
+    do_ruby_type_def "udb"
+    do_ruby_type_def "udb-gen"
+  else
+    "$UDB_ROOT"/bin/build_container
+    # need to run as a seperate process to pick up the new container
+    ./bin/chore gen ruby-type-def all
+  fi
 }
 
 do_ruby_type_def() {
+  source "$UDB_ROOT"/bin/setup
+
   gem=$1
   gems=()
   case "$gem" in
@@ -150,11 +158,9 @@ do_ruby_type_def() {
       ;;
   esac
   for gem in "${gems[@]}"; do
-    cd "${UDB_ROOT}"/tools/ruby-gems/"${gem}" || exit 1
-    bundle exec tapioca gems --all
-    bundle exec tapioca dsl
-    bundle exec tapioca annotations
-    cd - || exit 1
+    $RUN /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && bundle exec tapioca gems --all"
+    $RUN /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && bundle exec tapioca dsl"
+    $RUN /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && bundle exec tapioca annotations"
   done
 }
 

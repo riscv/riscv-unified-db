@@ -5,29 +5,38 @@
 # Please instead update this file by running `bin/tapioca gem rbs`.
 
 
+# source://rbs//lib/rbs/namespace.rb#120
+module Kernel
+  # source://rbs//lib/rbs/namespace.rb#121
+  def Namespace(name); end
+
+  # source://rbs//lib/rbs/type_name.rb#105
+  def TypeName(string); end
+end
+
 # source://rbs//lib/rbs/version.rb#3
 module RBS
   class << self
-    # source://rbs//lib/rbs.rb#81
+    # source://rbs//lib/rbs.rb#69
     def logger; end
 
     # Returns the value of attribute logger_level.
     #
-    # source://rbs//lib/rbs.rb#78
+    # source://rbs//lib/rbs.rb#66
     def logger_level; end
 
-    # source://rbs//lib/rbs.rb#90
+    # source://rbs//lib/rbs.rb#78
     def logger_level=(level); end
 
     # Returns the value of attribute logger_output.
     #
-    # source://rbs//lib/rbs.rb#79
+    # source://rbs//lib/rbs.rb#67
     def logger_output; end
 
-    # source://rbs//lib/rbs.rb#85
+    # source://rbs//lib/rbs.rb#73
     def logger_output=(val); end
 
-    # source://rbs//lib/rbs.rb#95
+    # source://rbs//lib/rbs.rb#83
     def print_warning; end
   end
 end
@@ -1066,882 +1075,14 @@ module RBS::AST::Members::Var
   def type; end
 end
 
-# source://rbs//lib/rbs/ast/ruby/comment_block.rb#5
-module RBS::AST::Ruby; end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#6
-module RBS::AST::Ruby::Annotations; end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#43
-class RBS::AST::Ruby::Annotations::AliasAnnotation < ::RBS::AST::Ruby::Annotations::Base
-  # @return [AliasAnnotation] a new instance of AliasAnnotation
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#46
-  def initialize(location:, prefix_location:, keyword_location:, type_name:, type_name_location:); end
-
-  # Returns the value of attribute keyword_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#44
-  def keyword_location; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#53
-  def map_type_name; end
-
-  # Returns the value of attribute type_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#44
-  def type_name; end
-
-  # Returns the value of attribute type_name_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#44
-  def type_name_location; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#7
-class RBS::AST::Ruby::Annotations::Base
-  # @return [Base] a new instance of Base
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#10
-  def initialize(location, prefix_location); end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#15
-  def buffer; end
-
-  # Returns the value of attribute location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#8
-  def location; end
-
-  # Returns the value of attribute prefix_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#8
-  def prefix_location; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#64
-class RBS::AST::Ruby::Annotations::ClassAliasAnnotation < ::RBS::AST::Ruby::Annotations::AliasAnnotation
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#65
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#82
-class RBS::AST::Ruby::Annotations::ColonMethodTypeAnnotation < ::RBS::AST::Ruby::Annotations::Base
-  # @return [ColonMethodTypeAnnotation] a new instance of ColonMethodTypeAnnotation
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#85
-  def initialize(location:, prefix_location:, annotations:, method_type:); end
-
-  # Returns the value of attribute annotations.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#83
-  def annotations; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#91
-  def map_type_name; end
-
-  # Returns the value of attribute method_type.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#83
-  def method_type; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#100
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#220
-class RBS::AST::Ruby::Annotations::InstanceVariableAnnotation < ::RBS::AST::Ruby::Annotations::Base
-  # @return [InstanceVariableAnnotation] a new instance of InstanceVariableAnnotation
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#223
-  def initialize(location:, prefix_location:, ivar_name:, ivar_name_location:, colon_location:, type:, comment_location:); end
-
-  # Returns the value of attribute colon_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#221
-  def colon_location; end
-
-  # Returns the value of attribute comment_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#221
-  def comment_location; end
-
-  # Returns the value of attribute ivar_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#221
-  def ivar_name; end
-
-  # Returns the value of attribute ivar_name_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#221
-  def ivar_name_location; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#232
-  def map_type_name(&block); end
-
-  # Returns the value of attribute type.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#221
-  def type; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#244
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#109
-class RBS::AST::Ruby::Annotations::MethodTypesAnnotation < ::RBS::AST::Ruby::Annotations::Base
-  # @return [MethodTypesAnnotation] a new instance of MethodTypesAnnotation
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#114
-  def initialize(location:, prefix_location:, overloads:, vertical_bar_locations:); end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#120
-  def map_type_name(&block); end
-
-  # Returns the value of attribute overloads.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#112
-  def overloads; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#131
-  def type_fingerprint; end
-
-  # Returns the value of attribute vertical_bar_locations.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#112
-  def vertical_bar_locations; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#110
-RBS::AST::Ruby::Annotations::MethodTypesAnnotation::Overload = RBS::AST::Members::MethodDefinition::Overload
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#73
-class RBS::AST::Ruby::Annotations::ModuleAliasAnnotation < ::RBS::AST::Ruby::Annotations::AliasAnnotation
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#74
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#20
-class RBS::AST::Ruby::Annotations::NodeTypeAssertion < ::RBS::AST::Ruby::Annotations::Base
-  # @return [NodeTypeAssertion] a new instance of NodeTypeAssertion
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#23
-  def initialize(location:, prefix_location:, type:); end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#28
-  def map_type_name; end
-
-  # Returns the value of attribute type.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#21
-  def type; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#35
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#153
-class RBS::AST::Ruby::Annotations::ReturnTypeAnnotation < ::RBS::AST::Ruby::Annotations::Base
-  # @return [ReturnTypeAnnotation] a new instance of ReturnTypeAnnotation
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#162
-  def initialize(location:, prefix_location:, return_location:, colon_location:, return_type:, comment_location:); end
-
-  # Returns the value of attribute colon_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#156
-  def colon_location; end
-
-  # Returns the value of attribute comment_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#160
-  def comment_location; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#170
-  def map_type_name(&block); end
-
-  # Returns the value of attribute return_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#154
-  def return_location; end
-
-  # Returns the value of attribute return_type.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#158
-  def return_type; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#181
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#139
-class RBS::AST::Ruby::Annotations::SkipAnnotation < ::RBS::AST::Ruby::Annotations::Base
-  # @return [SkipAnnotation] a new instance of SkipAnnotation
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#142
-  def initialize(location:, prefix_location:, skip_location:, comment_location:); end
-
-  # Returns the value of attribute comment_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#140
-  def comment_location; end
-
-  # Returns the value of attribute skip_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#140
-  def skip_location; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#148
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/annotations.rb#190
-class RBS::AST::Ruby::Annotations::TypeApplicationAnnotation < ::RBS::AST::Ruby::Annotations::Base
-  # @return [TypeApplicationAnnotation] a new instance of TypeApplicationAnnotation
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#193
-  def initialize(location:, prefix_location:, type_args:, close_bracket_location:, comma_locations:); end
-
-  # Returns the value of attribute close_bracket_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#191
-  def close_bracket_location; end
-
-  # Returns the value of attribute comma_locations.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#191
-  def comma_locations; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#200
-  def map_type_name(&block); end
-
-  # Returns the value of attribute type_args.
-  #
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#191
-  def type_args; end
-
-  # source://rbs//lib/rbs/ast/ruby/annotations.rb#212
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/comment_block.rb#6
-class RBS::AST::Ruby::CommentBlock
-  # @return [CommentBlock] a new instance of CommentBlock
-  #
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#9
-  def initialize(source_buffer, comments); end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#226
-  def as_comment; end
-
-  # Returns the value of attribute comment_buffer.
-  #
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#7
-  def comment_buffer; end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#211
-  def comments; end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#98
-  def each_paragraph(variables, &block); end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#50
-  def end_line; end
-
-  # @return [Boolean]
-  #
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#36
-  def leading?; end
-
-  # @return [Boolean]
-  #
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#215
-  def leading_annotation?(index); end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#174
-  def line_location(start_line, end_line); end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#54
-  def line_starts; end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#180
-  def location; end
-
-  # Returns the value of attribute name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#7
-  def name; end
-
-  # Returns the value of attribute offsets.
-  #
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#7
-  def offsets; end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#187
-  def parse_annotation_lines(start_line, end_line, variables); end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#46
-  def start_line; end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#169
-  def text(comment_index); end
-
-  # @return [Boolean]
-  #
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#41
-  def trailing?; end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#197
-  def trailing_annotation(variables); end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#130
-  def yield_annotation(start_line, end_line, current_line, variables, &block); end
-
-  # source://rbs//lib/rbs/ast/ruby/comment_block.rb#110
-  def yield_paragraph(start_line, current_line, variables, &block); end
-
-  class << self
-    # source://rbs//lib/rbs/ast/ruby/comment_block.rb#60
-    def build(buffer, comments); end
-  end
-end
-
-# source://rbs//lib/rbs/ast/ruby/comment_block.rb#96
-class RBS::AST::Ruby::CommentBlock::AnnotationSyntaxError < ::Struct
-  def error; end
-  def error=(_); end
-  def location; end
-  def location=(_); end
-
-  class << self
-    def [](*_arg0); end
-    def inspect; end
-    def keyword_init?; end
-    def members; end
-    def new(*_arg0); end
-  end
-end
-
-# source://rbs//lib/rbs/ast/ruby/declarations.rb#6
-module RBS::AST::Ruby::Declarations; end
-
-# source://rbs//lib/rbs/ast/ruby/declarations.rb#7
-class RBS::AST::Ruby::Declarations::Base
-  include ::RBS::AST::Ruby::Helpers::ConstantHelper
-  include ::RBS::AST::Ruby::Helpers::LocationHelper
-
-  # @return [Base] a new instance of Base
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#13
-  def initialize(buffer); end
-
-  # Returns the value of attribute buffer.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#8
-  def buffer; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/declarations.rb#18
-class RBS::AST::Ruby::Declarations::ClassDecl < ::RBS::AST::Ruby::Declarations::Base
-  # @return [ClassDecl] a new instance of ClassDecl
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#74
-  def initialize(buffer, name, node, super_class); end
-
-  # Returns the value of attribute class_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#66
-  def class_name; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#82
-  def each_decl(&block); end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#94
-  def location; end
-
-  # Returns the value of attribute members.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#68
-  def members; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#98
-  def name_location; end
-
-  # Returns the value of attribute node.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#70
-  def node; end
-
-  # Returns the value of attribute super_class.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#72
-  def super_class; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#102
-  def type_fingerprint; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#92
-  def type_params; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/declarations.rb#19
-class RBS::AST::Ruby::Declarations::ClassDecl::SuperClass
-  # @return [SuperClass] a new instance of SuperClass
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#28
-  def initialize(type_name_location, operator_location, type_name, type_annotation); end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#35
-  def args; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#43
-  def location; end
-
-  # Returns the value of attribute type_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#24
-  def name; end
-
-  # Returns the value of attribute operator_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#22
-  def operator_location; end
-
-  # Returns the value of attribute type_annotation.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#26
-  def type_annotation; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#35
-  def type_args; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#58
-  def type_fingerprint; end
-
-  # Returns the value of attribute type_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#24
-  def type_name; end
-
-  # Returns the value of attribute type_name_location.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#20
-  def type_name_location; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/declarations.rb#223
-class RBS::AST::Ruby::Declarations::ClassModuleAliasDecl < ::RBS::AST::Ruby::Declarations::Base
-  # @return [ClassModuleAliasDecl] a new instance of ClassModuleAliasDecl
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#230
-  def initialize(buffer, node, new_name, infered_old_name, leading_comment, annotation); end
-
-  # Returns the value of attribute annotation.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#228
-  def annotation; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#264
-  def comment; end
-
-  # Returns the value of attribute infered_old_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#227
-  def infered_old_name; end
-
-  # Returns the value of attribute leading_comment.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#225
-  def leading_comment; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#239
-  def location; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#243
-  def name_location; end
-
-  # Returns the value of attribute new_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#226
-  def new_name; end
-
-  # Returns the value of attribute node.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#224
-  def node; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#252
-  def old_name; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#268
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/declarations.rb#161
-class RBS::AST::Ruby::Declarations::ConstantDecl < ::RBS::AST::Ruby::Declarations::Base
-  # @return [ConstantDecl] a new instance of ConstantDecl
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#167
-  def initialize(buffer, constant_name, node, leading_comment, type_annotation); end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#209
-  def comment; end
-
-  # Returns the value of attribute constant_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#163
-  def constant_name; end
-
-  # Returns the value of attribute leading_comment.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#162
-  def leading_comment; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#175
-  def location; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#179
-  def name_location; end
-
-  # Returns the value of attribute node.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#164
-  def node; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#188
-  def type; end
-
-  # Returns the value of attribute type_annotation.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#165
-  def type_annotation; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#213
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/declarations.rb#114
-class RBS::AST::Ruby::Declarations::ModuleDecl < ::RBS::AST::Ruby::Declarations::Base
-  # @return [ModuleDecl] a new instance of ModuleDecl
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#121
-  def initialize(buffer, name, node); end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#128
-  def each_decl(&block); end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#142
-  def location; end
-
-  # Returns the value of attribute members.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#117
-  def members; end
-
-  # Returns the value of attribute module_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#115
-  def module_name; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#146
-  def name_location; end
-
-  # Returns the value of attribute node.
-  #
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#119
-  def node; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#140
-  def self_types; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#150
-  def type_fingerprint; end
-
-  # source://rbs//lib/rbs/ast/ruby/declarations.rb#138
-  def type_params; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/helpers/constant_helper.rb#6
-module RBS::AST::Ruby::Helpers; end
-
-# source://rbs//lib/rbs/ast/ruby/helpers/constant_helper.rb#7
-module RBS::AST::Ruby::Helpers::ConstantHelper
-  private
-
-  # source://rbs//lib/rbs/ast/ruby/helpers/constant_helper.rb#10
-  def constant_as_type_name(node); end
-
-  class << self
-    # source://rbs//lib/rbs/ast/ruby/helpers/constant_helper.rb#10
-    def constant_as_type_name(node); end
-  end
-end
-
-# source://rbs//lib/rbs/ast/ruby/helpers/location_helper.rb#7
-module RBS::AST::Ruby::Helpers::LocationHelper
-  # source://rbs//lib/rbs/ast/ruby/helpers/location_helper.rb#8
-  def rbs_location(location); end
-end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#6
-module RBS::AST::Ruby::Members; end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#338
-class RBS::AST::Ruby::Members::AttrAccessorMember < ::RBS::AST::Ruby::Members::AttributeMember; end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#332
-class RBS::AST::Ruby::Members::AttrReaderMember < ::RBS::AST::Ruby::Members::AttributeMember; end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#335
-class RBS::AST::Ruby::Members::AttrWriterMember < ::RBS::AST::Ruby::Members::AttributeMember; end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#287
-class RBS::AST::Ruby::Members::AttributeMember < ::RBS::AST::Ruby::Members::Base
-  # @return [AttributeMember] a new instance of AttributeMember
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#293
-  def initialize(buffer, node, name_nodes, leading_comment, type_annotation); end
-
-  # Returns the value of attribute leading_comment.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#291
-  def leading_comment; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#307
-  def location; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#311
-  def name_locations; end
-
-  # Returns the value of attribute name_nodes.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#289
-  def name_nodes; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#301
-  def names; end
-
-  # Returns the value of attribute node.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#288
-  def node; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#317
-  def type; end
-
-  # Returns the value of attribute type_annotation.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#290
-  def type_annotation; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#321
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#7
-class RBS::AST::Ruby::Members::Base
-  include ::RBS::AST::Ruby::Helpers::LocationHelper
-
-  # @return [Base] a new instance of Base
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#10
-  def initialize(buffer); end
-
-  # Returns the value of attribute buffer.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#8
-  def buffer; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#195
-class RBS::AST::Ruby::Members::DefMember < ::RBS::AST::Ruby::Members::Base
-  # @return [DefMember] a new instance of DefMember
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#203
-  def initialize(buffer, name, node, method_type, leading_comment); end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#223
-  def annotations; end
-
-  # Returns the value of attribute leading_comment.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#201
-  def leading_comment; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#211
-  def location; end
-
-  # Returns the value of attribute method_type.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#200
-  def method_type; end
-
-  # Returns the value of attribute name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#198
-  def name; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#227
-  def name_location; end
-
-  # Returns the value of attribute node.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#199
-  def node; end
-
-  # @return [Boolean]
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#219
-  def overloading?; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#215
-  def overloads; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#231
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#196
-RBS::AST::Ruby::Members::DefMember::Overload = RBS::AST::Members::MethodDefinition::Overload
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#281
-class RBS::AST::Ruby::Members::ExtendMember < ::RBS::AST::Ruby::Members::MixinMember; end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#278
-class RBS::AST::Ruby::Members::IncludeMember < ::RBS::AST::Ruby::Members::MixinMember; end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#341
-class RBS::AST::Ruby::Members::InstanceVariableMember < ::RBS::AST::Ruby::Members::Base
-  # @return [InstanceVariableMember] a new instance of InstanceVariableMember
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#344
-  def initialize(buffer, annotation); end
-
-  # Returns the value of attribute annotation.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#342
-  def annotation; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#357
-  def location; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#349
-  def name; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#353
-  def type; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#361
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#17
-class RBS::AST::Ruby::Members::MethodTypeAnnotation
-  # @return [MethodTypeAnnotation] a new instance of MethodTypeAnnotation
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#68
-  def initialize(type_annotations:); end
-
-  # @return [Boolean]
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#143
-  def empty?; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#72
-  def map_type_name(&block); end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#147
-  def overloads; end
-
-  # Returns the value of attribute type_annotations.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#66
-  def type_annotations; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#183
-  def type_fingerprint; end
-
-  class << self
-    # source://rbs//lib/rbs/ast/ruby/members.rb#85
-    def build(leading_block, trailing_block, variables); end
-  end
-end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#18
-class RBS::AST::Ruby::Members::MethodTypeAnnotation::DocStyle
-  # @return [DocStyle] a new instance of DocStyle
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#21
-  def initialize; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#25
-  def map_type_name(&block); end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#35
-  def method_type; end
-
-  # Returns the value of attribute return_type_annotation.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#19
-  def return_type_annotation; end
-
-  # Sets the attribute return_type_annotation
-  #
-  # @param value the value to set the attribute return_type_annotation to.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#19
-  def return_type_annotation=(_arg0); end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#31
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#241
-class RBS::AST::Ruby::Members::MixinMember < ::RBS::AST::Ruby::Members::Base
-  # @return [MixinMember] a new instance of MixinMember
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#246
-  def initialize(buffer, node, module_name, annotation); end
-
-  # Returns the value of attribute annotation.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#244
-  def annotation; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#253
-  def location; end
-
-  # Returns the value of attribute module_name.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#243
-  def module_name; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#257
-  def name_location; end
-
-  # Returns the value of attribute node.
-  #
-  # source://rbs//lib/rbs/ast/ruby/members.rb#242
-  def node; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#264
-  def type_args; end
-
-  # source://rbs//lib/rbs/ast/ruby/members.rb#268
-  def type_fingerprint; end
-end
-
-# source://rbs//lib/rbs/ast/ruby/members.rb#284
-class RBS::AST::Ruby::Members::PrependMember < ::RBS::AST::Ruby::Members::MixinMember; end
-
 # source://rbs//lib/rbs/ast/type_param.rb#5
 class RBS::AST::TypeParam
   # @return [TypeParam] a new instance of TypeParam
   #
   # source://rbs//lib/rbs/ast/type_param.rb#8
-  def initialize(name:, variance:, upper_bound:, lower_bound:, location:, default_type: T.unsafe(nil), unchecked: T.unsafe(nil)); end
+  def initialize(name:, variance:, upper_bound:, location:, default_type: T.unsafe(nil), unchecked: T.unsafe(nil)); end
 
-  # source://rbs//lib/rbs/ast/type_param.rb#41
+  # source://rbs//lib/rbs/ast/type_param.rb#33
   def ==(other); end
 
   # Returns the value of attribute default_type.
@@ -1949,10 +1090,10 @@ class RBS::AST::TypeParam
   # source://rbs//lib/rbs/ast/type_param.rb#6
   def default_type; end
 
-  # source://rbs//lib/rbs/ast/type_param.rb#41
+  # source://rbs//lib/rbs/ast/type_param.rb#33
   def eql?(other); end
 
-  # source://rbs//lib/rbs/ast/type_param.rb#53
+  # source://rbs//lib/rbs/ast/type_param.rb#44
   def hash; end
 
   # Returns the value of attribute location.
@@ -1960,15 +1101,7 @@ class RBS::AST::TypeParam
   # source://rbs//lib/rbs/ast/type_param.rb#6
   def location; end
 
-  # source://rbs//lib/rbs/ast/type_param.rb#25
-  def lower_bound; end
-
-  # Returns the value of attribute lower_bound_type.
-  #
-  # source://rbs//lib/rbs/ast/type_param.rb#6
-  def lower_bound_type; end
-
-  # source://rbs//lib/rbs/ast/type_param.rb#69
+  # source://rbs//lib/rbs/ast/type_param.rb#59
   def map_type(&block); end
 
   # Returns the value of attribute name.
@@ -1976,21 +1109,21 @@ class RBS::AST::TypeParam
   # source://rbs//lib/rbs/ast/type_param.rb#6
   def name; end
 
-  # source://rbs//lib/rbs/ast/type_param.rb#57
+  # source://rbs//lib/rbs/ast/type_param.rb#48
   def to_json(state = T.unsafe(nil)); end
 
-  # source://rbs//lib/rbs/ast/type_param.rb#133
+  # source://rbs//lib/rbs/ast/type_param.rb#117
   def to_s; end
 
-  # source://rbs//lib/rbs/ast/type_param.rb#32
+  # source://rbs//lib/rbs/ast/type_param.rb#24
   def unchecked!(value = T.unsafe(nil)); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/ast/type_param.rb#37
+  # source://rbs//lib/rbs/ast/type_param.rb#29
   def unchecked?; end
 
-  # source://rbs//lib/rbs/ast/type_param.rb#18
+  # source://rbs//lib/rbs/ast/type_param.rb#17
   def upper_bound; end
 
   # Returns the value of attribute upper_bound_type.
@@ -2004,22 +1137,22 @@ class RBS::AST::TypeParam
   def variance; end
 
   class << self
-    # source://rbs//lib/rbs/ast/type_param.rb#166
+    # source://rbs//lib/rbs/ast/type_param.rb#146
     def application(params, args); end
 
-    # source://rbs//lib/rbs/ast/type_param.rb#198
+    # source://rbs//lib/rbs/ast/type_param.rb#178
     def normalize_args(params, args); end
 
-    # source://rbs//lib/rbs/ast/type_param.rb#114
+    # source://rbs//lib/rbs/ast/type_param.rb#99
     def rename(params, new_names:); end
 
-    # source://rbs//lib/rbs/ast/type_param.rb#92
+    # source://rbs//lib/rbs/ast/type_param.rb#77
     def resolve_variables(params); end
 
-    # source://rbs//lib/rbs/ast/type_param.rb#102
+    # source://rbs//lib/rbs/ast/type_param.rb#87
     def subst_var(vars, type); end
 
-    # source://rbs//lib/rbs/ast/type_param.rb#219
+    # source://rbs//lib/rbs/ast/type_param.rb#199
     def validate(type_params); end
   end
 end
@@ -2196,33 +1329,24 @@ class RBS::BaseError < ::StandardError; end
 class RBS::Buffer
   # @return [Buffer] a new instance of Buffer
   #
-  # source://rbs//lib/rbs/buffer.rb#9
-  def initialize(content:, name: T.unsafe(nil), parent: T.unsafe(nil)); end
-
-  # source://rbs//lib/rbs/buffer.rb#131
-  def absolute_position(position); end
+  # source://rbs//lib/rbs/buffer.rb#8
+  def initialize(name:, content:); end
 
   # Returns the value of attribute content.
   #
   # source://rbs//lib/rbs/buffer.rb#6
   def content; end
 
-  # source://rbs//lib/rbs/buffer.rb#148
-  def detach; end
-
-  # source://rbs//lib/rbs/buffer.rb#86
+  # source://rbs//lib/rbs/buffer.rb#63
   def inspect; end
 
-  # source://rbs//lib/rbs/buffer.rb#78
+  # source://rbs//lib/rbs/buffer.rb#59
   def last_position; end
 
-  # source://rbs//lib/rbs/buffer.rb#26
-  def line_count; end
-
-  # source://rbs//lib/rbs/buffer.rb#22
+  # source://rbs//lib/rbs/buffer.rb#13
   def lines; end
 
-  # source://rbs//lib/rbs/buffer.rb#68
+  # source://rbs//lib/rbs/buffer.rb#49
   def loc_to_pos(loc); end
 
   # Returns the value of attribute name.
@@ -2230,31 +1354,11 @@ class RBS::Buffer
   # source://rbs//lib/rbs/buffer.rb#5
   def name; end
 
-  # Returns the value of attribute parent.
-  #
-  # source://rbs//lib/rbs/buffer.rb#7
-  def parent; end
-
-  # source://rbs//lib/rbs/buffer.rb#116
-  def parent_buffer; end
-
-  # source://rbs//lib/rbs/buffer.rb#122
-  def parent_position(position); end
-
-  # source://rbs//lib/rbs/buffer.rb#56
+  # source://rbs//lib/rbs/buffer.rb#37
   def pos_to_loc(pos); end
 
-  # source://rbs//lib/rbs/buffer.rb#30
+  # source://rbs//lib/rbs/buffer.rb#17
   def ranges; end
-
-  # source://rbs//lib/rbs/buffer.rb#90
-  def rbs_location(location, loc2 = T.unsafe(nil)); end
-
-  # source://rbs//lib/rbs/buffer.rb#98
-  def sub_buffer(lines:); end
-
-  # source://rbs//lib/rbs/buffer.rb#140
-  def top_buffer; end
 end
 
 # source://rbs//lib/rbs/builtin_names.rb#4
@@ -2666,113 +1770,113 @@ module RBS::Collection::Sources::Base
   def dependencies_of(name, version); end
 end
 
-# source://rbs//lib/rbs/collection/sources/git.rb#11
+# source://rbs//lib/rbs/collection/sources/git.rb#10
 class RBS::Collection::Sources::Git
   include ::RBS::Collection::Sources::Base
 
   # @return [Git] a new instance of Git
   #
-  # source://rbs//lib/rbs/collection/sources/git.rb#19
+  # source://rbs//lib/rbs/collection/sources/git.rb#18
   def initialize(name:, revision:, remote:, repo_dir:); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/collection/sources/git.rb#27
+  # source://rbs//lib/rbs/collection/sources/git.rb#26
   def has?(name, version); end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#44
+  # source://rbs//lib/rbs/collection/sources/git.rb#43
   def install(dest:, name:, version:, stdout:); end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#224
+  # source://rbs//lib/rbs/collection/sources/git.rb#223
   def load_metadata(dir:); end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#74
+  # source://rbs//lib/rbs/collection/sources/git.rb#73
   def manifest_of(name, version); end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#208
+  # source://rbs//lib/rbs/collection/sources/git.rb#207
   def metadata_content(name:, version:); end
 
   # Returns the value of attribute name.
   #
-  # source://rbs//lib/rbs/collection/sources/git.rb#17
+  # source://rbs//lib/rbs/collection/sources/git.rb#16
   def name; end
 
   # Returns the value of attribute remote.
   #
-  # source://rbs//lib/rbs/collection/sources/git.rb#17
+  # source://rbs//lib/rbs/collection/sources/git.rb#16
   def remote; end
 
   # Returns the value of attribute repo_dir.
   #
-  # source://rbs//lib/rbs/collection/sources/git.rb#17
+  # source://rbs//lib/rbs/collection/sources/git.rb#16
   def repo_dir; end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#173
+  # source://rbs//lib/rbs/collection/sources/git.rb#172
   def resolved_revision; end
 
   # Returns the value of attribute revision.
   #
-  # source://rbs//lib/rbs/collection/sources/git.rb#17
+  # source://rbs//lib/rbs/collection/sources/git.rb#16
   def revision; end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#114
+  # source://rbs//lib/rbs/collection/sources/git.rb#113
   def to_lockfile; end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#37
+  # source://rbs//lib/rbs/collection/sources/git.rb#36
   def versions(name); end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#216
+  # source://rbs//lib/rbs/collection/sources/git.rb#215
   def write_metadata(dir:, name:, version:); end
 
   private
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#88
+  # source://rbs//lib/rbs/collection/sources/git.rb#87
   def _install(dest:, name:, version:); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/collection/sources/git.rb#184
+  # source://rbs//lib/rbs/collection/sources/git.rb#183
   def commit_hash?; end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#100
+  # source://rbs//lib/rbs/collection/sources/git.rb#99
   def cp_r(src, dest); end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#124
+  # source://rbs//lib/rbs/collection/sources/git.rb#123
   def format_config_entry(name, version); end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#169
+  # source://rbs//lib/rbs/collection/sources/git.rb#168
   def gem_repo_dir; end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#230
+  # source://rbs//lib/rbs/collection/sources/git.rb#229
   def gems_versions; end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#188
+  # source://rbs//lib/rbs/collection/sources/git.rb#187
   def git(*cmd, **opt); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/collection/sources/git.rb#192
+  # source://rbs//lib/rbs/collection/sources/git.rb#191
   def git?(*cmd, **opt); end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#159
+  # source://rbs//lib/rbs/collection/sources/git.rb#158
   def git_dir; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/collection/sources/git.rb#153
+  # source://rbs//lib/rbs/collection/sources/git.rb#152
   def need_to_fetch?(revision); end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#131
+  # source://rbs//lib/rbs/collection/sources/git.rb#130
   def setup!; end
 
-  # source://rbs//lib/rbs/collection/sources/git.rb#198
+  # source://rbs//lib/rbs/collection/sources/git.rb#197
   def sh!(*cmd, **opt); end
 end
 
-# source://rbs//lib/rbs/collection/sources/git.rb#15
+# source://rbs//lib/rbs/collection/sources/git.rb#14
 class RBS::Collection::Sources::Git::CommandError < ::StandardError; end
 
-# source://rbs//lib/rbs/collection/sources/git.rb#13
+# source://rbs//lib/rbs/collection/sources/git.rb#12
 RBS::Collection::Sources::Git::METADATA_FILENAME = T.let(T.unsafe(nil), String)
 
 # source://rbs//lib/rbs/collection/sources/local.rb#6
@@ -2934,51 +2038,51 @@ class RBS::Constant
   def type; end
 end
 
-# source://rbs//lib/rbs/errors.rb#598
+# source://rbs//lib/rbs/errors.rb#577
 class RBS::CyclicClassAliasDefinitionError < ::RBS::BaseError
   include ::RBS::DetailedMessageable
 
   # @return [CyclicClassAliasDefinitionError] a new instance of CyclicClassAliasDefinitionError
   #
-  # source://rbs//lib/rbs/errors.rb#603
+  # source://rbs//lib/rbs/errors.rb#582
   def initialize(entry); end
 
   # Returns the value of attribute alias_entry.
   #
-  # source://rbs//lib/rbs/errors.rb#601
+  # source://rbs//lib/rbs/errors.rb#580
   def alias_entry; end
 
-  # source://rbs//lib/rbs/errors.rb#609
+  # source://rbs//lib/rbs/errors.rb#588
   def location; end
 end
 
-# source://rbs//lib/rbs/errors.rb#559
+# source://rbs//lib/rbs/errors.rb#538
 class RBS::CyclicTypeParameterBound < ::RBS::BaseError
   include ::RBS::DetailedMessageable
 
   # @return [CyclicTypeParameterBound] a new instance of CyclicTypeParameterBound
   #
-  # source://rbs//lib/rbs/errors.rb#564
+  # source://rbs//lib/rbs/errors.rb#543
   def initialize(type_name:, method_name:, params:, location:); end
 
   # Returns the value of attribute location.
   #
-  # source://rbs//lib/rbs/errors.rb#562
+  # source://rbs//lib/rbs/errors.rb#541
   def location; end
 
   # Returns the value of attribute method_name.
   #
-  # source://rbs//lib/rbs/errors.rb#562
+  # source://rbs//lib/rbs/errors.rb#541
   def method_name; end
 
   # Returns the value of attribute params.
   #
-  # source://rbs//lib/rbs/errors.rb#562
+  # source://rbs//lib/rbs/errors.rb#541
   def params; end
 
   # Returns the value of attribute type_name.
   #
-  # source://rbs//lib/rbs/errors.rb#562
+  # source://rbs//lib/rbs/errors.rb#541
   def type_name; end
 end
 
@@ -2986,170 +2090,170 @@ end
 class RBS::Definition
   # @return [Definition] a new instance of Definition
   #
-  # source://rbs//lib/rbs/definition.rb#302
+  # source://rbs//lib/rbs/definition.rb#297
   def initialize(type_name:, entry:, self_type:, ancestors:); end
 
   # Returns the value of attribute ancestors.
   #
-  # source://rbs//lib/rbs/definition.rb#296
+  # source://rbs//lib/rbs/definition.rb#291
   def ancestors; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/definition.rb#325
+  # source://rbs//lib/rbs/definition.rb#320
   def class?; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/definition.rb#342
+  # source://rbs//lib/rbs/definition.rb#337
   def class_type?; end
 
   # Returns the value of attribute class_variables.
   #
-  # source://rbs//lib/rbs/definition.rb#300
+  # source://rbs//lib/rbs/definition.rb#295
   def class_variables; end
 
-  # source://rbs//lib/rbs/definition.rb#389
+  # source://rbs//lib/rbs/definition.rb#384
   def each_type(&block); end
 
   # Returns the value of attribute entry.
   #
-  # source://rbs//lib/rbs/definition.rb#295
+  # source://rbs//lib/rbs/definition.rb#290
   def entry; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/definition.rb#346
+  # source://rbs//lib/rbs/definition.rb#341
   def instance_type?; end
 
   # Returns the value of attribute instance_variables.
   #
-  # source://rbs//lib/rbs/definition.rb#299
+  # source://rbs//lib/rbs/definition.rb#294
   def instance_variables; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/definition.rb#333
+  # source://rbs//lib/rbs/definition.rb#328
   def interface?; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/definition.rb#350
+  # source://rbs//lib/rbs/definition.rb#345
   def interface_type?; end
 
-  # source://rbs//lib/rbs/definition.rb#379
+  # source://rbs//lib/rbs/definition.rb#374
   def map_method_type(&block); end
 
   # Returns the value of attribute methods.
   #
-  # source://rbs//lib/rbs/definition.rb#298
+  # source://rbs//lib/rbs/definition.rb#293
   def methods; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/definition.rb#329
+  # source://rbs//lib/rbs/definition.rb#324
   def module?; end
 
   # Returns the value of attribute self_type.
   #
-  # source://rbs//lib/rbs/definition.rb#297
+  # source://rbs//lib/rbs/definition.rb#292
   def self_type; end
 
-  # source://rbs//lib/rbs/definition.rb#367
+  # source://rbs//lib/rbs/definition.rb#362
   def sub(s); end
 
   # Returns the value of attribute type_name.
   #
-  # source://rbs//lib/rbs/definition.rb#294
+  # source://rbs//lib/rbs/definition.rb#289
   def type_name; end
 
-  # source://rbs//lib/rbs/definition.rb#354
+  # source://rbs//lib/rbs/definition.rb#349
   def type_params; end
 
-  # source://rbs//lib/rbs/definition.rb#358
+  # source://rbs//lib/rbs/definition.rb#353
   def type_params_decl; end
 end
 
-# source://rbs//lib/rbs/definition.rb#209
+# source://rbs//lib/rbs/definition.rb#204
 module RBS::Definition::Ancestor; end
 
-# source://rbs//lib/rbs/definition.rb#210
+# source://rbs//lib/rbs/definition.rb#205
 class RBS::Definition::Ancestor::Instance
   # @return [Instance] a new instance of Instance
   #
-  # source://rbs//lib/rbs/definition.rb#213
+  # source://rbs//lib/rbs/definition.rb#208
   def initialize(name:, args:, source:); end
 
-  # source://rbs//lib/rbs/definition.rb#219
+  # source://rbs//lib/rbs/definition.rb#214
   def ==(other); end
 
   # Returns the value of attribute args.
   #
-  # source://rbs//lib/rbs/definition.rb#211
+  # source://rbs//lib/rbs/definition.rb#206
   def args; end
 
-  # source://rbs//lib/rbs/definition.rb#219
+  # source://rbs//lib/rbs/definition.rb#214
   def eql?(other); end
 
-  # source://rbs//lib/rbs/definition.rb#225
+  # source://rbs//lib/rbs/definition.rb#220
   def hash; end
 
   # Returns the value of attribute name.
   #
-  # source://rbs//lib/rbs/definition.rb#211
+  # source://rbs//lib/rbs/definition.rb#206
   def name; end
 
   # Returns the value of attribute source.
   #
-  # source://rbs//lib/rbs/definition.rb#211
+  # source://rbs//lib/rbs/definition.rb#206
   def source; end
 end
 
-# source://rbs//lib/rbs/definition.rb#230
+# source://rbs//lib/rbs/definition.rb#225
 class RBS::Definition::Ancestor::Singleton
   # @return [Singleton] a new instance of Singleton
   #
-  # source://rbs//lib/rbs/definition.rb#233
+  # source://rbs//lib/rbs/definition.rb#228
   def initialize(name:); end
 
-  # source://rbs//lib/rbs/definition.rb#237
+  # source://rbs//lib/rbs/definition.rb#232
   def ==(other); end
 
-  # source://rbs//lib/rbs/definition.rb#237
+  # source://rbs//lib/rbs/definition.rb#232
   def eql?(other); end
 
-  # source://rbs//lib/rbs/definition.rb#243
+  # source://rbs//lib/rbs/definition.rb#238
   def hash; end
 
   # Returns the value of attribute name.
   #
-  # source://rbs//lib/rbs/definition.rb#231
+  # source://rbs//lib/rbs/definition.rb#226
   def name; end
 end
 
-# source://rbs//lib/rbs/definition.rb#249
+# source://rbs//lib/rbs/definition.rb#244
 class RBS::Definition::InstanceAncestors
   # @return [InstanceAncestors] a new instance of InstanceAncestors
   #
-  # source://rbs//lib/rbs/definition.rb#254
+  # source://rbs//lib/rbs/definition.rb#249
   def initialize(type_name:, params:, ancestors:); end
 
   # Returns the value of attribute ancestors.
   #
-  # source://rbs//lib/rbs/definition.rb#252
+  # source://rbs//lib/rbs/definition.rb#247
   def ancestors; end
 
-  # source://rbs//lib/rbs/definition.rb#260
+  # source://rbs//lib/rbs/definition.rb#255
   def apply(args, env:, location:); end
 
   # Returns the value of attribute params.
   #
-  # source://rbs//lib/rbs/definition.rb#251
+  # source://rbs//lib/rbs/definition.rb#246
   def params; end
 
   # Returns the value of attribute type_name.
   #
-  # source://rbs//lib/rbs/definition.rb#250
+  # source://rbs//lib/rbs/definition.rb#245
   def type_name; end
 end
 
@@ -3157,91 +2261,91 @@ end
 class RBS::Definition::Method
   # @return [Method] a new instance of Method
   #
-  # source://rbs//lib/rbs/definition.rb#107
+  # source://rbs//lib/rbs/definition.rb#102
   def initialize(super_method:, defs:, accessibility:, alias_of:, annotations: T.unsafe(nil), alias_member: T.unsafe(nil)); end
 
-  # source://rbs//lib/rbs/definition.rb#117
+  # source://rbs//lib/rbs/definition.rb#112
   def ==(other); end
 
   # Returns the value of attribute accessibility.
   #
-  # source://rbs//lib/rbs/definition.rb#101
+  # source://rbs//lib/rbs/definition.rb#96
   def accessibility; end
 
   # Returns the value of attribute alias_member.
   #
-  # source://rbs//lib/rbs/definition.rb#105
+  # source://rbs//lib/rbs/definition.rb#100
   def alias_member; end
 
   # Returns the value of attribute alias_of.
   #
-  # source://rbs//lib/rbs/definition.rb#104
+  # source://rbs//lib/rbs/definition.rb#99
   def alias_of; end
 
   # Returns the value of attribute annotations.
   #
-  # source://rbs//lib/rbs/definition.rb#103
+  # source://rbs//lib/rbs/definition.rb#98
   def annotations; end
 
-  # source://rbs//lib/rbs/definition.rb#151
+  # source://rbs//lib/rbs/definition.rb#146
   def comments; end
 
-  # source://rbs//lib/rbs/definition.rb#133
+  # source://rbs//lib/rbs/definition.rb#128
   def defined_in; end
 
   # Returns the value of attribute defs.
   #
-  # source://rbs//lib/rbs/definition.rb#100
+  # source://rbs//lib/rbs/definition.rb#95
   def defs; end
 
-  # source://rbs//lib/rbs/definition.rb#117
+  # source://rbs//lib/rbs/definition.rb#112
   def eql?(other); end
 
   # Returns the value of attribute extra_annotations.
   #
-  # source://rbs//lib/rbs/definition.rb#102
+  # source://rbs//lib/rbs/definition.rb#97
   def extra_annotations; end
 
-  # source://rbs//lib/rbs/definition.rb#129
+  # source://rbs//lib/rbs/definition.rb#124
   def hash; end
 
-  # source://rbs//lib/rbs/definition.rb#140
+  # source://rbs//lib/rbs/definition.rb#135
   def implemented_in; end
 
-  # source://rbs//lib/rbs/definition.rb#190
+  # source://rbs//lib/rbs/definition.rb#185
   def map_method_type(&block); end
 
-  # source://rbs//lib/rbs/definition.rb#176
+  # source://rbs//lib/rbs/definition.rb#171
   def map_type(&block); end
 
-  # source://rbs//lib/rbs/definition.rb#183
+  # source://rbs//lib/rbs/definition.rb#178
   def map_type_bound(&block); end
 
-  # source://rbs//lib/rbs/definition.rb#155
+  # source://rbs//lib/rbs/definition.rb#150
   def members; end
 
-  # source://rbs//lib/rbs/definition.rb#147
+  # source://rbs//lib/rbs/definition.rb#142
   def method_types; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/definition.rb#163
+  # source://rbs//lib/rbs/definition.rb#158
   def private?; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/definition.rb#159
+  # source://rbs//lib/rbs/definition.rb#154
   def public?; end
 
-  # source://rbs//lib/rbs/definition.rb#167
+  # source://rbs//lib/rbs/definition.rb#162
   def sub(s); end
 
   # Returns the value of attribute super_method.
   #
-  # source://rbs//lib/rbs/definition.rb#99
+  # source://rbs//lib/rbs/definition.rb#94
   def super_method; end
 
-  # source://rbs//lib/rbs/definition.rb#196
+  # source://rbs//lib/rbs/definition.rb#191
   def update(super_method: T.unsafe(nil), defs: T.unsafe(nil), accessibility: T.unsafe(nil), alias_of: T.unsafe(nil), annotations: T.unsafe(nil), alias_member: T.unsafe(nil)); end
 end
 
@@ -3268,7 +2372,7 @@ class RBS::Definition::Method::TypeDef
   # source://rbs//lib/rbs/definition.rb#34
   def defined_in; end
 
-  # source://rbs//lib/rbs/definition.rb#89
+  # source://rbs//lib/rbs/definition.rb#84
   def each_annotation(&block); end
 
   # source://rbs//lib/rbs/definition.rb#50
@@ -3294,7 +2398,7 @@ class RBS::Definition::Method::TypeDef
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/definition.rb#80
+  # source://rbs//lib/rbs/definition.rb#75
   def overload?; end
 
   # Returns the value of attribute overload_annotations.
@@ -3307,25 +2411,25 @@ class RBS::Definition::Method::TypeDef
   # source://rbs//lib/rbs/definition.rb#32
   def type; end
 
-  # source://rbs//lib/rbs/definition.rb#73
+  # source://rbs//lib/rbs/definition.rb#68
   def update(type: T.unsafe(nil), member: T.unsafe(nil), defined_in: T.unsafe(nil), implemented_in: T.unsafe(nil)); end
 end
 
-# source://rbs//lib/rbs/definition.rb#284
+# source://rbs//lib/rbs/definition.rb#279
 class RBS::Definition::SingletonAncestors
   # @return [SingletonAncestors] a new instance of SingletonAncestors
   #
-  # source://rbs//lib/rbs/definition.rb#288
+  # source://rbs//lib/rbs/definition.rb#283
   def initialize(type_name:, ancestors:); end
 
   # Returns the value of attribute ancestors.
   #
-  # source://rbs//lib/rbs/definition.rb#286
+  # source://rbs//lib/rbs/definition.rb#281
   def ancestors; end
 
   # Returns the value of attribute type_name.
   #
-  # source://rbs//lib/rbs/definition.rb#285
+  # source://rbs//lib/rbs/definition.rb#280
   def type_name; end
 end
 
@@ -3372,18 +2476,18 @@ class RBS::DefinitionBuilder
   # source://rbs//lib/rbs/definition_builder.rb#6
   def ancestor_builder; end
 
-  # source://rbs//lib/rbs/definition_builder.rb#195
+  # source://rbs//lib/rbs/definition_builder.rb#172
   def build_instance(type_name); end
 
   # source://rbs//lib/rbs/definition_builder.rb#43
   def build_interface(type_name); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#327
+  # source://rbs//lib/rbs/definition_builder.rb#304
   def build_singleton(type_name); end
 
   # Builds a definition for singleton without .new method.
   #
-  # source://rbs//lib/rbs/definition_builder.rb#257
+  # source://rbs//lib/rbs/definition_builder.rb#234
   def build_singleton0(type_name); end
 
   # source://rbs//lib/rbs/definition_builder.rb#85
@@ -3392,7 +2496,7 @@ class RBS::DefinitionBuilder
   # source://rbs//lib/rbs/definition_builder.rb#33
   def define_interface(definition, type_name, subst); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#682
+  # source://rbs//lib/rbs/definition_builder.rb#642
   def define_method(methods, definition, method, subst, self_type_methods, defined_in:, implemented_in: T.unsafe(nil)); end
 
   # source://rbs//lib/rbs/definition_builder.rb#25
@@ -3403,19 +2507,19 @@ class RBS::DefinitionBuilder
   # source://rbs//lib/rbs/definition_builder.rb#5
   def env; end
 
-  # source://rbs//lib/rbs/definition_builder.rb#950
+  # source://rbs//lib/rbs/definition_builder.rb#826
   def expand_alias(type_name); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#954
+  # source://rbs//lib/rbs/definition_builder.rb#830
   def expand_alias1(type_name); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#961
+  # source://rbs//lib/rbs/definition_builder.rb#837
   def expand_alias2(type_name, args); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#621
+  # source://rbs//lib/rbs/definition_builder.rb#581
   def import_methods(definition, module_name, module_methods, interfaces_methods, subst, self_type_methods); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#570
+  # source://rbs//lib/rbs/definition_builder.rb#543
   def insert_variable(type_name, variables, name:, type:, source:); end
 
   # Returns the value of attribute instance_cache.
@@ -3428,7 +2532,7 @@ class RBS::DefinitionBuilder
   # source://rbs//lib/rbs/definition_builder.rb#12
   def interface_cache; end
 
-  # source://rbs//lib/rbs/definition_builder.rb#440
+  # source://rbs//lib/rbs/definition_builder.rb#417
   def interface_methods(interface_ancestors); end
 
   # Returns the value of attribute method_builder.
@@ -3446,33 +2550,33 @@ class RBS::DefinitionBuilder
   # source://rbs//lib/rbs/definition_builder.rb#10
   def singleton_cache; end
 
-  # source://rbs//lib/rbs/definition_builder.rb#470
+  # source://rbs//lib/rbs/definition_builder.rb#447
   def source_location(source, decl); end
 
   # source://rbs//lib/rbs/definition_builder.rb#66
   def tapp_subst(name, args); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#946
+  # source://rbs//lib/rbs/definition_builder.rb#822
   def try_cache(type_name, cache:); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#985
+  # source://rbs//lib/rbs/definition_builder.rb#861
   def update(env:, except:, ancestor_builder:); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#460
+  # source://rbs//lib/rbs/definition_builder.rb#437
   def validate_params_with(type_params, result:); end
 
   # @raise [NoTypeFoundError]
   #
-  # source://rbs//lib/rbs/definition_builder.rb#1014
+  # source://rbs//lib/rbs/definition_builder.rb#890
   def validate_type_name(name, location); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#488
+  # source://rbs//lib/rbs/definition_builder.rb#461
   def validate_type_params(definition, ancestors:, methods:); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#1003
+  # source://rbs//lib/rbs/definition_builder.rb#879
   def validate_type_presence(type); end
 
-  # source://rbs//lib/rbs/definition_builder.rb#581
+  # source://rbs//lib/rbs/definition_builder.rb#553
   def validate_variable(var); end
 end
 
@@ -3488,10 +2592,10 @@ class RBS::DefinitionBuilder::AncestorBuilder
   # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#151
   def env; end
 
-  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#664
+  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#608
   def fill_ancestor_source(ancestor, name:, source:, &block); end
 
-  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#492
+  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#436
   def instance_ancestors(type_name, building_ancestors: T.unsafe(nil)); end
 
   # Returns the value of attribute instance_ancestors_cache.
@@ -3499,7 +2603,7 @@ class RBS::DefinitionBuilder::AncestorBuilder
   # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#154
   def instance_ancestors_cache; end
 
-  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#628
+  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#572
   def interface_ancestors(type_name, building_ancestors: T.unsafe(nil)); end
 
   # Returns the value of attribute interface_ancestors_cache.
@@ -3507,7 +2611,7 @@ class RBS::DefinitionBuilder::AncestorBuilder
   # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#160
   def interface_ancestors_cache; end
 
-  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#474
+  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#416
   def mixin_ancestors(entry, type_name, included_modules:, included_interfaces:, extended_modules:, prepended_modules:, extended_interfaces:); end
 
   # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#350
@@ -3537,7 +2641,7 @@ class RBS::DefinitionBuilder::AncestorBuilder
   # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#156
   def one_singleton_ancestors_cache; end
 
-  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#573
+  # source://rbs//lib/rbs/definition_builder/ancestor_builder.rb#517
   def singleton_ancestors(type_name, building_ancestors: T.unsafe(nil)); end
 
   # Returns the value of attribute singleton_ancestors_cache.
@@ -3646,29 +2750,26 @@ class RBS::DefinitionBuilder::MethodBuilder
   # source://rbs//lib/rbs/definition_builder/method_builder.rb#91
   def initialize(env:); end
 
-  # source://rbs//lib/rbs/definition_builder/method_builder.rb#211
+  # source://rbs//lib/rbs/definition_builder/method_builder.rb#194
   def build_alias(methods, type, member:); end
 
-  # source://rbs//lib/rbs/definition_builder/method_builder.rb#216
+  # source://rbs//lib/rbs/definition_builder/method_builder.rb#199
   def build_attribute(methods, type, member:, accessibility:); end
 
   # source://rbs//lib/rbs/definition_builder/method_builder.rb#99
   def build_instance(type_name); end
 
-  # source://rbs//lib/rbs/definition_builder/method_builder.rb#191
+  # source://rbs//lib/rbs/definition_builder/method_builder.rb#174
   def build_interface(type_name); end
 
-  # source://rbs//lib/rbs/definition_builder/method_builder.rb#250
+  # source://rbs//lib/rbs/definition_builder/method_builder.rb#215
   def build_method(methods, type, member:, accessibility:); end
 
-  # source://rbs//lib/rbs/definition_builder/method_builder.rb#232
-  def build_ruby_attribute(methods, type, member:, accessibility:); end
-
-  # source://rbs//lib/rbs/definition_builder/method_builder.rb#162
+  # source://rbs//lib/rbs/definition_builder/method_builder.rb#145
   def build_singleton(type_name); end
 
-  # source://rbs//lib/rbs/definition_builder/method_builder.rb#261
-  def each_rbs_member_with_accessibility(members, accessibility: T.unsafe(nil)); end
+  # source://rbs//lib/rbs/definition_builder/method_builder.rb#226
+  def each_member_with_accessibility(members, accessibility: T.unsafe(nil)); end
 
   # Returns the value of attribute env.
   #
@@ -3690,7 +2791,7 @@ class RBS::DefinitionBuilder::MethodBuilder
   # source://rbs//lib/rbs/definition_builder/method_builder.rb#88
   def singleton_methods; end
 
-  # source://rbs//lib/rbs/definition_builder/method_builder.rb#274
+  # source://rbs//lib/rbs/definition_builder/method_builder.rb#239
   def update(env:, except:); end
 end
 
@@ -3783,7 +2884,7 @@ class RBS::Diff
   # source://rbs//lib/rbs/diff.rb#49
   def build_methods(path); end
 
-  # source://rbs//lib/rbs/diff.rb#122
+  # source://rbs//lib/rbs/diff.rb#116
   def constant_to_s(constant); end
 
   # source://rbs//lib/rbs/diff.rb#100
@@ -3796,21 +2897,21 @@ class RBS::Diff
   def each_diff_methods(kind, before_methods, after_methods); end
 end
 
-# source://rbs//lib/rbs/errors.rb#419
+# source://rbs//lib/rbs/errors.rb#418
 class RBS::DuplicatedDeclarationError < ::RBS::LoadingError
   # @return [DuplicatedDeclarationError] a new instance of DuplicatedDeclarationError
   #
-  # source://rbs//lib/rbs/errors.rb#423
+  # source://rbs//lib/rbs/errors.rb#422
   def initialize(name, *decls); end
 
   # Returns the value of attribute decls.
   #
-  # source://rbs//lib/rbs/errors.rb#421
+  # source://rbs//lib/rbs/errors.rb#420
   def decls; end
 
   # Returns the value of attribute name.
   #
-  # source://rbs//lib/rbs/errors.rb#420
+  # source://rbs//lib/rbs/errors.rb#419
   def name; end
 end
 
@@ -3889,340 +2990,333 @@ end
 class RBS::Environment
   # @return [Environment] a new instance of Environment
   #
-  # source://rbs//lib/rbs/environment.rb#48
+  # source://rbs//lib/rbs/environment.rb#145
   def initialize; end
 
-  # source://rbs//lib/rbs/environment.rb#981
+  # source://rbs//lib/rbs/environment.rb#475
+  def <<(decl); end
+
+  # source://rbs//lib/rbs/environment.rb#812
   def absolute_type(resolver, map, type, context:); end
 
-  # source://rbs//lib/rbs/environment.rb#976
+  # source://rbs//lib/rbs/environment.rb#807
   def absolute_type_name(resolver, map, type_name, context:); end
 
-  # source://rbs//lib/rbs/environment.rb#455
-  def add_source(source); end
+  # source://rbs//lib/rbs/environment.rb#481
+  def add_signature(buffer:, directives:, decls:); end
 
-  # source://rbs//lib/rbs/environment.rb#568
+  # source://rbs//lib/rbs/environment.rb#544
   def append_context(context, decl); end
 
-  # source://rbs//lib/rbs/environment.rb#992
+  # source://rbs//lib/rbs/environment.rb#823
   def buffers; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#117
+  # source://rbs//lib/rbs/environment.rb#218
   def class_alias?(name); end
 
   # Returns the value of attribute class_alias_decls.
   #
-  # source://rbs//lib/rbs/environment.rb#10
+  # source://rbs//lib/rbs/environment.rb#12
   def class_alias_decls; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#101
+  # source://rbs//lib/rbs/environment.rb#202
   def class_decl?(name); end
 
   # Returns the value of attribute class_decls.
   #
-  # source://rbs//lib/rbs/environment.rb#5
+  # source://rbs//lib/rbs/environment.rb#7
   def class_decls; end
 
-  # source://rbs//lib/rbs/environment.rb#125
+  # source://rbs//lib/rbs/environment.rb#226
   def class_entry(type_name, normalized: T.unsafe(nil)); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#97
+  # source://rbs//lib/rbs/environment.rb#198
   def constant_decl?(name); end
 
   # Returns the value of attribute constant_decls.
   #
-  # source://rbs//lib/rbs/environment.rb#8
+  # source://rbs//lib/rbs/environment.rb#10
   def constant_decls; end
 
-  # source://rbs//lib/rbs/environment.rb#167
+  # source://rbs//lib/rbs/environment.rb#268
   def constant_entry(type_name, normalized: T.unsafe(nil)); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#93
+  # source://rbs//lib/rbs/environment.rb#194
   def constant_name?(name); end
 
-  # source://rbs//lib/rbs/environment.rb#14
+  # Returns the value of attribute declarations.
+  #
+  # source://rbs//lib/rbs/environment.rb#5
   def declarations; end
-
-  # source://rbs//lib/rbs/environment.rb#470
-  def each_rbs_source(&block); end
-
-  # source://rbs//lib/rbs/environment.rb#482
-  def each_ruby_source(&block); end
 
   # Returns the value of attribute global_decls.
   #
-  # source://rbs//lib/rbs/environment.rb#9
+  # source://rbs//lib/rbs/environment.rb#11
   def global_decls; end
 
-  # source://rbs//lib/rbs/environment.rb#277
-  def insert_rbs_decl(decl, context:, namespace:); end
+  # source://rbs//lib/rbs/environment.rb#378
+  def insert_decl(decl, outer:, namespace:); end
 
-  # source://rbs//lib/rbs/environment.rb#374
-  def insert_ruby_decl(decl, context:, namespace:); end
-
-  # source://rbs//lib/rbs/environment.rb#987
+  # source://rbs//lib/rbs/environment.rb#818
   def inspect; end
 
   # Returns the value of attribute interface_decls.
   #
-  # source://rbs//lib/rbs/environment.rb#6
+  # source://rbs//lib/rbs/environment.rb#8
   def interface_decls; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#75
+  # source://rbs//lib/rbs/environment.rb#176
   def interface_name?(name); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#109
+  # source://rbs//lib/rbs/environment.rb#210
   def module_alias?(name); end
 
-  # source://rbs//lib/rbs/environment.rb#154
+  # source://rbs//lib/rbs/environment.rb#255
   def module_class_entry(type_name, normalized: T.unsafe(nil)); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#105
+  # source://rbs//lib/rbs/environment.rb#206
   def module_decl?(name); end
 
-  # source://rbs//lib/rbs/environment.rb#132
+  # source://rbs//lib/rbs/environment.rb#233
   def module_entry(type_name, normalized: T.unsafe(nil)); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#83
+  # source://rbs//lib/rbs/environment.rb#184
   def module_name?(name); end
 
-  # source://rbs//lib/rbs/environment.rb#269
+  # source://rbs//lib/rbs/environment.rb#370
   def normalize_module_name(name); end
 
-  # source://rbs//lib/rbs/environment.rb#273
+  # source://rbs//lib/rbs/environment.rb#374
   def normalize_module_name!(name); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#241
+  # source://rbs//lib/rbs/environment.rb#342
   def normalize_module_name?(name); end
 
-  # source://rbs//lib/rbs/environment.rb#219
+  # source://rbs//lib/rbs/environment.rb#320
   def normalize_type_name(name); end
 
-  # source://rbs//lib/rbs/environment.rb#206
+  # source://rbs//lib/rbs/environment.rb#307
   def normalize_type_name!(name); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#187
+  # source://rbs//lib/rbs/environment.rb#288
   def normalize_type_name?(name); end
 
-  # source://rbs//lib/rbs/environment.rb#139
+  # source://rbs//lib/rbs/environment.rb#240
   def normalized_class_entry(type_name); end
 
-  # source://rbs//lib/rbs/environment.rb#163
+  # source://rbs//lib/rbs/environment.rb#264
   def normalized_module_class_entry(type_name); end
 
-  # source://rbs//lib/rbs/environment.rb#150
+  # source://rbs//lib/rbs/environment.rb#251
   def normalized_module_entry(type_name); end
 
-  # source://rbs//lib/rbs/environment.rb#236
+  # source://rbs//lib/rbs/environment.rb#337
   def normalized_type_name!(name); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#223
+  # source://rbs//lib/rbs/environment.rb#324
   def normalized_type_name?(type_name); end
 
-  # source://rbs//lib/rbs/environment.rb#577
-  def resolve_declaration(resolver, map, decl, context:, prefix:); end
+  # source://rbs//lib/rbs/environment.rb#553
+  def resolve_declaration(resolver, map, decl, outer:, prefix:); end
 
-  # source://rbs//lib/rbs/environment.rb#862
+  # source://rbs//lib/rbs/environment.rb#693
   def resolve_member(resolver, map, member, context:); end
 
-  # source://rbs//lib/rbs/environment.rb#962
+  # source://rbs//lib/rbs/environment.rb#793
   def resolve_method_type(resolver, map, type, context:); end
 
-  # source://rbs//lib/rbs/environment.rb#713
-  def resolve_ruby_decl(resolver, decl, context:, prefix:); end
-
-  # source://rbs//lib/rbs/environment.rb#790
-  def resolve_ruby_member(resolver, member, context:); end
-
-  # source://rbs//lib/rbs/environment.rb#500
+  # source://rbs//lib/rbs/environment.rb#494
   def resolve_signature(resolver, table, dirs, decls, only: T.unsafe(nil)); end
 
-  # source://rbs//lib/rbs/environment.rb#522
+  # source://rbs//lib/rbs/environment.rb#516
   def resolve_type_names(only: T.unsafe(nil)); end
 
-  # source://rbs//lib/rbs/environment.rb#970
+  # source://rbs//lib/rbs/environment.rb#801
   def resolve_type_params(resolver, map, params, context:); end
 
-  # source://rbs//lib/rbs/environment.rb#562
+  # source://rbs//lib/rbs/environment.rb#538
   def resolver_context(*nesting); end
 
-  # Returns the value of attribute sources.
+  # Returns the value of attribute signatures.
   #
-  # source://rbs//lib/rbs/environment.rb#12
-  def sources; end
+  # source://rbs//lib/rbs/environment.rb#14
+  def signatures; end
 
   # Returns the value of attribute type_alias_decls.
   #
-  # source://rbs//lib/rbs/environment.rb#7
+  # source://rbs//lib/rbs/environment.rb#9
   def type_alias_decls; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#79
+  # source://rbs//lib/rbs/environment.rb#180
   def type_alias_name?(name); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment.rb#87
+  # source://rbs//lib/rbs/environment.rb#188
   def type_name?(name); end
 
-  # source://rbs//lib/rbs/environment.rb#996
-  def unload(paths); end
+  # source://rbs//lib/rbs/environment.rb#827
+  def unload(buffers); end
 
-  # source://rbs//lib/rbs/environment.rb#494
+  # source://rbs//lib/rbs/environment.rb#488
   def validate_type_params; end
 
   private
 
-  # source://rbs//lib/rbs/environment.rb#59
+  # source://rbs//lib/rbs/environment.rb#158
   def initialize_copy(other); end
 
   class << self
-    # source://rbs//lib/rbs/environment.rb#69
+    # source://rbs//lib/rbs/environment.rb#170
     def from_loader(loader); end
   end
 end
 
-# source://rbs//lib/rbs/environment.rb#33
+# source://rbs//lib/rbs/environment.rb#130
 class RBS::Environment::ClassAliasEntry < ::RBS::Environment::SingleEntry; end
 
-# source://rbs//lib/rbs/environment/class_entry.rb#5
-class RBS::Environment::ClassEntry
-  # @return [ClassEntry] a new instance of ClassEntry
-  #
-  # source://rbs//lib/rbs/environment/class_entry.rb#10
-  def initialize(name); end
-
-  # source://rbs//lib/rbs/environment/class_entry.rb#15
-  def <<(context_decl); end
-
-  # Returns the value of attribute context_decls.
-  #
-  # source://rbs//lib/rbs/environment/class_entry.rb#8
-  def context_decls; end
-
-  # source://rbs//lib/rbs/environment/class_entry.rb#21
-  def each_decl(&block); end
-
-  # @return [Boolean]
-  #
-  # source://rbs//lib/rbs/environment/class_entry.rb#31
-  def empty?; end
-
-  # Returns the value of attribute name.
-  #
-  # source://rbs//lib/rbs/environment/class_entry.rb#6
-  def name; end
-
-  # source://rbs//lib/rbs/environment/class_entry.rb#35
-  def primary_decl; end
-
-  # source://rbs//lib/rbs/environment/class_entry.rb#47
-  def type_params; end
-
-  # source://rbs//lib/rbs/environment/class_entry.rb#52
-  def validate_type_params; end
+# source://rbs//lib/rbs/environment.rb#100
+class RBS::Environment::ClassEntry < ::RBS::Environment::MultiEntry
+  # source://rbs//lib/rbs/environment.rb#101
+  def primary; end
 end
 
-# source://rbs//lib/rbs/environment.rb#42
+# source://rbs//lib/rbs/environment.rb#139
 class RBS::Environment::ConstantEntry < ::RBS::Environment::SingleEntry; end
 
-# source://rbs//lib/rbs/environment.rb#45
+# source://rbs//lib/rbs/environment.rb#16
+module RBS::Environment::ContextUtil
+  # source://rbs//lib/rbs/environment.rb#17
+  def calculate_context(decls); end
+end
+
+# source://rbs//lib/rbs/environment.rb#142
 class RBS::Environment::GlobalEntry < ::RBS::Environment::SingleEntry; end
 
-# source://rbs//lib/rbs/environment.rb#36
+# source://rbs//lib/rbs/environment.rb#133
 class RBS::Environment::InterfaceEntry < ::RBS::Environment::SingleEntry; end
 
-# source://rbs//lib/rbs/environment.rb#30
+# source://rbs//lib/rbs/environment.rb#127
 class RBS::Environment::ModuleAliasEntry < ::RBS::Environment::SingleEntry; end
 
-# source://rbs//lib/rbs/environment/module_entry.rb#5
-class RBS::Environment::ModuleEntry
-  # @return [ModuleEntry] a new instance of ModuleEntry
+# source://rbs//lib/rbs/environment.rb#85
+class RBS::Environment::ModuleEntry < ::RBS::Environment::MultiEntry
+  # source://rbs//lib/rbs/environment.rb#92
+  def primary; end
+
+  # source://rbs//lib/rbs/environment.rb#86
+  def self_types; end
+end
+
+# source://rbs//lib/rbs/environment.rb#29
+class RBS::Environment::MultiEntry
+  # @return [MultiEntry] a new instance of MultiEntry
   #
-  # source://rbs//lib/rbs/environment/module_entry.rb#10
-  def initialize(name); end
-
-  # source://rbs//lib/rbs/environment/module_entry.rb#15
-  def <<(context_decl); end
-
-  # Returns the value of attribute context_decls.
-  #
-  # source://rbs//lib/rbs/environment/module_entry.rb#8
-  def context_decls; end
-
-  # source://rbs//lib/rbs/environment/module_entry.rb#20
-  def each_decl(&block); end
+  # source://rbs//lib/rbs/environment.rb#43
+  def initialize(name:); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/environment/module_entry.rb#30
-  def empty?; end
+  # source://rbs//lib/rbs/environment.rb#70
+  def compatible_params?(ps1, ps2); end
+
+  # Returns the value of attribute decls.
+  #
+  # source://rbs//lib/rbs/environment.rb#41
+  def decls; end
+
+  # source://rbs//lib/rbs/environment.rb#48
+  def insert(decl:, outer:); end
 
   # Returns the value of attribute name.
   #
-  # source://rbs//lib/rbs/environment/module_entry.rb#6
+  # source://rbs//lib/rbs/environment.rb#40
   def name; end
 
-  # source://rbs//lib/rbs/environment/module_entry.rb#34
-  def primary_decl; end
+  # source://rbs//lib/rbs/environment.rb#80
+  def primary; end
 
-  # source://rbs//lib/rbs/environment/module_entry.rb#43
-  def self_types; end
-
-  # source://rbs//lib/rbs/environment/module_entry.rb#38
+  # source://rbs//lib/rbs/environment.rb#76
   def type_params; end
 
-  # source://rbs//lib/rbs/environment/module_entry.rb#49
+  # source://rbs//lib/rbs/environment.rb#53
   def validate_type_params; end
 end
 
-# source://rbs//lib/rbs/environment.rb#18
+# source://rbs//lib/rbs/environment.rb#30
+class RBS::Environment::MultiEntry::D < ::Struct
+  include ::RBS::Environment::ContextUtil
+
+  # source://rbs//lib/rbs/environment.rb#35
+  def context; end
+
+  def decl; end
+  def decl=(_); end
+  def outer; end
+  def outer=(_); end
+
+  class << self
+    def [](*_arg0); end
+    def inspect; end
+    def keyword_init?; end
+    def members; end
+    def new(*_arg0); end
+  end
+end
+
+# source://rbs//lib/rbs/environment.rb#109
 class RBS::Environment::SingleEntry
+  include ::RBS::Environment::ContextUtil
+
   # @return [SingleEntry] a new instance of SingleEntry
   #
-  # source://rbs//lib/rbs/environment.rb#23
-  def initialize(name:, decl:, context:); end
+  # source://rbs//lib/rbs/environment.rb#114
+  def initialize(name:, decl:, outer:); end
 
-  # Returns the value of attribute context.
-  #
-  # source://rbs//lib/rbs/environment.rb#20
+  # source://rbs//lib/rbs/environment.rb#122
   def context; end
 
   # Returns the value of attribute decl.
   #
-  # source://rbs//lib/rbs/environment.rb#21
+  # source://rbs//lib/rbs/environment.rb#112
   def decl; end
 
   # Returns the value of attribute name.
   #
-  # source://rbs//lib/rbs/environment.rb#19
+  # source://rbs//lib/rbs/environment.rb#110
   def name; end
+
+  # Returns the value of attribute outer.
+  #
+  # source://rbs//lib/rbs/environment.rb#111
+  def outer; end
 end
 
-# source://rbs//lib/rbs/environment.rb#39
+# source://rbs//lib/rbs/environment.rb#136
 class RBS::Environment::TypeAliasEntry < ::RBS::Environment::SingleEntry; end
 
 # source://rbs//lib/rbs/environment/use_map.rb#5
@@ -4446,7 +3540,7 @@ class RBS::GenericParameterMismatchError < ::RBS::LoadingError
   # @return [GenericParameterMismatchError] a new instance of GenericParameterMismatchError
   #
   # source://rbs//lib/rbs/errors.rb#411
-  def initialize(name:, decl:, location: T.unsafe(nil)); end
+  def initialize(name:, decl:); end
 
   # Returns the value of attribute decl.
   #
@@ -4459,21 +3553,21 @@ class RBS::GenericParameterMismatchError < ::RBS::LoadingError
   def name; end
 end
 
-# source://rbs//lib/rbs/errors.rb#574
+# source://rbs//lib/rbs/errors.rb#553
 class RBS::InconsistentClassModuleAliasError < ::RBS::BaseError
   include ::RBS::DetailedMessageable
 
   # @return [InconsistentClassModuleAliasError] a new instance of InconsistentClassModuleAliasError
   #
-  # source://rbs//lib/rbs/errors.rb#579
+  # source://rbs//lib/rbs/errors.rb#558
   def initialize(entry); end
 
   # Returns the value of attribute alias_entry.
   #
-  # source://rbs//lib/rbs/errors.rb#577
+  # source://rbs//lib/rbs/errors.rb#556
   def alias_entry; end
 
-  # source://rbs//lib/rbs/errors.rb#593
+  # source://rbs//lib/rbs/errors.rb#572
   def location; end
 end
 
@@ -4498,262 +3592,6 @@ class RBS::InheritModuleError < ::RBS::DefinitionError
     # source://rbs//lib/rbs/errors.rb#202
     def check!(super_decl, env:); end
   end
-end
-
-# source://rbs//lib/rbs/inline_parser.rb#4
-class RBS::InlineParser
-  class << self
-    # source://rbs//lib/rbs/inline_parser.rb#45
-    def parse(buffer, prism); end
-  end
-end
-
-# source://rbs//lib/rbs/inline_parser/comment_association.rb#5
-class RBS::InlineParser::CommentAssociation
-  # @return [CommentAssociation] a new instance of CommentAssociation
-  #
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#8
-  def initialize(blocks); end
-
-  # Returns the value of attribute associated_blocks.
-  #
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#6
-  def associated_blocks; end
-
-  # Returns the value of attribute blocks.
-  #
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#6
-  def blocks; end
-
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#84
-  def each_enclosed_block(node); end
-
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#104
-  def each_unassociated_block; end
-
-  # Returns the value of attribute end_line_map.
-  #
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#6
-  def end_line_map; end
-
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#47
-  def leading_block(node); end
-
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#55
-  def leading_block!(node); end
-
-  # Returns the value of attribute start_line_map.
-  #
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#6
-  def start_line_map; end
-
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#63
-  def trailing_block(node); end
-
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#76
-  def trailing_block!(node); end
-
-  class << self
-    # source://rbs//lib/rbs/inline_parser/comment_association.rb#24
-    def build(buffer, result); end
-  end
-end
-
-# source://rbs//lib/rbs/inline_parser/comment_association.rb#29
-class RBS::InlineParser::CommentAssociation::Reference
-  # @return [Reference] a new instance of Reference
-  #
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#32
-  def initialize(block, association); end
-
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#37
-  def associate!; end
-
-  # @return [Boolean]
-  #
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#42
-  def associated?; end
-
-  # Returns the value of attribute block.
-  #
-  # source://rbs//lib/rbs/inline_parser/comment_association.rb#30
-  def block; end
-end
-
-# source://rbs//lib/rbs/inline_parser.rb#20
-module RBS::InlineParser::Diagnostic; end
-
-# source://rbs//lib/rbs/inline_parser.rb#38
-class RBS::InlineParser::Diagnostic::AnnotationSyntaxError < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#41
-class RBS::InlineParser::Diagnostic::AttributeNonSymbolName < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#21
-class RBS::InlineParser::Diagnostic::Base
-  # @return [Base] a new instance of Base
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#24
-  def initialize(location, message); end
-
-  # Returns the value of attribute location.
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#22
-  def location; end
-
-  # Returns the value of attribute message.
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#22
-  def message; end
-end
-
-# source://rbs//lib/rbs/inline_parser.rb#42
-class RBS::InlineParser::Diagnostic::ClassModuleAliasDeclarationMissingTypeName < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#39
-class RBS::InlineParser::Diagnostic::MixinMultipleArguments < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#40
-class RBS::InlineParser::Diagnostic::MixinNonConstantModule < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#31
-class RBS::InlineParser::Diagnostic::NonConstantClassName < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#36
-class RBS::InlineParser::Diagnostic::NonConstantConstantDeclaration < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#32
-class RBS::InlineParser::Diagnostic::NonConstantModuleName < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#33
-class RBS::InlineParser::Diagnostic::NonConstantSuperClassName < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#30
-class RBS::InlineParser::Diagnostic::NotImplementedYet < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#35
-class RBS::InlineParser::Diagnostic::TopLevelAttributeDefinition < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#34
-class RBS::InlineParser::Diagnostic::TopLevelMethodDefinition < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#37
-class RBS::InlineParser::Diagnostic::UnusedInlineAnnotation < ::RBS::InlineParser::Diagnostic::Base; end
-
-# source://rbs//lib/rbs/inline_parser.rb#57
-class RBS::InlineParser::Parser < ::Prism::Visitor
-  include ::RBS::AST::Ruby::Helpers::ConstantHelper
-  include ::RBS::AST::Ruby::Helpers::LocationHelper
-
-  # @return [Parser] a new instance of Parser
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#63
-  def initialize(result); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#69
-  def buffer; end
-
-  # Returns the value of attribute comments.
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#58
-  def comments; end
-
-  # source://rbs//lib/rbs/inline_parser.rb#73
-  def current_module; end
-
-  # source://rbs//lib/rbs/inline_parser.rb#77
-  def current_module!; end
-
-  # source://rbs//lib/rbs/inline_parser.rb#81
-  def diagnostics; end
-
-  # source://rbs//lib/rbs/inline_parser.rb#472
-  def insert_declaration(decl); end
-
-  # Returns the value of attribute module_nesting.
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#58
-  def module_nesting; end
-
-  # source://rbs//lib/rbs/inline_parser.rb#315
-  def parse_attribute_call(node); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#375
-  def parse_constant_declaration(node); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#259
-  def parse_mixin_call(node); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#508
-  def parse_super_class(super_class_expr, inheritance_operator_loc); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#85
-  def push_module_nesting(mod); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#480
-  def report_unused_annotation(*annotations); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#495
-  def report_unused_block(block); end
-
-  # Returns the value of attribute result.
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#58
-  def result; end
-
-  # @return [Boolean]
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#92
-  def skip_node?(node); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#217
-  def visit_call_node(node); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#103
-  def visit_class_node(node); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#253
-  def visit_constant_path_write_node(node); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#246
-  def visit_constant_write_node(node); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#178
-  def visit_def_node(node); end
-
-  # source://rbs//lib/rbs/inline_parser.rb#156
-  def visit_module_node(node); end
-end
-
-# source://rbs//lib/rbs/inline_parser.rb#5
-class RBS::InlineParser::Result
-  # @return [Result] a new instance of Result
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#8
-  def initialize(buffer, prism); end
-
-  # Returns the value of attribute buffer.
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#6
-  def buffer; end
-
-  # Returns the value of attribute declarations.
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#6
-  def declarations; end
-
-  # Returns the value of attribute diagnostics.
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#6
-  def diagnostics; end
-
-  # Returns the value of attribute prism_result.
-  #
-  # source://rbs//lib/rbs/inline_parser.rb#6
-  def prism_result; end
-
-  # source://rbs//lib/rbs/inline_parser.rb#15
-  def type_fingerprint; end
 end
 
 # source://rbs//lib/rbs/errors.rb#341
@@ -4836,28 +3674,28 @@ class RBS::InvalidTypeApplicationError < ::RBS::DefinitionError
   end
 end
 
-# source://rbs//lib/rbs/errors.rb#432
+# source://rbs//lib/rbs/errors.rb#431
 class RBS::InvalidVarianceAnnotationError < ::RBS::DefinitionError
   include ::RBS::DetailedMessageable
 
   # @return [InvalidVarianceAnnotationError] a new instance of InvalidVarianceAnnotationError
   #
-  # source://rbs//lib/rbs/errors.rb#439
+  # source://rbs//lib/rbs/errors.rb#438
   def initialize(type_name:, param:, location:); end
 
   # Returns the value of attribute location.
   #
-  # source://rbs//lib/rbs/errors.rb#437
+  # source://rbs//lib/rbs/errors.rb#436
   def location; end
 
   # Returns the value of attribute param.
   #
-  # source://rbs//lib/rbs/errors.rb#436
+  # source://rbs//lib/rbs/errors.rb#435
   def param; end
 
   # Returns the value of attribute type_name.
   #
-  # source://rbs//lib/rbs/errors.rb#435
+  # source://rbs//lib/rbs/errors.rb#434
   def type_name; end
 end
 
@@ -4868,43 +3706,40 @@ class RBS::LoadingError < ::RBS::BaseError; end
 class RBS::Location
   def initialize(_arg0, _arg1, _arg2); end
 
-  # source://rbs//lib/rbs/location_aux.rb#79
+  # source://rbs//lib/rbs/location_aux.rb#71
   def ==(other); end
 
   def [](_arg0); end
   def _add_optional_child(_arg0, _arg1, _arg2); end
   def _add_optional_no_child(_arg0); end
   def _add_required_child(_arg0, _arg1, _arg2); end
-  def _end_pos; end
   def _optional_keys; end
   def _required_keys; end
-  def _start_pos; end
 
-  # source://rbs//lib/rbs/location_aux.rb#110
+  # source://rbs//lib/rbs/location_aux.rb#102
   def add_optional_child(name, range); end
 
-  # source://rbs//lib/rbs/location_aux.rb#106
+  # source://rbs//lib/rbs/location_aux.rb#98
   def add_required_child(name, range); end
 
   def aref(_arg0); end
   def buffer; end
 
-  # source://rbs//lib/rbs/location_aux.rb#118
+  # source://rbs//lib/rbs/location_aux.rb#110
   def each_optional_key(&block); end
 
-  # source://rbs//lib/rbs/location_aux.rb#126
+  # source://rbs//lib/rbs/location_aux.rb#118
   def each_required_key(&block); end
 
-  # source://rbs//lib/rbs/location_aux.rb#55
+  # source://rbs//lib/rbs/location_aux.rb#47
   def end_column; end
 
-  # source://rbs//lib/rbs/location_aux.rb#51
+  # source://rbs//lib/rbs/location_aux.rb#43
   def end_line; end
 
-  # source://rbs//lib/rbs/location_aux.rb#63
+  # source://rbs//lib/rbs/location_aux.rb#55
   def end_loc; end
 
-  # source://rbs//lib/rbs/location_aux.rb#35
   def end_pos; end
 
   # source://rbs//lib/rbs/location_aux.rb#5
@@ -4912,50 +3747,43 @@ class RBS::Location
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/location_aux.rb#134
+  # source://rbs//lib/rbs/location_aux.rb#126
   def key?(name); end
 
-  # source://rbs//lib/rbs/location_aux.rb#146
-  def local_location; end
-
-  # source://rbs//lib/rbs/location_aux.rb#166
-  def local_source; end
-
-  # source://rbs//lib/rbs/location_aux.rb#39
+  # source://rbs//lib/rbs/location_aux.rb#31
   def name; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/location_aux.rb#138
+  # source://rbs//lib/rbs/location_aux.rb#130
   def optional_key?(name); end
 
-  # source://rbs//lib/rbs/location_aux.rb#67
+  # source://rbs//lib/rbs/location_aux.rb#59
   def range; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/location_aux.rb#142
+  # source://rbs//lib/rbs/location_aux.rb#134
   def required_key?(name); end
 
-  # source://rbs//lib/rbs/location_aux.rb#71
+  # source://rbs//lib/rbs/location_aux.rb#63
   def source; end
 
-  # source://rbs//lib/rbs/location_aux.rb#47
+  # source://rbs//lib/rbs/location_aux.rb#39
   def start_column; end
 
-  # source://rbs//lib/rbs/location_aux.rb#43
+  # source://rbs//lib/rbs/location_aux.rb#35
   def start_line; end
 
-  # source://rbs//lib/rbs/location_aux.rb#59
+  # source://rbs//lib/rbs/location_aux.rb#51
   def start_loc; end
 
-  # source://rbs//lib/rbs/location_aux.rb#31
   def start_pos; end
 
-  # source://rbs//lib/rbs/location_aux.rb#86
+  # source://rbs//lib/rbs/location_aux.rb#78
   def to_json(state = T.unsafe(nil)); end
 
-  # source://rbs//lib/rbs/location_aux.rb#75
+  # source://rbs//lib/rbs/location_aux.rb#67
   def to_s; end
 
   private
@@ -4966,7 +3794,7 @@ class RBS::Location
     # source://rbs//lib/rbs/location_aux.rb#16
     def new(buffer_ = T.unsafe(nil), start_pos_ = T.unsafe(nil), end_pos_ = T.unsafe(nil), buffer: T.unsafe(nil), start_pos: T.unsafe(nil), end_pos: T.unsafe(nil)); end
 
-    # source://rbs//lib/rbs/location_aux.rb#102
+    # source://rbs//lib/rbs/location_aux.rb#94
     def to_string(location, default: T.unsafe(nil)); end
   end
 end
@@ -5008,7 +3836,7 @@ class RBS::Locator
   # source://rbs//lib/rbs/locator.rb#42
   def find_in_directive(pos, dir, array); end
 
-  # source://rbs//lib/rbs/locator.rb#212
+  # source://rbs//lib/rbs/locator.rb#208
   def find_in_loc(pos, location:, array:); end
 
   # source://rbs//lib/rbs/locator.rb#131
@@ -5017,13 +3845,13 @@ class RBS::Locator
   # source://rbs//lib/rbs/locator.rb#154
   def find_in_method_type(pos, method_type:, array:); end
 
-  # source://rbs//lib/rbs/locator.rb#196
+  # source://rbs//lib/rbs/locator.rb#192
   def find_in_type(pos, type:, array:); end
 
   # source://rbs//lib/rbs/locator.rb#172
   def find_in_type_param(pos, type_param:, array:); end
 
-  # source://rbs//lib/rbs/locator.rb#239
+  # source://rbs//lib/rbs/locator.rb#235
   def test_loc(pos, location:); end
 end
 
@@ -5106,38 +3934,35 @@ class RBS::MethodType
   def with_nonreturn_void?; end
 end
 
-# source://rbs//lib/rbs/errors.rb#468
+# source://rbs//lib/rbs/errors.rb#467
 class RBS::MixinClassError < ::RBS::DefinitionError
   include ::RBS::DetailedMessageable
 
   # @return [MixinClassError] a new instance of MixinClassError
   #
-  # source://rbs//lib/rbs/errors.rb#474
+  # source://rbs//lib/rbs/errors.rb#473
   def initialize(type_name:, member:); end
 
-  # source://rbs//lib/rbs/errors.rb#481
+  # source://rbs//lib/rbs/errors.rb#480
   def location; end
 
   # Returns the value of attribute member.
   #
-  # source://rbs//lib/rbs/errors.rb#472
+  # source://rbs//lib/rbs/errors.rb#471
   def member; end
 
   # Returns the value of attribute type_name.
   #
-  # source://rbs//lib/rbs/errors.rb#471
+  # source://rbs//lib/rbs/errors.rb#470
   def type_name; end
 
   private
 
-  # source://rbs//lib/rbs/errors.rb#502
-  def member_name(member); end
-
-  # source://rbs//lib/rbs/errors.rb#513
+  # source://rbs//lib/rbs/errors.rb#492
   def mixin_name; end
 
   class << self
-    # source://rbs//lib/rbs/errors.rb#485
+    # source://rbs//lib/rbs/errors.rb#484
     def check!(type_name:, env:, member:); end
   end
 end
@@ -5318,23 +4143,23 @@ class RBS::NoTypeFoundError < ::RBS::DefinitionError
   end
 end
 
-# source://rbs//lib/rbs/errors.rb#545
+# source://rbs//lib/rbs/errors.rb#524
 class RBS::NonregularTypeAliasError < ::RBS::BaseError
   include ::RBS::DetailedMessageable
 
   # @return [NonregularTypeAliasError] a new instance of NonregularTypeAliasError
   #
-  # source://rbs//lib/rbs/errors.rb#551
+  # source://rbs//lib/rbs/errors.rb#530
   def initialize(diagnostic:, location:); end
 
   # Returns the value of attribute diagnostic.
   #
-  # source://rbs//lib/rbs/errors.rb#548
+  # source://rbs//lib/rbs/errors.rb#527
   def diagnostic; end
 
   # Returns the value of attribute location.
   #
-  # source://rbs//lib/rbs/errors.rb#549
+  # source://rbs//lib/rbs/errors.rb#528
   def location; end
 end
 
@@ -5342,11 +4167,9 @@ end
 class RBS::Parser
   class << self
     def _lex(_arg0, _arg1); end
-    def _parse_inline_leading_annotation(_arg0, _arg1, _arg2, _arg3); end
-    def _parse_inline_trailing_annotation(_arg0, _arg1, _arg2, _arg3); end
     def _parse_method_type(_arg0, _arg1, _arg2, _arg3, _arg4); end
     def _parse_signature(_arg0, _arg1, _arg2); end
-    def _parse_type(_arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6); end
+    def _parse_type(_arg0, _arg1, _arg2, _arg3, _arg4); end
     def _parse_type_params(_arg0, _arg1, _arg2, _arg3); end
 
     # source://rbs//lib/rbs/parser_aux.rb#76
@@ -5358,12 +4181,6 @@ class RBS::Parser
     # source://rbs//lib/rbs/parser_aux.rb#43
     def magic_comment(buf); end
 
-    # source://rbs//lib/rbs/parser_aux.rb#119
-    def parse_inline_leading_annotation(source, range, variables: T.unsafe(nil)); end
-
-    # source://rbs//lib/rbs/parser_aux.rb#124
-    def parse_inline_trailing_annotation(source, range, variables: T.unsafe(nil)); end
-
     # source://rbs//lib/rbs/parser_aux.rb#13
     def parse_method_type(source, range: T.unsafe(nil), variables: T.unsafe(nil), require_eof: T.unsafe(nil)); end
 
@@ -5371,7 +4188,7 @@ class RBS::Parser
     def parse_signature(source); end
 
     # source://rbs//lib/rbs/parser_aux.rb#8
-    def parse_type(source, range: T.unsafe(nil), variables: T.unsafe(nil), require_eof: T.unsafe(nil), void_allowed: T.unsafe(nil), self_allowed: T.unsafe(nil)); end
+    def parse_type(source, range: T.unsafe(nil), variables: T.unsafe(nil), require_eof: T.unsafe(nil)); end
 
     # source://rbs//lib/rbs/parser_aux.rb#38
     def parse_type_params(source, module_type_params: T.unsafe(nil)); end
@@ -5639,10 +4456,10 @@ class RBS::Prototype::RBI
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/prototype/rbi.rb#564
+  # source://rbs//lib/rbs/prototype/rbi.rb#562
   def call_node?(node, name:, receiver: T.unsafe(nil), args: T.unsafe(nil)); end
 
-  # source://rbs//lib/rbs/prototype/rbi.rb#568
+  # source://rbs//lib/rbs/prototype/rbi.rb#566
   def const_to_name(node); end
 
   # source://rbs//lib/rbs/prototype/rbi.rb#90
@@ -5659,10 +4476,10 @@ class RBS::Prototype::RBI
   # source://rbs//lib/rbs/prototype/rbi.rb#8
   def decls; end
 
-  # source://rbs//lib/rbs/prototype/rbi.rb#604
+  # source://rbs//lib/rbs/prototype/rbi.rb#602
   def each_arg(array, &block); end
 
-  # source://rbs//lib/rbs/prototype/rbi.rb#618
+  # source://rbs//lib/rbs/prototype/rbi.rb#616
   def each_child(node); end
 
   # source://rbs//lib/rbs/prototype/rbi.rb#112
@@ -5673,7 +4490,7 @@ class RBS::Prototype::RBI
   # source://rbs//lib/rbs/prototype/rbi.rb#10
   def last_sig; end
 
-  # source://rbs//lib/rbs/prototype/rbi.rb#281
+  # source://rbs//lib/rbs/prototype/rbi.rb#280
   def method_type(args_node, type_node, variables:, overloads:); end
 
   # Returns the value of attribute modules.
@@ -5684,13 +4501,13 @@ class RBS::Prototype::RBI
   # source://rbs//lib/rbs/prototype/rbi.rb#42
   def nested_name(name); end
 
-  # source://rbs//lib/rbs/prototype/rbi.rb#626
+  # source://rbs//lib/rbs/prototype/rbi.rb#624
   def node_to_hash(node); end
 
   # source://rbs//lib/rbs/prototype/rbi.rb#18
   def parse(string); end
 
-  # source://rbs//lib/rbs/prototype/rbi.rb#354
+  # source://rbs//lib/rbs/prototype/rbi.rb#352
   def parse_params(args_node, args, method_type, variables:, overloads:); end
 
   # source://rbs//lib/rbs/prototype/rbi.rb#106
@@ -5698,7 +4515,7 @@ class RBS::Prototype::RBI
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/prototype/rbi.rb#556
+  # source://rbs//lib/rbs/prototype/rbi.rb#554
   def proc_type?(type_node); end
 
   # source://rbs//lib/rbs/prototype/rbi.rb#117
@@ -5713,10 +4530,10 @@ class RBS::Prototype::RBI
   # source://rbs//lib/rbs/prototype/rbi.rb#98
   def push_sig(node); end
 
-  # source://rbs//lib/rbs/prototype/rbi.rb#479
+  # source://rbs//lib/rbs/prototype/rbi.rb#477
   def type_of(type_node, variables:); end
 
-  # source://rbs//lib/rbs/prototype/rbi.rb#492
+  # source://rbs//lib/rbs/prototype/rbi.rb#490
   def type_of0(type_node, variables:); end
 end
 
@@ -5727,119 +4544,119 @@ class RBS::Prototype::Runtime
 
   # @return [Runtime] a new instance of Runtime
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#79
+  # source://rbs//lib/rbs/prototype/runtime.rb#71
   def initialize(patterns:, env:, merge:, todo: T.unsafe(nil), owners_included: T.unsafe(nil)); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#662
+  # source://rbs//lib/rbs/prototype/runtime.rb#654
   def block_from_ast_of(method); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#109
+  # source://rbs//lib/rbs/prototype/runtime.rb#101
   def builder; end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#117
+  # source://rbs//lib/rbs/prototype/runtime.rb#109
   def decls; end
 
   # Generate/find outer module declarations
   # This is broken down into another method to comply with `DRY`
   # This generates/finds declarations in nested form & returns the last array of declarations
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#591
+  # source://rbs//lib/rbs/prototype/runtime.rb#583
   def ensure_outer_module_declarations(mod); end
 
   # Returns the value of attribute env.
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#73
+  # source://rbs//lib/rbs/prototype/runtime.rb#65
   def env; end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#496
+  # source://rbs//lib/rbs/prototype/runtime.rb#488
   def generate_class(mod); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#433
+  # source://rbs//lib/rbs/prototype/runtime.rb#425
   def generate_constants(mod, decls); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#309
+  # source://rbs//lib/rbs/prototype/runtime.rb#301
   def generate_methods(mod, module_name, members); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#573
+  # source://rbs//lib/rbs/prototype/runtime.rb#565
   def generate_mixin(mod, decl, type_name, type_name_absolute); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#535
+  # source://rbs//lib/rbs/prototype/runtime.rb#527
   def generate_module(mod); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#481
+  # source://rbs//lib/rbs/prototype/runtime.rb#473
   def generate_super_class(mod); end
 
   # Returns the value of attribute merge.
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#74
+  # source://rbs//lib/rbs/prototype/runtime.rb#66
   def merge; end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#248
+  # source://rbs//lib/rbs/prototype/runtime.rb#240
   def merge_rbs(module_name, members, instance: T.unsafe(nil), singleton: T.unsafe(nil)); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#179
+  # source://rbs//lib/rbs/prototype/runtime.rb#171
   def method_type(method); end
 
   # Returns the value of attribute outline.
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#77
+  # source://rbs//lib/rbs/prototype/runtime.rb#69
   def outline; end
 
   # Sets the attribute outline
   #
   # @param value the value to set the attribute outline to.
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#77
+  # source://rbs//lib/rbs/prototype/runtime.rb#69
   def outline=(_arg0); end
 
   # Returns the value of attribute owners_included.
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#76
+  # source://rbs//lib/rbs/prototype/runtime.rb#68
   def owners_included; end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#113
+  # source://rbs//lib/rbs/prototype/runtime.rb#105
   def parse(file); end
 
   # Returns the value of attribute patterns.
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#72
+  # source://rbs//lib/rbs/prototype/runtime.rb#64
   def patterns; end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#92
+  # source://rbs//lib/rbs/prototype/runtime.rb#84
   def target?(const); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#296
+  # source://rbs//lib/rbs/prototype/runtime.rb#288
   def target_method?(mod, instance: T.unsafe(nil), singleton: T.unsafe(nil)); end
 
   # Returns the value of attribute todo.
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#75
+  # source://rbs//lib/rbs/prototype/runtime.rb#67
   def todo; end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#105
+  # source://rbs//lib/rbs/prototype/runtime.rb#97
   def todo_object; end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#645
+  # source://rbs//lib/rbs/prototype/runtime.rb#637
   def type_args(type_name); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#653
+  # source://rbs//lib/rbs/prototype/runtime.rb#645
   def type_params(mod); end
 
   private
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#423
+  # source://rbs//lib/rbs/prototype/runtime.rb#415
   def can_alias?(mod, method); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#137
+  # source://rbs//lib/rbs/prototype/runtime.rb#129
   def each_mixined_module(type_name, mod); end
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#146
+  # source://rbs//lib/rbs/prototype/runtime.rb#138
   def each_mixined_module_one(type_name, mod); end
 end
 
@@ -5947,12 +4764,12 @@ class RBS::Prototype::Runtime::Todo
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#50
+  # source://rbs//lib/rbs/prototype/runtime.rb#42
   def skip_constant?(module_name:, name:); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/prototype/runtime.rb#37
+  # source://rbs//lib/rbs/prototype/runtime.rb#33
   def skip_instance_method?(module_name:, method:, accessibility:); end
 
   # @return [Boolean]
@@ -5967,7 +4784,7 @@ class RBS::Prototype::Runtime::Todo
 
   private
 
-  # source://rbs//lib/rbs/prototype/runtime.rb#57
+  # source://rbs//lib/rbs/prototype/runtime.rb#49
   def mixin_decls(type_name); end
 end
 
@@ -5997,26 +4814,26 @@ class RBS::Prototype::Runtime::ValueObjectBase
   def build_s_members; end
 end
 
-# source://rbs//lib/rbs/errors.rb#448
+# source://rbs//lib/rbs/errors.rb#447
 class RBS::RecursiveAliasDefinitionError < ::RBS::DefinitionError
   include ::RBS::DetailedMessageable
 
   # @return [RecursiveAliasDefinitionError] a new instance of RecursiveAliasDefinitionError
   #
-  # source://rbs//lib/rbs/errors.rb#454
+  # source://rbs//lib/rbs/errors.rb#453
   def initialize(type:, defs:); end
 
   # Returns the value of attribute defs.
   #
-  # source://rbs//lib/rbs/errors.rb#452
+  # source://rbs//lib/rbs/errors.rb#451
   def defs; end
 
-  # source://rbs//lib/rbs/errors.rb#461
+  # source://rbs//lib/rbs/errors.rb#460
   def location; end
 
   # Returns the value of attribute type.
   #
-  # source://rbs//lib/rbs/errors.rb#451
+  # source://rbs//lib/rbs/errors.rb#450
   def type; end
 end
 
@@ -6043,26 +4860,26 @@ class RBS::RecursiveAncestorError < ::RBS::DefinitionError
   end
 end
 
-# source://rbs//lib/rbs/errors.rb#527
+# source://rbs//lib/rbs/errors.rb#506
 class RBS::RecursiveTypeAliasError < ::RBS::BaseError
   include ::RBS::DetailedMessageable
 
   # @return [RecursiveTypeAliasError] a new instance of RecursiveTypeAliasError
   #
-  # source://rbs//lib/rbs/errors.rb#533
+  # source://rbs//lib/rbs/errors.rb#512
   def initialize(alias_names:, location:); end
 
   # Returns the value of attribute alias_names.
   #
-  # source://rbs//lib/rbs/errors.rb#530
+  # source://rbs//lib/rbs/errors.rb#509
   def alias_names; end
 
   # Returns the value of attribute location.
   #
-  # source://rbs//lib/rbs/errors.rb#531
+  # source://rbs//lib/rbs/errors.rb#510
   def location; end
 
-  # source://rbs//lib/rbs/errors.rb#540
+  # source://rbs//lib/rbs/errors.rb#519
   def name; end
 end
 
@@ -6265,7 +5082,7 @@ class RBS::Resolver::TypeNameResolver
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#82
+  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#90
   def aliased_name?(type_name); end
 
   # Returns the value of attribute aliases.
@@ -6285,100 +5102,37 @@ class RBS::Resolver::TypeNameResolver
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#76
+  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#84
   def has_type_name?(full_name); end
 
-  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#121
+  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#129
   def normalize_namespace(type_name, rhs, context, visited); end
 
-  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#39
+  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#47
   def resolve(type_name, context:); end
 
-  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#104
+  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#112
   def resolve_head_namespace(head, context); end
 
-  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#62
+  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#70
   def resolve_namespace(type_name, context:); end
 
-  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#136
+  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#144
   def resolve_namespace0(type_name, context, visited); end
 
-  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#88
+  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#96
   def resolve_type_name(type_name, context); end
 
-  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#32
+  # source://rbs//lib/rbs/resolver/type_name_resolver.rb#40
   def try_cache(query); end
 
   class << self
-    # source://rbs//lib/rbs/resolver/type_name_resolver.rb#16
+    # source://rbs//lib/rbs/resolver/type_name_resolver.rb#24
     def build(env); end
+
+    # source://rbs//lib/rbs/resolver/type_name_resolver.rb#16
+    def new(*args); end
   end
-end
-
-# source://rbs//lib/rbs/source.rb#4
-module RBS::Source; end
-
-# source://rbs//lib/rbs/source.rb#5
-class RBS::Source::RBS
-  # @return [RBS] a new instance of RBS
-  #
-  # source://rbs//lib/rbs/source.rb#8
-  def initialize(buffer, directives, decls); end
-
-  # Returns the value of attribute buffer.
-  #
-  # source://rbs//lib/rbs/source.rb#6
-  def buffer; end
-
-  # Returns the value of attribute declarations.
-  #
-  # source://rbs//lib/rbs/source.rb#6
-  def declarations; end
-
-  # Returns the value of attribute directives.
-  #
-  # source://rbs//lib/rbs/source.rb#6
-  def directives; end
-
-  # source://rbs//lib/rbs/source.rb#25
-  def each_declaration_type_name(names, decl, &block); end
-
-  # source://rbs//lib/rbs/source.rb#14
-  def each_type_name(&block); end
-end
-
-# source://rbs//lib/rbs/source.rb#52
-class RBS::Source::Ruby
-  # @return [Ruby] a new instance of Ruby
-  #
-  # source://rbs//lib/rbs/source.rb#58
-  def initialize(buffer, prism, declarations, diagnostics); end
-
-  # Returns the value of attribute buffer.
-  #
-  # source://rbs//lib/rbs/source.rb#53
-  def buffer; end
-
-  # Returns the value of attribute declarations.
-  #
-  # source://rbs//lib/rbs/source.rb#55
-  def declarations; end
-
-  # Returns the value of attribute diagnostics.
-  #
-  # source://rbs//lib/rbs/source.rb#56
-  def diagnostics; end
-
-  # source://rbs//lib/rbs/source.rb#76
-  def each_declaration_type_name(names, decl, &block); end
-
-  # source://rbs//lib/rbs/source.rb#65
-  def each_type_name(&block); end
-
-  # Returns the value of attribute prism_result.
-  #
-  # source://rbs//lib/rbs/source.rb#54
-  def prism_result; end
 end
 
 # source://rbs//lib/rbs/substitution.rb#4
@@ -6443,12 +5197,12 @@ class RBS::Subtractor
 
   private
 
-  # source://rbs//lib/rbs/subtractor.rb#180
+  # source://rbs//lib/rbs/subtractor.rb#179
   def absolute_typename(name, context:); end
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/subtractor.rb#163
+  # source://rbs//lib/rbs/subtractor.rb#162
   def access_modifier?(decl); end
 
   # @return [Boolean]
@@ -6462,7 +5216,7 @@ class RBS::Subtractor
   # source://rbs//lib/rbs/subtractor.rb#48
   def filter_members(decl, context:); end
 
-  # source://rbs//lib/rbs/subtractor.rb#151
+  # source://rbs//lib/rbs/subtractor.rb#150
   def filter_redundant_access_modifiers(decls); end
 
   # @return [Boolean]
@@ -6482,13 +5236,13 @@ class RBS::Subtractor
 
   # @return [Boolean]
   #
-  # source://rbs//lib/rbs/subtractor.rb#140
+  # source://rbs//lib/rbs/subtractor.rb#139
   def mixin_exist?(owner, mixin, context:); end
 
-  # source://rbs//lib/rbs/subtractor.rb#189
+  # source://rbs//lib/rbs/subtractor.rb#188
   def typename_candidates(name, context:); end
 
-  # source://rbs//lib/rbs/subtractor.rb#167
+  # source://rbs//lib/rbs/subtractor.rb#166
   def update_decl(decl, members:); end
 end
 
@@ -6718,27 +5472,27 @@ class RBS::TypeName
   end
 end
 
-# source://rbs//lib/rbs/errors.rb#625
+# source://rbs//lib/rbs/errors.rb#604
 class RBS::TypeParamDefaultReferenceError < ::RBS::DefinitionError
   include ::RBS::DetailedMessageable
 
   # @return [TypeParamDefaultReferenceError] a new instance of TypeParamDefaultReferenceError
   #
-  # source://rbs//lib/rbs/errors.rb#631
+  # source://rbs//lib/rbs/errors.rb#610
   def initialize(type_param, location:); end
 
   # Returns the value of attribute location.
   #
-  # source://rbs//lib/rbs/errors.rb#629
+  # source://rbs//lib/rbs/errors.rb#608
   def location; end
 
   # Returns the value of attribute type_param.
   #
-  # source://rbs//lib/rbs/errors.rb#628
+  # source://rbs//lib/rbs/errors.rb#607
   def type_param; end
 
   class << self
-    # source://rbs//lib/rbs/errors.rb#637
+    # source://rbs//lib/rbs/errors.rb#616
     def check!(type_params); end
   end
 end
@@ -8080,18 +6834,18 @@ class RBS::Vendorer
   def vendor_dir; end
 end
 
-# source://rbs//lib/rbs/errors.rb#614
+# source://rbs//lib/rbs/errors.rb#593
 class RBS::WillSyntaxError < ::RBS::DefinitionError
   include ::RBS::DetailedMessageable
 
   # @return [WillSyntaxError] a new instance of WillSyntaxError
   #
-  # source://rbs//lib/rbs/errors.rb#619
+  # source://rbs//lib/rbs/errors.rb#598
   def initialize(message, location:); end
 
   # Returns the value of attribute location.
   #
-  # source://rbs//lib/rbs/errors.rb#617
+  # source://rbs//lib/rbs/errors.rb#596
   def location; end
 end
 

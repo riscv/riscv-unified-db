@@ -1140,6 +1140,23 @@ RuboCop::Cop::Sorbet::Refinement::MSG = T.let(T.unsafe(nil), String)
 # source://rubocop-sorbet//lib/rubocop/cop/sorbet/refinement.rb#36
 RuboCop::Cop::Sorbet::Refinement::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
+# source://rubocop-sorbet//lib/rubocop/cop/sorbet/signatures/runtime_on_failure_depends_on_checked.rb#22
+class RuboCop::Cop::Sorbet::RuntimeOnFailureDependsOnChecked < ::RuboCop::Cop::Base
+  include ::RuboCop::Cop::Sorbet::SignatureHelp
+
+  # source://rubocop-sorbet//lib/rubocop/cop/sorbet/signatures/runtime_on_failure_depends_on_checked.rb#33
+  def checked_tests_or_always?(param0 = T.unsafe(nil)); end
+
+  # source://rubocop-sorbet//lib/rubocop/cop/sorbet/signatures/runtime_on_failure_depends_on_checked.rb#28
+  def on_failure_call?(param0 = T.unsafe(nil)); end
+
+  # source://rubocop-sorbet//lib/rubocop/cop/sorbet/signatures/runtime_on_failure_depends_on_checked.rb#37
+  def on_signature(node); end
+end
+
+# source://rubocop-sorbet//lib/rubocop/cop/sorbet/signatures/runtime_on_failure_depends_on_checked.rb#25
+RuboCop::Cop::Sorbet::RuntimeOnFailureDependsOnChecked::MSG = T.let(T.unsafe(nil), String)
+
 # source://rubocop-sorbet//lib/rubocop/cop/sorbet/select_by_is_a.rb#19
 class RuboCop::Cop::Sorbet::SelectByIsA < ::RuboCop::Cop::Base
   extend ::RuboCop::Cop::AutoCorrector

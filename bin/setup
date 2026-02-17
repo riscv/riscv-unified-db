@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ -v UDB_SETUP_COMPLETE ]; then
+  return
+fi
+UDB_SETEP_COMPLETE=true
+
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 cd "$ROOT" || exit
 
@@ -134,17 +139,14 @@ if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; t
     fi
 
     if [ -v XDG_CACHE_HOME ]; then
-      if [ -d "$XDG_CACHE_HOME" ]; then
-        # this is a host directory, so map it in
-        CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${XDG_CACHE_HOME}:${XDG_CACHE_HOME}"
-      fi
       CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e XDG_CACHE_HOME"
     fi
 
+    CONTAINER_NAME="$REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
     if [ -t 1 ] && [ -t 0 ]; then
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm -it ${CONTAINER_RUN_FLAGS} -w ${ROOT} $REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
+      CONTAINER_BASE="${CONTAINER_TYPE} run --rm -it ${CONTAINER_RUN_FLAGS} -w ${ROOT} $CONTAINER_NAME"
     else
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} $REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
+      CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} $CONTAINER_NAME"
     fi
 elif [ "${CONTAINER_TYPE}" != "native" ]; then
     echo "Bad container type: ${CONTAINER_TYPE}" 1>&2

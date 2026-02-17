@@ -319,34 +319,34 @@ class Rack::Directory
   # source://rack//lib/rack/directory.rb#83
   def initialize(root, app = T.unsafe(nil)); end
 
-  # source://rack//lib/rack/directory.rb#89
+  # source://rack//lib/rack/directory.rb#90
   def call(env); end
 
-  # source://rack//lib/rack/directory.rb#109
+  # source://rack//lib/rack/directory.rb#110
   def check_bad_request(path_info); end
 
-  # source://rack//lib/rack/directory.rb#119
+  # source://rack//lib/rack/directory.rb#120
   def check_forbidden(path_info); end
 
-  # source://rack//lib/rack/directory.rb#181
+  # source://rack//lib/rack/directory.rb#184
   def entity_not_found(path_info); end
 
-  # source://rack//lib/rack/directory.rb#197
+  # source://rack//lib/rack/directory.rb#200
   def filesize_format(int); end
 
-  # source://rack//lib/rack/directory.rb#96
+  # source://rack//lib/rack/directory.rb#97
   def get(env); end
 
-  # source://rack//lib/rack/directory.rb#130
+  # source://rack//lib/rack/directory.rb#133
   def list_directory(path_info, path, script_name); end
 
-  # source://rack//lib/rack/directory.rb#171
+  # source://rack//lib/rack/directory.rb#174
   def list_path(env, path, path_info, script_name); end
 
   # source://rack//lib/rack/directory.rb#80
   def root; end
 
-  # source://rack//lib/rack/directory.rb#163
+  # source://rack//lib/rack/directory.rb#166
   def stat(path); end
 end
 
@@ -370,7 +370,7 @@ class Rack::Directory::DirectoryBody < ::Struct
   def DIR_FILE_escape(htmls); end
 end
 
-# source://rack//lib/rack/directory.rb#189
+# source://rack//lib/rack/directory.rb#192
 Rack::Directory::FILESIZE_FORMAT = T.let(T.unsafe(nil), Array)
 
 # source://rack//lib/rack/constants.rb#22
@@ -1030,44 +1030,44 @@ end
 # source://rack//lib/rack/mock_request.rb#24
 class Rack::MockRequest::FatalWarning < ::RuntimeError; end
 
-# source://rack//lib/rack/mock_response.rb#12
+# source://rack//lib/rack/mock_response.rb#13
 class Rack::MockResponse < ::Rack::Response
-  # source://rack//lib/rack/mock_response.rb#47
+  # source://rack//lib/rack/mock_response.rb#48
   def initialize(status, headers, body, errors = T.unsafe(nil)); end
 
-  # source://rack//lib/rack/mock_response.rb#62
+  # source://rack//lib/rack/mock_response.rb#63
   def =~(other); end
 
-  # source://rack//lib/rack/mock_response.rb#70
+  # source://rack//lib/rack/mock_response.rb#71
   def body; end
 
-  # source://rack//lib/rack/mock_response.rb#96
+  # source://rack//lib/rack/mock_response.rb#105
   def cookie(name); end
 
-  # source://rack//lib/rack/mock_response.rb#42
+  # source://rack//lib/rack/mock_response.rb#43
   def cookies; end
 
-  # source://rack//lib/rack/mock_response.rb#92
+  # source://rack//lib/rack/mock_response.rb#101
   def empty?; end
 
-  # source://rack//lib/rack/mock_response.rb#45
+  # source://rack//lib/rack/mock_response.rb#46
   def errors; end
 
-  # source://rack//lib/rack/mock_response.rb#45
+  # source://rack//lib/rack/mock_response.rb#46
   def errors=(_arg0); end
 
-  # source://rack//lib/rack/mock_response.rb#66
+  # source://rack//lib/rack/mock_response.rb#67
   def match(other); end
 
-  # source://rack//lib/rack/mock_response.rb#42
+  # source://rack//lib/rack/mock_response.rb#43
   def original_headers; end
 
   private
 
-  # source://rack//lib/rack/mock_response.rb#123
+  # source://rack//lib/rack/mock_response.rb#132
   def identify_cookie_attributes(cookie_filling); end
 
-  # source://rack//lib/rack/mock_response.rb#102
+  # source://rack//lib/rack/mock_response.rb#111
   def parse_cookies_from_header; end
 
   class << self
@@ -1075,35 +1075,35 @@ class Rack::MockResponse < ::Rack::Response
   end
 end
 
-# source://rack//lib/rack/mock_response.rb#13
+# source://rack//lib/rack/mock_response.rb#14
 class Rack::MockResponse::Cookie
-  # source://rack//lib/rack/mock_response.rb#16
+  # source://rack//lib/rack/mock_response.rb#17
   def initialize(args); end
 
-  # source://rack//lib/rack/mock_response.rb#14
+  # source://rack//lib/rack/mock_response.rb#15
   def domain; end
 
-  # source://rack//lib/rack/mock_response.rb#14
+  # source://rack//lib/rack/mock_response.rb#15
   def expires; end
 
-  # source://rack//lib/rack/mock_response.rb#25
+  # source://rack//lib/rack/mock_response.rb#26
   def method_missing(method_name, *args, **_arg2, &block); end
 
-  # source://rack//lib/rack/mock_response.rb#14
+  # source://rack//lib/rack/mock_response.rb#15
   def name; end
 
-  # source://rack//lib/rack/mock_response.rb#14
+  # source://rack//lib/rack/mock_response.rb#15
   def path; end
 
-  # source://rack//lib/rack/mock_response.rb#14
+  # source://rack//lib/rack/mock_response.rb#15
   def secure; end
 
-  # source://rack//lib/rack/mock_response.rb#14
+  # source://rack//lib/rack/mock_response.rb#15
   def value; end
 
   private
 
-  # source://rack//lib/rack/mock_response.rb#32
+  # source://rack//lib/rack/mock_response.rb#33
   def respond_to_missing?(method_name, include_all = T.unsafe(nil)); end
 end
 
