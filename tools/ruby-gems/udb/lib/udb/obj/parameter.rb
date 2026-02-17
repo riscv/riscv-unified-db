@@ -119,7 +119,7 @@ module Udb
     def possible_schemas
       @possible_schemas ||=
         begin
-          list = @schemas.select { |s| s.cond.could_be_satisfied_by_cfg_arch?(@cfg_arch) }.map(&:schema)
+          list = @schemas.select { |s| s.cond.satisfiable_by_cfg_arch?(@cfg_arch) }.map(&:schema)
           if list.empty?
             raise NoMatchingSchemaError, "Parameter #{name} has no matching schema for #{@cfg_arch.name}"
           end

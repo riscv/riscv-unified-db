@@ -502,6 +502,40 @@ module Udb
     end
     private :symtab_enums
 
+    # symbol table that is just used to bootstrap the cfg_arch and avoid cyclic dependencies
+    # this symbol table just adds extension names and parameter names, but doesn't attempt to resolve
+    # any dependencies
+    sig { returns(Idl::SymbolTable) }
+    def arch_symtab
+      @bootstrap_symtab ||=
+        begin
+          param_vars = params.map do |param|
+            # just pick some possible schema
+            idl_type = param.all_schemas.fetch(0).to_idl_type
+            Idl::Var.new(param.name, idl_type.make_const, param: true)
+          end
+
+          s = Idl::SymbolTable.new(
+            possible_xlens_cb: proc { [32,64] },
+            builtin_global_vars: param_vars,
+            builtin_funcs: symtab_callbacks,
+            builtin_enums: symtab_enums,
+            name: @name,
+            csrs:,
+            params:
+          )
+
+          puts "adding globals"
+          global_ast.add_global_symbols(s)
+
+          puts "added!"
+          s.deep_freeze
+          raise if s.name.nil?
+          global_ast.freeze_tree(s)
+          s
+        end
+    end
+
     # @api private
     sig { returns(Idl::SymbolTable) }
     def create_symtab
