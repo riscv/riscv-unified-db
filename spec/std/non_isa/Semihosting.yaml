@@ -1,0 +1,104 @@
+# Copyright (c) Ishaan Arora
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../schemas/non_isa_schema.json
+
+---
+$schema: non_isa_schema.json#
+kind: non-isa specification
+name: Semihosting
+long_name: RISC-V Semihosting
+version: "1.0.0"
+ratification_date: 2025-02
+description: |
+  Semihosting is a technique where an application running in a debug or
+  simulation environment can access elements of the system hosting the
+  debugger or simulator including console, file system, time, and other
+  functions. This allows for diagnostics, interaction, and measurement of
+  a target system without requiring significant infrastructure to exist
+  in that target environment.
+
+  The RISC-V semihosting specification adopts the design of the ARM semihosting
+  specification to minimize development effort. The services defined by the ARM
+  semihosting specification are portable across different architectures, and only
+  the mechanism of invoking a semihosting service (the semihosting binary interface)
+  is architecture-specific.
+
+  This specification only defines the semihosting binary interface for RISC-V
+  platforms; all other aspects of semihosting are defined by the ARM semihosting
+  specification.
+sections:
+  - title: Semihosting Breakpoint Instruction Sequence
+    content: |
+      Semihosting operations are requested using a sequence of instructions
+      including `EBREAK`. Because the RISC-V base ISA does not provide more than
+      one `EBREAK` instruction, RISC-V semihosting uses a special sequence of
+      instructions to distinguish a semihosting `EBREAK` from a debugger-inserted
+      `EBREAK`.
+
+      The following instruction sequence is used to invoke a semihosting operation:
+
+      ----
+      slli x0, x0, 0x1f   # 0x01f01013 Entry NOP
+      ebreak              # 0x00100073 Break to debugger
+      srai x0, x0, 7      # 0x40705013 Exit NOP
+      ----
+
+      These three instructions must be 32-bit wide instructions. This sequence is
+      applicable to all RISC-V base ISAs. If address translation and protection is
+      enabled for the semihosting caller, then the semihosting instruction sequence
+      and data passed via memory must be paged in; otherwise the behavior of the
+      semihosting call is UNSPECIFIED.
+
+      [NOTE]
+      ====
+      The `SLLI`, `EBREAK`, and `SRAI` instructions are part of the ratified
+      RV32E, RV32I, RV64E, and RV64I (Base Integer Instruction Set) specifications,
+      hence these instructions are present on almost all RISC-V platforms.
+
+      The `SLLI` and `SRAI` instruction-based NOPs which serve as semihosting
+      markers have been randomly selected from the Base Integer Instruction Set
+      since these are designated for custom use and unlikely to appear in real
+      life code.
+      ====
+  - title: Semihosting Parameters
+    content: |
+      The type of semihosting operation and its parameters are specified using
+      general purpose registers:
+
+      * The OPERATION NUMBER is specified in the `a0` register
+      * The PARAMETER is specified in the `a1` register
+      * The RETURN VALUE is available in the `a0` register after the call
+
+      All registers and data block fields are XLEN wide.
+  - title: Semihosting Services
+    content: |
+      [NOTE]
+      ====
+      The RISC-V semihosting specification adopts the services defined by the ARM
+      semihosting specification. This includes operations for:
+
+      * Console I/O (character and string input/output)
+      * File system access (open, close, read, write, seek, etc.)
+      * System information (clock, time, command line, heap info)
+      * Exit and error reporting
+
+      For the complete list of semihosting operations and their parameters,
+      refer to the ARM semihosting specification.
+      ====
+references:
+  - title: RISC-V Semihosting Specification
+    url: https://github.com/riscv-non-isa/riscv-semihosting
+    description: Official RISC-V semihosting specification repository
+  - title: ARM Semihosting Specification
+    url: https://developer.arm.com/documentation/dui0471/m/what-is-semihosting-
+    description: ARM semihosting specification that RISC-V semihosting adopts
+authors:
+  - name: RISC-V Community
+    organization:
+      name: RISC-V International
+      url: https://riscv.org
+license:
+  name: Creative Commons Attribution-ShareAlike 4.0 International
+  id: CC-BY-SA-4.0
+  url: https://creativecommons.org/licenses/by-sa/4.0/

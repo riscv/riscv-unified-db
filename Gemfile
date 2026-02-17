@@ -12,7 +12,7 @@ gem "udb_helpers", path: "tools/ruby-gems/udb_helpers"
 source "https://rubygems.org"
 
 gem "activesupport"
-gem "asciidoctor-diagram", "~> 2.2"
+gem "asciidoctor-diagram", "~> 3.0"
 gem "asciidoctor-pdf"
 gem "base64"
 gem "bigdecimal"
@@ -20,7 +20,7 @@ gem "concurrent-ruby", require: "concurrent"
 gem "concurrent-ruby-ext"
 gem "rake", "~> 13.0"
 gem "sorbet-runtime"
-gem "ttfunk", "1.7" # needed to avoid having asciidoctor-pdf dependencies pulling in a buggy version of ttunk (1.8)
+gem "ttfunk", "1.8.0" # needed to avoid having asciidoctor-pdf dependencies pulling in a buggy version of ttunk (1.8)
 gem "webrick"
 gem "write_xlsx"
 gem "yard"
@@ -36,7 +36,7 @@ group :development do
   gem "ruby-prof"
   gem "sorbet"
   gem "spoom"
-  gem "tapioca", "= 0.16.11", require: false
+  gem "tapioca", "= 0.17.10", require: false
 end
 
 group :development, :test do
