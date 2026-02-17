@@ -87,7 +87,7 @@ fi
 echo "Using ${CONTAINER_TYPE} environment"
 
 if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
-    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" | grep -q udb ; then
+    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG} --format table" | grep -q udb ; then
         echo "Image not found locally. Attempting to pull from registry..."
         if ${CONTAINER_TYPE} pull "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" 2>/dev/null; then
             echo "Successfully pulled image from registry."
