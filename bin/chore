@@ -135,7 +135,6 @@ do_update_gems() {
 
 do_ruby_type_def() {
   gem=$1
-  echo "input: $gem"
 
   source "$UDB_ROOT"/bin/setup
 
