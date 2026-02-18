@@ -281,16 +281,10 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: jdx/mise-action@v3
+      - uses: ruby/setup-ruby@v1
         with:
-          mise_toml: |
-            [tools]
-            ruby = "3.4.8"
-
-            [env]
-            RUBY_YJIT_ENABLE = "1"
-
-            [settings]
-            ruby.compile = false
+          ruby-version: "3.4" # Not needed with a .ruby-version, .tool-versions or mise.toml
+      - name: install bundle
+        run: bundle install
       - name: Run z3 tests
-        run: ruby tools/ruby-gems/udb/test/test_z3.rb
+        run: bundle exec ruby tools/ruby-gems/udb/test/test_z3.rb
