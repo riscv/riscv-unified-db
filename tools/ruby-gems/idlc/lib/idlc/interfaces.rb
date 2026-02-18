@@ -26,9 +26,6 @@ module Idl
     sig { abstract.returns(String) }
     def description; end
 
-    sig { abstract.returns(T::Boolean) }
-    def schema_known?; end
-
     sig { abstract.returns(Schema) }
     def schema; end
 
