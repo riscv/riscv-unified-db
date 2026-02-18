@@ -385,6 +385,8 @@ module Udb
       proc do |pattern|
         if pattern.to_s =~ /^http/
           JSON.parse(T.must(Net::HTTP.get(pattern)))
+        elsif pattern.to_s =~ /^json-schemer:\/\/schema/
+          JSON.load_file("#{udb_resolver.schemas_path}#{URI(pattern.to_s).path}")
         else
           JSON.load_file(udb_resolver.schemas_path / pattern.to_s)
         end

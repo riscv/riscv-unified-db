@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+UDB_ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 
 help() {
   echo "Usage: chore [OPTION] COMMAND [COMMAND_OPTIONS]"
@@ -62,7 +62,7 @@ update_subcmd_usage() {
 source_setup() {
   if [ -z "$SETUP_SOURCED" ]; then
     export SETUP_SOURCED=1
-    source "$ROOT"/setup
+    source "$UDB_ROOT"/bin/setup
   fi
 }
 
@@ -71,14 +71,14 @@ do_gen_regress() {
   echo "Generating .github/workflows/regress.yml"
   if [ $fail_on_change -eq 1 ]; then
     local sha_before
-    sha_before=$(sha256sum "$ROOT"/.github/workflows/regress.yml)
+    sha_before=$(sha256sum "$UDB_ROOT"/.github/workflows/regress.yml)
   fi
-  rm .github/workflows/regress.yml
+  rm -f .github/workflows/regress.yml
   $RUBY tools/test/gen_regress.rb
   chmod -wx .github/workflows/regress.yml
   if [ $fail_on_change -eq 1 ]; then
     local sha_after
-    sha_after=$(sha256sum "$ROOT"/.github/workflows/regress.yml)
+    sha_after=$(sha256sum "$UDB_ROOT"/.github/workflows/regress.yml)
     if [ "$sha_before" != "$sha_after" ]; then
       exit 1
     fi
@@ -87,6 +87,7 @@ do_gen_regress() {
 
 do_gen_all() {
   do_gen_regress
+  do_ruby_type_def all
 }
 
 increment_minor_version() {
@@ -103,37 +104,45 @@ increment_minor_version() {
 }
 
 do_update_gems() {
-  # first, we update all the gems on the host, which will give us updated Gemfile.lock files
+  source "$UDB_ROOT"/bin/setup
+
+  # first, update Gemfile.lock files
   # and sorbet definitions
-  cd "${ROOT}"/../tools/ruby-gems/idlc || exit 1
-  bundle update --bundler --ruby
-  do_ruby_type_def "idlc"
-  cd - || exit 1
-
-  cd "${ROOT}"/../tools/ruby-gems/udb || exit 1
-  bundle update --bundler --ruby
-  do_ruby_type_def "udb"
-  cd - || exit 1
-
-  cd "${ROOT}"/../tools/ruby-gems/udb-gen || exit 1
-  bundle update --bundler --ruby
-  do_ruby_type_def "udb-gen"
-  cd - || exit 1
-
-  bundle update --bundler --ruby
+  rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  rm "${UDB_ROOT}"/Gemfile.lock
+  $RUN bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
 
   # increment container-tag
   new_version=$(increment_minor_version "$(cat bin/.container-tag)")
   echo "$new_version" > bin/.container-tag
 
+  if [ "$CONTAINER_TYPE" == "native" ]; then
+    bundle install
+    do_ruby_type_def idlc
+    do_ruby_type_def udb
+    do_ruby_type_def udb-gen
+  else
+    # need to run as a seperate process to pick up the new container
+    # since we bumped the container tag, this will also cause the container to rebuild
+    ./bin/chore gen ruby-type-def
+  fi
 }
 
 do_ruby_type_def() {
   gem=$1
+
+  source "$UDB_ROOT"/bin/setup
+
+
   gems=()
   case "$gem" in
     all )
-      gems+=("udb" "idlc" "udb-gen")
+      gems=("udb" "idlc" "udb-gen")
       ;;
     udb )
       gems=("udb")
@@ -151,11 +160,14 @@ do_ruby_type_def() {
       ;;
   esac
   for gem in "${gems[@]}"; do
-    cd "${ROOT}"/../tools/ruby-gems/"${gem}" || exit 1
-    bundle exec tapioca gems --all
-    bundle exec tapioca dsl
-    bundle exec tapioca annotations
-    cd - || exit 1
+    steps=$(cat << STEPS
+      cd ${UDB_ROOT}/tools/ruby-gems/${gem} && \
+      bundle exec tapioca gems --all && \
+      bundle exec tapioca dsl && \
+      bundle exec tapioca annotations
+STEPS
+    )
+    $RUN /bin/bash -c "$steps"
   done
 }
 
@@ -230,6 +242,12 @@ case "$subcommand" in
             ;;
           esac
         done
+        shift $((OPTIND - 1))
+        if [[ $# -gt 0 ]]; then
+            echo "Unexpected argument remaining: $*" >&2
+            gen_ruby_type_def_usage
+            exit 1
+        fi
         do_ruby_type_def "$gem"
         exit 0
         ;;
