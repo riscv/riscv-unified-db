@@ -253,15 +253,30 @@ jobs:
           tools/eclipse/udb-vscode/.vscode-test/**/*
           tools/eclipse/udb-vscode/out/test/**/*
   udb-gem-z3:
-    name: Test udb gem using z3 across several arch
-    matrix:
-      platform:
-      - ubuntu-24.04
-      - ubuntu-24.04-arm
-      - macos-26
+    name: Test udb gem using z3 across several distros and platforms
+    strategy:
+      matrix:
+        platform:
+        - ubuntu-24.04
+        - ubuntu-24.04-arm
+        container:
+        - almalinux:8
+        - ubuntu:24.04
     runs-on: "${{ matrix.platform }}"
+    container: "${{ matrix.container }}"
     steps:
     - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: jdx/mise-action@v3
+      with:
+        mise_toml: |
+          [tools]
+          ruby = "3.4.8"
+
+          [env]
+          RUBY_YJIT_ENABLE = "1"
+
+          [settings]
+          ruby.compile = false
     - name: Run z3 tests
       run: ruby tools/ruby-gems/udb/test/test_z3.rb
   regress-idlc-unit:
