@@ -3,7 +3,7 @@
 if [ -v UDB_SETUP_COMPLETE ]; then
   return
 fi
-UDB_SETEP_COMPLETE=true
+UDB_SETUP_COMPLETE=true
 
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 cd "$ROOT" || exit

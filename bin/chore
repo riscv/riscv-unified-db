@@ -106,7 +106,7 @@ increment_minor_version() {
 do_update_gems() {
   source "$UDB_ROOT"/bin/setup
 
-  # first, we update all the gems on the host, which will give us updated Gemfile.lock files
+  # first, update Gemfile.lock files
   # and sorbet definitions
   rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
   $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
@@ -127,8 +127,8 @@ do_update_gems() {
     do_ruby_type_def udb
     do_ruby_type_def udb-gen
   else
-    "$UDB_ROOT"/bin/build_container
     # need to run as a seperate process to pick up the new container
+    # sine we bumped the container tag, this will also cause the container to rebuild
     ./bin/chore gen ruby-type-def
   fi
 }
