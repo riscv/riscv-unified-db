@@ -128,7 +128,7 @@ do_update_gems() {
     do_ruby_type_def udb-gen
   else
     # need to run as a seperate process to pick up the new container
-    # sine we bumped the container tag, this will also cause the container to rebuild
+    # since we bumped the container tag, this will also cause the container to rebuild
     ./bin/chore gen ruby-type-def
   fi
 }
