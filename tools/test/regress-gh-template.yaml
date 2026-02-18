@@ -68,6 +68,8 @@ jobs:
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
       - name: Use upload-artifact
         uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5 # v4.6.2
+        with:
+          path: .
 
   regress-pre-commit:
     runs-on: ubuntu-latest
@@ -200,11 +202,6 @@ jobs:
         with:
           name: riscv-json
           path: ext/llvm-project/riscv.json
-
-  call-deploy:
-    uses: ./.github/workflows/deploy.yml
-    with:
-      dry-run: true
 
   java-tests:
     name: Java (Xtext) tests

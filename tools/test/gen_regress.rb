@@ -36,7 +36,7 @@ def create_job(job_name, job_data, workflow_yaml)
   }
 
   if job_data["ci_stage"] == "merge_queue"
-    gh_job_yaml["if"] = "github.event_name == 'merge_queue'"
+    gh_job_yaml["if"] = "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
   end
 
   if job_data.key?("env")
@@ -58,17 +58,19 @@ def create_job(job_name, job_data, workflow_yaml)
   end
 
   if job_data.key?("gh_save_artifact")
-    gh_job_yaml["steps"] << {
-      "name" => "Upload artifact",
-      "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][1]["uses"],
-      "if" => "(github.event_name == 'push) && (github.reg_name == 'main')",
-      "with" => {
-        "name" => job_data["gh_save_artifact"]["name"],
-        "path" => job_data["gh_save_artifact"]["path"]
+    job_data["gh_save_artifact"].each do |artifact|
+      gh_job_yaml["steps"] << {
+        "name" => "Upload artifact",
+        "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][1]["uses"],
+        "if" => "((github.event_name == 'push') && (github.ref_name == 'main'))",
+        "with" => {
+          "name" => artifact["artifact_name"],
+          "path" => artifact["path"]
+        }
       }
-    }
-    if job_data["gh_save_artifact"]["include-hidden-files"]
-      gh_job_yaml["steps"].last["with"]["include-hidden-files"] = true
+      if artifact["include-hidden-files"]
+        gh_job_yaml["steps"].last["with"]["include-hidden-files"] = true
+      end
     end
   end
 
