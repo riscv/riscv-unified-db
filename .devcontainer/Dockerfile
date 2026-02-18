@@ -2,6 +2,7 @@ FROM ubuntu:24.04@sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f
 LABEL org.opencontainers.image.source=https://github.com/riscv/riscv-unified-db
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV IN_UDB_CONTAINER=true
 
 WORKDIR /workspace
 
@@ -27,7 +28,6 @@ RUN apt-get update && \
   libgmp-dev \
   libnewlib-dev \
   libyaml-dev \
-  libz3-dev \
   minisat \
   parallel \
   ssh \
@@ -100,7 +100,6 @@ RUN cd /opt/node && \
   rm /opt/node/package.json /opt/node/package-lock.json
 ENV NODE_PATH="/opt/node/node_modules"
 ENV PATH="/opt/node/node_modules/.bin:$PATH"
-ENV IN_UDB_CONTAINER=true
 
 # install gems
 ENV BUNDLE_PATH=/usr/local/bundle
@@ -137,6 +136,9 @@ COPY tools/ruby-gems/idlc/bin/idlc /workspace/bin/container
 COPY tools/ruby-gems/udb/bin/udb /workspace/bin/container
 COPY tools/ruby-gems/udb-gen/bin/udb-gen /workspace/bin/container
 ENV PATH="/workspace/bin/container:$PATH"
+
+# install z3
+RUN ruby -r "udb/z3_loader" -e "Udb::Z3Loader.ensure_z3_loaded"
 
 # Grant the default ubuntu user sudo access
 RUN echo ubuntu ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/ubuntu \

@@ -32,7 +32,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.bindir = "bin"
   s.executables << "udb"
-  s.extensions = ["ext/z3/extconf.rb"]
 
   s.add_dependency "activesupport"
   s.add_dependency "asciidoctor"

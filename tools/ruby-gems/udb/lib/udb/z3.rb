@@ -7,6 +7,11 @@
 require "forwardable"
 require "sorbet-runtime"
 require "udb/version_spec"
+require_relative "z3_loader"
+
+# Ensure Z3 library is available before requiring the z3 gem
+Udb::Z3Loader.ensure_z3_loaded
+
 require "z3"
 
 module Udb

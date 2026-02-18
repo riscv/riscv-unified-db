@@ -261,3 +261,16 @@ jobs:
           path: |
             tools/eclipse/udb-vscode/.vscode-test/**/*
             tools/eclipse/udb-vscode/out/test/**/*
+
+  udb-gem-z3:
+    name: Test udb gem using z3 across several arch
+    matrix:
+      platform:
+        - ubuntu-24.04
+        - ubuntu-24.04-arm
+        - macos-26
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Run z3 tests
+        run: ruby tools/ruby-gems/udb/test/test_z3.rb
