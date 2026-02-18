@@ -11,18 +11,18 @@ regress_template_yaml = YAML.load_file(Pathname.new(__dir__) / "regress-gh-templ
 regress_yaml = YAML.load(YAML.dump(regress_template_yaml))
 tests = YAML.load_file(Pathname.new(__dir__) / "regress-tests.yaml")
 
-tests["tests"].each do |test_name, test_data|
-  regress_yaml["jobs"][test_name] = {
+def create_job(job_name, job_data, workflow_yaml)
+  gh_job_yaml = {
     "runs-on" => "ubuntu-latest",
     "needs" => "build-container",
     "steps" => [
       {
         "name" => "Clone Github Repo Action",
-        "uses" => regress_yaml["jobs"]["build-container"]["steps"][0]["uses"]
+        "uses" => workflow_yaml["jobs"]["build-container"]["steps"][0]["uses"]
       },
       {
         "name" => "Download docker image",
-        "uses" => regress_yaml["jobs"]["never-runs"]["steps"][0]["uses"],
+        "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][0]["uses"],
         "with" => {
           "name" => "docker_image",
           "path" => "${{ runner.temp }}"
@@ -35,18 +35,54 @@ tests["tests"].each do |test_name, test_data|
     ]
   }
 
-  if test_data.key?("env")
-    regress_yaml["jobs"][test_name]["env"] = test_data["env"]
+  if job_data["ci_stage"] == "merge_queue"
+    gh_job_yaml["if"] = "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
   end
-  if test_data.key?("strategy")
-    regress_yaml["jobs"][test_name]["strategy"] = test_data["strategy"]
+
+  if job_data.key?("env")
+    gh_job_yaml["env"] = job_data["env"]
   end
-  if test_data.key?("gh_pre")
-    regress_yaml["jobs"][test_name]["steps"].concat(test_data["gh_pre"])
+
+  if job_data.key?("strategy")
+    gh_job_yaml["strategy"] = job_data["strategy"]
   end
-  regress_yaml["jobs"][test_name]["steps"].concat(test_data["test"])
-  if test_data.key?("gh_post")
-    regress_yaml["jobs"][test_name]["steps"].concat(test_data["gh_post"])
+
+  if job_data.key?("gh_pre")
+    gh_job_yaml["steps"].concat(job_data["gh_pre"])
+  end
+
+  gh_job_yaml["steps"].concat(job_data["test"])
+
+  if job_data.key?("gh_post")
+    gh_job_yaml["steps"].concat(job_data["gh_post"])
+  end
+
+  if job_data.key?("gh_save_artifact")
+    job_data["gh_save_artifact"].each do |artifact|
+      gh_job_yaml["steps"] << {
+        "name" => "Upload artifact",
+        "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][1]["uses"],
+        "if" => "((github.event_name == 'push') && (github.ref_name == 'main'))",
+        "with" => {
+          "name" => artifact["artifact_name"],
+          "path" => artifact["path"]
+        }
+      }
+      if artifact["include-hidden-files"]
+        gh_job_yaml["steps"].last["with"]["include-hidden-files"] = true
+      end
+    end
+  end
+
+  gh_job_yaml
+end
+
+tests["tests"].each do |test_name, test_data|
+  if ["pr", "merge_queue"].include?(test_data["ci_stage"])
+    regress_yaml["jobs"][test_name] = create_job(test_name, test_data, regress_yaml)
+
+  else
+    raise "bad ci_stage: #{test_data["ci_stage"]}"
   end
 end
 

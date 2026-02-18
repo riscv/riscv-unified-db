@@ -1,7 +1,7 @@
 name: Deploy pages
 on:
   workflow_run:
-    workflows: [Deployment actions]
+    workflows: [CI/CD]
     types: [completed]
     branches: [main]
   workflow_dispatch:

@@ -1,7 +1,9 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-name: Regression test
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: CI/CD
 
 permissions:
   contents: read
@@ -14,9 +16,13 @@ permissions:
   merge_group:
     types: [checks_requested]
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
   DOCKER: 1
+  DEPLOY_DIR: _site
 
 # cancel any prior actions from the same PR that are still running (we only care about the final commit)
 concurrency:
@@ -62,6 +68,10 @@ jobs:
     steps:
       - name: Use download-artifact
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+      - name: Use upload-artifact
+        uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5 # v4.6.2
+        with:
+          path: .
 
   regress-pre-commit:
     runs-on: ubuntu-latest
@@ -194,11 +204,6 @@ jobs:
         with:
           name: riscv-json
           path: ext/llvm-project/riscv.json
-
-  call-deploy:
-    uses: ./.github/workflows/deploy.yml
-    with:
-      dry-run: true
 
   java-tests:
     name: Java (Xtext) tests
