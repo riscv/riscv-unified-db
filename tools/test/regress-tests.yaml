@@ -306,7 +306,7 @@ tests:
       - name: Generate instruction appendix
         run: ./do gen:instruction_appendix
 
-  build-rva20-profile:
+  build-profile:
     ci_stage: merge_queue
     gh_save_artifact:
       - artifact_name: ${{ matrix.profile }}

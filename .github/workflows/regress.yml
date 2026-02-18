@@ -849,7 +849,7 @@ jobs:
         name: inst-appendix
         path: gen/instructions_appendix/instructions_appendix.pdf
     if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
-  build-rva20-profile:
+  build-profile:
     runs-on: ubuntu-latest
     needs: build-container
     steps:
@@ -939,7 +939,7 @@ jobs:
     - build-html-isa-manual
     - build-html-cfg-isa-manual
     - build-instruction-appendix
-    - build-rva20-profile
+    - build-profile
     - build-idl-doc
     - regress-pre-commit
     - regress-llvm
