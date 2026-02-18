@@ -17,7 +17,7 @@
           "description": "A regression test definition",
           "type": "object",
           "additionalProperties": false,
-          "required": ["test"],
+          "required": ["test", "ci_stage"],
           "properties": {
             "test": {
               "description": "The main test, specified as a series of shell commands.\n Borrows the {name, run} syntax from GitHub Actions",
@@ -65,6 +65,30 @@
               "examples": ["smoke", "unit"],
               "type": "array",
               "items": { "type": "string" }
+            },
+            "ci_stage": {
+              "enum": ["pr", "merge_queue"]
+            },
+            "gh_save_artifact": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["artifact_name", "path"],
+                "properties": {
+                  "artifact_name": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "include-hidden-files": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "minItems": 1
             },
             "env": {
               "description": "Environment variables set for the test",
