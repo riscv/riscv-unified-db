@@ -160,9 +160,14 @@ do_ruby_type_def() {
       ;;
   esac
   for gem in "${gems[@]}"; do
-    $RUN /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && bundle exec tapioca gems --all"
-    $RUN /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && bundle exec tapioca dsl"
-    $RUN /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && bundle exec tapioca annotations"
+    steps=$(cat << STEPS
+      cd ${UDB_ROOT}/tools/ruby-gems/${gem} && \
+      bundle exec tapioca gems --all && \
+      bundle exec tapioca dsl && \
+      bundle exec tapioca annotations
+STEPS
+    )
+    $RUN /bin/bash -c "$steps"
   done
 }
 
