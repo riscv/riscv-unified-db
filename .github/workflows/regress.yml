@@ -267,12 +267,12 @@ jobs:
     container: "${{ matrix.container }}"
     steps:
     - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-    - if: ${{ matrix.container }} == "almalinux:8"
+    - if: ${{ matrix.container == "almalinux:8" }}
       name: Install ruby
       run: |
         dnf install -y ruby
         dnf install -y rubygem-bundler
-    - if: ${{ matrix.container }} == "ubuntu:24.04"
+    - if: ${{ matrix.container == "ubuntu:24.04" }}
       name: Install ruby
       run: 'apt-get install -y ruby
 
