@@ -273,7 +273,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gem: [idlc, udb]
+        gem: [idlc, udb, udb_helpers]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Copy the gem directory to resolve symlinks
@@ -316,7 +316,11 @@ jobs:
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: idlc.gem
+      - name: download udb_helpers gem
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: udb_helpers.gem
       - name: install gems
-        run: gem install idlc.gem && gem install udb.gem
+        run: gem install idlc.gem && gem install udb_helpers.gem && gem install udb.gem
       - name: try z3
         run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
