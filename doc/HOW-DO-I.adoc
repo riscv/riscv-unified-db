@@ -84,13 +84,11 @@ Then `git add` all updated/new files and make a PR.
 
 === Add a new Ruby gem
 
-Add the gem in the appropriate Gemfile (top, or one of the sub-project gems under tools/ruby-gems).
+Add the gem in the appropriate gemspace or Gemfile (top, or one of the sub-project gems under tools/ruby-gems).
 
-Install it on the host:
+Install it:
 
 [source,bash]
 ----
-bundle install
+./bin/chore install gems # add '-t' option to avoid incrementing the container tag
 ----
-
-Then follow the proceedure in <<Update Ruby gems>>.

@@ -5,36 +5,15 @@
 # Please instead update this file by running `bin/tapioca gem rouge`.
 
 
-# The containing module for Rouge
-#
 # source://rouge//lib/rouge.rb#8
 module Rouge
   class << self
-    # Highlight some text with a given lexer and formatter.
-    #
-    # @example
-    #   Rouge.highlight('@foo = 1', 'ruby', 'html')
-    #   Rouge.highlight('var foo = 1;', 'js', 'terminal256')
-    #
-    #   # streaming - chunks become available as they are lexed
-    #   Rouge.highlight(large_string, 'ruby', 'html') do |chunk|
-    #   $stdout.print chunk
-    #   end
-    #
     # source://rouge//lib/rouge.rb#29
     def highlight(text, lexer, formatter, &b); end
 
-    # Load a file relative to the `lib/rouge` path.
-    #
-    # @api private
-    #
     # source://rouge//lib/rouge.rb#42
     def load_file(path); end
 
-    # Load the lexers in the `lib/rouge/lexers` directory.
-    #
-    # @api private
-    #
     # source://rouge//lib/rouge.rb#49
     def load_lexers; end
 
@@ -48,13 +27,9 @@ end
 
 # source://rouge//lib/rouge/theme.rb#163
 class Rouge::CSSTheme < ::Rouge::Theme
-  # @return [CSSTheme] a new instance of CSSTheme
-  #
   # source://rouge//lib/rouge/theme.rb#164
   def initialize(opts = T.unsafe(nil)); end
 
-  # @yield ["#{@scope} table td { padding: 5px; }"]
-  #
   # source://rouge//lib/rouge/theme.rb#168
   def render(&b); end
 
@@ -69,13 +44,6 @@ class Rouge::CSSTheme < ::Rouge::Theme
   # source://rouge//lib/rouge/theme.rb#189
   def css_selector(token); end
 
-  # yield all of the tokens that should be styled the same
-  # as the given token.  Essentially this recursively all of
-  # the subtokens, except those which are more specifically
-  # styled.
-  #
-  # @yield [tok]
-  #
   # source://rouge//lib/rouge/theme.rb#207
   def inflate_token(tok, &b); end
 
@@ -83,44 +51,28 @@ class Rouge::CSSTheme < ::Rouge::Theme
   def single_css_selector(token); end
 end
 
-# A Formatter takes a token stream and formats it for human viewing.
-#
 # source://rouge//lib/rouge/formatter.rb#6
 class Rouge::Formatter
-  # @return [Formatter] a new instance of Formatter
-  #
   # source://rouge//lib/rouge/formatter.rb#49
   def initialize(opts = T.unsafe(nil)); end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/formatter.rb#53
   def escape?(tok); end
 
   # source://rouge//lib/rouge/formatter.rb#57
   def filter_escapes(tokens); end
 
-  # Format a token stream.
-  #
   # source://rouge//lib/rouge/formatter.rb#68
   def format(tokens, &b); end
 
-  # @deprecated Use {#format} instead.
-  #
   # source://rouge//lib/rouge/formatter.rb#80
   def render(tokens); end
 
-  # yield strings that, when concatenated, form the formatted output
-  #
-  # @abstract
-  #
   # source://rouge//lib/rouge/formatter.rb#87
   def stream(tokens, &b); end
 
   protected
 
-  # @yield [out]
-  #
   # source://rouge//lib/rouge/formatter.rb#92
   def token_lines(tokens, &b); end
 
@@ -131,24 +83,15 @@ class Rouge::Formatter
     # source://rouge//lib/rouge/formatter.rb#35
     def enable_escape!; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/formatter.rb#31
     def escape_enabled?; end
 
-    # Find a formatter class given a unique tag.
-    #
     # source://rouge//lib/rouge/formatter.rb#20
     def find(tag); end
 
-    # Format a token stream.  Delegates to {#format}.
-    #
     # source://rouge//lib/rouge/formatter.rb#45
     def format(tokens, *args, **kwargs, &b); end
 
-    # Specify or get the unique tag for this formatter.  This is used
-    # for specifying a formatter in `rougify`.
-    #
     # source://rouge//lib/rouge/formatter.rb#12
     def tag(tag = T.unsafe(nil)); end
 
@@ -157,16 +100,12 @@ class Rouge::Formatter
   end
 end
 
-# @private
-#
 # source://rouge//lib/rouge/formatter.rb#8
 Rouge::Formatter::REGISTRY = T.let(T.unsafe(nil), Hash)
 
 # source://rouge//lib/rouge/formatters/html.rb#5
 module Rouge::Formatters; end
 
-# Transforms a token stream into HTML output.
-#
 # source://rouge//lib/rouge/formatters/html.rb#7
 class Rouge::Formatters::HTML < ::Rouge::Formatter
   # source://rouge//lib/rouge/formatters/html.rb#29
@@ -175,23 +114,11 @@ class Rouge::Formatters::HTML < ::Rouge::Formatter
   # source://rouge//lib/rouge/formatters/html.rb#23
   def span(tok, val); end
 
-  # @yield the html output.
-  #
   # source://rouge//lib/rouge/formatters/html.rb#19
   def stream(tokens, &b); end
 
   private
 
-  # A performance-oriented helper method to escape `&`, `<` and `>` for the rendered
-  # HTML from this formatter.
-  #
-  # `String#gsub` will always return a new string instance irrespective of whether
-  # a substitution occurs. This method however invokes `String#gsub` only if
-  # a substitution is imminent.
-  #
-  # Returns either the given `value` argument string as is or a new string with the
-  # special characters replaced with their escaped counterparts.
-  #
   # source://rouge//lib/rouge/formatters/html.rb#50
   def escape_special_html_chars(value); end
 end
@@ -204,8 +131,6 @@ Rouge::Formatters::HTML::TABLE_FOR_ESCAPE_HTML = T.let(T.unsafe(nil), Hash)
 
 # source://rouge//lib/rouge/formatters/html_inline.rb#6
 class Rouge::Formatters::HTMLInline < ::Rouge::Formatters::HTML
-  # @return [HTMLInline] a new instance of HTMLInline
-  #
   # source://rouge//lib/rouge/formatters/html_inline.rb#9
   def initialize(theme); end
 
@@ -213,40 +138,17 @@ class Rouge::Formatters::HTMLInline < ::Rouge::Formatters::HTML
   def safe_span(tok, safe_val); end
 end
 
-# Transforms a token stream into HTML output.
-#
 # source://rouge//lib/rouge/formatters/html_legacy.rb#7
 class Rouge::Formatters::HTMLLegacy < ::Rouge::Formatter
-  # Initialize with options.
-  #
-  # If `:inline_theme` is given, then instead of rendering the
-  # tokens as <span> tags with CSS classes, the styles according to
-  # the given theme will be inlined in "style" attributes.  This is
-  # useful for formats in which stylesheets are not available.
-  #
-  # Content will be wrapped in a tag (`div` if tableized, `pre` if
-  # not) with the given `:css_class` unless `:wrap` is set to `false`.
-  #
-  # @option opts
-  # @option opts
-  # @option opts
-  # @option opts
-  # @param opts [Hash] a customizable set of options
-  # @return [HTMLLegacy] a new instance of HTMLLegacy
-  #
   # source://rouge//lib/rouge/formatters/html_legacy.rb#24
   def initialize(opts = T.unsafe(nil)); end
 
-  # @yield the html output.
-  #
   # source://rouge//lib/rouge/formatters/html_legacy.rb#37
   def stream(tokens, &b); end
 end
 
 # source://rouge//lib/rouge/formatters/html_line_highlighter.rb#6
 class Rouge::Formatters::HTMLLineHighlighter < ::Rouge::Formatter
-  # @return [HTMLLineHighlighter] a new instance of HTMLLineHighlighter
-  #
   # source://rouge//lib/rouge/formatters/html_line_highlighter.rb#9
   def initialize(delegate, opts = T.unsafe(nil)); end
 
@@ -256,30 +158,15 @@ end
 
 # source://rouge//lib/rouge/formatters/html_line_table.rb#6
 class Rouge::Formatters::HTMLLineTable < ::Rouge::Formatter
-  # @option opts
-  # @option opts
-  # @option opts
-  # @option opts
-  # @option opts
-  # @option opts
-  # @param formatter [Rouge::Formatters::Formatter] An instance of a
-  #   `Rouge::Formatters::HTML` or `Rouge::Formatters::HTMLInline`
-  # @param opts [Hash] options for HTMLLineTable instance.
-  # @return [HTMLLineTable] a new instance of HTMLLineTable
-  #
   # source://rouge//lib/rouge/formatters/html_line_table.rb#24
   def initialize(formatter, opts = T.unsafe(nil)); end
 
-  # @yield [buffer.join]
-  #
   # source://rouge//lib/rouge/formatters/html_line_table.rb#34
   def stream(tokens, &b); end
 end
 
 # source://rouge//lib/rouge/formatters/html_linewise.rb#6
 class Rouge::Formatters::HTMLLinewise < ::Rouge::Formatter
-  # @return [HTMLLinewise] a new instance of HTMLLinewise
-  #
   # source://rouge//lib/rouge/formatters/html_linewise.rb#7
   def initialize(formatter, opts = T.unsafe(nil)); end
 
@@ -289,41 +176,27 @@ end
 
 # source://rouge//lib/rouge/formatters/html_pygments.rb#5
 class Rouge::Formatters::HTMLPygments < ::Rouge::Formatter
-  # @return [HTMLPygments] a new instance of HTMLPygments
-  #
   # source://rouge//lib/rouge/formatters/html_pygments.rb#6
   def initialize(inner, css_class = T.unsafe(nil)); end
 
-  # @yield [%(<div class="highlight"><pre class="#{@css_class}"><code>)]
-  #
   # source://rouge//lib/rouge/formatters/html_pygments.rb#11
   def stream(tokens, &b); end
 end
 
 # source://rouge//lib/rouge/formatters/html_table.rb#6
 class Rouge::Formatters::HTMLTable < ::Rouge::Formatter
-  # @return [HTMLTable] a new instance of HTMLTable
-  #
   # source://rouge//lib/rouge/formatters/html_table.rb#9
   def initialize(inner, opts = T.unsafe(nil)); end
 
-  # @yield [buffer.join]
-  #
   # source://rouge//lib/rouge/formatters/html_table.rb#23
   def stream(tokens, &b); end
 
-  # @yield [%(#{scope} .rouge-table { border-spacing: 0 })]
-  #
   # source://rouge//lib/rouge/formatters/html_table.rb#18
   def style(scope); end
 end
 
-# A formatter which renders nothing.
-#
 # source://rouge//lib/rouge/formatters/null.rb#7
 class Rouge::Formatters::Null < ::Rouge::Formatter
-  # @return [Null] a new instance of Null
-  #
   # source://rouge//lib/rouge/formatters/null.rb#10
   def initialize(*_arg0); end
 
@@ -331,18 +204,11 @@ class Rouge::Formatters::Null < ::Rouge::Formatter
   def stream(tokens, &b); end
 end
 
-# A formatter for 256-color terminals
-#
 # source://rouge//lib/rouge/formatters/terminal256.rb#7
 class Rouge::Formatters::Terminal256 < ::Rouge::Formatter
-  # @param theme [Hash, Rouge::Theme] the theme to render with.
-  # @return [Terminal256] a new instance of Terminal256
-  #
   # source://rouge//lib/rouge/formatters/terminal256.rb#15
   def initialize(theme = T.unsafe(nil)); end
 
-  # private
-  #
   # source://rouge//lib/rouge/formatters/terminal256.rb#173
   def escape_sequence(token); end
 
@@ -358,16 +224,12 @@ class Rouge::Formatters::Terminal256 < ::Rouge::Formatter
   # source://rouge//lib/rouge/formatters/terminal256.rb#190
   def text_style; end
 
-  # @private
-  #
   # source://rouge//lib/rouge/formatters/terminal256.rb#11
   def theme; end
 end
 
 # source://rouge//lib/rouge/formatters/terminal256.rb#31
 class Rouge::Formatters::Terminal256::EscapeSequence
-  # @return [EscapeSequence] a new instance of EscapeSequence
-  #
   # source://rouge//lib/rouge/formatters/terminal256.rb#33
   def initialize(style); end
 
@@ -380,13 +242,9 @@ class Rouge::Formatters::Terminal256::EscapeSequence
   # source://rouge//lib/rouge/formatters/terminal256.rb#105
   def reset_string; end
 
-  # @yield [style_string]
-  #
   # source://rouge//lib/rouge/formatters/terminal256.rb#86
   def stream_value(val, &b); end
 
-  # Returns the value of attribute style.
-  #
   # source://rouge//lib/rouge/formatters/terminal256.rb#32
   def style; end
 
@@ -413,23 +271,17 @@ class Rouge::Formatters::Terminal256::EscapeSequence
   end
 end
 
-# max distance between two colors, #000000 to #ffffff
-#
 # source://rouge//lib/rouge/formatters/terminal256.rb#142
 Rouge::Formatters::Terminal256::EscapeSequence::MAX_DISTANCE = T.let(T.unsafe(nil), Integer)
 
 # source://rouge//lib/rouge/formatters/terminal256.rb#165
 class Rouge::Formatters::Terminal256::Unescape < ::Rouge::Formatters::Terminal256::EscapeSequence
-  # @return [Unescape] a new instance of Unescape
-  #
   # source://rouge//lib/rouge/formatters/terminal256.rb#166
   def initialize(*_arg0); end
 
   # source://rouge//lib/rouge/formatters/terminal256.rb#168
   def reset_string(*_arg0); end
 
-  # @yield [val]
-  #
   # source://rouge//lib/rouge/formatters/terminal256.rb#169
   def stream_value(val); end
 
@@ -454,29 +306,18 @@ end
 
 # source://rouge//lib/rouge/formatters/tex.rb#6
 class Rouge::Formatters::Tex < ::Rouge::Formatter
-  # @return [Tex] a new instance of Tex
-  #
   # source://rouge//lib/rouge/formatters/tex.rb#33
   def initialize(opts = T.unsafe(nil)); end
 
   # source://rouge//lib/rouge/formatters/tex.rb#37
   def escape_tex(str); end
 
-  # Special handling for leading spaces, since they may be gobbled
-  # by a previous command.  We replace all initial spaces with
-  # \hphantom{xxxx}, which renders an empty space equal to the size
-  # of the x's.
-  #
-  # @yield ["\\hphantom{#{'x' * leading}}"]
-  #
   # source://rouge//lib/rouge/formatters/tex.rb#74
   def hphantom_tag(tok, val); end
 
   # source://rouge//lib/rouge/formatters/tex.rb#64
   def render_line(line, &b); end
 
-  # @yield ["\\begin{#{@prefix}*}%\n"]
-  #
   # source://rouge//lib/rouge/formatters/tex.rb#41
   def stream(tokens, &b); end
 
@@ -484,11 +325,6 @@ class Rouge::Formatters::Tex < ::Rouge::Formatter
   def tag(tok, val); end
 end
 
-# A map of TeX escape characters.
-# Newlines are handled specially by using #token_lines
-# spaces are preserved as long as they aren't at the beginning
-# of a line. see #tag_first for our initial-space strategy
-#
 # source://rouge//lib/rouge/formatters/tex.rb#13
 Rouge::Formatters::Tex::ESCAPE = T.let(T.unsafe(nil), Hash)
 
@@ -511,13 +347,9 @@ end
 
 # source://rouge//lib/rouge/guesser.rb#5
 class Rouge::Guesser::Ambiguous < ::StandardError
-  # @return [Ambiguous] a new instance of Ambiguous
-  #
   # source://rouge//lib/rouge/guesser.rb#7
   def initialize(alternatives); end
 
-  # Returns the value of attribute alternatives.
-  #
   # source://rouge//lib/rouge/guesser.rb#6
   def alternatives; end
 
@@ -533,21 +365,15 @@ class Rouge::Guessers::Disambiguation < ::Rouge::Guesser
   include ::Rouge::Guessers::Util
   include ::Rouge::Lexers
 
-  # @return [Disambiguation] a new instance of Disambiguation
-  #
   # source://rouge//lib/rouge/guessers/disambiguation.rb#9
   def initialize(filename, source); end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/guessers/disambiguation.rb#30
   def contains?(text); end
 
   # source://rouge//lib/rouge/guessers/disambiguation.rb#14
   def filter(lexers); end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/guessers/disambiguation.rb#34
   def matches?(re); end
 
@@ -564,65 +390,41 @@ end
 class Rouge::Guessers::Disambiguation::Disambiguator
   include ::Rouge::Guessers::Util
 
-  # @return [Disambiguator] a new instance of Disambiguator
-  #
   # source://rouge//lib/rouge/guessers/disambiguation.rb#50
   def initialize(patterns, &decider); end
 
   # source://rouge//lib/rouge/guessers/disambiguation.rb#55
   def decide!(guesser); end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/guessers/disambiguation.rb#64
   def match?(filename); end
 end
 
 # source://rouge//lib/rouge/guessers/filename.rb#5
 class Rouge::Guessers::Filename < ::Rouge::Guesser
-  # @return [Filename] a new instance of Filename
-  #
   # source://rouge//lib/rouge/guessers/filename.rb#7
   def initialize(filename); end
 
-  # returns a list of lexers that match the given filename with
-  # equal specificity (i.e. number of wildcards in the pattern).
-  # This helps disambiguate between, e.g. the Nginx lexer, which
-  # matches `nginx.conf`, and the Conf lexer, which matches `*.conf`.
-  # In this case, nginx will win because the pattern has no wildcards,
-  # while `*.conf` has one.
-  #
   # source://rouge//lib/rouge/guessers/filename.rb#17
   def filter(lexers); end
 
-  # Returns the value of attribute fname.
-  #
   # source://rouge//lib/rouge/guessers/filename.rb#6
   def fname; end
 end
 
-# This class allows for custom behavior
-# with glob -> lexer name mappings
-#
 # source://rouge//lib/rouge/guessers/glob_mapping.rb#7
 class Rouge::Guessers::GlobMapping < ::Rouge::Guesser
   include ::Rouge::Guessers::Util
 
-  # @return [GlobMapping] a new instance of GlobMapping
-  #
   # source://rouge//lib/rouge/guessers/glob_mapping.rb#26
   def initialize(glob_map, filename); end
 
-  # Returns the value of attribute filename.
-  #
   # source://rouge//lib/rouge/guessers/glob_mapping.rb#25
   def filename; end
 
   # source://rouge//lib/rouge/guessers/glob_mapping.rb#31
   def filter(lexers); end
 
-  # Returns the value of attribute glob_map.
-  #
   # source://rouge//lib/rouge/guessers/glob_mapping.rb#25
   def glob_map; end
 
@@ -634,16 +436,12 @@ end
 
 # source://rouge//lib/rouge/guessers/mimetype.rb#5
 class Rouge::Guessers::Mimetype < ::Rouge::Guesser
-  # @return [Mimetype] a new instance of Mimetype
-  #
   # source://rouge//lib/rouge/guessers/mimetype.rb#7
   def initialize(mimetype); end
 
   # source://rouge//lib/rouge/guessers/mimetype.rb#11
   def filter(lexers); end
 
-  # Returns the value of attribute mimetype.
-  #
   # source://rouge//lib/rouge/guessers/mimetype.rb#6
   def mimetype; end
 end
@@ -652,8 +450,6 @@ end
 class Rouge::Guessers::Modeline < ::Rouge::Guesser
   include ::Rouge::Guessers::Util
 
-  # @return [Modeline] a new instance of Modeline
-  #
   # source://rouge//lib/rouge/guessers/modeline.rb#23
   def initialize(source, opts = T.unsafe(nil)); end
 
@@ -661,25 +457,15 @@ class Rouge::Guessers::Modeline < ::Rouge::Guesser
   def filter(lexers); end
 end
 
-# [jneen] regexen stolen from linguist
-#
 # source://rouge//lib/rouge/guessers/modeline.rb#9
 Rouge::Guessers::Modeline::EMACS_MODELINE = T.let(T.unsafe(nil), Regexp)
 
 # source://rouge//lib/rouge/guessers/modeline.rb#21
 Rouge::Guessers::Modeline::MODELINES = T.let(T.unsafe(nil), Array)
 
-# First form vim modeline
-# [text]{white}{vi:|vim:|ex:}[white]{options}
-# ex: 'vim: syntax=ruby'
-#
 # source://rouge//lib/rouge/guessers/modeline.rb#14
 Rouge::Guessers::Modeline::VIM_MODELINE_1 = T.let(T.unsafe(nil), Regexp)
 
-# Second form vim modeline (compatible with some versions of Vi)
-# [text]{white}{vi:|vim:|Vim:|ex:}[white]se[t] {options}:[text]
-# ex: 'vim set syntax=ruby:'
-#
 # source://rouge//lib/rouge/guessers/modeline.rb#19
 Rouge::Guessers::Modeline::VIM_MODELINE_2 = T.let(T.unsafe(nil), Regexp)
 
@@ -687,25 +473,18 @@ Rouge::Guessers::Modeline::VIM_MODELINE_2 = T.let(T.unsafe(nil), Regexp)
 class Rouge::Guessers::Source < ::Rouge::Guesser
   include ::Rouge::Guessers::Util
 
-  # @return [Source] a new instance of Source
-  #
   # source://rouge//lib/rouge/guessers/source.rb#9
   def initialize(source); end
 
   # source://rouge//lib/rouge/guessers/source.rb#13
   def filter(lexers); end
 
-  # Returns the value of attribute source.
-  #
   # source://rouge//lib/rouge/guessers/source.rb#8
   def source; end
 end
 
 # source://rouge//lib/rouge/guessers/util.rb#5
 module Rouge::Guessers::Util
-  # @param source [String, IO]
-  # @return [String]
-  #
   # source://rouge//lib/rouge/guessers/util.rb#23
   def get_source(source); end
 
@@ -716,9 +495,6 @@ end
 # source://rouge//lib/rouge/guessers/util.rb#6
 module Rouge::Guessers::Util::SourceNormalizer
   class << self
-    # @param source [String, nil]
-    # @return [String, nil]
-    #
     # source://rouge//lib/rouge/guessers/util.rb#12
     def normalize(source); end
   end
@@ -745,28 +521,20 @@ module Rouge::HasModes
   def set_mode!(mode); end
 end
 
-# shared methods for some indentation-sensitive lexers
-#
 # source://rouge//lib/rouge/util.rb#68
 module Rouge::Indentation
-  # handle a single indented line
-  #
   # source://rouge//lib/rouge/util.rb#83
   def indentation(indent_str); end
 
   # source://rouge//lib/rouge/util.rb#69
   def reset!; end
 
-  # push a state for the next indented block
-  #
   # source://rouge//lib/rouge/util.rb#75
   def starts_block(block_state); end
 end
 
 # source://rouge//lib/rouge/util.rb#5
 class Rouge::InheritableHash < ::Hash
-  # @return [InheritableHash] a new instance of InheritableHash
-  #
   # source://rouge//lib/rouge/util.rb#6
   def initialize(parent = T.unsafe(nil)); end
 
@@ -776,14 +544,13 @@ class Rouge::InheritableHash < ::Hash
   # source://rouge//lib/rouge/util.rb#25
   def each(&b); end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/util.rb#21
   def include?(k); end
 
   # source://rouge//lib/rouge/util.rb#32
   def keys; end
 
+  # source://rouge//lib/rouge/util.rb#31
   def own_keys; end
 
   # source://rouge//lib/rouge/util.rb#17
@@ -794,12 +561,10 @@ end
 class Rouge::InheritableList
   include ::Enumerable
 
-  # @return [InheritableList] a new instance of InheritableList
-  #
   # source://rouge//lib/rouge/util.rb#42
   def initialize(parent = T.unsafe(nil)); end
 
-  # source://rouge//lib/rouge/util.rb#61
+  # source://rouge//lib/rouge/util.rb#64
   def <<(o); end
 
   # source://rouge//lib/rouge/util.rb#50
@@ -815,28 +580,13 @@ class Rouge::InheritableList
   def push(o); end
 end
 
-# cache value in a constant since `__dir__` allocates a new string
-# on every call.
-#
 # source://rouge//lib/rouge.rb#11
 Rouge::LIB_DIR = T.let(T.unsafe(nil), String)
 
-# A lexer transforms text into a stream of `[token, chunk]` pairs.
-#
-# @abstract
-#
 # source://rouge//lib/rouge/lexer.rb#12
 class Rouge::Lexer
   include ::Rouge::Token::Tokens
 
-  # Create a new lexer with the given options.  Individual lexers may
-  # specify extra options.  The only current globally accepted option
-  # is `:debug`.
-  #
-  # @option opts
-  # @param opts [Hash] a customizable set of options
-  # @return [Lexer] a new instance of Lexer
-  #
   # source://rouge//lib/rouge/lexer.rb#325
   def initialize(opts = T.unsafe(nil)); end
 
@@ -858,24 +608,12 @@ class Rouge::Lexer
   # source://rouge//lib/rouge/lexer.rb#391
   def bool_option(name, &default); end
 
-  # Continue the lex from the the current state without resetting
-  #
   # source://rouge//lib/rouge/lexer.rb#476
   def continue_lex(string, &b); end
 
   # source://rouge//lib/rouge/lexer.rb#417
   def hash_option(name, defaults, &val_cast); end
 
-  # Given a string, yield [token, chunk] pairs.  If no block is given,
-  # an enumerator is returned.
-  #
-  # @note The use of :continue => true has been deprecated. A warning is
-  #   issued if run with `$VERBOSE` set to true.
-  # @note The use of arbitrary `opts` has never been supported, but we
-  #   previously ignored them with no error. We now warn unconditionally.
-  # @option opts
-  # @param opts [Hash] a customizable set of options
-  #
   # source://rouge//lib/rouge/lexer.rb#453
   def lex(string, opts = T.unsafe(nil), &b); end
 
@@ -885,115 +623,55 @@ class Rouge::Lexer
   # source://rouge//lib/rouge/lexer.rb#409
   def list_option(name, &default); end
 
-  # -*- instance methods -*- #
-  #
   # source://rouge//lib/rouge/lexer.rb#315
   def options; end
 
-  # Called after each lex is finished.  The default implementation
-  # is a noop.
-  #
-  # @abstract
-  #
   # source://rouge//lib/rouge/lexer.rb#439
   def reset!; end
 
-  # Yield `[token, chunk]` pairs, given a prepared input stream.  This
-  # must be implemented.
-  #
-  # @abstract
-  # @param stream [StringScanner] the stream
-  #
   # source://rouge//lib/rouge/lexer.rb#510
   def stream_tokens(stream, &b); end
 
   # source://rouge//lib/rouge/lexer.rb#401
   def string_option(name, &default); end
 
-  # delegated to {Lexer.tag}
-  #
   # source://rouge//lib/rouge/lexer.rb#499
   def tag; end
 
   # source://rouge//lib/rouge/lexer.rb#413
   def token_option(name, &default); end
 
-  # Returns a new lexer with the given options set. Useful for e.g. setting
-  # debug flags post hoc, or providing global overrides for certain options
-  #
   # source://rouge//lib/rouge/lexer.rb#334
   def with(opts = T.unsafe(nil)); end
 
   class << self
-    # Used to specify alternate names this lexer class may be found by.
-    #
-    # @example
-    #   class Erb < Lexer
-    #   tag 'erb'
-    #   aliases 'eruby', 'rhtml'
-    #   end
-    #
-    #   Lexer.find('eruby') # => Erb
-    #
     # source://rouge//lib/rouge/lexer.rb#263
     def aliases(*args); end
 
-    # @return a list of all lexers.
-    #
     # source://rouge//lib/rouge/lexer.rb#143
     def all; end
 
-    # @private
-    # @raise [EncodingError]
-    #
     # source://rouge//lib/rouge/lexer.rb#297
     def assert_utf8!(str); end
 
-    # In case #continue_lex is called statically, we simply
-    # begin a new lex from the beginning, since there is no state.
-    #
-    # @see #continue_lex
-    #
     # source://rouge//lib/rouge/lexer.rb#30
     def continue_lex(*a, &b); end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexer.rb#217
     def debug_enabled?; end
 
-    # Specify or get a small demo string for this lexer
-    #
     # source://rouge//lib/rouge/lexer.rb#136
     def demo(arg = T.unsafe(nil)); end
 
-    # Specify or get the path name containing a small demo for
-    # this lexer (can be overriden by {demo}).
-    #
     # source://rouge//lib/rouge/lexer.rb#129
     def demo_file(arg = T.unsafe(nil)); end
 
-    # Specify or get this lexer's description.
-    #
     # source://rouge//lib/rouge/lexer.rb#111
     def desc(arg = T.unsafe(nil)); end
 
-    # Return true if there is an in-text indication (such as a shebang
-    # or DOCTYPE declaration) that this lexer should be used.
-    #
-    # @abstract
-    # @param text [TextAnalyzer] the text to be analyzed, with a couple of handy methods on it,
-    #   like {TextAnalyzer#shebang?} and {TextAnalyzer#doctype?}
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexer.rb#522
     def detect?(text); end
 
-    # Determine if a lexer has a method named +:detect?+ defined in its
-    # singleton class.
-    #
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexer.rb#223
     def detectable?; end
 
@@ -1003,63 +681,15 @@ class Rouge::Lexer
     # source://rouge//lib/rouge/lexer.rb#209
     def enable_debug!; end
 
-    # Specify a list of filename globs associated with this lexer.
-    #
-    # If a filename glob is associated with more than one lexer, this can
-    # cause a Guesser::Ambiguous error to be raised in various guessing
-    # methods. These errors can be avoided by disambiguation. Filename globs
-    # are disambiguated in one of two ways. Either the lexer will define a
-    # `self.detect?` method (intended for use with shebangs and doctypes) or a
-    # manual rule will be specified in Guessers::Disambiguation.
-    #
-    # @example
-    #   class Ruby < Lexer
-    #   filenames '*.rb', '*.ruby', 'Gemfile', 'Rakefile'
-    #   end
-    #
     # source://rouge//lib/rouge/lexer.rb#282
     def filenames(*fnames); end
 
-    # Given a name in string, return the correct lexer class.
-    #
-    # @param name [String]
-    # @return [Class<Rouge::Lexer>, nil]
-    #
     # source://rouge//lib/rouge/lexer.rb#37
     def find(name); end
 
-    # Find a lexer, with fancy shiny features.
-    #
-    # * The string you pass can include CGI-style options
-    #
-    #     Lexer.find_fancy('erb?parent=tex')
-    #
-    # * You can pass the special name 'guess' so we guess for you,
-    #   and you can pass a second argument of the code to guess by
-    #
-    #     Lexer.find_fancy('guess', "#!/bin/bash\necho Hello, world")
-    #
-    #   If the code matches more than one lexer then Guesser::Ambiguous
-    #   is raised.
-    #
-    # This is used in the Redcarpet plugin as well as Rouge's own
-    # markdown lexer for highlighting internal code blocks.
-    #
     # source://rouge//lib/rouge/lexer.rb#96
     def find_fancy(str, code = T.unsafe(nil), default_options = T.unsafe(nil)); end
 
-    # Guess which lexer to use based on a hash of info.
-    #
-    # @option info
-    # @option info
-    # @option info
-    # @param fallback [Proc] called if multiple lexers are detected.
-    #   If omitted, Guesser::Ambiguous is raised.
-    # @param info [Hash] a customizable set of options
-    # @return [Class<Rouge::Lexer>]
-    # @see Lexer.detect?
-    # @see Lexer.guesses
-    #
     # source://rouge//lib/rouge/lexer.rb#184
     def guess(info = T.unsafe(nil), &fallback); end
 
@@ -1072,39 +702,15 @@ class Rouge::Lexer
     # source://rouge//lib/rouge/lexer.rb#205
     def guess_by_source(source); end
 
-    # Guess which lexer to use based on a hash of info.
-    #
-    # This accepts the same arguments as Lexer.guess, but will never throw
-    # an error.  It will return a (possibly empty) list of potential lexers
-    # to use.
-    #
     # source://rouge//lib/rouge/lexer.rb#152
     def guesses(info = T.unsafe(nil)); end
 
-    # Lexes `stream` with the given options.  The lex is delegated to a
-    # new instance.
-    #
-    # @see #lex
-    #
     # source://rouge//lib/rouge/lexer.rb#22
     def lex(stream, opts = T.unsafe(nil), &b); end
 
-    # Same as ::find_fancy, except instead of returning an instantiated
-    # lexer, returns a pair of [lexer_class, options], so that you can
-    # modify or provide additional options to the lexer.
-    #
-    # Please note: the lexer class might be nil!
-    #
     # source://rouge//lib/rouge/lexer.rb#46
     def lookup_fancy(str, code = T.unsafe(nil), default_options = T.unsafe(nil)); end
 
-    # Specify a list of mimetypes associated with this lexer.
-    #
-    # @example
-    #   class Html < Lexer
-    #   mimetypes 'text/html', 'application/xhtml+xml'
-    #   end
-    #
     # source://rouge//lib/rouge/lexer.rb#292
     def mimetypes(*mts); end
 
@@ -1114,29 +720,14 @@ class Rouge::Lexer
     # source://rouge//lib/rouge/lexer.rb#119
     def option_docs; end
 
-    # Used to specify or get the canonical name of this lexer class.
-    #
-    # @example
-    #   class MyLexer < Lexer
-    #   tag 'foo'
-    #   end
-    #
-    #   MyLexer.tag # => 'foo'
-    #
-    #   Lexer.find('foo') # => MyLexer
-    #
     # source://rouge//lib/rouge/lexer.rb#247
     def tag(t = T.unsafe(nil)); end
 
-    # Specify or get this lexer's title. Meant to be human-readable.
-    #
     # source://rouge//lib/rouge/lexer.rb#103
     def title(t = T.unsafe(nil)); end
 
     protected
 
-    # @private
-    #
     # source://rouge//lib/rouge/lexer.rb#230
     def register(name, lexer); end
 
@@ -1198,8 +789,6 @@ end
 # source://rouge//lib/rouge/lexers/ada.rb#6
 class Rouge::Lexers::Ada < ::Rouge::RegexLexer
   class << self
-    # Return a hash mapping lower-case identifiers to token classes.
-    #
     # source://rouge//lib/rouge/lexers/ada.rb#23
     def idents; end
   end
@@ -1208,13 +797,9 @@ end
 # source://rouge//lib/rouge/lexers/ada.rb#20
 Rouge::Lexers::Ada::EXP = T.let(T.unsafe(nil), Regexp)
 
-# Ada identifiers are Unicode with underscores only allowed as separators.
-#
 # source://rouge//lib/rouge/lexers/ada.rb#15
 Rouge::Lexers::Ada::ID = T.let(T.unsafe(nil), Regexp)
 
-# Numerals can also contain underscores.
-#
 # source://rouge//lib/rouge/lexers/ada.rb#18
 Rouge::Lexers::Ada::NUM = T.let(T.unsafe(nil), Regexp)
 
@@ -1227,8 +812,6 @@ class Rouge::Lexers::Apache < ::Rouge::RegexLexer
   def name_for_token(token, tktype); end
 
   class << self
-    # self-modifying method that loads the keywords file
-    #
     # source://rouge//lib/rouge/lexers/apache.rb#15
     def directives; end
 
@@ -1350,8 +933,6 @@ class Rouge::Lexers::Awk < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/awk.rb#27
     def declarations; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/awk.rb#14
     def detect?(text); end
 
@@ -1389,8 +970,6 @@ end
 # source://rouge//lib/rouge/lexers/biml.rb#7
 class Rouge::Lexers::BIML < ::Rouge::Lexers::XML
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/biml.rb#13
     def detect?(text); end
   end
@@ -1451,36 +1030,21 @@ class Rouge::Lexers::Brainfuck < ::Rouge::RegexLexer; end
 # source://rouge//lib/rouge/lexers/brightscript.rb#6
 class Rouge::Lexers::Brightscript < ::Rouge::RegexLexer
   class << self
-    # Scene graph components configured as builtins. See BrightScript component documentation e.g.
-    # https://developer.roku.com/en-ca/docs/references/brightscript/components/roappinfo.md
-    #
     # source://rouge//lib/rouge/lexers/brightscript.rb#63
     def builtins; end
 
-    # https://developer.roku.com/en-ca/docs/references/brightscript/language/reserved-words.md
-    #
     # source://rouge//lib/rouge/lexers/brightscript.rb#29
     def keyword_reserved; end
 
-    # These keywords are present in BrightScript, but not supported in standard .brs files
-    #
     # source://rouge//lib/rouge/lexers/brightscript.rb#40
     def keyword_reserved_unsupported; end
 
-    # https://developer.roku.com/en-ca/docs/references/brightscript/language/expressions-variables-types.md
-    #
     # source://rouge//lib/rouge/lexers/brightscript.rb#47
     def keyword_type; end
 
-    # https://developer.roku.com/en-ca/docs/references/brightscript/language/global-utility-functions.md
-    # https://developer.roku.com/en-ca/docs/references/brightscript/language/global-string-functions.md
-    # https://developer.roku.com/en-ca/docs/references/brightscript/language/global-math-functions.md
-    #
     # source://rouge//lib/rouge/lexers/brightscript.rb#16
     def name_builtin; end
 
-    # https://developer.roku.com/en-ca/docs/references/brightscript/language/expressions-variables-types.md#operators
-    #
     # source://rouge//lib/rouge/lexers/brightscript.rb#55
     def operator_word; end
   end
@@ -1541,9 +1105,6 @@ class Rouge::Lexers::COBOL < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/cobol.rb#15
     def divisions; end
 
-    # List of COBOL keywords
-    # sourced from https://www.ibm.com/docs/en/cobol-zos/6.4?topic=appendixes-reserved-words
-    #
     # source://rouge//lib/rouge/lexers/cobol.rb#29
     def keywords; end
 
@@ -1567,8 +1128,6 @@ class Rouge::Lexers::CSS < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/css.rb#19
     def properties; end
 
-    # source: http://www.w3.org/TR/CSS21/syndata.html#vendor-keyword-history
-    #
     # source://rouge//lib/rouge/lexers/css.rb#217
     def vendor_prefixes; end
   end
@@ -1583,10 +1142,6 @@ class Rouge::Lexers::CSharp < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/csharp.rb#43
     def cpp_keywords; end
 
-    # Reserved Identifiers
-    # Contextual Keywords
-    # LINQ Query Expressions
-    #
     # source://rouge//lib/rouge/lexers/csharp.rb#20
     def keywords; end
 
@@ -1660,8 +1215,6 @@ class Rouge::Lexers::Coffeescript < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/coffeescript.rb#35
     def constants; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/coffeescript.rb#15
     def detect?(text); end
 
@@ -1679,8 +1232,6 @@ class Rouge::Lexers::CommonLisp < ::Rouge::RegexLexer; end
 # source://rouge//lib/rouge/lexers/common_lisp.rb#201
 Rouge::Lexers::CommonLisp::BUILTIN_CLASSES = T.let(T.unsafe(nil), Set)
 
-# 638 functions
-#
 # source://rouge//lib/rouge/lexers/common_lisp.rb#16
 Rouge::Lexers::CommonLisp::BUILTIN_FUNCTIONS = T.let(T.unsafe(nil), Set)
 
@@ -1702,52 +1253,11 @@ Rouge::Lexers::CommonLisp::SPECIAL_FORMS = T.let(T.unsafe(nil), Set)
 # source://rouge//lib/rouge/lexers/conf.rb#6
 class Rouge::Lexers::Conf < ::Rouge::RegexLexer; end
 
-# The {ConsoleLexer} class is intended to lex content that represents the
-# text that would display in a console/terminal. As distinct from the
-# {Shell} lexer, {ConsoleLexer} will try to parse out the prompt from each
-# line before passing the remainder of the line to the language lexer for
-# the shell (by default, the {Shell} lexer).
-#
-# The {ConsoleLexer} class accepts five options:
-# 1. **lang**: the shell language to lex (default: `shell`);
-# 2. **output**: the output language (default: `plaintext?token=Generic.Output`);
-# 3. **prompt**: comma-separated list of strings that indicate the end of a
-#    prompt (default: `$,#,>,;`);
-# 4. **comments**: whether to enable comments.
-# 5. **error**: comma-separated list of strings that indicate the start of an
-#    error message
-#
-# The comments option, if enabled, will lex lines that begin with a `#` as a
-# comment. Please note that this option will only work if the prompt is
-# either not manually specified or, if manually specified, does not include
-# the `#` character.
-#
-# Most Markdown lexers that recognise GitHub-Flavored Markdown syntax, will
-# pass the language string to Rouge as written in the original document.
-# This allows an end user to pass options to {ConsoleLexer} by passing them
-# as CGI-style parameters as in the example below.
-#
-# <pre>Here's some regular text.
-#
-# ```console?comments=true
-# # This is a comment
-# $ cp foo bar
-# ```
-#
-# Some more regular text.</pre>
-#
 # source://rouge//lib/rouge/lexers/console.rb#40
 class Rouge::Lexers::ConsoleLexer < ::Rouge::Lexer
-  # @return [ConsoleLexer] a new instance of ConsoleLexer
-  #
   # source://rouge//lib/rouge/lexers/console.rb#52
   def initialize(*_arg0); end
 
-  # whether to allow comments. if manually specifying a prompt that isn't
-  # simply "#", we flag this to on
-  #
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/console.rb#63
   def allow_comments?; end
 
@@ -1822,8 +1332,6 @@ end
 # source://rouge//lib/rouge/lexers/crystal.rb#6
 class Rouge::Lexers::Crystal < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/crystal.rb#15
     def detect?(text); end
   end
@@ -1845,8 +1353,6 @@ end
 
 # source://rouge//lib/rouge/lexers/cython.rb#8
 class Rouge::Lexers::Cython < ::Rouge::Lexers::Python
-  # @return [Cython] a new instance of Cython
-  #
   # source://rouge//lib/rouge/lexers/cython.rb#16
   def initialize(opts = T.unsafe(nil)); end
 
@@ -1879,8 +1385,6 @@ end
 # source://rouge//lib/rouge/lexers/diff.rb#5
 class Rouge::Lexers::Diff < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/diff.rb#14
     def detect?(text); end
   end
@@ -1889,9 +1393,6 @@ end
 # source://rouge//lib/rouge/lexers/digdag.rb#8
 class Rouge::Lexers::Digdag < ::Rouge::Lexers::YAML; end
 
-# http://docs.digdag.io/operators.html
-# as of digdag v0.9.10
-#
 # source://rouge//lib/rouge/lexers/digdag.rb#18
 Rouge::Lexers::Digdag::KEYWORD_PATTERN = T.let(T.unsafe(nil), Regexp)
 
@@ -1932,24 +1433,18 @@ end
 
 # source://rouge//lib/rouge/lexers/eex.rb#5
 class Rouge::Lexers::EEX < ::Rouge::TemplateLexer
-  # @return [EEX] a new instance of EEX
-  #
   # source://rouge//lib/rouge/lexers/eex.rb#14
   def initialize(opts = T.unsafe(nil)); end
 end
 
 # source://rouge//lib/rouge/lexers/epp.rb#5
 class Rouge::Lexers::EPP < ::Rouge::TemplateLexer
-  # @return [EPP] a new instance of EPP
-  #
   # source://rouge//lib/rouge/lexers/epp.rb#13
   def initialize(opts = T.unsafe(nil)); end
 end
 
 # source://rouge//lib/rouge/lexers/erb.rb#6
 class Rouge::Lexers::ERB < ::Rouge::TemplateLexer
-  # @return [ERB] a new instance of ERB
-  #
   # source://rouge//lib/rouge/lexers/erb.rb#15
   def initialize(opts = T.unsafe(nil)); end
 end
@@ -1969,14 +1464,9 @@ Rouge::Lexers::Eiffel::LanguageVariables = T.let(T.unsafe(nil), Array)
 # source://rouge//lib/rouge/lexers/eiffel.rb#27
 Rouge::Lexers::Eiffel::SimpleString = T.let(T.unsafe(nil), Regexp)
 
-# Direct port of pygments Lexer.
-# See: https://bitbucket.org/birkenfeld/pygments-main/src/7304e4759ae65343d89a51359ca538912519cc31/pygments/lexers/functional.py?at=default#cl-2362
-#
 # source://rouge//lib/rouge/lexers/elixir.rb#8
 class Rouge::Lexers::Elixir < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/elixir.rb#17
     def detect?(text); end
   end
@@ -1993,23 +1483,15 @@ class Rouge::Lexers::Erlang < ::Rouge::RegexLexer; end
 
 # source://rouge//lib/rouge/lexers/escape.rb#6
 class Rouge::Lexers::Escape < ::Rouge::Lexer
-  # @return [Escape] a new instance of Escape
-  #
   # source://rouge//lib/rouge/lexers/escape.rb#20
   def initialize(*_arg0); end
 
-  # Returns the value of attribute end.
-  #
   # source://rouge//lib/rouge/lexers/escape.rb#17
   def end; end
 
-  # Returns the value of attribute lang.
-  #
   # source://rouge//lib/rouge/lexers/escape.rb#18
   def lang; end
 
-  # Returns the value of attribute start.
-  #
   # source://rouge//lib/rouge/lexers/escape.rb#16
   def start; end
 
@@ -2046,8 +1528,6 @@ class Rouge::Lexers::Factor < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/factor.rb#17
     def builtins; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/factor.rb#13
     def detect?(text); end
   end
@@ -2079,18 +1559,12 @@ class Rouge::Lexers::FreeFEM < ::Rouge::Lexers::Cpp
     # source://rouge//lib/rouge/lexers/freefem.rb#56
     def builtins; end
 
-    # Override C/C++ ones (for example, `do` does not exists)
-    #
     # source://rouge//lib/rouge/lexers/freefem.rb#18
     def keywords; end
 
-    # Override C/C++ ones (for example, `double` does not exists)
-    #
     # source://rouge//lib/rouge/lexers/freefem.rb#25
     def keywords_type; end
 
-    # Override C/C++ ones (totally different)
-    #
     # source://rouge//lib/rouge/lexers/freefem.rb#34
     def reserved; end
   end
@@ -2108,8 +1582,6 @@ class Rouge::Lexers::GDScript < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/gdscript.rb#14
     def keywords; end
 
-    # Reserved for future implementation
-    #
     # source://rouge//lib/rouge/lexers/gdscript.rb#24
     def keywords_reserved; end
   end
@@ -2124,13 +1596,9 @@ class Rouge::Lexers::GHCCore < ::Rouge::RegexLexer; end
 # source://rouge//lib/rouge/lexers/gherkin.rb#6
 class Rouge::Lexers::Gherkin < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/gherkin.rb#16
     def detect?(text); end
 
-    # self-modifying method that loads the keywords file
-    #
     # source://rouge//lib/rouge/lexers/gherkin.rb#21
     def keywords; end
 
@@ -2141,17 +1609,10 @@ end
 
 # source://rouge//lib/rouge/lexers/gjs.rb#8
 class Rouge::Lexers::Gjs < ::Rouge::Lexers::Javascript
-  # @return [Gjs] a new instance of Gjs
-  #
   # source://rouge//lib/rouge/lexers/gjs.rb#15
   def initialize(*_arg0); end
 end
 
-# This file defines the GLSL language lexer to the Rouge
-# syntax highlighter.
-#
-# Author: Sri Harsha Chilakapati
-#
 # source://rouge//lib/rouge/lexers/glsl.rb#12
 class Rouge::Lexers::Glsl < ::Rouge::Lexers::C
   class << self
@@ -2190,21 +1651,15 @@ Rouge::Lexers::Go::CHAR_LIT = T.let(T.unsafe(nil), Regexp)
 # source://rouge//lib/rouge/lexers/go.rb#36
 Rouge::Lexers::Go::COMMENT = T.let(T.unsafe(nil), Regexp)
 
-# Floating-point literals
-#
 # source://rouge//lib/rouge/lexers/go.rb#83
 Rouge::Lexers::Go::DECIMALS = T.let(T.unsafe(nil), Regexp)
 
 # source://rouge//lib/rouge/lexers/go.rb#27
 Rouge::Lexers::Go::DECIMAL_DIGIT = T.let(T.unsafe(nil), Regexp)
 
-# Integer literals
-#
 # source://rouge//lib/rouge/lexers/go.rb#75
 Rouge::Lexers::Go::DECIMAL_LIT = T.let(T.unsafe(nil), Regexp)
 
-# Rune literals
-#
 # source://rouge//lib/rouge/lexers/go.rb#96
 Rouge::Lexers::Go::ESCAPED_CHAR = T.let(T.unsafe(nil), Regexp)
 
@@ -2229,13 +1684,9 @@ Rouge::Lexers::Go::HEX_DIGIT = T.let(T.unsafe(nil), Regexp)
 # source://rouge//lib/rouge/lexers/go.rb#78
 Rouge::Lexers::Go::HEX_LIT = T.let(T.unsafe(nil), Regexp)
 
-# Identifiers
-#
 # source://rouge//lib/rouge/lexers/go.rb#54
 Rouge::Lexers::Go::IDENTIFIER = T.let(T.unsafe(nil), Regexp)
 
-# Imaginary literals
-#
 # source://rouge//lib/rouge/lexers/go.rb#92
 Rouge::Lexers::Go::IMAGINARY_LIT = T.let(T.unsafe(nil), Regexp)
 
@@ -2245,18 +1696,12 @@ Rouge::Lexers::Go::INTERPRETED_STRING_LIT = T.let(T.unsafe(nil), Regexp)
 # source://rouge//lib/rouge/lexers/go.rb#79
 Rouge::Lexers::Go::INT_LIT = T.let(T.unsafe(nil), Regexp)
 
-# Keywords
-#
 # source://rouge//lib/rouge/lexers/go.rb#40
 Rouge::Lexers::Go::KEYWORD = T.let(T.unsafe(nil), Regexp)
 
-# Letters and digits
-#
 # source://rouge//lib/rouge/lexers/go.rb#26
 Rouge::Lexers::Go::LETTER = T.let(T.unsafe(nil), Regexp)
 
-# Comments
-#
 # source://rouge//lib/rouge/lexers/go.rb#34
 Rouge::Lexers::Go::LINE_COMMENT = T.let(T.unsafe(nil), Regexp)
 
@@ -2275,8 +1720,6 @@ Rouge::Lexers::Go::OCTAL_DIGIT = T.let(T.unsafe(nil), Regexp)
 # source://rouge//lib/rouge/lexers/go.rb#77
 Rouge::Lexers::Go::OCTAL_LIT = T.let(T.unsafe(nil), Regexp)
 
-# Operators and delimiters
-#
 # source://rouge//lib/rouge/lexers/go.rb#59
 Rouge::Lexers::Go::OPERATOR = T.let(T.unsafe(nil), Regexp)
 
@@ -2286,13 +1729,9 @@ Rouge::Lexers::Go::PREDECLARED_CONSTANTS = T.let(T.unsafe(nil), Regexp)
 # source://rouge//lib/rouge/lexers/go.rb#134
 Rouge::Lexers::Go::PREDECLARED_FUNCTIONS = T.let(T.unsafe(nil), Regexp)
 
-# Predeclared identifiers
-#
 # source://rouge//lib/rouge/lexers/go.rb#122
 Rouge::Lexers::Go::PREDECLARED_TYPES = T.let(T.unsafe(nil), Regexp)
 
-# String literals
-#
 # source://rouge//lib/rouge/lexers/go.rb#114
 Rouge::Lexers::Go::RAW_STRING_LIT = T.let(T.unsafe(nil), Regexp)
 
@@ -2314,8 +1753,6 @@ Rouge::Lexers::Go::UNICODE_LETTER = T.let(T.unsafe(nil), Regexp)
 # source://rouge//lib/rouge/lexers/go.rb#99
 Rouge::Lexers::Go::UNICODE_VALUE = T.let(T.unsafe(nil), Regexp)
 
-# Characters
-#
 # source://rouge//lib/rouge/lexers/go.rb#17
 Rouge::Lexers::Go::WHITE_SPACE = T.let(T.unsafe(nil), Regexp)
 
@@ -2342,8 +1779,6 @@ class Rouge::Lexers::Groovy < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/groovy.rb#26
     def declarations; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/groovy.rb#14
     def detect?(text); end
 
@@ -2357,8 +1792,6 @@ end
 
 # source://rouge//lib/rouge/lexers/gts.rb#8
 class Rouge::Lexers::Gts < ::Rouge::Lexers::Typescript
-  # @return [Gts] a new instance of Gts
-  #
   # source://rouge//lib/rouge/lexers/gts.rb#15
   def initialize(*_arg0); end
 end
@@ -2397,8 +1830,6 @@ end
 # source://rouge//lib/rouge/lexers/html.rb#6
 class Rouge::Lexers::HTML < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/html.rb#13
     def detect?(text); end
   end
@@ -2421,8 +1852,6 @@ end
 # source://rouge//lib/rouge/lexers/hack.rb#8
 class Rouge::Lexers::Hack < ::Rouge::Lexers::PHP
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/hack.rb#15
     def detect?(text); end
 
@@ -2431,23 +1860,13 @@ class Rouge::Lexers::Hack < ::Rouge::Lexers::PHP
   end
 end
 
-# A lexer for the Haml templating system for Ruby.
-#
-# @see http://haml.info
-#
 # source://rouge//lib/rouge/lexers/haml.rb#8
 class Rouge::Lexers::Haml < ::Rouge::RegexLexer
   include ::Rouge::Indentation
 
-  # @option opts
-  # @param opts [Hash] a customizable set of options
-  # @return [Haml] a new instance of Haml
-  #
   # source://rouge//lib/rouge/lexers/haml.rb#26
   def initialize(opts = T.unsafe(nil)); end
 
-  # Returns the value of attribute filters.
-  #
   # source://rouge//lib/rouge/lexers/haml.rb#21
   def filters; end
 
@@ -2467,8 +1886,6 @@ class Rouge::Lexers::Handlebars < ::Rouge::TemplateLexer; end
 # source://rouge//lib/rouge/lexers/haskell.rb#6
 class Rouge::Lexers::Haskell < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/haskell.rb#15
     def detect?(text); end
   end
@@ -2486,8 +1903,6 @@ class Rouge::Lexers::Haxe < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/haxe.rb#32
     def declarations; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/haxe.rb#14
     def detect?(text); end
 
@@ -2574,8 +1989,6 @@ class Rouge::Lexers::IO < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/io.rb#17
     def constants; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/io.rb#13
     def detect?(text); end
   end
@@ -2583,8 +1996,6 @@ end
 
 # source://rouge//lib/rouge/lexers/irb.rb#8
 class Rouge::Lexers::IRBLexer < ::Rouge::Lexers::ConsoleLexer
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/irb.rb#35
   def allow_comments?; end
 
@@ -2743,8 +2154,6 @@ class Rouge::Lexers::J < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/j.rb#84
     def control_words_id; end
 
-    # https://code.jsoftware.com/wiki/NuVoc
-    #
     # source://rouge//lib/rouge/lexers/j.rb#30
     def inflection_list; end
 
@@ -2754,8 +2163,6 @@ class Rouge::Lexers::J < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/j.rb#34
     def primitive_table; end
 
-    # https://code.jsoftware.com/wiki/Vocabulary/PartsOfSpeech
-    #
     # source://rouge//lib/rouge/lexers/j.rb#17
     def token_map; end
   end
@@ -2775,8 +2182,6 @@ class Rouge::Lexers::JSONDOC < ::Rouge::Lexers::JSON; end
 
 # source://rouge//lib/rouge/lexers/jsp.rb#6
 class Rouge::Lexers::JSP < ::Rouge::TemplateLexer
-  # @return [JSP] a new instance of JSP
-  #
   # source://rouge//lib/rouge/lexers/jsp.rb#12
   def initialize(*_arg0); end
 end
@@ -2801,12 +2206,6 @@ end
 # source://rouge//lib/rouge/lexers/java.rb#6
 class Rouge::Lexers::Java < ::Rouge::RegexLexer; end
 
-# IMPORTANT NOTICE:
-#
-# Please do not copy this lexer and open a pull request
-# for a new language. It will not get merged, you will
-# be unhappy, and kittens will cry.
-#
 # source://rouge//lib/rouge/lexers/javascript.rb#12
 class Rouge::Lexers::Javascript < ::Rouge::RegexLexer
   class << self
@@ -2819,10 +2218,6 @@ class Rouge::Lexers::Javascript < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/javascript.rb#109
     def declarations; end
 
-    # Pseudo-documentation: https://stackoverflow.com/questions/1661197/what-characters-are-valid-for-javascript-variable-names
-    #
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/javascript.rb#24
     def detect?(text); end
 
@@ -2874,10 +2269,6 @@ end
 # source://rouge//lib/rouge/lexers/julia.rb#6
 class Rouge::Lexers::Julia < ::Rouge::RegexLexer
   class << self
-    # Documentation: https://docs.julialang.org/en/v1/manual/variables/#Allowed-Variable-Names-1
-    #
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/julia.rb#16
     def detect?(text); end
   end
@@ -2898,32 +2289,6 @@ Rouge::Lexers::Julia::OPERATORS = T.let(T.unsafe(nil), Regexp)
 # source://rouge//lib/rouge/lexers/julia.rb#184
 Rouge::Lexers::Julia::PUNCTUATION = T.let(T.unsafe(nil), Regexp)
 
-# NOTE: The list of types was generated automatically using the following script:
-# using Pkg, InteractiveUtils
-#
-# allnames = [names(Core); names(Base, imported=true)]
-#
-# for stdlib in readdir(Pkg.Types.stdlib_dir())
-#     mod = Symbol(basename(stdlib))
-#     @eval begin
-#         using $mod
-#         append!(allnames, names($mod))
-#     end
-# end
-#
-# sort!(unique!(allnames))
-#
-# i = 1
-# for sym in allnames
-#     global i # needed at the top level, e.g. in the REPL
-#     isdefined(Main, sym) || continue
-#     getfield(which(Main, sym), sym) isa Type || continue
-#     sym === :(=>) && continue # Actually an alias for Pair
-#     print("| ", sym)
-#     i % 3 == 0 ? println() : print(" ") # print 3 to a line
-#     i += 1
-# end
-#
 # source://rouge//lib/rouge/lexers/julia.rb#65
 Rouge::Lexers::Julia::TYPES = T.let(T.unsafe(nil), Regexp)
 
@@ -2946,24 +2311,16 @@ end
 
 # source://rouge//lib/rouge/lexers/lasso.rb#8
 class Rouge::Lexers::Lasso < ::Rouge::TemplateLexer
-  # @return [Lasso] a new instance of Lasso
-  #
   # source://rouge//lib/rouge/lexers/lasso.rb#23
   def initialize(*_arg0); end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/lasso.rb#29
   def start_inline?; end
 
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/lasso.rb#18
     def detect?(text); end
 
-    # self-modifying method that loads the keywords file
-    #
     # source://rouge//lib/rouge/lexers/lasso.rb#38
     def keywords; end
   end
@@ -3013,8 +2370,6 @@ class Rouge::Lexers::Livescript < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/livescript.rb#19
     def declarations; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/livescript.rb#15
     def detect?(text); end
 
@@ -3028,8 +2383,6 @@ end
 
 # source://rouge//lib/rouge/lexers/lua.rb#6
 class Rouge::Lexers::Lua < ::Rouge::RegexLexer
-  # @return [Lua] a new instance of Lua
-  #
   # source://rouge//lib/rouge/lexers/lua.rb#17
   def initialize(opts = T.unsafe(nil)); end
 
@@ -3040,8 +2393,6 @@ class Rouge::Lexers::Lua < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/lua.rb#27
     def builtins; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/lua.rb#23
     def detect?(text); end
   end
@@ -3150,8 +2501,6 @@ end
 
 # source://rouge//lib/rouge/lexers/make.rb#6
 class Rouge::Lexers::Make < ::Rouge::RegexLexer
-  # @return [Make] a new instance of Make
-  #
   # source://rouge//lib/rouge/lexers/make.rb#23
   def initialize(opts = T.unsafe(nil)); end
 
@@ -3169,8 +2518,6 @@ end
 
 # source://rouge//lib/rouge/lexers/mason.rb#6
 class Rouge::Lexers::Mason < ::Rouge::TemplateLexer
-  # @return [Mason] a new instance of Mason
-  #
   # source://rouge//lib/rouge/lexers/mason.rb#13
   def initialize(*_arg0); end
 end
@@ -3181,22 +2528,15 @@ Rouge::Lexers::Mason::COMPONENTS = T.let(T.unsafe(nil), Array)
 # source://rouge//lib/rouge/lexers/mason.rb#20
 Rouge::Lexers::Mason::PERL_BLOCKS = T.let(T.unsafe(nil), Array)
 
-# Note: If you add a tag in the lines below, you also need to modify "disambiguate '*.m'" in file disambiguation.rb
-#
 # source://rouge//lib/rouge/lexers/mason.rb#19
 Rouge::Lexers::Mason::TEXT_BLOCKS = T.let(T.unsafe(nil), Array)
 
 # source://rouge//lib/rouge/lexers/mathematica.rb#6
 class Rouge::Lexers::Mathematica < ::Rouge::RegexLexer
   class << self
-    # The list of built-in symbols comes from a wolfram server and is created automatically by rake
-    #
     # source://rouge//lib/rouge/lexers/mathematica.rb#58
     def builtins; end
 
-    # Although Module, With and Block are normal built-in symbols, we give them a special treatment as they are
-    # the most important expressions for defining local variables
-    #
     # source://rouge//lib/rouge/lexers/mathematica.rb#51
     def keywords; end
   end
@@ -3205,8 +2545,6 @@ end
 # source://rouge//lib/rouge/lexers/matlab.rb#6
 class Rouge::Lexers::Matlab < ::Rouge::RegexLexer
   class << self
-    # self-modifying method that loads the builtins file
-    #
     # source://rouge//lib/rouge/lexers/matlab.rb#23
     def builtins; end
 
@@ -3234,8 +2572,6 @@ end
 
 # source://rouge//lib/rouge/lexers/meson.rb#137
 class Rouge::Lexers::Meson::StringRegister < ::Array
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/meson.rb#138
   def delim?(delim); end
 
@@ -3245,8 +2581,6 @@ class Rouge::Lexers::Meson::StringRegister < ::Array
   # source://rouge//lib/rouge/lexers/meson.rb#146
   def remove; end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/meson.rb#150
   def type?(type); end
 end
@@ -3274,8 +2608,6 @@ class Rouge::Lexers::Mojo < ::Rouge::Lexers::Python
     # source://rouge//lib/rouge/lexers/mojo.rb#27
     def builtins; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/mojo.rb#16
     def detect?(text); end
 
@@ -3286,8 +2618,6 @@ end
 
 # source://rouge//lib/rouge/lexers/moonscript.rb#8
 class Rouge::Lexers::Moonscript < ::Rouge::RegexLexer
-  # @return [Moonscript] a new instance of Moonscript
-  #
   # source://rouge//lib/rouge/lexers/moonscript.rb#19
   def initialize(*_arg0); end
 
@@ -3295,8 +2625,6 @@ class Rouge::Lexers::Moonscript < ::Rouge::RegexLexer
   def builtins; end
 
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/moonscript.rb#26
     def detect?(text); end
   end
@@ -3405,8 +2733,6 @@ class Rouge::Lexers::OCaml < ::Rouge::Lexers::OCamlCommon
   end
 end
 
-# shared states with Reasonml and ReScript
-#
 # source://rouge//lib/rouge/lexers/ocaml/common.rb#7
 class Rouge::Lexers::OCamlCommon < ::Rouge::RegexLexer
   class << self
@@ -3438,8 +2764,6 @@ module Rouge::Lexers::ObjectiveCCommon
   def builtins; end
 
   class << self
-    # @private
-    #
     # source://rouge//lib/rouge/lexers/objective_c/common.rb#23
     def extended(base); end
   end
@@ -3491,8 +2815,6 @@ end
 
 # source://rouge//lib/rouge/lexers/php.rb#6
 class Rouge::Lexers::PHP < ::Rouge::TemplateLexer
-  # @return [PHP] a new instance of PHP
-  #
   # source://rouge//lib/rouge/lexers/php.rb#21
   def initialize(*_arg0); end
 
@@ -3503,8 +2825,6 @@ class Rouge::Lexers::PHP < ::Rouge::TemplateLexer
     # source://rouge//lib/rouge/lexers/php.rb#51
     def builtins; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/php.rb#31
     def detect?(text); end
 
@@ -3536,8 +2856,6 @@ class Rouge::Lexers::Pascal < ::Rouge::RegexLexer; end
 # source://rouge//lib/rouge/lexers/perl.rb#6
 class Rouge::Lexers::Perl < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/perl.rb#16
     def detect?(text); end
   end
@@ -3545,18 +2863,12 @@ end
 
 # source://rouge//lib/rouge/lexers/plain_text.rb#6
 class Rouge::Lexers::PlainText < ::Rouge::Lexer
-  # @return [PlainText] a new instance of PlainText
-  #
   # source://rouge//lib/rouge/lexers/plain_text.rb#16
   def initialize(*_arg0); end
 
-  # @yield [self.token, string]
-  #
   # source://rouge//lib/rouge/lexers/plain_text.rb#22
   def stream_tokens(string, &b); end
 
-  # Returns the value of attribute token.
-  #
   # source://rouge//lib/rouge/lexers/plain_text.rb#15
   def token; end
 end
@@ -3570,8 +2882,6 @@ class Rouge::Lexers::Pony < ::Rouge::RegexLexer; end
 # source://rouge//lib/rouge/lexers/postscript.rb#7
 class Rouge::Lexers::PostScript < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/postscript.rb#15
     def detect?(text); end
   end
@@ -3580,24 +2890,15 @@ end
 # source://rouge//lib/rouge/lexers/powershell.rb#7
 class Rouge::Lexers::Powershell < ::Rouge::RegexLexer; end
 
-# https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions_cmdletbindingattribute?view=powershell-6
-#
 # source://rouge//lib/rouge/lexers/powershell.rb#16
 Rouge::Lexers::Powershell::ATTRIBUTES = T.let(T.unsafe(nil), Array)
 
-# https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables?view=powershell-6
-#
 # source://rouge//lib/rouge/lexers/powershell.rb#22
 Rouge::Lexers::Powershell::AUTO_VARS = T.let(T.unsafe(nil), String)
 
-# https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_reserved_words?view=powershell-6
-#
 # source://rouge//lib/rouge/lexers/powershell.rb#36
 Rouge::Lexers::Powershell::KEYWORDS = T.let(T.unsafe(nil), String)
 
-# https://devblogs.microsoft.com/scripting/powertip-find-a-list-of-powershell-type-accelerators/
-# ([PSObject].Assembly.GetType("System.Management.Automation.TypeAccelerators")::Get).Keys -join ' '
-#
 # source://rouge//lib/rouge/lexers/powershell.rb#46
 Rouge::Lexers::Powershell::KEYWORDS_TYPE = T.let(T.unsafe(nil), String)
 
@@ -3610,8 +2911,6 @@ Rouge::Lexers::Powershell::OPERATORS = T.let(T.unsafe(nil), String)
 # source://rouge//lib/rouge/lexers/praat.rb#6
 class Rouge::Lexers::Praat < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/praat.rb#14
     def detect?(text); end
 
@@ -3673,8 +2972,6 @@ class Rouge::Lexers::Puppet < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/puppet.rb#25
     def constants; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/puppet.rb#13
     def detect?(text); end
 
@@ -3698,8 +2995,6 @@ class Rouge::Lexers::Python < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/python.rb#44
     def builtins_pseudo; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/python.rb#15
     def detect?(text); end
 
@@ -3713,8 +3008,6 @@ end
 
 # source://rouge//lib/rouge/lexers/python.rb#274
 class Rouge::Lexers::Python::StringRegister < ::Array
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/python.rb#275
   def delim?(delim); end
 
@@ -3724,8 +3017,6 @@ class Rouge::Lexers::Python::StringRegister < ::Array
   # source://rouge//lib/rouge/lexers/python.rb#283
   def remove; end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/python.rb#287
   def type?(type); end
 end
@@ -3750,8 +3041,6 @@ class Rouge::Lexers::Qml < ::Rouge::Lexers::Javascript; end
 # source://rouge//lib/rouge/lexers/r.rb#6
 class Rouge::Lexers::R < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/r.rb#47
     def detect?(text); end
   end
@@ -3766,9 +3055,6 @@ Rouge::Lexers::R::KEYWORDS = T.let(T.unsafe(nil), Array)
 # source://rouge//lib/rouge/lexers/r.rb#18
 Rouge::Lexers::R::KEYWORD_CONSTANTS = T.let(T.unsafe(nil), Array)
 
-# These are all the functions in `base` that are implemented as a
-# `.Primitive`, minus those functions that are also keywords.
-#
 # source://rouge//lib/rouge/lexers/r.rb#27
 Rouge::Lexers::R::PRIMITIVE_FUNCTIONS = T.let(T.unsafe(nil), Array)
 
@@ -3789,8 +3075,6 @@ class Rouge::Lexers::Racket < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/racket.rb#65
     def builtins; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/racket.rb#14
     def detect?(text); end
 
@@ -3834,8 +3118,6 @@ end
 
 # source://rouge//lib/rouge/lexers/robot_framework.rb#6
 class Rouge::Lexers::RobotFramework < ::Rouge::RegexLexer
-  # @return [RobotFramework] a new instance of RobotFramework
-  #
   # source://rouge//lib/rouge/lexers/robot_framework.rb#16
   def initialize(opts = T.unsafe(nil)); end
 
@@ -3851,8 +3133,6 @@ end
 # source://rouge//lib/rouge/lexers/ruby.rb#6
 class Rouge::Lexers::Ruby < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/ruby.rb#18
     def detect?(text); end
   end
@@ -3860,8 +3140,6 @@ end
 
 # source://rouge//lib/rouge/lexers/rust.rb#6
 class Rouge::Lexers::Rust < ::Rouge::RegexLexer
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/rust.rb#53
   def macro_closed?; end
 
@@ -3869,8 +3147,6 @@ class Rouge::Lexers::Rust < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/rust.rb#35
     def builtins; end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/rust.rb#19
     def detect?(text); end
 
@@ -3981,8 +3257,6 @@ class Rouge::Lexers::Sass < ::Rouge::Lexers::SassCommon
   include ::Rouge::Indentation
 end
 
-# shared states with SCSS
-#
 # source://rouge//lib/rouge/lexers/sass/common.rb#7
 class Rouge::Lexers::SassCommon < ::Rouge::RegexLexer; end
 
@@ -4012,8 +3286,6 @@ class Rouge::Lexers::Sed < ::Rouge::RegexLexer
   def replacement; end
 
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/sed.rb#14
     def detect?(text); end
   end
@@ -4028,8 +3300,6 @@ class Rouge::Lexers::Sed::Replacement < ::Rouge::RegexLexer; end
 # source://rouge//lib/rouge/lexers/shell.rb#6
 class Rouge::Lexers::Shell < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/shell.rb#22
     def detect?(text); end
   end
@@ -4047,8 +3317,6 @@ class Rouge::Lexers::Sieve < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/sieve.rb#20
     def actions; end
 
-    # control commands (rfc5228 § 3)
-    #
     # source://rouge//lib/rouge/lexers/sieve.rb#16
     def controls; end
 
@@ -4068,10 +3336,6 @@ class Rouge::Lexers::Slice < ::Rouge::Lexers::C
   end
 end
 
-# A lexer for the Slim tempalte language
-#
-# @see http://slim-lang.org
-#
 # source://rouge//lib/rouge/lexers/slim.rb#8
 class Rouge::Lexers::Slim < ::Rouge::RegexLexer
   include ::Rouge::Indentation
@@ -4129,34 +3393,23 @@ Rouge::Lexers::Stan::OP = T.let(T.unsafe(nil), Regexp)
 # source://rouge//lib/rouge/lexers/stan.rb#15
 Rouge::Lexers::Stan::RT = T.let(T.unsafe(nil), Regexp)
 
-# optional comment or whitespace
-#
 # source://rouge//lib/rouge/lexers/stan.rb#13
 Rouge::Lexers::Stan::WS = T.let(T.unsafe(nil), Regexp)
 
 # source://rouge//lib/rouge/lexers/stata.rb#6
 class Rouge::Lexers::Stata < ::Rouge::RegexLexer
   class << self
-    # Stata commands used with braces. Includes all valid abbreviations for 'forvalues'.
-    #
     # source://rouge//lib/rouge/lexers/stata.rb#90
     def reserved_keywords; end
 
-    # Note: types `str1-str2045` handled separately below
-    #
     # source://rouge//lib/rouge/lexers/stata.rb#85
     def type_keywords; end
   end
 end
 
-# Partial list of common programming and estimation commands, as of Stata 16
-# Note: not all abbreviations are included
-#
 # source://rouge//lib/rouge/lexers/stata.rb#19
 Rouge::Lexers::Stata::KEYWORDS = T.let(T.unsafe(nil), Array)
 
-# Complete list of functions by name, as of Stata 16
-#
 # source://rouge//lib/rouge/lexers/stata.rb#48
 Rouge::Lexers::Stata::PRIMITIVE_FUNCTIONS = T.let(T.unsafe(nil), Array)
 
@@ -4169,10 +3422,6 @@ class Rouge::Lexers::SuperCollider < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/supercollider.rb#13
     def keywords; end
 
-    # these aren't technically keywords, but we treat
-    # them as such because it makes things clearer 99%
-    # of the time
-    #
     # source://rouge//lib/rouge/lexers/supercollider.rb#22
     def reserved; end
   end
@@ -4180,8 +3429,6 @@ end
 
 # source://rouge//lib/rouge/lexers/svelte.rb#8
 class Rouge::Lexers::Svelte < ::Rouge::Lexers::HTML
-  # @return [Svelte] a new instance of Svelte
-  #
   # source://rouge//lib/rouge/lexers/svelte.rb#14
   def initialize(*_arg0); end
 end
@@ -4214,8 +3461,6 @@ end
 # source://rouge//lib/rouge/lexers/tcl.rb#6
 class Rouge::Lexers::TCL < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/tcl.rb#13
     def detect?(text); end
 
@@ -4282,8 +3527,6 @@ class Rouge::Lexers::Tap < ::Rouge::RegexLexer; end
 # source://rouge//lib/rouge/lexers/tex.rb#6
 class Rouge::Lexers::TeX < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/tex.rb#15
     def detect?(text); end
   end
@@ -4312,8 +3555,6 @@ end
 # source://rouge//lib/rouge/lexers/tulip.rb#5
 class Rouge::Lexers::Tulip < ::Rouge::RegexLexer
   class << self
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/tulip.rb#14
     def detect?(text); end
   end
@@ -4359,8 +3600,6 @@ module Rouge::Lexers::TypescriptCommon
   def reserved; end
 
   class << self
-    # @private
-    #
     # source://rouge//lib/rouge/lexers/typescript/common.rb#36
     def extended(base); end
   end
@@ -4389,8 +3628,6 @@ class Rouge::Lexers::Varnish < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/varnish.rb#28
     def functions; end
 
-    # backend acl
-    #
     # source://rouge//lib/rouge/lexers/varnish.rb#18
     def keywords; end
 
@@ -4446,8 +3683,6 @@ end
 
 # source://rouge//lib/rouge/lexers/vue.rb#7
 class Rouge::Lexers::Vue < ::Rouge::Lexers::HTML
-  # @return [Vue] a new instance of Vue
-  #
   # source://rouge//lib/rouge/lexers/vue.rb#15
   def initialize(*_arg0); end
 
@@ -4466,10 +3701,6 @@ end
 # source://rouge//lib/rouge/lexers/xml.rb#6
 class Rouge::Lexers::XML < ::Rouge::RegexLexer
   class << self
-    # Documentation: https://www.w3.org/TR/xml11/#charsets and https://www.w3.org/TR/xml11/#sec-suggested-names
-    #
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/xml.rb#17
     def detect?(text); end
   end
@@ -4490,9 +3721,6 @@ class Rouge::Lexers::XPath < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/xpath.rb#18
     def decimalLiteral; end
 
-    # Terminal literals:
-    # https://www.w3.org/TR/xpath-31/#terminal-symbols
-    #
     # source://rouge//lib/rouge/lexers/xpath.rb#14
     def digits; end
 
@@ -4505,9 +3733,6 @@ class Rouge::Lexers::XPath < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/xpath.rb#79
     def keywords; end
 
-    # Terminal symbols:
-    # https://www.w3.org/TR/xpath-30/#id-terminal-delimitation
-    #
     # source://rouge//lib/rouge/lexers/xpath.rb#56
     def kindTest; end
 
@@ -4553,26 +3778,18 @@ class Rouge::Lexers::YAML < ::Rouge::RegexLexer
   # source://rouge//lib/rouge/lexers/yaml.rb#62
   def continue_indent(match); end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/yaml.rb#37
   def dedent?(level); end
 
   # source://rouge//lib/rouge/lexers/yaml.rb#32
   def indent; end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/lexers/yaml.rb#41
   def indent?(level); end
 
-  # reset the indentation levels
-  #
   # source://rouge//lib/rouge/lexers/yaml.rb#25
   def reset_indent; end
 
-  # Save a possible indentation level
-  #
   # source://rouge//lib/rouge/lexers/yaml.rb#46
   def save_indent(match); end
 
@@ -4580,10 +3797,6 @@ class Rouge::Lexers::YAML < ::Rouge::RegexLexer
   def set_indent(match, opts = T.unsafe(nil)); end
 
   class << self
-    # Documentation: https://yaml.org/spec/1.2/spec.html
-    #
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/lexers/yaml.rb#16
     def detect?(text); end
   end
@@ -4595,8 +3808,6 @@ class Rouge::Lexers::YANG < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/yang.rb#40
     def body_stmts_keywords; end
 
-    # RFC7950 other keywords
-    #
     # source://rouge//lib/rouge/lexers/yang.rb#69
     def constants_keywords; end
 
@@ -4615,16 +3826,12 @@ class Rouge::Lexers::YANG < ::Rouge::RegexLexer
     # source://rouge//lib/rouge/lexers/yang.rb#22
     def module_header_stmts_keywords; end
 
-    # Keywords from RFC7950 ; oriented at BNF style
-    #
     # source://rouge//lib/rouge/lexers/yang.rb#16
     def top_stmts_keywords; end
 
     # source://rouge//lib/rouge/lexers/yang.rb#54
     def type_stmts_keywords; end
 
-    # RFC7950 Built-In Types
-    #
     # source://rouge//lib/rouge/lexers/yang.rb#77
     def types; end
   end
@@ -4641,136 +3848,56 @@ class Rouge::Lexers::Zig < ::Rouge::RegexLexer
   end
 end
 
-# A stateful lexer that uses sets of regular expressions to
-# tokenize a string.  Most lexers are instances of RegexLexer.
-#
-# @abstract
-#
 # source://rouge//lib/rouge/regex_lexer.rb#8
 class Rouge::RegexLexer < ::Rouge::Lexer
-  # Delegate the lex to another lexer. We use the `continue_lex` method
-  # so that #reset! will not be called.  In this way, a single lexer
-  # can be repeatedly delegated to while maintaining its own internal
-  # state stack.
-  #
-  # @param lexer [#lex] The lexer or lexer class to delegate to
-  # @param text [String] The text to delegate.  This defaults to the last matched string.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#433
   def delegate(lexer, text = T.unsafe(nil)); end
 
-  # @private
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#281
   def get_state(state_name); end
 
-  # replace the head of the stack with the given state
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#477
   def goto(state_name); end
 
-  # Yield a token with the next matched group.  Subsequent calls
-  # to this method will yield subsequent groups.
-  #
-  # @deprecated
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#412
   def group(tok); end
 
-  # Yield tokens corresponding to the matched groups of the current
-  # match.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#418
   def groups(*tokens); end
 
-  # Check if `state_name` is in the state stack.
-  #
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#492
   def in_state?(state_name); end
 
-  # Pop the state stack.  If a number is passed in, it will be popped
-  # that number of times.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#466
   def pop!(times = T.unsafe(nil)); end
 
-  # Push a state onto the stack.  If no state name is given and you've
-  # passed a block, a state will be dynamically created using the
-  # {StateDSL}.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#450
   def push(state_name = T.unsafe(nil), &b); end
 
   # source://rouge//lib/rouge/regex_lexer.rb#443
   def recurse(text = T.unsafe(nil)); end
 
-  # reset this lexer to its initial state.  This runs all of the
-  # start_procs.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#302
   def reset!; end
 
-  # reset the stack back to `[:root]`.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#485
   def reset_stack; end
 
-  # The state stack.  This is initially the single state `[:root]`.
-  # It is an error for this stack to be empty.
-  #
-  # @see #state
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#288
   def stack; end
 
-  # The current state - i.e. one on top of the state stack.
-  #
-  # NB: if the state stack is empty, this will throw an error rather
-  # than returning nil.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#296
   def state; end
 
-  # Check if `state_name` is the state on top of the state stack.
-  #
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#500
   def state?(state_name); end
 
-  # Runs one step of the lex.  Rules in the current state are tried
-  # until one matches, at which point its callback is called.
-  #
-  # @return true if a rule was tried successfully
-  # @return false otherwise.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#358
   def step(state, stream); end
 
-  # This implements the lexer protocol, by yielding [token, value] pairs.
-  #
-  # The process for lexing works as follows, until the stream is empty:
-  #
-  # 1. We look at the state on top of the stack (which by default is
-  #    `[:root]`).
-  # 2. Each rule in that state is tried until one is successful.  If one
-  #    is found, that rule's callback is evaluated - which may yield
-  #    tokens and manipulate the state stack.  Otherwise, one character
-  #    is consumed with an `'Error'` token, and we continue at (1.)
-  #
-  # @see #step #step (where (2.) is implemented)
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#324
   def stream_tokens(str, &b); end
 
-  # Yield a token.
-  #
-  # @param tok the token type
-  # @param val (optional) the string value to yield.  If absent, this defaults
-  #   to the entire last match.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#404
   def token(tok, val = T.unsafe(nil)); end
 
@@ -4783,8 +3910,6 @@ class Rouge::RegexLexer < ::Rouge::Lexer
     # source://rouge//lib/rouge/regex_lexer.rb#264
     def append(name, &b); end
 
-    # @private
-    #
     # source://rouge//lib/rouge/regex_lexer.rb#271
     def get_state(name); end
 
@@ -4794,34 +3919,18 @@ class Rouge::RegexLexer < ::Rouge::Lexer
     # source://rouge//lib/rouge/regex_lexer.rb#231
     def replace_state(name, new_defn); end
 
-    # Specify an action to be run every fresh lex.
-    #
-    # @example
-    #   start { puts "I'm lexing a new string!" }
-    #
     # source://rouge//lib/rouge/regex_lexer.rb#247
     def start(&b); end
 
-    # The routines to run at the beginning of a fresh lex.
-    #
-    # @see start
-    #
     # source://rouge//lib/rouge/regex_lexer.rb#238
     def start_procs; end
 
-    # Define a new state for this lexer with the given name.
-    # The block will be evaluated in the context of a {StateDSL}.
-    #
     # source://rouge//lib/rouge/regex_lexer.rb#253
     def state(name, &b); end
 
     # source://rouge//lib/rouge/regex_lexer.rb#226
     def state_definitions; end
 
-    # The states hash for this lexer.
-    #
-    # @see state
-    #
     # source://rouge//lib/rouge/regex_lexer.rb#222
     def states; end
   end
@@ -4829,16 +3938,12 @@ end
 
 # source://rouge//lib/rouge/regex_lexer.rb#19
 class Rouge::RegexLexer::ClosedState < ::StandardError
-  # @return [ClosedState] a new instance of ClosedState
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#21
   def initialize(state); end
 
   # source://rouge//lib/rouge/regex_lexer.rb#25
   def rule; end
 
-  # Returns the value of attribute state.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#20
   def state; end
 
@@ -4848,8 +3953,6 @@ end
 
 # source://rouge//lib/rouge/regex_lexer.rb#9
 class Rouge::RegexLexer::InvalidRegex < ::StandardError
-  # @return [InvalidRegex] a new instance of InvalidRegex
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#10
   def initialize(re); end
 
@@ -4857,89 +3960,56 @@ class Rouge::RegexLexer::InvalidRegex < ::StandardError
   def to_s; end
 end
 
-# The number of successive scans permitted without consuming
-# the input stream.  If this is exceeded, the match fails.
-#
 # source://rouge//lib/rouge/regex_lexer.rb#351
 Rouge::RegexLexer::MAX_NULL_SCANS = T.let(T.unsafe(nil), Integer)
 
-# A rule is a tuple of a regular expression to test, and a callback
-# to perform if the test succeeds.
-#
-# @see StateDSL#rule
-#
 # source://rouge//lib/rouge/regex_lexer.rb#44
 class Rouge::RegexLexer::Rule
-  # @return [Rule] a new instance of Rule
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#48
   def initialize(re, callback); end
 
-  # Returns the value of attribute beginning_of_line.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#47
   def beginning_of_line; end
 
-  # Returns the value of attribute callback.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#45
   def callback; end
 
   # source://rouge//lib/rouge/regex_lexer.rb#54
   def inspect; end
 
-  # Returns the value of attribute re.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#46
   def re; end
 end
 
-# a State is a named set of rules that can be tested for or
-# mixed in.
-#
-# @see RegexLexer.state
-#
 # source://rouge//lib/rouge/regex_lexer.rb#63
 class Rouge::RegexLexer::State
-  # @return [State] a new instance of State
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#65
   def initialize(name, rules); end
 
   # source://rouge//lib/rouge/regex_lexer.rb#70
   def inspect; end
 
-  # Returns the value of attribute name.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#64
   def name; end
 
-  # Returns the value of attribute rules.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#64
   def rules; end
 end
 
 # source://rouge//lib/rouge/regex_lexer.rb#75
 class Rouge::RegexLexer::StateDSL
-  # @return [StateDSL] a new instance of StateDSL
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#77
   def initialize(name, &defn); end
 
   # source://rouge//lib/rouge/regex_lexer.rb#101
   def appended(&defn); end
 
-  # Returns the value of attribute name.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#76
   def name; end
 
   # source://rouge//lib/rouge/regex_lexer.rb#93
   def prepended(&defn); end
 
-  # Returns the value of attribute rules.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#76
   def rules; end
 
@@ -4951,34 +4021,12 @@ class Rouge::RegexLexer::StateDSL
   # source://rouge//lib/rouge/regex_lexer.rb#201
   def close!; end
 
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#191
   def context_sensitive?(re); end
 
-  # Mix in the rules from another state into this state.  The rules
-  # from the mixed-in state will be tried in order before moving on
-  # to the rest of the rules in this state.
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#208
   def mixin(state); end
 
-  # Define a new rule for this state.
-  #
-  # @overload rule
-  # @overload rule
-  # @param re [Regexp] a regular expression for this rule to test.
-  # @param tok [String] the token type to yield if `re` matches.
-  # @param next_state [#to_s] (optional) a state to push onto the stack if `re` matches.
-  #   If `next_state` is `:pop!`, the state stack will be popped
-  #   instead.
-  # @param callback [Proc] a block that will be evaluated in the context of the lexer
-  #   if `re` matches.  This block has access to a number of lexer
-  #   methods, including {RegexLexer#push}, {RegexLexer#pop!},
-  #   {RegexLexer#token}, and {RegexLexer#delegate}.  The first
-  #   argument can be used to access the match groups.
-  # @raise [ClosedState]
-  #
   # source://rouge//lib/rouge/regex_lexer.rb#129
   def rule(re, tok = T.unsafe(nil), next_state = T.unsafe(nil), &callback); end
 
@@ -4988,25 +4036,14 @@ class Rouge::RegexLexer::StateDSL
   def load!; end
 end
 
-# A TemplateLexer is one that accepts a :parent option, to specify
-# which language is being templated.  The lexer class can specify its
-# own default for the parent lexer, which is otherwise defaulted to
-# HTML.
-#
-# @abstract
-#
 # source://rouge//lib/rouge/template_lexer.rb#10
 class Rouge::TemplateLexer < ::Rouge::RegexLexer
-  # the parent lexer - the one being templated.
-  #
   # source://rouge//lib/rouge/template_lexer.rb#12
   def parent; end
 end
 
 # source://rouge//lib/rouge/tex_theme_renderer.rb#5
 class Rouge::TexThemeRenderer
-  # @return [TexThemeRenderer] a new instance of TexThemeRenderer
-  #
   # source://rouge//lib/rouge/tex_theme_renderer.rb#6
   def initialize(theme, opts = T.unsafe(nil)); end
 
@@ -5022,35 +4059,6 @@ class Rouge::TexThemeRenderer
   # source://rouge//lib/rouge/tex_theme_renderer.rb#101
   def palette_name(name); end
 
-  # Our general strategy is this:
-  #
-  # * First, define the \RG{tokname}{content} command, which will
-  #   expand into \RG@tok@tokname{content}. We use \csname...\endcsname
-  #   to interpolate into a command.
-  #
-  # * Define the default RG* environment, which will enclose the whole
-  #   thing. By default this will simply set \ttfamily (select monospace font)
-  #   but it can be overridden with \renewcommand by the user to be
-  #   any other formatting.
-  #
-  # * Define all the colors using xcolors \definecolor command. First we define
-  #   every palette color with a name such as RG@palette@themneame@colorname.
-  #   Then we find all foreground and background colors that have literal html
-  #   colors embedded in them and define them with names such as
-  #   RG@palette@themename@000000. While html allows three-letter colors such
-  #   as #FFF, xcolor requires all six characters to be present, so we make sure
-  #   to normalize that as well as the case convention in #inline_name.
-  #
-  # * Define the token commands RG@tok@xx. These will take the content as the
-  #   argument and format it according to the theme, referring to the color
-  #   in the palette.
-  #
-  # @yield [<<'END'.gsub('RG', @prefix)
-  # \makeatletter
-  # \def\RG#1#2{\csname RG@tok@#1\endcsname{#2}}%
-  # \newenvironment{RG*}{\ttfamily}{\relax}%
-  # END]
-  #
   # source://rouge//lib/rouge/tex_theme_renderer.rb#33
   def render(&b); end
 
@@ -5063,8 +4071,6 @@ class Rouge::TexThemeRenderer
   # source://rouge//lib/rouge/tex_theme_renderer.rb#57
   def render_palette(palette, &b); end
 
-  # @yield [out]
-  #
   # source://rouge//lib/rouge/tex_theme_renderer.rb#115
   def render_style(tok, style, &b); end
 
@@ -5074,38 +4080,18 @@ end
 
 # source://rouge//lib/rouge/text_analyzer.rb#5
 class Rouge::TextAnalyzer < ::String
-  # Return the contents of the doctype tag if present, nil otherwise.
-  #
   # source://rouge//lib/rouge/text_analyzer.rb#25
   def doctype; end
 
-  # Check if the doctype matches a given regexp or string
-  #
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/text_analyzer.rb#36
   def doctype?(type = T.unsafe(nil)); end
 
-  # Return true if the result of lexing with the given lexer contains no
-  # error tokens.
-  #
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/text_analyzer.rb#42
   def lexes_cleanly?(lexer); end
 
-  # Find a shebang.  Returns nil if no shebang is present.
-  #
   # source://rouge//lib/rouge/text_analyzer.rb#7
   def shebang; end
 
-  # Check if the given shebang is present.
-  #
-  # This normalizes things so that `text.shebang?('bash')` will detect
-  # `#!/bash`, '#!/bin/bash', '#!/usr/bin/env bash', and '#!/bin/bash -x'
-  #
-  # @return [Boolean]
-  #
   # source://rouge//lib/rouge/text_analyzer.rb#18
   def shebang?(match); end
 end
@@ -5167,8 +4153,6 @@ end
 
 # source://rouge//lib/rouge/theme.rb#8
 class Rouge::Theme::Style < ::Hash
-  # @return [Style] a new instance of Style
-  #
   # source://rouge//lib/rouge/theme.rb#9
   def initialize(theme, hsh = T.unsafe(nil)); end
 
@@ -5178,13 +4162,9 @@ class Rouge::Theme::Style < ::Hash
   # source://rouge//lib/rouge/theme.rb#16
   def fg; end
 
-  # @yield ["#{selector} {"]
-  #
   # source://rouge//lib/rouge/theme.rb#22
   def render(selector, &b); end
 
-  # @yield ["color: #{fg}"]
-  #
   # source://rouge//lib/rouge/theme.rb#34
   def rendered_rules(&b); end
 end
@@ -5192,10 +4172,6 @@ end
 # source://rouge//lib/rouge/themes/thankful_eyes.rb#5
 module Rouge::Themes; end
 
-# author Chris Kempson
-# base16 default dark
-# https://github.com/chriskempson/base16-default-schemes
-#
 # source://rouge//lib/rouge/themes/base16.rb#9
 class Rouge::Themes::Base16 < ::Rouge::CSSTheme
   extend ::Rouge::HasModes
@@ -5221,14 +4197,9 @@ class Rouge::Themes::Base16::Monokai < ::Rouge::Themes::Base16; end
 # source://rouge//lib/rouge/themes/base16.rb#90
 class Rouge::Themes::Base16::Solarized < ::Rouge::Themes::Base16; end
 
-# A port of the bw style from Pygments.
-# See https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/styles/bw.py
-#
 # source://rouge//lib/rouge/themes/bw.rb#8
 class Rouge::Themes::BlackWhiteTheme < ::Rouge::CSSTheme; end
 
-# stolen from pygments
-#
 # source://rouge//lib/rouge/themes/colorful.rb#7
 class Rouge::Themes::Colorful < ::Rouge::CSSTheme; end
 
@@ -5308,9 +4279,6 @@ Rouge::Themes::Github::P_PURPLE_2 = T.let(T.unsafe(nil), Hash)
 # source://rouge//lib/rouge/themes/github.rb#28
 Rouge::Themes::Github::P_PURPLE_5 = T.let(T.unsafe(nil), Hash)
 
-# Primer primitives
-# https://github.com/primer/primitives/tree/main/src/tokens
-#
 # source://rouge//lib/rouge/themes/github.rb#11
 Rouge::Themes::Github::P_RED_0 = T.let(T.unsafe(nil), Hash)
 
@@ -5326,9 +4294,6 @@ Rouge::Themes::Github::P_RED_7 = T.let(T.unsafe(nil), Hash)
 # source://rouge//lib/rouge/themes/github.rb#15
 Rouge::Themes::Github::P_RED_8 = T.let(T.unsafe(nil), Hash)
 
-# Based on https://github.com/morhetz/gruvbox, with help from
-# https://github.com/daveyarwood/gruvbox-pygments
-#
 # source://rouge//lib/rouge/themes/gruvbox.rb#10
 class Rouge::Themes::Gruvbox < ::Rouge::CSSTheme
   extend ::Rouge::HasModes
@@ -5372,8 +4337,6 @@ Rouge::Themes::Gruvbox::C_bright_yellow = T.let(T.unsafe(nil), String)
 # source://rouge//lib/rouge/themes/gruvbox.rb#15
 Rouge::Themes::Gruvbox::C_dark0 = T.let(T.unsafe(nil), String)
 
-# global Gruvbox colours {{{
-#
 # source://rouge//lib/rouge/themes/gruvbox.rb#14
 Rouge::Themes::Gruvbox::C_dark0_hard = T.let(T.unsafe(nil), String)
 
@@ -5482,9 +4445,6 @@ class Rouge::Themes::Monokai < ::Rouge::CSSTheme; end
 # source://rouge//lib/rouge/themes/monokai_sublime.rb#6
 class Rouge::Themes::MonokaiSublime < ::Rouge::CSSTheme; end
 
-# A port of the pastie style from Pygments.
-# See https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/styles/pastie.py
-#
 # source://rouge//lib/rouge/themes/pastie.rb#8
 class Rouge::Themes::Pastie < ::Rouge::CSSTheme; end
 
@@ -5512,18 +4472,12 @@ class Rouge::Token
     # source://rouge//lib/rouge/token.rb#46
     def make_token(name, shortname, &b); end
 
-    # @return [Boolean]
-    #
     # source://rouge//lib/rouge/token.rb#29
     def matches?(other); end
 
-    # Returns the value of attribute name.
-    #
     # source://rouge//lib/rouge/token.rb#7
     def name; end
 
-    # Returns the value of attribute parent.
-    #
     # source://rouge//lib/rouge/token.rb#8
     def parent; end
 
@@ -5533,8 +4487,6 @@ class Rouge::Token
     # source://rouge//lib/rouge/token.rb#41
     def register!; end
 
-    # Returns the value of attribute shortname.
-    #
     # source://rouge//lib/rouge/token.rb#9
     def shortname; end
 
@@ -5785,8 +4737,6 @@ class Rouge::Token::Tokens::Name::Variable::Instance < ::Rouge::Token::Tokens::N
 # source://rouge//lib/rouge/token.rb#48
 class Rouge::Token::Tokens::Name::Variable::Magic < ::Rouge::Token::Tokens::Name::Variable; end
 
-# convenience
-#
 # source://rouge//lib/rouge/token.rb#188
 Rouge::Token::Tokens::Num = Rouge::Token::Tokens::Literal::Number
 

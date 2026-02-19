@@ -41,7 +41,7 @@ class Thor
   def build_command_tree(klass, indent); end
 
   class << self
-    # source://thor//lib/thor.rb#246
+    # source://thor//lib/thor.rb#250
     def at_least_one(*args, &block); end
 
     # source://thor//lib/thor.rb#350
@@ -59,7 +59,7 @@ class Thor
     # source://thor//lib/thor.rb#21
     def default_command(meth = T.unsafe(nil)); end
 
-    # source://thor//lib/thor.rb#21
+    # source://thor//lib/thor.rb#28
     def default_task(meth = T.unsafe(nil)); end
 
     # source://thor//lib/thor/base.rb#27
@@ -74,7 +74,7 @@ class Thor
     # source://thor//lib/thor.rb#438
     def disable_required_check?(command); end
 
-    # source://thor//lib/thor.rb#203
+    # source://thor//lib/thor.rb#207
     def exclusive(*args, &block); end
 
     # source://thor//lib/thor.rb#288
@@ -98,10 +98,10 @@ class Thor
     # source://thor//lib/thor.rb#129
     def method_options(options = T.unsafe(nil)); end
 
-    # source://thor//lib/thor.rb#163
+    # source://thor//lib/thor.rb#175
     def option(name, options = T.unsafe(nil)); end
 
-    # source://thor//lib/thor.rb#129
+    # source://thor//lib/thor.rb#135
     def options(options = T.unsafe(nil)); end
 
     # source://thor//lib/thor.rb#12
@@ -110,7 +110,7 @@ class Thor
     # source://thor//lib/thor.rb#309
     def printable_commands(all = T.unsafe(nil), subcommand = T.unsafe(nil)); end
 
-    # source://thor//lib/thor.rb#309
+    # source://thor//lib/thor.rb#318
     def printable_tasks(all = T.unsafe(nil), subcommand = T.unsafe(nil)); end
 
     # source://thor//lib/thor.rb#37
@@ -131,13 +131,13 @@ class Thor
     # source://thor//lib/thor.rb#320
     def subcommands; end
 
-    # source://thor//lib/thor.rb#329
+    # source://thor//lib/thor.rb#344
     def subtask(subcommand, subcommand_class); end
 
-    # source://thor//lib/thor.rb#320
+    # source://thor//lib/thor.rb#323
     def subtasks; end
 
-    # source://thor//lib/thor.rb#258
+    # source://thor//lib/thor.rb#281
     def task_help(shell, command_name); end
 
     protected
@@ -151,7 +151,7 @@ class Thor
     # source://thor//lib/thor.rb#560
     def create_command(meth); end
 
-    # source://thor//lib/thor.rb#560
+    # source://thor//lib/thor.rb#584
     def create_task(meth); end
 
     # source://thor//lib/thor.rb#478
@@ -166,7 +166,7 @@ class Thor
     # source://thor//lib/thor.rb#626
     def find_command_possibilities(meth); end
 
-    # source://thor//lib/thor.rb#626
+    # source://thor//lib/thor.rb#639
     def find_task_possibilities(meth); end
 
     # source://thor//lib/thor.rb#586
@@ -181,7 +181,7 @@ class Thor
     # source://thor//lib/thor.rb#605
     def normalize_command_name(meth); end
 
-    # source://thor//lib/thor.rb#605
+    # source://thor//lib/thor.rb#621
     def normalize_task_name(meth); end
 
     # source://thor//lib/thor.rb#493
@@ -193,7 +193,7 @@ class Thor
     # source://thor//lib/thor.rb#592
     def retrieve_command_name(args); end
 
-    # source://thor//lib/thor.rb#592
+    # source://thor//lib/thor.rb#596
     def retrieve_task_name(args); end
 
     # source://thor//lib/thor.rb#653
@@ -205,7 +205,7 @@ class Thor
     # source://thor//lib/thor.rb#641
     def subcommand_help(cmd); end
 
-    # source://thor//lib/thor.rb#641
+    # source://thor//lib/thor.rb#647
     def subtask_help(cmd); end
   end
 end
@@ -220,13 +220,13 @@ module Thor::Actions
   # source://thor//lib/thor/actions.rb#89
   def action(instance); end
 
-  # source://thor//lib/thor/actions/create_file.rb#22
+  # source://thor//lib/thor/actions/create_file.rb#27
   def add_file(destination, *args, &block); end
 
-  # source://thor//lib/thor/actions/create_link.rb#17
+  # source://thor//lib/thor/actions/create_link.rb#22
   def add_link(destination, *args); end
 
-  # source://thor//lib/thor/actions/file_manipulation.rb#192
+  # source://thor//lib/thor/actions/file_manipulation.rb#197
   def append_file(path, *args, &block); end
 
   # source://thor//lib/thor/actions/file_manipulation.rb#192
@@ -286,10 +286,10 @@ module Thor::Actions
   # source://thor//lib/thor/actions/file_manipulation.rb#216
   def inject_into_class(path, klass, *args, &block); end
 
-  # source://thor//lib/thor/actions/inject_into_file.rb#56
+  # source://thor//lib/thor/actions/inject_into_file.rb#64
   def inject_into_file(destination, *args, &block); end
 
-  # source://thor//lib/thor/actions/inject_into_file.rb#26
+  # source://thor//lib/thor/actions/inject_into_file.rb#35
   def inject_into_file!(destination, *args, &block); end
 
   # source://thor//lib/thor/actions/file_manipulation.rb#239
@@ -307,7 +307,7 @@ module Thor::Actions
   # source://thor//lib/thor/actions/file_manipulation.rb#50
   def link_file(source, *args); end
 
-  # source://thor//lib/thor/actions/file_manipulation.rb#170
+  # source://thor//lib/thor/actions/file_manipulation.rb#175
   def prepend_file(path, *args, &block); end
 
   # source://thor//lib/thor/actions/file_manipulation.rb#170
@@ -316,7 +316,7 @@ module Thor::Actions
   # source://thor//lib/thor/actions.rb#114
   def relative_to_original_destination_root(path, remove_dot = T.unsafe(nil)); end
 
-  # source://thor//lib/thor/actions/file_manipulation.rb#350
+  # source://thor//lib/thor/actions/file_manipulation.rb#360
   def remove_dir(path, config = T.unsafe(nil)); end
 
   # source://thor//lib/thor/actions/file_manipulation.rb#350
@@ -582,7 +582,7 @@ class Thor::Argument
   # source://thor//lib/thor/parser/argument.rb#52
   def enum_to_s; end
 
-  # source://thor//lib/thor/parser/argument.rb#5
+  # source://thor//lib/thor/parser/argument.rb#6
   def human_name; end
 
   # source://thor//lib/thor/parser/argument.rb#5
@@ -740,7 +740,7 @@ module Thor::Base::ClassMethods
   # source://thor//lib/thor/base.rb#483
   def all_commands; end
 
-  # source://thor//lib/thor/base.rb#483
+  # source://thor//lib/thor/base.rb#487
   def all_tasks; end
 
   # source://thor//lib/thor/base.rb#190
@@ -812,7 +812,7 @@ module Thor::Base::ClassMethods
   # source://thor//lib/thor/base.rb#614
   def handle_no_command_error(command, has_namespace = T.unsafe(nil)); end
 
-  # source://thor//lib/thor/base.rb#614
+  # source://thor//lib/thor/base.rb#617
   def handle_no_task_error(command, has_namespace = T.unsafe(nil)); end
 
   # source://thor//lib/thor/base.rb#567
@@ -827,13 +827,13 @@ module Thor::Base::ClassMethods
   # source://thor//lib/thor/base.rb#537
   def no_commands_context; end
 
-  # source://thor//lib/thor/base.rb#531
+  # source://thor//lib/thor/base.rb#535
   def no_tasks(&block); end
 
   # source://thor//lib/thor/base.rb#607
   def public_command(*names); end
 
-  # source://thor//lib/thor/base.rb#607
+  # source://thor//lib/thor/base.rb#612
   def public_task(*names); end
 
   # source://thor//lib/thor/base.rb#427
@@ -845,7 +845,7 @@ module Thor::Base::ClassMethods
   # source://thor//lib/thor/base.rb#501
   def remove_command(*names); end
 
-  # source://thor//lib/thor/base.rb#501
+  # source://thor//lib/thor/base.rb#510
   def remove_task(*names); end
 
   # source://thor//lib/thor/base.rb#583
@@ -863,7 +863,7 @@ module Thor::Base::ClassMethods
   # source://thor//lib/thor/base.rb#223
   def strict_args_position?(config); end
 
-  # source://thor//lib/thor/base.rb#472
+  # source://thor//lib/thor/base.rb#475
   def tasks; end
 
   protected
@@ -892,7 +892,7 @@ module Thor::Base::ClassMethods
   # source://thor//lib/thor/base.rb#783
   def create_command(meth); end
 
-  # source://thor//lib/thor/base.rb#783
+  # source://thor//lib/thor/base.rb#785
   def create_task(meth); end
 
   # source://thor//lib/thor/base.rb#793
@@ -901,7 +901,7 @@ module Thor::Base::ClassMethods
   # source://thor//lib/thor/base.rb#709
   def find_and_refresh_command(name); end
 
-  # source://thor//lib/thor/base.rb#709
+  # source://thor//lib/thor/base.rb#718
   def find_and_refresh_task(name); end
 
   # source://thor//lib/thor/base.rb#750
@@ -1117,7 +1117,7 @@ class Thor::Group
     # source://thor//lib/thor/group.rb#199
     def printable_commands(*_arg0); end
 
-    # source://thor//lib/thor/group.rb#199
+    # source://thor//lib/thor/group.rb#205
     def printable_tasks(*_arg0); end
 
     # source://thor//lib/thor/group.rb#149
@@ -1134,7 +1134,7 @@ class Thor::Group
     # source://thor//lib/thor/group.rb#263
     def create_command(meth); end
 
-    # source://thor//lib/thor/group.rb#263
+    # source://thor//lib/thor/group.rb#267
     def create_task(meth); end
 
     # source://thor//lib/thor/group.rb#228
@@ -1143,7 +1143,7 @@ class Thor::Group
     # source://thor//lib/thor/group.rb#254
     def self_command; end
 
-    # source://thor//lib/thor/group.rb#254
+    # source://thor//lib/thor/group.rb#257
     def self_task; end
   end
 end
@@ -1179,7 +1179,7 @@ module Thor::Invocation
   # source://thor//lib/thor/invocation.rb#122
   def invoke_command(command, *args); end
 
-  # source://thor//lib/thor/invocation.rb#122
+  # source://thor//lib/thor/invocation.rb#130
   def invoke_task(command, *args); end
 
   # source://thor//lib/thor/invocation.rb#138
@@ -1193,7 +1193,7 @@ module Thor::Invocation
   # source://thor//lib/thor/invocation.rb#153
   def _retrieve_class_and_command(name, sent_command = T.unsafe(nil)); end
 
-  # source://thor//lib/thor/invocation.rb#153
+  # source://thor//lib/thor/invocation.rb#163
   def _retrieve_class_and_task(name, sent_command = T.unsafe(nil)); end
 
   # source://thor//lib/thor/invocation.rb#145
@@ -1338,16 +1338,16 @@ class Thor::Option < ::Thor::Argument
   # source://thor//lib/thor/parser/option.rb#99
   def aliases_for_usage; end
 
-  # source://thor//lib/thor/parser/option.rb#118
+  # source://thor//lib/thor/parser/option.rb#117
   def array?; end
 
-  # source://thor//lib/thor/parser/option.rb#118
+  # source://thor//lib/thor/parser/option.rb#117
   def boolean?; end
 
   # source://thor//lib/thor/parser/option.rb#3
   def group; end
 
-  # source://thor//lib/thor/parser/option.rb#118
+  # source://thor//lib/thor/parser/option.rb#117
   def hash?; end
 
   # source://thor//lib/thor/parser/option.rb#3
@@ -1359,7 +1359,7 @@ class Thor::Option < ::Thor::Argument
   # source://thor//lib/thor/parser/option.rb#3
   def lazy_default; end
 
-  # source://thor//lib/thor/parser/option.rb#118
+  # source://thor//lib/thor/parser/option.rb#117
   def numeric?; end
 
   # source://thor//lib/thor/parser/option.rb#3
@@ -1368,7 +1368,7 @@ class Thor::Option < ::Thor::Argument
   # source://thor//lib/thor/parser/option.rb#107
   def show_default?; end
 
-  # source://thor//lib/thor/parser/option.rb#118
+  # source://thor//lib/thor/parser/option.rb#117
   def string?; end
 
   # source://thor//lib/thor/parser/option.rb#75
@@ -1507,37 +1507,37 @@ module Thor::Shell
   # source://thor//lib/thor/shell.rb#44
   def initialize(args = T.unsafe(nil), options = T.unsafe(nil), config = T.unsafe(nil)); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def ask(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def error(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def file_collision(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def no?(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def print_in_columns(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def print_table(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def print_wrapped(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def say(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def say_error(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def say_status(*args, &block); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def set_color(*args, &block); end
 
   # source://thor//lib/thor/shell.rb#52
@@ -1546,13 +1546,13 @@ module Thor::Shell
   # source://thor//lib/thor/shell.rb#25
   def shell=(_arg0); end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def terminal_width(*args, &block); end
 
   # source://thor//lib/thor/shell.rb#66
   def with_padding; end
 
-  # source://thor//lib/thor/shell.rb#59
+  # source://thor//lib/thor/shell.rb#58
   def yes?(*args, &block); end
 
   protected
@@ -1983,7 +1983,7 @@ module Thor::Util
     # source://thor//lib/thor/util.rb#131
     def find_class_and_command_by_namespace(namespace, fallback = T.unsafe(nil)); end
 
-    # source://thor//lib/thor/util.rb#131
+    # source://thor//lib/thor/util.rb#148
     def find_class_and_task_by_namespace(namespace, fallback = T.unsafe(nil)); end
 
     # source://thor//lib/thor/util.rb#213

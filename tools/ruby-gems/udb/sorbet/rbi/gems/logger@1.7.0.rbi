@@ -75,7 +75,7 @@ class Logger
   # source://logger//lib/logger.rb#399
   def level=(severity); end
 
-  # source://logger//lib/logger.rb#675
+  # source://logger//lib/logger.rb#695
   def log(severity, message = T.unsafe(nil), progname = T.unsafe(nil)); end
 
   # source://logger//lib/logger.rb#422
@@ -87,10 +87,10 @@ class Logger
   # source://logger//lib/logger.rb#642
   def reopen(logdev = T.unsafe(nil), shift_age = T.unsafe(nil), shift_size = T.unsafe(nil), shift_period_suffix: T.unsafe(nil), binmode: T.unsafe(nil)); end
 
-  # source://logger//lib/logger.rb#383
+  # source://logger//lib/logger.rb#475
   def sev_threshold; end
 
-  # source://logger//lib/logger.rb#399
+  # source://logger//lib/logger.rb#476
   def sev_threshold=(severity); end
 
   # source://logger//lib/logger.rb#744

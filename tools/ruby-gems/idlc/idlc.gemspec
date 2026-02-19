@@ -3,7 +3,6 @@
 
 # frozen_string_literal: true
 
-require_relative "lib/gem_versions.rb"
 require_relative "lib/idlc/version"
 
 Gem::Specification.new do |s|
@@ -49,9 +48,9 @@ Gem::Specification.new do |s|
   s.add_development_dependency "ruby-prof"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "simplecov-cobertura"
-  s.add_development_dependency "sorbet", "= #{UdbGems::SORBET_VERSION}"
+  s.add_development_dependency "sorbet"
   s.add_development_dependency "spoom"
-  s.add_development_dependency "tapioca", "= #{UdbGems::TAPIOCA_VERSION}"
+  s.add_development_dependency "tapioca", ">= 0.17.10"
   s.add_development_dependency "yard"
   s.add_development_dependency "yard-sorbet"
 end

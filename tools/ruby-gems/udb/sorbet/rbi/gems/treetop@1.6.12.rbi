@@ -1608,7 +1608,7 @@ class Treetop::Runtime::CompiledParser
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#8
   def consume_all_input=(_arg0); end
 
-  # source://treetop//lib/treetop/runtime/compiled_parser.rb#8
+  # source://treetop//lib/treetop/runtime/compiled_parser.rb#9
   def consume_all_input?; end
 
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#38
@@ -1720,18 +1720,6 @@ class Treetop::Runtime::SyntaxNode
 
   # source://treetop//lib/treetop/runtime/syntax_node.rb#5
   def parent=(_arg0); end
-
-  # source://idlc/0.1.0/lib/idlc/syntax_node.rb#20
-  sig { params(filename: T.nilable(::String), starting_line: ::Integer).void }
-  def set_input_file(filename, starting_line = T.unsafe(nil)); end
-
-  # source://idlc/0.1.0/lib/idlc/syntax_node.rb#39
-  sig { params(filename: T.nilable(::String), starting_line: ::Integer).void }
-  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil)); end
-
-  # source://idlc/0.1.0/lib/idlc/syntax_node.rb#30
-  sig { returns(T::Boolean) }
-  def space?; end
 
   # source://treetop//lib/treetop/runtime/syntax_node.rb#31
   def terminal?; end

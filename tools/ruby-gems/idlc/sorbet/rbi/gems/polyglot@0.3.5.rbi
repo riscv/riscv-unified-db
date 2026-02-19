@@ -9,6 +9,11 @@
 module Kernel
   # source://polyglot//lib/polyglot.rb#64
   def require(*a, &b); end
+
+  private
+
+  # source://polyglot//lib/polyglot.rb#62
+  def polyglot_original_require(name); end
 end
 
 # source://polyglot//lib/polyglot.rb#3
@@ -27,13 +32,9 @@ end
 
 # source://polyglot//lib/polyglot.rb#9
 class Polyglot::NestedLoadError < ::LoadError
-  # @return [NestedLoadError] a new instance of NestedLoadError
-  #
   # source://polyglot//lib/polyglot.rb#10
   def initialize(le); end
 
-  # @raise [@le]
-  #
   # source://polyglot//lib/polyglot.rb#13
   def reraise; end
 end

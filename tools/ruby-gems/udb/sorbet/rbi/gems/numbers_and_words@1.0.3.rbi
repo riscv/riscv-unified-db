@@ -1207,7 +1207,7 @@ module NumbersAndWords::Strategies::FiguresConverter::Languages::Families::Base
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#48
   def hundreds_number_to_words; end
 
-  # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#39
+  # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#46
   def number_without_capacity_to_words(capacity = T.unsafe(nil)); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#11

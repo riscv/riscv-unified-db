@@ -72,8 +72,6 @@ module NumbersAndWords::ArrayExtensions::Helpers
   # source://numbers_and_words//lib/numbers_and_words/helper_classes/array_extensions/helpers.rb#45
   def only_ones; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/helper_classes/array_extensions/helpers.rb#32
   def opaque?(capacity); end
 
@@ -83,8 +81,6 @@ module NumbersAndWords::ArrayExtensions::Helpers
   # source://numbers_and_words//lib/numbers_and_words/helper_classes/array_extensions/helpers.rb#85
   def ordinal_index; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/helper_classes/array_extensions/helpers.rb#65
   def round_hundred?; end
 
@@ -336,59 +332,33 @@ module NumbersAndWords::Strategies::ArrayJoiner; end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#8
 class NumbersAndWords::Strategies::ArrayJoiner::Base
-  # @return [Base] a new instance of Base
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#11
   def initialize(elements, options = T.unsafe(nil)); end
 
-  # Returns the value of attribute elements.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#9
   def elements; end
 
-  # Sets the attribute elements
-  #
-  # @param value the value to set the attribute elements to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#9
   def elements=(_arg0); end
 
-  # Returns the value of attribute language.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#9
   def language; end
 
-  # Sets the attribute language
-  #
-  # @param value the value to set the attribute language to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#9
   def language=(_arg0); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#9
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#9
   def options=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#18
   def run; end
 
-  # Returns the value of attribute translations.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#9
   def translations; end
 
-  # Sets the attribute translations
-  #
-  # @param value the value to set the attribute translations to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner.rb#9
   def translations=(_arg0); end
 end
@@ -405,71 +375,39 @@ end
 class NumbersAndWords::Strategies::ArrayJoiner::Languages::Base
   include ::NumbersAndWords::Strategies::ArrayJoiner::Languages::Families::Base
 
-  # @return [Base] a new instance of Base
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#12
   def initialize(strategy); end
 
-  # Returns the value of attribute elements.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def elements; end
 
-  # Sets the attribute elements
-  #
-  # @param value the value to set the attribute elements to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def elements=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#19
   def join; end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def options=(_arg0); end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def strategy=(_arg0); end
 
-  # Returns the value of attribute strings.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def strings; end
 
-  # Sets the attribute strings
-  #
-  # @param value the value to set the attribute strings to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def strings=(_arg0); end
 
-  # Returns the value of attribute translations.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def translations; end
 
-  # Sets the attribute translations
-  #
-  # @param value the value to set the attribute translations to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/array_joiner/languages/base.rb#10
   def translations=(_arg0); end
 end
@@ -536,71 +474,39 @@ module NumbersAndWords::Strategies::FiguresConverter; end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#10
 class NumbersAndWords::Strategies::FiguresConverter::Base
-  # @return [Base] a new instance of Base
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#13
   def initialize(figures, options = T.unsafe(nil)); end
 
-  # Returns the value of attribute decorator.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def decorator; end
 
-  # Sets the attribute decorator
-  #
-  # @param value the value to set the attribute decorator to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def decorator=(_arg0); end
 
-  # Returns the value of attribute figures.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def figures; end
 
-  # Sets the attribute figures
-  #
-  # @param value the value to set the attribute figures to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def figures=(_arg0); end
 
-  # Returns the value of attribute language.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def language; end
 
-  # Sets the attribute language
-  #
-  # @param value the value to set the attribute language to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def language=(_arg0); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def options=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#22
   def run; end
 
-  # Returns the value of attribute translations.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def translations; end
 
-  # Sets the attribute translations
-  #
-  # @param value the value to set the attribute translations to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter.rb#11
   def translations=(_arg0); end
 
@@ -631,8 +537,6 @@ end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/decorators/base.rb#7
 class NumbersAndWords::Strategies::FiguresConverter::Decorators::Base
-  # @return [Base] a new instance of Base
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/decorators/base.rb#8
   def initialize(strategy, options); end
 
@@ -1041,71 +945,39 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Base
   include ::NumbersAndWords::Strategies::FiguresConverter::Languages::Families::Helpers
   include ::NumbersAndWords::Strategies::FiguresConverter::Languages::Families::Base
 
-  # @return [Base] a new instance of Base
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#12
   def initialize(strategy); end
 
-  # Returns the value of attribute figures.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def figures; end
 
-  # Sets the attribute figures
-  #
-  # @param value the value to set the attribute figures to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def figures=(_arg0); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def options=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#24
   def print_words; end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def strategy=(_arg0); end
 
-  # Returns the value of attribute strings.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def strings; end
 
-  # Sets the attribute strings
-  #
-  # @param value the value to set the attribute strings to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def strings=(_arg0); end
 
-  # Returns the value of attribute translations.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def translations; end
 
-  # Sets the attribute translations
-  #
-  # @param value the value to set the attribute translations to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/base.rb#10
   def translations=(_arg0); end
 
@@ -1173,13 +1045,9 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Da < ::NumbersAn
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/da.rb#42
   def gender; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/da.rb#34
   def hundred?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/da.rb#38
   def one_hundred?; end
 
@@ -1292,26 +1160,18 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Es < ::NumbersAn
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/es.rb#63
   def gender; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/es.rb#59
   def hundred_apocopated?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/es.rb#49
   def long_scale_thousand?; end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/es.rb#71
   def maybe_remove_zero; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/es.rb#54
   def one_apocopated?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/es.rb#42
   def one_thousand?; end
 end
@@ -1338,33 +1198,21 @@ module NumbersAndWords::Strategies::FiguresConverter::Languages::Families::Base
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#52
   def complex_tens; end
 
-  # Returns the value of attribute current_capacity.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#11
   def current_capacity; end
 
-  # Sets the attribute current_capacity
-  #
-  # @param value the value to set the attribute current_capacity to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#11
   def current_capacity=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#48
   def hundreds_number_to_words; end
 
-  # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#39
+  # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#46
   def number_without_capacity_to_words(capacity = T.unsafe(nil)); end
 
-  # Returns the value of attribute parent_figures.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#11
   def parent_figures; end
 
-  # Sets the attribute parent_figures
-  #
-  # @param value the value to set the attribute parent_figures to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/families/base.rb#11
   def parent_figures=(_arg0); end
 
@@ -1442,13 +1290,9 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Fr < ::NumbersAn
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/fr.rb#30
   def one?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/fr.rb#34
   def thousand?; end
 end
@@ -1461,8 +1305,6 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Hu < ::NumbersAn
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/hu.rb#32
   def complex_number_to_words; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/hu.rb#16
   def greater_than_2000?; end
 
@@ -1522,13 +1364,9 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Ka < ::NumbersAn
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/ka.rb#28
   def one?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/ka.rb#32
   def thousand?; end
 end
@@ -1546,13 +1384,9 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Lt < ::NumbersAn
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/lt.rb#22
   def one?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/lt.rb#26
   def thousand?; end
 end
@@ -1588,8 +1422,6 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Nl < ::NumbersAn
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/nl.rb#59
   def apply_tens_of_hundreds?; end
 
@@ -1610,13 +1442,9 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Pt < ::NumbersAn
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt.rb#18
   def hundred?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt.rb#22
   def one_hundred?; end
 end
@@ -1658,8 +1486,6 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::PtBr < ::Numbers
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt-BR.rb#58
   def gender; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt-BR.rb#68
   def hundred?; end
 
@@ -1672,28 +1498,18 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::PtBr < ::Numbers
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt-BR.rb#111
   def maybe_remove_zero; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt-BR.rb#72
   def one_hundred?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt-BR.rb#80
   def one_thousand?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt-BR.rb#76
   def opaque?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt-BR.rb#97
   def with_comma?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/pt-BR.rb#87
   def without_connector?; end
 end
@@ -1713,13 +1529,9 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Tr < ::NumbersAn
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/tr.rb#18
   def one?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/tr.rb#22
   def thousand?; end
 end
@@ -1740,8 +1552,6 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Vi < ::NumbersAn
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/vi.rb#78
   def fraction_number_zeros_leading; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/vi.rb#68
   def fractional?; end
 
@@ -1751,8 +1561,6 @@ class NumbersAndWords::Strategies::FiguresConverter::Languages::Vi < ::NumbersAn
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/vi.rb#48
   def hundreds(options = T.unsafe(nil)); end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/languages/vi.rb#43
   def hundreds?; end
 
@@ -1783,50 +1591,32 @@ module NumbersAndWords::Strategies::FiguresConverter::Options::Base; end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/gender.rb#8
 class NumbersAndWords::Strategies::FiguresConverter::Options::Base::Gender
-  # @return [Gender] a new instance of Gender
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/gender.rb#11
   def initialize(proxy, *_args); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/gender.rb#9
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/gender.rb#9
   def options=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/gender.rb#16
   def result; end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/gender.rb#9
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/gender.rb#9
   def strategy=(_arg0); end
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/gender.rb#22
   def active?; end
 end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/ordinal.rb#8
 class NumbersAndWords::Strategies::FiguresConverter::Options::Base::Ordinal
-  # @return [Ordinal] a new instance of Ordinal
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/ordinal.rb#9
   def initialize(proxy, *_args); end
 
@@ -1835,50 +1625,32 @@ class NumbersAndWords::Strategies::FiguresConverter::Options::Base::Ordinal
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/ordinal.rb#20
   def active?; end
 end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/remove_zero.rb#8
 class NumbersAndWords::Strategies::FiguresConverter::Options::Base::RemoveZero
-  # @return [RemoveZero] a new instance of RemoveZero
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/remove_zero.rb#11
   def initialize(proxy, *_args); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/remove_zero.rb#9
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/remove_zero.rb#9
   def options=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/remove_zero.rb#16
   def result; end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/remove_zero.rb#9
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/remove_zero.rb#9
   def strategy=(_arg0); end
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/base/remove_zero.rb#22
   def active?; end
 end
@@ -1909,47 +1681,29 @@ module NumbersAndWords::Strategies::FiguresConverter::Options::En; end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/hundreds_with_union.rb#8
 class NumbersAndWords::Strategies::FiguresConverter::Options::En::HundredsWithUnion
-  # @return [HundredsWithUnion] a new instance of HundredsWithUnion
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/hundreds_with_union.rb#11
   def initialize(proxy, *_args); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/hundreds_with_union.rb#16
   def modify_or_leave(hundreds); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/hundreds_with_union.rb#9
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/hundreds_with_union.rb#9
   def options=(_arg0); end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/hundreds_with_union.rb#9
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/hundreds_with_union.rb#9
   def strategy=(_arg0); end
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/hundreds_with_union.rb#23
   def active?; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/hundreds_with_union.rb#27
   def round_hundred?; end
 
@@ -1997,13 +1751,9 @@ NumbersAndWords::Strategies::FiguresConverter::Options::En::Ordinal::ZERO_TYPE =
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/pronounced.rb#8
 class NumbersAndWords::Strategies::FiguresConverter::Options::En::Pronounced
-  # @return [Pronounced] a new instance of Pronounced
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/pronounced.rb#11
   def initialize(proxy, *_args); end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/pronounced.rb#16
   def active?; end
 
@@ -2013,30 +1763,18 @@ class NumbersAndWords::Strategies::FiguresConverter::Options::En::Pronounced
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/pronounced.rb#32
   def handle_thousands(language, figures); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/pronounced.rb#9
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/pronounced.rb#9
   def options=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/pronounced.rb#20
   def process(language, figures); end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/pronounced.rb#9
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/pronounced.rb#9
   def strategy=(_arg0); end
 
@@ -2046,42 +1784,26 @@ end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/remove_hyphen.rb#8
 class NumbersAndWords::Strategies::FiguresConverter::Options::En::RemoveHyphen
-  # @return [RemoveHyphen] a new instance of RemoveHyphen
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/remove_hyphen.rb#11
   def initialize(proxy, *_args); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/remove_hyphen.rb#9
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/remove_hyphen.rb#9
   def options=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/remove_hyphen.rb#16
   def result; end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/remove_hyphen.rb#9
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/remove_hyphen.rb#9
   def strategy=(_arg0); end
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/en/remove_hyphen.rb#22
   def active?; end
 end
@@ -2112,42 +1834,26 @@ module NumbersAndWords::Strategies::FiguresConverter::Options::Es; end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/es/apocopated.rb#8
 class NumbersAndWords::Strategies::FiguresConverter::Options::Es::Apocopated
-  # @return [Apocopated] a new instance of Apocopated
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/es/apocopated.rb#11
   def initialize(proxy, *_args); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/es/apocopated.rb#9
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/es/apocopated.rb#9
   def options=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/es/apocopated.rb#16
   def result; end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/es/apocopated.rb#9
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/es/apocopated.rb#9
   def strategy=(_arg0); end
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/es/apocopated.rb#22
   def active?; end
 end
@@ -2169,77 +1875,47 @@ module NumbersAndWords::Strategies::FiguresConverter::Options::Nl; end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/nl/tens_of_hundreds.rb#8
 class NumbersAndWords::Strategies::FiguresConverter::Options::Nl::TensOfHundreds
-  # @return [TensOfHundreds] a new instance of TensOfHundreds
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/nl/tens_of_hundreds.rb#11
   def initialize(proxy, *_args); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/nl/tens_of_hundreds.rb#9
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/nl/tens_of_hundreds.rb#9
   def options=(_arg0); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/nl/tens_of_hundreds.rb#16
   def result; end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/nl/tens_of_hundreds.rb#9
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/nl/tens_of_hundreds.rb#9
   def strategy=(_arg0); end
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options/nl/tens_of_hundreds.rb#22
   def active?; end
 end
 
 # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options.rb#19
 class NumbersAndWords::Strategies::FiguresConverter::Options::Proxy
-  # @return [Proxy] a new instance of Proxy
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options.rb#22
   def initialize(strategy, options); end
 
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options.rb#27
   def method_missing(method_name, *args, &block); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options.rb#20
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options.rb#20
   def options=(_arg0); end
 
-  # Returns the value of attribute strategy.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options.rb#20
   def strategy; end
 
-  # Sets the attribute strategy
-  #
-  # @param value the value to set the attribute strategy to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options.rb#20
   def strategy=(_arg0); end
 
@@ -2251,8 +1927,6 @@ class NumbersAndWords::Strategies::FiguresConverter::Options::Proxy
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options.rb#45
   def proxy_class_name(method_name); end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/strategies/figures_converter/options.rb#39
   def respond_to_missing?(method_name, include_private: T.unsafe(nil)); end
 end
@@ -2329,8 +2003,6 @@ class NumbersAndWords::Translations::Cs < ::NumbersAndWords::Translations::Base
   # source://numbers_and_words//lib/numbers_and_words/translations/cs.rb#43
   def gender_to_use(options); end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/translations/cs.rb#39
   def ordinal?(options); end
 end
@@ -2682,8 +2354,6 @@ class NumbersAndWords::Translations::PtBr < ::NumbersAndWords::Translations::Bas
 
   private
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/translations/pt-BR.rb#72
   def ordinal?(options); end
 end
@@ -2753,20 +2423,12 @@ module NumbersAndWords::Wrappers; end
 
 # source://numbers_and_words//lib/numbers_and_words/wrappers/float.rb#5
 class NumbersAndWords::Wrappers::Float
-  # @return [Float] a new instance of Float
-  #
   # source://numbers_and_words//lib/numbers_and_words/wrappers/float.rb#10
   def initialize(number); end
 
-  # Returns the value of attribute number.
-  #
   # source://numbers_and_words//lib/numbers_and_words/wrappers/float.rb#8
   def number; end
 
-  # Sets the attribute number
-  #
-  # @param value the value to set the attribute number to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/wrappers/float.rb#8
   def number=(_arg0); end
 
@@ -2781,8 +2443,6 @@ class NumbersAndWords::Wrappers::Float
   # source://numbers_and_words//lib/numbers_and_words/wrappers/float.rb#34
   def fractional_part; end
 
-  # @return [Boolean]
-  #
   # source://numbers_and_words//lib/numbers_and_words/wrappers/float.rb#57
   def fractional_part_is_nil?; end
 
@@ -2798,15 +2458,9 @@ class NumbersAndWords::Wrappers::Float
   # source://numbers_and_words//lib/numbers_and_words/wrappers/float.rb#40
   def integral_part_with(options); end
 
-  # Returns the value of attribute options.
-  #
   # source://numbers_and_words//lib/numbers_and_words/wrappers/float.rb#24
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/wrappers/float.rb#24
   def options=(_arg0); end
 
@@ -2822,20 +2476,12 @@ NumbersAndWords::Wrappers::Float::ZERO_SYMBOL = T.let(T.unsafe(nil), String)
 
 # source://numbers_and_words//lib/numbers_and_words/wrappers/integer.rb#5
 class NumbersAndWords::Wrappers::Integer
-  # @return [Integer] a new instance of Integer
-  #
   # source://numbers_and_words//lib/numbers_and_words/wrappers/integer.rb#8
   def initialize(number); end
 
-  # Returns the value of attribute number.
-  #
   # source://numbers_and_words//lib/numbers_and_words/wrappers/integer.rb#6
   def number; end
 
-  # Sets the attribute number
-  #
-  # @param value the value to set the attribute number to.
-  #
   # source://numbers_and_words//lib/numbers_and_words/wrappers/integer.rb#6
   def number=(_arg0); end
 

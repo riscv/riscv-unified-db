@@ -93,7 +93,7 @@ if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; t
             echo "Successfully pulled image from registry."
         else
             echo "Could not pull image from registry. Building locally..."
-            ${CONTAINER_TYPE} build -t "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" -f .devcontainer/Dockerfile .
+            build_container
         fi
     fi
     if [ "${CONTAINER_TYPE}" == "podman" ]; then

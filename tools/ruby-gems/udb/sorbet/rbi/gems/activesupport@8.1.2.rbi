@@ -79,13 +79,13 @@ module ActiveSupport::CoreExt; end
 
 # source://activesupport//lib/active_support/core_ext/erb/util.rb#7
 module ActiveSupport::CoreExt::ERBUtil
-  # source://activesupport//lib/active_support/core_ext/erb/util.rb#25
+  # source://activesupport//lib/active_support/core_ext/erb/util.rb#28
   def h(s); end
 
-  # source://activesupport//lib/active_support/core_ext/erb/util.rb#25
+  # source://activesupport//lib/active_support/core_ext/erb/util.rb#10
   def html_escape(s); end
 
-  # source://activesupport//lib/active_support/core_ext/erb/util.rb#10
+  # source://activesupport//lib/active_support/core_ext/erb/util.rb#18
   def unwrapped_html_escape(s); end
 end
 
@@ -95,13 +95,13 @@ module ActiveSupport::CoreExt::ERBUtilPrivate
 
   private
 
-  # source://activesupport//lib/active_support/core_ext/erb/util.rb#25
+  # source://activesupport//lib/active_support/core_ext/erb/util.rb#33
   def h(s); end
 
-  # source://activesupport//lib/active_support/core_ext/erb/util.rb#25
+  # source://activesupport//lib/active_support/core_ext/erb/util.rb#33
   def html_escape(s); end
 
-  # source://activesupport//lib/active_support/core_ext/erb/util.rb#10
+  # source://activesupport//lib/active_support/core_ext/erb/util.rb#33
   def unwrapped_html_escape(s); end
 end
 
@@ -180,7 +180,7 @@ class ActiveSupport::Duration
   # source://activesupport//lib/active_support/duration.rb#224
   def abs(&_arg0); end
 
-  # source://activesupport//lib/active_support/duration.rb#436
+  # source://activesupport//lib/active_support/duration.rb#440
   def after(time = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/duration.rb#444
@@ -189,7 +189,7 @@ class ActiveSupport::Duration
   # source://activesupport//lib/active_support/duration.rb#459
   def as_json(options = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/duration.rb#444
+  # source://activesupport//lib/active_support/duration.rb#448
   def before(time = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/duration.rb#245
@@ -201,7 +201,7 @@ class ActiveSupport::Duration
   # source://activesupport//lib/active_support/duration.rb#426
   def eql?(other); end
 
-  # source://activesupport//lib/active_support/duration.rb#436
+  # source://activesupport//lib/active_support/duration.rb#439
   def from_now(time = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/duration.rb#430
@@ -219,7 +219,7 @@ class ActiveSupport::Duration
   # source://activesupport//lib/active_support/duration.rb#413
   def in_months; end
 
-  # source://activesupport//lib/active_support/duration.rb#377
+  # source://activesupport//lib/active_support/duration.rb#380
   def in_seconds; end
 
   # source://activesupport//lib/active_support/duration.rb#406
@@ -243,7 +243,7 @@ class ActiveSupport::Duration
   # source://activesupport//lib/active_support/duration.rb#473
   def iso8601(precision: T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/duration.rb#330
+  # source://activesupport//lib/active_support/duration.rb#333
   def kind_of?(klass); end
 
   # source://activesupport//lib/active_support/duration.rb#224
@@ -267,7 +267,7 @@ class ActiveSupport::Duration
   # source://activesupport//lib/active_support/duration.rb#353
   def to_s; end
 
-  # source://activesupport//lib/active_support/duration.rb#444
+  # source://activesupport//lib/active_support/duration.rb#447
   def until(time = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/duration.rb#133
@@ -710,13 +710,13 @@ module ActiveSupport::JSON
     # source://activesupport//lib/active_support/json/decoding.rb#24
     def decode(json, options = T.unsafe(nil)); end
 
-    # source://activesupport//lib/active_support/json/encoding.rb#47
+    # source://activesupport//lib/active_support/json/encoding.rb#56
     def dump(value, options = T.unsafe(nil)); end
 
     # source://activesupport//lib/active_support/json/encoding.rb#47
     def encode(value, options = T.unsafe(nil)); end
 
-    # source://activesupport//lib/active_support/json/decoding.rb#24
+    # source://activesupport//lib/active_support/json/decoding.rb#33
     def load(json, options = T.unsafe(nil)); end
 
     # source://activesupport//lib/active_support/json/decoding.rb#45
@@ -917,16 +917,16 @@ class ActiveSupport::Multibyte::Chars
   # source://activesupport//lib/active_support/multibyte/chars.rb#176
   def tidy_bytes!(*args); end
 
-  # source://activesupport//lib/active_support/multibyte/chars.rb#133
+  # source://activesupport//lib/active_support/multibyte/chars.rb#136
   def titlecase; end
 
   # source://activesupport//lib/active_support/multibyte/chars.rb#133
   def titleize; end
 
-  # source://activesupport//lib/active_support/multibyte/chars.rb#49
+  # source://activesupport//lib/active_support/multibyte/chars.rb#50
   def to_s; end
 
-  # source://activesupport//lib/active_support/multibyte/chars.rb#49
+  # source://activesupport//lib/active_support/multibyte/chars.rb#51
   def to_str; end
 
   # source://activesupport//lib/active_support/multibyte/chars.rb#49
@@ -977,7 +977,7 @@ class ActiveSupport::SafeBuffer < ::String
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#111
   def +(other); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#79
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#85
   def <<(value); end
 
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#38
@@ -992,22 +992,22 @@ class ActiveSupport::SafeBuffer < ::String
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#87
   def bytesplice(*args, value); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def capitalize(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def capitalize!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def chomp(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def chomp!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def chop(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def chop!(*args); end
 
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#59
@@ -1016,37 +1016,37 @@ class ActiveSupport::SafeBuffer < ::String
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#79
   def concat(value); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def delete(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def delete!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def delete_prefix(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def delete_prefix!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def delete_suffix(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def delete_suffix!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def downcase(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def downcase!(*args); end
 
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#151
   def encode_with(coder); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#172
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#171
   def gsub(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#183
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#171
   def gsub!(*args, &block); end
 
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#135
@@ -1055,16 +1055,16 @@ class ActiveSupport::SafeBuffer < ::String
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#91
   def insert(index, value); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def lstrip(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def lstrip!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def next(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def next!(*args); end
 
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#95
@@ -1073,61 +1073,61 @@ class ActiveSupport::SafeBuffer < ::String
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#99
   def replace(value); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def reverse(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def reverse!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def rstrip(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def rstrip!(*args); end
 
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#65
   def safe_concat(value); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def scrub(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def scrub!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#38
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#49
   def slice(*args); end
 
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#51
   def slice!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def squeeze(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def squeeze!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def strip(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def strip!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#172
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#171
   def sub(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#183
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#171
   def sub!(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def succ(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def succ!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def swapcase(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def swapcase!(*args); end
 
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#147
@@ -1136,28 +1136,28 @@ class ActiveSupport::SafeBuffer < ::String
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#139
   def to_s; end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def tr(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def tr!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def tr_s(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def tr_s!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def unicode_normalize(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def unicode_normalize!(*args); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#158
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def upcase(*args, &block); end
 
-  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#162
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#157
   def upcase!(*args); end
 
   private
@@ -1171,6 +1171,7 @@ class ActiveSupport::SafeBuffer < ::String
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#74
   def initialize_copy(other); end
 
+  # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#28
   def original_concat(*_arg0); end
 
   # source://activesupport//lib/active_support/core_ext/string/output_safety.rb#210
@@ -1226,6 +1227,7 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#438
   def advance(options); end
 
+  # source://activesupport//lib/active_support/time_with_zone.rb#251
   def after?(_arg0); end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#377
@@ -1234,6 +1236,7 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#182
   def as_json(options = T.unsafe(nil)); end
 
+  # source://activesupport//lib/active_support/time_with_zone.rb#250
   def before?(_arg0); end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#255
@@ -1245,10 +1248,10 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#398
   def change(options); end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#69
+  # source://activesupport//lib/active_support/time_with_zone.rb#72
   def comparable_time; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def day; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#100
@@ -1269,37 +1272,37 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#285
   def future?; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#69
+  # source://activesupport//lib/active_support/time_with_zone.rb#73
   def getgm; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#89
+  # source://activesupport//lib/active_support/time_with_zone.rb#92
   def getlocal(utc_offset = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#69
+  # source://activesupport//lib/active_support/time_with_zone.rb#74
   def getutc; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#111
+  # source://activesupport//lib/active_support/time_with_zone.rb#114
   def gmt?; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#117
+  # source://activesupport//lib/active_support/time_with_zone.rb#120
   def gmt_offset; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#69
+  # source://activesupport//lib/active_support/time_with_zone.rb#75
   def gmtime; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#117
+  # source://activesupport//lib/active_support/time_with_zone.rb#121
   def gmtoff; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#294
   def hash; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def hour; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#202
   def httpdate; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#314
+  # source://activesupport//lib/active_support/time_with_zone.rb#324
   def in(other); end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#83
@@ -1314,13 +1317,13 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#511
   def is_a?(klass); end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#100
+  # source://activesupport//lib/active_support/time_with_zone.rb#103
   def isdst; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#154
+  # source://activesupport//lib/active_support/time_with_zone.rb#167
   def iso8601(fraction_digits = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#511
+  # source://activesupport//lib/active_support/time_with_zone.rb#514
   def kind_of?(klass); end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#89
@@ -1332,25 +1335,25 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#535
   def marshal_load(variables); end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def mday; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#555
   def method_missing(*_arg0, **_arg1, &_arg2); end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def min; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def mon; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def month; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#272
+  # source://activesupport//lib/active_support/time_with_zone.rb#275
   def next_day?; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def nsec; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#260
@@ -1362,7 +1365,7 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#521
   def present?; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#279
+  # source://activesupport//lib/active_support/time_with_zone.rb#282
   def prev_day?; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#541
@@ -1371,16 +1374,16 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#210
   def rfc2822; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#154
+  # source://activesupport//lib/active_support/time_with_zone.rb#168
   def rfc3339(fraction_digits = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#210
+  # source://activesupport//lib/active_support/time_with_zone.rb#213
   def rfc822; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def sec; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#314
+  # source://activesupport//lib/active_support/time_with_zone.rb#323
   def since(other); end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#241
@@ -1395,7 +1398,7 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#461
   def to_a; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def to_date; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#494
@@ -1404,7 +1407,7 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#469
   def to_f; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#228
+  # source://activesupport//lib/active_support/time_with_zone.rb#237
   def to_formatted_s(format = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#228
@@ -1428,10 +1431,10 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#272
   def tomorrow?; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#477
+  # source://activesupport//lib/active_support/time_with_zone.rb#480
   def tv_sec; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def usec; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#69
@@ -1443,16 +1446,16 @@ class ActiveSupport::TimeWithZone
   # source://activesupport//lib/active_support/time_with_zone.rb#117
   def utc_offset; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def wday; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#154
   def xmlschema(fraction_digits = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def yday; end
 
-  # source://activesupport//lib/active_support/time_with_zone.rb#450
+  # source://activesupport//lib/active_support/time_with_zone.rb#449
   def year; end
 
   # source://activesupport//lib/active_support/time_with_zone.rb#279
@@ -1600,6 +1603,7 @@ class ActiveSupport::TimeZone
     # source://activesupport//lib/active_support/values/time_zone.rb#261
     def country_zones(country_code); end
 
+    # source://activesupport//lib/active_support/values/time_zone.rb#212
     def create(*_arg0); end
 
     # source://activesupport//lib/active_support/values/time_zone.rb#208
@@ -1655,7 +1659,7 @@ class Array
   # source://activesupport//lib/active_support/core_ext/object/json.rb#164
   def as_json(options = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/array/conversions.rb#94
+  # source://activesupport//lib/active_support/core_ext/array/conversions.rb#106
   def to_formatted_s(format = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/core_ext/array/conversions.rb#94
@@ -1680,9 +1684,6 @@ class BigDecimal < ::Numeric
 
   # source://activesupport//lib/active_support/core_ext/object/json.rb#134
   def as_json(options = T.unsafe(nil)); end
-
-  # source://activesupport//lib/active_support/core_ext/big_decimal/conversions.rb#8
-  def to_s(format = T.unsafe(nil)); end
 end
 
 # source://activesupport//lib/active_support/core_ext/object/json.rb#68
@@ -1697,13 +1698,13 @@ class Date
   include ::DateAndTime::Zones
   include ::DateAndTime::Calculations
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#90
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#98
   def +(other); end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#100
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#108
   def -(other); end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#152
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#160
   def <=>(other); end
 
   # source://activesupport//lib/active_support/core_ext/date/calculations.rb#127
@@ -1715,22 +1716,22 @@ class Date
   # source://activesupport//lib/active_support/core_ext/object/json.rb#211
   def as_json(options = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#67
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#72
   def at_beginning_of_day; end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#85
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#88
   def at_end_of_day; end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#75
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#80
   def at_midday; end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#75
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#82
   def at_middle_of_day; end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#67
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#71
   def at_midnight; end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#75
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#81
   def at_noon; end
 
   # source://activesupport//lib/active_support/core_ext/date/calculations.rb#67
@@ -1742,32 +1743,44 @@ class Date
   # source://activesupport//lib/active_support/core_ext/date/calculations.rb#152
   def compare_with_coercion(other); end
 
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#159
+  def compare_without_coercion(_arg0); end
+
+  # source://activesupport//lib/active_support/core_ext/date/conversions.rb#66
+  def default_inspect; end
+
   # source://activesupport//lib/active_support/core_ext/date/calculations.rb#85
   def end_of_day; end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#61
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#64
   def in(seconds); end
 
-  # source://activesupport//lib/active_support/core_ext/date/conversions.rb#63
+  # source://activesupport//lib/active_support/core_ext/date/conversions.rb#67
   def inspect; end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#75
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#78
   def midday; end
 
   # source://activesupport//lib/active_support/core_ext/date/calculations.rb#75
   def middle_of_day; end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#67
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#70
   def midnight; end
 
   # source://activesupport//lib/active_support/core_ext/date/calculations.rb#100
   def minus_with_duration(other); end
 
-  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#75
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#107
+  def minus_without_duration(_arg0); end
+
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#79
   def noon; end
 
   # source://activesupport//lib/active_support/core_ext/date/calculations.rb#90
   def plus_with_duration(other); end
+
+  # source://activesupport//lib/active_support/core_ext/date/calculations.rb#97
+  def plus_without_duration(_arg0); end
 
   # source://activesupport//lib/active_support/core_ext/date/conversions.rb#63
   def readable_inspect; end
@@ -1775,16 +1788,16 @@ class Date
   # source://activesupport//lib/active_support/core_ext/date/calculations.rb#61
   def since(seconds); end
 
-  # source://activesupport//lib/active_support/core_ext/date/conversions.rb#49
+  # source://activesupport//lib/active_support/core_ext/date/conversions.rb#60
   def to_formatted_s(format = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/core_ext/date/conversions.rb#49
   def to_fs(format = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date/conversions.rb#83
+  # source://activesupport//lib/active_support/core_ext/date/conversions.rb#69
   def to_time(form = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date/conversions.rb#95
+  # source://activesupport//lib/active_support/core_ext/date/conversions.rb#88
   def xmlschema; end
 
   class << self
@@ -1840,28 +1853,28 @@ module DateAndTime::Calculations
   # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#331
   def all_year; end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#125
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#128
   def at_beginning_of_month; end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#139
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#143
   def at_beginning_of_quarter; end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#267
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#271
   def at_beginning_of_week(start_day = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#179
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#182
   def at_beginning_of_year; end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#296
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#300
   def at_end_of_month; end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#154
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#158
   def at_end_of_quarter; end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#283
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#286
   def at_end_of_week(start_day = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#304
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#307
   def at_end_of_year; end
 
   # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#67
@@ -1906,13 +1919,13 @@ module DateAndTime::Calculations
   # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#240
   def last_month; end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#245
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#248
   def last_quarter; end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#223
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#227
   def last_week(start_day = T.unsafe(nil), same_time: T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#230
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#237
   def last_weekday; end
 
   # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#251
@@ -1927,7 +1940,7 @@ module DateAndTime::Calculations
   # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#102
   def months_since(months); end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#35
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#38
   def next_day?; end
 
   # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#340
@@ -1951,7 +1964,7 @@ module DateAndTime::Calculations
   # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#47
   def past?; end
 
-  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#41
+  # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#44
   def prev_day?; end
 
   # source://activesupport//lib/active_support/core_ext/date_and_time/calculations.rb#351
@@ -2059,34 +2072,34 @@ class DateTime < ::Date
   # source://activesupport//lib/active_support/core_ext/object/json.rb#221
   def as_json(options = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#122
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#127
   def at_beginning_of_day; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#146
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#149
   def at_beginning_of_hour; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#158
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#161
   def at_beginning_of_minute; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#140
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#143
   def at_end_of_day; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#152
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#155
   def at_end_of_hour; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#164
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#167
   def at_end_of_minute; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#130
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#135
   def at_midday; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#130
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#137
   def at_middle_of_day; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#122
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#126
   def at_midnight; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#130
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#136
   def at_noon; end
 
   # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#122
@@ -2101,6 +2114,9 @@ class DateTime < ::Date
   # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#51
   def change(options); end
 
+  # source://activesupport//lib/active_support/core_ext/date_time/conversions.rb#61
+  def default_inspect; end
+
   # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#140
   def end_of_day; end
 
@@ -2113,37 +2129,37 @@ class DateTime < ::Date
   # source://activesupport//lib/active_support/core_ext/date_time/conversions.rb#53
   def formatted_offset(colon = T.unsafe(nil), alternate_utc_string = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#184
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#192
   def getgm; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#170
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#178
   def getlocal(utc_offset = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#184
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#193
   def getutc; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#184
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#194
   def gmtime; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#116
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#119
   def in(seconds); end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/conversions.rb#58
+  # source://activesupport//lib/active_support/core_ext/date_time/conversions.rb#62
   def inspect; end
 
   # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#170
   def localtime(utc_offset = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#130
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#133
   def midday; end
 
   # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#130
   def middle_of_day; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#122
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#125
   def midnight; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#130
+  # source://activesupport//lib/active_support/core_ext/date_time/calculations.rb#134
   def noon; end
 
   # source://activesupport//lib/active_support/core_ext/date_time/conversions.rb#96
@@ -2167,7 +2183,7 @@ class DateTime < ::Date
   # source://activesupport//lib/active_support/core_ext/date_time/conversions.rb#81
   def to_f; end
 
-  # source://activesupport//lib/active_support/core_ext/date_time/conversions.rb#37
+  # source://activesupport//lib/active_support/core_ext/date_time/conversions.rb#44
   def to_formatted_s(format = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/core_ext/date_time/conversions.rb#37
@@ -2210,15 +2226,7 @@ class Delegator < ::BasicObject
   include ::ActiveSupport::Tryable
 end
 
-module ERB::Escape
-  private
-
-  def html_escape(_arg0); end
-
-  class << self
-    def html_escape(_arg0); end
-  end
-end
+module ERB::Escape; end
 
 # source://activesupport//lib/active_support/core_ext/erb/util.rb#39
 module ERB::Util
@@ -2238,16 +2246,10 @@ module ERB::Util
   def xml_name_escape(name); end
 
   class << self
-    # source://activesupport//lib/active_support/core_ext/erb/util.rb#25
-    def h(s); end
-
-    # source://activesupport//lib/active_support/core_ext/erb/util.rb#25
-    def html_escape(s); end
-
-    # source://activesupport//lib/active_support/core_ext/erb/util.rb#63
+    # source://activesupport//lib/active_support/core_ext/erb/util.rb#67
     def html_escape_once(s); end
 
-    # source://activesupport//lib/active_support/core_ext/erb/util.rb#124
+    # source://activesupport//lib/active_support/core_ext/erb/util.rb#134
     def json_escape(s); end
 
     # source://activesupport//lib/active_support/core_ext/erb/util.rb#161
@@ -2256,7 +2258,7 @@ module ERB::Util
     # source://activesupport//lib/active_support/core_ext/erb/util.rb#10
     def unwrapped_html_escape(s); end
 
-    # source://activesupport//lib/active_support/core_ext/erb/util.rb#142
+    # source://activesupport//lib/active_support/core_ext/erb/util.rb#157
     def xml_name_escape(name); end
   end
 end
@@ -2367,13 +2369,13 @@ class Hash
   # source://activesupport//lib/active_support/core_ext/hash/keys.rb#34
   def symbolize_keys!; end
 
-  # source://activesupport//lib/active_support/core_ext/hash/keys.rb#27
+  # source://activesupport//lib/active_support/core_ext/hash/keys.rb#30
   def to_options; end
 
-  # source://activesupport//lib/active_support/core_ext/hash/keys.rb#34
+  # source://activesupport//lib/active_support/core_ext/hash/keys.rb#37
   def to_options!; end
 
-  # source://activesupport//lib/active_support/core_ext/object/to_query.rb#81
+  # source://activesupport//lib/active_support/core_ext/object/to_query.rb#92
   def to_param(namespace = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/core_ext/object/to_query.rb#81
@@ -2476,16 +2478,7 @@ IO::Buffer::PAGE_SIZE = T.let(T.unsafe(nil), Integer)
 IO::Buffer::PRIVATE = T.let(T.unsafe(nil), Integer)
 IO::Buffer::READONLY = T.let(T.unsafe(nil), Integer)
 IO::Buffer::SHARED = T.let(T.unsafe(nil), Integer)
-
-class IO::ConsoleMode
-  def echo=(_arg0); end
-  def raw(*_arg0); end
-  def raw!(*_arg0); end
-
-  private
-
-  def initialize_copy(_arg0); end
-end
+class IO::ConsoleMode; end
 
 class IO::EAGAINWaitReadable < ::Errno::EAGAIN
   include ::IO::WaitReadable
@@ -2515,13 +2508,13 @@ class Module
   # source://activesupport//lib/active_support/core_ext/object/json.rb#53
   def as_json(options = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/module/attribute_accessors.rb#208
+  # source://activesupport//lib/active_support/core_ext/module/attribute_accessors.rb#213
   def cattr_accessor(*syms, instance_reader: T.unsafe(nil), instance_writer: T.unsafe(nil), instance_accessor: T.unsafe(nil), default: T.unsafe(nil), &blk); end
 
-  # source://activesupport//lib/active_support/core_ext/module/attribute_accessors.rb#55
+  # source://activesupport//lib/active_support/core_ext/module/attribute_accessors.rb#75
   def cattr_reader(*syms, instance_reader: T.unsafe(nil), instance_accessor: T.unsafe(nil), default: T.unsafe(nil), location: T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/module/attribute_accessors.rb#121
+  # source://activesupport//lib/active_support/core_ext/module/attribute_accessors.rb#140
   def cattr_writer(*syms, instance_writer: T.unsafe(nil), instance_accessor: T.unsafe(nil), default: T.unsafe(nil), location: T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/core_ext/module/delegation.rb#160
@@ -2658,7 +2651,7 @@ class String
   # source://activesupport//lib/active_support/core_ext/string/access.rb#29
   def at(position); end
 
-  # source://activesupport//lib/active_support/core_ext/string/inflections.rb#101
+  # source://activesupport//lib/active_support/core_ext/string/inflections.rb#111
   def camelcase(first_letter = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/core_ext/string/inflections.rb#101
@@ -2721,7 +2714,7 @@ class String
   # source://activesupport//lib/active_support/core_ext/string/inflections.rb#227
   def tableize; end
 
-  # source://activesupport//lib/active_support/core_ext/string/inflections.rb#126
+  # source://activesupport//lib/active_support/core_ext/string/inflections.rb#129
   def titlecase(keep_id_suffix: T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/core_ext/string/inflections.rb#126
@@ -2767,7 +2760,10 @@ class Time
   # source://activesupport//lib/active_support/core_ext/time/conversions.rb#69
   def formatted_offset(colon = T.unsafe(nil), alternate_utc_string = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/core_ext/time/conversions.rb#55
+  # source://activesupport//lib/active_support/core_ext/time/conversions.rb#74
+  def rfc3339(*_arg0); end
+
+  # source://activesupport//lib/active_support/core_ext/time/conversions.rb#62
   def to_formatted_s(format = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/core_ext/time/conversions.rb#55

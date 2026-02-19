@@ -5,23 +5,10 @@
 # Please instead update this file by running `bin/tapioca gem ruby-prof`.
 
 
-module ERB::Escape
-  private
-
-  def html_escape(_arg0); end
-
-  class << self
-    def html_escape(_arg0); end
-  end
-end
+module ERB::Escape; end
 
 # source://ruby-prof//lib/ruby-prof/rack.rb#4
-module Rack
-  class << self
-    # source://rack/3.2.5/lib/rack/version.rb#14
-    def release; end
-  end
-end
+module Rack; end
 
 # source://ruby-prof//lib/ruby-prof/rack.rb#5
 class Rack::RubyProf
@@ -113,12 +100,25 @@ class RubyProf::AbstractPrinter
 end
 
 class RubyProf::Allocation
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _dump_data; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _load_data(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def count; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def klass_flags; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def klass_name; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def line; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def source_file; end
 end
 
@@ -202,36 +202,52 @@ end
 
 # source://ruby-prof//lib/ruby-prof/call_tree.rb#8
 class RubyProf::CallTree
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def initialize(_arg0); end
 
   # source://ruby-prof//lib/ruby-prof/call_tree.rb#36
   def <=>(other); end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _dump_data; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _load_data(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def add_child(_arg0); end
 
   # source://ruby-prof//lib/ruby-prof/call_tree.rb#10
   def called; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def children; end
 
   # source://ruby-prof//lib/ruby-prof/call_tree.rb#30
   def children_time; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def depth; end
 
   # source://ruby-prof//lib/ruby-prof/call_tree.rb#53
   def inspect; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def line; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def measurement; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def parent; end
 
   # source://ruby-prof//lib/ruby-prof/call_tree.rb#20
   def self_time; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def source_file; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def target; end
 
   # source://ruby-prof//lib/ruby-prof/call_tree.rb#49
@@ -306,11 +322,22 @@ class RubyProf::CallTreeVisitor
 end
 
 class RubyProf::CallTrees
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _dump_data; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _load_data(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def call_trees; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def callees; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def callers; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def min_depth; end
 end
 
@@ -474,11 +501,19 @@ class RubyProf::Measure::WallTime; end
 
 # source://ruby-prof//lib/ruby-prof/measurement.rb#4
 class RubyProf::Measurement
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def initialize(_arg0, _arg1, _arg2, _arg3); end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _dump_data; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _load_data(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def called; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def called=(_arg0); end
 
   # source://ruby-prof//lib/ruby-prof/measurement.rb#5
@@ -487,20 +522,33 @@ class RubyProf::Measurement
   # source://ruby-prof//lib/ruby-prof/measurement.rb#13
   def inspect; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def merge!(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def self_time; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def self_time=(_arg0); end
 
   # source://ruby-prof//lib/ruby-prof/measurement.rb#9
   def to_s; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def total_time; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def total_time=(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def wait_time; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def wait_time=(_arg0); end
 
   private
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def initialize_copy(_arg0); end
 end
 
@@ -508,6 +556,7 @@ end
 class RubyProf::MethodInfo
   include ::Comparable
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def initialize(_arg0, _arg1); end
 
   # source://ruby-prof//lib/ruby-prof/method_info.rb#63
@@ -516,9 +565,16 @@ class RubyProf::MethodInfo
   # source://ruby-prof//lib/ruby-prof/method_info.rb#59
   def ==(other); end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _dump_data; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _load_data(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def allocations; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def call_trees; end
 
   # source://ruby-prof//lib/ruby-prof/method_info.rb#31
@@ -533,17 +589,31 @@ class RubyProf::MethodInfo
   # source://ruby-prof//lib/ruby-prof/method_info.rb#15
   def full_name; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def hash; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def klass_flags; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def klass_name; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def line; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def measurement; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def method_name; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def recursive?; end
 
   # source://ruby-prof//lib/ruby-prof/method_info.rb#41
   def self_time; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def source_file; end
 
   # source://ruby-prof//lib/ruby-prof/method_info.rb#83
@@ -628,15 +698,22 @@ RubyProf::PROCESS_TIME = T.let(T.unsafe(nil), Integer)
 
 # source://ruby-prof//lib/ruby-prof/profile.rb#6
 class RubyProf::Profile
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def initialize(*_arg0); end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _dump_data; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _load_data(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def add_thread(_arg0); end
 
   # source://ruby-prof//lib/ruby-prof/profile.rb#35
   def exclude_common_methods!; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def exclude_method!(_arg0, _arg1); end
 
   # source://ruby-prof//lib/ruby-prof/profile.rb#39
@@ -645,6 +722,7 @@ class RubyProf::Profile
   # source://ruby-prof//lib/ruby-prof/profile.rb#45
   def exclude_singleton_methods!(mod, *method_names); end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def measure_mode; end
 
   # source://ruby-prof//lib/ruby-prof/profile.rb#20
@@ -656,32 +734,66 @@ class RubyProf::Profile
   # source://ruby-prof//lib/ruby-prof/profile.rb#61
   def merge!; end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def pause; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def paused?; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def profile; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def remove_thread(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def resume; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def running?; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def start; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def stop; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def threads; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def track_allocations?; end
 
   class << self
+    # source://ruby-prof//lib/ruby-prof.rb#9
     def profile(*_arg0); end
   end
 end
 
 # source://ruby-prof//lib/ruby-prof/thread.rb#2
 class RubyProf::Thread
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def initialize(_arg0, _arg1, _arg2); end
 
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _dump_data; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def _load_data(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def call_tree; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def fiber_id; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def id; end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def merge!(_arg0); end
+
+  # source://ruby-prof//lib/ruby-prof.rb#9
   def methods; end
 
   # source://ruby-prof//lib/ruby-prof/thread.rb#4

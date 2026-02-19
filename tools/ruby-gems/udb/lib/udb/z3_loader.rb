@@ -11,6 +11,8 @@ require "uri"
 require "rbconfig"
 require "tmpdir"
 require "sorbet-runtime"
+require "zip"
+
 require_relative "log"
 require_relative "z3_version"
 
@@ -108,7 +110,7 @@ module Udb
           if ENV.key?("IN_UDB_CONTAINER")
             "/opt"
           else
-            if ENV["XDG_DATA_HOME"] && !ENV["XDG_DATA_HOME"].empty?
+            if ENV["XDG_DATA_HOME"] && !T.must(ENV["XDG_DATA_HOME"]).empty?
               ENV["XDG_DATA_HOME"]
             else
               File.join(Dir.home, ".local", "share")
@@ -244,7 +246,7 @@ module Udb
       def download_file(url, destination)
         uri = URI.parse(url)
 
-        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+        Net::HTTP.start(uri.host, uri.port, open_timeout: 10, read_timeout: 10, use_ssl: uri.scheme == "https") do |http|
           request = Net::HTTP::Get.new(uri)
 
           http.request(request) do |response|
@@ -271,24 +273,10 @@ module Udb
       def extract_zip(zip_path, destination)
         FileUtils.mkdir_p(destination)
 
-        # Try to use unzip command if available
-        if system("which unzip > /dev/null 2>&1")
-          system("unzip", "-q", zip_path, "-d", destination) or
-            raise "unzip command failed"
-        else
-          # Fallback to Ruby's zip library if available
-          begin
-            require "zip"
-            Zip::File.open(zip_path) do |zip_file|
-              zip_file.each do |entry|
-                entry_path = File.join(destination, entry.name)
-                FileUtils.mkdir_p(File.dirname(entry_path))
-                entry.extract(entry_path)
-              end
-            end
-          rescue LoadError
-            raise "Neither unzip command nor rubyzip gem is available. " \
-              "Please install unzip or add 'gem \"rubyzip\"' to your Gemfile."
+        Zip::File.open(zip_path) do |zip_file|
+          zip_file.each do |entry|
+            FileUtils.mkdir_p(File.dirname(File.join(destination, entry.name)))
+            entry.extract(destination_directory: destination)
           end
         end
       end

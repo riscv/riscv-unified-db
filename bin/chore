@@ -12,8 +12,9 @@ help() {
   echo ""
   echo "Commands:"
   echo ""
-  echo "  gen:    Generate an artifact ('chore gen -h' for more)"
-  echo "  update: Update libraries     ('chore update -h' for more)"
+  echo "  gen:     Generate an artifact  ('chore gen -h' for more)"
+  echo "  install: Install new libraries ('chore install -h' for more)"
+  echo "  update:  Update libraries      ('chore update -h' for more)"
   echo ""
 }
 
@@ -56,6 +57,43 @@ update_subcmd_usage() {
   echo "Commands:"
   echo ""
   echo "  gems:          Update Ruby Gems and regenerate type definitions"
+  echo ""
+}
+
+update_gems_usage() {
+  echo "Usage: chore update gems [-ht]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -t:      Do not increment the container tag"
+  echo ""
+}
+
+install_subcmd_usage() {
+  echo "Usage: chore install [-h] COMMAND"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo ""
+  echo "Commands:"
+  echo ""
+  echo "  gems:          Install any new Ruby Gems added to a gemspec"
+  echo "                 and regenerate type definitions"
+  echo ""
+}
+
+install_gems_usage() {
+  echo "Usage: chore install gems [-th]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -t:      Do not update the container tag"
   echo ""
 }
 
@@ -103,23 +141,21 @@ increment_minor_version() {
   echo "$new_version"
 }
 
-do_update_gems() {
+do_install_gems() {
+  local update_tag=$1
   source "$UDB_ROOT"/bin/setup
 
-  # first, update Gemfile.lock files
-  # and sorbet definitions
-  rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
-  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
-  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
-  $RUN bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/Gemfile.lock
-  $RUN bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  # run "bundle exec bundle" to get the BUNDLED WITH version of bundler
+  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
+  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
+  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
+  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile
 
   # increment container-tag
-  new_version=$(increment_minor_version "$(cat bin/.container-tag)")
-  echo "$new_version" > bin/.container-tag
+  if [ "$update_tag" == "yes" ]; then
+    new_version=$(increment_minor_version "$(cat bin/.container-tag)")
+    echo "$new_version" > bin/.container-tag
+  fi
 
   if [ "$CONTAINER_TYPE" == "native" ]; then
     bundle install
@@ -127,6 +163,44 @@ do_update_gems() {
     do_ruby_type_def udb
     do_ruby_type_def udb-gen
   else
+    build_container
+
+    # need to run as a seperate process to pick up the new container
+    # since we bumped the container tag, this will also cause the container to rebuild
+    ./bin/chore gen ruby-type-def
+  fi
+}
+
+do_update_gems() {
+  local update_tag=$1
+  source "$UDB_ROOT"/bin/setup
+
+  # first, update Gemfile.lock files
+  # and sorbet definitions
+  rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
+  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
+  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
+  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  rm "${UDB_ROOT}"/Gemfile.lock
+  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+
+  # increment container-tag
+  if [ "$update_tag" == "yes" ]; then
+    new_version=$(increment_minor_version "$(cat bin/.container-tag)")
+    echo "$new_version" > bin/.container-tag
+  fi
+
+  if [ "$CONTAINER_TYPE" == "native" ]; then
+    bundle exec bundle install
+    do_ruby_type_def idlc
+    do_ruby_type_def udb
+    do_ruby_type_def udb-gen
+  else
+    # rebuild the container
+    build_container
+
     # need to run as a seperate process to pick up the new container
     # since we bumped the container tag, this will also cause the container to rebuild
     ./bin/chore gen ruby-type-def
@@ -167,7 +241,7 @@ do_ruby_type_def() {
       bundle exec tapioca annotations
 STEPS
     )
-    $RUN /bin/bash -c "$steps"
+    $RUN /bin/bash -c "$steps" || exit $?
   done
 }
 
@@ -257,7 +331,54 @@ case "$subcommand" in
         exit 1
     esac
     ;;
-  # Invalid subcommand
+  install )
+    while getopts ":h" opt; do
+      case $opt in
+        # help
+        h )
+          install_subcmd_usage
+          exit 0
+        ;;
+        t )
+          update_tag=no
+          ;;
+        ? )
+          echo "[ERROR]: Invalid option: -${OPTARG}"
+          install_subcmd_usage
+          exit 1 # Exit with error
+        ;;
+      esac
+    done
+    target="$1"; shift
+    case "$target" in
+      gems )
+        update_tag=yes
+        while getopts ":ht" opt; do
+          case $opt in
+            # help
+            h )
+              install_gems_usage
+              exit 0
+            ;;
+            t )
+              update_tag=no
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              install_gems_usage
+              exit 1 # Exit with error
+            ;;
+          esac
+        done
+        do_install_gems "$update_tag"
+        exit 0
+      ;;
+      * )
+        echo "Invalid target: $subcommand"
+        install_subcmd_usage
+        exit 1
+    esac
+    ;;
   update )
     while getopts ":h" opt; do # Go through the options
       case $opt in
@@ -277,7 +398,26 @@ case "$subcommand" in
     target="$1"; shift
     case "$target" in
       gems )
-        do_update_gems
+          update_tag=yes
+          while getopts ":ht" opt; do # Go through the options
+            case $opt in
+              # help
+              h )
+                update_gems_usage
+                exit 0 # Exit correctly
+              ;;
+              t )
+                update_tag=no
+              ;;
+              # Invalid option
+              ? )
+                  echo "[ERROR]: Invalid option: -${OPTARG}"
+                  update_gems_usage
+                  exit 1 # Exit with error
+              ;;
+            esac
+          done
+        do_update_gems "$update_tag"
         exit 0
       ;;
       * )
