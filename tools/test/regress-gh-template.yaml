@@ -267,6 +267,25 @@ jobs:
             tools/eclipse/udb-vscode/.vscode-test/**/*
             tools/eclipse/udb-vscode/out/test/**/*
 
+  create-gems:
+    name: Create the gems
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        gem: [idlc, udb, udb-gen]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Create the ${{ matrix.gem }} gem
+        run: |
+          cd tools/ruby-gems/${{ matrix.gem }} && \
+          gem build #{{ matrix.gem }}.gemspec
+      - name: Upload the ${{ matrix.gem }} gem
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ${{ matrix.gem }}-gem
+          path: tools/ruby-gems/#{{ matrix.gem }}/${{ matrix.gem }}-*.gem
+
   udb-gem-z3:
     name: Test udb gem using z3 across several distros and platforms
     strategy:
@@ -280,18 +299,28 @@ jobs:
           - ubuntu:24.04
     runs-on: ${{ matrix.platform }}
     container: ${{ matrix.container }}
+    needs: create-gems
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - if: matrix.container == 'almalinux:8'
         name: Install ruby
         run: |
           dnf install -y ruby
-          dnf install -y rubygem-bundler
       - if: matrix.container == 'ubuntu:24.04'
         name: Install ruby
         run: |
           apt-get install -y ruby
-      - name: install bundle
-        run: bundle install
-      - name: Run z3 tests
-        run: bundle exec ruby tools/ruby-gems/udb/test/test_z3.rb
+      - name: download udb gem
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: udb-gem
+          path: udb.gem
+      - name: download idlc gem
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: idlc-gem
+          path: idlc.gem
+      - name: install gems
+        run: gem install idlc.gem && gem install udb.gem
+      - name: try z3
+        run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
