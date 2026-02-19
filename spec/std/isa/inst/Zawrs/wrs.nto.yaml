@@ -53,3 +53,25 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  # wrs.nto follows TW/VTW trap rules similar to WFI, but unlike WFI it
+  # does NOT cause an illegal instruction exception in U-mode when TW=0.
+
+  # When TW=1, any mode other than M traps with IllegalInstruction
+  if ((CSR[misa].S == 1) && (CSR[mstatus].TW == 1'b1)) {
+    if (mode() != PrivilegeMode::M) {
+      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    }
+  }
+
+  # When H extension is present, TW=0, and VTW=1, VS/VU mode traps
+  # with VirtualInstruction. Unlike WFI, VU does NOT trap when VTW=0.
+  if (CSR[misa].H == 1) {
+    if ((CSR[mstatus].TW == 1'b0) && (CSR[hstatus].VTW == 1'b1)) {
+      if ((mode() == PrivilegeMode::VS) || (mode() == PrivilegeMode::VU)) {
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+      }
+    }
+  }
+
+  # stall while the reservation set is valid and no interrupt is pending
+  wrs_nto();
