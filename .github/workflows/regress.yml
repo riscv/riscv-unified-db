@@ -267,12 +267,12 @@ jobs:
     - name: Create the ${{ matrix.gem }} gem
       run: |
         cd tools/ruby-gems/${{ matrix.gem }} && \
-        gem build #{{ matrix.gem }}.gemspec
+        gem build ${{ matrix.gem }}.gemspec
     - name: Upload the ${{ matrix.gem }} gem
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: "${{ matrix.gem }}-gem"
-        path: tools/ruby-gems/#{{ matrix.gem }}/${{ matrix.gem }}-*.gem
+        path: tools/ruby-gems/${{ matrix.gem }}/${{ matrix.gem }}-*.gem
   udb-gem-z3:
     name: Test udb gem using z3 across several distros and platforms
     strategy:
@@ -283,7 +283,7 @@ jobs:
         - ubuntu-24.04-arm
         container:
         - almalinux:8
-        - ubuntu:24.04
+        - ruby:3-slim
     runs-on: "${{ matrix.platform }}"
     container: "${{ matrix.container }}"
     needs: create-gems
@@ -292,11 +292,6 @@ jobs:
     - if: matrix.container == 'almalinux:8'
       name: Install ruby
       run: 'dnf install -y ruby
-
-        '
-    - if: matrix.container == 'ubuntu:24.04'
-      name: Install ruby
-      run: 'apt-get install -y ruby
 
         '
     - name: download udb gem
