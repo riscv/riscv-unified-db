@@ -276,15 +276,17 @@ jobs:
         gem: [idlc, udb, udb-gen]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Copy the gem directory to resolve symlinks
+        run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
       - name: Create the ${{ matrix.gem }} gem
         run: |
-          cd tools/ruby-gems/${{ matrix.gem }} && \
+          cd gem-build-dir && \
           gem build -o ${{ matrix.gem }}.gem ${{ matrix.gem }}.gemspec
       - name: Upload the ${{ matrix.gem }} gem
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: ${{ matrix.gem }}.gem
-          path: tools/ruby-gems/${{ matrix.gem }}/${{ matrix.gem }}.gem
+          path: gem-build-dir/${{ matrix.gem }}.gem
 
   udb-gem-z3:
     name: Test udb gem using z3 across several distros and platforms
