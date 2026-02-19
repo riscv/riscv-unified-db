@@ -273,7 +273,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gem: [idlc, udb, udb-gen]
+        gem: [idlc, udb]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Copy the gem directory to resolve symlinks

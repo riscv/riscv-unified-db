@@ -30,7 +30,7 @@ module FFI
         end
       names.map! do |name|
         if name =~ /z3/
-          unless name[0] == "/"
+          unless Pathname.new(name).absolute?
             # when we load z3, make sure we get our installed version
             File.join(Udb::Z3Loader.z3_lib_dir, name)
           else
@@ -219,6 +219,19 @@ module Udb
               "  - /usr/local/lib\n" \
               "  - ~/.local/lib"
           end
+
+          # verify checksum
+          alg, expected_checksum = Z3_CHECKSUM.fetch(platform).split(":")
+          case alg
+          when "sha256"
+            actual_checksum = Digest::SHA256.digest(File.read zip_path)
+            if expected_checksum != actual_checksum
+              raise Z3LoadError, "Checksum did not match on Z3 download. Please try again"
+            end
+          else
+            raise Z3LoadError, "Unexpected checksum"
+          end
+
 
           # Extract the archive
           extract_dir = File.join(tmpdir, "extracted")
