@@ -171,9 +171,9 @@ module Udb
           # Linux - Z3 provides glibc builds
           case cpu
           when /x86_64|x64/
-            "x64-glibc-2.35"
+            "x64-glibc-2.39"
           when /arm64|aarch64/
-            "arm64-glibc-2.35"
+            "arm64-glibc-2.39"
           else
             raise Z3LoadError, "Unsupported Linux architecture: #{cpu}"
           end
