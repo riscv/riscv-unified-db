@@ -267,12 +267,12 @@ jobs:
     - name: Create the ${{ matrix.gem }} gem
       run: |
         cd tools/ruby-gems/${{ matrix.gem }} && \
-        gem build ${{ matrix.gem }}.gemspec
+        gem build -o ${{ matrix.gem }}.gem ${{ matrix.gem }}.gemspec
     - name: Upload the ${{ matrix.gem }} gem
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: "${{ matrix.gem }}-gem"
-        path: tools/ruby-gems/${{ matrix.gem }}/${{ matrix.gem }}-*.gem
+        name: "${{ matrix.gem }}.gem"
+        path: tools/ruby-gems/${{ matrix.gem }}/${{ matrix.gem }}.gem
   udb-gem-z3:
     name: Test udb gem using z3 across several distros and platforms
     strategy:
@@ -297,13 +297,11 @@ jobs:
     - name: download udb gem
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
-        name: udb-gem
-        path: udb.gem
+        name: udb.gem
     - name: download idlc gem
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
-        name: idlc-gem
-        path: idlc.gem
+        name: idlc.gem
     - name: install gems
       run: gem install idlc.gem && gem install udb.gem
     - name: try z3
