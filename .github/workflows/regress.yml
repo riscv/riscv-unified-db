@@ -546,7 +546,6 @@ jobs:
         - cfg_arch
         - cfg
         - z3
-        - z3_loader
   regress-gen-go:
     runs-on: ubuntu-latest
     needs: build-container
