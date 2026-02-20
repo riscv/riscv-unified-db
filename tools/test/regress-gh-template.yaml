@@ -311,7 +311,8 @@ jobs:
           dnf install -y ruby
           dnf install -y ruby-devel
           dnf install -y gcc-toolset-13
-          export PRE="scl enable gcc-toolset-13"
+          PRE="scl enable gcc-toolset-13"
+          echo "PRE=$PRE" >> $GITHUB_ENV
       - name: download udb gem
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
