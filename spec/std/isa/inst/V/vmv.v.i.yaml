@@ -55,7 +55,7 @@ operation(): |
     U32 end_bit_pos = start_bit_pos + state.sew - 1;
 
     # Write the sign-extended immediate (truncated to SEW bits) to the element
-    v[vd][end_bit_pos:start_bit_pos] = sext_imm[state.sew-1:0]
+    v[vd][end_bit_pos:start_bit_pos] = sext_imm[state.sew-1:0];
   }
 
   CSR[vstart].VALUE = 0;

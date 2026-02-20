@@ -176,4 +176,16 @@ class TestArrays < Minitest::Test
     refute_nil m
     assert_instance_of Idl::AryElementAssignmentAst, m.to_ast
   end
+
+  def test_vmv
+    idl = "v[vd][end_bit_pos:start_bit_pos] = sext_imm[state.sew-1:0]"
+
+    symtab = Idl::SymbolTable.new(
+      possible_xlens_cb: proc { [32, 64] }
+    )
+    @compiler.parser.set_input_file(idl, 0)
+    m = @compiler.parser.parse(idl, root: :assignment)
+    refute_nil m
+    assert_instance_of Idl::AryRangeAssignmentAst, m.to_ast
+  end
 end
