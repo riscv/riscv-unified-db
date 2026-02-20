@@ -140,14 +140,6 @@ COPY tools/ruby-gems/udb/bin/udb /workspace/bin/container
 COPY tools/ruby-gems/udb-gen/bin/udb-gen /workspace/bin/container
 ENV PATH="/workspace/bin/container:$PATH"
 
-# install z3
-COPY tools/ruby-gems/udb/lib/udb/log.rb tmp/
-COPY tools/ruby-gems/udb/lib/udb/z3_version.rb tmp/
-COPY tools/ruby-gems/udb/lib/udb/z3_loader.rb tmp/
-RUN cd tmp && \
-  bundle exec --gemfile /opt/Gemfile ruby -e "require_relative 'z3_loader'; Udb::Z3Loader.ensure_z3_loaded" && \
-  rm -rf tmp
-
 # Grant the default ubuntu user sudo access
 RUN echo ubuntu ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu
