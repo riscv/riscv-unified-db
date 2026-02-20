@@ -307,7 +307,9 @@ jobs:
       - if: matrix.container == 'almalinux:8'
         name: Install ruby
         run: |
-          dnf module install -y ruby:3.3
+          dnf module enable ruby:3.3
+          dnf install -y ruby
+          dnf install -y ruby-devel
       - name: download udb gem
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
