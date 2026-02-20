@@ -302,9 +302,7 @@ jobs:
         echo "PRE=$PRE" >> $GITHUB_ENV
     - if: matrix.container != 'almalinux:8'
       name: Make dummy PRE
-      run: 'echo "PRE=date" >> $GITHUB_ENV
-
-        '
+      run: echo "PRE=true" >> $GITHUB_ENV
     - name: download udb gem
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
