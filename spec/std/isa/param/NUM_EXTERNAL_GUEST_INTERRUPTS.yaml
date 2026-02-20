@@ -21,4 +21,4 @@ definedBy:
 
 requirements:
   idl(): |
-    (MXLEN == 32) -> NUM_EXTERNAL_GUESTS_INTERRUPTS <= 31;
+    (MXLEN == 32) -> NUM_EXTERNAL_GUEST_INTERRUPTS <= 31;
