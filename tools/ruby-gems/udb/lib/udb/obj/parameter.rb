@@ -69,7 +69,7 @@ module Udb
     def initialize(yaml, data_path, cfg_arch)
       super(yaml, data_path, cfg_arch)
 
-      @schema << Schema.new(data["schema"])
+      @schema = Schema.new(data["schema"])
     end
 
     # @return JSON Schema for this param
