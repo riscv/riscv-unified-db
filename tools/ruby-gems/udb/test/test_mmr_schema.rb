@@ -19,8 +19,12 @@ class TestMmrSchema < Minitest::Test
     @schemer = JSONSchemer.schema(
       schema_json,
       ref_resolver: proc { |uri|
-        path = SCHEMA_DIR / uri.path
-        JSON.parse(File.read(path))
+        path = SCHEMA_DIR / File.basename(uri.path)
+        data = JSON.parse(File.read(path))
+        # json_schemer 2.x enforces Draft-07 strictly: $defs is not recognised
+        # (Draft-07 uses "definitions"). Copy $defs so both keywords work.
+        data["definitions"] = data["$defs"] if data["$defs"] && !data.key?("definitions")
+        data
       }
     )
   end
@@ -37,7 +41,7 @@ class TestMmrSchema < Minitest::Test
       "description" => "A simple test register for unit testing.",
       "writable" => true,
       "physical_address" => 0x1000,
-      "definedBy" => { "name" => "Xexample" }
+      "definedBy" => { "extension" => { "name" => "Xexample" } }
     }
   end
 
@@ -104,8 +108,8 @@ class TestMmrSchema < Minitest::Test
     data = valid_mmr.merge(
       "definedBy" => {
         "allOf" => [
-          { "name" => "Xext1" },
-          { "name" => "Xext2" }
+          { "extension" => { "name" => "Xext1" } },
+          { "extension" => { "name" => "Xext2" } }
         ]
       }
     )
