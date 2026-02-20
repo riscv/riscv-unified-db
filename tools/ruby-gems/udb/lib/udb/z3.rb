@@ -77,7 +77,9 @@ module Udb
       end
 
       if schema_hsh.key?("allOf")
-        constrain_int(solver, term, schema_hsh.fetch("allOf"))
+        schema_hsh.fetch("allOf").each do |h|
+          constrain_int(solver, term, h)
+        end
       end
 
       if schema_hsh.key?("anyOf")
