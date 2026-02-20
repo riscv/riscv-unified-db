@@ -1,0 +1,10 @@
+version = 1
+
+# Computer-generated files that are checked in
+[[annotations]]
+path = [
+    "VERSION",
+    "**/*.so"
+]
+SPDX-FileCopyrightText = "Copyright (c) Microsoft Corporation"
+SPDX-License-Identifier = "MIT"

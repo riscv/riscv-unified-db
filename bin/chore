@@ -57,6 +57,7 @@ update_subcmd_usage() {
   echo "Commands:"
   echo ""
   echo "  gems:          Update Ruby Gems and regenerate type definitions"
+  echo "  z3:            Update the z3 shared library used by the udb gem"
   echo ""
 }
 
@@ -205,6 +206,21 @@ do_update_gems() {
     # since we bumped the container tag, this will also cause the container to rebuild
     ./bin/chore gen ruby-type-def
   fi
+}
+
+do_update_z3() {
+  local cpu=$1
+  local dir
+  local orig_dir="${PWD}"
+
+  dir=$(mktemp -d --tmpdir="$PWD" build-z3.XXXXXX)
+  cd "$dir" || exit 1
+  "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh ./z3-build Release "${cpu}" || exit 1
+  rm -f "${UDB_ROOT}"/tools/ruby-gems/udb/ext/z3/"${cpu}"/*.so
+  cp z3-build/lib/*.so "${UDB_ROOT}"/tools/ruby-gems/udb/ext/z3/"${cpu}"
+  cp z3-build/VERSION "${UDB_ROOT}"/tools/ruby-gems/udb/ext/z3/
+  cd "${orig_dir}" || exit 1
+  rm -rf "${dir}"
 }
 
 do_ruby_type_def() {
@@ -420,6 +436,11 @@ case "$subcommand" in
         do_update_gems "$update_tag"
         exit 0
       ;;
+      z3 )
+        do_update_z3 x64
+        do_update_z3 arm64
+        exit 0
+        ;;
       * )
         echo "Invalid target: $subcommand"
         update_subcmd_usage

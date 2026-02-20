@@ -92,3 +92,14 @@ Install it:
 ----
 ./bin/chore install gems # add '-t' option to avoid incrementing the container tag
 ----
+
+=== Update the version of z3 used by udb
+
+This requires docker/podman to run since it builds a portable binary using an old distro in a container.
+
+[source,bash]
+----
+./bin/chore update z3
+----
+
+Check in the updates, and make sure to bump the version of the udb gem.

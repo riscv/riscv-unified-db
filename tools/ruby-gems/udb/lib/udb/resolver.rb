@@ -15,7 +15,7 @@ module Udb
 
   sig { returns(Pathname) }
   def self.gem_path
-    @gem_path ||= Pathname.new(Bundler.definition.specs.find { |s| s.name == "udb" }.full_gem_path)
+    @gem_path ||= Pathname.new(Gem::Specification.find_by_name("udb").full_gem_path)
   end
 
   sig { params(from_dir: Pathname).returns(Pathname) }
