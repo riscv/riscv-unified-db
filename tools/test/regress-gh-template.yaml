@@ -311,6 +311,7 @@ jobs:
           dnf install -y ruby
           dnf install -y ruby-devel
           dnf install -y gcc-toolset-13
+          export PRE="scl enable gcc-toolset-13"
       - name: download udb gem
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
@@ -325,8 +326,8 @@ jobs:
           name: udb_helpers.gem
       - name: install gems
         run: |
-          scl enable gcc-toolset-13 gem install idlc.gem && \
-          scl enable gcc-toolset-13 gem install udb_helpers.gem && \
-          scl enable gcc-toolset-13 gem install udb.gem
+          $PRE gem install idlc.gem && \
+          $PRE gem install udb_helpers.gem && \
+          $PRE gem install udb.gem
       - name: try z3
         run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
