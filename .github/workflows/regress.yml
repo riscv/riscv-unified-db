@@ -293,7 +293,7 @@ jobs:
     - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
     - if: matrix.container == 'almalinux:8'
       name: Install ruby
-      run: 'dnf install -y ruby
+      run: 'dnf module install -y ruby:3.3
 
         '
     - name: download udb gem
