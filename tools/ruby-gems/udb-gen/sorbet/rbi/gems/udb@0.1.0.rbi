@@ -6781,10 +6781,6 @@ class Udb::Parameter < ::Udb::TopLevelDatabaseObject
   sig { override.params(other: T.untyped).returns(T.nilable(::Integer)) }
   def <=>(other); end
 
-  # source://udb//lib/udb/obj/parameter.rb#131
-  sig { override.returns(T::Array[::Udb::Schema]) }
-  def all_schemas; end
-
   # source://udb//lib/udb/obj/parameter.rb#25
   sig { returns(::Udb::ConfiguredArchitecture) }
   def cfg_arch; end
@@ -6801,18 +6797,6 @@ class Udb::Parameter < ::Udb::TopLevelDatabaseObject
   sig { override.returns(::Idl::Type) }
   def idl_type; end
 
-  # returns the largest (compatibale with all) type of any possible schema
-  #
-  # source://udb//lib/udb/obj/parameter.rb#148
-  sig { returns(::Idl::Type) }
-  def maximal_idl_type; end
-
-  # returns the largest (compatibale with all) type of any possible schema
-  #
-  # source://udb//lib/udb/obj/parameter.rb#170
-  sig { returns(::Udb::Schema) }
-  def maximal_schema; end
-
   # source://udb//lib/udb/obj/parameter.rb#29
   sig { override.returns(::String) }
   def name; end
@@ -6820,10 +6804,6 @@ class Udb::Parameter < ::Udb::TopLevelDatabaseObject
   # source://udb//lib/udb/obj/parameter.rb#201
   sig { params(in_scope_exts: T::Array[::Udb::Extension]).returns(::String) }
   def name_potentially_with_link(in_scope_exts); end
-
-  # source://udb//lib/udb/obj/parameter.rb#119
-  sig { override.returns(T::Array[::Udb::Schema]) }
-  def possible_schemas; end
 
   # source://udb//lib/udb/obj/parameter.rb#38
   sig { returns(::Udb::AbstractCondition) }
@@ -6833,13 +6813,6 @@ class Udb::Parameter < ::Udb::TopLevelDatabaseObject
   sig { override.returns(::Udb::Schema) }
   def schema; end
 
-  # whether or not the schema is unambiguously known
-  # since schemas can change based on parameter values and/or extension presence,
-  # non-full configs may not be able to know which schema applies
-  #
-  # source://udb//lib/udb/obj/parameter.rb#91
-  sig { override.returns(T::Boolean) }
-  def schema_known?; end
 
   # Pretty convert extension schema to a string.
   #
@@ -6847,9 +6820,6 @@ class Udb::Parameter < ::Udb::TopLevelDatabaseObject
   sig { returns(::String) }
   def schema_type; end
 
-  # source://udb//lib/udb/obj/parameter.rb#113
-  sig { returns(T::Array[::Udb::Parameter::ConditionalSchema]) }
-  def schemas; end
 
   # source://udb//lib/udb/obj/parameter.rb#220
   sig { returns(::String) }
@@ -7043,8 +7013,6 @@ class Udb::ParameterWithValue
   end
   def initialize(param, value); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
-  def all_schemas(*args, **_arg1, &block); end
 
   # source://forwardable/1.3.3/forwardable.rb#231
   def defined_by_condition(*args, **_arg1, &block); end
@@ -7059,19 +7027,10 @@ class Udb::ParameterWithValue
   def name(*args, **_arg1, &block); end
 
   # source://forwardable/1.3.3/forwardable.rb#231
-  def possible_schemas(*args, **_arg1, &block); end
-
-  # source://forwardable/1.3.3/forwardable.rb#231
   def requirements_condition(*args, **_arg1, &block); end
 
   # source://forwardable/1.3.3/forwardable.rb#231
   def schema(*args, **_arg1, &block); end
-
-  # source://forwardable/1.3.3/forwardable.rb#231
-  def schema_known?(*args, **_arg1, &block); end
-
-  # source://forwardable/1.3.3/forwardable.rb#231
-  def schemas(*args, **_arg1, &block); end
 
   # source://udb//lib/udb/obj/parameter.rb#240
   sig do

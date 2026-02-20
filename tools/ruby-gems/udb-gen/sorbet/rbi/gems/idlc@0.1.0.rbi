@@ -7873,12 +7873,6 @@ module Idl::RuntimeParam
 
   # @abstract
   #
-  # source://idlc//lib/idlc/interfaces.rb#39
-  sig { abstract.returns(T::Array[::Idl::Schema]) }
-  def all_schemas; end
-
-  # @abstract
-  #
   # source://idlc//lib/idlc/interfaces.rb#27
   sig { abstract.returns(::String) }
   def description; end
@@ -7897,21 +7891,10 @@ module Idl::RuntimeParam
 
   # @abstract
   #
-  # source://idlc//lib/idlc/interfaces.rb#36
-  sig { abstract.returns(T::Array[::Idl::Schema]) }
-  def possible_schemas; end
-
-  # @abstract
-  #
   # source://idlc//lib/idlc/interfaces.rb#33
   sig { abstract.returns(::Idl::Schema) }
   def schema; end
 
-  # @abstract
-  #
-  # source://idlc//lib/idlc/interfaces.rb#30
-  sig { abstract.returns(T::Boolean) }
-  def schema_known?; end
 
   # @abstract
   #
