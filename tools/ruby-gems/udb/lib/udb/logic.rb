@@ -5,7 +5,6 @@
 # frozen_string_literal: true
 
 require "numbers_and_words"
-require "minisat"
 require "tempfile"
 require "treetop"
 
@@ -1086,14 +1085,6 @@ module Udb
 
       (self <=> other) == 0
     end
-
-    # test for logical equivalence
-    sig { params(other: ParameterTerm).returns(T::Boolean) }
-    def equivalent?(other)
-      return false unless other.name == name
-
-      LogicNode.new(LogicNodeType::Term, [self]).equivalent?(LogicNode.new(LogicNodeType::Term, [other]))
-    end
   end
 
   # @api private
@@ -1121,6 +1112,11 @@ module Udb
     }
     def to_s
       "t#{@id}"
+    end
+
+    sig { returns(Z3::BoolExpr) }
+    def to_z3
+      @z3 ||= Z3.Bool(to_s)
     end
 
     sig { params(cfg_arch: ConfiguredArchitecture).returns(String) }
@@ -1176,9 +1172,9 @@ module Udb
     def self.reset_stats
       @num_brute_force_sat_solves = 0
       @time_brute_force_sat_solves = 0
-      @num_minisat_sat_solves = 0
-      @time_minisat_sat_solves = 0
-      @num_minisat_cache_hits = 0
+      @num_z3_sat_solves = 0
+      @time_z3_sat_solves = 0
+      @num_z3_cache_hits = 0
     end
 
     reset_stats
@@ -1191,20 +1187,20 @@ module Udb
       @num_brute_force_sat_solves += 1
     end
 
-    def self.num_minisat_sat_solves
-      @num_minisat_sat_solves
+    def self.num_z3_sat_solves
+      @num_z3_sat_solves
     end
 
-    def self.inc_minisat_sat_solves
-      @num_minisat_sat_solves += 1
+    def self.inc_z3_sat_solves
+      @num_z3_sat_solves += 1
     end
 
-    def self.num_minisat_cache_hits
-      @num_minisat_cache_hits
+    def self.num_z3_cache_hits
+      @num_z3_cache_hits
     end
 
-    def self.inc_minisat_cache_hits
-      @num_minisat_cache_hits += 1
+    def self.inc_z3_cache_hits
+      @num_z3_cache_hits += 1
     end
 
 
@@ -2993,54 +2989,6 @@ module Udb
       @memo.is_nested_cnf = ret
     end
 
-    sig { params(solver: MiniSat::Solver, node: LogicNode, term_map: T::Hash[TermType, MiniSat::Variable], cur_or: T::nilable(T::Array[T.untyped])).void }
-    def build_solver(solver, node, term_map, cur_or)
-      if node.type == LogicNodeType::Term
-        v = term_map.fetch(T.cast(node.children.fetch(0), TermType))
-        if cur_or.nil?
-          solver << v
-        else
-          cur_or << v
-        end
-      elsif node.type == LogicNodeType::Not
-        child = node.node_children.fetch(0)
-        term = T.cast(child.children.fetch(0), TermType)
-        v = -term_map.fetch(term)
-        if cur_or.nil?
-          solver << v
-        else
-          cur_or << v
-        end
-      elsif node.type == LogicNodeType::Or
-        node.node_children.each do |child|
-          build_solver(solver, child, term_map, cur_or)
-        end
-      elsif node.type == LogicNodeType::And
-        node.node_children.each do |child|
-          new_or = []
-          build_solver(solver, child, term_map, new_or)
-          solver << new_or
-        end
-      else
-        raise "not in cnf"
-      end
-    end
-    private :build_solver
-
-    sig { params(other: LogicNode).returns(T::Boolean) }
-    def always_implies?(other)
-      # can test that by seeing if the contradiction is satisfiable, i.e.:
-      # if self -> other , contradition would be self & not other
-      contradiction = LogicNode.new(
-        LogicNodeType::And,
-        [
-          self,
-          LogicNode.new(LogicNodeType::Not, [other])
-        ]
-      )
-      !contradiction.satisfiable?
-    end
-
     sig { params(cfg_arch: ConfiguredArchitecture, solver: Z3Solver).returns(Z3::BoolExpr) }
     def to_z3(cfg_arch, solver = Z3Solver.new)
       case @type
@@ -3048,8 +2996,10 @@ module Udb
         t = @children.fetch(0)
         if t.is_a?(ParameterTerm) || t.is_a?(ExtensionTerm)
           t.to_z3(solver, cfg_arch)
+        elsif t.is_a?(FreeTerm)
+          t.to_z3
         else
-          raise "unexpected" if t.is_a?(FreeTerm) || t.is_a?(LogicNode)
+          raise "unexpected #{self}" if t.is_a?(LogicNode)
 
           t.to_z3(solver)
         end
@@ -3087,8 +3037,8 @@ module Udb
     end
 
     # @return true iff self is satisfiable (possible to be true for some combination of term values)
-    sig { returns(T::Boolean) }
-    def satisfiable?
+    sig { params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def satisfiable?(cfg_arch)
       @memo.is_satisfiable ||=
         begin
           nterms = terms.size
@@ -3120,60 +3070,38 @@ module Udb
 
           else
             # use SAT solver
-            LogicNode.inc_minisat_sat_solves
+            LogicNode.inc_z3_sat_solves
 
             @@cache ||= {}
-            cache_key = hash
+            cache_key = [hash, cfg_arch.hash].hash
             if @@cache.key?(cache_key)
-              LogicNode.inc_minisat_cache_hits
+              LogicNode.inc_z3_cache_hits
               return @@cache[cache_key]
             end
 
-            c = self.cnf? ? self : equisat_cnf
-            # raise "cnf error" unless c.cnf?
-
-            if c.type == LogicNodeType::True
-              return true
-            elsif c.type == LogicNodeType::False
-              return false
-            end
-
-            t = c.terms
-
-            solver = MiniSat::Solver.new
-
-            term_map = T.let({}, T::Hash[TermType, MiniSat::Variable])
-            t.each do |term|
-              unless term_map.key?(term)
-                term_map[term] = solver.new_var
-              end
-            end
-            raise "term mapping failed" unless t.uniq == term_map.keys
-
-            build_solver(solver, flatten_cnf(c), term_map, nil)
-
-            solver.solve
-            @@cache[cache_key] = solver.satisfied?
+            solver = Z3Solver.new
+            solver.assert to_z3(cfg_arch, solver)
+            @@cache[cache_key] = solver.satisfiable?
           end
         end
     end
 
     # @return true iff self is unsatisfiable (not possible to be true for any combination of term values)
-    sig { returns(T::Boolean) }
-    def unsatisfiable? = !satisfiable?
+    sig { params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def unsatisfiable?(cfg_arch) = !satisfiable?(cfg_arch)
 
-    sig { params(other: LogicNode).returns(T::Boolean) }
-    def equisatisfiable?(other)
-      if satisfiable?
-        other.satisfiable?
+    sig { params(other: LogicNode, cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def equisatisfiable?(other, cfg_arch)
+      if satisfiable?(cfg_arch)
+        other.satisfiable?(cfg_arch)
       else
-        !other.satisfiable?
+        !other.satisfiable?(cfg_arch)
       end
     end
 
     # @return true iff self and other are logically equivalent (identical truth tables)
-    sig { params(other: LogicNode).returns(T::Boolean) }
-    def equivalent?(other)
+    sig { params(other: LogicNode, cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
+    def equivalent?(other, cfg_arch)
       # equivalent (A <=> B) if the biconditional is true:
       #   (A -> B) && (B -> A)
       # or, expressed without implication:
@@ -3209,7 +3137,7 @@ module Udb
           )
         ]
       )
-      contradiction.unsatisfiable?
+      contradiction.unsatisfiable?(cfg_arch)
     end
 
     sig {

@@ -28,7 +28,6 @@ RUN apt-get update && \
   libnewlib-dev \
   libyaml-dev \
   libz3-dev \
-  minisat \
   parallel \
   ssh \
   sudo \
@@ -53,8 +52,6 @@ RUN curl https://mise.run | sh
 
 # Install tools managed by mise (.mise.toml)
 COPY .mise.toml /mise/config.toml
-# Install rust first — needed during Ruby compilation for YJIT
-RUN mise install rust
 RUN mise install
 RUN mise reshim
 RUN mkdir -p /mise/state && chmod -R 777 /mise
@@ -115,20 +112,29 @@ RUN mkdir -p /usr/local/bundle \
 
 COPY Gemfile /opt/Gemfile
 COPY Gemfile.lock /opt/Gemfile.lock
+COPY tools/ruby-gems/idlc/Gemfile /opt/tools/ruby-gems/idlc/
+COPY tools/ruby-gems/idlc/Gemfile.lock /opt/tools/ruby-gems/idlc/
 COPY tools/ruby-gems/idlc/idlc.gemspec /opt/tools/ruby-gems/idlc/
 COPY tools/ruby-gems/idlc/lib/gem_versions.rb /opt/tools/ruby-gems/idlc/lib/
 COPY tools/ruby-gems/idlc/lib/idlc/version.rb /opt/tools/ruby-gems/idlc/lib/idlc/
 COPY tools/ruby-gems/idl_highlighter/idl_highlighter.gemspec /opt/tools/ruby-gems/idl_highlighter/
 COPY tools/ruby-gems/idl_highlighter/lib/idl_highlighter/version.rb /opt/tools/ruby-gems/idl_highlighter/lib/idl_highlighter/
+COPY tools/ruby-gems/udb/Gemfile /opt/tools/ruby-gems/udb/
+COPY tools/ruby-gems/udb/Gemfile.lock /opt/tools/ruby-gems/udb/
 COPY tools/ruby-gems/udb/udb.gemspec /opt/tools/ruby-gems/udb/
 COPY tools/ruby-gems/udb/lib/gem_versions.rb /opt/tools/ruby-gems/udb/lib/
 COPY tools/ruby-gems/udb/lib/udb/version.rb /opt/tools/ruby-gems/udb/lib/udb/
+COPY tools/ruby-gems/udb-gen/Gemfile /opt/tools/ruby-gems/udb-gen/
+COPY tools/ruby-gems/udb-gen/Gemfile.lock /opt/tools/ruby-gems/udb-gen/
 COPY tools/ruby-gems/udb-gen/udb-gen.gemspec /opt/tools/ruby-gems/udb-gen/
 COPY tools/ruby-gems/udb-gen/lib/gem_versions.rb /opt/tools/ruby-gems/udb-gen/lib/
 COPY tools/ruby-gems/udb-gen/lib/udb-gen/version.rb /opt/tools/ruby-gems/udb-gen/lib/udb-gen/
 COPY tools/ruby-gems/udb_helpers/udb_helpers.gemspec /opt/tools/ruby-gems/udb_helpers/
 COPY tools/ruby-gems/udb_helpers/lib/udb_helpers/version.rb /opt/tools/ruby-gems/udb_helpers/lib/udb_helpers/
 RUN bundle install --gemfile /opt/Gemfile --jobs $(nproc) \
+    && bundle install --gemfile /opt/tools/ruby-gems/idlc/Gemfile --jobs $(nproc) \
+    && bundle install --gemfile /opt/tools/ruby-gems/udb/Gemfile --jobs $(nproc) \
+    && bundle install --gemfile /opt/tools/ruby-gems/udb-gen/Gemfile --jobs $(nproc) \
     && chmod -R a+rwX /usr/local/bundle
 
 # the binaries for gems need to be copied in

@@ -49,3 +49,9 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  # wrs.sto has an implementation-defined short timeout that guarantees
+  # forward progress, so TW/VTW checks are not applicable.
+
+  # stall while the reservation set is valid, no interrupt is pending,
+  # and the short timeout has not elapsed
+  wrs_sto();

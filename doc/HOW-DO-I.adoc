@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: CC-BY-4.0
 
 = FAQ
+:toc: left
+:toclevels: 3
+:sectnums:
 
 == Development
 
@@ -53,6 +56,8 @@ To add a basic regression, you must:
 2. run `./bin/chore gen regress`
 --
 
+See xref:regress-test-infrastructure.adoc[Regression test infrastructure] for more details.
+
 Complex Regressions::
 --
 Complex regressions are not runnable on the command line. They only run in CI via GitHub Actions.
@@ -63,27 +68,17 @@ To add a complex regression, you must:
 2. run `./bin/chore gen regress`
 --
 
+See xref:regress-test-infrastructure.adoc[Regression test infrastructure] for more details.
+
+
 === Update Ruby gems
 
-This will run natively, so you either need to be in the container already (e.g., in the devcontainer), or you need to have rbenv installed on the host.
+To update Ruby gems to the latest available versions, run:
 
-(If needed) Make sure you have the correct version of Ruby installed:
-
-```bash
-rbenv install
-```
-
-Then, update the gems on the host. This will update the Gemfile.lock files and sorbet definitions.
-
-```bash
+[source,bash]
+----
 ./bin/chore update gems
-```
-
-Then rebuild the container:
-
-```bash
-./bin/build_container
-```
+----
 
 Then `git add` all updated/new files and make a PR.
 
@@ -93,8 +88,9 @@ Add the gem in the appropriate Gemfile (top, or one of the sub-project gems unde
 
 Install it on the host:
 
-```bash
+[source,bash]
+----
 bundle install
-```
+----
 
 Then follow the proceedure in <<Update Ruby gems>>.

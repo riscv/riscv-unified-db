@@ -1,1 +1,0 @@
-../../../../udb/lib/sorbet/rbi/ruby-minisat.rbi

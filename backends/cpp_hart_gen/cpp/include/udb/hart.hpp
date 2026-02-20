@@ -134,6 +134,14 @@ namespace udb {
       //throw WfiException();
     }
 
+    void wrs_nto() {
+      // no-op: a valid implementation per the Zawrs spec
+    }
+
+    void wrs_sto() {
+      // no-op: a valid implementation per the Zawrs spec
+    }
+
     void pause() {
       //Do nothing for now
       //throw PauseException();

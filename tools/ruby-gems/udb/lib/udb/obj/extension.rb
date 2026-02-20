@@ -982,7 +982,7 @@ module Udb
                 node
               end
             end
-            !ctree.replace_terms(cb).satisfiable?
+            !ctree.replace_terms(cb).satisfiable?(@arch)
           end
 
           next if unconditional_terms.empty?

@@ -1,3 +1,5 @@
 --dir
 .
 --cache-dir=.sorbet-cache
+--suppress-payload-superclass-redefinition-for=RDoc::Markup::BlankLine
+--suppress-payload-superclass-redefinition-for=RDoc::Markup::HardBreak
