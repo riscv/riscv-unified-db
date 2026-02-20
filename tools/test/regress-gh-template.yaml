@@ -324,6 +324,9 @@ jobs:
         with:
           name: udb_helpers.gem
       - name: install gems
-        run: gem install idlc.gem && gem install udb_helpers.gem && gem install udb.gem
+        run: |
+          scl enable gcc-toolset-13 gem install idlc.gem && \
+          scl enable gcc-toolset-13 gem install udb_helpers.gem && \
+          scl enable gcc-toolset-13 gem install udb.gem
       - name: try z3
         run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
