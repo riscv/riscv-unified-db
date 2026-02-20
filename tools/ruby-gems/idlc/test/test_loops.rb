@@ -12,8 +12,8 @@ $root ||= (Pathname.new(__FILE__) / ".." / ".." / ".." / "..").realpath
 
 require_relative "helpers"
 
-# test IDL variables
-class TestVariables < Minitest::Test
+# test IDL loops
+class TestLoops < Minitest::Test
   include TestMixin
 
   def test_const_iter

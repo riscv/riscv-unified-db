@@ -2794,12 +2794,6 @@ module Idl
     end
   end
 
-  class AryElementAssignmentSyntaxNode < SyntaxNode
-    def to_ast
-      AryElementAssignmentAst.new(input, interval, send(:var).to_ast, send(:idx).to_ast, send(:rval).to_ast)
-    end
-  end
-
   # represents an array element assignment
   #
   # for example:
@@ -2958,7 +2952,22 @@ module Idl
 
   class AryRangeAssignmentSyntaxNode < SyntaxNode
     def to_ast
-      AryRangeAssignmentAst.new(input, interval, send(:var).to_ast, send(:msb).to_ast, send(:lsb).to_ast, send(:rval).to_ast)
+      var = send(:var).to_ast
+      send(:brackets).elements[0..-1].each do |bracket|
+        var =
+          if bracket.msb.empty?
+            AryElementAccessAst.new(input, interval, var, bracket.lsb.to_ast)
+          else
+            AryRangeAccessAst.new(input, interval, var,
+                                  bracket.msb.expression.to_ast, bracket.lsb.to_ast)
+          end
+      end
+      last_bracket = send(:brackets).elements[-1]
+      if last_bracket.msb.empty?
+        AryElementAssignmentAst.new(input, interval, send(:var).to_ast, last_bracket.lsb.to_ast, send(:rval).to_ast)
+      else
+        AryRangeAssignmentAst.new(input, interval, send(:var).to_ast, last_bracket.msb.expression.to_ast, last_bracket.lsb.to_ast, send(:rval).to_ast)
+      end
     end
   end
 
