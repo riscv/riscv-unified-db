@@ -308,9 +308,8 @@ module Udb
           raise "unhandled subschema type"
         end
       elsif schema_hsh.key?("$ref")
-        if schema_hsh.fetch("$ref") == "schema_defs.json#/$defs/uint32"
-          :int
-        elsif schema_hsh.fetch("$ref") == "schema_defs.json#/$defs/uint64"
+        case schema_hsh.fetch("$ref").split("/").last
+        when "uint32", "uint64", "32bit_unsigned_pow2", "64bit_unsigned_pow2"
           :int
         else
           raise "unhandled ref: #{schema_hsh.fetch("$ref")}"
