@@ -100,9 +100,13 @@ module Udb
 
       if schema_hsh.key?("$ref")
         if schema_hsh.fetch("$ref").split("/").last == "uint32"
-          solver.assert((term == 0) | (0 == (term & (term - 1))))
           solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**32 - 1)))
         elsif schema_hsh.fetch("$ref").split("/").last == "uint64"
+          solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**64 - 1)))
+        elsif schema_hsh.fetch("$ref").split("/").last == "32bit_unsigned_pow2"
+          solver.assert((term == 0) | (0 == (term & (term - 1))))
+          solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**32 - 1)))
+        elsif schema_hsh.fetch("$ref").split("/").last == "64bit_unsigned_pow2"
           solver.assert((term == 0) | (0 == (term & (term - 1))))
           solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**64 - 1)))
         else
@@ -119,7 +123,9 @@ module Udb
       end
 
       if schema_hsh.key?("allOf")
-        constrain_bool(solver, term, schema_hsh.fetch("allOf"))
+        schema_hsh.fetch("allOf").each do |h|
+          constrain_bool(solver, term, h)
+        end
       end
 
       if schema_hsh.key?("anyOf")
