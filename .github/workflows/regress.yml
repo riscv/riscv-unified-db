@@ -295,8 +295,8 @@ jobs:
       name: Install ruby
       run: |
         dnf module enable -y ruby:3.3
-        dnf install -y ruby ruby-devel gcc-toolset-11
-        PRE="source scl_source enable gcc-toolset-11"
+        dnf install -y ruby ruby-devel gcc-toolset-12
+        PRE="source scl_source enable gcc-toolset-12"
         echo "PRE=$PRE" >> $GITHUB_ENV
     - if: matrix.container != 'almalinux:8'
       name: Make dummy PRE
