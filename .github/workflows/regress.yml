@@ -21,6 +21,7 @@ permissions:
 env:
   DOCKER: 1
   DEPLOY_DIR: _site
+  GITHUB_TOKEN: "${{ github.token }}"
 concurrency:
   group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   cancel-in-progress: true
