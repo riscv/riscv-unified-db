@@ -557,6 +557,8 @@ jobs:
         - cfg_arch
         - cfg
         - z3
+        - mmr
+        - mmr_schema
   regress-gen-go:
     runs-on: ubuntu-latest
     needs: build-container

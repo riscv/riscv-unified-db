@@ -61,6 +61,12 @@ repos:
         files: ^spec/std/isa/csr/.*\.(yaml|yml)$
         args: ["--schemafile", "spec/schemas/csr_schema.json"]
       - id: check-jsonschema
+        name: Validate MMR files with jsonschema
+        stages: [pre-commit]
+        alias: check-jsonschema-mmr
+        files: ^spec/.*/isa/.*/mmr/.*\.(yaml|yml)$
+        args: ["--schemafile", "spec/schemas/mmr_schema.json"]
+      - id: check-jsonschema
         name: Validate extension files with jsonschema
         stages: [pre-commit]
         alias: check-jsonschema-ext

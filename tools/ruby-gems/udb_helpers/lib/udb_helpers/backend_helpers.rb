@@ -1,3 +1,4 @@
+# typed: false
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
@@ -160,6 +161,19 @@ module Udb
         "%%UDB_DOC_LINK%csr_field;#{csr_name.sanitize}.#{field_name.sanitize};#{csr_name}.#{field_name}%%"
       end
 
+      # @return [String] A hyperlink to UDB MMR documentation
+      # @param mmr_name [String] Name of the MMR
+      def link_to_udb_doc_mmr(mmr_name)
+        "%%UDB_DOC_LINK%mmr;#{mmr_name.sanitize};#{mmr_name}%%"
+      end
+
+      # @return [String] A hyperlink to UDB MMR field documentation
+      # @param mmr_name [String] Name of the MMR
+      # @param field_name [String] Name of the MMR field
+      def link_to_udb_doc_mmr_field(mmr_name, field_name)
+        "%%UDB_DOC_LINK%mmr_field;#{mmr_name.sanitize}.#{field_name.sanitize};#{mmr_name}.#{field_name}%%"
+      end
+
       # @return [String] A hyperlink to UDB IDL function documentation
       # @param func_name [String] Name of the IDL function
       def link_to_udb_doc_idl_func(func_name)
@@ -219,6 +233,19 @@ module Udb
         "[#udb:doc:csr_field:#{csr_name.sanitize}:#{field_name.sanitize}]"
       end
 
+      # @return [String] An anchor for UDB MMR documentation
+      # @param name [String] Name of the MMR
+      def anchor_for_udb_doc_mmr(name)
+        "[#udb:doc:mmr:#{name.sanitize}]"
+      end
+
+      # @return [String] An anchor for UDB MMR field documentation
+      # @param mmr_name [String] Name of the MMR
+      # @param field_name [String] Name of the MMR field
+      def anchor_for_udb_doc_mmr_field(mmr_name, field_name)
+        "[#udb:doc:mmr_field:#{mmr_name.sanitize}:#{field_name.sanitize}]"
+      end
+
       # @return [String] An anchor for an IDL function documentation
       # @param name [String] Name of the function
       def anchor_for_udb_doc_idl_func(name)
@@ -264,67 +291,70 @@ module Udb
   module Helpers
     module AsciidocUtils
       # The syntax "class << self" causes all methods to be treated as class methods.
-      class << self
-        # Convert proprietary link format to legal AsciiDoc links.
-        # They are converted to AsciiDoc internal cross references (i.e., <<anchor_name,link_text>>).
-        # For example,
-        #   %%UDB_DOC_LINK%inst;add;add instruction%%
-        # is converted to:
-        #   <<udb:inst:add,add instruction>>
-        #
-        # @param path_or_str [Pathname or String]
-        # @return [String]
-        def resolve_links(path_or_str)
-          str =
-            if path_or_str.is_a?(Pathname)
-              path_or_str.read
-            else
-              path_or_str
-            end
-          str.gsub(/%%UDB_DOC_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
-            type = Regexp.last_match[1]
-            name = Regexp.last_match[2]
-            link_text = Regexp.last_match[3]
+      # Convert proprietary link format to legal AsciiDoc links.
+      # They are converted to AsciiDoc internal cross references (i.e., <<anchor_name,link_text>>).
+      # For example,
+      #   %%UDB_DOC_LINK%inst;add;add instruction%%
+      # is converted to:
+      #   <<udb:inst:add,add instruction>>
+      #
+      # @param path_or_str [Pathname or String]
+      # @return [String]
+      def self.resolve_links(path_or_str)
+        str =
+          if path_or_str.is_a?(Pathname)
+            path_or_str.read
+          else
+            path_or_str
+          end
+        str.gsub(/%%UDB_DOC_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
+          type = Regexp.last_match[1]
+          name = Regexp.last_match[2]
+          link_text = Regexp.last_match[3]
 
-            case type
-            when "ext"
-              "<<udb:doc:ext:#{name},#{link_text}>>"
-            when "ext_param"
-              ext_name, param_name = name.split('.')
-              "<<udb:doc:ext_param:#{ext_name}:#{param_name},#{link_text}>>"
-            when "inst"
-              "<<udb:doc:inst:#{name},#{link_text}>>"
-            when "csr"
-              "<<udb:doc:csr:#{name},#{link_text}>>"
-            when "csr_field"
-              csr_name, field_name = name.split('.')
-              "<<udb:doc:csr_field:#{csr_name}:#{field_name},#{link_text}>>"
-            when "func"
-              "<<udb:doc:func:#{name},#{link_text}>>"
-            else
-              raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
-            end
-          end.gsub(/%%UDB_DOC_COV_PT_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
-            org = Regexp.last_match[1] # "sep", "combo", or "appendix"
-            id = Regexp.last_match[2]
-            link_text = Regexp.last_match[3]
+          case type
+          when "ext"
+            "<<udb:doc:ext:#{name},#{link_text}>>"
+          when "ext_param"
+            ext_name, param_name = name.split(".")
+            "<<udb:doc:ext_param:#{ext_name}:#{param_name},#{link_text}>>"
+          when "inst"
+            "<<udb:doc:inst:#{name},#{link_text}>>"
+          when "csr"
+            "<<udb:doc:csr:#{name},#{link_text}>>"
+          when "csr_field"
+            csr_name, field_name = name.split(".")
+            "<<udb:doc:csr_field:#{csr_name}:#{field_name},#{link_text}>>"
+          when "mmr"
+            "<<udb:doc:mmr:#{name},#{link_text}>>"
+          when "mmr_field"
+            mmr_name, field_name = name.split(".")
+            "<<udb:doc:mmr_field:#{mmr_name}:#{field_name},#{link_text}>>"
+          when "func"
+            "<<udb:doc:func:#{name},#{link_text}>>"
+          else
+            raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
+          end
+        end.gsub(/%%UDB_DOC_COV_PT_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
+          org = Regexp.last_match[1] # "sep", "combo", or "appendix"
+          id = Regexp.last_match[2]
+          link_text = Regexp.last_match[3]
 
-            raise "Unhandled link org of '#{org}' for ID '#{id}' with link_text '#{link_text}'" unless org == "sep" || org == "combo" || org == "appendix"
+          raise "Unhandled link org of '#{org}' for ID '#{id}' with link_text '#{link_text}'" unless org == "sep" || org == "combo" || org == "appendix"
 
-            "<<udb:doc:cov_pt:#{org}:#{id},#{link_text}>>"
-          end.gsub(/%%IDL_CODE_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
-            type = Regexp.last_match[1]
-            name = Regexp.last_match[2]
-            link_text = Regexp.last_match[3]
+          "<<udb:doc:cov_pt:#{org}:#{id},#{link_text}>>"
+        end.gsub(/%%IDL_CODE_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
+          type = Regexp.last_match[1]
+          name = Regexp.last_match[2]
+          link_text = Regexp.last_match[3]
 
-            case type
-            when "inst"
-              inst_name, id = name.split('.')
-              "<<idl:code:inst:#{inst_name}:#{id},#{link_text}>>"
-            # TODO: Add csr and csr_field support
-            else
-              raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
-            end
+          case type
+          when "inst"
+            inst_name, id = name.split(".")
+            "<<idl:code:inst:#{inst_name}:#{id},#{link_text}>>"
+          # TODO: Add csr and csr_field support
+          else
+            raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
           end
         end
       end
@@ -337,70 +367,68 @@ module Udb
   module Helpers
     module AntoraUtils
       # The syntax "class << self" causes all methods to be treated as class methods.
-      class << self
-        # Convert proprietary link format to legal AsciiDoc links.
-        #
-        # They are converted to AsciiDoc external cross references in the form:
-        #   xref:<module>:<file>.adoc:#<anchor_name>[<link_text>])
-        # where <> don't appear in the actual cross reference (just there to indicate variable content).
-        #
-        # For example,
-        #   %%UDB_DOC_LINK%inst;add;add instruction%%
-        # is converted to:
-        #   xref:insts:add.adoc#udb:doc:add[add instruction]
-        #
-        # Antora supports the module name after the "xref:". In the example above, it the module name is "insts"
-        # and corresponds to the directory name the add.adoc file is located in. For more details, see:
-        #    https://docs.antora.org/antora/latest/page/xref/
-        # and then
-        #    https://docs.antora.org/antora/latest/page/resource-id-coordinates/
-        #
-        # @param path_or_str [Pathname or String]
-        # @return [String]
-        def resolve_links(path_or_str)
-          str =
-            if path_or_str.is_a?(Pathname)
-              path_or_str.read
-            else
-              path_or_str
-            end
-          str.gsub(/%%UDB_DOC_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
-            type = Regexp.last_match[1]
-            name = Regexp.last_match[2]
-            link_text = Regexp.last_match[3]
+      # Convert proprietary link format to legal AsciiDoc links.
+      #
+      # They are converted to AsciiDoc external cross references in the form:
+      #   xref:<module>:<file>.adoc:#<anchor_name>[<link_text>])
+      # where <> don't appear in the actual cross reference (just there to indicate variable content).
+      #
+      # For example,
+      #   %%UDB_DOC_LINK%inst;add;add instruction%%
+      # is converted to:
+      #   xref:insts:add.adoc#udb:doc:add[add instruction]
+      #
+      # Antora supports the module name after the "xref:". In the example above, it the module name is "insts"
+      # and corresponds to the directory name the add.adoc file is located in. For more details, see:
+      #    https://docs.antora.org/antora/latest/page/xref/
+      # and then
+      #    https://docs.antora.org/antora/latest/page/resource-id-coordinates/
+      #
+      # @param path_or_str [Pathname or String]
+      # @return [String]
+      def self.resolve_links(path_or_str)
+        str =
+          if path_or_str.is_a?(Pathname)
+            path_or_str.read
+          else
+            path_or_str
+          end
+        str.gsub(/%%UDB_DOC_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
+          type = Regexp.last_match[1]
+          name = Regexp.last_match[2]
+          link_text = Regexp.last_match[3]
 
-            case type
-            when "ext"
-              "xref:exts:#{name}.adoc#udb:doc:ext:#{name}[#{link_text}]"
-            when "ext_param"
-              ext_name, param_name = name.split('.')
-              "xref:exts:#{ext_name}.adoc#udb:doc:ext_param:#{ext_name}:#{param_name}[#{link_text}]"
-            when "inst"
-              "xref:insts:#{name}.adoc#udb:doc:inst:#{name}[#{link_text}]"
-            when "csr"
-              "xref:csrs:#{name}.adoc#udb:doc:csr:#{name}[#{link_text}]"
-            when "csr_field"
-              csr_name, field_name = name.split('.')
-              "xref:csrs:#{csr_name}.adoc#udb:doc:csr_field:#{csr_name}:#{field_name}[#{link_text}]"
-            when "func"
-              # All functions are in the same file called "funcs.adoc".
-              "xref:funcs:funcs.adoc#udb:doc:func:#{name}[#{link_text.gsub(']', '\]')}]"
-            else
-              raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
-            end
-          end.gsub(/%%IDL_CODE_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
-            type = Regexp.last_match[1]
-            name = Regexp.last_match[2]
-            link_text = Regexp.last_match[3]
+          case type
+          when "ext"
+            "xref:exts:#{name}.adoc#udb:doc:ext:#{name}[#{link_text}]"
+          when "ext_param"
+            ext_name, param_name = name.split(".")
+            "xref:exts:#{ext_name}.adoc#udb:doc:ext_param:#{ext_name}:#{param_name}[#{link_text}]"
+          when "inst"
+            "xref:insts:#{name}.adoc#udb:doc:inst:#{name}[#{link_text}]"
+          when "csr"
+            "xref:csrs:#{name}.adoc#udb:doc:csr:#{name}[#{link_text}]"
+          when "csr_field"
+            csr_name, field_name = name.split(".")
+            "xref:csrs:#{csr_name}.adoc#udb:doc:csr_field:#{csr_name}:#{field_name}[#{link_text}]"
+          when "func"
+            # All functions are in the same file called "funcs.adoc".
+            "xref:funcs:funcs.adoc#udb:doc:func:#{name}[#{link_text.gsub(']', '\]')}]"
+          else
+            raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
+          end
+        end.gsub(/%%IDL_CODE_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
+          type = Regexp.last_match[1]
+          name = Regexp.last_match[2]
+          link_text = Regexp.last_match[3]
 
-            case type
-            when "inst"
-              inst_name, id = name.split('.')
-              "xref:insts:#{inst_name}.adoc#idl:code:inst:#{inst_name}:#{id}[#{link_text}]"
-            # TODO: Add csr and csr_field support
-            else
-              raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
-            end
+          case type
+          when "inst"
+            inst_name, id = name.split(".")
+            "xref:insts:#{inst_name}.adoc#idl:code:inst:#{inst_name}:#{id}[#{link_text}]"
+          # TODO: Add csr and csr_field support
+          else
+            raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
           end
         end
       end
