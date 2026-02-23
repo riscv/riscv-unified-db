@@ -175,6 +175,50 @@ CLANG_FORMAT="${RUN} clang-format"
 CLANG_TIDY="${RUN} clang-tidy"
 MAKE="${RUN} make"
 
+# Download Z3 shared library from GitHub Releases into the XDG cache.
+# This mirrors what ext/udb_z3_download/extconf.rb does at gem-install time,
+# but uses the `gh` CLI so it works in the source-checkout workflow.
+setup_z3() {
+  local z3_version
+  z3_version=$(ruby -e "load '${ROOT}/tools/ruby-gems/udb/lib/udb/z3_version.rb'; puts Udb::Z3_VERSION")
+
+  local cpu
+  case "$(uname -m)" in
+    x86_64)  cpu="x64"   ;;
+    aarch64) cpu="arm64" ;;
+    arm64)   cpu="arm64" ;;
+    *)
+      echo "setup_z3: unsupported architecture $(uname -m), skipping Z3 download" >&2
+      return 0
+      ;;
+  esac
+
+  local xdg_cache="${XDG_CACHE_HOME:-${HOME}/.cache}"
+  local dest_dir="${xdg_cache}/udb/z3/${z3_version}/${cpu}"
+  local dest_file="${dest_dir}/libz3.so"
+
+  if [ -f "${dest_file}" ]; then
+    return 0
+  fi
+
+  if ! command -v gh &>/dev/null; then
+    echo "setup_z3: 'gh' CLI not found; cannot download Z3 automatically." >&2
+    echo "  Install gh (https://cli.github.com) or place libz3.so at:" >&2
+    echo "  ${dest_file}" >&2
+    return 1
+  fi
+
+  echo "Downloading Z3 (${z3_version}, ${cpu}) from GitHub Releases..."
+  mkdir -p "${dest_dir}"
+  gh release download "${z3_version}" \
+    --repo riscv/riscv-unified-db \
+    --pattern "libz3-${cpu}.so" \
+    --output "${dest_file}"
+  echo "  Saved to ${dest_file}"
+}
+
+setup_z3
+
 if [ ! -v GITHUB_ACTIONS ]; then
 
   GIT_REPO_ROOT=$(git rev-parse --path-format=absolute --git-common-dir | tr -d '\n')

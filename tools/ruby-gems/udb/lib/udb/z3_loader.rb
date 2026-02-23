@@ -14,6 +14,7 @@ require "sorbet-runtime"
 require "zip"
 
 require_relative "log"
+require_relative "z3_version"
 
 module FFI
   class DynamicLibrary
@@ -57,21 +58,22 @@ module Udb
       # Main entry point - ensures Z3 is available before requiring the z3 gem
       sig { void }
       def ensure_z3_loaded
-        require 'z3'
+        require "z3"
       end
 
       sig { returns(String) }
       def z3_lib_dir
         cpu =
           case RbConfig::CONFIG["host_cpu"]
-            when /arm64|aarch64/
-              "arm64"
-            when /x86_64|x64/
-              "x64"
-            else
-              raise Z3LoadError, "Unsupported host cpu: #{cpu}"
-            end
-        (Pathname.new(Gem::Specification.find_by_name("udb").full_gem_path) / "ext" / "z3" / cpu).to_s
+          when /arm64|aarch64/
+            "arm64"
+          when /x86_64|x64/
+            "x64"
+          else
+            raise Z3LoadError, "Unsupported host cpu: #{RbConfig::CONFIG["host_cpu"]}"
+          end
+        xdg_cache = ENV.fetch("XDG_CACHE_HOME", File.join(Dir.home, ".cache"))
+        File.join(xdg_cache, "udb", "z3", Udb::Z3_VERSION, cpu)
       end
 
       private
