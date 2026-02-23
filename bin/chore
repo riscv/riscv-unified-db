@@ -267,24 +267,20 @@ do_update_z3() {
   cp "${work_dir}/z3-x64/lib/libz3.so"   "${work_dir}/libz3-x64.so"
   cp "${work_dir}/z3-arm64/lib/libz3.so" "${work_dir}/libz3-arm64.so"
 
-  # Create (or recreate) the GitHub Release and upload assets
+  # Create the GitHub Release and upload assets (skip if release already exists)
   local release_tag="${z3_version}"
+  echo "==> Checking for existing GitHub Release ${release_tag}..."
+  if gh release view "${release_tag}" --repo riscv/riscv-unified-db &>/dev/null; then
+    echo "==> GitHub Release ${release_tag} already exists. Nothing to do."
+    return 0
+  fi
   echo "==> Creating GitHub Release ${release_tag}..."
   gh release create "${release_tag}" \
     --repo riscv/riscv-unified-db \
     --title "Z3 binaries ${z3_version}" \
     --notes "Pre-built Z3 shared libraries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
     "${work_dir}/libz3-x64.so" \
-    "${work_dir}/libz3-arm64.so" \
-    || {
-      # If the release already exists, just upload/overwrite the assets
-      echo "  Release already exists; uploading assets..."
-      gh release upload "${release_tag}" \
-        --repo riscv/riscv-unified-db \
-        --clobber \
-        "${work_dir}/libz3-x64.so" \
-        "${work_dir}/libz3-arm64.so"
-    }
+    "${work_dir}/libz3-arm64.so"
 
   # Update z3_version.rb so the gem knows which release to download
   # z3_version_rb already declared above
