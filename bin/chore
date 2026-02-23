@@ -265,20 +265,38 @@ do_update_z3() {
   local work_dir
   work_dir=$(mktemp -d --tmpdir="$PWD" build-z3.XXXXXX)
 
-  echo "==> Building Z3 for x64..."
-  "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-x64" Release x64 || exit 1
-
-  echo "==> Building Z3 for arm64..."
-  "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-arm64" Release arm64 || exit 1
-
-  # Read the version produced by the build
   local z3_version
-  z3_version=$(cat "${work_dir}/z3-x64/VERSION")
-  echo "==> Built Z3 version: ${z3_version}"
+  if [ "${target_version}" != "${current_version}" ]; then
+    # New upstream version: build from source
+    echo "==> Building Z3 for x64..."
+    "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-x64" Release x64 || exit 1
 
-  # Rename the .so files to the asset names expected by extconf.rb / setup_z3
-  cp "${work_dir}/z3-x64/lib/libz3.so"   "${work_dir}/libz3-x64.so"
-  cp "${work_dir}/z3-arm64/lib/libz3.so" "${work_dir}/libz3-arm64.so"
+    echo "==> Building Z3 for arm64..."
+    "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-arm64" Release arm64 || exit 1
+
+    # Read the version produced by the build
+    z3_version=$(cat "${work_dir}/z3-x64/VERSION")
+    echo "==> Built Z3 version: ${z3_version}"
+
+    # Rename the .so files to the asset names expected by extconf.rb / setup_z3
+    cp "${work_dir}/z3-x64/lib/libz3.so"   "${work_dir}/libz3-x64.so"
+    cp "${work_dir}/z3-arm64/lib/libz3.so" "${work_dir}/libz3-arm64.so"
+  else
+    # Version unchanged: use the already-installed libraries from the XDG cache
+    z3_version="${current_version}"
+    local xdg_cache="${XDG_CACHE_HOME:-${HOME}/.cache}"
+    local cache_x64="${xdg_cache}/udb/z3/${current_version}/x64/libz3.so"
+    local cache_arm64="${xdg_cache}/udb/z3/${current_version}/arm64/libz3.so"
+    if [ ! -f "${cache_x64}" ] || [ ! -f "${cache_arm64}" ]; then
+      echo "ERROR: Cached Z3 libraries not found. Run 'bin/setup' first to download them." >&2
+      echo "  Expected: ${cache_x64}" >&2
+      echo "  Expected: ${cache_arm64}" >&2
+      exit 1
+    fi
+    cp "${cache_x64}"   "${work_dir}/libz3-x64.so"
+    cp "${cache_arm64}" "${work_dir}/libz3-arm64.so"
+    echo "==> Using cached Z3 libraries for ${z3_version}"
+  fi
 
   # Create the GitHub Release and upload assets
   local release_tag="${z3_version}"
@@ -290,9 +308,10 @@ do_update_z3() {
     "${work_dir}/libz3-x64.so" \
     "${work_dir}/libz3-arm64.so"
 
-  # Update z3_version.rb so the gem knows which release to download
-  # z3_version_rb already declared above
-  cat > "${z3_version_rb}" << RUBY
+  if [ "${target_version}" != "${current_version}" ]; then
+    # Update z3_version.rb so the gem knows which release to download
+    # z3_version_rb already declared above
+    cat > "${z3_version_rb}" << RUBY
 # typed: false
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
@@ -304,16 +323,21 @@ module Udb
   Z3_VERSION = "${z3_version}"
 end
 RUBY
-  echo "==> Updated ${z3_version_rb}"
+    echo "==> Updated ${z3_version_rb}"
+  fi
 
   cd "${orig_dir}" || exit 1
   rm -rf "${work_dir}"
 
   echo ""
-  echo "Done. Next steps:"
-  echo "  1. git add tools/ruby-gems/udb/lib/udb/z3_version.rb"
-  echo "  2. git commit -m 'chore: update Z3 to ${z3_version}'"
-  echo "  3. Open a PR"
+  if [ "${target_version}" != "${current_version}" ]; then
+    echo "Done. Next steps:"
+    echo "  1. git add tools/ruby-gems/udb/lib/udb/z3_version.rb"
+    echo "  2. git commit -m 'chore: update Z3 to ${z3_version}'"
+    echo "  3. Open a PR"
+  else
+    echo "Done. GitHub Release ${z3_version} created on riscv/riscv-unified-db."
+  fi
 }
 
 do_ruby_type_def() {
