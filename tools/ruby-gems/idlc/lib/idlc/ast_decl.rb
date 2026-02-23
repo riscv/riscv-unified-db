@@ -4,12 +4,12 @@
 # typed: true
 # frozen_string_literal: true
 
-# this file exists to get around a bug in tapioca/sorbet that thinks AstNode is declared
-# abstract twice when the abstract! definition is in ast.rb
+# Workaround for a tapioca/sorbet bug where, if AstNode#abstract! is defined only in
+# ast.rb, tapioca reports that AstNode is declared abstract twice during RBI generation.
 #
-# This started when tapioca upgraded from 0.16.11
-#
-# I'm not sure why, but this fixes it
+# This regression was observed immediately after upgrading tapioca from 0.16.11; keep
+# this shim file until the duplicate-abstract error no longer occurs with the current
+# tapioca/sorbet versions.
 
 require "sorbet-runtime"
 
