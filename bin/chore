@@ -226,7 +226,8 @@ do_update_z3() {
 
   # Query the latest Z3 release tag from upstream (Z3Prover/z3)
   local latest_version
-  latest_version=$(gh release list --repo Z3Prover/z3 --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null) || {
+  latest_version=$(gh release list --repo Z3Prover/z3 --limit 50 --json tagName \
+    --jq '[.[] | select(.tagName | test("^z3-[0-9]+\\.[0-9]+\\.[0-9]+$"))] | .[0].tagName' 2>/dev/null) || {
     echo "ERROR: Could not query latest Z3 release from Z3Prover/z3. Check gh authentication." >&2
     exit 1
   }
