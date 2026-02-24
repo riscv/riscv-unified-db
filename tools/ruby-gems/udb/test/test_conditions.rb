@@ -342,6 +342,76 @@ class TestConditions < Minitest::Test
   end
 
   # skip checks on the real data if we can't find the repository root
+  def test_param_allof_uint64_ref_schema_satisfiability
+    # CACHE_BLOCK_SIZE has schema: allOf: [$ref: uint64, not: {const: 0}]
+    # Exercises constrain_int allOf iteration and the uint64 $ref branch
+    # Uses param: condition to avoid IDL parser width-suffix requirements
+    cond_yaml = {
+      "param" => {
+        "name" => "CACHE_BLOCK_SIZE",
+        "equal" => 64,
+        "reason" => "cache block size of 64 bytes"
+      }
+    }
+    cond = Condition.new(cond_yaml, $mock_cfg_arch)
+    assert cond.satisfiable?
+  end
+
+  def test_z3_constrain_int_allof_with_32bit_pow2_ref
+    # Directly exercises constrain_int allOf iteration and the 32bit_unsigned_pow2 $ref branch
+    # by calling Z3ParameterTerm.constrain_int with an allOf schema containing a 32bit_unsigned_pow2 $ref
+    require "udb/z3"
+    solver = Z3Solver.new
+    term = Z3.Bitvec("test_pow2_32", 64)
+    schema = {
+      "allOf" => [
+        { "type" => "integer", "minimum" => 1 },
+        { "$ref" => "schema_defs.json#/$defs/32bit_unsigned_pow2" }
+      ]
+    }
+    Z3ParameterTerm.constrain_int(solver, term, schema)
+    assert solver.satisfiable?
+  end
+
+  def test_z3_constrain_int_allof_with_64bit_pow2_ref
+    # Directly exercises constrain_int allOf iteration and the 64bit_unsigned_pow2 $ref branch
+    require "udb/z3"
+    solver = Z3Solver.new
+    term = Z3.Bitvec("test_pow2_64", 64)
+    schema = {
+      "allOf" => [
+        { "type" => "integer", "minimum" => 1 },
+        { "$ref" => "schema_defs.json#/$defs/64bit_unsigned_pow2" }
+      ]
+    }
+    Z3ParameterTerm.constrain_int(solver, term, schema)
+    assert solver.satisfiable?
+  end
+
+  def test_param_bool_allof_schema_satisfiability
+    # BOOL_ALLOF has schema: allOf: [{type: boolean}, {const: true}]
+    # Exercises constrain_bool allOf iteration
+    # Uses param: condition to avoid IDL parser issues
+    cond_yaml = {
+      "param" => {
+        "name" => "BOOL_ALLOF",
+        "equal" => true,
+        "reason" => "BOOL_ALLOF is always true"
+      }
+    }
+    cond = Condition.new(cond_yaml, $mock_cfg_arch)
+    assert cond.satisfiable?
+  end
+
+  def test_parameter_schema_and_idl_type_with_allof
+    # Exercises Parameter#initialize and #idl_type with an allOf schema
+    param = $mock_cfg_arch.param("CACHE_BLOCK_SIZE")
+    refute_nil param
+    assert param.schema.to_h.key?("allOf")
+    assert_equal :bits, param.idl_type.kind
+  end
+
+
   unless $db_cfg_arch.nil?
 
     # test all instruction definedBy:

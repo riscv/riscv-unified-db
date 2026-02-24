@@ -10,19 +10,13 @@
 The following <%= params.size %> parameters are defined in this manual:
 
 |===
-| Name | Type | Existence | Description
+| Name | Type | Existence | Additional Requirements | Description
 
 <%- params.each do |param| -%>
 | <%= param.name %>
-<%-   if param.schema_known? -%>
 | <%= param.schema.to_pretty_s %>
-<%-   else -%>
-<%-     param.schemas.each do |cond_schema| -%>
-<%-       next unless cond_schema.cond.could_be_satisfied_by_cfg_arch?(cfg_arch) -%>
-a| <%= cond_schema.schema.to_pretty_s %> when <%= cond_schema.cond.to_asciidoc %>
-<%-     end -%>
-<%-   end -%>
 a| <%= param.defined_by_condition.to_asciidoc -%>
+a| <%= param.requirements_condition.empty? ? "None" : param.requirements_condition.to_asciidoc %>
 a| <%= param.description %>
 <%- end -%>
 |===
