@@ -6056,6 +6056,13 @@ module Idl::RuntimeParam
   sig { abstract.returns(::Idl::Schema) }
   def schema; end
 
+  # source://idlc//lib/idlc/interfaces.rb#35
+  sig do
+    abstract
+      .returns(T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean))
+  end
+  def value; end
+
   # source://idlc//lib/idlc/interfaces.rb#42
   sig { abstract.returns(T::Boolean) }
   def value_known?; end
