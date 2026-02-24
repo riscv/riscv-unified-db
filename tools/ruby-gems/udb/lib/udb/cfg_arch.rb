@@ -511,12 +511,12 @@ module Udb
         begin
           param_vars = params.map do |param|
             # just pick some possible schema
-            idl_type = param.all_schemas.fetch(0).to_idl_type
+            idl_type = param.schema.to_idl_type
             Idl::Var.new(param.name, idl_type.make_const, param: true)
           end
 
           s = Idl::SymbolTable.new(
-            possible_xlens_cb: proc { [32,64] },
+            possible_xlens_cb: proc { [32, 64] },
             builtin_global_vars: param_vars,
             builtin_funcs: symtab_callbacks,
             builtin_enums: symtab_enums,
