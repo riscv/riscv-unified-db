@@ -334,10 +334,8 @@ tests:
     tags:
       - smoke
     test:
-      - name: Generate resolved schemas
-        run: ./do gen:schemas
       - name: Check schema versions against published URLs
-        run: ./bin/ruby tools/scripts/check_schema_versions.rb
+        run: ./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb
 
   build-idl-doc:
     ci_stage: merge_queue
