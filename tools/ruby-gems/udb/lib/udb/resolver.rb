@@ -362,12 +362,12 @@ module Udb
     SCHEMAS_BASE_URL = "https://riscv.github.io/riscv-unified-db/schemas"
 
     # Resolve schema files by rewriting their $id to the full published URL and
-    # writing the result to gen/schemas/VERSION/SCHEMA_FILENAME.
+    # writing the result to gen/schemas/SCHEMA_NAME/VERSION/SCHEMA_FILENAME.
     #
-    # For each schema file in schemas_path, reads the $id (which is the version
-    # string, e.g. "v0.1"), then writes a copy to
-    # gen/schemas/<version>/<schema_filename> with $id set to
-    # https://riscv.github.io/riscv-unified-db/schemas/<version>/<schema_filename>.
+    # Each schema file has its own independent version (the $id field, e.g. "v0.1").
+    # The resolved file is written to gen/schemas/<schema_name>/<version>/<schema_name>
+    # with $id set to
+    # https://riscv.github.io/riscv-unified-db/schemas/<schema_name>/<version>/<schema_name>.
     sig { void }
     def resolve_schemas
       require "json"
@@ -380,11 +380,11 @@ module Udb
         next if version.nil?
 
         schema_name = schema_file.basename.to_s
-        resolved_id = "#{SCHEMAS_BASE_URL}/#{version}/#{schema_name}"
+        resolved_id = "#{SCHEMAS_BASE_URL}/#{schema_name}/#{version}/#{schema_name}"
 
         resolved_schema = schema_data.merge("$id" => resolved_id)
 
-        out_dir = gen_path / "schemas" / version
+        out_dir = gen_path / "schemas" / schema_name / version
         out_dir.mkpath
         out_path = out_dir / schema_name
         out_path.write(JSON.pretty_generate(resolved_schema) + "\n")

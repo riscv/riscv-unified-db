@@ -234,13 +234,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Collect all schema release tags (schemas/v*)
-          SCHEMA_TAGS=$(gh release list --json tagName --jq '.[] | .tagName | select(startswith("schemas/"))' 2>/dev/null || true)
+          # Collect all per-schema release tags (schemas/<schema_name>/<version>)
+          SCHEMA_TAGS=$(gh release list --limit 200 --json tagName --jq '.[] | .tagName | select(startswith("schemas/"))' 2>/dev/null || true)
           if [ -n "$SCHEMA_TAGS" ]; then
             while IFS= read -r tag; do
-              version="${tag#schemas/}"
-              mkdir -p "_site/schemas/${version}"
-              gh release download "${tag}" --dir "_site/schemas/${version}" --pattern "*.json" 2>/dev/null || true
+              # tag format: schemas/<schema_name>/<version>
+              rest="${tag#schemas/}"
+              schema_name="${rest%%/*}"
+              version="${rest#*/}"
+              mkdir -p "_site/schemas/${schema_name}/${version}"
+              gh release download "${tag}" --dir "_site/schemas/${schema_name}/${version}" --pattern "*.json" 2>/dev/null || true
             done <<< "$SCHEMA_TAGS"
           fi
           # Write a JSON index of all available schema versions and files

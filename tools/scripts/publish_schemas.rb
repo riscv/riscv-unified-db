@@ -4,11 +4,11 @@
 
 # Publishes resolved schema files as GitHub release assets.
 #
-# For each schema version found in gen/schemas/, this script:
-#   1. Checks if a release tag "schemas/<version>" already exists.
+# Each schema has its own independent version. For each schema found in
+# gen/schemas/<schema_name>/<version>/, this script:
+#   1. Checks if a release tag "schemas/<schema_name>/<version>" already exists.
 #   2. If not, creates a new release with that tag.
-#   3. For each schema file in the version directory, checks if the asset
-#      already exists in the release and whether it has changed.
+#   3. Checks if the schema file asset already exists and whether it has changed.
 #   4. Uploads new or changed schema files as release assets.
 #
 # Requires the GH_TOKEN environment variable and the `gh` CLI to be available.
@@ -52,37 +52,42 @@ def asset_content(tag, asset_name)
   status.success? ? stdout : nil
 end
 
-gen_schemas_dir.each_child.select(&:directory?).sort.each do |version_dir|
-  version = version_dir.basename.to_s
-  tag = "schemas/#{version}"
+# gen/schemas/<schema_name>/<version>/<schema_name>
+gen_schemas_dir.each_child.select(&:directory?).sort.each do |schema_dir|
+  schema_name = schema_dir.basename.to_s
 
-  puts "Processing schema version: #{version}"
+  schema_dir.each_child.select(&:directory?).sort.each do |version_dir|
+    version = version_dir.basename.to_s
+    tag = "schemas/#{schema_name}/#{version}"
 
-  unless release_exists?(tag)
-    puts "  Creating release #{tag}..."
-    gh(
-      "release", "create", tag,
-      "--title", "Schema #{version}",
-      "--notes", "JSON Schema files for riscv-unified-db version #{version}.\n\n" \
-                 "These schemas are published at:\n" \
-                 "https://riscv.github.io/riscv-unified-db/schemas/#{version}/",
-      "--latest=false"
-    )
-  end
+    puts "Processing #{schema_name} #{version}"
 
-  version_dir.glob("*.json").sort.each do |schema_file|
-    schema_name = schema_file.basename.to_s
-    local_content = schema_file.read
-    remote_content = asset_content(tag, schema_name)
+    unless release_exists?(tag)
+      puts "  Creating release #{tag}..."
+      gh(
+        "release", "create", tag,
+        "--title", "#{schema_name} #{version}",
+        "--notes", "#{schema_name} version #{version} for riscv-unified-db.\n\n" \
+                   "Published at:\n" \
+                   "https://riscv.github.io/riscv-unified-db/schemas/#{schema_name}/#{version}/#{schema_name}",
+        "--latest=false"
+      )
+    end
 
-    if remote_content.nil?
-      puts "  Uploading new asset: #{schema_name}"
-      gh("release", "upload", tag, schema_file.to_s, "--clobber")
-    elsif remote_content.strip != local_content.strip
-      puts "  Updating changed asset: #{schema_name}"
-      gh("release", "upload", tag, schema_file.to_s, "--clobber")
-    else
-      puts "  Unchanged: #{schema_name}"
+    version_dir.glob("*.json").sort.each do |schema_file|
+      asset_name = schema_file.basename.to_s
+      local_content = schema_file.read
+      remote_content = asset_content(tag, asset_name)
+
+      if remote_content.nil?
+        puts "  Uploading new asset: #{asset_name}"
+        gh("release", "upload", tag, schema_file.to_s, "--clobber")
+      elsif remote_content.strip != local_content.strip
+        puts "  Updating changed asset: #{asset_name}"
+        gh("release", "upload", tag, schema_file.to_s, "--clobber")
+      else
+        puts "  Unchanged: #{asset_name}"
+      end
     end
   end
 end

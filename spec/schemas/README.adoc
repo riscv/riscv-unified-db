@@ -24,8 +24,8 @@ string (e.g. `v0.1`).  When a schema is resolved for publication, the `$id` is
 expanded to the full canonical URL:
 `https://riscv.github.io/riscv-unified-db/schemas/<version>/<schema>.json`.
 
-Resolved schema files are written to `gen/schemas/<version>/` and published as
-GitHub releases under the tag `schemas/<version>`.
+Resolved schema files are written to `gen/schemas/<schema_name>/<version>/` and
+published as GitHub releases under the tag `schemas/<schema_name>/<version>`.
 
 == Schema Versions
 
@@ -34,7 +34,7 @@ GitHub releases under the tag `schemas/<version>`.
 | Version | Published URL
 
 | 0.1 (current)
-| https://riscv.github.io/riscv-unified-db/schemas/v0.1/
+| https://riscv.github.io/riscv-unified-db/schemas/csr_schema.json/v0.1/csr_schema.json (example)
 |===
 
 == Schema Identification (`$id`)
@@ -70,13 +70,12 @@ schema version used.
 When breaking or significant changes are made to one or more schemas, a new
 version should be released.  Follow these steps:
 
-. Update the `$id` field in each changed schema file to the new version string
-  (e.g. `v0.2`).
+. Update the `$id` field in the changed schema file to the new version string
+  (e.g. `v0.2`). Other schemas that did not change keep their current `$id`.
 . Run `./do gen:schemas` to generate the resolved schema files in
-  `gen/schemas/<version>/`.
+  `gen/schemas/<schema_name>/<version>/`.
 . The CI `schema-release` workflow will automatically publish the new version
-  as a GitHub release under the tag `schemas/<version>` when the changes are
-  merged to `main`.
-. Add the new version to the <<Schema Versions>> table in this README.
+  as a GitHub release under the tag `schemas/<schema_name>/<version>` when the
+  changes are merged to `main`.
 . Previous schema versions remain available via their GitHub release tags and
-  at `https://riscv.github.io/riscv-unified-db/schemas/<old-version>/`.
+  at `https://riscv.github.io/riscv-unified-db/schemas/<schema_name>/<old-version>/<schema_name>`.
