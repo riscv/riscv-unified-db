@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/riscv/riscv-unified-db/tree/main/spec/schemas/v0.1/ext_schema.json",
+  "type": "object",
+  "required": [
+    "$schema",
+    "kind",
+    "name",
+    "type",
+    "description",
+    "long_name",
+    "versions"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri-reference",
+      "enum": ["ext_schema.json#", "v0.1/ext_schema.json#"],
+      "description": "Path to schema, relative to <UDB ROOT>/schemas"
+    },
+    "kind": {
+      "type": "string",
+      "const": "extension",
+      "description": "Object type"
+    },
+    "name": {
+      "$ref": "schema_defs.json#/$defs/extension_name"
+    },
+    "long_name": {
+      "type": "string",
+      "description": "One line description for the extension"
+    },
+    "description": {
+      "$ref": "schema_defs.json#/$defs/spec_text",
+      "description": "Full documentation of the extension"
+    },
+    "rvi_jira_issue": {
+      "type": "string",
+      "description": "JIRA issue number for the RVI issue that tracks this extension"
+    },
+    "company": {
+      "description": "The company that developed this extension",
+      "$ref": "schema_defs.json#/$defs/company"
+    },
+    "doc_license": {
+      "$ref": "schema_defs.json#/$defs/license"
+    },
+    "type": {
+      "enum": ["unprivileged", "privileged"],
+      "description": "Either unprivileged or privileged"
+    },
+    "requirements": {
+      "description": "Condition represeting requirements of this extension. If the condition is false, the extension cannot be implemented",
+      "$ref": "schema_defs.json#/$defs/condition"
+    },
+    "versions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["version", "state"],
+        "if": {
+          "properties": {
+            "state": {
+              "const": "ratified"
+            }
+          }
+        },
+        "then": {
+          "required": ["ratification_date"]
+        },
+        "properties": {
+          "version": {
+            "$ref": "schema_defs.json#/$defs/extension_version"
+          },
+          "state": {
+            "$ref": "schema_defs.json#/$defs/spec_state",
+            "description": "Current state of this version"
+          },
+          "repositories": {
+            "description": "Repositories associated with this extension",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "branch": {
+                  "type": "string",
+                  "description": "Branch/tag where the work is done"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "ratification_date": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^20[0-9][0-9]-(0[1-9]|1[0-2])$",
+                "$comment": "When ratification date is known",
+                "description": "A specific year and month in YYYY-MM format",
+                "examples": ["2019-01", "2024-12"]
+              },
+              {
+                "type": "string",
+                "pattern": "^unknown$",
+                "$comment": "When ratification date is unknown"
+              },
+              {
+                "type": "null",
+                "$comment": "When version isn't ratified"
+              }
+            ]
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Changes since last version"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Link to ratified document"
+          },
+          "contributors": {
+            "description": "List of contributors to this version of the extension",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Contributor name, in 'GIVEN_NAME SURNAME' format"
+                },
+                "company": {
+                  "type": "string",
+                  "description": "Company the contributor worked for, or 'Individual'"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "description": "E-mail address for the contributor"
+                }
+              }
+            }
+          },
+          "requirements": {
+            "description": "Condition represeting requirements of this extension version _in addition to any specified for the extension overall_. If the condition is false, the extension version cannot be implemented",
+            "$ref": "schema_defs.json#/$defs/condition"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "$source": {
+      "type": "string",
+      "description": "Source file where this extension was defined"
+    },
+    "cert_normative_rules": {
+      "$ref": "schema_defs.json#/$defs/cert_normative_rules"
+    }
+  },
+  "additionalProperties": false
+}

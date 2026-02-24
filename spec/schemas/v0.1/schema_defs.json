@@ -1,0 +1,874 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/riscv/riscv-unified-db/tree/main/spec/schemas/v0.1/schema_defs.json",
+  "title": "Common patterns used by all schemas",
+  "$defs": {
+    "$source": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "Path to the source file containing this object"
+    },
+    "semantic_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "rvi_version": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+(\\.[0-9]+(-pre)?)?)?$"
+    },
+    "csr_name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.]+$",
+      "description": "CSR name"
+    },
+    "csr_field": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.]+\\.[A-Z0-9]+$",
+      "description": "CSR field"
+    },
+    "csr_field_bits": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.]+\\.[A-Z0-9]+\\[[0-9]+(:[0-9]+)?\\]$",
+      "description": "CSR field"
+    },
+    "field_location": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "description": "Location of a single bit"
+        },
+        {
+          "type": "string",
+          "pattern": "^[0-9]+-[0-9]+$",
+          "description": "Location range of a multi-bit field"
+        }
+      ],
+      "description": "Location of a field in a register"
+    },
+    "bit_length_value": {
+      "description": "Bit width value for a register or field",
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "string",
+          "minLength": 1,
+          "enum": ["MXLEN", "FLEN", "VLEN"]
+        }
+      ]
+    },
+    "register_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+      "description": "Register name"
+    },
+    "register_file_name": {
+      "type": "string",
+      "pattern": "^[A-Z]$",
+      "description": "Register file name"
+    },
+    "register_alias": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+      "description": "Register alias or ABI mnemonic"
+    },
+    "possibly_split_field_location": {
+      "description": "Location specifier for a field",
+      "oneOf": [
+        {
+          "description": "bit range location, possibly split",
+          "type": "string",
+          "pattern": "^(([0-9]+)|([0-9]+-[0-9]+))(\\|(([0-9]+)|([0-9]+-[0-9]+)))*$"
+        },
+        {
+          "description": "Single bit location",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31
+        }
+      ]
+    },
+    "revision_history_entry": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "$ref": "#/$defs/semantic_version",
+          "description": "Revision number"
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The date of the change"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of changes"
+        }
+      },
+      "required": ["date", "revision", "changes"],
+      "additionalProperties": false
+    },
+    "spec_state": {
+      "type": "string",
+      "enum": [
+        "development",
+        "frozen",
+        "public-review",
+        "ratification-ready",
+        "ratified",
+        "nonstandard-released"
+      ]
+    },
+    "spec_text": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Asciidoctor source"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/conditional_text"
+          }
+        }
+      ]
+    },
+    "conditional_text": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Asciidoctor source"
+        },
+        "when()": {
+          "type": "string",
+          "description": "IDL boolean expression. When true, the text applies"
+        },
+        "when_ast": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "license": {
+      "description": "License that applies to the textual documentation for this extension",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "License name"
+        },
+        "id": {
+          "type": "string",
+          "description": "License identifier"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Link to license text"
+        },
+        "text_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Link to license text"
+        }
+      },
+      "additionalProperties": false
+    },
+    "company": {
+      "description": "A company",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the company. Should be \"RISC-V International\" for standard extensions"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Website of the company. Should be \"https://riscv.org\" for standard extensions"
+        }
+      }
+    },
+    "extension_presence": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["mandatory", "optional", "prohibited"]
+        },
+        {
+          "type": "object",
+          "required": ["optional"],
+          "properties": {
+            "optional": {
+              "type": "string",
+              "enum": ["localized", "development", "expansion", "transitory"]
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "A specific day in YYYY-MM-DD format",
+      "examples": ["2018-11-13", "2024-12-31"]
+    },
+    "extension_name": {
+      "type": "string",
+      "pattern": "^(([A-WY])|([SXZ][a-z0-9]+))$"
+    },
+    "extension_version": {
+      "$ref": "#/$defs/rvi_version"
+    },
+    "requirement_string": {
+      "type": "string",
+      "pattern": "^((>=)|(>)|(~>)|(<)|(<=)|(=))?\\s*[0-9]+(\\.[0-9]+(\\.[0-9]+(-[a-fA-F0-9]+)?)?)?$"
+    },
+    "version_requirements": {
+      "description": "A (set of) version requirements",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/requirement_string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/requirement_string"
+          }
+        }
+      ]
+    },
+    "extension_requirement": {
+      "description": "A requirement on an extension. Can either specify just an extension name, in which case version '>= 0' is implied, or both a name and a requirement",
+      "type": "object",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/extension_name"
+        },
+        "version": {
+          "$ref": "#/$defs/version_requirements"
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "param_name": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z_0-9]*$"
+    },
+    "param_requirement": {
+      "type": "object",
+      "required": ["name", "schema"],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/param_name"
+        },
+        "schema": {
+          "$ref": "json-schema-draft-07.json#"
+        }
+      },
+      "additionalProperties": false
+    },
+    "requires_entry": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/extension_requirement"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "anyOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/requires_entry"
+              }
+            },
+            "allOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/requires_entry"
+              }
+            },
+            "oneOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/requires_entry"
+              }
+            },
+            "not": {
+              "type": "object",
+              "$ref": "#/$defs/requires_entry"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "extension_with_version": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/extension_name"
+        },
+        "version": {
+          "$ref": "#/$defs/extension_version"
+        }
+      }
+    },
+    "author": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Author's full name"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Author's email address"
+        },
+        "organization": {
+          "$ref": "#/$defs/organization",
+          "description": "Author's organization, which should be an RVI member (or individual)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "organization": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Organization name"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Organization URL"
+        }
+      },
+      "additionalProperties": false
+    },
+    "when_condition": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/version_requirements"
+        }
+      },
+      "additionalProperties": false
+    },
+    "parameter_constraint": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "$ref": "json-schema-draft-07.json#"
+        },
+        "when": {
+          "$ref": "#/$defs/when_condition"
+        }
+      }
+    },
+    "cert_normative_rules": {
+      "description": "Architecturally visible behaviors requiring validation by certification tests",
+      "type": "array",
+      "required": ["id", "name", "doc_links", "description"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "doc_links": {
+          "description": "Link to UDB documentation, ISA manual, Sail code, or IDL code",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "encoding_match": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[01-]{43}11111$",
+          "description": "48-bit encoding"
+        },
+        {
+          "type": "string",
+          "pattern": "^[01-]{30}11$",
+          "description": "32-bit encoding"
+        },
+        {
+          "type": "string",
+          "pattern": "^[01-]{14}((00)|(01)|(10))$",
+          "description": "16-bit encoding"
+        }
+      ]
+    },
+    "inst_type_name": {
+      "type": "string",
+      "pattern": "[A-Z][A-Za-z0-9\\-]*"
+    },
+    "inst_subtype_name": {
+      "type": "string",
+      "pattern": "[A-Z][A-Za-z0-9\\-]*-[A-Za-z0-9\\-]*"
+    },
+    "reference": {
+      "type": "string",
+      "pattern": "^.+\\.yaml#(/.*)?$",
+      "description": "refrence to another database object, as a JSON Reference"
+    },
+    "integer": {
+      "description": "An integer, either native to JSON or a number-like string",
+      "oneOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string",
+          "pattern": "^0b[01]+$"
+        },
+        {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]+$"
+        }
+      ]
+    },
+    "ref_url": {
+      "type": "string",
+      "pattern": "^.*/.*\\.yaml#.*$"
+    },
+    "ref_url_list": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ref_url"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref_url"
+          }
+        }
+      ]
+    },
+    "extension_condition": {
+      "description": "A logic condition specifying certain extension version requirements",
+      "type": "object",
+      "required": ["extension"],
+      "properties": {
+        "extension": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/extension_requirement"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "allOf": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "schema_defs.json#/$defs/extension_condition/properties/extension"
+                  },
+                  "minItems": 2
+                },
+                "anyOf": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "schema_defs.json#/$defs/extension_condition/properties/extension"
+                  },
+                  "minItems": 2
+                },
+                "oneOf": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "schema_defs.json#/$defs/extension_condition/properties/extension"
+                  },
+                  "minItems": 2
+                },
+                "noneOf": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "schema_defs.json#/$defs/extension_condition/properties/extension"
+                  },
+                  "minItems": 2
+                },
+                "not": {
+                  "$ref": "schema_defs.json#/$defs/extension_condition/properties/extension"
+                }
+              },
+              "minProperties": 1,
+              "maxProperties": 1
+            },
+            {
+              "type": "object",
+              "required": ["if", "then"],
+              "properties": {
+                "if": {
+                  "$ref": "schema_defs.json#/$defs/condition"
+                },
+                "then": {
+                  "$ref": "schema_defs.json#/$defs/extension_condition/properties/extension"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "param_condition": {
+      "type": "object",
+      "required": ["param"],
+      "properties": {
+        "param": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "$ref": "#/$defs/param_name"
+                },
+                "index": {
+                  "type": "integer"
+                },
+                "size": {
+                  "type": "boolean"
+                },
+                "equal": {
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "oneOf": {
+                  "type": "array",
+                  "minItems": 2,
+                  "oneOf": [
+                    {
+                      "items": {
+                        "type": "integer"
+                      }
+                    },
+                    {
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    {
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    }
+                  ]
+                },
+                "notEqual": {
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "greaterThan": {
+                  "type": "integer"
+                },
+                "lessThan": {
+                  "type": "integer"
+                },
+                "greaterThanOrEqual": {
+                  "type": "integer"
+                },
+                "lessThanOrEqual": {
+                  "type": "integer"
+                },
+                "includes": {
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "reason": {
+                  "description": "Why the param condition exists",
+                  "type": "string"
+                }
+              },
+              "$comment": "Mandating 2-3 properties, depending on if reason is given",
+              "minProperties": 2,
+              "maxProperties": 3
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "allOf": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "schema_defs.json#/$defs/param_condition/properties/param"
+                  },
+                  "minItems": 2
+                },
+                "anyOf": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "schema_defs.json#/$defs/param_condition/properties/param"
+                  },
+                  "minItems": 2
+                },
+                "oneOf": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "schema_defs.json#/$defs/param_condition/properties/param"
+                  },
+                  "minItems": 2
+                },
+                "noneOf": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "schema_defs.json#/$defs/param_condition/properties/param"
+                  },
+                  "minItems": 2
+                },
+                "not": {
+                  "$ref": "schema_defs.json#/$defs/param_condition/properties/param"
+                }
+              },
+              "minProperties": 1,
+              "maxProperties": 1
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "idl": {
+      "description": "IDL code",
+      "type": "string"
+    },
+    "idl_condition": {
+      "description": "A condition expressed with IDL",
+      "type": "object",
+      "required": ["idl()"],
+      "properties": {
+        "idl()": {
+          "description": "IDL function containing one or more implications (e.g., A -> B).",
+          "$ref": "#/$defs/idl"
+        },
+        "idl_ast": {
+          "type": "object"
+        },
+        "reason": {
+          "description": "Why the constraint exists",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "yaml_condition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "allOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/yaml_condition"
+              },
+              "minItems": 2
+            },
+            "anyOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/yaml_condition"
+              },
+              "minItems": 2
+            },
+            "oneOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/yaml_condition"
+              },
+              "minItems": 2
+            },
+            "noneOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/yaml_condition"
+              },
+              "minItems": 2
+            },
+            "not": {
+              "$ref": "#/$defs/yaml_condition"
+            }
+          },
+          "minProperties": 1,
+          "maxProperties": 1,
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/extension_condition"
+        },
+        {
+          "$ref": "#/$defs/param_condition"
+        },
+        {
+          "$ref": "#/$defs/xlen_condition"
+        }
+      ]
+    },
+    "xlen_condition": {
+      "type": "object",
+      "required": ["xlen"],
+      "properties": {
+        "xlen": {
+          "enum": [32, 64]
+        }
+      },
+      "additionalProperties": false
+    },
+    "condition": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/yaml_condition"
+        },
+        {
+          "$ref": "#/$defs/idl_condition"
+        }
+      ]
+    },
+    "extension_requirement_list_item": {
+      "description": "A list of extension requirements, possibly with a condition",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/extension_requirement"
+        },
+        {
+          "description": "A conditional extension requirement",
+          "type": "object",
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/extension_name"
+            },
+            "version": {
+              "$ref": "#/$defs/version_requirements"
+            },
+            "when": {
+              "$comment": "Using 'when' instead of 'if' to distinguish it from 'if' in a condition",
+              "$ref": "#/$defs/condition"
+            }
+          },
+          "required": ["name", "when"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "extension_requirement_list": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "allOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/extension_requirement_list_item"
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/extension_requirement_list_item"
+        }
+      ]
+    },
+    "uint32": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "uint64": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "32bit_unsigned_pow2": {
+      "description": "An unsigned power of 2 that fits in 32 bits",
+      "type": "integer",
+      "enum": [
+        1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4095, 8192, 16384,
+        32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304,
+        8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912,
+        1073741824, 2147483648
+      ]
+    },
+    "64bit_unsigned_pow2": {
+      "description": "An unsigned power of 2 that fits in 64 bits",
+      "type": "integer",
+      "enum": [
+        1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4095, 8192, 16384,
+        32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304,
+        8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912,
+        1073741824, 2147483648, 4294967296, 8589934592, 17179869184,
+        34359738368, 68719476736, 137438953472, 274877906944, 549755813888,
+        1099511627776, 2199023255552, 4398046511104, 8796093022208,
+        17592186044416, 35184372088832, 70368744177664, 140737488355328,
+        281474976710656, 562949953421312, 1125899906842624, 2251799813685248,
+        4503599627370496, 9007199254740992, 18014398509481984,
+        36028797018963968, 72057594037927936, 144115188075855872,
+        288230376151711744, 576460752303423488, 1152921504606846976,
+        2305843009213693952, 4611686018427387904, 9223372036854775808
+      ]
+    }
+  }
+}

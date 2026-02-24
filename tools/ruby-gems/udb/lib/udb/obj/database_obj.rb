@@ -380,15 +380,27 @@ module Udb
     end
 
     @@schemas ||= {}
+    # Base URI used in schema $id fields.  Relative $ref values are resolved against
+    # this by the JSON Schemer library, producing full https://... URIs that must be
+    # mapped back to local files.
+    SCHEMA_BASE_URI = "https://github.com/riscv/riscv-unified-db/tree/main/spec/schemas/"
+
     sig { params(udb_resolver: Resolver).returns(T.proc.params(pattern: Regexp).returns(T.untyped)) }
     def self.create_json_schemer_resolver(udb_resolver)
       proc do |pattern|
-        if pattern.to_s =~ /^http/
+        uri_str = pattern.to_s
+        if uri_str.start_with?(SCHEMA_BASE_URI)
+          # Strip the known base URI prefix and load from the local filesystem.
+          rel = uri_str[SCHEMA_BASE_URI.length..]
+          local_path = udb_resolver.schemas_path / rel
+          local_path = udb_resolver.schemas_path / File.basename(rel) unless local_path.exist?
+          JSON.load_file(local_path)
+        elsif uri_str =~ /^http/
           JSON.parse(T.must(Net::HTTP.get(pattern)))
-        elsif pattern.to_s =~ /^json-schemer:\/\/schema/
-          JSON.load_file("#{udb_resolver.schemas_path}#{URI(pattern.to_s).path}")
+        elsif uri_str =~ /^json-schemer:\/\/schema/
+          JSON.load_file("#{udb_resolver.schemas_path}#{URI(uri_str).path}")
         else
-          JSON.load_file(udb_resolver.schemas_path / pattern.to_s)
+          JSON.load_file(udb_resolver.schemas_path / uri_str)
         end
       end
     end

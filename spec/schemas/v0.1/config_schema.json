@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/riscv/riscv-unified-db/tree/main/spec/schemas/v0.1/config_schema.json",
+  "$defs": {
+    "full_configuration": {
+      "type": "object",
+      "required": [
+        "$schema",
+        "kind",
+        "type",
+        "description",
+        "name",
+        "implemented_extensions",
+        "params"
+      ],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "format": "uri-reference",
+          "enum": ["config_schema.json#", "v0.1/config_schema.json#"]
+        },
+        "kind": {
+          "type": "string",
+          "const": "architecture configuration"
+        },
+        "type": {
+          "type": "string",
+          "const": "fully configured"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the configuration"
+        },
+        "description": {
+          "type": "string",
+          "description": "An asciidoc description of the configuration"
+        },
+        "arch_overlay": {
+          "type": "string",
+          "description": "Optional arch overlay to apply. Can be either the name of a directory under arch_overlay/ or a (absolute or relative) path to an overlay directory"
+        },
+        "$source": {
+          "type": "string",
+          "format": "uri",
+          "description": "Path to original file, when this is a copy"
+        },
+        "params": {
+          "type": "object"
+        },
+        "implemented_extensions": {
+          "description": "Extensions implemented by this architecture",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "version"],
+            "properties": {
+              "name": {
+                "$ref": "schema_defs.json#/$defs/extension_name",
+                "description": "Extension name"
+              },
+              "version": {
+                "$ref": "schema_defs.json#/$defs/extension_version"
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "partial_configuration": {
+      "type": "object",
+      "required": [
+        "$schema",
+        "kind",
+        "type",
+        "name",
+        "description",
+        "mandatory_extensions"
+      ],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "format": "uri-reference",
+          "enum": ["config_schema.json#", "v0.1/config_schema.json#"]
+        },
+        "kind": {
+          "type": "string",
+          "const": "architecture configuration"
+        },
+        "type": {
+          "type": "string",
+          "const": "partially configured"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the configuration"
+        },
+        "description": {
+          "type": "string",
+          "description": "An asciidoc description of the configuration"
+        },
+        "params": {
+          "type": "object"
+        },
+        "arch_overlay": {
+          "type": "string",
+          "description": "Optional arch overlay to apply. Can be either the name of a directory under arch_overlay/ or a (absolute or relative) path to an overlay directory"
+        },
+        "$source": {
+          "type": "string",
+          "format": "uri",
+          "description": "Path to original file, when this is a copy"
+        },
+        "mandatory_extensions": {
+          "description": "Extensions mandatory in this architecture",
+          "type": "array",
+          "items": {
+            "$ref": "schema_defs.json#/$defs/extension_requirement"
+          }
+        },
+        "non_mandatory_extensions": {
+          "description": "Extensions that are not mandatory but are still _special_ in this architecture. This could mean different things depending on the context: for certificates or generated IP, this would correspond to _optional supported_, and extensions not in non_mandatory are not possible. For profiles, this corresponds to some type of _profile optional_, but extensions in non_mandatory are still possible.",
+          "type": "array",
+          "items": {
+            "$ref": "schema_defs.json#/$defs/extension_requirement"
+          }
+        },
+        "prohibited_extensions": {
+          "description": "Extensions explicitly prohibited in this architecture. Does *not* need to include extensions that are excluded because of a conflict-by-definition with a mandatory extension, as those will be calculated automatically",
+          "type": "array",
+          "items": {
+            "$ref": "schema_defs.json#/$defs/extension_requirement"
+          }
+        },
+        "implemented_extensions": {
+          "type": "null"
+        },
+        "additional_extensions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether or not a compliant instance of this partial config can have more extensions than those listed in mandatory_extensions/non_mandatory_extensions"
+        }
+      },
+      "additionalProperties": false
+    },
+    "unconfiguration": {
+      "type": "object",
+      "required": ["$schema", "kind", "type", "name", "description"],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "format": "uri-reference",
+          "enum": ["config_schema.json#", "v0.1/config_schema.json#"]
+        },
+        "kind": {
+          "type": "string",
+          "const": "architecture configuration"
+        },
+        "type": {
+          "type": "string",
+          "const": "unconfigured"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the configuration"
+        },
+        "arch_overlay": {
+          "type": "string",
+          "description": "Optional arch overlay to apply. Can be either the name of a directory under arch_overlay/ or a (absolute or relative) path to an overlay directory"
+        },
+        "$source": {
+          "type": "string",
+          "format": "uri",
+          "description": "Path to original file, when this is a copy"
+        },
+        "description": {
+          "type": "string",
+          "description": "An asciidoc description of the configuration"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/full_configuration"
+    },
+    {
+      "$ref": "#/$defs/partial_configuration"
+    },
+    {
+      "$ref": "#/$defs/unconfiguration"
+    }
+  ]
+}

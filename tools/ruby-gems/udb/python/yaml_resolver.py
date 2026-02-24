@@ -36,8 +36,48 @@ UDB_ROOT = (
 SCHEMAS_PATH = Path(os.path.join(UDB_ROOT, "spec", "schemas"))
 
 
+# Map from symlink name -> real relative path for schema files
+# e.g. 'csr_schema.json' -> 'v0.1/csr_schema.json'
+_SCHEMA_SYMLINK_MAP: dict[str, str] = {
+    entry.name: str(entry.resolve().relative_to(SCHEMAS_PATH))
+    for entry in SCHEMAS_PATH.iterdir()
+    if entry.is_symlink()
+}
+
+
+def _resolve_schema_uri(uri: str) -> str:
+    """Replace a symlink-based schema URI with the real versioned path it points to.
+
+    For example, 'csr_schema.json#' becomes 'v0.1/csr_schema.json#'.
+    URIs that already point to a versioned (non-symlink) path are returned unchanged.
+    """
+    fragment_sep = uri.find("#")
+    if fragment_sep == -1:
+        base, fragment = uri, ""
+    else:
+        base, fragment = uri[:fragment_sep], uri[fragment_sep:]
+    resolved_base = _SCHEMA_SYMLINK_MAP.get(base, base)
+    return resolved_base + fragment
+
+
+# The base URI used in schema $id fields; relative refs are resolved against it.
+_SCHEMA_BASE_URI = "https://github.com/riscv/riscv-unified-db/tree/main/spec/schemas/"
+
+
 def retrieve_from_filesystem(uri: str):
-    path = SCHEMAS_PATH / Path(uri)
+    # The referencing library resolves relative $ref values against the schema's $id,
+    # producing full https://... URIs.  Strip the known base prefix so we can map
+    # back to a local filesystem path.
+    if uri.startswith(_SCHEMA_BASE_URI):
+        rel = uri[len(_SCHEMA_BASE_URI) :]
+    else:
+        rel = uri
+    path = SCHEMAS_PATH / Path(rel)
+    if not path.exists():
+        # Some shared files (e.g. json-schema-draft-07.json) live at the root of
+        # SCHEMAS_PATH rather than inside a versioned sub-directory.  Fall back to
+        # looking up just the filename at the root level.
+        path = SCHEMAS_PATH / Path(rel).name
     contents = json.loads(path.read_text())
     return Resource.from_contents(contents)
 
@@ -552,6 +592,7 @@ class SchemaNotFoundException(Exception):
 
 
 def _get_schema(uri):
+    uri = _resolve_schema_uri(uri)
     rel_path = uri.split("#")[0]
 
     if rel_path in schemas:
@@ -614,6 +655,13 @@ def write_resolved_file_and_validate(
     resolved_path = os.path.join(resolved_dir, rel_path)
     resolved_obj = resolve(rel_path, args.arch_dir, do_checks, compile_idl)
     resolved_obj["$source"] = os.path.join(args.arch_dir, rel_path)
+
+    # Replace any symlink-based $schema reference with the real versioned path it resolves to,
+    # so the written file records the exact schema version that was used rather than the
+    # "latest" symlink alias.
+    if "$schema" in resolved_obj:
+        resolved_obj["$schema"] = _resolve_schema_uri(resolved_obj["$schema"])
+
     write_yaml(resolved_path, resolved_obj)
 
     if do_checks and ("$schema" in resolved_obj):
