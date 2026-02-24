@@ -511,6 +511,7 @@ jobs:
         - cfg
         - mmr
         - mmr_schema
+        - schema_versioning
   regress-gen-go:
     runs-on: ubuntu-latest
     needs: build-container
