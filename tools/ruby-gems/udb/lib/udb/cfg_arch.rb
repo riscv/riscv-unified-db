@@ -525,10 +525,8 @@ module Udb
             params:
           )
 
-          puts "adding globals"
           global_ast.add_global_symbols(s)
 
-          puts "added!"
           s.deep_freeze
           raise if s.name.nil?
           global_ast.freeze_tree(s)
