@@ -378,22 +378,22 @@ module Udb
       if schema_hsh.key?("$ref")
         # Handle references to shorthand type definitions
         if schema_hsh.fetch("$ref").split("/").last == "uint32"
-          assertions << solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**32 - 1)))
+          assertions << ((term.unsigned_gt(0)) & (term.unsigned_le(2**32 - 1)))
         elsif schema_hsh.fetch("$ref").split("/").last == "uint64"
-          assertions << solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**64 - 1)))
+          assertions << ((term.unsigned_gt(0)) & (term.unsigned_le(2**64 - 1)))
         elsif schema_hsh.fetch("$ref").split("/").last == "32bit_unsigned_pow2"
-          assertions << solver.assert((term == 0) | (0 == (term & (term - 1))))
-          assertions << solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**32 - 1)))
+          assertions << ((term == 0) | (0 == (term & (term - 1))))
+          assertions << ((term.unsigned_gt(0)) & (term.unsigned_le(2**32 - 1)))
         elsif schema_hsh.fetch("$ref").split("/").last == "64bit_unsigned_pow2"
-          assertions << solver.assert((term == 0) | (0 == (term & (term - 1))))
-          assertions << solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**64 - 1)))
+          assertions << ((term == 0) | (0 == (term & (term - 1))))
+          assertions << ((term.unsigned_gt(0)) & (term.unsigned_le(2**64 - 1)))
         else
           raise "Unhandled schema $ref: #{schema_hsh.fetch("$ref")}"
         end
       end
 
       if assert
-        assertions.each { |a| solver.assert a }
+        assertions.each { |a| puts a; solver.assert a }
       end
       assertions
     end
