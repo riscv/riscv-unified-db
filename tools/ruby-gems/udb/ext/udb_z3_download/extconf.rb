@@ -13,6 +13,16 @@ require "fileutils"
 require "net/http"
 require "uri"
 
+# Check that required build tools are present
+def find_executable(name)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
+    File.executable?(File.join(dir, name))
+  end
+end
+
+abort "ERROR: 'make' is not installed or not on PATH. Please install make before continuing." \
+  unless find_executable("make")
+
 # Load Z3_VERSION from the sibling lib file without requiring the full gem
 z3_version_rb = File.expand_path("../../lib/udb/z3_version.rb", __dir__)
 load z3_version_rb
