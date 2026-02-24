@@ -473,39 +473,8 @@ module Udb
         + params.reject { |p| pb.advance; @config.param_values.key?(p.name) }
       final_param_vars = all_params.map do |param|
         pb.advance
-        idl_type =
-          if param.schema_known?
-            param.idl_type
-          else
-            begin
-              idl_types =
-                param.possible_schemas.map do |schema|
-                  schema.to_idl_type
-                end
-              if idl_types.fetch(0).kind == :bits
-                # use the worst case sizing
-                if !(t = idl_types.find { |t| t.width == :unknown }).nil?
-                  t
-                else
-                  idl_types.max { |t1, t2| T.cast(t1.width, Integer) <=> T.cast(t2.width, Integer) }
-                end
-              else
-                idl_types.at(0)
-              end
-            rescue Parameter::NoMatchingSchemaError
-              # nothing matched. That's only OK if this parameter is not defined in this config
-              # unfortunately, we can't easily check that there because that requires a constructed
-              # symtab ;(
-              # we are just going to assume the user has validated the config (or is in the process
-              # of validating it)
-              # if param.defined_by_condition.satisfied_by_cfg_arch?(self)
-              #   Udb.logger.warn "Parameter '#{param.name}' is defined, but has no matching schema"
-              # end
+        idl_type = param.idl_type
 
-              # just pick some possible schema
-              param.all_schemas.fetch(0).to_idl_type
-            end
-          end
         if param.value_known?
           Idl::Var.new(param.name, idl_type.make_const, param.value, param: true)
         else

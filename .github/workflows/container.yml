@@ -5,7 +5,47 @@ on:
       - main
   workflow_dispatch:
 jobs:
+  check-tag:
+    runs-on: ubuntu-24.04
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - name: Clone Github Repo Action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Get container tag
+        run: |
+          TAG=$(cat bin/.container-tag)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Check if tag already exists in registry
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ env.TAG }}"
+          # Check Docker Hub
+          DH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://hub.docker.com/v2/repositories/riscvintl/udb/tags/${TAG}/")
+          # Check GHCR (uses GitHub token for auth)
+          GHCR_TOKEN=$(curl -s \
+            -H "Authorization: Bearer $(echo -n "$GITHUB_TOKEN" | base64 -w0)" \
+            "https://ghcr.io/token?scope=repository:riscv/udb:pull" \
+            | jq -r .token)
+          GHCR_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${GHCR_TOKEN}" \
+            "https://ghcr.io/v2/riscv/udb/manifests/${TAG}")
+          if [ "$DH_STATUS" = "200" ] && [ "$GHCR_STATUS" = "200" ]; then
+            echo "Container tag ${TAG} already exists in both registries - skipping build."
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Container tag ${TAG} not found in one or both registries - proceeding with build."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
   build-docker-container:
+    needs: check-tag
+    if: needs.check-tag.outputs.exists != 'true'
     env:
       DOCKER: 1
     strategy:
@@ -14,8 +54,10 @@ jobs:
         include:
           - runner: ubuntu-24.04
             platform: linux/amd64
+            artifact: image-amd64
           - runner: ubuntu-24.04-arm
             platform: linux/arm64
+            artifact: image-arm64
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Clone Github Repo Action
@@ -26,66 +68,54 @@ jobs:
           TAG=$(cat bin/.container-tag)
           echo "TAG=$TAG" >> $GITHUB_ENV
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to GHCR
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
-      - name: Build and push by digest
-        id: build
+      - name: Build and export to tarball
         uses: docker/build-push-action@601a80b39c9405e50806ae38af30926f9d957c47 # v6.19.1
         with:
           file: ./.devcontainer/Dockerfile
           platforms: ${{ matrix.platform }}
-          outputs: type=image,"name=docker.io/riscvintl/udb,ghcr.io/riscv/udb",push-by-digest=true,name-canonical=true,push=true
-          tags: docker.io/riscvintl/udb,ghcr.io/riscv/udb
+          push: false
+          tags: riscvintl/udb:${{ env.TAG }}
+          outputs: type=docker,dest=${{ runner.temp }}/image.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Export digest
-        run: |
-          mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
-
-      - name: Upload digest
+      - name: Upload image tarball
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: digests-${{ matrix.runner }}
-          path: /tmp/digests/*
+          name: ${{ matrix.artifact }}
+          path: ${{ runner.temp }}/image.tar
           if-no-files-found: error
           retention-days: 1
 
   merge-docker-container:
     runs-on: ubuntu-24.04
     needs:
+      - check-tag
       - build-docker-container
+    if: needs.check-tag.outputs.exists != 'true'
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Download digests
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          pattern: digests-*
-          merge-multiple: true
-          path: /tmp/digests
 
       - name: Get container tag
         run: |
           TAG=$(cat bin/.container-tag)
           echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Download amd64 image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: image-amd64
+          path: ${{ runner.temp }}/amd64
+
+      - name: Download arm64 image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: image-arm64
+          path: ${{ runner.temp }}/arm64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
@@ -96,17 +126,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Create manifest list and push
-        working-directory: /tmp/digests
-        run: |
-          docker buildx imagetools create \
-            --tag riscvintl/udb:${{ env.TAG }} \
-            $(printf 'riscvintl/udb@sha256:%s ' *)
-
-      - name: Inspect image
-        run: |
-          docker buildx imagetools inspect riscvintl/udb:${{ env.TAG }}
-
       - name: Login to GHCR
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
@@ -114,15 +133,44 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create manifest list and push
-        working-directory: /tmp/digests
+      - name: Load, retag, and push platform images
         run: |
-          CONTAINER_NAME=$(printf 'ghcr.io/riscv/udb@sha256:%s ' *)
-          echo "CONTAINER_NAME=$CONTAINER_NAME" >> $GITHUB_ENV
-          docker buildx imagetools create \
-            --tag ghcr.io/riscv/udb:${{ env.TAG }} \
-            $(printf 'ghcr.io/riscv/udb@sha256:%s ' *)
+          TAG="${{ env.TAG }}"
 
-      - name: Inspect image
+          # Load amd64 image and retag with platform suffix before loading arm64
+          # (both tars carry the same tag, so we must retag immediately after each load)
+          docker load --input ${{ runner.temp }}/amd64/image.tar
+          docker tag riscvintl/udb:${TAG} docker.io/riscvintl/udb:${TAG}-amd64
+          docker tag riscvintl/udb:${TAG} ghcr.io/riscv/udb:${TAG}-amd64
+
+          docker load --input ${{ runner.temp }}/arm64/image.tar
+          docker tag riscvintl/udb:${TAG} docker.io/riscvintl/udb:${TAG}-arm64
+          docker tag riscvintl/udb:${TAG} ghcr.io/riscv/udb:${TAG}-arm64
+
+          # Push platform-specific images to both registries
+          docker push docker.io/riscvintl/udb:${TAG}-amd64
+          docker push docker.io/riscvintl/udb:${TAG}-arm64
+          docker push ghcr.io/riscv/udb:${TAG}-amd64
+          docker push ghcr.io/riscv/udb:${TAG}-arm64
+
+      - name: Create and push multi-platform manifest to Docker Hub
         run: |
-          docker buildx imagetools inspect ghcr.io/riscv/udb:${{ env.TAG }}
+          TAG="${{ env.TAG }}"
+          docker buildx imagetools create \
+            --tag docker.io/riscvintl/udb:${TAG} \
+            docker.io/riscvintl/udb:${TAG}-amd64 \
+            docker.io/riscvintl/udb:${TAG}-arm64
+
+      - name: Create and push multi-platform manifest to GHCR
+        run: |
+          TAG="${{ env.TAG }}"
+          docker buildx imagetools create \
+            --tag ghcr.io/riscv/udb:${TAG} \
+            ghcr.io/riscv/udb:${TAG}-amd64 \
+            ghcr.io/riscv/udb:${TAG}-arm64
+
+      - name: Inspect Docker Hub image
+        run: docker buildx imagetools inspect docker.io/riscvintl/udb:${{ env.TAG }}
+
+      - name: Inspect GHCR image
+        run: docker buildx imagetools inspect ghcr.io/riscv/udb:${{ env.TAG }}

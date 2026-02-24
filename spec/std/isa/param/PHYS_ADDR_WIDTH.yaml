@@ -14,24 +14,11 @@ definedBy:
 description: |
   Implementation-defined size of the physical address space.
 schema:
-  oneOf:
-    - when:
-        param:
-          name: MXLEN
-          equal: 32
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 34
-    - when:
-        param:
-          name: MXLEN
-          equal: 64
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 64
+  type: integer
+  minimum: 1
+  maximum: 64
 requirements:
   idl(): |
+    (MXLEN == 32) -> PHYS_ADDR_WIDTH <= 34;
     (MXLEN == 32) && !implemented?(ExtensionName::Sv32) -> (PHYS_ADDR_WIDTH <= 32);
   reason: without Sv32 translation, there is no way to create an address > 32 bits

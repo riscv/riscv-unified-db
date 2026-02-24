@@ -407,7 +407,7 @@ module Udb
     def to_z3(solver, cfg_arch)
       t = comparison_type
       e = T.let(
-        solver.param(name, T.must(cfg_arch.param(name)).maximal_schema.to_h),
+        solver.param(name, T.must(cfg_arch.param(name)).schema.to_h),
         T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr, Z3::BoolExpr)
       )
       if @yaml.key?("size")

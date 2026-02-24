@@ -19,26 +19,14 @@ description: |
   Must be greater than or equal to _max_(`PHYS_ADDR_WIDTH`, `VA_SIZE`)
 
 schema:
-  oneOf:
-    - when:
-        param:
-          name: MXLEN
-          equal: 32
-      schema:
-        type: integer
-        minimum: 0
-        maximum: 32
-    - when:
-        param:
-          name: MXLEN
-          equal: 64
-      schema:
-        type: integer
-        minimum: 0
-        maximum: 64
+  type: integer
+  minimum: 0
+  maximum: 64
 
 requirements:
   idl(): |
+    MXLEN == 32 -> MTVAL_WIDTH <= 32;
+
     # in RV32, MTVAL must be able to hold a physical address if M-mode takes an exception
     # that reports an address
     # Since phyiscal address width can be larger than 32 with Sv32, need to downsize MTVAL in that case

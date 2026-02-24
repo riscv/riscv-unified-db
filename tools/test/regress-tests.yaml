@@ -124,6 +124,8 @@ tests:
           - yaml_loader
           - cfg_arch
           - cfg
+          - mmr
+          - mmr_schema
     test:
       - name: Run udb gem ${{ matrix.test }} unit tests
         run: ./bin/ruby tools/ruby-gems/udb/test/test_${{ matrix.test }}.rb
