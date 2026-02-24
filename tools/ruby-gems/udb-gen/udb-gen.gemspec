@@ -17,7 +17,6 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.platform    = Gem::Platform::RUBY
   s.files       = Dir["lib/**/*.rb", "templates/*.erb", "LICENSE"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
@@ -31,6 +30,9 @@ Gem::Specification.new do |s|
   s.bindir = "bin"
   s.executables << "udb-gen"
 
+  s.add_dependency "asciidoctor"
+  s.add_dependency "asciidoctor-diagram"
+  s.add_dependency "asciidoctor-pdf"
   s.add_dependency "rake"
   s.add_dependency "sorbet-runtime", "= #{UdbGems::SORBET_VERSION}"
   s.add_dependency "tty-exit"

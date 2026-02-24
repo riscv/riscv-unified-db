@@ -577,7 +577,6 @@ dependencies = [
     { name = "reuse" },
     { name = "ruamel-yaml" },
     { name = "ruff" },
-    { name = "spython" },
     { name = "tqdm" },
 ]
 
@@ -591,7 +590,6 @@ requires-dist = [
     { name = "reuse", specifier = ">=6.2.0" },
     { name = "ruamel-yaml", specifier = ">=0.19.1" },
     { name = "ruff", specifier = ">=0.15.0" },
-    { name = "spython", specifier = ">=0.3.14" },
     { name = "tqdm", specifier = ">=4.67.3" },
 ]
 
@@ -708,15 +706,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/b0/69adf22f4e24f3677208adb715c578266842e6e6a3cc77483f48dd999ede/ruff-0.15.0-py3-none-win32.whl", hash = "sha256:238a717ef803e501b6d51e0bdd0d2c6e8513fe9eec14002445134d3907cd46c3", size = 10465945, upload-time = "2026-02-03T17:53:12.591Z" },
     { url = "https://files.pythonhosted.org/packages/51/ad/f813b6e2c97e9b4598be25e94a9147b9af7e60523b0cb5d94d307c15229d/ruff-0.15.0-py3-none-win_amd64.whl", hash = "sha256:dd5e4d3301dc01de614da3cdffc33d4b1b96fb89e45721f1598e5532ccf78b18", size = 11564657, upload-time = "2026-02-03T17:52:51.893Z" },
     { url = "https://files.pythonhosted.org/packages/f6/b0/2d823f6e77ebe560f4e397d078487e8d52c1516b331e3521bc75db4272ca/ruff-0.15.0-py3-none-win_arm64.whl", hash = "sha256:c480d632cc0ca3f0727acac8b7d053542d9e114a462a145d0b00e7cd658c515a", size = 10865753, upload-time = "2026-02-03T17:53:03.014Z" },
-]
-
-[[package]]
-name = "spython"
-version = "0.3.14"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f0/55/ecc3cfb2168177440d42fdea999a3c64a92e97e1e3fde9884a19408aab4c/spython-0.3.14.tar.gz", hash = "sha256:8ad53ef034395cfa2d8a710cc1c3638e4475e5bbc6a2842d317db8013c2e4188", size = 69164, upload-time = "2024-09-15T00:28:58.14Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/38/8b6fc7a8153cb49eb3a9a13acfa9eeb6cc476e37888781e593e6f02ac05e/spython-0.3.14-py3-none-any.whl", hash = "sha256:72968583e498bc2a51f9acd0ed6bc0d7d1f7ccd491feaba5e2f7d944bc51da3a", size = 109720, upload-time = "2024-09-15T00:28:56.713Z" },
 ]
 
 [[package]]

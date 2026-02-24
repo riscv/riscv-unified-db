@@ -7149,12 +7149,6 @@ module Idl
     end
   end
 
-  # TODO: move this into a unit test
-  tmp = UnknownLiteral.new(5, 4)
-  raise tmp.to_s unless tmp.to_s == "3'bx01"
-  tmp = UnknownLiteral.new(0x7fff_ffff, 0b1000_0000_0000)
-  raise tmp.to_s unless tmp.to_s == "31'b1111111111111111111x11111111111"
-
   # represents an integer literal
   class IntLiteralAst < AstNode
     include Rvalue

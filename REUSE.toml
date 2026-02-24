@@ -9,7 +9,6 @@ path = [
     "bin/**",
     "cert_flow.txt",
     "cfgs/**",
-    "container.def",
     "do",
     "doc/data-templates.adoc",
     "doc/riscv-opcodes-migration.adoc",
@@ -87,7 +86,7 @@ SPDX-License-Identifier = "BSD-3-Clause-Clear"
 
 [[annotations]]
 path = [
-    "renovate.json",
+    "renovate.json5",
     "uv.lock",
 ]
 SPDX-FileCopyrightText = "Copyright (c) Jordan Carlin"

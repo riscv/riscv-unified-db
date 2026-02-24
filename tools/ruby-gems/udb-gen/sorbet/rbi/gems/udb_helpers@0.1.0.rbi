@@ -32,7 +32,7 @@ end
 
 # Utilities for a backend to generate an Antora web-site.
 #
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#324
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#355
 module Udb::Helpers::AntoraUtils
   class << self
     # Convert proprietary link format to legal AsciiDoc links.
@@ -54,14 +54,14 @@ module Udb::Helpers::AntoraUtils
     # @param path_or_str [Pathname or String]
     # @return [String]
     #
-    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#346
+    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#377
     def resolve_links(path_or_str); end
   end
 end
 
 # Utilities for a backend to generate AsciiDoc.
 #
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#255
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#281
 module Udb::Helpers::AsciidocUtils
   class << self
     # Convert proprietary link format to legal AsciiDoc links.
@@ -74,7 +74,7 @@ module Udb::Helpers::AsciidocUtils
     # @param path_or_str [Pathname or String]
     # @return [String]
     #
-    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#267
+    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#293
     def resolve_links(path_or_str); end
   end
 end
@@ -89,7 +89,7 @@ module Udb::Helpers::TemplateHelpers
   # @param name [String] Name of the non-ISA specification
   # @return [String] An anchor for a UDB non-ISA specification documentation
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#233
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#259
   def anchor_for_non_isa_spec(name); end
 
   # Have to use [[anchor]] instead of [#anchor] since only the former works when in a table cell.
@@ -99,59 +99,72 @@ module Udb::Helpers::TemplateHelpers
   # @raise [ArgumentError]
   # @return [String] An anchor for a UDB normative rule documentation
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#226
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#252
   def anchor_for_udb_doc_cov_pt(org, id); end
 
   # @param name [String] Name of the CSR
   # @return [String] An anchor for UDB CSR documentation
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#205
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#218
   def anchor_for_udb_doc_csr(name); end
 
   # @param csr_name [String] Name of the CSR
   # @param field_name [String] Name of the CSR field
   # @return [String] An anchor for UDB CSR field documentation
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#212
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#225
   def anchor_for_udb_doc_csr_field(csr_name, field_name); end
 
   # @param ext_name [String] Name of the extension
   # @return [String] An anchor for UDB extension documentation
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#185
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#198
   def anchor_for_udb_doc_ext(ext_name); end
 
   # @param ext_name [String] Name of the extension
   # @param param_name [String] Name of the parameter
   # @return [String] An anchor for UDB parameter documentation
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#192
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#205
   def anchor_for_udb_doc_ext_param(ext_name, param_name); end
 
   # @param name [String] Name of the function
   # @return [String] An anchor for an IDL function documentation
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#218
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#244
   def anchor_for_udb_doc_idl_func(name); end
 
   # @param name [String] Name of the instruction
   # @return [String] An anchor for UDB instruction documentation
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#199
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#212
   def anchor_for_udb_doc_inst(name); end
+
+  # @param name [String] Name of the MMR
+  # @return [String] An anchor for UDB MMR documentation
+  #
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#231
+  def anchor_for_udb_doc_mmr(name); end
+
+  # @param mmr_name [String] Name of the MMR
+  # @param field_name [String] Name of the MMR field
+  # @return [String] An anchor for UDB MMR field documentation
+  #
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#238
+  def anchor_for_udb_doc_mmr_field(mmr_name, field_name); end
 
   # @param func_name [String] Name of the instruction
   # @param id [String] ID within the instruction code
   # @return [String] An anchor inside IDL instruction code
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#240
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#266
   def anchor_inside_idl_inst_code(inst_name, id); end
 
   # @param func_name [String] Name of the instruction
   # @param id [String] ID within the instruction code
   # @return [String] A hyperlink into IDL instruction code
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#174
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#187
   def link_into_idl_inst_code(inst_name, id); end
 
   # @param org [String] Organization of normative rules and test procedures (sep=separate chapters, combo=combined chapters, appendix=appendix)
@@ -159,7 +172,7 @@ module Udb::Helpers::TemplateHelpers
   # @raise [ArgumentError]
   # @return [String] A hyperlink to a UDB certification normative rule (separate chapters for cov pts and test procs)
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#166
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#179
   def link_to_udb_doc_cov_pt(org, id); end
 
   # @param csr_name [String] Name of the CSR
@@ -192,7 +205,7 @@ module Udb::Helpers::TemplateHelpers
   # @param func_name [String] Name of the IDL function
   # @return [String] A hyperlink to UDB IDL function documentation
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#159
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#172
   def link_to_udb_doc_idl_func(func_name); end
 
   # @param inst_name [String] Name of the instruction
@@ -200,6 +213,19 @@ module Udb::Helpers::TemplateHelpers
   #
   # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#140
   def link_to_udb_doc_inst(inst_name); end
+
+  # @param mmr_name [String] Name of the MMR
+  # @return [String] A hyperlink to UDB MMR documentation
+  #
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#159
+  def link_to_udb_doc_mmr(mmr_name); end
+
+  # @param mmr_name [String] Name of the MMR
+  # @param field_name [String] Name of the MMR field
+  # @return [String] A hyperlink to UDB MMR field documentation
+  #
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#166
+  def link_to_udb_doc_mmr_field(mmr_name, field_name); end
 
   # Include a partial ERB template into a full ERB template.
   #
@@ -217,7 +243,7 @@ module Udb::Helpers::TemplateHelpers
   #
   # @raise [ArgumentError]
   #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#246
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#272
   def check_no_periods(s); end
 end
 

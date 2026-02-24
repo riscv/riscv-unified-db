@@ -1,3 +1,355 @@
-= Data templates
+= Data Templates
+:toc:
+:toclevels: 3
 
-TODO
+This guide provides templates and examples for creating UDB data files.
+All data files use YAML format and are validated against JSON schemas.
+
+For detailed schema documentation, see xref:schemas.adoc[Schema Documentation].
+For IDL (ISA Description Language) syntax, see xref:idl.adoc[IDL Documentation].
+
+== File Structure
+
+All UDB data files share a common header structure:
+
+[source,yaml]
+----
+# Copyright (c) Your Name or Organization
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=<path-to-schema>
+
+$schema: "<schema-name>.json#"
+kind: <object-type>
+name: <unique-name>
+----
+
+== Extension Definitions
+
+Extensions are defined in `spec/std/isa/ext/` (or `spec/custom/isa/ext/` for custom extensions).
+
+=== Basic Extension Template
+
+[source,yaml]
+----
+# Copyright (c) Your Name or Organization
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Zexample
+long_name: Example Extension
+description: |
+  Brief description of what this extension provides.
+
+  Can include multiple paragraphs with AsciiDoc formatting.
+type: unprivileged  # or: privileged, unprivileged
+versions:
+  - version: "1.0.0"
+    state: ratified  # or: development, frozen
+    ratification_date: 2024-01
+    url: https://example.com/spec  # optional: link to specification
+----
+
+=== Extension Types
+
+* `unprivileged` - User-mode extensions (e.g., Zba, Zbb)
+* `privileged` - Requires M-mode or S-mode (e.g., Smepmp, Sstvecv)
+
+== Instruction Definitions
+
+Instructions are defined in `spec/std/isa/inst/<Extension>/`.
+
+=== Basic Instruction Template
+
+[source,yaml]
+----
+# Copyright (c) Your Name or Organization
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: example
+long_name: Example Instruction
+description: |
+  Detailed description of what the instruction does.
+definedBy:
+  extension:
+    name: I  # Extension that defines this instruction
+assembly: xd, xs1, imm  # Assembly syntax with operands
+encoding:
+  match: "-----------------000-----0010011"  # Binary pattern (- = don't care)
+  variables:
+    - name: imm
+      location: 31-20        # Bit positions
+      sign_extend: true      # Optional: sign-extend this field
+    - name: xs1
+      location: 19-15
+    - name: xd
+      location: 11-7
+access:
+  s: always    # S-mode access
+  u: always    # U-mode access
+  vs: always   # VS-mode access
+  vu: always   # VU-mode access
+data_independent_timing: true  # For cryptographic extensions
+operation(): |
+  # IDL code implementing the instruction
+  X[xd] = X[xs1] + $signed(imm);
+----
+
+=== Encoding Variables
+
+Common variable properties:
+
+* `location` - Bit range (e.g., `31-20`, `19-15`, or `31|7|30-25|11-8` for non-contiguous)
+* `sign_extend` - Set to `true` for signed immediates
+* `left_shift` - Shift value left by N bits (common for branch offsets)
+
+=== Pseudoinstructions
+
+Instructions can define pseudoinstruction mappings:
+
+[source,yaml]
+----
+pseudoinstructions:
+  - when: (xd == 0 && xs1 == 0 && imm == 0)
+    to: nop
+  - when: imm == 0
+    to: mv xd,xs1
+----
+
+=== Operation IDL
+
+The `operation()` field contains IDL code. Common patterns:
+
+[source,yaml]
+----
+# Simple arithmetic
+operation(): X[xd] = X[xs1] + $signed(imm);
+
+# Multi-line with conditionals
+operation(): |
+  XReg result = X[xs1] + X[xs2];
+  if (result == 0) {
+    # handle zero case
+  }
+  X[xd] = result;
+
+# Branch instruction
+operation(): |
+  if (X[xs1] == X[xs2]) {
+    jump_halfword($pc + $signed(imm));
+  }
+----
+
+== CSR Definitions
+
+CSRs are defined in `spec/std/isa/csr/` or subdirectories by extension.
+
+=== Basic CSR Template
+
+[source,yaml]
+----
+# Copyright (c) Your Name or Organization
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/csr_schema.json
+
+$schema: "csr_schema.json#"
+kind: csr
+name: mexample
+long_name: Machine Example CSR
+address: 0x350           # CSR address
+writable: true           # false for read-only CSRs
+priv_mode: M             # M, S, U, or VS
+length: MXLEN            # or: 32, 64, SXLEN, etc.
+description: |
+  Description of what this CSR controls.
+definedBy:
+  extension:
+    name: Sm
+fields:
+  FIELD_NAME:
+    location: 7-4        # Bit range
+    description: |
+      Description of this field.
+    type: RW             # Field type (see below)
+    reset_value: 0       # Reset value
+----
+
+=== CSR Field Types
+
+Common field types:
+
+* `RO` - Read-only
+* `RO-H` - Read-only, hardware-updated
+* `RW` - Read-write
+* `RW-R` - Read-write, with restrictions
+* `RW-H` - Read-write, hardware can also modify
+* `RWR` - Read-write, restricted (WARL)
+
+=== RV32/RV64 Different Locations
+
+When field locations differ between RV32 and RV64:
+
+[source,yaml]
+----
+fields:
+  BASE:
+    location_rv64: 63-2   # Location in RV64
+    location_rv32: 31-2   # Location in RV32
+    description: Base address field.
+    type: RW
+    reset_value: 0
+----
+
+=== Dynamic Field Types
+
+Use `type()` for configuration-dependent field types:
+
+[source,yaml]
+----
+fields:
+  MODE:
+    location: 1-0
+    description: Operating mode.
+    type(): |
+      if (MTVEC_ACCESS == "ro") {
+        return CsrFieldType::RO;
+      }
+      return CsrFieldType::RWR;
+    reset_value: 0
+----
+
+=== Software Write Behavior
+
+Use `sw_write()` for complex write behavior:
+
+[source,yaml]
+----
+fields:
+  VALUE:
+    location: 31-0
+    description: Counter value.
+    type: RW
+    sw_write(csr_value): |
+      # Validate and potentially modify the written value
+      if (csr_value.VALUE > MAX_VALUE) {
+        return MAX_VALUE;
+      }
+      return csr_value.VALUE;
+    reset_value: 0
+----
+
+=== Field Aliases
+
+For CSRs that alias other CSRs:
+
+[source,yaml]
+----
+fields:
+  COUNT:
+    location: 63-0
+    alias: mcycle.COUNT   # This field aliases mcycle.COUNT
+    description: Alias of mcycle.COUNT.
+    type: RO-H
+    reset_value: UNDEFINED_LEGAL
+----
+
+== Parameter Definitions
+
+Parameters are defined in `spec/std/isa/param/`.
+
+=== Basic Parameter Template
+
+[source,yaml]
+----
+# Copyright (c) Your Name or Organization
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: EXAMPLE_PARAM
+long_name: Example Parameter
+description: |
+  Description of what this parameter controls.
+schema:
+  type: integer
+  minimum: 0
+  maximum: 64
+definedBy:
+  extension:
+    name: Zexample
+----
+
+=== Parameter Schema Types
+
+[source,yaml]
+----
+# Integer parameter
+schema:
+  type: integer
+  minimum: 1
+  maximum: 128
+
+# Boolean parameter
+schema:
+  type: boolean
+
+# Enum parameter
+schema:
+  type: string
+  enum:
+    - "option1"
+    - "option2"
+    - "option3"
+
+# Array parameter
+schema:
+  type: array
+  items:
+    type: integer
+----
+
+== Validation
+
+=== Schema Validation
+
+All YAML files are validated against their schemas during the build process.
+To validate manually:
+
+[source,bash]
+----
+pre-commit run check-jsonschema
+----
+
+=== Common Validation Errors
+
+1. **Missing required fields** - Check the schema for required properties
+2. **Invalid field type** - Ensure values match the expected type (string, integer, etc.)
+3. **Invalid location format** - Use `N-M` format for bit ranges
+4. **Invalid extension reference** - Ensure the referenced extension exists
+
+== Best Practices
+
+1. **Use descriptive names** - `long_name` should be human-readable
+2. **Write clear descriptions** - Use AsciiDoc formatting for complex descriptions
+3. **Follow existing patterns** - Look at similar files for guidance
+4. **Test your changes** - Run validation before submitting PRs
+5. **Include all required fields** - Check the schema for required properties
+
+== Examples in the Repository
+
+For more complete examples, see:
+
+* Extensions: `spec/std/isa/ext/Zicbom.yaml`, `spec/std/isa/ext/Zba.yaml`
+* Instructions: `spec/std/isa/inst/I/addi.yaml`, `spec/std/isa/inst/Zalrsc/lr.w.yaml`
+* CSRs: `spec/std/isa/csr/mtvec.yaml`, `spec/std/isa/csr/mstatus.yaml`
+* Parameters: `spec/std/isa/param/CACHE_BLOCK_SIZE.yaml`

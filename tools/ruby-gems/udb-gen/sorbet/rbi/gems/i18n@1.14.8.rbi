@@ -5,6 +5,42 @@
 # Please instead update this file by running `bin/tapioca gem i18n`.
 
 
+# source://i18n//lib/i18n/gettext/po_parser.rb#15
+module GetText; end
+
+# source://i18n//lib/i18n/gettext/po_parser.rb#17
+class GetText::PoParser < ::Racc::Parser
+  # source://i18n//lib/i18n/gettext/po_parser.rb#19
+  def _(x); end
+
+  def _reduce_10(val, _values, result); end
+  def _reduce_12(val, _values, result); end
+  def _reduce_13(val, _values, result); end
+  def _reduce_14(val, _values, result); end
+  def _reduce_15(val, _values, result); end
+  def _reduce_5(val, _values, result); end
+  def _reduce_8(val, _values, result); end
+  def _reduce_9(val, _values, result); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#323
+  def _reduce_none(val, _values, result); end
+
+  def next_token; end
+  def on_comment(comment); end
+  def on_message(msgid, msgstr); end
+  def parse(str, data, ignore_fuzzy = T.unsafe(nil)); end
+  def unescape(orig); end
+end
+
+# source://i18n//lib/i18n/gettext/po_parser.rb#184
+GetText::PoParser::Racc_arg = T.let(T.unsafe(nil), Array)
+
+# source://i18n//lib/i18n/gettext/po_parser.rb#221
+GetText::PoParser::Racc_debug_parser = T.let(T.unsafe(nil), TrueClass)
+
+# source://i18n//lib/i18n/gettext/po_parser.rb#200
+GetText::PoParser::Racc_token_to_s_table = T.let(T.unsafe(nil), Array)
+
 # Simple Locale tag implementation that computes subtags by simply splitting
 # the locale tag at '-' occurrences.
 #
@@ -517,6 +553,54 @@ I18n::Backend::Flatten::FLATTEN_SEPARATOR = T.let(T.unsafe(nil), String)
 
 # source://i18n//lib/i18n/backend/flatten.rb#14
 I18n::Backend::Flatten::SEPARATOR_ESCAPE_CHAR = T.let(T.unsafe(nil), String)
+
+# Experimental support for using Gettext po files to store translations.
+#
+# To use this you can simply include the module to the Simple backend - or
+# whatever other backend you are using.
+#
+#  I18n::Backend::Simple.include(I18n::Backend::Gettext)
+#
+# Now you should be able to include your Gettext translation (*.po) files to
+# the +I18n.load_path+ so they're loaded to the backend and you can use them as
+# usual:
+#
+#  I18n.load_path += Dir["path/to/locales/*.po"]
+#
+# Following the Gettext convention this implementation expects that your
+# translation files are named by their locales. E.g. the file en.po would
+# contain the translations for the English locale.
+#
+# To translate text <b>you must use</b> one of the translate methods provided by
+# I18n::Gettext::Helpers.
+#
+#  include I18n::Gettext::Helpers
+#  puts _("some string")
+#
+# Without it strings containing periods (".") will not be translated.
+#
+# source://i18n//lib/i18n/backend/gettext.rb#33
+module I18n::Backend::Gettext
+  protected
+
+  # source://i18n//lib/i18n/backend/gettext.rb#41
+  def load_po(filename); end
+
+  # source://i18n//lib/i18n/backend/gettext.rb#51
+  def normalize(locale, data); end
+
+  # source://i18n//lib/i18n/backend/gettext.rb#68
+  def normalize_pluralization(locale, key, value); end
+
+  # source://i18n//lib/i18n/backend/gettext.rb#47
+  def parse(filename); end
+end
+
+# source://i18n//lib/i18n/backend/gettext.rb#34
+class I18n::Backend::Gettext::PoData < ::Hash
+  # source://i18n//lib/i18n/backend/gettext.rb#35
+  def set_comment(msgid_or_sym, comment); end
+end
 
 # source://i18n//lib/i18n/backend/interpolation_compiler.rb#20
 module I18n::Backend::InterpolationCompiler

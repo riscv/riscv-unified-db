@@ -74,25 +74,9 @@ This extension has the following implementation options (AKA parameters):
 --
 |===
 h| Type
-<%- if param.schema_known? -%>
 | <%= param.schema.type_pretty %>
-<%- else -%>
-|
-<%- param.schemas.each do |cond_schema| -%>
-<%- next unless cond_schema.cond.could_be_satisfied_by_cfg_arch?(cfg_arch) -%>
-<%= cond_schema.schema.type_pretty %> when <%= cond_schema.cond.to_asciidoc %>
-<%- end-%>
-<%- end -%>
 h| Valid Values
-<%- if param.schema_known? -%>
 | <%= param.schema.to_pretty_s %>
-<%- else -%>
-|
-<%- param.schemas.each do |cond_schema| -%>
-<%- next unless cond_schema.cond.could_be_satisfied_by_cfg_arch?(cfg_arch) -%>
-<%= cond_schema.schema.to_pretty_s %> when <%= cond_schema.cond.to_asciidoc %>
-<%- end-%>
-<%- end-%>
 h| Description a| <%= param.description %>
 |===
 --

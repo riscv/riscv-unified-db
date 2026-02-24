@@ -20,6 +20,7 @@
 #   Extension       extensions()        extension_hash()        extension(name)
 #   Instruction     instructions()      instruction_hash()      instruction(name)
 #   Csr             csrs()              csr_hash()              csr(name)
+#   Mmr             mmrs()              mmr_hash()              mmr(name)
 #   ProcCertClass   proc_cert_classes() proc_cert_class_hash()  proc_cert_class(name)
 #   ProcCertModel   proc_cert_models()  proc_cert_model_hash()  proc_cert_model(name)
 #   ProfileFamily   profile_families()  profile_family_hash()   profile_family(name)
@@ -52,6 +53,7 @@ require_relative "obj/csr"
 require_relative "obj/csr_field"
 require_relative "obj/register_file"
 require_relative "obj/exception_code"
+require_relative "obj/mmr"
 require_relative "obj/extension"
 require_relative "obj/instruction"
 require_relative "obj/manual"
@@ -129,6 +131,12 @@ module Udb
         arch_dir: "register",
         klass: RegisterFile,
         kind: DatabaseObject::Kind::RegisterFile
+      },
+      {
+        fn_name: "mmr",
+        arch_dir: "mmr",
+        klass: Mmr,
+        kind: DatabaseObject::Kind::Mmr
       },
       {
         fn_name: "param",
@@ -286,6 +294,9 @@ module Udb
         when /^csr.*/
           csr_name = File.basename(file_path, ".yaml")
           csr(csr_name)
+        when /^mmr.*/
+          mmr_name = File.basename(file_path, ".yaml")
+          mmr(mmr_name)
         when /^ext.*/
           ext_name = File.basename(file_path, ".yaml")
           extension(ext_name)

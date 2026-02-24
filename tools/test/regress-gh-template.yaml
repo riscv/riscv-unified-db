@@ -1,11 +1,14 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-name: Regression test
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: CI/CD
 
 permissions:
   contents: read
   pull-requests: write
+  packages: read
 
 "on": # needs to be quoted or else Psych treats this as true
   pull_request:
@@ -14,9 +17,13 @@ permissions:
   merge_group:
     types: [checks_requested]
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
   DOCKER: 1
+  DEPLOY_DIR: _site
 
 # cancel any prior actions from the same PR that are still running (we only care about the final commit)
 concurrency:
@@ -26,6 +33,9 @@ concurrency:
 jobs:
   build-container:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -35,10 +45,34 @@ jobs:
           TAG=$(cat bin/.container-tag)
           echo "TAG=$TAG" >> $GITHUB_ENV
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if container image exists in registry
+        id: check-registry
+        run: |
+          if docker manifest inspect ghcr.io/riscv/udb:${{ env.TAG }} > /dev/null 2>&1; then
+            echo "REGISTRY_HIT=true" >> $GITHUB_ENV
+          else
+            echo "REGISTRY_HIT=false" >> $GITHUB_ENV
+          fi
+
+      - name: Pull image from registry
+        if: env.REGISTRY_HIT == 'true'
+        run: |
+          docker pull ghcr.io/riscv/udb:${{ env.TAG }}
+          docker save ghcr.io/riscv/udb:${{ env.TAG }} -o ${{ runner.temp }}/docker_image.tar
+
       - name: Set up Docker Buildx
+        if: env.REGISTRY_HIT == 'false'
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Build and export
+        if: env.REGISTRY_HIT == 'false'
         uses: docker/build-push-action@601a80b39c9405e50806ae38af30926f9d957c47 # v6.19.1
         with:
           push: false
@@ -62,6 +96,10 @@ jobs:
     steps:
       - name: Use download-artifact
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+      - name: Use upload-artifact
+        uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5 # v4.6.2
+        with:
+          path: .
 
   regress-pre-commit:
     runs-on: ubuntu-latest
@@ -70,7 +108,7 @@ jobs:
         # there are some symlinks in udb-gen that look broken without submodules
         with:
           submodules: "true"
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
 
   regress-llvm:
@@ -195,11 +233,6 @@ jobs:
           name: riscv-json
           path: ext/llvm-project/riscv.json
 
-  call-deploy:
-    uses: ./.github/workflows/deploy.yml
-    with:
-      dry-run: true
-
   java-tests:
     name: Java (Xtext) tests
     runs-on: ubuntu-latest
@@ -237,7 +270,7 @@ jobs:
         working-directory: tools/eclipse/udb-vscode
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "20"
           cache: "npm"

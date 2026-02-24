@@ -23,7 +23,7 @@ get_container_type() {
   else
     echo -e "UDB tools run in a container. Docker and Podman are supported.\\n\\n1. Docker\\n2. Podman\\n" >&2
     while true; do
-      echo "Which would you like to use? (1/2/3) " >&2
+      echo "Which would you like to use? (1/2) " >&2
       read -r ans
       case $ans in
           [1]* ) container_type=docker; break;;

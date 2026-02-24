@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ -v UDB_SETUP_COMPLETE ]; then
+  return
+fi
+UDB_SETUP_COMPLETE=true
+
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 cd "$ROOT" || exit
 
@@ -82,7 +87,7 @@ fi
 echo "Using ${CONTAINER_TYPE} environment"
 
 if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
-    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" | grep -q udb ; then
+    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" --format table | grep -q udb ; then
         echo "Image not found locally. Attempting to pull from registry..."
         if ${CONTAINER_TYPE} pull "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" 2>/dev/null; then
             echo "Successfully pulled image from registry."
@@ -107,14 +112,12 @@ if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; t
         GIT_PATH=$(git rev-parse --git-common-dir | tr -d '\n' | xargs dirname)
         CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${GIT_PATH}:${GIT_PATH}${SELINUX_LABEL}"
     fi
-    if ! [ -v GITHUB_ACTIONS ]; then
-      # create empty home directory (used as location to cache files by several tools)
-      if ! [ -d "${ROOT}"/.docker-home ]; then
-        mkdir "${ROOT}"/.docker-home
-      fi
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e HOME"
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${ROOT}/.docker-home:${HOME}"
+    # create empty home directory (used as location to cache files by several tools)
+    if ! [ -d "${ROOT}"/.docker-home ]; then
+      mkdir "${ROOT}"/.docker-home
     fi
+    CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e HOME"
+    CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${ROOT}/.docker-home:${HOME}"
 
     mkdir -p "${ROOT}/.cache"
 
@@ -133,14 +136,11 @@ if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; t
       CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e PRE_COMMIT_HOME"
     fi
 
-    if [ -v XDG_CACHE_HOME ]; then
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e XDG_CACHE_HOME"
-    fi
-
+    CONTAINER_NAME="$REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
     if [ -t 1 ] && [ -t 0 ]; then
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm -it ${CONTAINER_RUN_FLAGS} -w ${ROOT} $REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
+      CONTAINER_BASE="${CONTAINER_TYPE} run --rm -it ${CONTAINER_RUN_FLAGS} -w ${ROOT} $CONTAINER_NAME"
     else
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} $REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
+      CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} $CONTAINER_NAME"
     fi
 elif [ "${CONTAINER_TYPE}" != "native" ]; then
     echo "Bad container type: ${CONTAINER_TYPE}" 1>&2

@@ -3284,7 +3284,7 @@ class Z3::Solver
   # source://z3//lib/z3/solver.rb#25
   def assert(ast); end
 
-  # source://udb/0.1.0/../../udb/lib/udb/z3.rb#18
+  # source://udb/0.1.0/lib/udb/z3.rb#33
   sig { params(ast: ::Z3::Expr, name: ::String).void }
   def assert_as(ast, name); end
 

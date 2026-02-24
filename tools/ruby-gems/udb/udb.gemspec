@@ -19,7 +19,6 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower", "James Ball"]
   s.email       = ["dhower@qti.qualcomm.com", "jamesball@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.platform    = Gem::Platform::RUBY
   s.files       = Dir["lib/**/*.rb", "LICENSE"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
@@ -32,7 +31,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.bindir = "bin"
   s.executables << "udb"
-  s.extensions = ["ext/z3/extconf.rb"]
 
   s.add_dependency "activesupport"
   s.add_dependency "asciidoctor"
@@ -43,7 +41,6 @@ Gem::Specification.new do |s|
   s.add_dependency "numbers_and_words"
   s.add_dependency "ostruct"
   s.add_dependency "pastel"
-  s.add_dependency "ruby-minisat", ">= 2.2.0.3"
   s.add_dependency "sorbet-runtime", "= #{UdbGems::SORBET_VERSION}"
   s.add_dependency "terminal-table"
   s.add_dependency "thor"

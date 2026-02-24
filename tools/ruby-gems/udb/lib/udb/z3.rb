@@ -354,9 +354,8 @@ module Udb
       end
 
       if schema_hsh.key?("allOf")
-        # Recursively process all subschemas and combine constraints
-        schema_hsh.fetch("allOf").each do |subschema|
-          assertions += constrain_int(solver, term, subschema, name:, assert: false)
+        schema_hsh.fetch("allOf").each do |h|
+          assertions += constrain_int(solver, term, h)
         end
       end
 
@@ -379,11 +378,15 @@ module Udb
       if schema_hsh.key?("$ref")
         # Handle references to shorthand type definitions
         if schema_hsh.fetch("$ref").split("/").last == "uint32"
-          assertions << term.unsigned_ge(0)
-          assertions << term.unsigned_le(2**32 - 1)
+          assertions << solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**32 - 1)))
         elsif schema_hsh.fetch("$ref").split("/").last == "uint64"
-          assertions << term.unsigned_ge(0)
-          assertions << term.unsigned_le(2**64 - 1)
+          assertions << solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**64 - 1)))
+        elsif schema_hsh.fetch("$ref").split("/").last == "32bit_unsigned_pow2"
+          assertions << solver.assert((term == 0) | (0 == (term & (term - 1))))
+          assertions << solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**32 - 1)))
+        elsif schema_hsh.fetch("$ref").split("/").last == "64bit_unsigned_pow2"
+          assertions << solver.assert((term == 0) | (0 == (term & (term - 1))))
+          assertions << solver.assert((term.unsigned_gt(0)) & (term.unsigned_le(2**64 - 1)))
         else
           raise "Unhandled schema $ref: #{schema_hsh.fetch("$ref")}"
         end
@@ -424,7 +427,9 @@ module Udb
       end
 
       if schema_hsh.key?("allOf")
-        assertions += constrain_bool(solver, term, schema_hsh.fetch("allOf"), name:, assert: false)
+        schema_hsh.fetch("allOf").each do |h|
+          assertions += constrain_bool(solver, term, h)
+        end
       end
 
       if schema_hsh.key?("anyOf")
@@ -683,10 +688,8 @@ module Udb
           raise "unhandled subschema type"
         end
       elsif schema_hsh.key?("$ref")
-        # Handle known type references
-        if schema_hsh.fetch("$ref") == "schema_defs.json#/$defs/uint32"
-          :int
-        elsif schema_hsh.fetch("$ref") == "schema_defs.json#/$defs/uint64"
+        case schema_hsh.fetch("$ref").split("/").last
+        when "uint32", "uint64", "32bit_unsigned_pow2", "64bit_unsigned_pow2"
           :int
         else
           raise "unhandled ref: #{schema_hsh.fetch("$ref")}"

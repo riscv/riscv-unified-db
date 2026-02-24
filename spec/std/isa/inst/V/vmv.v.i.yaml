@@ -54,12 +54,19 @@ operation(): |
     U32 start_bit_pos = i * state.sew;
     U32 end_bit_pos = start_bit_pos + state.sew - 1;
 
-    # Write the sign-extended immediate (truncated to SEW bits) to the element
-    v[vd] = {
-      v[vd][VLEN-1:end_bit_pos + 1],
-      sext_imm[state.sew-1:0],
-      v[vd][start_bit_pos-1:0]
-    };
+    # Write the sign-extended immediate (truncated to SEW bits) to the element,
+    # guarding against invalid bit-slice ranges at vector register boundaries
+    if (start_bit_pos == 0) {
+      if (end_bit_pos == VLEN - 1) {
+        v[vd] = sext_imm[state.sew-1:0];
+      } else {
+        v[vd] = {v[vd][VLEN-1:end_bit_pos + 1], sext_imm[state.sew-1:0]};
+      }
+    } else if (end_bit_pos == VLEN - 1) {
+      v[vd] = {sext_imm[state.sew-1:0], v[vd][start_bit_pos-1:0]};
+    } else {
+      v[vd] = {v[vd][VLEN-1:end_bit_pos + 1], sext_imm[state.sew-1:0], v[vd][start_bit_pos-1:0]};
+    }
   }
 
   CSR[vstart].VALUE = 0;
