@@ -36,48 +36,50 @@ UDB_ROOT = (
 SCHEMAS_PATH = Path(os.path.join(UDB_ROOT, "spec", "schemas"))
 
 
-# Map from symlink name -> real relative path for schema files
-# e.g. 'csr_schema.json' -> 'v0.1/csr_schema.json'
-_SCHEMA_SYMLINK_MAP: dict[str, str] = {
-    entry.name: str(entry.resolve().relative_to(SCHEMAS_PATH))
-    for entry in SCHEMAS_PATH.iterdir()
-    if entry.is_symlink()
-}
+# Map from schema filename -> version string, built by reading the $id field from each schema.
+# e.g. 'csr_schema.json' -> 'v0.1'
+_SCHEMA_VERSION_MAP: dict[str, str] = {}
+for _entry in SCHEMAS_PATH.iterdir():
+    if _entry.suffix == ".json" and _entry.name != "json-schema-draft-07.json":
+        try:
+            _schema_data = json.loads(_entry.read_text())
+            _version = _schema_data.get("$id")
+            if _version:
+                _SCHEMA_VERSION_MAP[_entry.name] = _version
+        except Exception:
+            pass
 
 
-def _resolve_schema_uri(uri: str) -> str:
-    """Replace a symlink-based schema URI with the real versioned path it points to.
+def _versioned_schema_uri(uri: str) -> str:
+    """Rewrite a bare schema URI to include the version prefix.
 
-    For example, 'csr_schema.json#' becomes 'v0.1/csr_schema.json#'.
-    URIs that already point to a versioned (non-symlink) path are returned unchanged.
+    For example, 'csr_schema.json#' becomes 'v0.1/csr_schema.json#' (where v0.1
+    is the version recorded in the $id field of csr_schema.json).
+    URIs that already contain a version prefix are returned unchanged.
     """
     fragment_sep = uri.find("#")
     if fragment_sep == -1:
         base, fragment = uri, ""
     else:
         base, fragment = uri[:fragment_sep], uri[fragment_sep:]
-    resolved_base = _SCHEMA_SYMLINK_MAP.get(base, base)
-    return resolved_base + fragment
-
-
-# The base URI used in schema $id fields; relative refs are resolved against it.
-_SCHEMA_BASE_URI = "https://github.com/riscv/riscv-unified-db/tree/main/spec/schemas/"
+    # If the base already contains a '/', it already has a version prefix
+    if "/" in base:
+        return uri
+    version = _SCHEMA_VERSION_MAP.get(base)
+    if version:
+        return f"{version}/{base}{fragment}"
+    return uri
 
 
 def retrieve_from_filesystem(uri: str):
-    # The referencing library resolves relative $ref values against the schema's $id,
-    # producing full https://... URIs.  Strip the known base prefix so we can map
-    # back to a local filesystem path.
-    if uri.startswith(_SCHEMA_BASE_URI):
-        rel = uri[len(_SCHEMA_BASE_URI) :]
-    else:
-        rel = uri
-    path = SCHEMAS_PATH / Path(rel)
+    # The referencing library resolves relative $ref values against the schema's $id.
+    # Since $id is now just the version string (e.g. "v0.1"), relative refs like
+    # "schema_defs.json" resolve to just "schema_defs.json" (no prefix).
+    # We look up the file directly in SCHEMAS_PATH.
+    path = SCHEMAS_PATH / Path(uri)
     if not path.exists():
-        # Some shared files (e.g. json-schema-draft-07.json) live at the root of
-        # SCHEMAS_PATH rather than inside a versioned sub-directory.  Fall back to
-        # looking up just the filename at the root level.
-        path = SCHEMAS_PATH / Path(rel).name
+        # Fall back to just the filename at the root level.
+        path = SCHEMAS_PATH / Path(uri).name
     contents = json.loads(path.read_text())
     return Resource.from_contents(contents)
 
@@ -592,8 +594,10 @@ class SchemaNotFoundException(Exception):
 
 
 def _get_schema(uri):
-    uri = _resolve_schema_uri(uri)
+    # Strip version prefix (e.g. 'v0.1/csr_schema.json#' -> 'csr_schema.json')
     rel_path = uri.split("#")[0]
+    if "/" in rel_path:
+        rel_path = rel_path.split("/", 1)[1]
 
     if rel_path in schemas:
         return schemas[rel_path]
@@ -656,14 +660,9 @@ def write_resolved_file_and_validate(
     resolved_obj = resolve(rel_path, args.arch_dir, do_checks, compile_idl)
     resolved_obj["$source"] = os.path.join(args.arch_dir, rel_path)
 
-    # Replace any symlink-based $schema reference with the real versioned path it resolves to,
-    # so the written file records the exact schema version that was used rather than the
-    # "latest" symlink alias.
-    if "$schema" in resolved_obj:
-        resolved_obj["$schema"] = _resolve_schema_uri(resolved_obj["$schema"])
-
-    write_yaml(resolved_path, resolved_obj)
-
+    # Validate against the schema using the bare (unversioned) $schema URI, before
+    # rewriting it to the versioned form.  This way the schema enum only needs to
+    # list the bare name (e.g. 'csr_schema.json#') and source data files use that form.
     if do_checks and ("$schema" in resolved_obj):
         schema = _get_schema(resolved_obj["$schema"])
         try:
@@ -672,6 +671,13 @@ def write_resolved_file_and_validate(
             print(f"JSON Schema Validation Error for {rel_path}:")
             print(best_match(schema.iter_errors(resolved_obj)).message)
             exit(1)
+
+    # Rewrite the $schema field to include the version prefix, so the written file
+    # records the exact schema version that was used (e.g. 'v0.1/csr_schema.json#').
+    if "$schema" in resolved_obj:
+        resolved_obj["$schema"] = _versioned_schema_uri(resolved_obj["$schema"])
+
+    write_yaml(resolved_path, resolved_obj)
 
     os.chmod(resolved_path, 0o666)
 

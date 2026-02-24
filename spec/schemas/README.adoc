@@ -15,42 +15,45 @@ conform to, and so that older versions remain available as the schemas evolve.
 spec/schemas/
 ├── README.adoc                  # this file
 ├── json-schema-draft-07.json    # unversioned copy of the JSON Schema Draft-07 meta-schema
-├── <schema>.json -> v<X.Y>/<schema>.json   # symlinks to the current version
-└── v<X.Y>/                      # one subdirectory per released version
-    └── <schema>.json
+└── <schema>.json                # schema files (current version)
 ----
 
-The top-level `.json` files (except `json-schema-draft-07.json`) are *symbolic
-links* that always point to the latest released version.  Consumers that want
-stable, version-pinned references should use the versioned path inside the
-appropriate `v<X.Y>/` subdirectory.
+The `.json` files (except `json-schema-draft-07.json`) are the current versions
+of each schema.  Each schema file contains a `$id` field set to the version
+string (e.g. `v0.1`).  When a schema is resolved for publication, the `$id` is
+expanded to the full canonical URL:
+`https://riscv.github.io/riscv-unified-db/schemas/<version>/<schema>.json`.
+
+Resolved schema files are written to `gen/schemas/<version>/` and published as
+GitHub releases under the tag `schemas/<version>`.
 
 == Schema Versions
 
 [cols="1,3",options="header"]
 |===
-| Version | Directory
+| Version | Published URL
 
 | 0.1 (current)
-| link:v0.1/[spec/schemas/v0.1/]
+| https://riscv.github.io/riscv-unified-db/schemas/v0.1/
 |===
 
 == Schema Identification (`$id`)
 
-Every versioned schema file contains a top-level `$id` key whose value is the
-canonical URL of that file in the repository:
+Every schema file contains a top-level `$id` key whose value is the version
+string (e.g. `v0.1`).  Source data files reference schemas using the bare
+filename (e.g. `csr_schema.json#`).  When data files are resolved, the
+`$schema` field is rewritten to include the version prefix
+(e.g. `v0.1/csr_schema.json#`) so that the resolved file records the exact
+schema version used.
 
 [source,json]
 ----
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/riscv/riscv-unified-db/tree/main/spec/schemas/v0.1/<schema>.json",
+  "$id": "v0.1",
   ...
 }
 ----
-
-The `$id` encodes both the schema name and its version, making it
-unambiguous which version of a schema a data file was validated against.
 
 == Special Files
 
@@ -67,20 +70,13 @@ unambiguous which version of a schema a data file was validated against.
 When breaking or significant changes are made to one or more schemas, a new
 version should be released.  Follow these steps:
 
-. Create a new subdirectory named `v<X.Y>` (e.g. `v1.0`).
-. Copy the schemas that changed (or all schemas, for consistency) into the new
-  subdirectory.
-. Update the `$id` value in each copied schema to reflect the new version path.
-. Re-point the top-level symlinks to the new subdirectory:
-+
-[source,bash]
-----
-cd spec/schemas
-for f in v<X.Y>/*.json; do
-  fname=$(basename "$f")
-  ln -sf "v<X.Y>/$fname" "$fname"
-done
-----
+. Update the `$id` field in each changed schema file to the new version string
+  (e.g. `v0.2`).
+. Run `./do gen:schemas` to generate the resolved schema files in
+  `gen/schemas/<version>/`.
+. The CI `schema-release` workflow will automatically publish the new version
+  as a GitHub release under the tag `schemas/<version>` when the changes are
+  merged to `main`.
 . Add the new version to the <<Schema Versions>> table in this README.
-. Keep the previous `v<X.Y>/` subdirectory intact so that existing data files
-  that reference the old `$id` continue to validate correctly.
+. Previous schema versions remain available via their GitHub release tags and
+  at `https://riscv.github.io/riscv-unified-db/schemas/<old-version>/`.

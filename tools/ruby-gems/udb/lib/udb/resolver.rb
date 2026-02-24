@@ -358,5 +358,37 @@ module Udb
         )
       end
     end
+
+    SCHEMAS_BASE_URL = "https://riscv.github.io/riscv-unified-db/schemas"
+
+    # Resolve schema files by rewriting their $id to the full published URL and
+    # writing the result to gen/schemas/VERSION/SCHEMA_FILENAME.
+    #
+    # For each schema file in schemas_path, reads the $id (which is the version
+    # string, e.g. "v0.1"), then writes a copy to
+    # gen/schemas/<version>/<schema_filename> with $id set to
+    # https://riscv.github.io/riscv-unified-db/schemas/<version>/<schema_filename>.
+    sig { void }
+    def resolve_schemas
+      require "json"
+
+      schemas_path.glob("*.json").each do |schema_file|
+        next if schema_file.basename.to_s == "json-schema-draft-07.json"
+
+        schema_data = JSON.parse(schema_file.read)
+        version = schema_data["$id"]
+        next if version.nil?
+
+        schema_name = schema_file.basename.to_s
+        resolved_id = "#{SCHEMAS_BASE_URL}/#{version}/#{schema_name}"
+
+        resolved_schema = schema_data.merge("$id" => resolved_id)
+
+        out_dir = gen_path / "schemas" / version
+        out_dir.mkpath
+        out_path = out_dir / schema_name
+        out_path.write(JSON.pretty_generate(resolved_schema) + "\n")
+      end
+    end
   end
 end

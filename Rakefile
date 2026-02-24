@@ -101,6 +101,12 @@ namespace :gen do
       $resolver.cfg_arch_for(cfg)
     end
   end
+
+  desc "Resolve schema files and write them to gen/schemas/VERSION/SCHEMA with full $id URLs"
+  task :schemas do
+    $resolver.resolve_schemas
+    puts "Resolved schema files written to gen/schemas/"
+  end
 end
 
 namespace :serve do

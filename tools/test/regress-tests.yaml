@@ -329,6 +329,16 @@ tests:
           UPPER_PROFILE="${PROFILE_NAME^^}"
           ./do gen:profile_release_pdf[${PROFILE_NAME}]
 
+  regress-schema-versions:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Generate resolved schemas
+        run: ./do gen:schemas
+      - name: Check schema versions against published URLs
+        run: ./bin/ruby tools/scripts/check_schema_versions.rb
+
   build-idl-doc:
     ci_stage: merge_queue
     gh_save_artifact:
