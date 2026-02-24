@@ -775,24 +775,24 @@ module Udb
       end
 
       s.push
-      pb = Udb.create_progressbar("checking sat for #{name} [:bar]", total: nil, clear: true)
-      pid = fork {
-        loop do
-          sleep(1)
-          pb.advance
-        end
-      }
-      sat = s.satisfiable?
-      Process.kill("TERM", pid)
-      Process.wait(pid)
-      pb.finish
-      unless sat
-        Udb.logger.error "#{name} is not satisfiable"
-        Udb.logger.error "Unsatisfiable core:"
-        core = Z3::LowLevel.solver_get_unsat_core(s.solver)
-        puts Z3::LowLevel.unpack_ast_vector(core)
-        exit 1
-      end
+      # pb = Udb.create_progressbar("checking sat for #{name} [:bar]", total: nil, clear: true)
+      # pid = fork {
+      #   loop do
+      #     sleep(1)
+      #     pb.advance
+      #   end
+      # }
+      # sat = s.satisfiable?
+      # Process.kill("TERM", pid)
+      # Process.wait(pid)
+      # pb.finish
+      # unless sat
+      #   Udb.logger.error "#{name} is not satisfiable"
+      #   Udb.logger.error "Unsatisfiable core:"
+      #   core = Z3::LowLevel.solver_get_unsat_core(s.solver)
+      #   puts Z3::LowLevel.unpack_ast_vector(core)
+      #   exit 1
+      # end
 
       s
     end

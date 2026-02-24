@@ -393,7 +393,7 @@ module Udb
       end
 
       if assert
-        assertions.each { |a| puts a; solver.assert a }
+        assertions.each { |a| solver.assert a }
       end
       assertions
     end

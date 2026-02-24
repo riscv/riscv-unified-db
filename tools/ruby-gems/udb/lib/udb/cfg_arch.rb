@@ -261,16 +261,28 @@ module Udb
       # check extension requirements
       reasons = []
 
-      if to_condition.satisfiable?
-        return ValidationResult.new(valid: true, reasons:)
+      # check as much as we can before going into full SMT solving
+      config.param_values.each do |param_name, param_value|
+        reasons << "Parameter has no definition: '#{param_name}'" if param(param_name).nil?
+        if !param(param_name).nil? && !param(param_name).schema.validate(param_value, udb_resolver: @config.info.resolver)
+          reasons << "Parameter value violates the schema: '#{param_name}' = '#{param_value}'"
+        end
       end
 
-      explicitly_implemented_extension_versions.each do |ext_ver|
-        unless ext_ver.valid?
-          reasons << "Extension version has no definition: #{ext_ver}"
-          next
+      config.implemented_extensions.each do |h|
+        unless extensions.any? { |e| e.name == h["name"] }
+          reasons << "#{h["name"]} is not a known extension"
         end
+        if extensions.any? { |e| e.name == h["name"] } && !extension(h["name"]).versions.any? { |v| v.version_spec == h["version"] }
+          reasons << "#{h["version"]} is not a known extension"
+        end
+      end
 
+      # shouldn't go any further if there is already a problem because constructing a
+      # cfg_arch condition will fail
+      return ValidationResult.new(valid: false, reasons:) unless reasons.empty?
+
+      explicitly_implemented_extension_versions.each do |ext_ver|
         unless ext_ver.requirements_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
           reasons << "Extension requirement is unmet: #{ext_ver}. Needs: #{ext_ver.requirements_condition.minimize(expand: true).to_s_with_value(self, expand: false)}"
         end
@@ -279,13 +291,6 @@ module Udb
       # check parameter requirements
       config.param_values.each do |param_name, param_value|
         p = param(param_name)
-        if p.nil?
-          reasons << "Parameter has no definition: '#{param_name}'"
-          next
-        end
-        unless p.schema.validate(param_value, udb_resolver: @config.info.resolver)
-          reasons << "Parameter value violates the schema: '#{param_name}' = '#{param_value}'"
-        end
         unless p.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
           reasons << [
             "Parameter is not defined by this config: '#{param_name}'.",
@@ -314,7 +319,8 @@ module Udb
       end
 
       if reasons.empty?
-        ValidationResult.new(valid: true, reasons: [])
+        raise "bad validity check" unless to_condition.satisfiable?
+        ValidationResult.new(valid: true, reasons:)
       else
         ValidationResult.new(valid: false, reasons:)
       end
@@ -360,15 +366,29 @@ module Udb
     def partial_config_valid?
       reasons = []
 
-      if (to_condition).satisfiable?
-        return ValidationResult.new(valid: true, reasons: [])
-      end
-
       mandatory_extension_reqs.each do |ext_req|
         unless ext_req.valid?
           reasons << "Extension requirement can never be met (no match in the database): #{ext_req}"
         end
       end
+
+      # check that provided param values are defined and match the schema
+      config.param_values.each do |param_name, param_value|
+        p = param(param_name)
+        # pwv.name is not a defined parameter
+        if p.nil?
+          reasons << "Parameter has no definition: '#{param_name}'"
+          next
+        end
+
+        unless p.schema.validate(param_value, udb_resolver: @config.info.resolver)
+          reasons << "Parameter value violates the schema: '#{param_name}' = '#{param_value}'"
+        end
+      end
+
+      # shouldn't go any further if there is already a problem because constructing a
+      # cfg_arch condition will fail
+      return ValidationResult.new(valid: false, reasons:) unless reasons.empty?
 
       # first check extension requirements
       # need to make sure that it is possible to construct a config that
@@ -387,15 +407,6 @@ module Udb
       # check that provided param values are defined and match the schema
       config.param_values.each do |param_name, param_value|
         p = param(param_name)
-        # pwv.name is not a defined parameter
-        if p.nil?
-          reasons << "Parameter has no definition: '#{param_name}'"
-          next
-        end
-
-        unless p.schema.validate(param_value, udb_resolver: @config.info.resolver)
-          reasons << "Parameter value violates the schema: '#{param_name}' = '#{param_value}'"
-        end
 
         # check that parameter is defined by the partial config (e.g., is defined by a mandatory
         # extension and/or other param value).
@@ -416,11 +427,12 @@ module Udb
         end
       end
 
-      unless reasons.empty?
+      if reasons.empty?
+        raise "Bad validation" unless to_condition.satisfiable?
+        return ValidationResult.new(valid: true, reasons: [])
+      else
         return ValidationResult.new(valid: false, reasons:)
       end
-
-      ValidationResult.new(valid: true, reasons: [])
     end
     private :partial_config_valid?
 
