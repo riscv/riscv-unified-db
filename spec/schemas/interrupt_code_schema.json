@@ -6,7 +6,7 @@
   "required": ["$schema", "kind", "num", "name", "display_name", "definedBy"],
   "properties": {
     "$schema": {
-      "enum": ["interrupt_code_schema.json#"]
+      "const": "interrupt_code_schema.json#"
     },
     "kind": {
       "const": "interrupt_code"

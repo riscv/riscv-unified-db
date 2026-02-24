@@ -160,8 +160,8 @@
   },
   "properties": {
     "$schema": {
-      "enum": ["inst_subtype_schema.json#"],
-      "description": "Pointer to schema"
+      "description": "Pointer to schema",
+      "const": "inst_subtype_schema.json#"
     },
     "kind": {
       "const": "instruction_subtype",

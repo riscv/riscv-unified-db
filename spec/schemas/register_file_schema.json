@@ -81,8 +81,8 @@
       "properties": {
         "$schema": {
           "format": "uri-reference",
-          "enum": ["register_file_schema.json#"],
-          "description": "Path to schema, relative to <UDB ROOT>/schemas"
+          "description": "Path to schema, relative to <UDB ROOT>/schemas",
+          "const": "register_file_schema.json#"
         },
         "kind": {
           "const": "register_file"

@@ -17,7 +17,7 @@
         "$schema": {
           "type": "string",
           "format": "uri-reference",
-          "enum": ["config_schema.json#"]
+          "const": "config_schema.json#"
         },
         "kind": {
           "type": "string",
@@ -81,7 +81,7 @@
         "$schema": {
           "type": "string",
           "format": "uri-reference",
-          "enum": ["config_schema.json#"]
+          "const": "config_schema.json#"
         },
         "kind": {
           "type": "string",
@@ -150,7 +150,7 @@
         "$schema": {
           "type": "string",
           "format": "uri-reference",
-          "enum": ["config_schema.json#"]
+          "const": "config_schema.json#"
         },
         "kind": {
           "type": "string",

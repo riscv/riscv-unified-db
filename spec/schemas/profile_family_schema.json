@@ -5,7 +5,7 @@
   "required": ["$schema", "kind", "name", "long_name"],
   "properties": {
     "$schema": {
-      "enum": ["profile_family_schema.json#"]
+      "const": "profile_family_schema.json#"
     },
     "kind": {
       "const": "profile family"

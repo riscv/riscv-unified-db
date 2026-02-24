@@ -8,7 +8,7 @@
     "$schema": {
       "type": "string",
       "format": "uri-reference",
-      "enum": ["non_isa_schema.json#"]
+      "const": "non_isa_schema.json#"
     },
     "kind": {
       "type": "string",

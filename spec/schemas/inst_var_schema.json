@@ -71,7 +71,7 @@
   "required": ["$schema", "kind", "name", "data"],
   "properties": {
     "$schema": {
-      "enum": ["inst_var_schema.json#"]
+      "const": "inst_var_schema.json#"
     },
     "kind": {
       "const": "instruction_variable"

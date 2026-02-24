@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "properties": {
     "$schema": {
-      "enum": ["proc_cert_class_schema.json#"]
+      "const": "proc_cert_class_schema.json#"
     },
     "kind": {
       "const": "processor certificate class"

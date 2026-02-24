@@ -15,8 +15,8 @@
     "$schema": {
       "type": "string",
       "format": "uri-reference",
-      "enum": ["ext_schema.json#"],
-      "description": "Path to schema, relative to <UDB ROOT>/schemas"
+      "description": "Path to schema, relative to <UDB ROOT>/schemas",
+      "const": "ext_schema.json#"
     },
     "kind": {
       "type": "string",

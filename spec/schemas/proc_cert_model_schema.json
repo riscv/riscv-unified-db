@@ -54,7 +54,7 @@
       ]
     },
     "$schema": {
-      "enum": ["proc_cert_model_schema.json#"]
+      "const": "proc_cert_model_schema.json#"
     },
     "kind": {
       "const": "processor certificate model"

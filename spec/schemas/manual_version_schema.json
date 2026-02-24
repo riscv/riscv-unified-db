@@ -62,7 +62,7 @@
   ],
   "properties": {
     "$schema": {
-      "enum": ["manual_version_schema.json#"]
+      "const": "manual_version_schema.json#"
     },
     "kind": {
       "const": "manual version"

@@ -6,7 +6,7 @@
   "type": "object",
   "properties": {
     "$schema": {
-      "enum": ["inst_type_schema.json#"]
+      "const": "inst_type_schema.json#"
     },
     "kind": {
       "const": "instruction_type"

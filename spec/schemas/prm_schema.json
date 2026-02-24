@@ -160,7 +160,7 @@
   ],
   "properties": {
     "$schema": {
-      "enum": ["prm_schema.json#"]
+      "const": "prm_schema.json#"
     },
     "kind": {
       "const": "programmer reference manual"

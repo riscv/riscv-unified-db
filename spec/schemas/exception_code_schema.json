@@ -6,7 +6,7 @@
   "required": ["$schema", "kind", "num", "name", "display_name", "definedBy"],
   "properties": {
     "$schema": {
-      "enum": ["exception_code_schema.json#"]
+      "const": "exception_code_schema.json#"
     },
     "kind": {
       "const": "exception_code"

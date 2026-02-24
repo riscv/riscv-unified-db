@@ -5,7 +5,7 @@
   "required": ["$schema", "kind", "name", "long_name"],
   "properties": {
     "$schema": {
-      "enum": ["manual_schema.json#"]
+      "const": "manual_schema.json#"
     },
     "kind": {
       "const": "manual"

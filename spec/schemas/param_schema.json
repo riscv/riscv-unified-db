@@ -12,7 +12,7 @@
   ],
   "properties": {
     "$schema": {
-      "enum": ["param_schema.json#"]
+      "const": "param_schema.json#"
     },
     "kind": {
       "const": "parameter"

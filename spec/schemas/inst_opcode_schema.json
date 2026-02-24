@@ -7,7 +7,7 @@
   "required": ["$schema", "kind", "data"],
   "properties": {
     "$schema": {
-      "enum": ["inst_opcode_schema.json#"]
+      "const": "inst_opcode_schema.json#"
     },
     "kind": {
       "const": "instruction_opcode"

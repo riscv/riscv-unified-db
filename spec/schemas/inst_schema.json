@@ -308,8 +308,8 @@
     "$schema": {
       "type": "string",
       "format": "uri-reference",
-      "enum": ["inst_schema.json#"],
-      "description": "Path to schema, relative to <UDB ROOT>/schemas"
+      "description": "Path to schema, relative to <UDB ROOT>/schemas",
+      "const": "inst_schema.json#"
     },
     "kind": {
       "type": "string",
