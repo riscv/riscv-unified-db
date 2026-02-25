@@ -336,7 +336,11 @@ function softfloat_shiftRightJam64 {
      is zero or nonzero.
   }
   body {
-    return (dist < 63) ? a>>dist | (((a<<(-dist & 63)) != 0) ? 1 : 0) : ((a != 0) ? 1 : 0);
+    # negate dist using 2's complement to avoid a truncation warning from the IDL compiler
+    # that would happen if you use -dist
+    # (because '-dist' is a signed type, which, when masked, loses information)
+    Bits<32> neg_dist = ~dist + 1;
+    return (dist < 63) ? a>>dist | (((a<<(neg_dist & 63)) != 0) ? 1 : 0) : ((a != 0) ? 1 : 0);
   }
 }
 
@@ -1417,7 +1421,7 @@ function f32_div {
     # Check if the lower 6 bits are zero, meaning the division was exact.
     # This is used to determine if rounding/jamming is needed.
     if ((sigZ & 0x3F) != 0) {
-      sigZ = sigZ | ((sigB `* sigZ) != sig64A);
+      sigZ = sigZ | (((sigB `* sigZ) != sig64A) ? 0 : 1);
     }
 
     return softfloat_roundPackToF32(signZ, expZ, sigZ, mode);
