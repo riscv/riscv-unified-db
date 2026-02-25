@@ -463,8 +463,8 @@ module Idl
 
     # @!macro type_check
     # @abstract
-    sig { abstract.params(symtab: SymbolTable).void }
-    def type_check(symtab); end
+    sig { abstract.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:); end
 
     # @!macro [new] to_idl
     #   Return valid IDL representation of the node (and its subtree)
@@ -854,8 +854,8 @@ module Idl
     sig { override.returns(String) }
     def to_idl = "include \"#{filename}\""
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab); end
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:); end
 
     def to_h
       raise "unreachable"
@@ -877,8 +877,8 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab); end
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:); end
 
     sig { override.params(symtab: SymbolTable).returns(Type) }
     def type(symtab) = BoolType
@@ -924,8 +924,8 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab); end
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:); end
 
     sig { override.params(symtab: SymbolTable).returns(Type) }
     def type(symtab) = BoolType
@@ -982,7 +982,7 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type_error "no symbol named '#{name}' on line #{lineno}" if symtab.get(name).nil?
     end
 
@@ -1120,8 +1120,8 @@ module Idl
     end
 
     # @1macro type_check
-    def type_check(symtab)
-      var_decl_with_init.type_check(symtab)
+    def type_check(symtab, strict:)
+      var_decl_with_init.type_check(symtab, strict:)
     end
 
     # @1macro type
@@ -1199,8 +1199,8 @@ module Idl
       declaration.make_global
     end
 
-    def type_check(symtab)
-      declaration.type_check(symtab)
+    def type_check(symtab, strict:)
+      declaration.type_check(symtab, strict:)
     end
 
     def type(symtab)
@@ -1302,8 +1302,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      definitions.each { |d| d.type_check(symtab) }
+    def type_check(symtab, strict:)
+      definitions.each { |d| d.type_check(symtab, strict:) }
 
       fetch_blocks = definitions.grep(FetchAst)
       type_error "Multiple fetch blocks defined" if fetch_blocks.size > 1
@@ -1386,13 +1386,13 @@ module Idl
       super(input, interval, [ary, value])
     end
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab)
-      ary.type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      ary.type_check(symtab, strict:)
       ary_type = ary.type(symtab)
       type_error "First argument of $array_includes? must be an array. Found #{ary_type}" unless ary_type.kind == :array
 
-      expr.type_check(symtab)
+      expr.type_check(symtab, strict:)
       value_type = expr.type(symtab)
       unless value_type.comparable_to?(ary_type.sub_type)
         type_error "Second argument of $array_includes? must be comparable to the array element type. Found #{ary_type.sub_type} and #{value_type}"
@@ -1456,8 +1456,8 @@ module Idl
       super(input, interval, [expression])
     end
 
-    def type_check(symtab)
-      expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
       expression_type = expression.type(symtab)
       type_error "#{expression.text_value} is not an array" unless expression_type.kind == :array
       type_error "#{expression.text_value} must be a constant" unless expression_type.const?
@@ -1525,8 +1525,8 @@ module Idl
       super(input, interval, [enum_class_name])
     end
 
-    def type_check(symtab)
-      enum_class.type_check(symtab)
+    def type_check(symtab, strict:)
+      enum_class.type_check(symtab, strict:)
     end
 
     def type(symtab)
@@ -1586,8 +1586,8 @@ module Idl
       super(input, interval, [enum_class_name])
     end
 
-    def type_check(symtab)
-      enum_class.type_check(symtab)
+    def type_check(symtab, strict:)
+      enum_class.type_check(symtab, strict:)
     end
 
     def type(symtab)
@@ -1652,9 +1652,9 @@ module Idl
       super(input, interval, [user_type_name, expression])
     end
 
-    def type_check(symtab)
-      enum_name.type_check(symtab)
-      expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      enum_name.type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
 
       if expression.type(symtab).kind != :bits
         type_error "Can only cast from Bits<N> to enum"
@@ -1724,8 +1724,8 @@ module Idl
       super(input, interval, [enum_class_name])
     end
 
-    def type_check(symtab)
-      enum_class.type_check(symtab)
+    def type_check(symtab, strict:)
+      enum_class.type_check(symtab, strict:)
     end
 
     def type(symtab)
@@ -1849,15 +1849,15 @@ module Idl
     def element_values = @element_values
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       @element_value_asts.each do |e|
         unless e.nil?
-          e.type_check(symtab)
+          e.type_check(symtab, strict:)
         end
       end
 
       add_symbol(symtab)
-      @user_type.type_check(symtab)
+      @user_type.type_check(symtab, strict:)
     end
 
     # @!macro add_symbol
@@ -1942,7 +1942,7 @@ module Idl
     end
 
     # @!macro type_check_no_args
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       sym = symtab.get(@user_type.text_value)
       type_error "Builtin enum #{@user_type.text_value} is not defined" if sym.nil?
       type_error "#{@user_type.text_value} is not an enum" unless sym.is_a?(EnumerationType)
@@ -2014,8 +2014,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      @msb.type_check(symtab)
+    def type_check(symtab, strict:)
+      @msb.type_check(symtab, strict:)
 
       value_result = value_try do
         @msb.value(symtab)
@@ -2026,7 +2026,7 @@ module Idl
 
       return if @lsb.nil?
 
-      @lsb.type_check(symtab)
+      @lsb.type_check(symtab, strict:)
       value_result = value_try do
         @lsb.value(symtab)
       end
@@ -2156,16 +2156,16 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      @size.type_check(symtab)
+    def type_check(symtab, strict:)
+      @size.type_check(symtab, strict:)
       @fields.each do |f|
-        f.type_check(symtab)
+        f.type_check(symtab, strict:)
         r = f.range(symtab)
         type_error "Field position (#{r}) is larger than the bitfield width (#{@size.value(symtab)} #{@size.text_value})" if r.first >= @size.value(symtab)
       end
 
       add_symbol(symtab)
-      @name.type_check(symtab)
+      @name.type_check(symtab, strict:)
     end
 
     # @!macro add_symbol
@@ -2276,9 +2276,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       @member_types.each do |t|
-        t.type_check(symtab)
+        t.type_check(symtab, strict:)
       end
       add_symbol(symtab)
     end
@@ -2418,9 +2418,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      var.type_check(symtab)
-      index.type_check(symtab)
+    def type_check(symtab, strict:)
+      var.type_check(symtab, strict:)
+      index.type_check(symtab, strict:)
 
       type_error "Array index must be integral" unless index.type(symtab).integral?
 
@@ -2530,10 +2530,10 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      var.type_check(symtab)
-      msb.type_check(symtab)
-      lsb.type_check(symtab)
+    def type_check(symtab, strict:)
+      var.type_check(symtab, strict:)
+      msb.type_check(symtab, strict:)
+      lsb.type_check(symtab, strict:)
 
       type_error "Range operator only defined for integral types (found #{var.type(symtab)})" unless var.type(symtab).integral?
 
@@ -2637,9 +2637,9 @@ module Idl
     def execute_unknown(symtab); end
 
     # @!macro type_check
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab)
-      rhs.type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      rhs.type_check(symtab, strict:)
     end
 
     # @!macro to_idl
@@ -2707,12 +2707,12 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      lhs.type_check(symtab)
+    def type_check(symtab, strict:)
+      lhs.type_check(symtab, strict:)
       lhs_var = symtab.get(lhs.name)
       type_error "Cannot assign to a const" if lhs_var.type.const? && !lhs_var.for_loop_iter?
 
-      rhs.type_check(symtab)
+      rhs.type_check(symtab, strict:)
       if lhs_var.type.const? && lhs_var.for_loop_iter?
         # also check that the rhs is const_eval
         type_error "Assignment would make iteration variable non-const" unless rhs.type(symtab).const?
@@ -2828,14 +2828,14 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      lhs.type_check(symtab)
+    def type_check(symtab, strict:)
+      lhs.type_check(symtab, strict:)
       unless [:array, :bits].include?(lhs.type(symtab).kind)
         type_error "#{lhs.text_value} must be an array or an integral type"
       end
       type_error "Assigning to a constant" if lhs.type(symtab).const?
 
-      idx.type_check(symtab)
+      idx.type_check(symtab, strict:)
 
       type_error "Index must be integral" unless idx.type(symtab).integral?
 
@@ -2845,7 +2845,7 @@ module Idl
       end
       # OK, doesn't need to be known
 
-      rhs.type_check(symtab)
+      rhs.type_check(symtab, strict:)
 
       case lhs.type(symtab).kind
       when :array
@@ -2991,13 +2991,13 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      variable.type_check(symtab)
+    def type_check(symtab, strict:)
+      variable.type_check(symtab, strict:)
       type_error "#{variable.text_value} must be integral" unless variable.type(symtab).kind == :bits
       type_error "Assigning to a constant" if variable.type(symtab).const?
 
-      msb.type_check(symtab)
-      lsb.type_check(symtab)
+      msb.type_check(symtab, strict:)
+      lsb.type_check(symtab, strict:)
 
       type_error "MSB must be integral" unless msb.type(symtab).integral?
       type_error "LSB must be integral" unless lsb.type(symtab).integral?
@@ -3011,7 +3011,7 @@ module Idl
       end
       # OK, don't have to know the value
 
-      write_value.type_check(symtab)
+      write_value.type_check(symtab, strict:)
 
       unless write_value.type(symtab).integral?
         type_error "Incompatible type in range assignment"
@@ -3147,8 +3147,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      id.type_check(symtab)
+    def type_check(symtab, strict:)
+      id.type_check(symtab, strict:)
       var = symtab.get(id.name)
       type_error "#{id.name} has not been declared" if var.nil?
 
@@ -3165,7 +3165,7 @@ module Idl
 
       type_error "Cannot write const variable" if var.type.const?
 
-      rhs.type_check(symtab)
+      rhs.type_check(symtab, strict:)
       return if rhs.type(symtab).convertable_to?(type(symtab))
 
       type_error "Incompatible type in assignment (#{type(symtab)}, #{rhs.type(symtab)})"
@@ -3257,10 +3257,10 @@ module Idl
       csr_field.field_def(symtab)
     end
 
-    def type_check(symtab)
-      csr_field.type_check(symtab)
+    def type_check(symtab, strict:)
+      csr_field.type_check(symtab, strict:)
 
-      write_value.type_check(symtab)
+      write_value.type_check(symtab, strict:)
       type_error "Incompatible type in assignment" unless write_value.type(symtab).convertable_to?(type(symtab))
     end
 
@@ -3343,9 +3343,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      function_call.type_check(symtab)
-      variables.each { |var| var.type_check(symtab) }
+    def type_check(symtab, strict:)
+      function_call.type_check(symtab, strict:)
+      variables.each { |var| var.type_check(symtab, strict:) }
 
       type_error "Assigning value to a constant" if variables.any? { |v| v.type(symtab).const? }
 
@@ -3474,8 +3474,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      type_name.type_check(symtab)
+    def type_check(symtab, strict:)
+      type_name.type_check(symtab, strict:)
 
       add_symbol(symtab)
     end
@@ -3607,8 +3607,8 @@ module Idl
     def type(symtab) = decl_type(symtab)
 
     # @!macro type_check
-    def type_check(symtab, add_sym = true)
-      type_name.type_check(symtab)
+    def type_check(symtab, add_sym: true, strict:)
+      type_name.type_check(symtab, strict:)
       dtype = type_name.type(symtab)
 
       type_error "No type '#{type_name.text_value}'" if dtype.nil?
@@ -3616,7 +3616,7 @@ module Idl
       type_error "Constants must be initialized at declaration" if id.text_value[0] == T.must(id.text_value[0]).upcase
 
       unless ary_size.nil?
-        T.must(ary_size).type_check(symtab)
+        T.must(ary_size).type_check(symtab, strict:)
         value_result = value_try do
           T.must(ary_size).value(symtab)
         end
@@ -3628,7 +3628,7 @@ module Idl
 
       add_symbol(symtab) if add_sym
 
-      id.type_check(symtab)
+      id.type_check(symtab, strict:)
     end
 
     # @!macro add_symbol
@@ -3799,12 +3799,12 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      rhs.type_check(symtab)
+    def type_check(symtab, strict:)
+      rhs.type_check(symtab, strict:)
 
-      type_name.type_check(symtab)
+      type_name.type_check(symtab, strict:)
 
-      ary_size&.type_check(symtab)
+      ary_size&.type_check(symtab, strict:)
 
       decl_type = lhs_type(symtab)
 
@@ -3823,7 +3823,7 @@ module Idl
         symtab.add(lhs.text_value, Var.new(lhs.text_value, decl_type.clone, for_loop_iter: @for_iter_var))
       end
 
-      lhs.type_check(symtab)
+      lhs.type_check(symtab, strict:)
 
       # now check that the assignment is compatible
       return if rhs.type(symtab).convertable_to?(decl_type)
@@ -3955,7 +3955,7 @@ module Idl
       end
     end
 
-    def type_check(_symtab)
+    def type_check(_symtab, strict:)
       raise "you must have forgotten the to_ast pass"
     end
   end
@@ -3996,8 +3996,8 @@ module Idl
     sig { returns(RvalueAst) }
     def consequent = T.cast(@children.fetch(1), RvalueAst)
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
       antecedent.type_error "Antecedent must a boolean" unless antecedent.type(symtab).kind == :boolean
       consequent.type_error "Consequent must a boolean" unless consequent.type(symtab).kind == :boolean
     end
@@ -4058,9 +4058,9 @@ module Idl
     sig { returns(ImplicationExpressionAst) }
     def expression = T.cast(@children.fetch(0), ImplicationExpressionAst)
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab)
-      expression.type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
     end
 
     sig { params(symtab: SymbolTable).returns(T::Boolean) }
@@ -4121,10 +4121,10 @@ module Idl
     sig { returns(T::Array[T.any(ImplicationStatementAst, ForLoopAst)]) }
     def stmts = T.cast(@children, T::Array[T.any(ImplicationStatementAst, ForLoopAst)])
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
       stmts.each do |stmt|
-        stmt.type_check(symtab)
+        stmt.type_check(symtab, strict:)
       end
     end
 
@@ -4180,9 +4180,9 @@ module Idl
       super(input, interval, [e])
     end
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab)
-      expression.type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
 
       e_type = expression.type(symtab)
       type_error "#{expression.text_value} is not a Bits<N> type" unless e_type.kind == :bits
@@ -4244,8 +4244,8 @@ module Idl
     def initialize(input, interval, exp) = super(input, interval, [exp])
 
     # @!macro type_check
-    def type_check(symtab)
-      expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
     end
 
     # @!macro type
@@ -4314,8 +4314,8 @@ module Idl
     def initialize(input, interval, exp) = super(input, interval, [exp])
 
     # @!macro type_check
-    def type_check(symtab)
-      expr.type_check(symtab)
+    def type_check(symtab, strict:)
+      expr.type_check(symtab, strict:)
 
       unless [:bits, :enum_ref, :csr].include?(expr.type(symtab).kind)
         type_error "#{expr.type(symtab)} Cannot be cast to bits"
@@ -4574,7 +4574,7 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       internal_error "No type_check function #{lhs.inspect}" unless lhs.respond_to?(:type_check)
 
       lhs_short_circuit = T.let(false, T::Boolean)
@@ -4594,19 +4594,19 @@ module Idl
           # both are known and boolean. nothing more to check
           return
         elsif lhs_value == false && op == "||"
-          rhs.type_check(symtab)
+          rhs.type_check(symtab, strict:)
         elsif lhs_value == true && op == "||"
           rhs_short_circuit = true
         elsif lhs_value == true && op == "&&"
-          rhs.type_check(symtab)
+          rhs.type_check(symtab, strict:)
         elsif lhs_value == false && op == "&&"
           rhs_short_circuit = true
         elsif rhs_value == false && op == "||"
-          lhs.type_check(symtab)
+          lhs.type_check(symtab, strict:)
         elsif rhs_value == true && op == "||"
           lhs_short_circuit = true
         elsif rhs_value == true && op == "&&"
-          lhs.type_check(symtab)
+          lhs.type_check(symtab, strict:)
         elsif rhs_value == false && op == "&&"
           lhs_short_circuit = true
         end
@@ -5218,7 +5218,7 @@ module Idl
     def invert(symtab) = expression.invert(symtab)
 
     # @!macro type_check
-    def type_check(symtab) = expression.type_check(symtab)
+    def type_check(symtab, strict:) = expression.type_check(symtab, strict:)
 
     # @!macro type
     def type(symtab) = expression.type(symtab)
@@ -5269,9 +5269,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       entries.each do |node|
-        node.type_check(symtab)
+        node.type_check(symtab, strict:)
       end
 
       unless element_nodes.all? { |e| e.type(symtab).equal_to?(element_nodes[0].type(symtab)) }
@@ -5329,11 +5329,11 @@ module Idl
     def expressions = @children
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type_error "Must concatenate at least two objects" if expressions.size < 2
 
       expressions.each do |exp|
-        exp.type_check(symtab)
+        exp.type_check(symtab, strict:)
         e_type = exp.type(symtab)
         type_error "Concatenation only supports Bits<> types" unless e_type.kind == :bits
 
@@ -5436,9 +5436,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      n.type_check(symtab)
-      v.type_check(symtab)
+    def type_check(symtab, strict:)
+      n.type_check(symtab, strict:)
+      v.type_check(symtab, strict:)
 
       type_error "value of replication must be a Bits type" unless v.type(symtab).kind == :bits
       value_try do
@@ -5516,8 +5516,8 @@ module Idl
       super(input, interval, [rval])
     end
 
-    def type_check(symtab)
-      rval.type_check(symtab)
+    def type_check(symtab, strict:)
+      rval.type_check(symtab, strict:)
       rval_immutable =
         rval.is_a?(IdAst) && (rval.type(symtab).const? && !symtab.get(T.cast(rval, IdAst).name).for_loop_iter?)
       type_error "Cannot decrement a const variable" if rval_immutable
@@ -5596,7 +5596,7 @@ module Idl
       super(input, interval, EMPTY_ARRAY)
     end
 
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type_error "Not a builtin variable" unless ["$pc", "$encoding"].include?(name)
     end
 
@@ -5671,8 +5671,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      rval.type_check(symtab)
+    def type_check(symtab, strict:)
+      rval.type_check(symtab, strict:)
       var = symtab.get(rval.text_value)
       rval_immutable =
         rval.is_a?(IdAst) && (rval.type(symtab).const? && !var.for_loop_iter?)
@@ -5774,8 +5774,8 @@ module Idl
       end
     end
 
-    def type_check(symtab)
-      obj.type_check(symtab)
+    def type_check(symtab, strict:)
+      obj.type_check(symtab, strict:)
 
       obj_type = obj.type(symtab)
 
@@ -5871,7 +5871,7 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       enum_def_type = @enum_def_type
 
       type_error "No symbol #{@enum_class_name} has been defined" if enum_def_type.nil?
@@ -5981,8 +5981,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      exp.type_check(symtab)
+    def type_check(symtab, strict:)
+      exp.type_check(symtab, strict:)
 
       case op
       when "-"
@@ -6098,8 +6098,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      condition.type_check(symtab)
+    def type_check(symtab, strict:)
+      condition.type_check(symtab, strict:)
       if condition.type(symtab).kind == :bits
         type_error "ternary selector must be bool (maybe you meant '#{condition.text_value} != 0'?)"
       else
@@ -6109,11 +6109,11 @@ module Idl
       value_result = value_try do
         cond = condition.value(symtab)
         # if the condition is compile-time-known, only check the used field
-        cond ? true_expression.type_check(symtab) : false_expression.type_check(symtab)
+        cond ? true_expression.type_check(symtab, strict:) : false_expression.type_check(symtab, strict:)
       end
       value_else(value_result) do
-        true_expression.type_check(symtab)
-        false_expression.type_check(symtab)
+        true_expression.type_check(symtab, strict:)
+        false_expression.type_check(symtab, strict:)
 
         unless true_expression.type(symtab).equal_to?(false_expression.type(symtab))
           # we'll allow dissimilar if they are both bits type
@@ -6126,7 +6126,7 @@ module Idl
 
     # @!macro type
     def type(symtab)
-      condition.type_check(symtab)
+      condition.type_check(symtab, strict: true)
       value_result = value_try do
         cond = condition.value(symtab)
         # if the condition is compile-time-known, only check the used field
@@ -6247,7 +6247,7 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab); end
+    def type_check(symtab, strict:); end
 
     # @!macro execute
     def execute(symtab); end
@@ -6292,8 +6292,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      action.type_check(symtab)
+    def type_check(symtab, strict:)
+      action.type_check(symtab, strict:)
     end
 
     # @!macro execute
@@ -6362,11 +6362,11 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      action.type_check(symtab)
+    def type_check(symtab, strict:)
+      action.type_check(symtab, strict:)
       type_error "Cannot declare from a conditional statement" if action.is_a?(Declaration)
 
-      condition.type_check(symtab)
+      condition.type_check(symtab, strict:)
       type_error "condition is not boolean" unless condition.type(symtab).convertable_to?(:boolean)
     end
 
@@ -6440,7 +6440,7 @@ module Idl
     end
 
     # @!macro type_check_no_args
-    def type_check(_symtab)
+    def type_check(_symtab, strict:)
       # nothing to do!
     end
 
@@ -6501,7 +6501,7 @@ module Idl
     def initialize(input, interval) = super(input, interval, EMPTY_ARRAY)
 
     # @!macro type_check_no_args
-    def type_check(_symtab)
+    def type_check(_symtab, strict:)
       # nothing to do!
     end
 
@@ -6575,8 +6575,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      return_expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      return_expression.type_check(symtab, strict:)
     end
 
     # @return [Array<AstNode>] List of return value nodes
@@ -6671,9 +6671,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       return_value_nodes.each do |v|
-        v.type_check(symtab)
+        v.type_check(symtab, strict:)
         type_error "Unknown type for #{v.text_value}" if v.type(symtab).nil?
       end
 
@@ -6755,10 +6755,10 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      condition.type_check(symtab)
+    def type_check(symtab, strict:)
+      condition.type_check(symtab, strict:)
       type_error "Condition must be boolean" unless condition.type(symtab).kind == :boolean
-      return_expression.type_check(symtab)
+      return_expression.type_check(symtab, strict:)
     end
 
     # @return [Type] The actual return type
@@ -6838,7 +6838,7 @@ module Idl
     def text_value = @text
 
     # @!macro type_check
-    def type_check(symtab); end
+    def type_check(symtab, strict:); end
 
     # @return [String] The comment text, with the leading hash and any leading space removed
     # @example
@@ -6906,9 +6906,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       if @type_name == "Bits"
-        bits_expression.type_check(symtab)
+        bits_expression.type_check(symtab, strict:)
         value_result = value_try do
           unless bits_expression.value(symtab).positive?
             type_error "Bits width (#{bits_expression.value(symtab)}) must be positive"
@@ -7048,7 +7048,7 @@ module Idl
     def text_value = @text
 
     # @!macro type_check
-    def type_check(_symtab); end
+    def type_check(_symtab, strict:); end
 
     def type(symtab)
       @type
@@ -7195,7 +7195,7 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       if text_value.delete("_") =~ /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
         # verilog-style literal
         width = ::Regexp.last_match(1)
@@ -7606,7 +7606,7 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       level = symtab.levels
 
       tvals = template_values(symtab, unknown_ok: true)
@@ -7624,7 +7624,7 @@ module Idl
         end
 
         template_arg_nodes.each_with_index do |t, idx|
-          t.type_check(symtab)
+          t.type_check(symtab, strict:)
           unless t.type(symtab).convertable_to?(func_def_type.template_types(symtab)[idx])
             type_error "Template argument #{idx + 1} has wrong type"
           end
@@ -7641,7 +7641,7 @@ module Idl
         type_error "Wrong number of arguments to '#{name}' function call. Expecting #{func_def_type.num_args}, got #{num_args}"
       end
       arg_nodes.each do |a|
-        a.type_check(symtab)
+        a.type_check(symtab, strict:)
       end
       arg_nodes.each_with_index do |a, idx|
         unless a.type(symtab).convertable_to?(func_def_type.argument_type(idx, tvals, arg_nodes, symtab, self))
@@ -7809,7 +7809,7 @@ module Idl
     def text_value = @name
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type = type(symtab)
 
       type_error "#{text_value} is not a type" unless type.is_a?(Type)
@@ -7884,13 +7884,13 @@ module Idl
     def stmts = @children
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       internal_error "Function bodies should be at global + 1 scope (at #{symtab.levels})" unless symtab.levels == 2
 
       return_value_might_be_known = true
 
       stmts.each do |s|
-        s.type_check(symtab)
+        s.type_check(symtab, strict:)
         # next unless return_value_might_be_known
 
         # begin
@@ -8019,8 +8019,8 @@ module Idl
       super(input, interval, [body])
     end
 
-    def type_check(symtab)
-      body.type_check(symtab)
+    def type_check(symtab, strict:)
+      body.type_check(symtab, strict:)
     end
 
     def return_type(symtab)
@@ -8296,7 +8296,7 @@ end,
     end
 
     # @param [Array<Integer>] template values to apply
-    def type_check_template_instance(symtab)
+    def type_check_template_instance(symtab, strict:)
       internal_error "Function definitions should be at global + 1 scope" unless symtab.levels == 2
 
       internal_error "Not a template function" unless templated?
@@ -8305,20 +8305,20 @@ end,
         internal_error "Template values missing" unless symtab.get(tname)
       end
 
-      type_check_return(symtab)
-      type_check_args(symtab)
+      type_check_return(symtab, strict:)
+      type_check_args(symtab, strict:)
       @argument_nodes.each { |a| symtab.add(a.name, Var.new(a.name, a.type(symtab))) }
-      type_check_body(symtab)
+      type_check_body(symtab, strict:)
     end
 
     # we do lazy type checking of the function body so that we never check
     # uncalled functions, which avoids dealing with mentions of CSRs that
     # may not exist in a given implementation
-    def type_check_from_call(symtab)
+    def type_check_from_call(symtab, strict:)
       internal_error "Function definitions should be at global + 1 scope" unless symtab.levels == 2
 
-      type_check_return(symtab)
-      type_check_args(symtab)
+      type_check_return(symtab, strict:)
+      type_check_args(symtab, strict:)
       # @argument_nodes.each do |a|
       #   value_result = value_try do
       #     symtab.add(a.name, Var.new(a.name, a.type(symtab), a.value(symtab)))
@@ -8327,7 +8327,7 @@ end,
       #     symtab.add(a.name, Var.new(a.name, a.type(symtab)))
       #   end
       # end
-      type_check_body(symtab)
+      type_check_body(symtab, strict:)
     end
 
     def apply_template_and_arg_syms(symtab)
@@ -8341,7 +8341,7 @@ end,
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       internal_error "Functions must be declared at global scope (at #{symtab.levels})" unless symtab.levels == 1
 
       type_check_targs(symtab)
@@ -8352,17 +8352,17 @@ end,
         symtab.add(tname, Var.new(tname, template_types(symtab)[index], template_index: index))
       end
 
-      type_check_return(symtab)
+      type_check_return(symtab, strict:)
 
       arguments(symtab).each do |arg_type, arg_name|
         symtab.add(arg_name, Var.new(arg_name, arg_type))
       end
-      type_check_args(symtab)
+      type_check_args(symtab, strict:)
 
 
       # template functions are checked as they are called
       unless templated?
-        type_check_body(symtab)
+        type_check_body(symtab, strict:)
       end
       symtab.pop
     end
@@ -8406,18 +8406,18 @@ end,
       @targs.each { |t| type_error "Template types must be integral" unless t.type(symtab).integral? }
     end
 
-    def type_check_return(symtab)
-      @return_type_nodes.each { |r| r.type_check(symtab) }
+    def type_check_return(symtab, strict:)
+      @return_type_nodes.each { |r| r.type_check(symtab, strict:) }
     end
 
-    def type_check_args(symtab)
-      @argument_nodes.each { |a| a.type_check(symtab, false) }
+    def type_check_args(symtab, strict:)
+      @argument_nodes.each { |a| a.type_check(symtab, add_sym: false, strict:) }
     end
 
-    def type_check_body(symtab)
+    def type_check_body(symtab, strict:)
       return if @body.nil?
 
-      @body.type_check(symtab)
+      @body.type_check(symtab, strict:)
     end
 
     def body
@@ -8567,13 +8567,13 @@ end,
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       symtab.push(self)
-      init.type_check(symtab)
-      condition.type_check(symtab)
-      update.type_check(symtab)
+      init.type_check(symtab, strict:)
+      condition.type_check(symtab, strict:)
+      update.type_check(symtab, strict:)
 
-      stmts.each { |stmt| stmt.type_check(symtab) }
+      stmts.each { |stmt| stmt.type_check(symtab, strict:) }
 
       symtab.pop
     end
@@ -8762,12 +8762,12 @@ end,
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       symtab.push(self)
 
       begin
         stmts.each do |s|
-          s.type_check(symtab)
+          s.type_check(symtab, strict:)
         end
       ensure
         symtab.pop
@@ -8908,8 +8908,8 @@ end,
       super(input, interval, [cond, body])
     end
 
-    def type_check(symtab)
-      cond.type_check(symtab)
+    def type_check(symtab, strict:)
+      cond.type_check(symtab, strict:)
 
       cond_value = T.let(nil, T.nilable(ValueRbType))
       value_try do
@@ -8920,7 +8920,7 @@ end,
         type_error "'#{cond.text_value}' is not boolean"
       end
 
-      body.type_check(symtab) unless cond_value == false
+      body.type_check(symtab, strict:) unless cond_value == false
     end
 
     sig { override.params(symtab: SymbolTable).returns(Type) }
@@ -9050,9 +9050,9 @@ end,
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       level = symtab.levels
-      if_cond.type_check(symtab)
+      if_cond.type_check(symtab, strict:)
 
 
       unless if_cond.type(symtab).convertable_to?(:boolean)
@@ -9069,19 +9069,19 @@ end,
       end
 
       # short-circuit the if body if we can
-      if_body.type_check(symtab) unless if_cond_value == false
+      if_body.type_check(symtab, strict:) unless if_cond_value == false
 
       internal_error "not at same level #{level} #{symtab.levels}" unless level == symtab.levels
 
       unless (if_cond_value == true) || elseifs.empty?
         elseifs.each do |eif|
-          eif.type_check(symtab)
+          eif.type_check(symtab, strict:)
         end
       end
 
       internal_error "not at same level #{level} #{symtab.levels}" unless level == symtab.levels
 
-      final_else_body.type_check(symtab) unless if_cond_value == true
+      final_else_body.type_check(symtab, strict:) unless if_cond_value == true
 
       internal_error "not at same level #{level} #{symtab.levels}" unless level == symtab.levels
     end
@@ -9336,12 +9336,15 @@ end,
     end
 
     # @!macro type_check
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab)
-      @csr.type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      @csr.type_check(symtab, strict:)
 
-      type_error "CSR[#{csr_name}].#{@field_name} is not defined in RV32" if symtab.mxlen == 32 && !field_def(symtab).defined_in_base32?
-      type_error "CSR[#{csr_name}].#{@field_name} is not defined in RV64" if symtab.mxlen == 64 && !field_def(symtab).defined_in_base64?
+      type_error "#{@field_name} is not a field of CSR[#{csr_name}]" unless csr_def(symtab).fields.any? { |f| f.name == @field_name }
+      if strict
+        type_error "CSR[#{csr_name}].#{@field_name} is not defined in RV32" if symtab.mxlen == 32 && !field_def(symtab).defined_in_base32?
+        type_error "CSR[#{csr_name}].#{@field_name} is not defined in RV64" if symtab.mxlen == 64 && !field_def(symtab).defined_in_base64?
+      end
     end
 
     sig { params(symtab: SymbolTable).returns(Csr) }
@@ -9466,8 +9469,13 @@ end,
   class CsrReadExpressionAst < AstNode
     include Rvalue
 
+    class Memo < T::Struct
+      prop :csr_obj, T.nilable(Csr)
+      prop :type, T.nilable(Type)
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
-    def const_eval?(symtab) = !@csr_obj.value.nil?
+    def const_eval?(symtab) = !csr_def(symtab).value.nil?
 
     attr_reader :csr_name
 
@@ -9475,30 +9483,28 @@ end,
       super(input, interval, [])
 
       @csr_name = csr_name
+      @memo = Memo.new
     end
 
     def freeze_tree(symtab)
       return if frozen?
 
       type_error "CSR '#{@csr_name}' is not defined" unless symtab.csr?(@csr_name)
-      @csr_obj = symtab.csr(@csr_name)
-
-      @type = CsrType.new(@csr_obj).freeze
 
       @children.each { |child| child.freeze_tree(symtab) }
       freeze
     end
 
     # @!macro type
-    def type(symtab) = @type ||= CsrType.new(symtab.csr(@csr_name))
+    def type(symtab) = @memo.type ||= CsrType.new(csr_def(symtab))
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type_error "CSR '#{@csr_name}' is not defined" unless symtab.csr?(@csr_name)
     end
 
     def csr_def(symtab)
-      @csr_obj
+      @memo.csr_obj ||= symtab.csr(@csr_name)
     end
 
     def csr_known?(symtab)
@@ -9507,7 +9513,7 @@ end,
 
     # @!macro value
     def value(symtab)
-      v = @csr_obj.value
+      v = csr_def(symtab).value
       if v.nil?
         value_error "CSR is not defined"
       end
@@ -9556,9 +9562,9 @@ end,
       super(input, interval, [csr, expression])
     end
 
-    def type_check(symtab)
-      csr.type_check(symtab)
-      expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      csr.type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
 
       e_type = expression.type(symtab)
       return if e_type.kind == :bits && ((e_type.width == :unknown || symtab.mxlen.nil?) || (e_type.width == symtab.mxlen))
@@ -9648,8 +9654,8 @@ end,
       @function_name = function_name
     end
 
-    def type_check(symtab)
-      csr.type_check(symtab)
+    def type_check(symtab, strict:)
+      csr.type_check(symtab, strict:)
 
       if ["sw_read", "address"].include?(function_name)
         type_error "unexpected argument(s)" unless args.empty?
@@ -9750,7 +9756,7 @@ end,
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       if idx.is_a?(IntLiteralAst)
         # make sure this value is a defined CSR
         index = symtab.csrs.index { |csr| csr.address == idx.value(symtab) }

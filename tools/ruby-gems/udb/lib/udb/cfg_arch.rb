@@ -719,10 +719,31 @@ module Udb
       possible_instructions.each do |inst|
         progressbar.advance if show_progress
         if @mxlen == 32
-          inst.type_checked_operation_ast(32) if inst.rv32?
+          if inst.rv32?
+            inst.type_checked_operation_ast(32)
+            s = inst.fill_symtab(32, inst.type_checked_operation_ast(32))
+            unless inst.pruned_operation_ast(32).nil?
+              inst.pruned_operation_ast(32).type_check(s, strict: true)
+            end
+            s.release
+          end
         elsif @mxlen == 64
-          inst.type_checked_operation_ast(64) if inst.rv64?
-          inst.type_checked_operation_ast(32) if possible_xlens.include?(32) && inst.rv32?
+          if inst.rv64?
+            inst.type_checked_operation_ast(64)
+            s = inst.fill_symtab(64, inst.type_checked_operation_ast(64))
+            unless inst.pruned_operation_ast(64).nil?
+              inst.pruned_operation_ast(64).type_check(s, strict: true)
+            end
+            s.release
+          end
+          if possible_xlens.include?(32) && inst.rv32?
+            inst.type_checked_operation_ast(32)
+            s = inst.fill_symtab(32, inst.type_checked_operation_ast(32))
+            unless inst.pruned_operation_ast(32).nil?
+              inst.pruned_operation_ast(32).type_check(s, strict: true)
+            end
+            s.release
+          end
         end
       end
 
@@ -770,7 +791,13 @@ module Udb
         end
       func_list.each do |func|
         progressbar.advance if show_progress
-        func.type_check(symtab)
+        s = symtab.global_clone
+        s.push(func)
+        func.type_check(symtab, strict: false)
+        s.pop
+        s.push(func)
+        func.prune(s).type_check(symtab, strict: true)
+        s.release
       end
 
       puts "done" if show_progress

@@ -809,7 +809,7 @@ module Idl
         symtab = apply_template_values(template_values, func_call_ast)
         apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast)
 
-        @func_def_ast.type_check_template_instance(symtab)
+        @func_def_ast.type_check_template_instance(symtab, strict: false)
 
         symtab.pop
         symtab.release
@@ -820,7 +820,7 @@ module Idl
 
         apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast)
 
-        @func_def_ast.type_check_from_call(symtab)
+        @func_def_ast.type_check_from_call(symtab, strict: false)
         symtab.pop
         symtab.release
       end
