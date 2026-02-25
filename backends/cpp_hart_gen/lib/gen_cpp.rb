@@ -111,9 +111,9 @@ module Idl
     def to_cxx
       (if (@qualifiers.nil? || @qualifiers.empty?)
          ""
-else
-  "#{@qualifiers.include?(:const) ? 'const' : ''} "
-end) + \
+      else
+        "#{@qualifiers.include?(:const) ? 'const' : ''} "
+      end) + \
       to_cxx_no_qualifiers
     end
   end

@@ -10,6 +10,9 @@ module Idl
 
   class AstNode; end
   class EnumDefinitionAst < AstNode; end
+  class Type; end
+  class EnumerationType < Type; end
+  module Csr; end
 
   # Data types
   class Type
@@ -96,19 +99,22 @@ module Idl
     attr_reader :qualifiers
 
     sig { returns(T.any(Integer, Symbol)) }
-    attr_reader :width
+    def width = T.must(@width)
 
     sig { returns(T.nilable(AstNode)) }
     attr_reader :width_ast
 
+    sig { returns(T.nilable(Integer)) }
+    attr_reader :max_width
+
     sig { returns(Type) }
-    attr_reader :sub_type
+    def sub_type = T.must(@sub_type)
 
     sig { returns(T::Array[Type]) }
-    attr_reader :tuple_types
+    def tuple_types = T.must(@tuple_types)
 
     sig { returns(EnumerationType) }
-    attr_reader :enum_class
+    def enum_class = T.must(@enum_class)
 
     def qualify(qualifier)
       @qualifiers << qualifier
@@ -119,17 +125,29 @@ module Idl
     def self.from_typename(type_name, cfg_arch)
       case type_name
       when "XReg"
-        return Type.new(:bits, width: cfg_arch.param_values["MXLEN"])
-      when "FReg"
-        return Type.new(:freg, width: 32)
-      when "DReg"
-        return Type.new(:dreg, width: 64)
+        return Type.new(:bits, width: cfg_arch.param_values.key?("MXLEN") ? cfg_arch.param_values.fetch("MXLEN") : :unknown, max_width: 64)
       when /Bits<((?:0x)?[0-9a-fA-F]+)>/
         Type.new(:bits, width: $1.to_i)
       end
     end
 
-    def initialize(kind, qualifiers: [], width: nil, width_ast: nil, max_width: nil, sub_type: nil, name: nil, tuple_types: nil, return_type: nil, arguments: nil, enum_class: nil, csr: nil)
+    sig {
+      params(
+        kind: Symbol,
+        qualifiers: T::Array[Symbol],
+        width: T.nilable(T.any(Integer, Symbol)),
+        width_ast: T.nilable(AstNode),
+        max_width: T.nilable(Integer),
+        sub_type: T.nilable(Type),
+        name: T.nilable(String),
+        tuple_types: T.nilable(T::Array[Type]),
+        return_type: T.nilable(Type),
+        enum_class: T.nilable(EnumerationType),
+        csr: T.nilable(Csr)
+      )
+      .void
+    }
+    def initialize(kind, qualifiers: [], width: nil, width_ast: nil, max_width: nil, sub_type: nil, name: nil, tuple_types: nil, return_type: nil, enum_class: nil, csr: nil)
       raise "Invalid kind '#{kind}'" unless KINDS.include?(kind)
 
       @kind = kind
@@ -140,7 +158,6 @@ module Idl
 
       raise "Should be a FunctionType" if kind == :function && !self.is_a?(FunctionType)
 
-      raise "Width must be an Integer, is a #{width.class}" unless width.nil? || width.is_a?(Integer) || width == :unknown
       @width = width
       @width_ast = width_ast
       @max_width = max_width

@@ -4333,7 +4333,7 @@ module Idl
         Type.new(:bits, width: etype.enum_class.width, qualifiers: [:known])
       when :csr
         if (etype.csr.is_a?(Symbol) && etype.csr == :unknown) || etype.csr.dynamic_length?
-          Type.new(:bits, width: :unknown)
+          Type.new(:bits, width: :unknown, max_width: 64)
         else
           effective_xlen = symtab.get("__effective_xlen")
           Type.new(:bits, width: etype.csr.length(effective_xlen.nil? ? nil : effective_xlen.value))
@@ -6139,14 +6139,38 @@ module Idl
       value_else(value_result) do
         t =
           if true_expression.type(symtab).kind == :bits && false_expression.type(symtab).kind == :bits
-            true_width = true_expression.type(symtab).width
-            false_width = false_expression.type(symtab).width
+            true_type = true_expression.type(symtab)
+            false_type = false_expression.type(symtab)
+            true_width = true_type.width
+            false_width = false_type.width
             known = true_expression.type(symtab).known? && false_expression.type(symtab).known?
             if true_width == :unknown || false_width == :unknown
+              max_width =
+                if true_width == :unknown && false_width == :unknown
+                  if true_type.max_width.nil? || false_type.max_width.nil?
+                    nil
+                  else
+                    [true_type.max_width, false_type.max_width].max
+                  end
+                elsif true_width == :unknown
+                  if true_type.max_width.nil?
+                    nil
+                  else
+                    [true_type.max_width, false_width].max
+                  end
+                elsif false_width == :unknown
+                  if false_type.max_width.nil?
+                    nil
+                  else
+                    [false_type.max_width, true_width].max
+                  end
+                else
+                  raise "unreachable"
+                end
               if known
-                Type.new(:bits, width: :unknown, qualifiers: [:known])
+                Type.new(:bits, width: :unknown, max_width:, qualifiers: [:known])
               else
-                Type.new(:bits, width: :unknown)
+                Type.new(:bits, width: :unknown, max_width:)
               end
             else
               if known
@@ -7204,7 +7228,12 @@ module Idl
 
         qualifiers = signed == "s" ? [:signed, :const] : [:const]
         qualifiers << :known unless T.must(value).include?("x")
-        @type = Type.new(:bits, width:, qualifiers:)
+        @type =
+          if width == :unknown
+            Type.new(:bits, width:, qualifiers:)
+          else
+            Type.new(:bits, width:, max_width: 64, qualifiers:)
+          end
       when /^0([bdx]?)([0-9a-fA-F]*)(s?)$/
         # C++-style literal
         signed = ::Regexp.last_match(3)
