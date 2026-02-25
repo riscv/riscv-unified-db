@@ -7230,9 +7230,9 @@ module Idl
         qualifiers << :known unless T.must(value).include?("x")
         @type =
           if width == :unknown
-            Type.new(:bits, width:, qualifiers:)
-          else
             Type.new(:bits, width:, max_width: 64, qualifiers:)
+          else
+            Type.new(:bits, width:, qualifiers:)
           end
       when /^0([bdx]?)([0-9a-fA-F]*)(s?)$/
         # C++-style literal
@@ -7262,7 +7262,7 @@ module Idl
         width = ::Regexp.last_match(1)
         if width.nil? || width == "MXLEN"
           if symtab.nil?
-            width = "MXLEN"
+            width = :unknown
           else
             width = symtab.mxlen.nil? ? :unknown : symtab.mxlen
           end
