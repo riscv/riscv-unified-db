@@ -264,17 +264,17 @@ module Udb
       # check as much as we can before going into full SMT solving
       config.param_values.each do |param_name, param_value|
         reasons << "Parameter has no definition: '#{param_name}'" if param(param_name).nil?
-        if !param(param_name).nil? && !param(param_name).schema.validate(param_value, udb_resolver: @config.info.resolver)
+        if !param(param_name).nil? && !T.must(param(param_name)).schema.validate(param_value, udb_resolver: @config.info.resolver)
           reasons << "Parameter value violates the schema: '#{param_name}' = '#{param_value}'"
         end
       end
 
-      config.implemented_extensions.each do |h|
+      T.cast(config, FullConfig).implemented_extensions.each do |h|
         unless extensions.any? { |e| e.name == h["name"] }
-          reasons << "#{h["name"]} is not a known extension"
+          reasons << "#{h.fetch("name")} is not a known extension"
         end
-        if extensions.any? { |e| e.name == h["name"] } && !extension(h["name"]).versions.any? { |v| v.version_spec == h["version"] }
-          reasons << "#{h["version"]} is not a known extension"
+        if extensions.any? { |e| e.name == h.fetch("name") } && !T.must(extension(h.fetch("name"))).versions.any? { |v| v.version_spec == h.fetch("version") }
+          reasons << "#{h.fetch("version")} is not a known extension"
         end
       end
 
@@ -290,7 +290,7 @@ module Udb
 
       # check parameter requirements
       config.param_values.each do |param_name, param_value|
-        p = param(param_name)
+        p = T.must(param(param_name))
         unless p.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
           reasons << [
             "Parameter is not defined by this config: '#{param_name}'.",
@@ -406,7 +406,7 @@ module Udb
 
       # check that provided param values are defined and match the schema
       config.param_values.each do |param_name, param_value|
-        p = param(param_name)
+        p = T.must(param(param_name))
 
         # check that parameter is defined by the partial config (e.g., is defined by a mandatory
         # extension and/or other param value).
