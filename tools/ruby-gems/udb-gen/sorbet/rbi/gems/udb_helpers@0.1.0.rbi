@@ -5,260 +5,125 @@
 # Please instead update this file by running `bin/tapioca gem udb_helpers`.
 
 
-# Add to standard String class.
-#
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#13
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#14
 class String
   include ::Comparable
 
-  # Should be called on all RISC-V extension, instruction, CSR, and CSR field names.
-  # Parameters never have periods in their names so they don't need to be sanitized.
-  #
-  # @param name [String] Some RISC-V name which might have periods in it or ampersand
-  # @return [String] New String with periods replaced with underscores and ampersands replaced with "_and_"
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#19
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#20
   def sanitize; end
 end
 
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#23
+module Udb; end
+
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#24
 module Udb::Helpers
   class << self
-    # Version of the gem
-    #
     # source://udb_helpers//lib/udb_helpers/version.rb#9
     def version; end
   end
 end
 
-# Utilities for a backend to generate an Antora web-site.
-#
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#355
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#368
 module Udb::Helpers::AntoraUtils
   class << self
-    # Convert proprietary link format to legal AsciiDoc links.
-    #
-    # They are converted to AsciiDoc external cross references in the form:
-    #   xref:<module>:<file>.adoc:#<anchor_name>[<link_text>])
-    # where <> don't appear in the actual cross reference (just there to indicate variable content).
-    #
-    # For example,
-    #   %%UDB_DOC_LINK%inst;add;add instruction%%
-    # is converted to:
-    #
-    # Antora supports the module name after the "xref:". In the example above, it the module name is "insts"
-    # and corresponds to the directory name the add.adoc file is located in. For more details, see:
-    #    https://docs.antora.org/antora/latest/page/xref/
-    # and then
-    #    https://docs.antora.org/antora/latest/page/resource-id-coordinates/
-    #
-    # @param path_or_str [Pathname or String]
-    # @return [String]
-    #
-    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#377
+    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#389
     def resolve_links(path_or_str); end
   end
 end
 
-# Utilities for a backend to generate AsciiDoc.
-#
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#281
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#292
 module Udb::Helpers::AsciidocUtils
   class << self
-    # Convert proprietary link format to legal AsciiDoc links.
-    # They are converted to AsciiDoc internal cross references (i.e., <<anchor_name,link_text>>).
-    # For example,
-    #   %%UDB_DOC_LINK%inst;add;add instruction%%
-    # is converted to:
-    #   <<udb:inst:add,add instruction>>
-    #
-    # @param path_or_str [Pathname or String]
-    # @return [String]
-    #
-    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#293
+    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#303
     def resolve_links(path_or_str); end
   end
 end
 
-# This module is included in the CfgArch and Design classes so its methods are available to be called directly
-# from them without having to prefix a method with the module name.
-#
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#93
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#100
 module Udb::Helpers::TemplateHelpers
   include ::Udb::Helpers::WavedromUtil
 
-  # @param name [String] Name of the non-ISA specification
-  # @return [String] An anchor for a UDB non-ISA specification documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#259
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#266
   def anchor_for_non_isa_spec(name); end
 
-  # Have to use [[anchor]] instead of [#anchor] since only the former works when in a table cell.
-  #
-  # @param org [String] Document organization of normative rules and test procedures (sep=separate chapters, combo=combined chapters, appendix=appendix)
-  # @param id [String] ID of the normative rule
-  # @raise [ArgumentError]
-  # @return [String] An anchor for a UDB normative rule documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#252
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#259
   def anchor_for_udb_doc_cov_pt(org, id); end
 
-  # @param name [String] Name of the CSR
-  # @return [String] An anchor for UDB CSR documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#218
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#225
   def anchor_for_udb_doc_csr(name); end
 
-  # @param csr_name [String] Name of the CSR
-  # @param field_name [String] Name of the CSR field
-  # @return [String] An anchor for UDB CSR field documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#225
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#232
   def anchor_for_udb_doc_csr_field(csr_name, field_name); end
 
-  # @param ext_name [String] Name of the extension
-  # @return [String] An anchor for UDB extension documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#198
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#205
   def anchor_for_udb_doc_ext(ext_name); end
 
-  # @param ext_name [String] Name of the extension
-  # @param param_name [String] Name of the parameter
-  # @return [String] An anchor for UDB parameter documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#205
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#212
   def anchor_for_udb_doc_ext_param(ext_name, param_name); end
 
-  # @param name [String] Name of the function
-  # @return [String] An anchor for an IDL function documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#244
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#251
   def anchor_for_udb_doc_idl_func(name); end
 
-  # @param name [String] Name of the instruction
-  # @return [String] An anchor for UDB instruction documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#212
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#219
   def anchor_for_udb_doc_inst(name); end
 
-  # @param name [String] Name of the MMR
-  # @return [String] An anchor for UDB MMR documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#231
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#238
   def anchor_for_udb_doc_mmr(name); end
 
-  # @param mmr_name [String] Name of the MMR
-  # @param field_name [String] Name of the MMR field
-  # @return [String] An anchor for UDB MMR field documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#238
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#245
   def anchor_for_udb_doc_mmr_field(mmr_name, field_name); end
 
-  # @param func_name [String] Name of the instruction
-  # @param id [String] ID within the instruction code
-  # @return [String] An anchor inside IDL instruction code
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#266
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#273
   def anchor_inside_idl_inst_code(inst_name, id); end
 
-  # @param func_name [String] Name of the instruction
-  # @param id [String] ID within the instruction code
-  # @return [String] A hyperlink into IDL instruction code
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#187
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#194
   def link_into_idl_inst_code(inst_name, id); end
 
-  # @param org [String] Organization of normative rules and test procedures (sep=separate chapters, combo=combined chapters, appendix=appendix)
-  # @param id [String] ID of the normative rule
-  # @raise [ArgumentError]
-  # @return [String] A hyperlink to a UDB certification normative rule (separate chapters for cov pts and test procs)
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#179
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#186
   def link_to_udb_doc_cov_pt(org, id); end
 
-  # @param csr_name [String] Name of the CSR
-  # @return [String] A hyperlink to UDB CSR documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#146
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#153
   def link_to_udb_doc_csr(csr_name); end
 
-  # @param csr_name [String] Name of the CSR
-  # @param field_name [String] Name of the CSR field
-  # @return [String] A hyperlink to UDB CSR field documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#153
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#160
   def link_to_udb_doc_csr_field(csr_name, field_name); end
 
-  # @param ext_name [String] Name of the extension
-  # @return [String] A hyperlink to UDB extension documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#125
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#132
   def link_to_udb_doc_ext(ext_name); end
 
-  # @param ext_name [String] Name of the extension
-  # @param param_name [String] Name of the parameter
-  # @param link_text [String] What to put in the link text (don't assume param_name)
-  # @return [String] A hyperlink to UDB parameter documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#133
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#140
   def link_to_udb_doc_ext_param(ext_name, param_name, link_text); end
 
-  # @param func_name [String] Name of the IDL function
-  # @return [String] A hyperlink to UDB IDL function documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#172
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#179
   def link_to_udb_doc_idl_func(func_name); end
 
-  # @param inst_name [String] Name of the instruction
-  # @return [String] A hyperlink to UDB instruction documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#140
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#147
   def link_to_udb_doc_inst(inst_name); end
 
-  # @param mmr_name [String] Name of the MMR
-  # @return [String] A hyperlink to UDB MMR documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#159
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#166
   def link_to_udb_doc_mmr(mmr_name); end
 
-  # @param mmr_name [String] Name of the MMR
-  # @param field_name [String] Name of the MMR field
-  # @return [String] A hyperlink to UDB MMR field documentation
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#166
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#173
   def link_to_udb_doc_mmr_field(mmr_name, field_name); end
 
-  # Include a partial ERB template into a full ERB template.
-  #
-  # @param template_pname [String] Path to template file relative to "backends" directory.
-  # @param inputs [Hash<String, Object>] Input objects to pass into template
-  # @raise [ArgumentError]
-  # @return [String] Result of ERB evaluation of the template file
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#99
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#106
   def partial(template_pname, inputs = T.unsafe(nil)); end
 
   private
 
-  # @ param s [String]
-  #
-  # @raise [ArgumentError]
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#272
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#279
   def check_no_periods(s); end
 end
 
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#22
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#25
 module Udb::Helpers::WavedromUtil
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#23
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#26
   def fix_entities(text); end
 
-  # Custom JSON converter for wavedrom that handles hexadecimal literals
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#31
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#34
   def json_dump_with_hex_literals(data); end
 
-  # Helper to process wavedrom data
-  #
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#43
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#46
   def process_wavedrom(json_data); end
 end

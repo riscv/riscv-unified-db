@@ -22,13 +22,13 @@ module Strings::ANSI
   def sanitize(string); end
 
   class << self
-    # source://strings-ansi//lib/strings/ansi.rb#45
+    # source://strings-ansi//lib/strings/ansi.rb#48
     def ansi?(string); end
 
-    # source://strings-ansi//lib/strings/ansi.rb#65
+    # source://strings-ansi//lib/strings/ansi.rb#68
     def only_ansi?(string); end
 
-    # source://strings-ansi//lib/strings/ansi.rb#28
+    # source://strings-ansi//lib/strings/ansi.rb#31
     def sanitize(string); end
   end
 end

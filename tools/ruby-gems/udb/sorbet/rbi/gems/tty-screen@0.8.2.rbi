@@ -12,10 +12,10 @@ module TTY; end
 module TTY::Screen
   private
 
-  # source://tty-screen//lib/tty/screen.rb#128
+  # source://tty-screen//lib/tty/screen.rb#134
   def cols; end
 
-  # source://tty-screen//lib/tty/screen.rb#128
+  # source://tty-screen//lib/tty/screen.rb#133
   def columns; end
 
   # source://tty-screen//lib/tty/screen.rb#442
@@ -30,13 +30,13 @@ module TTY::Screen
   # source://tty-screen//lib/tty/screen.rb#55
   def jruby?; end
 
-  # source://tty-screen//lib/tty/screen.rb#146
+  # source://tty-screen//lib/tty/screen.rb#152
   def lines; end
 
   # source://tty-screen//lib/tty/screen.rb#476
   def nonzero_column?(column); end
 
-  # source://tty-screen//lib/tty/screen.rb#146
+  # source://tty-screen//lib/tty/screen.rb#151
   def rows; end
 
   # source://tty-screen//lib/tty/screen.rb#461
@@ -82,10 +82,10 @@ module TTY::Screen
   def windows?; end
 
   class << self
-    # source://tty-screen//lib/tty/screen.rb#128
+    # source://tty-screen//lib/tty/screen.rb#136
     def cols; end
 
-    # source://tty-screen//lib/tty/screen.rb#128
+    # source://tty-screen//lib/tty/screen.rb#135
     def columns; end
 
     # source://tty-screen//lib/tty/screen.rb#81
@@ -94,16 +94,16 @@ module TTY::Screen
     # source://tty-screen//lib/tty/screen.rb#81
     def env=(_arg0); end
 
-    # source://tty-screen//lib/tty/screen.rb#146
+    # source://tty-screen//lib/tty/screen.rb#149
     def height; end
 
-    # source://tty-screen//lib/tty/screen.rb#331
+    # source://tty-screen//lib/tty/screen.rb#338
     def ioctl?(control, buf); end
 
-    # source://tty-screen//lib/tty/screen.rb#55
+    # source://tty-screen//lib/tty/screen.rb#57
     def jruby?; end
 
-    # source://tty-screen//lib/tty/screen.rb#146
+    # source://tty-screen//lib/tty/screen.rb#154
     def lines; end
 
     # source://tty-screen//lib/tty/screen.rb#94
@@ -115,57 +115,57 @@ module TTY::Screen
     # source://tty-screen//lib/tty/screen.rb#28
     def private_module_function(name); end
 
-    # source://tty-screen//lib/tty/screen.rb#146
+    # source://tty-screen//lib/tty/screen.rb#153
     def rows; end
 
-    # source://tty-screen//lib/tty/screen.rb#106
+    # source://tty-screen//lib/tty/screen.rb#118
     def size(verbose: T.unsafe(nil)); end
 
-    # source://tty-screen//lib/tty/screen.rb#426
+    # source://tty-screen//lib/tty/screen.rb#432
     def size_from_ansicon; end
 
-    # source://tty-screen//lib/tty/screen.rb#161
+    # source://tty-screen//lib/tty/screen.rb#164
     def size_from_default; end
 
-    # source://tty-screen//lib/tty/screen.rb#412
+    # source://tty-screen//lib/tty/screen.rb#418
     def size_from_env; end
 
-    # source://tty-screen//lib/tty/screen.rb#249
+    # source://tty-screen//lib/tty/screen.rb#262
     def size_from_io_console(verbose: T.unsafe(nil)); end
 
-    # source://tty-screen//lib/tty/screen.rb#308
+    # source://tty-screen//lib/tty/screen.rb#342
     def size_from_ioctl; end
 
-    # source://tty-screen//lib/tty/screen.rb#232
+    # source://tty-screen//lib/tty/screen.rb#234
     def size_from_java(verbose: T.unsafe(nil)); end
 
-    # source://tty-screen//lib/tty/screen.rb#353
+    # source://tty-screen//lib/tty/screen.rb#365
     def size_from_readline(verbose: T.unsafe(nil)); end
 
-    # source://tty-screen//lib/tty/screen.rb#390
+    # source://tty-screen//lib/tty/screen.rb#399
     def size_from_stty; end
 
-    # source://tty-screen//lib/tty/screen.rb#373
+    # source://tty-screen//lib/tty/screen.rb#382
     def size_from_tput; end
 
-    # source://tty-screen//lib/tty/screen.rb#207
+    # source://tty-screen//lib/tty/screen.rb#209
     def size_from_win_api(verbose: T.unsafe(nil)); end
 
-    # source://tty-screen//lib/tty/screen.rb#128
+    # source://tty-screen//lib/tty/screen.rb#131
     def width; end
 
-    # source://tty-screen//lib/tty/screen.rb#42
+    # source://tty-screen//lib/tty/screen.rb#44
     def windows?; end
 
     private
 
-    # source://tty-screen//lib/tty/screen.rb#442
+    # source://tty-screen//lib/tty/screen.rb#29
     def command_exist?(command); end
 
-    # source://tty-screen//lib/tty/screen.rb#476
+    # source://tty-screen//lib/tty/screen.rb#29
     def nonzero_column?(column); end
 
-    # source://tty-screen//lib/tty/screen.rb#461
+    # source://tty-screen//lib/tty/screen.rb#29
     def run_command(*args); end
   end
 end

@@ -13,7 +13,7 @@ module Pastel
   def new(enabled: T.unsafe(nil), eachline: T.unsafe(nil)); end
 
   class << self
-    # source://pastel//lib/pastel.rb#31
+    # source://pastel//lib/pastel.rb#41
     def new(enabled: T.unsafe(nil), eachline: T.unsafe(nil)); end
   end
 end
@@ -103,7 +103,7 @@ class Pastel::Color
   # source://pastel//lib/pastel/color.rb#16
   def enabled; end
 
-  # source://pastel//lib/pastel/color.rb#16
+  # source://pastel//lib/pastel/color.rb#17
   def enabled?; end
 
   # source://pastel//lib/pastel/color.rb#225
@@ -228,16 +228,16 @@ class Pastel::Delegator
   # source://pastel//lib/pastel/delegator.rb#57
   def ==(other); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#16
   def alias_color(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#16
   def colored?(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#16
   def decorate(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#16
   def enabled?(*args, **_arg1, &block); end
 
   # source://pastel//lib/pastel/delegator.rb#48
@@ -249,25 +249,25 @@ class Pastel::Delegator
   # source://pastel//lib/pastel/delegator.rb#66
   def inspect; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#16
   def lookup(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#19
   def parse(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#16
   def strip(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#16
   def styles(*args, **_arg1, &block); end
 
-  # source://pastel//lib/pastel/delegator.rb#66
+  # source://pastel//lib/pastel/delegator.rb#69
   def to_s; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#20
   def undecorate(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://pastel//lib/pastel/delegator.rb#16
   def valid?(*args, **_arg1, &block); end
 
   protected
@@ -303,7 +303,7 @@ class Pastel::Detached
   # source://pastel//lib/pastel/detached.rb#57
   def ==(other); end
 
-  # source://pastel//lib/pastel/detached.rb#32
+  # source://pastel//lib/pastel/detached.rb#36
   def [](*args); end
 
   # source://pastel//lib/pastel/detached.rb#32

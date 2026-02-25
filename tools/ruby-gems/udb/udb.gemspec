@@ -3,7 +3,6 @@
 
 # frozen_string_literal: true
 
-require_relative "lib/gem_versions.rb"
 require_relative "lib/udb/version"
 
 Gem::Specification.new do |s|
@@ -19,7 +18,8 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower", "James Ball"]
   s.email       = ["dhower@qti.qualcomm.com", "jamesball@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.files       = Dir["lib/**/*.rb", "LICENSE"]
+  s.files       = Dir["lib/**/*.rb", "LICENSE", "ext/udb_z3_download/extconf.rb", "lib/udb/Z3_VERSION"]
+  s.extensions  = ["ext/udb_z3_download/extconf.rb"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
     "homepage_uri" => "https://github.com/riscv/riscv-unified-db",
@@ -41,7 +41,8 @@ Gem::Specification.new do |s|
   s.add_dependency "numbers_and_words"
   s.add_dependency "ostruct"
   s.add_dependency "pastel"
-  s.add_dependency "sorbet-runtime", "= #{UdbGems::SORBET_VERSION}"
+  s.add_dependency "rubyzip"
+  s.add_dependency "sorbet-runtime"
   s.add_dependency "terminal-table"
   s.add_dependency "thor"
   s.add_dependency "tilt"
@@ -57,8 +58,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rubocop-sorbet"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "simplecov-cobertura"
-  s.add_development_dependency "sorbet", "= #{UdbGems::SORBET_VERSION}"
-  s.add_development_dependency "tapioca", "= #{UdbGems::TAPIOCA_VERSION}"
+  s.add_development_dependency "sorbet"
+  s.add_development_dependency "tapioca", ">= 0.17.10"
   s.add_development_dependency "yard"
   s.add_development_dependency "yard-sorbet"
 end

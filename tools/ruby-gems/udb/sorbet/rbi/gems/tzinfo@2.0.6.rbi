@@ -13,7 +13,7 @@ module TZInfo
   end
 end
 
-# source://tzinfo//lib/tzinfo/transition_rule.rb#120
+# source://tzinfo//lib/tzinfo/transition_rule.rb#129
 class TZInfo::AbsoluteDayOfYearTransitionRule < ::TZInfo::DayOfYearTransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#130
   def initialize(day, transition_at = T.unsafe(nil)); end
@@ -21,7 +21,7 @@ class TZInfo::AbsoluteDayOfYearTransitionRule < ::TZInfo::DayOfYearTransitionRul
   # source://tzinfo//lib/tzinfo/transition_rule.rb#153
   def ==(r); end
 
-  # source://tzinfo//lib/tzinfo/transition_rule.rb#153
+  # source://tzinfo//lib/tzinfo/transition_rule.rb#156
   def eql?(r); end
 
   # source://tzinfo//lib/tzinfo/transition_rule.rb#137
@@ -116,7 +116,7 @@ class TZInfo::Country
   # source://tzinfo//lib/tzinfo/country.rb#152
   def zone_info; end
 
-  # source://tzinfo//lib/tzinfo/country.rb#111
+  # source://tzinfo//lib/tzinfo/country.rb#114
   def zone_names; end
 
   # source://tzinfo//lib/tzinfo/country.rb#132
@@ -649,7 +649,7 @@ class TZInfo::DateTimeWithOffset < ::DateTime
   def clear_timezone_offset; end
 end
 
-# source://tzinfo//lib/tzinfo/transition_rule.rb#323
+# source://tzinfo//lib/tzinfo/transition_rule.rb#339
 class TZInfo::DayOfMonthTransitionRule < ::TZInfo::DayOfWeekTransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#340
   def initialize(month, week, day_of_week, transition_at = T.unsafe(nil)); end
@@ -657,7 +657,7 @@ class TZInfo::DayOfMonthTransitionRule < ::TZInfo::DayOfWeekTransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#353
   def ==(r); end
 
-  # source://tzinfo//lib/tzinfo/transition_rule.rb#353
+  # source://tzinfo//lib/tzinfo/transition_rule.rb#356
   def eql?(r); end
 
   protected
@@ -672,7 +672,7 @@ class TZInfo::DayOfMonthTransitionRule < ::TZInfo::DayOfWeekTransitionRule
   def offset_start; end
 end
 
-# source://tzinfo//lib/tzinfo/transition_rule.rb#261
+# source://tzinfo//lib/tzinfo/transition_rule.rb#273
 class TZInfo::DayOfWeekTransitionRule < ::TZInfo::TransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#274
   def initialize(month, day_of_week, transition_at); end
@@ -680,7 +680,7 @@ class TZInfo::DayOfWeekTransitionRule < ::TZInfo::TransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#299
   def ==(r); end
 
-  # source://tzinfo//lib/tzinfo/transition_rule.rb#299
+  # source://tzinfo//lib/tzinfo/transition_rule.rb#302
   def eql?(r); end
 
   # source://tzinfo//lib/tzinfo/transition_rule.rb#283
@@ -701,7 +701,7 @@ class TZInfo::DayOfWeekTransitionRule < ::TZInfo::TransitionRule
   def month; end
 end
 
-# source://tzinfo//lib/tzinfo/transition_rule.rb#73
+# source://tzinfo//lib/tzinfo/transition_rule.rb#81
 class TZInfo::DayOfYearTransitionRule < ::TZInfo::TransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#82
   def initialize(day, transition_at); end
@@ -709,7 +709,7 @@ class TZInfo::DayOfYearTransitionRule < ::TZInfo::TransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#94
   def ==(r); end
 
-  # source://tzinfo//lib/tzinfo/transition_rule.rb#94
+  # source://tzinfo//lib/tzinfo/transition_rule.rb#97
   def eql?(r); end
 
   protected
@@ -724,7 +724,7 @@ end
 # source://tzinfo//lib/tzinfo/format1.rb#7
 module TZInfo::Format1; end
 
-# source://tzinfo//lib/tzinfo/format1/country_definer.rb#10
+# source://tzinfo//lib/tzinfo/format1/country_definer.rb#11
 class TZInfo::Format1::CountryDefiner < ::TZInfo::Format2::CountryDefiner
   # source://tzinfo//lib/tzinfo/format1/country_definer.rb#12
   def initialize(identifier_deduper, description_deduper); end
@@ -968,7 +968,7 @@ class TZInfo::InvalidDataSource < ::StandardError; end
 # source://tzinfo//lib/tzinfo/timezone.rb#26
 class TZInfo::InvalidTimezoneIdentifier < ::StandardError; end
 
-# source://tzinfo//lib/tzinfo/transition_rule.rb#184
+# source://tzinfo//lib/tzinfo/transition_rule.rb#185
 class TZInfo::JulianDayOfYearTransitionRule < ::TZInfo::DayOfYearTransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#202
   def initialize(day, transition_at = T.unsafe(nil)); end
@@ -976,7 +976,7 @@ class TZInfo::JulianDayOfYearTransitionRule < ::TZInfo::DayOfYearTransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#226
   def ==(r); end
 
-  # source://tzinfo//lib/tzinfo/transition_rule.rb#226
+  # source://tzinfo//lib/tzinfo/transition_rule.rb#229
   def eql?(r); end
 
   # source://tzinfo//lib/tzinfo/transition_rule.rb#209
@@ -1000,7 +1000,7 @@ TZInfo::JulianDayOfYearTransitionRule::LEAP = T.let(T.unsafe(nil), Integer)
 # source://tzinfo//lib/tzinfo/transition_rule.rb#190
 TZInfo::JulianDayOfYearTransitionRule::YEAR = T.let(T.unsafe(nil), Integer)
 
-# source://tzinfo//lib/tzinfo/transition_rule.rb#396
+# source://tzinfo//lib/tzinfo/transition_rule.rb#408
 class TZInfo::LastDayOfMonthTransitionRule < ::TZInfo::DayOfWeekTransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#409
   def initialize(month, day_of_week, transition_at = T.unsafe(nil)); end
@@ -1008,7 +1008,7 @@ class TZInfo::LastDayOfMonthTransitionRule < ::TZInfo::DayOfWeekTransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#420
   def ==(r); end
 
-  # source://tzinfo//lib/tzinfo/transition_rule.rb#420
+  # source://tzinfo//lib/tzinfo/transition_rule.rb#423
   def eql?(r); end
 
   protected
@@ -1046,7 +1046,7 @@ class TZInfo::OffsetTimezonePeriod < ::TZInfo::TimezonePeriod
   # source://tzinfo//lib/tzinfo/offset_timezone_period.rb#23
   def end_transition; end
 
-  # source://tzinfo//lib/tzinfo/offset_timezone_period.rb#32
+  # source://tzinfo//lib/tzinfo/offset_timezone_period.rb#35
   def eql?(p); end
 
   # source://tzinfo//lib/tzinfo/offset_timezone_period.rb#38
@@ -1099,7 +1099,7 @@ class TZInfo::TimeWithOffset < ::Time
   # source://tzinfo//lib/tzinfo/time_with_offset.rb#69
   def gmtime; end
 
-  # source://tzinfo//lib/tzinfo/time_with_offset.rb#43
+  # source://tzinfo//lib/tzinfo/time_with_offset.rb#47
   def isdst; end
 
   # source://tzinfo//lib/tzinfo/time_with_offset.rb#79
@@ -1145,6 +1145,7 @@ class TZInfo::Timestamp
   # source://tzinfo//lib/tzinfo/timestamp.rb#372
   def add_and_set_utc_offset(seconds, utc_offset); end
 
+  # source://tzinfo//lib/tzinfo/timestamp.rb#464
   def eql?(_arg0); end
 
   # source://tzinfo//lib/tzinfo/timestamp.rb#468
@@ -1272,7 +1273,7 @@ class TZInfo::Timezone
   # source://tzinfo//lib/tzinfo/timezone.rb#1137
   def _dump(limit); end
 
-  # source://tzinfo//lib/tzinfo/timezone.rb#1048
+  # source://tzinfo//lib/tzinfo/timezone.rb#1051
   def abbr(time = T.unsafe(nil)); end
 
   # source://tzinfo//lib/tzinfo/timezone.rb#1048
@@ -1290,7 +1291,7 @@ class TZInfo::Timezone
   # source://tzinfo//lib/tzinfo/timezone.rb#997
   def current_period; end
 
-  # source://tzinfo//lib/tzinfo/timezone.rb#1008
+  # source://tzinfo//lib/tzinfo/timezone.rb#1018
   def current_period_and_time; end
 
   # source://tzinfo//lib/tzinfo/timezone.rb#1008
@@ -1362,7 +1363,7 @@ class TZInfo::Timezone
   # source://tzinfo//lib/tzinfo/timezone.rb#370
   def transitions_up_to(to, from = T.unsafe(nil)); end
 
-  # source://tzinfo//lib/tzinfo/timezone.rb#1094
+  # source://tzinfo//lib/tzinfo/timezone.rb#1097
   def utc_offset(time = T.unsafe(nil)); end
 
   # source://tzinfo//lib/tzinfo/timezone.rb#572
@@ -1437,7 +1438,7 @@ class TZInfo::TimezoneOffset
   # source://tzinfo//lib/tzinfo/timezone_offset.rb#84
   def ==(toi); end
 
-  # source://tzinfo//lib/tzinfo/timezone_offset.rb#50
+  # source://tzinfo//lib/tzinfo/timezone_offset.rb#51
   def abbr; end
 
   # source://tzinfo//lib/tzinfo/timezone_offset.rb#50
@@ -1464,10 +1465,10 @@ class TZInfo::TimezoneOffset
   # source://tzinfo//lib/tzinfo/timezone_offset.rb#37
   def std_offset; end
 
-  # source://tzinfo//lib/tzinfo/timezone_offset.rb#21
+  # source://tzinfo//lib/tzinfo/timezone_offset.rb#22
   def utc_offset; end
 
-  # source://tzinfo//lib/tzinfo/timezone_offset.rb#43
+  # source://tzinfo//lib/tzinfo/timezone_offset.rb#44
   def utc_total_offset; end
 end
 
@@ -1476,7 +1477,7 @@ class TZInfo::TimezonePeriod
   # source://tzinfo//lib/tzinfo/timezone_period.rb#23
   def initialize(offset); end
 
-  # source://tzinfo//lib/tzinfo/timezone_period.rb#80
+  # source://tzinfo//lib/tzinfo/timezone_period.rb#83
   def abbr; end
 
   # source://tzinfo//lib/tzinfo/timezone_period.rb#80
@@ -1515,13 +1516,13 @@ class TZInfo::TimezonePeriod
   # source://tzinfo//lib/tzinfo/timezone_period.rb#72
   def std_offset; end
 
-  # source://tzinfo//lib/tzinfo/timezone_period.rb#54
+  # source://tzinfo//lib/tzinfo/timezone_period.rb#57
   def utc_offset; end
 
-  # source://tzinfo//lib/tzinfo/timezone_period.rb#90
+  # source://tzinfo//lib/tzinfo/timezone_period.rb#93
   def utc_total_offset; end
 
-  # source://tzinfo//lib/tzinfo/timezone_period.rb#80
+  # source://tzinfo//lib/tzinfo/timezone_period.rb#84
   def zone_identifier; end
 
   private
@@ -1581,7 +1582,7 @@ class TZInfo::TimezoneTransition
   # source://tzinfo//lib/tzinfo/timezone_transition.rb#48
   def at; end
 
-  # source://tzinfo//lib/tzinfo/timezone_transition.rb#86
+  # source://tzinfo//lib/tzinfo/timezone_transition.rb#90
   def eql?(tti); end
 
   # source://tzinfo//lib/tzinfo/timezone_transition.rb#94
@@ -1614,7 +1615,7 @@ class TZInfo::TransitionRule
   # source://tzinfo//lib/tzinfo/transition_rule.rb#37
   def at(offset, year); end
 
-  # source://tzinfo//lib/tzinfo/transition_rule.rb#47
+  # source://tzinfo//lib/tzinfo/transition_rule.rb#50
   def eql?(r); end
 
   # source://tzinfo//lib/tzinfo/transition_rule.rb#54
@@ -1640,7 +1641,7 @@ class TZInfo::TransitionsTimezonePeriod < ::TZInfo::TimezonePeriod
   # source://tzinfo//lib/tzinfo/transitions_timezone_period.rb#15
   def end_transition; end
 
-  # source://tzinfo//lib/tzinfo/transitions_timezone_period.rb#47
+  # source://tzinfo//lib/tzinfo/transitions_timezone_period.rb#50
   def eql?(p); end
 
   # source://tzinfo//lib/tzinfo/transitions_timezone_period.rb#53

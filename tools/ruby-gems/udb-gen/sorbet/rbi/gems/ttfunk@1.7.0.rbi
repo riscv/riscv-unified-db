@@ -20,19 +20,12 @@ end
 module TTFunk::BinUtils
   extend ::TTFunk::BinUtils
 
-  # turns a (sorted) sequence of values into a series of two-element arrays
-  # where the first element is the start and the second is the length
-  #
   # source://ttfunk//lib/ttfunk/bin_utils.rb#39
   def rangify(values); end
 
-  # assumes big-endian
-  #
   # source://ttfunk//lib/ttfunk/bin_utils.rb#17
   def slice_int(value, bit_width:, slice_count:); end
 
-  # assumes big-endian
-  #
   # source://ttfunk//lib/ttfunk/bin_utils.rb#6
   def stitch_int(arr, bit_width:); end
 
@@ -42,8 +35,6 @@ end
 
 # source://ttfunk//lib/ttfunk/bit_field.rb#4
 class TTFunk::BitField
-  # @return [BitField] a new instance of BitField
-  #
   # source://ttfunk//lib/ttfunk/bit_field.rb#7
   def initialize(value = T.unsafe(nil)); end
 
@@ -53,21 +44,15 @@ class TTFunk::BitField
   # source://ttfunk//lib/ttfunk/bit_field.rb#19
   def off(pos); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/bit_field.rb#23
   def off?(pos); end
 
   # source://ttfunk//lib/ttfunk/bit_field.rb#11
   def on(pos); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/bit_field.rb#15
   def on?(pos); end
 
-  # Returns the value of attribute value.
-  #
   # source://ttfunk//lib/ttfunk/bit_field.rb#5
   def value; end
 end
@@ -76,9 +61,6 @@ end
 class TTFunk::Collection
   include ::Enumerable
 
-  # @raise [ArgumentError]
-  # @return [Collection] a new instance of Collection
-  #
   # source://ttfunk//lib/ttfunk/collection.rb#19
   def initialize(io); end
 
@@ -99,18 +81,12 @@ end
 
 # source://ttfunk//lib/ttfunk/directory.rb#4
 class TTFunk::Directory
-  # @return [Directory] a new instance of Directory
-  #
   # source://ttfunk//lib/ttfunk/directory.rb#8
   def initialize(io, offset = T.unsafe(nil)); end
 
-  # Returns the value of attribute scaler_type.
-  #
   # source://ttfunk//lib/ttfunk/directory.rb#6
   def scaler_type; end
 
-  # Returns the value of attribute tables.
-  #
   # source://ttfunk//lib/ttfunk/directory.rb#5
   def tables; end
 end
@@ -120,10 +96,6 @@ class TTFunk::DuplicatePlaceholderError < ::StandardError; end
 
 # source://ttfunk//lib/ttfunk/encoded_string.rb#12
 class TTFunk::EncodedString
-  # @return [EncodedString] a new instance of EncodedString
-  # @yield [_self]
-  # @yieldparam _self [TTFunk::EncodedString] the object that the method was called on
-  #
   # source://ttfunk//lib/ttfunk/encoded_string.rb#13
   def initialize; end
 
@@ -165,8 +137,6 @@ class TTFunk::Error < ::StandardError; end
 
 # source://ttfunk//lib/ttfunk.rb#26
 class TTFunk::File
-  # @return [File] a new instance of File
-  #
   # source://ttfunk//lib/ttfunk.rb#61
   def initialize(contents, offset = T.unsafe(nil)); end
 
@@ -182,8 +152,6 @@ class TTFunk::File
   # source://ttfunk//lib/ttfunk.rb#93
   def cmap; end
 
-  # Returns the value of attribute contents.
-  #
   # source://ttfunk//lib/ttfunk.rb#27
   def contents; end
 
@@ -193,8 +161,6 @@ class TTFunk::File
   # source://ttfunk//lib/ttfunk.rb#148
   def digital_signature; end
 
-  # Returns the value of attribute directory.
-  #
   # source://ttfunk//lib/ttfunk.rb#28
   def directory; end
 
@@ -253,8 +219,6 @@ class TTFunk::File
     # source://ttfunk//lib/ttfunk.rb#30
     def open(io_or_path); end
 
-    # @raise [ArgumentError]
-    #
     # source://ttfunk//lib/ttfunk.rb#42
     def verify_and_open(io_or_path); end
   end
@@ -262,16 +226,12 @@ end
 
 # source://ttfunk//lib/ttfunk/max.rb#4
 class TTFunk::Max < ::TTFunk::Aggregate
-  # @return [Max] a new instance of Max
-  #
   # source://ttfunk//lib/ttfunk/max.rb#7
   def initialize(init_value = T.unsafe(nil)); end
 
   # source://ttfunk//lib/ttfunk/max.rb#12
   def <<(new_value); end
 
-  # Returns the value of attribute value.
-  #
   # source://ttfunk//lib/ttfunk/max.rb#5
   def value; end
 
@@ -281,16 +241,12 @@ end
 
 # source://ttfunk//lib/ttfunk/min.rb#4
 class TTFunk::Min < ::TTFunk::Aggregate
-  # @return [Min] a new instance of Min
-  #
   # source://ttfunk//lib/ttfunk/min.rb#7
   def initialize(init_value = T.unsafe(nil)); end
 
   # source://ttfunk//lib/ttfunk/min.rb#12
   def <<(new_value); end
 
-  # Returns the value of attribute value.
-  #
   # source://ttfunk//lib/ttfunk/min.rb#5
   def value; end
 
@@ -311,17 +267,9 @@ class TTFunk::OTFEncoder < ::TTFunk::TTFEncoder
   # source://ttfunk//lib/ttfunk/otf_encoder.rb#52
   def collect_glyphs(glyph_ids); end
 
-  # CFF fonts don't maintain a glyf table, all glyph information is stored
-  # in the charstrings index. Return an empty hash here to indicate a glyf
-  # table should not be encoded.
-  #
   # source://ttfunk//lib/ttfunk/otf_encoder.rb#14
   def glyf_table; end
 
-  # Since CFF fonts don't maintain a glyf table, they also don't maintain
-  # a loca table. Return an empty hash here to indicate a loca table
-  # shouldn't be encoded.
-  #
   # source://ttfunk//lib/ttfunk/otf_encoder.rb#21
   def loca_table; end
 
@@ -342,8 +290,6 @@ TTFunk::OTFEncoder::OPTIMAL_TABLE_ORDER = T.let(T.unsafe(nil), Array)
 class TTFunk::OneBasedArray
   include ::Enumerable
 
-  # @return [OneBasedArray] a new instance of OneBasedArray
-  #
   # source://ttfunk//lib/ttfunk/one_based_array.rb#7
   def initialize(size = T.unsafe(nil)); end
 
@@ -361,38 +307,24 @@ class TTFunk::OneBasedArray
 
   private
 
-  # Returns the value of attribute entries.
-  #
   # source://ttfunk//lib/ttfunk/one_based_array.rb#34
   def entries; end
 end
 
 # source://ttfunk//lib/ttfunk/placeholder.rb#4
 class TTFunk::Placeholder
-  # @return [Placeholder] a new instance of Placeholder
-  #
   # source://ttfunk//lib/ttfunk/placeholder.rb#8
   def initialize(name, length: T.unsafe(nil)); end
 
-  # Returns the value of attribute length.
-  #
   # source://ttfunk//lib/ttfunk/placeholder.rb#6
   def length; end
 
-  # Returns the value of attribute name.
-  #
   # source://ttfunk//lib/ttfunk/placeholder.rb#6
   def name; end
 
-  # Returns the value of attribute position.
-  #
   # source://ttfunk//lib/ttfunk/placeholder.rb#5
   def position; end
 
-  # Sets the attribute position
-  #
-  # @param value the value to set the attribute position to.
-  #
   # source://ttfunk//lib/ttfunk/placeholder.rb#5
   def position=(_arg0); end
 end
@@ -401,8 +333,6 @@ end
 module TTFunk::Reader
   private
 
-  # For debugging purposes
-  #
   # source://ttfunk//lib/ttfunk/reader.rb#32
   def hexdump(string); end
 
@@ -424,16 +354,12 @@ end
 
 # source://ttfunk//lib/ttfunk/resource_file.rb#4
 class TTFunk::ResourceFile
-  # @return [ResourceFile] a new instance of ResourceFile
-  #
   # source://ttfunk//lib/ttfunk/resource_file.rb#14
   def initialize(io); end
 
   # source://ttfunk//lib/ttfunk/resource_file.rb#61
   def [](type, index = T.unsafe(nil)); end
 
-  # Returns the value of attribute map.
-  #
   # source://ttfunk//lib/ttfunk/resource_file.rb#5
   def map; end
 
@@ -453,23 +379,18 @@ end
 
 # source://ttfunk//lib/ttfunk/sci_form.rb#4
 class TTFunk::SciForm
-  # @return [SciForm] a new instance of SciForm
-  #
   # source://ttfunk//lib/ttfunk/sci_form.rb#8
   def initialize(significand, exponent = T.unsafe(nil)); end
 
   # source://ttfunk//lib/ttfunk/sci_form.rb#17
   def ==(other); end
 
+  # source://ttfunk//lib/ttfunk/sci_form.rb#6
   def eql?(_arg0); end
 
-  # Returns the value of attribute exponent.
-  #
   # source://ttfunk//lib/ttfunk/sci_form.rb#5
   def exponent; end
 
-  # Returns the value of attribute significand.
-  #
   # source://ttfunk//lib/ttfunk/sci_form.rb#5
   def significand; end
 
@@ -481,33 +402,21 @@ end
 class TTFunk::SubTable
   include ::TTFunk::Reader
 
-  # @return [SubTable] a new instance of SubTable
-  #
   # source://ttfunk//lib/ttfunk/sub_table.rb#14
   def initialize(file, offset, length = T.unsafe(nil)); end
 
-  # end of table
-  #
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/sub_table.rb#22
   def eot?; end
 
-  # Returns the value of attribute file.
-  #
   # source://ttfunk//lib/ttfunk/sub_table.rb#12
   def file; end
 
-  # Returns the value of attribute length.
-  #
   # source://ttfunk//lib/ttfunk/sub_table.rb#12
   def length; end
 
   # source://ttfunk//lib/ttfunk/sub_table.rb#30
   def read(*args); end
 
-  # Returns the value of attribute table_offset.
-  #
   # source://ttfunk//lib/ttfunk/sub_table.rb#12
   def table_offset; end
 end
@@ -525,8 +434,6 @@ end
 
 # source://ttfunk//lib/ttfunk/subset/base.rb#17
 class TTFunk::Subset::Base
-  # @return [Base] a new instance of Base
-  #
   # source://ttfunk//lib/ttfunk/subset/base.rb#23
   def initialize(original); end
 
@@ -542,8 +449,6 @@ class TTFunk::Subset::Base
   # source://ttfunk//lib/ttfunk/subset/base.rb#52
   def glyphs; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/base.rb#31
   def microsoft_symbol?; end
 
@@ -553,16 +458,12 @@ class TTFunk::Subset::Base
   # source://ttfunk//lib/ttfunk/subset/base.rb#72
   def old_to_new_glyph; end
 
-  # Returns the value of attribute original.
-  #
   # source://ttfunk//lib/ttfunk/subset/base.rb#21
   def original; end
 
   # source://ttfunk//lib/ttfunk/subset/base.rb#36
   def to_unicode_map; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/base.rb#27
   def unicode?; end
 
@@ -583,31 +484,21 @@ TTFunk::Subset::Base::MS_SYMBOL_ENCODING_ID = T.let(T.unsafe(nil), Integer)
 
 # source://ttfunk//lib/ttfunk/subset/code_page.rb#9
 class TTFunk::Subset::CodePage < ::TTFunk::Subset::Base
-  # @return [CodePage] a new instance of CodePage
-  #
   # source://ttfunk//lib/ttfunk/subset/code_page.rb#32
   def initialize(original, code_page, encoding); end
 
-  # Returns the value of attribute code_page.
-  #
   # source://ttfunk//lib/ttfunk/subset/code_page.rb#30
   def code_page; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/code_page.rb#48
   def covers?(character); end
 
-  # Returns the value of attribute encoding.
-  #
   # source://ttfunk//lib/ttfunk/subset/code_page.rb#30
   def encoding; end
 
   # source://ttfunk//lib/ttfunk/subset/code_page.rb#57
   def from_unicode(character); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/code_page.rb#52
   def includes?(character); end
 
@@ -639,29 +530,21 @@ end
 
 # source://ttfunk//lib/ttfunk/subset/mac_roman.rb#9
 class TTFunk::Subset::MacRoman < ::TTFunk::Subset::CodePage
-  # @return [MacRoman] a new instance of MacRoman
-  #
   # source://ttfunk//lib/ttfunk/subset/mac_roman.rb#10
   def initialize(original); end
 end
 
 # source://ttfunk//lib/ttfunk/subset/unicode.rb#8
 class TTFunk::Subset::Unicode < ::TTFunk::Subset::Base
-  # @return [Unicode] a new instance of Unicode
-  #
   # source://ttfunk//lib/ttfunk/subset/unicode.rb#11
   def initialize(original); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/unicode.rb#29
   def covers?(_character); end
 
   # source://ttfunk//lib/ttfunk/subset/unicode.rb#37
   def from_unicode(character); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/unicode.rb#33
   def includes?(character); end
 
@@ -674,8 +557,6 @@ class TTFunk::Subset::Unicode < ::TTFunk::Subset::Base
   # source://ttfunk//lib/ttfunk/subset/unicode.rb#21
   def to_unicode_map; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/unicode.rb#17
   def unicode?; end
 
@@ -685,21 +566,15 @@ end
 
 # source://ttfunk//lib/ttfunk/subset/unicode_8bit.rb#8
 class TTFunk::Subset::Unicode8Bit < ::TTFunk::Subset::Base
-  # @return [Unicode8Bit] a new instance of Unicode8Bit
-  #
   # source://ttfunk//lib/ttfunk/subset/unicode_8bit.rb#9
   def initialize(original); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/unicode_8bit.rb#32
   def covers?(character); end
 
   # source://ttfunk//lib/ttfunk/subset/unicode_8bit.rb#40
   def from_unicode(character); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/unicode_8bit.rb#36
   def includes?(character); end
 
@@ -712,8 +587,6 @@ class TTFunk::Subset::Unicode8Bit < ::TTFunk::Subset::Base
   # source://ttfunk//lib/ttfunk/subset/unicode_8bit.rb#20
   def to_unicode_map; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/subset/unicode_8bit.rb#16
   def unicode?; end
 
@@ -726,51 +599,33 @@ TTFunk::Subset::Unicode::SPACE_CHAR = T.let(T.unsafe(nil), Integer)
 
 # source://ttfunk//lib/ttfunk/subset/windows_1252.rb#9
 class TTFunk::Subset::Windows1252 < ::TTFunk::Subset::CodePage
-  # @return [Windows1252] a new instance of Windows1252
-  #
   # source://ttfunk//lib/ttfunk/subset/windows_1252.rb#10
   def initialize(original); end
 end
 
 # source://ttfunk//lib/ttfunk/subset_collection.rb#6
 class TTFunk::SubsetCollection
-  # @return [SubsetCollection] a new instance of SubsetCollection
-  #
   # source://ttfunk//lib/ttfunk/subset_collection.rb#7
   def initialize(original); end
 
   # source://ttfunk//lib/ttfunk/subset_collection.rb#12
   def [](subset); end
 
-  # +characters+ should be an array of UTF-16 characters. Returns
-  # an array of subset chunks, where each chunk is another array of
-  # two elements. The first element is the subset number, and the
-  # second element is the string of characters to render with that
-  # font subset. The strings will be encoded for their subset font,
-  # and so may not look (in the raw) like what was passed in, but
-  # they will render correctly with the indicated subset font.
-  #
   # source://ttfunk//lib/ttfunk/subset_collection.rb#42
   def encode(characters); end
 
-  # +characters+ should be an array of UTF-16 characters
-  #
   # source://ttfunk//lib/ttfunk/subset_collection.rb#17
   def use(characters); end
 end
 
 # source://ttfunk//lib/ttfunk/sum.rb#4
 class TTFunk::Sum < ::TTFunk::Aggregate
-  # @return [Sum] a new instance of Sum
-  #
   # source://ttfunk//lib/ttfunk/sum.rb#7
   def initialize(init_value = T.unsafe(nil)); end
 
   # source://ttfunk//lib/ttfunk/sum.rb#12
   def <<(operand); end
 
-  # Returns the value of attribute value.
-  #
   # source://ttfunk//lib/ttfunk/sum.rb#5
   def value; end
 
@@ -780,26 +635,18 @@ end
 
 # source://ttfunk//lib/ttfunk/ttf_encoder.rb#4
 class TTFunk::TTFEncoder
-  # @return [TTFEncoder] a new instance of TTFEncoder
-  #
   # source://ttfunk//lib/ttfunk/ttf_encoder.rb#13
   def initialize(original, subset, options = T.unsafe(nil)); end
 
   # source://ttfunk//lib/ttfunk/ttf_encoder.rb#19
   def encode; end
 
-  # Returns the value of attribute options.
-  #
   # source://ttfunk//lib/ttfunk/ttf_encoder.rb#11
   def options; end
 
-  # Returns the value of attribute original.
-  #
   # source://ttfunk//lib/ttfunk/ttf_encoder.rb#11
   def original; end
 
-  # Returns the value of attribute subset.
-  #
   # source://ttfunk//lib/ttfunk/ttf_encoder.rb#11
   def subset; end
 
@@ -811,8 +658,6 @@ class TTFunk::TTFEncoder
   # source://ttfunk//lib/ttfunk/ttf_encoder.rb#204
   def checksum(data); end
 
-  # "mandatory" tables. Every font should ("should") have these
-  #
   # source://ttfunk//lib/ttfunk/ttf_encoder.rb#69
   def cmap_table; end
 
@@ -864,10 +709,6 @@ class TTFunk::TTFEncoder
   # source://ttfunk//lib/ttfunk/ttf_encoder.rb#61
   def optimal_table_order; end
 
-  # "optional" tables. Fonts may omit these if they do not need them.
-  # Because they apply globally, we can simply copy them over, without
-  # modification, if they exist.
-  #
   # source://ttfunk//lib/ttfunk/ttf_encoder.rb#125
   def os2_table; end
 
@@ -894,28 +735,18 @@ TTFunk::TTFEncoder::OPTIMAL_TABLE_ORDER = T.let(T.unsafe(nil), Array)
 class TTFunk::Table
   include ::TTFunk::Reader
 
-  # @return [Table] a new instance of Table
-  #
   # source://ttfunk//lib/ttfunk/table.rb#13
   def initialize(file); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table.rb#28
   def exists?; end
 
-  # Returns the value of attribute file.
-  #
   # source://ttfunk//lib/ttfunk/table.rb#9
   def file; end
 
-  # Returns the value of attribute length.
-  #
   # source://ttfunk//lib/ttfunk/table.rb#11
   def length; end
 
-  # Returns the value of attribute offset.
-  #
   # source://ttfunk//lib/ttfunk/table.rb#10
   def offset; end
 
@@ -936,31 +767,21 @@ class TTFunk::Table::Cff < ::TTFunk::Table
   # source://ttfunk//lib/ttfunk/table/cff.rb#34
   def encode(new_to_old, old_to_new); end
 
-  # Returns the value of attribute global_subr_index.
-  #
   # source://ttfunk//lib/ttfunk/table/cff.rb#28
   def global_subr_index; end
 
-  # Returns the value of attribute header.
-  #
   # source://ttfunk//lib/ttfunk/table/cff.rb#27
   def header; end
 
-  # Returns the value of attribute name_index.
-  #
   # source://ttfunk//lib/ttfunk/table/cff.rb#27
   def name_index; end
 
-  # Returns the value of attribute string_index.
-  #
   # source://ttfunk//lib/ttfunk/table/cff.rb#27
   def string_index; end
 
   # source://ttfunk//lib/ttfunk/table/cff.rb#30
   def tag; end
 
-  # Returns the value of attribute top_index.
-  #
   # source://ttfunk//lib/ttfunk/table/cff.rb#27
   def top_index; end
 
@@ -974,52 +795,36 @@ end
 class TTFunk::Table::Cff::Charset < ::TTFunk::SubTable
   include ::Enumerable
 
-  # @return [Charset] a new instance of Charset
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#40
   def initialize(top_dict, file, offset_or_id = T.unsafe(nil), length = T.unsafe(nil)); end
 
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#58
   def [](glyph_id); end
 
-  # Returns the value of attribute count.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#38
   def count; end
 
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#51
   def each; end
 
-  # mapping is new -> old glyph ids
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#77
   def encode(mapping); end
 
-  # Returns the value of attribute entries.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#37
   def entries; end
 
-  # Returns the value of attribute format.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#38
   def format; end
 
-  # Returns the value of attribute length.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#37
   def length; end
 
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#64
   def offset; end
 
-  # Returns the value of attribute offset_or_id.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#38
   def offset_or_id; end
 
-  # Returns the value of attribute top_dict.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charset.rb#38
   def top_dict; end
 
@@ -1096,8 +901,6 @@ TTFunk::Table::Cff::Charsets::STANDARD_STRINGS = T.let(T.unsafe(nil), TTFunk::On
 
 # source://ttfunk//lib/ttfunk/table/cff/charstring.rb#6
 class TTFunk::Table::Cff::Charstring
-  # @return [Charstring] a new instance of Charstring
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charstring.rb#43
   def initialize(glyph_id, top_dict, font_dict, raw); end
 
@@ -1107,16 +910,12 @@ class TTFunk::Table::Cff::Charstring
   # source://ttfunk//lib/ttfunk/table/cff/charstring.rb#77
   def glyph; end
 
-  # Returns the value of attribute glyph_id.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charstring.rb#41
   def glyph_id; end
 
   # source://ttfunk//lib/ttfunk/table/cff/charstring.rb#69
   def path; end
 
-  # Returns the value of attribute raw.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charstring.rb#41
   def raw; end
 
@@ -1230,21 +1029,15 @@ TTFunk::Table::Cff::Charstring::FLEX_CODE_MAP = T.let(T.unsafe(nil), Hash)
 
 # source://ttfunk//lib/ttfunk/table/cff/charstrings_index.rb#6
 class TTFunk::Table::Cff::CharstringsIndex < ::TTFunk::Table::Cff::Index
-  # @return [CharstringsIndex] a new instance of CharstringsIndex
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charstrings_index.rb#9
   def initialize(top_dict, *remaining_args); end
 
   # source://ttfunk//lib/ttfunk/table/cff/charstrings_index.rb#14
   def [](index); end
 
-  # gets passed a mapping of new => old glyph ids
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charstrings_index.rb#21
   def encode(mapping); end
 
-  # Returns the value of attribute top_dict.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/charstrings_index.rb#7
   def top_dict; end
 
@@ -1264,7 +1057,7 @@ class TTFunk::Table::Cff::Dict < ::TTFunk::SubTable
   # source://ttfunk//lib/ttfunk/table/cff/dict.rb#34
   def each(&block); end
 
-  # source://ttfunk//lib/ttfunk/table/cff/dict.rb#34
+  # source://ttfunk//lib/ttfunk/table/cff/dict.rb#38
   def each_pair(&block); end
 
   # source://ttfunk//lib/ttfunk/table/cff/dict.rb#40
@@ -1314,13 +1107,9 @@ class TTFunk::Table::Cff::Dict < ::TTFunk::SubTable
   # source://ttfunk//lib/ttfunk/table/cff/dict.rb#140
   def parse!; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cff/dict.rb#229
   def valid_exponent?(exponent); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cff/dict.rb#225
   def valid_significand?(significand); end
 
@@ -1331,16 +1120,12 @@ end
 # source://ttfunk//lib/ttfunk/table/cff/dict.rb#9
 class TTFunk::Table::Cff::Dict::InvalidOperandError < ::StandardError; end
 
-# maximum number of operands allowed per operator
-#
 # source://ttfunk//lib/ttfunk/table/cff/dict.rb#22
 TTFunk::Table::Cff::Dict::MAX_OPERANDS = T.let(T.unsafe(nil), Integer)
 
 # source://ttfunk//lib/ttfunk/table/cff/dict.rb#15
 TTFunk::Table::Cff::Dict::OPERAND_BZERO = T.let(T.unsafe(nil), Array)
 
-# for regular single-byte operators
-#
 # source://ttfunk//lib/ttfunk/table/cff/dict.rb#14
 TTFunk::Table::Cff::Dict::OPERATOR_BZERO = T.let(T.unsafe(nil), Range)
 
@@ -1350,16 +1135,12 @@ class TTFunk::Table::Cff::Dict::TooManyOperandsError < ::StandardError; end
 # source://ttfunk//lib/ttfunk/table/cff/dict.rb#26
 TTFunk::Table::Cff::Dict::VALID_SCI_EXPONENT_RE = T.let(T.unsafe(nil), Regexp)
 
-# used to validate operands expressed in scientific notation
-#
 # source://ttfunk//lib/ttfunk/table/cff/dict.rb#25
 TTFunk::Table::Cff::Dict::VALID_SCI_SIGNIFICAND_RE = T.let(T.unsafe(nil), Regexp)
 
 # source://ttfunk//lib/ttfunk/table/cff/dict.rb#19
 TTFunk::Table::Cff::Dict::WIDE_OPERATOR_ADJUSTMENT = T.let(T.unsafe(nil), Integer)
 
-# for operators that are two bytes wide
-#
 # source://ttfunk//lib/ttfunk/table/cff/dict.rb#18
 TTFunk::Table::Cff::Dict::WIDE_OPERATOR_BZERO = T.let(T.unsafe(nil), Integer)
 
@@ -1367,16 +1148,12 @@ TTFunk::Table::Cff::Dict::WIDE_OPERATOR_BZERO = T.let(T.unsafe(nil), Integer)
 class TTFunk::Table::Cff::Encoding < ::TTFunk::SubTable
   include ::Enumerable
 
-  # @return [Encoding] a new instance of Encoding
-  #
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#27
   def initialize(top_dict, file, offset_or_id = T.unsafe(nil), length = T.unsafe(nil)); end
 
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#45
   def [](glyph_id); end
 
-  # Returns the value of attribute count.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#25
   def count; end
 
@@ -1386,26 +1163,18 @@ class TTFunk::Table::Cff::Encoding < ::TTFunk::SubTable
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#65
   def encode(new_to_old, old_to_new); end
 
-  # Returns the value of attribute format.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#25
   def format; end
 
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#52
   def offset; end
 
-  # Returns the value of attribute offset_or_id.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#25
   def offset_or_id; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#96
   def supplemental?; end
 
-  # Returns the value of attribute top_dict.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#25
   def top_dict; end
 
@@ -1417,8 +1186,6 @@ class TTFunk::Table::Cff::Encoding < ::TTFunk::SubTable
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#177
   def element_format(fmt = T.unsafe(nil)); end
 
-  # @TODO: handle supplemental encoding (necessary?)
-  #
   # source://ttfunk//lib/ttfunk/table/cff/encoding.rb#186
   def element_width(fmt = T.unsafe(nil)); end
 
@@ -1462,39 +1229,27 @@ TTFunk::Table::Cff::Encodings::STANDARD = T.let(T.unsafe(nil), TTFunk::OneBasedA
 class TTFunk::Table::Cff::FdSelector < ::TTFunk::SubTable
   include ::Enumerable
 
-  # @return [FdSelector] a new instance of FdSelector
-  #
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#17
   def initialize(top_dict, file, offset, length = T.unsafe(nil)); end
 
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#22
   def [](glyph_id); end
 
-  # Returns the value of attribute count.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#15
   def count; end
 
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#48
   def each; end
 
-  # mapping is new -> old glyph ids
-  #
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#55
   def encode(mapping); end
 
-  # Returns the value of attribute entries.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#15
   def entries; end
 
-  # Returns the value of attribute n_glyphs.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#15
   def n_glyphs; end
 
-  # Returns the value of attribute top_dict.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#15
   def top_dict; end
 
@@ -1509,8 +1264,6 @@ class TTFunk::Table::Cff::FdSelector < ::TTFunk::SubTable
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#85
   def range_cache; end
 
-  # values is an array of [new_gid, fd_index] pairs
-  #
   # source://ttfunk//lib/ttfunk/table/cff/fd_selector.rb#90
   def rangify_gids(values); end
 end
@@ -1529,8 +1282,6 @@ TTFunk::Table::Cff::FdSelector::RANGE_FORMAT = T.let(T.unsafe(nil), Integer)
 
 # source://ttfunk//lib/ttfunk/table/cff/font_dict.rb#6
 class TTFunk::Table::Cff::FontDict < ::TTFunk::Table::Cff::Dict
-  # @return [FontDict] a new instance of FontDict
-  #
   # source://ttfunk//lib/ttfunk/table/cff/font_dict.rb#13
   def initialize(top_dict, file, offset, length = T.unsafe(nil)); end
 
@@ -1543,8 +1294,6 @@ class TTFunk::Table::Cff::FontDict < ::TTFunk::Table::Cff::Dict
   # source://ttfunk//lib/ttfunk/table/cff/font_dict.rb#50
   def private_dict; end
 
-  # Returns the value of attribute top_dict.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/font_dict.rb#11
   def top_dict; end
 
@@ -1565,8 +1314,6 @@ TTFunk::Table::Cff::FontDict::PLACEHOLDER_LENGTH = T.let(T.unsafe(nil), Integer)
 
 # source://ttfunk//lib/ttfunk/table/cff/font_index.rb#6
 class TTFunk::Table::Cff::FontIndex < ::TTFunk::Table::Cff::Index
-  # @return [FontIndex] a new instance of FontIndex
-  #
   # source://ttfunk//lib/ttfunk/table/cff/font_index.rb#9
   def initialize(top_dict, file, offset, length = T.unsafe(nil)); end
 
@@ -1576,37 +1323,27 @@ class TTFunk::Table::Cff::FontIndex < ::TTFunk::Table::Cff::Index
   # source://ttfunk//lib/ttfunk/table/cff/font_index.rb#24
   def finalize(new_cff_data, mapping); end
 
-  # Returns the value of attribute top_dict.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/font_index.rb#7
   def top_dict; end
 end
 
 # source://ttfunk//lib/ttfunk/table/cff/header.rb#6
 class TTFunk::Table::Cff::Header < ::TTFunk::SubTable
-  # size of all offsets from beginning of table
-  #
   # source://ttfunk//lib/ttfunk/table/cff/header.rb#15
   def absolute_offset_size; end
 
   # source://ttfunk//lib/ttfunk/table/cff/header.rb#21
   def encode; end
 
-  # size of the header itself
-  #
   # source://ttfunk//lib/ttfunk/table/cff/header.rb#12
   def header_size; end
 
   # source://ttfunk//lib/ttfunk/table/cff/header.rb#17
   def length; end
 
-  # cff format version numbers
-  #
   # source://ttfunk//lib/ttfunk/table/cff/header.rb#8
   def major; end
 
-  # Returns the value of attribute minor.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/header.rb#9
   def minor; end
 
@@ -1623,13 +1360,9 @@ class TTFunk::Table::Cff::Index < ::TTFunk::SubTable
   # source://ttfunk//lib/ttfunk/table/cff/index.rb#18
   def [](index); end
 
-  # number of objects in the index
-  #
   # source://ttfunk//lib/ttfunk/table/cff/index.rb#10
   def count; end
 
-  # Returns the value of attribute data_start_pos.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/index.rb#16
   def data_start_pos; end
 
@@ -1639,23 +1372,15 @@ class TTFunk::Table::Cff::Index < ::TTFunk::SubTable
   # source://ttfunk//lib/ttfunk/table/cff/index.rb#30
   def encode; end
 
-  # offset array element size
-  #
   # source://ttfunk//lib/ttfunk/table/cff/index.rb#13
   def offset_size; end
 
-  # Returns the value of attribute offsets.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/index.rb#15
   def offsets; end
 
-  # Returns the value of attribute raw_data.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/index.rb#15
   def raw_data; end
 
-  # Returns the value of attribute raw_offset_length.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/index.rb#15
   def raw_offset_length; end
 
@@ -1681,47 +1406,39 @@ end
 class TTFunk::Table::Cff::OneBasedIndex
   extend ::Forwardable
 
-  # @return [OneBasedIndex] a new instance of OneBasedIndex
-  #
   # source://ttfunk//lib/ttfunk/table/cff/one_based_index.rb#20
   def initialize(*args); end
 
   # source://ttfunk//lib/ttfunk/table/cff/one_based_index.rb#24
   def [](idx); end
 
-  # Returns the value of attribute base_index.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/one_based_index.rb#18
   def base_index; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://ttfunk//lib/ttfunk/table/cff/one_based_index.rb#11
   def count(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://ttfunk//lib/ttfunk/table/cff/one_based_index.rb#11
   def each(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://ttfunk//lib/ttfunk/table/cff/one_based_index.rb#11
   def encode(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://ttfunk//lib/ttfunk/table/cff/one_based_index.rb#11
   def length(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://ttfunk//lib/ttfunk/table/cff/one_based_index.rb#11
   def table_offset(*args, **_arg1, &block); end
 end
 
 # source://ttfunk//lib/ttfunk/table/cff/path.rb#6
 class TTFunk::Table::Cff::Path
-  # @return [Path] a new instance of Path
-  #
   # source://ttfunk//lib/ttfunk/table/cff/path.rb#11
   def initialize; end
 
   # source://ttfunk//lib/ttfunk/table/cff/path.rb#28
   def close_path; end
 
-  # Returns the value of attribute commands.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/path.rb#9
   def commands; end
 
@@ -1734,8 +1451,6 @@ class TTFunk::Table::Cff::Path
   # source://ttfunk//lib/ttfunk/table/cff/path.rb#16
   def move_to(x, y); end
 
-  # Returns the value of attribute number_of_contours.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/path.rb#9
   def number_of_contours; end
 
@@ -1756,9 +1471,6 @@ class TTFunk::Table::Cff::PrivateDict < ::TTFunk::Table::Cff::Dict
   # source://ttfunk//lib/ttfunk/table/cff/private_dict.rb#56
   def default_width_x; end
 
-  # @TODO: use mapping to determine which subroutines are still used.
-  # For now, just encode them all.
-  #
   # source://ttfunk//lib/ttfunk/table/cff/private_dict.rb#21
   def encode(_mapping); end
 
@@ -1798,8 +1510,6 @@ class TTFunk::Table::Cff::SubrIndex < ::TTFunk::Table::Cff::Index
   def bias; end
 end
 
-# the extra space is important
-#
 # source://ttfunk//lib/ttfunk/table/cff.rb#25
 TTFunk::Table::Cff::TAG = T.let(T.unsafe(nil), String)
 
@@ -1817,14 +1527,6 @@ class TTFunk::Table::Cff::TopDict < ::TTFunk::Table::Cff::Dict
   # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#157
   def charstring_type; end
 
-  # https://www.microsoft.com/typography/otspec/cff.htm
-  #
-  # "OpenType fonts with TrueType outlines use a glyph index to specify
-  # and access glyphs within a font; e.g., to index within the 'loca'
-  # table and thereby access glyph data in the 'glyf' table. This concept
-  # is retained in OpenType CFF fonts, except that glyph data is accessed
-  # through the CharStrings INDEX of the CFF table."
-  #
   # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#148
   def charstrings_index; end
 
@@ -1843,9 +1545,7 @@ class TTFunk::Table::Cff::TopDict < ::TTFunk::Table::Cff::Dict
   # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#162
   def font_index; end
 
-  # @return [Boolean]
-  #
-  # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#113
+  # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#117
   def is_cid_font?; end
 
   # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#176
@@ -1854,8 +1554,6 @@ class TTFunk::Table::Cff::TopDict < ::TTFunk::Table::Cff::Dict
   # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#109
   def ros; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#113
   def ros?; end
 
@@ -1870,8 +1568,6 @@ class TTFunk::Table::Cff::TopDict < ::TTFunk::Table::Cff::Dict
   # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#211
   def finalize_subtable(new_cff_data, name, table_data); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#217
   def pointer_operator?(operator); end
 end
@@ -1879,8 +1575,6 @@ end
 # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#7
 TTFunk::Table::Cff::TopDict::DEFAULT_CHARSTRING_TYPE = T.let(T.unsafe(nil), Integer)
 
-# all the operators we currently care about
-#
 # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#23
 TTFunk::Table::Cff::TopDict::OPERATORS = T.let(T.unsafe(nil), Hash)
 
@@ -1890,9 +1584,6 @@ TTFunk::Table::Cff::TopDict::OPERATOR_CODES = T.let(T.unsafe(nil), Hash)
 # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#9
 TTFunk::Table::Cff::TopDict::PLACEHOLDER_LENGTH = T.let(T.unsafe(nil), Integer)
 
-# operators whose values are offsets that point to other parts
-# of the file
-#
 # source://ttfunk//lib/ttfunk/table/cff/top_dict.rb#13
 TTFunk::Table::Cff::TopDict::POINTER_OPERATORS = T.let(T.unsafe(nil), Hash)
 
@@ -1907,16 +1598,12 @@ end
 
 # source://ttfunk//lib/ttfunk/table/cmap.rb#5
 class TTFunk::Table::Cmap < ::TTFunk::Table
-  # Returns the value of attribute tables.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap.rb#7
   def tables; end
 
   # source://ttfunk//lib/ttfunk/table/cmap.rb#17
   def unicode; end
 
-  # Returns the value of attribute version.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap.rb#6
   def version; end
 
@@ -1936,18 +1623,12 @@ module TTFunk::Table::Cmap::Format00
   # source://ttfunk//lib/ttfunk/table/cmap/format00.rb#35
   def [](code); end
 
-  # Returns the value of attribute code_map.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format00.rb#8
   def code_map; end
 
-  # Returns the value of attribute language.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format00.rb#7
   def language; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format00.rb#39
   def supported?; end
 
@@ -1957,13 +1638,6 @@ module TTFunk::Table::Cmap::Format00
   def parse_cmap!; end
 
   class << self
-    # Expects a hash mapping character codes to glyph ids (where the
-    # glyph ids are from the original font). Returns a hash including
-    # a new map (:charmap) that maps the characters in charmap to a
-    # another hash containing both the old (:old) and new (:new) glyph
-    # ids. The returned hash also includes a :subtable key, which contains
-    # the encoded subtable for the given charmap.
-    #
     # source://ttfunk//lib/ttfunk/table/cmap/format00.rb#16
     def encode(charmap); end
   end
@@ -1974,18 +1648,12 @@ module TTFunk::Table::Cmap::Format04
   # source://ttfunk//lib/ttfunk/table/cmap/format04.rb#95
   def [](code); end
 
-  # Returns the value of attribute code_map.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format04.rb#8
   def code_map; end
 
-  # Returns the value of attribute language.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format04.rb#7
   def language; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format04.rb#99
   def supported?; end
 
@@ -1995,13 +1663,6 @@ module TTFunk::Table::Cmap::Format04
   def parse_cmap!; end
 
   class << self
-    # Expects a hash mapping character codes to glyph ids (where the
-    # glyph ids are from the original font). Returns a hash including
-    # a new map (:charmap) that maps the characters in charmap to a
-    # another hash containing both the old (:old) and new (:new) glyph
-    # ids. The returned hash also includes a :subtable key, which contains
-    # the encoded subtable for the given charmap.
-    #
     # source://ttfunk//lib/ttfunk/table/cmap/format04.rb#16
     def encode(charmap); end
   end
@@ -2012,18 +1673,12 @@ module TTFunk::Table::Cmap::Format06
   # source://ttfunk//lib/ttfunk/table/cmap/format06.rb#34
   def [](code); end
 
-  # Returns the value of attribute code_map.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format06.rb#8
   def code_map; end
 
-  # Returns the value of attribute language.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format06.rb#7
   def language; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format06.rb#38
   def supported?; end
 
@@ -2043,18 +1698,12 @@ module TTFunk::Table::Cmap::Format10
   # source://ttfunk//lib/ttfunk/table/cmap/format10.rb#35
   def [](code); end
 
-  # Returns the value of attribute code_map.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format10.rb#8
   def code_map; end
 
-  # Returns the value of attribute language.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format10.rb#7
   def language; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format10.rb#39
   def supported?; end
 
@@ -2074,18 +1723,12 @@ module TTFunk::Table::Cmap::Format12
   # source://ttfunk//lib/ttfunk/table/cmap/format12.rb#48
   def [](code); end
 
-  # Returns the value of attribute code_map.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format12.rb#8
   def code_map; end
 
-  # Returns the value of attribute language.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format12.rb#7
   def language; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/format12.rb#52
   def supported?; end
 
@@ -2104,38 +1747,24 @@ end
 class TTFunk::Table::Cmap::Subtable
   include ::TTFunk::Reader
 
-  # @return [Subtable] a new instance of Subtable
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/subtable.rb#51
   def initialize(file, table_start); end
 
-  # @raise [NotImplementedError]
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/subtable.rb#81
   def [](_code); end
 
-  # Returns the value of attribute encoding_id.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/subtable.rb#12
   def encoding_id; end
 
-  # Returns the value of attribute format.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/subtable.rb#13
   def format; end
 
-  # Returns the value of attribute platform_id.
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/subtable.rb#11
   def platform_id; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/subtable.rb#77
   def supported?; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/cmap/subtable.rb#71
   def unicode?; end
 
@@ -2155,21 +1784,15 @@ TTFunk::Table::Cmap::Subtable::ENCODING_MAPPINGS = T.let(T.unsafe(nil), Hash)
 
 # source://ttfunk//lib/ttfunk/table/dsig.rb#5
 class TTFunk::Table::Dsig < ::TTFunk::Table
-  # Returns the value of attribute flags.
-  #
   # source://ttfunk//lib/ttfunk/table/dsig.rb#17
   def flags; end
 
-  # Returns the value of attribute signatures.
-  #
   # source://ttfunk//lib/ttfunk/table/dsig.rb#17
   def signatures; end
 
   # source://ttfunk//lib/ttfunk/table/dsig.rb#29
   def tag; end
 
-  # Returns the value of attribute version.
-  #
   # source://ttfunk//lib/ttfunk/table/dsig.rb#17
   def version; end
 
@@ -2186,28 +1809,18 @@ end
 
 # source://ttfunk//lib/ttfunk/table/dsig.rb#6
 class TTFunk::Table::Dsig::SignatureRecord
-  # @return [SignatureRecord] a new instance of SignatureRecord
-  #
   # source://ttfunk//lib/ttfunk/table/dsig.rb#9
   def initialize(format, length, offset, signature); end
 
-  # Returns the value of attribute format.
-  #
   # source://ttfunk//lib/ttfunk/table/dsig.rb#7
   def format; end
 
-  # Returns the value of attribute length.
-  #
   # source://ttfunk//lib/ttfunk/table/dsig.rb#7
   def length; end
 
-  # Returns the value of attribute offset.
-  #
   # source://ttfunk//lib/ttfunk/table/dsig.rb#7
   def offset; end
 
-  # Returns the value of attribute signature.
-  #
   # source://ttfunk//lib/ttfunk/table/dsig.rb#7
   def signature; end
 end
@@ -2226,15 +1839,6 @@ class TTFunk::Table::Glyf < ::TTFunk::Table
   def parse!; end
 
   class << self
-    # Accepts a hash mapping (old) glyph-ids to glyph objects, and a hash
-    # mapping old glyph-ids to new glyph-ids.
-    #
-    # Returns a hash containing:
-    #
-    # * :table - a string representing the encoded 'glyf' table containing
-    #   the given glyphs.
-    # * :offsets - an array of offsets for each glyph
-    #
     # source://ttfunk//lib/ttfunk/table/glyf.rb#16
     def encode(glyphs, new_to_old, old_to_new); end
   end
@@ -2244,56 +1848,36 @@ end
 class TTFunk::Table::Glyf::Compound
   include ::TTFunk::Reader
 
-  # @return [Compound] a new instance of Compound
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#25
   def initialize(id, raw); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#74
   def compound?; end
 
-  # Returns the value of attribute glyph_ids.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#21
   def glyph_ids; end
 
-  # Returns the value of attribute id.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#18
   def id; end
 
-  # Returns the value of attribute number_of_contours.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#19
   def number_of_contours; end
 
-  # Returns the value of attribute raw.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#18
   def raw; end
 
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#78
   def recode(mapping); end
 
-  # Returns the value of attribute x_max.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#20
   def x_max; end
 
-  # Returns the value of attribute x_min.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#20
   def x_min; end
 
-  # Returns the value of attribute y_max.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#20
   def y_max; end
 
-  # Returns the value of attribute y_min.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#20
   def y_min; end
 end
@@ -2303,66 +1887,50 @@ TTFunk::Table::Glyf::Compound::ARG_1_AND_2_ARE_WORDS = T.let(T.unsafe(nil), Inte
 
 # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
 class TTFunk::Table::Glyf::Compound::Component < ::Struct
-  # Returns the value of attribute arg1
-  #
-  # @return [Object] the current value of arg1
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def arg1; end
 
-  # Sets the attribute arg1
-  #
-  # @param value [Object] the value to set the attribute arg1 to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def arg1=(_); end
 
-  # Returns the value of attribute arg2
-  #
-  # @return [Object] the current value of arg2
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def arg2; end
 
-  # Sets the attribute arg2
-  #
-  # @param value [Object] the value to set the attribute arg2 to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def arg2=(_); end
 
-  # Returns the value of attribute flags
-  #
-  # @return [Object] the current value of flags
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def flags; end
 
-  # Sets the attribute flags
-  #
-  # @param value [Object] the value to set the attribute flags to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def flags=(_); end
 
-  # Returns the value of attribute glyph_index
-  #
-  # @return [Object] the current value of glyph_index
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def glyph_index; end
 
-  # Sets the attribute glyph_index
-  #
-  # @param value [Object] the value to set the attribute glyph_index to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def glyph_index=(_); end
 
-  # Returns the value of attribute transform
-  #
-  # @return [Object] the current value of transform
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def transform; end
 
-  # Sets the attribute transform
-  #
-  # @param value [Object] the value to set the attribute transform to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
   def transform=(_); end
 
   class << self
+    # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
     def [](*_arg0); end
+
+    # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
     def inspect; end
+
+    # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
     def keyword_init?; end
+
+    # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
     def members; end
+
+    # source://ttfunk//lib/ttfunk/table/glyf/compound.rb#23
     def new(*_arg0); end
   end
 end
@@ -2384,213 +1952,135 @@ TTFunk::Table::Glyf::Compound::WE_HAVE_INSTRUCTIONS = T.let(T.unsafe(nil), Integ
 
 # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#6
 class TTFunk::Table::Glyf::PathBased
-  # @return [PathBased] a new instance of PathBased
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#11
   def initialize(path, horizontal_metrics); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#41
   def compound?; end
 
-  # Returns the value of attribute horizontal_metrics.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#7
   def horizontal_metrics; end
 
-  # Returns the value of attribute left_side_bearing.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#9
   def left_side_bearing; end
 
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#37
   def number_of_contours; end
 
-  # Returns the value of attribute path.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#7
   def path; end
 
-  # Returns the value of attribute right_side_bearing.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#9
   def right_side_bearing; end
 
-  # Returns the value of attribute x_max.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#8
   def x_max; end
 
-  # Returns the value of attribute x_min.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#8
   def x_min; end
 
-  # Returns the value of attribute y_max.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#8
   def y_max; end
 
-  # Returns the value of attribute y_min.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/path_based.rb#8
   def y_min; end
 end
 
 # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#8
 class TTFunk::Table::Glyf::Simple
-  # @return [Simple] a new instance of Simple
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#15
   def initialize(id, raw); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#30
   def compound?; end
 
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#38
   def end_point_of_last_contour; end
 
-  # Returns the value of attribute end_points_of_contours.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#12
   def end_points_of_contours; end
 
-  # Returns the value of attribute id.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#9
   def id; end
 
-  # Returns the value of attribute instruction_length.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#13
   def instruction_length; end
 
-  # Returns the value of attribute instructions.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#13
   def instructions; end
 
-  # Returns the value of attribute number_of_contours.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#10
   def number_of_contours; end
 
-  # Returns the value of attribute raw.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#9
   def raw; end
 
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#34
   def recode(_mapping); end
 
-  # Returns the value of attribute x_max.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#11
   def x_max; end
 
-  # Returns the value of attribute x_min.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#11
   def x_min; end
 
-  # Returns the value of attribute y_max.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#11
   def y_max; end
 
-  # Returns the value of attribute y_min.
-  #
   # source://ttfunk//lib/ttfunk/table/glyf/simple.rb#11
   def y_min; end
 end
 
 # source://ttfunk//lib/ttfunk/table/head.rb#7
 class TTFunk::Table::Head < ::TTFunk::Table
-  # Returns the value of attribute checksum_adjustment.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#10
   def checksum_adjustment; end
 
-  # Returns the value of attribute created.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#14
   def created; end
 
-  # Returns the value of attribute flags.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#12
   def flags; end
 
-  # Returns the value of attribute font_direction_hint.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#22
   def font_direction_hint; end
 
-  # Returns the value of attribute font_revision.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#9
   def font_revision; end
 
-  # Returns the value of attribute glyph_data_format.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#24
   def glyph_data_format; end
 
-  # Returns the value of attribute index_to_loc_format.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#23
   def index_to_loc_format; end
 
-  # Returns the value of attribute lowest_rec_ppem.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#21
   def lowest_rec_ppem; end
 
-  # Returns the value of attribute mac_style.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#20
   def mac_style; end
 
-  # Returns the value of attribute magic_number.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#11
   def magic_number; end
 
-  # Returns the value of attribute modified.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#15
   def modified; end
 
-  # Returns the value of attribute units_per_em.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#13
   def units_per_em; end
 
-  # Returns the value of attribute version.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#8
   def version; end
 
-  # Returns the value of attribute x_max.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#18
   def x_max; end
 
-  # Returns the value of attribute x_min.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#16
   def x_min; end
 
-  # Returns the value of attribute y_max.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#19
   def y_max; end
 
-  # Returns the value of attribute y_min.
-  #
   # source://ttfunk//lib/ttfunk/table/head.rb#17
   def y_min; end
 
@@ -2600,8 +2090,6 @@ class TTFunk::Table::Head < ::TTFunk::Table
   def parse!; end
 
   class << self
-    # mapping is new -> old glyph ids
-    #
     # source://ttfunk//lib/ttfunk/table/head.rb#28
     def encode(head, loca, mapping); end
 
@@ -2614,68 +2102,42 @@ end
 
 # source://ttfunk//lib/ttfunk/table/hhea.rb#7
 class TTFunk::Table::Hhea < ::TTFunk::Table
-  # Returns the value of attribute advance_width_max.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#12
   def advance_width_max; end
 
-  # Returns the value of attribute ascent.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#9
   def ascent; end
 
-  # Returns the value of attribute caret_offset.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#18
   def caret_offset; end
 
-  # Returns the value of attribute carot_slope_rise.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#16
   def carot_slope_rise; end
 
-  # Returns the value of attribute carot_slope_run.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#17
   def carot_slope_run; end
 
-  # Returns the value of attribute descent.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#10
   def descent; end
 
-  # Returns the value of attribute line_gap.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#11
   def line_gap; end
 
-  # Returns the value of attribute metric_data_format.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#19
   def metric_data_format; end
 
-  # Returns the value of attribute min_left_side_bearing.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#13
   def min_left_side_bearing; end
 
-  # Returns the value of attribute min_right_side_bearing.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#14
   def min_right_side_bearing; end
 
-  # Returns the value of attribute number_of_metrics.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#20
   def number_of_metrics; end
 
-  # Returns the value of attribute version.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#8
   def version; end
 
-  # Returns the value of attribute x_max_extent.
-  #
   # source://ttfunk//lib/ttfunk/table/hhea.rb#15
   def x_max_extent; end
 
@@ -2700,18 +2162,12 @@ class TTFunk::Table::Hmtx < ::TTFunk::Table
   # source://ttfunk//lib/ttfunk/table/hmtx.rb#27
   def for(glyph_id); end
 
-  # Returns the value of attribute left_side_bearings.
-  #
   # source://ttfunk//lib/ttfunk/table/hmtx.rb#9
   def left_side_bearings; end
 
-  # Returns the value of attribute metrics.
-  #
   # source://ttfunk//lib/ttfunk/table/hmtx.rb#8
   def metrics; end
 
-  # Returns the value of attribute widths.
-  #
   # source://ttfunk//lib/ttfunk/table/hmtx.rb#10
   def widths; end
 
@@ -2731,46 +2187,41 @@ end
 
 # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
 class TTFunk::Table::Hmtx::HorizontalMetric < ::Struct
-  # Returns the value of attribute advance_width
-  #
-  # @return [Object] the current value of advance_width
+  # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
   def advance_width; end
 
-  # Sets the attribute advance_width
-  #
-  # @param value [Object] the value to set the attribute advance_width to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
   def advance_width=(_); end
 
-  # Returns the value of attribute left_side_bearing
-  #
-  # @return [Object] the current value of left_side_bearing
+  # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
   def left_side_bearing; end
 
-  # Sets the attribute left_side_bearing
-  #
-  # @param value [Object] the value to set the attribute left_side_bearing to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
   def left_side_bearing=(_); end
 
   class << self
+    # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
     def [](*_arg0); end
+
+    # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
     def inspect; end
+
+    # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
     def keyword_init?; end
+
+    # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
     def members; end
+
+    # source://ttfunk//lib/ttfunk/table/hmtx.rb#25
     def new(*_arg0); end
   end
 end
 
 # source://ttfunk//lib/ttfunk/table/kern.rb#7
 class TTFunk::Table::Kern < ::TTFunk::Table
-  # Returns the value of attribute tables.
-  #
   # source://ttfunk//lib/ttfunk/table/kern.rb#9
   def tables; end
 
-  # Returns the value of attribute version.
-  #
   # source://ttfunk//lib/ttfunk/table/kern.rb#8
   def version; end
 
@@ -2798,36 +2249,24 @@ end
 class TTFunk::Table::Kern::Format0
   include ::TTFunk::Reader
 
-  # @return [Format0] a new instance of Format0
-  #
   # source://ttfunk//lib/ttfunk/table/kern/format0.rb#14
   def initialize(attributes = T.unsafe(nil)); end
 
-  # Returns the value of attribute attributes.
-  #
   # source://ttfunk//lib/ttfunk/table/kern/format0.rb#11
   def attributes; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/kern/format0.rb#39
   def cross_stream?; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/kern/format0.rb#35
   def horizontal?; end
 
-  # Returns the value of attribute pairs.
-  #
   # source://ttfunk//lib/ttfunk/table/kern/format0.rb#12
   def pairs; end
 
   # source://ttfunk//lib/ttfunk/table/kern/format0.rb#43
   def recode(mapping); end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/kern/format0.rb#31
   def vertical?; end
 end
@@ -2837,8 +2276,6 @@ class TTFunk::Table::Loca < ::TTFunk::Table
   # source://ttfunk//lib/ttfunk/table/loca.rb#31
   def index_of(glyph_id); end
 
-  # Returns the value of attribute offsets.
-  #
   # source://ttfunk//lib/ttfunk/table/loca.rb#8
   def offsets; end
 
@@ -2851,14 +2288,6 @@ class TTFunk::Table::Loca < ::TTFunk::Table
   def parse!; end
 
   class << self
-    # Accepts an array of offsets, with each index corresponding to the
-    # glyph id with that index.
-    #
-    # Returns a hash containing:
-    #
-    # * :table - the string representing the table's contents
-    # * :type  - the type of offset (to be encoded in the 'head' table)
-    #
     # source://ttfunk//lib/ttfunk/table/loca.rb#17
     def encode(offsets); end
   end
@@ -2866,78 +2295,48 @@ end
 
 # source://ttfunk//lib/ttfunk/table/maxp.rb#7
 class TTFunk::Table::Maxp < ::TTFunk::Table
-  # Returns the value of attribute max_component_contours.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#13
   def max_component_contours; end
 
-  # Returns the value of attribute max_component_depth.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#22
   def max_component_depth; end
 
-  # Returns the value of attribute max_component_elements.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#21
   def max_component_elements; end
 
-  # Returns the value of attribute max_component_points.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#12
   def max_component_points; end
 
-  # Returns the value of attribute max_contours.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#11
   def max_contours; end
 
-  # Returns the value of attribute max_function_defs.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#17
   def max_function_defs; end
 
-  # Returns the value of attribute max_instruction_defs.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#18
   def max_instruction_defs; end
 
-  # Returns the value of attribute max_points.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#10
   def max_points; end
 
-  # Returns the value of attribute max_size_of_instructions.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#20
   def max_size_of_instructions; end
 
-  # Returns the value of attribute max_stack_elements.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#19
   def max_stack_elements; end
 
-  # Returns the value of attribute max_storage.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#16
   def max_storage; end
 
-  # Returns the value of attribute max_twilight_points.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#15
   def max_twilight_points; end
 
-  # Returns the value of attribute max_zones.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#14
   def max_zones; end
 
-  # Returns the value of attribute num_glyphs.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#9
   def num_glyphs; end
 
-  # Returns the value of attribute version.
-  #
   # source://ttfunk//lib/ttfunk/table/maxp.rb#8
   def version; end
 
@@ -2954,46 +2353,30 @@ end
 
 # source://ttfunk//lib/ttfunk/table/name.rb#8
 class TTFunk::Table::Name < ::TTFunk::Table
-  # Returns the value of attribute compatible_full.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#47
   def compatible_full; end
 
   # source://ttfunk//lib/ttfunk/table/name.rb#31
   def copyright; end
 
-  # Returns the value of attribute description.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#40
   def description; end
 
-  # Returns the value of attribute designer.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#39
   def designer; end
 
-  # Returns the value of attribute designer_url.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#42
   def designer_url; end
 
-  # Returns the value of attribute entries.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#28
   def entries; end
 
-  # Returns the value of attribute font_family.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#32
   def font_family; end
 
-  # Returns the value of attribute font_name.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#35
   def font_name; end
 
-  # Returns the value of attribute font_subfamily.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#33
   def font_subfamily; end
 
@@ -3003,51 +2386,33 @@ class TTFunk::Table::Name < ::TTFunk::Table
   # source://ttfunk//lib/ttfunk/table/name.rb#44
   def license_url; end
 
-  # Returns the value of attribute manufacturer.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#38
   def manufacturer; end
 
   # source://ttfunk//lib/ttfunk/table/name.rb#105
   def postscript_name; end
 
-  # Returns the value of attribute preferred_family.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#45
   def preferred_family; end
 
-  # Returns the value of attribute preferred_subfamily.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#46
   def preferred_subfamily; end
 
-  # Returns the value of attribute sample_text.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#48
   def sample_text; end
 
-  # Returns the value of attribute strings.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#29
   def strings; end
 
-  # Returns the value of attribute trademark.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#37
   def trademark; end
 
-  # Returns the value of attribute unique_subfamily.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#34
   def unique_subfamily; end
 
-  # Returns the value of attribute vendor_url.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#41
   def vendor_url; end
 
-  # Returns the value of attribute version.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#36
   def version; end
 
@@ -3097,23 +2462,15 @@ TTFunk::Table::Name::MANUFACTURER_NAME_ID = T.let(T.unsafe(nil), Integer)
 
 # source://ttfunk//lib/ttfunk/table/name.rb#9
 class TTFunk::Table::Name::NameString < ::String
-  # @return [NameString] a new instance of NameString
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#14
   def initialize(text, platform_id, encoding_id, language_id); end
 
-  # Returns the value of attribute encoding_id.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#11
   def encoding_id; end
 
-  # Returns the value of attribute language_id.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#12
   def language_id; end
 
-  # Returns the value of attribute platform_id.
-  #
   # source://ttfunk//lib/ttfunk/table/name.rb#10
   def platform_id; end
 
@@ -3147,171 +2504,105 @@ TTFunk::Table::Name::VERSION_NAME_ID = T.let(T.unsafe(nil), Integer)
 
 # source://ttfunk//lib/ttfunk/table/os2.rb#8
 class TTFunk::Table::OS2 < ::TTFunk::Table
-  # Returns the value of attribute ascent.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#33
   def ascent; end
 
-  # Returns the value of attribute ave_char_width.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#11
   def ave_char_width; end
 
-  # Returns the value of attribute break_char.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#43
   def break_char; end
 
-  # Returns the value of attribute cap_height.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#41
   def cap_height; end
 
-  # Returns the value of attribute char_range.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#27
   def char_range; end
 
-  # Returns the value of attribute code_page_range.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#38
   def code_page_range; end
 
-  # Returns the value of attribute default_char.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#42
   def default_char; end
 
-  # Returns the value of attribute descent.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#34
   def descent; end
 
-  # Returns the value of attribute family_class.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#25
   def family_class; end
 
-  # Returns the value of attribute first_char_index.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#30
   def first_char_index; end
 
-  # Returns the value of attribute last_char_index.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#31
   def last_char_index; end
 
-  # Returns the value of attribute line_gap.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#35
   def line_gap; end
 
-  # Returns the value of attribute max_context.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#44
   def max_context; end
 
-  # Returns the value of attribute panose.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#26
   def panose; end
 
-  # Returns the value of attribute selection.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#29
   def selection; end
 
   # source://ttfunk//lib/ttfunk/table/os2.rb#280
   def tag; end
 
-  # Returns the value of attribute type.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#14
   def type; end
 
-  # Returns the value of attribute vendor_id.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#28
   def vendor_id; end
 
-  # Returns the value of attribute version.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#9
   def version; end
 
-  # Returns the value of attribute weight_class.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#12
   def weight_class; end
 
-  # Returns the value of attribute width_class.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#13
   def width_class; end
 
-  # Returns the value of attribute win_ascent.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#36
   def win_ascent; end
 
-  # Returns the value of attribute win_descent.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#37
   def win_descent; end
 
-  # Returns the value of attribute x_height.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#40
   def x_height; end
 
-  # Returns the value of attribute y_strikeout_position.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#24
   def y_strikeout_position; end
 
-  # Returns the value of attribute y_strikeout_size.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#23
   def y_strikeout_size; end
 
-  # Returns the value of attribute y_subscript_x_offset.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#17
   def y_subscript_x_offset; end
 
-  # Returns the value of attribute y_subscript_x_size.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#15
   def y_subscript_x_size; end
 
-  # Returns the value of attribute y_subscript_y_offset.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#18
   def y_subscript_y_offset; end
 
-  # Returns the value of attribute y_subscript_y_size.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#16
   def y_subscript_y_size; end
 
-  # Returns the value of attribute y_superscript_x_offset.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#21
   def y_superscript_x_offset; end
 
-  # Returns the value of attribute y_superscript_x_size.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#19
   def y_superscript_x_size; end
 
-  # Returns the value of attribute y_superscript_y_offset.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#22
   def y_superscript_y_offset; end
 
-  # Returns the value of attribute y_superscript_y_size.
-  #
   # source://ttfunk//lib/ttfunk/table/os2.rb#20
   def y_superscript_y_size; end
 
@@ -3376,82 +2667,47 @@ TTFunk::Table::OS2::UNICODE_RANGES = T.let(T.unsafe(nil), Array)
 # source://ttfunk//lib/ttfunk/table/os2.rb#275
 TTFunk::Table::OS2::WEIGHT_LOWERCASE = T.let(T.unsafe(nil), Array)
 
-# Used to calculate the xAvgCharWidth field.
-# From https://docs.microsoft.com/en-us/typography/opentype/spec/os2:
-#
-# "When first defined, the specification was biased toward Basic Latin
-# characters, and it was thought that the xAvgCharWidth value could be
-# used to estimate the average length of lines of text. A formula for
-# calculating xAvgCharWidth was provided using frequency-of-use
-# weighting factors for lowercase letters a - z."
-#
-# The array below contains 26 weight values which correspond to the
-# 26 letters in the Latin alphabet. Each weight is the relative
-# frequency of that letter in the English language.
-#
 # source://ttfunk//lib/ttfunk/table/os2.rb#274
 TTFunk::Table::OS2::WEIGHT_SPACE = T.let(T.unsafe(nil), Integer)
 
 # source://ttfunk//lib/ttfunk/table/post.rb#7
 class TTFunk::Table::Post < ::TTFunk::Table
-  # Returns the value of attribute fixed_pitch.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#12
   def fixed_pitch; end
 
-  # @return [Boolean]
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#26
   def fixed_pitch?; end
 
-  # Returns the value of attribute format.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#8
   def format; end
 
   # source://ttfunk//lib/ttfunk/table/post.rb#30
   def glyph_for(_code); end
 
-  # Returns the value of attribute italic_angle.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#9
   def italic_angle; end
 
-  # Returns the value of attribute max_mem_type1.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#16
   def max_mem_type1; end
 
-  # Returns the value of attribute max_mem_type42.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#14
   def max_mem_type42; end
 
-  # Returns the value of attribute min_mem_type1.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#15
   def min_mem_type1; end
 
-  # Returns the value of attribute min_mem_type42.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#13
   def min_mem_type42; end
 
   # source://ttfunk//lib/ttfunk/table/post.rb#34
   def recode(mapping); end
 
-  # Returns the value of attribute subtable.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#18
   def subtable; end
 
-  # Returns the value of attribute underline_position.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#10
   def underline_position; end
 
-  # Returns the value of attribute underline_thickness.
-  #
   # source://ttfunk//lib/ttfunk/table/post.rb#11
   def underline_thickness; end
 
@@ -3526,23 +2782,15 @@ class TTFunk::Table::Sbix < ::TTFunk::Table
   # source://ttfunk//lib/ttfunk/table/sbix.rb#15
   def bitmap_data_for(glyph_id, strike_index); end
 
-  # Returns the value of attribute flags.
-  #
   # source://ttfunk//lib/ttfunk/table/sbix.rb#9
   def flags; end
 
-  # Returns the value of attribute num_strikes.
-  #
   # source://ttfunk//lib/ttfunk/table/sbix.rb#10
   def num_strikes; end
 
-  # Returns the value of attribute strikes.
-  #
   # source://ttfunk//lib/ttfunk/table/sbix.rb#11
   def strikes; end
 
-  # Returns the value of attribute version.
-  #
   # source://ttfunk//lib/ttfunk/table/sbix.rb#8
   def version; end
 
@@ -3554,116 +2802,83 @@ end
 
 # source://ttfunk//lib/ttfunk/table/sbix.rb#13
 class TTFunk::Table::Sbix::BitmapData < ::Struct
-  # Returns the value of attribute data
-  #
-  # @return [Object] the current value of data
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def data; end
 
-  # Sets the attribute data
-  #
-  # @param value [Object] the value to set the attribute data to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def data=(_); end
 
-  # Returns the value of attribute ppem
-  #
-  # @return [Object] the current value of ppem
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def ppem; end
 
-  # Sets the attribute ppem
-  #
-  # @param value [Object] the value to set the attribute ppem to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def ppem=(_); end
 
-  # Returns the value of attribute resolution
-  #
-  # @return [Object] the current value of resolution
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def resolution; end
 
-  # Sets the attribute resolution
-  #
-  # @param value [Object] the value to set the attribute resolution to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def resolution=(_); end
 
-  # Returns the value of attribute type
-  #
-  # @return [Object] the current value of type
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def type; end
 
-  # Sets the attribute type
-  #
-  # @param value [Object] the value to set the attribute type to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def type=(_); end
 
-  # Returns the value of attribute x
-  #
-  # @return [Object] the current value of x
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def x; end
 
-  # Sets the attribute x
-  #
-  # @param value [Object] the value to set the attribute x to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def x=(_); end
 
-  # Returns the value of attribute y
-  #
-  # @return [Object] the current value of y
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def y; end
 
-  # Sets the attribute y
-  #
-  # @param value [Object] the value to set the attribute y to.
-  # @return [Object] the newly set value
+  # source://ttfunk//lib/ttfunk/table/sbix.rb#13
   def y=(_); end
 
   class << self
+    # source://ttfunk//lib/ttfunk/table/sbix.rb#13
     def [](*_arg0); end
+
+    # source://ttfunk//lib/ttfunk/table/sbix.rb#13
     def inspect; end
+
+    # source://ttfunk//lib/ttfunk/table/sbix.rb#13
     def keyword_init?; end
+
+    # source://ttfunk//lib/ttfunk/table/sbix.rb#13
     def members; end
+
+    # source://ttfunk//lib/ttfunk/table/sbix.rb#13
     def new(*_arg0); end
   end
 end
 
 # source://ttfunk//lib/ttfunk/table/simple.rb#7
 class TTFunk::Table::Simple < ::TTFunk::Table
-  # @return [Simple] a new instance of Simple
-  #
   # source://ttfunk//lib/ttfunk/table/simple.rb#10
   def initialize(file, tag); end
 
-  # Returns the value of attribute tag.
-  #
   # source://ttfunk//lib/ttfunk/table/simple.rb#8
   def tag; end
 end
 
 # source://ttfunk//lib/ttfunk/table/vorg.rb#7
 class TTFunk::Table::Vorg < ::TTFunk::Table
-  # Returns the value of attribute count.
-  #
   # source://ttfunk//lib/ttfunk/table/vorg.rb#11
   def count; end
 
-  # Returns the value of attribute default_vert_origin_y.
-  #
   # source://ttfunk//lib/ttfunk/table/vorg.rb#11
   def default_vert_origin_y; end
 
   # source://ttfunk//lib/ttfunk/table/vorg.rb#28
   def for(glyph_id); end
 
-  # Returns the value of attribute major_version.
-  #
   # source://ttfunk//lib/ttfunk/table/vorg.rb#10
   def major_version; end
 
-  # Returns the value of attribute minor_version.
-  #
   # source://ttfunk//lib/ttfunk/table/vorg.rb#10
   def minor_version; end
 

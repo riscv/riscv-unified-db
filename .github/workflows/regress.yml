@@ -22,6 +22,7 @@ permissions:
 env:
   DOCKER: 1
   DEPLOY_DIR: _site
+  GITHUB_TOKEN: "${{ github.token }}"
 concurrency:
   group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   cancel-in-progress: true
@@ -277,6 +278,77 @@ jobs:
         path: |
           tools/eclipse/udb-vscode/.vscode-test/**/*
           tools/eclipse/udb-vscode/out/test/**/*
+  create-gems:
+    name: Create the gems
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        gem:
+        - idlc
+        - udb
+        - udb_helpers
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - name: Copy the gem directory to resolve symlinks
+      run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
+    - name: Create the ${{ matrix.gem }} gem
+      run: |
+        cd gem-build-dir && \
+        gem build -o ${{ matrix.gem }}.gem ${{ matrix.gem }}.gemspec
+    - name: Upload the ${{ matrix.gem }} gem
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      with:
+        name: "${{ matrix.gem }}.gem"
+        path: gem-build-dir/${{ matrix.gem }}.gem
+  udb-gem-z3:
+    name: Test udb gem using z3 across several distros and platforms
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+        - ubuntu-24.04
+        - ubuntu-24.04-arm
+        container:
+        - almalinux:8
+        - ruby:3-slim
+    runs-on: "${{ matrix.platform }}"
+    container: "${{ matrix.container }}"
+    needs: create-gems
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - if: matrix.container == 'almalinux:8'
+      name: Install ruby
+      run: |
+        dnf module enable -y ruby:3.3
+        dnf install -y ruby ruby-devel gcc-toolset-12
+        PRE="source scl_source enable gcc-toolset-12"
+        echo "PRE=$PRE" >> $GITHUB_ENV
+    - if: matrix.container == 'ruby:3-slim'
+      name: Install make
+      run: |
+        apt-get update -qq && \
+        apt-get install --no-install-recommends -y make
+    - name: download udb gem
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      with:
+        name: udb.gem
+    - name: download idlc gem
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      with:
+        name: idlc.gem
+    - name: download udb_helpers gem
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      with:
+        name: udb_helpers.gem
+    - name: install gems
+      run: |
+        $PRE && \
+        gem install idlc.gem && \
+        gem install udb_helpers.gem && \
+        gem install udb.gem
+    - name: try z3
+      run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
   regress-idlc-unit:
     runs-on: ubuntu-latest
     needs: build-container
@@ -509,6 +581,7 @@ jobs:
         - yaml_loader
         - cfg_arch
         - cfg
+        - z3
         - mmr
         - mmr_schema
   regress-gen-go:
@@ -975,6 +1048,8 @@ jobs:
     - build-llvm
     - java-tests
     - vscode-tests
+    - create-gems
+    - udb-gem-z3
     if: "${{ always() }}"
     steps:
     - name: exit failure

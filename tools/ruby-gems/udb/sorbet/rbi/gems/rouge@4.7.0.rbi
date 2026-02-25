@@ -550,6 +550,7 @@ class Rouge::InheritableHash < ::Hash
   # source://rouge//lib/rouge/util.rb#32
   def keys; end
 
+  # source://rouge//lib/rouge/util.rb#31
   def own_keys; end
 
   # source://rouge//lib/rouge/util.rb#17
@@ -563,7 +564,7 @@ class Rouge::InheritableList
   # source://rouge//lib/rouge/util.rb#42
   def initialize(parent = T.unsafe(nil)); end
 
-  # source://rouge//lib/rouge/util.rb#61
+  # source://rouge//lib/rouge/util.rb#64
   def <<(o); end
 
   # source://rouge//lib/rouge/util.rb#50

@@ -35,3 +35,14 @@ get_container_type() {
 
   echo "$container_type"
 }
+
+build_container() {
+  [ -v CONTAINER_TYPE ] || (echo "bin/setup was not sourced" 1>&2; exit 1)
+
+  if [ "$CONTAINER_TYPE" == "native" ]; then
+    echo "You need to select a container type first" 1>&2
+    exit 1
+  fi
+
+  ${CONTAINER_TYPE} build -t "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" -f "${UDB_ROOT}"/.devcontainer/Dockerfile "${UDB_ROOT}"
+}

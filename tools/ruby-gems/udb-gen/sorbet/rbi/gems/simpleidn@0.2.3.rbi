@@ -5,65 +5,26 @@
 # Please instead update this file by running `bin/tapioca gem simpleidn`.
 
 
-# IdnaMappingTable.txt
-# Date: 2023-08-10, 22:32:27 GMT
-# © 2023 Unicode®, Inc.
-# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see https://www.unicode.org/terms_of_use.html
-#
-# Unicode IDNA Compatible Preprocessing for UTS #46
-# Version: 15.1.0
-#
-# For documentation and usage, see https://www.unicode.org/reports/tr46
-#
-# Total code points: 1114112
-#
 # source://simpleidn//lib/simpleidn/version.rb#1
 module SimpleIDN
   private
 
-  # Converts a UTF-8 unicode string to a punycode ACE string.
-  # == Example
-  #   SimpleIDN.to_ascii("møllerriis.com")
-  #    => "xn--mllerriis-l8a.com"
-  #
   # source://simpleidn//lib/simpleidn.rb#232
   def to_ascii(domain, transitional = T.unsafe(nil)); end
 
-  # Converts a punycode ACE string to a UTF-8 unicode string.
-  # == Example
-  #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
-  #    => "møllerriis.com"
-  #
   # source://simpleidn//lib/simpleidn.rb#256
   def to_unicode(domain, transitional = T.unsafe(nil)); end
 
-  # Applies UTS46 mapping to a Unicode string
-  # Returns a UTF-8 string in Normalization Form C (NFC)
-  #
   # source://simpleidn//lib/simpleidn.rb#221
   def uts46map(str, transitional = T.unsafe(nil)); end
 
   class << self
-    # Converts a UTF-8 unicode string to a punycode ACE string.
-    # == Example
-    #   SimpleIDN.to_ascii("møllerriis.com")
-    #    => "xn--mllerriis-l8a.com"
-    #
     # source://simpleidn//lib/simpleidn.rb#232
     def to_ascii(domain, transitional = T.unsafe(nil)); end
 
-    # Converts a punycode ACE string to a UTF-8 unicode string.
-    # == Example
-    #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
-    #    => "møllerriis.com"
-    #
     # source://simpleidn//lib/simpleidn.rb#256
     def to_unicode(domain, transitional = T.unsafe(nil)); end
 
-    # Applies UTS46 mapping to a Unicode string
-    # Returns a UTF-8 string in Normalization Form C (NFC)
-    #
     # source://simpleidn//lib/simpleidn.rb#221
     def uts46map(str, transitional = T.unsafe(nil)); end
   end
@@ -75,9 +36,6 @@ SimpleIDN::ACE_PREFIX = T.let(T.unsafe(nil), String)
 # source://simpleidn//lib/simpleidn.rb#199
 SimpleIDN::ASCII_MAX = T.let(T.unsafe(nil), Integer)
 
-# The ConversionError is raised when an error occurs during a
-# Punycode <-> Unicode conversion.
-#
 # source://simpleidn//lib/simpleidn.rb#7
 class SimpleIDN::ConversionError < ::RangeError; end
 
@@ -94,62 +52,34 @@ SimpleIDN::LABEL_SEPERATOR_RE = T.let(T.unsafe(nil), Regexp)
 module SimpleIDN::Punycode
   private
 
-  # Bias adaptation function
-  #
   # source://simpleidn//lib/simpleidn.rb#43
   def adapt(delta, numpoints, firsttime); end
 
-  # Main decode
-  #
   # source://simpleidn//lib/simpleidn.rb#56
   def decode(input); end
 
-  # decode_digit(cp) returns the numeric value of a basic code
-  # point (for use in representing integers) in the range 0 to
-  # base-1, or base if cp is does not represent a value.
-  #
   # source://simpleidn//lib/simpleidn.rb#29
   def decode_digit(cp); end
 
-  # Main encode function
-  #
   # source://simpleidn//lib/simpleidn.rb#128
   def encode(input); end
 
-  # encode_digit(d) returns the basic code point whose value
-  # (when used for representing integers) is d, which needs to be in
-  # the range 0 to base-1.
-  #
   # source://simpleidn//lib/simpleidn.rb#36
   def encode_digit(d); end
 
   class << self
-    # Bias adaptation function
-    #
     # source://simpleidn//lib/simpleidn.rb#43
     def adapt(delta, numpoints, firsttime); end
 
-    # Main decode
-    #
     # source://simpleidn//lib/simpleidn.rb#56
     def decode(input); end
 
-    # decode_digit(cp) returns the numeric value of a basic code
-    # point (for use in representing integers) in the range 0 to
-    # base-1, or base if cp is does not represent a value.
-    #
     # source://simpleidn//lib/simpleidn.rb#29
     def decode_digit(cp); end
 
-    # Main encode function
-    #
     # source://simpleidn//lib/simpleidn.rb#128
     def encode(input); end
 
-    # encode_digit(d) returns the basic code point whose value
-    # (when used for representing integers) is d, which needs to be in
-    # the range 0 to base-1.
-    #
     # source://simpleidn//lib/simpleidn.rb#36
     def encode_digit(d); end
   end
@@ -188,8 +118,6 @@ SimpleIDN::Punycode::TMAX = T.let(T.unsafe(nil), Integer)
 # source://simpleidn//lib/simpleidn.rb#16
 SimpleIDN::Punycode::TMIN = T.let(T.unsafe(nil), Integer)
 
-# See UTS46 Table 1
-#
 # source://simpleidn//lib/simpleidn.rb#210
 SimpleIDN::TRANSITIONAL = T.let(T.unsafe(nil), Hash)
 

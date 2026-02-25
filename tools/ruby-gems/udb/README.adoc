@@ -10,6 +10,23 @@ the database. That configuration may be "_", which is the special 'unconfig' tha
 RISC-V, including both RV32 and RV64. Example configs can be found in the `riscv-config-db` repository,
 under the `cfgs` directory.
 
+== Requirements
+
+To install the udb gem, your system must have:
+
+* Ruby version >= 3.2
+* make
+* gcc >= 12 (or clang equivalent)
+
+== Installation
+
+Run:
+
+[source,bash]
+```
+gem install udb
+```
+
 == Library interface
 
 The main entry point to the udb database is through the {Udb::ConfiguredArchitecture} object.

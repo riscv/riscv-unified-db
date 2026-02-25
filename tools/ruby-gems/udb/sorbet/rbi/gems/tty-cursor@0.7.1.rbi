@@ -30,7 +30,7 @@ module TTY::Cursor
   # source://tty-cursor//lib/tty/cursor.rb#169
   def clear_lines(n, direction = T.unsafe(nil)); end
 
-  # source://tty-cursor//lib/tty/cursor.rb#169
+  # source://tty-cursor//lib/tty/cursor.rb#175
   def clear_rows(n, direction = T.unsafe(nil)); end
 
   # source://tty-cursor//lib/tty/cursor.rb#191
@@ -48,16 +48,16 @@ module TTY::Cursor
   # source://tty-cursor//lib/tty/cursor.rb#51
   def current; end
 
-  # source://tty-cursor//lib/tty/cursor.rb#94
+  # source://tty-cursor//lib/tty/cursor.rb#97
   def cursor_backward(n = T.unsafe(nil)); end
 
-  # source://tty-cursor//lib/tty/cursor.rb#86
+  # source://tty-cursor//lib/tty/cursor.rb#89
   def cursor_down(n = T.unsafe(nil)); end
 
-  # source://tty-cursor//lib/tty/cursor.rb#102
+  # source://tty-cursor//lib/tty/cursor.rb#105
   def cursor_forward(n = T.unsafe(nil)); end
 
-  # source://tty-cursor//lib/tty/cursor.rb#78
+  # source://tty-cursor//lib/tty/cursor.rb#81
   def cursor_up(n = T.unsafe(nil)); end
 
   # source://tty-cursor//lib/tty/cursor.rb#86

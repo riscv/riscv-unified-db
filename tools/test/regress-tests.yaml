@@ -124,6 +124,7 @@ tests:
           - yaml_loader
           - cfg_arch
           - cfg
+          - z3
           - mmr
           - mmr_schema
     test:

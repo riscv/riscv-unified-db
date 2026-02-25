@@ -86,46 +86,122 @@ class JSONSchemer::Configuration < ::Struct
   # source://json_schemer//lib/json_schemer/configuration.rb#9
   def initialize(base_uri: T.unsafe(nil), meta_schema: T.unsafe(nil), vocabulary: T.unsafe(nil), format: T.unsafe(nil), formats: T.unsafe(nil), content_encodings: T.unsafe(nil), content_media_types: T.unsafe(nil), keywords: T.unsafe(nil), before_property_validation: T.unsafe(nil), after_property_validation: T.unsafe(nil), insert_property_defaults: T.unsafe(nil), property_default_resolver: T.unsafe(nil), ref_resolver: T.unsafe(nil), regexp_resolver: T.unsafe(nil), output_format: T.unsafe(nil), resolve_enumerators: T.unsafe(nil), access_mode: T.unsafe(nil)); end
 
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def access_mode; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def access_mode=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def after_property_validation; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def after_property_validation=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def base_uri; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def base_uri=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def before_property_validation; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def before_property_validation=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def content_encodings; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def content_encodings=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def content_media_types; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def content_media_types=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def format; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def format=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def formats; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def formats=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def insert_property_defaults; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def insert_property_defaults=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def keywords; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def keywords=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def meta_schema; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def meta_schema=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def output_format; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def output_format=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def property_default_resolver; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def property_default_resolver=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def ref_resolver; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def ref_resolver=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def regexp_resolver; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def regexp_resolver=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def resolve_enumerators; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def resolve_enumerators=(_); end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def vocabulary; end
+
+  # source://json_schemer//lib/json_schemer/configuration.rb#3
   def vocabulary=(_); end
 
   class << self
+    # source://json_schemer//lib/json_schemer/configuration.rb#3
     def [](*_arg0); end
+
+    # source://json_schemer//lib/json_schemer/configuration.rb#3
     def inspect; end
+
+    # source://json_schemer//lib/json_schemer/configuration.rb#3
     def keyword_init?; end
+
+    # source://json_schemer//lib/json_schemer/configuration.rb#3
     def members; end
+
+    # source://json_schemer//lib/json_schemer/configuration.rb#3
     def new(*_arg0); end
   end
 end
@@ -1805,7 +1881,10 @@ end
 
 # source://json_schemer//lib/json_schemer/result.rb#12
 class JSONSchemer::Result < ::Struct
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def annotation; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def annotation=(_); end
 
   # source://json_schemer//lib/json_schemer/result.rb#115
@@ -1817,7 +1896,10 @@ class JSONSchemer::Result < ::Struct
   # source://json_schemer//lib/json_schemer/result.rb#136
   def detailed; end
 
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def details; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def details=(_); end
 
   # source://json_schemer//lib/json_schemer/result.rb#30
@@ -1832,27 +1914,52 @@ class JSONSchemer::Result < ::Struct
   # source://json_schemer//lib/json_schemer/result.rb#50
   def i18n?; end
 
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def ignore_nested; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def ignore_nested=(_); end
 
   # source://json_schemer//lib/json_schemer/result.rb#181
   def insert_property_defaults(context); end
 
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def instance; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def instance=(_); end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def instance_location; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def instance_location=(_); end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def keyword_location; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def keyword_location=(_); end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def nested; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def nested=(_); end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def nested_key; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def nested_key=(_); end
 
   # source://json_schemer//lib/json_schemer/result.rb#13
   def output(output_format); end
 
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def source; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def source=(_); end
 
   # source://json_schemer//lib/json_schemer/result.rb#94
@@ -1861,9 +1968,16 @@ class JSONSchemer::Result < ::Struct
   # source://json_schemer//lib/json_schemer/result.rb#77
   def to_output_unit; end
 
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def type; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def type=(_); end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def valid; end
+
+  # source://json_schemer//lib/json_schemer/result.rb#12
   def valid=(_); end
 
   # source://json_schemer//lib/json_schemer/result.rb#152
@@ -1887,10 +2001,19 @@ class JSONSchemer::Result < ::Struct
   def resolved_keyword_location; end
 
   class << self
+    # source://json_schemer//lib/json_schemer/result.rb#12
     def [](*_arg0); end
+
+    # source://json_schemer//lib/json_schemer/result.rb#12
     def inspect; end
+
+    # source://json_schemer//lib/json_schemer/result.rb#12
     def keyword_init?; end
+
+    # source://json_schemer//lib/json_schemer/result.rb#12
     def members; end
+
+    # source://json_schemer//lib/json_schemer/result.rb#12
     def new(*_arg0); end
   end
 end
@@ -1906,7 +2029,7 @@ class JSONSchemer::Schema
   # source://json_schemer//lib/json_schemer/schema.rb#272
   def absolute_keyword_location; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://json_schemer//lib/json_schemer/schema.rb#48
   def after_property_validation(*args, **_arg1, &block); end
 
   # source://json_schemer//lib/json_schemer/schema.rb#46
@@ -1915,7 +2038,7 @@ class JSONSchemer::Schema
   # source://json_schemer//lib/json_schemer/schema.rb#46
   def base_uri=(_arg0); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://json_schemer//lib/json_schemer/schema.rb#48
   def before_property_validation(*args, **_arg1, &block); end
 
   # source://json_schemer//lib/json_schemer/schema.rb#223
@@ -1924,13 +2047,13 @@ class JSONSchemer::Schema
   # source://json_schemer//lib/json_schemer/schema.rb#47
   def configuration; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://json_schemer//lib/json_schemer/schema.rb#48
   def content_encodings(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://json_schemer//lib/json_schemer/schema.rb#48
   def content_media_types(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://json_schemer//lib/json_schemer/schema.rb#49
   def custom_keywords(*args, **_arg1, &block); end
 
   # source://json_schemer//lib/json_schemer/schema.rb#331
@@ -1954,16 +2077,16 @@ class JSONSchemer::Schema
   # source://json_schemer//lib/json_schemer/schema.rb#303
   def fetch_format(format, *args, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://json_schemer//lib/json_schemer/schema.rb#48
   def format(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://json_schemer//lib/json_schemer/schema.rb#48
   def formats(*args, **_arg1, &block); end
 
   # source://json_schemer//lib/json_schemer/schema.rb#327
   def id_keyword; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://json_schemer//lib/json_schemer/schema.rb#48
   def insert_property_defaults(*args, **_arg1, &block); end
 
   # source://json_schemer//lib/json_schemer/schema.rb#362
@@ -2035,7 +2158,7 @@ class JSONSchemer::Schema
   # source://json_schemer//lib/json_schemer/schema.rb#47
   def value; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://json_schemer//lib/json_schemer/schema.rb#48
   def vocabulary(*args, **_arg1, &block); end
 
   private
@@ -2055,26 +2178,53 @@ end
 
 # source://json_schemer//lib/json_schemer/schema.rb#4
 class JSONSchemer::Schema::Context < ::Struct
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def access_mode; end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def access_mode=(_); end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def adjacent_results; end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def adjacent_results=(_); end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def dynamic_scope; end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def dynamic_scope=(_); end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def instance; end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def instance=(_); end
 
   # source://json_schemer//lib/json_schemer/schema.rb#5
   def original_instance(instance_location); end
 
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def short_circuit; end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#4
   def short_circuit=(_); end
 
   class << self
+    # source://json_schemer//lib/json_schemer/schema.rb#4
     def [](*_arg0); end
+
+    # source://json_schemer//lib/json_schemer/schema.rb#4
     def inspect; end
+
+    # source://json_schemer//lib/json_schemer/schema.rb#4
     def keyword_init?; end
+
+    # source://json_schemer//lib/json_schemer/schema.rb#4
     def members; end
+
+    # source://json_schemer//lib/json_schemer/schema.rb#4
     def new(*_arg0); end
   end
 end

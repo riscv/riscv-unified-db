@@ -10,8 +10,6 @@ module Hana; end
 
 # source://hana//lib/hana.rb#56
 class Hana::Patch
-  # @return [Patch] a new instance of Patch
-  #
   # source://hana//lib/hana.rb#88
   def initialize(is); end
 
@@ -20,29 +18,21 @@ class Hana::Patch
 
   private
 
-  # @raise [MissingTargetException]
-  #
   # source://hana//lib/hana.rb#107
   def add(ins, doc); end
 
   # source://hana//lib/hana.rb#223
   def add_op(dest, key, obj); end
 
-  # @raise [ObjectOperationOnArrayException]
-  #
   # source://hana//lib/hana.rb#214
   def check_index(obj, key); end
 
-  # @raise [MissingTargetException]
-  #
   # source://hana//lib/hana.rb#144
   def copy(ins, doc); end
 
   # source://hana//lib/hana.rb#202
   def get_path(ins); end
 
-  # @raise [MissingTargetException]
-  #
   # source://hana//lib/hana.rb#128
   def move(ins, doc); end
 
@@ -67,32 +57,18 @@ Hana::Patch::FROM = T.let(T.unsafe(nil), String)
 
 # source://hana//lib/hana.rb#60
 class Hana::Patch::FailedTestException < ::Hana::Patch::Exception
-  # @return [FailedTestException] a new instance of FailedTestException
-  #
   # source://hana//lib/hana.rb#63
   def initialize(path, value); end
 
-  # Returns the value of attribute path.
-  #
   # source://hana//lib/hana.rb#61
   def path; end
 
-  # Sets the attribute path
-  #
-  # @param value the value to set the attribute path to.
-  #
   # source://hana//lib/hana.rb#61
   def path=(_arg0); end
 
-  # Returns the value of attribute value.
-  #
   # source://hana//lib/hana.rb#61
   def value; end
 
-  # Sets the attribute value
-  #
-  # @param value the value to set the attribute value to.
-  #
   # source://hana//lib/hana.rb#61
   def value=(_arg0); end
 end
@@ -125,8 +101,6 @@ Hana::Patch::VALUE = T.let(T.unsafe(nil), String)
 class Hana::Pointer
   include ::Enumerable
 
-  # @return [Pointer] a new instance of Pointer
-  #
   # source://hana//lib/hana.rb#15
   def initialize(path); end
 

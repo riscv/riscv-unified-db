@@ -12,7 +12,7 @@ module TTY; end
 module TTY::Color
   extend ::TTY::Color
 
-  # source://tty-color//lib/tty/color.rb#27
+  # source://tty-color//lib/tty/color.rb#31
   def color?; end
 
   # source://tty-color//lib/tty/color.rb#67
@@ -33,10 +33,10 @@ module TTY::Color
   # source://tty-color//lib/tty/color.rb#27
   def support?; end
 
-  # source://tty-color//lib/tty/color.rb#27
+  # source://tty-color//lib/tty/color.rb#30
   def supports?; end
 
-  # source://tty-color//lib/tty/color.rb#27
+  # source://tty-color//lib/tty/color.rb#32
   def supports_color?; end
 
   # source://tty-color//lib/tty/color.rb#58

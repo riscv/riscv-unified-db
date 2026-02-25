@@ -15,7 +15,7 @@ class TTY::Logger
   # source://tty-logger//lib/tty/logger.rb#91
   def initialize(output: T.unsafe(nil), fields: T.unsafe(nil)); end
 
-  # source://tty-logger//lib/tty/logger.rb#233
+  # source://tty-logger//lib/tty/logger.rb#242
   def <<(*msg); end
 
   # source://tty-logger//lib/tty/logger.rb#147
@@ -36,19 +36,19 @@ class TTY::Logger
   # source://tty-logger//lib/tty/logger.rb#333
   def copy_error(error, message, backtrace = T.unsafe(nil)); end
 
-  # source://tty-logger//lib/tty/logger.rb#44
+  # source://tty-logger//lib/tty/logger.rb#43
   def debug(*msg, &block); end
 
-  # source://tty-logger//lib/tty/logger.rb#44
+  # source://tty-logger//lib/tty/logger.rb#43
   def error(*msg, &block); end
 
-  # source://tty-logger//lib/tty/logger.rb#44
+  # source://tty-logger//lib/tty/logger.rb#43
   def fatal(*msg, &block); end
 
   # source://tty-logger//lib/tty/logger.rb#312
   def filter(*objects); end
 
-  # source://tty-logger//lib/tty/logger.rb#44
+  # source://tty-logger//lib/tty/logger.rb#43
   def info(*msg, &block); end
 
   # source://tty-logger//lib/tty/logger.rb#253
@@ -66,16 +66,16 @@ class TTY::Logger
   # source://tty-logger//lib/tty/logger.rb#162
   def remove_handler(handler); end
 
-  # source://tty-logger//lib/tty/logger.rb#44
+  # source://tty-logger//lib/tty/logger.rb#43
   def success(*msg, &block); end
 
   # source://tty-logger//lib/tty/logger.rb#344
   def swap_filtered(obj); end
 
-  # source://tty-logger//lib/tty/logger.rb#44
+  # source://tty-logger//lib/tty/logger.rb#43
   def wait(*msg, &block); end
 
-  # source://tty-logger//lib/tty/logger.rb#44
+  # source://tty-logger//lib/tty/logger.rb#43
   def warn(*msg, &block); end
 
   # source://tty-logger//lib/tty/logger.rb#233
