@@ -20,6 +20,13 @@ definedBy:
   extension:
     name: Smrnmi
 fields:
+  Reserved_High:
+    location_rv32: 31-13
+    location_rv64: 63-13
+    type: RO
+    reset_value: 0
+    description: Reserved (WPRI).
+
   MNPP:
     location: 12-11
     description: |
@@ -61,6 +68,29 @@ fields:
       } else {
         return true;
       }
+  Reserved_10:
+    location: 10
+    type: RO
+    reset_value: 0
+    description: Reserved (WPRI).
+
+  MNPELP:
+    location: 9
+    description: |
+      M-mode NMI Previous Expected Landing Pad state.
+      (Added by Zicfilp extension)
+    type: RW-H
+    reset_value: UNDEFINED_LEGAL
+    definedBy:
+      extension:
+        name: Zicfilp
+
+  Reserved_8:
+    location: 8
+    type: RO
+    reset_value: 0
+    description: Reserved (WPRI).
+
   MNPV:
     location: 7
     description: |
@@ -74,6 +104,13 @@ fields:
     definedBy:
       extension:
         name: H
+
+  Reserved_4_6:
+    location: 6-4
+    type: RO
+    reset_value: 0
+    description: Reserved (WPRI).
+
   NMIE:
     location: 3
     description: |
@@ -95,3 +132,9 @@ fields:
 
     type: RW-H
     reset_value: 0
+
+  Reserved_0_2:
+    location: 2-0
+    type: RO
+    reset_value: 0
+    description: Reserved (WPRI).
