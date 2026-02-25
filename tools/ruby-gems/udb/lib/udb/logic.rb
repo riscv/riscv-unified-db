@@ -12,6 +12,8 @@ require "idlc/symbol_table"
 require "udb/eqn"
 require "udb/version_spec"
 require "udb/z3"
+require "udb/espresso_path"
+require "udb/must_path"
 
 # Implements the LogicNode class, which is used to test for satisfiability/equality/etc of logic
 #
@@ -3441,7 +3443,7 @@ module Udb
 
         Tempfile.create do |rf|
           # run must, re-use the tempfile for the result
-          `must -o #{rf.path} #{f.path}`
+          `#{Udb::MustPath.binary} -o #{rf.path} #{f.path}`
           unless $?.success?
             raise "could not find minimal subsets"
           end
@@ -3560,9 +3562,9 @@ module Udb
 
         cmd =
           if exact
-            "espresso -Dsignature #{f.path}"
+            "#{Udb::EspressoPath.binary} -Dsignature #{f.path}"
           else
-            "espresso -efast #{f.path}"
+            "#{Udb::EspressoPath.binary} -efast #{f.path}"
           end
         result = `#{cmd} 2>&1`
         unless $?.success?
