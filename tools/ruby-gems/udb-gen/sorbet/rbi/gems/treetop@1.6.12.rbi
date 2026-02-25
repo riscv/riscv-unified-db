@@ -7,8 +7,6 @@
 
 # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#1
 class IntervalSkipList
-  # @return [IntervalSkipList] a new instance of IntervalSkipList
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#4
   def initialize; end
 
@@ -18,8 +16,6 @@ class IntervalSkipList
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#64
   def delete(marker); end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#14
   def empty?; end
 
@@ -35,20 +31,14 @@ class IntervalSkipList
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#24
   def overlapping(range); end
 
-  # Returns the value of attribute probability.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#2
   def probability; end
 
   protected
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#157
   def can_ascend_from?(node, level); end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#161
   def can_descend_from?(level); end
 
@@ -61,8 +51,6 @@ class IntervalSkipList
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#134
   def find(key, path); end
 
-  # Returns the value of attribute head.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#100
   def head; end
 
@@ -75,29 +63,21 @@ class IntervalSkipList
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#177
   def mark_forward_path_at_level(node, level, marker); end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#169
   def next_node_at_level_inside_range?(node, level, range); end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#173
   def next_node_at_level_outside_range?(node, level, range); end
 
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#149
   def next_node_height; end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#165
   def node_inside_range?(node, range); end
 
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#191
   def nodes; end
 
-  # Returns the value of attribute ranges.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/interval_skip_list.rb#100
   def ranges; end
 
@@ -107,23 +87,15 @@ end
 
 # source://treetop//lib/treetop/runtime/interval_skip_list/head_node.rb#2
 class IntervalSkipList::HeadNode
-  # @return [HeadNode] a new instance of HeadNode
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/head_node.rb#5
   def initialize(height); end
 
-  # Returns the value of attribute forward.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/head_node.rb#3
   def forward; end
 
-  # Returns the value of attribute forward_markers.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/head_node.rb#3
   def forward_markers; end
 
-  # Returns the value of attribute height.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/head_node.rb#3
   def height; end
 
@@ -133,8 +105,6 @@ end
 
 # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#2
 class IntervalSkipList::Node < ::IntervalSkipList::HeadNode
-  # @return [Node] a new instance of Node
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#6
   def initialize(key, height, path); end
 
@@ -144,25 +114,15 @@ class IntervalSkipList::Node < ::IntervalSkipList::HeadNode
   # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#19
   def delete(path); end
 
-  # Returns the value of attribute endpoint_of.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#4
   def endpoint_of; end
 
-  # Returns the value of attribute key.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#3
   def key; end
 
-  # Sets the attribute key
-  #
-  # @param value the value to set the attribute key to.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#3
   def key=(_arg0); end
 
-  # Returns the value of attribute markers.
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#4
   def markers; end
 
@@ -171,8 +131,6 @@ class IntervalSkipList::Node < ::IntervalSkipList::HeadNode
 
   protected
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#74
   def can_be_promoted_higher?(marker, level); end
 
@@ -188,8 +146,6 @@ class IntervalSkipList::Node < ::IntervalSkipList::HeadNode
   # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#120
   def demote_outbound_markers(path); end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/interval_skip_list/node.rb#139
   def forward_node_with_marker_at_or_above_level?(marker, level); end
 
@@ -216,8 +172,6 @@ class String
   # source://treetop//lib/treetop/ruby_extensions/string.rb#12
   def line_of(index); end
 
-  # The following methods are lifted from Facets 2.0.2
-  #
   # source://treetop//lib/treetop/ruby_extensions/string.rb#17
   def tabto(n); end
 
@@ -228,13 +182,9 @@ end
 # source://treetop//lib/treetop/runtime/compiled_parser.rb#1
 module Treetop
   class << self
-    # compile a treetop source file and load it
-    #
     # source://treetop//lib/treetop/compiler/grammar_compiler.rb#35
     def load(path); end
 
-    # compile a treetop source string and load it
-    #
     # source://treetop//lib/treetop/compiler/grammar_compiler.rb#48
     def load_from_string(s); end
   end
@@ -329,13 +279,9 @@ class Treetop::Compiler::GrammarCompiler
   # source://treetop//lib/treetop/compiler/grammar_compiler.rb#5
   def compile(source_path, target_path = T.unsafe(nil)); end
 
-  # compile a treetop file into ruby
-  #
   # source://treetop//lib/treetop/compiler/grammar_compiler.rb#18
   def ruby_source(source_path); end
 
-  # compile a string containing treetop source into ruby
-  #
   # source://treetop//lib/treetop/compiler/grammar_compiler.rb#23
   def ruby_source_from_string(s); end
 end
@@ -356,16 +302,12 @@ module Treetop::Compiler::InlineModuleMixin
   # source://treetop//lib/treetop/compiler/node_classes/inline_module.rb#6
   def compile(index, builder, rule); end
 
-  # Returns the value of attribute module_name.
-  #
   # source://treetop//lib/treetop/compiler/node_classes/inline_module.rb#4
   def module_name; end
 end
 
 # source://treetop//lib/treetop/compiler/lexical_address_space.rb#3
 class Treetop::Compiler::LexicalAddressSpace
-  # @return [LexicalAddressSpace] a new instance of LexicalAddressSpace
-  #
   # source://treetop//lib/treetop/compiler/lexical_address_space.rb#4
   def initialize; end
 
@@ -1300,8 +1242,6 @@ end
 
 # source://treetop//lib/treetop/compiler/node_classes/repetition.rb#72
 class Treetop::Compiler::OccurrenceRange < ::Treetop::Compiler::Repetition
-  # remove the last terminal_failure if we merely failed to reach the maximum
-  #
   # source://treetop//lib/treetop/compiler/node_classes/repetition.rb#95
   def clean_unsaturated; end
 
@@ -1347,8 +1287,6 @@ class Treetop::Compiler::ParsingExpression < ::Treetop::Runtime::SyntaxNode
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#45
   def accumulator_var; end
 
-  # Returns the value of attribute address.
-  #
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#4
   def address; end
 
@@ -1364,8 +1302,6 @@ class Treetop::Compiler::ParsingExpression < ::Treetop::Runtime::SyntaxNode
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#138
   def begin_comment(expression); end
 
-  # Returns the value of attribute builder.
-  #
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#4
   def builder; end
 
@@ -1375,8 +1311,6 @@ class Treetop::Compiler::ParsingExpression < ::Treetop::Runtime::SyntaxNode
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#16
   def declared_module_name; end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#24
   def decorated?; end
 
@@ -1416,8 +1350,6 @@ class Treetop::Compiler::ParsingExpression < ::Treetop::Runtime::SyntaxNode
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#28
   def optional_arg(arg); end
 
-  # Returns the value of attribute parent_expression.
-  #
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#4
   def parent_expression; end
 
@@ -1430,16 +1362,12 @@ class Treetop::Compiler::ParsingExpression < ::Treetop::Runtime::SyntaxNode
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#49
   def start_index_var; end
 
-  # Returns the value of attribute subexpression_address.
-  #
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#4
   def subexpression_address; end
 
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#53
   def subexpression_result_var; end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#57
   def subexpression_success?; end
 
@@ -1452,8 +1380,6 @@ class Treetop::Compiler::ParsingExpression < ::Treetop::Runtime::SyntaxNode
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#106
   def var_initialization; end
 
-  # Returns the value of attribute var_symbols.
-  #
   # source://treetop//lib/treetop/compiler/node_classes/parsing_expression.rb#4
   def var_symbols; end
 end
@@ -1517,8 +1443,6 @@ end
 
 # source://treetop//lib/treetop/compiler/ruby_builder.rb#5
 class Treetop::Compiler::RubyBuilder
-  # @return [RubyBuilder] a new instance of RubyBuilder
-  #
   # source://treetop//lib/treetop/compiler/ruby_builder.rb#9
   def initialize; end
 
@@ -1528,8 +1452,6 @@ class Treetop::Compiler::RubyBuilder
   # source://treetop//lib/treetop/compiler/ruby_builder.rb#60
   def accumulate(left, right); end
 
-  # Returns the value of attribute address_space.
-  #
   # source://treetop//lib/treetop/compiler/ruby_builder.rb#7
   def address_space; end
 
@@ -1560,8 +1482,6 @@ class Treetop::Compiler::RubyBuilder
   # source://treetop//lib/treetop/compiler/ruby_builder.rb#24
   def indented(depth = T.unsafe(nil)); end
 
-  # Returns the value of attribute level.
-  #
   # source://treetop//lib/treetop/compiler/ruby_builder.rb#7
   def level; end
 
@@ -1586,8 +1506,6 @@ class Treetop::Compiler::RubyBuilder
   # source://treetop//lib/treetop/compiler/ruby_builder.rb#104
   def reset_addresses; end
 
-  # Returns the value of attribute ruby.
-  #
   # source://treetop//lib/treetop/compiler/ruby_builder.rb#7
   def ruby; end
 
@@ -1622,16 +1540,12 @@ end
 class Treetop::Compiler::SequenceElementAccessorModule
   include ::Treetop::Compiler::InlineModuleMixin
 
-  # @return [SequenceElementAccessorModule] a new instance of SequenceElementAccessorModule
-  #
   # source://treetop//lib/treetop/compiler/node_classes/sequence.rb#53
   def initialize(sequence_elements); end
 
   # source://treetop//lib/treetop/compiler/node_classes/sequence.rb#57
   def compile(idx, builder, rule); end
 
-  # Returns the value of attribute sequence_elements.
-  #
   # source://treetop//lib/treetop/compiler/node_classes/sequence.rb#51
   def sequence_elements; end
 end
@@ -1685,26 +1599,16 @@ module Treetop::Runtime; end
 class Treetop::Runtime::CompiledParser
   include ::Treetop::Runtime
 
-  # @return [CompiledParser] a new instance of CompiledParser
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#11
   def initialize; end
 
-  # Returns the value of attribute consume_all_input.
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#8
   def consume_all_input; end
 
-  # Sets the attribute consume_all_input
-  #
-  # @param value the value to set the attribute consume_all_input to.
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#8
   def consume_all_input=(_arg0); end
 
-  # Returns the value of attribute consume_all_input.
-  #
-  # source://treetop//lib/treetop/runtime/compiled_parser.rb#8
+  # source://treetop//lib/treetop/runtime/compiled_parser.rb#9
   def consume_all_input?; end
 
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#38
@@ -1719,28 +1623,18 @@ class Treetop::Runtime::CompiledParser
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#43
   def failure_reason; end
 
-  # Returns the value of attribute index.
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#6
   def index; end
 
-  # Returns the value of attribute input.
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#6
   def input; end
 
-  # Returns the value of attribute max_terminal_failure_index.
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#6
   def max_terminal_failure_index; end
 
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#15
   def parse(input, options = T.unsafe(nil)); end
 
-  # Sets the attribute root
-  #
-  # @param value the value to set the attribute root to.
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#7
   def root=(_arg0); end
 
@@ -1752,28 +1646,18 @@ class Treetop::Runtime::CompiledParser
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#78
   def forget_failures_to_here; end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#106
   def has_terminal?(terminal, mode, index); end
 
-  # Sets the attribute index
-  #
-  # @param value the value to set the attribute index to.
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#66
   def index=(_arg0); end
 
-  # Returns the value of attribute input_length.
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#65
   def input_length; end
 
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#98
   def instantiate_node(node_type, *args); end
 
-  # Returns the value of attribute node_cache.
-  #
   # source://treetop//lib/treetop/runtime/compiled_parser.rb#65
   def node_cache; end
 
@@ -1795,8 +1679,6 @@ Treetop::Runtime::CompiledParser::OtherThan = T.let(T.unsafe(nil), String)
 
 # source://treetop//lib/treetop/runtime/syntax_node.rb#3
 class Treetop::Runtime::SyntaxNode
-  # @return [SyntaxNode] a new instance of SyntaxNode
-  #
   # source://treetop//lib/treetop/runtime/syntax_node.rb#7
   def initialize(input, interval, elements = T.unsafe(nil)); end
 
@@ -1809,16 +1691,12 @@ class Treetop::Runtime::SyntaxNode
   # source://treetop//lib/treetop/runtime/syntax_node.rb#15
   def elements; end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/syntax_node.rb#43
   def empty?; end
 
   # source://treetop//lib/treetop/runtime/syntax_node.rb#51
   def extension_modules; end
 
-  # Returns the value of attribute input.
-  #
   # source://treetop//lib/treetop/runtime/syntax_node.rb#4
   def input; end
 
@@ -1831,42 +1709,18 @@ class Treetop::Runtime::SyntaxNode
   # source://treetop//lib/treetop/runtime/syntax_node.rb#63
   def inspect_self(indent = T.unsafe(nil)); end
 
-  # Returns the value of attribute interval.
-  #
   # source://treetop//lib/treetop/runtime/syntax_node.rb#4
   def interval; end
 
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/syntax_node.rb#35
   def nonterminal?; end
 
-  # Returns the value of attribute parent.
-  #
   # source://treetop//lib/treetop/runtime/syntax_node.rb#5
   def parent; end
 
-  # Sets the attribute parent
-  #
-  # @param value the value to set the attribute parent to.
-  #
   # source://treetop//lib/treetop/runtime/syntax_node.rb#5
   def parent=(_arg0); end
 
-  # source://idlc/0.1.0/lib/idlc/syntax_node.rb#20
-  sig { params(filename: T.nilable(::String), starting_line: ::Integer).void }
-  def set_input_file(filename, starting_line = T.unsafe(nil)); end
-
-  # source://idlc/0.1.0/lib/idlc/syntax_node.rb#39
-  sig { params(filename: T.nilable(::String), starting_line: ::Integer).void }
-  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil)); end
-
-  # source://idlc/0.1.0/lib/idlc/syntax_node.rb#30
-  sig { returns(T::Boolean) }
-  def space?; end
-
-  # @return [Boolean]
-  #
   # source://treetop//lib/treetop/runtime/syntax_node.rb#31
   def terminal?; end
 
@@ -1882,26 +1736,18 @@ end
 
 # source://treetop//lib/treetop/runtime/terminal_parse_failure.rb#3
 class Treetop::Runtime::TerminalParseFailure
-  # @return [TerminalParseFailure] a new instance of TerminalParseFailure
-  #
   # source://treetop//lib/treetop/runtime/terminal_parse_failure.rb#6
   def initialize(index, expected_string, unexpected = T.unsafe(nil)); end
 
-  # Returns the value of attribute expected_string.
-  #
   # source://treetop//lib/treetop/runtime/terminal_parse_failure.rb#4
   def expected_string; end
 
-  # Returns the value of attribute index.
-  #
   # source://treetop//lib/treetop/runtime/terminal_parse_failure.rb#4
   def index; end
 
   # source://treetop//lib/treetop/runtime/terminal_parse_failure.rb#12
   def to_s; end
 
-  # Returns the value of attribute unexpected.
-  #
   # source://treetop//lib/treetop/runtime/terminal_parse_failure.rb#4
   def unexpected; end
 end

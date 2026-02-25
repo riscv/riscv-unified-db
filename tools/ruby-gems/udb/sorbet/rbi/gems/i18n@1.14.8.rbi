@@ -13,22 +13,46 @@ class GetText::PoParser < ::Racc::Parser
   # source://i18n//lib/i18n/gettext/po_parser.rb#19
   def _(x); end
 
+  # source://i18n//lib/i18n/gettext/po_parser.rb#282
   def _reduce_10(val, _values, result); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#295
   def _reduce_12(val, _values, result); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#302
   def _reduce_13(val, _values, result); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#309
   def _reduce_14(val, _values, result); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#316
   def _reduce_15(val, _values, result); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#235
   def _reduce_5(val, _values, result); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#246
   def _reduce_8(val, _values, result); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#264
   def _reduce_9(val, _values, result); end
 
   # source://i18n//lib/i18n/gettext/po_parser.rb#323
   def _reduce_none(val, _values, result); end
 
+  # source://i18n//lib/i18n/gettext/po_parser.rb#23
   def next_token; end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#23
   def on_comment(comment); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#23
   def on_message(msgid, msgstr); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#23
   def parse(str, data, ignore_fuzzy = T.unsafe(nil)); end
+
+  # source://i18n//lib/i18n/gettext/po_parser.rb#23
   def unescape(orig); end
 end
 
@@ -147,7 +171,7 @@ module I18n::Backend::Base
   # source://i18n//lib/i18n/backend/base.rb#254
   def load_rb(filename); end
 
-  # source://i18n//lib/i18n/backend/base.rb#261
+  # source://i18n//lib/i18n/backend/base.rb#272
   def load_yaml(filename); end
 
   # source://i18n//lib/i18n/backend/base.rb#261
@@ -165,7 +189,7 @@ module I18n::Backend::Base
   # source://i18n//lib/i18n/backend/base.rb#150
   def resolve(locale, object, subject, options = T.unsafe(nil)); end
 
-  # source://i18n//lib/i18n/backend/base.rb#150
+  # source://i18n//lib/i18n/backend/base.rb#172
   def resolve_entry(locale, object, subject, options = T.unsafe(nil)); end
 
   # source://i18n//lib/i18n/backend/base.rb#120
@@ -504,7 +528,7 @@ class I18n::Backend::KeyValue::SubtreeProxy
   # source://i18n//lib/i18n/backend/key_value.rb#183
   def is_a?(klass); end
 
-  # source://i18n//lib/i18n/backend/key_value.rb#183
+  # source://i18n//lib/i18n/backend/key_value.rb#186
   def kind_of?(klass); end
 
   # source://i18n//lib/i18n/backend/key_value.rb#192
@@ -725,19 +749,19 @@ end
 
 # source://i18n//lib/i18n.rb#55
 module I18n::Base
-  # source://i18n//lib/i18n.rb#71
+  # source://i18n//lib/i18n.rb#70
   def available_locales; end
 
-  # source://i18n//lib/i18n.rb#75
+  # source://i18n//lib/i18n.rb#70
   def available_locales=(value); end
 
   # source://i18n//lib/i18n.rb#387
   def available_locales_initialized?; end
 
-  # source://i18n//lib/i18n.rb#71
+  # source://i18n//lib/i18n.rb#70
   def backend; end
 
-  # source://i18n//lib/i18n.rb#75
+  # source://i18n//lib/i18n.rb#70
   def backend=(value); end
 
   # source://i18n//lib/i18n.rb#57
@@ -746,34 +770,34 @@ module I18n::Base
   # source://i18n//lib/i18n.rb#63
   def config=(value); end
 
-  # source://i18n//lib/i18n.rb#71
+  # source://i18n//lib/i18n.rb#70
   def default_locale; end
 
-  # source://i18n//lib/i18n.rb#75
+  # source://i18n//lib/i18n.rb#70
   def default_locale=(value); end
 
-  # source://i18n//lib/i18n.rb#71
+  # source://i18n//lib/i18n.rb#70
   def default_separator; end
 
-  # source://i18n//lib/i18n.rb#75
+  # source://i18n//lib/i18n.rb#70
   def default_separator=(value); end
 
   # source://i18n//lib/i18n.rb#92
   def eager_load!; end
 
-  # source://i18n//lib/i18n.rb#71
+  # source://i18n//lib/i18n.rb#70
   def enforce_available_locales; end
 
   # source://i18n//lib/i18n.rb#381
   def enforce_available_locales!(locale); end
 
-  # source://i18n//lib/i18n.rb#75
+  # source://i18n//lib/i18n.rb#70
   def enforce_available_locales=(value); end
 
-  # source://i18n//lib/i18n.rb#71
+  # source://i18n//lib/i18n.rb#70
   def exception_handler; end
 
-  # source://i18n//lib/i18n.rb#75
+  # source://i18n//lib/i18n.rb#70
   def exception_handler=(value); end
 
   # source://i18n//lib/i18n.rb#266
@@ -782,19 +806,19 @@ module I18n::Base
   # source://i18n//lib/i18n.rb#255
   def interpolation_keys(key, **options); end
 
-  # source://i18n//lib/i18n.rb#336
+  # source://i18n//lib/i18n.rb#344
   def l(object, locale: T.unsafe(nil), format: T.unsafe(nil), **options); end
 
-  # source://i18n//lib/i18n.rb#71
+  # source://i18n//lib/i18n.rb#70
   def load_path; end
 
-  # source://i18n//lib/i18n.rb#75
+  # source://i18n//lib/i18n.rb#70
   def load_path=(value); end
 
-  # source://i18n//lib/i18n.rb#71
+  # source://i18n//lib/i18n.rb#70
   def locale; end
 
-  # source://i18n//lib/i18n.rb#75
+  # source://i18n//lib/i18n.rb#70
   def locale=(value); end
 
   # source://i18n//lib/i18n.rb#376
@@ -809,10 +833,10 @@ module I18n::Base
   # source://i18n//lib/i18n.rb#84
   def reload!; end
 
-  # source://i18n//lib/i18n.rb#212
+  # source://i18n//lib/i18n.rb#227
   def t(key = T.unsafe(nil), throw: T.unsafe(nil), raise: T.unsafe(nil), locale: T.unsafe(nil), **options); end
 
-  # source://i18n//lib/i18n.rb#231
+  # source://i18n//lib/i18n.rb#234
   def t!(key, **options); end
 
   # source://i18n//lib/i18n.rb#212
@@ -951,37 +975,37 @@ module I18n::Gettext::Helpers
   # source://i18n//lib/i18n/gettext/helpers.rb#17
   def N_(msgsid); end
 
-  # source://i18n//lib/i18n/gettext/helpers.rb#21
+  # source://i18n//lib/i18n/gettext/helpers.rb#24
   def _(msgid, options = T.unsafe(nil)); end
 
   # source://i18n//lib/i18n/gettext/helpers.rb#21
   def gettext(msgid, options = T.unsafe(nil)); end
 
-  # source://i18n//lib/i18n/gettext/helpers.rb#38
+  # source://i18n//lib/i18n/gettext/helpers.rb#41
   def n_(msgid, msgid_plural, n = T.unsafe(nil)); end
 
   # source://i18n//lib/i18n/gettext/helpers.rb#38
   def ngettext(msgid, msgid_plural, n = T.unsafe(nil)); end
 
-  # source://i18n//lib/i18n/gettext/helpers.rb#61
+  # source://i18n//lib/i18n/gettext/helpers.rb#72
   def np_(msgctxt, msgid, msgid_plural, n = T.unsafe(nil)); end
 
   # source://i18n//lib/i18n/gettext/helpers.rb#61
   def npgettext(msgctxt, msgid, msgid_plural, n = T.unsafe(nil)); end
 
-  # source://i18n//lib/i18n/gettext/helpers.rb#46
+  # source://i18n//lib/i18n/gettext/helpers.rb#56
   def ns_(msgid, msgid_plural, n = T.unsafe(nil), separator = T.unsafe(nil)); end
 
   # source://i18n//lib/i18n/gettext/helpers.rb#46
   def nsgettext(msgid, msgid_plural, n = T.unsafe(nil), separator = T.unsafe(nil)); end
 
-  # source://i18n//lib/i18n/gettext/helpers.rb#32
+  # source://i18n//lib/i18n/gettext/helpers.rb#36
   def p_(msgctxt, msgid); end
 
   # source://i18n//lib/i18n/gettext/helpers.rb#32
   def pgettext(msgctxt, msgid); end
 
-  # source://i18n//lib/i18n/gettext/helpers.rb#26
+  # source://i18n//lib/i18n/gettext/helpers.rb#30
   def s_(msgid, separator = T.unsafe(nil)); end
 
   # source://i18n//lib/i18n/gettext/helpers.rb#26
@@ -1237,7 +1261,7 @@ module I18n::MissingTranslation::Base
   # source://i18n//lib/i18n/exceptions.rb#78
   def to_exception; end
 
-  # source://i18n//lib/i18n/exceptions.rb#63
+  # source://i18n//lib/i18n/exceptions.rb#76
   def to_s; end
 end
 

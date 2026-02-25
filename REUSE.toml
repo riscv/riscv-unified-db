@@ -9,7 +9,6 @@ path = [
     "bin/**",
     "cert_flow.txt",
     "cfgs/**",
-    "container.def",
     "do",
     "doc/data-templates.adoc",
     "doc/riscv-opcodes-migration.adoc",
@@ -22,7 +21,6 @@ path = [
     "package.json",
     "Rakefile",
     "README.adoc",
-    "requirements.txt",
     "spec/schemas/**",
 ]
 SPDX-FileCopyrightText = [
@@ -87,6 +85,9 @@ SPDX-FileCopyrightText = "Copyright (c) 2025 Synopsys, Inc."
 SPDX-License-Identifier = "BSD-3-Clause-Clear"
 
 [[annotations]]
-path = "renovate.json"
+path = [
+    "renovate.json5",
+    "uv.lock",
+]
 SPDX-FileCopyrightText = "Copyright (c) Jordan Carlin"
 SPDX-License-Identifier = "BSD-3-Clause-Clear"

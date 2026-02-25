@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vluxseg6ei64.v
-long_name: No synopsis available
+long_name: "Vector unordered load 6 elements of 64 bits with index"
 description: |
-  No description available.
+  Loads 6 segments of 64-bit elements from memory using unordered access pattern with index register vs1, starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. The effective element width is 64 bits.
 definedBy:
   extension:
     name: Zvl32b

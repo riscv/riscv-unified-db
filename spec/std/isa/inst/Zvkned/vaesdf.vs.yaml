@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vaesdf.vs
-long_name: No synopsis available
+long_name: Vector AES decryption final round with scalar
 description: |
-  No description available.
+  Performs the final round of AES decryption on vector register vs2 using scalar register rs1, storing results in vector register vd according to mask vm. This combines the inverse shift rows, inverse sub bytes, and add round key operations.
 definedBy:
   extension:
     name: Zvkned

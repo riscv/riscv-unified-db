@@ -23,8 +23,7 @@ Model:
 	fields = Fields? &
 	swRead = SwRead? &
 	source = Source? &
-	certNormativeRules = CertNormativeRules? &
-	certTestProcedures = CertTestProcedures?
+	certNormativeRules = CertNormativeRules?
 ;
 
 // This is so we can directly copy+paste from a UDB .yaml file
@@ -49,7 +48,6 @@ IndirectSlot:'indirect_slot' ':' indirectSlot=INT ; /* TODO: validator: min:1 ma
 
 VirtualAddress:'virtual_address' ':' virtualAddress=Hex ;
 CertNormativeRules: 'cert_normative_rules' ':' certNormativeRules=CNRType ;
-CertTestProcedures: 'cert_test_procedures' ':' certTestProcedures=CTPType ;
 
 // implement in validator?
 Requires:'requires' ':' requires=STRING ;
@@ -96,8 +94,7 @@ FieldDef:
 		alias = Alias? &
 		definedBy = DefinedBy? &
 		affectedBy = AffectedBy? &
-		certNormativeRules = CertNormativeRules? &
-		certTestProcedures = CertTestProcedures?
+		certNormativeRules = CertNormativeRules?
 	DEDENT
 ;
 

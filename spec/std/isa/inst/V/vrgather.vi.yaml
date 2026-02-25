@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vrgather.vi
-long_name: No synopsis available
+long_name: "Vector register gather with immediate index"
 description: |
-  No description available.
+  Gathers elements from vector register vs2 using immediate index value and stores results in vector register vd, using vector mask vm. This operation performs indexed element selection.
 definedBy:
   extension:
     name: Zvl32b

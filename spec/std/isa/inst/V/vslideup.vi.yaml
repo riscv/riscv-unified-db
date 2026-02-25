@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vslideup.vi
-long_name: No synopsis available
+long_name: "Vector slide up with immediate"
 description: |
-  No description available.
+  Slides elements in vector register vs2 up by 1 position, inserting immediate value at the bottom, and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
     name: Zvl32b

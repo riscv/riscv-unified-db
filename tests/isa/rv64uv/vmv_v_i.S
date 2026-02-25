@@ -21,7 +21,7 @@ RVTEST_CODE_BEGIN
 # VLEN=128, SEW=64, LMUL=1 -> VLMAX=2
 # Expected: all elements = 5
   TEST_CASE(1, x5, 5, \
-    vsetivli x0, 2, 0x1b; \
+    vsetivli x0, 2, 0x18; \
     vmv.v.i v1, 5; \
     vmv.x.s x5, v1; \
   )
@@ -30,7 +30,7 @@ RVTEST_CODE_BEGIN
 # VLEN=128, SEW=64, LMUL=1 -> VLMAX=2
 # Expected: all elements = -1 (0xFFFFFFFFFFFFFFFF)
   TEST_CASE(2, x5, -1, \
-    vsetivli x0, 2, 0x1b; \
+    vsetivli x0, 2, 0x18; \
     vmv.v.i v2, -1; \
     vmv.x.s x5, v2; \
   )
@@ -39,7 +39,7 @@ RVTEST_CODE_BEGIN
 # VLEN=128, SEW=32, LMUL=1 -> VLMAX=4
 # Expected: all elements = 0
   TEST_CASE(3, x5, 0, \
-    vsetivli x0, 4, 0x13; \
+    vsetivli x0, 4, 0x10; \
     vmv.v.i v3, 0; \
     vmv.x.s x5, v3; \
   )
@@ -48,7 +48,7 @@ RVTEST_CODE_BEGIN
 # VLEN=128, SEW=8, LMUL=1 -> VLMAX=16
 # Expected: all elements = 15
   TEST_CASE(4, x5, 15, \
-    vsetivli x0, 16, 0x03; \
+    vsetivli x0, 16, 0x00; \
     vmv.v.i v4, 15; \
     vmv.x.s x5, v4; \
   )
@@ -57,7 +57,7 @@ RVTEST_CODE_BEGIN
 # VLEN=128, SEW=16, LMUL=1 -> VLMAX=8
 # Expected: all elements = -16 (sign-extended)
   TEST_CASE(5, x5, -16, \
-    vsetivli x0, 8, 0x0b; \
+    vsetivli x0, 8, 0x08; \
     vmv.v.i v5, -16; \
     vmv.x.s x5, v5; \
   )

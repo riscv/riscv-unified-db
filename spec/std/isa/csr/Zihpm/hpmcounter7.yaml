@@ -9,7 +9,7 @@
 $schema: csr_schema.json#
 kind: csr
 name: hpmcounter7
-long_name: User-mode Hardware Performance Counter 4
+long_name: Unprivileged Hardware Performance Counter 4
 address: 0xC07
 writable: false
 description: |

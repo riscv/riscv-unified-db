@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vssseg8e64.v
-long_name: No synopsis available
+long_name: Vector segmented store 8 elements of 64 bits with stride
 description: |
-  No description available.
+  Stores 8 segments of 64-bit elements from vector register vs2 to memory starting at address in xs1 register with stride, using vector mask vm. The effective element width is 64 bits.
 definedBy:
   extension:
     name: Zvl32b

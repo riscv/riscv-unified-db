@@ -43,6 +43,35 @@
       ],
       "description": "Location of a field in a register"
     },
+    "bit_length_value": {
+      "description": "Bit width value for a register or field",
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "string",
+          "minLength": 1,
+          "enum": ["MXLEN", "FLEN", "VLEN"]
+        }
+      ]
+    },
+    "register_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+      "description": "Register name"
+    },
+    "register_file_name": {
+      "type": "string",
+      "pattern": "^[A-Z]$",
+      "description": "Register file name"
+    },
+    "register_alias": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+      "description": "Register alias or ABI mnemonic"
+    },
     "possibly_split_field_location": {
       "description": "Location specifier for a field",
       "oneOf": [
@@ -118,7 +147,8 @@
         "when()": {
           "type": "string",
           "description": "IDL boolean expression. When true, the text applies"
-        }
+        },
+        "when_ast": { "type": "object" }
       },
       "additionalProperties": false
     },
@@ -367,34 +397,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "cert_test_procedures": {
-      "description": "Procedure test must follow to test certification normative rules",
-      "type": "array",
-      "required": ["id", "name", "description", "normative_rules"],
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "test_file_name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "normative_rules": {
-          "type": "array",
-          "description": "List of certification normative rule IDs to be validated",
-          "items": {
-            "type": "string"
-          }
-        },
-        "steps": {
-          "description": "List of steps typically using Asciidoc unordered lists",
-          "type": "string"
-        },
-        "additionalProperties": false
-      }
     },
     "encoding_match": {
       "oneOf": [
@@ -697,6 +699,9 @@
         "idl()": {
           "description": "IDL function containing one or more implications (e.g., A -> B).",
           "$ref": "#/$defs/idl"
+        },
+        "idl_ast": {
+          "type": "object"
         },
         "reason": {
           "description": "Why the constraint exists",

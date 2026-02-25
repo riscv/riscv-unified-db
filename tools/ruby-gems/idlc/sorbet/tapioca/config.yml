@@ -3,7 +3,28 @@ gem:
   #
   exclude:
     - asciidoctor-pdf
-  # doc: true
+    - minitest
+    - parser
+    - prism
+    - rdbg
+    - rbi
+    - rdoc
+    - rouge
+    - ruby-prof
+    - rubocop
+    - rubocop-github
+    - rubocop-minitest
+    - rubocop-performance
+    - rubocop-sorbet
+    - ruby-lsp
+    - simplecov
+    - simplecov-cobertura
+    - spoom
+    - tapioca
+    - uri
+    - yard
+    - yard-sorbet
+  doc: false
   # workers: 5
 dsl:
   # Add your `dsl` command parameters here:

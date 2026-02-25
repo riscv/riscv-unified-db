@@ -9,7 +9,7 @@
 $schema: csr_schema.json#
 kind: csr
 name: hpmcounter8h
-long_name: User-mode Hardware Performance Counter 5, high half
+long_name: Unprivileged Hardware Performance Counter 5, high half
 address: 0xC88
 writable: false
 description: |

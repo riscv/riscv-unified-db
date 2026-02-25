@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vxor.vv
-long_name: No synopsis available
+long_name: Vector-vector bitwise XOR
 description: |
-  No description available.
+  Performs bitwise XOR on corresponding elements from vs1 and vs2 according to mask vm and stores results in vd. Element width is determined by SEW setting.
 definedBy:
   extension:
     name: Zvl32b

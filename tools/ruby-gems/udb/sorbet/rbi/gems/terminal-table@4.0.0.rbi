@@ -13,7 +13,7 @@ class Terminal::Table
   # source://terminal-table//lib/terminal-table/table.rb#12
   def initialize(options = T.unsafe(nil), &block); end
 
-  # source://terminal-table//lib/terminal-table/table.rb#39
+  # source://terminal-table//lib/terminal-table/table.rb#44
   def <<(array); end
 
   # source://terminal-table//lib/terminal-table/table.rb#206
@@ -55,7 +55,7 @@ class Terminal::Table
   # source://terminal-table//lib/terminal-table/table.rb#111
   def headings=(arrays); end
 
-  # source://terminal-table//lib/terminal-table/table.rb#96
+  # source://terminal-table//lib/terminal-table/table.rb#99
   def length_of_column(n); end
 
   # source://terminal-table//lib/terminal-table/table.rb#104
@@ -82,7 +82,7 @@ class Terminal::Table
   # source://terminal-table//lib/terminal-table/table.rb#197
   def title=(title); end
 
-  # source://terminal-table//lib/terminal-table/table.rb#171
+  # source://terminal-table//lib/terminal-table/table.rb#175
   def to_s; end
 
   private
@@ -218,7 +218,7 @@ class Terminal::Table::Cell
   # source://terminal-table//lib/terminal-table/cell.rb#57
   def render(line = T.unsafe(nil)); end
 
-  # source://terminal-table//lib/terminal-table/cell.rb#57
+  # source://terminal-table//lib/terminal-table/cell.rb#64
   def to_s(line = T.unsafe(nil)); end
 
   # source://terminal-table//lib/terminal-table/cell.rb#9
@@ -242,7 +242,7 @@ class Terminal::Table::Row
   # source://terminal-table//lib/terminal-table/row.rb#15
   def initialize(table, array = T.unsafe(nil), **_kwargs); end
 
-  # source://terminal-table//lib/terminal-table/row.rb#22
+  # source://terminal-table//lib/terminal-table/row.rb#28
   def <<(item); end
 
   # source://terminal-table//lib/terminal-table/row.rb#30
@@ -358,7 +358,7 @@ class Terminal::Table::Style
   # source://terminal-table//lib/terminal-table/style.rb#207
   def border_y_width; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://terminal-table//lib/terminal-table/style.rb#192
   def horizontal(*args, **_arg1, &block); end
 
   # source://terminal-table//lib/terminal-table/style.rb#240
@@ -382,13 +382,13 @@ class Terminal::Table::Style
   # source://terminal-table//lib/terminal-table/style.rb#238
   def padding_right=(_arg0); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://terminal-table//lib/terminal-table/style.rb#192
   def remove_horizontals(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://terminal-table//lib/terminal-table/style.rb#192
   def remove_verticals(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://terminal-table//lib/terminal-table/style.rb#192
   def vertical(*args, **_arg1, &block); end
 
   # source://terminal-table//lib/terminal-table/style.rb#242
@@ -456,7 +456,7 @@ module Terminal::Table::Util
   def ansi_escape(line); end
 
   class << self
-    # source://terminal-table//lib/terminal-table/util.rb#5
+    # source://terminal-table//lib/terminal-table/util.rb#10
     def ansi_escape(line); end
   end
 end

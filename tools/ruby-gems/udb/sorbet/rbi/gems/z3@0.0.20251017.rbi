@@ -157,6 +157,7 @@ class Z3::AST
   class << self
     private
 
+    # source://z3//lib/z3/ast.rb#57
     def new(*_arg0); end
   end
 end
@@ -241,6 +242,7 @@ class Z3::ArrayExpr < ::Z3::Expr
   def value_sort; end
 
   class << self
+    # source://z3//lib/z3/expr/array_expr.rb#3
     def new(*_arg0); end
   end
 end
@@ -266,6 +268,7 @@ class Z3::ArraySort < ::Z3::Sort
   def value_sort; end
 
   class << self
+    # source://z3//lib/z3/sort/array_sort.rb#22
     def new(*_arg0); end
   end
 end
@@ -320,7 +323,7 @@ class Z3::BitvecExpr < ::Z3::Expr
   # source://z3//lib/z3/expr/bitvec_expr.rb#265
   def abs; end
 
-  # source://z3//lib/z3/expr/bitvec_expr.rb#109
+  # source://z3//lib/z3/expr/bitvec_expr.rb#105
   def add_no_overflow?(other); end
 
   # source://z3//lib/z3/expr/bitvec_expr.rb#119
@@ -564,6 +567,7 @@ class Z3::BitvecExpr < ::Z3::Expr
     # source://z3//lib/z3/expr/bitvec_expr.rb#278
     def coerce_to_same_bv_sort(*args); end
 
+    # source://z3//lib/z3/expr/bitvec_expr.rb#275
     def new(*_arg0); end
   end
 end
@@ -592,6 +596,7 @@ class Z3::BitvecSort < ::Z3::Sort
   def to_s; end
 
   class << self
+    # source://z3//lib/z3/sort/bitvec_sort.rb#39
     def new(*_arg0); end
   end
 end
@@ -638,6 +643,7 @@ class Z3::BoolExpr < ::Z3::Expr
     # source://z3//lib/z3/expr/bool_expr.rb#53
     def coerce_to_same_bool_sort(*args); end
 
+    # source://z3//lib/z3/expr/bool_expr.rb#50
     def new(*_arg0); end
   end
 end
@@ -660,6 +666,7 @@ class Z3::BoolSort < ::Z3::Sort
   def from_const(val); end
 
   class << self
+    # source://z3//lib/z3/sort/bool_sort.rb#29
     def new(*_arg0); end
   end
 end
@@ -869,6 +876,7 @@ class Z3::FloatExpr < ::Z3::Expr
     # source://z3//lib/z3/expr/float_expr.rb#107
     def coerce_to_same_float_sort(*args); end
 
+    # source://z3//lib/z3/expr/float_expr.rb#104
     def new(*_arg0); end
   end
 end
@@ -915,6 +923,7 @@ class Z3::FloatSort < ::Z3::Sort
   def to_s; end
 
   class << self
+    # source://z3//lib/z3/sort/float_sort.rb#90
     def new(*_arg0); end
   end
 end
@@ -943,6 +952,7 @@ class Z3::FuncDecl < ::Z3::AST
   def to_s; end
 
   class << self
+    # source://z3//lib/z3/func_decl.rb#39
     def new(*_arg0); end
   end
 end
@@ -1018,6 +1028,7 @@ class Z3::IntExpr < ::Z3::ArithExpr
     # source://z3//lib/z3/expr/int_expr.rb#30
     def coerce_to_same_int_sort(*args); end
 
+    # source://z3//lib/z3/expr/int_expr.rb#28
     def new(*_arg0); end
   end
 end
@@ -1034,6 +1045,7 @@ class Z3::IntSort < ::Z3::Sort
   def from_const(val); end
 
   class << self
+    # source://z3//lib/z3/sort/int_sort.rb#19
     def new(*_arg0); end
   end
 end
@@ -2820,7 +2832,7 @@ module Z3::LowLevel
     # source://z3//lib/z3/low_level_auto.rb#2316
     def solver_propagate_register(solver, ast); end
 
-    # source://z3//lib/z3/low_level_auto.rb#2324
+    # source://z3//lib/z3/low_level_auto.rb#2320
     def solver_push(solver); end
 
     # source://z3//lib/z3/low_level_auto.rb#2328
@@ -3132,6 +3144,7 @@ end
 # source://z3//lib/z3/expr/real_expr.rb#2
 class Z3::RealExpr < ::Z3::ArithExpr
   class << self
+    # source://z3//lib/z3/expr/real_expr.rb#3
     def new(*_arg0); end
   end
 end
@@ -3154,6 +3167,7 @@ class Z3::RealSort < ::Z3::Sort
   def from_value(val); end
 
   class << self
+    # source://z3//lib/z3/sort/real_sort.rb#34
     def new(*_arg0); end
   end
 end
@@ -3161,6 +3175,7 @@ end
 # source://z3//lib/z3/expr/rounding_mode_expr.rb#2
 class Z3::RoundingModeExpr < ::Z3::Expr
   class << self
+    # source://z3//lib/z3/expr/rounding_mode_expr.rb#3
     def new(*_arg0); end
   end
 end
@@ -3195,6 +3210,7 @@ class Z3::RoundingModeSort < ::Z3::Sort
   def towards_zero; end
 
   class << self
+    # source://z3//lib/z3/sort/rounding_mode_sort.rb#39
     def new(*_arg0); end
   end
 end
@@ -3241,6 +3257,7 @@ class Z3::SetExpr < ::Z3::Expr
     # source://z3//lib/z3/expr/set_expr.rb#39
     def coerce_to_same_set_sort(*args); end
 
+    # source://z3//lib/z3/expr/set_expr.rb#3
     def new(*_arg0); end
   end
 end
@@ -3269,6 +3286,7 @@ class Z3::SetSort < ::Z3::Sort
   def to_s; end
 
   class << self
+    # source://z3//lib/z3/sort/set_sort.rb#29
     def new(*_arg0); end
   end
 end
@@ -3432,1364 +3450,3770 @@ end
 module Z3::VeryLowLevel
   extend ::FFI::Library
 
+  # source://z3//lib/z3/very_low_level_auto.rb#3
   def Z3_add_const_interp(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#4
   def Z3_add_func_interp(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#5
   def Z3_algebraic_add(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#6
   def Z3_algebraic_div(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#7
   def Z3_algebraic_eq(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#8
   def Z3_algebraic_ge(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#9
   def Z3_algebraic_get_i(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#10
   def Z3_algebraic_get_poly(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#11
   def Z3_algebraic_gt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#12
   def Z3_algebraic_is_neg(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#13
   def Z3_algebraic_is_pos(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#14
   def Z3_algebraic_is_value(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#15
   def Z3_algebraic_is_zero(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#16
   def Z3_algebraic_le(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#17
   def Z3_algebraic_lt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#18
   def Z3_algebraic_mul(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#19
   def Z3_algebraic_neq(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#20
   def Z3_algebraic_power(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#21
   def Z3_algebraic_root(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#22
   def Z3_algebraic_sign(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#23
   def Z3_algebraic_sub(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#24
   def Z3_apply_result_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#25
   def Z3_apply_result_get_num_subgoals(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#26
   def Z3_apply_result_get_subgoal(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#27
   def Z3_apply_result_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#28
   def Z3_apply_result_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#29
   def Z3_ast_map_contains(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#30
   def Z3_ast_map_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#31
   def Z3_ast_map_erase(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#32
   def Z3_ast_map_find(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#33
   def Z3_ast_map_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#34
   def Z3_ast_map_insert(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#35
   def Z3_ast_map_keys(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#36
   def Z3_ast_map_reset(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#37
   def Z3_ast_map_size(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#38
   def Z3_ast_map_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#39
   def Z3_ast_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#40
   def Z3_ast_vector_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#41
   def Z3_ast_vector_get(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#42
   def Z3_ast_vector_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#43
   def Z3_ast_vector_push(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#44
   def Z3_ast_vector_resize(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#45
   def Z3_ast_vector_set(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#46
   def Z3_ast_vector_size(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#47
   def Z3_ast_vector_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#48
   def Z3_ast_vector_translate(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#49
+  def Z3_constructor_num_fields(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#50
   def Z3_datatype_update_field(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#51
   def Z3_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#52
   def Z3_del_config(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#53
   def Z3_del_constructor(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#54
   def Z3_del_constructor_list(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#55
   def Z3_del_context(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#56
   def Z3_disable_trace(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#57
+  def Z3_enable_concurrent_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#58
   def Z3_enable_trace(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#59
   def Z3_eval_smtlib2_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#60
   def Z3_finalize_memory(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#61
   def Z3_fixedpoint_add_cover(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#62
   def Z3_fixedpoint_add_invariant(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#63
   def Z3_fixedpoint_add_rule(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#64
   def Z3_fixedpoint_assert(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#65
   def Z3_fixedpoint_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#66
   def Z3_fixedpoint_from_file(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#67
   def Z3_fixedpoint_from_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#68
   def Z3_fixedpoint_get_answer(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#69
   def Z3_fixedpoint_get_assertions(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#70
   def Z3_fixedpoint_get_cover_delta(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#71
   def Z3_fixedpoint_get_ground_sat_answer(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#72
   def Z3_fixedpoint_get_help(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#73
   def Z3_fixedpoint_get_num_levels(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#74
   def Z3_fixedpoint_get_param_descrs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#75
   def Z3_fixedpoint_get_reachable(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#76
   def Z3_fixedpoint_get_reason_unknown(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#77
   def Z3_fixedpoint_get_rule_names_along_trace(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#78
   def Z3_fixedpoint_get_rules(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#79
   def Z3_fixedpoint_get_rules_along_trace(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#80
   def Z3_fixedpoint_get_statistics(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#81
   def Z3_fixedpoint_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#82
   def Z3_fixedpoint_query(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#83
   def Z3_fixedpoint_query_from_lvl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#84
   def Z3_fixedpoint_register_relation(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#85
   def Z3_fixedpoint_set_params(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#86
   def Z3_fixedpoint_update_rule(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#87
   def Z3_fpa_get_ebits(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#88
   def Z3_fpa_get_numeral_exponent_bv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#89
   def Z3_fpa_get_numeral_exponent_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#90
   def Z3_fpa_get_numeral_sign_bv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#91
   def Z3_fpa_get_numeral_significand_bv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#92
   def Z3_fpa_get_numeral_significand_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#93
   def Z3_fpa_get_sbits(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#94
   def Z3_fpa_is_numeral_inf(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#95
   def Z3_fpa_is_numeral_nan(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#96
   def Z3_fpa_is_numeral_negative(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#97
   def Z3_fpa_is_numeral_normal(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#98
   def Z3_fpa_is_numeral_positive(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#99
   def Z3_fpa_is_numeral_subnormal(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#100
   def Z3_fpa_is_numeral_zero(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#101
   def Z3_func_entry_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#102
   def Z3_func_entry_get_arg(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#103
   def Z3_func_entry_get_num_args(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#104
   def Z3_func_entry_get_value(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#105
   def Z3_func_entry_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#106
   def Z3_func_interp_add_entry(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#107
   def Z3_func_interp_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#108
   def Z3_func_interp_get_arity(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#109
   def Z3_func_interp_get_else(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#110
   def Z3_func_interp_get_entry(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#111
   def Z3_func_interp_get_num_entries(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#112
   def Z3_func_interp_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#113
   def Z3_func_interp_set_else(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#114
   def Z3_get_algebraic_number_lower(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#115
   def Z3_get_algebraic_number_upper(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#116
   def Z3_get_app_arg(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#117
   def Z3_get_app_decl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#118
   def Z3_get_app_num_args(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#119
   def Z3_get_arity(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#121
   def Z3_get_array_sort_domain(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#122
+  def Z3_get_array_sort_domain_n(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#123
   def Z3_get_array_sort_range(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#124
   def Z3_get_as_array_func_decl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#125
   def Z3_get_ast_hash(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#126
   def Z3_get_ast_id(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#127
   def Z3_get_ast_kind(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#128
   def Z3_get_bool_value(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#129
   def Z3_get_bv_sort_size(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#130
   def Z3_get_datatype_sort_constructor(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#131
   def Z3_get_datatype_sort_constructor_accessor(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#132
   def Z3_get_datatype_sort_num_constructors(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#133
   def Z3_get_datatype_sort_recognizer(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#134
   def Z3_get_decl_ast_parameter(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#135
   def Z3_get_decl_double_parameter(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#136
   def Z3_get_decl_func_decl_parameter(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#137
   def Z3_get_decl_int_parameter(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#138
   def Z3_get_decl_kind(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#139
   def Z3_get_decl_name(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#140
   def Z3_get_decl_num_parameters(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#141
   def Z3_get_decl_parameter_kind(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#142
   def Z3_get_decl_rational_parameter(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#143
   def Z3_get_decl_sort_parameter(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#144
   def Z3_get_decl_symbol_parameter(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#145
   def Z3_get_denominator(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#147
   def Z3_get_domain(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#148
   def Z3_get_domain_size(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#149
   def Z3_get_error_code(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#150
   def Z3_get_full_version(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#151
   def Z3_get_func_decl_id(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#152
+  def Z3_get_global_param_descrs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#153
   def Z3_get_index_value(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#154
   def Z3_get_num_probes(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#155
+  def Z3_get_num_simplifiers(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#156
   def Z3_get_num_tactics(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#157
   def Z3_get_numeral_binary_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#158
   def Z3_get_numeral_decimal_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#159
   def Z3_get_numeral_double(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#160
   def Z3_get_numeral_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#161
   def Z3_get_numerator(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#162
   def Z3_get_pattern(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#163
   def Z3_get_pattern_num_terms(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#164
   def Z3_get_probe_name(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#165
   def Z3_get_quantifier_body(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#166
   def Z3_get_quantifier_bound_name(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#167
   def Z3_get_quantifier_bound_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#168
+  def Z3_get_quantifier_id(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#169
   def Z3_get_quantifier_no_pattern_ast(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#170
   def Z3_get_quantifier_num_bound(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#171
   def Z3_get_quantifier_num_no_patterns(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#172
   def Z3_get_quantifier_num_patterns(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#173
   def Z3_get_quantifier_pattern_ast(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#174
+  def Z3_get_quantifier_skolem_id(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#175
   def Z3_get_quantifier_weight(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#176
   def Z3_get_range(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#177
   def Z3_get_re_sort_basis(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#178
   def Z3_get_relation_arity(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#179
   def Z3_get_relation_column(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#180
   def Z3_get_seq_sort_basis(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#181
+  def Z3_get_simplifier_name(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#182
   def Z3_get_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#183
   def Z3_get_sort_id(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#184
   def Z3_get_sort_kind(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#185
   def Z3_get_sort_name(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#186
+  def Z3_get_string_length(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#187
   def Z3_get_symbol_int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#188
   def Z3_get_symbol_kind(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#189
   def Z3_get_symbol_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#190
   def Z3_get_tactic_name(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#191
   def Z3_get_tuple_sort_field_decl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#192
   def Z3_get_tuple_sort_mk_decl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#193
   def Z3_get_tuple_sort_num_fields(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_get_version(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#194
   def Z3_global_param_reset_all(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#195
   def Z3_global_param_set(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#196
   def Z3_goal_assert(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#197
   def Z3_goal_convert_model(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#198
   def Z3_goal_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#199
   def Z3_goal_depth(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#200
   def Z3_goal_formula(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#201
   def Z3_goal_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#202
   def Z3_goal_inconsistent(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#203
   def Z3_goal_is_decided_sat(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#204
   def Z3_goal_is_decided_unsat(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#205
   def Z3_goal_num_exprs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#206
   def Z3_goal_precision(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#207
   def Z3_goal_reset(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#208
   def Z3_goal_size(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#209
   def Z3_goal_to_dimacs_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#210
   def Z3_goal_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#211
   def Z3_goal_translate(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#212
   def Z3_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#213
   def Z3_interrupt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#214
   def Z3_is_algebraic_number(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#215
   def Z3_is_app(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#216
   def Z3_is_as_array(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#217
+  def Z3_is_char_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#218
   def Z3_is_eq_ast(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#219
   def Z3_is_eq_func_decl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#220
   def Z3_is_eq_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#222
   def Z3_is_lambda(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#223
   def Z3_is_numeral_ast(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#224
   def Z3_is_quantifier_exists(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#225
   def Z3_is_quantifier_forall(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#227
   def Z3_is_well_sorted(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#228
+  def Z3_mk_abs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_add(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_and(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#229
   def Z3_mk_array_default(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#230
   def Z3_mk_array_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#231
   def Z3_mk_as_array(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#232
   def Z3_mk_ast_map(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#233
   def Z3_mk_ast_vector(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#234
+  def Z3_mk_bit2bool(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#235
   def Z3_mk_bool_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#236
   def Z3_mk_bound(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#237
   def Z3_mk_bv2int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#238
   def Z3_mk_bv_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#239
   def Z3_mk_bvadd(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#240
   def Z3_mk_bvadd_no_overflow(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#241
   def Z3_mk_bvadd_no_underflow(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#242
   def Z3_mk_bvand(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#243
   def Z3_mk_bvashr(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#244
   def Z3_mk_bvlshr(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#245
   def Z3_mk_bvmul(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#246
   def Z3_mk_bvmul_no_overflow(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#247
   def Z3_mk_bvmul_no_underflow(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#248
   def Z3_mk_bvnand(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#249
   def Z3_mk_bvneg(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#250
   def Z3_mk_bvneg_no_overflow(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#251
   def Z3_mk_bvnor(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#252
   def Z3_mk_bvnot(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#253
   def Z3_mk_bvor(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#254
   def Z3_mk_bvredand(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#255
   def Z3_mk_bvredor(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#256
   def Z3_mk_bvsdiv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#257
   def Z3_mk_bvsdiv_no_overflow(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#258
   def Z3_mk_bvsge(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#259
   def Z3_mk_bvsgt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#260
   def Z3_mk_bvshl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#261
   def Z3_mk_bvsle(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#262
   def Z3_mk_bvslt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#263
   def Z3_mk_bvsmod(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#264
   def Z3_mk_bvsrem(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#265
   def Z3_mk_bvsub(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#266
   def Z3_mk_bvsub_no_overflow(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#267
   def Z3_mk_bvsub_no_underflow(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#268
   def Z3_mk_bvudiv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#269
   def Z3_mk_bvuge(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#270
   def Z3_mk_bvugt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#271
   def Z3_mk_bvule(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#272
   def Z3_mk_bvult(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#273
   def Z3_mk_bvurem(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#274
   def Z3_mk_bvxnor(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#275
   def Z3_mk_bvxor(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#276
+  def Z3_mk_char(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#277
+  def Z3_mk_char_from_bv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#278
+  def Z3_mk_char_is_digit(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#279
+  def Z3_mk_char_le(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#280
+  def Z3_mk_char_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#281
+  def Z3_mk_char_to_bv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#282
+  def Z3_mk_char_to_int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#283
   def Z3_mk_concat(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#284
   def Z3_mk_config(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#285
   def Z3_mk_const(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#286
   def Z3_mk_const_array(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_context(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#287
   def Z3_mk_context_rc(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#288
+  def Z3_mk_datatype_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_distinct(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#289
   def Z3_mk_div(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#290
   def Z3_mk_divides(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#291
   def Z3_mk_empty_set(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#292
   def Z3_mk_eq(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#293
   def Z3_mk_ext_rotate_left(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#294
   def Z3_mk_ext_rotate_right(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#295
   def Z3_mk_extract(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#296
   def Z3_mk_false(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#297
   def Z3_mk_finite_domain_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#298
   def Z3_mk_fixedpoint(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#299
   def Z3_mk_fpa_abs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#300
   def Z3_mk_fpa_add(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#301
   def Z3_mk_fpa_div(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#302
   def Z3_mk_fpa_eq(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#303
   def Z3_mk_fpa_fma(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#304
   def Z3_mk_fpa_fp(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#305
   def Z3_mk_fpa_geq(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#306
   def Z3_mk_fpa_gt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#307
   def Z3_mk_fpa_inf(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#308
   def Z3_mk_fpa_is_infinite(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#309
   def Z3_mk_fpa_is_nan(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#310
   def Z3_mk_fpa_is_negative(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#311
   def Z3_mk_fpa_is_normal(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#312
   def Z3_mk_fpa_is_positive(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#313
   def Z3_mk_fpa_is_subnormal(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#314
   def Z3_mk_fpa_is_zero(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#315
   def Z3_mk_fpa_leq(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#316
   def Z3_mk_fpa_lt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#317
   def Z3_mk_fpa_max(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#318
   def Z3_mk_fpa_min(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#319
   def Z3_mk_fpa_mul(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#320
   def Z3_mk_fpa_nan(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#321
   def Z3_mk_fpa_neg(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#322
   def Z3_mk_fpa_numeral_double(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#323
   def Z3_mk_fpa_numeral_int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#324
   def Z3_mk_fpa_numeral_int64_uint64(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#325
   def Z3_mk_fpa_numeral_int_uint(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#326
   def Z3_mk_fpa_rem(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#327
   def Z3_mk_fpa_round_nearest_ties_to_away(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#328
   def Z3_mk_fpa_round_nearest_ties_to_even(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#329
   def Z3_mk_fpa_round_to_integral(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#330
   def Z3_mk_fpa_round_toward_negative(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#331
   def Z3_mk_fpa_round_toward_positive(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#332
   def Z3_mk_fpa_round_toward_zero(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#333
   def Z3_mk_fpa_rounding_mode_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#334
   def Z3_mk_fpa_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#335
   def Z3_mk_fpa_sort_128(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#336
   def Z3_mk_fpa_sort_16(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#337
   def Z3_mk_fpa_sort_32(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#338
   def Z3_mk_fpa_sort_64(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#339
   def Z3_mk_fpa_sort_double(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#340
   def Z3_mk_fpa_sort_half(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#341
   def Z3_mk_fpa_sort_quadruple(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#342
   def Z3_mk_fpa_sort_single(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#343
   def Z3_mk_fpa_sqrt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#344
   def Z3_mk_fpa_sub(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#345
   def Z3_mk_fpa_to_fp_bv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#346
   def Z3_mk_fpa_to_fp_float(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#347
   def Z3_mk_fpa_to_fp_int_real(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#348
   def Z3_mk_fpa_to_fp_real(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#349
   def Z3_mk_fpa_to_fp_signed(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#350
   def Z3_mk_fpa_to_fp_unsigned(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#351
   def Z3_mk_fpa_to_ieee_bv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#352
   def Z3_mk_fpa_to_real(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#353
   def Z3_mk_fpa_to_sbv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#354
   def Z3_mk_fpa_to_ubv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#355
   def Z3_mk_fpa_zero(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#356
   def Z3_mk_fresh_const(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#357
   def Z3_mk_full_set(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#358
   def Z3_mk_ge(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#359
   def Z3_mk_goal(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#360
   def Z3_mk_gt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#361
   def Z3_mk_iff(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#362
   def Z3_mk_implies(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#363
   def Z3_mk_int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#364
   def Z3_mk_int2bv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#365
   def Z3_mk_int2real(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#366
   def Z3_mk_int64(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#367
   def Z3_mk_int_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#368
   def Z3_mk_int_symbol(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#369
   def Z3_mk_int_to_str(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#370
   def Z3_mk_is_int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#371
   def Z3_mk_ite(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#372
   def Z3_mk_le(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#373
   def Z3_mk_linear_order(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#374
   def Z3_mk_lstring(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#375
   def Z3_mk_lt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#376
   def Z3_mk_mod(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#377
   def Z3_mk_model(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_mul(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#378
   def Z3_mk_not(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#379
   def Z3_mk_numeral(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#380
   def Z3_mk_optimize(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_or(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#381
   def Z3_mk_params(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#382
   def Z3_mk_partial_order(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#383
   def Z3_mk_piecewise_linear_order(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#384
   def Z3_mk_power(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#385
   def Z3_mk_probe(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#386
+  def Z3_mk_re_allchar(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#387
   def Z3_mk_re_complement(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#388
+  def Z3_mk_re_diff(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#389
   def Z3_mk_re_empty(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#390
   def Z3_mk_re_full(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#391
   def Z3_mk_re_loop(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#392
+  def Z3_mk_re_power(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#393
   def Z3_mk_re_range(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#394
   def Z3_mk_real(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#395
   def Z3_mk_real2int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#396
+  def Z3_mk_real_int64(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#397
   def Z3_mk_real_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#398
   def Z3_mk_rem(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#399
   def Z3_mk_repeat(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#400
   def Z3_mk_rotate_left(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#401
   def Z3_mk_rotate_right(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#402
+  def Z3_mk_sbv_to_str(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#403
   def Z3_mk_select(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#404
+  def Z3_mk_seq_foldl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#405
+  def Z3_mk_seq_foldli(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#406
   def Z3_mk_seq_last_index(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#407
+  def Z3_mk_seq_map(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#408
+  def Z3_mk_seq_mapi(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#409
   def Z3_mk_seq_nth(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#410
   def Z3_mk_set_add(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#411
   def Z3_mk_set_complement(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#412
   def Z3_mk_set_del(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#413
   def Z3_mk_set_difference(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#414
   def Z3_mk_set_has_size(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_set_intersect(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#415
   def Z3_mk_set_member(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#416
   def Z3_mk_set_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#417
   def Z3_mk_set_subset(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_set_union(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#418
   def Z3_mk_sign_ext(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#419
   def Z3_mk_simple_solver(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#420
   def Z3_mk_solver(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#421
   def Z3_mk_solver_for_logic(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#422
   def Z3_mk_solver_from_tactic(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#423
   def Z3_mk_store(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#424
   def Z3_mk_str_le(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#425
   def Z3_mk_str_lt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#426
   def Z3_mk_str_to_int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#427
+  def Z3_mk_string_from_code(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#428
   def Z3_mk_string_symbol(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#429
+  def Z3_mk_string_to_code(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_sub(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#430
   def Z3_mk_tactic(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#431
   def Z3_mk_transitive_closure(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#432
   def Z3_mk_tree_order(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#433
   def Z3_mk_true(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#434
+  def Z3_mk_type_variable(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#435
+  def Z3_mk_ubv_to_str(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#436
   def Z3_mk_unary_minus(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#437
   def Z3_mk_uninterpreted_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#438
   def Z3_mk_unsigned_int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#439
   def Z3_mk_unsigned_int64(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#440
   def Z3_mk_xor(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#441
   def Z3_mk_zero_ext(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#442
   def Z3_model_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_model_eval(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#443
   def Z3_model_extrapolate(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#444
   def Z3_model_get_const_decl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#445
   def Z3_model_get_const_interp(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#446
   def Z3_model_get_func_decl(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#447
   def Z3_model_get_func_interp(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#448
   def Z3_model_get_num_consts(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#449
   def Z3_model_get_num_funcs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#450
   def Z3_model_get_num_sorts(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#451
   def Z3_model_get_sort(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#452
   def Z3_model_get_sort_universe(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#453
   def Z3_model_has_interp(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#454
   def Z3_model_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#455
   def Z3_model_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#456
   def Z3_model_translate(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#457
   def Z3_optimize_assert(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#458
   def Z3_optimize_assert_and_track(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#459
   def Z3_optimize_assert_soft(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_optimize_check(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#460
   def Z3_optimize_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#461
   def Z3_optimize_from_file(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#462
   def Z3_optimize_from_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#463
   def Z3_optimize_get_assertions(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#464
   def Z3_optimize_get_help(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#465
   def Z3_optimize_get_lower(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#466
   def Z3_optimize_get_lower_as_vector(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#467
   def Z3_optimize_get_model(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#468
   def Z3_optimize_get_objectives(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#469
   def Z3_optimize_get_param_descrs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#470
   def Z3_optimize_get_reason_unknown(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#471
   def Z3_optimize_get_statistics(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#472
   def Z3_optimize_get_unsat_core(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#473
   def Z3_optimize_get_upper(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#474
   def Z3_optimize_get_upper_as_vector(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#475
   def Z3_optimize_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#476
   def Z3_optimize_maximize(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#477
   def Z3_optimize_minimize(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#478
   def Z3_optimize_pop(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#479
   def Z3_optimize_push(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#480
+  def Z3_optimize_set_initial_value(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#481
   def Z3_optimize_set_params(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#482
   def Z3_optimize_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#483
   def Z3_param_descrs_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#484
   def Z3_param_descrs_get_kind(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#485
   def Z3_param_descrs_get_name(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#486
   def Z3_param_descrs_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#487
   def Z3_param_descrs_size(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#488
   def Z3_param_descrs_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#489
   def Z3_params_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#490
   def Z3_params_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#491
   def Z3_params_set_bool(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#492
   def Z3_params_set_double(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#493
   def Z3_params_set_symbol(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#494
   def Z3_params_set_uint(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#495
   def Z3_params_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#496
   def Z3_params_validate(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#497
   def Z3_pattern_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#498
   def Z3_polynomial_subresultants(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#499
   def Z3_probe_and(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#500
   def Z3_probe_apply(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#501
   def Z3_probe_const(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#502
   def Z3_probe_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#503
   def Z3_probe_eq(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#504
   def Z3_probe_ge(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#505
   def Z3_probe_get_descr(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#506
   def Z3_probe_gt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#507
   def Z3_probe_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#508
   def Z3_probe_le(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#509
   def Z3_probe_lt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#510
   def Z3_probe_not(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#511
   def Z3_probe_or(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#512
   def Z3_qe_lite(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#513
   def Z3_rcf_add(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#514
+  def Z3_rcf_coefficient(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#515
   def Z3_rcf_del(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#516
   def Z3_rcf_div(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#517
   def Z3_rcf_eq(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#518
+  def Z3_rcf_extension_index(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#519
   def Z3_rcf_ge(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#520
   def Z3_rcf_gt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#521
+  def Z3_rcf_infinitesimal_name(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#522
   def Z3_rcf_inv(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#523
+  def Z3_rcf_is_algebraic(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#524
+  def Z3_rcf_is_infinitesimal(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#525
+  def Z3_rcf_is_rational(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#526
+  def Z3_rcf_is_transcendental(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#527
   def Z3_rcf_le(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#528
   def Z3_rcf_lt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#529
   def Z3_rcf_mk_e(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#530
   def Z3_rcf_mk_infinitesimal(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#531
   def Z3_rcf_mk_pi(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#532
   def Z3_rcf_mk_rational(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#533
   def Z3_rcf_mk_small_int(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#534
   def Z3_rcf_mul(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#535
   def Z3_rcf_neg(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#536
   def Z3_rcf_neq(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#537
+  def Z3_rcf_num_coefficients(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#538
+  def Z3_rcf_num_sign_condition_coefficients(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#539
+  def Z3_rcf_num_sign_conditions(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#540
   def Z3_rcf_num_to_decimal_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#541
   def Z3_rcf_num_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#542
   def Z3_rcf_power(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#543
+  def Z3_rcf_sign_condition_coefficient(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#544
+  def Z3_rcf_sign_condition_sign(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#545
   def Z3_rcf_sub(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#546
+  def Z3_rcf_transcendental_name(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#547
   def Z3_reset_memory(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level.rb#14
   def Z3_set_error_handler(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#548
   def Z3_set_param_value(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#549
+  def Z3_simplifier_get_descr(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#550
   def Z3_simplify(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#551
   def Z3_simplify_ex(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#552
   def Z3_simplify_get_help(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#553
   def Z3_simplify_get_param_descrs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#554
   def Z3_solver_assert(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#555
   def Z3_solver_assert_and_track(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#556
   def Z3_solver_check(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#558
+  def Z3_solver_congruence_next(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#559
+  def Z3_solver_congruence_root(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#560
   def Z3_solver_cube(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#561
   def Z3_solver_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#562
   def Z3_solver_from_file(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#563
   def Z3_solver_from_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#564
   def Z3_solver_get_assertions(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#565
   def Z3_solver_get_consequences(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#566
   def Z3_solver_get_help(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#567
   def Z3_solver_get_model(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#568
   def Z3_solver_get_non_units(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#569
   def Z3_solver_get_num_scopes(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#570
   def Z3_solver_get_param_descrs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#571
   def Z3_solver_get_proof(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#572
   def Z3_solver_get_reason_unknown(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#573
   def Z3_solver_get_statistics(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#574
   def Z3_solver_get_trail(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#575
   def Z3_solver_get_units(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#576
   def Z3_solver_get_unsat_core(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#577
   def Z3_solver_import_model_converter(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#578
   def Z3_solver_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#579
   def Z3_solver_interrupt(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#580
   def Z3_solver_pop(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#581
   def Z3_solver_propagate_register(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#582
   def Z3_solver_push(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#584
   def Z3_solver_reset(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#585
+  def Z3_solver_set_initial_value(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#586
   def Z3_solver_set_params(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#587
+  def Z3_solver_solve_for(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#588
   def Z3_solver_to_dimacs_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#589
   def Z3_solver_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#590
   def Z3_stats_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#591
   def Z3_stats_get_double_value(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#592
   def Z3_stats_get_key(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#593
   def Z3_stats_get_uint_value(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#594
   def Z3_stats_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#595
   def Z3_stats_is_double(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#596
   def Z3_stats_is_uint(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#597
   def Z3_stats_size(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#598
   def Z3_stats_to_string(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#599
   def Z3_tactic_and_then(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#600
   def Z3_tactic_apply(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#601
   def Z3_tactic_apply_ex(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#602
   def Z3_tactic_cond(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#603
   def Z3_tactic_dec_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#604
   def Z3_tactic_fail(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#605
   def Z3_tactic_fail_if(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#606
   def Z3_tactic_fail_if_not_decided(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#607
   def Z3_tactic_get_descr(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#608
   def Z3_tactic_get_help(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#609
   def Z3_tactic_get_param_descrs(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#610
   def Z3_tactic_inc_ref(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#611
   def Z3_tactic_or_else(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#612
   def Z3_tactic_par_and_then(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#613
   def Z3_tactic_repeat(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#614
   def Z3_tactic_skip(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#615
   def Z3_tactic_try_for(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#616
   def Z3_tactic_using_params(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#617
   def Z3_tactic_when(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#618
   def Z3_toggle_warning_messages(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#619
   def Z3_translate(*_arg0); end
+
+  # source://z3//lib/z3/very_low_level_auto.rb#620
   def Z3_update_param_value(*_arg0); end
 
   class << self
+    # source://z3//lib/z3/very_low_level_auto.rb#3
     def Z3_add_const_interp(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#4
     def Z3_add_func_interp(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#5
     def Z3_algebraic_add(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#6
     def Z3_algebraic_div(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#7
     def Z3_algebraic_eq(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#8
     def Z3_algebraic_ge(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#9
     def Z3_algebraic_get_i(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#10
     def Z3_algebraic_get_poly(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#11
     def Z3_algebraic_gt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#12
     def Z3_algebraic_is_neg(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#13
     def Z3_algebraic_is_pos(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#14
     def Z3_algebraic_is_value(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#15
     def Z3_algebraic_is_zero(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#16
     def Z3_algebraic_le(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#17
     def Z3_algebraic_lt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#18
     def Z3_algebraic_mul(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#19
     def Z3_algebraic_neq(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#20
     def Z3_algebraic_power(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#21
     def Z3_algebraic_root(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#22
     def Z3_algebraic_sign(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#23
     def Z3_algebraic_sub(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#24
     def Z3_apply_result_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#25
     def Z3_apply_result_get_num_subgoals(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#26
     def Z3_apply_result_get_subgoal(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#27
     def Z3_apply_result_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#28
     def Z3_apply_result_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#29
     def Z3_ast_map_contains(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#30
     def Z3_ast_map_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#31
     def Z3_ast_map_erase(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#32
     def Z3_ast_map_find(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#33
     def Z3_ast_map_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#34
     def Z3_ast_map_insert(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#35
     def Z3_ast_map_keys(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#36
     def Z3_ast_map_reset(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#37
     def Z3_ast_map_size(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#38
     def Z3_ast_map_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#39
     def Z3_ast_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#40
     def Z3_ast_vector_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#41
     def Z3_ast_vector_get(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#42
     def Z3_ast_vector_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#43
     def Z3_ast_vector_push(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#44
     def Z3_ast_vector_resize(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#45
     def Z3_ast_vector_set(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#46
     def Z3_ast_vector_size(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#47
     def Z3_ast_vector_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#48
     def Z3_ast_vector_translate(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_constructor_num_fields(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#49
+    def Z3_constructor_num_fields(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#50
     def Z3_datatype_update_field(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#51
     def Z3_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#52
     def Z3_del_config(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#53
     def Z3_del_constructor(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#54
     def Z3_del_constructor_list(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#55
     def Z3_del_context(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#56
     def Z3_disable_trace(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_enable_concurrent_dec_ref(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#57
+    def Z3_enable_concurrent_dec_ref(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#58
     def Z3_enable_trace(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#59
     def Z3_eval_smtlib2_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#60
     def Z3_finalize_memory(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#61
     def Z3_fixedpoint_add_cover(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#62
     def Z3_fixedpoint_add_invariant(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#63
     def Z3_fixedpoint_add_rule(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#64
     def Z3_fixedpoint_assert(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#65
     def Z3_fixedpoint_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#66
     def Z3_fixedpoint_from_file(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#67
     def Z3_fixedpoint_from_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#68
     def Z3_fixedpoint_get_answer(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#69
     def Z3_fixedpoint_get_assertions(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#70
     def Z3_fixedpoint_get_cover_delta(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#71
     def Z3_fixedpoint_get_ground_sat_answer(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#72
     def Z3_fixedpoint_get_help(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#73
     def Z3_fixedpoint_get_num_levels(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#74
     def Z3_fixedpoint_get_param_descrs(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#75
     def Z3_fixedpoint_get_reachable(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#76
     def Z3_fixedpoint_get_reason_unknown(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#77
     def Z3_fixedpoint_get_rule_names_along_trace(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#78
     def Z3_fixedpoint_get_rules(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#79
     def Z3_fixedpoint_get_rules_along_trace(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#80
     def Z3_fixedpoint_get_statistics(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#81
     def Z3_fixedpoint_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#82
     def Z3_fixedpoint_query(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#83
     def Z3_fixedpoint_query_from_lvl(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#84
     def Z3_fixedpoint_register_relation(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#85
     def Z3_fixedpoint_set_params(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#86
     def Z3_fixedpoint_update_rule(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#87
     def Z3_fpa_get_ebits(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#88
     def Z3_fpa_get_numeral_exponent_bv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#89
     def Z3_fpa_get_numeral_exponent_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#90
     def Z3_fpa_get_numeral_sign_bv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#91
     def Z3_fpa_get_numeral_significand_bv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#92
     def Z3_fpa_get_numeral_significand_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#93
     def Z3_fpa_get_sbits(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#94
     def Z3_fpa_is_numeral_inf(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#95
     def Z3_fpa_is_numeral_nan(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#96
     def Z3_fpa_is_numeral_negative(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#97
     def Z3_fpa_is_numeral_normal(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#98
     def Z3_fpa_is_numeral_positive(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#99
     def Z3_fpa_is_numeral_subnormal(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#100
     def Z3_fpa_is_numeral_zero(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#101
     def Z3_func_entry_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#102
     def Z3_func_entry_get_arg(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#103
     def Z3_func_entry_get_num_args(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#104
     def Z3_func_entry_get_value(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#105
     def Z3_func_entry_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#106
     def Z3_func_interp_add_entry(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#107
     def Z3_func_interp_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#108
     def Z3_func_interp_get_arity(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#109
     def Z3_func_interp_get_else(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#110
     def Z3_func_interp_get_entry(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#111
     def Z3_func_interp_get_num_entries(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#112
     def Z3_func_interp_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#113
     def Z3_func_interp_set_else(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#114
     def Z3_get_algebraic_number_lower(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#115
     def Z3_get_algebraic_number_upper(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#116
     def Z3_get_app_arg(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#117
     def Z3_get_app_decl(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#118
     def Z3_get_app_num_args(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#119
     def Z3_get_arity(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
+    # source://z3//lib/z3/very_low_level_auto.rb#120
     def Z3_get_array_arity(*args); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#121
     def Z3_get_array_sort_domain(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_get_array_sort_domain_n(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#122
+    def Z3_get_array_sort_domain_n(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#123
     def Z3_get_array_sort_range(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#124
     def Z3_get_as_array_func_decl(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#125
     def Z3_get_ast_hash(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#126
     def Z3_get_ast_id(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#127
     def Z3_get_ast_kind(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#128
     def Z3_get_bool_value(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#129
     def Z3_get_bv_sort_size(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#130
     def Z3_get_datatype_sort_constructor(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#131
     def Z3_get_datatype_sort_constructor_accessor(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#132
     def Z3_get_datatype_sort_num_constructors(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#133
     def Z3_get_datatype_sort_recognizer(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#134
     def Z3_get_decl_ast_parameter(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#135
     def Z3_get_decl_double_parameter(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#136
     def Z3_get_decl_func_decl_parameter(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#137
     def Z3_get_decl_int_parameter(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#138
     def Z3_get_decl_kind(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#139
     def Z3_get_decl_name(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#140
     def Z3_get_decl_num_parameters(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#141
     def Z3_get_decl_parameter_kind(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#142
     def Z3_get_decl_rational_parameter(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#143
     def Z3_get_decl_sort_parameter(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#144
     def Z3_get_decl_symbol_parameter(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#145
     def Z3_get_denominator(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
+    # source://z3//lib/z3/very_low_level_auto.rb#146
     def Z3_get_depth(*args); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#147
     def Z3_get_domain(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#148
     def Z3_get_domain_size(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#149
     def Z3_get_error_code(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#150
     def Z3_get_full_version(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#151
     def Z3_get_func_decl_id(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_get_global_param_descrs(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#152
+    def Z3_get_global_param_descrs(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#153
     def Z3_get_index_value(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#154
     def Z3_get_num_probes(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_get_num_simplifiers(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#155
+    def Z3_get_num_simplifiers(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#156
     def Z3_get_num_tactics(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#157
     def Z3_get_numeral_binary_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#158
     def Z3_get_numeral_decimal_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#159
     def Z3_get_numeral_double(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#160
     def Z3_get_numeral_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#161
     def Z3_get_numerator(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#162
     def Z3_get_pattern(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#163
     def Z3_get_pattern_num_terms(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#164
     def Z3_get_probe_name(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#165
     def Z3_get_quantifier_body(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#166
     def Z3_get_quantifier_bound_name(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#167
     def Z3_get_quantifier_bound_sort(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_get_quantifier_id(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#168
+    def Z3_get_quantifier_id(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#169
     def Z3_get_quantifier_no_pattern_ast(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#170
     def Z3_get_quantifier_num_bound(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#171
     def Z3_get_quantifier_num_no_patterns(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#172
     def Z3_get_quantifier_num_patterns(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#173
     def Z3_get_quantifier_pattern_ast(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_get_quantifier_skolem_id(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#174
+    def Z3_get_quantifier_skolem_id(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#175
     def Z3_get_quantifier_weight(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#176
     def Z3_get_range(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#177
     def Z3_get_re_sort_basis(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#178
     def Z3_get_relation_arity(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#179
     def Z3_get_relation_column(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#180
     def Z3_get_seq_sort_basis(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_get_simplifier_name(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#181
+    def Z3_get_simplifier_name(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#182
     def Z3_get_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#183
     def Z3_get_sort_id(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#184
     def Z3_get_sort_kind(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#185
     def Z3_get_sort_name(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_get_string_length(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#186
+    def Z3_get_string_length(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#187
     def Z3_get_symbol_int(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#188
     def Z3_get_symbol_kind(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#189
     def Z3_get_symbol_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#190
     def Z3_get_tactic_name(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#191
     def Z3_get_tuple_sort_field_decl(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#192
     def Z3_get_tuple_sort_mk_decl(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#193
     def Z3_get_tuple_sort_num_fields(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_get_version(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#194
     def Z3_global_param_reset_all(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#195
     def Z3_global_param_set(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#196
     def Z3_goal_assert(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#197
     def Z3_goal_convert_model(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#198
     def Z3_goal_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#199
     def Z3_goal_depth(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#200
     def Z3_goal_formula(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#201
     def Z3_goal_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#202
     def Z3_goal_inconsistent(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#203
     def Z3_goal_is_decided_sat(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#204
     def Z3_goal_is_decided_unsat(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#205
     def Z3_goal_num_exprs(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#206
     def Z3_goal_precision(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#207
     def Z3_goal_reset(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#208
     def Z3_goal_size(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#209
     def Z3_goal_to_dimacs_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#210
     def Z3_goal_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#211
     def Z3_goal_translate(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#212
     def Z3_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#213
     def Z3_interrupt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#214
     def Z3_is_algebraic_number(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#215
     def Z3_is_app(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#216
     def Z3_is_as_array(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_is_char_sort(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#217
+    def Z3_is_char_sort(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#218
     def Z3_is_eq_ast(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#219
     def Z3_is_eq_func_decl(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#220
     def Z3_is_eq_sort(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
+    # source://z3//lib/z3/very_low_level_auto.rb#221
     def Z3_is_ground(*args); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#222
     def Z3_is_lambda(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#223
     def Z3_is_numeral_ast(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#224
     def Z3_is_quantifier_exists(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#225
     def Z3_is_quantifier_forall(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
+    # source://z3//lib/z3/very_low_level_auto.rb#226
     def Z3_is_recursive_datatype_sort(*args); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#227
     def Z3_is_well_sorted(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_abs(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#228
+    def Z3_mk_abs(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_add(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_and(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#229
     def Z3_mk_array_default(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#230
     def Z3_mk_array_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#231
     def Z3_mk_as_array(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#232
     def Z3_mk_ast_map(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#233
     def Z3_mk_ast_vector(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_bit2bool(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#234
+    def Z3_mk_bit2bool(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#235
     def Z3_mk_bool_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#236
     def Z3_mk_bound(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#237
     def Z3_mk_bv2int(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#238
     def Z3_mk_bv_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#239
     def Z3_mk_bvadd(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#240
     def Z3_mk_bvadd_no_overflow(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#241
     def Z3_mk_bvadd_no_underflow(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#242
     def Z3_mk_bvand(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#243
     def Z3_mk_bvashr(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#244
     def Z3_mk_bvlshr(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#245
     def Z3_mk_bvmul(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#246
     def Z3_mk_bvmul_no_overflow(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#247
     def Z3_mk_bvmul_no_underflow(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#248
     def Z3_mk_bvnand(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#249
     def Z3_mk_bvneg(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#250
     def Z3_mk_bvneg_no_overflow(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#251
     def Z3_mk_bvnor(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#252
     def Z3_mk_bvnot(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#253
     def Z3_mk_bvor(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#254
     def Z3_mk_bvredand(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#255
     def Z3_mk_bvredor(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#256
     def Z3_mk_bvsdiv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#257
     def Z3_mk_bvsdiv_no_overflow(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#258
     def Z3_mk_bvsge(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#259
     def Z3_mk_bvsgt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#260
     def Z3_mk_bvshl(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#261
     def Z3_mk_bvsle(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#262
     def Z3_mk_bvslt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#263
     def Z3_mk_bvsmod(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#264
     def Z3_mk_bvsrem(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#265
     def Z3_mk_bvsub(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#266
     def Z3_mk_bvsub_no_overflow(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#267
     def Z3_mk_bvsub_no_underflow(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#268
     def Z3_mk_bvudiv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#269
     def Z3_mk_bvuge(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#270
     def Z3_mk_bvugt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#271
     def Z3_mk_bvule(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#272
     def Z3_mk_bvult(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#273
     def Z3_mk_bvurem(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#274
     def Z3_mk_bvxnor(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#275
     def Z3_mk_bvxor(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_char(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#276
+    def Z3_mk_char(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_char_from_bv(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#277
+    def Z3_mk_char_from_bv(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_char_is_digit(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#278
+    def Z3_mk_char_is_digit(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_char_le(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#279
+    def Z3_mk_char_le(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_char_sort(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#280
+    def Z3_mk_char_sort(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_char_to_bv(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#281
+    def Z3_mk_char_to_bv(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_char_to_int(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#282
+    def Z3_mk_char_to_int(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#283
     def Z3_mk_concat(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#284
     def Z3_mk_config(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#285
     def Z3_mk_const(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#286
     def Z3_mk_const_array(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_context(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#287
     def Z3_mk_context_rc(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_datatype_sort(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#288
+    def Z3_mk_datatype_sort(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_distinct(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#289
     def Z3_mk_div(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#290
     def Z3_mk_divides(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#291
     def Z3_mk_empty_set(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#292
     def Z3_mk_eq(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#293
     def Z3_mk_ext_rotate_left(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#294
     def Z3_mk_ext_rotate_right(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#295
     def Z3_mk_extract(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#296
     def Z3_mk_false(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#297
     def Z3_mk_finite_domain_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#298
     def Z3_mk_fixedpoint(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#299
     def Z3_mk_fpa_abs(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#300
     def Z3_mk_fpa_add(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#301
     def Z3_mk_fpa_div(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#302
     def Z3_mk_fpa_eq(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#303
     def Z3_mk_fpa_fma(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#304
     def Z3_mk_fpa_fp(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#305
     def Z3_mk_fpa_geq(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#306
     def Z3_mk_fpa_gt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#307
     def Z3_mk_fpa_inf(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#308
     def Z3_mk_fpa_is_infinite(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#309
     def Z3_mk_fpa_is_nan(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#310
     def Z3_mk_fpa_is_negative(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#311
     def Z3_mk_fpa_is_normal(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#312
     def Z3_mk_fpa_is_positive(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#313
     def Z3_mk_fpa_is_subnormal(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#314
     def Z3_mk_fpa_is_zero(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#315
     def Z3_mk_fpa_leq(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#316
     def Z3_mk_fpa_lt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#317
     def Z3_mk_fpa_max(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#318
     def Z3_mk_fpa_min(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#319
     def Z3_mk_fpa_mul(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#320
     def Z3_mk_fpa_nan(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#321
     def Z3_mk_fpa_neg(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#322
     def Z3_mk_fpa_numeral_double(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#323
     def Z3_mk_fpa_numeral_int(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#324
     def Z3_mk_fpa_numeral_int64_uint64(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#325
     def Z3_mk_fpa_numeral_int_uint(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#326
     def Z3_mk_fpa_rem(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#327
     def Z3_mk_fpa_round_nearest_ties_to_away(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#328
     def Z3_mk_fpa_round_nearest_ties_to_even(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#329
     def Z3_mk_fpa_round_to_integral(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#330
     def Z3_mk_fpa_round_toward_negative(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#331
     def Z3_mk_fpa_round_toward_positive(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#332
     def Z3_mk_fpa_round_toward_zero(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#333
     def Z3_mk_fpa_rounding_mode_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#334
     def Z3_mk_fpa_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#335
     def Z3_mk_fpa_sort_128(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#336
     def Z3_mk_fpa_sort_16(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#337
     def Z3_mk_fpa_sort_32(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#338
     def Z3_mk_fpa_sort_64(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#339
     def Z3_mk_fpa_sort_double(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#340
     def Z3_mk_fpa_sort_half(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#341
     def Z3_mk_fpa_sort_quadruple(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#342
     def Z3_mk_fpa_sort_single(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#343
     def Z3_mk_fpa_sqrt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#344
     def Z3_mk_fpa_sub(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#345
     def Z3_mk_fpa_to_fp_bv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#346
     def Z3_mk_fpa_to_fp_float(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#347
     def Z3_mk_fpa_to_fp_int_real(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#348
     def Z3_mk_fpa_to_fp_real(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#349
     def Z3_mk_fpa_to_fp_signed(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#350
     def Z3_mk_fpa_to_fp_unsigned(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#351
     def Z3_mk_fpa_to_ieee_bv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#352
     def Z3_mk_fpa_to_real(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#353
     def Z3_mk_fpa_to_sbv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#354
     def Z3_mk_fpa_to_ubv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#355
     def Z3_mk_fpa_zero(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#356
     def Z3_mk_fresh_const(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#357
     def Z3_mk_full_set(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#358
     def Z3_mk_ge(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#359
     def Z3_mk_goal(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#360
     def Z3_mk_gt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#361
     def Z3_mk_iff(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#362
     def Z3_mk_implies(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#363
     def Z3_mk_int(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#364
     def Z3_mk_int2bv(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#365
     def Z3_mk_int2real(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#366
     def Z3_mk_int64(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#367
     def Z3_mk_int_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#368
     def Z3_mk_int_symbol(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#369
     def Z3_mk_int_to_str(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#370
     def Z3_mk_is_int(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#371
     def Z3_mk_ite(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#372
     def Z3_mk_le(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#373
     def Z3_mk_linear_order(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#374
     def Z3_mk_lstring(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#375
     def Z3_mk_lt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#376
     def Z3_mk_mod(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#377
     def Z3_mk_model(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_mul(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#378
     def Z3_mk_not(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#379
     def Z3_mk_numeral(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#380
     def Z3_mk_optimize(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_or(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#381
     def Z3_mk_params(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#382
     def Z3_mk_partial_order(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#383
     def Z3_mk_piecewise_linear_order(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#384
     def Z3_mk_power(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#385
     def Z3_mk_probe(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_re_allchar(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#386
+    def Z3_mk_re_allchar(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#387
     def Z3_mk_re_complement(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_re_diff(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#388
+    def Z3_mk_re_diff(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#389
     def Z3_mk_re_empty(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#390
     def Z3_mk_re_full(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#391
     def Z3_mk_re_loop(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_re_power(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#392
+    def Z3_mk_re_power(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#393
     def Z3_mk_re_range(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#394
     def Z3_mk_real(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#395
     def Z3_mk_real2int(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_real_int64(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#396
+    def Z3_mk_real_int64(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#397
     def Z3_mk_real_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#398
     def Z3_mk_rem(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#399
     def Z3_mk_repeat(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#400
     def Z3_mk_rotate_left(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#401
     def Z3_mk_rotate_right(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_sbv_to_str(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#402
+    def Z3_mk_sbv_to_str(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#403
     def Z3_mk_select(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_seq_foldl(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#404
+    def Z3_mk_seq_foldl(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_seq_foldli(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#405
+    def Z3_mk_seq_foldli(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#406
     def Z3_mk_seq_last_index(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_seq_map(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#407
+    def Z3_mk_seq_map(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_seq_mapi(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#408
+    def Z3_mk_seq_mapi(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#409
     def Z3_mk_seq_nth(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#410
     def Z3_mk_set_add(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#411
     def Z3_mk_set_complement(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#412
     def Z3_mk_set_del(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#413
     def Z3_mk_set_difference(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#414
     def Z3_mk_set_has_size(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_set_intersect(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#415
     def Z3_mk_set_member(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#416
     def Z3_mk_set_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#417
     def Z3_mk_set_subset(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_set_union(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#418
     def Z3_mk_sign_ext(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#419
     def Z3_mk_simple_solver(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#420
     def Z3_mk_solver(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#421
     def Z3_mk_solver_for_logic(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#422
     def Z3_mk_solver_from_tactic(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#423
     def Z3_mk_store(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#424
     def Z3_mk_str_le(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#425
     def Z3_mk_str_lt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#426
     def Z3_mk_str_to_int(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_string_from_code(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#427
+    def Z3_mk_string_from_code(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#428
     def Z3_mk_string_symbol(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_string_to_code(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#429
+    def Z3_mk_string_to_code(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_sub(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#430
     def Z3_mk_tactic(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#431
     def Z3_mk_transitive_closure(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#432
     def Z3_mk_tree_order(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#433
     def Z3_mk_true(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_type_variable(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#434
+    def Z3_mk_type_variable(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_mk_ubv_to_str(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#435
+    def Z3_mk_ubv_to_str(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#436
     def Z3_mk_unary_minus(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#437
     def Z3_mk_uninterpreted_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#438
     def Z3_mk_unsigned_int(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#439
     def Z3_mk_unsigned_int64(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#440
     def Z3_mk_xor(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#441
     def Z3_mk_zero_ext(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#442
     def Z3_model_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_model_eval(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#443
     def Z3_model_extrapolate(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#444
     def Z3_model_get_const_decl(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#445
     def Z3_model_get_const_interp(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#446
     def Z3_model_get_func_decl(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#447
     def Z3_model_get_func_interp(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#448
     def Z3_model_get_num_consts(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#449
     def Z3_model_get_num_funcs(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#450
     def Z3_model_get_num_sorts(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#451
     def Z3_model_get_sort(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#452
     def Z3_model_get_sort_universe(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#453
     def Z3_model_has_interp(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#454
     def Z3_model_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#455
     def Z3_model_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#456
     def Z3_model_translate(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#457
     def Z3_optimize_assert(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#458
     def Z3_optimize_assert_and_track(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#459
     def Z3_optimize_assert_soft(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_optimize_check(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#460
     def Z3_optimize_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#461
     def Z3_optimize_from_file(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#462
     def Z3_optimize_from_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#463
     def Z3_optimize_get_assertions(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#464
     def Z3_optimize_get_help(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#465
     def Z3_optimize_get_lower(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#466
     def Z3_optimize_get_lower_as_vector(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#467
     def Z3_optimize_get_model(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#468
     def Z3_optimize_get_objectives(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#469
     def Z3_optimize_get_param_descrs(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#470
     def Z3_optimize_get_reason_unknown(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#471
     def Z3_optimize_get_statistics(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#472
     def Z3_optimize_get_unsat_core(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#473
     def Z3_optimize_get_upper(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#474
     def Z3_optimize_get_upper_as_vector(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#475
     def Z3_optimize_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#476
     def Z3_optimize_maximize(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#477
     def Z3_optimize_minimize(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#478
     def Z3_optimize_pop(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#479
     def Z3_optimize_push(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_optimize_set_initial_value(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#480
+    def Z3_optimize_set_initial_value(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#481
     def Z3_optimize_set_params(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#482
     def Z3_optimize_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#483
     def Z3_param_descrs_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#484
     def Z3_param_descrs_get_kind(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#485
     def Z3_param_descrs_get_name(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#486
     def Z3_param_descrs_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#487
     def Z3_param_descrs_size(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#488
     def Z3_param_descrs_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#489
     def Z3_params_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#490
     def Z3_params_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#491
     def Z3_params_set_bool(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#492
     def Z3_params_set_double(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#493
     def Z3_params_set_symbol(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#494
     def Z3_params_set_uint(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#495
     def Z3_params_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#496
     def Z3_params_validate(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#497
     def Z3_pattern_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#498
     def Z3_polynomial_subresultants(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#499
     def Z3_probe_and(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#500
     def Z3_probe_apply(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#501
     def Z3_probe_const(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#502
     def Z3_probe_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#503
     def Z3_probe_eq(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#504
     def Z3_probe_ge(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#505
     def Z3_probe_get_descr(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#506
     def Z3_probe_gt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#507
     def Z3_probe_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#508
     def Z3_probe_le(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#509
     def Z3_probe_lt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#510
     def Z3_probe_not(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#511
     def Z3_probe_or(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#512
     def Z3_qe_lite(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#513
     def Z3_rcf_add(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_coefficient(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#514
+    def Z3_rcf_coefficient(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#515
     def Z3_rcf_del(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#516
     def Z3_rcf_div(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#517
     def Z3_rcf_eq(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_extension_index(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#518
+    def Z3_rcf_extension_index(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#519
     def Z3_rcf_ge(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#520
     def Z3_rcf_gt(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_infinitesimal_name(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#521
+    def Z3_rcf_infinitesimal_name(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#522
     def Z3_rcf_inv(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_is_algebraic(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#523
+    def Z3_rcf_is_algebraic(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_is_infinitesimal(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#524
+    def Z3_rcf_is_infinitesimal(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_is_rational(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#525
+    def Z3_rcf_is_rational(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_is_transcendental(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#526
+    def Z3_rcf_is_transcendental(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#527
     def Z3_rcf_le(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#528
     def Z3_rcf_lt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#529
     def Z3_rcf_mk_e(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#530
     def Z3_rcf_mk_infinitesimal(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#531
     def Z3_rcf_mk_pi(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#532
     def Z3_rcf_mk_rational(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#533
     def Z3_rcf_mk_small_int(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#534
     def Z3_rcf_mul(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#535
     def Z3_rcf_neg(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#536
     def Z3_rcf_neq(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_num_coefficients(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#537
+    def Z3_rcf_num_coefficients(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_num_sign_condition_coefficients(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#538
+    def Z3_rcf_num_sign_condition_coefficients(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_num_sign_conditions(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#539
+    def Z3_rcf_num_sign_conditions(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#540
     def Z3_rcf_num_to_decimal_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#541
     def Z3_rcf_num_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#542
     def Z3_rcf_power(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_sign_condition_coefficient(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#543
+    def Z3_rcf_sign_condition_coefficient(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_sign_condition_sign(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#544
+    def Z3_rcf_sign_condition_sign(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#545
     def Z3_rcf_sub(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_rcf_transcendental_name(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#546
+    def Z3_rcf_transcendental_name(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#547
     def Z3_reset_memory(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level.rb#14
     def Z3_set_error_handler(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#548
     def Z3_set_param_value(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_simplifier_get_descr(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#549
+    def Z3_simplifier_get_descr(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#550
     def Z3_simplify(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#551
     def Z3_simplify_ex(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#552
     def Z3_simplify_get_help(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#553
     def Z3_simplify_get_param_descrs(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#554
     def Z3_solver_assert(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#555
     def Z3_solver_assert_and_track(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#556
     def Z3_solver_check(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
+    # source://z3//lib/z3/very_low_level_auto.rb#557
     def Z3_solver_congruence_explain(*args); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_solver_congruence_next(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#558
+    def Z3_solver_congruence_next(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_solver_congruence_root(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#559
+    def Z3_solver_congruence_root(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#560
     def Z3_solver_cube(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#561
     def Z3_solver_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#562
     def Z3_solver_from_file(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#563
     def Z3_solver_from_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#564
     def Z3_solver_get_assertions(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#565
     def Z3_solver_get_consequences(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#566
     def Z3_solver_get_help(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#567
     def Z3_solver_get_model(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#568
     def Z3_solver_get_non_units(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#569
     def Z3_solver_get_num_scopes(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#570
     def Z3_solver_get_param_descrs(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#571
     def Z3_solver_get_proof(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#572
     def Z3_solver_get_reason_unknown(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#573
     def Z3_solver_get_statistics(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#574
     def Z3_solver_get_trail(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#575
     def Z3_solver_get_units(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#576
     def Z3_solver_get_unsat_core(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#577
     def Z3_solver_import_model_converter(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#578
     def Z3_solver_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#579
     def Z3_solver_interrupt(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#580
     def Z3_solver_pop(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#581
     def Z3_solver_propagate_register(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#582
     def Z3_solver_push(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#584
     def Z3_solver_reset(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_solver_set_initial_value(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#585
+    def Z3_solver_set_initial_value(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#586
     def Z3_solver_set_params(*_arg0); end
 
-    # source://z3//lib/z3/very_low_level.rb#16
-    def Z3_solver_solve_for(*args); end
+    # source://z3//lib/z3/very_low_level_auto.rb#587
+    def Z3_solver_solve_for(*_arg0); end
 
+    # source://z3//lib/z3/very_low_level_auto.rb#588
     def Z3_solver_to_dimacs_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#589
     def Z3_solver_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#590
     def Z3_stats_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#591
     def Z3_stats_get_double_value(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#592
     def Z3_stats_get_key(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#593
     def Z3_stats_get_uint_value(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#594
     def Z3_stats_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#595
     def Z3_stats_is_double(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#596
     def Z3_stats_is_uint(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#597
     def Z3_stats_size(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#598
     def Z3_stats_to_string(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#599
     def Z3_tactic_and_then(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#600
     def Z3_tactic_apply(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#601
     def Z3_tactic_apply_ex(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#602
     def Z3_tactic_cond(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#603
     def Z3_tactic_dec_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#604
     def Z3_tactic_fail(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#605
     def Z3_tactic_fail_if(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#606
     def Z3_tactic_fail_if_not_decided(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#607
     def Z3_tactic_get_descr(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#608
     def Z3_tactic_get_help(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#609
     def Z3_tactic_get_param_descrs(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#610
     def Z3_tactic_inc_ref(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#611
     def Z3_tactic_or_else(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#612
     def Z3_tactic_par_and_then(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#613
     def Z3_tactic_repeat(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#614
     def Z3_tactic_skip(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#615
     def Z3_tactic_try_for(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#616
     def Z3_tactic_using_params(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#617
     def Z3_tactic_when(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#618
     def Z3_toggle_warning_messages(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#619
     def Z3_translate(*_arg0); end
+
+    # source://z3//lib/z3/very_low_level_auto.rb#620
     def Z3_update_param_value(*_arg0); end
 
     # source://z3//lib/z3/very_low_level.rb#11

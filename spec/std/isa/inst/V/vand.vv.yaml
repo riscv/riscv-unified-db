@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vand.vv
-long_name: No synopsis available
+long_name: Vector-vector bitwise AND
 description: |
-  No description available.
+  Performs bitwise AND on corresponding elements from vs1 and vs2 according to mask vm and stores results in vd. Element width is determined by SEW setting.
 definedBy:
   extension:
     name: Zvl32b

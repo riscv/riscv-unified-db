@@ -43,11 +43,11 @@ doc_license:
   url: https://creativecommons.org/licenses/by/4.0/
 requirements:
   allOf:
-    # Svade was defined with Sm 1.13
-    # it needs at least Sm 1.11 for menvcfg defintion
     - extension:
         name: Sm
-        version: ">= 1.13"
-    - not:
-        extension:
-          name: Svadu
+        version: ">= 1.12"
+    - anyOf:
+      - extension:
+          name: Sv32
+      - extension:
+          name: Sv39

@@ -10,8 +10,6 @@ module Unicode; end
 
 # source://unicode-display_width//lib/unicode/display_width/constants.rb#4
 class Unicode::DisplayWidth
-  # @return [DisplayWidth] a new instance of DisplayWidth
-  #
   # source://unicode-display_width//lib/unicode/display_width.rb#104
   def initialize(ambiguous: T.unsafe(nil), overwrite: T.unsafe(nil), emoji: T.unsafe(nil)); end
 
@@ -31,8 +29,6 @@ class Unicode::DisplayWidth
     # source://unicode-display_width//lib/unicode/display_width.rb#12
     def of(string, ambiguous = T.unsafe(nil), overwrite = T.unsafe(nil), options = T.unsafe(nil)); end
 
-    # Same as .width_no_overwrite - but with applying overwrites for each char
-    #
     # source://unicode-display_width//lib/unicode/display_width.rb#57
     def width_all_features(string, ambiguous, overwrite, options); end
 

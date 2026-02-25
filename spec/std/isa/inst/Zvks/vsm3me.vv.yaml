@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsm3me.vv
-long_name: No synopsis available
+long_name: Vector SM3 message expansion
 description: |
-  No description available.
+  Performs SM3 message expansion operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in the SM3 hash function message expansion phase.
 definedBy:
   extension:
     name: Zvksh

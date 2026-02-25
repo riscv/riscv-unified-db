@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vclmul.vx
-long_name: No synopsis available
+long_name: Vector carry-less multiply by scalar
 description: |
-  No description available.
+  Performs a carry-less multiply operation on each element in vector register vs2 with scalar register xs1, storing results in vector register vd according to mask vm.
 definedBy:
   extension:
     name: Zvbc

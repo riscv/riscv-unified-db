@@ -13,23 +13,13 @@ description:
   "
 long_name: TODO
 schema:
-  oneOf:
-    - when:
-        param:
-          name: MXLEN
-          equal: 32
-      schema:
-        type: integer
-        minimum: 0
-        maximum: 7
-    - when:
-        param:
-          name: MXLEN
-          equal: 64
-      schema:
-        type: integer
-        minimum: 0
-        maximum: 14
+  type: integer
+  minimum: 0
+  maximum: 14
 definedBy:
   extension:
     name: H
+
+requirements:
+  idl(): |
+    (MXLEN == 32) -> VMID_WIDTH <= 7;

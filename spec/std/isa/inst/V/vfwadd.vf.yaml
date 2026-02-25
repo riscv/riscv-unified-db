@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwadd.vf
-long_name: No synopsis available
+long_name: "Vector floating-point widening addition with scalar"
 description: |
-  No description available.
+  Performs floating-point addition on elements from vector register vs2 and floating-point scalar register fs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows IEEE 754 floating-point arithmetic rules.
 definedBy:
   extension:
     name: Zvl32b

@@ -95,13 +95,13 @@ class AwesomePrint::Formatter
   # source://awesome_print//lib/awesome_print/formatter.rb#16
   def initialize(inspector); end
 
-  # source://awesome_print//lib/awesome_print/ext/ostruct.rb#13
+  # source://awesome_print//lib/awesome_print/formatter.rb#36
   def cast(object, type); end
 
-  # source://awesome_print//lib/awesome_print/formatter.rb#36
+  # source://awesome_print//lib/awesome_print/ext/active_support.rb#10
   def cast_without_active_support(object, type); end
 
-  # source://awesome_print//lib/awesome_print/ext/active_support.rb#14
+  # source://awesome_print//lib/awesome_print/ext/ostruct.rb#9
   def cast_without_ostruct(object, type); end
 
   # source://awesome_print//lib/awesome_print/formatter.rb#23
@@ -154,7 +154,7 @@ class AwesomePrint::Formatter
   # source://awesome_print//lib/awesome_print/formatter.rb#86
   def awesome_struct(s); end
 
-  # source://awesome_print//lib/awesome_print/formatter.rb#90
+  # source://awesome_print//lib/awesome_print/formatter.rb#93
   def awesome_unboundmethod(m); end
 
   # source://awesome_print//lib/awesome_print/formatter.rb#119
@@ -576,10 +576,10 @@ module Kernel
   # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#8
   def ai(options = T.unsafe(nil)); end
 
-  # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#8
+  # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#17
   def awesome_inspect(options = T.unsafe(nil)); end
 
-  # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#19
+  # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#23
   def awesome_print(object, options = T.unsafe(nil)); end
 
   private
@@ -588,7 +588,7 @@ module Kernel
   def ap(object, options = T.unsafe(nil)); end
 
   class << self
-    # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#19
+    # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#25
     def ap(object, options = T.unsafe(nil)); end
   end
 end
@@ -601,7 +601,7 @@ end
 class String
   include ::Comparable
 
-  # source://awesome_print//lib/awesome_print/core_ext/string.rb#23
+  # source://awesome_print//lib/awesome_print/core_ext/string.rb#28
   def black(*html); end
 
   # source://awesome_print//lib/awesome_print/core_ext/string.rb#19
@@ -628,7 +628,7 @@ class String
   # source://awesome_print//lib/awesome_print/core_ext/string.rb#23
   def greenish(*html); end
 
-  # source://awesome_print//lib/awesome_print/core_ext/string.rb#23
+  # source://awesome_print//lib/awesome_print/core_ext/string.rb#29
   def pale(*html); end
 
   # source://awesome_print//lib/awesome_print/core_ext/string.rb#19

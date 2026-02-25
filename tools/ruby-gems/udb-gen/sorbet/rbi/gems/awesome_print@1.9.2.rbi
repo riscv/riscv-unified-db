@@ -13,9 +13,6 @@ module AwesomeMethodArray
   # source://awesome_print//lib/awesome_print/core_ext/awesome_method_array.rb#17
   def -(_other_ary); end
 
-  # Intercepting Array#grep needs a special treatment since grep accepts
-  # an optional block.
-  #
   # source://awesome_print//lib/awesome_print/core_ext/awesome_method_array.rb#33
   def grep(pattern, &blk); end
 end
@@ -23,42 +20,24 @@ end
 # source://awesome_print//lib/awesome_print/custom_defaults.rb#1
 module AwesomePrint
   class << self
-    # @return [Boolean]
-    #
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#12
     def console?; end
 
-    # Returns the value of attribute defaults.
-    #
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#3
     def defaults; end
 
-    # Sets the attribute defaults
-    #
-    # @param value the value to set the attribute defaults to.
-    #
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#3
     def defaults=(_arg0); end
 
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#20
     def diet_rb; end
 
-    # Returns the value of attribute force_colors.
-    #
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#3
     def force_colors; end
 
-    # Class accessor to force colorized output (ex. forked subprocess where TERM
-    # might be dumb).
-    # ---------------------------------------------------------------------------
-    #
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#8
     def force_colors!(value = T.unsafe(nil)); end
 
-    # Sets the attribute force_colors
-    #
-    # @param value the value to set the attribute force_colors to.
-    #
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#3
     def force_colors=(_arg0); end
 
@@ -68,8 +47,6 @@ module AwesomePrint
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#44
     def pry!; end
 
-    # @return [Boolean]
-    #
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#16
     def rails_console?; end
 
@@ -81,10 +58,6 @@ module AwesomePrint
 
     private
 
-    # Takes a value and returns true unless it is false or nil
-    # This is an alternative to the less readable !!(value)
-    # https://github.com/bbatsov/ruby-style-guide#no-bang-bang
-    #
     # source://awesome_print//lib/awesome_print/custom_defaults.rb#53
     def boolean(value); end
   end
@@ -92,15 +65,9 @@ end
 
 # source://awesome_print//lib/awesome_print/ext/active_support.rb#7
 module AwesomePrint::ActiveSupport
-  # Format ActiveSupport::TimeWithZone as standard Time.
-  # ------------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/ext/active_support.rb#28
   def awesome_active_support_time(object); end
 
-  # Format HashWithIndifferentAccess as standard Hash.
-  # ------------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/ext/active_support.rb#34
   def awesome_hash_with_indifferent_access(object); end
 
@@ -108,8 +75,6 @@ module AwesomePrint::ActiveSupport
   def cast_with_active_support(object, type); end
 
   class << self
-    # @private
-    #
     # source://awesome_print//lib/awesome_print/ext/active_support.rb#9
     def included(base); end
   end
@@ -117,9 +82,6 @@ end
 
 # source://awesome_print//lib/awesome_print/colorize.rb#4
 module AwesomePrint::Colorize
-  # Pick the color and apply it to the given string as necessary.
-  # ------------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/colorize.rb#8
   def colorize(str, type); end
 end
@@ -130,37 +92,24 @@ class AwesomePrint::Formatter
   include ::AwesomePrint::ActiveSupport
   include ::AwesomePrint::OpenStruct
 
-  # @return [Formatter] a new instance of Formatter
-  #
   # source://awesome_print//lib/awesome_print/formatter.rb#16
   def initialize(inspector); end
 
-  # Hook this when adding custom formatters. Check out lib/awesome_print/ext
-  # directory for custom formatters that ship with awesome_print.
-  # ------------------------------------------------------------------------------
-  #
-  # source://awesome_print//lib/awesome_print/ext/ostruct.rb#13
+  # source://awesome_print//lib/awesome_print/formatter.rb#36
   def cast(object, type); end
 
-  # source://awesome_print//lib/awesome_print/formatter.rb#36
+  # source://awesome_print//lib/awesome_print/ext/active_support.rb#10
   def cast_without_active_support(object, type); end
 
-  # source://awesome_print//lib/awesome_print/ext/active_support.rb#14
+  # source://awesome_print//lib/awesome_print/ext/ostruct.rb#9
   def cast_without_ostruct(object, type); end
 
-  # Main entry point to format an object.
-  # ------------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/formatter.rb#23
   def format(object, type = T.unsafe(nil)); end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatter.rb#12
   def inspector; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatter.rb#12
   def options; end
 
@@ -193,9 +142,6 @@ class AwesomePrint::Formatter
   # source://awesome_print//lib/awesome_print/formatter.rb#60
   def awesome_rational(n); end
 
-  # Catch all method to format an arbitrary object.
-  # ------------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/formatter.rb#44
   def awesome_self(object, type); end
 
@@ -208,18 +154,12 @@ class AwesomePrint::Formatter
   # source://awesome_print//lib/awesome_print/formatter.rb#86
   def awesome_struct(s); end
 
-  # source://awesome_print//lib/awesome_print/formatter.rb#90
+  # source://awesome_print//lib/awesome_print/formatter.rb#93
   def awesome_unboundmethod(m); end
 
   # source://awesome_print//lib/awesome_print/formatter.rb#119
   def convert_to_hash(object); end
 
-  # A class (ex. `Net::HTTP.Get`) might have `attr_reader :method` accessor
-  # which causes `object.method(:to_hash)` throw `ArgumentError (wrong number
-  # of arguments (given 1, expected 0))`. The following tries to avoid that.
-  #
-  # @return [Boolean]
-  #
   # source://awesome_print//lib/awesome_print/formatter.rb#113
   def has_method_accessor?(object); end
 end
@@ -232,26 +172,18 @@ module AwesomePrint::Formatters; end
 
 # source://awesome_print//lib/awesome_print/formatters/array_formatter.rb#5
 class AwesomePrint::Formatters::ArrayFormatter < ::AwesomePrint::Formatters::BaseFormatter
-  # @return [ArrayFormatter] a new instance of ArrayFormatter
-  #
   # source://awesome_print//lib/awesome_print/formatters/array_formatter.rb#8
   def initialize(array, inspector); end
 
-  # Returns the value of attribute array.
-  #
   # source://awesome_print//lib/awesome_print/formatters/array_formatter.rb#6
   def array; end
 
   # source://awesome_print//lib/awesome_print/formatters/array_formatter.rb#14
   def format; end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatters/array_formatter.rb#6
   def inspector; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatters/array_formatter.rb#6
   def options; end
 
@@ -278,8 +210,6 @@ class AwesomePrint::Formatters::ArrayFormatter < ::AwesomePrint::Formatters::Bas
   # source://awesome_print//lib/awesome_print/formatters/array_formatter.rb#60
   def methods_array; end
 
-  # @return [Boolean]
-  #
   # source://awesome_print//lib/awesome_print/formatters/array_formatter.rb#26
   def methods_array?; end
 
@@ -318,9 +248,6 @@ class AwesomePrint::Formatters::BaseFormatter
   # source://awesome_print//lib/awesome_print/formatters/base_formatter.rb#116
   def indent; end
 
-  # Indentation related methods
-  # -----------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/formatters/base_formatter.rb#108
   def indentation; end
 
@@ -336,29 +263,6 @@ class AwesomePrint::Formatters::BaseFormatter
   # source://awesome_print//lib/awesome_print/formatters/base_formatter.rb#120
   def outdent; end
 
-  # To support limited output, for example:
-  #
-  # ap ('a'..'z').to_a, :limit => 3
-  # [
-  #     [ 0] "a",
-  #     [ 1] .. [24],
-  #     [25] "z"
-  # ]
-  #
-  # ap (1..100).to_a, :limit => true # Default limit is 7.
-  # [
-  #     [ 0] 1,
-  #     [ 1] 2,
-  #     [ 2] 3,
-  #     [ 3] .. [96],
-  #     [97] 98,
-  #     [98] 99,
-  #     [99] 100
-  # ]
-  # ------------------------------------------------------------------------------
-  #
-  # @return [Boolean]
-  #
   # source://awesome_print//lib/awesome_print/formatters/base_formatter.rb#30
   def should_be_limited?; end
 end
@@ -368,104 +272,72 @@ AwesomePrint::Formatters::BaseFormatter::DEFAULT_LIMIT_SIZE = T.let(T.unsafe(nil
 
 # source://awesome_print//lib/awesome_print/formatters/class_formatter.rb#5
 class AwesomePrint::Formatters::ClassFormatter < ::AwesomePrint::Formatters::BaseFormatter
-  # @return [ClassFormatter] a new instance of ClassFormatter
-  #
   # source://awesome_print//lib/awesome_print/formatters/class_formatter.rb#9
   def initialize(klass, inspector); end
 
   # source://awesome_print//lib/awesome_print/formatters/class_formatter.rb#15
   def format; end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatters/class_formatter.rb#7
   def inspector; end
 
-  # Returns the value of attribute klass.
-  #
   # source://awesome_print//lib/awesome_print/formatters/class_formatter.rb#7
   def klass; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatters/class_formatter.rb#7
   def options; end
 end
 
 # source://awesome_print//lib/awesome_print/formatters/dir_formatter.rb#6
 class AwesomePrint::Formatters::DirFormatter < ::AwesomePrint::Formatters::BaseFormatter
-  # @return [DirFormatter] a new instance of DirFormatter
-  #
   # source://awesome_print//lib/awesome_print/formatters/dir_formatter.rb#10
   def initialize(dir, inspector); end
 
-  # Returns the value of attribute dir.
-  #
   # source://awesome_print//lib/awesome_print/formatters/dir_formatter.rb#8
   def dir; end
 
   # source://awesome_print//lib/awesome_print/formatters/dir_formatter.rb#16
   def format; end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatters/dir_formatter.rb#8
   def inspector; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatters/dir_formatter.rb#8
   def options; end
 end
 
 # source://awesome_print//lib/awesome_print/formatters/file_formatter.rb#6
 class AwesomePrint::Formatters::FileFormatter < ::AwesomePrint::Formatters::BaseFormatter
-  # @return [FileFormatter] a new instance of FileFormatter
-  #
   # source://awesome_print//lib/awesome_print/formatters/file_formatter.rb#10
   def initialize(file, inspector); end
 
-  # Returns the value of attribute file.
-  #
   # source://awesome_print//lib/awesome_print/formatters/file_formatter.rb#8
   def file; end
 
   # source://awesome_print//lib/awesome_print/formatters/file_formatter.rb#16
   def format; end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatters/file_formatter.rb#8
   def inspector; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatters/file_formatter.rb#8
   def options; end
 end
 
 # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#5
 class AwesomePrint::Formatters::HashFormatter < ::AwesomePrint::Formatters::BaseFormatter
-  # @return [HashFormatter] a new instance of HashFormatter
-  #
   # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#8
   def initialize(hash, inspector); end
 
   # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#14
   def format; end
 
-  # Returns the value of attribute hash.
-  #
   # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#6
   def hash; end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#6
   def inspector; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#6
   def options; end
 
@@ -483,8 +355,6 @@ class AwesomePrint::Formatters::HashFormatter < ::AwesomePrint::Formatters::Base
   # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#34
   def multiline_hash; end
 
-  # @return [Boolean]
-  #
   # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#30
   def multiline_hash?; end
 
@@ -506,65 +376,45 @@ class AwesomePrint::Formatters::HashFormatter < ::AwesomePrint::Formatters::Base
   # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#38
   def simple_hash; end
 
-  # @return [Boolean]
-  #
   # source://awesome_print//lib/awesome_print/formatters/hash_formatter.rb#81
   def symbol?(key); end
 end
 
 # source://awesome_print//lib/awesome_print/formatters/method_formatter.rb#5
 class AwesomePrint::Formatters::MethodFormatter < ::AwesomePrint::Formatters::BaseFormatter
-  # @return [MethodFormatter] a new instance of MethodFormatter
-  #
   # source://awesome_print//lib/awesome_print/formatters/method_formatter.rb#9
   def initialize(method, inspector); end
 
   # source://awesome_print//lib/awesome_print/formatters/method_formatter.rb#15
   def format; end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatters/method_formatter.rb#7
   def inspector; end
 
-  # Returns the value of attribute method.
-  #
   # source://awesome_print//lib/awesome_print/formatters/method_formatter.rb#7
   def method; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatters/method_formatter.rb#7
   def options; end
 end
 
 # source://awesome_print//lib/awesome_print/formatters/object_formatter.rb#5
 class AwesomePrint::Formatters::ObjectFormatter < ::AwesomePrint::Formatters::BaseFormatter
-  # @return [ObjectFormatter] a new instance of ObjectFormatter
-  #
   # source://awesome_print//lib/awesome_print/formatters/object_formatter.rb#9
   def initialize(object, inspector); end
 
   # source://awesome_print//lib/awesome_print/formatters/object_formatter.rb#16
   def format; end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatters/object_formatter.rb#7
   def inspector; end
 
-  # Returns the value of attribute object.
-  #
   # source://awesome_print//lib/awesome_print/formatters/object_formatter.rb#7
   def object; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatters/object_formatter.rb#7
   def options; end
 
-  # Returns the value of attribute variables.
-  #
   # source://awesome_print//lib/awesome_print/formatters/object_formatter.rb#7
   def variables; end
 
@@ -576,70 +426,48 @@ class AwesomePrint::Formatters::ObjectFormatter < ::AwesomePrint::Formatters::Ba
   # source://awesome_print//lib/awesome_print/formatters/object_formatter.rb#69
   def left_aligned; end
 
-  # @return [Boolean]
-  #
   # source://awesome_print//lib/awesome_print/formatters/object_formatter.rb#58
   def valid_instance_var?(variable_name); end
 end
 
 # source://awesome_print//lib/awesome_print/formatters/simple_formatter.rb#5
 class AwesomePrint::Formatters::SimpleFormatter < ::AwesomePrint::Formatters::BaseFormatter
-  # @return [SimpleFormatter] a new instance of SimpleFormatter
-  #
   # source://awesome_print//lib/awesome_print/formatters/simple_formatter.rb#9
   def initialize(string, type, inspector); end
 
   # source://awesome_print//lib/awesome_print/formatters/simple_formatter.rb#16
   def format; end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatters/simple_formatter.rb#7
   def inspector; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatters/simple_formatter.rb#7
   def options; end
 
-  # Returns the value of attribute string.
-  #
   # source://awesome_print//lib/awesome_print/formatters/simple_formatter.rb#7
   def string; end
 
-  # Returns the value of attribute type.
-  #
   # source://awesome_print//lib/awesome_print/formatters/simple_formatter.rb#7
   def type; end
 end
 
 # source://awesome_print//lib/awesome_print/formatters/struct_formatter.rb#5
 class AwesomePrint::Formatters::StructFormatter < ::AwesomePrint::Formatters::BaseFormatter
-  # @return [StructFormatter] a new instance of StructFormatter
-  #
   # source://awesome_print//lib/awesome_print/formatters/struct_formatter.rb#9
   def initialize(struct, inspector); end
 
   # source://awesome_print//lib/awesome_print/formatters/struct_formatter.rb#16
   def format; end
 
-  # Returns the value of attribute inspector.
-  #
   # source://awesome_print//lib/awesome_print/formatters/struct_formatter.rb#7
   def inspector; end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/formatters/struct_formatter.rb#7
   def options; end
 
-  # Returns the value of attribute struct.
-  #
   # source://awesome_print//lib/awesome_print/formatters/struct_formatter.rb#7
   def struct; end
 
-  # Returns the value of attribute variables.
-  #
   # source://awesome_print//lib/awesome_print/formatters/struct_formatter.rb#7
   def variables; end
 
@@ -654,43 +482,27 @@ end
 
 # source://awesome_print//lib/awesome_print/indentator.rb#2
 class AwesomePrint::Indentator
-  # @return [Indentator] a new instance of Indentator
-  #
   # source://awesome_print//lib/awesome_print/indentator.rb#6
   def initialize(indentation); end
 
   # source://awesome_print//lib/awesome_print/indentator.rb#11
   def indent; end
 
-  # Returns the value of attribute indentation.
-  #
   # source://awesome_print//lib/awesome_print/indentator.rb#4
   def indentation; end
 
-  # Returns the value of attribute shift_width.
-  #
   # source://awesome_print//lib/awesome_print/indentator.rb#4
   def shift_width; end
 end
 
 # source://awesome_print//lib/awesome_print/inspector.rb#9
 class AwesomePrint::Inspector
-  # @return [Inspector] a new instance of Inspector
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#14
   def initialize(options = T.unsafe(nil)); end
 
-  # Dispatcher that detects data nesting and invokes object-aware formatter.
-  # ---------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#71
   def awesome(object); end
 
-  # Return true if we are to colorize the output.
-  # ---------------------------------------------------------------------------
-  #
-  # @return [Boolean]
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#86
   def colorize?; end
 
@@ -700,77 +512,38 @@ class AwesomePrint::Inspector
   # source://awesome_print//lib/awesome_print/inspector.rb#65
   def increase_indentation(&block); end
 
-  # Returns the value of attribute indentator.
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#10
   def indentator; end
 
-  # Sets the attribute indentator
-  #
-  # @param value the value to set the attribute indentator to.
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#10
   def indentator=(_arg0); end
 
-  # Returns the value of attribute options.
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#10
   def options; end
 
-  # Sets the attribute options
-  #
-  # @param value the value to set the attribute options to.
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#10
   def options=(_arg0); end
 
   private
 
-  # @return [Boolean]
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#152
   def dotfile_readable?(dotfile); end
 
-  # This method needs to be mocked during testing so that it always loads
-  # predictable values
-  # ---------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#147
   def load_dotfile; end
 
-  # Load ~/.aprc file with custom defaults that override default options.
-  # ---------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#162
   def merge_custom_defaults!; end
 
-  # Update @options by first merging the :color hash and then the remaining
-  # keys.
-  # ---------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#139
   def merge_options!(options = T.unsafe(nil)); end
 
-  # Format nested data, for example:
-  #   arr = [1, 2]; arr << arr
-  #   => [1,2, [...]]
-  #   hash = { :a => 1 }; hash[:b] = hash
-  #   => { :a => 1, :b => {...} }
-  # ---------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#107
   def nested(object); end
 
-  # Turn class name into symbol, ex: Hello::World => :hello_world. Classes
-  # that inherit from Array, Hash, File, Dir, and Struct are treated as the
-  # base class.
-  # ---------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#125
   def printable(object); end
 
-  # ---------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/inspector.rb#117
   def unnested(object); end
 end
@@ -780,9 +553,6 @@ AwesomePrint::Inspector::AP = T.let(T.unsafe(nil), Symbol)
 
 # source://awesome_print//lib/awesome_print/core_ext/logger.rb#7
 module AwesomePrint::Logger
-  # Add ap method to logger
-  # ------------------------------------------------------------------------------
-  #
   # source://awesome_print//lib/awesome_print/core_ext/logger.rb#11
   def ap(object, level = T.unsafe(nil)); end
 end
@@ -796,8 +566,6 @@ module AwesomePrint::OpenStruct
   def cast_with_ostruct(object, type); end
 
   class << self
-    # @private
-    #
     # source://awesome_print//lib/awesome_print/ext/ostruct.rb#8
     def included(base); end
   end
@@ -808,10 +576,10 @@ module Kernel
   # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#8
   def ai(options = T.unsafe(nil)); end
 
-  # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#8
+  # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#17
   def awesome_inspect(options = T.unsafe(nil)); end
 
-  # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#19
+  # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#23
   def awesome_print(object, options = T.unsafe(nil)); end
 
   private
@@ -820,7 +588,7 @@ module Kernel
   def ap(object, options = T.unsafe(nil)); end
 
   class << self
-    # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#19
+    # source://awesome_print//lib/awesome_print/core_ext/kernel.rb#25
     def ap(object, options = T.unsafe(nil)); end
   end
 end
@@ -833,7 +601,7 @@ end
 class String
   include ::Comparable
 
-  # source://awesome_print//lib/awesome_print/core_ext/string.rb#23
+  # source://awesome_print//lib/awesome_print/core_ext/string.rb#28
   def black(*html); end
 
   # source://awesome_print//lib/awesome_print/core_ext/string.rb#19
@@ -860,7 +628,7 @@ class String
   # source://awesome_print//lib/awesome_print/core_ext/string.rb#23
   def greenish(*html); end
 
-  # source://awesome_print//lib/awesome_print/core_ext/string.rb#23
+  # source://awesome_print//lib/awesome_print/core_ext/string.rb#29
   def pale(*html); end
 
   # source://awesome_print//lib/awesome_print/core_ext/string.rb#19

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwsubu.vv
-long_name: No synopsis available
+long_name: "Vector widening unsigned subtraction"
 description: |
-  No description available.
+  Performs unsigned subtraction on elements from vector registers vs2 and vs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
 definedBy:
   extension:
     name: Zvl32b

@@ -22,19 +22,19 @@ class TTY::ProgressBar
   # source://tty-progressbar//lib/tty/progressbar.rb#170
   def attach_to(multibar); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def bar_format(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def clear(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def clear_head(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#489
   def clear_line; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def complete(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#499
@@ -52,7 +52,7 @@ class TTY::ProgressBar
   # source://tty-progressbar//lib/tty/progressbar.rb#526
   def done?; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#43
   def elapsed_time(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#424
@@ -64,28 +64,28 @@ class TTY::ProgressBar
   # source://tty-progressbar//lib/tty/progressbar.rb#31
   def format=(_arg0); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def frequency(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def head(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def hide_cursor(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def incomplete(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#160
   def indeterminate?; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def inset(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#577
   def inspect; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def interval(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#259
@@ -94,7 +94,7 @@ class TTY::ProgressBar
   # source://tty-progressbar//lib/tty/progressbar.rb#551
   def log(message); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#41
   def mean_rate(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#367
@@ -103,7 +103,7 @@ class TTY::ProgressBar
   # source://tty-progressbar//lib/tty/progressbar.rb#538
   def on(name, &callback); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def output(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#478
@@ -112,7 +112,7 @@ class TTY::ProgressBar
   # source://tty-progressbar//lib/tty/progressbar.rb#517
   def paused?; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#41
   def rate(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#323
@@ -139,7 +139,7 @@ class TTY::ProgressBar
   # source://tty-progressbar//lib/tty/progressbar.rb#191
   def start; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#43
   def start_time(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#457
@@ -151,10 +151,10 @@ class TTY::ProgressBar
   # source://tty-progressbar//lib/tty/progressbar.rb#568
   def to_s; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def total(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def unknown(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#276
@@ -163,10 +163,10 @@ class TTY::ProgressBar
   # source://tty-progressbar//lib/tty/progressbar.rb#180
   def use(formatter_class); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def width(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar.rb#37
   def width=(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar.rb#393
@@ -335,13 +335,13 @@ module TTY::ProgressBar::Converter
   def to_time(seconds); end
 
   class << self
-    # source://tty-progressbar//lib/tty/progressbar/converter.rb#68
+    # source://tty-progressbar//lib/tty/progressbar/converter.rb#83
     def to_bytes(value, decimals: T.unsafe(nil), separator: T.unsafe(nil), unit_separator: T.unsafe(nil)); end
 
-    # source://tty-progressbar//lib/tty/progressbar/converter.rb#46
+    # source://tty-progressbar//lib/tty/progressbar/converter.rb#50
     def to_seconds(seconds, precision: T.unsafe(nil)); end
 
-    # source://tty-progressbar//lib/tty/progressbar/converter.rb#17
+    # source://tty-progressbar//lib/tty/progressbar/converter.rb#35
     def to_time(seconds); end
   end
 end
@@ -403,13 +403,13 @@ class TTY::ProgressBar::Formatters
   # source://tty-progressbar//lib/tty/progressbar/formatters.rb#29
   def initialize(pipeline = T.unsafe(nil)); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar/formatters.rb#26
   def decorate(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar/formatters.rb#36
   def load(progress); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar/formatters.rb#26
   def use(*args, **_arg1, &block); end
 end
 
@@ -430,7 +430,7 @@ class TTY::ProgressBar::Meter
   # source://tty-progressbar//lib/tty/progressbar/meter.rb#16
   def initialize(interval); end
 
-  # source://tty-progressbar//lib/tty/progressbar/meter.rb#98
+  # source://tty-progressbar//lib/tty/progressbar/meter.rb#106
   def avg_rate; end
 
   # source://tty-progressbar//lib/tty/progressbar/meter.rb#111
@@ -467,7 +467,7 @@ class TTY::ProgressBar::Multi
   # source://tty-progressbar//lib/tty/progressbar/multi.rb#46
   def initialize(*args); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar/multi.rb#19
   def [](*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar/multi.rb#165
@@ -479,16 +479,16 @@ class TTY::ProgressBar::Multi
   # source://tty-progressbar//lib/tty/progressbar/multi.rb#187
   def done?; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar/multi.rb#19
   def each(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar/multi.rb#19
   def empty?(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar/multi.rb#214
   def finish; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar/multi.rb#19
   def length(*args, **_arg1, &block); end
 
   # source://tty-progressbar//lib/tty/progressbar/multi.rb#242
@@ -536,10 +536,10 @@ class TTY::ProgressBar::Multi
   # source://tty-progressbar//lib/tty/progressbar/multi.rb#143
   def total; end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar/multi.rb#21
   def width(*args, **_arg1, &block); end
 
-  # source://forwardable/1.3.3/forwardable.rb#231
+  # source://tty-progressbar//lib/tty/progressbar/multi.rb#21
   def width=(*args, **_arg1, &block); end
 
   private

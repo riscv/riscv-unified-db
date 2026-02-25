@@ -1,6 +1,7 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
+# typed: false
 # frozen_string_literal: true
 
 require "ostruct"
@@ -19,7 +20,7 @@ XmockensionParameterWithValue = Struct.new(:name, :desc, :schema, :extra_validat
 # ConfiguredArchitecture mock that knows about XLEN and extensions
 class MockConfiguredArchitecture
   def param_values = { "XLEN" => 32 }
-  def params_with_value = [XmockensionParameterWithValue.new("XLEN", "mxlen", {"type" => "integer", "enum" => [32, 64]}, nil, nil, 32)]
+  def params_with_value = [XmockensionParameterWithValue.new("XLEN", "mxlen", { "type" => "integer", "enum" => [32, 64] }, nil, nil, 32)]
   def params_without_value = []
   def params = []
   def extensions = [Xmockension.new("I")]

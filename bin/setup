@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ -v UDB_SETUP_COMPLETE ]; then
+  return
+fi
+UDB_SETUP_COMPLETE=true
+
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 cd "$ROOT" || exit
 
@@ -34,17 +39,13 @@ source "${ROOT}/bin/.functions.sh"
 # A docker container run using Podman. All commands on the host (using ./do or ./bin/*) are run in the context of a Docker image.
 # Podman provides a Docker-compatible CLI.
 #
-# = singularity
 #
-# An apptainer/singularity container. All commands on the host (using ./do or ./bin/*) are run in the context of an Apptainer/Singularity image.
-#
-#
-# ALL THREE CONTAINERS ARE (in theory) IDENTICAL. Which one you use is a preference of your setup and installed
+# BOTH CONTAINERS ARE (in theory) IDENTICAL. Which one you use is a preference of your setup and installed
 # software.
 
 CONTAINER_TYPE=$(get_container_type)
 
-if [ "${CONTAINER_TYPE}" != "docker" ] && [ "${CONTAINER_TYPE}" != "podman" ] && [ "${CONTAINER_TYPE}" != "singularity" ] && [ "${CONTAINER_TYPE}" != "native" ]; then
+if [ "${CONTAINER_TYPE}" != "docker" ] && [ "${CONTAINER_TYPE}" != "podman" ] && [ "${CONTAINER_TYPE}" != "native" ]; then
   echo "BAD CONTAINER TYPE: ${CONTAINER_TYPE}"
 fi
 
@@ -85,22 +86,14 @@ fi
 
 echo "Using ${CONTAINER_TYPE} environment"
 
-if [ -v GITHUB_ACTIONS ] && [ "${CONTAINER_TYPE}" == "singularity" ]; then
-    echo "Running in a GitHub Action"
-    CONTAINER_PATH=${ROOT}/.singularity/image.sif
-
-    # needed to get singularity working on Ubuntu 24.04
-    # see https://github.com/lima-vm/lima/issues/2319
-    sudo /bin/bash -c "echo \"kernel.apparmor_restrict_unprivileged_userns = 0\" >/etc/sysctl.d/99-userns.conf"
-    sudo sysctl --system
-elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
-    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" | grep -q udb ; then
+if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
+    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" --format table | grep -q udb ; then
         echo "Image not found locally. Attempting to pull from registry..."
         if ${CONTAINER_TYPE} pull "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" 2>/dev/null; then
             echo "Successfully pulled image from registry."
         else
             echo "Could not pull image from registry. Building locally..."
-            ${CONTAINER_TYPE} build -t "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" -f .devcontainer/Dockerfile .
+            build_container
         fi
     fi
     if [ "${CONTAINER_TYPE}" == "podman" ]; then
@@ -119,14 +112,12 @@ elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ];
         GIT_PATH=$(git rev-parse --git-common-dir | tr -d '\n' | xargs dirname)
         CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${GIT_PATH}:${GIT_PATH}${SELINUX_LABEL}"
     fi
-    if ! [ -v GITHUB_ACTIONS ]; then
-      # create empty home directory (used as location to cache files by several tools)
-      if ! [ -d "${ROOT}"/.docker-home ]; then
-        mkdir "${ROOT}"/.docker-home
-      fi
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e HOME"
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${ROOT}/.docker-home:${HOME}"
+    # create empty home directory (used as location to cache files by several tools)
+    if ! [ -d "${ROOT}"/.docker-home ]; then
+      mkdir "${ROOT}"/.docker-home
     fi
+    CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e HOME"
+    CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${ROOT}/.docker-home:${HOME}"
 
     mkdir -p "${ROOT}/.cache"
 
@@ -145,26 +136,11 @@ elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ];
       CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e PRE_COMMIT_HOME"
     fi
 
-    if [ -v XDG_CACHE_HOME ]; then
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e XDG_CACHE_HOME"
-    fi
-
+    CONTAINER_NAME="$REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
     if [ -t 1 ] && [ -t 0 ]; then
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm -it ${CONTAINER_RUN_FLAGS} -w ${ROOT} $REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
+      CONTAINER_BASE="${CONTAINER_TYPE} run --rm -it ${CONTAINER_RUN_FLAGS} -w ${ROOT} $CONTAINER_NAME"
     else
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} $REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
-    fi
-elif [ "${CONTAINER_TYPE}" == "singularity" ]; then
-    CONTAINER_PATH=${ROOT}/.singularity/image-$CONTAINER_TAG.sif
-    if [ ! -f "${CONTAINER_PATH}" ]; then
-      echo "Fetching container..."
-      if [ ! -d "${ROOT}/.singularity" ]; then
-        mkdir -p "${ROOT}/.singularity"
-      fi
-      singularity pull "${CONTAINER_PATH}" "oras://$REGISTRY/$OWNER/spec-generator:$CONTAINER_TAG"
-    fi
-    if [ -v UDB_CONTAINER_BIND ]; then
-      EXTRA_BIND="--bind ${UDB_CONTAINER_BIND}:${UDB_CONTAINER_BIND}"
+      CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} $CONTAINER_NAME"
     fi
 elif [ "${CONTAINER_TYPE}" != "native" ]; then
     echo "Bad container type: ${CONTAINER_TYPE}" 1>&2
@@ -175,13 +151,6 @@ if [ "${CONTAINER_TYPE}" == "native" ]; then
     RUN=""
 elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
     RUN="${CONTAINER_BASE}"
-elif [ "${CONTAINER_TYPE}" == "singularity" ]; then
-    if [ -f "$ROOT/.git" ]; then
-        # if this is a worktree, need to add the parent git repo in, too
-        GIT_PATH=$(git rev-parse --git-common-dir | tr -d '\n' | xargs dirname)
-        GIT_BIND="--bind ${GIT_PATH}:${GIT_PATH}"
-    fi
-    RUN="singularity run ${GIT_BIND} ${EXTRA_BIND} ${CONTAINER_PATH}"
 else
     echo "Bad container type: ${CONTAINER_TYPE}" 1>&2
     exit 1
@@ -198,8 +167,7 @@ RAKE="${RUN} bundle exec rake"
 NPM="${RUN} npm"
 NPX="${RUN} npx"
 NODE="${RUN} node"
-PYTHON="${RUN} /opt/venv/bin/python3"
-PIP="${RUN} /opt/venv/bin/pip"
+PYTHON="${RUN} uv run python"
 BASH="${RUN} bash"
 GPP="${RUN} g++"
 GDB="${RUN} gdb"
@@ -207,9 +175,46 @@ CLANG_FORMAT="${RUN} clang-format"
 CLANG_TIDY="${RUN} clang-tidy"
 MAKE="${RUN} make"
 
-if [ ! -v GITHUB_ACTIONS ]; then
+# Download Z3 shared library from GitHub Releases into the XDG cache.
+# This mirrors what ext/udb_z3_download/extconf.rb does at gem-install time
+setup_z3() {
+  local z3_version
+  z3_version=$($RUN ruby -e "load '${ROOT}/tools/ruby-gems/udb/lib/udb/z3_version.rb'; puts Udb::Z3_VERSION" | tr -d '[:space:]')
 
-  git config --local commit.template ${ROOT}/.gitmessage
+  local cpu
+  case "$(uname -m)" in
+    x86_64)  cpu="x64"   ;;
+    aarch64) cpu="arm64" ;;
+    arm64)   cpu="arm64" ;;
+    *)
+      echo "setup_z3: unsupported architecture $(uname -m), skipping Z3 download" >&2
+      return 0
+      ;;
+  esac
+
+  local xdg_cache
+  if [ "$CONTAINER_TYPE" == "native" ]; then
+    xdg_cache="${XDG_CACHE_HOME:-${H}/.cache}"
+  else
+    xdg_cache="${ROOT}/.docker-home/.cache"
+  fi
+  local dest_dir="${xdg_cache}/udb/z3/${z3_version}/${cpu}"
+  local dest_file="${dest_dir}/libz3.so"
+
+  if [ -f "${dest_file}" ]; then
+    return 0
+  fi
+
+
+  echo "Downloading Z3 (${z3_version}, ${cpu}) from GitHub Releases..."
+  mkdir -p "${dest_dir}"
+  curl -o "${dest_file}" -L https://github.com/riscv/riscv-unified-db/releases/download/"${z3_version}"/libz3-${cpu}.so
+  echo "  Saved to ${dest_file}"
+}
+
+setup_z3
+
+if [ ! -v GITHUB_ACTIONS ]; then
 
   GIT_REPO_ROOT=$(git rev-parse --path-format=absolute --git-common-dir | tr -d '\n')
   if [ ! -f "$GIT_REPO_ROOT/hooks/pre-commit" ]; then

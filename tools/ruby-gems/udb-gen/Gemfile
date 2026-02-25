@@ -7,8 +7,8 @@
 source "https://rubygems.org"
 
 # explicit require the local gems so that bundler can find them
-gem "idlc", path: "../idlc"
-gem "udb", path: "../udb"
-gem "udb_helpers", path: "../udb_helpers"
+gemspec path: "../idlc"
+gemspec path: "../udb"
+gemspec path: "../udb_helpers"
 
 gemspec
