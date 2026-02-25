@@ -7488,7 +7488,7 @@ module Idl
     def to_h
       {
         "kind" => "bits_literal",
-        "width" => width(nil).to_s,
+        "width" => (width(nil) == :unknown) ? "MXLEN" : width(nil).to_s,
         "value" => unsigned_value,
         "signed" => signed?,
         "radix" => radix,
