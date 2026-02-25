@@ -8,6 +8,9 @@
 # source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#14
 class Array
   include ::Enumerable
+
+  # source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#15
+  def nil_or_empty?; end
 end
 
 # source://asciidoctor//lib/asciidoctor.rb#48
@@ -28,10 +31,10 @@ module Asciidoctor
     # source://asciidoctor//lib/asciidoctor/load.rb#115
     def load_file(filename, options = T.unsafe(nil)); end
 
-    # source://asciidoctor//lib/asciidoctor/convert.rb#34
+    # source://asciidoctor//lib/asciidoctor/convert.rb#194
     def render(input, options = T.unsafe(nil)); end
 
-    # source://asciidoctor//lib/asciidoctor/convert.rb#189
+    # source://asciidoctor//lib/asciidoctor/convert.rb#197
     def render_file(filename, options = T.unsafe(nil)); end
   end
 end
@@ -59,7 +62,7 @@ class Asciidoctor::AbstractBlock < ::Asciidoctor::AbstractNode
   # source://asciidoctor//lib/asciidoctor/abstract_block.rb#226
   def alt; end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#115
+  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#122
   def append(block); end
 
   # source://asciidoctor//lib/asciidoctor/abstract_block.rb#389
@@ -137,7 +140,7 @@ class Asciidoctor::AbstractBlock < ::Asciidoctor::AbstractNode
   # source://asciidoctor//lib/asciidoctor/abstract_block.rb#24
   def numeral=(_arg0); end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#176
+  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#182
   def query(selector = T.unsafe(nil), &block); end
 
   # source://asciidoctor//lib/asciidoctor/abstract_block.rb#435
@@ -146,7 +149,7 @@ class Asciidoctor::AbstractBlock < ::Asciidoctor::AbstractNode
   # source://asciidoctor//lib/asciidoctor/abstract_block.rb#324
   def remove_sub(sub); end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#74
+  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#80
   def render; end
 
   # source://asciidoctor//lib/asciidoctor/abstract_block.rb#218
@@ -432,7 +435,7 @@ class Asciidoctor::Block < ::Asciidoctor::AbstractBlock
   # source://asciidoctor//lib/asciidoctor/block.rb#50
   def initialize(parent, context, opts = T.unsafe(nil)); end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_node.rb#14
+  # source://asciidoctor//lib/asciidoctor/block.rb#27
   def blockname; end
 
   # source://asciidoctor//lib/asciidoctor/block.rb#108
@@ -677,7 +680,7 @@ end
 
 # source://asciidoctor//lib/asciidoctor/converter.rb#103
 module Asciidoctor::Converter::BackendTraits
-  # source://asciidoctor//lib/asciidoctor/converter.rb#132
+  # source://asciidoctor//lib/asciidoctor/converter.rb#136
   def backend_info(basebackend = T.unsafe(nil)); end
 
   # source://asciidoctor//lib/asciidoctor/converter.rb#132
@@ -972,7 +975,7 @@ class Asciidoctor::Document < ::Asciidoctor::AbstractBlock
   # source://asciidoctor//lib/asciidoctor/document.rb#567
   def counter(name, seed = T.unsafe(nil)); end
 
-  # source://asciidoctor//lib/asciidoctor/document.rb#586
+  # source://asciidoctor//lib/asciidoctor/document.rb#590
   def counter_increment(counter_name, block); end
 
   # source://asciidoctor//lib/asciidoctor/document.rb#205
@@ -1014,7 +1017,7 @@ class Asciidoctor::Document < ::Asciidoctor::AbstractBlock
   # source://asciidoctor//lib/asciidoctor/document.rb#642
   def footnotes?; end
 
-  # source://asciidoctor//lib/asciidoctor/document.rb#795
+  # source://asciidoctor//lib/asciidoctor/document.rb#798
   def has_header?; end
 
   # source://asciidoctor//lib/asciidoctor/document.rb#208
@@ -1026,7 +1029,7 @@ class Asciidoctor::Document < ::Asciidoctor::AbstractBlock
   # source://asciidoctor//lib/asciidoctor/document.rb#586
   def increment_and_store_counter(counter_name, block); end
 
-  # source://asciidoctor//lib/asciidoctor/document.rb#721
+  # source://asciidoctor//lib/asciidoctor/document.rb#738
   def name(opts = T.unsafe(nil)); end
 
   # source://asciidoctor//lib/asciidoctor/document.rb#654
@@ -1065,13 +1068,13 @@ class Asciidoctor::Document < ::Asciidoctor::AbstractBlock
   # source://asciidoctor//lib/asciidoctor/document.rb#226
   def reader; end
 
-  # source://asciidoctor//lib/asciidoctor/document.rb#199
+  # source://asciidoctor//lib/asciidoctor/document.rb#202
   def references; end
 
   # source://asciidoctor//lib/asciidoctor/document.rb#593
   def register(type, value); end
 
-  # source://asciidoctor//lib/asciidoctor/document.rb#929
+  # source://asciidoctor//lib/asciidoctor/document.rb#972
   def render(opts = T.unsafe(nil)); end
 
   # source://asciidoctor//lib/asciidoctor/document.rb#612
@@ -1175,59 +1178,129 @@ end
 
 # source://asciidoctor//lib/asciidoctor/document.rb#141
 class Asciidoctor::Document::Author < ::Struct
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def email; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def email=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def firstname; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def firstname=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def initials; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def initials=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def lastname; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def lastname=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def middlename; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def middlename=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def name; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#141
   def name=(_); end
 
   class << self
+    # source://asciidoctor//lib/asciidoctor/document.rb#141
     def [](*_arg0); end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#141
     def inspect; end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#141
     def keyword_init?; end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#141
     def members; end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#141
     def new(*_arg0); end
   end
 end
 
 # source://asciidoctor//lib/asciidoctor/document.rb#89
 class Asciidoctor::Document::Footnote < ::Struct
+  # source://asciidoctor//lib/asciidoctor/document.rb#89
   def id; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#89
   def id=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#89
   def index; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#89
   def index=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#89
   def text; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#89
   def text=(_); end
 
   class << self
+    # source://asciidoctor//lib/asciidoctor/document.rb#89
     def [](*_arg0); end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#89
     def inspect; end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#89
     def keyword_init?; end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#89
     def members; end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#89
     def new(*_arg0); end
   end
 end
 
 # source://asciidoctor//lib/asciidoctor/document.rb#85
 class Asciidoctor::Document::ImageReference < ::Struct
+  # source://asciidoctor//lib/asciidoctor/document.rb#85
   def imagesdir; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#85
   def imagesdir=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#85
   def target; end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#85
   def target=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/document.rb#86
   def to_s; end
 
   class << self
+    # source://asciidoctor//lib/asciidoctor/document.rb#85
     def [](*_arg0); end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#85
     def inspect; end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#85
     def keyword_init?; end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#85
     def members; end
+
+    # source://asciidoctor//lib/asciidoctor/document.rb#85
     def new(*_arg0); end
   end
 end
@@ -1252,7 +1325,7 @@ class Asciidoctor::Document::Title
   # source://asciidoctor//lib/asciidoctor/document.rb#131
   def subtitle?; end
 
-  # source://asciidoctor//lib/asciidoctor/document.rb#108
+  # source://asciidoctor//lib/asciidoctor/document.rb#109
   def title; end
 
   # source://asciidoctor//lib/asciidoctor/document.rb#135
@@ -1329,16 +1402,16 @@ module Asciidoctor::Extensions::BlockProcessorDsl
   include ::Asciidoctor::Extensions::ProcessorDsl
   include ::Asciidoctor::Extensions::SyntaxProcessorDsl
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#565
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#570
   def bind_to(*value); end
 
   # source://asciidoctor//lib/asciidoctor/extensions.rb#565
   def contexts(*value); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#565
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#569
   def on_context(*value); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#565
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#568
   def on_contexts(*value); end
 end
 
@@ -1442,10 +1515,10 @@ module Asciidoctor::Extensions::InlineMacroProcessorDsl
   # source://asciidoctor//lib/asciidoctor/extensions.rb#652
   def match(value); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#645
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#648
   def match_format(value); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#645
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#650
   def using_format(value); end
 end
 
@@ -1472,7 +1545,7 @@ module Asciidoctor::Extensions::MacroProcessorDsl
   # source://asciidoctor//lib/asciidoctor/extensions.rb#591
   def resolve_attributes(*args); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#591
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#600
   def resolves_attributes(*args); end
 end
 
@@ -1566,7 +1639,7 @@ class Asciidoctor::Extensions::Processor
     # source://asciidoctor//lib/asciidoctor/extensions.rb#55
     def option(key, default_value); end
 
-    # source://asciidoctor//lib/asciidoctor/extensions.rb#66
+    # source://asciidoctor//lib/asciidoctor/extensions.rb#75
     def use_dsl; end
   end
 end
@@ -1693,13 +1766,13 @@ class Asciidoctor::Extensions::Registry
   # source://asciidoctor//lib/asciidoctor/extensions.rb#850
   def tree_processors?; end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#843
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#863
   def treeprocessor(*args, &block); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#858
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#865
   def treeprocessors; end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#850
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#864
   def treeprocessors?; end
 
   private
@@ -1730,28 +1803,28 @@ module Asciidoctor::Extensions::SyntaxProcessorDsl
   # source://asciidoctor//lib/asciidoctor/extensions.rb#318
   def default_attributes(value); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#318
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#322
   def default_attrs(value); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#311
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#314
   def name_positional_attributes(*value); end
 
   # source://asciidoctor//lib/asciidoctor/extensions.rb#297
   def named(value); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#306
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#309
   def parse_content_as(value); end
 
   # source://asciidoctor//lib/asciidoctor/extensions.rb#311
   def positional_attributes(*value); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#311
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#316
   def positional_attrs(*value); end
 
   # source://asciidoctor//lib/asciidoctor/extensions.rb#324
   def resolve_attributes(*args); end
 
-  # source://asciidoctor//lib/asciidoctor/extensions.rb#324
+  # source://asciidoctor//lib/asciidoctor/extensions.rb#371
   def resolves_attributes(*args); end
 end
 
@@ -1932,7 +2005,7 @@ class Asciidoctor::Inline < ::Asciidoctor::AbstractNode
   # source://asciidoctor//lib/asciidoctor/inline.rb#48
   def reftext?; end
 
-  # source://asciidoctor//lib/asciidoctor/inline.rb#31
+  # source://asciidoctor//lib/asciidoctor/inline.rb#36
   def render; end
 
   # source://asciidoctor//lib/asciidoctor/inline.rb#12
@@ -2037,22 +2110,22 @@ class Asciidoctor::List < ::Asciidoctor::AbstractBlock
   # source://asciidoctor//lib/asciidoctor/list.rb#13
   def initialize(parent, context, opts = T.unsafe(nil)); end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#5
+  # source://asciidoctor//lib/asciidoctor/list.rb#9
   def content; end
 
   # source://asciidoctor//lib/asciidoctor/list.rb#24
   def convert; end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#5
+  # source://asciidoctor//lib/asciidoctor/list.rb#7
   def items; end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#127
+  # source://asciidoctor//lib/asciidoctor/list.rb#11
   def items?; end
 
   # source://asciidoctor//lib/asciidoctor/list.rb#20
   def outline?; end
 
-  # source://asciidoctor//lib/asciidoctor/list.rb#24
+  # source://asciidoctor//lib/asciidoctor/list.rb#35
   def render; end
 
   # source://asciidoctor//lib/asciidoctor/list.rb#37
@@ -2070,7 +2143,7 @@ class Asciidoctor::ListItem < ::Asciidoctor::AbstractBlock
   # source://asciidoctor//lib/asciidoctor/list.rb#105
   def fold_first; end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_node.rb#26
+  # source://asciidoctor//lib/asciidoctor/list.rb#50
   def list; end
 
   # source://asciidoctor//lib/asciidoctor/list.rb#53
@@ -2381,6 +2454,7 @@ class Asciidoctor::Parser
 
     private
 
+    # source://asciidoctor//lib/asciidoctor/parser.rb#83
     def new(*_arg0); end
   end
 end
@@ -2390,20 +2464,44 @@ Asciidoctor::Parser::AuthorKeys = T.let(T.unsafe(nil), Array)
 
 # source://asciidoctor//lib/asciidoctor/parser.rb#28
 class Asciidoctor::Parser::BlockMatchData < ::Struct
+  # source://asciidoctor//lib/asciidoctor/parser.rb#28
   def context; end
+
+  # source://asciidoctor//lib/asciidoctor/parser.rb#28
   def context=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/parser.rb#28
   def masq; end
+
+  # source://asciidoctor//lib/asciidoctor/parser.rb#28
   def masq=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/parser.rb#28
   def terminator; end
+
+  # source://asciidoctor//lib/asciidoctor/parser.rb#28
   def terminator=(_); end
+
+  # source://asciidoctor//lib/asciidoctor/parser.rb#28
   def tip; end
+
+  # source://asciidoctor//lib/asciidoctor/parser.rb#28
   def tip=(_); end
 
   class << self
+    # source://asciidoctor//lib/asciidoctor/parser.rb#28
     def [](*_arg0); end
+
+    # source://asciidoctor//lib/asciidoctor/parser.rb#28
     def inspect; end
+
+    # source://asciidoctor//lib/asciidoctor/parser.rb#28
     def keyword_init?; end
+
+    # source://asciidoctor//lib/asciidoctor/parser.rb#28
     def members; end
+
+    # source://asciidoctor//lib/asciidoctor/parser.rb#28
     def new(*_arg0); end
   end
 end
@@ -2473,7 +2571,7 @@ class Asciidoctor::PathResolver
   # source://asciidoctor//lib/asciidoctor/path_resolver.rb#285
   def partition_path(path, web = T.unsafe(nil)); end
 
-  # source://asciidoctor//lib/asciidoctor/path_resolver.rb#244
+  # source://asciidoctor//lib/asciidoctor/path_resolver.rb#251
   def posixfy(path); end
 
   # source://asciidoctor//lib/asciidoctor/path_resolver.rb#244
@@ -2482,7 +2580,7 @@ class Asciidoctor::PathResolver
   # source://asciidoctor//lib/asciidoctor/path_resolver.rb#223
   def relative_path(path, base); end
 
-  # source://asciidoctor//lib/asciidoctor/path_resolver.rb#145
+  # source://asciidoctor//lib/asciidoctor/path_resolver.rb#174
   def root?(path); end
 
   # source://asciidoctor//lib/asciidoctor/path_resolver.rb#363
@@ -2544,10 +2642,10 @@ class Asciidoctor::PreprocessorReader < ::Asciidoctor::Reader
   # source://asciidoctor//lib/asciidoctor/reader.rb#644
   def empty?; end
 
-  # source://asciidoctor//lib/asciidoctor/reader.rb#644
+  # source://asciidoctor//lib/asciidoctor/reader.rb#647
   def eof?; end
 
-  # source://asciidoctor//lib/asciidoctor/reader.rb#760
+  # source://asciidoctor//lib/asciidoctor/reader.rb#763
   def exceeded_max_depth?; end
 
   # source://asciidoctor//lib/asciidoctor/reader.rb#760
@@ -2657,7 +2755,7 @@ class Asciidoctor::Reader
   # source://asciidoctor//lib/asciidoctor/reader.rb#90
   def empty?; end
 
-  # source://asciidoctor//lib/asciidoctor/reader.rb#90
+  # source://asciidoctor//lib/asciidoctor/reader.rb#98
   def eof?; end
 
   # source://asciidoctor//lib/asciidoctor/reader.rb#25
@@ -2708,19 +2806,19 @@ class Asciidoctor::Reader
   # source://asciidoctor//lib/asciidoctor/reader.rb#396
   def read_lines_until(options = T.unsafe(nil)); end
 
-  # source://asciidoctor//lib/asciidoctor/reader.rb#196
+  # source://asciidoctor//lib/asciidoctor/reader.rb#202
   def readlines; end
 
-  # source://asciidoctor//lib/asciidoctor/reader.rb#258
+  # source://asciidoctor//lib/asciidoctor/reader.rb#264
   def replace_line(replacement); end
 
   # source://asciidoctor//lib/asciidoctor/reader.rb#258
   def replace_next_line(replacement); end
 
-  # source://asciidoctor//lib/asciidoctor/reader.rb#230
+  # source://asciidoctor//lib/asciidoctor/reader.rb#234
   def restore_line(line_to_restore); end
 
-  # source://asciidoctor//lib/asciidoctor/reader.rb#244
+  # source://asciidoctor//lib/asciidoctor/reader.rb#247
   def restore_lines(lines_to_restore); end
 
   # source://asciidoctor//lib/asciidoctor/reader.rb#550
@@ -2806,7 +2904,7 @@ class Asciidoctor::Reader::Cursor
   # source://asciidoctor//lib/asciidoctor/reader.rb#8
   def path; end
 
-  # source://asciidoctor//lib/asciidoctor/reader.rb#18
+  # source://asciidoctor//lib/asciidoctor/reader.rb#22
   def to_s; end
 end
 
@@ -2871,7 +2969,7 @@ class Asciidoctor::Section < ::Asciidoctor::AbstractBlock
   # source://asciidoctor//lib/asciidoctor/section.rb#25
   def index=(_arg0); end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_block.rb#288
+  # source://asciidoctor//lib/asciidoctor/section.rb#58
   def name; end
 
   # source://asciidoctor//lib/asciidoctor/section.rb#35
@@ -2986,7 +3084,7 @@ module Asciidoctor::Substitutors
   # source://asciidoctor//lib/asciidoctor/substitutors.rb#75
   def apply_subs(text, subs = T.unsafe(nil)); end
 
-  # source://asciidoctor//lib/asciidoctor/substitutors.rb#75
+  # source://asciidoctor//lib/asciidoctor/substitutors.rb#150
   def apply_title_subs(text, subs = T.unsafe(nil)); end
 
   # source://asciidoctor//lib/asciidoctor/substitutors.rb#1285
@@ -3040,7 +3138,7 @@ module Asciidoctor::Substitutors
   # source://asciidoctor//lib/asciidoctor/substitutors.rb#911
   def sub_source(source, process_callouts); end
 
-  # source://asciidoctor//lib/asciidoctor/substitutors.rb#174
+  # source://asciidoctor//lib/asciidoctor/substitutors.rb#182
   def sub_specialcharacters(text); end
 
   # source://asciidoctor//lib/asciidoctor/substitutors.rb#174
@@ -3072,6 +3170,7 @@ module Asciidoctor::Substitutors
   # source://asciidoctor//lib/asciidoctor/substitutors.rb#1520
   def split_simple_csv(str); end
 
+  # source://asciidoctor//lib/asciidoctor/substitutors.rb#1467
   def sub_placeholder(*_arg0); end
 end
 
@@ -3335,7 +3434,7 @@ class Asciidoctor::Table::Cell < ::Asciidoctor::AbstractBlock
   # source://asciidoctor//lib/asciidoctor/table.rb#224
   def colspan=(_arg0); end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_node.rb#26
+  # source://asciidoctor//lib/asciidoctor/table.rb#230
   def column; end
 
   # source://asciidoctor//lib/asciidoctor/table.rb#371
@@ -3398,7 +3497,7 @@ class Asciidoctor::Table::Column < ::Asciidoctor::AbstractNode
   # source://asciidoctor//lib/asciidoctor/table.rb#179
   def style=(_arg0); end
 
-  # source://asciidoctor//lib/asciidoctor/abstract_node.rb#26
+  # source://asciidoctor//lib/asciidoctor/table.rb#192
   def table; end
 end
 
@@ -3511,6 +3610,7 @@ class Asciidoctor::Table::Rows
   # source://asciidoctor//lib/asciidoctor/table.rb#13
   def initialize(head = T.unsafe(nil), foot = T.unsafe(nil), body = T.unsafe(nil)); end
 
+  # source://asciidoctor//lib/asciidoctor/table.rb#19
   def [](*_arg0); end
 
   # source://asciidoctor//lib/asciidoctor/table.rb#11
@@ -3632,14 +3732,29 @@ Asciidoctor::XmlSanitizeRx = T.let(T.unsafe(nil), Regexp)
 # source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#18
 class Hash
   include ::Enumerable
+
+  # source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#19
+  def nil_or_empty?; end
+end
+
+# source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#6
+class NilClass
+  # source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#7
+  def nil_or_empty?; end
 end
 
 # source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#22
 class Numeric
   include ::Comparable
+
+  # source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#23
+  def nil_or_empty?; end
 end
 
 # source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#10
 class String
   include ::Comparable
+
+  # source://asciidoctor//lib/asciidoctor/core_ext/nil_or_empty.rb#11
+  def nil_or_empty?; end
 end

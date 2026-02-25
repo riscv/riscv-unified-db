@@ -71,7 +71,7 @@ class TestLogic < Minitest::Test
 
     assert_equal "(A=1.0.0 OR B=1.0.0)", n.to_s(format: LogicNode::LogicSymbolFormat::English)
     assert_equal "out = (a | b)", n.to_eqntott.eqn
-    assert n.satisfiable?
+    assert n.satisfiable?(cfg_arch)
     assert n.cnf?
     assert_equal SatisfiedResult::Yes, n.eval_cb(proc { |term| term.name == "A" ? SatisfiedResult::Yes : SatisfiedResult::No })
     assert_equal SatisfiedResult::Yes, n.eval_cb(proc { |term| term.name == "B" ? SatisfiedResult::Yes : SatisfiedResult::No })
@@ -96,7 +96,7 @@ class TestLogic < Minitest::Test
     assert_equal "(A=1.0.0 AND B=1.0.0)", n.to_s(format: LogicNode::LogicSymbolFormat::English)
     assert_equal "out = (a & b)", n.to_eqntott.eqn
     assert n.cnf?
-    assert n.satisfiable?
+    assert n.satisfiable?(cfg_arch)
     assert_equal SatisfiedResult::No, n.eval_cb(proc { |term| term.name == "A" ? SatisfiedResult::Yes : SatisfiedResult::No })
     assert_equal SatisfiedResult::No, n.eval_cb(proc { |term| term.name == "B" ? SatisfiedResult::Yes : SatisfiedResult::No })
     assert_equal SatisfiedResult::Yes, n.eval_cb(proc { |_term| SatisfiedResult::Yes })
@@ -113,7 +113,7 @@ class TestLogic < Minitest::Test
 
     assert_equal "NOT A=1.0.0", n.to_s(format: LogicNode::LogicSymbolFormat::English)
     assert_equal "out = !(a)", n.to_eqntott.eqn
-    assert n.satisfiable?
+    assert n.satisfiable?(cfg_arch)
     assert n.cnf?
     assert_equal SatisfiedResult::No, n.eval_cb(proc { |term| term.name == "A" ? SatisfiedResult::Yes : SatisfiedResult::No })
     assert_equal SatisfiedResult::Yes, n.eval_cb(proc { |term| term.name == "B" ? SatisfiedResult::Yes : SatisfiedResult::No })
@@ -149,7 +149,6 @@ class TestLogic < Minitest::Test
         ]
       )
 
-    assert n.satisfiable?
     assert_equal "(A=1.0.0 AND B=1.0.0 AND C=1.0.0 AND D=1.0.0 AND E=1.0.0 AND F=1.0.0 AND G=1.0.0 AND H=1.0.0)", n.to_s(format: LogicNode::LogicSymbolFormat::English)
     assert_equal "out = (a & b & c & d & e & f & g & h)", n.to_eqntott.eqn
     assert_equal "(((((((A=1.0.0 AND B=1.0.0) AND C=1.0.0) AND D=1.0.0) AND E=1.0.0) AND F=1.0.0) AND G=1.0.0) AND H=1.0.0)", n.group_by_2.to_s(format: LogicNode::LogicSymbolFormat::English)
@@ -172,12 +171,11 @@ class TestLogic < Minitest::Test
         ]
       )
 
-    assert n.satisfiable?
     assert_equal "(A=1.0.0 AND B=1.0.0 AND A=1.0.0 AND B=1.0.0 AND A=1.0.0 AND B=1.0.0 AND A=1.0.0 AND B=1.0.0)", n.to_s(format: LogicNode::LogicSymbolFormat::English)
     assert_equal "out = (a & b & a & b & a & b & a & b)", n.to_eqntott.eqn
     assert_equal "(((((((A=1.0.0 AND B=1.0.0) AND A=1.0.0) AND B=1.0.0) AND A=1.0.0) AND B=1.0.0) AND A=1.0.0) AND B=1.0.0)", n.group_by_2.to_s(format: LogicNode::LogicSymbolFormat::English)
     assert_includes ["(A=1.0.0 AND B=1.0.0)", "(B=1.0.0 AND A=1.0.0)"], n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false).to_s(format: LogicNode::LogicSymbolFormat::English)
-    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false))
+    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false), cfg_arch)
   end
 
   sig { void }
@@ -197,12 +195,11 @@ class TestLogic < Minitest::Test
         ]
       )
 
-    assert n.satisfiable?
     assert_equal "(A=1.0.0 OR B=1.0.0 OR A=1.0.0 OR B=1.0.0 OR A=1.0.0 OR B=1.0.0 OR A=1.0.0 OR B=1.0.0)", n.to_s(format: LogicNode::LogicSymbolFormat::English)
     assert_equal "out = (a | b | a | b | a | b | a | b)", n.to_eqntott.eqn
     assert_equal "(((((((A=1.0.0 OR B=1.0.0) OR A=1.0.0) OR B=1.0.0) OR A=1.0.0) OR B=1.0.0) OR A=1.0.0) OR B=1.0.0)", n.group_by_2.to_s(format: LogicNode::LogicSymbolFormat::English)
     assert_includes ["(A=1.0.0 OR B=1.0.0)", "(B=1.0.0 OR A=1.0.0)"], n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false).to_s(format: LogicNode::LogicSymbolFormat::English)
-    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false))
+    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false), cfg_arch)
   end
 
   def test_array_param_terms
@@ -213,7 +210,7 @@ class TestLogic < Minitest::Test
       "reason" => "blah"
     }
     term = ParameterTerm.new(h)
-    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal)
+    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal, cfg_arch)
     assert_equal "(SCOUNTENABLE_EN[3]==true)", term.to_s
     assert_equal SatisfiedResult::Yes, term.eval_value(true)
     assert_equal SatisfiedResult::No, term.eval_value(false)
@@ -225,7 +222,7 @@ class TestLogic < Minitest::Test
       "reason" => "blah"
     }
     term = ParameterTerm.new(h)
-    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal)
+    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal, cfg_arch)
     assert_equal "(SCOUNTENABLE_EN[4]!=true)", term.to_s
     assert_equal SatisfiedResult::Yes, term.eval_value(false)
     assert_equal SatisfiedResult::No, term.eval_value(true)
@@ -237,7 +234,7 @@ class TestLogic < Minitest::Test
       "reason" => "blah"
     }
     term = ParameterTerm.new(h)
-    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal)
+    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal, cfg_arch)
     assert_equal "(SCOUNTENABLE_EN[4]==false)", term.to_s
     assert_equal SatisfiedResult::Yes, term.eval_value(false)
     assert_equal SatisfiedResult::No, term.eval_value(true)
@@ -249,7 +246,7 @@ class TestLogic < Minitest::Test
       "reason" => "blah"
     }
     term = ParameterTerm.new(h)
-    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal)
+    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal, cfg_arch)
     assert_equal "(SCOUNTENABLE_EN[4]!=false)", term.to_s
     assert_equal SatisfiedResult::Yes, term.eval_value(true)
     assert_equal SatisfiedResult::No, term.eval_value(false)
@@ -261,7 +258,7 @@ class TestLogic < Minitest::Test
       "reason" => "blah"
     }
     term = ParameterTerm.new(h)
-    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal)
+    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal, cfg_arch)
     assert_equal "(SCOUNTENABLE_EN[10]<5)", term.to_s
     assert_equal SatisfiedResult::Yes, term.eval_value(4)
     assert_equal SatisfiedResult::No, term.eval_value(5)
@@ -274,7 +271,7 @@ class TestLogic < Minitest::Test
       "reason" => "blah"
     }
     term = ParameterTerm.new(h)
-    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal)
+    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal, cfg_arch)
     assert_equal "(SCOUNTENABLE_EN[10]>5)", term.to_s
     assert_equal SatisfiedResult::No, term.eval_value(4)
     assert_equal SatisfiedResult::No, term.eval_value(5)
@@ -287,7 +284,7 @@ class TestLogic < Minitest::Test
       "reason" => "blah"
     }
     term = ParameterTerm.new(h)
-    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal)
+    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal, cfg_arch)
     assert_equal "(SCOUNTENABLE_EN[10]<=5)", term.to_s
     assert_equal SatisfiedResult::Yes, term.eval_value(4)
     assert_equal SatisfiedResult::Yes, term.eval_value(5)
@@ -300,7 +297,7 @@ class TestLogic < Minitest::Test
       "reason" => "blah"
     }
     term = ParameterTerm.new(h)
-    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal)
+    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal, cfg_arch)
     assert_equal "(SCOUNTENABLE_EN[10]>=5)", term.to_s
     assert_equal SatisfiedResult::No, term.eval_value(4)
     assert_equal SatisfiedResult::Yes, term.eval_value(5)
@@ -324,7 +321,7 @@ class TestLogic < Minitest::Test
       "reason" => "blah"
     }
     term = ParameterTerm.new(h)
-    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal)
+    assert term.to_logic_node.equivalent?(ParamCondition.new(term.to_h, cfg_arch).to_logic_tree_internal, cfg_arch)
     assert_equal "(SCOUNTENABLE_EN==true)", term.to_s
     assert_equal SatisfiedResult::Yes, term.eval_value(true)
     assert_equal SatisfiedResult::No, term.eval_value(false)
@@ -677,8 +674,8 @@ class TestLogic < Minitest::Test
           ])
       ]
     )
-    assert n.satisfiable?
-    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false))
+    assert n.satisfiable?(cfg_arch)
+    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false), cfg_arch)
     assert_equal(SatisfiedResult::Maybe, n.eval_cb(cb))
     assert_equal(SatisfiedResult::Yes, n.eval_cb(cb2))
   end
@@ -784,8 +781,8 @@ class TestLogic < Minitest::Test
       }
     }
     assert_equal h, n.to_h
-    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false))
-    assert n.satisfiable?
+    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false), cfg_arch)
+    assert n.satisfiable?(cfg_arch)
 
     n = LogicNode.new(
       LogicNodeType::And,
@@ -811,8 +808,8 @@ class TestLogic < Minitest::Test
       }
     }
     assert_equal h, n.to_h
-    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false))
-    assert n.satisfiable?
+    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false), cfg_arch)
+    assert n.satisfiable?(cfg_arch)
 
     n = LogicNode.new(
       LogicNodeType::And,
@@ -840,8 +837,8 @@ class TestLogic < Minitest::Test
         ]
       }
     assert_equal h, n.to_h
-    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false))
-    assert n.satisfiable?
+    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false), cfg_arch)
+    assert n.satisfiable?(cfg_arch)
 
     n = LogicNode.new(
       LogicNodeType::Or,
@@ -875,8 +872,8 @@ class TestLogic < Minitest::Test
       }
     }
     assert_equal h, n.to_h
-    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false))
-    assert n.satisfiable?
+    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false), cfg_arch)
+    assert n.satisfiable?(cfg_arch)
 
     n = LogicNode.new(
       LogicNodeType::Or,
@@ -902,8 +899,8 @@ class TestLogic < Minitest::Test
       }
     }
     assert_equal h, n.to_h
-    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false))
-    assert n.satisfiable?
+    assert n.equivalent?(n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false), cfg_arch)
+    assert n.satisfiable?(cfg_arch)
 
     n = LogicNode.new(
       LogicNodeType::Or,
@@ -1200,8 +1197,8 @@ class TestLogic < Minitest::Test
     assert n.nnf.nnf?
     # nnf_n is also the minimal form
     assert_equal n.espresso(LogicNode::CanonicalizationType::SumOfProducts, false).to_s, n.nnf.to_s
-    assert n.equivalent?(nnf_n)
-    assert nnf_n.equivalent?(n)
+    assert n.equivalent?(nnf_n, cfg_arch)
+    assert nnf_n.equivalent?(n, cfg_arch)
 
     n = LogicNode.new(
       LogicNodeType::If,
@@ -1225,8 +1222,8 @@ class TestLogic < Minitest::Test
     )
 
     assert n.nnf.nnf?
-    assert n.equivalent?(nnf_n)
-    assert nnf_n.equivalent?(n)
+    assert n.equivalent?(nnf_n, cfg_arch)
+    assert nnf_n.equivalent?(n, cfg_arch)
 
     n = LogicNode.new(
       LogicNodeType::Xor,
@@ -1298,8 +1295,8 @@ class TestLogic < Minitest::Test
     )
 
     assert n.nnf.nnf?
-    assert n.equivalent?(nnf_n)
-    assert nnf_n.equivalent?(n)
+    assert n.equivalent?(nnf_n, cfg_arch)
+    assert nnf_n.equivalent?(n, cfg_arch)
 
     n = LogicNode.new(LogicNodeType::Not, [n])
 
@@ -1349,8 +1346,8 @@ class TestLogic < Minitest::Test
     )
 
     assert n.nnf.nnf?
-    assert n.equivalent?(nnf_n)
-    assert nnf_n.equivalent?(n)
+    assert n.equivalent?(nnf_n, cfg_arch)
+    assert nnf_n.equivalent?(n, cfg_arch)
 
     n = LogicNode.new(
       LogicNodeType::None,
@@ -1371,8 +1368,8 @@ class TestLogic < Minitest::Test
     )
 
     assert n.nnf.nnf?
-    assert n.equivalent?(nnf_n)
-    assert nnf_n.equivalent?(n)
+    assert n.equivalent?(nnf_n, cfg_arch)
+    assert nnf_n.equivalent?(n, cfg_arch)
 
     n = LogicNode.new(LogicNodeType::Not, [n])
 
@@ -1387,23 +1384,23 @@ class TestLogic < Minitest::Test
     )
 
     assert n.nnf.nnf?
-    assert n.equivalent?(nnf_n)
-    assert nnf_n.equivalent?(n)
+    assert n.equivalent?(nnf_n, cfg_arch)
+    assert nnf_n.equivalent?(n, cfg_arch)
   end
 
   def test_equivalence
     n = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
     m = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
 
-    assert n.equivalent?(m)
-    assert m.equivalent?(n)
+    assert n.equivalent?(m, cfg_arch)
+    assert m.equivalent?(n, cfg_arch)
 
 
     n = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
     m = LogicNode.new(LogicNodeType::Term, [ParameterTerm.new("name" => "A", "equal" => true, "reason" => "blah")])
 
-    refute n.equivalent?(m)
-    refute m.equivalent?(n)
+    refute n.equivalent?(m, cfg_arch)
+    refute m.equivalent?(n, cfg_arch)
 
 
     n = LogicNode.new(LogicNodeType::None, [LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")]), LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")]), LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("C", "=", "1.0.0")])])
@@ -1411,16 +1408,16 @@ class TestLogic < Minitest::Test
 
     assert n.equisat_cnf.cnf?
     assert m.equisat_cnf.cnf?
-    assert n.equivalent?(m)
-    assert m.equivalent?(n)
+    assert n.equivalent?(m, cfg_arch)
+    assert m.equivalent?(n, cfg_arch)
 
     n = LogicNode.new(LogicNodeType::None, [LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")]), LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])])
     m = LogicNode.new(LogicNodeType::And, [LogicNode.new(LogicNodeType::Not, [LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])]), LogicNode.new(LogicNodeType::Not, [LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])])])
 
     assert n.equisat_cnf.cnf?
     assert m.equisat_cnf.cnf?
-    assert n.equivalent?(m)
-    assert m.equivalent?(n)
+    assert n.equivalent?(m, cfg_arch)
+    assert m.equivalent?(n, cfg_arch)
 
 
   end
@@ -1466,7 +1463,7 @@ class TestLogic < Minitest::Test
     assert_equal LogicNodeType::And, mpi.type
     assert_equal 3, mpi.children.size
 
-    assert mpi.equivalent?(t)
+    assert mpi.equivalent?(t, cfg_arch)
 
     # @example
     #   given the equation
@@ -1509,23 +1506,25 @@ class TestLogic < Minitest::Test
     assert_equal LogicNodeType::And, mpi.type
     assert_equal 3, mpi.children.size
 
-    assert mpi.equivalent?(t)
+    assert mpi.equivalent?(t, cfg_arch)
   end
 
-  def node_from_json(ary)
+  def node_from_json(ary, terms = {})
     case ary[0]
     when ":AND"
-      LogicNode.new(LogicNodeType::And, ary[1..].map { |a| node_from_json(a) })
+      LogicNode.new(LogicNodeType::And, ary[1..].map { |a| node_from_json(a, terms) })
     when ":OR"
-      LogicNode.new(LogicNodeType::Or, ary[1..].map { |a| node_from_json(a) })
+      LogicNode.new(LogicNodeType::Or, ary[1..].map { |a| node_from_json(a, terms) })
     when ":XOR"
-      LogicNode.new(LogicNodeType::Xor, ary[1..].map { |a| node_from_json(a) })
+      LogicNode.new(LogicNodeType::Xor, ary[1..].map { |a| node_from_json(a, terms) })
     when ":NOT"
-      LogicNode.new(LogicNodeType::Not, [node_from_json(ary[1])])
+      LogicNode.new(LogicNodeType::Not, [node_from_json(ary[1], terms)])
     when ":IMPLIES"
-      LogicNode.new(LogicNodeType::If, [node_from_json(ary[1]), node_from_json(ary[2])])
+      LogicNode.new(LogicNodeType::If, [node_from_json(ary[1], terms), node_from_json(ary[2], terms)])
     when /[a-z]/
-      LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new(ary[0], ">=", "0")])
+      term = terms.key?(ary[0]) ? terms.fetch(ary[0]) : FreeTerm.new
+      terms[ary[0]] ||= term
+      LogicNode.new(LogicNodeType::Term, [term])
     else
       raise "unhandled: #{ary[0]}"
     end
@@ -1535,7 +1534,7 @@ class TestLogic < Minitest::Test
     f = LogicNode.new(LogicNodeType::Not, [LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])])
     # assert_equal 2, f.tseytin.terms.size
     assert f.tseytin.cnf?
-    assert f.satisfiable?
+    assert f.satisfiable?(cfg_arch)
 
     f = LogicNode.new(LogicNodeType::And,
       [
@@ -1545,7 +1544,7 @@ class TestLogic < Minitest::Test
     )
     # assert_equal 4, f.tseytin.terms.size
     assert f.tseytin.cnf?
-    assert f.satisfiable?
+    assert f.satisfiable?(cfg_arch)
 
     f = LogicNode.new(LogicNodeType::Or,
     [
@@ -1555,18 +1554,22 @@ class TestLogic < Minitest::Test
     )
     # assert_equal 6, f.tseytin.terms.size
     assert f.tseytin.cnf?
-    assert f.satisfiable?
+    assert f.satisfiable?(cfg_arch)
 
     unsat = LogicNode.new(LogicNodeType::And, [f, LogicNode.new(LogicNodeType::Not, [f])])
-    refute unsat.satisfiable?
+    refute unsat.satisfiable?(cfg_arch)
   end
 
   bool_eqns = JSON.load_file(File.join(__dir__, "boolean_expressions.json"))
   bool_eqns.each_with_index do |json_eqn, index|
     define_method("test_random_#{index}") do
+      LogicNode.reset_stats
       node = node_from_json(json_eqn)
-      if node.satisfiable?
+      # return if (node.terms.size > 20) # z3 is too slow
+      if node.satisfiable?(cfg_arch)
         # test all the transformations
+
+        assert_equal 1, LogicNode.num_brute_force_sat_solves + LogicNode.num_z3_sat_solves
 
         # nnf gets covered by equiv_cnf
         # nnf = node.nnf
@@ -1575,18 +1578,22 @@ class TestLogic < Minitest::Test
 
         cnf = node.equisat_cnf
         assert cnf.cnf?
-        assert node.equisatisfiable?(cnf)
+        assert node.equisatisfiable?(cnf, cfg_arch)
 
         pos = node.minimize(LogicNode::CanonicalizationType::ProductOfSums)
         assert \
-          node.equivalent?(pos),
+          node.equivalent?(pos, cfg_arch),
           "#{node} was minimized to #{pos}, which is not equivalent"
         assert pos.cnf?
 
         sop = node.minimize(LogicNode::CanonicalizationType::SumOfProducts)
-        assert node.equivalent?(sop)
+        assert node.equivalent?(sop, cfg_arch)
         assert sop.dnf?
       else
+        cnf = node.equisat_cnf
+        assert cnf.cnf?
+        assert node.equisatisfiable?(cnf, cfg_arch)
+
         min = node.minimize(LogicNode::CanonicalizationType::ProductOfSums)
         assert_equal \
           LogicNodeType::False,

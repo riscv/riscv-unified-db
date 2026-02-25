@@ -1,6 +1,5 @@
 .bundle
 .python
-.singularity
 .antora
 .home
 .yardoc
@@ -32,6 +31,11 @@ sorbet
 coverage
 .sorbet-cache
 .project
+.docker-home
+
+# Z3 binaries — downloaded at gem install time, not stored in git
+tools/ruby-gems/udb/ext/z3/**/*.so
+tools/ruby-gems/udb/ext/z3/VERSION
 
 # emacs backup files
 *~

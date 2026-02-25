@@ -1,11 +1,14 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-name: Regression test
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: CI/CD
 
 permissions:
   contents: read
   pull-requests: write
+  packages: read
 
 "on": # needs to be quoted or else Psych treats this as true
   pull_request:
@@ -14,9 +17,14 @@ permissions:
   merge_group:
     types: [checks_requested]
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
   DOCKER: 1
+  DEPLOY_DIR: _site
+  GITHUB_TOKEN: ${{ github.token }}
 
 # cancel any prior actions from the same PR that are still running (we only care about the final commit)
 concurrency:
@@ -26,20 +34,47 @@ concurrency:
 jobs:
   build-container:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Get container tag
         run: |
           TAG=$(cat bin/.container-tag)
           echo "TAG=$TAG" >> $GITHUB_ENV
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if container image exists in registry
+        id: check-registry
+        run: |
+          if docker manifest inspect ghcr.io/riscv/udb:${{ env.TAG }} > /dev/null 2>&1; then
+            echo "REGISTRY_HIT=true" >> $GITHUB_ENV
+          else
+            echo "REGISTRY_HIT=false" >> $GITHUB_ENV
+          fi
+
+      - name: Pull image from registry
+        if: env.REGISTRY_HIT == 'true'
+        run: |
+          docker pull ghcr.io/riscv/udb:${{ env.TAG }}
+          docker save ghcr.io/riscv/udb:${{ env.TAG }} -o ${{ runner.temp }}/docker_image.tar
+
       - name: Set up Docker Buildx
+        if: env.REGISTRY_HIT == 'false'
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Build and export
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        if: env.REGISTRY_HIT == 'false'
+        uses: docker/build-push-action@601a80b39c9405e50806ae38af30926f9d957c47 # v6.19.1
         with:
           push: false
           file: ./.devcontainer/Dockerfile
@@ -50,7 +85,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Upload container
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: docker_image
           path: ${{ runner.temp }}/docker_image.tar
@@ -61,7 +96,11 @@ jobs:
     if: "false"
     steps:
       - name: Use download-artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+      - name: Use upload-artifact
+        uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5 # v4.6.2
+        with:
+          path: .
 
   regress-pre-commit:
     runs-on: ubuntu-latest
@@ -70,7 +109,7 @@ jobs:
         # there are some symlinks in udb-gen that look broken without submodules
         with:
           submodules: "true"
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
 
   regress-llvm:
@@ -78,9 +117,9 @@ jobs:
     needs: [build-container, build-llvm]
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Download docker image
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: docker_image
           path: ${{ runner.temp }}
@@ -118,16 +157,16 @@ jobs:
     needs: [build-container, regress-udb-unit-test]
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Download docker image
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: docker_image
           path: ${{ runner.temp }}
       - name: Load image
         run: docker load --input ${{ runner.temp }}/docker_image.tar
       - name: download coverage
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           pattern: udb-*-cov
           path: _cov/udb
@@ -147,7 +186,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository (no submodules, shallow fetch)
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: false
           fetch-depth: 1
@@ -190,15 +229,10 @@ jobs:
       - name: Show riscv.json output
         run: ls -l ext/llvm-project/riscv.json
       - name: Upload RISC-V JSON as Artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: riscv-json
           path: ext/llvm-project/riscv.json
-
-  call-deploy:
-    uses: ./.github/workflows/deploy.yml
-    with:
-      dry-run: true
 
   java-tests:
     name: Java (Xtext) tests
@@ -209,7 +243,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Setup Temurin JDK 21
-        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: temurin
           java-version: "21"
@@ -221,7 +255,7 @@ jobs:
         run: mvn -B -U -Dheadless=true verify
       - name: Archive surefire reports (always)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: surefire-reports
           path: |
@@ -237,13 +271,13 @@ jobs:
         working-directory: tools/eclipse/udb-vscode
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: tools/eclipse/udb-vscode/package-lock.json
       - name: Setup Temurin JDK 21 (for LS)
-        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: temurin
           java-version: "21"
@@ -255,9 +289,79 @@ jobs:
         run: xvfb-run -a npm test
       - name: Archive VS Code test logs (always)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: vscode-test-logs
           path: |
             tools/eclipse/udb-vscode/.vscode-test/**/*
             tools/eclipse/udb-vscode/out/test/**/*
+
+  create-gems:
+    name: Create the gems
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        gem: [idlc, udb, udb_helpers]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Copy the gem directory to resolve symlinks
+        run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
+      - name: Create the ${{ matrix.gem }} gem
+        run: |
+          cd gem-build-dir && \
+          gem build -o ${{ matrix.gem }}.gem ${{ matrix.gem }}.gemspec
+      - name: Upload the ${{ matrix.gem }} gem
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ${{ matrix.gem }}.gem
+          path: gem-build-dir/${{ matrix.gem }}.gem
+
+  udb-gem-z3:
+    name: Test udb gem using z3 across several distros and platforms
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+        container:
+          - almalinux:8
+          - ruby:3-slim
+    runs-on: ${{ matrix.platform }}
+    container: ${{ matrix.container }}
+    needs: create-gems
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - if: matrix.container == 'almalinux:8'
+        name: Install ruby
+        run: |
+          dnf module enable -y ruby:3.3
+          dnf install -y ruby ruby-devel gcc-toolset-12
+          PRE="source scl_source enable gcc-toolset-12"
+          echo "PRE=$PRE" >> $GITHUB_ENV
+      - if: matrix.container == 'ruby:3-slim'
+        name: Install make
+        run: |
+          apt-get update -qq && \
+          apt-get install --no-install-recommends -y make
+      - name: download udb gem
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: udb.gem
+      - name: download idlc gem
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: idlc.gem
+      - name: download udb_helpers gem
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: udb_helpers.gem
+      - name: install gems
+        run: |
+          $PRE && \
+          gem install idlc.gem && \
+          gem install udb_helpers.gem && \
+          gem install udb.gem
+      - name: try z3
+        run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"

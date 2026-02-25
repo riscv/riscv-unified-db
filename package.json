@@ -7,8 +7,6 @@
     "@asciidoctor/tabs": "v1.0.0-beta.6",
     "@cloudflare/doca": "^0.1.3",
     "@cloudflare/doca-default-theme": "^0.1.1",
-    "@commitlint/cli": "19.8.1",
-    "@commitlint/config-conventional": "19.8.1",
     "asciidoctor-kroki": "0.18.1",
     "asciidoctor-mathjax": "^0.0.5",
     "bytefield-svg": "^1.8.0",

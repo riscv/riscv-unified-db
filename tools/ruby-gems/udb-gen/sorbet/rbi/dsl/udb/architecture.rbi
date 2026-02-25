@@ -149,4 +149,13 @@ class Udb::Architecture
 
   sig { returns(T::Array[Udb::Profile]) }
   def profiles; end
+
+  sig { params(name: String).returns(T.nilable(Udb::RegisterFile)) }
+  def register_file(name); end
+
+  sig { returns(T::Hash[String, Udb::RegisterFile]) }
+  def register_file_hash; end
+
+  sig { returns(T::Array[Udb::RegisterFile]) }
+  def register_files; end
 end

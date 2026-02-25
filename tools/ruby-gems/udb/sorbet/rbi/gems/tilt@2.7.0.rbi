@@ -29,7 +29,7 @@ module Tilt
     # source://tilt//lib/tilt.rb#70
     def new(file, line = T.unsafe(nil), options = T.unsafe(nil), &block); end
 
-    # source://tilt//lib/tilt.rb#50
+    # source://tilt//lib/tilt.rb#98
     def prefer(template_class, *extensions); end
 
     # source://tilt//lib/tilt.rb#50
@@ -52,7 +52,7 @@ module Tilt
   end
 end
 
-# source://tilt//lib/tilt/asciidoc.rb#0
+# source://tilt//lib/tilt/asciidoc.rb#19
 class Tilt::AsciidoctorTemplate < ::Tilt::StaticTemplate
   private
 
@@ -68,7 +68,7 @@ class Tilt::BaseMapping
   # source://tilt//lib/tilt/mapping.rb#16
   def new(file, line = T.unsafe(nil), options = T.unsafe(nil), &block); end
 
-  # source://tilt//lib/tilt/mapping.rb#32
+  # source://tilt//lib/tilt/mapping.rb#37
   def template_for(file); end
 
   # source://tilt//lib/tilt/mapping.rb#48
@@ -240,7 +240,7 @@ class Tilt::Pipeline < ::Tilt::Template
   def prepare; end
 end
 
-# source://tilt//lib/tilt/plain.rb#0
+# source://tilt//lib/tilt/plain.rb#9
 class Tilt::PlainTemplate < ::Tilt::StaticTemplate
   private
 
@@ -248,7 +248,7 @@ class Tilt::PlainTemplate < ::Tilt::StaticTemplate
   def _prepare_output; end
 end
 
-# source://tilt//lib/tilt/rdoc.rb#0
+# source://tilt//lib/tilt/rdoc.rb#31
 class Tilt::RDocTemplate < ::Tilt::StaticTemplate
   private
 

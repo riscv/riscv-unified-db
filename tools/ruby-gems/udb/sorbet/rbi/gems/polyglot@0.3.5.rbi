@@ -9,6 +9,11 @@
 module Kernel
   # source://polyglot//lib/polyglot.rb#64
   def require(*a, &b); end
+
+  private
+
+  # source://polyglot//lib/polyglot.rb#62
+  def polyglot_original_require(name); end
 end
 
 # source://polyglot//lib/polyglot.rb#3

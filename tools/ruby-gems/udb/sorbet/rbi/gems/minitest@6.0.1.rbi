@@ -444,7 +444,7 @@ end
 # source://minitest//lib/minitest.rb#614
 Minitest::Reportable::BASE_DIR = T.let(T.unsafe(nil), String)
 
-# source://minitest//lib/minitest.rb#752
+# source://minitest//lib/minitest.rb#754
 class Minitest::Reporter < ::Minitest::AbstractReporter
   # source://minitest//lib/minitest.rb#763
   def initialize(io = T.unsafe(nil), options = T.unsafe(nil)); end

@@ -59,11 +59,6 @@ module Udb
       end
     end
 
-    class ConditionalSchema < T::Struct
-      const :cond, AbstractCondition
-      const :schema, Schema
-    end
-
     sig {
       params(
         yaml: T::Hash[String, T.untyped],
@@ -74,118 +69,19 @@ module Udb
     def initialize(yaml, data_path, cfg_arch)
       super(yaml, data_path, cfg_arch)
 
-      @schemas = T.let([], T::Array[ConditionalSchema])
-      if data.fetch("schema").key?("oneOf")
-        data.fetch("schema").fetch("oneOf").each do |cond_schema|
-          @schemas << ConditionalSchema.new(schema: Schema.new(cond_schema.fetch("schema")), cond: Condition.new(cond_schema.fetch("when"), @cfg_arch))
-        end
-      else
-        @schemas << ConditionalSchema.new(schema: Schema.new(data["schema"]), cond: AlwaysTrueCondition.new(cfg_arch))
-      end
-    end
-
-    # whether or not the schema is unambiguously known
-    # since schemas can change based on parameter values and/or extension presence,
-    # non-full configs may not be able to know which schema applies
-    sig { override.returns(T::Boolean) }
-    def schema_known?
-      @schema_known ||= begin
-        if @schemas.size == 1
-          true
-        else
-          1 == @schemas.count { |cond_schema| cond_schema.cond.could_be_satisfied_by_cfg_arch?(@cfg_arch) }
-        end
-      end
+      @schema = Schema.new(data["schema"])
     end
 
     # @return JSON Schema for this param
-    # @raises RuntimeError if schema_known? is false
     sig { override.returns(Schema) }
-    def schema
-      unless schema_known?
-        raise "Schema is not known for parameter #{name} because more than one is possible given what we know about the configuration"
-      end
-
-      @schema ||= T.must(@schemas.find { |cond_schema| cond_schema.cond.satisfied_by_cfg_arch?(@cfg_arch) == SatisfiedResult::Yes }).schema
-    end
-
-    sig { returns(T::Array[ConditionalSchema]) }
-    attr_reader :schemas
+    attr_reader :schema
 
     class NoMatchingSchemaError < RuntimeError; end
 
-    # @return list of schemas that are possible for this config
-    sig { override.returns(T::Array[Schema]) }
-    def possible_schemas
-      @possible_schemas ||=
-        begin
-          list = @schemas.select { |s| s.cond.could_be_satisfied_by_cfg_arch?(@cfg_arch) }.map(&:schema)
-          if list.empty?
-            raise NoMatchingSchemaError, "Parameter #{name} has no matching schema for #{@cfg_arch.name}"
-          end
-          list
-        end
-    end
-
-    sig { override.returns(T::Array[Schema]) }
-    def all_schemas
-      @schemas.map(&:schema)
-    end
-
     # @returns Type of the parameter
-    # @raises RuntimeError if schema_known? if false
     sig { override.returns(Idl::Type) }
     def idl_type
-      unless schema_known?
-        raise "Schema is not known for parameter #{name} because more than one is possible given what we know about the configuration"
-      end
-
       @idl_type ||= schema.to_idl_type.make_const.freeze
-    end
-
-    # returns the largest (compatibale with all) type of any possible schema
-    sig { returns(Idl::Type) }
-    def maximal_idl_type
-      @maximal_idl_type ||=
-        if schema_known?
-          idl_type
-        else
-          idl_types = possible_schemas.map(&:to_idl_type)
-          unless idl_types.all? { |t| t.kind == :bit }
-            raise "TODO: parameter has multiple schemas that are not Bits"
-          end
-          max_width = idl_types.map(&:width).max do |a, b|
-            if [a, b].include?(:unknown)
-              a == :unknown ? 1 : -1
-            else
-              (T.cast(a, Integer) <=> T.cast(b, Integer))
-            end
-          end
-          Idl::Type.new(:bits, width: max_width, qualifiers: [:const])
-        end
-    end
-
-    # returns the largest (compatibale with all) type of any possible schema
-    sig { returns(Schema) }
-    def maximal_schema
-      @maximal_schema ||=
-        if schema_known?
-          schema
-        else
-          idl_types = possible_schemas.map(&:to_idl_type)
-          unless idl_types.all? { |t| t.kind == :bits }
-            raise "TODO: parameter has multiple schemas that are not Bits (#{idl_types.map(&:kind)})"
-          end
-          possible_schemas.max do |a, b|
-            at = a.to_idl_type
-            bt = b.to_idl_type
-            if [at.width, bt.width].include?(:unknown)
-              at.width == :unknown ? 1 : -1
-            else
-              (T.cast(at.width, Integer) <=> T.cast(bt.width, Integer))
-            end
-          end
-        end
     end
 
     # @return if this parameter is defined in +cfg_arch+
@@ -232,7 +128,7 @@ module Udb
     include Idl::RuntimeParam
 
     def_delegators :@param,
-      :name, :description, :schema_known?, :schema, :schemas, :possible_schemas, :all_schemas, :idl_type,
+      :name, :description, :schema, :idl_type,
       :defined_by_condition, :requirements_condition
 
     # @return [Object] The parameter value

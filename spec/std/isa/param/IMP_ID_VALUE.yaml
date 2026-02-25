@@ -18,16 +18,8 @@ definedBy:
 description: |
   A unique encoding of the version of the processor implementation.
 schema:
-  oneOf:
-    - when:
-        param:
-          name: MXLEN
-          equal: 32
-      schema:
-        $ref: schema_defs.json#/$defs/uint32
-    - when:
-        param:
-          name: MXLEN
-          equal: 64
-      schema:
-        $ref: schema_defs.json#/$defs/uint64
+  $ref: schema_defs.json#/$defs/uint64
+
+requirements:
+  idl(): |
+    (MXLEN == 32) -> IMP_ID_VALUE <= 32'hffffffff;

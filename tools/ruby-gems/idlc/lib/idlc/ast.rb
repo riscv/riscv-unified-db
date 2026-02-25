@@ -10,8 +10,9 @@ require_relative "type"
 require_relative "symbol_table"
 require_relative "syntax_node"
 
-module Idl
+require_relative "ast_decl"
 
+module Idl
   # type, from ruby's perspective, of any IDL value
   BasicValueRbType = T.type_alias {
     T.any(
@@ -34,11 +35,7 @@ module Idl
   EMPTY_ARRAY = [].freeze
 
   # base class for all nodes considered part of the Ast
-  # @abstract
   class AstNode
-    extend T::Sig
-    extend T::Helpers
-    abstract!
 
     Bits1Type = Type.new(:bits, width: 1, qualifiers: [:known].freeze).freeze
     PossiblyUnknownBits1Type = Type.new(:bits, width: 1).freeze
@@ -7148,12 +7145,6 @@ module Idl
       "#{[known_str.size, x.size].max}'b#{v.reverse.join("")}"
     end
   end
-
-  # TODO: move this into a unit test
-  tmp = UnknownLiteral.new(5, 4)
-  raise tmp.to_s unless tmp.to_s == "3'bx01"
-  tmp = UnknownLiteral.new(0x7fff_ffff, 0b1000_0000_0000)
-  raise tmp.to_s unless tmp.to_s == "31'b1111111111111111111x11111111111"
 
   # represents an integer literal
   class IntLiteralAst < AstNode

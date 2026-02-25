@@ -16,7 +16,8 @@ SPDX-License-Identifier = "BSD-3-Clause-Clear"
 path = [
     "sorbet/**",
     "test/boolean_expressions.json",
-    "Gemfile.lock"
+    "Gemfile.lock",
+    "lib/udb/Z3_VERSION"
 ]
 SPDX-FileCopyrightText = "NONE"
 SPDX-License-Identifier = "CC0-1.0"

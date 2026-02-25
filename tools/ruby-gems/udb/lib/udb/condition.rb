@@ -4,7 +4,6 @@
 # typed: true
 # frozen_string_literal: true
 
-require "minisat"
 require "sorbet-runtime"
 
 require "idlc/symbol_table"
@@ -264,7 +263,7 @@ module Udb
           LogicNode.new(LogicNodeType::Not, [to_logic_tree(expand: true)])
         ]
       )
-      !contradiction.satisfiable?
+      !contradiction.satisfiable?(@cfg_arch)
     end
 
     sig { params(other_condition: AbstractCondition).returns(T::Boolean) }
