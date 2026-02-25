@@ -3588,13 +3588,13 @@ module Idl
       qualifiers << :const if T.must(id.text_value[0]).upcase == id.text_value[0]
       qualifiers << :global if @global
 
-      dtype = Type.new(:enum_ref, enum_class: dtype, qualifiers:) if dtype.kind == :enum
+      dtype = Type.new(:enum_ref, enum_class: T.cast(dtype, EnumerationType), qualifiers:) if dtype.kind == :enum
 
       # dtype = dtype.clone.qualify(q.text_value.to_sym) unless q.empty?
 
       unless ary_size.nil?
         value_result = value_try do
-          dtype = Type.new(:array, width: T.must(ary_size).value(symtab), sub_type: dtype, qualifiers:)
+          dtype = Type.new(:array, width: T.cast(T.must(ary_size).value(symtab), Integer), sub_type: dtype, qualifiers:)
         end
         value_else(value_result) do
           dtype = Type.new(:array, width: :unknown, sub_type: dtype, qualifiers:)
@@ -3788,7 +3788,7 @@ module Idl
 
       unless ary_size.nil?
         value_result = value_try do
-          decl_type = Type.new(:array, sub_type: decl_type, width: T.must(ary_size).value(symtab), qualifiers:)
+          decl_type = Type.new(:array, sub_type: decl_type, width: T.cast(T.must(ary_size).value(symtab), Integer), qualifiers:)
         end
         value_else(value_result) do
           type_error "Array size must be known at compile time"
