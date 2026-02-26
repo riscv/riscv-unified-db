@@ -39,6 +39,36 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  check_f_ok($encoding);
+
+  Bits<32> sp_value_a = f[fs1][31:0];
+  Bits<32> sp_value_b = f[fs2][31:0];
+
+  if (is_sp_nan?(sp_value_a) || is_sp_nan?(sp_value_b)) {
+    if (is_sp_signaling_nan?(sp_value_a) || is_sp_signaling_nan?(sp_value_b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    # If both are NaN, return canonical NaN; otherwise return the non-NaN operand
+    if (is_sp_nan?(sp_value_a) && is_sp_nan?(sp_value_b)) {
+      f[fd] = 32'h7fc00000; # canonical NaN
+    } else if (is_sp_nan?(sp_value_a)) {
+      f[fd] = sp_value_b;
+    } else {
+      f[fd] = sp_value_a;
+    }
+  } else {
+    # -0.0 is considered less than +0.0
+    Boolean sign_a = sp_value_a[31] == 1;
+    Boolean sign_b = sp_value_b[31] == 1;
+    Boolean a_lt_b;
+    if (sign_a != sign_b) {
+      a_lt_b = sign_a && ((sp_value_a[30:0] | sp_value_b[30:0]) != 0);
+    } else {
+      a_lt_b = (sp_value_a != sp_value_b) && (sign_a != (sp_value_a < sp_value_b));
+    }
+    f[fd] = a_lt_b ? sp_value_a : sp_value_b;
+  }
+  mark_f_state_dirty();
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>

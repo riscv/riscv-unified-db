@@ -34,6 +34,12 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  check_f_ok($encoding);
+  RoundingMode mode = rm_to_mode(rm, $encoding);
+  # fnmadd: -(fs1 * fs2) - fs3 = -(fs1 * fs2) + (-fs3)
+  # Negate fs3 by flipping its sign bit, then use subProd op
+  Bits<32> fs3_negated = f[fs3][31:0] ^ 32'h80000000;
+  f[fd] = f32_muladd(f[fs1], f[fs2], fs3_negated, F32MulAddOp::Softfloat_mulAdd_subProd, mode);
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
