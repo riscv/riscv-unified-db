@@ -182,7 +182,7 @@ class TestVariables < Minitest::Test
       CSR[mockcsr].UNKNOWN = CSR[mockcsr].ONE;
     IDL
     expected_idl = <<~IDL
-      CSR[mockcsr].UNKNOWN = 1;
+      CSR[mockcsr].UNKNOWN = 32'1;
     IDL
     ast =
           @compiler.compile_func_body(
@@ -232,7 +232,7 @@ class TestVariables < Minitest::Test
       Bits<32> tmp = $bits(CSR[mockcsr2]);
     IDL
     expected_idl = <<~IDL
-      Bits<32> tmp = 1;
+      Bits<32> tmp = 32'1;
     IDL
     ast =
           @compiler.compile_func_body(

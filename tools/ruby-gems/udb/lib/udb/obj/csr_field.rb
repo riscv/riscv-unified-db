@@ -734,9 +734,9 @@ module Udb
         raise "Unexpected location field" unless loc.is_a?(String)
 
         e, s = loc.split("-").map(&:to_i)
-        raise "Invalid location" if s > e
+        raise "Invalid location" if T.must(s) > T.must(e)
 
-        (s..e).size
+        T.must((s..e).size)
       end
     end
 

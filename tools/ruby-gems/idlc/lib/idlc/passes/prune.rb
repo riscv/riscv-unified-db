@@ -89,11 +89,16 @@ module Idl
     def prune(symtab, forced_type: nil)
       value_result = value_try do
         v = value(symtab)
-        if v.is_a?(Integer)
+        if type(symtab).kind == :bits
           # can only prune if the bit width of the integer is known
           if type(symtab).width == :unknown
             value_error "Unknown width"
           end
+        elsif type(symtab).kind == :struct
+          value_error <<~MSG
+            Literal struct values can't be pruned since a struct can't be initialized with a single expression.
+            This would require syntax like { .a = FOO, .b = BAR }
+          MSG
         end
         return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
       end

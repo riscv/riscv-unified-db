@@ -5843,6 +5843,10 @@ module Idl
   class EnumRefAst < AstNode
     include Rvalue
 
+    class Memo < T::Struct
+      prop :enum_def_type, T::Hash[SymbolTable, EnumerationType], default: {}
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
@@ -5854,52 +5858,38 @@ module Idl
 
       @enum_class_name = class_name
       @member_name = member_name
-      @enum_def_type = nil
+      @memo = Memo.new
     end
 
-    # @!macro freeze_tree
-    def freeze_tree(global_symtab)
-      return if frozen?
-
-      @enum_def_type = global_symtab.get(@enum_class_name)
-
-      if @enum_def_type.nil? || @enum_def_type.kind != :enum
-        type_error "#{@enum_class_name} is not a defined Enum"
-      end
-
-      freeze
+    def enum_def_type(symtab)
+      @memo.enum_def_type[symtab] ||=
+        begin
+          t = symtab.get(@enum_class_name)
+          if t.nil? || t.kind != :enum
+            type_error "#{@enum_class_name} is not a defined Enum"
+          end
+          t
+        end
     end
 
     # @!macro type_check
     def type_check(symtab, strict:)
-      enum_def_type = @enum_def_type
+      type_error "No symbol #{@enum_class_name} has been defined" if enum_def_type(symtab).nil?
 
-      type_error "No symbol #{@enum_class_name} has been defined" if enum_def_type.nil?
-
-      type_error "#{@enum_class_name} is not an enum type" unless enum_def_type.is_a?(EnumerationType)
-      type_error "#{@enum_class_name} has no member '#{@member_name}'" if enum_def_type.value(@member_name).nil?
+      type_error "#{@enum_class_name} is not an enum type" unless enum_def_type(symtab).is_a?(EnumerationType)
+      type_error "#{@enum_class_name} has no member '#{@member_name}'" if enum_def_type(symtab).value(@member_name).nil?
     end
 
     # @!macro type
     def type(symtab)
-      if !frozen?
-        enum_def_type = symtab.get(@enum_class_name)
+      type_error "No enum named #{@enum_class_name}" if enum_def_type(symtab).nil?
 
-        if enum_def_type.nil? || enum_def_type.kind != :enum
-          type_error "#{@enum_class_name} is not a defined Enum"
-        end
-        enum_def_type.ref_type
-      else
-        type_error "No enum named #{@enum_class_name}" if @enum_def_type.nil?
-
-        @enum_def_type.ref_type
-      end
+      enum_def_type(symtab).ref_type
     end
 
     # @!macro value_no
     def value(symtab)
-      enum_def_type = symtab.get(@enum_class_name)
-      enum_def_type.value(@member_name)
+      enum_def_type(symtab).value(@member_name)
     end
 
     # @!macro to_idl
