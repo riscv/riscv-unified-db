@@ -533,7 +533,7 @@ module Udb
       @sw_write_ast
     end
 
-    sig { params(effective_xlen: T.nilable(Integer), ast: Idl::AstNode).returns(Idl::SymbolTable) }
+    sig { params(effective_xlen: T.nilable(Integer), ast: T.nilable(Idl::AstNode)).returns(Idl::SymbolTable) }
     def fill_symtab_for_sw_write(effective_xlen, ast)
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
@@ -565,7 +565,7 @@ module Udb
       symtab
     end
 
-    sig { params(effective_xlen: T.nilable(Integer), ast: Idl::AstNode).returns(Idl::SymbolTable) }
+    sig { params(effective_xlen: T.nilable(Integer), ast: T.nilable(Idl::AstNode)).returns(Idl::SymbolTable) }
     def fill_symtab_for_type(effective_xlen, ast)
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
@@ -601,10 +601,12 @@ module Udb
       symtab.add("__expected_return_type", Idl::Type.new(:bits, width: max_width))
 
       # XLEN at reset is always mxlen
-      symtab.add(
-        "__effective_xlen",
-        Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), cfg_arch.mxlen)
-      )
+      unless cfg_arch.mxlen.nil?
+        symtab.add(
+          "__effective_xlen",
+          Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), cfg_arch.mxlen)
+        )
+      end
 
       symtab
     end

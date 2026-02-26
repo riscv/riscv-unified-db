@@ -509,7 +509,8 @@ The result of a binary operation is signed if both operands are signed; otherwis
                                                              `i` and `j` must be boolean.
 | 15            | `c ? t : f` | `typeof(t)`                | Ternary operator. +
                                                              The result is `t` if `c` is true, and `f` otherwise. +
-                                                             `c` must be boolean, and `t` and `f` must be identical types.
+                                                             `c` must be boolean, and `t` and `f` must be compatible types. +
+                                                             When `t` and `f` are Bits types of different width, the result is the larger of the two widths.
 |===
 
 === Implications

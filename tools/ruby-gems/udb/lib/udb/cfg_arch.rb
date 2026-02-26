@@ -514,38 +514,6 @@ module Udb
     end
     private :symtab_enums
 
-    # symbol table that is just used to bootstrap the cfg_arch and avoid cyclic dependencies
-    # this symbol table just adds extension names and parameter names, but doesn't attempt to resolve
-    # any dependencies
-    sig { returns(Idl::SymbolTable) }
-    def arch_symtab
-      @bootstrap_symtab ||=
-        begin
-          param_vars = params.map do |param|
-            # just pick some possible schema
-            idl_type = param.schema.to_idl_type
-            Idl::Var.new(param.name, idl_type.make_const, param: true)
-          end
-
-          s = Idl::SymbolTable.new(
-            possible_xlens_cb: proc { [32, 64] },
-            builtin_global_vars: param_vars,
-            builtin_funcs: symtab_callbacks,
-            builtin_enums: symtab_enums,
-            name: @name,
-            csrs:,
-            params:
-          )
-
-          global_ast.add_global_symbols(s)
-
-          s.deep_freeze
-          raise if s.name.nil?
-          global_ast.freeze_tree(s)
-          s
-        end
-    end
-
     # @api private
     sig { returns(Idl::SymbolTable) }
     def create_symtab
@@ -709,82 +677,97 @@ module Udb
     sig { params(show_progress: T::Boolean, io: IO).void }
     def type_check(show_progress: true, io: $stdout)
       io.puts "Type checking IDL code for #{@config.name}..." if show_progress
-      insts = possible_instructions(show_progress:)
+      insts = @config.unconfigured? ? instructions : possible_instructions(show_progress:)
+      xlens = @config.unconfigured? ? [32, 64] : possible_xlens
 
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking possible instructions [:bar]", total: insts.size, output: $stdout)
+          TTY::ProgressBar.new("type checking possible instructions [:bar] :current/:total", total: insts.size, output: $stdout)
         end
 
-      possible_instructions.each do |inst|
+      insts.each do |inst|
         progressbar.advance if show_progress
         if @mxlen == 32
           if inst.rv32?
-            inst.type_checked_operation_ast(32)
-            s = inst.fill_symtab(32, inst.type_checked_operation_ast(32))
-            unless inst.pruned_operation_ast(32).nil?
-              inst.pruned_operation_ast(32).type_check(s, strict: true)
+            s = inst.fill_symtab(32, inst.operation_ast)
+            unless inst.operation_ast.nil?
+              inst.operation_ast.prune(s).type_check(s, strict: true)
             end
             s.release
           end
-        elsif @mxlen == 64
+        else
           if inst.rv64?
-            inst.type_checked_operation_ast(64)
-            s = inst.fill_symtab(64, inst.type_checked_operation_ast(64))
-            unless inst.pruned_operation_ast(64).nil?
-              inst.pruned_operation_ast(64).type_check(s, strict: true)
+            s = inst.fill_symtab(64, inst.operation_ast)
+            unless inst.operation_ast.nil?
+              inst.operation_ast.prune(s).type_check(s, strict: true)
             end
             s.release
           end
-          if possible_xlens.include?(32) && inst.rv32?
-            inst.type_checked_operation_ast(32)
-            s = inst.fill_symtab(32, inst.type_checked_operation_ast(32))
-            unless inst.pruned_operation_ast(32).nil?
-              inst.pruned_operation_ast(32).type_check(s, strict: true)
+          if xlens.include?(32) && inst.rv32?
+            s = inst.fill_symtab(32, inst.operation_ast)
+            unless inst.operation_ast.nil?
+              inst.operation_ast.prune(s).type_check(s, strict: true)
             end
             s.release
           end
         end
       end
 
+      csr_list = @config.unconfigured? ? csrs : possible_csrs
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking CSRs [:bar]", total: possible_csrs.size, output: $stdout)
+          TTY::ProgressBar.new("type checking CSRs [:bar]", total: csr_list.size, output: $stdout)
         end
 
-      possible_csrs.each do |csr|
+      csr_list.each do |csr|
         progressbar.advance if show_progress
         if csr.has_custom_sw_read?
-          if (possible_xlens.include?(32) && csr.defined_in_base32?)
-            csr.type_checked_sw_read_ast(32)
+          if (xlens.include?(32) && csr.defined_in_base32?)
+            s = csr.fill_symtab(nil, 32)
+            csr.sw_read_ast(s).prune(s).type_check(s, strict: true)
           end
-          if (possible_xlens.include?(64) && csr.defined_in_base64?)
-            csr.type_checked_sw_read_ast(64)
+          if (xlens.include?(64) && csr.defined_in_base64?)
+            s = csr.fill_symtab(nil, 64)
+            csr.sw_read_ast(s).prune(s).type_check(s, strict: true)
           end
         end
         csr.possible_fields.each do |field|
-          unless field.type_ast.nil?
-            if possible_xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
-              field.type_checked_type_ast(32)
-            end
-            if possible_xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
-              field.type_checked_type_ast(64)
-            end
-          end
           unless field.reset_value_ast.nil?
-            if ((possible_xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?) ||
-                (possible_xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?))
-              field.type_checked_reset_value_ast if csr.defined_in_base32? && field.defined_in_base32?
+            if xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
+              s = field.fill_symtab_for_reset(nil)
+              field.reset_value_ast.prune(s).type_check(s, strict: true)
+              s.release
+            end
+            if xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
+              s = field.fill_symtab_for_reset(nil)
+              field.reset_value_ast.prune(s).type_check(s, strict: true)
+              s.release
             end
           end
           unless field.sw_write_ast(symtab).nil?
-            field.type_checked_sw_write_ast(symtab, 32) if possible_xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
-            field.type_checked_sw_write_ast(symtab, 64) if possible_xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
+            if xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
+              s = field.fill_symtab_for_sw_write(32, nil)
+              field.sw_write_ast(s).prune(s).type_check(s, strict: true)
+            end
+            if xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
+              s = field.fill_symtab_for_sw_write(64, nil)
+              field.sw_write_ast(s).prune(s).type_check(s, strict: true)
+            end
+          end
+          unless field.type_ast.nil?
+            if xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
+              s = field.fill_symtab_for_type(32, nil)
+              field.type_ast.prune(s).type_check(s, strict: true)
+            end
+            if xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
+              s = field.fill_symtab_for_type(64, nil)
+              field.type_ast.prune(s).type_check(s, strict: true)
+            end
           end
         end
       end
 
-      func_list = reachable_functions(show_progress:)
+      func_list = @config.unconfigured? ? functions : reachable_functions(show_progress:)
       progressbar =
         if show_progress
           TTY::ProgressBar.new("type checking functions [:bar]", total: func_list.size, output: $stdout)
@@ -793,10 +776,9 @@ module Udb
         progressbar.advance if show_progress
         s = symtab.global_clone
         s.push(func)
-        func.type_check(symtab, strict: false)
+        pruned = func.prune(s)
         s.pop
-        s.push(func)
-        func.prune(s).type_check(symtab, strict: true)
+        pruned.type_check(s, strict: true)
         s.release
       end
 

@@ -6086,6 +6086,10 @@ module Idl
   class TernaryOperatorExpressionAst < AstNode
     include Rvalue
 
+    class Memo < T::Struct
+      prop :type, T::Hash[SymbolTable, Type], default: {}
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = condition.const_eval?(symtab) && true_expression.const_eval?(symtab) && false_expression.const_eval?(symtab)
 
@@ -6093,8 +6097,19 @@ module Idl
     def true_expression = @children[1]
     def false_expression = @children[2]
 
+    sig {
+      params(
+        input: T.nilable(String),
+        interval: T.nilable(T::Range[Integer]),
+        condition: RvalueAst,
+        true_expression: RvalueAst,
+        false_expression: RvalueAst
+      )
+      .void
+    }
     def initialize(input, interval, condition, true_expression, false_expression)
       super(input, interval, [condition, true_expression, false_expression])
+      @memo = Memo.new
     end
 
     # @!macro type_check
@@ -6106,12 +6121,24 @@ module Idl
         type_error "ternary selector must be bool" unless condition.type(symtab).kind == :boolean
       end
 
-      value_result = value_try do
-        cond = condition.value(symtab)
-        # if the condition is compile-time-known, only check the used field
-        cond ? true_expression.type_check(symtab, strict:) : false_expression.type_check(symtab, strict:)
-      end
-      value_else(value_result) do
+      if strict
+        value_result = value_try do
+          cond = condition.value(symtab)
+          # if the condition is compile-time-known, only check the used field
+          cond ? true_expression.type_check(symtab, strict:) : false_expression.type_check(symtab, strict:)
+        end
+        value_else(value_result) do
+          true_expression.type_check(symtab, strict:)
+          false_expression.type_check(symtab, strict:)
+
+          unless true_expression.type(symtab).equal_to?(false_expression.type(symtab))
+            # we'll allow dissimilar if they are both bits type
+            unless true_expression.type(symtab).kind == :bits && false_expression.type(symtab).kind == :bits
+              type_error "True and false options must be same type (have #{true_expression.type(symtab)} and #{false_expression.type(symtab)})"
+            end
+          end
+        end
+      else
         true_expression.type_check(symtab, strict:)
         false_expression.type_check(symtab, strict:)
 
@@ -6126,67 +6153,56 @@ module Idl
 
     # @!macro type
     def type(symtab)
-      condition.type_check(symtab, strict: true)
-      value_result = value_try do
-        cond = condition.value(symtab)
-        # if the condition is compile-time-known, only check the used field
-        if cond
-          return true_expression.type(symtab)
-        else
-          return false_expression.type(symtab)
-        end
-      end
-      value_else(value_result) do
-        t =
-          if true_expression.type(symtab).kind == :bits && false_expression.type(symtab).kind == :bits
-            true_type = true_expression.type(symtab)
-            false_type = false_expression.type(symtab)
-            true_width = true_type.width
-            false_width = false_type.width
-            known = true_expression.type(symtab).known? && false_expression.type(symtab).known?
-            if true_width == :unknown || false_width == :unknown
-              max_width =
-                if true_width == :unknown && false_width == :unknown
-                  if true_type.max_width.nil? || false_type.max_width.nil?
-                    nil
-                  else
-                    [true_type.max_width, false_type.max_width].max
-                  end
-                elsif true_width == :unknown
-                  if true_type.max_width.nil?
-                    nil
-                  else
-                    [true_type.max_width, false_width].max
-                  end
-                elsif false_width == :unknown
-                  if false_type.max_width.nil?
-                    nil
-                  else
-                    [false_type.max_width, true_width].max
-                  end
+      return @memo.type.fetch(symtab) if @memo.type.key?(symtab)
+      t =
+        if true_expression.type(symtab).kind == :bits && false_expression.type(symtab).kind == :bits
+          true_type = true_expression.type(symtab)
+          false_type = false_expression.type(symtab)
+          true_width = true_type.width
+          false_width = false_type.width
+          known = true_expression.type(symtab).known? && false_expression.type(symtab).known?
+          if true_width == :unknown || false_width == :unknown
+            max_width =
+              if true_width == :unknown && false_width == :unknown
+                if true_type.max_width.nil? || false_type.max_width.nil?
+                  nil
                 else
-                  raise "unreachable"
+                  [true_type.max_width, false_type.max_width].max
                 end
-              if known
-                Type.new(:bits, width: :unknown, max_width:, qualifiers: [:known])
+              elsif true_width == :unknown
+                if true_type.max_width.nil?
+                  nil
+                else
+                  [true_type.max_width, false_width].max
+                end
+              elsif false_width == :unknown
+                if false_type.max_width.nil?
+                  nil
+                else
+                  [false_type.max_width, true_width].max
+                end
               else
-                Type.new(:bits, width: :unknown, max_width:)
+                raise "unreachable"
               end
+            if known
+              Type.new(:bits, width: :unknown, max_width:, qualifiers: [:known])
             else
-              if known
-                Type.new(:bits, width: [true_width, false_width].max, qualifiers: [:known])
-              else
-                Type.new(:bits, width: [true_width, false_width].max)
-              end
+              Type.new(:bits, width: :unknown, max_width:)
             end
           else
-            true_expression.type(symtab).clone
+            if known
+              Type.new(:bits, width: [true_width, false_width].max, qualifiers: [:known])
+            else
+              Type.new(:bits, width: [true_width, false_width].max)
+            end
           end
-        if condition.type(symtab).const? && true_expression.type(symtab).const? && false_expression.type(symtab).const?
-          t.make_const!
+        else
+          true_expression.type(symtab).clone
         end
-        return t
+      if condition.type(symtab).const? && true_expression.type(symtab).const? && false_expression.type(symtab).const?
+        t.make_const!
       end
+      @memo.type[symtab] = t
     end
 
     # @!macro value
@@ -6225,9 +6241,9 @@ module Idl
       interval = interval_from_source_yaml(yaml.fetch("source"))
       TernaryOperatorExpressionAst.new(
         input, interval,
-        AstNode.from_h(yaml.fetch("condition"), source_mapper),
-        AstNode.from_h(yaml.fetch("true_expression"), source_mapper),
-        AstNode.from_h(yaml.fetch("false_expression"), source_mapper)
+        T.cast(AstNode.from_h(yaml.fetch("condition"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("true_expression"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("false_expression"), source_mapper), RvalueAst)
       )
     end
   end
@@ -9406,13 +9422,9 @@ end,
       if fd.defined_in_all_bases?
         Type.new(:bits, width: symtab.possible_xlens.map { |xlen| fd.width(xlen) }.max)
       elsif fd.base64_only?
-        if symtab.possible_xlens.include?(64)
-          Type.new(:bits, width: fd.width(64))
-        end
+        Type.new(:bits, width: fd.width(64))
       elsif fd.base32_only?
-        if symtab.possible_xlens.include?(32)
-          Type.new(:bits, width: fd.width(32))
-        end
+        Type.new(:bits, width: fd.width(32))
       else
         internal_error "unexpected field base"
       end

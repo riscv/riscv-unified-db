@@ -52,7 +52,7 @@ module Udb
     }
     def initialize(idl, input_file:, input_line:, cfg_arch:, reason: nil)
       @cfg_arch = cfg_arch
-      symtab = cfg_arch.arch_symtab.global_clone
+      symtab = cfg_arch.symtab.global_clone
       begin
         @ast = @cfg_arch.idl_compiler.compile_constraint(idl, symtab)
       rescue SyntaxError
@@ -71,7 +71,7 @@ module Udb
     # convert into a pure UDB condition
     sig { returns(T.any(T::Hash[String, T.untyped], T::Boolean)) }
     def to_h
-      symtab = @cfg_arch.arch_symtab.global_clone
+      symtab = @cfg_arch.symtab.global_clone
       h = @ast.to_udb_h(symtab)
       symtab.release
 
