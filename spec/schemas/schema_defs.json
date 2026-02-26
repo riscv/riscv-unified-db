@@ -1,8 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
   "title": "Common patterns used by all schemas",
-
   "$defs": {
     "$source": {
       "type": "string",
@@ -34,7 +32,10 @@
     },
     "field_location": {
       "oneOf": [
-        { "type": "integer", "description": "Location of a single bit" },
+        {
+          "type": "integer",
+          "description": "Location of a single bit"
+        },
         {
           "type": "string",
           "pattern": "^[0-9]+-[0-9]+$",
@@ -53,7 +54,11 @@
         {
           "type": "string",
           "minLength": 1,
-          "enum": ["MXLEN", "FLEN", "VLEN"]
+          "enum": [
+            "MXLEN",
+            "FLEN",
+            "VLEN"
+          ]
         }
       ]
     },
@@ -108,7 +113,11 @@
           "description": "List of changes"
         }
       },
-      "required": ["date", "revision", "changes"],
+      "required": [
+        "date",
+        "revision",
+        "changes"
+      ],
       "additionalProperties": false
     },
     "spec_state": {
@@ -138,7 +147,9 @@
     },
     "conditional_text": {
       "type": "object",
-      "required": ["text"],
+      "required": [
+        "text"
+      ],
       "properties": {
         "text": {
           "type": "string",
@@ -148,7 +159,9 @@
           "type": "string",
           "description": "IDL boolean expression. When true, the text applies"
         },
-        "when_ast": { "type": "object" }
+        "when_ast": {
+          "type": "object"
+        }
       },
       "additionalProperties": false
     },
@@ -196,15 +209,26 @@
       "oneOf": [
         {
           "type": "string",
-          "enum": ["mandatory", "optional", "prohibited"]
+          "enum": [
+            "mandatory",
+            "optional",
+            "prohibited"
+          ]
         },
         {
           "type": "object",
-          "required": ["optional"],
+          "required": [
+            "optional"
+          ],
           "properties": {
             "optional": {
               "type": "string",
-              "enum": ["localized", "development", "expansion", "transitory"]
+              "enum": [
+                "localized",
+                "development",
+                "expansion",
+                "transitory"
+              ]
             }
           },
           "additionalProperties": false
@@ -215,7 +239,10 @@
       "type": "string",
       "format": "date",
       "description": "A specific day in YYYY-MM-DD format",
-      "examples": ["2018-11-13", "2024-12-31"]
+      "examples": [
+        "2018-11-13",
+        "2024-12-31"
+      ]
     },
     "extension_name": {
       "type": "string",
@@ -251,9 +278,22 @@
         },
         "version": {
           "$ref": "#/$defs/version_requirements"
+        },
+        "note": {
+          "type": "string",
+          "description": "A brief note about the dependency"
+        },
+        "cert_normative_rules": {
+          "description": "References to the normative rule(s) that mandate this extension dependency",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "additionalProperties": false
     },
     "param_name": {
@@ -262,7 +302,10 @@
     },
     "param_requirement": {
       "type": "object",
-      "required": ["name", "schema"],
+      "required": [
+        "name",
+        "schema"
+      ],
       "properties": {
         "name": {
           "$ref": "#/$defs/param_name"
@@ -275,7 +318,9 @@
     },
     "requires_entry": {
       "oneOf": [
-        { "$ref": "#/$defs/extension_requirement" },
+        {
+          "$ref": "#/$defs/extension_requirement"
+        },
         {
           "type": "object",
           "properties": {
@@ -308,7 +353,10 @@
     },
     "extension_with_version": {
       "type": "object",
-      "required": ["name", "version"],
+      "required": [
+        "name",
+        "version"
+      ],
       "properties": {
         "name": {
           "$ref": "#/$defs/extension_name"
@@ -320,7 +368,9 @@
     },
     "author": {
       "type": "object",
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -340,7 +390,9 @@
     },
     "organization": {
       "type": "object",
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -377,7 +429,12 @@
     "cert_normative_rules": {
       "description": "Architecturally visible behaviors requiring validation by certification tests",
       "type": "array",
-      "required": ["id", "name", "doc_links", "description"],
+      "required": [
+        "id",
+        "name",
+        "doc_links",
+        "description"
+      ],
       "properties": {
         "id": {
           "type": "string"
@@ -466,7 +523,9 @@
     "extension_condition": {
       "description": "A logic condition specifying certain extension version requirements",
       "type": "object",
-      "required": ["extension"],
+      "required": [
+        "extension"
+      ],
       "properties": {
         "extension": {
           "oneOf": [
@@ -514,7 +573,10 @@
             },
             {
               "type": "object",
-              "required": ["if", "then"],
+              "required": [
+                "if",
+                "then"
+              ],
               "properties": {
                 "if": {
                   "$ref": "schema_defs.json#/$defs/condition"
@@ -532,14 +594,18 @@
     },
     "param_condition": {
       "type": "object",
-      "required": ["param"],
+      "required": [
+        "param"
+      ],
       "properties": {
         "param": {
           "oneOf": [
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["name"],
+              "required": [
+                "name"
+              ],
               "properties": {
                 "name": {
                   "$ref": "#/$defs/param_name"
@@ -685,16 +751,16 @@
       },
       "additionalProperties": false
     },
-
     "idl": {
       "description": "IDL code",
       "type": "string"
     },
-
     "idl_condition": {
       "description": "A condition expressed with IDL",
       "type": "object",
-      "required": ["idl()"],
+      "required": [
+        "idl()"
+      ],
       "properties": {
         "idl()": {
           "description": "IDL function containing one or more implications (e.g., A -> B).",
@@ -710,7 +776,6 @@
       },
       "additionalProperties": false
     },
-
     "yaml_condition": {
       "oneOf": [
         {
@@ -763,18 +828,21 @@
         }
       ]
     },
-
     "xlen_condition": {
       "type": "object",
-      "required": ["xlen"],
+      "required": [
+        "xlen"
+      ],
       "properties": {
         "xlen": {
-          "enum": [32, 64]
+          "enum": [
+            32,
+            64
+          ]
         }
       },
       "additionalProperties": false
     },
-
     "condition": {
       "oneOf": [
         {
@@ -785,7 +853,6 @@
         }
       ]
     },
-
     "extension_requirement_list_item": {
       "description": "A list of extension requirements, possibly with a condition",
       "oneOf": [
@@ -807,7 +874,10 @@
               "$ref": "#/$defs/condition"
             }
           },
-          "required": ["name", "when"],
+          "required": [
+            "name",
+            "when"
+          ],
           "additionalProperties": false
         }
       ]
@@ -832,7 +902,6 @@
         }
       ]
     },
-
     "uint32": {
       "type": "integer",
       "minimum": 0,
@@ -847,28 +916,108 @@
       "description": "An unsigned power of 2 that fits in 32 bits",
       "type": "integer",
       "enum": [
-        1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4095, 8192, 16384,
-        32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304,
-        8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912,
-        1073741824, 2147483648
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4095,
+        8192,
+        16384,
+        32768,
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576,
+        2097152,
+        4194304,
+        8388608,
+        16777216,
+        33554432,
+        67108864,
+        134217728,
+        268435456,
+        536870912,
+        1073741824,
+        2147483648
       ]
     },
     "64bit_unsigned_pow2": {
       "description": "An unsigned power of 2 that fits in 64 bits",
       "type": "integer",
       "enum": [
-        1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4095, 8192, 16384,
-        32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304,
-        8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912,
-        1073741824, 2147483648, 4294967296, 8589934592, 17179869184,
-        34359738368, 68719476736, 137438953472, 274877906944, 549755813888,
-        1099511627776, 2199023255552, 4398046511104, 8796093022208,
-        17592186044416, 35184372088832, 70368744177664, 140737488355328,
-        281474976710656, 562949953421312, 1125899906842624, 2251799813685248,
-        4503599627370496, 9007199254740992, 18014398509481984,
-        36028797018963968, 72057594037927936, 144115188075855872,
-        288230376151711744, 576460752303423488, 1152921504606846976,
-        2305843009213693952, 4611686018427387904, 9223372036854775808
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4095,
+        8192,
+        16384,
+        32768,
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576,
+        2097152,
+        4194304,
+        8388608,
+        16777216,
+        33554432,
+        67108864,
+        134217728,
+        268435456,
+        536870912,
+        1073741824,
+        2147483648,
+        4294967296,
+        8589934592,
+        17179869184,
+        34359738368,
+        68719476736,
+        137438953472,
+        274877906944,
+        549755813888,
+        1099511627776,
+        2199023255552,
+        4398046511104,
+        8796093022208,
+        17592186044416,
+        35184372088832,
+        70368744177664,
+        140737488355328,
+        281474976710656,
+        562949953421312,
+        1125899906842624,
+        2251799813685248,
+        4503599627370496,
+        9007199254740992,
+        18014398509481984,
+        36028797018963968,
+        72057594037927936,
+        144115188075855872,
+        288230376151711744,
+        576460752303423488,
+        1152921504606846976,
+        2305843009213693952,
+        4611686018427387904,
+        9223372036854775808
       ]
     }
   }
