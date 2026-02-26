@@ -1,4 +1,4 @@
- kind: csr;
+kind: csr;
 name: vcsr;
 long_name: Vector Control and Status Register;
 address: 0x00F;
