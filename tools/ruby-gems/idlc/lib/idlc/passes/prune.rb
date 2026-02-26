@@ -477,6 +477,60 @@ module Idl
     end
   end
 
+  class ConcatenationExpressionAst
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        return create_int_literal(v, forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        c = ConcatenationExpressionAst.new(
+          input, interval, @children.map { |c| c.prune(symtab) }
+        )
+        if forced_type
+          if forced_type.width < type(symtab).width
+            c = AryRangeAccessAst.new(
+              input, interval, c, create_int_literal(forced_type.width - 1), create_int_literal(0)
+            )
+          elsif forced_type.width > type(symtab).width
+            extra = forced_type.width - type(symtab).width
+            mock_type = Struct.new(:width)
+            c = ConcatenationExpressionAst.new(
+              input, interval, [create_int_literal(0, forced_type: mock_type.new(extra))] + @children.map { |c| c.prune(symtab) }
+            )
+          end
+        end
+        c
+      end
+    end
+  end
+
+  class ReplicationExpressionAst
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        return create_int_literal(v, forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        c = ReplicationExpressionAst.new(input, interval, n.prune(symtab), v.prune(symtab))
+        if forced_type
+          if forced_type.width < type(symtab).width
+            c = AryRangeAccessAst.new(
+              input, interval, c, create_int_literal(forced_type.width - 1), create_int_literal(0)
+            )
+          elsif forced_type.width > type(symtab).width
+            extra = forced_type.width - type(symtab).width
+            mock_type = Struct.new(:width)
+            c = ConcatenationExpressionAst.new(
+              input, interval, [create_int_literal(0, forced_type: mock_type.new(extra))] + @children.map { |c| c.prune(symtab) }
+            )
+          end
+        end
+        c
+      end
+    end
+  end
+
   class IntLiteralAst
     def prune(symtab, forced_type: nil)
       if forced_type

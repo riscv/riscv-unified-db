@@ -74,6 +74,40 @@ class TestVariables < Minitest::Test
     end
   end
 
+  def test_ternary_prune
+    orig_idl = "(true) ? {1'b1, {31{1'b0}}} : {1'b1, {63{1'b0}}}"
+    expected_idl = "64'h80000000"
+
+    symtab = Idl::SymbolTable.new
+    m = @compiler.parser.parse(orig_idl, root: :expression)
+    refute_nil m
+
+    ast = m.to_ast
+    assert_instance_of Idl::TernaryOperatorExpressionAst, ast
+
+    pruned = ast.prune(symtab)
+    assert_instance_of Idl::IntLiteralAst, pruned
+
+    assert_equal expected_idl, pruned.to_idl
+  end
+
+  def test_ternary_prune_2
+    orig_idl = "(true) ? {1'b1, {31{1'bx}}} : {1'b1, {63{1'b0}}}"
+    expected_idl = "{32'0,1'b1,{31{1'bx}}}"
+
+    symtab = Idl::SymbolTable.new
+    m = @compiler.parser.parse(orig_idl, root: :expression)
+    refute_nil m
+
+    ast = m.to_ast
+    assert_instance_of Idl::TernaryOperatorExpressionAst, ast
+
+    pruned = ast.prune(symtab)
+    assert_instance_of Idl::ConcatenationExpressionAst, pruned
+
+    assert_equal expected_idl, pruned.to_idl
+  end
+
   def test_prune_csr_value
     orig_idl = <<~IDL
       if (CSR[mockcsr].ONE == 1) {

@@ -5378,13 +5378,17 @@ module Idl
 
     # @!macro value
     def value(symtab)
-      result = 0
+      result = UnknownLiteral.new(0, 0)
       total_width = 0
       expressions.reverse_each do |exp|
         result |= (exp.value(symtab) << total_width)
         total_width += exp.type(symtab).width
       end
-      result
+      if result.is_a?(UnknownLiteral)
+        result.unknown_mask.zero? ? result.known_vlue : result
+      else
+        result
+      end
     end
 
     # @!macro to_idl
@@ -5449,11 +5453,15 @@ module Idl
 
     # @!macro value
     def value(symtab)
-      result = 0
+      result = UnknownLiteral.new(0, 0)
       n.value(symtab).times do |i|
         result |= v.value(symtab) << (i * v.type(symtab).width)
       end
-      result
+      if result.is_a?(UnknownLiteral)
+        result.unknown_mask.zero? ? result.known_value : result
+      else
+        result
+      end
     end
 
     # @!macro type
@@ -7134,6 +7142,17 @@ module Idl
         raise "unexpected"
       end
     end
+    def <=(other)
+      throw(:value_error, :unknown_value) unless @unknown_mask.zero?
+      if other.is_a?(Integer)
+        @known_value <= other
+      elsif other.is_a?(UnknownLiteral)
+        throw(:value_error, :unknown_value) unless other.unknown_mask.zero?
+        @known_value <= other.known_value
+      else
+        raise "unexpected"
+      end
+    end
     def |(other)
       if other.is_a?(Integer)
         new_known_value = @known_value | other
@@ -7153,6 +7172,15 @@ module Idl
         end
       else
         raise "unexpected"
+      end
+    end
+    def <<(shamt)
+      if shamt.is_a?(Integer)
+        new_known_value = @known_value << shamt
+        new_unknown_mask = @unknown_mask << shamt
+        UnknownLiteral.new(new_known_value, new_unknown_mask)
+      else
+        raise "cannot left shift by unknown amount"
       end
     end
     def to_s
