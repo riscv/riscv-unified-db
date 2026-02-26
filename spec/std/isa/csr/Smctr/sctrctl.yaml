@@ -11,7 +11,9 @@ address: 0x14E
 writable: true
 priv_mode: S
 length: 64
-definedBy: Smctr
+definedBy:
+  extension:
+    name: Smctr
 description: The `sctrctl` register enables and configures the Control Transfer Records capability in S mode.
 fields:
   U:
@@ -57,7 +59,9 @@ fields:
     description: |
       Set `sctrstatus.FROZEN` on local-counter-overflow interrupt (LCOFI) that traps
       to M or S mode.
-    definedBy: Sscofpmf
+    definedBy:
+      extension:
+        name: Sscofpmf
   EXCINH:
     location: 33
     type: RW
@@ -157,10 +161,64 @@ fields:
     description: |
       WARL bits designated for custom use. The value 0 must correspond to standard behavior.
 sw_read(): |
-  Bits<12> sctrctl_addr = 0x14E;
-  Bits<64> sctrctl_mask = 0x787F9F80000DC3;
-  Csr csr_handle = direct_csr_lookup(sctrctl_addr);
+  Bits<12> addr = 0x14E;
+  Bits<64> mask = 0x00000000000803; # U, S, and BPFRZ are not optional
+  Csr csr_handle = direct_csr_lookup(addr);
   if (!csr_handle.valid) {
     unimplemented_csr($encoding);
   }
-  return (CSR[mctrctl] & sctrctl_mask);
+  if (MCTRCTL_RASEMU_IMPLEMENTED) {
+    mask = mask | (1 `<< 7);
+  }
+  if (MCTRCTL_STE_IMPLEMENTED) {
+    mask = mask | (1 `<< 8);
+  }
+  if (MCTRCTL_MTE_IMPLEMENTED) {
+    mask = mask | (1 `<< 9);
+  }
+  if (implemented?(ExtensionName::Sscofpmf)) {
+    mask = mask | (1 `<< 12);
+  }
+  if (MCTRCTL_EXCINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 33);
+  }
+  if (MCTRCTL_INTRINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 34);
+  }
+  if (MCTRCTL_TRETINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 35);
+  }
+  if (MCTRCTL_NTBREN_IMPLEMENTED) {
+    mask = mask | (1 `<< 36);
+  }
+  if (MCTRCTL_TKBRINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 37);
+  }
+  if (MCTRCTL_INDCALLINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 40);
+  }
+  if (MCTRCTL_DIRCALLINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 41);
+  }
+  if (MCTRCTL_INDJMPINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 42);
+  }
+  if (MCTRCTL_DIRJMPINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 43);
+  }
+  if (MCTRCTL_CORSWAPINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 44);
+  }
+  if (MCTRCTL_RETINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 45);
+  }
+  if (MCTRCTL_INDLJMPINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 46);
+  }
+  if (MCTRCTL_DIRLJMPINH_IMPLEMENTED) {
+    mask = mask | (1 `<< 47);
+  }
+  if (MCTRCTL_CUSTOM_IMPLEMENTED) {
+    mask = mask | (4'b1111 `<< 60);
+  }
+  return ($bits(CSR[mctrctl]) & mask);

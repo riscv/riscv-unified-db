@@ -11,7 +11,9 @@ address: 0x34E
 writable: true
 priv_mode: M
 length: 64
-definedBy: Smctr
+definedBy:
+  extension:
+    name: Smctr
 description: |
   The `mctrctl` register enables and configures the Control Transfer Records capability in M mode.
 fields:
@@ -39,18 +41,30 @@ fields:
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it enables RAS (Return Address Stack) Emulation Mode.
+    definedBy:
+      param:
+        name: MCTRCTL_RASEMU_IMPLEMENTED
+        equal: true
   STE:
     location: 8
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       Enables recording of traps to S-mode when S=0.
+    definedBy:
+      param:
+        name: MCTRCTL_STE_IMPLEMENTED
+        equal: true
   MTE:
     location: 9
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       Enables recording of traps to M-mode when M=0.
+    definedBy:
+      param:
+        name: MCTRCTL_MTE_IMPLEMENTED
+        equal: true
   BPFRZ:
     location: 11
     type: RW
@@ -64,96 +78,146 @@ fields:
     description: |
       Set `sctrstatus.FROZEN` on local-counter-overflow interrupt (LCOFI) that traps
       to M or S mode.
-    definedBy: Sscofpmf
+    definedBy:
+      extension:
+        name: Sscofpmf
   EXCINH:
     location: 33
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of exceptions.
+    definedBy:
+      param:
+        name: MCTRCTL_EXCINH_IMPLEMENTED
+        equal: true
   INTRINH:
     location: 34
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of interrupts.
+    definedBy:
+      param:
+        name: MCTRCTL_INTRINH_IMPLEMENTED
+        equal: true
   TRETINH:
     location: 35
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of trap returns.
+    definedBy:
+      param:
+        name: MCTRCTL_TRETINH_IMPLEMENTED
+        equal: true
   NTBREN:
     location: 36
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it enables recording of not-taken branches.
+    definedBy:
+      param:
+        name: MCTRCTL_NTBREN_IMPLEMENTED
+        equal: true
   TKBRINH:
     location: 37
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of taken branches.
+    definedBy:
+      param:
+        name: MCTRCTL_TKBRINH_IMPLEMENTED
+        equal: true
   INDCALLINH:
     location: 40
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of indirect calls.
+    definedBy:
+      param:
+        name: MCTRCTL_INDCALLINH_IMPLEMENTED
+        equal: true
   DIRCALLINH:
     location: 41
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of direct calls.
+    definedBy:
+      param:
+        name: MCTRCTL_DIRCALLINH_IMPLEMENTED
+        equal: true
   INDJMPINH:
     location: 42
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of indirect jumps (without linkage).
+    definedBy:
+      param:
+        name: MCTRCTL_INDJMPINH_IMPLEMENTED
+        equal: true
   DIRJMPINH:
     location: 43
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of direct jumps (without linkage).
+    definedBy:
+      param:
+        name: MCTRCTL_DIRJMPINH_IMPLEMENTED
+        equal: true
   CORSWAPINH:
     location: 44
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of co-routine swaps.
+    definedBy:
+      param:
+        name: MCTRCTL_CORSWAPINH_IMPLEMENTED
+        equal: true
   RETINH:
     location: 45
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of function returns.
+    definedBy:
+      param:
+        name: MCTRCTL_RETINH_IMPLEMENTED
+        equal: true
   INDLJMPINH:
     location: 46
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of other indirect jumps (with linkage).
+    definedBy:
+      param:
+        name: MCTRCTL_INDLJMPINH_IMPLEMENTED
+        equal: true
   DIRLJMPINH:
     location: 47
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       When set, it inhibits recording of other direct jumps (with linkage).
+    definedBy:
+      param:
+        name: MCTRCTL_DIRLJMPINH_IMPLEMENTED
+        equal: true
   CUSTOM:
     location: 63-60
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |
       WARL bits designated for custom use. The value 0 must correspond to standard behavior.
-sw_read(): |
-  Bits<12> mctrctl_addr = 0x34E;
-  Bits<64> mctrctl_mask = 0x787F9F80000FC7;
-  Csr csr_handle = direct_csr_lookup(mctrctl_addr);
-  if (!csr_handle.valid) {
-    unimplemented_csr($encoding);
-  }
-  return (CSR[mctrctl] & mctrctl_mask);
+    definedBy:
+      param:
+        name: MCTRCTL_CUSTOM_IMPLEMENTED
+        equal: true
