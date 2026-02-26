@@ -48,7 +48,7 @@ class TestAstType < Minitest::Test
       ast.type(symtab)
     end
     assert_raises Idl::AstNode::TypeError do
-      ast.freeze_tree(symtab)
+      ast.enum_def_type(symtab)
     end
 
   end

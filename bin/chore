@@ -58,6 +58,18 @@ update_subcmd_usage() {
   echo ""
   echo "  gems:          Update Ruby Gems and regenerate type definitions"
   echo "  z3:            Update the z3 shared library used by the udb gem"
+  echo "                 ('chore update z3 -h' for more)"
+  echo ""
+}
+
+update_z3_usage() {
+  echo "Usage: chore update z3 [-hn]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -n:      Build only for native/host platform (for use in CI matrix builds)"
   echo ""
 }
 
@@ -209,6 +221,8 @@ do_update_gems() {
 }
 
 do_update_z3() {
+  local native_only=$1
+
   # Requires: docker (for build_z3_with_docker.sh) and gh (GitHub CLI, authenticated)
   if ! command -v gh &>/dev/null; then
     echo "ERROR: 'gh' CLI is required for 'chore update z3'. Install from https://cli.github.com" >&2
@@ -268,45 +282,141 @@ do_update_z3() {
   local z3_version
   if [ "${target_version}" != "${current_version}" ]; then
     # New upstream version: build from source
-    echo "==> Building Z3 for x64..."
-    "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-x64" Release x64 || exit 1
+    if [ "${native_only}" = "yes" ]; then
+      # Detect native architecture
+      local native_arch
+      case "$(uname -m)" in
+        x86_64)
+          native_arch="x64"
+          ;;
+        aarch64)
+          native_arch="arm64"
+          ;;
+        *)
+          echo "ERROR: Unsupported architecture: $(uname -m)" >&2
+          exit 1
+          ;;
+      esac
+      echo "==> Building Z3 for native platform (${native_arch})..."
+      "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-${native_arch}" Release "${native_arch}" || exit 1
 
-    echo "==> Building Z3 for arm64..."
-    "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-arm64" Release arm64 || exit 1
+      # Read the version produced by the build
+      z3_version=$(cat "${work_dir}/z3-${native_arch}/VERSION")
+      echo "==> Built Z3 version: ${z3_version}"
 
-    # Read the version produced by the build
-    z3_version=$(cat "${work_dir}/z3-x64/VERSION")
-    echo "==> Built Z3 version: ${z3_version}"
+      # Rename the .so file to the asset name expected by extconf.rb / setup_z3
+      cp "${work_dir}/z3-${native_arch}/lib/libz3.so" "${work_dir}/libz3-${native_arch}.so"
+    else
+      # Build for both architectures
+      echo "==> Building Z3 for x64..."
+      "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-x64" Release x64 || exit 1
 
-    # Rename the .so files to the asset names expected by extconf.rb / setup_z3
-    cp "${work_dir}/z3-x64/lib/libz3.so"   "${work_dir}/libz3-x64.so"
-    cp "${work_dir}/z3-arm64/lib/libz3.so" "${work_dir}/libz3-arm64.so"
+      echo "==> Building Z3 for arm64..."
+      "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-arm64" Release arm64 || exit 1
+
+      # Read the version produced by the build
+      z3_version=$(cat "${work_dir}/z3-x64/VERSION")
+      echo "==> Built Z3 version: ${z3_version}"
+
+      # Rename the .so files to the asset names expected by extconf.rb / setup_z3
+      cp "${work_dir}/z3-x64/lib/libz3.so"   "${work_dir}/libz3-x64.so"
+      cp "${work_dir}/z3-arm64/lib/libz3.so" "${work_dir}/libz3-arm64.so"
+    fi
   else
     # Version unchanged: use the already-installed libraries from the XDG cache
     z3_version="${current_version}"
     local xdg_cache="${XDG_CACHE_HOME:-${HOME}/.cache}"
-    local cache_x64="${xdg_cache}/udb/z3/${current_version}/x64/libz3.so"
-    local cache_arm64="${xdg_cache}/udb/z3/${current_version}/arm64/libz3.so"
-    if [ ! -f "${cache_x64}" ] || [ ! -f "${cache_arm64}" ]; then
-      echo "ERROR: Cached Z3 libraries not found. Run 'bin/setup' first to download them." >&2
-      echo "  Expected: ${cache_x64}" >&2
-      echo "  Expected: ${cache_arm64}" >&2
-      exit 1
+
+    if [ "${native_only}" = "yes" ]; then
+      # Detect native architecture
+      local native_arch
+      case "$(uname -m)" in
+        x86_64)
+          native_arch="x64"
+          ;;
+        aarch64)
+          native_arch="arm64"
+          ;;
+        *)
+          echo "ERROR: Unsupported architecture: $(uname -m)" >&2
+          exit 1
+          ;;
+      esac
+      local cache_native="${xdg_cache}/udb/z3/${current_version}/${native_arch}/libz3.so"
+      if [ ! -f "${cache_native}" ]; then
+        echo "ERROR: Cached Z3 library not found. Run 'bin/setup' first to download it." >&2
+        echo "  Expected: ${cache_native}" >&2
+        exit 1
+      fi
+      cp "${cache_native}" "${work_dir}/libz3-${native_arch}.so"
+      echo "==> Using cached Z3 library for ${z3_version} (${native_arch})"
+    else
+      local cache_x64="${xdg_cache}/udb/z3/${current_version}/x64/libz3.so"
+      local cache_arm64="${xdg_cache}/udb/z3/${current_version}/arm64/libz3.so"
+      if [ ! -f "${cache_x64}" ] || [ ! -f "${cache_arm64}" ]; then
+        echo "ERROR: Cached Z3 libraries not found. Run 'bin/setup' first to download them." >&2
+        echo "  Expected: ${cache_x64}" >&2
+        echo "  Expected: ${cache_arm64}" >&2
+        exit 1
+      fi
+      cp "${cache_x64}"   "${work_dir}/libz3-x64.so"
+      cp "${cache_arm64}" "${work_dir}/libz3-arm64.so"
+      echo "==> Using cached Z3 libraries for ${z3_version}"
     fi
-    cp "${cache_x64}"   "${work_dir}/libz3-x64.so"
-    cp "${cache_arm64}" "${work_dir}/libz3-arm64.so"
-    echo "==> Using cached Z3 libraries for ${z3_version}"
   fi
 
-  # Create the GitHub Release and upload assets
+  # Generate checksum files
+  echo "==> Generating checksums..."
+  if [ "${native_only}" = "yes" ]; then
+    # Detect native architecture
+    local native_arch
+    case "$(uname -m)" in
+      x86_64)
+        native_arch="x64"
+        ;;
+      aarch64)
+        native_arch="arm64"
+        ;;
+    esac
+    (cd "${work_dir}" && sha256sum "libz3-${native_arch}.so" | awk '{print "sha256:" $1}' > "libz3-${native_arch}.checksum")
+    echo "  ${native_arch}: $(cat "${work_dir}/libz3-${native_arch}.checksum")"
+  else
+    (cd "${work_dir}" && sha256sum libz3-x64.so | awk '{print "sha256:" $1}' > libz3-x64.checksum)
+    (cd "${work_dir}" && sha256sum libz3-arm64.so | awk '{print "sha256:" $1}' > libz3-arm64.checksum)
+    echo "  x64:   $(cat "${work_dir}/libz3-x64.checksum")"
+    echo "  arm64: $(cat "${work_dir}/libz3-arm64.checksum")"
+  fi
+
+  # Create the GitHub Release and upload assets (or upload to existing release if native_only)
   local release_tag="${z3_version}"
-  echo "==> Creating GitHub Release ${release_tag}..."
-  gh release create "${release_tag}" \
-    --repo riscv/riscv-unified-db \
-    --title "Z3 binaries ${z3_version}" \
-    --notes "Pre-built Z3 shared libraries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
-    "${work_dir}/libz3-x64.so" \
-    "${work_dir}/libz3-arm64.so"
+  if [ "${native_only}" = "yes" ]; then
+    # Detect native architecture
+    local native_arch
+    case "$(uname -m)" in
+      x86_64)
+        native_arch="x64"
+        ;;
+      aarch64)
+        native_arch="arm64"
+        ;;
+    esac
+    echo "==> Uploading ${native_arch} assets to GitHub Release ${release_tag}..."
+    gh release upload "${release_tag}" \
+      --repo riscv/riscv-unified-db \
+      --clobber \
+      "${work_dir}/libz3-${native_arch}.so" \
+      "${work_dir}/libz3-${native_arch}.checksum"
+  else
+    echo "==> Creating GitHub Release ${release_tag}..."
+    gh release create "${release_tag}" \
+      --repo riscv/riscv-unified-db \
+      --title "Z3 binaries ${z3_version}" \
+      --notes "Pre-built Z3 shared libraries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
+      "${work_dir}/libz3-x64.so" \
+      "${work_dir}/libz3-arm64.so" \
+      "${work_dir}/libz3-x64.checksum" \
+      "${work_dir}/libz3-arm64.checksum"
+  fi
 
   if [ "${target_version}" != "${current_version}" ]; then
     # Update z3_version.rb so the gem knows which release to download
@@ -543,7 +653,24 @@ case "$subcommand" in
         exit 0
       ;;
       z3 )
-        do_update_z3
+        native_only=no
+        while getopts ":hn" opt; do
+          case $opt in
+            h )
+              update_z3_usage
+              exit 0
+              ;;
+            n )
+              native_only=yes
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              update_z3_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_update_z3 "$native_only"
         exit 0
         ;;
       * )

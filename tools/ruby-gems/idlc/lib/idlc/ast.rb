@@ -2545,7 +2545,7 @@ module Idl
         lsb_value = lsb.value(symtab)
 
         var_type = var.type(symtab)
-        if var_type.kind == :bits && var_type.width != :unknown && msb_value >= var_type.width
+        if strict && var_type.kind == :bits && var_type.width != :unknown && msb_value >= var_type.width
           type_error "Range too large for bits (msb = #{msb_value}, range size = #{var_type.width})"
         end
 

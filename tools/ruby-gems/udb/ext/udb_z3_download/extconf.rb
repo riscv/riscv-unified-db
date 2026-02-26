@@ -85,6 +85,31 @@ unless File.exist?(dest_file)
   body = download_with_redirects(url_str)
   File.binwrite(dest_file, body)
   $stderr.puts "  Saved to #{dest_file}"
+
+  # Download and verify checksum
+  checksum_asset_name = "libz3-#{cpu}.checksum"
+  checksum_url_str = "https://github.com/#{GITHUB_REPO}/releases/download/#{Z3_VERSION}/#{checksum_asset_name}"
+  checksum_file = File.join(dest_dir, "libz3.checksum")
+
+  $stderr.puts "  Downloading checksum..."
+  checksum_body = download_with_redirects(checksum_url_str)
+  File.write(checksum_file, checksum_body)
+
+  $stderr.puts "  Verifying checksum..."
+  require "digest"
+  checksum_content = checksum_body.strip
+  expected = checksum_content.split(":")[1]
+  actual = Digest::SHA256.file(dest_file).hexdigest
+
+  if expected != actual
+    $stderr.puts "ERROR: Checksum verification failed for libz3!"
+    $stderr.puts "  Expected: #{expected}"
+    $stderr.puts "  Got:      #{actual}"
+    $stderr.puts "  The downloaded file may be corrupted or tampered with."
+    abort "Checksum verification failed"
+  end
+
+  $stderr.puts "  Checksum verified successfully."
 end
 
 # Write a no-op Makefile — we have no C extension to compile
