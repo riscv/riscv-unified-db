@@ -252,7 +252,7 @@ module Idl
     def prune(symtab, forced_type: nil)
       value_try do
         val = value(symtab)
-        if v.is_a?(Integer)
+        if val.is_a?(Integer)
           # can only prune if the bit width of the integer is known
           if type(symtab).width == :unknown
             value_error "Unknown width"
