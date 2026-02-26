@@ -472,6 +472,18 @@ module Idl
     end
   end
 
+  class IntLiteralAst
+    def prune(symtab, forced_type: nil)
+      if forced_type
+        raise "pruning error: attempt to force bitwidth when width is unknown" if forced_type.width.nil? || forced_type.width == :unknown
+        s = "#{forced_type.width}'d#{value(symtab)}"
+        IntLiteralAst.new(s, 0...s.size, s)
+      else
+        dup
+      end
+    end
+  end
+
   class TernaryOperatorExpressionAst < AstNode
     def prune(symtab, forced_type: nil)
       value_result = value_try do

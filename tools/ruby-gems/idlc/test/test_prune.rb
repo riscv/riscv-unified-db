@@ -17,6 +17,63 @@ require_relative "helpers"
 class TestVariables < Minitest::Test
   include TestMixin
 
+  def test_prune_forced_type
+    orig_idl = "true ? 4'b0 : 5'b1"
+
+    expected_idl = "5'd0"
+
+    symtab = Idl::SymbolTable.new
+    m = @compiler.parser.parse(orig_idl, root: :expression)
+    refute_nil m
+
+    ast = m.to_ast
+    assert_instance_of Idl::TernaryOperatorExpressionAst, ast
+
+    pruned = ast.prune(symtab)
+    assert_instance_of Idl::IntLiteralAst, pruned
+
+    assert_equal expected_idl, pruned.to_idl
+  end
+
+  def test_prune_forced_type_nested
+    orig_idl = "true ? 4'b0 : (5'b1 * 1)"
+
+    expected_idl = "5'd0"
+
+    symtab = Idl::SymbolTable.new
+    m = @compiler.parser.parse(orig_idl, root: :expression)
+    refute_nil m
+
+    ast = m.to_ast
+    assert_instance_of Idl::TernaryOperatorExpressionAst, ast
+
+    pruned = ast.prune(symtab)
+    assert_instance_of Idl::IntLiteralAst, pruned
+
+    assert_equal expected_idl, pruned.to_idl
+  end
+
+  def test_prune_forced_type_nested_2
+    ops = ["*", "/", "+", "-", "&", "|"]
+    ops.each do |op|
+      orig_idl = "false ? 5'b0 : 4'b1 #{op} 1"
+
+      expected_idl = "5'#{eval "1 #{op} 1"}"
+
+      symtab = Idl::SymbolTable.new
+      m = @compiler.parser.parse(orig_idl, root: :expression)
+      refute_nil m
+
+      ast = m.to_ast
+      assert_instance_of Idl::TernaryOperatorExpressionAst, ast
+
+      pruned = ast.prune(symtab)
+      assert_instance_of Idl::IntLiteralAst, pruned
+
+      assert_equal expected_idl, pruned.to_idl
+    end
+  end
+
   def test_prune_csr_value
     orig_idl = <<~IDL
       if (CSR[mockcsr].ONE == 1) {

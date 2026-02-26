@@ -717,7 +717,27 @@ module Udb
     # @return [Integer] Number of bits in the field
     sig { override.params(effective_xlen: T.nilable(Integer)).returns(Integer) }
     def width(effective_xlen)
-      T.must(location(effective_xlen).size)
+      loc =
+        if @data.key?("location")
+          @data.fetch("location")
+        else
+          if effective_xlen.nil?
+            # just pick one. they better be the same
+            @data.fetch("location_rv32")
+          else
+            @data.fetch("location_rv#{effective_xlen}")
+          end
+        end
+      if loc.is_a?(Integer)
+        return 1
+      else
+        raise "Unexpected location field" unless loc.is_a?(String)
+
+        e, s = loc.split("-").map(&:to_i)
+        raise "Invalid location" if s > e
+
+        (s..e).size
+      end
     end
 
     sig { returns(Integer) }

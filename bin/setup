@@ -194,7 +194,7 @@ setup_z3() {
 
   local xdg_cache
   if [ "$CONTAINER_TYPE" == "native" ]; then
-    xdg_cache="${XDG_CACHE_HOME:-${H}/.cache}"
+    xdg_cache="${XDG_CACHE_HOME:-${HOME}/.cache}"
   else
     xdg_cache="${ROOT}/.docker-home/.cache"
   fi
