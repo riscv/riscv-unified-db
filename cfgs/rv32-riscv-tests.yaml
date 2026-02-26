@@ -199,6 +199,41 @@ params:
   U_MODE_ENDIANNESS: little
   UXLEN: [32]
   MSTATEEN_ENVCFG_TYPE: rw
+  HPM_COUNTER_EN:
+    [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]
   # HSTATEEN_ENVCFG_TYPE: rw
   # MSTATEEN_AIA_TYPE: rw
   # MSTATEEN_CONTEXT_TYPE: rw
