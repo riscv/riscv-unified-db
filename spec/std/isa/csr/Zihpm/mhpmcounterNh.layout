@@ -17,8 +17,10 @@ description: |
 definedBy:
   allOf:
     - xlen: 32
-    - extension:
-        name: Smhpm
+    - param:
+        name: HPM_COUNTER_EN
+        index: <%= hpm_num %>
+        equal: true
 fields:
   COUNT:
     location: 31-0

@@ -16,8 +16,9 @@ priv_mode: M
 length: MXLEN
 description: PMP entry address
 definedBy:
-  extension:
-    name: Smpmp
+  param:
+    name: NUM_PMP_ENTRIES
+    greaterThan: 0
 fields:
   ADDR:
     location_rv32: 31-0

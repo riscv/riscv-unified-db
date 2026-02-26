@@ -1281,7 +1281,7 @@ function access_check {
     }
 
     # check PMP
-    if (implemented?(ExtensionName::Smpmp)) {
+    if (NUM_PMP_ENTRIES > 0) {
       if (!pmp_check(paddr[PHYS_ADDR_WIDTH-1:0], access_size, type)) {
         raise(fault_type, from_mode, vaddr);
       }

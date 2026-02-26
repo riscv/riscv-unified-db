@@ -159,7 +159,6 @@ RVA23M64:
 - S ~>1.13 mandatory
 - Sha ~>1.0 mandatory
 - Sm ~> 1.13 mandatory
-- Smpmp ~> 1.13 mandatory
 - Ssccptr ~>1.0 mandatory
 - Sscofpmf ~>1.0 mandatory
 - Sscounterenw ~>1.0 mandatory
@@ -357,7 +356,6 @@ RVB23M64:
 - M ~> 2.0 mandatory
 - S ~>1.13 mandatory
 - Sm ~> 1.13 mandatory
-- Smpmp ~> 1.13 mandatory
 - Ssccptr ~>1.0 mandatory
 - Sscofpmf ~>1.0 mandatory
 - Sscounterenw ~>1.0 mandatory

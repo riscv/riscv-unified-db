@@ -16,8 +16,9 @@ priv_mode: M
 length: MXLEN
 description: PMP entry configuration
 definedBy:
-  extension:
-    name: Smpmp
+  param:
+    name: NUM_PMP_ENTRIES
+    notEqual: 0
 fields:
   pmp40cfg:
     location: 7-0

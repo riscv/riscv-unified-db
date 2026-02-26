@@ -32,10 +32,7 @@ introduction: |
 
   * M extension (mandatory)
   * U extension (User-mode privilege level)
-  * Smpmp extension (M-mode PMP)
-  * B (Bitfield) extension
-  * Zce extension (additional 16-bit instructions suitable for microcontrollers)
-  * CLIC extension (if/when ratified)
+  * Zihpm extension (hardware performance counters)
 
 # Specification versions
 tsc_profile_release: null # None for MC200
@@ -56,5 +53,5 @@ extensions:
     presence: mandatory
   U:
     presence: mandatory
-  Smpmp:
+  Zihpm:
     presence: mandatory
