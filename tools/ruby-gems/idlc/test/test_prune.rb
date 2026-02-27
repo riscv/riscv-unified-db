@@ -249,26 +249,6 @@ class TestVariables < Minitest::Test
     assert_instance_of Idl::TernaryOperatorExpressionAst, pruned
   end
 
-  $mock_csr_field_class = Class.new do
-    include Idl::CsrField
-    def initialize(name, val, loc)
-      @name = name
-      @val = val
-      @loc = loc
-    end
-    attr_reader :name
-    def defined_in_all_bases? = true
-    def defined_in_base32? = true
-    def defined_in_base64? = true
-    def base64_only? = false
-    def base32_only? = false
-    def location(_) = @loc
-    def width(_) = 32
-    def type(_) = @val.nil? ? "RW" : "RO"
-    def exists? = true
-    def reset_value = @val.nil? ? "UNDEFINED_LEGAL" : @val
-  end
-
   def test_prune_csr_value
     orig_idl = <<~IDL
       if (CSR[mockcsr].ONE == 1) {
@@ -287,8 +267,8 @@ class TestVariables < Minitest::Test
       def dynamic_length? = false
       def value = nil
       def fields = [
-        $mock_csr_field_class.new("ONE", 1, 0..15),
-        $mock_csr_field_class.new("UNKNOWN", nil, 16..31)
+        MockCsrFieldClass.new("ONE", 1, 0..15),
+        MockCsrFieldClass.new("UNKNOWN", nil, 16..31)
       ]
     end
     mock_csr_class2 = Class.new do
@@ -299,7 +279,7 @@ class TestVariables < Minitest::Test
       def dynamic_length? = false
       def value = 1
       def fields = [
-        $mock_csr_field_class.new("ONE", 1, 0..31)
+        MockCsrFieldClass.new("ONE", 1, 0..31)
       ]
     end
     symtab = Idl::SymbolTable.new(
@@ -440,9 +420,9 @@ class TestVariables < Minitest::Test
       def dynamic_length? = false
       def value = nil
       def fields = [
-        $mock_csr_field_class.new("FIELD1", 1, 0..7),
-        $mock_csr_field_class.new("FIELD2", 2, 8..15),
-        $mock_csr_field_class.new("FIELD3", nil, 16..31)
+        MockCsrFieldClass.new("FIELD1", 1, 0..7),
+        MockCsrFieldClass.new("FIELD2", 2, 8..15),
+        MockCsrFieldClass.new("FIELD3", nil, 16..31)
       ]
     end
 
@@ -488,7 +468,7 @@ class TestVariables < Minitest::Test
       def dynamic_length? = false
       def value = nil
       def fields = [
-        $mock_csr_field_class.new("UNKNOWN", nil, 0..31)
+        MockCsrFieldClass.new("UNKNOWN", nil, 0..31)
       ]
     end
 

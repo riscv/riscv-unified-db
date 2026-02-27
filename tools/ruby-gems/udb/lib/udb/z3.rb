@@ -161,11 +161,11 @@ module Udb
         exprs = @items.map do |item|
           item == target_value
         end
-        solver.assert Z3.Or(*exprs)
+        solver.assert T.unsafe(Z3).Or(*exprs)
       end
       # Handle uniqueness constraint: all elements must be distinct
       if @constraints.unique
-        solver.assert Z3.Distinct(*@items)
+        solver.assert T.unsafe(Z3).Distinct(*@items)
       end
     end
 
