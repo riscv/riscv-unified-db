@@ -14,92 +14,14 @@ versions:
     state: ratified
     ratification_date: 2023-03
 requirements:
-  param:
-    anyOf:
-      - name: HPM_COUNTER_EN
-        index: 3
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 4
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 5
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 6
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 7
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 8
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 9
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 10
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 11
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 12
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 13
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 14
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 15
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 16
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 17
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 18
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 19
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 20
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 21
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 22
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 23
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 24
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 25
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 26
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 27
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 28
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 29
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 30
-        equal: true
-      - name: HPM_COUNTER_EN
-        index: 31
-        equal: true
+  idl(): |
+    -> (HPM_COUNTER_EN[3] || HPM_COUNTER_EN[4] || HPM_COUNTER_EN[5] ||
+        HPM_COUNTER_EN[6] || HPM_COUNTER_EN[7] || HPM_COUNTER_EN[8] ||
+        HPM_COUNTER_EN[9] || HPM_COUNTER_EN[10] || HPM_COUNTER_EN[11] ||
+        HPM_COUNTER_EN[12] || HPM_COUNTER_EN[13] || HPM_COUNTER_EN[14] ||
+        HPM_COUNTER_EN[15] || HPM_COUNTER_EN[16] || HPM_COUNTER_EN[17] ||
+        HPM_COUNTER_EN[18] || HPM_COUNTER_EN[19] || HPM_COUNTER_EN[20] ||
+        HPM_COUNTER_EN[21] || HPM_COUNTER_EN[22] || HPM_COUNTER_EN[23] ||
+        HPM_COUNTER_EN[24] || HPM_COUNTER_EN[25] || HPM_COUNTER_EN[26] ||
+        HPM_COUNTER_EN[27] || HPM_COUNTER_EN[28] || HPM_COUNTER_EN[29] ||
+        HPM_COUNTER_EN[30] || HPM_COUNTER_EN[31]);
