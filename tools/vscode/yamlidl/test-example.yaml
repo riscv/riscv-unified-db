@@ -14,12 +14,12 @@ description: "This is a *bold* description with AsciiDoc markup like `code` and 
 # Description with block scalar - AsciiDoc highlighting
 long_description: |
   = Instruction Description
-  
+
   This is a *bold* statement with AsciiDoc formatting.
-  
+
   * List item 1
   * List item 2
-  
+
   You can use `inline code` and other AsciiDoc features.
 
 # Keys ending with () - IDL highlighting should be applied
@@ -46,14 +46,14 @@ description_long(): >
 instruction:
   name: "ADD"
   opcode(): "0110011"
-  
+
   # Nested key with () - should get IDL highlighting
   implementation(): |
     if (rd != 0) {
       Bits<XLEN> result = X[rs1] + X[rs2]
       X[rd] = result
     }
-  
+
   # Another nested example
   decode(Bits<32> inst): |
     Bits<5> rd = inst[11:7]
@@ -67,7 +67,7 @@ processor:
     alu:
       add_operation(): "X[rd] = X[rs1] + X[rs2]"
       sub_operation(): "X[rd] = X[rs1] - X[rs2]"
-      
+
       complex_op(Bits<XLEN> a, Bits<XLEN> b): |
         Bits<XLEN> temp = a + b
         if (temp > XLEN'hFFFFFFFF) {
@@ -76,7 +76,7 @@ processor:
         return temp
 
 # Single-quoted strings should also work
-single_quoted(): 'X[rd] = X[rs1] << 1'
+single_quoted(): "X[rd] = X[rs1] << 1"
 
 # Double-quoted strings
 double_quoted(): "X[rd] = X[rs1] >> 1"

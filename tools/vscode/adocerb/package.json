@@ -1,5 +1,4 @@
 {
-  "_comment": "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. SPDX-License-Identifier: BSD-3-Clause-Clear",
   "name": "adocerb-vscode",
   "displayName": "AsciiDoc ERB Template",
   "description": "Syntax highlighting for AsciiDoc with ERB templating",
@@ -35,8 +34,6 @@
           "source.ruby": "ruby"
         }
       }
-
     ]
   }
-  
 }

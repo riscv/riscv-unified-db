@@ -1,130 +1,65 @@
 {
-  "_comment": "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. SPDX-License-Identifier: BSD-3-Clause-Clear",
   "comments": {
-        "lineComment": "//",
-        "blockComment": [
-            "////",
-            "////"
-        ]
+    "lineComment": "//",
+    "blockComment": ["////", "////"]
+  },
+  "brackets": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["<", ">"]
+  ],
+  "autoClosingPairs": [
+    {
+      "open": "{",
+      "close": "}"
     },
-    "brackets": [
-        [
-            "{",
-            "}"
-        ],
-        [
-            "[",
-            "]"
-        ],
-        [
-            "(",
-            ")"
-        ],
-        [
-            "<",
-            ">"
-        ]
-    ],
-    "autoClosingPairs": [
-        {
-            "open": "{",
-            "close": "}"
-        },
-        {
-            "open": "[",
-            "close": "]"
-        },
-        {
-            "open": "(",
-            "close": ")"
-        },
-        {
-            "open": "'",
-            "close": "'",
-            "notIn": [
-                "string",
-                "comment"
-            ]
-        },
-        {
-            "open": "\"",
-            "close": "\"",
-            "notIn": [
-                "string"
-            ]
-        },
-        {
-            "open": "`",
-            "close": "`",
-            "notIn": [
-                "string",
-                "comment"
-            ]
-        },
-        {
-            "open": "/**",
-            "close": " */",
-            "notIn": [
-                "string"
-            ]
-        },
-        {
-            "open": "////",
-            "close": " ////",
-            "notIn": [
-                "string",
-                "comment"
-            ]
-        }
-    ],
-    "surroundingPairs": [
-        [
-            "{",
-            "}"
-        ],
-        [
-            "[",
-            "]"
-        ],
-        [
-            "(",
-            ")"
-        ],
-        [
-            "<",
-            ">"
-        ],
-        [
-            "'",
-            "'"
-        ],
-        [
-            "\"",
-            "\""
-        ],
-        [
-            "`",
-            "`"
-        ],
-        [
-            "_",
-            "_"
-        ],
-        [
-            "*",
-            "*"
-        ],
-        [
-            "^",
-            "^"
-        ],
-        [
-            "~",
-            "~"
-        ],
-        [
-            "#",
-            "#"
-        ]
-    ]
+    {
+      "open": "[",
+      "close": "]"
+    },
+    {
+      "open": "(",
+      "close": ")"
+    },
+    {
+      "open": "'",
+      "close": "'",
+      "notIn": ["string", "comment"]
+    },
+    {
+      "open": "\"",
+      "close": "\"",
+      "notIn": ["string"]
+    },
+    {
+      "open": "`",
+      "close": "`",
+      "notIn": ["string", "comment"]
+    },
+    {
+      "open": "/**",
+      "close": " */",
+      "notIn": ["string"]
+    },
+    {
+      "open": "////",
+      "close": " ////",
+      "notIn": ["string", "comment"]
+    }
+  ],
+  "surroundingPairs": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["<", ">"],
+    ["'", "'"],
+    ["\"", "\""],
+    ["`", "`"],
+    ["_", "_"],
+    ["*", "*"],
+    ["^", "^"],
+    ["~", "~"],
+    ["#", "#"]
+  ]
 }

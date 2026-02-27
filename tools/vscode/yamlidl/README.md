@@ -45,9 +45,9 @@ execute(Bits<5> rd, Bits<5> rs1): |
 instruction:
   description: |
     = Instruction Overview
-    
+
     This uses *AsciiDoc* formatting with `inline code`.
-  
+
   encoding(): "0000000 rs2 rs1 000 rd 0110011"
   behavior(): |
     X[rd] = X[rs1] & X[rs2]

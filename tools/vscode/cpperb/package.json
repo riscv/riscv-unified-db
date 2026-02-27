@@ -1,5 +1,4 @@
 {
-  "_comment": "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. SPDX-License-Identifier: BSD-3-Clause-Clear",
   "name": "cpperb-vscode",
   "displayName": "C++ ERB template",
   "description": "C++ syntax highlighting with Ruby ERB templating",
@@ -41,5 +40,4 @@
       }
     ]
   }
-  
 }

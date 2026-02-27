@@ -1,5 +1,4 @@
 {
-  "_comment": "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. SPDX-License-Identifier: BSD-3-Clause-Clear",
   "name": "yamlidl-vscode",
   "displayName": "YAML with IDL Injection",
   "description": "Syntax highlighting for YAML files with IDL code in string values where keys end with parentheses",
@@ -17,14 +16,18 @@
   },
   "publisher": "HowerLimited",
   "contributes": {
-    "grammars": [{
-      "scopeName": "yaml.idl.injection",
-      "path": "./syntaxes/yaml-idl-injection.json",
-      "injectTo": ["source.yaml"],
-      "embeddedLanguages": {
-        "meta.embedded.block.idl": "idl",
-        "meta.embedded.block.asciidoc": "asciidoc"
+    "grammars": [
+      {
+        "scopeName": "yaml.idl.injection",
+        "path": "./syntaxes/yaml-idl-injection.json",
+        "injectTo": [
+          "source.yaml"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.idl": "idl",
+          "meta.embedded.block.asciidoc": "asciidoc"
+        }
       }
-    }]
+    ]
   }
 }

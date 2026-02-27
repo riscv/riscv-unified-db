@@ -1,5 +1,4 @@
 {
-  "_comment": "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. SPDX-License-Identifier: BSD-3-Clause-Clear",
   "name": "idl-vscode",
   "displayName": "ISA Description Language (IDL) Language Support",
   "description": "Language support for the Isa Description Language",
@@ -17,16 +16,26 @@
   },
   "publisher": "HowerLimited",
   "contributes": {
-    "languages": [{
-      "id": "idl",
-      "aliases": ["IDL", "idl"],
-      "extensions": [".idl",".isa"],
-      "configuration": "./language-configuration.json"
-    }],
-    "grammars": [{
-      "language": "idl",
-      "scopeName": "source.idl",
-      "path": "./syntaxes/idl.tmLanguage.json"
-    }]
+    "languages": [
+      {
+        "id": "idl",
+        "aliases": [
+          "IDL",
+          "idl"
+        ],
+        "extensions": [
+          ".idl",
+          ".isa"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "idl",
+        "scopeName": "source.idl",
+        "path": "./syntaxes/idl.tmLanguage.json"
+      }
+    ]
   }
 }

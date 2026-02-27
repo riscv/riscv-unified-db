@@ -1,5 +1,4 @@
 {
-  "_comment": "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. SPDX-License-Identifier: BSD-3-Clause-Clear",
   "name": "udb-extension-pack-vscode",
   "displayName": "RISC-V UnifiedDB Extension Pack",
   "description": "Extensions for RISC-V UnifiedDB in Visual Studio Code.",
@@ -10,10 +9,10 @@
   },
   "version": "0.2.0",
   "engines": {
-      "vscode": "^1.48.0"
+    "vscode": "^1.48.0"
   },
   "categories": [
-      "Extension Packs"
+    "Extension Packs"
   ],
   "repository": {
     "type": "git",
@@ -21,9 +20,9 @@
     "directory": "pack"
   },
   "extensionPack": [
-      "HowerLimited.cpperb-vscode",
-      "HowerLimited.adocerb-vscode",
-      "HowerLimited.idl-vscode",
-      "HowerLimited.yamlidl-vscode"
+    "HowerLimited.cpperb-vscode",
+    "HowerLimited.adocerb-vscode",
+    "HowerLimited.idl-vscode",
+    "HowerLimited.yamlidl-vscode"
   ]
 }
