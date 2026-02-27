@@ -2,6 +2,11 @@
 # SPDX-FileCopyrightText: Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
+if [ -z "$UDB_REPO" ]; then
+	echo "Error: UDB_REPO environment variable is not set"
+	exit 1
+fi
+
 if [ -n "$1" ]; then
 	ARCH_TYPE=$1
 	shift
@@ -35,8 +40,8 @@ echo tests: $tests
 for rvtest in $tests
 do
     echo $rvtest
-    ./gen/cpp_hart_gen/${ARCH_TYPE}_${BUILD_TYPE}/build/iss \
+    $UDB_REPO/gen/cpp_hart_gen/${ARCH_TYPE}_${BUILD_TYPE}/build/iss \
 		-m ${ARCH_TYPE} \
-		-c ./cfgs/${config}.yaml \
-		./tests/isa/${test_prefix}-$rvtest
+		-c $UDB_REPO/cfgs/${config}.yaml \
+		${test_prefix}${rvtest}
 done

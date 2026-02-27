@@ -1,0 +1,31 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+
+# WARNING: This file is auto-generated from spec/std/isa/inst/Zcmop/c.mop.N.layout
+
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: c.mop.1
+long_name: Compressed May-Be-Operation 1
+description: |
+  C.MOP.1 is encoded in the reserved encoding space corresponding to C.LUI x1, 0.
+  Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not
+  write any register. Their encoding allows future extensions to define them to read register x[1].
+
+  This is c.mop.1 from the compressed MOP instruction family.
+definedBy:
+  extension:
+    name: Zcmop
+assembly: ""
+encoding:
+  match: "0110000010000001"
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: false
+operation(): "" #do nothing

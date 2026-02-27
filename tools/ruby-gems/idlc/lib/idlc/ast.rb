@@ -5132,8 +5132,10 @@ module Idl
         elsif op == "|"
           # if one side is all ones, we don't need to know the other side
           rhs_type = rhs.type(symtab)
+          type_error "Right-hand side of bitwise | must be a Bits type (is #{rhs_type})" unless rhs_type.kind == :bits
           value_error("Unknown width") if rhs_type.width == :unknown
           lhs_type = lhs.type(symtab)
+          type_error "Left-hand side of bitwise | must be a Bits type (is #{lhs_type})" unless lhs_type.kind == :bits
           value_error("unknown width") if lhs_type.width == :unknown
 
           value_result = value_try do
