@@ -153,7 +153,7 @@ end
 
 desc "Clean up all generated files and container"
 task :clobber do
-  warn "Don't run clean using Rake. Run `./do clean` (alias for `./bin/clean`) instead."
+  warn "Don't run clobber using Rake. Run `./do clobber` (alias for `./bin/clobber`) instead."
 end
 
 
