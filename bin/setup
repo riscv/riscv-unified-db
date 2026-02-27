@@ -93,7 +93,7 @@ if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; t
             echo "Successfully pulled image from registry."
         else
             echo "Could not pull image from registry. Building locally..."
-            build_container
+            build_container "${ROOT}"
         fi
     fi
     if [ "${CONTAINER_TYPE}" == "podman" ]; then

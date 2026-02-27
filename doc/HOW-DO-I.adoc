@@ -103,3 +103,62 @@ This requires docker/podman to run since it builds a portable binary using an ol
 ----
 
 Check in the updates, and make sure to bump the version of the udb gem.
+
+=== Build the container image
+
+To build the development container image:
+
+[source,bash]
+----
+./bin/chore container build
+----
+
+To force rebuild even if the container already exists:
+
+[source,bash]
+----
+./bin/chore container build -f
+----
+
+=== Pull the container image
+
+To pull the container image from the registry:
+
+[source,bash]
+----
+./bin/chore container pull
+----
+
+To force pull even if the container already exists locally:
+
+[source,bash]
+----
+./bin/chore container pull -f
+----
+
+=== Remove the container image
+
+To remove the local container image:
+
+[source,bash]
+----
+./bin/chore container remove
+# or use the short form:
+./bin/chore container rm
+----
+
+=== Generate Ruby type definitions
+
+To generate Sorbet type definitions for all Ruby gems:
+
+[source,bash]
+----
+./bin/chore gen ruby-type-def
+----
+
+To generate type definitions for a specific gem:
+
+[source,bash]
+----
+./bin/chore gen ruby-type-def -g udb    # or idlc, or udb-gen
+----

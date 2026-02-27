@@ -13,6 +13,17 @@ require "yaml"
 require "udb/condition"
 require "udb/resolver"
 
+# this is needed for tty-progressbar to work with minitest
+unless StringIO.method_defined? :ioctl
+  class StringIO
+    def ioctl(*)
+      # :nocov:
+      80
+      # :nocov:
+    end
+  end
+end
+
 begin
   $db_resolver = Udb::Resolver.new(Udb.repo_root)
   $db_cfg_arch = $db_resolver.cfg_arch_for("_")
@@ -722,5 +733,42 @@ class TestConditions < Minitest::Test
 
       end
     end
+  end
+
+  def test_z3_assertions
+    c = Condition.new(
+      {
+        "extension" => { "name" => "A" }
+      },
+      $db_cfg_arch
+    )
+    assert_instance_of String, c.z3_assertions($db_cfg_arch).to_s
+  end
+
+  def test_unsat_core
+    f = Condition.new(
+      {
+        "extension" => { "name" => "F" }
+      },
+      $db_cfg_arch
+    )
+    zfinx = Condition.new(
+      {
+        "extension" => { "name" => "Zfinx" }
+      },
+      $db_cfg_arch
+    )
+    assert_match (/F|Zfinx/), (f & zfinx).unsat_arch_core($db_cfg_arch).to_s
+    assert_nil (f & zfinx).sat_arch_model($db_cfg_arch)
+  end
+
+  def test_sat_arch_model
+    f = Condition.new(
+      {
+        "extension" => { "name" => "F" }
+      },
+      $db_cfg_arch
+    )
+    assert_match (/F/), f.sat_arch_model($db_cfg_arch)
   end
 end

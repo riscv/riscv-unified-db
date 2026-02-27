@@ -811,13 +811,11 @@ module Udb
       end
       result = s.unsatisfiable?
       if result
-        Udb.logger.error "Architecture condition is not satisfiable for #{cfg_arch.name}"
-        Udb.logger.error "Unsatisfiable core:"
         core = Z3::LowLevel.solver_get_unsat_core(s.solver)
-        puts Z3::LowLevel.unpack_ast_vector(core)
+        s.pop
+        return Z3::LowLevel.unpack_ast_vector(core)
       end
-      s.pop
-      result
+      raise "Cond is not unsatisfiable"
     end
 
     def z3_assertions(cfg_arch)
@@ -831,7 +829,6 @@ module Udb
       else
         s.assert_as tree.to_z3(cfg_arch, s), tree.to_s
       end
-      result = s.satisfiable?
       assertions = s.assertions
       s.pop
       assertions
