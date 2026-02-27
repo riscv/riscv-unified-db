@@ -16,9 +16,12 @@ priv_mode: M
 length: MXLEN
 description: PMP entry configuration
 definedBy:
-  param:
-    name: NUM_PMP_ENTRIES
-    notEqual: 0
+  allOf:
+    - extension:
+        name: Sm
+    - param:
+        name: NUM_PMP_ENTRIES
+        notEqual: 0
 fields:
   pmp0cfg:
     location: 7-0

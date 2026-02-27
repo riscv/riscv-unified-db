@@ -3801,9 +3801,6 @@ module Z3::VeryLowLevel
   # source://z3//lib/z3/very_low_level_auto.rb#119
   def Z3_get_arity(*_arg0); end
 
-  # source://z3//lib/z3/very_low_level_auto.rb#120
-  def Z3_get_array_arity(*_arg0); end
-
   # source://z3//lib/z3/very_low_level_auto.rb#121
   def Z3_get_array_sort_domain(*_arg0); end
 
@@ -3878,9 +3875,6 @@ module Z3::VeryLowLevel
 
   # source://z3//lib/z3/very_low_level_auto.rb#145
   def Z3_get_denominator(*_arg0); end
-
-  # source://z3//lib/z3/very_low_level_auto.rb#146
-  def Z3_get_depth(*_arg0); end
 
   # source://z3//lib/z3/very_low_level_auto.rb#147
   def Z3_get_domain(*_arg0); end
@@ -4107,9 +4101,6 @@ module Z3::VeryLowLevel
   # source://z3//lib/z3/very_low_level_auto.rb#220
   def Z3_is_eq_sort(*_arg0); end
 
-  # source://z3//lib/z3/very_low_level_auto.rb#221
-  def Z3_is_ground(*_arg0); end
-
   # source://z3//lib/z3/very_low_level_auto.rb#222
   def Z3_is_lambda(*_arg0); end
 
@@ -4121,9 +4112,6 @@ module Z3::VeryLowLevel
 
   # source://z3//lib/z3/very_low_level_auto.rb#225
   def Z3_is_quantifier_forall(*_arg0); end
-
-  # source://z3//lib/z3/very_low_level_auto.rb#226
-  def Z3_is_recursive_datatype_sort(*_arg0); end
 
   # source://z3//lib/z3/very_low_level_auto.rb#227
   def Z3_is_well_sorted(*_arg0); end
@@ -4704,6 +4692,9 @@ module Z3::VeryLowLevel
   # source://z3//lib/z3/very_low_level_auto.rb#413
   def Z3_mk_set_difference(*_arg0); end
 
+  # source://z3//lib/z3/very_low_level_auto.rb#414
+  def Z3_mk_set_has_size(*_arg0); end
+
   # source://z3//lib/z3/very_low_level.rb#14
   def Z3_mk_set_intersect(*_arg0); end
 
@@ -5147,9 +5138,6 @@ module Z3::VeryLowLevel
 
   # source://z3//lib/z3/very_low_level_auto.rb#556
   def Z3_solver_check(*_arg0); end
-
-  # source://z3//lib/z3/very_low_level_auto.rb#557
-  def Z3_solver_congruence_explain(*_arg0); end
 
   # source://z3//lib/z3/very_low_level_auto.rb#558
   def Z3_solver_congruence_next(*_arg0); end
@@ -5690,7 +5678,7 @@ module Z3::VeryLowLevel
     def Z3_get_arity(*_arg0); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#120
-    def Z3_get_array_arity(*_arg0); end
+    def Z3_get_array_arity(*args); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#121
     def Z3_get_array_sort_domain(*_arg0); end
@@ -5768,7 +5756,7 @@ module Z3::VeryLowLevel
     def Z3_get_denominator(*_arg0); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#146
-    def Z3_get_depth(*_arg0); end
+    def Z3_get_depth(*args); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#147
     def Z3_get_domain(*_arg0); end
@@ -5996,7 +5984,7 @@ module Z3::VeryLowLevel
     def Z3_is_eq_sort(*_arg0); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#221
-    def Z3_is_ground(*_arg0); end
+    def Z3_is_ground(*args); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#222
     def Z3_is_lambda(*_arg0); end
@@ -6011,7 +5999,7 @@ module Z3::VeryLowLevel
     def Z3_is_quantifier_forall(*_arg0); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#226
-    def Z3_is_recursive_datatype_sort(*_arg0); end
+    def Z3_is_recursive_datatype_sort(*args); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#227
     def Z3_is_well_sorted(*_arg0); end
@@ -6593,7 +6581,7 @@ module Z3::VeryLowLevel
     def Z3_mk_set_difference(*_arg0); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#414
-    def Z3_mk_set_has_size(*args); end
+    def Z3_mk_set_has_size(*_arg0); end
 
     # source://z3//lib/z3/very_low_level.rb#14
     def Z3_mk_set_intersect(*_arg0); end
@@ -7040,7 +7028,7 @@ module Z3::VeryLowLevel
     def Z3_solver_check(*_arg0); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#557
-    def Z3_solver_congruence_explain(*_arg0); end
+    def Z3_solver_congruence_explain(*args); end
 
     # source://z3//lib/z3/very_low_level_auto.rb#558
     def Z3_solver_congruence_next(*_arg0); end

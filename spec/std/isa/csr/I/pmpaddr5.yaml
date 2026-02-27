@@ -16,9 +16,12 @@ priv_mode: M
 length: MXLEN
 description: PMP entry address
 definedBy:
-  param:
-    name: NUM_PMP_ENTRIES
-    greaterThan: 5
+  allOf:
+    - extension:
+        name: Sm
+    - param:
+        name: NUM_PMP_ENTRIES
+        greaterThan: 5
 fields:
   ADDR:
     location_rv32: 31-0

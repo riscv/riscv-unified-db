@@ -18,6 +18,8 @@ description: |
   Upper half of mhpmcounter18.
 definedBy:
   allOf:
+    - extension:
+        name: Sm
     - xlen: 32
     - param:
         name: HPM_COUNTER_EN

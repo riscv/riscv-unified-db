@@ -17,6 +17,8 @@ length: MXLEN
 description: PMP entry configuration
 definedBy:
   allOf:
+    - extension:
+        name: Sm
     - xlen: 32 # odd numbered pmpcfg registers do not exist in RV64
     - param:
         name: NUM_PMP_ENTRIES

@@ -16,6 +16,8 @@ description: |
   Upper half of mhpmcounter<%= hpm_num %>.
 definedBy:
   allOf:
+    - extension:
+        name: Sm
     - xlen: 32
     - param:
         name: HPM_COUNTER_EN
