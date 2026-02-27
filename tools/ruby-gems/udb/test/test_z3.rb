@@ -16,6 +16,11 @@ class TestZ3Solver < Minitest::Test
     assert_instance_of Udb::Z3Solver, @solver
   end
 
+  def test_assert_as_tracks_assertion
+    @solver.assert_as(Z3.Bool("tracked_true"), "tracked_true_constraint")
+    assert @solver.satisfiable?
+  end
+
   def test_xlen_returns_int_expr
     xlen = @solver.xlen
     assert_instance_of Z3::IntExpr, xlen

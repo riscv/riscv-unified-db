@@ -4,6 +4,8 @@
 # typed: false
 # frozen_string_literal: true
 
+require "pathname"
+
 IDLC_ROOT = (Pathname.new(__dir__) / "..").realpath
 
 require "simplecov"

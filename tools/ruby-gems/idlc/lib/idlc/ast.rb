@@ -5378,14 +5378,14 @@ module Idl
 
     # @!macro value
     def value(symtab)
-      result = UnknownLiteral.new(0, 0)
+      result = T.let(UnknownLiteral.new(0, 0), T.any(Integer, UnknownLiteral))
       total_width = 0
       expressions.reverse_each do |exp|
         result |= (exp.value(symtab) << total_width)
         total_width += exp.type(symtab).width
       end
       if result.is_a?(UnknownLiteral)
-        result.unknown_mask.zero? ? result.known_vlue : result
+        result.unknown_mask.zero? ? result.known_value : result
       else
         result
       end
@@ -5453,7 +5453,7 @@ module Idl
 
     # @!macro value
     def value(symtab)
-      result = UnknownLiteral.new(0, 0)
+      result = T.let(UnknownLiteral.new(0, 0), T.any(UnknownLiteral, Integer))
       n.value(symtab).times do |i|
         result |= v.value(symtab) << (i * v.type(symtab).width)
       end
