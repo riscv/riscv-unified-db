@@ -127,6 +127,10 @@ tests:
           - z3
           - mmr
           - mmr_schema
+          - z3_extensions
+          - z3_finite_array
+          - z3_parameter_constraints
+          - z3
     test:
       - name: Run udb gem ${{ matrix.test }} unit tests
         run: ./bin/ruby tools/ruby-gems/udb/test/test_${{ matrix.test }}.rb

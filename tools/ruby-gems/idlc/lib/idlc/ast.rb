@@ -4317,7 +4317,7 @@ module Idl
     def type_check(symtab, strict:)
       expr.type_check(symtab, strict:)
 
-      unless [:bits, :enum_ref, :csr].include?(expr.type(symtab).kind)
+      unless [:bits, :enum_ref, :bitfield, :csr].include?(expr.type(symtab).kind)
         type_error "#{expr.type(symtab)} Cannot be cast to bits"
       end
     end
@@ -4329,6 +4329,8 @@ module Idl
       case etype.kind
       when :bits
         etype
+      when :bitfield
+        Type.new(:bits, width: etype.width, qualifiers: [:known])
       when :enum_ref
         Type.new(:bits, width: etype.enum_class.width, qualifiers: [:known])
       when :csr
@@ -4349,6 +4351,8 @@ module Idl
 
       case etype.kind
       when :bits
+        expr.value(symtab)
+      when :bitfield
         expr.value(symtab)
       when :enum_ref
         if expr.is_a?(EnumRefAst)

@@ -728,6 +728,7 @@ module Idl
   end
 
   class BitfieldType < Type
+    def width = @field_ranges.map(&:size).reduce(&:+)
     def initialize(type_name, width, field_names, field_ranges)
       super(:bitfield, name: type_name, width:)
 

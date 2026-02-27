@@ -584,6 +584,10 @@ jobs:
         - z3
         - mmr
         - mmr_schema
+        - z3_extensions
+        - z3_finite_array
+        - z3_parameter_constraints
+        - z3
   regress-gen-go:
     runs-on: ubuntu-latest
     needs: build-container
