@@ -22,9 +22,9 @@ end
 
 def create_bool_literal(value)
   if value
-    Idl::IdAst.new("true", 0..4, "true")
+    Idl::TrueExpressionAst.new("true", 0..4)
   else
-    Idl::IdAst.new("false", 0..5, "false")
+    Idl::FalseExpressionAst.new("false", 0..5)
   end
 end
 
@@ -173,6 +173,18 @@ module Idl
         @type,
         pruned_body
       )
+    end
+  end
+  class ParenExpressionAst
+    def prune(symtab, forced_type: nil)
+      e = expression.prune(symtab, forced_type:)
+      if e.is_a?(ParenExpressionAst)
+        e
+      elsif e.is_a?(IntLiteralAst) || e.is_a?(TrueExpressionAst) || e.is_a?(FalseExpressionAst) || e.is_a?(IdAst)
+        e
+      else
+        ParenExpressionAst.new(input, interval, e)
+      end
     end
   end
   class FunctionBodyAst < AstNode

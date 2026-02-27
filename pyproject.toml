@@ -10,6 +10,7 @@ dependencies = [
     "jsonschema>=4.26.0",
     "mergedeep>=1.3.4",
     "pre-commit>=4.5.1",
+    "pycobertura>=4.1.0",
     "pytest>=9.0.2",
     "reuse>=6.2.0",
     "ruamel.yaml>=0.19.1",

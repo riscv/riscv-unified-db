@@ -161,11 +161,11 @@ module Udb
         exprs = @items.map do |item|
           item == target_value
         end
-        solver.assert Z3.Or(exprs)
+        solver.assert Z3.Or(*exprs)
       end
       # Handle uniqueness constraint: all elements must be distinct
       if @constraints.unique
-        solver.assert Z3.Distinct(@items)
+        solver.assert Z3.Distinct(*@items)
       end
     end
 
@@ -628,6 +628,8 @@ module Udb
         else
           raise "Unhandled JSON schema type"
         end
+      elsif schema_hsh.key?("minimum") || schema_hsh.key?("maximum")
+        :int
       elsif schema_hsh.key?("const")
         # Infer type from const value
         case schema_hsh["const"]
@@ -1025,7 +1027,7 @@ module Udb
       if ver_spec.pre
         e
       else
-        e & Z3.And((@major_term == ver_spec.major), (@minor_term == ver_spec.minor), (@patch_term == ver_spec.patch), (@pre_term))
+        e | Z3.And((@major_term == ver_spec.major), (@minor_term == ver_spec.minor), (@patch_term == ver_spec.patch), (@pre_term))
       end
     end
   end
