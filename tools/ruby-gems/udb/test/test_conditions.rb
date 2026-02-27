@@ -769,6 +769,6 @@ class TestConditions < Minitest::Test
       },
       $db_cfg_arch
     )
-    assert_match (/F/), f.sat_arch_model($db_cfg_arch)
+    assert_match (/F/), f.sat_arch_model($db_cfg_arch).to_s
   end
 end
