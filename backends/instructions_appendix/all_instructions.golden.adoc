@@ -13207,11 +13207,11 @@ Included in::
 
 
 
-[#udb:doc:inst:c_mop_n]
-== c.mop.n
+[#udb:doc:inst:c_mop_1]
+== c.mop.1
 
 Synopsis::
-Compressed May-Be-Operation
+Compressed May-Be-Operation 1
 
 Base::
 
@@ -13224,23 +13224,374 @@ Base::
 |===
 
 Assembly::
-c.mop.n
+c.mop.1
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x81,"type":2},{"bits":3,"name": "n","type":4},{"bits":5,"name": 0xc,"type":2}]}
+{"reg":[{"bits":16,"name": 0x6081,"type":2}]}
 ....
 
 Description::
-C.MOP.n is encoded in the reserved encoding space corresponding to C.LUI xn, 0. Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not write any register. Their encoding allows future extensions to define them to read register x[n].
+C.MOP.1 is encoded in the reserved encoding space corresponding to C.LUI x1, 0.
+Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not
+write any register. Their encoding allows future extensions to define them to read register x[1].
+
+This is c.mop.1 from the compressed MOP instruction family.
+
 
 Decode Variables::
-[width="100%", cols="1,2", options="header"]
+c.mop.1 has no decode variables.
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
 |===
-|Variable Name |Location
-|n |$encoding[10:8]
+| Extension | Version
+
+| *Zcmop*
+| any
 |===
+
+
+
+
+[#udb:doc:inst:c_mop_11]
+== c.mop.11
+
+Synopsis::
+Compressed May-Be-Operation 11
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+c.mop.11
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":16,"name": 0x6581,"type":2}]}
+....
+
+Description::
+C.MOP.11 is encoded in the reserved encoding space corresponding to C.LUI x11, 0.
+Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not
+write any register. Their encoding allows future extensions to define them to read register x[11].
+
+This is c.mop.11 from the compressed MOP instruction family.
+
+
+Decode Variables::
+c.mop.11 has no decode variables.
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zcmop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:c_mop_13]
+== c.mop.13
+
+Synopsis::
+Compressed May-Be-Operation 13
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+c.mop.13
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":16,"name": 0x6681,"type":2}]}
+....
+
+Description::
+C.MOP.13 is encoded in the reserved encoding space corresponding to C.LUI x13, 0.
+Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not
+write any register. Their encoding allows future extensions to define them to read register x[13].
+
+This is c.mop.13 from the compressed MOP instruction family.
+
+
+Decode Variables::
+c.mop.13 has no decode variables.
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zcmop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:c_mop_15]
+== c.mop.15
+
+Synopsis::
+Compressed May-Be-Operation 15
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+c.mop.15
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":16,"name": 0x6781,"type":2}]}
+....
+
+Description::
+C.MOP.15 is encoded in the reserved encoding space corresponding to C.LUI x15, 0.
+Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not
+write any register. Their encoding allows future extensions to define them to read register x[15].
+
+This is c.mop.15 from the compressed MOP instruction family.
+
+
+Decode Variables::
+c.mop.15 has no decode variables.
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zcmop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:c_mop_3]
+== c.mop.3
+
+Synopsis::
+Compressed May-Be-Operation 3
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+c.mop.3
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":16,"name": 0x6181,"type":2}]}
+....
+
+Description::
+C.MOP.3 is encoded in the reserved encoding space corresponding to C.LUI x3, 0.
+Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not
+write any register. Their encoding allows future extensions to define them to read register x[3].
+
+This is c.mop.3 from the compressed MOP instruction family.
+
+
+Decode Variables::
+c.mop.3 has no decode variables.
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zcmop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:c_mop_5]
+== c.mop.5
+
+Synopsis::
+Compressed May-Be-Operation 5
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+c.mop.5
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":16,"name": 0x6281,"type":2}]}
+....
+
+Description::
+C.MOP.5 is encoded in the reserved encoding space corresponding to C.LUI x5, 0.
+Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not
+write any register. Their encoding allows future extensions to define them to read register x[5].
+
+This is c.mop.5 from the compressed MOP instruction family.
+
+
+Decode Variables::
+c.mop.5 has no decode variables.
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zcmop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:c_mop_7]
+== c.mop.7
+
+Synopsis::
+Compressed May-Be-Operation 7
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+c.mop.7
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":16,"name": 0x6381,"type":2}]}
+....
+
+Description::
+C.MOP.7 is encoded in the reserved encoding space corresponding to C.LUI x7, 0.
+Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not
+write any register. Their encoding allows future extensions to define them to read register x[7].
+
+This is c.mop.7 from the compressed MOP instruction family.
+
+
+Decode Variables::
+c.mop.7 has no decode variables.
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zcmop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:c_mop_9]
+== c.mop.9
+
+Synopsis::
+Compressed May-Be-Operation 9
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+c.mop.9
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":16,"name": 0x6481,"type":2}]}
+....
+
+Description::
+C.MOP.9 is encoded in the reserved encoding space corresponding to C.LUI x9, 0.
+Unlike the MOPs defined in the Zimop extension, the C.MOP.n instructions are defined to not
+write any register. Their encoding allows future extensions to define them to read register x[9].
+
+This is c.mop.9 from the compressed MOP instruction family.
+
+
+Decode Variables::
+c.mop.9 has no decode variables.
 
 Included in::
 
@@ -15040,7 +15391,7 @@ xref:insts:cbo_zero.adoc#udb:doc:inst:cbo_zero[cbo.zero] is ordered by `FENCE` i
 Both PMP and PMA access control must be the same for all bytes in the block; otherwise, xref:insts:cbo_zero.adoc#udb:doc:inst:cbo_zero[cbo.zero] has UNSPECIFIED behavior.
 <%- end -%>
 
-Clean operations are treated as stores for page and access permissions. If permission checks fail,
+Zero operations are treated as stores for page and access permissions. If permission checks fail,
 one of the following exceptions will occur:
 
   <%- if ext?(:H) -%>
@@ -28179,11 +28530,11 @@ Included in::
 
 
 
-[#udb:doc:inst:mop_r_n]
-== mop.r.n
+[#udb:doc:inst:mop_r_0]
+== mop.r.0
 
 Synopsis::
-May-be-operation (1 source register)
+May-be-operation 0 (1 source register)
 
 Base::
 
@@ -28196,24 +28547,25 @@ Base::
 |===
 
 Assembly::
-mop.r.n xd, xs1
+mop.r.0 xd, xs1
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":2,"name": "n[1:0]","type":4},{"bits":4,"name": 0x7,"type":2},{"bits":2,"name": "n[3:2]","type":4},{"bits":2,"name": 0x0,"type":2},{"bits":1,"name": "n[4]","type":4},{"bits":1,"name": 0x1,"type":2}]}
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x81c,"type":2}]}
 ....
 
 Description::
-Unless redefined by another extension, this instructions simply writes 0 to X[xd].
-The encoding allows future extensions to define them to read X[xs1], as well as write X[xd].
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.0 from the MOP.R instruction family (n=0).
 
 
 Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|n |{$encoding[30], $encoding[27:26], $encoding[21:20]}
 |xs1 |$encoding[19:15]
 |xd |$encoding[11:7]
 |===
@@ -28232,11 +28584,11 @@ Included in::
 
 
 
-[#udb:doc:inst:mop_rr_n]
-== mop.rr.n
+[#udb:doc:inst:mop_r_1]
+== mop.r.1
 
 Synopsis::
-May-be-operation (2 source registers)
+May-be-operation 1 (1 source register)
 
 Base::
 
@@ -28249,25 +28601,2092 @@ Base::
 |===
 
 Assembly::
-mop.rr.n xd, xs1, xs2
+mop.r.1 xd, xs1
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":1,"name": 0x1,"type":2},{"bits":2,"name": "n[1:0]","type":4},{"bits":2,"name": 0x0,"type":2},{"bits":1,"name": "n[2]","type":4},{"bits":1,"name": 0x1,"type":2}]}
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x81d,"type":2}]}
 ....
 
 Description::
-The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
-and 7, inclusive. Unless redefined by another extension, these instructions simply write 0 to X[xd].
-Their encoding allows future extensions to define them to read X[xs1] and X[xs2], as well as write X[xd].
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.1 from the MOP.R instruction family (n=1).
 
 
 Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|n |{$encoding[30], $encoding[27:26]}
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_10]
+== mop.r.10
+
+Synopsis::
+May-be-operation 10 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.10 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x89e,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.10 from the MOP.R instruction family (n=10).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_11]
+== mop.r.11
+
+Synopsis::
+May-be-operation 11 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.11 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x89f,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.11 from the MOP.R instruction family (n=11).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_12]
+== mop.r.12
+
+Synopsis::
+May-be-operation 12 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.12 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x8dc,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.12 from the MOP.R instruction family (n=12).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_13]
+== mop.r.13
+
+Synopsis::
+May-be-operation 13 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.13 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x8dd,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.13 from the MOP.R instruction family (n=13).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_14]
+== mop.r.14
+
+Synopsis::
+May-be-operation 14 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.14 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x8de,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.14 from the MOP.R instruction family (n=14).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_15]
+== mop.r.15
+
+Synopsis::
+May-be-operation 15 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.15 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x8df,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.15 from the MOP.R instruction family (n=15).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_16]
+== mop.r.16
+
+Synopsis::
+May-be-operation 16 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.16 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc1c,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.16 from the MOP.R instruction family (n=16).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_17]
+== mop.r.17
+
+Synopsis::
+May-be-operation 17 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.17 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc1d,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.17 from the MOP.R instruction family (n=17).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_18]
+== mop.r.18
+
+Synopsis::
+May-be-operation 18 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.18 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc1e,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.18 from the MOP.R instruction family (n=18).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_19]
+== mop.r.19
+
+Synopsis::
+May-be-operation 19 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.19 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc1f,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.19 from the MOP.R instruction family (n=19).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_2]
+== mop.r.2
+
+Synopsis::
+May-be-operation 2 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.2 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x81e,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.2 from the MOP.R instruction family (n=2).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_20]
+== mop.r.20
+
+Synopsis::
+May-be-operation 20 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.20 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc5c,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.20 from the MOP.R instruction family (n=20).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_21]
+== mop.r.21
+
+Synopsis::
+May-be-operation 21 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.21 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc5d,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.21 from the MOP.R instruction family (n=21).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_22]
+== mop.r.22
+
+Synopsis::
+May-be-operation 22 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.22 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc5e,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.22 from the MOP.R instruction family (n=22).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_23]
+== mop.r.23
+
+Synopsis::
+May-be-operation 23 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.23 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc5f,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.23 from the MOP.R instruction family (n=23).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_24]
+== mop.r.24
+
+Synopsis::
+May-be-operation 24 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.24 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc9c,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.24 from the MOP.R instruction family (n=24).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_25]
+== mop.r.25
+
+Synopsis::
+May-be-operation 25 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.25 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc9d,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.25 from the MOP.R instruction family (n=25).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_26]
+== mop.r.26
+
+Synopsis::
+May-be-operation 26 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.26 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc9e,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.26 from the MOP.R instruction family (n=26).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_27]
+== mop.r.27
+
+Synopsis::
+May-be-operation 27 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.27 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xc9f,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.27 from the MOP.R instruction family (n=27).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_28]
+== mop.r.28
+
+Synopsis::
+May-be-operation 28 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.28 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xcdc,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.28 from the MOP.R instruction family (n=28).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_29]
+== mop.r.29
+
+Synopsis::
+May-be-operation 29 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.29 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xcdd,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.29 from the MOP.R instruction family (n=29).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_3]
+== mop.r.3
+
+Synopsis::
+May-be-operation 3 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.3 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x81f,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.3 from the MOP.R instruction family (n=3).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_30]
+== mop.r.30
+
+Synopsis::
+May-be-operation 30 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.30 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xcde,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.30 from the MOP.R instruction family (n=30).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_31]
+== mop.r.31
+
+Synopsis::
+May-be-operation 31 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.31 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0xcdf,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.31 from the MOP.R instruction family (n=31).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_4]
+== mop.r.4
+
+Synopsis::
+May-be-operation 4 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.4 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x85c,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.4 from the MOP.R instruction family (n=4).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_5]
+== mop.r.5
+
+Synopsis::
+May-be-operation 5 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.5 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x85d,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.5 from the MOP.R instruction family (n=5).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_6]
+== mop.r.6
+
+Synopsis::
+May-be-operation 6 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.6 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x85e,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.6 from the MOP.R instruction family (n=6).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_7]
+== mop.r.7
+
+Synopsis::
+May-be-operation 7 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.7 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x85f,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.7 from the MOP.R instruction family (n=7).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_8]
+== mop.r.8
+
+Synopsis::
+May-be-operation 8 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.8 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x89c,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.8 from the MOP.R instruction family (n=8).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_r_9]
+== mop.r.9
+
+Synopsis::
+May-be-operation 9 (1 source register)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.r.9 xd, xs1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x89d,"type":2}]}
+....
+
+Description::
+Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+The encoding allows future extensions to define it to read X[xs1], as well as write X[xd].
+
+This is mop.r.9 from the MOP.R instruction family (n=9).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_rr_0]
+== mop.rr.0
+
+Synopsis::
+May-be-operation 0 (2 source registers)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.rr.0 xd, xs1, xs2
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x41,"type":2}]}
+....
+
+Description::
+The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
+and 7, inclusive. Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+Its encoding allows future extensions to define it to read X[xs1] and X[xs2], as well as write X[xd].
+
+This is mop.rr.0 from the MOP.RR instruction family (n=0).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_rr_1]
+== mop.rr.1
+
+Synopsis::
+May-be-operation 1 (2 source registers)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.rr.1 xd, xs1, xs2
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x43,"type":2}]}
+....
+
+Description::
+The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
+and 7, inclusive. Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+Its encoding allows future extensions to define it to read X[xs1] and X[xs2], as well as write X[xd].
+
+This is mop.rr.1 from the MOP.RR instruction family (n=1).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_rr_2]
+== mop.rr.2
+
+Synopsis::
+May-be-operation 2 (2 source registers)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.rr.2 xd, xs1, xs2
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x45,"type":2}]}
+....
+
+Description::
+The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
+and 7, inclusive. Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+Its encoding allows future extensions to define it to read X[xs1] and X[xs2], as well as write X[xd].
+
+This is mop.rr.2 from the MOP.RR instruction family (n=2).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_rr_3]
+== mop.rr.3
+
+Synopsis::
+May-be-operation 3 (2 source registers)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.rr.3 xd, xs1, xs2
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x47,"type":2}]}
+....
+
+Description::
+The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
+and 7, inclusive. Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+Its encoding allows future extensions to define it to read X[xs1] and X[xs2], as well as write X[xd].
+
+This is mop.rr.3 from the MOP.RR instruction family (n=3).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_rr_4]
+== mop.rr.4
+
+Synopsis::
+May-be-operation 4 (2 source registers)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.rr.4 xd, xs1, xs2
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x61,"type":2}]}
+....
+
+Description::
+The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
+and 7, inclusive. Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+Its encoding allows future extensions to define it to read X[xs1] and X[xs2], as well as write X[xd].
+
+This is mop.rr.4 from the MOP.RR instruction family (n=4).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_rr_5]
+== mop.rr.5
+
+Synopsis::
+May-be-operation 5 (2 source registers)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.rr.5 xd, xs1, xs2
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x63,"type":2}]}
+....
+
+Description::
+The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
+and 7, inclusive. Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+Its encoding allows future extensions to define it to read X[xs1] and X[xs2], as well as write X[xd].
+
+This is mop.rr.5 from the MOP.RR instruction family (n=5).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_rr_6]
+== mop.rr.6
+
+Synopsis::
+May-be-operation 6 (2 source registers)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.rr.6 xd, xs1, xs2
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x65,"type":2}]}
+....
+
+Description::
+The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
+and 7, inclusive. Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+Its encoding allows future extensions to define it to read X[xs1] and X[xs2], as well as write X[xd].
+
+This is mop.rr.6 from the MOP.RR instruction family (n=6).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zimop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:mop_rr_7]
+== mop.rr.7
+
+Synopsis::
+May-be-operation 7 (2 source registers)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+mop.rr.7 xd, xs1, xs2
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x73,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x67,"type":2}]}
+....
+
+Description::
+The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
+and 7, inclusive. Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+Its encoding allows future extensions to define it to read X[xs1] and X[xs2], as well as write X[xd].
+
+This is mop.rr.7 from the MOP.RR instruction family (n=7).
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
 |xs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |xd |$encoding[11:7]

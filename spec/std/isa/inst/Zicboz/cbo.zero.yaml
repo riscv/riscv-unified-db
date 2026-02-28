@@ -18,7 +18,7 @@ description: |
   Both PMP and PMA access control must be the same for all bytes in the block; otherwise, `cbo.zero` has UNSPECIFIED behavior.
   <%- end -%>
 
-  Clean operations are treated as stores for page and access permissions. If permission checks fail,
+  Zero operations are treated as stores for page and access permissions. If permission checks fail,
   one of the following exceptions will occur:
 
     <%- if ext?(:H) -%>
@@ -66,20 +66,42 @@ access_detail: |
   ! 1 ! 1 ! 1 ! executes ! executes ! executes ! executes
   !===
 operation(): |
-  if ((mode() == PrivilegeMode::M && CSR[menvcfg].CBZE == 0) ||
-      (mode() == PrivilegeMode::U && CSR[senvcfg].CBZE == 0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-  }
-  else if ((mode() == PrivilegeMode::VS && CSR[henvcfg].CBZE ==0) ||
-           (mode() == PrivilegeMode::VU && (CSR[henvcfg].CBZE | CSR[senvcfg].CBZE) == 0)) {
-    raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
-  } else {
-    XReg mask = CACHE_BLOCK_SIZE - 1;
-    XReg cache_block_vaddr = X[xs1] & ~mask;
+  # Access checks for cbo.zero per envcfg CBZE bits.
+  # M-mode always has access.
 
-    TranslationResult result;
-    result = translate(cache_block_vaddr, MemoryOperation::Write, effective_ldst_mode(), $encoding);
-    access_check(result.paddr, CACHE_BLOCK_SIZE*8, cache_block_vaddr, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
-
-    cache_block_zero(result.paddr);
+  if (CSR[misa].S == 1) {
+    if (CSR[menvcfg].CBZE == 0) {
+      # menvcfg.CBZE=0: all non-M modes trap
+      if (mode() == PrivilegeMode::S || mode() == PrivilegeMode::U) {
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+      }
+      if (CSR[misa].H == 1) {
+        if (mode() == PrivilegeMode::VS || mode() == PrivilegeMode::VU) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+      }
+    } else {
+      # menvcfg.CBZE=1: check lower-level envcfg bits
+      if (mode() == PrivilegeMode::U && CSR[senvcfg].CBZE == 0) {
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+      }
+      if (CSR[misa].H == 1) {
+        if (CSR[henvcfg].CBZE == 0) {
+          if (mode() == PrivilegeMode::VS || mode() == PrivilegeMode::VU) {
+            raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+          }
+        } else if (mode() == PrivilegeMode::VU && CSR[senvcfg].CBZE == 0) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+      }
+    }
   }
+
+  XReg mask = CACHE_BLOCK_SIZE - 1;
+  XReg cache_block_vaddr = X[xs1] & ~mask;
+
+  TranslationResult result;
+  result = translate(cache_block_vaddr, MemoryOperation::Write, effective_ldst_mode(), $encoding);
+  access_check(result.paddr, CACHE_BLOCK_SIZE*8, cache_block_vaddr, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
+
+  cache_block_zero(result.paddr);
