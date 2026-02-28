@@ -581,13 +581,12 @@ jobs:
         - yaml_loader
         - cfg_arch
         - cfg
-        - z3
         - mmr
         - mmr_schema
+        - z3
         - z3_extensions
         - z3_finite_array
         - z3_parameter_constraints
-        - z3
   regress-gen-go:
     runs-on: ubuntu-latest
     needs: build-container
