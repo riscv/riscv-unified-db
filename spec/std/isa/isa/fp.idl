@@ -898,7 +898,7 @@ function f32_to_i64 {
   body {
     Bits<1> sign = signF32UI(a);
     Bits<8> exp  = expF32UI(a);
-      Bits<23> fracA = fracF32UI(a);
+    Bits<23> frac = fracF32UI(a);
 
     Bits<32> sig32;
     Bits<8> shiftDist;
