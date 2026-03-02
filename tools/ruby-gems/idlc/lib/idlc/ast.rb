@@ -3,8 +3,7 @@
 
 # typed: true
 # frozen_string_literal: true
-
-require "sorbet-runtime"
+puts "HIIFHIDHFID"
 
 require_relative "type"
 require_relative "symbol_table"
@@ -1272,7 +1271,14 @@ module Idl
     def functions = definitions.grep(FunctionDefAst)
 
     # @return [FetchAst] Fetch body
-    def fetch = definitions.grep(FetchAst)[0]
+    def fetch
+      @fetch ||=
+        begin
+          raise "No fetch block defined" if definitions.grep(FetchAst).size == 0
+
+          definitions.grep(FetchAst)[0]
+        end
+    end
 
     # Add all the global symbols to symtab
     #
@@ -1307,7 +1313,6 @@ module Idl
 
       fetch_blocks = definitions.grep(FetchAst)
       type_error "Multiple fetch blocks defined" if fetch_blocks.size > 1
-      type_error "No fetch block defined" if fetch_blocks.size.zero?
     end
 
     sig { override.returns(String) }
