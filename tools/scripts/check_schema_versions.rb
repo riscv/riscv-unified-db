@@ -24,6 +24,7 @@ end
 failures = []
 
 gen_schemas_dir.glob("**/*.json").sort.each do |schema_file|
+  next if File.directory?(schema_file)
   schema_data = JSON.parse(schema_file.read)
   published_id = schema_data["$id"]
   next if published_id.nil?
