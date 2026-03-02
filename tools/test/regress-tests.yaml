@@ -49,15 +49,16 @@ tests:
     ci_stage: pr
     tags:
       - smoke
+    strategy:
+      matrix:
+        cfg:
+          - _
+          - rv32
+          - rv64
+          - qc_iu
     test:
-      - name: Type check IDL for _
-        run: ./do test:idl CFG=_
-      - name: Type check IDL for rv32
-        run: ./do test:idl CFG=rv32
-      - name: Type check IDL for rv64
-        run: ./do test:idl CFG=rv64
-      - name: Type check IDL for qc_iu
-        run: ./do test:idl CFG=qc_iu
+      - name: Type check IDL for ${{ matrix.cfg }}
+        run: ./do test:idl CFG=${{ matrix.cfg }}
 
   regress-test-inst-encodings:
     ci_stage: pr
