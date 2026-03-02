@@ -3,7 +3,6 @@
 
 # typed: true
 # frozen_string_literal: true
-puts "HIIFHIDHFID"
 
 require_relative "type"
 require_relative "symbol_table"
@@ -1248,8 +1247,20 @@ module Idl
     end
   end
 
+  class FetchAst < AstNode
+  end
   # top-level AST node
   class IsaAst < AstNode
+    class Memo < T::Struct
+      prop :fetch, T.nilable(FetchAst)
+    end
+
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), children: T::Array[AstNode]).void }
+    def initialize(input, interval, children)
+      super(input, interval, children)
+      @memo = Memo.new
+    end
+
     def definitions = children
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
@@ -1272,7 +1283,7 @@ module Idl
 
     # @return [FetchAst] Fetch body
     def fetch
-      @fetch ||=
+      @memo.fetch ||=
         begin
           raise "No fetch block defined" if definitions.grep(FetchAst).size == 0
 
@@ -4251,6 +4262,7 @@ module Idl
     # @!macro type_check
     def type_check(symtab, strict:)
       expression.type_check(symtab, strict:)
+      type_error "$signed cast only works on Bits types" unless expression.type(symtab).kind == :bits
     end
 
     # @!macro type
@@ -4562,11 +4574,11 @@ module Idl
         end
       elsif op == "`*"
         qualifiers << :known if lhs_type.known? && rhs_type.known?
-        # widening multiply: result is 2x the width of the largest operand
+        # widening multiply: result sum of the widths of the operations
         value_result = value_try do
           value_error "lhs width is unknown" if lhs_type.width == :unknown
           value_error "rhs width is unknown" if rhs_type.width == :unknown
-          return Type.new(:bits, width: [lhs_type.width, rhs_type.width].max * 2, qualifiers:)
+          return Type.new(:bits, width: (lhs_type.width + rhs_type.width), qualifiers:)
         end
         value_else(value_result) do
           Type.new(:bits, width: :unknown, qualifiers:)

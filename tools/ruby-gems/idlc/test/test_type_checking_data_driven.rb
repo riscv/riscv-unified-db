@@ -50,9 +50,9 @@ class TestTypeCheckingDataDriven < Minitest::Test
       ast = compile_idl(test_case["idl"], test_case["test_type"])
 
       # Get the type to check
-      type = if test_case["test_type"] == "statement"
+      type = if test_case["test_type"] == "initialization"
         # For statements, check the LHS type
-               ast.action.lhs.type(@symtab)
+               ast.lhs.type(@symtab)
       else
         # For expressions, check the expression type
         ast.type(@symtab)
@@ -102,7 +102,7 @@ class TestTypeCheckingDataDriven < Minitest::Test
   end
 
   def compile_idl(idl, test_type)
-    root = test_type == "statement" ? :statement : :expression
+    root = test_type == "initialization" ? :assignment : :expression
 
     @compiler.parser.set_input_file("", 0)
     m = @compiler.parser.parse(idl, root: root)
