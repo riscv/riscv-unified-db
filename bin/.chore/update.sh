@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
 # Update operations for bin/chore
 # This file contains all update-related subcommands
 
