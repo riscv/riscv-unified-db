@@ -6,6 +6,7 @@ version = 1
 [[annotations]]
 path = [
   ".gitignore",
+  ".vscode/launch.json",
   "yamlidl/package.json",
   "yamlidl/syntaxes/yaml-idl-injection.json",
   "yamlidl/language-configuration-yamlidl.json",
