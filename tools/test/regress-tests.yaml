@@ -49,15 +49,16 @@ tests:
     ci_stage: pr
     tags:
       - smoke
+    strategy:
+      matrix:
+        cfg:
+          - _
+          - rv32
+          - rv64
+          - qc_iu
     test:
-      - name: Type check IDL for _
-        run: ./do test:idl CFG=_
-      - name: Type check IDL for rv32
-        run: ./do test:idl CFG=rv32
-      - name: Type check IDL for rv64
-        run: ./do test:idl CFG=rv64
-      - name: Type check IDL for qc_iu
-        run: ./do test:idl CFG=qc_iu
+      - name: Type check IDL for ${{ matrix.cfg }}
+        run: ./do test:idl CFG=${{ matrix.cfg }}
 
   regress-test-inst-encodings:
     ci_stage: pr
@@ -103,13 +104,13 @@ tests:
     ci_stage: pr
     test:
       - name: Generate extension PDF
-        run: ./do gen:proc_crd_pdf[MockProcessor]
+        run: ./do gen:proc_crd_pdf[RVI20-32]
 
   regress-gen-profile:
     ci_stage: pr
     test:
       - name: Generate extension PDF
-        run: ./do gen:profile_release_pdf[Mock]
+        run: ./do gen:profile_release_pdf[RVI20]
 
   regress-udb-unit-test:
     ci_stage: pr
@@ -124,9 +125,12 @@ tests:
           - yaml_loader
           - cfg_arch
           - cfg
-          - z3
           - mmr
           - mmr_schema
+          - z3
+          - z3_extensions
+          - z3_finite_array
+          - z3_parameter_constraints
     test:
       - name: Run udb gem ${{ matrix.test }} unit tests
         run: ./bin/ruby tools/ruby-gems/udb/test/test_${{ matrix.test }}.rb

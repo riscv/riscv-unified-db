@@ -380,6 +380,24 @@ function creg2reg {
   }
 }
 
+function reserved_instruction {
+  arguments Bits<INSTR_ENC_SIZE> encoding
+  description {
+    Either raises an IllegalInstruction exception or enters unpredictable state,
+    depending on the setting of the TRAP_ON_UNIMPLEMENTED_INSTRUCTION parameter.
+
+    This should be called when an instruction is architecturally defined but
+    has been disabled at runtime (_e.g._, by clearing misa.A).
+  }
+  body {
+    if (TRAP_ON_UNIMPLEMENTED_INSTRUCTION) {
+      raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    } else {
+      unpredictable("Unimplemented instruction that does not trap");
+    }
+  }
+}
+
 function unimplemented_csr {
   arguments Bits<INSTR_ENC_SIZE> encoding
   description {

@@ -165,7 +165,7 @@ end
 
 desc "Clean up all generated files and container"
 task :clobber do
-  warn "Don't run clean using Rake. Run `./do clean` (alias for `./bin/clean`) instead."
+  warn "Don't run clobber using Rake. Run `./do clobber` (alias for `./bin/clobber`) instead."
 end
 
 
@@ -436,6 +436,48 @@ end
   end
 end
 
+# MOP.R instruction generation from layout (mop.r.0 through mop.r.31)
+(0..31).each do |n|
+  file "#{$resolver.std_path}/inst/Zimop/mop.r.#{n}.yaml" => [
+    "#{$resolver.std_path}/inst/Zimop/mop.r.N.layout",
+    __FILE__
+  ] do |t|
+    FileUtils.rm_f(t.name)
+    erb = ERB.new(File.read($resolver.std_path / "inst/Zimop/mop.r.N.layout"), trim_mode: "-")
+    erb.filename = "#{$resolver.std_path}/inst/Zimop/mop.r.N.layout"
+    File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+    File.chmod(0444, t.name)
+  end
+end
+
+# MOP.RR instruction generation from layout (mop.rr.0 through mop.rr.7)
+(0..7).each do |n|
+  file "#{$resolver.std_path}/inst/Zimop/mop.rr.#{n}.yaml" => [
+    "#{$resolver.std_path}/inst/Zimop/mop.rr.N.layout",
+    __FILE__
+  ] do |t|
+    FileUtils.rm_f(t.name)
+    erb = ERB.new(File.read($resolver.std_path / "inst/Zimop/mop.rr.N.layout"), trim_mode: "-")
+    erb.filename = "#{$resolver.std_path}/inst/Zimop/mop.rr.N.layout"
+    File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+    File.chmod(0444, t.name)
+  end
+end
+
+# C.MOP instruction generation from layout (c.mop.1, c.mop.3, c.mop.5, c.mop.7, c.mop.9, c.mop.11, c.mop.13, c.mop.15)
+[1, 3, 5, 7, 9, 11, 13, 15].each do |n|
+  file "#{$resolver.std_path}/inst/Zcmop/c.mop.#{n}.yaml" => [
+    "#{$resolver.std_path}/inst/Zcmop/c.mop.N.layout",
+    __FILE__
+  ] do |t|
+    FileUtils.rm_f(t.name)
+    erb = ERB.new(File.read($resolver.std_path / "inst/Zcmop/c.mop.N.layout"), trim_mode: "-")
+    erb.filename = "#{$resolver.std_path}/inst/Zcmop/c.mop.N.layout"
+    File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+    File.chmod(0444, t.name)
+  end
+end
+
 namespace :gen do
   desc "Generate architecture files from layouts"
   task :arch do
@@ -481,6 +523,21 @@ namespace :gen do
 
         Rake::Task["#{$resolver.std_path}/inst/#{extension_dir}/amocas.#{size}#{suffix}.yaml"].invoke
       end
+    end
+
+    # Generate MOP.R instruction files (mop.r.0 through mop.r.31)
+    (0..31).each do |n|
+      Rake::Task["#{$resolver.std_path}/inst/Zimop/mop.r.#{n}.yaml"].invoke
+    end
+
+    # Generate MOP.RR instruction files (mop.rr.0 through mop.rr.7)
+    (0..7).each do |n|
+      Rake::Task["#{$resolver.std_path}/inst/Zimop/mop.rr.#{n}.yaml"].invoke
+    end
+
+    # Generate C.MOP instruction files (c.mop.1, c.mop.3, c.mop.5, c.mop.7, c.mop.9, c.mop.11, c.mop.13, c.mop.15)
+    [1, 3, 5, 7, 9, 11, 13, 15].each do |n|
+      Rake::Task["#{$resolver.std_path}/inst/Zcmop/c.mop.#{n}.yaml"].invoke
     end
   end
 

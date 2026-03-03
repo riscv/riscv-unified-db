@@ -93,7 +93,7 @@ if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; t
             echo "Successfully pulled image from registry."
         else
             echo "Could not pull image from registry. Building locally..."
-            build_container
+            build_container "${ROOT}"
         fi
     fi
     if [ "${CONTAINER_TYPE}" == "podman" ]; then
@@ -194,12 +194,13 @@ setup_z3() {
 
   local xdg_cache
   if [ "$CONTAINER_TYPE" == "native" ]; then
-    xdg_cache="${XDG_CACHE_HOME:-${H}/.cache}"
+    xdg_cache="${XDG_CACHE_HOME:-${HOME}/.cache}"
   else
     xdg_cache="${ROOT}/.docker-home/.cache"
   fi
   local dest_dir="${xdg_cache}/udb/z3/${z3_version}/${cpu}"
   local dest_file="${dest_dir}/libz3.so"
+  local checksum_file="${dest_dir}/libz3.checksum"
 
   if [ -f "${dest_file}" ]; then
     return 0
@@ -209,6 +210,24 @@ setup_z3() {
   echo "Downloading Z3 (${z3_version}, ${cpu}) from GitHub Releases..."
   mkdir -p "${dest_dir}"
   curl -o "${dest_file}" -L https://github.com/riscv/riscv-unified-db/releases/download/"${z3_version}"/libz3-${cpu}.so
+  curl -o "${checksum_file}" -L https://github.com/riscv/riscv-unified-db/releases/download/"${z3_version}"/libz3-${cpu}.checksum
+
+  echo "  Verifying checksum..."
+  $RUN ruby -e "
+    require 'digest'
+    checksum_content = File.read('${checksum_file}').strip
+    expected = checksum_content.split(':')[1]
+    actual = Digest::SHA256.file('${dest_file}').hexdigest
+    if expected != actual
+      puts 'ERROR: Checksum verification failed for libz3!'
+      puts \"  Expected: #{expected}\"
+      puts \"  Got:      #{actual}\"
+      puts '  The downloaded file may be corrupted or tampered with.'
+      exit 1
+    end
+    puts '  Checksum verified successfully.'
+  " || exit 1
+
   echo "  Saved to ${dest_file}"
 }
 

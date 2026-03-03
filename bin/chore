@@ -12,9 +12,58 @@ help() {
   echo ""
   echo "Commands:"
   echo ""
-  echo "  gen:     Generate an artifact  ('chore gen -h' for more)"
-  echo "  install: Install new libraries ('chore install -h' for more)"
-  echo "  update:  Update libraries      ('chore update -h' for more)"
+  echo "  container: Container operations     ('chore container -h' for more)"
+  echo "  gen:       Generate an artifact     ('chore gen -h' for more)"
+  echo "  install:   Install new libraries    ('chore install -h' for more)"
+  echo "  update:    Update libraries         ('chore update -h' for more)"
+  echo ""
+}
+
+container_subcmd_usage() {
+  echo "Usage: chore container [-h] COMMAND"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo ""
+  echo "Commands:"
+  echo ""
+  echo "  build:      Build the container image ('chore container build -h' for more)"
+  echo "  pull:       Pull the container image from registry ('chore container pull -h' for more)"
+  echo "  remove|rm:  Remove the container image ('chore container remove -h' for more)"
+  echo ""
+}
+
+container_build_usage() {
+  echo "Usage: chore container build [-hf]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -f:      Force rebuild even if container already exists"
+  echo ""
+}
+
+container_pull_usage() {
+  echo "Usage: chore container pull [-hf]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -f:      Force pull even if container already exists locally"
+  echo ""
+}
+
+container_remove_usage() {
+  echo "Usage: chore container remove|rm [-h]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
   echo ""
 }
 
@@ -58,6 +107,18 @@ update_subcmd_usage() {
   echo ""
   echo "  gems:          Update Ruby Gems and regenerate type definitions"
   echo "  z3:            Update the z3 shared library used by the udb gem"
+  echo "                 ('chore update z3 -h' for more)"
+  echo ""
+}
+
+update_z3_usage() {
+  echo "Usage: chore update z3 [-hn]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -n:      Build only for native/host platform (for use in CI matrix builds)"
   echo ""
 }
 
@@ -98,13 +159,18 @@ install_gems_usage() {
   echo ""
 }
 
-source_setup() {
-  if [ -z "$SETUP_SOURCED" ]; then
-    export SETUP_SOURCED=1
-    source "$UDB_ROOT"/bin/setup
-  fi
-}
+# Source helper functions and modular subcommand files
+# shellcheck source=.chore/helpers.sh
+source "${UDB_ROOT}/bin/.chore/helpers.sh"
+# shellcheck source=.chore/container.sh
+source "${UDB_ROOT}/bin/.chore/container.sh"
+# shellcheck source=.chore/update.sh
+source "${UDB_ROOT}/bin/.chore/update.sh"
 
+#
+# Generate .github/workflows/regress.yml
+# Returns: 0 on success, 1 if file changed (when fail_on_change=1)
+#
 do_gen_regress() {
   source_setup
   echo "Generating .github/workflows/regress.yml"
@@ -124,24 +190,19 @@ do_gen_regress() {
   fi
 }
 
+#
+# Generate all development artifacts
+#
 do_gen_all() {
   do_gen_regress
   do_ruby_type_def all
 }
 
-increment_minor_version() {
-  local version=$1
-  # Set Internal Field Separator to '.'
-  IFS='.' read -r major minor <<<"$version"
-
-  # Increment the minor version number using arithmetic expansion
-  ((minor++))
-
-  # Re-assemble the version string
-  local new_version="${major}.${minor}"
-  echo "$new_version"
-}
-
+#
+# Install new Ruby gems and optionally update container tag
+# Args: $1 - update_tag ("yes" to increment container tag, "no" otherwise)
+# Returns: 0 on success, exits with 1 on error
+#
 do_install_gems() {
   local update_tag=$1
   source "$UDB_ROOT"/bin/setup
@@ -164,7 +225,7 @@ do_install_gems() {
     do_ruby_type_def udb
     do_ruby_type_def udb-gen
   else
-    build_container
+    build_container "${UDB_ROOT}"
 
     # need to run as a seperate process to pick up the new container
     # since we bumped the container tag, this will also cause the container to rebuild
@@ -172,163 +233,11 @@ do_install_gems() {
   fi
 }
 
-do_update_gems() {
-  local update_tag=$1
-  source "$UDB_ROOT"/bin/setup
-
-  # first, update Gemfile.lock files
-  # and sorbet definitions
-  rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-
-  # increment container-tag
-  if [ "$update_tag" == "yes" ]; then
-    new_version=$(increment_minor_version "$(cat bin/.container-tag)")
-    echo "$new_version" > bin/.container-tag
-  fi
-
-  if [ "$CONTAINER_TYPE" == "native" ]; then
-    bundle exec bundle install
-    do_ruby_type_def idlc
-    do_ruby_type_def udb
-    do_ruby_type_def udb-gen
-  else
-    # rebuild the container
-    build_container
-
-    # need to run as a seperate process to pick up the new container
-    # since we bumped the container tag, this will also cause the container to rebuild
-    ./bin/chore gen ruby-type-def
-  fi
-}
-
-do_update_z3() {
-  # Requires: docker (for build_z3_with_docker.sh) and gh (GitHub CLI, authenticated)
-  if ! command -v gh &>/dev/null; then
-    echo "ERROR: 'gh' CLI is required for 'chore update z3'. Install from https://cli.github.com" >&2
-    exit 1
-  fi
-
-  # Read the version currently tracked in z3_version.rb
-  local z3_version_rb="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/z3_version.rb"
-  local current_version
-  current_version=$(ruby -e "load '${z3_version_rb}'; puts Udb::Z3_VERSION" 2>/dev/null) || {
-    echo "ERROR: Could not read current Z3 version from ${z3_version_rb}" >&2
-    exit 1
-  }
-  echo "==> Current Z3 version in z3_version.rb: ${current_version}"
-
-  # Query the latest Z3 release tag from upstream (Z3Prover/z3)
-  local latest_version
-  latest_version=$(gh release list --repo Z3Prover/z3 --limit 50 --json tagName \
-    --jq '[.[] | select(.tagName | test("^z3-[0-9]+\\.[0-9]+\\.[0-9]+$"))] | .[0].tagName' 2>/dev/null) || {
-    echo "ERROR: Could not query latest Z3 release from Z3Prover/z3. Check gh authentication." >&2
-    exit 1
-  }
-  echo "==> Latest upstream Z3 release: ${latest_version}"
-
-  # Compare versions: strip "z3-" prefix and use sort -V to determine which is newer
-  local current_ver="${current_version#z3-}"
-  local latest_ver="${latest_version#z3-}"
-  local newest
-  newest=$(printf '%s\n%s\n' "${current_ver}" "${latest_ver}" | sort -V | tail -1)
-
-  # Determine the target version to build/release
-  local target_version
-  if [ "${latest_ver}" = "${current_ver}" ]; then
-    echo "==> Z3 is already up to date (${current_version})."
-    target_version="${current_version}"
-  elif [ "${newest}" != "${latest_ver}" ]; then
-    echo "==> Current version (${current_version}) is already newer than upstream (${latest_version})."
-    target_version="${current_version}"
-  else
-    echo "==> New Z3 version available: ${latest_version} (current: ${current_version})."
-    target_version="${latest_version}"
-  fi
-
-  # Always check if the GitHub Release exists before building
-  echo "==> Checking for existing GitHub Release ${target_version} on riscv/riscv-unified-db..."
-  if gh release view "${target_version}" --repo riscv/riscv-unified-db &>/dev/null; then
-    echo "==> GitHub Release ${target_version} already exists. Nothing to do."
-    return 0
-  fi
-
-  echo "==> Building Z3 ${target_version}..."
-
-  local orig_dir="${PWD}"
-  local work_dir
-  work_dir=$(mktemp -d --tmpdir="$PWD" build-z3.XXXXXX)
-
-  local z3_version
-  if [ "${target_version}" != "${current_version}" ]; then
-    # New upstream version: build from source
-    echo "==> Building Z3 for x64..."
-    "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-x64" Release x64 || exit 1
-
-    echo "==> Building Z3 for arm64..."
-    "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-arm64" Release arm64 || exit 1
-
-    # Read the version produced by the build
-    z3_version=$(cat "${work_dir}/z3-x64/VERSION")
-    echo "==> Built Z3 version: ${z3_version}"
-
-    # Rename the .so files to the asset names expected by extconf.rb / setup_z3
-    cp "${work_dir}/z3-x64/lib/libz3.so"   "${work_dir}/libz3-x64.so"
-    cp "${work_dir}/z3-arm64/lib/libz3.so" "${work_dir}/libz3-arm64.so"
-  else
-    # Version unchanged: use the already-installed libraries from the XDG cache
-    z3_version="${current_version}"
-    local xdg_cache="${XDG_CACHE_HOME:-${HOME}/.cache}"
-    local cache_x64="${xdg_cache}/udb/z3/${current_version}/x64/libz3.so"
-    local cache_arm64="${xdg_cache}/udb/z3/${current_version}/arm64/libz3.so"
-    if [ ! -f "${cache_x64}" ] || [ ! -f "${cache_arm64}" ]; then
-      echo "ERROR: Cached Z3 libraries not found. Run 'bin/setup' first to download them." >&2
-      echo "  Expected: ${cache_x64}" >&2
-      echo "  Expected: ${cache_arm64}" >&2
-      exit 1
-    fi
-    cp "${cache_x64}"   "${work_dir}/libz3-x64.so"
-    cp "${cache_arm64}" "${work_dir}/libz3-arm64.so"
-    echo "==> Using cached Z3 libraries for ${z3_version}"
-  fi
-
-  # Create the GitHub Release and upload assets
-  local release_tag="${z3_version}"
-  echo "==> Creating GitHub Release ${release_tag}..."
-  gh release create "${release_tag}" \
-    --repo riscv/riscv-unified-db \
-    --title "Z3 binaries ${z3_version}" \
-    --notes "Pre-built Z3 shared libraries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
-    "${work_dir}/libz3-x64.so" \
-    "${work_dir}/libz3-arm64.so"
-
-  if [ "${target_version}" != "${current_version}" ]; then
-    # Update z3_version.rb so the gem knows which release to download
-    # z3_version_rb already declared above
-    echo -n "${z3_version}" > "${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/Z3_VERSION"
-    echo "==> Updated ${z3_version_rb}"
-  fi
-
-  cd "${orig_dir}" || exit 1
-  rm -rf "${work_dir}"
-
-  echo ""
-  if [ "${target_version}" != "${current_version}" ]; then
-    echo "Done. Next steps:"
-    echo "  1. git add tools/ruby-gems/udb/lib/udb/z3_version.rb"
-    echo "  2. git commit -m 'chore: update Z3 to ${z3_version}'"
-    echo "  3. Open a PR"
-  else
-    echo "Done. GitHub Release ${z3_version} created on riscv/riscv-unified-db."
-  fi
-}
-
+#
+# Generate Ruby type definitions (Sorbet RBI files)
+# Args: $1 - gem name ("all", "udb", "idlc", or "udb-gen")
+# Returns: 0 on success, exits with 1 on error
+#
 do_ruby_type_def() {
   gem=$1
 
@@ -386,6 +295,91 @@ shift $((OPTIND-1))
 subcommand=$1; shift # Get subcommand and shift to next option
 
 case "$subcommand" in
+  container )
+    while getopts ":h" opt; do
+      case $opt in
+        # help
+        h )
+          container_subcmd_usage
+          exit 0
+        ;;
+        ? )
+          echo "[ERROR]: Invalid option: -${OPTARG}"
+          container_subcmd_usage
+          exit 1 # Exit with error
+        ;;
+      esac
+    done
+    target="$1"; shift
+    case "$target" in
+      build )
+        force=no
+        while getopts ":hf" opt; do
+          case $opt in
+            # help
+            h )
+              container_build_usage
+              exit 0
+            ;;
+            f )
+              force=yes
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              container_build_usage
+              exit 1 # Exit with error
+            ;;
+          esac
+        done
+        do_container_build "$force"
+        exit 0
+      ;;
+      pull )
+        force=no
+        while getopts ":hf" opt; do
+          case $opt in
+            # help
+            h )
+              container_pull_usage
+              exit 0
+            ;;
+            f )
+              force=yes
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              container_pull_usage
+              exit 1 # Exit with error
+            ;;
+          esac
+        done
+        do_container_pull "$force"
+        exit 0
+      ;;
+      remove|rm )
+        while getopts ":h" opt; do
+          case $opt in
+            # help
+            h )
+              container_remove_usage
+              exit 0
+            ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              container_remove_usage
+              exit 1 # Exit with error
+            ;;
+          esac
+        done
+        do_container_remove
+        exit 0
+      ;;
+      * )
+        echo "Invalid target: $target"
+        container_subcmd_usage
+        exit 1
+    esac
+    ;;
   gen )
     fail_on_change=0
     while getopts ":hf" opt; do # Go through the options
@@ -543,7 +537,24 @@ case "$subcommand" in
         exit 0
       ;;
       z3 )
-        do_update_z3
+        native_only=no
+        while getopts ":hn" opt; do
+          case $opt in
+            h )
+              update_z3_usage
+              exit 0
+              ;;
+            n )
+              native_only=yes
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              update_z3_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_update_z3 "$native_only"
         exit 0
         ;;
       * )
@@ -556,7 +567,7 @@ case "$subcommand" in
     if [ ! -z "$subcommand" ]; then  # Don't show if no subcommand provided
       echo "Invalid subcommand: $subcommand"
     fi
-    usage
+    help
     exit 1 # Exit with error
   ;;
 esac

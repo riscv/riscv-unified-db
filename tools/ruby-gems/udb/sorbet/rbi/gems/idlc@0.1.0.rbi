@@ -1811,44 +1811,44 @@ class Idl::CommentSyntaxNode < ::Idl::SyntaxNode
   def to_ast; end
 end
 
-# source://idlc//lib/idlc.rb#63
+# source://idlc//lib/idlc.rb#51
 class Idl::Compiler
-  # source://idlc//lib/idlc.rb#68
+  # source://idlc//lib/idlc.rb#56
   def initialize; end
 
-  # source://idlc//lib/idlc.rb#376
+  # source://idlc//lib/idlc.rb#377
   sig { params(body: ::String, symtab: ::Idl::SymbolTable, pass_error: T::Boolean).returns(::Idl::ConstraintBodyAst) }
   def compile_constraint(body, symtab, pass_error: T.unsafe(nil)); end
 
-  # source://idlc//lib/idlc.rb#332
+  # source://idlc//lib/idlc.rb#333
   def compile_expression(expression, symtab, pass_error: T.unsafe(nil)); end
 
-  # source://idlc//lib/idlc.rb#84
+  # source://idlc//lib/idlc.rb#71
   def compile_file(path, source_mapper = T.unsafe(nil)); end
 
-  # source://idlc//lib/idlc.rb#151
+  # source://idlc//lib/idlc.rb#152
   sig { params(loop: ::String, symtab: ::Idl::SymbolTable, pass_error: T::Boolean).returns(::Idl::ForLoopAst) }
   def compile_for_loop(loop, symtab, pass_error: T.unsafe(nil)); end
 
-  # source://idlc//lib/idlc.rb#204
+  # source://idlc//lib/idlc.rb#205
   def compile_func_body(body, return_type: T.unsafe(nil), symtab: T.unsafe(nil), name: T.unsafe(nil), input_file: T.unsafe(nil), input_line: T.unsafe(nil), no_rescue: T.unsafe(nil), extra_syms: T.unsafe(nil), type_check: T.unsafe(nil)); end
 
-  # source://idlc//lib/idlc.rb#293
+  # source://idlc//lib/idlc.rb#294
   def compile_inst_operation(inst, symtab:, input_file: T.unsafe(nil), input_line: T.unsafe(nil)); end
 
-  # source://idlc//lib/idlc.rb#266
+  # source://idlc//lib/idlc.rb#267
   def compile_inst_scope(idl, symtab:, input_file:, input_line: T.unsafe(nil)); end
 
-  # source://idlc//lib/idlc.rb#66
+  # source://idlc//lib/idlc.rb#54
   def parser; end
 
-  # source://idlc//lib/idlc.rb#73
+  # source://idlc//lib/idlc.rb#61
   def pb=(pb); end
 
-  # source://idlc//lib/idlc.rb#304
+  # source://idlc//lib/idlc.rb#305
   def type_check(ast, symtab, what); end
 
-  # source://idlc//lib/idlc.rb#79
+  # source://idlc//lib/idlc.rb#66
   def unset_pb; end
 
   class << self
@@ -2126,83 +2126,83 @@ class Idl::ConstraintBodySyntaxNode < ::Idl::SyntaxNode
   def to_ast; end
 end
 
-# source://idlc//lib/idlc/interfaces.rb#119
+# source://idlc//lib/idlc/interfaces.rb#110
 module Idl::Csr
   interface!
 
-  # source://idlc//lib/idlc/interfaces.rb#134
+  # source://idlc//lib/idlc/interfaces.rb#125
   sig { abstract.returns(T::Boolean) }
   def dynamic_length?; end
 
-  # source://idlc//lib/idlc/interfaces.rb#137
+  # source://idlc//lib/idlc/interfaces.rb#128
   sig { abstract.returns(T::Array[::Idl::CsrField]) }
   def fields; end
 
-  # source://idlc//lib/idlc/interfaces.rb#128
+  # source://idlc//lib/idlc/interfaces.rb#119
   sig { abstract.params(base: T.nilable(::Integer)).returns(T.nilable(::Integer)) }
   def length(base); end
 
-  # source://idlc//lib/idlc/interfaces.rb#131
+  # source://idlc//lib/idlc/interfaces.rb#122
   sig { abstract.returns(::Integer) }
   def max_length; end
 
-  # source://idlc//lib/idlc/interfaces.rb#125
+  # source://idlc//lib/idlc/interfaces.rb#116
   sig { abstract.returns(::String) }
   def name; end
 
-  # source://idlc//lib/idlc/interfaces.rb#142
+  # source://idlc//lib/idlc/interfaces.rb#133
   sig { abstract.returns(T.nilable(::Integer)) }
   def value; end
 end
 
-# source://idlc//lib/idlc/interfaces.rb#73
+# source://idlc//lib/idlc/interfaces.rb#64
 module Idl::CsrField
   interface!
 
-  # source://idlc//lib/idlc/interfaces.rb#97
+  # source://idlc//lib/idlc/interfaces.rb#88
   sig { abstract.returns(T::Boolean) }
   def base32_only?; end
 
-  # source://idlc//lib/idlc/interfaces.rb#93
+  # source://idlc//lib/idlc/interfaces.rb#84
   sig { abstract.returns(T::Boolean) }
   def base64_only?; end
 
-  # source://idlc//lib/idlc/interfaces.rb#83
+  # source://idlc//lib/idlc/interfaces.rb#74
   sig { abstract.returns(T::Boolean) }
   def defined_in_all_bases?; end
 
-  # source://idlc//lib/idlc/interfaces.rb#86
+  # source://idlc//lib/idlc/interfaces.rb#77
   sig { abstract.returns(T::Boolean) }
   def defined_in_base32?; end
 
-  # source://idlc//lib/idlc/interfaces.rb#89
+  # source://idlc//lib/idlc/interfaces.rb#80
   sig { abstract.returns(T::Boolean) }
   def defined_in_base64?; end
 
-  # source://idlc//lib/idlc/interfaces.rb#113
+  # source://idlc//lib/idlc/interfaces.rb#104
   sig { abstract.returns(T::Boolean) }
   def exists?; end
 
-  # source://idlc//lib/idlc/interfaces.rb#102
+  # source://idlc//lib/idlc/interfaces.rb#93
   sig { abstract.params(base: T.nilable(::Integer)).returns(T::Range[::Integer]) }
   def location(base); end
 
-  # source://idlc//lib/idlc/interfaces.rb#79
+  # source://idlc//lib/idlc/interfaces.rb#70
   sig { abstract.returns(::String) }
   def name; end
 
-  # source://idlc//lib/idlc/interfaces.rb#116
+  # source://idlc//lib/idlc/interfaces.rb#107
   sig do
     abstract
       .returns(T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean, T::Hash[::String, T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean)]))
   end
   def reset_value; end
 
-  # source://idlc//lib/idlc/interfaces.rb#108
+  # source://idlc//lib/idlc/interfaces.rb#99
   sig { abstract.params(base: T.nilable(::Integer)).returns(T.nilable(::String)) }
   def type(base); end
 
-  # source://idlc//lib/idlc/interfaces.rb#105
+  # source://idlc//lib/idlc/interfaces.rb#96
   sig { abstract.params(base: T.nilable(::Integer)).returns(::Integer) }
   def width(base); end
 end
@@ -6040,7 +6040,7 @@ module Idl::RuntimeParam
   sig { abstract.returns(::String) }
   def description; end
 
-  # source://idlc//lib/idlc/interfaces.rb#48
+  # source://idlc//lib/idlc/interfaces.rb#39
   sig { abstract.returns(::Idl::Type) }
   def idl_type; end
 
@@ -6048,18 +6048,18 @@ module Idl::RuntimeParam
   sig { abstract.returns(::String) }
   def name; end
 
-  # source://idlc//lib/idlc/interfaces.rb#33
+  # source://idlc//lib/idlc/interfaces.rb#30
   sig { abstract.returns(::Idl::Schema) }
   def schema; end
 
-  # source://idlc//lib/idlc/interfaces.rb#45
+  # source://idlc//lib/idlc/interfaces.rb#36
   sig do
     abstract
       .returns(T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean))
   end
   def value; end
 
-  # source://idlc//lib/idlc/interfaces.rb#42
+  # source://idlc//lib/idlc/interfaces.rb#33
   sig { abstract.returns(T::Boolean) }
   def value_known?; end
 end
@@ -6108,27 +6108,27 @@ end
 # source://idlc//lib/idlc/ast.rb#817
 Idl::RvalueAst = T.type_alias { T.all(::Idl::AstNode, ::Idl::Rvalue) }
 
-# source://idlc//lib/idlc/interfaces.rb#52
+# source://idlc//lib/idlc/interfaces.rb#43
 module Idl::Schema
   interface!
 
-  # source://idlc//lib/idlc/interfaces.rb#61
+  # source://idlc//lib/idlc/interfaces.rb#52
   sig { abstract.returns(::Integer) }
   def max_val; end
 
-  # source://idlc//lib/idlc/interfaces.rb#58
+  # source://idlc//lib/idlc/interfaces.rb#49
   sig { abstract.returns(T::Boolean) }
   def max_val_known?; end
 
-  # source://idlc//lib/idlc/interfaces.rb#67
+  # source://idlc//lib/idlc/interfaces.rb#58
   sig { abstract.returns(::Integer) }
   def min_val; end
 
-  # source://idlc//lib/idlc/interfaces.rb#64
+  # source://idlc//lib/idlc/interfaces.rb#55
   sig { abstract.returns(T::Boolean) }
   def min_val_known?; end
 
-  # source://idlc//lib/idlc/interfaces.rb#70
+  # source://idlc//lib/idlc/interfaces.rb#61
   sig { abstract.returns(::Idl::Type) }
   def to_idl_type; end
 end
@@ -7706,21 +7706,15 @@ class IdlParser < ::Treetop::Runtime::CompiledParser
   # source://idlc//lib/idlc.rb#14
   def input_file; end
 
-  # source://idlc//lib/idlc.rb#35
+  # source://idlc//lib/idlc.rb#25
   def instantiate_node(node_type, *args); end
 
   # source://idlc//lib/idlc.rb#16
   def set_input_file(filename, starting_line = T.unsafe(nil)); end
 
-  # source://idlc//lib/idlc.rb#21
-  def set_pb(pb); end
-
-  # source://idlc//lib/idlc.rb#27
-  def unset_pb; end
-
   protected
 
-  # source://idlc//lib/idlc.rb#32
+  # source://idlc//lib/idlc.rb#22
   def idlc_instantiate_node(node_type, *args); end
 end
 

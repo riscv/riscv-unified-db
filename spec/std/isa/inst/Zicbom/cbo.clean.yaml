@@ -54,7 +54,7 @@ access:
   vs: sometimes
   vu: sometimes
 access_detail: |
-  Access is controlled through `menvcfg.CBZE`, `senvcfg.CBZE`, and `henvcfg.CBZE`.
+  Access is controlled through `menvcfg.CBCFE`, `senvcfg.CBCFE`, and `henvcfg.CBCFE`.
   When access is denied, the instruction either raises an `Illegal Instruction`
   or `Virtual Instruction` exception according to the table below.
 

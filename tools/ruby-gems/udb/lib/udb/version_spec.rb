@@ -276,8 +276,14 @@ module Udb
           v_spec != @version_spec
         when :"~>"
           if ext.is_a?(Extension)
-            matching_ver = ext.versions.find { |v| v.version_spec == v_spec }
-            raise "Can't find version?" if matching_ver.nil?
+            matching_ver = ext.versions.find { |v| v.version_spec == @version_spec }
+            if matching_ver.nil?
+              # no exact match, just take the smallest that is >
+              matching_ver = ext.versions.find { |v| v.version_spec > @version_spec }
+              if matching_ver.nil?
+                return false
+              end
+            end
 
             matching_ver.compatible?(ext.arch.extension_version(ext.name, v_spec.to_s))
           else

@@ -422,17 +422,51 @@ module Udb
         "__instruction_encoding_size",
         Idl::Var.new("__instruction_encoding_size", Idl::Type.new(:bits, width: encoding_width.bit_length), encoding_width)
       )
-      symtab.add(
-        "__effective_xlen",
-        Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 7), effective_xlen)
-      )
-      encoding(effective_xlen).decode_variables.each do |d|
-        qualifiers = [:const]
-        qualifiers << :signed if d.sext?
-        width = d.size
+      if effective_xlen.nil?
+        if defined_in_base?(32)
+          encoding(32).decode_variables.each do |d|
+            qualifiers = [:const]
+            qualifiers << :signed if d.sext?
+            width = d.size
 
-        var = Idl::Var.new(d.name, Idl::Type.new(:bits, qualifiers:, width:), decode_var: true)
-        symtab.add(d.name, var)
+            var = Idl::Var.new(d.name, Idl::Type.new(:bits, qualifiers:, width:), decode_var: true)
+            symtab.add(d.name, var)
+          end
+        end
+        if defined_in_base?(64)
+          encoding(64).decode_variables.each do |d|
+            qualifiers = [:const]
+            qualifiers << :signed if d.sext?
+            width = d.size
+
+            existing = symtab.get(d.name)
+            if existing.nil?
+              var = Idl::Var.new(d.name, Idl::Type.new(:bits, qualifiers:, width:), decode_var: true)
+              symtab.add(d.name, var)
+            else
+              raise "An operand appears to be shadowing a global" if existing.type.kind != :bits
+              # use the biggest
+              if width > existing.type.width
+                var = Idl::Var.new(d.name, Idl::Type.new(:bits, qualifiers:, width:), decode_var: true)
+                symtab.add(d.name, var)
+              end
+            end
+          end
+        end
+
+      else
+        symtab.add(
+          "__effective_xlen",
+          Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 7), effective_xlen)
+        )
+        encoding(effective_xlen).decode_variables.each do |d|
+          qualifiers = [:const]
+          qualifiers << :signed if d.sext?
+          width = d.size
+
+          var = Idl::Var.new(d.name, Idl::Type.new(:bits, qualifiers:, width:), decode_var: true)
+          symtab.add(d.name, var)
+        end
       end
 
       symtab

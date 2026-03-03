@@ -48,7 +48,7 @@ class TestAstType < Minitest::Test
       ast.type(symtab)
     end
     assert_raises Idl::AstNode::TypeError do
-      ast.freeze_tree(symtab)
+      ast.enum_def_type(symtab)
     end
 
   end
@@ -63,6 +63,34 @@ class TestAstType < Minitest::Test
     ast = m.to_ast
     refute_nil ast
     assert_equal Idl::Type.new(:bits, width: 1), ast.type(symtab)
+  end
+
+  def test_bits_cast_dynamic_csr_has_max_width
+    mock_csr_class = Class.new do
+      include Idl::Csr
+      def name = "mockcsr_dyn"
+      def max_length = 64
+      def length(_) = 32
+      def dynamic_length? = true
+      def value = nil
+      def fields = []
+    end
+
+    symtab = Idl::SymbolTable.new(
+      csrs: [mock_csr_class.new],
+      possible_xlens_cb: proc { [32, 64] }
+    )
+
+    idl = "$bits(CSR[mockcsr_dyn])"
+    m = @compiler.parser.parse(idl, root: :bits_cast)
+    refute_nil m
+    ast = m.to_ast
+    refute_nil ast
+
+    t = ast.type(symtab)
+    assert_equal :bits, t.kind
+    assert_equal :unknown, t.width
+    assert_equal 64, t.max_width
   end
 
   def test_csr_field_assignment

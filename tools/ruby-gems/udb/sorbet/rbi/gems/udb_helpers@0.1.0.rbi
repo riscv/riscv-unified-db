@@ -5,14 +5,18 @@
 # Please instead update this file by running `bin/tapioca gem udb_helpers`.
 
 
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#13
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#14
 class String
   include ::Comparable
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#19
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#20
   def sanitize; end
 end
 
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#23
+module Udb; end
+
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#24
 module Udb::Helpers
   class << self
     # source://udb_helpers//lib/udb_helpers/version.rb#9
@@ -20,94 +24,106 @@ module Udb::Helpers
   end
 end
 
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#324
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#368
 module Udb::Helpers::AntoraUtils
   class << self
-    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#346
+    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#389
     def resolve_links(path_or_str); end
   end
 end
 
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#255
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#292
 module Udb::Helpers::AsciidocUtils
   class << self
-    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#267
+    # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#303
     def resolve_links(path_or_str); end
   end
 end
 
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#93
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#100
 module Udb::Helpers::TemplateHelpers
   include ::Udb::Helpers::WavedromUtil
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#233
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#266
   def anchor_for_non_isa_spec(name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#226
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#259
   def anchor_for_udb_doc_cov_pt(org, id); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#205
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#225
   def anchor_for_udb_doc_csr(name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#212
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#232
   def anchor_for_udb_doc_csr_field(csr_name, field_name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#185
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#205
   def anchor_for_udb_doc_ext(ext_name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#192
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#212
   def anchor_for_udb_doc_ext_param(ext_name, param_name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#218
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#251
   def anchor_for_udb_doc_idl_func(name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#199
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#219
   def anchor_for_udb_doc_inst(name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#240
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#238
+  def anchor_for_udb_doc_mmr(name); end
+
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#245
+  def anchor_for_udb_doc_mmr_field(mmr_name, field_name); end
+
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#273
   def anchor_inside_idl_inst_code(inst_name, id); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#174
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#194
   def link_into_idl_inst_code(inst_name, id); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#166
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#186
   def link_to_udb_doc_cov_pt(org, id); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#146
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#153
   def link_to_udb_doc_csr(csr_name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#153
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#160
   def link_to_udb_doc_csr_field(csr_name, field_name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#125
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#132
   def link_to_udb_doc_ext(ext_name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#133
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#140
   def link_to_udb_doc_ext_param(ext_name, param_name, link_text); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#159
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#179
   def link_to_udb_doc_idl_func(func_name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#140
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#147
   def link_to_udb_doc_inst(inst_name); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#99
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#166
+  def link_to_udb_doc_mmr(mmr_name); end
+
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#173
+  def link_to_udb_doc_mmr_field(mmr_name, field_name); end
+
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#106
   def partial(template_pname, inputs = T.unsafe(nil)); end
 
   private
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#246
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#279
   def check_no_periods(s); end
 end
 
-# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#22
+# source://udb_helpers//lib/udb_helpers/backend_helpers.rb#25
 module Udb::Helpers::WavedromUtil
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#23
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#26
   def fix_entities(text); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#31
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#34
   def json_dump_with_hex_literals(data); end
 
-  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#43
+  # source://udb_helpers//lib/udb_helpers/backend_helpers.rb#46
   def process_wavedrom(json_data); end
 end
