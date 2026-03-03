@@ -5,7 +5,7 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: sc.d
+name: sc.d.aq
 long_name: Store conditional doubleword
 description: |
   `sc.d` conditionally writes a doubleword in _xs2_ to the address in _xs1_:
@@ -112,7 +112,7 @@ encoding:
   variables:
     - name: aq
       location: 26
-      not: 1
+      not: 0
     - name: rl
       location: 25
       not: 1
