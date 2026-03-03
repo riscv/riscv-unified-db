@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # Build must (mustool) from source using Docker and AlmaLinux 8.
-# Produces a statically-linked binary for maximum portability (glibc 2.28+).
+# Produces a statically-linked binary for maximum portability (musl 1.2.5).
 #
 # Usage: build_must_with_docker.sh [output_dir] [architecture]
 #   output_dir   - where to place the binary (default: ./must-build)
@@ -57,19 +57,22 @@ build_must_with_docker() {
 FROM almalinux:8
 
 RUN dnf install -y \
-    gcc-toolset-14 \
+    gcc-toolset-12 \
     make \
     git \
-    zlib-static \
-    glibc-static \
-    libstdc++-static \
+    zlib-devel \
     && dnf clean all
 
-ENV PATH=/opt/rh/gcc-toolset-14/root/usr/bin:$PATH \
-    LD_LIBRARY_PATH=/opt/rh/gcc-toolset-14/root/usr/lib64:$LD_LIBRARY_PATH
+ENV PATH=/opt/rh/gcc-toolset-12/root/usr/bin:$PATH \
+    LD_LIBRARY_PATH=/opt/rh/gcc-toolset-12/root/usr/lib64
 
 ARG MUST_COMMIT
 WORKDIR /build
+
+RUN curl -L -o musl-1.2.5.tar.gz https://musl.libc.org/releases/musl-1.2.5.tar.gz \
+  && tar -xf musl-1.2.5.tar.gz \
+  && cd musl-1.2.5 \
+  && ./configure && make && make install
 
 RUN git clone https://github.com/jar-ben/mustool.git must && \
     cd must && \
@@ -82,7 +85,7 @@ RUN sed -i -e 's/#include <signal.h>/#include <signal.h>\n#include <cstdio>/' \
     mcsmus/mcsmus/control.cc
 
 # Build; link statically where possible
-RUN make -j$(nproc) LDFLAGS="-static" && \
+RUN make -j$(nproc) CC="/usr/local/musl/bin/musl-gcc" LDFLAGS="-static" && \
     strip must
 
 RUN touch /build/BUILD_SUCCESS
