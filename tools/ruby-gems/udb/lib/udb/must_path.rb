@@ -76,7 +76,7 @@ module Udb
         http.open_timeout = 30
         http.read_timeout = 120
 
-        request = Net::HTTP::Get.new(uri.request_uri)
+        request = Net::HTTP::Get.new(T.cast(uri, T.any(URI::HTTP, URI::HTTPS)).request_uri)
         request["User-Agent"] = "udb-gem/must-installer"
 
         response = http.request(request)
