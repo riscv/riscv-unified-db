@@ -282,19 +282,19 @@ module Udb
     end
     def create_top_level_progressbar(fmt: T.unsafe(nil), level: T.unsafe(nil), clear: T.unsafe(nil)); end
 
-    # source://udb//../../udb/lib/udb/resolver.rb#60
+    # source://udb//../../udb/lib/udb/resolver.rb#61
     sig { returns(::Pathname) }
     def default_cfgs_path; end
 
-    # source://udb//../../udb/lib/udb/resolver.rb#50
+    # source://udb//../../udb/lib/udb/resolver.rb#51
     sig { returns(::Pathname) }
     def default_custom_isa_path; end
 
-    # source://udb//../../udb/lib/udb/resolver.rb#55
+    # source://udb//../../udb/lib/udb/resolver.rb#56
     sig { returns(::Pathname) }
     def default_gen_path; end
 
-    # source://udb//../../udb/lib/udb/resolver.rb#45
+    # source://udb//../../udb/lib/udb/resolver.rb#46
     sig { returns(::Pathname) }
     def default_std_isa_path; end
 
@@ -302,7 +302,7 @@ module Udb
     sig { void }
     def delete_top_level_progressbar; end
 
-    # source://udb//../../udb/lib/udb/resolver.rb#17
+    # source://udb//../../udb/lib/udb/resolver.rb#18
     sig { returns(::Pathname) }
     def gem_path; end
 
@@ -318,7 +318,7 @@ module Udb
     sig { returns(T.any(::Logger, ::TTY::Logger)) }
     def logger; end
 
-    # source://udb//../../udb/lib/udb/resolver.rb#34
+    # source://udb//../../udb/lib/udb/resolver.rb#35
     sig { returns(::Pathname) }
     def repo_root; end
 
@@ -335,7 +335,7 @@ module Udb
 
     private
 
-    # source://udb//../../udb/lib/udb/resolver.rb#22
+    # source://udb//../../udb/lib/udb/resolver.rb#23
     sig { params(from_dir: ::Pathname).returns(::Pathname) }
     def find_udb_root(from_dir); end
   end
@@ -5685,9 +5685,9 @@ Udb::RequirementSpec::REQUIREMENT_OP_REGEX = T.let(T.unsafe(nil), Regexp)
 # source://udb//../../udb/lib/udb/version_spec.rb#182
 Udb::RequirementSpec::REQUIREMENT_REGEX = T.let(T.unsafe(nil), Regexp)
 
-# source://udb//../../udb/lib/udb/resolver.rb#67
+# source://udb//../../udb/lib/udb/resolver.rb#68
 class Udb::Resolver
-  # source://udb//../../udb/lib/udb/resolver.rb#143
+  # source://udb//../../udb/lib/udb/resolver.rb#144
   sig do
     params(
       repo_root: ::Pathname,
@@ -5702,35 +5702,35 @@ class Udb::Resolver
   end
   def initialize(repo_root = T.unsafe(nil), schemas_path_override: T.unsafe(nil), cfgs_path_override: T.unsafe(nil), gen_path_override: T.unsafe(nil), std_path_override: T.unsafe(nil), custom_path_override: T.unsafe(nil), quiet: T.unsafe(nil), compile_idl: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#171
+  # source://udb//../../udb/lib/udb/resolver.rb#172
   sig { params(target: ::Pathname, deps: T::Array[::Pathname]).returns(T::Boolean) }
   def any_newer?(target, deps); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#356
+  # source://udb//../../udb/lib/udb/resolver.rb#345
   sig { params(config_path_or_name: T.any(::Pathname, ::String)).returns(::Udb::ConfiguredArchitecture) }
   def cfg_arch_for(config_path_or_name); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#285
+  # source://udb//../../udb/lib/udb/resolver.rb#274
   sig { params(config_path_or_name: T.any(::Pathname, ::String)).returns(::Udb::Resolver::ConfigInfo) }
   def cfg_info(config_path_or_name); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#89
+  # source://udb//../../udb/lib/udb/resolver.rb#90
   sig { returns(::Pathname) }
   def cfgs_path; end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#101
+  # source://udb//../../udb/lib/udb/resolver.rb#102
   sig { returns(::Pathname) }
   def custom_path; end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#93
+  # source://udb//../../udb/lib/udb/resolver.rb#94
   sig { returns(::Pathname) }
   def gen_path; end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#218
+  # source://udb//../../udb/lib/udb/resolver.rb#219
   sig { params(config_yaml: T::Hash[::String, T.untyped]).void }
   def merge_arch(config_yaml); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#105
+  # source://udb//../../udb/lib/udb/resolver.rb#106
   sig { params(cfg_path_or_name: T.any(::Pathname, ::String)).returns(::Pathname) }
   def merged_spec_path(cfg_path_or_name); end
 
@@ -5738,28 +5738,28 @@ class Udb::Resolver
   sig { params(config_yaml: T::Hash[::String, T.untyped]).void }
   def resolve_arch(config_yaml); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#194
+  # source://udb//../../udb/lib/udb/resolver.rb#195
   sig { params(config_path: ::Pathname).returns(T::Hash[::String, T.untyped]) }
   def resolve_config(config_path); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#115
+  # source://udb//../../udb/lib/udb/resolver.rb#116
   sig { params(cfg_path_or_name: T.any(::Pathname, ::String)).returns(::Pathname) }
   def resolved_spec_path(cfg_path_or_name); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#181
+  # source://udb//../../udb/lib/udb/resolver.rb#182
   sig { params(cmd: T::Array[::String]).void }
   def run(cmd); end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#85
+  # source://udb//../../udb/lib/udb/resolver.rb#86
   sig { returns(::Pathname) }
   def schemas_path; end
 
-  # source://udb//../../udb/lib/udb/resolver.rb#97
+  # source://udb//../../udb/lib/udb/resolver.rb#98
   sig { returns(::Pathname) }
   def std_path; end
 end
 
-# source://udb//../../udb/lib/udb/resolver.rb#71
+# source://udb//../../udb/lib/udb/resolver.rb#72
 class Udb::Resolver::ConfigInfo < ::T::Struct
   prop :name, ::String
   prop :path, ::Pathname
@@ -6082,6 +6082,198 @@ class Udb::XlenTerm
 
   # source://udb//../../udb/lib/udb/logic.rb#42
   def xlen; end
+end
+
+# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#9
+module Udb::Yaml; end
+
+# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#11
+class Udb::Yaml::Comment
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#19
+  def initialize(line, column, content, type, indent); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  def column; end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  def content; end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  def indent; end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  def line; end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#27
+  def to_s; end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  def type; end
+end
+
+# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#33
+class Udb::Yaml::CommentMap
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#34
+  def initialize; end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#48
+  def add_comment(key_path, comment); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#63
+  def add_header_comment(comment); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#68
+  def add_trailing_comment(comment); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#129
+  def all_comments; end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#125
+  def all_source_locations; end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#57
+  def get_comments(key_path); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#99
+  def get_multiline_content(key_path); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#118
+  def get_source_location(key_path); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#83
+  def get_string_style(key_path); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#43
+  def header_comments; end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#91
+  def set_multiline_content(key_path, lines); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#110
+  def set_source_location(key_path, file, line, column, offset = T.unsafe(nil)); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#75
+  def set_string_style(key_path, style); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#43
+  def trailing_comments; end
+end
+
+# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#135
+class Udb::Yaml::CommentParser
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#139
+  def parse(yaml_string); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#164
+  def parse_file(file_path); end
+
+  private
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#349
+  def associate_comments(comments_by_line, line_to_path, comment_map, data); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#239
+  def build_line_to_path_map(yaml_string); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#278
+  def detect_string_styles(yaml_string, line_to_path, comment_map); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#171
+  def extract_comments(lines); end
+
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#211
+  def find_comment_position(line); end
+end
+
+# source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#13
+class Udb::Yaml::PreservingEmitter
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#14
+  def initialize(comment_map = T.unsafe(nil)); end
+
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#22
+  def emit(data, io = T.unsafe(nil)); end
+
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#76
+  def emit_file(data, file_path); end
+
+  private
+
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#206
+  def emit_array(array, output, path, indent); end
+
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#95
+  def emit_hash(hash, output, path, indent); end
+
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#266
+  def emit_scalar(value, output, path, indent, inline: T.unsafe(nil), preserve_style: T.unsafe(nil)); end
+
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#83
+  def emit_value(value, output, path, indent); end
+
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#276
+  def format_scalar(value, path = T.unsafe(nil), preserve_style = T.unsafe(nil)); end
+
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#298
+  def format_string(str, path = T.unsafe(nil), preserve_style = T.unsafe(nil)); end
+
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#320
+  def needs_quoting?(str); end
+end
+
+# source://udb//../../udb/lib/udb/yaml/resolver.rb#19
+class Udb::Yaml::Resolver
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#20
+  def initialize(quiet: T.unsafe(nil), compile_idl: T.unsafe(nil)); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#51
+  def merge_file(rel_path, base_dir, overlay_dir, output_dir); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#33
+  def merge_files(base_dir, overlay_dir, output_dir); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#98
+  def resolve_files(input_dir, output_dir, options = T.unsafe(nil)); end
+
+  private
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#529
+  def calculate_content_offset(line, value_part, line_num, lines, cumulative_offsets); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#490
+  def calculate_value_column(line, value_part, line_num, lines); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#408
+  def deep_copy(obj); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#402
+  def deep_merge(base, other); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#390
+  def deep_merge!(base, other); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#358
+  def dig(obj, *keys); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#342
+  def get_resolved_object(rel_path, arch_root, no_checks); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#370
+  def json_merge_patch(base, patch); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#129
+  def resolve_file(rel_path, input_dir, output_dir, no_checks); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#252
+  def resolve_inherits(obj, obj_path, obj_file_path, doc_obj, arch_root, no_checks); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#183
+  def resolve_object(obj, obj_path, obj_file_path, doc_obj, arch_root, no_checks); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#420
+  def track_source_locations(file_path, comment_map); end
+
+  # source://udb//../../udb/lib/udb/yaml/resolver.rb#160
+  def write_resolved_file(rel_path, input_dir, output_dir, no_checks); end
 end
 
 # source://udb//../../udb/lib/udb/z3.rb#872
