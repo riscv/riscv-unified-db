@@ -57,16 +57,14 @@ build_must_with_docker() {
 FROM almalinux:8
 
 RUN dnf install -y \
-    gcc-toolset-14 \
+    gcc-toolset-12 \
     make \
     git \
-    zlib-static \
-    glibc-static \
-    libstdc++-static \
+    zlib-devel \
     && dnf clean all
 
-ENV PATH=/opt/rh/gcc-toolset-14/root/usr/bin:$PATH \
-    LD_LIBRARY_PATH=/opt/rh/gcc-toolset-14/root/usr/lib64:$LD_LIBRARY_PATH
+ENV PATH=/opt/rh/gcc-toolset-12/root/usr/bin:$PATH \
+    LD_LIBRARY_PATH=/opt/rh/gcc-toolset-12/root/usr/lib64:$LD_LIBRARY_PATH
 
 ARG MUST_COMMIT
 WORKDIR /build
