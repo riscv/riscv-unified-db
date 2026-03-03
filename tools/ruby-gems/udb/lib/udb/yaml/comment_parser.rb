@@ -106,14 +106,15 @@ module Udb
       # @param file [String] Source file path
       # @param line [Integer] Line number in source file
       # @param column [Integer] Column number where value starts in source file
-      def set_source_location(key_path, file, line, column)
+      # @param offset [Integer, nil] Character offset in source file where IDL content starts
+      def set_source_location(key_path, file, line, column, offset = nil)
         path_key = key_path.join("/")
-        @source_locations[path_key] = { file: file, line: line, column: column }
+        @source_locations[path_key] = { file: file, line: line, column: column, offset: offset }
       end
 
       # Get the source location for a key path
       # @param key_path [Array<String, Integer>] Path to the key
-      # @return [Hash, nil] Hash with :file, :line, and :column keys, or nil if not set
+      # @return [Hash, nil] Hash with :file, :line, :column, and :offset keys, or nil if not set
       def get_source_location(key_path)
         path_key = key_path.join("/")
         @source_locations[path_key]
@@ -138,22 +139,22 @@ module Udb
       def parse(yaml_string)
         lines = yaml_string.lines
         comment_map = CommentMap.new
-        
+
         # Extract comments with their line numbers
         comments_by_line = extract_comments(lines)
-        
+
         # Parse the YAML data
         data = Psych.safe_load(yaml_string, permitted_classes: [Date, Symbol], aliases: true) || {}
-        
+
         # Build a map of line numbers to key paths
         line_to_path = build_line_to_path_map(yaml_string)
-        
+
         # Detect string styles
         detect_string_styles(yaml_string, line_to_path, comment_map)
-        
+
         # Associate comments with key paths
         associate_comments(comments_by_line, line_to_path, comment_map, data)
-        
+
         { data: data, comments: comment_map }
       end
 
@@ -170,11 +171,11 @@ module Udb
       def extract_comments(lines)
         comments = {}
         in_document = false
-        
+
         lines.each_with_index do |line, line_num|
           # Skip empty lines
           next if line.strip.empty?
-          
+
           # Check if we've started the document (first non-comment, non-empty line)
           unless in_document
             if line.strip.start_with?('#')
@@ -187,37 +188,37 @@ module Udb
               in_document = true
             end
           end
-          
+
           # Check for inline or block comments
           # Need to be careful about # in strings
           comment_pos = find_comment_position(line)
           if comment_pos
             before_hash = line[0...comment_pos]
             comment_content = line[comment_pos+1..-1].strip
-            
+
             # Determine if it's inline or block
             type = before_hash.strip.empty? ? :block : :inline
             indent = line[/^\s*/].length
-            
+
             comments[line_num] = Comment.new(line_num, comment_pos, comment_content, type, indent)
           end
         end
-        
+
         comments
       end
-      
+
       # Find the position of a comment # character, ignoring # inside strings
       def find_comment_position(line)
         in_single_quote = false
         in_double_quote = false
         escape_next = false
-        
+
         line.chars.each_with_index do |char, idx|
           if escape_next
             escape_next = false
             next
           end
-          
+
           case char
           when '\\'
             escape_next = true if in_single_quote || in_double_quote
@@ -229,7 +230,7 @@ module Udb
             return idx unless in_single_quote || in_double_quote
           end
         end
-        
+
         nil
       end
 
@@ -239,25 +240,25 @@ module Udb
         line_to_path = {}
         current_path = []
         indent_stack = [0]
-        
+
         yaml_string.lines.each_with_index do |line, line_num|
           # Skip comments and empty lines
           next if line.strip.empty? || line.strip.start_with?('#')
-          
+
           indent = line[/^\s*/].length
-          
+
           # Adjust path based on indentation
           while indent_stack.length > 1 && indent <= indent_stack[-1]
             indent_stack.pop
             current_path.pop
           end
-          
+
           # Extract key if this is a key-value line
           if line.include?(':')
             key = line.split(':', 2)[0].strip
             # Remove array indicator if present
             key = key.sub(/^-\s*/, '')
-            
+
             unless key.empty?
               current_path << key
               line_to_path[line_num] = current_path.dup
@@ -269,7 +270,7 @@ module Udb
             # A full implementation would need more sophisticated tracking
           end
         end
-        
+
         line_to_path
       end
 
@@ -279,14 +280,14 @@ module Udb
         lines.each_with_index do |line, line_num|
           # Skip comments and empty lines
           next if line.strip.empty? || line.strip.start_with?('#')
-          
+
           # Check if this line has a key with a value
           if line.include?(':') && line_to_path[line_num]
             value_part = line.split(':', 2)[1]
             next if value_part.nil?
-            
+
             value_part = value_part.strip
-            
+
             # Check for literal block scalar (|) or folded block scalar (>)
             if value_part.start_with?('|')
               comment_map.set_string_style(line_to_path[line_num], :literal)
@@ -300,36 +301,36 @@ module Udb
                 next_line = lines[next_line_idx]
                 current_indent = line[/^\s*/].length
                 next_indent = next_line[/^\s*/].length
-                
+
                 # If next line is more indented and doesn't have a colon (not a nested key)
-                if next_indent > current_indent && 
-                   !next_line.strip.empty? && 
+                if next_indent > current_indent &&
+                   !next_line.strip.empty? &&
                    !next_line.strip.start_with?('#') &&
                    !next_line.strip.start_with?('-') &&
                    !next_line.include?(':')
                   # This is an implicit multiline plain scalar
                   comment_map.set_string_style(line_to_path[line_num], :plain_multiline)
-                  
+
                   # Capture the original lines
                   multiline_lines = []
                   idx = next_line_idx
                   while idx < lines.length
                     line_content = lines[idx]
                     line_indent = line_content[/^\s*/].length
-                    
+
                     # Stop if we hit a line that's not part of this multiline string
                     break if line_indent <= current_indent && !line_content.strip.empty?
                     break if line_content.strip.start_with?('#')
                     break if line_content.include?(':')
-                    
+
                     # Add this line if it's part of the multiline content
                     if line_indent > current_indent && !line_content.strip.empty?
                       multiline_lines << line_content.strip
                     end
-                    
+
                     idx += 1
                   end
-                  
+
                   comment_map.set_multiline_content(line_to_path[line_num], multiline_lines) if multiline_lines.any?
                 end
               end
@@ -348,15 +349,15 @@ module Udb
       def associate_comments(comments_by_line, line_to_path, comment_map, data)
         sorted_lines = comments_by_line.keys.sort
         path_lines = line_to_path.keys.sort
-        
+
         sorted_lines.each do |comment_line|
           comment = comments_by_line[comment_line]
-          
+
           if comment.type == :header
             comment_map.add_header_comment(comment)
             next
           end
-          
+
           # Find the nearest key path
           if comment.type == :inline
             # Inline comment belongs to the same line

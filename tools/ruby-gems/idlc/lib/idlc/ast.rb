@@ -203,6 +203,7 @@ module Idl
       @input = input
       @input_file = nil
       @starting_line = 0
+      @starting_offset = 0
       @interval = interval
       @interval_text_value =
         unless input.nil? || interval.nil?
@@ -219,14 +220,16 @@ module Idl
     #
     # @param [String] filename The name of the input file.
     # @param [Integer] starting_line The starting line number in the input file.
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer).void }
-    def set_input_file_unless_already_set(filename, starting_line = 0)
+    # @param [Integer] starting_offset The byte offset in the file where the IDL content starts.
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer).void }
+    def set_input_file_unless_already_set(filename, starting_line = 0, starting_offset = 0)
       return unless @input_file.nil?
 
       @input_file = Pathname.new(filename)
       @starting_line = starting_line
+      @starting_offset = starting_offset
       children.each do |child|
-        child.set_input_file_unless_already_set(filename, starting_line)
+        child.set_input_file_unless_already_set(filename, starting_line, starting_offset)
       end
       raise "?" if @starting_line.nil?
     end
@@ -235,12 +238,14 @@ module Idl
     #
     # @param filename [String] Filename
     # @param starting_line [Integer] Starting line in the file
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer).void }
-    def set_input_file(filename, starting_line = 0)
+    # @param starting_offset [Integer] Byte offset in the file where the IDL content starts
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer).void }
+    def set_input_file(filename, starting_line = 0, starting_offset = 0)
       @input_file = Pathname.new(filename)
       @starting_line = starting_line
+      @starting_offset = starting_offset
       children.each do |child|
-        child.set_input_file(filename, starting_line)
+        child.set_input_file(filename, starting_line, starting_offset)
       end
       raise "?" if @starting_line.nil?
     end
@@ -482,8 +487,8 @@ module Idl
     def source_yaml
       {
         "file" => @input_file.to_s,
-        "begin" => T.must(interval).begin,
-        "end" => T.must(interval).max || T.must(interval).begin
+        "begin" => (@starting_offset || 0) + T.must(interval).begin,
+        "end" => (@starting_offset || 0) + (T.must(interval).max || T.must(interval).begin)
       }
     end
 
@@ -5972,6 +5977,7 @@ module Idl
     def initialize(input, interval, op, expression)
       super(input, interval, [expression])
 
+      raise "Bad op #{op.inspect}" unless ["~", "!", "-"].include?(op)
       @op = op
     end
 

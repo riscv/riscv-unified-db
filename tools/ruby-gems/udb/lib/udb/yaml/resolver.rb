@@ -71,10 +71,10 @@ module Udb
           end
         else
           # Both exist, merge them
-          if !output_path.exist? || 
-             base_path.mtime > output_path.mtime || 
+          if !output_path.exist? ||
+             base_path.mtime > output_path.mtime ||
              overlay_path.mtime > output_path.mtime
-            
+
             # Parse both files with comments
             parser = CommentParser.new
             base_result = parser.parse_file(base_path)
@@ -136,7 +136,7 @@ module Udb
         parser = CommentParser.new
         result = parser.parse_file(input_path)
         data = result[:data]
-        
+
         # Track source locations for all keys
         track_source_locations(input_path, result[:comments])
         @current_comment_map = result[:comments]
@@ -151,7 +151,7 @@ module Udb
 
         # Resolve the data
         resolved_data = resolve_object(data, [], rel_path, data, input_dir, no_checks)
-        
+
         # Cache the resolved object
         @resolved_objs[rel_path] = { data: resolved_data, comments: result[:comments] }
       end
@@ -159,7 +159,7 @@ module Udb
       # Write a resolved file (second pass - after all resolutions are cached)
       def write_resolved_file(rel_path, input_dir, output_dir, no_checks)
         output_path = output_dir / rel_path
-        
+
         return unless @resolved_objs.key?(rel_path)
 
         resolved_obj = @resolved_objs[rel_path][:data]
@@ -218,6 +218,7 @@ module Udb
             # (the 1-indexed key line number) — a convenient coincidence.
             source_loc = @current_comment_map&.get_source_location(obj_path + [key])
             starting_line = source_loc ? source_loc[:line] : 0
+            starting_offset = source_loc ? (source_loc[:offset] || 0) : 0
             parse_root =
               if key == "operation()"
                 :instruction_operation
@@ -239,7 +240,7 @@ module Udb
             if ast.nil?
               raise "IDL compiler could not convert to ast"
             end
-            ast.set_input_file(obj_file_path, starting_line)
+            ast.set_input_file(obj_file_path, starting_line, starting_offset)
             resolved[key_minus_args] = ast.to_h
           end
         end
@@ -250,7 +251,7 @@ module Udb
       # Resolve $inherits directive
       def resolve_inherits(obj, obj_path, obj_file_path, doc_obj, arch_root, no_checks)
         inherits_targets = obj["$inherits"].is_a?(Array) ? obj["$inherits"] : [obj["$inherits"]]
-        
+
         # Track inheritance
         obj["$child_of"] = obj["$inherits"]
         obj.delete("$inherits")
@@ -267,7 +268,7 @@ module Udb
             ref_file_path = ""
             ref_obj_path_str = inherits_target.start_with?("/") ? inherits_target : "/#{inherits_target}"
           end
-          
+
           ref_obj_path = ref_obj_path_str.split("/").drop(1) # Drop empty first element
 
           ref_obj = nil
@@ -290,7 +291,7 @@ module Udb
           # Merge parent object
           ref_obj.each do |key, value|
             next if key == "$parent_of" || key == "$child_of"
-            
+
             if parent_obj.key?(key) && parent_obj[key].is_a?(Hash) && value.is_a?(Hash)
               deep_merge!(parent_obj[key], value)
             else
@@ -349,7 +350,7 @@ module Udb
 
         resolved_data = resolve_object(data, [], rel_path, data, arch_root, no_checks)
         @resolved_objs[rel_path] = { data: resolved_data, comments: result[:comments] }
-        
+
         resolved_data
       end
 
@@ -419,17 +420,25 @@ module Udb
       def track_source_locations(file_path, comment_map)
         yaml_string = File.read(file_path, encoding: "utf-8")
         lines = yaml_string.lines
+
+        # Build cumulative character offsets: cumulative_offsets[i] = byte offset of start of line i
+        cumulative_offsets = []
+        offset = 0
+        lines.each do |line|
+          cumulative_offsets << offset
+          offset += line.bytesize
+        end
+
         current_path = []
         indent_stack = [0]
         in_multiline_string = false
         multiline_base_indent = 0
-        multiline_start_line = nil
-        
+
         lines.each_with_index do |line, line_num|
           next if line.strip.empty? || line.strip.start_with?('#')
-          
+
           indent = line[/^\s*/].length
-          
+
           # If we're in a multiline string and this line is more indented than the key, skip it
           if in_multiline_string
             if indent > multiline_base_indent
@@ -439,59 +448,62 @@ module Udb
               in_multiline_string = false
             end
           end
-          
+
           # Adjust path based on indentation
           while indent_stack.length > 1 && indent <= indent_stack[-1]
             indent_stack.pop
             current_path.pop
           end
-          
+
           # Extract key if this is a key-value line (and not part of multiline content)
           if line.include?(':')
             key = line.split(':', 2)[0].strip
             key = key.sub(/^-\s*/, '')
-            
+
             unless key.empty?
               current_path << key
-              
+
               # Calculate column where value starts
               value_part = line.split(':', 2)[1]
               column = calculate_value_column(line, value_part, line_num, lines)
-              
+
+              # Calculate the absolute character offset of the IDL content start
+              content_offset = calculate_content_offset(line, value_part, line_num, lines, cumulative_offsets)
+
               # Store source location (1-indexed line and column numbers for user-friendliness)
-              comment_map.set_source_location(current_path.dup, file_path.to_s, line_num + 1, column + 1)
+              comment_map.set_source_location(current_path.dup, file_path.to_s, line_num + 1, column + 1, content_offset)
               indent_stack << indent
-              
+
               # Check if this key starts a multiline string (literal | or folded >)
               if value_part && (value_part.strip.start_with?('|') || value_part.strip.start_with?('>'))
                 in_multiline_string = true
                 multiline_base_indent = indent
-                multiline_start_line = line_num
               end
             end
           end
         end
       end
-      
+
       # Calculate the column where the value starts
       # For multiline strings (| or >), returns the column of the first content line
       # For inline values, returns the column after the colon and space
       def calculate_value_column(line, value_part, line_num, lines)
         return 0 if value_part.nil?
-        
+
         # Find the colon position
         colon_pos = line.index(':')
         return 0 if colon_pos.nil?
-        
+
         value_stripped = value_part.strip
-        
+
         # For multiline strings (| or >), find the first content line
         if value_stripped.start_with?('|') || value_stripped.start_with?('>')
           # Look for the first non-empty line after the | or >
+          # Note: '#' lines inside a literal block scalar are IDL content, not YAML comments
           next_line_idx = line_num + 1
           while next_line_idx < lines.length
             next_line = lines[next_line_idx]
-            if !next_line.strip.empty? && !next_line.strip.start_with?('#')
+            if !next_line.strip.empty?
               # Return the column where the content starts (after indentation)
               return next_line[/^\s*/].length
             end
@@ -500,15 +512,48 @@ module Udb
           # If no content found, return column after the indicator
           return colon_pos + 2
         end
-        
+
         # For inline values, find where the value actually starts (after colon and spaces)
         # Skip the colon and any following whitespace
         value_start = colon_pos + 1
         while value_start < line.length && line[value_start] == ' '
           value_start += 1
         end
-        
+
         value_start
+      end
+
+      # Calculate the absolute character offset in the file where the IDL content starts.
+      # For multiline strings (| or >), this is the start of the first content line's indented text.
+      # For inline values, this is the position of the first non-space character after the colon.
+      def calculate_content_offset(line, value_part, line_num, lines, cumulative_offsets)
+        return 0 if value_part.nil?
+
+        colon_pos = line.index(':')
+        return 0 if colon_pos.nil?
+
+        value_stripped = value_part.strip
+
+        if value_stripped.start_with?('|') || value_stripped.start_with?('>')
+          # Find the first non-empty content line after the | or >
+          # Note: '#' lines inside a literal block scalar are IDL content, not YAML comments
+          next_line_idx = line_num + 1
+          while next_line_idx < lines.length
+            next_line = lines[next_line_idx]
+            if !next_line.strip.empty?
+              content_col = next_line[/^\s*/].length
+              return cumulative_offsets[next_line_idx] + content_col
+            end
+            next_line_idx += 1
+          end
+          # No content found; point just past the indicator character
+          return cumulative_offsets[line_num] + colon_pos + 2
+        end
+
+        # Inline value: find the first non-space character after the colon
+        value_start = colon_pos + 1
+        value_start += 1 while value_start < line.length && line[value_start] == ' '
+        cumulative_offsets[line_num] + value_start
       end
     end
   end
