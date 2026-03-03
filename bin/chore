@@ -106,19 +106,48 @@ update_subcmd_usage() {
   echo "Commands:"
   echo ""
   echo "  gems:          Update Ruby Gems and regenerate type definitions"
+  echo "  espresso:      Update the espresso binary used by the udb gem"
+  echo "                 ('chore update espresso -h' for more)"
+  echo "  must:          Update the must binary used by the udb gem"
+  echo "                 ('chore update must -h' for more)"
   echo "  z3:            Update the z3 shared library used by the udb gem"
   echo "                 ('chore update z3 -h' for more)"
   echo ""
 }
 
-update_z3_usage() {
-  echo "Usage: chore update z3 [-hn]"
+update_espresso_usage() {
+  echo "Usage: chore update espresso [-hnf]"
   echo ""
   echo ""
   echo "Options:"
   echo ""
   echo "  -h:      Print help"
   echo "  -n:      Build only for native/host platform (for use in CI matrix builds)"
+  echo "  -f:      Force rebuild and release even if release already exists"
+  echo ""
+}
+
+update_must_usage() {
+  echo "Usage: chore update must [-hnf]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -n:      Build only for native/host platform (for use in CI matrix builds)"
+  echo "  -f:      Force rebuild and release even if release already exists"
+  echo ""
+}
+
+update_z3_usage() {
+  echo "Usage: chore update z3 [-hnf]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -n:      Build only for native/host platform (for use in CI matrix builds)"
+  echo "  -f:      Force rebuild and release even if release already exists"
   echo ""
 }
 
@@ -536,9 +565,60 @@ case "$subcommand" in
         do_update_gems "$update_tag"
         exit 0
       ;;
+      espresso )
+        native_only=no
+        force=no
+        while getopts ":hnf" opt; do
+          case $opt in
+            h )
+              update_espresso_usage
+              exit 0
+              ;;
+            n )
+              native_only=yes
+              ;;
+            f )
+              force=yes
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              update_espresso_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_update_espresso "$native_only" "$force"
+        exit 0
+        ;;
+      must )
+        native_only=no
+        force=no
+        while getopts ":hnf" opt; do
+          case $opt in
+            h )
+              update_must_usage
+              exit 0
+              ;;
+            n )
+              native_only=yes
+              ;;
+            f )
+              force=yes
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              update_must_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_update_must "$native_only" "$force"
+        exit 0
+        ;;
       z3 )
         native_only=no
-        while getopts ":hn" opt; do
+        force=no
+        while getopts ":hnf" opt; do
           case $opt in
             h )
               update_z3_usage
@@ -547,6 +627,9 @@ case "$subcommand" in
             n )
               native_only=yes
               ;;
+            f )
+              force=yes
+              ;;
             ? )
               echo "[ERROR]: Invalid option: -${OPTARG}"
               update_z3_usage
@@ -554,7 +637,7 @@ case "$subcommand" in
               ;;
           esac
         done
-        do_update_z3 "$native_only"
+        do_update_z3 "$native_only" "$force"
         exit 0
         ;;
       * )

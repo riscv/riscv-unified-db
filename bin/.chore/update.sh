@@ -48,12 +48,258 @@ do_update_gems() {
 }
 
 #
+# Update espresso binary
+# Args: $1 - native_only ("yes" to build only for native platform, "no" for both x64 and arm64)
+#       $2 - force ("yes" to force rebuild even if release exists, "no" otherwise)
+# Returns: 0 on success, exits with 1 on error
+#
+do_update_espresso() {
+  local native_only=$1
+  local force=${2:-no}
+
+  # Requires: docker (for build_espresso_with_docker.sh) and gh (GitHub CLI, authenticated)
+  if ! command -v gh &>/dev/null; then
+    echo "ERROR: 'gh' CLI is required for 'chore update espresso'. Install from https://cli.github.com" >&2
+    exit 1
+  fi
+
+  # For espresso, we use a fixed version since it builds from a fixed git repo
+  local espresso_version="espresso-1.0"
+  echo "==> Building espresso version: ${espresso_version}"
+
+  # Check if the GitHub Release exists before building (unless force is enabled)
+  if [ "${force}" != "yes" ]; then
+    echo "==> Checking for existing GitHub Release ${espresso_version} on riscv/riscv-unified-db..."
+    if gh release view "${espresso_version}" --repo riscv/riscv-unified-db &>/dev/null; then
+      echo "==> GitHub Release ${espresso_version} already exists. Nothing to do."
+      return 0
+    fi
+  else
+    echo "==> Force rebuild enabled..."
+    # Delete existing release if it exists
+    if gh release view "${espresso_version}" --repo riscv/riscv-unified-db &>/dev/null; then
+      echo "==> Deleting existing GitHub Release ${espresso_version}..."
+      gh release delete "${espresso_version}" --repo riscv/riscv-unified-db --yes
+    fi
+  fi
+
+  echo "==> Building espresso ${espresso_version}..."
+
+  local orig_dir="${PWD}"
+  local work_dir
+  work_dir=$(mktemp -d --tmpdir="$PWD" build-espresso.XXXXXX)
+
+  if [ "${native_only}" = "yes" ]; then
+    # Detect native architecture
+    local native_arch
+    case "$(uname -m)" in
+      x86_64)
+        native_arch="x64"
+        ;;
+      aarch64)
+        native_arch="arm64"
+        ;;
+      *)
+        echo "ERROR: Unsupported architecture: $(uname -m)" >&2
+        exit 1
+        ;;
+    esac
+    echo "==> Building espresso for native platform (${native_arch})..."
+    "${UDB_ROOT}"/tools/scripts/build_espresso_with_docker.sh "${work_dir}/espresso-build" "${native_arch}" || exit 1
+
+    # Move the binary to the asset name expected by the gem
+    mv "${work_dir}/espresso-build/espresso" "${work_dir}/espresso-${native_arch}"
+  else
+    # Build for both architectures
+    echo "==> Building espresso for x64..."
+    "${UDB_ROOT}"/tools/scripts/build_espresso_with_docker.sh "${work_dir}/espresso-x64-out" x64 || exit 1
+
+    echo "==> Building espresso for arm64..."
+    "${UDB_ROOT}"/tools/scripts/build_espresso_with_docker.sh "${work_dir}/espresso-arm64-out" arm64 || exit 1
+
+    # Rename the binaries to the asset names expected by the gem
+    mv "${work_dir}/espresso-x64-out/espresso" "${work_dir}/espresso-x64"
+    mv "${work_dir}/espresso-arm64-out/espresso" "${work_dir}/espresso-arm64"
+  fi
+
+  # Create the GitHub Release and upload assets (or upload to existing release if native_only)
+  local release_tag="${espresso_version}"
+  if [ "${native_only}" = "yes" ]; then
+    # Detect native architecture
+    local native_arch
+    case "$(uname -m)" in
+      x86_64)
+        native_arch="x64"
+        ;;
+      aarch64)
+        native_arch="arm64"
+        ;;
+    esac
+    echo "==> Uploading ${native_arch} assets to GitHub Release ${release_tag}..."
+    # Try to upload; if release doesn't exist, create it first (for parallel CI builds)
+    if ! gh release upload "${release_tag}" \
+      --repo riscv/riscv-unified-db \
+      --clobber \
+      "${work_dir}/espresso-${native_arch}" 2>/dev/null; then
+      echo "==> Release doesn't exist yet, creating it..."
+      gh release create "${release_tag}" \
+        --repo riscv/riscv-unified-db \
+        --title "Espresso binaries ${espresso_version}" \
+        --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
+        "${work_dir}/espresso-${native_arch}"
+    fi
+  else
+    echo "==> Creating GitHub Release ${release_tag}..."
+    gh release create "${release_tag}" \
+      --repo riscv/riscv-unified-db \
+      --title "Espresso binaries ${espresso_version}" \
+      --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
+      "${work_dir}/espresso-x64" \
+      "${work_dir}/espresso-arm64"
+  fi
+
+  cd "${orig_dir}" || exit 1
+  rm -rf "${work_dir}"
+
+  echo ""
+  echo "Done. GitHub Release ${espresso_version} created on riscv/riscv-unified-db."
+}
+
+#
+# Update must binary
+# Args: $1 - native_only ("yes" to build only for native platform, "no" for both x64 and arm64)
+#       $2 - force ("yes" to force rebuild even if release exists, "no" otherwise)
+# Returns: 0 on success, exits with 1 on error
+#
+do_update_must() {
+  local native_only=$1
+  local force=${2:-no}
+
+  # Requires: docker (for build_must_with_docker.sh) and gh (GitHub CLI, authenticated)
+  if ! command -v gh &>/dev/null; then
+    echo "ERROR: 'gh' CLI is required for 'chore update must'. Install from https://cli.github.com" >&2
+    exit 1
+  fi
+
+  # Read the commit hash from the build script
+  local must_commit
+  must_commit=$(grep '^MUST_COMMIT=' "${UDB_ROOT}/tools/scripts/build_must_with_docker.sh" | cut -d'"' -f2)
+  if [ -z "$must_commit" ]; then
+    echo "ERROR: Could not read MUST_COMMIT from build_must_with_docker.sh" >&2
+    exit 1
+  fi
+
+  # Use short commit hash for the version tag
+  local must_version="must-${must_commit:0:7}"
+  echo "==> Building must version: ${must_version} (commit: ${must_commit})"
+
+  # Check if the GitHub Release exists before building (unless force is enabled)
+  if [ "${force}" != "yes" ]; then
+    echo "==> Checking for existing GitHub Release ${must_version} on riscv/riscv-unified-db..."
+    if gh release view "${must_version}" --repo riscv/riscv-unified-db &>/dev/null; then
+      echo "==> GitHub Release ${must_version} already exists. Nothing to do."
+      return 0
+    fi
+  else
+    echo "==> Force rebuild enabled..."
+    # Delete existing release if it exists
+    if gh release view "${must_version}" --repo riscv/riscv-unified-db &>/dev/null; then
+      echo "==> Deleting existing GitHub Release ${must_version}..."
+      gh release delete "${must_version}" --repo riscv/riscv-unified-db --yes
+    fi
+  fi
+
+  echo "==> Building must ${must_version}..."
+
+  local orig_dir="${PWD}"
+  local work_dir
+  work_dir=$(mktemp -d --tmpdir="$PWD" build-must.XXXXXX)
+
+  if [ "${native_only}" = "yes" ]; then
+    # Detect native architecture
+    local native_arch
+    case "$(uname -m)" in
+      x86_64)
+        native_arch="x64"
+        ;;
+      aarch64)
+        native_arch="arm64"
+        ;;
+      *)
+        echo "ERROR: Unsupported architecture: $(uname -m)" >&2
+        exit 1
+        ;;
+    esac
+    echo "==> Building must for native platform (${native_arch})..."
+    "${UDB_ROOT}"/tools/scripts/build_must_with_docker.sh "${work_dir}/must-build" "${native_arch}" || exit 1
+
+    # Move the binary to the asset name expected by the gem
+    mv "${work_dir}/must-build/must" "${work_dir}/must-${native_arch}"
+  else
+    # Build for both architectures
+    echo "==> Building must for x64..."
+    "${UDB_ROOT}"/tools/scripts/build_must_with_docker.sh "${work_dir}/must-x64-out" x64 || exit 1
+
+    echo "==> Building must for arm64..."
+    "${UDB_ROOT}"/tools/scripts/build_must_with_docker.sh "${work_dir}/must-arm64-out" arm64 || exit 1
+
+    # Rename the binaries to the asset names expected by the gem
+    mv "${work_dir}/must-x64-out/must" "${work_dir}/must-x64"
+    mv "${work_dir}/must-arm64-out/must" "${work_dir}/must-arm64"
+  fi
+
+  # Create the GitHub Release and upload assets
+  local release_tag="${must_version}"
+  if [ "${native_only}" = "yes" ]; then
+    # Detect native architecture
+    local native_arch
+    case "$(uname -m)" in
+      x86_64)
+        native_arch="x64"
+        ;;
+      aarch64)
+        native_arch="arm64"
+        ;;
+    esac
+    echo "==> Uploading ${native_arch} assets to GitHub Release ${release_tag}..."
+    # Try to upload; if release doesn't exist, create it first (for parallel CI builds)
+    if ! gh release upload "${release_tag}" \
+      --repo riscv/riscv-unified-db \
+      --clobber \
+      "${work_dir}/must-${native_arch}" 2>/dev/null; then
+      echo "==> Release doesn't exist yet, creating it..."
+      gh release create "${release_tag}" \
+        --repo riscv/riscv-unified-db \
+        --title "Must binaries ${must_version}" \
+        --notes "Pre-built must (mustool) binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${must_commit}" \
+        "${work_dir}/must-${native_arch}"
+    fi
+  else
+    echo "==> Creating GitHub Release ${release_tag}..."
+    gh release create "${release_tag}" \
+      --repo riscv/riscv-unified-db \
+      --title "Must binaries ${must_version}" \
+      --notes "Pre-built must (mustool) binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${must_commit}" \
+      "${work_dir}/must-x64" \
+      "${work_dir}/must-arm64"
+  fi
+
+  cd "${orig_dir}" || exit 1
+  rm -rf "${work_dir}"
+
+  echo ""
+  echo "Done. GitHub Release ${must_version} created on riscv/riscv-unified-db."
+}
+
+#
 # Update Z3 shared library
 # Args: $1 - native_only ("yes" to build only for native platform, "no" for both x64 and arm64)
+#       $2 - force ("yes" to force rebuild even if release exists, "no" otherwise)
 # Returns: 0 on success, exits with 1 on error
 #
 do_update_z3() {
   local native_only=$1
+  local force=${2:-no}
 
   # Requires: docker (for build_z3_with_docker.sh) and gh (GitHub CLI, authenticated)
   if ! command -v gh &>/dev/null; then
@@ -98,11 +344,20 @@ do_update_z3() {
     target_version="${latest_version}"
   fi
 
-  # Always check if the GitHub Release exists before building
-  echo "==> Checking for existing GitHub Release ${target_version} on riscv/riscv-unified-db..."
-  if gh release view "${target_version}" --repo riscv/riscv-unified-db &>/dev/null; then
-    echo "==> GitHub Release ${target_version} already exists. Nothing to do."
-    return 0
+  # Check if the GitHub Release exists before building (unless force is enabled)
+  if [ "${force}" != "yes" ]; then
+    echo "==> Checking for existing GitHub Release ${target_version} on riscv/riscv-unified-db..."
+    if gh release view "${target_version}" --repo riscv/riscv-unified-db &>/dev/null; then
+      echo "==> GitHub Release ${target_version} already exists. Nothing to do."
+      return 0
+    fi
+  else
+    echo "==> Force rebuild enabled..."
+    # Delete existing release if it exists
+    if gh release view "${target_version}" --repo riscv/riscv-unified-db &>/dev/null; then
+      echo "==> Deleting existing GitHub Release ${target_version}..."
+      gh release delete "${target_version}" --repo riscv/riscv-unified-db --yes
+    fi
   fi
 
   echo "==> Building Z3 ${target_version}..."
@@ -233,11 +488,20 @@ do_update_z3() {
         ;;
     esac
     echo "==> Uploading ${native_arch} assets to GitHub Release ${release_tag}..."
-    gh release upload "${release_tag}" \
+    # Try to upload; if release doesn't exist, create it first (for parallel CI builds)
+    if ! gh release upload "${release_tag}" \
       --repo riscv/riscv-unified-db \
       --clobber \
       "${work_dir}/libz3-${native_arch}.so" \
-      "${work_dir}/libz3-${native_arch}.checksum"
+      "${work_dir}/libz3-${native_arch}.checksum" 2>/dev/null; then
+      echo "==> Release doesn't exist yet, creating it..."
+      gh release create "${release_tag}" \
+        --repo riscv/riscv-unified-db \
+        --title "Z3 binaries ${z3_version}" \
+        --notes "Pre-built Z3 shared libraries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
+        "${work_dir}/libz3-${native_arch}.so" \
+        "${work_dir}/libz3-${native_arch}.checksum"
+    fi
   else
     echo "==> Creating GitHub Release ${release_tag}..."
     gh release create "${release_tag}" \

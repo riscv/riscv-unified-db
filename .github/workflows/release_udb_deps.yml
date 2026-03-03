@@ -1,12 +1,10 @@
 name: Build and release UDB gem dependencies to GitHub
 
-# Builds and uploads prebuilt espresso and/or must binaries as GitHub release assets.
+# Builds and uploads prebuilt espresso, must, and/or z3 binaries as GitHub release assets.
 # Run this workflow manually whenever a tool version needs to be updated.
 #
-# Steps:
-#   1. Create a GitHub release tag (e.g. espresso-1.0 or must-17fa9f9) on the repo.
-#   2. Trigger this workflow via workflow_dispatch, selecting the tool and tag.
-#   3. The workflow builds on native amd64 and arm64 runners and uploads the binaries.
+# The workflow automatically creates release tags and uploads binaries for the selected tool(s).
+# Each tool uses the chore update command which handles tag creation and release management.
 
 on:
   workflow_dispatch:
@@ -20,10 +18,11 @@ on:
           - must
           - z3
           - all
-      tag:
-        description: "Release tag to upload assets to (e.g. espresso-1.0 or must-17fa9f9)"
-        required: true
-        type: string
+      force:
+        description: "Force rebuild and release even if release already exists"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build-z3:
@@ -61,10 +60,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./bin/chore update z3 -n
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ./bin/chore update z3 -n -f
+          else
+            ./bin/chore update z3 -n
+          fi
 
   build-espresso:
     if: inputs.tool == 'espresso' || inputs.tool == 'all'
+    name: Build Espresso (${{ matrix.arch }})
     strategy:
       fail-fast: false
       matrix:
@@ -75,28 +79,37 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Install GitHub CLI
+        run: |
+          type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
 
-      - name: Build espresso (${{ matrix.arch }})
-        run: bash tools/scripts/build_espresso_with_docker.sh ./espresso-out ${{ matrix.arch }}
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | gh auth login --with-token
 
-      - name: Rename binary with arch suffix
-        run: mv ./espresso-out/espresso ./espresso-${{ matrix.arch }}
-
-      - name: Upload espresso-${{ matrix.arch }} to release
+      - name: Build and upload Espresso for ${{ matrix.arch }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ inputs.tag }}" \
-            "espresso-${{ matrix.arch }}" \
-            --clobber
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ./bin/chore update espresso -n -f
+          else
+            ./bin/chore update espresso -n
+          fi
 
   build-must:
     if: inputs.tool == 'must' || inputs.tool == 'all'
+    name: Build Must (${{ matrix.arch }})
     strategy:
       fail-fast: false
       matrix:
@@ -107,22 +120,30 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Install GitHub CLI
+        run: |
+          type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
 
-      - name: Build must (${{ matrix.arch }})
-        run: bash tools/scripts/build_must_with_docker.sh ./must-out ${{ matrix.arch }}
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | gh auth login --with-token
 
-      - name: Rename binary with arch suffix
-        run: mv ./must-out/must ./must-${{ matrix.arch }}
-
-      - name: Upload must-${{ matrix.arch }} to release
+      - name: Build and upload Must for ${{ matrix.arch }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ inputs.tag }}" \
-            "must-${{ matrix.arch }}" \
-            --clobber
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ./bin/chore update must -n -f
+          else
+            ./bin/chore update must -n
+          fi
