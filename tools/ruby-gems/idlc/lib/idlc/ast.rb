@@ -483,7 +483,7 @@ module Idl
       {
         "file" => @input_file.to_s,
         "begin" => T.must(interval).begin,
-        "end" => T.must(interval).max
+        "end" => T.must(interval).max || T.must(interval).begin
       }
     end
 
