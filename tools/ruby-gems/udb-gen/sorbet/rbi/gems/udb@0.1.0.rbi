@@ -6084,195 +6084,380 @@ class Udb::XlenTerm
   def xlen; end
 end
 
-# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#9
+# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#11
 module Udb::Yaml; end
 
-# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#11
+# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#13
 class Udb::Yaml::Comment
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#19
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#40
+  sig { params(line: ::Integer, column: ::Integer, content: ::String, type: ::Symbol, indent: ::Integer).void }
   def initialize(line, column, content, type, indent); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#20
+  sig { returns(::Integer) }
   def column; end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#23
+  sig { returns(::String) }
   def content; end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#29
+  sig { returns(::Integer) }
   def indent; end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#17
+  sig { returns(::Integer) }
   def line; end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#27
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#49
+  sig { returns(::String) }
   def to_s; end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#12
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#26
+  sig { returns(::Symbol) }
   def type; end
 end
 
-# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#33
+# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#55
 class Udb::Yaml::CommentMap
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#34
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#59
+  sig { void }
   def initialize; end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#48
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#80
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)], comment: ::Udb::Yaml::Comment).void }
   def add_comment(key_path, comment); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#63
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#95
+  sig { params(comment: ::Udb::Yaml::Comment).void }
   def add_header_comment(comment); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#68
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#100
+  sig { params(comment: ::Udb::Yaml::Comment).void }
   def add_trailing_comment(comment); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#129
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#170
+  sig { returns(T::Array[::Udb::Yaml::Comment]) }
   def all_comments; end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#125
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#165
+  sig { returns(T::Hash[::String, T::Hash[::Symbol, T.untyped]]) }
   def all_source_locations; end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#57
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#89
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(T::Array[::Udb::Yaml::Comment]) }
   def get_comments(key_path); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#99
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#137
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(T.nilable(T::Array[::String])) }
   def get_multiline_content(key_path); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#118
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#159
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(T.nilable(T::Hash[::Symbol, T.untyped])) }
   def get_source_location(key_path); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#83
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#118
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(T.nilable(::Symbol)) }
   def get_string_style(key_path); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#43
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#69
+  sig { returns(T::Array[::Udb::Yaml::Comment]) }
   def header_comments; end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#91
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#129
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)], lines: T::Array[::String]).void }
   def set_multiline_content(key_path, lines); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#110
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#151
+  sig do
+    params(
+      key_path: T::Array[T.any(::Integer, ::String)],
+      file: ::String,
+      line: ::Integer,
+      column: ::Integer,
+      offset: T.nilable(::Integer)
+    ).void
+  end
   def set_source_location(key_path, file, line, column, offset = T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#75
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#110
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)], style: ::Symbol).void }
   def set_string_style(key_path, style); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#43
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#72
+  sig { returns(T::Array[::Udb::Yaml::Comment]) }
   def trailing_comments; end
 end
 
-# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#135
+# source://udb//../../udb/lib/udb/yaml/comment_parser.rb#176
 class Udb::Yaml::CommentParser
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#139
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#182
+  sig { params(yaml_string: ::String).returns(T::Hash[::Symbol, T.untyped]) }
   def parse(yaml_string); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#164
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#198
+  sig { params(file_path: T.any(::Pathname, ::String)).returns(T::Hash[::Symbol, T.untyped]) }
   def parse_file(file_path); end
 
   private
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#349
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#374
+  sig do
+    params(
+      comments_by_line: T::Hash[::Integer, ::Udb::Yaml::Comment],
+      line_to_path: T::Hash[::Integer, T::Array[::String]],
+      comment_map: ::Udb::Yaml::CommentMap,
+      data: T.untyped
+    ).void
+  end
   def associate_comments(comments_by_line, line_to_path, comment_map, data); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#239
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#270
+  sig { params(yaml_string: ::String).returns(T::Hash[::Integer, T::Array[::String]]) }
   def build_line_to_path_map(yaml_string); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#278
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#307
+  sig do
+    params(
+      yaml_string: ::String,
+      line_to_path: T::Hash[::Integer, T::Array[::String]],
+      comment_map: ::Udb::Yaml::CommentMap
+    ).void
+  end
   def detect_string_styles(yaml_string, line_to_path, comment_map); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#171
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#207
+  sig { params(lines: T::Array[::String]).returns(T::Hash[::Integer, ::Udb::Yaml::Comment]) }
   def extract_comments(lines); end
 
-  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#211
+  # source://udb//../../udb/lib/udb/yaml/comment_parser.rb#241
+  sig { params(line: ::String).returns(T.nilable(::Integer)) }
   def find_comment_position(line); end
 end
 
-# source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#13
+# source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#15
 class Udb::Yaml::PreservingEmitter
-  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#14
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#19
+  sig { params(comment_map: T.nilable(::Udb::Yaml::CommentMap)).void }
   def initialize(comment_map = T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#22
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#29
+  sig { params(data: T.untyped, io: T.nilable(T.any(::IO, ::String))).returns(::String) }
   def emit(data, io = T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#76
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#79
+  sig { params(data: T.untyped, file_path: T.any(::Pathname, ::String)).void }
   def emit_file(data, file_path); end
 
   private
 
-  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#206
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#192
+  sig do
+    params(
+      array: T::Array[T.untyped],
+      output: ::StringIO,
+      path: T::Array[T.any(::Integer, ::String)],
+      indent: ::Integer
+    ).void
+  end
   def emit_array(array, output, path, indent); end
 
-  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#95
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#112
+  sig do
+    params(
+      hash: T::Hash[T.untyped, T.untyped],
+      output: ::StringIO,
+      path: T::Array[T.any(::Integer, ::String)],
+      indent: ::Integer
+    ).void
+  end
   def emit_hash(hash, output, path, indent); end
 
-  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#266
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#254
+  sig do
+    params(
+      value: T.untyped,
+      output: ::StringIO,
+      path: T::Array[T.any(::Integer, ::String)],
+      indent: ::Integer,
+      inline: T::Boolean,
+      preserve_style: T::Boolean
+    ).void
+  end
   def emit_scalar(value, output, path, indent, inline: T.unsafe(nil), preserve_style: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#83
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#93
+  sig do
+    params(
+      value: T.untyped,
+      output: ::StringIO,
+      path: T::Array[T.any(::Integer, ::String)],
+      indent: ::Integer
+    ).void
+  end
   def emit_value(value, output, path, indent); end
 
-  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#276
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#270
+  sig do
+    params(
+      value: T.untyped,
+      path: T::Array[T.any(::Integer, ::String)],
+      preserve_style: T::Boolean
+    ).returns(::String)
+  end
   def format_scalar(value, path = T.unsafe(nil), preserve_style = T.unsafe(nil)); end
 
   # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#298
+  sig do
+    params(
+      str: ::String,
+      path: T::Array[T.any(::Integer, ::String)],
+      preserve_style: T::Boolean
+    ).returns(::String)
+  end
   def format_string(str, path = T.unsafe(nil), preserve_style = T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#320
+  # source://udb//../../udb/lib/udb/yaml/preserving_emitter.rb#316
+  sig { params(str: ::String).returns(T::Boolean) }
   def needs_quoting?(str); end
 end
 
-# source://udb//../../udb/lib/udb/yaml/resolver.rb#19
+# source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#21
 class Udb::Yaml::Resolver
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#20
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#25
+  sig { params(quiet: T::Boolean, compile_idl: T::Boolean).void }
   def initialize(quiet: T.unsafe(nil), compile_idl: T.unsafe(nil)); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#51
-  def merge_file(rel_path, base_dir, overlay_dir, output_dir); end
-
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#33
-  def merge_files(base_dir, overlay_dir, output_dir); end
-
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#98
-  def resolve_files(input_dir, output_dir, options = T.unsafe(nil)); end
-
-  private
-
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#529
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#560
+  sig do
+    params(
+      line: ::String,
+      value_part: T.nilable(::String),
+      line_num: ::Integer,
+      lines: T::Array[::String],
+      cumulative_offsets: T::Array[::Integer]
+    ).returns(::Integer)
+  end
   def calculate_content_offset(line, value_part, line_num, lines, cumulative_offsets); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#490
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#523
+  sig do
+    params(
+      line: ::String,
+      value_part: T.nilable(::String),
+      line_num: ::Integer,
+      lines: T::Array[::String]
+    ).returns(::Integer)
+  end
   def calculate_value_column(line, value_part, line_num, lines); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#408
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#437
+  sig { params(obj: T.untyped).returns(T.untyped) }
   def deep_copy(obj); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#402
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#431
+  sig do
+    params(
+      base: T::Hash[T.untyped, T.untyped],
+      other: T::Hash[T.untyped, T.untyped]
+    ).returns(T::Hash[T.untyped, T.untyped])
+  end
   def deep_merge(base, other); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#390
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#414
+  sig do
+    params(
+      base: T::Hash[T.untyped, T.untyped],
+      other: T::Hash[T.untyped, T.untyped]
+    ).returns(T::Hash[T.untyped, T.untyped])
+  end
   def deep_merge!(base, other); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#358
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#372
+  sig { params(obj: T.untyped, keys: T.untyped).returns(T.untyped) }
   def dig(obj, *keys); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#342
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#357
+  sig do
+    params(
+      rel_path: ::String,
+      arch_root: ::Pathname,
+      no_checks: T::Boolean
+    ).returns(T::Hash[::String, T.untyped])
+  end
   def get_resolved_object(rel_path, arch_root, no_checks); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#370
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#389
+  sig { params(base: T.untyped, patch: T.untyped).returns(T.untyped) }
   def json_merge_patch(base, patch); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#129
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#67
+  sig do
+    params(
+      rel_path: ::String,
+      base_dir: ::Pathname,
+      overlay_dir: T.nilable(::Pathname),
+      output_dir: ::Pathname
+    ).void
+  end
+  def merge_file(rel_path, base_dir, overlay_dir, output_dir); end
+
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#43
+  sig do
+    params(
+      base_dir: T.any(::Pathname, ::String),
+      overlay_dir: T.nilable(T.any(::Pathname, ::String)),
+      output_dir: T.any(::Pathname, ::String)
+    ).void
+  end
+  def merge_files(base_dir, overlay_dir, output_dir); end
+
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#140
+  sig { params(rel_path: ::String, input_dir: ::Pathname, output_dir: ::Pathname, no_checks: T::Boolean).void }
   def resolve_file(rel_path, input_dir, output_dir, no_checks); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#252
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#108
+  sig do
+    params(
+      input_dir: T.any(::Pathname, ::String),
+      output_dir: T.any(::Pathname, ::String),
+      options: T::Hash[::Symbol, T.untyped]
+    ).void
+  end
+  def resolve_files(input_dir, output_dir, options = T.unsafe(nil)); end
+
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#272
+  sig do
+    params(
+      obj: T::Hash[::String, T.untyped],
+      obj_path: T::Array[T.untyped],
+      obj_file_path: T.any(::Pathname, ::String),
+      doc_obj: T.untyped,
+      arch_root: ::Pathname,
+      no_checks: T::Boolean
+    ).returns(T::Hash[::String, T.untyped])
+  end
   def resolve_inherits(obj, obj_path, obj_file_path, doc_obj, arch_root, no_checks); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#183
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#200
+  sig do
+    params(
+      obj: T.untyped,
+      obj_path: T::Array[T.untyped],
+      obj_file_path: T.any(::Pathname, ::String),
+      doc_obj: T.untyped,
+      arch_root: ::Pathname,
+      no_checks: T::Boolean
+    ).returns(T.untyped)
+  end
   def resolve_object(obj, obj_path, obj_file_path, doc_obj, arch_root, no_checks); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#420
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#458
+  sig { params(file_path: T.any(::Pathname, ::String), comment_map: ::Udb::Yaml::CommentMap).void }
   def track_source_locations(file_path, comment_map); end
 
-  # source://udb//../../udb/lib/udb/yaml/resolver.rb#160
+  # source://udb//../../udb/lib/udb/yaml/yaml_resolver.rb#172
+  sig { params(rel_path: ::String, input_dir: ::Pathname, output_dir: ::Pathname, no_checks: T::Boolean).void }
   def write_resolved_file(rel_path, input_dir, output_dir, no_checks); end
 end
 
