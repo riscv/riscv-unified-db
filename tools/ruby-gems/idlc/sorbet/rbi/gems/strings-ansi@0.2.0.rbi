@@ -5,42 +5,23 @@
 # Please instead update this file by running `bin/tapioca gem strings-ansi`.
 
 
-# source://strings-ansi//lib/strings/ansi/version.rb#3
 module Strings; end
 
-# source://strings-ansi//lib/strings/ansi/version.rb#4
 module Strings::ANSI
   private
 
-  # source://strings-ansi//lib/strings/ansi.rb#45
   def ansi?(string); end
-
-  # source://strings-ansi//lib/strings/ansi.rb#65
   def only_ansi?(string); end
-
-  # source://strings-ansi//lib/strings/ansi.rb#28
   def sanitize(string); end
 
   class << self
-    # source://strings-ansi//lib/strings/ansi.rb#48
     def ansi?(string); end
-
-    # source://strings-ansi//lib/strings/ansi.rb#68
     def only_ansi?(string); end
-
-    # source://strings-ansi//lib/strings/ansi.rb#31
     def sanitize(string); end
   end
 end
 
-# source://strings-ansi//lib/strings/ansi.rb#15
 Strings::ANSI::ANSI_MATCHER = T.let(T.unsafe(nil), String)
-
-# source://strings-ansi//lib/strings/ansi.rb#9
 Strings::ANSI::CSI = T.let(T.unsafe(nil), String)
-
-# source://strings-ansi//lib/strings/ansi.rb#12
 Strings::ANSI::RESET = T.let(T.unsafe(nil), String)
-
-# source://strings-ansi//lib/strings/ansi/version.rb#5
 Strings::ANSI::VERSION = T.let(T.unsafe(nil), String)

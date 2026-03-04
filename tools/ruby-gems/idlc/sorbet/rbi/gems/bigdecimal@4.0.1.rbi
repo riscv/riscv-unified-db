@@ -5,266 +5,111 @@
 # Please instead update this file by running `bin/tapioca gem bigdecimal`.
 
 
-# source://bigdecimal//lib/bigdecimal.rb#13
 class BigDecimal < ::Numeric
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def %(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def *(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#77
   def **(y); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def +(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def +@; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def -(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def -@; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def /(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def <(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def <=(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def <=>(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def ==(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def ===(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def >(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def >=(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def _decimal_shift(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def _dump(*_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def abs; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def add(_arg0, _arg1); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def ceil(*_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def clone; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def coerce(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def div(*_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def divmod(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def dup; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def eql?(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def exponent; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def finite?; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def fix; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def floor(*_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def frac; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def hash; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def infinite?; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def inspect; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def modulo(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def mult(_arg0, _arg1); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def n_significant_digits; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def nan?; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def nonzero?; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#97
   def power(y, prec = T.unsafe(nil)); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def precision; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def precision_scale; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def quo(*_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def remainder(_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def round(*_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def scale; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def sign; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def split; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#212
   def sqrt(prec); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def sub(_arg0, _arg1); end
-
-  # source://bigdecimal//lib/bigdecimal/util.rb#110
   def to_d; end
-
-  # source://bigdecimal//lib/bigdecimal/util.rb#90
   def to_digits; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def to_f; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def to_i; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def to_int; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def to_r; end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def to_s(format = T.unsafe(nil)); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def truncate(*_arg0); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#10
   def zero?; end
 
   class << self
-    # source://bigdecimal//lib/bigdecimal.rb#10
     def _load(_arg0); end
-
-    # source://bigdecimal//lib/bigdecimal.rb#10
     def double_fig; end
-
-    # source://bigdecimal//lib/bigdecimal.rb#10
     def interpret_loosely(_arg0); end
-
-    # source://bigdecimal//lib/bigdecimal.rb#10
     def limit(*_arg0); end
-
-    # source://bigdecimal//lib/bigdecimal.rb#10
     def mode(*_arg0); end
-
-    # source://bigdecimal//lib/bigdecimal.rb#10
     def save_exception_mode; end
-
-    # source://bigdecimal//lib/bigdecimal.rb#10
     def save_limit; end
-
-    # source://bigdecimal//lib/bigdecimal.rb#10
     def save_rounding_mode; end
   end
 end
 
-# source://bigdecimal//lib/bigdecimal.rb#14
 module BigDecimal::Internal
   class << self
-    # source://bigdecimal//lib/bigdecimal.rb#18
     def coerce_to_bigdecimal(x, prec, method_name); end
-
-    # source://bigdecimal//lib/bigdecimal.rb#30
     def coerce_validate_prec(prec, method_name, accept_zero: T.unsafe(nil)); end
-
-    # source://bigdecimal//lib/bigdecimal.rb#50
     def infinity_computation_result; end
-
-    # source://bigdecimal//lib/bigdecimal.rb#57
     def nan_computation_result; end
   end
 end
 
 BigDecimal::VERSION = T.let(T.unsafe(nil), String)
 
-# source://bigdecimal//lib/bigdecimal.rb#240
 module BigMath
   private
 
-  # source://bigdecimal//lib/bigdecimal.rb#310
   def _exp_taylor(x, prec); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#332
   def exp(x, prec); end
-
-  # source://bigdecimal//lib/bigdecimal.rb#255
   def log(x, prec); end
 
   class << self
-    # source://bigdecimal//lib/bigdecimal.rb#332
     def exp(x, prec); end
-
-    # source://bigdecimal//lib/bigdecimal.rb#255
     def log(x, prec); end
 
     private
 
-    # source://bigdecimal//lib/bigdecimal.rb#310
     def _exp_taylor(x, prec); end
   end
 end
 
-# source://bigdecimal//lib/bigdecimal/util.rb#141
 class Complex < ::Numeric
-  # source://bigdecimal//lib/bigdecimal/util.rb#164
   def to_d(precision = T.unsafe(nil)); end
 end
 
-# source://bigdecimal//lib/bigdecimal/util.rb#116
 class Rational < ::Numeric
-  # source://bigdecimal//lib/bigdecimal/util.rb#135
   def to_d(precision = T.unsafe(nil)); end
 end

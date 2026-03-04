@@ -5,83 +5,54 @@
 # Please instead update this file by running `bin/tapioca gem prawn`.
 
 
-# source://prawn//lib/prawn/security/arcfour.rb#14
 class Arcfour
-  # source://prawn//lib/prawn/security/arcfour.rb#15
   def initialize(key); end
 
-  # source://prawn//lib/prawn/security/arcfour.rb#41
   def encrypt(string); end
 
   private
 
-  # source://prawn//lib/prawn/security/arcfour.rb#48
   def key_byte; end
 end
 
-# source://prawn//lib/prawn/security.rb#212
 module PDF; end
 
-# source://prawn//lib/prawn/security.rb#213
 module PDF::Core
   private
 
-  # source://prawn//lib/prawn/security.rb#221
   def encrypted_pdf_object(obj, key, id, gen, in_content_stream = T.unsafe(nil)); end
 
   class << self
-    # source://prawn//lib/prawn/security.rb#221
     def encrypted_pdf_object(obj, key, id, gen, in_content_stream = T.unsafe(nil)); end
   end
 end
 
-# source://prawn//lib/prawn/security.rb#282
 class PDF::Core::Reference
-  # source://prawn//lib/prawn/security.rb#285
   def encrypted_object(key); end
 end
 
-# source://prawn//lib/prawn/security.rb#267
 class PDF::Core::Stream
-  # source://prawn//lib/prawn/security.rb#268
   def encrypted_object(key, id, gen); end
 end
 
-# source://prawn//lib/prawn.rb#11
 module Prawn
   private
 
-  # source://prawn//lib/prawn.rb#34
   def debug; end
-
-  # source://prawn//lib/prawn.rb#34
   def debug=(_arg0); end
-
-  # source://prawn//lib/prawn.rb#41
   def verify_options(accepted, actual); end
 
   class << self
-    # source://prawn//lib/prawn.rb#36
     def debug; end
-
-    # source://prawn//lib/prawn.rb#36
     def debug=(_arg0); end
-
-    # source://prawn//lib/prawn/image_handler.rb#12
     def image_handler; end
-
-    # source://prawn//lib/prawn.rb#41
     def verify_options(accepted, actual); end
   end
 end
 
-# source://prawn//lib/prawn.rb#19
 Prawn::BASEDIR = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn.rb#20
 Prawn::DATADIR = T.let(T.unsafe(nil), String)
 
-# source://prawn//lib/prawn/security.rb#14
 class Prawn::Document
   include ::Prawn::Document::Internals
   include ::PDF::Core::Annotations
@@ -104,1071 +75,454 @@ class Prawn::Document
   include ::Prawn::SoftMask
   include ::Prawn::TransformationStack
 
-  # source://prawn//lib/prawn/document.rb#204
   def initialize(options = T.unsafe(nil), &block); end
 
-  # source://prawn//lib/prawn/document/bounding_box.rb#158
   def bounding_box(point, *args, &block); end
-
-  # source://prawn//lib/prawn/document.rb#440
   def bounds; end
-
-  # source://prawn//lib/prawn/document.rb#456
   def bounds=(bounding_box); end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#172
   def canvas(&block); end
-
-  # source://prawn//lib/prawn/document/column_box.rb#30
   def column_box(*args, &block); end
-
-  # source://prawn//lib/prawn/document.rb#361
   def cursor; end
-
-  # source://prawn//lib/prawn/grid.rb#22
   def define_grid(options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/document.rb#319
   def delete_page(index); end
-
-  # source://prawn//lib/prawn/font.rb#237
   def find_font(name, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/document.rb#384
   def float; end
-
-  # source://prawn//lib/prawn/font.rb#48
   def font(name = T.unsafe(nil), options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/font.rb#171
   def font_families; end
-
-  # source://prawn//lib/prawn/font.rb#258
   def font_registry; end
-
-  # source://prawn//lib/prawn/font.rb#95
   def font_size(points = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/font.rb#105
   def font_size=(size); end
-
-  # source://prawn//lib/prawn/document.rb#346
   def go_to_page(page_number); end
-
-  # source://prawn//lib/prawn/grid.rb#34
   def grid(*args); end
-
-  # source://prawn//lib/prawn/document.rb#625
   def group(*_arguments); end
-
-  # source://prawn//lib/prawn/document.rb#527
   def indent(left, right = T.unsafe(nil), &block); end
-
-  # source://prawn//lib/prawn/document.rb#681
   def initialize_first_page(options); end
-
-  # source://prawn//lib/prawn/document.rb#107
   def margin_box; end
-
-  # source://prawn//lib/prawn/document.rb#107
   def margin_box=(_arg0); end
-
-  # source://prawn//lib/prawn/document.rb#108
   def margins; end
-
-  # source://prawn//lib/prawn/document.rb#669
   def mask(*fields); end
-
-  # source://prawn//lib/prawn/document.rb#367
   def move_cursor_to(new_y); end
-
-  # source://prawn//lib/prawn/document.rb#470
   def move_down(amount); end
-
-  # source://prawn//lib/prawn/document.rb#463
   def move_up(amount); end
-
-  # source://prawn//lib/prawn/document.rb#570
   def number_pages(string, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/outline.rb#10
   def outline; end
-
-  # source://prawn//lib/prawn/document.rb#509
   def pad(y); end
-
-  # source://prawn//lib/prawn/document.rb#495
   def pad_bottom(y); end
-
-  # source://prawn//lib/prawn/document.rb#482
   def pad_top(y); end
-
-  # source://prawn//lib/prawn/document.rb#695
   def page; end
-
-  # source://prawn//lib/prawn/document.rb#337
   def page_count; end
-
-  # source://prawn//lib/prawn/document.rb#652
   def page_match?(page_filter, page_number); end
-
-  # source://prawn//lib/prawn/document.rb#109
   def page_number; end
-
-  # source://prawn//lib/prawn/document.rb#109
   def page_number=(_arg0); end
-
-  # source://prawn//lib/prawn/document.rb#447
   def reference_bounds; end
-
-  # source://prawn//lib/prawn/document.rb#395
   def render(*arguments, &block); end
-
-  # source://prawn//lib/prawn/document.rb#408
   def render_file(filename); end
-
-  # source://prawn//lib/prawn/repeater.rb#78
   def repeat(page_filter, options = T.unsafe(nil), &block); end
-
-  # source://prawn//lib/prawn/repeater.rb#17
   def repeaters; end
-
-  # source://prawn//lib/prawn/font.rb#209
   def save_font; end
-
-  # source://prawn//lib/prawn/font.rb#201
   def set_font(font, size = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/document/span.rb#29
   def span(width, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/document.rb#255
   def start_new_page(options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/document.rb#692
   def state; end
-
-  # source://prawn//lib/prawn/document.rb#692
   def state=(_arg0); end
-
-  # source://prawn//lib/prawn/document.rb#113
   def text_formatter; end
-
-  # source://prawn//lib/prawn/document.rb#113
   def text_formatter=(_arg0); end
-
-  # source://prawn//lib/prawn/document.rb#634
   def transaction; end
-
-  # source://prawn//lib/prawn/font.rb#129
   def width_of(string, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/document.rb#108
   def y; end
-
-  # source://prawn//lib/prawn/document.rb#353
   def y=(new_y); end
 
   private
 
-  # source://prawn//lib/prawn/document.rb#737
   def apply_margin_options(options); end
-
-  # source://prawn//lib/prawn/document.rb#756
   def font_metric_cache; end
-
-  # source://prawn//lib/prawn/document.rb#712
   def generate_margin_box; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#187
   def init_bounding_box(user_block, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/document/column_box.rb#39
   def init_column_box(user_block, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/grid.rb#318
   def multi_box(box1, box2); end
-
-  # source://prawn//lib/prawn/grid.rb#314
   def single_box(rows, columns); end
-
-  # source://prawn//lib/prawn/document.rb#703
   def use_graphic_settings(override_settings = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/font.rb#264
   def width_of_inline_formatted_string(string, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/font.rb#274
   def width_of_string(string, options = T.unsafe(nil)); end
 
   class << self
-    # source://prawn//lib/prawn/document.rb#95
     def extensions; end
-
-    # source://prawn//lib/prawn/document.rb#144
     def generate(filename, options = T.unsafe(nil), &block); end
-
-    # source://prawn//lib/prawn/document.rb#100
     def inherited(base); end
   end
 end
 
-# source://prawn//lib/prawn/document/bounding_box.rb#225
 class Prawn::Document::BoundingBox
-  # source://prawn//lib/prawn/document/bounding_box.rb#233
   def initialize(document, parent, point, options = T.unsafe(nil)); end
 
-  # source://prawn//lib/prawn/document/bounding_box.rb#434
   def absolute_bottom; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#452
   def absolute_bottom_left; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#458
   def absolute_bottom_right; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#416
   def absolute_left; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#422
   def absolute_right; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#428
   def absolute_top; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#440
   def absolute_top_left; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#446
   def absolute_top_right; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#305
   def add_left_padding(left_padding); end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#321
   def add_right_padding(right_padding); end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#264
   def anchor; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#360
   def bottom; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#410
   def bottom_left; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#398
   def bottom_right; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#529
   def deep_copy; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#250
   def document; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#469
   def height; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#294
   def indent(left_padding, right_padding = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#274
   def left; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#480
   def left_side; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#495
   def move_past_bottom; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#250
   def parent; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#513
   def reference_bounds; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#340
   def right; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#486
   def right_side; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#507
   def stretchy?; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#313
   def subtract_left_padding(left_padding); end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#328
   def subtract_right_padding(right_padding); end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#350
   def top; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#373
   def top_left; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#386
   def top_right; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#254
   def total_left_padding; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#258
   def total_right_padding; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#523
   def update_height; end
-
-  # source://prawn//lib/prawn/document/bounding_box.rb#463
   def width; end
 
   class << self
-    # source://prawn//lib/prawn/document/bounding_box.rb#547
     def restore_deep_copy(bounds, document); end
   end
 end
 
-# source://prawn//lib/prawn/document/bounding_box.rb#226
 class Prawn::Document::BoundingBox::NoReferenceBounds < ::StandardError
-  # source://prawn//lib/prawn/document/bounding_box.rb#227
   def initialize(message = T.unsafe(nil)); end
 end
 
-# source://prawn//lib/prawn/document/column_box.rb#54
 class Prawn::Document::ColumnBox < ::Prawn::Document::BoundingBox
-  # source://prawn//lib/prawn/document/column_box.rb#55
   def initialize(document, parent, point, options = T.unsafe(nil)); end
 
-  # source://prawn//lib/prawn/document/column_box.rb#123
   def add_left_padding(left_padding); end
-
-  # source://prawn//lib/prawn/document/column_box.rb#133
   def add_right_padding(right_padding); end
-
-  # source://prawn//lib/prawn/document/column_box.rb#65
   def bare_column_width; end
-
-  # source://prawn//lib/prawn/document/column_box.rb#90
   def left; end
-
-  # source://prawn//lib/prawn/document/column_box.rb#84
   def left_side; end
-
-  # source://prawn//lib/prawn/document/column_box.rb#109
   def move_past_bottom; end
-
-  # source://prawn//lib/prawn/document/column_box.rb#103
   def right; end
-
-  # source://prawn//lib/prawn/document/column_box.rb#96
   def right_side; end
-
-  # source://prawn//lib/prawn/document/column_box.rb#128
   def subtract_left_padding(left_padding); end
-
-  # source://prawn//lib/prawn/document/column_box.rb#137
   def subtract_right_padding(right_padding); end
-
-  # source://prawn//lib/prawn/document/column_box.rb#72
   def width; end
-
-  # source://prawn//lib/prawn/document/column_box.rb#78
   def width_of_column; end
 end
 
-# source://prawn//lib/prawn/grid.rb#57
 class Prawn::Document::Grid
-  # source://prawn//lib/prawn/grid.rb#60
   def initialize(pdf, options = T.unsafe(nil)); end
 
-  # source://prawn//lib/prawn/grid.rb#58
   def column_gutter; end
-
-  # source://prawn//lib/prawn/grid.rb#71
   def column_width; end
-
-  # source://prawn//lib/prawn/grid.rb#58
   def columns; end
-
-  # source://prawn//lib/prawn/grid.rb#58
   def gutter; end
-
-  # source://prawn//lib/prawn/grid.rb#58
   def pdf; end
-
-  # source://prawn//lib/prawn/grid.rb#58
   def row_gutter; end
-
-  # source://prawn//lib/prawn/grid.rb#76
   def row_height; end
-
-  # source://prawn//lib/prawn/grid.rb#58
   def rows; end
-
-  # source://prawn//lib/prawn/grid.rb#81
   def show_all(color = T.unsafe(nil)); end
 
   private
 
-  # source://prawn//lib/prawn/grid.rb#95
   def apply_gutter(options); end
-
-  # source://prawn//lib/prawn/grid.rb#91
   def subdivide(total, num, gutter); end
 end
 
-# source://prawn//lib/prawn/grid.rb#113
 class Prawn::Document::GridBox
-  # source://prawn//lib/prawn/grid.rb#116
   def initialize(pdf, rows, columns); end
 
-  # source://prawn//lib/prawn/grid.rb#165
   def bottom; end
-
-  # source://prawn//lib/prawn/grid.rb#180
   def bottom_left; end
-
-  # source://prawn//lib/prawn/grid.rb#185
   def bottom_right; end
-
-  # source://prawn//lib/prawn/grid.rb#190
   def bounding_box(&blk); end
-
-  # source://prawn//lib/prawn/grid.rb#145
   def gutter; end
-
-  # source://prawn//lib/prawn/grid.rb#140
   def height; end
-
-  # source://prawn//lib/prawn/grid.rb#150
   def left; end
-
-  # source://prawn//lib/prawn/grid.rb#125
   def name; end
-
-  # source://prawn//lib/prawn/grid.rb#114
   def pdf; end
-
-  # source://prawn//lib/prawn/grid.rb#155
   def right; end
-
-  # source://prawn//lib/prawn/grid.rb#195
   def show(grid_color = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/grid.rb#160
   def top; end
-
-  # source://prawn//lib/prawn/grid.rb#170
   def top_left; end
-
-  # source://prawn//lib/prawn/grid.rb#175
   def top_right; end
-
-  # source://prawn//lib/prawn/grid.rb#130
   def total_height; end
-
-  # source://prawn//lib/prawn/grid.rb#135
   def width; end
 
   private
 
-  # source://prawn//lib/prawn/grid.rb#209
   def grid; end
 end
 
-# source://prawn//lib/prawn/document/internals.rb#19
 module Prawn::Document::Internals
   extend ::Forwardable
 
-  # source://prawn//lib/prawn/document/internals.rb#60
   def add_content(*args, **_arg1, &block); end
-
-  # source://prawn//lib/prawn/document/internals.rb#47
   def compression_enabled?(*args, **_arg1, &block); end
-
-  # source://prawn//lib/prawn/document/internals.rb#50
   def deref(*args, **_arg1, &block); end
-
-  # source://prawn//lib/prawn/document/internals.rb#26
   def graphic_state(*args, **_arg1, &block); end
-
-  # source://prawn//lib/prawn/document/internals.rb#55
   def names(*args, **_arg1, &block); end
-
-  # source://prawn//lib/prawn/document/internals.rb#26
   def on_page_create(*args, **_arg1, &block); end
-
-  # source://prawn//lib/prawn/document/internals.rb#50
   def ref(*args, **_arg1, &block); end
-
-  # source://prawn//lib/prawn/document/internals.rb#50
   def ref!(*args, **_arg1, &block); end
-
-  # source://prawn//lib/prawn/document/internals.rb#62
   def renderer; end
-
-  # source://prawn//lib/prawn/document/internals.rb#36
   def restore_graphics_state; end
-
-  # source://prawn//lib/prawn/document/internals.rb#31
   def save_graphics_state(state = T.unsafe(nil), &block); end
 end
 
-# source://prawn//lib/prawn/grid.rb#217
 class Prawn::Document::MultiBox
-  # source://prawn//lib/prawn/grid.rb#218
   def initialize(pdf, box1, box2); end
 
-  # source://prawn//lib/prawn/grid.rb#257
   def bottom; end
-
-  # source://prawn//lib/prawn/grid.rb#269
   def bottom_left; end
-
-  # source://prawn//lib/prawn/grid.rb#273
   def bottom_right; end
-
-  # source://prawn//lib/prawn/grid.rb#277
   def bounding_box(&blk); end
-
-  # source://prawn//lib/prawn/grid.rb#241
   def gutter; end
-
-  # source://prawn//lib/prawn/grid.rb#237
   def height; end
-
-  # source://prawn//lib/prawn/grid.rb#245
   def left; end
-
-  # source://prawn//lib/prawn/grid.rb#225
   def name; end
-
-  # source://prawn//lib/prawn/grid.rb#223
   def pdf; end
-
-  # source://prawn//lib/prawn/grid.rb#249
   def right; end
-
-  # source://prawn//lib/prawn/grid.rb#281
   def show(grid_color = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/grid.rb#253
   def top; end
-
-  # source://prawn//lib/prawn/grid.rb#261
   def top_left; end
-
-  # source://prawn//lib/prawn/grid.rb#265
   def top_right; end
-
-  # source://prawn//lib/prawn/grid.rb#229
   def total_height; end
-
-  # source://prawn//lib/prawn/grid.rb#233
   def width; end
 
   private
 
-  # source://prawn//lib/prawn/grid.rb#307
   def bottom_box; end
-
-  # source://prawn//lib/prawn/grid.rb#295
   def left_box; end
-
-  # source://prawn//lib/prawn/grid.rb#299
   def right_box; end
-
-  # source://prawn//lib/prawn/grid.rb#303
   def top_box; end
 end
 
-# source://prawn//lib/prawn/security.rb#17
 module Prawn::Document::Security
-  # source://prawn//lib/prawn/security.rb#88
   def encrypt_document(options = T.unsafe(nil)); end
 
   private
 
-  # source://prawn//lib/prawn/security.rb#124
   def encryption_dictionary; end
-
-  # source://prawn//lib/prawn/security.rb#195
   def owner_password_hash; end
-
-  # source://prawn//lib/prawn/security.rb#178
   def pad_password(password); end
-
-  # source://prawn//lib/prawn/security.rb#147
   def permissions=(perms = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/security.rb#169
   def permissions_value; end
-
-  # source://prawn//lib/prawn/security.rb#183
   def user_encryption_key; end
-
-  # source://prawn//lib/prawn/security.rb#204
   def user_password_hash; end
 
   class << self
-    # source://prawn//lib/prawn/security.rb#110
     def encrypt_string(str, key, id, gen); end
   end
 end
 
-# source://prawn//lib/prawn/security.rb#144
 Prawn::Document::Security::FULL_PERMISSIONS = T.let(T.unsafe(nil), Integer)
-
-# source://prawn//lib/prawn/security.rb#173
 Prawn::Document::Security::PASSWORD_PADDING = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/security.rb#136
 Prawn::Document::Security::PERMISSIONS_BITS = T.let(T.unsafe(nil), Hash)
-
-# source://prawn//lib/prawn/document.rb#67
 Prawn::Document::VALID_OPTIONS = T.let(T.unsafe(nil), Array)
-
-# source://prawn//lib/prawn/encoding.rb#9
 module Prawn::Encoding; end
-
-# source://prawn//lib/prawn/encoding.rb#12
 class Prawn::Encoding::WinAnsi; end
-
-# source://prawn//lib/prawn/encoding.rb#13
 Prawn::Encoding::WinAnsi::CHARACTERS = T.let(T.unsafe(nil), Array)
-
-# source://prawn//lib/prawn/errors.rb#10
 module Prawn::Errors; end
-
-# source://prawn//lib/prawn/errors.rb#71
 class Prawn::Errors::BlockRequired < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#26
 class Prawn::Errors::CannotFit < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#31
 class Prawn::Errors::CannotGroup < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#37
 class Prawn::Errors::IncompatibleStringEncoding < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#75
 class Prawn::Errors::InvalidGraphicsPath < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#82
 class Prawn::Errors::InvalidJoinStyle < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#57
 class Prawn::Errors::InvalidName < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#13
 class Prawn::Errors::InvalidTableSpan < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#54
 class Prawn::Errors::NameTaken < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#18
 class Prawn::Errors::NotOnPage < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#64
 class Prawn::Errors::RequiredOption < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#61
 class Prawn::Errors::UndefinedObjectName < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#22
 class Prawn::Errors::UnknownFont < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#44
 class Prawn::Errors::UnknownOption < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#68
 class Prawn::Errors::UnknownOutlineTitle < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#79
 class Prawn::Errors::UnrecognizedTableContent < ::StandardError; end
-
-# source://prawn//lib/prawn/errors.rb#49
 class Prawn::Errors::UnsupportedImageType < ::StandardError; end
-
-# source://prawn//lib/prawn.rb#22
 Prawn::FLOAT_PRECISION = T.let(T.unsafe(nil), Float)
 
-# source://prawn//lib/prawn/font.rb#281
 class Prawn::Font
-  # source://prawn//lib/prawn/font.rb#329
   def initialize(document, name, options = T.unsafe(nil)); end
 
-  # source://prawn//lib/prawn/font.rb#395
   def add_to_current_page(subset); end
-
-  # source://prawn//lib/prawn/font.rb#343
   def ascender; end
-
-  # source://prawn//lib/prawn/font.rb#349
   def descender; end
-
-  # source://prawn//lib/prawn/font.rb#421
   def eql?(other); end
-
-  # source://prawn//lib/prawn/font.rb#298
   def family; end
-
-  # source://prawn//lib/prawn/font.rb#415
   def hash; end
-
-  # source://prawn//lib/prawn/font.rb#387
   def height; end
-
-  # source://prawn//lib/prawn/font.rb#380
   def height_at(size); end
-
-  # source://prawn//lib/prawn/font.rb#402
   def identifier_for(subset); end
-
-  # source://prawn//lib/prawn/font.rb#406
   def inspect; end
-
-  # source://prawn//lib/prawn/font.rb#355
   def line_gap; end
-
-  # source://prawn//lib/prawn/font.rb#295
   def name; end
-
-  # source://prawn//lib/prawn/font.rb#363
   def normalize_encoding(_string); end
-
-  # source://prawn//lib/prawn/font.rb#372
   def normalize_encoding!(str); end
-
-  # source://prawn//lib/prawn/font.rb#301
   def options; end
 
   protected
 
-  # source://prawn//lib/prawn/font.rb#450
   def size; end
 
   private
 
-  # source://prawn//lib/prawn/font.rb#430
   def generate_unique_id; end
-
-  # source://prawn//lib/prawn/font.rb#442
   def key_is_unique?(test_key); end
 
   class << self
-    # source://prawn//lib/prawn/font.rb#317
     def font_format(src, options); end
-
-    # source://prawn//lib/prawn/font.rb#307
     def load(document, src, options = T.unsafe(nil)); end
   end
 end
 
-# source://prawn//lib/prawn/font.rb#289
 Prawn::Font::AFM = Prawn::Fonts::AFM
-
-# source://prawn//lib/prawn/font.rb#291
 Prawn::Font::DFont = Prawn::Fonts::DFont
-
-# source://prawn//lib/prawn/font.rb#292
 Prawn::Font::TTC = Prawn::Fonts::TTC
-
-# source://prawn//lib/prawn/font.rb#290
 Prawn::Font::TTF = Prawn::Fonts::TTF
 
-# source://prawn//lib/prawn/font_metric_cache.rb#15
 class Prawn::FontMetricCache
-  # source://prawn//lib/prawn/font_metric_cache.rb#18
   def initialize(document); end
 
-  # source://prawn//lib/prawn/font_metric_cache.rb#24
   def width_of(string, options); end
 end
 
-# source://prawn//lib/prawn/font_metric_cache.rb#16
 class Prawn::FontMetricCache::CacheEntry < ::Struct
-  # source://prawn//lib/prawn/font_metric_cache.rb#16
   def font; end
-
-  # source://prawn//lib/prawn/font_metric_cache.rb#16
   def font=(_); end
-
-  # source://prawn//lib/prawn/font_metric_cache.rb#16
   def options; end
-
-  # source://prawn//lib/prawn/font_metric_cache.rb#16
   def options=(_); end
-
-  # source://prawn//lib/prawn/font_metric_cache.rb#16
   def string; end
-
-  # source://prawn//lib/prawn/font_metric_cache.rb#16
   def string=(_); end
 
   class << self
-    # source://prawn//lib/prawn/font_metric_cache.rb#16
     def [](*_arg0); end
-
-    # source://prawn//lib/prawn/font_metric_cache.rb#16
     def inspect; end
-
-    # source://prawn//lib/prawn/font_metric_cache.rb#16
     def keyword_init?; end
-
-    # source://prawn//lib/prawn/font_metric_cache.rb#16
     def members; end
-
-    # source://prawn//lib/prawn/font_metric_cache.rb#16
     def new(*_arg0); end
   end
 end
 
-# source://prawn//lib/prawn/fonts/afm.rb#12
 module Prawn::Fonts; end
 
-# source://prawn//lib/prawn/fonts/afm.rb#15
 class Prawn::Fonts::AFM < ::Prawn::Font
-  # source://prawn//lib/prawn/fonts/afm.rb#54
   def initialize(document, name, options = T.unsafe(nil)); end
 
-  # source://prawn//lib/prawn/fonts/afm.rb#47
   def attributes; end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#82
   def bbox; end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#129
   def character_count(str); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#87
   def compute_width_of(string, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#145
   def encode_text(text, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#149
   def glyph_present?(char); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#102
   def has_kerning_data?; end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#111
   def normalize_encoding(text); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#123
   def to_utf8(text); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#29
   def unicode?; end
 
   private
 
-  # source://prawn//lib/prawn/fonts/afm.rb#174
   def find_font(file); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#261
   def kern(string); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#183
   def parse_afm(file_name); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#243
   def parse_generic_afm_attribute(line, hash); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#157
   def register(_subset); end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#170
   def symbolic?; end
-
-  # source://prawn//lib/prawn/fonts/afm.rb#285
   def unscaled_width_of(string); end
 
   class << self
-    # source://prawn//lib/prawn/fonts/afm.rb#50
     def font_data; end
-
-    # source://prawn//lib/prawn/fonts/afm.rb#17
     def hide_m17n_warning; end
-
-    # source://prawn//lib/prawn/fonts/afm.rb#17
     def hide_m17n_warning=(_arg0); end
-
-    # source://prawn//lib/prawn/fonts/afm.rb#33
     def metrics_path; end
   end
 end
 
-# source://prawn//lib/prawn/fonts/afm.rb#22
 Prawn::Fonts::AFM::BUILT_INS = T.let(T.unsafe(nil), Array)
 
-# source://prawn//lib/prawn/fonts/dfont.rb#8
 class Prawn::Fonts::DFont < ::Prawn::Fonts::TTF
   private
 
-  # source://prawn//lib/prawn/fonts/dfont.rb#31
   def read_ttf_file; end
 
   class << self
-    # source://prawn//lib/prawn/fonts/dfont.rb#23
     def font_count(file); end
-
-    # source://prawn//lib/prawn/fonts/dfont.rb#15
     def named_fonts(file); end
   end
 end
 
-# source://prawn//lib/prawn/fonts/otf.rb#8
 class Prawn::Fonts::OTF < ::Prawn::Fonts::TTF; end
 
-# source://prawn//lib/prawn/fonts/ttc.rb#8
 class Prawn::Fonts::TTC < ::Prawn::Fonts::TTF
   private
 
-  # source://prawn//lib/prawn/fonts/ttc.rb#27
   def font_option_to_index(file, option); end
-
-  # source://prawn//lib/prawn/fonts/ttc.rb#20
   def read_ttf_file; end
 
   class << self
-    # source://prawn//lib/prawn/fonts/ttc.rb#12
     def font_names(file); end
   end
 end
 
-# source://prawn//lib/prawn/fonts/ttf.rb#16
 class Prawn::Fonts::TTF < ::Prawn::Font
-  # source://prawn//lib/prawn/fonts/ttf.rb#46
   def initialize(document, name, options = T.unsafe(nil)); end
 
-  # source://prawn//lib/prawn/fonts/ttf.rb#136
   def basename; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#83
   def bbox; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#161
   def cap_height; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#221
   def character_count(str); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#64
   def compute_width_of(string, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#103
   def encode_text(text, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#175
   def family_class; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#214
   def glyph_present?(char); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#90
   def has_kerning_data?; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#145
   def italic_angle; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#200
   def normalize_encoding(text); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#187
   def pdf_flags; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#183
   def script?; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#179
   def serif?; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#141
   def stem_v; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#40
   def subsets; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#210
   def to_utf8(text); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#40
   def ttf; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#42
   def unicode?; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#169
   def x_height; end
 
   private
 
-  # source://prawn//lib/prawn/fonts/ttf.rb#266
   def character_width_by_code(code); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#227
   def cmap; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#291
   def embed(reference, subset); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#262
   def hmtx; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#236
   def kern(string); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#253
   def kern_pairs_table; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#398
   def read_ttf_file; end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#280
   def register(subset); end
-
-  # source://prawn//lib/prawn/fonts/ttf.rb#276
   def scale_factor; end
 end
 
-# source://prawn//lib/prawn/fonts/ttf.rb#17
 class Prawn::Fonts::TTF::Error < ::StandardError
-  # source://prawn//lib/prawn/fonts/ttf.rb#21
   def initialize(message = T.unsafe(nil), font: T.unsafe(nil)); end
 end
 
-# source://prawn//lib/prawn/fonts/ttf.rb#18
 Prawn::Fonts::TTF::Error::DEFAULT_MESSAGE = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/fonts/ttf.rb#19
 Prawn::Fonts::TTF::Error::MESSAGE_WITH_FONT = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/fonts/ttf.rb#35
 class Prawn::Fonts::TTF::NoPostscriptName < ::Prawn::Fonts::TTF::Error; end
-
-# source://prawn//lib/prawn/fonts/ttf.rb#36
 Prawn::Fonts::TTF::NoPostscriptName::DEFAULT_MESSAGE = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/fonts/ttf.rb#37
 Prawn::Fonts::TTF::NoPostscriptName::MESSAGE_WITH_FONT = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/fonts/ttf.rb#30
 class Prawn::Fonts::TTF::NoUnicodeCMap < ::Prawn::Fonts::TTF::Error; end
-
-# source://prawn//lib/prawn/fonts/ttf.rb#31
 Prawn::Fonts::TTF::NoUnicodeCMap::DEFAULT_MESSAGE = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/fonts/ttf.rb#32
 Prawn::Fonts::TTF::NoUnicodeCMap::MESSAGE_WITH_FONT = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/fonts/ttf.rb#377
 Prawn::Fonts::TTF::UNICODE_CMAP_TEMPLATE = T.let(T.unsafe(nil), String)
 
-# source://prawn//lib/prawn/graphics/blend_mode.rb#11
 module Prawn::Graphics
   include ::Prawn::Graphics::BlendMode
   include ::Prawn::Graphics::Color
@@ -1179,1642 +533,705 @@ module Prawn::Graphics
   include ::Prawn::Graphics::Transformation
   include ::Prawn::Graphics::Patterns
 
-  # source://prawn//lib/prawn/graphics.rb#195
   def circle(center, radius); end
-
-  # source://prawn//lib/prawn/graphics.rb#298
   def close_and_stroke; end
-
-  # source://prawn//lib/prawn/graphics.rb#417
   def close_path; end
-
-  # source://prawn//lib/prawn/graphics.rb#179
   def curve(origin, dest, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics.rb#68
   def curve_to(dest, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics.rb#207
   def ellipse(point, radius1, radius2 = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics.rb#396
   def fill(options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics.rb#410
   def fill_and_stroke(options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_circle(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_circle_at(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_curve(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_curve_to(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_ellipse(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_ellipse_at(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_horizontal_line(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_horizontal_rule(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_line(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_line_to(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_polygon(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_rectangle(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_rounded_polygon(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_rounded_rectangle(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_rounded_vertex(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_and_stroke_vertical_line(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_circle(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_circle_at(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_curve(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_curve_to(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_ellipse(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_ellipse_at(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_horizontal_line(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_horizontal_rule(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_line(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_line_to(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_polygon(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_rectangle(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_rounded_polygon(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_rounded_rectangle(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_rounded_vertex(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def fill_vertical_line(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#152
   def horizontal_line(x1, x2, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics.rb#161
   def horizontal_rule; end
-
-  # source://prawn//lib/prawn/graphics.rb#140
   def line(*points); end
-
-  # source://prawn//lib/prawn/graphics.rb#58
   def line_to(*point); end
-
-  # source://prawn//lib/prawn/graphics.rb#126
   def line_width(width = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics.rb#113
   def line_width=(width); end
-
-  # source://prawn//lib/prawn/graphics.rb#47
   def move_to(*point); end
-
-  # source://prawn//lib/prawn/graphics.rb#238
   def polygon(*points); end
-
-  # source://prawn//lib/prawn/graphics.rb#87
   def rectangle(point, width, height); end
-
-  # source://prawn//lib/prawn/graphics.rb#255
   def rounded_polygon(radius, *points); end
-
-  # source://prawn//lib/prawn/graphics.rb#100
   def rounded_rectangle(point, width, height, radius); end
-
-  # source://prawn//lib/prawn/graphics.rb#270
   def rounded_vertex(radius, *points); end
-
-  # source://prawn//lib/prawn/graphics.rb#290
   def stroke; end
-
-  # source://prawn//lib/prawn/graphics.rb#333
   def stroke_axis(options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics.rb#305
   def stroke_bounds; end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_circle(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_circle_at(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_curve(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_curve_to(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_ellipse(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_ellipse_at(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_horizontal_line(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_horizontal_rule(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_line(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_line_to(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_polygon(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_rectangle(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_rounded_polygon(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_rounded_rectangle(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_rounded_vertex(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#635
   def stroke_vertical_line(*args); end
-
-  # source://prawn//lib/prawn/graphics.rb#170
   def vertical_line(y1, y2, params); end
 
   private
 
-  # source://prawn//lib/prawn/graphics.rb#645
   def current_line_width; end
-
-  # source://prawn//lib/prawn/graphics.rb#649
   def current_line_width=(width); end
-
-  # source://prawn//lib/prawn/graphics.rb#666
   def degree_to_rad(angle); end
-
-  # source://prawn//lib/prawn/graphics.rb#657
   def map_to_absolute(*point); end
-
-  # source://prawn//lib/prawn/graphics.rb#662
   def map_to_absolute!(point); end
-
-  # source://prawn//lib/prawn/graphics.rb#672
   def point_on_line(distance_from_end, *points); end
-
-  # source://prawn//lib/prawn/graphics.rb#653
   def write_line_width; end
 end
 
-# source://prawn//lib/prawn/graphics/blend_mode.rb#31
 module Prawn::Graphics::BlendMode
-  # source://prawn//lib/prawn/graphics/blend_mode.rb#34
   def blend_mode(blend_mode = T.unsafe(nil)); end
 
   private
 
-  # source://prawn//lib/prawn/graphics/blend_mode.rb#51
   def blend_mode_dictionary_name(blend_mode); end
-
-  # source://prawn//lib/prawn/graphics/blend_mode.rb#47
   def blend_mode_dictionary_registry; end
 end
 
-# source://prawn//lib/prawn/graphics/cap_style.rb#11
 module Prawn::Graphics::CapStyle
-  # source://prawn//lib/prawn/graphics/cap_style.rb#22
   def cap_style(style = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics/cap_style.rb#30
   def cap_style=(style = T.unsafe(nil)); end
 
   private
 
-  # source://prawn//lib/prawn/graphics/cap_style.rb#34
   def current_cap_style; end
-
-  # source://prawn//lib/prawn/graphics/cap_style.rb#38
   def current_cap_style=(style); end
-
-  # source://prawn//lib/prawn/graphics/cap_style.rb#42
   def write_stroke_cap_style; end
 end
 
-# source://prawn//lib/prawn/graphics/cap_style.rb#14
 Prawn::Graphics::CapStyle::CAP_STYLES = T.let(T.unsafe(nil), Hash)
 
-# source://prawn//lib/prawn/graphics/color.rb#11
 module Prawn::Graphics::Color
-  # source://prawn//lib/prawn/graphics/color.rb#28
   def fill_color(*color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#35
   def fill_color=(*color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#51
   def stroke_color(*color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#59
   def stroke_color=(*color); end
 
   private
 
-  # source://prawn//lib/prawn/graphics/color.rb#133
   def color_space(color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#129
   def color_to_s(color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#98
   def color_type(color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#204
   def current_color_space(type); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#213
   def current_fill_color; end
-
-  # source://prawn//lib/prawn/graphics/color.rb#217
   def current_fill_color=(color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#221
   def current_stroke_color; end
-
-  # source://prawn//lib/prawn/graphics/color.rb#225
   def current_stroke_color=(color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#78
   def hex2rgb(hex); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#118
   def normalize_color(color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#87
   def process_color(*color); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#69
   def rgb2hex(rgb); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#170
   def set_color(type, color, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#144
   def set_color_space(type, color_space); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#208
   def set_current_color_space(color_space, type); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#191
   def set_fill_color(color = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#195
   def set_stroke_color(color = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics/color.rb#199
   def update_colors; end
-
-  # source://prawn//lib/prawn/graphics/color.rb#229
   def write_color(color, operator); end
 
   class << self
-    # source://prawn//lib/prawn/graphics/color.rb#78
     def hex2rgb(hex); end
-
-    # source://prawn//lib/prawn/graphics/color.rb#69
     def rgb2hex(rgb); end
   end
 end
 
-# source://prawn//lib/prawn/graphics/color.rb#142
 Prawn::Graphics::Color::COLOR_SPACES = T.let(T.unsafe(nil), Array)
 
-# source://prawn//lib/prawn/graphics/dash.rb#11
 module Prawn::Graphics::Dash
-  # source://prawn//lib/prawn/graphics/dash.rb#58
   def dash(length = T.unsafe(nil), options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics/dash.rb#82
   def dash=(length = T.unsafe(nil), options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics/dash.rb#93
   def dashed?; end
-
-  # source://prawn//lib/prawn/graphics/dash.rb#86
   def undash; end
 
   private
 
-  # source://prawn//lib/prawn/graphics/dash.rb#111
   def current_dash_state; end
-
-  # source://prawn//lib/prawn/graphics/dash.rb#107
   def current_dash_state=(dash_options); end
-
-  # source://prawn//lib/prawn/graphics/dash.rb#115
   def dash_setting; end
-
-  # source://prawn//lib/prawn/graphics/dash.rb#103
   def undashed_setting; end
-
-  # source://prawn//lib/prawn/graphics/dash.rb#99
   def write_stroke_dash; end
 end
 
-# source://prawn//lib/prawn/graphics/join_style.rb#11
 module Prawn::Graphics::JoinStyle
-  # source://prawn//lib/prawn/graphics/join_style.rb#23
   def join_style(style = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics/join_style.rb#37
   def join_style=(style = T.unsafe(nil)); end
 
   private
 
-  # source://prawn//lib/prawn/graphics/join_style.rb#41
   def current_join_style; end
-
-  # source://prawn//lib/prawn/graphics/join_style.rb#45
   def current_join_style=(style); end
-
-  # source://prawn//lib/prawn/graphics/join_style.rb#49
   def write_stroke_join_style; end
 end
 
-# source://prawn//lib/prawn/graphics/join_style.rb#12
 Prawn::Graphics::JoinStyle::JOIN_STYLES = T.let(T.unsafe(nil), Hash)
-
-# source://prawn//lib/prawn/graphics.rb#187
 Prawn::Graphics::KAPPA = T.let(T.unsafe(nil), Float)
 
-# source://prawn//lib/prawn/graphics/patterns.rb#14
 module Prawn::Graphics::Patterns
-  # source://prawn//lib/prawn/graphics/patterns.rb#69
   def fill_gradient(*args, **kwargs); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#75
   def stroke_gradient(*args, **kwargs); end
 
   private
 
-  # source://prawn//lib/prawn/graphics/patterns.rb#191
   def create_gradient_pattern(gradient); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#253
   def gradient_coordinates(gradient); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#187
   def gradient_registry; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#173
   def gradient_registry_key(gradient); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#113
   def parse_gradient_arguments(*arguments, from: T.unsafe(nil), to: T.unsafe(nil), r1: T.unsafe(nil), r2: T.unsafe(nil), stops: T.unsafe(nil), apply_transformations: T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#81
   def set_gradient(type, *grad, **kwargs); end
 end
 
-# source://prawn//lib/prawn/graphics/patterns.rb#16
 class Prawn::Graphics::Patterns::Gradient < ::Struct
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def apply_transformations; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def apply_transformations=(_); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def from; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def from=(_); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def r1; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def r1=(_); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def r2; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def r2=(_); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def stops; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def stops=(_); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def to; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def to=(_); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def type; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#16
   def type=(_); end
 
   class << self
-    # source://prawn//lib/prawn/graphics/patterns.rb#16
     def [](*_arg0); end
-
-    # source://prawn//lib/prawn/graphics/patterns.rb#16
     def inspect; end
-
-    # source://prawn//lib/prawn/graphics/patterns.rb#16
     def keyword_init?; end
-
-    # source://prawn//lib/prawn/graphics/patterns.rb#16
     def members; end
-
-    # source://prawn//lib/prawn/graphics/patterns.rb#16
     def new(*_arg0); end
   end
 end
 
-# source://prawn//lib/prawn/graphics/patterns.rb#15
 class Prawn::Graphics::Patterns::GradientStop < ::Struct
-  # source://prawn//lib/prawn/graphics/patterns.rb#15
   def color; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#15
   def color=(_); end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#15
   def position; end
-
-  # source://prawn//lib/prawn/graphics/patterns.rb#15
   def position=(_); end
 
   class << self
-    # source://prawn//lib/prawn/graphics/patterns.rb#15
     def [](*_arg0); end
-
-    # source://prawn//lib/prawn/graphics/patterns.rb#15
     def inspect; end
-
-    # source://prawn//lib/prawn/graphics/patterns.rb#15
     def keyword_init?; end
-
-    # source://prawn//lib/prawn/graphics/patterns.rb#15
     def members; end
-
-    # source://prawn//lib/prawn/graphics/patterns.rb#15
     def new(*_arg0); end
   end
 end
 
-# source://prawn//lib/prawn/graphics/transformation.rb#12
 module Prawn::Graphics::Transformation
-  # source://prawn//lib/prawn/graphics/transformation.rb#43
   def rotate(angle, options = T.unsafe(nil), &block); end
-
-  # source://prawn//lib/prawn/graphics/transformation.rb#116
   def scale(factor, options = T.unsafe(nil), &block); end
-
-  # source://prawn//lib/prawn/graphics/transformation.rb#147
   def transformation_matrix(*matrix); end
-
-  # source://prawn//lib/prawn/graphics/transformation.rb#84
   def translate(x, y, &block); end
 end
 
-# source://prawn//lib/prawn/graphics/transparency.rb#30
 module Prawn::Graphics::Transparency
-  # source://prawn//lib/prawn/graphics/transparency.rb#54
   def transparent(opacity, stroke_opacity = T.unsafe(nil)); end
 
   private
 
-  # source://prawn//lib/prawn/graphics/transparency.rb#74
   def next_opacity_dictionary_id; end
-
-  # source://prawn//lib/prawn/graphics/transparency.rb#78
   def opacity_dictionary_name(opacity, stroke_opacity); end
-
-  # source://prawn//lib/prawn/graphics/transparency.rb#70
   def opacity_dictionary_registry; end
 end
 
-# source://prawn//lib/prawn/image_handler.rb#16
 class Prawn::ImageHandler
-  # source://prawn//lib/prawn/image_handler.rb#17
   def initialize; end
 
-  # source://prawn//lib/prawn/image_handler.rb#35
   def find(image_blob); end
-
-  # source://prawn//lib/prawn/image_handler.rb#21
   def register(handler); end
-
-  # source://prawn//lib/prawn/image_handler.rb#26
   def register!(handler); end
-
-  # source://prawn//lib/prawn/image_handler.rb#31
   def unregister(handler); end
 end
 
-# source://prawn//lib/prawn/images.rb#15
 module Prawn::Images
-  # source://prawn//lib/prawn/images.rb#84
   def build_image_object(file); end
-
-  # source://prawn//lib/prawn/images.rb#115
   def embed_image(pdf_obj, info, options); end
-
-  # source://prawn//lib/prawn/images.rb#68
   def image(file, options = T.unsafe(nil)); end
 
   private
 
-  # source://prawn//lib/prawn/images.rb#188
   def determine_y_with_page_flow(height); end
-
-  # source://prawn//lib/prawn/images.rb#156
   def image_position(width, height, options); end
-
-  # source://prawn//lib/prawn/images.rb#199
   def image_registry; end
-
-  # source://prawn//lib/prawn/images.rb#203
   def next_image_id; end
-
-  # source://prawn//lib/prawn/images.rb#195
   def overruns_page?(height); end
-
-  # source://prawn//lib/prawn/images.rb#137
   def verify_and_read_image(io_or_path); end
 end
 
-# source://prawn//lib/prawn/images/image.rb#13
 class Prawn::Images::Image
-  # source://prawn//lib/prawn/images/image.rb#16
   def calc_image_dimensions(options); end
 end
 
-# source://prawn//lib/prawn/images/jpg.rb#18
 class Prawn::Images::JPG < ::Prawn::Images::Image
-  # source://prawn//lib/prawn/images/jpg.rb#39
   def initialize(data); end
 
-  # source://prawn//lib/prawn/images/jpg.rb#23
   def bits; end
-
-  # source://prawn//lib/prawn/images/jpg.rb#63
   def build_pdf_object(document); end
-
-  # source://prawn//lib/prawn/images/jpg.rb#23
   def channels; end
-
-  # source://prawn//lib/prawn/images/jpg.rb#23
   def height; end
-
-  # source://prawn//lib/prawn/images/jpg.rb#24
   def scaled_height; end
-
-  # source://prawn//lib/prawn/images/jpg.rb#24
   def scaled_height=(_arg0); end
-
-  # source://prawn//lib/prawn/images/jpg.rb#24
   def scaled_width; end
-
-  # source://prawn//lib/prawn/images/jpg.rb#24
   def scaled_width=(_arg0); end
-
-  # source://prawn//lib/prawn/images/jpg.rb#23
   def width; end
 
   class << self
-    # source://prawn//lib/prawn/images/jpg.rb#31
     def can_render?(image_blob); end
   end
 end
 
-# source://prawn//lib/prawn/images/jpg.rb#19
 class Prawn::Images::JPG::FormatError < ::StandardError; end
-
-# source://prawn//lib/prawn/images/jpg.rb#26
 Prawn::Images::JPG::JPEG_SOF_BLOCKS = T.let(T.unsafe(nil), Array)
 
-# source://prawn//lib/prawn/images/png.rb#19
 class Prawn::Images::PNG < ::Prawn::Images::Image
-  # source://prawn//lib/prawn/images/png.rb#36
   def initialize(data); end
 
-  # source://prawn//lib/prawn/images/png.rb#25
   def alpha_channel; end
-
-  # source://prawn//lib/prawn/images/png.rb#120
   def alpha_channel?; end
-
-  # source://prawn//lib/prawn/images/png.rb#23
   def bits; end
-
-  # source://prawn//lib/prawn/images/png.rb#130
   def build_pdf_object(document); end
-
-  # source://prawn//lib/prawn/images/png.rb#24
   def color_type; end
-
-  # source://prawn//lib/prawn/images/png.rb#98
   def colors; end
-
-  # source://prawn//lib/prawn/images/png.rb#24
   def compression_method; end
-
-  # source://prawn//lib/prawn/images/png.rb#24
   def filter_method; end
-
-  # source://prawn//lib/prawn/images/png.rb#23
   def height; end
-
-  # source://prawn//lib/prawn/images/png.rb#22
   def img_data; end
-
-  # source://prawn//lib/prawn/images/png.rb#25
   def interlace_method; end
-
-  # source://prawn//lib/prawn/images/png.rb#250
   def min_pdf_version; end
-
-  # source://prawn//lib/prawn/images/png.rb#22
   def palette; end
-
-  # source://prawn//lib/prawn/images/png.rb#26
   def scaled_height; end
-
-  # source://prawn//lib/prawn/images/png.rb#26
   def scaled_height=(_arg0); end
-
-  # source://prawn//lib/prawn/images/png.rb#26
   def scaled_width; end
-
-  # source://prawn//lib/prawn/images/png.rb#26
   def scaled_width=(_arg0); end
-
-  # source://prawn//lib/prawn/images/png.rb#110
   def split_alpha_channel!; end
-
-  # source://prawn//lib/prawn/images/png.rb#22
   def transparency; end
-
-  # source://prawn//lib/prawn/images/png.rb#23
   def width; end
 
   private
 
-  # source://prawn//lib/prawn/images/png.rb#300
   def generate_alpha_channel; end
-
-  # source://prawn//lib/prawn/images/png.rb#264
   def split_image_data; end
 
   class << self
-    # source://prawn//lib/prawn/images/png.rb#28
     def can_render?(image_blob); end
   end
 end
 
-# source://prawn//lib/prawn/measurements.rb#12
 module Prawn::Measurements
-  # source://prawn//lib/prawn/measurements.rb#14
   def cm2mm(cm); end
-
-  # source://prawn//lib/prawn/measurements.rb#57
   def cm2pt(cm); end
-
-  # source://prawn//lib/prawn/measurements.rb#18
   def dm2mm(dm); end
-
-  # source://prawn//lib/prawn/measurements.rb#61
   def dm2pt(dm); end
-
-  # source://prawn//lib/prawn/measurements.rb#28
   def ft2in(ft); end
-
-  # source://prawn//lib/prawn/measurements.rb#45
   def ft2pt(ft); end
-
-  # source://prawn//lib/prawn/measurements.rb#41
   def in2pt(inch); end
-
-  # source://prawn//lib/prawn/measurements.rb#22
   def m2mm(m); end
-
-  # source://prawn//lib/prawn/measurements.rb#65
   def m2pt(m); end
-
-  # source://prawn//lib/prawn/measurements.rb#53
   def mm2pt(mm); end
-
-  # source://prawn//lib/prawn/measurements.rb#69
   def pt2mm(pt); end
-
-  # source://prawn//lib/prawn/measurements.rb#37
   def pt2pt(pt); end
-
-  # source://prawn//lib/prawn/measurements.rb#32
   def yd2in(yd); end
-
-  # source://prawn//lib/prawn/measurements.rb#49
   def yd2pt(yd); end
 end
 
-# source://prawn//lib/prawn/outline.rb#27
 class Prawn::Outline
-  # source://prawn//lib/prawn/outline.rb#31
   def initialize(document); end
 
-  # source://prawn//lib/prawn/outline.rb#108
   def add_subsection_to(title, position = T.unsafe(nil), &block); end
-
-  # source://prawn//lib/prawn/outline.rb#74
   def define(&block); end
-
-  # source://prawn//lib/prawn/outline.rb#29
   def document; end
-
-  # source://prawn//lib/prawn/outline.rb#29
   def document=(_arg0); end
-
-  # source://prawn//lib/prawn/outline.rb#141
   def insert_section_after(title, &block); end
-
-  # source://prawn//lib/prawn/outline.rb#29
   def items; end
-
-  # source://prawn//lib/prawn/outline.rb#29
   def items=(_arg0); end
-
-  # source://prawn//lib/prawn/outline.rb#213
   def page(options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/outline.rb#41
   def page_number; end
-
-  # source://prawn//lib/prawn/outline.rb#29
   def parent; end
-
-  # source://prawn//lib/prawn/outline.rb#29
   def parent=(_arg0); end
-
-  # source://prawn//lib/prawn/outline.rb#29
   def prev; end
-
-  # source://prawn//lib/prawn/outline.rb#29
   def prev=(_arg0); end
-
-  # source://prawn//lib/prawn/outline.rb#181
   def section(title, options = T.unsafe(nil), &block); end
-
-  # source://prawn//lib/prawn/outline.rb#78
   def update(&block); end
 
   private
 
-  # source://prawn//lib/prawn/outline.rb#233
   def add_outline_item(title, options, &block); end
-
-  # source://prawn//lib/prawn/outline.rb#297
   def adjust_relations(nxt, last); end
-
-  # source://prawn//lib/prawn/outline.rb#242
   def create_outline_item(title, options); end
-
-  # source://prawn//lib/prawn/outline.rb#257
   def establish_relations(outline_item); end
-
-  # source://prawn//lib/prawn/outline.rb#263
   def increase_count; end
-
-  # source://prawn//lib/prawn/outline.rb#288
   def insert_section(nxt, &block); end
-
-  # source://prawn//lib/prawn/outline.rb#281
   def reset_parent(outline_item); end
-
-  # source://prawn//lib/prawn/outline.rb#305
   def reset_root_positioning; end
-
-  # source://prawn//lib/prawn/outline.rb#228
   def root; end
-
-  # source://prawn//lib/prawn/outline.rb#276
   def set_variables_for_block(outline_item, block); end
 end
 
-# source://prawn//lib/prawn/repeater.rb#86
 class Prawn::Repeater
-  # source://prawn//lib/prawn/repeater.rb#97
   def initialize(document, page_filter, dynamic = T.unsafe(nil), &block); end
 
-  # source://prawn//lib/prawn/repeater.rb#109
   def match?(page_number); end
-
-  # source://prawn//lib/prawn/repeater.rb#95
   def name; end
-
-  # source://prawn//lib/prawn/repeater.rb#113
   def run(page_number); end
 
   class << self
-    # source://prawn//lib/prawn/repeater.rb#90
     def count; end
-
-    # source://prawn//lib/prawn/repeater.rb#88
     def count=(_arg0); end
   end
 end
 
-# source://prawn//lib/prawn/soft_mask.rb#27
 module Prawn::SoftMask
-  # source://prawn//lib/prawn/soft_mask.rb#30
   def soft_mask(&block); end
 
   private
 
-  # source://prawn//lib/prawn/soft_mask.rb#89
   def soft_mask_registry; end
 end
 
-# source://prawn//lib/prawn/stamp.rb#27
 module Prawn::Stamp
-  # source://prawn//lib/prawn/stamp.rb#78
   def create_stamp(name, &block); end
-
-  # source://prawn//lib/prawn/stamp.rb#42
   def stamp(name); end
-
-  # source://prawn//lib/prawn/stamp.rb#62
   def stamp_at(name, point); end
 
   private
 
-  # source://prawn//lib/prawn/stamp.rb#107
   def create_stamp_dictionary(name); end
-
-  # source://prawn//lib/prawn/stamp.rb#143
   def freeze_stamp_graphics; end
-
-  # source://prawn//lib/prawn/stamp.rb#90
   def next_stamp_dictionary_id; end
-
-  # source://prawn//lib/prawn/stamp.rb#94
   def stamp_dictionary(name); end
-
-  # source://prawn//lib/prawn/stamp.rb#86
   def stamp_dictionary_registry; end
-
-  # source://prawn//lib/prawn/stamp.rb#136
   def update_annotation_references(annots); end
 end
 
-# source://prawn//lib/prawn/utilities.rb#18
 class Prawn::SynchronizedCache
-  # source://prawn//lib/prawn/utilities.rb#21
   def initialize; end
 
-  # source://prawn//lib/prawn/utilities.rb#26
   def [](key); end
-
-  # source://prawn//lib/prawn/utilities.rb#30
   def []=(key, value); end
 end
 
-# source://prawn//lib/prawn/text/formatted/line_wrap.rb#12
 module Prawn::Text
   include ::PDF::Core::Text
   include ::Prawn::Text::Formatted
 
-  # source://prawn//lib/prawn/text.rb#276
   def draw_text(text, options); end
-
-  # source://prawn//lib/prawn/text.rb#291
   def draw_text!(text, options); end
-
-  # source://prawn//lib/prawn/text.rb#190
   def formatted_text(array, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text.rb#322
   def height_of(string, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text.rb#336
   def height_of_formatted(array, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text.rb#152
   def text(string, options = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/box.rb#106
   def text_box(string, options = T.unsafe(nil)); end
 
   private
 
-  # source://prawn//lib/prawn/text.rb#364
   def draw_indented_formatted_line(string, options); end
-
-  # source://prawn//lib/prawn/text.rb#355
   def draw_remaining_formatted_text_on_new_pages(remaining_text, options); end
-
-  # source://prawn//lib/prawn/text.rb#377
   def fill_formatted_text_box(text, options); end
-
-  # source://prawn//lib/prawn/text.rb#406
   def inspect_options_for_draw_text(options); end
-
-  # source://prawn//lib/prawn/text.rb#421
   def inspect_options_for_text(options); end
-
-  # source://prawn//lib/prawn/text.rb#390
   def merge_text_box_positioning_options(options); end
-
-  # source://prawn//lib/prawn/text.rb#443
   def move_text_position(amount); end
-
-  # source://prawn//lib/prawn/text.rb#433
   def process_final_gap_option(options); end
-
-  # source://prawn//lib/prawn/text.rb#438
   def process_indent_paragraphs_option(options); end
 end
 
-# source://prawn//lib/prawn/text/box.rb#131
 class Prawn::Text::Box < ::Prawn::Text::Formatted::Box
-  # source://prawn//lib/prawn/text/box.rb#132
   def initialize(string, options = T.unsafe(nil)); end
 
-  # source://prawn//lib/prawn/text/box.rb#136
   def render(flags = T.unsafe(nil)); end
 end
 
-# source://prawn//lib/prawn/text/formatted/line_wrap.rb#13
 module Prawn::Text::Formatted
-  # source://prawn//lib/prawn/text/formatted/box.rb#92
   def formatted_text_box(array, options = T.unsafe(nil)); end
 end
 
-# source://prawn//lib/prawn/text/formatted/arranger.rb#15
 class Prawn::Text::Formatted::Arranger
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#46
   def initialize(document, options = T.unsafe(nil)); end
 
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#154
   def apply_color_and_font_settings(fragment, &block); end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#168
   def apply_font_settings(fragment = T.unsafe(nil), &block); end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#39
   def consumed; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#39
   def consumed=(_arg0); end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#44
   def current_format_state; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#86
   def finalize_line; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#38
   def finalized; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#126
   def finished?; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#236
   def font_style(styles); end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#106
   def format_array=(array); end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#43
   def fragments; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#116
   def initialize_line; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#73
   def line; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#63
   def line_width; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#37
   def max_ascender; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#36
   def max_descender; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#35
   def max_line_height; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#130
   def next_string; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#146
   def preview_next_string; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#225
   def repack_unretrieved; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#217
   def retrieve_fragment; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#53
   def space_count; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#42
   def unconsumed; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#198
   def update_last_string(printed, unprinted, normalized_soft_hyphen = T.unsafe(nil)); end
 
   private
 
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#261
   def apply_font_size(size, styles, &block); end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#306
   def fragment_measurements=(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#318
   def line_measurement_maximums=(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#251
   def load_previous_format_state; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#290
   def omit_trailing_whitespace_from_line_width; end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#278
   def subscript?(styles); end
-
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#284
   def superscript?(styles); end
 end
 
-# source://prawn//lib/prawn/text/formatted/arranger.rb#29
 class Prawn::Text::Formatted::Arranger::BadFontFamily < ::StandardError
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#30
   def initialize(message = T.unsafe(nil)); end
 end
 
-# source://prawn//lib/prawn/text/formatted/arranger.rb#16
 class Prawn::Text::Formatted::Arranger::NotFinalized < ::StandardError
-  # source://prawn//lib/prawn/text/formatted/arranger.rb#20
   def initialize(message = T.unsafe(nil), method: T.unsafe(nil)); end
 end
 
-# source://prawn//lib/prawn/text/formatted/arranger.rb#17
 Prawn::Text::Formatted::Arranger::NotFinalized::DEFAULT_MESSAGE = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/text/formatted/arranger.rb#18
 Prawn::Text::Formatted::Arranger::NotFinalized::MESSAGE_WITH_METHOD = T.let(T.unsafe(nil), String)
 
-# source://prawn//lib/prawn/text/formatted/box.rb#102
 class Prawn::Text::Formatted::Box
   include ::Prawn::Text::Formatted::Wrap
 
-  # source://prawn//lib/prawn/text/formatted/box.rb#140
   def initialize(formatted_text, options = T.unsafe(nil)); end
 
-  # source://prawn//lib/prawn/text/formatted/box.rb#128
   def ascender; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#124
   def at; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#244
   def available_width; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#130
   def descender; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#258
   def draw_fragment(fragment, accumulated_width = T.unsafe(nil), line_width = T.unsafe(nil), word_spacing = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#119
   def everything_printed?; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#250
   def height; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#132
   def leading; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#134
   def line_gap; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#126
   def line_height; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#113
   def nothing_printed?; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#211
   def render(flags = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#109
   def text; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#351
   def valid_options; end
 
   private
 
-  # source://prawn//lib/prawn/text/formatted/box.rb#417
   def analyze_glyphs_for_fallback_font_support(hash); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#493
   def default_height; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#615
   def draw_fragment_overlay_anchor(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#600
   def draw_fragment_overlay_link(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#626
   def draw_fragment_overlay_local(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#642
   def draw_fragment_overlay_styles(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#590
   def draw_fragment_overlays(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#584
   def draw_fragment_underlays(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#451
   def find_font_for_this_glyph(char, current_font, fallback_fonts); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#460
   def form_fragments_from_like_font_glyph_pairs(font_glyph_pairs, hash); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#480
   def move_baseline_down; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#386
   def normalize_encoding; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#370
   def normalized_text(flags); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#378
   def original_text; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#382
   def original_text=(formatted_text); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#406
   def process_fallback_fonts(formatted_text); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#549
   def process_options; end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#501
   def process_vertical_alignment(text); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#557
   def render_rotated(text); end
-
-  # source://prawn//lib/prawn/text/formatted/box.rb#529
   def shrink_to_fit(text); end
 
   class << self
-    # source://prawn//lib/prawn/text/formatted/box.rb#341
     def extensions; end
-
-    # source://prawn//lib/prawn/text/formatted/box.rb#346
     def inherited(base); end
   end
 end
 
-# source://prawn//lib/prawn/text/formatted/fragment.rb#16
 class Prawn::Text::Formatted::Fragment
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#22
   def initialize(text, format_state, document); end
 
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#185
   def absolute_bottom; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#197
   def absolute_bottom_left; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#201
   def absolute_bottom_right; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#62
   def absolute_bounding_box; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#173
   def absolute_left; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#177
   def absolute_right; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#181
   def absolute_top; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#189
   def absolute_top_left; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#193
   def absolute_top_right; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#89
   def anchor; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#19
   def ascender; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#19
   def ascender=(_arg0); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#20
   def baseline; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#20
   def baseline=(_arg0); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#153
   def bottom; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#169
   def bottom_left; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#165
   def bottom_right; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#58
   def bounding_box; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#134
   def callback_objects; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#109
   def character_spacing; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#97
   def color; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#118
   def default_direction=(direction); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#19
   def descender; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#19
   def descender=(_arg0); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#114
   def direction; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#101
   def font; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#17
   def format_state; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#39
   def height; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#125
   def include_trailing_white_space!; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#20
   def left; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#20
   def left=(_arg0); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#19
   def line_height; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#19
   def line_height=(_arg0); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#85
   def link; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#93
   def local; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#145
   def right; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#105
   def size; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#130
   def space_count; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#76
   def strikethrough_points; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#81
   def styles; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#43
   def subscript?; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#47
   def superscript?; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#17
   def text; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#149
   def top; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#157
   def top_left; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#161
   def top_right; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#71
   def underline_points; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#33
   def width; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#18
   def width=(_arg0); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#20
   def word_spacing; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#20
   def word_spacing=(_arg0); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#51
   def y_offset; end
 
   private
 
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#227
   def exclude_trailing_white_space?; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#235
   def normalized_soft_hyphen; end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#239
   def process_soft_hyphens(string); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#207
   def process_text(text); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#231
   def soft_hyphens_need_processing?(string); end
-
-  # source://prawn//lib/prawn/text/formatted/fragment.rb#247
   def strip_zero_width_spaces(string); end
 end
 
-# source://prawn//lib/prawn/text/formatted/line_wrap.rb#15
 class Prawn::Text::Formatted::LineWrap
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#26
   def paragraph_finished?; end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#23
   def space_count; end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#30
   def tokenize(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#18
   def width; end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#38
   def wrap_line(options); end
 
   private
 
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#88
   def add_fragment_to_line(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#311
   def append_char(char); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#77
   def apply_font_settings_and_add_fragment_to_line(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#178
   def break_chars(encoding = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#65
   def empty_line?(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#297
   def end_of_the_line_reached(segment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#61
   def first_fragment_on_this_line?(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#283
   def fragment_begins_with_breakable?(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#226
   def fragment_finished(fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#197
   def hyphen(_encoding = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#208
   def initialize_line(options); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#204
   def line_empty?; end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#287
   def line_finished?; end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#73
   def next_string_newline?; end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#279
   def previous_fragment_ended_with_breakable?; end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#258
   def pull_preceding_fragment_to_join_this_one?(current_fragment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#268
   def remember_this_fragment_for_backward_looking_ops; end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#129
   def scan_pattern(encoding = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#171
   def soft_hyphen(encoding = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#291
   def update_line_status_based_on_last_output; end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#241
   def update_output_based_on_last_fragment(fragment, normalized_soft_hyphen = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#193
   def whitespace(encoding = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#155
   def word_division_scan_pattern(encoding = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#305
   def wrap_by_char(segment); end
-
-  # source://prawn//lib/prawn/text/formatted/line_wrap.rb#186
   def zero_width_space(encoding = T.unsafe(nil)); end
 end
 
-# source://prawn//lib/prawn/text/formatted/parser.rb#14
 class Prawn::Text::Formatted::Parser
   class << self
-    # source://prawn//lib/prawn/text/formatted/parser.rb#126
     def array_from_tokens(tokens); end
-
-    # source://prawn//lib/prawn/text/formatted/parser.rb#103
     def array_paragraphs(array); end
-
-    # source://prawn//lib/prawn/text/formatted/parser.rb#36
     def format(string, *_args); end
-
-    # source://prawn//lib/prawn/text/formatted/parser.rb#41
     def to_string(array); end
   end
 end
 
-# source://prawn//lib/prawn/text/formatted/parser.rb#17
 Prawn::Text::Formatted::Parser::PARSER_REGEX = T.let(T.unsafe(nil), Regexp)
 
-# source://prawn//lib/prawn/text/formatted/wrap.rb#17
 module Prawn::Text::Formatted::Wrap
-  # source://prawn//lib/prawn/text/formatted/wrap.rb#18
   def initialize(_array, options); end
 
-  # source://prawn//lib/prawn/text/formatted/wrap.rb#47
   def wrap(array); end
 
   private
 
-  # source://prawn//lib/prawn/text/formatted/wrap.rb#123
   def enough_height_for_this_line?; end
-
-  # source://prawn//lib/prawn/text/formatted/wrap.rb#158
   def format_and_draw_fragment(fragment, accumulated_width, line_width, word_spacing); end
-
-  # source://prawn//lib/prawn/text/formatted/wrap.rb#143
   def initialize_wrap(array); end
-
-  # source://prawn//lib/prawn/text/formatted/wrap.rb#79
   def print_line; end
-
-  # source://prawn//lib/prawn/text/formatted/wrap.rb#114
   def word_spacing_for_this_line; end
 end
 
-# source://prawn//lib/prawn/text.rb#20
 Prawn::Text::NBSP = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/text.rb#24
 Prawn::Text::SHY = T.let(T.unsafe(nil), String)
-
-# source://prawn//lib/prawn/text.rb#22
 Prawn::Text::ZWSP = T.let(T.unsafe(nil), String)
 
-# source://prawn//lib/prawn/transformation_stack.rb#14
 module Prawn::TransformationStack
-  # source://prawn//lib/prawn/transformation_stack.rb#15
   def add_to_transformation_stack(a, b, c, d, e, f); end
-
-  # source://prawn//lib/prawn/transformation_stack.rb#29
   def current_transformation_matrix_with_translation(x = T.unsafe(nil), y = T.unsafe(nil)); end
-
-  # source://prawn//lib/prawn/transformation_stack.rb#25
   def restore_transformation_stack; end
-
-  # source://prawn//lib/prawn/transformation_stack.rb#20
   def save_transformation_stack; end
 end
 
-# source://prawn//lib/prawn/version.rb#4
 Prawn::VERSION = T.let(T.unsafe(nil), String)
 
-# source://prawn//lib/prawn/view.rb#59
 module Prawn::View
-  # source://prawn//lib/prawn/view.rb#66
   def document; end
-
-  # source://prawn//lib/prawn/view.rb#72
   def method_missing(method_name, *arguments, &block); end
-
-  # source://prawn//lib/prawn/view.rb#97
   def save_as(filename); end
-
-  # source://prawn//lib/prawn/view.rb#90
   def update(&block); end
 
   private
 
-  # source://prawn//lib/prawn/view.rb#78
   def respond_to_missing?(method_name, _include_all = T.unsafe(nil)); end
 end
