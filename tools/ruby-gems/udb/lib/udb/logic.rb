@@ -5,6 +5,7 @@
 # frozen_string_literal: true
 
 require "numbers_and_words"
+require "open3"
 require "tempfile"
 require "treetop"
 
@@ -3439,10 +3440,8 @@ module Udb
 
         Tempfile.create do |rf|
           # run must, re-use the tempfile for the result
-          `#{Udb::MustPath.binary} -o #{rf.path} #{f.path}`
-          unless $?.success?
-            raise "could not find minimal subsets"
-          end
+          _stdout, status = Open3.capture2(Udb::MustPath.binary, "-o", rf.path, f.path)
+          raise "could not find minimal subsets" unless status.success?
 
           rf.rewind
           result = rf.read
@@ -3495,10 +3494,8 @@ module Udb
             FILE
             f.flush
 
-            tt = `eqntott -l #{f.path}`
-            unless $?.success?
-              raise "eqntott failure"
-            end
+            tt, status = Open3.capture2("eqntott", "-l", f.path)
+            raise "eqntott failure" unless status.success?
           end
 
           if T.must(tt).lines.any? { |l| l =~ /^\.p 0/ }
@@ -3556,16 +3553,14 @@ module Udb
         f.write pla
         f.flush
 
-        cmd =
+        args =
           if exact
-            "#{Udb::EspressoPath.binary} -Dsignature #{f.path}"
+            [Udb::EspressoPath.binary, "-Dsignature", f.path]
           else
-            "#{Udb::EspressoPath.binary} -efast #{f.path}"
+            [Udb::EspressoPath.binary, "-efast", f.path]
           end
-        result = `#{cmd} 2>&1`
-        unless $?.success?
-          raise "espresso failure\n#{result}"
-        end
+        result, status = Open3.capture2e(*args)
+        raise "espresso failure\n#{result}" unless status.success?
 
         sop_terms = []
         always_true = T.let(false, T::Boolean)
