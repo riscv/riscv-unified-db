@@ -27429,7 +27429,7 @@ Included in::
 == lb.aq
 
 Synopsis::
-No synopsis available
+Load Byte Acquire
 
 Base::
 
@@ -27480,7 +27480,7 @@ Included in::
 == lb.aqrl
 
 Synopsis::
-No synopsis available
+Load Byte Acquire Release
 
 Base::
 
@@ -27661,7 +27661,7 @@ xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd]
 == ld.aq
 
 Synopsis::
-No synopsis available
+Load Doubleword Acquire
 
 Base::
 
@@ -27712,7 +27712,7 @@ Included in::
 == ld.aqrl
 
 Synopsis::
-No synopsis available
+Load Doubleword Acquire Release
 
 Base::
 
@@ -27817,7 +27817,7 @@ Included in::
 == lh.aq
 
 Synopsis::
-No synopsis available
+Load Halfword Acquire
 
 Base::
 
@@ -27868,7 +27868,7 @@ Included in::
 == lh.aqrl
 
 Synopsis::
-No synopsis available
+Load Halfword Acquire Release
 
 Base::
 
@@ -28023,7 +28023,7 @@ Included in::
 == lr.d
 
 Synopsis::
-Load reserved doubleword
+Load Reserved Doubleword
 
 Base::
 
@@ -28115,7 +28115,7 @@ xlen+++()+++ == 64
 == lr.d.aq
 
 Synopsis::
-Load reserved doubleword
+Load Reserved Doubleword
 
 Base::
 
@@ -28207,7 +28207,7 @@ xlen+++()+++ == 64
 == lr.d.aqrl
 
 Synopsis::
-Load reserved doubleword
+Load Reserved Doubleword
 
 Base::
 
@@ -28299,7 +28299,7 @@ xlen+++()+++ == 64
 == lr.d.rl
 
 Synopsis::
-Load reserved doubleword
+Load Reserved Doubleword
 
 Base::
 
@@ -28391,7 +28391,7 @@ xlen+++()+++ == 64
 == lr.w
 
 Synopsis::
-Load reserved word
+Load Reserved Word
 
 Base::
 
@@ -28485,7 +28485,7 @@ Included in::
 == lr.w.aq
 
 Synopsis::
-Load reserved word
+Load Reserved Word
 
 Base::
 
@@ -28579,7 +28579,7 @@ Included in::
 == lr.w.aqrl
 
 Synopsis::
-Load reserved word
+Load Reserved Word
 
 Base::
 
@@ -28673,7 +28673,7 @@ Included in::
 == lr.w.rl
 
 Synopsis::
-Load reserved word
+Load Reserved Word
 
 Base::
 
@@ -28871,7 +28871,7 @@ Included in::
 == lw.aq
 
 Synopsis::
-No synopsis available
+Load Word Acquire
 
 Base::
 
@@ -28922,7 +28922,7 @@ Included in::
 == lw.aqrl
 
 Synopsis::
-No synopsis available
+Load Word Acquire Release
 
 Base::
 
@@ -33277,7 +33277,7 @@ Included in::
 == sb.aqrl
 
 Synopsis::
-No synopsis available
+Store Byte Acquire Release
 
 Base::
 
@@ -33328,7 +33328,7 @@ Included in::
 == sb.rl
 
 Synopsis::
-No synopsis available
+Store Byte Release
 
 Base::
 
@@ -33413,6 +33413,7 @@ xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] instruction invalidates any reserva
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
+
 
 The address held in _xs1_ must be naturally aligned to the size of the operand
 (_i.e._, eight-byte aligned).
@@ -33550,18 +33551,19 @@ Encoding::
 ....
 
 Description::
-xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] conditionally writes a doubleword in _xs2_ to the address in _xs1_:
-the xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] succeeds only if the reservation is still valid and the
-reservation set contains the bytes being written. If the xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] succeeds,
+xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] conditionally writes a doubleword in _xs2_ to the address in _xs1_:
+the xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] succeeds,
 the instruction writes the doubleword in _xs2_ to memory, and it writes zero to _xd_.
-If the xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] fails, the instruction does not write to memory, and it writes a
-nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d]
+If the xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq]
 may be treated like a store. Regardless of success or failure, executing an
-xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] instruction invalidates any reservation held by this hart.
+xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] instruction invalidates any reservation held by this hart.
 
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
+
 
 The address held in _xs1_ must be naturally aligned to the size of the operand
 (_i.e._, eight-byte aligned).
@@ -33699,18 +33701,19 @@ Encoding::
 ....
 
 Description::
-xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] conditionally writes a doubleword in _xs2_ to the address in _xs1_:
-the xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] succeeds only if the reservation is still valid and the
-reservation set contains the bytes being written. If the xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] succeeds,
+xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] conditionally writes a doubleword in _xs2_ to the address in _xs1_:
+the xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] succeeds,
 the instruction writes the doubleword in _xs2_ to memory, and it writes zero to _xd_.
-If the xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] fails, the instruction does not write to memory, and it writes a
-nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d]
+If the xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl]
 may be treated like a store. Regardless of success or failure, executing an
-xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] instruction invalidates any reservation held by this hart.
+xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] instruction invalidates any reservation held by this hart.
 
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
+
 
 The address held in _xs1_ must be naturally aligned to the size of the operand
 (_i.e._, eight-byte aligned).
@@ -33848,18 +33851,19 @@ Encoding::
 ....
 
 Description::
-xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] conditionally writes a doubleword in _xs2_ to the address in _xs1_:
-the xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] succeeds only if the reservation is still valid and the
-reservation set contains the bytes being written. If the xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] succeeds,
+xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] conditionally writes a doubleword in _xs2_ to the address in _xs1_:
+the xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] succeeds,
 the instruction writes the doubleword in _xs2_ to memory, and it writes zero to _xd_.
-If the xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] fails, the instruction does not write to memory, and it writes a
-nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d]
+If the xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl]
 may be treated like a store. Regardless of success or failure, executing an
-xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] instruction invalidates any reservation held by this hart.
+xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] instruction invalidates any reservation held by this hart.
 
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
+
 
 The address held in _xs1_ must be naturally aligned to the size of the operand
 (_i.e._, eight-byte aligned).
@@ -34006,18 +34010,17 @@ nonzero value to _xd_. For the purposes of memory protection, a failed xref:inst
 may be treated like a store. Regardless of success or failure, executing an
 xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] instruction invalidates any reservation held by this hart.
 
-<%- if MXLEN == 64 -%>
-[NOTE]
-If a value other than 0 or 1 is defined as a result for xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w], the value will before
-sign-extended into _xd_.
-<%- end -%>
-
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
 
+<%- if MXLEN == 64 -%>
+[NOTE]
+ xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] sign-extends the value placed in _xd_.
+<%- end -%>
+
 The address held in _xs1_ must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+(_i.e._, four-byte aligned).
 If the address is not naturally aligned, an address-misaligned exception or an
 access-fault exception will be generated.
 The access-fault exception can be generated for a memory access that would otherwise
@@ -34149,27 +34152,26 @@ Encoding::
 ....
 
 Description::
-xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] conditionally writes a word in _xs2_ to the address in _xs1_:
-the xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] succeeds only if the reservation is still valid and the
-reservation set contains the bytes being written. If the xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] succeeds,
+xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] conditionally writes a word in _xs2_ to the address in _xs1_:
+the xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] succeeds,
 the instruction writes the word in _xs2_ to memory, and it writes zero to _xd_.
-If the xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] fails, the instruction does not write to memory, and it writes a
-nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w]
+If the xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq]
 may be treated like a store. Regardless of success or failure, executing an
-xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] instruction invalidates any reservation held by this hart.
-
-<%- if MXLEN == 64 -%>
-[NOTE]
-If a value other than 0 or 1 is defined as a result for xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w], the value will before
-sign-extended into _xd_.
-<%- end -%>
+xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] instruction invalidates any reservation held by this hart.
 
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
 
+<%- if MXLEN == 64 -%>
+[NOTE]
+ xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] sign-extends the value placed in _xd_.
+<%- end -%>
+
 The address held in _xs1_ must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+(_i.e._, four-byte aligned).
 If the address is not naturally aligned, an address-misaligned exception or an
 access-fault exception will be generated.
 The access-fault exception can be generated for a memory access that would otherwise
@@ -34301,27 +34303,26 @@ Encoding::
 ....
 
 Description::
-xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] conditionally writes a word in _xs2_ to the address in _xs1_:
-the xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] succeeds only if the reservation is still valid and the
-reservation set contains the bytes being written. If the xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] succeeds,
+xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] conditionally writes a word in _xs2_ to the address in _xs1_:
+the xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] succeeds,
 the instruction writes the word in _xs2_ to memory, and it writes zero to _xd_.
-If the xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] fails, the instruction does not write to memory, and it writes a
-nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w]
+If the xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl]
 may be treated like a store. Regardless of success or failure, executing an
-xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] instruction invalidates any reservation held by this hart.
-
-<%- if MXLEN == 64 -%>
-[NOTE]
-If a value other than 0 or 1 is defined as a result for xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w], the value will before
-sign-extended into _xd_.
-<%- end -%>
+xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] instruction invalidates any reservation held by this hart.
 
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
 
+<%- if MXLEN == 64 -%>
+[NOTE]
+ xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] sign-extends the value placed in _xd_.
+<%- end -%>
+
 The address held in _xs1_ must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+(_i.e._, four-byte aligned).
 If the address is not naturally aligned, an address-misaligned exception or an
 access-fault exception will be generated.
 The access-fault exception can be generated for a memory access that would otherwise
@@ -34453,27 +34454,26 @@ Encoding::
 ....
 
 Description::
-xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] conditionally writes a word in _xs2_ to the address in _xs1_:
-the xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] succeeds only if the reservation is still valid and the
-reservation set contains the bytes being written. If the xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] succeeds,
+xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] conditionally writes a word in _xs2_ to the address in _xs1_:
+the xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] succeeds,
 the instruction writes the word in _xs2_ to memory, and it writes zero to _xd_.
-If the xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] fails, the instruction does not write to memory, and it writes a
-nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w]
+If the xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl]
 may be treated like a store. Regardless of success or failure, executing an
-xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] instruction invalidates any reservation held by this hart.
-
-<%- if MXLEN == 64 -%>
-[NOTE]
-If a value other than 0 or 1 is defined as a result for xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w], the value will before
-sign-extended into _xd_.
-<%- end -%>
+xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] instruction invalidates any reservation held by this hart.
 
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
 
+<%- if MXLEN == 64 -%>
+[NOTE]
+ xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] sign-extends the value placed in _xd_.
+<%- end -%>
+
 The address held in _xs1_ must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+(_i.e._, four-byte aligned).
 If the address is not naturally aligned, an address-misaligned exception or an
 access-fault exception will be generated.
 The access-fault exception can be generated for a memory access that would otherwise
@@ -34722,7 +34722,7 @@ xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd]
 == sd.aqrl
 
 Synopsis::
-No synopsis available
+Store Doubleword Acquire Release
 
 Base::
 
@@ -34773,7 +34773,7 @@ Included in::
 == sd.rl
 
 Synopsis::
-No synopsis available
+Store Doubleword Release
 
 Base::
 
@@ -35328,7 +35328,7 @@ Included in::
 == sh.aqrl
 
 Synopsis::
-No synopsis available
+Store Halfword Acquire Release
 
 Base::
 
@@ -35379,7 +35379,7 @@ Included in::
 == sh.rl
 
 Synopsis::
-No synopsis available
+Store Halfword Release
 
 Base::
 
@@ -38329,7 +38329,7 @@ Included in::
 == sw.aqrl
 
 Synopsis::
-No synopsis available
+Store Word Acquire Release
 
 Base::
 
@@ -38380,7 +38380,7 @@ Included in::
 == sw.rl
 
 Synopsis::
-No synopsis available
+Store Word Release
 
 Base::
 
