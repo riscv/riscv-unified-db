@@ -13,9 +13,7 @@ require "idlc/symbol_table"
 require "udb/eqn"
 require "udb/version_spec"
 require "udb/z3"
-require "udb/eqntott_path"
-require "udb/espresso_path"
-require "udb/must_path"
+require "udb/dep_paths"
 
 # Implements the LogicNode class, which is used to test for satisfiability/equality/etc of logic
 #

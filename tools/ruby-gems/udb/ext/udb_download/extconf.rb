@@ -25,10 +25,7 @@ abort "ERROR: 'make' is not installed or not on PATH. Please install make before
   unless find_executable("make")
 
 # Load version constants from sibling lib files without requiring the full gem
-load File.expand_path("../../lib/udb/espresso_version.rb", __dir__)
-load File.expand_path("../../lib/udb/eqntott_version.rb", __dir__)
-load File.expand_path("../../lib/udb/must_version.rb", __dir__)
-load File.expand_path("../../lib/udb/z3_version.rb", __dir__)
+load File.expand_path("../../lib/udb/dep_versions.rb", __dir__)
 
 GITHUB_REPO = "riscv/riscv-unified-db"
 
