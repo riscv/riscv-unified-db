@@ -1,14 +1,30 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-
-# WARNING: This file is auto-generated from spec/std/isa/inst/Zalasr/lSIZE.AQRL.layout
-
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # yaml-language-server: $schema=../../../../schemas/inst_schema.json
+<%-
+  raise "'size' must be defined as 'b', 'h', 'w', or 'd'" unless %w[b h w d].include?(size)
+  raise "'aq' must be defined as true or false" unless [true, false].include?(aq)
+  raise "'rl' must be defined as true or false" unless [true, false].include?(rl)
+  raise "lSIZE.AQRL.layout expects aq to be true" unless aq
+
+  size_info = {
+    "b" => { funct3: "000" },
+    "h" => { funct3: "001" },
+    "w" => { funct3: "010" },
+    "d" => { funct3: "011" }
+  }
+
+  current_size = size_info[size]
+
+  aq_rl_suffix = rl ? ".aqrl" : ".aq"
+  aq_bit = aq ? "1" : "0"
+  rl_bit = rl ? "1" : "0"
+-%>
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: ld.aq
+name: l<%= size %><%= aq_rl_suffix %>
 long_name: No synopsis available
 description: |
   No description available.
@@ -17,7 +33,7 @@ definedBy:
     name: Zalasr
 assembly: xd, (xs1)
 encoding:
-  match: 001101000000-----011-----0101111
+  match: 00110<%= aq_bit %><%= rl_bit %>00000-----<%= current_size[:funct3] %>-----0101111
   variables:
     - name: xs1
       location: 19-15
