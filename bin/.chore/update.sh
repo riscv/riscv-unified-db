@@ -508,14 +508,14 @@ do_update_z3() {
     exit 1
   fi
 
-  # Read the version currently tracked in z3_version.rb
-  local z3_version_rb="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/z3_version.rb"
+  # Read the version currently tracked in dep_versions.rb
+  local z3_version_rb="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/dep_versions.rb"
   local current_version
   current_version=$(ruby -e "load '${z3_version_rb}'; puts Udb::Z3_VERSION" 2>/dev/null) || {
     echo "ERROR: Could not read current Z3 version from ${z3_version_rb}" >&2
     exit 1
   }
-  echo "==> Current Z3 version in z3_version.rb: ${current_version}"
+  echo "==> Current Z3 version in dep_versions.rb: ${current_version}"
 
   # Query the latest Z3 release tag from upstream (Z3Prover/z3)
   local latest_version
@@ -725,7 +725,7 @@ do_update_z3() {
   fi
 
   if [ "${target_version}" != "${current_version}" ]; then
-    # Update z3_version.rb so the gem knows which release to download
+    # Update dep_version.rb so the gem knows which release to download
     # z3_version_rb already declared above
     echo "${z3_version}" > "${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/Z3_VERSION"
     echo "==> Updated ${z3_version_rb}"
@@ -737,7 +737,8 @@ do_update_z3() {
   echo ""
   if [ "${target_version}" != "${current_version}" ]; then
     echo "Done. Next steps:"
-    echo "  1. git add tools/ruby-gems/udb/lib/udb/z3_version.rb"
+    echo "  1. git add tools/ruby-gems/udb/lib/udb/dep_versions.rb"
+    echo "  2. git add tools/ruby-gems/udb/lib/udb/Z3_VERSION"
     echo "  2. git commit -m 'chore: update Z3 to ${z3_version}'"
     echo "  3. Open a PR"
   else
