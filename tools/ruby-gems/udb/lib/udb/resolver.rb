@@ -9,7 +9,7 @@ require "concurrent/hash"
 require "sorbet-runtime"
 
 require_relative "cfg_arch"
-require_relative "yaml/resolver"
+require_relative "yaml/yaml_resolver"
 
 module Udb
   extend T::Sig

@@ -1,10 +1,11 @@
+# typed: false
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/udb/yaml/resolver"
+require_relative "../lib/udb/yaml/yaml_resolver"
 require_relative "../lib/udb/yaml/comment_parser"
 require_relative "../lib/udb/yaml/preserving_emitter"
 require "tmpdir"
@@ -135,9 +136,9 @@ class TestYamlResolver < Minitest::Test
       content = File.read(resolved_path)
 
       # Check for source map markers
-      assert content.include?("===== SOURCE MAP BEGIN ====="),
+      assert_includes content, "===== SOURCE MAP BEGIN =====",
         "Source map begin marker not found in #{resolved_path.basename}"
-      assert content.include?("===== SOURCE MAP END ====="),
+      assert_includes content, "===== SOURCE MAP END =====",
         "Source map end marker not found in #{resolved_path.basename}"
 
       # Extract source map
@@ -207,10 +208,10 @@ class TestYamlResolver < Minitest::Test
     emitter = Udb::Yaml::PreservingEmitter.new(result[:comments])
     emitted = emitter.emit(result[:data])
 
-    assert emitted.include?("# Header comment"), "Header comment not preserved"
-    assert emitted.include?("# inline comment"), "Inline comment not preserved"
-    assert emitted.include?("# Block comment"), "Block comment not preserved"
-    assert emitted.include?("# Nested comment"), "Nested comment not preserved"
+    assert_includes emitted, "# Header comment", "Header comment not preserved"
+    assert_includes emitted, "# inline comment", "Inline comment not preserved"
+    assert_includes emitted, "# Block comment", "Block comment not preserved"
+    assert_includes emitted, "# Nested comment", "Nested comment not preserved"
   end
 
   # Test string style preservation
@@ -239,10 +240,10 @@ class TestYamlResolver < Minitest::Test
     emitter = Udb::Yaml::PreservingEmitter.new(result[:comments])
     emitted = emitter.emit(result[:data])
 
-    assert emitted.include?("literal: |"), "Literal style not preserved"
-    assert emitted.include?("folded: >"), "Folded style not preserved"
-    assert emitted.include?("plain: plain value"), "Plain style not preserved"
-    assert emitted.include?('quoted: "quoted value"'), "Quoted style not preserved"
+    assert_includes emitted, "literal: |", "Literal style not preserved"
+    assert_includes emitted, "folded: >", "Folded style not preserved"
+    assert_includes emitted, "plain: plain value", "Plain style not preserved"
+    assert_includes emitted, 'quoted: "quoted value"', "Quoted style not preserved"
   end
 
   # Test multiline plain scalar preservation
@@ -302,16 +303,16 @@ class TestYamlResolver < Minitest::Test
     lines = yaml_content.lines
 
     lines.each_with_index do |line, idx|
-      next if line.strip.empty? || line.strip.start_with?('#')
+      next if line.strip.empty? || line.strip.start_with?("#")
 
-      if line.include?(':')
-        key = line.split(':', 2)[0].strip
+      if line.include?(":")
+        key = line.split(":", 2)[0].strip
         next if key.empty?
 
         # Calculate column
-        colon_pos = line.index(':')
+        colon_pos = line.index(":")
         value_start = colon_pos + 1
-        value_start += 1 while value_start < line.length && line[value_start] == ' '
+        value_start += 1 while value_start < line.length && line[value_start] == " "
 
         comment_map.set_source_location([key], temp_file.to_s, idx + 1, value_start + 1)
       end

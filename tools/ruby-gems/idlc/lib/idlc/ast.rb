@@ -488,7 +488,7 @@ module Idl
       {
         "file" => @input_file.to_s,
         "begin" => (@starting_offset || 0) + T.must(interval).begin,
-        "end" => (@starting_offset || 0) + (T.must(interval).max || T.must(interval).begin)
+        "end" => (@starting_offset || 0) + ((T.must(interval).size == 0) ? T.must(interval).begin : T.must(interval).max)
       }
     end
 
