@@ -5,7 +5,7 @@
 # frozen_string_literal: true
 
 # This extconf.rb runs at `gem install` time to download binaries and libraries
-# (espresso, must, Z3) from the GitHub releases for the current platform.
+# (espresso, eqntott, must, Z3) from the GitHub releases for the current platform.
 # It requires no external tools — only Ruby's built-in Net::HTTP.
 
 require "digest"
@@ -26,6 +26,7 @@ abort "ERROR: 'make' is not installed or not on PATH. Please install make before
 
 # Load version constants from sibling lib files without requiring the full gem
 load File.expand_path("../../lib/udb/espresso_version.rb", __dir__)
+load File.expand_path("../../lib/udb/eqntott_version.rb", __dir__)
 load File.expand_path("../../lib/udb/must_version.rb", __dir__)
 load File.expand_path("../../lib/udb/z3_version.rb", __dir__)
 
@@ -101,6 +102,45 @@ unless File.exist?(espresso_file)
 
   if expected != actual
     $stderr.puts "ERROR: Checksum verification failed for espresso!"
+    $stderr.puts "  Expected: #{expected}"
+    $stderr.puts "  Got:      #{actual}"
+    $stderr.puts "  The downloaded file may be corrupted or tampered with."
+    abort "Checksum verification failed"
+  end
+
+  $stderr.puts "  Checksum verified successfully."
+end
+
+# ---------------------------------------------------------------------------
+# eqntott
+# ---------------------------------------------------------------------------
+eqntott_version = Udb::EQNTOTT_VERSION
+eqntott_dir  = File.join(xdg_cache, "udb", "eqntott", eqntott_version, cpu)
+eqntott_file = File.join(eqntott_dir, "eqntott")
+
+unless File.exist?(eqntott_file)
+  FileUtils.mkdir_p(eqntott_dir)
+  url_str = "https://github.com/#{GITHUB_REPO}/releases/download/#{eqntott_version}/eqntott-#{cpu}"
+  $stderr.puts "Downloading eqntott (#{eqntott_version}, #{cpu}) from GitHub releases..."
+  $stderr.puts "  URL: #{url_str}"
+  File.binwrite(eqntott_file, download_with_redirects(url_str))
+  File.chmod(0o755, eqntott_file)
+  $stderr.puts "  Saved to #{eqntott_file}"
+
+  # Download and verify checksum
+  checksum_url_str =
+    "https://github.com/#{GITHUB_REPO}/releases/download/#{eqntott_version}/eqntott-#{cpu}.checksum"
+  checksum_file = File.join(eqntott_dir, "eqntott.checksum")
+  $stderr.puts "  Downloading checksum..."
+  checksum_body = download_with_redirects(checksum_url_str)
+  File.write(checksum_file, checksum_body)
+
+  $stderr.puts "  Verifying checksum..."
+  expected = checksum_body.strip.split(":")[1]
+  actual   = Digest::SHA256.file(eqntott_file).hexdigest
+
+  if expected != actual
+    $stderr.puts "ERROR: Checksum verification failed for eqntott!"
     $stderr.puts "  Expected: #{expected}"
     $stderr.puts "  Got:      #{actual}"
     $stderr.puts "  The downloaded file may be corrupted or tampered with."

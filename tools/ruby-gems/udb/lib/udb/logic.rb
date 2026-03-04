@@ -13,6 +13,7 @@ require "idlc/symbol_table"
 require "udb/eqn"
 require "udb/version_spec"
 require "udb/z3"
+require "udb/eqntott_path"
 require "udb/espresso_path"
 require "udb/must_path"
 
@@ -3494,7 +3495,7 @@ module Udb
             FILE
             f.flush
 
-            tt, status = Open3.capture2("eqntott", "-l", f.path)
+            tt, status = Open3.capture2(Udb::EqntottPath.binary, "-l", f.path)
             raise "eqntott failure" unless status.success?
           end
 

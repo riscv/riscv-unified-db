@@ -56,14 +56,6 @@ RUN mise install
 RUN mise reshim
 RUN mkdir -p /mise/state && chmod -R 777 /mise
 
-# build/install eqntott
-RUN git clone --depth=1 https://github.com/TheProjecter/eqntott.git && \
-    cd eqntott && \
-    ./configure && \
-    make && make install && \
-    cd .. && \
-    rm -rf eqntott
-
 # Sync Python project dependencies with uv
 COPY pyproject.toml uv.lock /opt/python/
 RUN cd /opt/python && uv sync

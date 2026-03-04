@@ -106,6 +106,8 @@ update_subcmd_usage() {
   echo "Commands:"
   echo ""
   echo "  gems:          Update Ruby Gems and regenerate type definitions"
+  echo "  eqntott:       Update the eqntott binary used by the udb gem"
+  echo "                 ('chore update eqntott -h' for more)"
   echo "  espresso:      Update the espresso binary used by the udb gem"
   echo "                 ('chore update espresso -h' for more)"
   echo "  must:          Update the must binary used by the udb gem"
@@ -129,6 +131,18 @@ update_espresso_usage() {
 
 update_must_usage() {
   echo "Usage: chore update must [-hnf]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -n:      Build only for native/host platform (for use in CI matrix builds)"
+  echo "  -f:      Force rebuild and release even if release already exists"
+  echo ""
+}
+
+update_eqntott_usage() {
+  echo "Usage: chore update eqntott [-hnf]"
   echo ""
   echo ""
   echo "Options:"
@@ -565,6 +579,31 @@ case "$subcommand" in
         do_update_gems "$update_tag"
         exit 0
       ;;
+      eqntott )
+        native_only=no
+        force=no
+        while getopts ":hnf" opt; do
+          case $opt in
+            h )
+              update_eqntott_usage
+              exit 0
+              ;;
+            n )
+              native_only=yes
+              ;;
+            f )
+              force=yes
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              update_eqntott_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_update_eqntott "$native_only" "$force"
+        exit 0
+        ;;
       espresso )
         native_only=no
         force=no

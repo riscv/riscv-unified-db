@@ -9,6 +9,7 @@ produce artifacts with glibc 2.28+ compatibility.
 
 | Tool | Script | Output |
 |------|--------|--------|
+| eqntott | `build_eqntott_with_docker.sh` | `eqntott` (static executable) |
 | espresso | `build_espresso_with_docker.sh` | `espresso` (static executable) |
 | must (mustool) | `build_must_with_docker.sh` | `must` (static executable) |
 | Z3 | `build_z3_with_docker.sh` | `libz3.so` + headers + binaries |
@@ -32,11 +33,13 @@ The easiest way to build and release a new version is via `bin/chore`:
 
 ```bash
 # Build and release for the native platform only (used in CI matrix)
+./bin/chore update eqntott -n
 ./bin/chore update espresso -n
 ./bin/chore update must -n
 ./bin/chore update z3 -n
 
 # Build and release for both x64 and arm64 at once
+./bin/chore update eqntott
 ./bin/chore update espresso
 ./bin/chore update must
 ./bin/chore update z3
@@ -47,6 +50,54 @@ The easiest way to build and release a new version is via `bin/chore`:
 
 The `chore update` commands handle building, checksum generation, GitHub
 release creation, and (for Z3) version file updates automatically.
+
+---
+
+## eqntott
+
+The build is pinned to a specific commit of
+[TheProjecter/eqntott](https://github.com/TheProjecter/eqntott) that matches
+`lib/udb/EQNTOTT_VERSION` in the udb gem.
+
+### Usage
+
+```bash
+./build_eqntott_with_docker.sh [output_dir] [architecture]
+```
+
+#### Arguments
+
+- **output_dir** (optional): Directory where the binary will be placed
+  - Default: `./eqntott-build`
+- **architecture** (optional): Target architecture
+  - Options: `x64`, `amd64`, `x86_64`, `arm64`, `aarch64`
+  - Default: `x64`
+
+### Examples
+
+```bash
+# Build x64 binary to ./eqntott-build
+./build_eqntott_with_docker.sh
+
+# Build arm64 binary to ./eqntott-arm64
+./build_eqntott_with_docker.sh ./eqntott-arm64 arm64
+```
+
+### Output
+
+A single statically-linked executable named `eqntott` in the output directory.
+
+### Releasing a New Version
+
+1. Update `EQNTOTT_COMMIT` in `build_eqntott_with_docker.sh` to the new commit hash.
+2. Build for both architectures:
+   ```bash
+   ./build_eqntott_with_docker.sh ./out x64
+   ./build_eqntott_with_docker.sh ./out arm64
+   ```
+3. Update `lib/udb/EQNTOTT_VERSION` to the new tag (e.g. `eqntott-<short-sha>`).
+4. Run `./bin/chore update eqntott` to create the GitHub release and upload the
+   binaries and checksums.
 
 ---
 

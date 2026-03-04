@@ -1,6 +1,6 @@
 name: Build and release UDB gem dependencies to GitHub
 
-# Builds and uploads prebuilt espresso, must, and/or z3 binaries as GitHub release assets.
+# Builds and uploads prebuilt eqntott, espresso, must, and/or z3 binaries as GitHub release assets.
 # Run this workflow manually whenever a tool version needs to be updated.
 #
 # The workflow automatically creates release tags and uploads binaries for the selected tool(s).
@@ -14,6 +14,7 @@ on:
         required: true
         type: choice
         options:
+          - eqntott
           - espresso
           - must
           - z3
@@ -28,6 +29,32 @@ env:
   GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
 jobs:
+  build-eqntott:
+    if: inputs.tool == 'eqntott' || inputs.tool == 'all'
+    name: Build Eqntott (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Build and upload Eqntott for ${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ./bin/chore update eqntott -n -f
+          else
+            ./bin/chore update eqntott -n
+          fi
+
   build-z3:
     if: inputs.tool == 'z3' || inputs.tool == 'all'
     name: Build Z3 (${{ matrix.arch }})
