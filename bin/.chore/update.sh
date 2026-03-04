@@ -118,6 +118,11 @@ do_update_espresso() {
 
     # Move the binary to the asset name expected by the gem
     mv "${work_dir}/espresso-build/espresso" "${work_dir}/espresso-${native_arch}"
+
+    # Generate checksum
+    echo "==> Generating checksum..."
+    (cd "${work_dir}" && sha256sum "espresso-${native_arch}" | awk '{print "sha256:" $1}' > "espresso-${native_arch}.checksum")
+    echo "  ${native_arch}: $(cat "${work_dir}/espresso-${native_arch}.checksum")"
   else
     # Build for both architectures
     echo "==> Building espresso for x64..."
@@ -129,6 +134,13 @@ do_update_espresso() {
     # Rename the binaries to the asset names expected by the gem
     mv "${work_dir}/espresso-x64-out/espresso" "${work_dir}/espresso-x64"
     mv "${work_dir}/espresso-arm64-out/espresso" "${work_dir}/espresso-arm64"
+
+    # Generate checksums
+    echo "==> Generating checksums..."
+    (cd "${work_dir}" && sha256sum espresso-x64 | awk '{print "sha256:" $1}' > espresso-x64.checksum)
+    (cd "${work_dir}" && sha256sum espresso-arm64 | awk '{print "sha256:" $1}' > espresso-arm64.checksum)
+    echo "  x64:   $(cat "${work_dir}/espresso-x64.checksum")"
+    echo "  arm64: $(cat "${work_dir}/espresso-arm64.checksum")"
   fi
 
   # Create the GitHub Release and upload assets (or upload to existing release if native_only)
@@ -149,13 +161,15 @@ do_update_espresso() {
     if ! gh release upload "${release_tag}" \
       --repo riscv/riscv-unified-db \
       --clobber \
-      "${work_dir}/espresso-${native_arch}" 2>/dev/null; then
+      "${work_dir}/espresso-${native_arch}" \
+      "${work_dir}/espresso-${native_arch}.checksum" 2>/dev/null; then
       echo "==> Release doesn't exist yet, creating it..."
       gh release create "${release_tag}" \
         --repo riscv/riscv-unified-db \
         --title "Espresso binaries ${espresso_version}" \
         --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
-        "${work_dir}/espresso-${native_arch}"
+        "${work_dir}/espresso-${native_arch}" \
+        "${work_dir}/espresso-${native_arch}.checksum"
     fi
   else
     echo "==> Creating GitHub Release ${release_tag}..."
@@ -164,7 +178,9 @@ do_update_espresso() {
       --title "Espresso binaries ${espresso_version}" \
       --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
       "${work_dir}/espresso-x64" \
-      "${work_dir}/espresso-arm64"
+      "${work_dir}/espresso-arm64" \
+      "${work_dir}/espresso-x64.checksum" \
+      "${work_dir}/espresso-arm64.checksum"
   fi
 
   cd "${orig_dir}" || exit 1
@@ -253,6 +269,11 @@ do_update_must() {
 
     # Move the binary to the asset name expected by the gem
     mv "${work_dir}/must-build/must" "${work_dir}/must-${native_arch}"
+
+    # Generate checksum
+    echo "==> Generating checksum..."
+    (cd "${work_dir}" && sha256sum "must-${native_arch}" | awk '{print "sha256:" $1}' > "must-${native_arch}.checksum")
+    echo "  ${native_arch}: $(cat "${work_dir}/must-${native_arch}.checksum")"
   else
     # Build for both architectures
     echo "==> Building must for x64..."
@@ -264,6 +285,13 @@ do_update_must() {
     # Rename the binaries to the asset names expected by the gem
     mv "${work_dir}/must-x64-out/must" "${work_dir}/must-x64"
     mv "${work_dir}/must-arm64-out/must" "${work_dir}/must-arm64"
+
+    # Generate checksums
+    echo "==> Generating checksums..."
+    (cd "${work_dir}" && sha256sum must-x64 | awk '{print "sha256:" $1}' > must-x64.checksum)
+    (cd "${work_dir}" && sha256sum must-arm64 | awk '{print "sha256:" $1}' > must-arm64.checksum)
+    echo "  x64:   $(cat "${work_dir}/must-x64.checksum")"
+    echo "  arm64: $(cat "${work_dir}/must-arm64.checksum")"
   fi
 
   # Create the GitHub Release and upload assets
@@ -284,13 +312,15 @@ do_update_must() {
     if ! gh release upload "${release_tag}" \
       --repo riscv/riscv-unified-db \
       --clobber \
-      "${work_dir}/must-${native_arch}" 2>/dev/null; then
+      "${work_dir}/must-${native_arch}" \
+      "${work_dir}/must-${native_arch}.checksum" 2>/dev/null; then
       echo "==> Release doesn't exist yet, creating it..."
       gh release create "${release_tag}" \
         --repo riscv/riscv-unified-db \
         --title "Must binaries ${must_version}" \
         --notes "Pre-built must (mustool) binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${must_commit}" \
-        "${work_dir}/must-${native_arch}"
+        "${work_dir}/must-${native_arch}" \
+        "${work_dir}/must-${native_arch}.checksum"
     fi
   else
     echo "==> Creating GitHub Release ${release_tag}..."
@@ -299,7 +329,9 @@ do_update_must() {
       --title "Must binaries ${must_version}" \
       --notes "Pre-built must (mustool) binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${must_commit}" \
       "${work_dir}/must-x64" \
-      "${work_dir}/must-arm64"
+      "${work_dir}/must-arm64" \
+      "${work_dir}/must-x64.checksum" \
+      "${work_dir}/must-arm64.checksum"
   fi
 
   cd "${orig_dir}" || exit 1
