@@ -3493,7 +3493,7 @@ module Udb
             FILE
             f.flush
 
-            tt, status = Open3.capture2(Udb::EqntottPath.binary, "-l", f.path)
+            tt, status = Open3.capture2(Udb::EqntottPath.binary, "-l", T.must(f.path))
             raise "eqntott failure" unless status.success?
           end
 
@@ -3558,7 +3558,7 @@ module Udb
           else
             [Udb::EspressoPath.binary, "-efast", f.path]
           end
-        result, status = Open3.capture2e(*args)
+        result, status = T.unsafe(Open3).capture2e(*args)
         raise "espresso failure\n#{result}" unless status.success?
 
         sop_terms = []
