@@ -672,7 +672,6 @@ dependencies = [
     { name = "pycobertura" },
     { name = "pytest" },
     { name = "reuse" },
-    { name = "ruamel-yaml" },
     { name = "ruff" },
     { name = "tqdm" },
 ]
@@ -686,7 +685,6 @@ requires-dist = [
     { name = "pycobertura", specifier = ">=4.1.0" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "reuse", specifier = ">=6.2.0" },
-    { name = "ruamel-yaml", specifier = ">=0.19.1" },
     { name = "ruff", specifier = ">=0.15.0" },
     { name = "tqdm", specifier = ">=4.67.3" },
 ]

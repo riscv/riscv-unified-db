@@ -1,3 +1,8 @@
+<!--
+Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+SPDX-License-Identifier: BSD-3-Clause-Clear
+-->
+
 # Ruby YAML Resolver
 
 This directory contains a pure Ruby implementation of YAML resolution that preserves comments and key order.
@@ -68,14 +73,6 @@ yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl
 yaml_resolver.resolve_files(merged_spec_path(config_name).to_s, resolved_spec_path(config_name).to_s, no_checks: false)
 ```
 
-## Advantages Over Python Implementation
-
-1. **No external dependencies**: Uses only Ruby standard library (Psych)
-2. **Better integration**: No subprocess overhead
-3. **Maintainability**: Pure Ruby code that's easier to debug and extend
-4. **Performance**: Eliminates Python interpreter startup time
-5. **Consistency**: Same language as the rest of the codebase
-
 ## Implementation Details
 
 ### Comment Association Algorithm
@@ -107,19 +104,3 @@ The resolver implements deep merging for nested hashes:
 1. **Comment positioning**: The current implementation uses a simplified line-to-key-path mapping. Complex YAML structures (deeply nested arrays, flow-style collections) may have imperfect comment association.
 
 2. **Quote style preservation**: The emitter uses a heuristic to determine when strings need quoting. It may not preserve the exact quote style from the original file.
-
-3. **IDL compilation**: The `compile_idl` option is not yet implemented in the Ruby version. This would require calling out to the IDL compiler.
-
-### Future Enhancements
-
-1. **AST-based comment tracking**: Use Psych's AST to more accurately track comment positions
-2. **Quote style preservation**: Track and preserve original quote styles
-3. **Flow style support**: Better handling of flow-style collections
-4. **Schema validation**: Integrate JSON schema validation
-5. **IDL compilation**: Add support for compiling IDL code blocks
-
-## Testing
-
-```bash
-bin/rake gen:cfg_arch[rv32]
-```
