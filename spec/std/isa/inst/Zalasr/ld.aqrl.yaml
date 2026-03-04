@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: ld.aqrl
-long_name: No synopsis available
+long_name: Load doubleword (acquire) (release)
 description: |
   No description available.
 definedBy:

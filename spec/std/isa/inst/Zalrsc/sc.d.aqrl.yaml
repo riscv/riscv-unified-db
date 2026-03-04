@@ -11,19 +11,19 @@ kind: instruction
 name: sc.d.aqrl
 long_name: Store conditional doubleword
 description: |
-  `sc.d` conditionally writes a doubleword in _xs2_ to the address in _xs1_:
-  the `sc.d` succeeds only if the reservation is still valid and the
-  reservation set contains the bytes being written. If the `sc.d` succeeds,
+  `sc.d.aqrl` conditionally writes a doubleword in _xs2_ to the address in _xs1_:
+  the `sc.d.aqrl` succeeds only if the reservation is still valid and the
+  reservation set contains the bytes being written. If the `sc.d.aqrl` succeeds,
   the instruction writes the doubleword in _xs2_ to memory, and it writes zero to _xd_.
-  If the `sc.d` fails, the instruction does not write to memory, and it writes a
-  nonzero value to _xd_. For the purposes of memory protection, a failed `sc.d`
+  If the `sc.d.aqrl` fails, the instruction does not write to memory, and it writes a
+  nonzero value to _xd_. For the purposes of memory protection, a failed `sc.d.aqrl`
   may be treated like a store. Regardless of success or failure, executing an
-  `sc.d` instruction invalidates any reservation held by this hart.
-
+  `sc.d.aqrl` instruction invalidates any reservation held by this hart.
 
   The failure code with value 1 encodes an unspecified failure.
   Other failure codes are reserved at this time.
   Portable software should only assume the failure code will be non-zero.
+
 
   The address held in _xs1_ must be naturally aligned to the size of the operand
   (_i.e._, eight-byte aligned).

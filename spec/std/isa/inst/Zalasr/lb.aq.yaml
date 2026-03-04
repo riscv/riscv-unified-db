@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: lb.aq
-long_name: No synopsis available
+long_name: Load byte (acquire)
 description: |
   No description available.
 definedBy:

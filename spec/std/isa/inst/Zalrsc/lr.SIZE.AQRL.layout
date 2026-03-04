@@ -29,13 +29,9 @@
   current_size = size_info[size]
 
   aq_rl_suffix = ""
-  if aq && rl
-    aq_rl_suffix = ".aqrl"
-  elsif aq
-    aq_rl_suffix = ".aq"
-  elsif rl
-    aq_rl_suffix = ".rl"
-  end
+  aq_rl_suffix << "." if aq || rl
+  aq_rl_suffix << "aq" if aq
+  aq_rl_suffix << "rl" if rl
 -%>
 
 $schema: "inst_schema.json#"
@@ -148,17 +144,15 @@ operation(): |
       unpredictable("Implementations may raise either a LoadAddressMisaligned or a LoadAccessFault when an LR/SC address is misaligned");
     }
   }
-<%- if size == "w" -%>
-
   XReg load_value = load_reserved<<%= current_size[:load_reserved_bits] %>>(virtual_address, aq, rl, $encoding);
+<%- if size == "w" -%>
   if (xlen() == 64) {
     X[xd] = load_value;
   } else {
     X[xd] = sext(load_value[31:0], 32);
   }
 <%- else -%>
-
-  X[xd] = load_reserved<<%= current_size[:load_reserved_bits] %>>(virtual_address, aq, rl, $encoding);
+  X[xd] = load_value;
 <%- end -%>
 
 # SPDX-SnippetBegin

@@ -11,27 +11,26 @@ kind: instruction
 name: sc.w.aqrl
 long_name: Store conditional word
 description: |
-  `sc.w` conditionally writes a word in _xs2_ to the address in _xs1_:
-  the `sc.w` succeeds only if the reservation is still valid and the
-  reservation set contains the bytes being written. If the `sc.w` succeeds,
+  `sc.w.aqrl` conditionally writes a word in _xs2_ to the address in _xs1_:
+  the `sc.w.aqrl` succeeds only if the reservation is still valid and the
+  reservation set contains the bytes being written. If the `sc.w.aqrl` succeeds,
   the instruction writes the word in _xs2_ to memory, and it writes zero to _xd_.
-  If the `sc.w` fails, the instruction does not write to memory, and it writes a
-  nonzero value to _xd_. For the purposes of memory protection, a failed `sc.w`
+  If the `sc.w.aqrl` fails, the instruction does not write to memory, and it writes a
+  nonzero value to _xd_. For the purposes of memory protection, a failed `sc.w.aqrl`
   may be treated like a store. Regardless of success or failure, executing an
-  `sc.w` instruction invalidates any reservation held by this hart.
-
-  <%- if MXLEN == 64 -%>
-  [NOTE]
-  If a value other than 0 or 1 is defined as a result for `sc.w`, the value will before
-  sign-extended into _xd_.
-  <%- end -%>
+  `sc.w.aqrl` instruction invalidates any reservation held by this hart.
 
   The failure code with value 1 encodes an unspecified failure.
   Other failure codes are reserved at this time.
   Portable software should only assume the failure code will be non-zero.
 
+  <%- if MXLEN == 64 -%>
+  [NOTE]
+   `sc.w.aqrl` sign-extends the value placed in _xd_.
+  <%- end -%>
+
   The address held in _xs1_ must be naturally aligned to the size of the operand
-  (_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+  (_i.e._, four-byte aligned).
   If the address is not naturally aligned, an address-misaligned exception or an
   access-fault exception will be generated.
   The access-fault exception can be generated for a memory access that would otherwise

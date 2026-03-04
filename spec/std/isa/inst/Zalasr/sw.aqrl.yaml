@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sw.aqrl
-long_name: No synopsis available
+long_name: Store word (acquire) (release)
 description: |
   No description available.
 definedBy:

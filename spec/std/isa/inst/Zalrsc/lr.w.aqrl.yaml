@@ -101,7 +101,6 @@ operation(): |
       unpredictable("Implementations may raise either a LoadAddressMisaligned or a LoadAccessFault when an LR/SC address is misaligned");
     }
   }
-
   XReg load_value = load_reserved<32>(virtual_address, aq, rl, $encoding);
   if (xlen() == 64) {
     X[xd] = load_value;

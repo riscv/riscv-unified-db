@@ -98,8 +98,8 @@ operation(): |
       unpredictable("Implementations may raise either a LoadAddressMisaligned or a LoadAccessFault when an LR/SC address is misaligned");
     }
   }
-
-  X[xd] = load_reserved<64>(virtual_address, aq, rl, $encoding);
+  XReg load_value = load_reserved<64>(virtual_address, aq, rl, $encoding);
+  X[xd] = load_value;
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>

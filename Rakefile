@@ -458,8 +458,8 @@ end
 
 # Zalasr load-acquire generation from layout
 zalasr_load_variants = [
-  { suffix: ".aq", aq: true, rl: false },
-  { suffix: ".aqrl", aq: true, rl: true }
+  { suffix: ".aq", rl: false },
+  { suffix: ".aqrl", rl: true }
 ]
 
 ["b", "h", "w", "d"].each do |size|
@@ -469,7 +469,6 @@ zalasr_load_variants = [
       __FILE__
     ] do |t|
       FileUtils.rm_f(t.name)
-      aq = variant[:aq]
       rl = variant[:rl]
       erb = ERB.new(File.read($resolver.std_path / "inst/Zalasr/lSIZE.AQRL.layout"), trim_mode: "-")
       erb.filename = "#{$resolver.std_path}/inst/Zalasr/lSIZE.AQRL.layout"
@@ -481,8 +480,8 @@ end
 
 # Zalasr store-release generation from layout
 zalasr_store_variants = [
-  { suffix: ".rl", aq: false, rl: true },
-  { suffix: ".aqrl", aq: true, rl: true }
+  { suffix: ".rl", aq: false },
+  { suffix: ".aqrl", aq: true }
 ]
 
 ["b", "h", "w", "d"].each do |size|
@@ -493,7 +492,6 @@ zalasr_store_variants = [
     ] do |t|
       FileUtils.rm_f(t.name)
       aq = variant[:aq]
-      rl = variant[:rl]
       erb = ERB.new(File.read($resolver.std_path / "inst/Zalasr/sSIZE.AQRL.layout"), trim_mode: "-")
       erb.filename = "#{$resolver.std_path}/inst/Zalasr/sSIZE.AQRL.layout"
       File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
@@ -594,19 +592,19 @@ namespace :gen do
     # Generate LR/SC instruction files
     %w[lr sc].each do |op|
       ["w", "d"].each do |size|
-        ["", ".aq", ".rl", ".aqrl"].each do |suffix|
-          Rake::Task["#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{suffix}.yaml"].invoke
+        aq_rl_variants.each do |variant|
+          Rake::Task["#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{variant[:suffix]}.yaml"].invoke
         end
       end
     end
 
     # Generate Zalasr load/store instruction files
     ["b", "h", "w", "d"].each do |size|
-      [".aq", ".aqrl"].each do |suffix|
-        Rake::Task["#{$resolver.std_path}/inst/Zalasr/l#{size}#{suffix}.yaml"].invoke
+      zalasr_load_variants.each do |variant|
+        Rake::Task["#{$resolver.std_path}/inst/Zalasr/l#{size}#{variant[:suffix]}.yaml"].invoke
       end
-      [".rl", ".aqrl"].each do |suffix|
-        Rake::Task["#{$resolver.std_path}/inst/Zalasr/s#{size}#{suffix}.yaml"].invoke
+      zalasr_store_variants.each do |variant|
+        Rake::Task["#{$resolver.std_path}/inst/Zalasr/s#{size}#{variant[:suffix]}.yaml"].invoke
       end
     end
 
