@@ -93,8 +93,7 @@ jobs:
     - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       with:
         submodules: 'true'
-    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-    - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
+    - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037
   regress-llvm:
     runs-on: ubuntu-latest
     needs:
