@@ -576,7 +576,7 @@ do_update_z3() {
   if [ "${target_version}" != "${current_version}" ]; then
     # Update z3_version.rb so the gem knows which release to download
     # z3_version_rb already declared above
-    echo -n "${z3_version}" > "${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/Z3_VERSION"
+    echo "${z3_version}" > "${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/Z3_VERSION"
     echo "==> Updated ${z3_version_rb}"
   fi
 

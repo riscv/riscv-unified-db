@@ -5,5 +5,5 @@
 # frozen_string_literal: true
 
 module Udb
-  Z3_VERSION = File.read("#{Kernel.__dir__}/Z3_VERSION")
+  Z3_VERSION = File.read("#{Kernel.__dir__}/Z3_VERSION").strip
 end

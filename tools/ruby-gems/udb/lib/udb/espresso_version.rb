@@ -5,5 +5,5 @@
 # frozen_string_literal: true
 
 module Udb
-  ESPRESSO_VERSION = File.read("#{Kernel.__dir__}/ESPRESSO_VERSION")
+  ESPRESSO_VERSION = File.read("#{Kernel.__dir__}/ESPRESSO_VERSION").strip
 end

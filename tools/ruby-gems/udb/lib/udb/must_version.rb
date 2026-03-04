@@ -5,5 +5,5 @@
 # frozen_string_literal: true
 
 module Udb
-  MUST_VERSION = File.read("#{Kernel.__dir__}/MUST_VERSION")
+  MUST_VERSION = File.read("#{Kernel.__dir__}/MUST_VERSION").strip
 end
