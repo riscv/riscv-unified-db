@@ -9,7 +9,7 @@
 
   size_info = {
     "w" => {
-      long_name_suffix: "word",
+      long_name_suffix: "Word",
       funct3: "010",
       align_bits: "32",
       load_reserved_bits: "32",
@@ -17,7 +17,7 @@
       rl_not: rl ? "0" : "1"
     },
     "d" => {
-      long_name_suffix: "doubleword",
+      long_name_suffix: "Doubleword",
       funct3: "011",
       align_bits: "64",
       load_reserved_bits: "64",
@@ -37,7 +37,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: lr.<%= size %><%= aq_rl_suffix %>
-long_name: Load reserved <%= current_size[:long_name_suffix] %>
+long_name: Load Reserved <%= current_size[:long_name_suffix] %>
 description: |
 <%- if size == "w" -%>
   Loads a word from the address in xs1, places the sign-extended value in xd,
@@ -144,6 +144,7 @@ operation(): |
       unpredictable("Implementations may raise either a LoadAddressMisaligned or a LoadAccessFault when an LR/SC address is misaligned");
     }
   }
+
   XReg load_value = load_reserved<<%= current_size[:load_reserved_bits] %>>(virtual_address, aq, rl, $encoding);
 <%- if size == "w" -%>
   if (xlen() == 64) {

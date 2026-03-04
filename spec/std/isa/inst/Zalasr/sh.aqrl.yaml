@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sh.aqrl
-long_name: Store halfword (acquire) (release)
+long_name: Store Halfword Acquire Release
 description: |
   No description available.
 definedBy:

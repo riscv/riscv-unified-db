@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: lr.w.rl
-long_name: Load reserved word
+long_name: Load Reserved Word
 description: |
   Loads a word from the address in xs1, places the sign-extended value in xd,
   and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
@@ -101,6 +101,7 @@ operation(): |
       unpredictable("Implementations may raise either a LoadAddressMisaligned or a LoadAccessFault when an LR/SC address is misaligned");
     }
   }
+
   XReg load_value = load_reserved<32>(virtual_address, aq, rl, $encoding);
   if (xlen() == 64) {
     X[xd] = load_value;

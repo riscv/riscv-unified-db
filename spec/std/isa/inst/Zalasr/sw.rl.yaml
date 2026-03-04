@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sw.rl
-long_name: Store word (release)
+long_name: Store Word Release
 description: |
   No description available.
 definedBy:

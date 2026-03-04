@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sd.rl
-long_name: Store doubleword (release)
+long_name: Store Doubleword Release
 description: |
   No description available.
 definedBy:

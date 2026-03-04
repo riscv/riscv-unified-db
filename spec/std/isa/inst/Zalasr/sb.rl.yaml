@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sb.rl
-long_name: Store byte (release)
+long_name: Store Byte Release
 description: |
   No description available.
 definedBy:

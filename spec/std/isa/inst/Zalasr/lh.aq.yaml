@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: lh.aq
-long_name: Load halfword (acquire)
+long_name: Load Halfword Acquire
 description: |
   No description available.
 definedBy:

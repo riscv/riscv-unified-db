@@ -7,18 +7,18 @@
   raise "'rl' must be defined as true or false" unless [true, false].include?(rl)
 
   size_info = {
-    "b" => { funct3: "000", long_name_suffix: "byte" },
-    "h" => { funct3: "001", long_name_suffix: "halfword" },
-    "w" => { funct3: "010", long_name_suffix: "word" },
-    "d" => { funct3: "011", long_name_suffix: "doubleword" }
+    "b" => { funct3: "000", long_name_suffix: "Byte" },
+    "h" => { funct3: "001", long_name_suffix: "Halfword" },
+    "w" => { funct3: "010", long_name_suffix: "Word" },
+    "d" => { funct3: "011", long_name_suffix: "Doubleword" }
   }
 
   current_size = size_info[size]
 
   aq_rl_suffix = rl ? ".aqrl" : ".aq"
   rl_bit = rl ? "1" : "0"
-  acquire_suffix = " (acquire)"
-  release_suffix = rl ? " (release)" : ""
+  acquire_suffix = " Acquire"
+  release_suffix = rl ? " Release" : ""
 -%>
 
 $schema: "inst_schema.json#"

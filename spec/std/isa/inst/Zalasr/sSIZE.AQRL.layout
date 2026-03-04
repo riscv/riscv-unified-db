@@ -7,18 +7,18 @@
   raise "'aq' must be defined as true or false" unless [true, false].include?(aq)
 
   size_info = {
-    "b" => { funct3: "000", long_name_suffix: "byte" },
-    "h" => { funct3: "001", long_name_suffix: "halfword" },
-    "w" => { funct3: "010", long_name_suffix: "word" },
-    "d" => { funct3: "011", long_name_suffix: "doubleword" }
+    "b" => { funct3: "000", long_name_suffix: "Byte" },
+    "h" => { funct3: "001", long_name_suffix: "Halfword" },
+    "w" => { funct3: "010", long_name_suffix: "Word" },
+    "d" => { funct3: "011", long_name_suffix: "Doubleword" }
   }
 
   current_size = size_info[size]
 
   aq_rl_suffix = aq ? ".aqrl" : ".rl"
   aq_bit = aq ? "1" : "0"
-  acquire_suffix = aq ? " (acquire)" : ""
-  release_suffix = " (release)"
+  acquire_suffix = aq ? " Acquire" : ""
+  release_suffix = " Release"
 -%>
 
 $schema: "inst_schema.json#"

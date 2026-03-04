@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sb.aqrl
-long_name: Store byte (acquire) (release)
+long_name: Store Byte Acquire Release
 description: |
   No description available.
 definedBy:

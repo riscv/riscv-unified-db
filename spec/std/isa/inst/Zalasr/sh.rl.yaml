@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sh.rl
-long_name: Store halfword (release)
+long_name: Store Halfword Release
 description: |
   No description available.
 definedBy:

@@ -9,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: lw.aq
-long_name: Load word (acquire)
+long_name: Load Word Acquire
 description: |
   No description available.
 definedBy:
