@@ -85,7 +85,7 @@ WORKDIR /build/eqntott
 # Configure and build with static linking
 RUN ./configure CC="/usr/local/musl/bin/musl-gcc" LDFLAGS="-static" && \
     make -j$(nproc) && \
-    strip eqntott
+    strip src/eqntott
 
 RUN touch /build/BUILD_SUCCESS
 EOF
@@ -110,7 +110,7 @@ EOF
     fi
 
     mkdir -p "$output_dir"
-    docker cp "$container_name:/build/eqntott/eqntott" "$output_dir/eqntott" \
+    docker cp "$container_name:/build/eqntott/src/eqntott" "$output_dir/eqntott" \
         || error "Failed to extract eqntott binary"
     chmod +x "$output_dir/eqntott"
 
