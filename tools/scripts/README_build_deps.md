@@ -3,6 +3,10 @@
 
 # Building UDB Gem Dependencies from Source with Docker
 
+*NOTE* The scripts described here are not intended to be run by many/any developers.
+The primary way to update dependencies is to use the "Build and release UDB gem dependencies to
+GitHub" action on GitHub.
+
 This directory contains scripts to build the prebuilt binaries and libraries
 used by the `udb` gem from source using Docker and AlmaLinux 8. All builds
 produce artifacts with glibc 2.28+ compatibility.
