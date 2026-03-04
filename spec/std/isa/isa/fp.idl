@@ -20,7 +20,7 @@ Bits<32> SP_POS_INF       = 32'b0_11111111_00000000000000000000000;
 Bits<32> SP_NEG_INF       = 32'b1_11111111_00000000000000000000000;
 Bits<32> SP_POS_ZERO      = 32'b0_00000000_00000000000000000000000;
 Bits<32> SP_NEG_ZERO      = 32'b1_00000000_00000000000000000000000;
-Bits<32> SP_CANONICAL_NAN = 32'b0_11111111_01000000000000000000000;
+Bits<32> SP_CANONICAL_NAN = 32'b0_11111111_10000000000000000000000;
 
 Bits<16> HP_CANONICAL_NAN = 16'b0_11111_1111111111;
 
@@ -195,10 +195,7 @@ function is_sp_neg_norm? {
     return
       (sp_value[31] == 1)                 # negative
       && (sp_value[30:23] != 0b11111111)  # not inf/NaN
-      && !(                               # not subnornmal
-        (sp_value[30:23] == 0b00000000)
-        && sp_value[22:0] != 0
-      );
+      && (sp_value[30:23] != 0b00000000); # not zero
   }
 }
 
@@ -210,12 +207,9 @@ function is_sp_pos_norm? {
   }
   body {
     return
-      (sp_value[31] == 0)                # positive
+      (sp_value[31] == 0)                 # positive
       && (sp_value[30:23] != 0b11111111)  # not inf/NaN
-      && !(                              # not subnornmal
-        (sp_value[30:23] == 0b00000000)
-        && sp_value[22:0] != 0
-      );
+      && (sp_value[30:23] != 0b00000000); # not zero
   }
 }
 
