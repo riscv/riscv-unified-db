@@ -566,6 +566,24 @@
                     },
                     {
                       "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "boolean"
+                      }
                     }
                   ]
                 },
@@ -753,6 +771,19 @@
           },
           "minProperties": 1,
           "maxProperties": 1,
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["if", "then"],
+          "properties": {
+            "if": {
+              "$ref": "#/$defs/yaml_condition"
+            },
+            "then": {
+              "$ref": "#/$defs/yaml_condition"
+            }
+          },
           "additionalProperties": false
         },
         {

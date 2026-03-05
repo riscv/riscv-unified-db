@@ -139,6 +139,9 @@
           "type": "boolean",
           "default": true,
           "description": "Whether or not a compliant instance of this partial config can have more extensions than those listed in mandatory_extensions/non_mandatory_extensions"
+        },
+        "requirements": {
+          "$ref": "schema_defs.json#/$defs/condition"
         }
       },
       "additionalProperties": false

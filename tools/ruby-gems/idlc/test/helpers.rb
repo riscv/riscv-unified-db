@@ -1,6 +1,7 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
+# typed: false
 # frozen_string_literal: true
 
 require "ostruct"
@@ -19,7 +20,7 @@ XmockensionParameterWithValue = Struct.new(:name, :desc, :schema, :extra_validat
 # ConfiguredArchitecture mock that knows about XLEN and extensions
 class MockConfiguredArchitecture
   def param_values = { "XLEN" => 32 }
-  def params_with_value = [XmockensionParameterWithValue.new("XLEN", "mxlen", {"type" => "integer", "enum" => [32, 64]}, nil, nil, 32)]
+  def params_with_value = [XmockensionParameterWithValue.new("XLEN", "mxlen", { "type" => "integer", "enum" => [32, 64] }, nil, nil, 32)]
   def params_without_value = []
   def params = []
   def extensions = [Xmockension.new("I")]
@@ -42,8 +43,29 @@ module TestMixin
       "XLEN" => Idl::Var.new("XLEN", Idl::Type.new(:bits, width: 8), 32)
     }
   end
+  class MockCsrFieldClass
+    require "idlc/interfaces"
+    include Idl::CsrField
+    def initialize(name, val, loc)
+      @name = name
+      @val = val
+      @loc = loc
+    end
+    attr_reader :name
+    def defined_in_all_bases? = true
+    def defined_in_base32? = true
+    def defined_in_base64? = true
+    def base64_only? = false
+    def base32_only? = false
+    def location(_) = @loc
+    def width(_) = 32
+    def type(_) = @val.nil? ? "RW" : "RO"
+    def exists? = true
+    def reset_value = @val.nil? ? "UNDEFINED_LEGAL" : @val
+  end
   def setup
     @symtab = Idl::SymbolTable.new
     @compiler = Idl::Compiler.new
+    @mock_csr_field_class = MockCsrFieldClass
   end
 end

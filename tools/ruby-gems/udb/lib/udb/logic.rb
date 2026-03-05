@@ -5,6 +5,7 @@
 # frozen_string_literal: true
 
 require "numbers_and_words"
+require "open3"
 require "tempfile"
 require "treetop"
 
@@ -12,6 +13,7 @@ require "idlc/symbol_table"
 require "udb/eqn"
 require "udb/version_spec"
 require "udb/z3"
+require "udb/dep_paths"
 
 # Implements the LogicNode class, which is used to test for satisfiability/equality/etc of logic
 #
@@ -433,11 +435,7 @@ module Udb
       when ParameterComparisonType::GreaterThanOrEqual
         T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) >= @yaml["greaterThanOrEqual"]
       when ParameterComparisonType::Includes
-        expr = T.cast(e, Z3ParameterTerm)[0] == @yaml["includes"]
-        T.cast(e, Z3ParameterTerm).max_items.times do |i|
-          expr = expr | (T.cast(e, Z3ParameterTerm)[i] == @yaml["includes"])
-        end
-        expr
+        T.cast(e, Z3ParameterTerm).has_value?(@yaml["includes"])
       when ParameterComparisonType::OneOf
         expr = e == @yaml["oneOf"][0]
         @yaml["oneOf"][1..].each do |v|
@@ -3441,10 +3439,8 @@ module Udb
 
         Tempfile.create do |rf|
           # run must, re-use the tempfile for the result
-          `must -o #{rf.path} #{f.path}`
-          unless $?.success?
-            raise "could not find minimal subsets"
-          end
+          _stdout, status = Open3.capture2(Udb::MustPath.binary, "-o", rf.path, f.path)
+          raise "could not find minimal subsets" unless status.success?
 
           rf.rewind
           result = rf.read
@@ -3497,10 +3493,8 @@ module Udb
             FILE
             f.flush
 
-            tt = `eqntott -l #{f.path}`
-            unless $?.success?
-              raise "eqntott failure"
-            end
+            tt, status = Open3.capture2(Udb::EqntottPath.binary, "-l", T.must(f.path))
+            raise "eqntott failure" unless status.success?
           end
 
           if T.must(tt).lines.any? { |l| l =~ /^\.p 0/ }
@@ -3558,16 +3552,14 @@ module Udb
         f.write pla
         f.flush
 
-        cmd =
+        args =
           if exact
-            "espresso -Dsignature #{f.path}"
+            [Udb::EspressoPath.binary, "-Dsignature", f.path]
           else
-            "espresso -efast #{f.path}"
+            [Udb::EspressoPath.binary, "-efast", f.path]
           end
-        result = `#{cmd} 2>&1`
-        unless $?.success?
-          raise "espresso failure\n#{result}"
-        end
+        result, status = T.unsafe(Open3).capture2e(*args)
+        raise "espresso failure\n#{result}" unless status.success?
 
         sop_terms = []
         always_true = T.let(false, T::Boolean)
