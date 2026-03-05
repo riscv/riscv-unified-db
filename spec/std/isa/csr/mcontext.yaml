@@ -50,3 +50,4 @@ sw_read(): |
   if (!MCONTEXT_AVAILABLE) {
     unimplemented_csr($encoding);
   }
+  return $bits(CSR[mcontext]);

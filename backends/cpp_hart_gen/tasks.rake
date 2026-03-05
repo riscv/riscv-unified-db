@@ -384,7 +384,7 @@ task checkout_riscv_tests: "#{$root}/ext/riscv-tests/env/LICENSE"
 
 task build_riscv_tests: "checkout_riscv_tests" do
   Dir.chdir "#{$root}/ext/riscv-tests/isa" do
-    sh "make RISCV_GCC_OPTS='-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I/usr/include/newlib'"
+    sh "make RISCV_GCC_OPTS='-g -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I/usr/include/newlib'"
   end
 end
 
