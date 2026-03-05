@@ -1628,8 +1628,8 @@ function f32_to_ui32 {
   }
   body {
     Bits<1> sign = signF32UI(a);
-    Bits<8> exp  = expF32UI(a);
-    Bits<23> sig = fracF32UI(a);
+    Bits<16> exp  = expF32UI(a);
+    Bits<32> sig = fracF32UI(a);
     Bits<8> shiftDist;
     U64 sig64;
     # for NaN return the highest positive value and set floating-point flag to invalid.
@@ -1647,7 +1647,7 @@ function f32_to_ui32 {
     sig64 = sig `<< 32;
     shiftDist = 8'hAA - exp;
 
-    if (shiftDist > 0) {
+    if ($signed(shiftDist) > 0s) {
       sig64 = softfloat_shiftRightJam64( sig64, shiftDist);
     }
 
