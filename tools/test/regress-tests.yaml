@@ -127,6 +127,7 @@ tests:
           - cfg
           - mmr
           - mmr_schema
+          - instruction
           - z3
           - z3_extensions
           - z3_finite_array

@@ -20,6 +20,7 @@ gem:
     - yard-sorbet
     - uri
   doc: false
+  loc: false
   # workers: 5
 dsl:
   # Add your `dsl` command parameters here:
