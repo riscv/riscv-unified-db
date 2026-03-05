@@ -237,14 +237,14 @@ jobs:
           # Collect all per-schema release tags (schemas/<schema_name>/<version>)
           SCHEMA_TAGS=$(gh release list --limit 200 --json tagName --jq '.[] | .tagName | select(startswith("schemas/"))' 2>/dev/null || true)
           if [ -n "$SCHEMA_TAGS" ]; then
-            while IFS= read -r tag; do
+            for tag in $SCHEMA_TAGS; do
               # tag format: schemas/<schema_name>/<version>
               rest="${tag#schemas/}"
               schema_name="${rest%%/*}"
               version="${rest#*/}"
               mkdir -p "_site/schemas/${schema_name}/${version}"
               gh release download "${tag}" --dir "_site/schemas/${schema_name}/${version}" --pattern "*.json" 2>/dev/null || true
-            done <<< "$SCHEMA_TAGS"
+            done
           fi
           # Write a JSON index of all available schema versions and files
           ruby tools/scripts/gen_schema_index.rb _site/schemas _site/schemas/index.json

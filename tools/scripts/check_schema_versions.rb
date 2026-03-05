@@ -27,7 +27,10 @@ gen_schemas_dir.glob("**/*.json").sort.each do |schema_file|
   next if File.directory?(schema_file)
   schema_data = JSON.parse(schema_file.read)
   published_id = schema_data["$id"]
-  next if published_id.nil?
+  if published_id.nil?
+    warn "WARNING: #{schema_file} has no '$id' field (skipping version check)"
+    next
+  end
 
   uri = URI.parse(published_id)
   begin
@@ -44,8 +47,10 @@ gen_schemas_dir.glob("**/*.json").sort.each do |schema_file|
       failures << "Schema mismatch for #{published_id}:\n" \
                   "  Local:  #{schema_file}\n" \
                   "  Remote: #{published_id}\n" \
-                  "  The published schema differs from the local version. " \
-                  "Bump the schema version (\$id) to publish a new version."
+                  "  The published schema differs from the local version.\n" \
+                  "  To fix: bump the schema version (\$id) to a new version number.\n" \
+                  "  Note: new versions are published automatically when merged to main.\n" \
+                  "  To skip this check locally, do not run check_schema_versions."
     else
       puts "OK (matches published): #{published_id}"
     end
