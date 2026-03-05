@@ -18,8 +18,8 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower", "James Ball"]
   s.email       = ["dhower@qti.qualcomm.com", "jamesball@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.files       = Dir["lib/**/*.rb", "LICENSE", "ext/udb_z3_download/extconf.rb", "lib/udb/Z3_VERSION"]
-  s.extensions  = ["ext/udb_z3_download/extconf.rb"]
+  s.files       = Dir["lib/**/*.rb", "LICENSE", "ext/udb_download/extconf.rb", "lib/udb/Z3_VERSION", "lib/udb/ESPRESSO_VERSION", "lib/udb/MUST_VERSION", "lib/udb/EQNTOTT_VERSION"]
+  s.extensions  = ["ext/udb_download/extconf.rb"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
     "homepage_uri" => "https://github.com/riscv/riscv-unified-db",

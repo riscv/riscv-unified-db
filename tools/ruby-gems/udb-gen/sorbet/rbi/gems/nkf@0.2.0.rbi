@@ -5,137 +5,57 @@
 # Please instead update this file by running `bin/tapioca gem nkf`.
 
 
-# source://nkf//lib/kconv.rb#18
 module Kconv
   private
 
-  # source://nkf//lib/kconv.rb#141
   def guess(str); end
-
-  # source://nkf//lib/kconv.rb#156
   def iseuc(str); end
-
-  # source://nkf//lib/kconv.rb#174
   def isjis(str); end
-
-  # source://nkf//lib/kconv.rb#165
   def issjis(str); end
-
-  # source://nkf//lib/kconv.rb#193
   def isutf8(str); end
-
-  # source://nkf//lib/kconv.rb#57
   def kconv(str, to_enc, from_enc = T.unsafe(nil)); end
-
-  # source://nkf//lib/kconv.rb#83
   def toeuc(str); end
-
-  # source://nkf//lib/kconv.rb#74
   def tojis(str); end
-
-  # source://nkf//lib/kconv.rb#128
   def tolocale(str); end
-
-  # source://nkf//lib/kconv.rb#92
   def tosjis(str); end
-
-  # source://nkf//lib/kconv.rb#110
   def toutf16(str); end
-
-  # source://nkf//lib/kconv.rb#119
   def toutf32(str); end
-
-  # source://nkf//lib/kconv.rb#101
   def toutf8(str); end
 
   class << self
-    # source://nkf//lib/kconv.rb#144
     def guess(str); end
-
-    # source://nkf//lib/kconv.rb#159
     def iseuc(str); end
-
-    # source://nkf//lib/kconv.rb#187
     def isjis(str); end
-
-    # source://nkf//lib/kconv.rb#168
     def issjis(str); end
-
-    # source://nkf//lib/kconv.rb#196
     def isutf8(str); end
-
-    # source://nkf//lib/kconv.rb#64
     def kconv(str, to_enc, from_enc = T.unsafe(nil)); end
-
-    # source://nkf//lib/kconv.rb#86
     def toeuc(str); end
-
-    # source://nkf//lib/kconv.rb#77
     def tojis(str); end
-
-    # source://nkf//lib/kconv.rb#131
     def tolocale(str); end
-
-    # source://nkf//lib/kconv.rb#95
     def tosjis(str); end
-
-    # source://nkf//lib/kconv.rb#113
     def toutf16(str); end
-
-    # source://nkf//lib/kconv.rb#122
     def toutf32(str); end
-
-    # source://nkf//lib/kconv.rb#104
     def toutf8(str); end
   end
 end
 
-# source://nkf//lib/kconv.rb#26
 Kconv::AUTO = T.let(T.unsafe(nil), T.untyped)
-
-# source://nkf//lib/kconv.rb#36
 Kconv::NOCONV = T.let(T.unsafe(nil), T.untyped)
-
-# source://nkf//lib/kconv.rb#46
 Kconv::UNKNOWN = T.let(T.unsafe(nil), T.untyped)
 
-# source://nkf//lib/kconv.rb#199
 class String
   include ::Comparable
 
-  # source://nkf//lib/kconv.rb#264
   def iseuc; end
-
-  # source://nkf//lib/kconv.rb#276
   def isjis; end
-
-  # source://nkf//lib/kconv.rb#270
   def issjis; end
-
-  # source://nkf//lib/kconv.rb#282
   def isutf8; end
-
-  # source://nkf//lib/kconv.rb#205
   def kconv(to_enc, from_enc = T.unsafe(nil)); end
-
-  # source://nkf//lib/kconv.rb#224
   def toeuc; end
-
-  # source://nkf//lib/kconv.rb#218
   def tojis; end
-
-  # source://nkf//lib/kconv.rb#254
   def tolocale; end
-
-  # source://nkf//lib/kconv.rb#230
   def tosjis; end
-
-  # source://nkf//lib/kconv.rb#242
   def toutf16; end
-
-  # source://nkf//lib/kconv.rb#248
   def toutf32; end
-
-  # source://nkf//lib/kconv.rb#236
   def toutf8; end
 end

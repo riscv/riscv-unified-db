@@ -179,7 +179,7 @@ MAKE="${RUN} make"
 # This mirrors what ext/udb_z3_download/extconf.rb does at gem-install time
 setup_z3() {
   local z3_version
-  z3_version=$($RUN ruby -e "load '${ROOT}/tools/ruby-gems/udb/lib/udb/z3_version.rb'; puts Udb::Z3_VERSION" | tr -d '[:space:]')
+  z3_version=$($RUN ruby -e "load '${ROOT}/tools/ruby-gems/udb/lib/udb/dep_versions.rb'; puts Udb::Z3_VERSION" | tr -d '[:space:]')
 
   local cpu
   case "$(uname -m)" in

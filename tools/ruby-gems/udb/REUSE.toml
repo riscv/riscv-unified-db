@@ -17,7 +17,10 @@ path = [
     "sorbet/**",
     "test/boolean_expressions.json",
     "Gemfile.lock",
-    "lib/udb/Z3_VERSION"
+    "lib/udb/Z3_VERSION",
+    "lib/udb/ESPRESSO_VERSION",
+    "lib/udb/EQNTOTT_VERSION",
+    "lib/udb/MUST_VERSION"
 ]
 SPDX-FileCopyrightText = "NONE"
 SPDX-License-Identifier = "CC0-1.0"

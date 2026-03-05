@@ -885,7 +885,7 @@ module Udb
           else
             ops[0]
           end
-        ops = "sext(#{ops})" if sext?
+        ops = "sext(#{ops}, #{size})" if sext?
         ops
       end
     end

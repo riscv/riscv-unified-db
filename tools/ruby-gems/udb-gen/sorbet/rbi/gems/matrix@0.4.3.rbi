@@ -5,773 +5,326 @@
 # Please instead update this file by running `bin/tapioca gem matrix`.
 
 
-# source://matrix//lib/matrix.rb#17
 module ExceptionForMatrix; end
 
-# source://matrix//lib/matrix.rb#18
 class ExceptionForMatrix::ErrDimensionMismatch < ::StandardError
-  # source://matrix//lib/matrix.rb#19
   def initialize(val = T.unsafe(nil)); end
 end
 
-# source://matrix//lib/matrix.rb#28
 class ExceptionForMatrix::ErrNotRegular < ::StandardError
-  # source://matrix//lib/matrix.rb#29
   def initialize(val = T.unsafe(nil)); end
 end
 
-# source://matrix//lib/matrix.rb#38
 class ExceptionForMatrix::ErrOperationNotDefined < ::StandardError
-  # source://matrix//lib/matrix.rb#39
   def initialize(vals); end
 end
 
-# source://matrix//lib/matrix.rb#48
 class ExceptionForMatrix::ErrOperationNotImplemented < ::StandardError
-  # source://matrix//lib/matrix.rb#49
   def initialize(vals); end
 end
 
-# source://matrix//lib/matrix/version.rb#3
 class Matrix
   include ::Enumerable
   include ::ExceptionForMatrix
   include ::Matrix::CoercionHelper
   extend ::Matrix::ConversionHelper
 
-  # source://matrix//lib/matrix.rb#322
   def initialize(rows, column_count = T.unsafe(nil)); end
 
-  # source://matrix//lib/matrix.rb#1058
   def *(m); end
-
-  # source://matrix//lib/matrix.rb#1238
   def **(exp); end
-
-  # source://matrix//lib/matrix.rb#1093
   def +(m); end
-
-  # source://matrix//lib/matrix.rb#1284
   def +@; end
-
-  # source://matrix//lib/matrix.rb#1120
   def -(m); end
-
-  # source://matrix//lib/matrix.rb#1293
   def -@; end
-
-  # source://matrix//lib/matrix.rb#1147
   def /(other); end
-
-  # source://matrix//lib/matrix.rb#1021
   def ==(other); end
-
-  # source://matrix//lib/matrix.rb#337
   def [](i, j); end
-
-  # source://matrix//lib/matrix.rb#351
   def []=(i, j, v); end
-
-  # source://matrix//lib/matrix.rb#1300
   def abs; end
-
-  # source://matrix//lib/matrix.rb#1597
   def adjoint; end
-
-  # source://matrix//lib/matrix.rb#793
   def adjugate; end
-
-  # source://matrix//lib/matrix.rb#973
   def antisymmetric?; end
-
-  # source://matrix//lib/matrix.rb#1650
   def coerce(other); end
-
-  # source://matrix//lib/matrix.rb#778
   def cofactor(row, column); end
-
-  # source://matrix//lib/matrix.rb#828
   def cofactor_expansion(row: T.unsafe(nil), column: T.unsafe(nil)); end
-
-  # source://matrix//lib/matrix.rb#508
   def collect(which = T.unsafe(nil), &block); end
-
-  # source://matrix//lib/matrix.rb#526
   def collect!(which = T.unsafe(nil)); end
-
-  # source://matrix//lib/matrix.rb#477
   def column(j); end
-
-  # source://matrix//lib/matrix.rb#456
   def column_count; end
-
-  # source://matrix//lib/matrix.rb#457
   def column_size; end
-
-  # source://matrix//lib/matrix.rb#1671
   def column_vectors; end
-
-  # source://matrix//lib/matrix.rb#315
   def combine(*matrices, &block); end
-
-  # source://matrix//lib/matrix.rb#341
   def component(i, j); end
-
-  # source://matrix//lib/matrix.rb#1588
   def conj; end
-
-  # source://matrix//lib/matrix.rb#1585
   def conjugate; end
-
-  # source://matrix//lib/matrix.rb#1356
   def det; end
-
-  # source://matrix//lib/matrix.rb#1403
   def det_e; end
-
-  # source://matrix//lib/matrix.rb#1318
   def determinant; end
-
-  # source://matrix//lib/matrix.rb#1399
   def determinant_e; end
-
-  # source://matrix//lib/matrix.rb#839
   def diagonal?; end
-
-  # source://matrix//lib/matrix.rb#556
   def each(which = T.unsafe(nil), &block); end
-
-  # source://matrix//lib/matrix.rb#616
   def each_with_index(which = T.unsafe(nil)); end
-
-  # source://matrix//lib/matrix.rb#1555
   def eigen; end
-
-  # source://matrix//lib/matrix.rb#1552
   def eigensystem; end
-
-  # source://matrix//lib/matrix.rb#340
   def element(i, j); end
-
-  # source://matrix//lib/matrix.rb#1694
   def elements_to_f; end
-
-  # source://matrix//lib/matrix.rb#1702
   def elements_to_i; end
-
-  # source://matrix//lib/matrix.rb#1710
   def elements_to_r; end
-
-  # source://matrix//lib/matrix.rb#848
   def empty?; end
-
-  # source://matrix//lib/matrix.rb#1170
   def entrywise_product(m); end
-
-  # source://matrix//lib/matrix.rb#1027
   def eql?(other); end
-
-  # source://matrix//lib/matrix.rb#695
   def find_index(*args); end
-
-  # source://matrix//lib/matrix.rb#751
   def first_minor(row, column); end
-
-  # source://matrix//lib/matrix.rb#534
   def freeze; end
-
-  # source://matrix//lib/matrix.rb#1167
   def hadamard_product(m); end
-
-  # source://matrix//lib/matrix.rb#1044
   def hash; end
-
-  # source://matrix//lib/matrix.rb#856
   def hermitian?; end
-
-  # source://matrix//lib/matrix.rb#1413
   def hstack(*matrices); end
-
-  # source://matrix//lib/matrix.rb#1613
   def imag; end
-
-  # source://matrix//lib/matrix.rb#1610
   def imaginary; end
-
-  # source://matrix//lib/matrix.rb#679
   def index(*args); end
-
-  # source://matrix//lib/matrix.rb#1735
   def inspect; end
-
-  # source://matrix//lib/matrix.rb#1182
   def inv; end
-
-  # source://matrix//lib/matrix.rb#1178
   def inverse; end
-
-  # source://matrix//lib/matrix.rb#810
   def laplace_expansion(row: T.unsafe(nil), column: T.unsafe(nil)); end
-
-  # source://matrix//lib/matrix.rb#866
   def lower_triangular?; end
-
-  # source://matrix//lib/matrix.rb#1567
   def lup; end
-
-  # source://matrix//lib/matrix.rb#1570
   def lup_decomposition; end
-
-  # source://matrix//lib/matrix.rb#512
   def map(which = T.unsafe(nil), &block); end
-
-  # source://matrix//lib/matrix.rb#532
   def map!(which = T.unsafe(nil)); end
-
-  # source://matrix//lib/matrix.rb#710
   def minor(*param); end
-
-  # source://matrix//lib/matrix.rb#874
   def normal?; end
-
-  # source://matrix//lib/matrix.rb#892
   def orthogonal?; end
-
-  # source://matrix//lib/matrix.rb#911
   def permutation?; end
-
-  # source://matrix//lib/matrix.rb#1426
   def rank; end
-
-  # source://matrix//lib/matrix.rb#1457
   def rank_e; end
-
-  # source://matrix//lib/matrix.rb#1624
   def real; end
-
-  # source://matrix//lib/matrix.rb#932
   def real?; end
-
-  # source://matrix//lib/matrix.rb#1634
   def rect; end
-
-  # source://matrix//lib/matrix.rb#1637
   def rectangular; end
-
-  # source://matrix//lib/matrix.rb#939
   def regular?; end
-
-  # source://matrix//lib/matrix.rb#1474
   def rotate_entries(rotation = T.unsafe(nil)); end
-
-  # source://matrix//lib/matrix.rb#1494
   def round(ndigits = T.unsafe(nil)); end
-
-  # source://matrix//lib/matrix.rb#463
   def row(i, &block); end
-
-  # source://matrix//lib/matrix.rb#448
   def row_count; end
-
-  # source://matrix//lib/matrix.rb#452
   def row_size; end
-
-  # source://matrix//lib/matrix.rb#1662
   def row_vectors; end
-
-  # source://matrix//lib/matrix.rb#946
   def singular?; end
-
-  # source://matrix//lib/matrix.rb#980
   def skew_symmetric?; end
-
-  # source://matrix//lib/matrix.rb#953
   def square?; end
-
-  # source://matrix//lib/matrix.rb#961
   def symmetric?; end
-
-  # source://matrix//lib/matrix.rb#1525
   def t; end
-
-  # source://matrix//lib/matrix.rb#1687
   def to_a; end
-
-  # source://matrix//lib/matrix.rb#1680
   def to_matrix; end
-
-  # source://matrix//lib/matrix.rb#1722
   def to_s; end
-
-  # source://matrix//lib/matrix.rb#1509
   def tr; end
-
-  # source://matrix//lib/matrix.rb#1503
   def trace; end
-
-  # source://matrix//lib/matrix.rb#1521
   def transpose; end
-
-  # source://matrix//lib/matrix.rb#986
   def unitary?; end
-
-  # source://matrix//lib/matrix.rb#1003
   def upper_triangular?; end
-
-  # source://matrix//lib/matrix.rb#1535
   def vstack(*matrices); end
-
-  # source://matrix//lib/matrix.rb#1010
   def zero?; end
 
   protected
 
-  # source://matrix//lib/matrix.rb#1258
   def power_int(exp); end
-
-  # source://matrix//lib/matrix.rb#69
   def rows; end
 
   private
 
-  # source://matrix//lib/matrix.rb#376
   def check_int(val, direction); end
-
-  # source://matrix//lib/matrix.rb#370
   def check_range(val, direction); end
-
-  # source://matrix//lib/matrix.rb#1369
   def determinant_bareiss; end
-
-  # source://matrix//lib/matrix.rb#1036
   def initialize_copy(m); end
-
-  # source://matrix//lib/matrix.rb#1184
   def inverse_from(src); end
-
-  # source://matrix//lib/matrix.rb#330
   def new_matrix(rows, column_count = T.unsafe(nil)); end
-
-  # source://matrix//lib/matrix.rb#432
   def set_col_range(row, col_range, value); end
-
-  # source://matrix//lib/matrix.rb#425
   def set_column_vector(row_range, col, value); end
-
-  # source://matrix//lib/matrix.rb#366
   def set_component(i, j, v); end
-
-  # source://matrix//lib/matrix.rb#365
   def set_element(i, j, v); end
-
-  # source://matrix//lib/matrix.rb#387
   def set_row_and_col_range(row_range, col_range, value); end
-
-  # source://matrix//lib/matrix.rb#411
   def set_row_range(row_range, col, value); end
-
-  # source://matrix//lib/matrix.rb#381
   def set_value(row, col, value); end
 
   class << self
-    # source://matrix//lib/matrix.rb#176
     def I(n); end
-
-    # source://matrix//lib/matrix.rb#78
     def [](*rows); end
-
-    # source://matrix//lib/matrix.rb#123
     def build(row_count, column_count = T.unsafe(nil)); end
-
-    # source://matrix//lib/matrix.rb#209
     def column_vector(column); end
-
-    # source://matrix//lib/matrix.rb#108
     def columns(columns); end
-
-    # source://matrix//lib/matrix.rb#288
     def combine(*matrices); end
-
-    # source://matrix//lib/matrix.rb#143
     def diagonal(*values); end
-
-    # source://matrix//lib/matrix.rb#227
     def empty(row_count = T.unsafe(nil), column_count = T.unsafe(nil)); end
-
-    # source://matrix//lib/matrix.rb#262
     def hstack(x, *matrices); end
-
-    # source://matrix//lib/matrix.rb#171
     def identity(n); end
-
-    # source://matrix//lib/matrix.rb#196
     def row_vector(row); end
-
-    # source://matrix//lib/matrix.rb#90
     def rows(rows, copy = T.unsafe(nil)); end
-
-    # source://matrix//lib/matrix.rb#161
     def scalar(n, value); end
-
-    # source://matrix//lib/matrix.rb#175
     def unit(n); end
-
-    # source://matrix//lib/matrix.rb#241
     def vstack(x, *matrices); end
-
-    # source://matrix//lib/matrix.rb#185
     def zero(row_count, column_count = T.unsafe(nil)); end
 
     private
 
-    # source://matrix//lib/matrix.rb#68
     def new(*_arg0); end
   end
 end
 
-# source://matrix//lib/matrix.rb#1770
 module Matrix::CoercionHelper
   private
 
-  # source://matrix//lib/matrix.rb#1775
   def apply_through_coercion(obj, oper); end
 
   class << self
-    # source://matrix//lib/matrix.rb#1822
     def check_int(val, count, kind); end
-
-    # source://matrix//lib/matrix.rb#1812
     def check_range(val, count, kind); end
-
-    # source://matrix//lib/matrix.rb#1789
     def coerce_to(obj, cls, meth); end
-
-    # source://matrix//lib/matrix.rb#1802
     def coerce_to_int(obj); end
-
-    # source://matrix//lib/matrix.rb#1806
     def coerce_to_matrix(obj); end
   end
 end
 
-# source://matrix//lib/matrix.rb#1745
 module Matrix::ConversionHelper
   private
 
-  # source://matrix//lib/matrix.rb#1750
   def convert_to_array(obj, copy = T.unsafe(nil)); end
 end
 
-# source://matrix//lib/matrix/eigenvalue_decomposition.rb#16
 class Matrix::EigenvalueDecomposition
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#20
   def initialize(a); end
 
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#77
   def d; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#74
   def eigenvalue_matrix; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#60
   def eigenvalues; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#44
   def eigenvector_matrix; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#51
   def eigenvector_matrix_inv; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#68
   def eigenvectors; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#84
   def to_a; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#81
   def to_ary; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#47
   def v; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#56
   def v_inv; end
 
   private
 
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#87
   def build_eigenvectors; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#103
   def cdiv(xr, xi, yr, yi); end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#236
   def diagonalize; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#447
   def hessenberg_to_real_schur; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#355
   def reduce_to_hessenberg; end
-
-  # source://matrix//lib/matrix/eigenvalue_decomposition.rb#118
   def tridiagonalize; end
 end
 
-# source://matrix//lib/matrix/lup_decomposition.rb#17
 class Matrix::LUPDecomposition
   include ::Matrix::ConversionHelper
 
-  # source://matrix//lib/matrix/lup_decomposition.rb#154
   def initialize(a); end
 
-  # source://matrix//lib/matrix/lup_decomposition.rb#79
   def det; end
-
-  # source://matrix//lib/matrix/lup_decomposition.rb#89
   def determinant; end
-
-  # source://matrix//lib/matrix/lup_decomposition.rb#22
   def l; end
-
-  # source://matrix//lib/matrix/lup_decomposition.rb#48
   def p; end
-
-  # source://matrix//lib/matrix/lup_decomposition.rb#63
   def pivots; end
-
-  # source://matrix//lib/matrix/lup_decomposition.rb#67
   def singular?; end
-
-  # source://matrix//lib/matrix/lup_decomposition.rb#95
   def solve(b); end
-
-  # source://matrix//lib/matrix/lup_decomposition.rb#59
   def to_a; end
-
-  # source://matrix//lib/matrix/lup_decomposition.rb#56
   def to_ary; end
-
-  # source://matrix//lib/matrix/lup_decomposition.rb#36
   def u; end
 end
 
-# source://matrix//lib/matrix.rb#666
 Matrix::SELECTORS = T.let(T.unsafe(nil), Hash)
 
-# source://matrix//lib/matrix.rb#1835
 class Matrix::Scalar < ::Numeric
   include ::ExceptionForMatrix
   include ::Matrix::CoercionHelper
 
-  # source://matrix//lib/matrix.rb#1839
   def initialize(value); end
 
-  # source://matrix//lib/matrix.rb#1866
   def *(other); end
-
-  # source://matrix//lib/matrix.rb#1890
   def **(other); end
-
-  # source://matrix//lib/matrix.rb#1844
   def +(other); end
-
-  # source://matrix//lib/matrix.rb#1855
   def -(other); end
-
-  # source://matrix//lib/matrix.rb#1877
   def /(other); end
 end
 
-# source://matrix//lib/matrix/version.rb#4
 Matrix::VERSION = T.let(T.unsafe(nil), String)
 
-# source://matrix//lib/matrix.rb#1968
 class Vector
   include ::ExceptionForMatrix
   include ::Enumerable
   include ::Matrix::CoercionHelper
   extend ::Matrix::ConversionHelper
 
-  # source://matrix//lib/matrix.rb#2022
   def initialize(array); end
 
-  # source://matrix//lib/matrix.rb#2224
   def *(x); end
-
-  # source://matrix//lib/matrix.rb#2241
   def +(v); end
-
-  # source://matrix//lib/matrix.rb#2289
   def +@; end
-
-  # source://matrix//lib/matrix.rb#2259
   def -(v); end
-
-  # source://matrix//lib/matrix.rb#2293
   def -@; end
-
-  # source://matrix//lib/matrix.rb#2277
   def /(x); end
-
-  # source://matrix//lib/matrix.rb#2200
   def ==(other); end
-
-  # source://matrix//lib/matrix.rb#2036
   def [](i); end
-
-  # source://matrix//lib/matrix.rb#2051
   def []=(i, v); end
-
-  # source://matrix//lib/matrix.rb#2409
   def angle_with(v); end
-
-  # source://matrix//lib/matrix.rb#2469
   def coerce(other); end
-
-  # source://matrix//lib/matrix.rb#2353
   def collect(&block); end
-
-  # source://matrix//lib/matrix.rb#2363
   def collect!(&block); end
-
-  # source://matrix//lib/matrix.rb#2125
   def collect2(v); end
-
-  # source://matrix//lib/matrix.rb#2040
   def component(i); end
-
-  # source://matrix//lib/matrix.rb#2429
   def covector; end
-
-  # source://matrix//lib/matrix.rb#2348
   def cross(*vs); end
-
-  # source://matrix//lib/matrix.rb#2328
   def cross_product(*vs); end
-
-  # source://matrix//lib/matrix.rb#2314
   def dot(v); end
-
-  # source://matrix//lib/matrix.rb#2102
   def each(&block); end
-
-  # source://matrix//lib/matrix.rb#2111
   def each2(v); end
-
-  # source://matrix//lib/matrix.rb#2039
   def element(i); end
-
-  # source://matrix//lib/matrix.rb#2447
   def elements_to_f; end
-
-  # source://matrix//lib/matrix.rb#2452
   def elements_to_i; end
-
-  # source://matrix//lib/matrix.rb#2457
   def elements_to_r; end
-
-  # source://matrix//lib/matrix.rb#2205
   def eql?(other); end
-
-  # source://matrix//lib/matrix.rb#2179
   def freeze; end
-
-  # source://matrix//lib/matrix.rb#2213
   def hash; end
-
-  # source://matrix//lib/matrix.rb#2165
   def independent?(*vs); end
-
-  # source://matrix//lib/matrix.rb#2305
   def inner_product(v); end
-
-  # source://matrix//lib/matrix.rb#2492
   def inspect; end
-
-  # source://matrix//lib/matrix.rb#2375
   def magnitude; end
-
-  # source://matrix//lib/matrix.rb#2358
   def map(&block); end
-
-  # source://matrix//lib/matrix.rb#2369
   def map!(&block); end
-
-  # source://matrix//lib/matrix.rb#2384
   def map2(v, &block); end
-
-  # source://matrix//lib/matrix.rb#2379
   def norm; end
-
-  # source://matrix//lib/matrix.rb#2398
   def normalize; end
-
-  # source://matrix//lib/matrix.rb#2378
   def r; end
-
-  # source://matrix//lib/matrix.rb#2084
   def round(ndigits = T.unsafe(nil)); end
-
-  # source://matrix//lib/matrix.rb#2091
   def size; end
-
-  # source://matrix//lib/matrix.rb#2436
   def to_a; end
-
-  # source://matrix//lib/matrix.rb#2443
   def to_matrix; end
-
-  # source://matrix//lib/matrix.rb#2485
   def to_s; end
-
-  # source://matrix//lib/matrix.rb#2172
   def zero?; end
 
   protected
 
-  # source://matrix//lib/matrix.rb#1976
   def elements; end
 
   private
 
-  # source://matrix//lib/matrix.rb#2187
   def initialize_copy(v); end
-
-  # source://matrix//lib/matrix.rb#2062
   def set_component(i, v); end
-
-  # source://matrix//lib/matrix.rb#2061
   def set_element(i, v); end
-
-  # source://matrix//lib/matrix.rb#2069
   def set_range(range, value); end
-
-  # source://matrix//lib/matrix.rb#2065
   def set_value(index, value); end
 
   class << self
-    # source://matrix//lib/matrix.rb#1983
     def [](*array); end
-
-    # source://matrix//lib/matrix.rb#2000
     def basis(size:, index:); end
-
-    # source://matrix//lib/matrix.rb#1991
     def elements(array, copy = T.unsafe(nil)); end
-
-    # source://matrix//lib/matrix.rb#2147
     def independent?(*vs); end
-
-    # source://matrix//lib/matrix.rb#2013
     def zero(size); end
 
     private
 
-    # source://matrix//lib/matrix.rb#1975
     def new(*_arg0); end
   end
 end
 
-# source://matrix//lib/matrix.rb#2390
 class Vector::ZeroVectorError < ::StandardError; end
