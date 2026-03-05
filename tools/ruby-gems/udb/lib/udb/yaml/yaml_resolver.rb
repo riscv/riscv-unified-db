@@ -158,6 +158,11 @@ module Udb
 
         resolved_data = resolve_object(data, [], rel_path, data, input_dir, no_checks)
 
+        # Second pass: set $parent_of on parent objects based on $child_of relationships.
+        # This must be done after the full document is resolved because a child (e.g. "bottom")
+        # may be processed after its parent (e.g. "middle") is already in resolved_data.
+        set_parent_of_relationships(resolved_data, rel_path)
+
         @resolved_objs[rel_path] = { data: resolved_data, comments: result[:comments] }
       end
 
@@ -270,10 +275,13 @@ module Udb
         ).returns(T::Hash[String, T.untyped])
       }
       def resolve_inherits(obj, obj_path, obj_file_path, doc_obj, arch_root, no_checks)
-        inherits_targets = obj["$inherits"].is_a?(Array) ? obj["$inherits"] : [obj["$inherits"]]
+        inherits_value = obj["$inherits"]
+        inherits_targets = inherits_value.is_a?(Array) ? inherits_value : [inherits_value]
 
-        obj["$child_of"] = obj["$inherits"]
-        obj.delete("$inherits")
+        # Build a new hash instead of mutating obj in-place.
+        # Mutating obj would corrupt doc_obj (the original parsed data), causing subsequent
+        # resolutions of the same key to see the already-mutated version without $inherits.
+        obj = obj.reject { |k, _| k == "$inherits" }.merge("$child_of" => inherits_value)
 
         parent_obj = T.let({}, T::Hash[String, T.untyped])
 
@@ -311,13 +319,6 @@ module Udb
             end
           end
 
-          child_ref = "#{obj_file_path}#/#{obj_path.join("/")}"
-          if ref_obj.key?("$parent_of")
-            ref_obj["$parent_of"] = [ref_obj["$parent_of"]] unless ref_obj["$parent_of"].is_a?(Array)
-            ref_obj["$parent_of"] << child_ref
-          else
-            ref_obj["$parent_of"] = child_ref
-          end
         end
 
         final_obj = T.let({}, T::Hash[String, T.untyped])
@@ -345,6 +346,56 @@ module Udb
         end
 
         final_obj
+      end
+
+      sig {
+        params(
+          resolved_data: T::Hash[String, T.untyped],
+          rel_path: String
+        ).void
+      }
+      def set_parent_of_relationships(resolved_data, rel_path)
+        walk_for_parent_of(resolved_data, [], resolved_data, rel_path)
+      end
+
+      sig {
+        params(
+          obj: T.untyped,
+          path: T::Array[String],
+          doc_root: T::Hash[String, T.untyped],
+          rel_path: String
+        ).void
+      }
+      def walk_for_parent_of(obj, path, doc_root, rel_path)
+        return unless obj.is_a?(Hash)
+
+        if obj.key?("$child_of")
+          child_of = obj["$child_of"]
+          targets = child_of.is_a?(Array) ? child_of : [child_of]
+          child_ref = path.empty? ? rel_path : "#{rel_path}#/#{path.join("/")}"
+
+          targets.each do |target|
+            next unless target.is_a?(String) && target.start_with?("#")
+
+            ref_path_str = target.split("#", 2)[1]
+            ref_path = ref_path_str.split("/").drop(1)
+            parent_obj = T.unsafe(self).dig(doc_root, *ref_path)
+            next if parent_obj.nil? || !parent_obj.is_a?(Hash)
+
+            if parent_obj.key?("$parent_of")
+              existing = parent_obj["$parent_of"]
+              existing = [existing] unless existing.is_a?(Array)
+              existing << child_ref unless existing.include?(child_ref)
+              parent_obj["$parent_of"] = existing.length == 1 ? existing[0] : existing
+            else
+              parent_obj["$parent_of"] = child_ref
+            end
+          end
+        end
+
+        obj.each do |key, value|
+          walk_for_parent_of(value, path + [key], doc_root, rel_path)
+        end
       end
 
       sig {
