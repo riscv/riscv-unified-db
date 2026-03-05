@@ -5,565 +5,265 @@
 # Please instead update this file by running `bin/tapioca gem commander`.
 
 
-# source://commander//lib/commander/core_ext/array.rb#3
 class Array
   include ::Enumerable
 
   class << self
-    # source://commander//lib/commander/core_ext/array.rb#21
     def parse(string); end
   end
 end
 
-# source://commander//lib/commander/blank.rb#3
 module Blank
   class << self
-    # source://commander//lib/commander/blank.rb#4
     def included(base); end
   end
 end
 
-# source://commander//lib/commander/version.rb#3
 module Commander
   private
 
-  # source://commander//lib/commander/configure.rb#4
   def configure(*configuration_opts, &configuration_block); end
 
   class << self
-    # source://commander//lib/commander/configure.rb#15
     def configure(*configuration_opts, &configuration_block); end
   end
 end
 
-# source://commander//lib/commander/command.rb#6
 class Commander::Command
-  # source://commander//lib/commander/command.rb#40
   def initialize(name); end
 
-  # source://commander//lib/commander/command.rb#147
   def action(*args, &block); end
-
-  # source://commander//lib/commander/command.rb#181
   def call(args = T.unsafe(nil)); end
-
-  # source://commander//lib/commander/command.rb#7
   def description; end
-
-  # source://commander//lib/commander/command.rb#7
   def description=(_arg0); end
-
-  # source://commander//lib/commander/command.rb#59
   def example(description, command); end
-
-  # source://commander//lib/commander/command.rb#7
   def examples; end
-
-  # source://commander//lib/commander/command.rb#7
   def examples=(_arg0); end
-
-  # source://commander//lib/commander/command.rb#8
   def global_options; end
-
-  # source://commander//lib/commander/command.rb#215
   def inspect; end
-
-  # source://commander//lib/commander/command.rb#7
   def name; end
-
-  # source://commander//lib/commander/command.rb#7
   def name=(_arg0); end
-
-  # source://commander//lib/commander/command.rb#110
   def option(*args, &block); end
-
-  # source://commander//lib/commander/command.rb#211
   def option_proc(switches); end
-
-  # source://commander//lib/commander/command.rb#7
   def options; end
-
-  # source://commander//lib/commander/command.rb#7
   def options=(_arg0); end
-
-  # source://commander//lib/commander/command.rb#166
   def parse_options_and_call_procs(*args); end
-
-  # source://commander//lib/commander/command.rb#197
   def proxy_option_struct; end
-
-  # source://commander//lib/commander/command.rb#7
   def proxy_options; end
-
-  # source://commander//lib/commander/command.rb#7
   def proxy_options=(_arg0); end
-
-  # source://commander//lib/commander/command.rb#156
   def run(*args); end
-
-  # source://commander//lib/commander/command.rb#7
   def summary; end
-
-  # source://commander//lib/commander/command.rb#7
   def summary=(_arg0); end
-
-  # source://commander//lib/commander/command.rb#7
   def syntax; end
-
-  # source://commander//lib/commander/command.rb#7
   def syntax=(_arg0); end
-
-  # source://commander//lib/commander/command.rb#142
   def when_called(*args, &block); end
 end
 
-# source://commander//lib/commander/command.rb#13
 class Commander::Command::Options
   include ::Blank
 
-  # source://commander//lib/commander/command.rb#16
   def initialize; end
 
-  # source://commander//lib/commander/command.rb#20
   def __hash__; end
-
-  # source://commander//lib/commander/command.rb#28
   def default(defaults = T.unsafe(nil)); end
-
-  # source://commander//lib/commander/command.rb#32
   def inspect; end
-
-  # source://commander//lib/commander/command.rb#24
   def method_missing(meth, *args); end
 end
 
-# source://commander//lib/commander/delegates.rb#4
 module Commander::Delegates
-  # source://commander//lib/commander/delegates.rb#16
   def add_command(*args, &block); end
-
-  # source://commander//lib/commander/delegates.rb#16
   def alias_command(*args, &block); end
-
-  # source://commander//lib/commander/delegates.rb#16
   def always_trace!(*args, &block); end
-
-  # source://commander//lib/commander/delegates.rb#16
   def command(*args, &block); end
-
-  # source://commander//lib/commander/delegates.rb#16
   def default_command(*args, &block); end
-
-  # source://commander//lib/commander/delegates.rb#23
   def defined_commands(*_arg0, **_arg1, &_arg2); end
-
-  # source://commander//lib/commander/delegates.rb#16
   def global_option(*args, &block); end
-
-  # source://commander//lib/commander/delegates.rb#16
   def never_trace!(*args, &block); end
-
-  # source://commander//lib/commander/delegates.rb#16
   def program(*args, &block); end
-
-  # source://commander//lib/commander/delegates.rb#16
   def run!(*args, &block); end
 end
 
-# source://commander//lib/commander/help_formatters.rb#4
 module Commander::HelpFormatter
   private
 
-  # source://commander//lib/commander/help_formatters.rb#47
   def indent(amount, text); end
 
   class << self
-    # source://commander//lib/commander/help_formatters.rb#47
     def indent(amount, text); end
   end
 end
 
-# source://commander//lib/commander/help_formatters/base.rb#12
 class Commander::HelpFormatter::Base
-  # source://commander//lib/commander/help_formatters/base.rb#13
   def initialize(runner); end
 
-  # source://commander//lib/commander/help_formatters/base.rb#17
   def render; end
-
-  # source://commander//lib/commander/help_formatters/base.rb#21
   def render_command(command); end
 end
 
-# source://commander//lib/commander/help_formatters.rb#9
 class Commander::HelpFormatter::Context
-  # source://commander//lib/commander/help_formatters.rb#10
   def initialize(target); end
 
-  # source://commander//lib/commander/help_formatters.rb#21
   def decorate_binding(_bind); end
-
-  # source://commander//lib/commander/help_formatters.rb#14
   def get_binding; end
 end
 
-# source://commander//lib/commander/help_formatters.rb#25
 class Commander::HelpFormatter::ProgramContext < ::Commander::HelpFormatter::Context
-  # source://commander//lib/commander/help_formatters.rb#26
   def decorate_binding(bind); end
-
-  # source://commander//lib/commander/help_formatters.rb#35
   def max_aliases_length(bind); end
-
-  # source://commander//lib/commander/help_formatters.rb#31
   def max_command_length(bind); end
-
-  # source://commander//lib/commander/help_formatters.rb#39
   def max_key_length(hash, default = T.unsafe(nil)); end
 end
 
-# source://commander//lib/commander/help_formatters/terminal.rb#7
 class Commander::HelpFormatter::Terminal < ::Commander::HelpFormatter::Base
-  # source://commander//lib/commander/help_formatters/terminal.rb#8
   def render; end
-
-  # source://commander//lib/commander/help_formatters/terminal.rb#12
   def render_command(command); end
-
-  # source://commander//lib/commander/help_formatters/terminal.rb#16
   def template(name); end
 end
 
-# source://commander//lib/commander/help_formatters/terminal_compact.rb#7
 class Commander::HelpFormatter::TerminalCompact < ::Commander::HelpFormatter::Terminal
-  # source://commander//lib/commander/help_formatters/terminal_compact.rb#8
   def template(name); end
 end
 
-# source://commander//lib/commander/methods.rb#4
 module Commander::Methods
   include ::Commander::UI
   include ::Commander::UI::AskForClass
   include ::Commander::Delegates
 end
 
-# source://commander//lib/commander/platform.rb#4
 module Commander::Platform
   class << self
-    # source://commander//lib/commander/platform.rb#5
     def jruby?; end
   end
 end
 
-# source://commander//lib/commander/runner.rb#6
 class Commander::Runner
-  # source://commander//lib/commander/runner.rb#21
   def initialize(args = T.unsafe(nil)); end
 
-  # source://commander//lib/commander/runner.rb#223
   def active_command; end
-
-  # source://commander//lib/commander/runner.rb#200
   def add_command(command); end
-
-  # source://commander//lib/commander/runner.rb#207
   def alias?(name); end
-
-  # source://commander//lib/commander/runner.rb#184
   def alias_command(alias_name, name, *args); end
-
-  # source://commander//lib/commander/runner.rb#89
   def always_trace!; end
-
-  # source://commander//lib/commander/runner.rb#255
   def args_without_command_name; end
-
-  # source://commander//lib/commander/runner.rb#161
   def command(name, &block); end
-
-  # source://commander//lib/commander/runner.rb#214
   def command_exists?(name); end
-
-  # source://commander//lib/commander/runner.rb#232
   def command_name_from_args; end
-
-  # source://commander//lib/commander/runner.rb#15
   def commands; end
-
-  # source://commander//lib/commander/runner.rb#287
   def create_default_commands; end
-
-  # source://commander//lib/commander/runner.rb#193
   def default_command(name); end
-
-  # source://commander//lib/commander/runner.rb#358
   def expand_optionally_negative_switches(switches); end
-
-  # source://commander//lib/commander/runner.rb#170
   def global_option(*args, &block); end
-
-  # source://commander//lib/commander/runner.rb#393
   def global_option_proc(switches, &block); end
-
-  # source://commander//lib/commander/runner.rb#248
   def help_formatter; end
-
-  # source://commander//lib/commander/runner.rb#266
   def help_formatter_alias_defaults; end
-
-  # source://commander//lib/commander/runner.rb#15
   def help_formatter_aliases; end
-
-  # source://commander//lib/commander/runner.rb#97
   def never_trace!; end
-
-  # source://commander//lib/commander/runner.rb#15
   def options; end
-
-  # source://commander//lib/commander/runner.rb#372
   def parse_global_options; end
-
-  # source://commander//lib/commander/runner.rb#131
   def program(key, *args, &block); end
-
-  # source://commander//lib/commander/runner.rb#275
   def program_defaults; end
-
-  # source://commander//lib/commander/runner.rb#322
   def remove_global_options(options, args); end
-
-  # source://commander//lib/commander/runner.rb#405
   def require_program(*keys); end
-
-  # source://commander//lib/commander/runner.rb#313
   def require_valid_command(command = T.unsafe(nil)); end
-
-  # source://commander//lib/commander/runner.rb#40
   def run!; end
-
-  # source://commander//lib/commander/runner.rb#439
   def run_active_command; end
-
-  # source://commander//lib/commander/runner.rb#448
   def say(*args); end
-
-  # source://commander//lib/commander/runner.rb#239
   def valid_command_names_from(*args); end
-
-  # source://commander//lib/commander/runner.rb#82
   def version; end
 
   private
 
-  # source://commander//lib/commander/runner.rb#458
   def longest_valid_command_name_from(args); end
 
   class << self
-    # source://commander//lib/commander/runner.rb#33
     def instance; end
-
-    # source://commander//lib/commander/runner.rb#414
     def separate_switches_from_description(*args); end
-
-    # source://commander//lib/commander/runner.rb#432
     def switch_to_sym(switch); end
   end
 end
 
-# source://commander//lib/commander/runner.rb#11
 class Commander::Runner::CommandError < ::StandardError; end
-
-# source://commander//lib/commander/runner.rb#13
 class Commander::Runner::InvalidCommandError < ::Commander::Runner::CommandError; end
 
-# source://commander//lib/commander/user_interaction.rb#14
 module Commander::UI
   private
 
-  # source://commander//lib/commander/user_interaction.rb#193
   def applescript(script); end
-
-  # source://commander//lib/commander/user_interaction.rb#256
   def ask_editor(input = T.unsafe(nil), preferred_editor = T.unsafe(nil)); end
-
-  # source://commander//lib/commander/user_interaction.rb#237
   def available_editor(preferred = T.unsafe(nil)); end
-
-  # source://commander//lib/commander/user_interaction.rb#43
   def choose(message = T.unsafe(nil), *choices, &block); end
-
-  # source://commander//lib/commander/user_interaction.rb#117
   def color(*args); end
-
-  # source://commander//lib/commander/user_interaction.rb#168
   def converse(prompt, responses = T.unsafe(nil)); end
-
-  # source://commander//lib/commander/user_interaction.rb#272
   def enable_paging; end
-
-  # source://commander//lib/commander/user_interaction.rb#222
   def io(input = T.unsafe(nil), output = T.unsafe(nil), &block); end
-
-  # source://commander//lib/commander/user_interaction.rb#57
   def log(action, *args); end
-
-  # source://commander//lib/commander/user_interaction.rb#34
   def password(message = T.unsafe(nil), mask = T.unsafe(nil)); end
-
-  # source://commander//lib/commander/user_interaction.rb#316
   def progress(arr, options = T.unsafe(nil)); end
-
-  # source://commander//lib/commander/user_interaction.rb#374
   def replace_tokens(str, hash); end
-
-  # source://commander//lib/commander/user_interaction.rb#97
   def say_error(*args); end
-
-  # source://commander//lib/commander/user_interaction.rb#69
   def say_ok(*args); end
-
-  # source://commander//lib/commander/user_interaction.rb#83
   def say_warning(*args); end
-
-  # source://commander//lib/commander/user_interaction.rb#139
   def speak(message, voice = T.unsafe(nil), rate = T.unsafe(nil)); end
 
   class << self
-    # source://commander//lib/commander/user_interaction.rb#193
     def applescript(script); end
-
-    # source://commander//lib/commander/user_interaction.rb#256
     def ask_editor(input = T.unsafe(nil), preferred_editor = T.unsafe(nil)); end
-
-    # source://commander//lib/commander/user_interaction.rb#237
     def available_editor(preferred = T.unsafe(nil)); end
-
-    # source://commander//lib/commander/user_interaction.rb#43
     def choose(message = T.unsafe(nil), *choices, &block); end
-
-    # source://commander//lib/commander/user_interaction.rb#117
     def color(*args); end
-
-    # source://commander//lib/commander/user_interaction.rb#168
     def converse(prompt, responses = T.unsafe(nil)); end
-
-    # source://commander//lib/commander/user_interaction.rb#272
     def enable_paging; end
-
-    # source://commander//lib/commander/user_interaction.rb#222
     def io(input = T.unsafe(nil), output = T.unsafe(nil), &block); end
-
-    # source://commander//lib/commander/user_interaction.rb#57
     def log(action, *args); end
-
-    # source://commander//lib/commander/user_interaction.rb#34
     def password(message = T.unsafe(nil), mask = T.unsafe(nil)); end
-
-    # source://commander//lib/commander/user_interaction.rb#316
     def progress(arr, options = T.unsafe(nil)); end
-
-    # source://commander//lib/commander/user_interaction.rb#374
     def replace_tokens(str, hash); end
-
-    # source://commander//lib/commander/user_interaction.rb#97
     def say_error(*args); end
-
-    # source://commander//lib/commander/user_interaction.rb#69
     def say_ok(*args); end
-
-    # source://commander//lib/commander/user_interaction.rb#83
     def say_warning(*args); end
-
-    # source://commander//lib/commander/user_interaction.rb#139
     def speak(message, voice = T.unsafe(nil), rate = T.unsafe(nil)); end
   end
 end
 
-# source://commander//lib/commander/user_interaction.rb#325
 module Commander::UI::AskForClass
-  # source://commander//lib/commander/user_interaction.rb#330
   def ask_for_array(prompt); end
-
-  # source://commander//lib/commander/user_interaction.rb#330
   def ask_for_file(prompt); end
-
-  # source://commander//lib/commander/user_interaction.rb#330
   def ask_for_float(prompt); end
-
-  # source://commander//lib/commander/user_interaction.rb#330
   def ask_for_integer(prompt); end
-
-  # source://commander//lib/commander/user_interaction.rb#330
   def ask_for_pathname(prompt); end
-
-  # source://commander//lib/commander/user_interaction.rb#330
   def ask_for_regexp(prompt); end
-
-  # source://commander//lib/commander/user_interaction.rb#330
   def ask_for_string(prompt); end
-
-  # source://commander//lib/commander/user_interaction.rb#330
   def ask_for_symbol(prompt); end
-
-  # source://commander//lib/commander/user_interaction.rb#335
   def method_missing(method_name, *arguments, &block); end
 
   private
 
-  # source://commander//lib/commander/user_interaction.rb#366
   def respond_to_missing?(method_name, include_private = T.unsafe(nil)); end
 end
 
-# source://commander//lib/commander/user_interaction.rb#326
 Commander::UI::AskForClass::DEPRECATED_CONSTANTS = T.let(T.unsafe(nil), Array)
 
-# source://commander//lib/commander/user_interaction.rb#416
 class Commander::UI::ProgressBar
-  # source://commander//lib/commander/user_interaction.rb#442
   def initialize(total, options = T.unsafe(nil)); end
 
-  # source://commander//lib/commander/user_interaction.rb#532
   def completed?; end
-
-  # source://commander//lib/commander/user_interaction.rb#549
   def erase_line; end
-
-  # source://commander//lib/commander/user_interaction.rb#525
   def finished?; end
-
-  # source://commander//lib/commander/user_interaction.rb#495
   def generate_tokens; end
-
-  # source://commander//lib/commander/user_interaction.rb#540
   def increment(tokens = T.unsafe(nil)); end
-
-  # source://commander//lib/commander/user_interaction.rb#456
   def percent_complete; end
-
-  # source://commander//lib/commander/user_interaction.rb#488
   def progress_bar; end
-
-  # source://commander//lib/commander/user_interaction.rb#511
   def show; end
-
-  # source://commander//lib/commander/user_interaction.rb#481
   def steps_remaining; end
-
-  # source://commander//lib/commander/user_interaction.rb#467
   def time_elapsed; end
-
-  # source://commander//lib/commander/user_interaction.rb#474
   def time_remaining; end
 end
 
-# source://commander//lib/commander/version.rb#4
 Commander::VERSION = T.let(T.unsafe(nil), String)
 
-# source://commander//lib/commander/core_ext/object.rb#3
 class Object < ::BasicObject
   include ::Kernel
   include ::PP::ObjectMixin
 
-  # source://commander//lib/commander/core_ext/object.rb#7
   def get_binding; end
 end

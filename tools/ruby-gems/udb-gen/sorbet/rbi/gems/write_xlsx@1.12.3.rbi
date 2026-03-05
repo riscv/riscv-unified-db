@@ -5,33 +5,24 @@
 # Please instead update this file by running `bin/tapioca gem write_xlsx`.
 
 
-# source://write_xlsx//lib/write_xlsx/col_name.rb#6
 class ColName
   include ::Singleton::SingletonInstanceMethods
   include ::Singleton
   extend ::Singleton::SingletonClassMethods
 
-  # source://write_xlsx//lib/write_xlsx/col_name.rb#9
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/col_name.rb#14
   def col_str(col); end
-
-  # source://write_xlsx//lib/write_xlsx/col_name.rb#18
   def row_str(row); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/col_name.rb#24
   def col_str_build(col); end
 
   class << self
     private
 
-    # source://write_xlsx//lib/write_xlsx/col_name.rb#7
     def allocate; end
-
-    # source://write_xlsx//lib/write_xlsx/col_name.rb#7
     def new(*_arg0); end
   end
 end
@@ -43,6404 +34,2529 @@ class Object < ::BasicObject
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/compatibility.rb#64
   def ruby_18; end
-
-  # source://write_xlsx//lib/write_xlsx/compatibility.rb#68
   def ruby_19; end
 end
 
-# source://write_xlsx//lib/write_xlsx/compatibility.rb#11
 class String
   include ::Comparable
 
-  # source://write_xlsx//lib/write_xlsx/compatibility.rb#12
   def first_line; end
 end
 
-# source://write_xlsx//lib/write_xlsx.rb#88
 class WriteXLSX < ::Writexlsx::Workbook; end
-
-# source://write_xlsx//lib/write_xlsx.rb#95
 class WriteXLSXDimensionError < ::StandardError; end
-
-# source://write_xlsx//lib/write_xlsx.rb#92
 class WriteXLSXInsufficientArgumentError < ::StandardError; end
-
-# source://write_xlsx//lib/write_xlsx.rb#98
 class WriteXLSXOptionParameterError < ::StandardError; end
-
-# source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#9
 module Writexlsx; end
 
-# source://write_xlsx//lib/write_xlsx/chart/legend.rb#5
 class Writexlsx::Chart
   include ::Writexlsx::Utility
   include ::Writexlsx::Gradient
 
-  # source://write_xlsx//lib/write_xlsx/chart.rb#215
   def initialize(subtype); end
 
-  # source://write_xlsx//lib/write_xlsx/chart.rb#268
   def add_series(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#175
   def already_inserted=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#563
   def already_inserted?; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#245
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#178
   def axis2_ids; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#457
   def combine(chart); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#174
   def combined; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#541
   def data_id(full_formula, data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#175
   def date_category=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#171
   def embedded; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#171
   def formula_data; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#171
   def formula_ids; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#173
   def height; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#169
   def id; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#169
   def id=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#170
   def index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#567
   def is_secondary?; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#174
   def label_position_default; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#174
   def label_positions; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#169
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#169
   def name=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#170
   def palette=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#519
   def process_names(name = T.unsafe(nil), name_formula = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#170
   def protection=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#176
   def series_index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#365
   def set_chartarea(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#443
   def set_drop_lines(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#464
   def set_embedded_config_data; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#450
   def set_high_low_lines(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#349
   def set_legend(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#357
   def set_plotarea(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#399
   def set_size(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#373
   def set_style(style_id = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#415
   def set_table(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#342
   def set_title(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#423
   def set_up_down_bars(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#326
   def set_x2_axis(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#307
   def set_x_axis(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#238
   def set_xml_writer(filename); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#334
   def set_y2_axis(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#318
   def set_y_axis(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#381
   def show_blanks_as(option); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#392
   def show_hidden_data; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#574
   def show_na_as_empty_cell; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#409
   def size(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#173
   def width; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#471
   def write_bar_chart(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1295
   def write_val_axis(x_axis, y_axis, axis_ids, position = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#177
   def writer=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#178
   def x2_axis; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#172
   def x_offset; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#172
   def x_scale; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#178
   def y2_axis; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#172
   def y_offset; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#172
   def y_scale; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chart.rb#664
   def add_axis_ids(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#616
   def axes_series(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#580
   def axis_setup; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#744
   def chart_space_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#595
   def display_setup; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#629
   def get_data_type(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#648
   def get_primary_axes_series; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#656
   def get_secondary_axes_series; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2009
   def has_fill_formatting(element); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#672
   def ids; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1744
   def position_allowed; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#651
   def primary_axes_series; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#659
   def secondary_axes_series; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2051
   def series_property(object, property); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#697
   def set_axis_defaults; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#685
   def set_default_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2109
   def write_a_alpha(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2964
   def write_a_bg_clr(color); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2960
   def write_a_fg_clr(color); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2914
   def write_a_fill_to_rect(type); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2836
   def write_a_grad_fill(gradient); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2863
   def write_a_gs_lst(gradient); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2646
   def write_a_latin(args); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2886
   def write_a_lin(angle); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2062
   def write_a_ln(line); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2102
   def write_a_no_fill; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1932
   def write_a_p_pr_rich(font); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1920
   def write_a_p_rich(title, font, ignore_rich_pr); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2902
   def write_a_path(type); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2951
   def write_a_patt_fill(pattern); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2118
   def write_a_prst_dash(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1939
   def write_a_r(title, font); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1951
   def write_a_r_pr(font); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1962
   def write_a_t(title); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2935
   def write_a_tile_rect(type); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1607
   def write_auto(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1839
   def write_auto_title_deleted; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2630
   def write_axis_font(font); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1212
   def write_axis_id(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1194
   def write_axis_ids(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1512
   def write_axis_pos(val, reverse = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2202
   def write_backward(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2968
   def write_bars_base(tag, format); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1600
   def write_c_crosses_at(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2621
   def write_c_invert_if_negative(invert = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1480
   def write_c_log_base(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1704
   def write_c_major_time_unit(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1686
   def write_c_major_unit(val = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1498
   def write_c_max(max = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1505
   def write_c_min(min = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1713
   def write_c_minor_time_unit(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1695
   def write_c_minor_unit(val = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2807
   def write_c_smooth(smooth); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1072
   def write_cat(series); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1219
   def write_cat_axis(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1535
   def write_cat_number_format(axis); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#772
   def write_chart; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#739
   def write_chart_space(&block); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#934
   def write_chart_type; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1584
   def write_cross_axis(val = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1677
   def write_cross_between(val = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1591
   def write_crosses(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1441
   def write_crossing(crossing); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2742
   def write_custom_error(error_bars); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2749
   def write_custom_error_base(tag, values, data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2527
   def write_custom_label_format_only(label); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2505
   def write_custom_label_formula(label); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2484
   def write_custom_label_str(label); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2447
   def write_custom_labels(parent, labels); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2607
   def write_d_lbl_pos(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2413
   def write_d_lbls(labels); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2386
   def write_d_pt(points = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2401
   def write_d_pt_point(index, point); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2653
   def write_d_table; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1542
   def write_data_label_number_format(format_code); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1372
   def write_date_axis(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2614
   def write_delete(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#802
   def write_disp_blanks_as; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2218
   def write_disp_eq; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2225
   def write_disp_rsqr; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2818
   def write_disp_units(units, display); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2800
   def write_down_bars(format); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2272
   def write_drop_lines; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2714
   def write_err_bar_type(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2670
   def write_err_bars(direction, error_bars); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2707
   def write_err_dir(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2721
   def write_err_val_type(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2660
   def write_error_bars(error_bars); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2735
   def write_error_val(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#998
   def write_ext_lst_display_na; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#970
   def write_ext_lst_inverted_fill(color); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2345
   def write_format_code(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2193
   def write_forward(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2784
   def write_gap_width(val = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1663
   def write_gridlines_base(tag, gridlines); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#939
   def write_grouping(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1809
   def write_header_footer; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2265
   def write_hi_low_lines; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1047
   def write_idx(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2211
   def write_intercept(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1614
   def write_label_align(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1627
   def write_label_offset(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#756
   def write_lang; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#898
   def write_layout(layout = T.unsafe(nil), type = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1722
   def write_legend; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1764
   def write_legend_entry(index); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1757
   def write_legend_pos(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2276
   def write_lines_base(lines, tag); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1652
   def write_major_gridlines(gridlines); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1556
   def write_major_tick_mark(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#911
   def write_manual_layout(layout, type); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1969
   def write_marker(marker = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1998
   def write_marker_size(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1989
   def write_marker_value; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1659
   def write_minor_gridlines(gridlines); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1565
   def write_minor_tick_mark(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1152
   def write_multi_lvl_str_ref(formula, data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2170
   def write_name(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2728
   def write_no_end_cap; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2302
   def write_num_base(tag, data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2298
   def write_num_cache(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1177
   def write_num_lit(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1121
   def write_num_or_str_ref(tag, formula, data, type); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1138
   def write_num_ref(formula, data, type); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2755
   def write_num_ref_or_lit(values, data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1527
   def write_number_format(axis); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1054
   def write_order(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1489
   def write_orientation(reverse = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2289
   def write_overlap(val = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1776
   def write_overlay; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1816
   def write_page_margins; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1832
   def write_page_setup; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2186
   def write_period(val = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#811
   def write_plot_area; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1783
   def write_plot_vis_only; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1795
   def write_print_settings; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2377
   def write_protection; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2359
   def write_pt(idx, value); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2352
   def write_pt_count(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2338
   def write_pts(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1903
   def write_rich(title, font, is_y_axis, ignore_rich_pr = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1464
   def write_scaling(reverse, min = T.unsafe(nil), max = T.unsafe(nil), log_base = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1452
   def write_scaling_with_param(param); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2579
   def write_separator(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#953
   def write_ser(series); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1020
   def write_ser_base(series); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#946
   def write_series(series); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1184
   def write_series_formula(formula); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1061
   def write_series_name(series); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2558
   def write_show_cat_name; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2586
   def write_show_leader_lines; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2544
   def write_show_legend_key; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2572
   def write_show_percent; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2565
   def write_show_ser_name; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2551
   def write_show_val; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2022
   def write_sp_pr(series); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2331
   def write_str_cache(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1145
   def write_str_ref(formula, data, type); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#763
   def write_style; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2005
   def write_symbol(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1574
   def write_tick_label_pos(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1634
   def write_tick_lbl_skip(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1643
   def write_tick_mark_skip(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1862
   def write_title_formula(title, is_y_axis = T.unsafe(nil), axis = T.unsafe(nil), layout = T.unsafe(nil), overlay = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1848
   def write_title_rich(title, is_y_axis, font, layout, overlay = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2125
   def write_trendline(trendline); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2232
   def write_trendline_lbl(trendline); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2250
   def write_trendline_num_fmt; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2179
   def write_trendline_order(val = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2163
   def write_trendline_type(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1894
   def write_tx_formula(title, data_id); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1878
   def write_tx_rich(title, is_y_axis, font); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1887
   def write_tx_value(title); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2793
   def write_up_bars(format); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2766
   def write_up_down_bars; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#2370
   def write_v(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1103
   def write_val(series); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1307
   def write_val_axis_base(x_axis, y_axis, axis_ids_0, axis_ids_1, position); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#1107
   def write_val_base(formula, data_id, tag); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#718
   def x2_axis_defaults; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#704
   def x_axis_defaults; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#727
   def y2_axis_defaults; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#711
   def y_axis_defaults; end
 
   class << self
-    # source://write_xlsx//lib/write_xlsx/chart.rb#183
     def factory(current_subclass, subtype = T.unsafe(nil)); end
   end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart/axis.rb#10
 class Writexlsx::Chart::Axis < ::Writexlsx::Chart::Caption
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#18
   def crossing; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#13
   def defaults; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#13
   def defaults=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#17
   def display_units; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#17
   def display_units_visible; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#21
   def fill; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#20
   def interval_tick; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#19
   def interval_unit; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#21
   def label_align; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#18
   def label_position; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#19
   def layout; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#21
   def line; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#18
   def log_base; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#20
   def major_gridlines; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#15
   def major_tick_mark; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#15
   def major_tick_mark=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#16
   def major_unit; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#16
   def major_unit_type; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#14
   def max; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#14
   def max=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#26
   def merge_with_hash(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#14
   def min; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#14
   def min=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#20
   def minor_gridlines; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#15
   def minor_tick_mark; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#15
   def minor_tick_mark=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#16
   def minor_unit; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#16
   def minor_unit_type; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#19
   def num_font; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#14
   def num_format; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#14
   def num_format=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#19
   def num_format_linked; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#14
   def position; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#14
   def position=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#18
   def position_axis; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#20
   def reverse; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#21
   def text_axis; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#18
   def visible; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#71
   def write_cat_number_format(writer, cat_has_num_fmt); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#63
   def write_number_format(writer); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#113
   def get_display_units(display_units); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#134
   def get_tick_type(tick_type); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#91
   def num_fmt_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#188
   def set_axis_fill(args); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#184
   def set_axis_line(args); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#180
   def set_axis_name_layout(args); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#147
   def set_display_units(args); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#151
   def set_display_units_visible(args); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#175
   def set_font_properties(args); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#98
   def set_major_minor_gridlines(args); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#155
   def set_position(args); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#161
   def set_position_axis; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#83
   def source_linked; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/axis.rb#79
   def user_defined_num_fmt_set?; end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart/caption.rb#6
 class Writexlsx::Chart::Caption
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#12
   def initialize(chart); end
 
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#9
   def data_id; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#9
   def data_id=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#9
   def formula; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#9
   def formula=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#10
   def layout; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#16
   def merge_with_hash(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#9
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#9
   def name=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#9
   def name_font; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#9
   def name_font=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#10
   def none; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#10
   def overlay; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chart/caption.rb#31
   def chart; end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart/series.rb#8
 class Writexlsx::Chart::Chartline
   include ::Writexlsx::Utility
   include ::Writexlsx::Gradient
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#14
   def initialize(params); end
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#12
   def fill; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#42
   def fill_defined?; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#12
   def gradient; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#12
   def line; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#38
   def line_defined?; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#12
   def pattern; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#12
   def type; end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart/series.rb#176
 class Writexlsx::Chart::Errorbars
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#182
   def initialize(params); end
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#179
   def direction; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#179
   def endcap; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#179
   def fill; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#179
   def line; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#180
   def minus_data; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#180
   def minus_values; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#180
   def plus_data; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#180
   def plus_values; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#179
   def type; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#179
   def value; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#213
   def error_bar_direction(direction); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#203
   def types; end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart/series.rb#50
 class Writexlsx::Chart::Gridline < ::Writexlsx::Chart::Chartline
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#53
   def initialize(params); end
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#51
   def visible; end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart/legend.rb#6
 class Writexlsx::Chart::Legend
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#10
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#8
   def delete_series; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#8
   def delete_series=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#7
   def fill; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#7
   def fill=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#8
   def font; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#8
   def font=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#7
   def gradient; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#7
   def gradient=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#8
   def layout; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#8
   def layout=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#7
   def line; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#7
   def line=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#7
   def pattern; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#7
   def pattern=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#8
   def position; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/legend.rb#8
   def position=(_arg0); end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart/series.rb#137
 class Writexlsx::Chart::Marker < ::Writexlsx::Chart::Chartline
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#140
   def initialize(params); end
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#150
   def automatic?; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#138
   def size; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#156
   def types; end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart/series.rb#47
 class Writexlsx::Chart::Point < ::Writexlsx::Chart::Chartline; end
 
-# source://write_xlsx//lib/write_xlsx/chart/series.rb#225
 class Writexlsx::Chart::Series
   include ::Writexlsx::Utility
   include ::Writexlsx::Gradient
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#236
   def initialize(chart, params = T.unsafe(nil)); end
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#276
   def ==(other); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#230
   def cat_data_id; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#229
   def categories; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#233
   def error_bars; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#230
   def fill; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#230
   def gradient; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#231
   def invert_if_negative; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#232
   def inverted_color; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#231
   def labels; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#234
   def line; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#234
   def line=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#290
   def line_defined?; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#234
   def marker; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#234
   def marker=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#229
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#229
   def name_formula; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#229
   def name_id; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#230
   def pattern; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#233
   def points; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#231
   def smooth; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#231
   def trendline; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#230
   def val_data_id; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#229
   def values; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#233
   def x2_axis; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#233
   def y2_axis; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#299
   def aref_to_formula(data); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#312
   def errorbars(x, y); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#322
   def labels_properties(labels); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#306
   def set_data_ids(params); end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart/series.rb#59
 class Writexlsx::Chart::Trendline < ::Writexlsx::Chart::Chartline
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#64
   def initialize(params); end
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#60
   def backward; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#61
   def display_equation; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#61
   def display_r_squared; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#60
   def forward; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#61
   def intercept; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#62
   def label; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#60
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#60
   def order; end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#60
   def period; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#86
   def trendline_label_properties(_label); end
-
-  # source://write_xlsx//lib/write_xlsx/chart/series.rb#125
   def types; end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart.rb#51
 class Writexlsx::ChartArea
   include ::Writexlsx::Utility
   include ::Writexlsx::Gradient
 
-  # source://write_xlsx//lib/write_xlsx/chart.rb#57
   def initialize(params = T.unsafe(nil)); end
 
-  # source://write_xlsx//lib/write_xlsx/chart.rb#55
   def fill; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#55
   def gradient; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#55
   def layout; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#55
   def line; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#55
   def pattern; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chart.rb#160
   def numeric_or_downcase(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#88
   def params_to_border(params); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#113
   def swe_line_pattern(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#117
   def swe_line_pattern_hash; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#143
   def swe_line_weight(val); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#147
   def swe_line_weight_hash; end
 end
 
-# source://write_xlsx//lib/write_xlsx/chartsheet.rb#17
 class Writexlsx::Chartsheet < ::Writexlsx::Worksheet
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#22
   def initialize(workbook, index, name); end
 
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#106
   def add_series(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#35
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#20
   def chart=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#193
   def external_links; end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#181
   def prepare_chart(_index, chart_id, drawing_id); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#64
   def protect(password = T.unsafe(nil), user_options = T.unsafe(nil), options = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#138
   def set_chartarea(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#170
   def set_drop_lines(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#174
   def set_high_low_lines(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#130
   def set_legend(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#134
   def set_plotarea(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#158
   def set_size(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#142
   def set_style(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#162
   def set_table(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#126
   def set_title(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#166
   def set_up_down_bars(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#118
   def set_x2_axis(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#110
   def set_x_axis(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#122
   def set_y2_axis(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#114
   def set_y_axis(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#146
   def show_blanks_as(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#154
   def show_hidden_data(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#150
   def show_na_as_empty_cell; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#205
   def write_chartsheet(&block); end
-
-  # source://write_xlsx//lib/write_xlsx/chartsheet.rb#221
   def write_sheet_pr; end
 end
 
-# source://write_xlsx//lib/write_xlsx/colors.rb#5
 class Writexlsx::Colors
-  # source://write_xlsx//lib/write_xlsx/colors.rb#37
   def color(color_code = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/colors.rb#57
   def inspect; end
 end
 
-# source://write_xlsx//lib/write_xlsx/colors.rb#6
 Writexlsx::Colors::COLORS = T.let(T.unsafe(nil), Hash)
 
-# source://write_xlsx//lib/write_xlsx/drawing.rb#8
 class Writexlsx::Drawing
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#15
   def initialize(type, dimensions, width, height, shape, anchor, rel_index = T.unsafe(nil), url_rel_index = T.unsafe(nil), tip = T.unsafe(nil), name = T.unsafe(nil), description = T.unsafe(nil), decorative = T.unsafe(nil)); end
 
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def anchor; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def anchor=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#12
   def decorative; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def description; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def description=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def dimensions; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def dimensions=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#13
   def embedded=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def height; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def height=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def name=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#13
   def orientation=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def rel_index; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def rel_index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def shape; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def shape=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#12
   def tip; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def type; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def type=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def url_rel_index; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def url_rel_index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def width; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#11
   def width=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#315
   def write_a16_creation_id; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#724
   def write_a_av_lst(shape = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#594
   def write_a_blip(index); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#699
   def write_a_ext(cx, cy); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#620
   def write_a_fill_rect; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#344
   def write_a_graphic_frame_locks; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#256
   def write_a_hlink_click(index, tip); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#770
   def write_a_ln(shape = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#685
   def write_a_off; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#571
   def write_a_pic_locks; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#711
   def write_a_prst_geom(shape = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#759
   def write_a_solid_fill(rgb = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#610
   def write_a_stretch; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#289
   def write_a_uri_ext(uri); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#664
   def write_a_xfrm(shape = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#73
   def write_absolute_anchor(index); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#300
   def write_adec_decorative; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#397
   def write_atag_graphic(index); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#407
   def write_atag_graphic_data(index); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#582
   def write_blip_fill; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#421
   def write_c_chart(id); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#330
   def write_c_nv_graphic_frame_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#561
   def write_c_nv_pic_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#228
   def write_c_nv_pr(index, name, description = T.unsafe(nil), url_rel_index = T.unsafe(nil), tip = T.unsafe(nil), decorative = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#438
   def write_client_data; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#138
   def write_col(data); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#145
   def write_col_off(data); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#274
   def write_decorative; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#102
   def write_from; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#190
   def write_graphic_frame(index, rel_index, name = T.unsafe(nil), description = T.unsafe(nil), decorative = T.unsafe(nil), macro = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#477
   def write_nv_cxn_sp_pr(index, shape); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#211
   def write_nv_graphic_frame_pr(index, name = T.unsafe(nil), description = T.unsafe(nil), decorative = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#546
   def write_nv_pic_pr(index); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#508
   def write_nv_sp_pr(index, shape); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#524
   def write_pic(index); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#166
   def write_pos(x, y); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#152
   def write_row(data); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#159
   def write_row_off(data); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#445
   def write_sp(index, shape); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#627
   def write_sp_pr(shape); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#120
   def write_to; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#33
   def write_two_cell_anchor(index); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#802
   def write_tx_body(shape); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#178
   def write_xdr_ext(cx, cy); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#639
   def write_xdr_sp_pr(shape); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#355
   def write_xfrm; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#382
   def write_xfrm_extension; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#367
   def write_xfrm_offset; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#13
   def writer=(_arg0); end
 end
 
-# source://write_xlsx//lib/write_xlsx/drawing.rb#873
 class Writexlsx::Drawings
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#878
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#922
   def add_drawing_object(drawing); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#896
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#876
   def embedded=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#876
   def orientation=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#889
   def set_xml_writer(filename); end
-
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#885
   def xml_str; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/drawing.rb#931
   def write_drawing_workspace(&block); end
 end
 
-# source://write_xlsx//lib/write_xlsx/format.rb#7
 class Writexlsx::Format
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/format.rb#22
   def initialize(formats, params = T.unsafe(nil)); end
 
-  # source://write_xlsx//lib/write_xlsx/format.rb#566
   def [](attr); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#17
   def bg_color; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#17
   def bg_color=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#20
   def bold; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#494
   def bold?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#621
   def border_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#15
   def border_index; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#15
   def border_index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#13
   def bottom; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#13
   def bottom_color; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#304
   def color(color_code); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#490
   def color?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#12
   def color_indexed; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#95
   def copy(other); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#16
   def diag_border; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#16
   def diag_border=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#12
   def diag_color; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#12
   def diag_type; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#19
   def dxf_bg_color; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#19
   def dxf_bg_color=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#19
   def dxf_fg_color; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#19
   def dxf_fg_color=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#10
   def dxf_index; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#17
   def fg_color; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#17
   def fg_color=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#16
   def fill_index; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#16
   def fill_index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#11
   def font; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#16
   def font_condense; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#16
   def font_condense=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#16
   def font_extend; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#16
   def font_extend=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#11
   def font_family; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#15
   def font_index; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#15
   def font_index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#12
   def font_only; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#14
   def font_scheme; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#11
   def font_script; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#20
   def font_strikeout; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#662
   def force_text_format?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#138
   def get_align_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#274
   def get_alignment_key; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#244
   def get_border_key; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#294
   def get_dxf_index; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#263
   def get_fill_key; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#223
   def get_font_key; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#216
   def get_format_key; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#196
   def get_protection_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#281
   def get_xf_index; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#518
   def has_border(flag); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#522
   def has_border?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#526
   def has_dxf_border(flag); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#530
   def has_dxf_border?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#558
   def has_dxf_fill(flag); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#562
   def has_dxf_fill?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#542
   def has_dxf_font(flag); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#546
   def has_dxf_font?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#550
   def has_fill(flag); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#554
   def has_fill?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#534
   def has_font(flag); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#538
   def has_font?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#11
   def hyperlink; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#209
   def inspect; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#20
   def italic; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#498
   def italic?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#13
   def left; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#13
   def left_color; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#470
   def method_missing(name, *args); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#10
   def num_format; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#15
   def num_format_index; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#15
   def num_format_index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#506
   def outline?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#17
   def pattern; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#17
   def pattern=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#15
   def quote_prefix; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#15
   def quote_prefix=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#13
   def right; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#13
   def right_color; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#20
   def rotation; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#343
   def set_align(location); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#205
   def set_bold(bold = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#395
   def set_border(style); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#405
   def set_border_color(color); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#455
   def set_border_info(borders); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#379
   def set_center_across(_flag = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#440
   def set_font_info(fonts); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#117
   def set_format_properties(*properties); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#432
   def set_hyperlink(hyperlink); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#388
   def set_merge(_merge = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#415
   def set_rotation(rotation); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#372
   def set_valign(location); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#510
   def shadow?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#11
   def size; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#502
   def strikeout?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#11
   def theme; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#13
   def top; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#13
   def top_color; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#11
   def underline; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#514
   def underline?; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#570
   def write_font(writer, worksheet, dxf_format = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#602
   def write_font_rpr(writer, worksheet); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#636
   def xf_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#11
   def xf_id; end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#10
   def xf_index; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/format.rb#725
   def write_condense(writer); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#732
   def write_extend(writer); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#682
   def write_font_family_scheme(writer); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#668
   def write_font_shapes(writer); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#693
   def write_underline(writer, underline); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#700
   def write_underline_attributes(underline); end
-
-  # source://write_xlsx//lib/write_xlsx/format.rb#718
   def write_vert_align(writer, val); end
 
   class << self
-    # source://write_xlsx//lib/write_xlsx/format.rb#313
     def color(color_code); end
   end
 end
 
-# source://write_xlsx//lib/write_xlsx/formats.rb#7
 class Writexlsx::Formats
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/formats.rb#12
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/formats.rb#10
   def dxf_format_indices; end
-
-  # source://write_xlsx//lib/write_xlsx/formats.rb#26
   def dxf_index_by_key(key); end
-
-  # source://write_xlsx//lib/write_xlsx/formats.rb#10
   def formats; end
-
-  # source://write_xlsx//lib/write_xlsx/formats.rb#30
   def set_dxf_index_by_key(key); end
-
-  # source://write_xlsx//lib/write_xlsx/formats.rb#22
   def set_xf_index_by_key(key); end
-
-  # source://write_xlsx//lib/write_xlsx/formats.rb#10
   def xf_format_indices; end
-
-  # source://write_xlsx//lib/write_xlsx/formats.rb#18
   def xf_index_by_key(key); end
 end
 
-# source://write_xlsx//lib/write_xlsx/gradient.rb#4
 module Writexlsx::Gradient
-  # source://write_xlsx//lib/write_xlsx/gradient.rb#5
   def gradient_properties(args); end
 end
 
-# source://write_xlsx//lib/write_xlsx/image.rb#7
 class Writexlsx::Image
-  # source://write_xlsx//lib/write_xlsx/image.rb#11
   def initialize(row, col, image, x_offset, y_offset, x_scale, y_scale, url, tip, anchor, description, decorative); end
 
-  # source://write_xlsx//lib/write_xlsx/image.rb#9
   def anchor; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#8
   def col; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#9
   def decorative; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#9
   def description; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#77
   def filename; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#57
   def height; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#41
   def height_emus; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#45
   def image; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#73
   def md5; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#61
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#81
   def position; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#85
   def ref_id; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#8
   def row; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#33
   def scaled_height; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#29
   def scaled_width; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#9
   def tip; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#49
   def type; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#9
   def url; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#53
   def width; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#37
   def width_emus; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#65
   def x_dpi; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#8
   def x_offset; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#8
   def x_scale; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#69
   def y_dpi; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#8
   def y_offset; end
-
-  # source://write_xlsx//lib/write_xlsx/image.rb#8
   def y_scale; end
 end
 
-# source://write_xlsx//lib/write_xlsx/image_property.rb#7
 class Writexlsx::ImageProperty
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#12
   def initialize(filename, options = T.unsafe(nil)); end
 
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#10
   def body; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#10
   def body=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#9
   def decorative; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#9
   def description; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#9
   def filename; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#8
   def height; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#8
   def md5; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#8
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#10
   def position; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#10
   def position=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#140
   def process_bmp(data); end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#128
   def process_gif(data); end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#82
   def process_jpg(data); end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#43
   def process_png(data); end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#10
   def ref_id; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#10
   def ref_id=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#8
   def type; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#8
   def width; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#8
   def x_dpi; end
-
-  # source://write_xlsx//lib/write_xlsx/image_property.rb#8
   def y_dpi; end
 end
 
-# source://write_xlsx//lib/write_xlsx/inserted_chart.rb#5
 class Writexlsx::InsertedChart
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#12
   def initialize(row, col, chart, x_offset, y_offset, x_scale, y_scale, anchor, description, decorative); end
 
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#10
   def anchor; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#8
   def chart; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#8
   def col; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#10
   def decorative; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#10
   def description; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#28
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#8
   def row; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#37
   def scaled_height; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#32
   def scaled_width; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#8
   def x_offset; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#9
   def x_scale; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#8
   def y_offset; end
-
-  # source://write_xlsx//lib/write_xlsx/inserted_chart.rb#9
   def y_scale; end
 end
 
-# source://write_xlsx//lib/write_xlsx/workbook.rb#22
 Writexlsx::MAX_URL_LENGTH = T.let(T.unsafe(nil), Integer)
-
-# source://write_xlsx//lib/write_xlsx/workbook.rb#21
 Writexlsx::OFFICE_URL = T.let(T.unsafe(nil), String)
-
-# source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#10
 module Writexlsx::Package; end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#757
 class Writexlsx::Package::AboveAverageFormat < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#758
   def attributes; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/app.rb#9
 class Writexlsx::Package::App
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#14
   def initialize(workbook); end
 
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#57
   def add_chartsheet_heading_pairs; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#69
   def add_chartsheet_part_names; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#89
   def add_heading_pair(heading_pair); end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#79
   def add_named_range_heading_pairs; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#85
   def add_named_ranges_parts; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#75
   def add_part_name(part_name); end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#46
   def add_worksheet_heading_pairs; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#61
   def add_worksheet_part_names; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#27
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#12
   def doc_security=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#98
   def set_properties(properties); end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#23
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#249
   def write_app_version; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#120
   def write_application; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#191
   def write_company; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#129
   def write_doc_security; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#145
   def write_heading_pairs; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#229
   def write_hyperlink_base; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#240
   def write_hyperlinks_changed; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#211
   def write_links_up_to_date; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#200
   def write_manager; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#107
   def write_properties(&block); end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#136
   def write_scale_crop; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#220
   def write_shared_doc; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#154
   def write_titles_of_parts; end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#184
   def write_vt_data(type, data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/app.rb#164
   def write_vt_vector(base_type, data); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#800
 class Writexlsx::Package::BlanksOrErrorsFormat < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#801
   def write_cf_rule; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/button.rb#8
 class Writexlsx::Package::Button
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#11
   def initialize(worksheet, row, col, params, default_row_pixels, button_number); end
 
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#82
   def color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#108
   def fill_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#86
   def style_addition; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#78
   def type; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#66
   def v_shape_attributes(id, z_index); end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#144
   def write_client_data; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#173
   def write_fmla_macro; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#166
   def write_print_object; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#118
   def write_rotation_lock; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#90
   def write_shape(writer, id, z_index); end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#180
   def write_text_halign; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#187
   def write_text_valign; end
-
-  # source://write_xlsx//lib/write_xlsx/package/button.rb#129
   def write_textbox; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#732
 class Writexlsx::Package::CellIsFormat < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#733
   def attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#737
   def write_cf_rule; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#806
 class Writexlsx::Package::ColorScaleFormat < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#807
   def write_cf_rule; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#816
   def write_color_scale; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/comments.rb#10
 class Writexlsx::Package::Comment
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#21
   def initialize(workbook, worksheet, row, col, string, options = T.unsafe(nil)); end
 
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#19
   def author; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#19
   def author=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#44
   def backgrount_color(color); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#17
   def col; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#17
   def color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#81
   def default_start_col(col); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#66
   def default_start_row(row); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#94
   def default_x_offset(col); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#103
   def default_y_offset(row); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#158
   def fill_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#18
   def font_family; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#217
   def font_name; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#18
   def font_size; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#59
   def rgb_color(rgb); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#17
   def row; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#17
   def string; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#128
   def style_addition; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#124
   def type; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#116
   def v_shape_attributes(id, z_index); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#17
   def vertices; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#151
   def visibility; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#19
   def visible; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#19
   def visible=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#194
   def write_client_data; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#167
   def write_shadow; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#132
   def write_shape(writer, id, z_index); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#180
   def write_textbox; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#215
   def writer=(_arg0); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#223
   def options_parse(row, col, options); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/comments.rb#13
 Writexlsx::Package::Comment::DEFAULT_COLOR = T.let(T.unsafe(nil), Integer)
-
-# source://write_xlsx//lib/write_xlsx/package/comments.rb#15
 Writexlsx::Package::Comment::DEFAULT_HEIGHT = T.let(T.unsafe(nil), Integer)
-
-# source://write_xlsx//lib/write_xlsx/package/comments.rb#14
 Writexlsx::Package::Comment::DEFAULT_WIDTH = T.let(T.unsafe(nil), Integer)
 
-# source://write_xlsx//lib/write_xlsx/package/comments.rb#245
 class Writexlsx::Package::Comments
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#248
   def initialize(worksheet); end
 
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#255
   def [](row); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#259
   def add(workbook, worksheet, row, col, string, options); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#276
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#264
   def empty?; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#308
   def has_comment_in_row?(row); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#272
   def set_xml_writer(filename); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#268
   def size; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#285
   def sorted_comments; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#314
   def comments_visible?; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#351
   def write_author(data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#330
   def write_authors(comment_data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#441
   def write_color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#367
   def write_comment(comment); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#358
   def write_comment_list(comment_data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#321
   def write_comments(&block); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#457
   def write_family(val); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#448
   def write_r_font(val); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#416
   def write_r_pr(comment); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#432
   def write_sz(val); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#382
   def write_text(comment); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#392
   def write_text_r(comment); end
-
-  # source://write_xlsx//lib/write_xlsx/package/comments.rb#404
   def write_text_t(comment); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#6
 class Writexlsx::Package::ConditionalFormat
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#43
   def initialize(worksheet, range, param); end
 
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#77
   def attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#186
   def bar_axis_color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#182
   def bar_axis_position; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#166
   def bar_border_color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#162
   def bar_color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#170
   def bar_negative_color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#174
   def bar_negative_color_same; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#178
   def bar_no_border; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#210
   def bar_only; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#102
   def criteria; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#118
   def direction; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#90
   def format; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#122
   def formula; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#190
   def icon_style; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#198
   def icons; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#202
   def icons_only; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#158
   def max_color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#150
   def max_type; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#154
   def max_value; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#106
   def maximum; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#146
   def mid_color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#138
   def mid_type; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#142
   def mid_value; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#134
   def min_color; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#126
   def min_type; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#130
   def min_value; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#110
   def minimum; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#94
   def priority; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#41
   def range; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#214
   def range_param_for_conditional_formatting(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#206
   def reverse_icons; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#98
   def stop_if_true; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#194
   def total_icons; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#86
   def type; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#114
   def value; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#50
   def write_cf_rule; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#54
   def write_cf_rule_formula_tag(tag = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#68
   def write_cfvo(type, value, criteria = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#60
   def write_formula_tag(data); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#469
   def check_conditional_formatting_parameters(param); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#530
   def convert_date_time_if_required(val); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#727
   def date_1904?; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#284
   def handling_of_blanks_error_types; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#227
   def handling_of_text_criteria; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#250
   def handling_of_time_period_criteria; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#641
   def icon_set_styles; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#394
   def palette_color(index); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#447
   def param_for_conditional_formatting(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#398
   def range_start_cell_for_conditional_formatting(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#410
   def row_col_param_for_conditional_formatting(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#666
   def set_icon_properties(total_icons, user_props); end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#606
   def valid_criteria_type_for_conditional_formatting; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#542
   def valid_parameter_for_conditional_formatting; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#581
   def valid_type_for_conditional_formatting; end
 
   class << self
-    # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#9
     def factory(worksheet, *args); end
   end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/content_types.rb#9
 class Writexlsx::Package::ContentTypes
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#15
   def initialize(workbook); end
 
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#148
   def add_calc_chain; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#95
   def add_chart_name(name); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#88
   def add_chart_names; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#82
   def add_chartsheet_name(name); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#73
   def add_chartsheet_names; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#132
   def add_comment_name(name); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#123
   def add_comment_names; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#186
   def add_custom_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#47
   def add_default(part_name, content_type); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#110
   def add_drawing_name(name); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#101
   def add_drawing_names; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#155
   def add_image_types; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#195
   def add_metadata; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#54
   def add_override(part_name, content_type); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#202
   def add_richvalue; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#141
   def add_shared_strings; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#168
   def add_table_name(table_name); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#161
   def add_table_names(table_count); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#178
   def add_vba_project; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#119
   def add_vml_name; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#67
   def add_worksheet_name(name); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#58
   def add_worksheet_names; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#35
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#31
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#226
   def change_the_workbook_xml_content_type_from_xlsx_to_xlsm; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#274
   def write_default(extension, content_type); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#251
   def write_default_or_override(tag, param0, a); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#236
   def write_defaults; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#286
   def write_override(part_name, content_type); end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#245
   def write_overrides; end
-
-  # source://write_xlsx//lib/write_xlsx/package/content_types.rb#262
   def write_types(&block); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/content_types.rb#13
 Writexlsx::Package::ContentTypes::App_document = T.let(T.unsafe(nil), String)
-
-# source://write_xlsx//lib/write_xlsx/package/content_types.rb#12
 Writexlsx::Package::ContentTypes::App_package = T.let(T.unsafe(nil), String)
 
-# source://write_xlsx//lib/write_xlsx/package/core.rb#9
 class Writexlsx::Package::Core
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#15
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#25
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#31
   def set_properties(properties); end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#21
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#55
   def datetime_to_iso8601_date(gm_time = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#114
   def dcterms_date; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#160
   def write_base(key, tag, default = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#149
   def write_cp_category; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#156
   def write_cp_content_status; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#64
   def write_cp_core_properties(&block); end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#37
   def write_cp_core_properties_base; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#135
   def write_cp_keywords; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#92
   def write_cp_last_modified_by; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#85
   def write_dc_creator; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#142
   def write_dc_description; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#128
   def write_dc_subject; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#121
   def write_dc_title; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#110
   def write_dcterms(tag); end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#99
   def write_dcterms_created; end
-
-  # source://write_xlsx//lib/write_xlsx/package/core.rb#106
   def write_dcterms_modified; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/core.rb#13
 Writexlsx::Package::Core::App_document = T.let(T.unsafe(nil), String)
-
-# source://write_xlsx//lib/write_xlsx/package/core.rb#12
 Writexlsx::Package::Core::App_package = T.let(T.unsafe(nil), String)
 
-# source://write_xlsx//lib/write_xlsx/package/custom.rb#9
 class Writexlsx::Package::Custom
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#12
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#22
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#31
   def set_properties(properties); end
-
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#18
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#37
   def write_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#55
   def write_property(property); end
-
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#108
   def write_vt_bool(data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#121
   def write_vt_filetime(data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#94
   def write_vt_i4(data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#87
   def write_vt_lpwstr(data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/custom.rb#101
   def write_vt_r8(data); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#828
 class Writexlsx::Package::DataBarFormat < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#829
   def write_cf_rule; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#839
   def write_data_bar; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#854
   def write_data_bar_ext(param); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#876
 class Writexlsx::Package::ExpressionFormat < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#877
   def write_cf_rule; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#882
 class Writexlsx::Package::IconSetFormat < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#883
   def write_cf_rule; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#892
   def write_icon_set; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/metadata.rb#12
 class Writexlsx::Package::Metadata
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#18
   def initialize(workbook); end
 
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#30
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#15
   def has_dynamic_functions=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#16
   def num_embedded_images=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#26
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#190
   def write_cell_ext; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#144
   def write_cell_future_metadata; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#224
   def write_cell_metadata; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#99
   def write_cell_metadata_type; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#57
   def write_metadata; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#82
   def write_metadata_types; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#260
   def write_rc(type, value); end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#201
   def write_value_ext(num); end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#165
   def write_value_future_metadata; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#240
   def write_value_metadata; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#122
   def write_value_metadata_type; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#212
   def write_xda_dynamic_array_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/package/metadata.rb#271
   def write_xlrd_rvb(value); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/packager.rb#25
 class Writexlsx::Package::Packager
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#28
   def initialize(workbook); end
 
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#42
   def create_package; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#35
   def set_package_dir(package_dir); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#474
   def add_image_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#498
   def add_vba_project; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#148
   def write_app_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#96
   def write_chart_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#107
   def write_chart_or_drawing_files(objects, filename); end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#89
   def write_chartsheet_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#434
   def write_chartsheet_rels_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#127
   def write_comment_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#281
   def write_content_types_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#175
   def write_core_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#265
   def write_custom_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#103
   def write_drawing_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#442
   def write_drawing_rels_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#486
   def write_image_x_xml_files(image, index); end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#188
   def write_metadata_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#219
   def write_rich_value_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#205
   def write_rich_value_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#253
   def write_rich_value_rel; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#450
   def write_rich_value_rels_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#231
   def write_rich_value_structure_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#243
   def write_rich_value_types_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#345
   def write_root_rels_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#134
   def write_shared_strings_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#310
   def write_styles_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#338
   def write_table_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#326
   def write_theme_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#120
   def write_vml_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#75
   def write_workbook_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#372
   def write_workbook_rels_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#85
   def write_worksheet_files; end
-
-  # source://write_xlsx//lib/write_xlsx/package/packager.rb#427
   def write_worksheet_rels_files; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/relationships.rb#9
 class Writexlsx::Package::Relationships
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#16
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#35
   def add_document_relationship(type, target, target_mode = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#49
   def add_ms_package_relationship(type, target); end
-
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#42
   def add_package_relationship(type, target); end
-
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#64
   def add_rich_value_relationships; end
-
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#57
   def add_worksheet_relationship(type, target, target_mode = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#26
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#22
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#104
   def write_relationship(type, target, target_mode = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/relationships.rb#91
   def write_relationships; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/relationships.rb#14
 Writexlsx::Package::Relationships::Document_schema = T.let(T.unsafe(nil), String)
-
-# source://write_xlsx//lib/write_xlsx/package/relationships.rb#13
 Writexlsx::Package::Relationships::Package_schema = T.let(T.unsafe(nil), String)
-
-# source://write_xlsx//lib/write_xlsx/package/relationships.rb#12
 Writexlsx::Package::Relationships::Schema_root = T.let(T.unsafe(nil), String)
 
-# source://write_xlsx//lib/write_xlsx/package/rich_value.rb#9
 class Writexlsx::Package::RichValue
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value.rb#14
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value.rb#23
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value.rb#12
   def embedded_images; end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value.rb#12
   def embedded_images=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value.rb#19
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value.rb#49
   def write_rv(index, description, decorative); end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value.rb#31
   def write_rv_data; end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value.rb#65
   def write_v(data); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/rich_value_rel.rb#18
 class Writexlsx::Package::RichValueRel
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_rel.rb#23
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_rel.rb#32
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_rel.rb#28
   def set_xml_writer(filename); end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_rel.rb#21
   def value_count=(_arg0); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_rel.rb#63
   def write_rel(id); end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_rel.rb#43
   def write_rich_value_rels; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/rich_value_structure.rb#19
 class Writexlsx::Package::RichValueStructure
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_structure.rb#24
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_structure.rb#33
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_structure.rb#22
   def has_embedded_descriptions=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_structure.rb#29
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_structure.rb#73
   def write_k(n, t); end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_structure.rb#44
   def write_rv_structures; end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_structure.rb#60
   def write_s; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/rich_value_types.rb#18
 class Writexlsx::Package::RichValueTypes
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_types.rb#21
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_types.rb#29
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_types.rb#25
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_types.rb#93
   def write_flag(name); end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_types.rb#80
   def write_key(name, flags = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/rich_value_types.rb#40
   def write_rv_types_info; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#9
 class Writexlsx::Package::SharedStrings
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#16
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#29
   def add(string); end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#51
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#43
   def empty?; end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#24
   def index(string, params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#47
   def set_xml_writer(filename); end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#39
   def string(index); end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#14
   def strings; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#119
   def add_c2_c3(string); end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#128
   def total_count; end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#132
   def unique_count; end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#86
   def write_si(string); end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#63
   def write_sst(&block); end
-
-  # source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#79
   def write_sst_strings; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/shared_strings.rb#12
 Writexlsx::Package::SharedStrings::PRESERVE_SPACE_ATTRIBUTES = T.let(T.unsafe(nil), Array)
 
-# source://write_xlsx//lib/write_xlsx/package/styles.rb#9
 class Writexlsx::Package::Styles
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#12
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#31
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#293
   def bg_and_fg_color(format, dxf_format); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#59
   def palette_color(index); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#258
   def pattern_only_case?(format, dxf_format); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#40
   def set_style_properties(xf_formats, palette, font_count, num_formats, border_count, fill_count, custom_colors, dxf_formats, has_comments); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#27
   def set_xml_writer(filename); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#331
   def write_border(format, dxf_format = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#338
   def write_border_base(format, dxf_format); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#354
   def write_border_sub_elements(format); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#310
   def write_borders; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#316
   def write_borders_base; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#403
   def write_cell_style_xfs; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#419
   def write_cell_xfs; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#182
   def write_comment_font; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#216
   def write_default_fill(pattern_type); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#247
   def write_fill(format, dxf_format = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#264
   def write_fill_base(format, dxf_format); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#194
   def write_fills; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#202
   def write_fills_base; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#168
   def write_font_base; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#155
   def write_fonts; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#322
   def write_format_elements(elements, count, &block); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#140
   def write_num_fmt(num_fmt_id, format_code); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#81
   def write_num_fmts; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#277
   def write_pattern_fill(format, dxf_format); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#72
   def write_style_sheet(&block); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#433
   def write_style_xf(has_hyperlink, font_id); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#381
   def write_sub_border(type, style = T.unsafe(nil), color = T.unsafe(nil)); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#513
   def write_cell_style(name, xf_id, builtin_id); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#498
   def write_cell_styles; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#568
   def write_colors; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#596
   def write_condense; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#541
   def write_dxf(format); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#526
   def write_dxfs; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#605
   def write_extend; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#579
   def write_mru_colors(custom_colors); end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#458
   def write_style_sheet_base; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#555
   def write_table_styles; end
-
-  # source://write_xlsx//lib/write_xlsx/package/styles.rb#474
   def write_xf(format); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/styles.rb#361
 Writexlsx::Package::Styles::BORDER_STYLES = T.let(T.unsafe(nil), Array)
-
-# source://write_xlsx//lib/write_xlsx/package/styles.rb#98
 Writexlsx::Package::Styles::FORMAT_CODES = T.let(T.unsafe(nil), Hash)
-
-# source://write_xlsx//lib/write_xlsx/package/styles.rb#222
 Writexlsx::Package::Styles::PATTERNS = T.let(T.unsafe(nil), Array)
 
-# source://write_xlsx//lib/write_xlsx/package/table.rb#9
 class Writexlsx::Package::Table
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#32
   def initialize(worksheet, *args); end
 
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#77
   def add_the_table_columns; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#66
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#30
   def id; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#30
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#94
   def overwrite_the_defaults_with_any_use_defined_values(col_id, col_data, col_num); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#186
   def prepare(id); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#59
   def set_xml_writer(filename); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#178
   def store_filter_cell_positions; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#161
   def write_any_columns_formulas_after_the_user_supplied_table_data; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#143
   def write_the_cell_data_if_supplied; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#135
   def write_the_column_headers_to_the_worksheet(col_num, col_data); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#193
   def handle_args(row1, col1 = T.unsafe(nil), row2 = T.unsafe(nil), col2 = T.unsafe(nil), param = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#256
   def handle_the_column_formula(col_data, _col_num, formula, _format); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#269
   def handle_the_function_for_the_table_row(row2, col_data, col_num, user_data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#371
   def set_the_autofilter_range; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#366
   def set_the_table_and_autofilter_ranges; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#349
   def set_the_table_name; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#332
   def set_the_table_options; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#341
   def set_the_table_style; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#301
   def table_function_to_formula(function, col_name); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#326
   def total_label_only(row2, col_num, col_data, total_string, format); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#240
   def valid_table_parameter; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#399
   def write_auto_filter; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#470
   def write_calculated_column_formula(formula); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#375
   def write_table_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#423
   def write_table_column(col_data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#410
   def write_table_columns; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#456
   def write_table_style_info; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#479
   def write_totals_row_formula(formula); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/table.rb#12
 class Writexlsx::Package::Table::ColumnData
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#17
   def initialize(id, param = T.unsafe(nil)); end
 
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#15
   def custom_total; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#15
   def custom_total=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#14
   def format; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#14
   def format=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#14
   def formula; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#14
   def formula=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#13
   def id; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#14
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#14
   def name=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#14
   def name_format; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#14
   def name_format=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#15
   def total_function; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#15
   def total_function=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#15
   def total_string; end
-
-  # source://write_xlsx//lib/write_xlsx/package/table.rb#15
   def total_string=(_arg0); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#777
 class Writexlsx::Package::TextOrWithFormat < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#778
   def attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#785
   def write_cf_rule; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/theme.rb#9
 class Writexlsx::Package::Theme
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/theme.rb#12
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/theme.rb#16
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/package/theme.rb#27
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/theme.rb#38
   def write_theme_file; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#790
 class Writexlsx::Package::TimePeriodFormat < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#791
   def attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#795
   def write_cf_rule; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#767
 class Writexlsx::Package::Top10Format < ::Writexlsx::Package::ConditionalFormat
-  # source://write_xlsx//lib/write_xlsx/package/conditional_format.rb#768
   def attributes; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/vml.rb#9
 class Writexlsx::Package::Vml
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#12
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#20
   def assemble_xml_file(data_id, vml_shape_id, comments_data, buttons_data, header_images_data = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#16
   def set_xml_writer(filename); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#253
   def write_aspect_ratio_lock; end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#200
   def write_button_path; end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#142
   def write_button_shapetype; end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#123
   def write_comment_shapetype; end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#339
   def write_f(eqn); end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#318
   def write_formulas; end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#111
   def write_idmap(data_id); end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#214
   def write_image_path; end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#268
   def write_image_shape(id, index, image_property); end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#163
   def write_image_shapetype; end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#306
   def write_imagedata(image_property); end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#242
   def write_rotation_lock; end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#65
   def write_shape_type_and_shape(data, vml_shape_id, z_index); end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#97
   def write_shapelayout(data_id); end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#231
   def write_shapetype_lock; end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#80
   def write_xml_namespace(&block); end
-
-  # source://write_xlsx//lib/write_xlsx/package/vml.rb#85
   def xml_attributes; end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#11
 class Writexlsx::Package::XMLWriterSimple
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#14
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#87
   def characters(data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#95
   def close; end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#91
   def crlf; end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#69
   def data_element(tag, data, attr = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#64
   def empty_tag(tag, attr = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#56
   def end_tag(tag); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#60
   def end_tag_str(tag); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#104
   def io_write(str); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#23
   def set_xml_writer(filename = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#76
   def si_element(data, attr); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#83
   def si_rich_element(data); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#44
   def start_tag(tag, attr = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#48
   def start_tag_str(tag, attr = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#100
   def string; end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#32
   def tag_elements(tag, attributes = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#38
   def tag_elements_str(tag, attributes = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#27
   def xml_decl(encoding = T.unsafe(nil), standalone = T.unsafe(nil)); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#126
   def escape_attributes(str = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#137
   def escape_data(str = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#111
   def key_vals(attribute); end
 end
 
-# source://write_xlsx//lib/write_xlsx/package/xml_writer_simple.rb#12
 Writexlsx::Package::XMLWriterSimple::XMLNS = T.let(T.unsafe(nil), String)
 
-# source://write_xlsx//lib/write_xlsx/shape.rb#14
 class Writexlsx::Shape
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/shape.rb#28
   def initialize(properties = T.unsafe(nil)); end
 
-  # source://write_xlsx//lib/write_xlsx/shape.rb#19
   def adjustments; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#145
   def adjustments=(args); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#19
   def align; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#19
   def anchor; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#205
   def auto_locate_connectors(shapes, shape_hash); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#157
   def calc_position_emus(worksheet); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#22
   def column_end; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#22
   def column_end=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#22
   def column_start; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#22
   def column_start=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def connect; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def connect=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#291
   def dimensions; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#17
   def drawing; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#17
   def edit_as; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def element; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def element=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def end; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def end=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def end_index; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def end_index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#26
   def end_side; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#26
   def end_side=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#18
   def fill; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def flip_h; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def flip_h=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def flip_v; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def flip_v=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#18
   def format; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def height; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def height=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def height_emu; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def height_emu=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def id; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def id=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#18
   def line; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def line_type; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def line_type=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def line_weight; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def line_weight=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def name=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def palette; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def palette=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def rotation; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def rotation=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#22
   def row_end; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#22
   def row_end=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#22
   def row_start; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#22
   def row_start=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def scale_x; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def scale_x=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def scale_y; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def scale_y=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#189
   def set_position(row_start, column_start, x_offset, y_offset, x_scale, y_scale, anchor); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#134
   def set_properties(properties); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def start; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def start=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def start_index; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def start_index=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#26
   def start_side; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#26
   def start_side=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def stencil; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def stencil=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def text; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#21
   def text=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#18
   def tx_box; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def type; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#20
   def type=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#285
   def validate(index); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#19
   def valign; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def width; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def width=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def width_emu; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#25
   def width_emu=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def x1; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def x1=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def x2; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def x2=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def x_abs; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def x_abs=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def x_offset; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def x_offset=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def y1; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def y1=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def y2; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def y2=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def y_abs; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#23
   def y_abs=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def y_offset; end
-
-  # source://write_xlsx//lib/write_xlsx/shape.rb#24
   def y_offset=(_arg0); end
 end
 
-# source://write_xlsx//lib/write_xlsx/sheets.rb#8
 class Writexlsx::Sheets
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#13
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#25
   def chartname_count; end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#17
   def chartsheet_count; end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#201
   def chartsheets; end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#192
   def index_by_name(sheetname); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#29
   def make_and_check_sheet_chart_name(type, name); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#21
   def sheetname_count; end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#184
   def tables; end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#188
   def tables_count; end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#205
   def visible_first; end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#197
   def worksheets; end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#54
   def write_chartsheet_files(package_dir); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#111
   def write_chartsheet_rels_files(package_dir); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#91
   def write_comment_files(package_dir); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#117
   def write_drawing_rels_files(package_dir); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#164
   def write_sheet_rels_files_base(sheets, dir, body); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#37
   def write_sheets(writer); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#100
   def write_table_files(package_dir); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#142
   def write_vml_drawing_rels_files(package_dir, worksheet, index); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#61
   def write_vml_files(package_dir); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#47
   def write_worksheet_files(package_dir); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#158
   def write_worksheet_rels_files(package_dir); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#220
   def check_valid_sheetname(name); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#236
   def is_sheetname_uniq?(name); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#211
   def sheet_chart_count(type); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#249
   def write_sheet(writer, sheet, sheet_id); end
-
-  # source://write_xlsx//lib/write_xlsx/sheets.rb#243
   def write_sheet_files(dir, sheet, index); end
 end
 
-# source://write_xlsx//lib/write_xlsx/sheets.rb#11
 Writexlsx::Sheets::BASE_NAME = T.let(T.unsafe(nil), Hash)
 
-# source://write_xlsx//lib/write_xlsx/sparkline.rb#16
 class Writexlsx::Sparkline
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#19
   def initialize(ws, param, sheetname); end
 
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#100
   def count; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#104
   def group_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#157
   def write_sparkline_group(writer); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#280
   def cust_max_min(max_min); end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#274
   def set_spark_color(user_color, palette_color); end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#314
   def spark_styles; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#284
   def valid_sparkline_parameter; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#167
   def write; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#197
   def write_color_axis; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#211
   def write_color_first; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#225
   def write_color_high; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#218
   def write_color_last; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#232
   def write_color_low; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#204
   def write_color_markers; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#190
   def write_color_negative; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#183
   def write_color_series; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#264
   def write_spark_color(element, color); end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#246
   def write_sparklines; end
-
-  # source://write_xlsx//lib/write_xlsx/sparkline.rb#239
   def write_xmf_date_axis; end
 end
 
-# source://write_xlsx//lib/write_xlsx/chart.rb#13
 class Writexlsx::Table
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/chart.rb#18
   def initialize(params = T.unsafe(nil)); end
 
-  # source://write_xlsx//lib/write_xlsx/chart.rb#16
   def font; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#16
   def horizontal; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#16
   def outline; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#30
   def palette=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#16
   def show_keys; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#16
   def vertical; end
-
-  # source://write_xlsx//lib/write_xlsx/chart.rb#32
   def write_d_table(writer); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/chart.rb#46
   def attributes; end
 end
 
-# source://write_xlsx//lib/write_xlsx/utility.rb#7
 module Writexlsx::Utility
-  # source://write_xlsx//lib/write_xlsx/utility.rb#272
   def absolute_char(absolute); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#142
   def check_dimensions(row, col); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#380
   def check_dimensions_and_update_max_min_values(row, col, ignore_row = T.unsafe(nil), ignore_col = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#367
   def check_parameter(params, valid_keys, method); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#932
   def color(color_code); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#154
   def convert_date_time(date_time_string); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#766
   def convert_font_args(params); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#733
   def dash_types; end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#253
   def escape_url(url); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#635
   def fill_properties(fill); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#398
   def float_to_str(float); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#889
   def get_font_latin_attributes(font); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#947
   def get_font_style_attributes(font); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#463
   def layout_properties(args, is_text = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#411
   def legend_properties(params); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#724
   def line_fill_properties(params); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#626
   def line_properties(line); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#755
   def palette_color_from_index(index); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#780
   def params_to_font(params); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#642
   def pattern_properties(args); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#487
   def pixels_to_points(vertices); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#359
   def ptrue?(value); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#293
   def put_deprecate_message(method); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#130
   def quote_sheetname(sheetname); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#612
   def r_id_attributes(id); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#298
   def row_col_notation(row_or_a1); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#519
   def shape_style_base(left_str, top_str, width_str, height_str, z_index_str); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#393
   def store_col_max_min_values(col); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#388
   def store_row_max_min_values(row); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#308
   def substitute_cellref(cell, *args); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#334
   def underline_attributes(underline); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#500
   def v_shape_attributes_base(id); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#507
   def v_shape_style_base(z_index, vertices); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#749
   def value_or_raise(hash, key, msg); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#814
   def write_a_body_pr(rot, is_y_axis = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#864
   def write_a_def_rpr(font = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#965
   def write_a_end_para_rpr; end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#838
   def write_a_lst_style; end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#845
   def write_a_p_formula(font = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#857
   def write_a_p_pr_formula(font); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#904
   def write_a_solid_fill(fill); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#916
   def write_a_srgb_clr(color, transparency = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#557
   def write_anchor; end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#567
   def write_auto_fill; end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#349
   def write_color(name, value, writer = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#545
   def write_comment_path(gradientshapeok, connecttype); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#872
   def write_def_rpr_r_pr_common(font, style_attributes, tag); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#574
   def write_div(align, font = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#538
   def write_fill; end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#589
   def write_font(font); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#606
   def write_stroke; end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#798
   def write_tx_pr(font, is_y_axis = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#616
   def write_xml_declaration; end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#51
   def xl_cell_to_rowcol(cell); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#77
   def xl_col_to_name(col, col_absolute); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#87
   def xl_range(row_1, row_2, col_1, col_2, row_abs_1 = T.unsafe(nil), row_abs_2 = T.unsafe(nil), col_abs_1 = T.unsafe(nil), col_abs_2 = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#99
   def xl_range_formula(sheetname, row_1, row_2, col_1, col_2); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#37
   def xl_rowcol_to_cell(row_or_name, col, row_absolute = T.unsafe(nil), col_absolute = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#118
   def xl_string_pixel_width(string); end
-
-  # source://write_xlsx//lib/write_xlsx/utility.rb#276
   def xml_str; end
 
   class << self
-    # source://write_xlsx//lib/write_xlsx/utility.rb#280
     def delete_files(path); end
   end
 end
 
-# source://write_xlsx//lib/write_xlsx/utility.rb#12
 Writexlsx::Utility::CHAR_WIDTHS = T.let(T.unsafe(nil), Hash)
-
-# source://write_xlsx//lib/write_xlsx/utility.rb#9
 Writexlsx::Utility::COL_MAX = T.let(T.unsafe(nil), Integer)
-
-# source://write_xlsx//lib/write_xlsx/utility.rb#32
 Writexlsx::Utility::DEFAULT_COL_PIXELS = T.let(T.unsafe(nil), Integer)
-
-# source://write_xlsx//lib/write_xlsx/utility.rb#30
 Writexlsx::Utility::MAX_DIGIT_WIDTH = T.let(T.unsafe(nil), Integer)
-
-# source://write_xlsx//lib/write_xlsx/utility.rb#31
 Writexlsx::Utility::PADDING = T.let(T.unsafe(nil), Integer)
-
-# source://write_xlsx//lib/write_xlsx/utility.rb#355
 Writexlsx::Utility::PERL_TRUE_VALUES = T.let(T.unsafe(nil), Array)
-
-# source://write_xlsx//lib/write_xlsx/utility.rb#8
 Writexlsx::Utility::ROW_MAX = T.let(T.unsafe(nil), Integer)
-
-# source://write_xlsx//lib/write_xlsx/utility.rb#11
 Writexlsx::Utility::SHEETNAME_MAX = T.let(T.unsafe(nil), Integer)
-
-# source://write_xlsx//lib/write_xlsx/utility.rb#10
 Writexlsx::Utility::STR_MAX = T.let(T.unsafe(nil), Integer)
 
-# source://write_xlsx//lib/write_xlsx/workbook.rb#24
 class Writexlsx::Workbook
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#47
   def initialize(file, *option_params); end
 
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#612
   def activesheet; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#540
   def activesheet=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#252
   def add_chart(params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#290
   def add_format(property_hash = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#306
   def add_shape(properties = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#465
   def add_vba_project(vba_project); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#240
   def add_worksheet(name = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#201
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#45
   def charts; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#45
   def charts=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#570
   def chartsheet_count; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#600
   def chartsheets; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#133
   def close; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#33
   def custom_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#544
   def date_1904?; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#505
   def default_url_format; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#319
   def define_name(name, formula); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#32
   def doc_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#30
   def drawings; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#30
   def drawings=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#43
   def embedded_descriptions; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#41
   def embedded_image_indexes; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#42
   def embedded_images; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#37
   def excel2003_style; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#608
   def firstsheet; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#27
   def firstsheet=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#176
   def get_1904; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#506
   def get_default_url_format; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#162
   def get_worksheet_by_name(sheetname = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#549
   def has_dynamic_functions?; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#44
   def has_embedded_descriptions=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#624
   def has_embedded_descriptions?; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#620
   def has_embedded_images?; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#616
   def has_metadata?; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#34
   def image_types; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#34
   def images; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#38
   def max_url_length; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#31
   def named_ranges; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#574
   def non_chartsheet_count; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#604
   def non_chartsheets; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#596
   def num_comment_files; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#592
   def num_vml_files; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#28
   def palette; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#40
   def read_only; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#479
   def read_only_recommended; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#167
   def set_1904(mode = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#488
   def set_calc_mode(mode, calc_id = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#511
   def set_custom_color(index, red = T.unsafe(nil), green = T.unsafe(nil), blue = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#423
   def set_custom_property(name, value, type = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#389
   def set_properties(params); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#353
   def set_size(width = T.unsafe(nil), height = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#372
   def set_tab_ratio(tab_ratio = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#180
   def set_tempdir(dir); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#472
   def set_vba_name(vba_codename = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#187
   def set_xml_writer(filename); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#558
   def shared_string_index(str); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#35
   def shared_strings; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#566
   def shared_strings_empty?; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#148
   def sheets(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#632
   def store_image_types(type); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#562
   def str_unique; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#39
   def strings_to_urls; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#578
   def style_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#36
   def vba_project; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#159
   def worksheet_by_name(sheetname = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#29
   def worksheets; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#542
   def writer; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#194
   def xml_str; end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1296
   def add_chart_data; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1343
   def chart_data(worksheet, cells); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#769
   def check_chart_sheetname(name); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#765
   def check_sheetname(name); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#925
   def defined_names; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1166
   def eq_0?(val); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1406
   def extract_named_ranges(defined_names); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#673
   def filename; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#678
   def fileobj; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#777
   def get_chart_range(range); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1170
   def ne_0?(val); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1392
   def normalise_defined_name(name); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1398
   def normalise_sheet_name(name); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1090
   def prepare_borders; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1179
   def prepare_defined_names; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1437
   def prepare_drawings; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1453
   def prepare_drawings_of_all_sheets; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1111
   def prepare_fills; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1023
   def prepare_fonts; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#988
   def prepare_format_properties; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1009
   def prepare_formats; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1282
   def prepare_metadata; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1044
   def prepare_num_formats; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#983
   def prepare_sst_string_data; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1270
   def prepare_tables; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1220
   def prepare_vml_objects; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#650
   def process_workbook_options(*params); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#700
   def set_color_palette; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#683
   def setup_filename; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#1370
   def sort_defined_names(names); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#932
   def store_workbook; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#695
   def tempdir; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#852
   def write_book_views; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#869
   def write_calc_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#909
   def write_defined_name(defined_name); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#901
   def write_defined_names; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#889
   def write_ext; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#885
   def write_ext_lst; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#836
   def write_file_sharing; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#820
   def write_file_version; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#919
   def write_io(str); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#897
   def write_mx_arch_id; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#809
   def write_workbook(&block); end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#844
   def write_workbook_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#856
   def write_workbook_view; end
-
-  # source://write_xlsx//lib/write_xlsx/workbook.rb#976
   def zip_entry_for_part(part); end
 end
 
-# source://write_xlsx//lib/write_xlsx/workbook.rb#557
 Writexlsx::Workbook::EMPTY_HASH = T.let(T.unsafe(nil), Hash)
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#5
 class Writexlsx::Worksheet
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#45
   def initialize(workbook, index, name); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#220
   def activate; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2312
   def add_sparkline(param); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2299
   def add_table(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#172
   def assemble_xml_file; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2401
   def autofilter(row1, col1 = T.unsafe(nil), row2 = T.unsafe(nil), col2 = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#35
   def autofilter_area; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#387
   def autofit; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#31
   def background_image; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2654
   def buttons_data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#703
   def center_horizontally; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#710
   def center_vertically; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#30
   def charts; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#36
   def col_info; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#38
   def comments; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#38
   def comments_author; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2503
   def comments_author=(author); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2593
   def comments_visible?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2287
   def conditional_formatting(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#39
   def data_bars_2010; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#39
   def data_bars_2010=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2348
   def data_validation(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2634
   def date_1904?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#43
   def default_row_height; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#43
   def default_row_height=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2673
   def drawing_links; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#30
   def drawings; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#39
   def dxf_priority; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#39
   def dxf_priority=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1921
   def embed_image(row, col, filename, options = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2638
   def excel2003_style?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#41
   def excel_version=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2662
   def external_links; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#42
   def filter_cells; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2432
   def filter_column(col, expression); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2463
   def filter_column_list(col, *tokens); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2388
   def fit_to_pages(width = T.unsafe(nil), height = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#31
   def footer_images; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#546
   def freeze_panes(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2568
   def get_range_data(row_start, col_start, row_end, col_end); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2521
   def has_comments?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2789
   def has_dynamic_functions?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2793
   def has_embedded_images?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2517
   def has_header_vml?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2525
   def has_shapes?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2513
   def has_vml?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#31
   def header_images; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2658
   def header_images_data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#243
   def hidden?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#229
   def hide(hidden = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2356
   def hide_gridlines(option = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2377
   def hide_row_col_headers; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#974
   def hide_zero(flag = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2734
   def horizontal_dpi=(val); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2752
   def ignore_errors(ignores); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#30
   def images; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#29
   def index; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2323
   def insert_button(row, col, properties = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1819
   def insert_chart(row, col, chart = T.unsafe(nil), *options); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1877
   def insert_image(row, col, image = T.unsafe(nil), *options); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1984
   def insert_shape(row_start, column_start, shape = T.unsafe(nil), x_offset = T.unsafe(nil), y_offset = T.unsafe(nil), x_scale = T.unsafe(nil), y_scale = T.unsafe(nil), anchor = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2529
   def is_chartsheet?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#960
   def keep_leading_zeros(flag = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#770
   def margin_bottom=(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#746
   def margin_left=(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#754
   def margin_right=(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#762
   def margin_top=(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#717
   def margins=(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#728
   def margins_left_right=(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#737
   def margins_top_bottom=(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2176
   def merge_range(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2213
   def merge_range_type(type, *args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#29
   def name; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2726
   def num_comments_block; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1710
   def outline_settings(visible = T.unsafe(nil), symbols_below = T.unsafe(nil), symbols_right = T.unsafe(nil), auto_style = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2646
   def palette_color(index); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#626
   def paper=(paper_size); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2863
   def position_object_pixels(col_start, row_start, x1, y1, width, height, anchor = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2536
   def prepare_chart(index, chart_id, drawing_id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2802
   def prepare_drawings(drawing_id, chart_ref_id, image_ref_id, image_ids, header_image_ids, background_ids); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1295
   def prepare_formula(given_formula, expand_future_functions = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2698
   def prepare_header_vml_objects(vml_header_id, vml_drawing_id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2706
   def prepare_tables(table_id, seen); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2681
   def prepare_vml_objects(vml_data_id, vml_shape_id, vml_drawing_id, comment_id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#981
   def print_across(across = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#887
   def print_area(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#951
   def print_black_and_white; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#875
   def print_repeat_cols; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#853
   def print_repeat_rows; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2364
   def print_row_col_headers(headers = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#928
   def print_scale=(scale = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#265
   def protect(password = T.unsafe(nil), options = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#863
   def repeat_columns(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2055
   def repeat_formula(row, col, formula, format, *pairs); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#839
   def repeat_rows(row_min, row_max = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#967
   def right_to_left(flag = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#36
   def row_sizes; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#211
   def select; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2853
   def set_background(image); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#302
   def set_column(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#358
   def set_column_pixels(*data); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2508
   def set_comments_author(author); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2156
   def set_default_row(height = T.unsafe(nil), zero_height = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#256
   def set_first_sheet; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#672
   def set_footer(string = T.unsafe(nil), margin = T.unsafe(nil), options = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2478
   def set_h_pagebreaks(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#638
   def set_header(string = T.unsafe(nil), margin = T.unsafe(nil), options = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#589
   def set_landscape; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#831
   def set_margin_bottom(margin = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#804
   def set_margin_left(margin = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#813
   def set_margin_right(margin = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#822
   def set_margin_top(margin = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#777
   def set_margins(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#786
   def set_margins_LR(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#795
   def set_margins_TB(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#597
   def set_page_view(flag = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#606
   def set_pagebreak_view; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#630
   def set_paper(paper_size); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#581
   def set_portrait; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#943
   def set_print_scale(scale = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2101
   def set_row(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2146
   def set_row_pixels(*data); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#36
   def set_rows; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#493
   def set_selection(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#998
   def set_start_page(page_start); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#618
   def set_tab_color(color); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#526
   def set_top_left_cell(row, col = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2488
   def set_v_pagebreaks(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2745
   def set_vba_name(vba_codename = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#168
   def set_xml_writer(filename); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#919
   def set_zoom(scale); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#30
   def shapes; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2496
   def show_comments(visible = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2798
   def some_image_or_drawing_to_be_processed?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2597
   def sorted_comments; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#571
   def split_panes(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#994
   def start_page=(page_start); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1723
   def store_formula(string); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#613
   def tab_color=(color); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#30
   def tables; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2730
   def tables_count; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#279
   def unprotect_range(range, range_name = T.unsafe(nil), password = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1627
   def update_format_with_params(row, col, params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1677
   def update_range_format_with_params(row_first, col_first, row_last = T.unsafe(nil), col_last = T.unsafe(nil), params = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#40
   def vba_codename; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2738
   def vertical_dpi=(val); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#239
   def very_hidden; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#247
   def very_hidden?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#33
   def vml_data_id; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#32
   def vml_drawing_links; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#34
   def vml_header_id; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#37
   def vml_shape_id; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1012
   def write(row, col, token = T.unsafe(nil), format = T.unsafe(nil), value1 = T.unsafe(nil), value2 = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1579
   def write_array_formula(row1, col1, row2 = T.unsafe(nil), col2 = T.unsafe(nil), formula = T.unsafe(nil), format = T.unsafe(nil), value = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1515
   def write_array_formula_base(type, *args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1269
   def write_blank(row, col, format = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1598
   def write_boolean(row, col, val = T.unsafe(nil), format = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2624
   def write_cell_array_formula(formula, range); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2617
   def write_cell_formula(formula = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2604
   def write_cell_value(value = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1116
   def write_col(row, col, tokens = T.unsafe(nil), *options); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1141
   def write_comment(row, col, string = T.unsafe(nil), options = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1783
   def write_date_time(row, col, str, format = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1588
   def write_dynamic_array_formula(row1, col1, row2 = T.unsafe(nil), col2 = T.unsafe(nil), formula = T.unsafe(nil), format = T.unsafe(nil), value = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2771
   def write_ext(url, &block); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1475
   def write_formula(row, col, formula = T.unsafe(nil), format = T.unsafe(nil), value = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1171
   def write_number(row, col, number, format = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1231
   def write_rich_string(row, col, *rich_strings); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1083
   def write_row(row, col, tokens = T.unsafe(nil), *options); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2779
   def write_sparkline_groups; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1199
   def write_string(row, col, string = T.unsafe(nil), format = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#1738
   def write_url(row, col, url = T.unsafe(nil), format = T.unsafe(nil), str = T.unsafe(nil), tip = T.unsafe(nil), ignore_write_string = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#36
   def writer; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#908
   def zoom=(scale); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4842
   def autofilter_ref?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4741
   def calc_spans(data, row_num, span_min, span_max); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4716
   def calculate_spans; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3974
   def calculate_x_split_width(width); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3063
   def cell_format_of_rich_string(rich_strings); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3743
   def col_info_attributes(args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2992
   def compare_col_info(col_options, previous_options); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4770
   def convert_name_area(row_num_1, col_num_1, row_num_2, col_num_2); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3029
   def drawing_rel_index(target = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4846
   def drawings?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3496
   def encode_password(password); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4971
   def expand_formula(formula, function, addition = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3150
   def extract_filter_tokens(expression = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4810
   def filter_on?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4806
   def fit_page?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3044
   def get_vml_drawing_rel_index(target); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3053
   def hyperlinks_count; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4455
   def increment_rel_id_and_write_r_id(tag); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3821
   def not_contain_formatting_or_data?(row_num); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4818
   def outline_changed?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3181
   def parse_filter_expression(expression, tokens); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3206
   def parse_filter_tokens(expression, tokens); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3346
   def pixels_to_height(pixels); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3332
   def pixels_to_width(pixels); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3313
   def position_object_emus(graphical_object); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3442
   def prepare_background(image_id, image_type); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3447
   def prepare_background_image(background_ids, image_ref_id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4878
   def prepare_filter_column(col); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4933
   def prepare_header_footer_image(image, header_image_ids, image_ref_id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3427
   def prepare_header_image(image_id, image_property); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3355
   def prepare_image(image, drawing_id, image_ids, image_ref_id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3469
   def prepare_shape(index, drawing_id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4838
   def protect?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4949
   def protect_default_settings; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4850
   def remove_white_space(margin); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3073
   def rich_strings_fragments(rich_strings); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4830
   def right_to_left?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3849
   def row_attributes(args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4858
   def set_active_pane_and_cell_selections(row, col, top_row, left_col, active_cell, sqref); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3021
   def set_external_comment_links(comment_id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3016
   def set_external_vml_links(vml_drawing_id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4760
   def shared_string_index(str); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4834
   def show_zeros?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2947
   def size_col(col, anchor = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#2973
   def size_row(row, anchor = T.unsafe(nil)); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3293
   def sort_pagebreaks(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4664
   def sparkline_groups_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4697
   def store_data_to_table(cell_data, row, col); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3057
   def store_hyperlink(row, col, hyperlink); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4706
   def store_row_col_max_min_values(row, col); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4814
   def tab_color?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3550
   def tab_outline_fit?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4822
   def vba_codename?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4122
   def write_auto_filter; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4144
   def write_autofilters; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4081
   def write_breaks(tag); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4109
   def write_brk(id, max); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3825
   def write_cell_column_dimension(row_num); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4077
   def write_col_breaks; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3739
   def write_col_info(args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3695
   def write_cols; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4682
   def write_conditional_formats; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4691
   def write_conditional_formatting(range, cond_formats); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4495
   def write_conditional_formatting_2010(data_bar); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4230
   def write_custom_filter(operator, val); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4205
   def write_custom_filters(*tokens); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4673
   def write_data_validations; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3564
   def write_dimension; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4391
   def write_drawings; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3845
   def write_empty_row(*args); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4467
   def write_ext_list; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4479
   def write_ext_list_data_bars; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4638
   def write_ext_list_sparklines; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4198
   def write_filter(val); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4163
   def write_filter_column(col_id, type, *filters); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4178
   def write_filters(*filters); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3135
   def write_formatted_blank_to_area(row_first, row_last, col_first, col_last, format); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3887
   def write_freeze_panes(row, col, top_row, left_col, type); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4063
   def write_header_footer; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4260
   def write_hyperlinks; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4924
   def write_ignored_error(type, sqref); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4899
   def write_ignored_errors; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4398
   def write_legacy_drawing; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4405
   def write_legacy_drawing_hf; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4043
   def write_merge_cell(merged_range); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4028
   def write_merge_cells; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4318
   def write_outline_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4014
   def write_page_margins; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3557
   def write_page_set_up_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4021
   def write_page_setup; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3874
   def write_panes; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4002
   def write_phonetic_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4418
   def write_picture; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4056
   def write_print_options; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4378
   def write_protected_range(sqref, name, password); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4365
   def write_protected_ranges; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4460
   def write_r_id(tag, id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4070
   def write_row_breaks; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3838
   def write_row_element(*args, &block); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3798
   def write_rows; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3666
   def write_selection(pane, active_cell, sqref); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3659
   def write_selections; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3995
   def write_sheet_calc_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3786
   def write_sheet_data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3678
   def write_sheet_format_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3532
   def write_sheet_pr; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4333
   def write_sheet_protection; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3600
   def write_sheet_view; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3596
   def write_sheet_views; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4034
   def write_some_elements(tag, container, &block); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4649
   def write_sparklines(sparkline); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3926
   def write_split_panes; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4304
   def write_tab_color; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4451
   def write_table_part(id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4440
   def write_table_parts; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4433
   def write_underline(writer, underline); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3514
   def write_worksheet_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4629
   def write_x14_axis_color(rgb); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4602
   def write_x14_border_color(rgb); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4555
   def write_x14_cf_rule(data_bar); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4540
   def write_x14_cfvo(type, value); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4570
   def write_x14_data_bar(data_bar); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4620
   def write_x14_negative_border_color(rgb); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4611
   def write_x14_negative_fill_color(rgb); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#3108
   def xml_str_of_rich_string(fragments); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet.rb#4826
   def zoom_scale_normal?; end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#196
 class Writexlsx::Worksheet::BlankCellData < ::Writexlsx::Worksheet::CellData
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#197
   def initialize(xf); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#201
   def data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#205
   def write_cell(worksheet, row, row_name, col); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#174
 class Writexlsx::Worksheet::BooleanCellData < ::Writexlsx::Worksheet::CellData
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#177
   def initialize(val, xf); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#182
   def data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#175
   def token; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#186
   def write_cell(worksheet, row, row_name, col); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet.rb#27
 Writexlsx::Worksheet::COLINFO = Struct
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#6
 class Writexlsx::Worksheet::CellData
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#15
   def cell_attributes(worksheet, row, row_name, col); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#34
   def display_url_string?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#9
   def xf; end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#6
 class Writexlsx::Worksheet::DataValidation
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#14
   def initialize(*args); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#10
   def cells; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#9
   def criteria; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#11
   def dropdown; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#12
   def error_message; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#12
   def error_title; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#10
   def error_type; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#11
   def ignore_blank; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#12
   def input_message; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#12
   def input_title; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#90
   def keys; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#9
   def maximum; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#9
   def minimum; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#84
   def options_to_instance_variable(params); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#10
   def other_cells; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#11
   def show_error; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#11
   def show_input; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#9
   def source; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#9
   def validate; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#94
   def validate_none?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#9
   def value; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#101
   def write_data_validation(writer); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#138
   def attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#203
   def check_criteria_required; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#188
   def check_for_valid_input_params; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#207
   def check_maximum_value_when_criteria_is_between_or_notbetween; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#218
   def check_valid_citeria_types; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#225
   def convert_date_time_value_if_required; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#302
   def date_1904?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#237
   def error_type_hash; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#177
   def has_key?(key); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#181
   def set_some_defaults; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#281
   def valid_criteria_type; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#259
   def valid_validation_parameter; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#241
   def valid_validation_type; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#120
   def write_formula_1(formula); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/data_validation.rb#132
   def write_formula_2(formula); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#88
 class Writexlsx::Worksheet::DateTimeCellData < ::Writexlsx::Worksheet::NumberCellData; end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#148
 class Writexlsx::Worksheet::DynamicFormulaArrayCellData < ::Writexlsx::Worksheet::CellData
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#151
   def initialize(formula, xf, range, result); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#158
   def data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#149
   def link_type; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#149
   def range; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#149
   def result; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#149
   def token; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#149
   def url; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#162
   def write_cell(worksheet, row, row_name, col); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#210
 class Writexlsx::Worksheet::EmbedImageCellData < ::Writexlsx::Worksheet::CellData
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#211
   def initialize(image_index, xf); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#216
   def write_cell(worksheet, row, row_name, col); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#97
 class Writexlsx::Worksheet::ExternalHyperlink < ::Writexlsx::Worksheet::Hyperlink
-  # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#98
   def initialize(url, str, tip, max_url_length); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#126
 class Writexlsx::Worksheet::FormulaArrayCellData < ::Writexlsx::Worksheet::CellData
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#129
   def initialize(formula, xf, range, result); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#136
   def data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#127
   def link_type; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#127
   def range; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#127
   def result; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#127
   def token; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#127
   def url; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#140
   def write_cell(worksheet, row, row_name, col); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#91
 class Writexlsx::Worksheet::FormulaCellData < ::Writexlsx::Worksheet::CellData
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#94
   def initialize(formula, xf, result); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#100
   def data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#92
   def link_type; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#92
   def range; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#92
   def result; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#92
   def token; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#92
   def url; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#104
   def write_cell(worksheet, row, row_name, col); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#6
 class Writexlsx::Worksheet::Hyperlink
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#23
   def initialize(url, str, tip, max_url_length); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#44
   def attributes(row, col, id); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#60
   def display_on; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#56
   def external_hyper_link; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#9
   def str; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#9
   def tip; end
 
   class << self
-    # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#13
     def factory(url, str = T.unsafe(nil), tip = T.unsafe(nil), max_url_length = T.unsafe(nil)); end
   end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#11
 Writexlsx::Worksheet::Hyperlink::MAXIMUM_URLS_SIZE = T.let(T.unsafe(nil), Integer)
 
-# source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#66
 class Writexlsx::Worksheet::InternalHyperlink < ::Writexlsx::Worksheet::Hyperlink
-  # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#69
   def initialize(url, str, tip, max_url_length); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/hyperlink.rb#86
   def attributes(row, col, _dummy = T.unsafe(nil)); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#39
 class Writexlsx::Worksheet::NumberCellData < ::Writexlsx::Worksheet::CellData
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#42
   def initialize(num, xf); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#47
   def data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#40
   def token; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#51
   def write_cell(worksheet, row, row_name, col); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#6
 class Writexlsx::Worksheet::PageSetup
   include ::Writexlsx::Utility
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#20
   def initialize; end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#14
   def across=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#15
   def black_white; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#15
   def black_white=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#50
   def center_horizontally; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#55
   def center_vertically; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#13
   def fit_height; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#13
   def fit_height=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#13
   def fit_page; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#13
   def fit_page=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#13
   def fit_width; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#13
   def fit_width=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def footer; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def footer=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#12
   def hbreaks; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#12
   def hbreaks=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def header; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def header=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def header_footer_aligns; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def header_footer_aligns=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def header_footer_changed; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def header_footer_changed=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def header_footer_scales; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#16
   def header_footer_scales=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#69
   def hide_gridlines(option); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#18
   def horizontal_dpi=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#9
   def margin_bottom; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#9
   def margin_bottom=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#10
   def margin_footer; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#10
   def margin_footer=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#10
   def margin_header; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#10
   def margin_header=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#9
   def margin_left; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#9
   def margin_left=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#9
   def margin_right; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#9
   def margin_right=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#9
   def margin_top; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#9
   def margin_top=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#15
   def orientation; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#15
   def orientation=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#13
   def page_setup_changed; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#13
   def page_setup_changed=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#17
   def page_start=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#43
   def paper=(paper_size); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#11
   def print_area; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#11
   def print_area=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#15
   def print_options_changed; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#15
   def print_options_changed=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#60
   def print_row_col_headers(headers); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#11
   def repeat_cols; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#11
   def repeat_cols=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#11
   def repeat_rows; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#11
   def repeat_rows=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#12
   def scale; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#12
   def scale=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#12
   def vbreaks; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#12
   def vbreaks=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#18
   def vertical_dpi=(_arg0); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#148
   def write_header_footer(writer, excel2003_style); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#127
   def write_page_margins(writer); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#98
   def write_page_setup(writer); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#134
   def write_print_options(writer); end
 
   private
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#180
   def margin_attributes; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#176
   def write_odd_footer(writer); end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/page_setup.rb#169
   def write_odd_header(writer); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#85
 class Writexlsx::Worksheet::RichStringCellData < ::Writexlsx::Worksheet::StringCellData; end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#58
 class Writexlsx::Worksheet::StringCellData < ::Writexlsx::Worksheet::CellData
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#61
   def initialize(index, xf, raw_string); end
 
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#67
   def data; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#80
   def display_url_string?; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#59
   def raw_string; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#59
   def token; end
-
-  # source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#72
   def write_cell(worksheet, row, row_name, col); end
 end
 
-# source://write_xlsx//lib/write_xlsx/worksheet/cell_data.rb#71
 Writexlsx::Worksheet::StringCellData::TYPE_STR_ATTRS = T.let(T.unsafe(nil), Array)
 
-# source://write_xlsx//lib/write_xlsx/utility.rb#970
 module Writexlsx::WriteDPtPoint
-  # source://write_xlsx//lib/write_xlsx/utility.rb#975
   def write_d_pt_point(index, point); end
 end
 
-# source://write_xlsx//lib/write_xlsx/zip_file_utils.rb#11
 module ZipFileUtils
   class << self
-    # source://write_xlsx//lib/write_xlsx/zip_file_utils.rb#60
     def each_dir_for(dir_path, &block); end
-
-    # source://write_xlsx//lib/write_xlsx/zip_file_utils.rb#64
     def each_file_for(path, &block); end
-
-    # source://write_xlsx//lib/write_xlsx/zip_file_utils.rb#84
     def encode_path(path, encode_s); end
-
-    # source://write_xlsx//lib/write_xlsx/zip_file_utils.rb#80
     def relative(path, base_dir); end
-
-    # source://write_xlsx//lib/write_xlsx/zip_file_utils.rb#39
     def unzip(src, dest, options = T.unsafe(nil)); end
-
-    # source://write_xlsx//lib/write_xlsx/zip_file_utils.rb#15
     def zip(src, dest, options = T.unsafe(nil)); end
   end
 end

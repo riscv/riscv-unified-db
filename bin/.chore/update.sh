@@ -118,6 +118,11 @@ do_update_espresso() {
 
     # Move the binary to the asset name expected by the gem
     mv "${work_dir}/espresso-build/espresso" "${work_dir}/espresso-${native_arch}"
+
+    # Generate checksum
+    echo "==> Generating checksum..."
+    (cd "${work_dir}" && sha256sum "espresso-${native_arch}" | awk '{print "sha256:" $1}' > "espresso-${native_arch}.checksum")
+    echo "  ${native_arch}: $(cat "${work_dir}/espresso-${native_arch}.checksum")"
   else
     # Build for both architectures
     echo "==> Building espresso for x64..."
@@ -129,6 +134,13 @@ do_update_espresso() {
     # Rename the binaries to the asset names expected by the gem
     mv "${work_dir}/espresso-x64-out/espresso" "${work_dir}/espresso-x64"
     mv "${work_dir}/espresso-arm64-out/espresso" "${work_dir}/espresso-arm64"
+
+    # Generate checksums
+    echo "==> Generating checksums..."
+    (cd "${work_dir}" && sha256sum espresso-x64 | awk '{print "sha256:" $1}' > espresso-x64.checksum)
+    (cd "${work_dir}" && sha256sum espresso-arm64 | awk '{print "sha256:" $1}' > espresso-arm64.checksum)
+    echo "  x64:   $(cat "${work_dir}/espresso-x64.checksum")"
+    echo "  arm64: $(cat "${work_dir}/espresso-arm64.checksum")"
   fi
 
   # Create the GitHub Release and upload assets (or upload to existing release if native_only)
@@ -149,13 +161,15 @@ do_update_espresso() {
     if ! gh release upload "${release_tag}" \
       --repo riscv/riscv-unified-db \
       --clobber \
-      "${work_dir}/espresso-${native_arch}" 2>/dev/null; then
+      "${work_dir}/espresso-${native_arch}" \
+      "${work_dir}/espresso-${native_arch}.checksum" 2>/dev/null; then
       echo "==> Release doesn't exist yet, creating it..."
       gh release create "${release_tag}" \
         --repo riscv/riscv-unified-db \
         --title "Espresso binaries ${espresso_version}" \
         --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
-        "${work_dir}/espresso-${native_arch}"
+        "${work_dir}/espresso-${native_arch}" \
+        "${work_dir}/espresso-${native_arch}.checksum"
     fi
   else
     echo "==> Creating GitHub Release ${release_tag}..."
@@ -164,7 +178,9 @@ do_update_espresso() {
       --title "Espresso binaries ${espresso_version}" \
       --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
       "${work_dir}/espresso-x64" \
-      "${work_dir}/espresso-arm64"
+      "${work_dir}/espresso-arm64" \
+      "${work_dir}/espresso-x64.checksum" \
+      "${work_dir}/espresso-arm64.checksum"
   fi
 
   cd "${orig_dir}" || exit 1
@@ -253,6 +269,11 @@ do_update_must() {
 
     # Move the binary to the asset name expected by the gem
     mv "${work_dir}/must-build/must" "${work_dir}/must-${native_arch}"
+
+    # Generate checksum
+    echo "==> Generating checksum..."
+    (cd "${work_dir}" && sha256sum "must-${native_arch}" | awk '{print "sha256:" $1}' > "must-${native_arch}.checksum")
+    echo "  ${native_arch}: $(cat "${work_dir}/must-${native_arch}.checksum")"
   else
     # Build for both architectures
     echo "==> Building must for x64..."
@@ -264,6 +285,13 @@ do_update_must() {
     # Rename the binaries to the asset names expected by the gem
     mv "${work_dir}/must-x64-out/must" "${work_dir}/must-x64"
     mv "${work_dir}/must-arm64-out/must" "${work_dir}/must-arm64"
+
+    # Generate checksums
+    echo "==> Generating checksums..."
+    (cd "${work_dir}" && sha256sum must-x64 | awk '{print "sha256:" $1}' > must-x64.checksum)
+    (cd "${work_dir}" && sha256sum must-arm64 | awk '{print "sha256:" $1}' > must-arm64.checksum)
+    echo "  x64:   $(cat "${work_dir}/must-x64.checksum")"
+    echo "  arm64: $(cat "${work_dir}/must-arm64.checksum")"
   fi
 
   # Create the GitHub Release and upload assets
@@ -284,13 +312,15 @@ do_update_must() {
     if ! gh release upload "${release_tag}" \
       --repo riscv/riscv-unified-db \
       --clobber \
-      "${work_dir}/must-${native_arch}" 2>/dev/null; then
+      "${work_dir}/must-${native_arch}" \
+      "${work_dir}/must-${native_arch}.checksum" 2>/dev/null; then
       echo "==> Release doesn't exist yet, creating it..."
       gh release create "${release_tag}" \
         --repo riscv/riscv-unified-db \
         --title "Must binaries ${must_version}" \
         --notes "Pre-built must (mustool) binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${must_commit}" \
-        "${work_dir}/must-${native_arch}"
+        "${work_dir}/must-${native_arch}" \
+        "${work_dir}/must-${native_arch}.checksum"
     fi
   else
     echo "==> Creating GitHub Release ${release_tag}..."
@@ -299,7 +329,9 @@ do_update_must() {
       --title "Must binaries ${must_version}" \
       --notes "Pre-built must (mustool) binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${must_commit}" \
       "${work_dir}/must-x64" \
-      "${work_dir}/must-arm64"
+      "${work_dir}/must-arm64" \
+      "${work_dir}/must-x64.checksum" \
+      "${work_dir}/must-arm64.checksum"
   fi
 
   cd "${orig_dir}" || exit 1
@@ -307,6 +339,157 @@ do_update_must() {
 
   echo ""
   echo "Done. GitHub Release ${must_version} created on riscv/riscv-unified-db."
+}
+
+#
+# Update eqntott binary
+# Args: $1 - native_only ("yes" to build only for native platform, "no" for both x64 and arm64)
+#       $2 - force ("yes" to force rebuild even if release exists, "no" otherwise)
+# Returns: 0 on success, exits with 1 on error
+#
+do_update_eqntott() {
+  local native_only=$1
+  local force=${2:-no}
+
+  # Requires: docker (for build_eqntott_with_docker.sh) and gh (GitHub CLI, authenticated)
+  if ! command -v gh &>/dev/null; then
+    echo "ERROR: 'gh' CLI is required for 'chore update eqntott'. Install from https://cli.github.com" >&2
+    exit 1
+  fi
+
+  # Read the commit hash from the build script
+  local eqntott_commit
+  eqntott_commit=$(grep '^EQNTOTT_COMMIT=' "${UDB_ROOT}/tools/scripts/build_eqntott_with_docker.sh" | cut -d'"' -f2)
+  if [ -z "$eqntott_commit" ]; then
+    echo "ERROR: Could not read EQNTOTT_COMMIT from build_eqntott_with_docker.sh" >&2
+    exit 1
+  fi
+
+  # Use short commit hash for the version tag
+  local eqntott_version="eqntott-${eqntott_commit:0:7}"
+  echo "==> Building eqntott version: ${eqntott_version} (commit: ${eqntott_commit})"
+
+  # Check if the GitHub Release exists
+  local release_exists=no
+  if gh release view "${eqntott_version}" --repo riscv/riscv-unified-db &>/dev/null; then
+    release_exists=yes
+  fi
+
+  # Handle based on force flag and release existence
+  if [ "${force}" != "yes" ] && [ "${release_exists}" = "yes" ]; then
+    echo "==> GitHub Release ${eqntott_version} already exists. Nothing to do."
+    echo "    Use -f flag to force rebuild."
+    return 0
+  fi
+
+  if [ "${force}" = "yes" ] && [ "${release_exists}" = "yes" ]; then
+    echo "==> Force rebuild enabled..."
+    # Only delete the release if we're building both architectures (not native_only)
+    # For native_only builds, we'll use --clobber to replace individual assets
+    if [ "${native_only}" != "yes" ]; then
+      echo "==> Deleting existing GitHub Release ${eqntott_version}..."
+      gh release delete "${eqntott_version}" --repo riscv/riscv-unified-db --yes
+    else
+      echo "==> Will replace existing assets with --clobber"
+    fi
+  fi
+
+  echo "==> Building eqntott ${eqntott_version}..."
+
+  local orig_dir="${PWD}"
+  local work_dir
+  work_dir=$(mktemp -d --tmpdir="$PWD" build-eqntott.XXXXXX)
+
+  if [ "${native_only}" = "yes" ]; then
+    # Detect native architecture
+    local native_arch
+    case "$(uname -m)" in
+      x86_64)
+        native_arch="x64"
+        ;;
+      aarch64)
+        native_arch="arm64"
+        ;;
+      *)
+        echo "ERROR: Unsupported architecture: $(uname -m)" >&2
+        exit 1
+        ;;
+    esac
+    echo "==> Building eqntott for native platform (${native_arch})..."
+    "${UDB_ROOT}"/tools/scripts/build_eqntott_with_docker.sh "${work_dir}/eqntott-build" "${native_arch}" || exit 1
+
+    # Move the binary to the asset name expected by the gem
+    mv "${work_dir}/eqntott-build/eqntott" "${work_dir}/eqntott-${native_arch}"
+
+    # Generate checksum
+    echo "==> Generating checksum..."
+    (cd "${work_dir}" && sha256sum "eqntott-${native_arch}" | awk '{print "sha256:" $1}' > "eqntott-${native_arch}.checksum")
+    echo "  ${native_arch}: $(cat "${work_dir}/eqntott-${native_arch}.checksum")"
+  else
+    # Build for both architectures
+    echo "==> Building eqntott for x64..."
+    "${UDB_ROOT}"/tools/scripts/build_eqntott_with_docker.sh "${work_dir}/eqntott-x64-out" x64 || exit 1
+
+    echo "==> Building eqntott for arm64..."
+    "${UDB_ROOT}"/tools/scripts/build_eqntott_with_docker.sh "${work_dir}/eqntott-arm64-out" arm64 || exit 1
+
+    # Rename the binaries to the asset names expected by the gem
+    mv "${work_dir}/eqntott-x64-out/eqntott" "${work_dir}/eqntott-x64"
+    mv "${work_dir}/eqntott-arm64-out/eqntott" "${work_dir}/eqntott-arm64"
+
+    # Generate checksums
+    echo "==> Generating checksums..."
+    (cd "${work_dir}" && sha256sum eqntott-x64 | awk '{print "sha256:" $1}' > eqntott-x64.checksum)
+    (cd "${work_dir}" && sha256sum eqntott-arm64 | awk '{print "sha256:" $1}' > eqntott-arm64.checksum)
+    echo "  x64:   $(cat "${work_dir}/eqntott-x64.checksum")"
+    echo "  arm64: $(cat "${work_dir}/eqntott-arm64.checksum")"
+  fi
+
+  # Create the GitHub Release and upload assets
+  local release_tag="${eqntott_version}"
+  if [ "${native_only}" = "yes" ]; then
+    # Detect native architecture
+    local native_arch
+    case "$(uname -m)" in
+      x86_64)
+        native_arch="x64"
+        ;;
+      aarch64)
+        native_arch="arm64"
+        ;;
+    esac
+    echo "==> Uploading ${native_arch} assets to GitHub Release ${release_tag}..."
+    # Try to upload; if release doesn't exist, create it first (for parallel CI builds)
+    if ! gh release upload "${release_tag}" \
+      --repo riscv/riscv-unified-db \
+      --clobber \
+      "${work_dir}/eqntott-${native_arch}" \
+      "${work_dir}/eqntott-${native_arch}.checksum" 2>/dev/null; then
+      echo "==> Release doesn't exist yet, creating it..."
+      gh release create "${release_tag}" \
+        --repo riscv/riscv-unified-db \
+        --title "eqntott binaries ${eqntott_version}" \
+        --notes "Pre-built eqntott binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${eqntott_commit}" \
+        "${work_dir}/eqntott-${native_arch}" \
+        "${work_dir}/eqntott-${native_arch}.checksum"
+    fi
+  else
+    echo "==> Creating GitHub Release ${release_tag}..."
+    gh release create "${release_tag}" \
+      --repo riscv/riscv-unified-db \
+      --title "eqntott binaries ${eqntott_version}" \
+      --notes "Pre-built eqntott binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${eqntott_commit}" \
+      "${work_dir}/eqntott-x64" \
+      "${work_dir}/eqntott-arm64" \
+      "${work_dir}/eqntott-x64.checksum" \
+      "${work_dir}/eqntott-arm64.checksum"
+  fi
+
+  cd "${orig_dir}" || exit 1
+  rm -rf "${work_dir}"
+
+  echo ""
+  echo "Done. GitHub Release ${eqntott_version} created on riscv/riscv-unified-db."
 }
 
 #
@@ -325,14 +508,14 @@ do_update_z3() {
     exit 1
   fi
 
-  # Read the version currently tracked in z3_version.rb
-  local z3_version_rb="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/z3_version.rb"
+  # Read the version currently tracked in dep_versions.rb
+  local z3_version_rb="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/dep_versions.rb"
   local current_version
   current_version=$(ruby -e "load '${z3_version_rb}'; puts Udb::Z3_VERSION" 2>/dev/null) || {
     echo "ERROR: Could not read current Z3 version from ${z3_version_rb}" >&2
     exit 1
   }
-  echo "==> Current Z3 version in z3_version.rb: ${current_version}"
+  echo "==> Current Z3 version in dep_versions.rb: ${current_version}"
 
   # Query the latest Z3 release tag from upstream (Z3Prover/z3)
   local latest_version
@@ -542,9 +725,9 @@ do_update_z3() {
   fi
 
   if [ "${target_version}" != "${current_version}" ]; then
-    # Update z3_version.rb so the gem knows which release to download
+    # Update dep_version.rb so the gem knows which release to download
     # z3_version_rb already declared above
-    echo -n "${z3_version}" > "${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/Z3_VERSION"
+    echo "${z3_version}" > "${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/Z3_VERSION"
     echo "==> Updated ${z3_version_rb}"
   fi
 
@@ -554,7 +737,8 @@ do_update_z3() {
   echo ""
   if [ "${target_version}" != "${current_version}" ]; then
     echo "Done. Next steps:"
-    echo "  1. git add tools/ruby-gems/udb/lib/udb/z3_version.rb"
+    echo "  1. git add tools/ruby-gems/udb/lib/udb/dep_versions.rb"
+    echo "  2. git add tools/ruby-gems/udb/lib/udb/Z3_VERSION"
     echo "  2. git commit -m 'chore: update Z3 to ${z3_version}'"
     echo "  3. Open a PR"
   else

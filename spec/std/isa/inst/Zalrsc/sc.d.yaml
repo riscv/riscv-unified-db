@@ -1,4 +1,7 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+
+# WARNING: This file is auto-generated from spec/std/isa/inst/Zalrsc/sc.SIZE.AQRL.layout
+
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # yaml-language-server: $schema=../../../../schemas/inst_schema.json
@@ -20,6 +23,7 @@ description: |
   The failure code with value 1 encodes an unspecified failure.
   Other failure codes are reserved at this time.
   Portable software should only assume the failure code will be non-zero.
+
 
   The address held in _xs1_ must be naturally aligned to the size of the operand
   (_i.e._, eight-byte aligned).
@@ -112,8 +116,10 @@ encoding:
   variables:
     - name: aq
       location: 26
+      not: 1
     - name: rl
       location: 25
+      not: 1
     - name: xs2
       location: 24-20
     - name: xs1
