@@ -3387,6 +3387,9 @@ class Udb::Parameter < ::Udb::TopLevelDatabaseObject
   sig { returns(::String) }
   def schema_type; end
 
+  sig { returns(::Udb::AbstractCondition) }
+  def to_condition; end
+
   sig { returns(::String) }
   def to_idl; end
 
@@ -3646,6 +3649,10 @@ class Udb::Portfolio < ::Udb::TopLevelDatabaseObject
   def optional_ext_reqs; end
   def out_of_scope_params(ext_name); end
   def recommendations; end
+
+  sig { returns(::Udb::AbstractCondition) }
+  def requirements_condition; end
+
   def revision_history; end
 
   sig { returns(::Udb::ConfiguredArchitecture) }
@@ -3654,8 +3661,11 @@ class Udb::Portfolio < ::Udb::TopLevelDatabaseObject
   sig { returns(::Udb::ConfiguredArchitecture) }
   def to_cfg_arch_for_optional; end
 
+  sig { params(mandatory: T::Array[::Udb::PortfolioExtensionRequirement]).returns(T::Hash[::String, T.untyped]) }
+  def to_config(mandatory: T.unsafe(nil)); end
+
   sig { returns(T::Hash[::String, T.untyped]) }
-  def to_config; end
+  def to_strict_config; end
 
   def uses_optional_types?; end
   def version; end
@@ -3707,6 +3717,7 @@ class Udb::PortfolioClass < ::Udb::TopLevelDatabaseObject
 end
 
 class Udb::PortfolioExtensionRequirement
+  include ::Comparable
   extend ::Forwardable
 
   sig do
@@ -3719,7 +3730,14 @@ class Udb::PortfolioExtensionRequirement
       presence: T.nilable(::Udb::Presence)
     ).void
   end
-  def initialize(name, requirements, arch:, note:, req_id:, presence:); end
+  def initialize(name, requirements, arch:, note: T.unsafe(nil), req_id: T.unsafe(nil), presence: T.unsafe(nil)); end
+
+  sig do
+    params(
+      other: T.any(::Udb::ExtensionRequirement, ::Udb::PortfolioExtensionRequirement)
+    ).returns(T.nilable(::Integer))
+  end
+  def <=>(other); end
 
   def ext_req; end
   def extension(*args, **_arg1, &block); end
