@@ -241,7 +241,7 @@ if [ ! -v GITHUB_ACTIONS ]; then
 #!/usr/bin/env bash
 
 # start templated
-INSTALL_PREK=\$(realpath ./bin/pre-commit)
+INSTALL_PREK=\$(realpath ./bin/prek)
 ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=pre-commit)
 # end templated
 
