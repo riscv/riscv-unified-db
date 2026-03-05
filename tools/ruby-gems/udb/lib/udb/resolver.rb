@@ -18,47 +18,76 @@ module Udb
     @gem_path ||= Pathname.new(Gem::Specification.find_by_name("udb").full_gem_path)
   end
 
-  sig { params(from_dir: Pathname).returns(Pathname) }
+  sig { params(from_dir: Pathname).returns(T.nilable(Pathname)) }
   def self.find_udb_root(from_dir)
-    if (from_dir / "do").executable?
+    if from_dir.root?
+      nil
+    elsif (from_dir / "do").executable? && (from_dir / "spec").directory?
       from_dir
     else
-      raise "Cannot find UDB repository root in directory hierarchy" if from_dir.dirname == from_dir
-
       find_udb_root(from_dir.dirname)
     end
   end
   private_class_method :find_udb_root
 
-  sig { returns(Pathname) }
+  sig { returns(T.nilable(Pathname)) }
   def self.repo_root
     @root ||=
       if ENV.key?("UDB_ROOT")
         Pathname.new(ENV["UDB_ROOT"])
       else
-        # try to find the root in the directory hierarchy by looking for the do script
         find_udb_root(Pathname.new(__dir__))
       end
   end
 
   sig { returns(Pathname) }
   def self.default_std_isa_path
-    repo_root / "spec" / "std" / "isa"
+    if repo_root.nil?
+      # not in the udb repo. try for a copy of the database stored with the gem
+      gem_path / ".data" / "spec" / "std" / "isa"
+    else
+      repo_root / "spec" / "std" / "isa"
+    end
   end
 
   sig { returns(Pathname) }
   def self.default_custom_isa_path
-    repo_root / "spec" / "custom" / "isa"
+    if repo_root.nil?
+      # not in the udb repo. try for a copy of the database stored with the gem
+      gem_path / ".data" / "spec" / "custom" / "isa"
+    else
+      repo_root / "spec" / "custom" / "isa"
+    end
+  end
+
+  sig { returns(Pathname) }
+  def self.default_schemas_path
+    if repo_root.nil?
+      # not in the udb repo. try for a copy of the database stored with the gem
+      gem_path / ".data" / "spec" / "schemas"
+    else
+      repo_root / "spec" / "schemas"
+    end
   end
 
   sig { returns(Pathname) }
   def self.default_gen_path
-    repo_root / "gen"
+    if repo_root.nil?
+      # not in the udb repo. use XDG path
+      data_home = Pathname.new(ENV.fetch("XDG_DATA_HOME", "#{ENV["HOME"]}/.local/share"))
+      data_home / "udb" / Udb.version / "gen"
+    else
+      repo_root / "gen"
+    end
   end
 
   sig { returns(Pathname) }
   def self.default_cfgs_path
-    repo_root / "cfgs"
+    if repo_root.nil?
+      gem_path / ".data" / "cfgs"
+    else
+      repo_root / "cfgs"
+    end
   end
 
   # resolves the specification in the context of a config, and writes to a generation folder
@@ -130,7 +159,7 @@ module Udb
     # Any specific path can be overridden. If all paths are overridden, it doesn't matter what repo_root is.
     sig {
       params(
-        repo_root: Pathname,
+        repo_root: T.nilable(Pathname),
         schemas_path_override: T.nilable(Pathname),
         cfgs_path_override: T.nilable(Pathname),
         gen_path_override: T.nilable(Pathname),
@@ -151,11 +180,11 @@ module Udb
       compile_idl: false
     )
       @repo_root = repo_root
-      @schemas_path = schemas_path_override || (@repo_root / "spec" / "schemas")
-      @cfgs_path = cfgs_path_override || (@repo_root / "cfgs")
-      @gen_path = gen_path_override || (@repo_root / "gen")
-      @std_path = std_path_override || (@repo_root / "spec" / "std" / "isa")
-      @custom_path = custom_path_override || (@repo_root / "spec" / "custom" / "isa")
+      @schemas_path = schemas_path_override || Udb.default_schemas_path
+      @cfgs_path = cfgs_path_override || Udb.default_cfgs_path
+      @gen_path = gen_path_override || Udb.default_gen_path
+      @std_path = std_path_override || Udb.default_std_isa_path
+      @custom_path = custom_path_override || Udb.default_custom_isa_path
       @quiet = quiet
       @compile_idl = compile_idl
       @mutex = Thread::Mutex.new

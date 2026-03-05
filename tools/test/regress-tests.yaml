@@ -202,6 +202,16 @@ tests:
       - name: Check profile_extensions
         run: ./do test:profile_extensions
 
+  regress-build-udb-gem:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Build udb gem via chore
+        run: ./bin/chore build udb-gem
+      - name: Verify udb gem was built
+        run: ls gen/udb_gem/udb-*.gem
+
   regress-regress:
     ci_stage: pr
     test:

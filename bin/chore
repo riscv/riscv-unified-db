@@ -12,10 +12,36 @@ help() {
   echo ""
   echo "Commands:"
   echo ""
+  echo "  build:     Build an artifact        ('chore build -h' for more)"
   echo "  container: Container operations     ('chore container -h' for more)"
   echo "  gen:       Generate an artifact     ('chore gen -h' for more)"
   echo "  install:   Install new libraries    ('chore install -h' for more)"
   echo "  update:    Update libraries         ('chore update -h' for more)"
+  echo ""
+}
+
+build_subcmd_usage() {
+  echo "Usage: chore build [-h] TARGET"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo ""
+  echo "Commands:"
+  echo ""
+  echo "  udb-gem:       Build the udb gem    ('chore build udb-gem -h' for more)"
+  echo ""
+}
+
+build_udb_gem_usage() {
+  echo "Usage: chore build udb-gem [-hd]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:        Print help"
+  echo "  -d DIR:    Override the staging/gen directory (default: <repo-root>/gen/udb_gem)"
   echo ""
 }
 
@@ -317,6 +343,46 @@ STEPS
     )
     $RUN /bin/bash -c "$steps" || exit $?
   done
+}
+
+#
+# Build the udb gem
+# Args: $1 - gen_dir (optional override for staging directory; empty string = use default)
+# Returns: 0 on success, exits with 1 on error
+#
+do_build_udb_gem() {
+  local gen_dir=$1
+  source_setup
+
+  local staging_dir="${gen_dir:-${UDB_ROOT}/gen/udb_gem}"
+
+  echo "Preparing udb gem staging directory at ${staging_dir} and building gem..."
+  local rake_env=""
+  if [ -n "$gen_dir" ]; then
+    rake_env="UDB_GEM_GEN_DIR=${gen_dir} "
+  fi
+  # Run prepare and gem build in a single container invocation so that the
+  # staging directory (which may be outside the repo-root mount) is accessible
+  # to both steps.
+  local build_cmd
+  build_cmd=$(cat << CMD
+cd ${UDB_ROOT}/tools/ruby-gems/udb && \
+${rake_env}bundle exec rake release:udb:prepare && \
+cd ${staging_dir} && \
+BUNDLE_GEMFILE= gem build udb.gemspec
+CMD
+  )
+  $RUN /bin/bash -c "$build_cmd" || exit $?
+
+  # Announce the location of the built gem (path is the same on host when
+  # staging_dir is inside the repo root; otherwise just print the directory).
+  local gem_file
+  gem_file=$(ls "${staging_dir}"/udb-*.gem 2>/dev/null | sort -V | tail -1)
+  if [ -n "$gem_file" ]; then
+    echo "udb gem built successfully: ${gem_file}"
+  else
+    echo "udb gem built in: ${staging_dir}"
+  fi
 }
 
 while getopts ":h" opt; do # Go through the options
@@ -682,6 +748,49 @@ case "$subcommand" in
       * )
         echo "Invalid target: $subcommand"
         update_subcmd_usage
+        exit 1
+    esac
+    ;;
+  build )
+    while getopts ":h" opt; do
+      case $opt in
+        h )
+          build_subcmd_usage
+          exit 0
+        ;;
+        ? )
+          echo "[ERROR]: Invalid option: -${OPTARG}"
+          build_subcmd_usage
+          exit 1
+        ;;
+      esac
+    done
+    target="$1"; shift
+    case "$target" in
+      udb-gem )
+        gen_dir=""
+        while getopts ":hd:" opt; do
+          case $opt in
+            h )
+              build_udb_gem_usage
+              exit 0
+            ;;
+            d )
+              gen_dir=$OPTARG
+            ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              build_udb_gem_usage
+              exit 1
+            ;;
+          esac
+        done
+        do_build_udb_gem "$gen_dir"
+        exit 0
+      ;;
+      * )
+        echo "Invalid target: $target"
+        build_subcmd_usage
         exit 1
     esac
     ;;
