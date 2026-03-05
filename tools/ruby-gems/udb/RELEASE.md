@@ -9,8 +9,12 @@ SPDX-License-Identifier: CC0-1.0
 This document describes how to prepare and publish a release of the `udb` gem to
 [rubygems.org](https://rubygems.org).
 
-> **Note:** CI automation for the publish step will be added in a future update.
-> This document will be expanded at that time.
+> **Automated releases:** The publish step (Steps 2–4 below) is handled
+> automatically by the
+> [Release udb gem to RubyGems.org](../../.github/workflows/release_udb_gem.yml)
+> GitHub Actions workflow.  Simply bump the version in `version.rb`, commit,
+> and merge to `main` — the workflow will build, publish, and tag the release.
+> Manual publishing (Steps 2–4) is only needed if the CI workflow is unavailable.
 
 ---
 
