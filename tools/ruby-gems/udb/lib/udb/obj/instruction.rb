@@ -494,8 +494,8 @@ module Udb
     # @param symtab [Idl::SymbolTable] Symbol table with global scope populated
     # @param effective_xlen [Integer] The effective XLEN to evaluate against
     # @return [Array<Idl::FunctionBodyAst>] List of all functions that can be reached from operation()
-    sig { params(effective_xlen: Integer).returns(T::Array[Idl::FunctionDefAst]) }
-    def reachable_functions(effective_xlen)
+    sig { params(effective_xlen: Integer, cache: T::Hash[T.untyped, T.untyped]).returns(T::Array[Idl::FunctionDefAst]) }
+    def reachable_functions(effective_xlen, cache = {})
       if @data["operation()"].nil?
         []
       else
@@ -504,7 +504,7 @@ module Udb
           begin
             ast = operation_ast
             symtab = fill_symtab(effective_xlen, ast)
-            fns = ast.reachable_functions(symtab)
+            fns = ast.reachable_functions(symtab, cache)
             symtab.release
             fns
           end

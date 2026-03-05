@@ -1245,7 +1245,7 @@ module Udb
     # represent the config and architecture defintion as a Condition
     sig { returns(Condition) }
     def to_condition
-      @condition ||=
+      @to_condition ||=
         begin
           if fully_configured?
             (
@@ -1291,7 +1291,7 @@ module Udb
     # a condition where both mandatory and non-mandatory extensions are required
     sig { returns(Condition) }
     def in_scope_condition
-      @condition ||=
+      @in_scope_condition ||=
         begin
           if fully_configured?
             (
@@ -1457,19 +1457,23 @@ module Udb
           TTY::ProgressBar.new("determining reachable IDL functions [:bar]", total: insts.size + csrs.size + 1 + global_ast.functions.size, output: $stdout)
         end
 
+      # Shared cache across all instructions/CSRs so that common utility functions
+      # are only traversed once rather than once per instruction.
+      shared_cache = {}
+
       possible_instructions.each do |inst|
         bar.advance if show_progress
 
         fns =
           if inst.base.nil?
             if multi_xlen?
-              (inst.reachable_functions(32) +
-              inst.reachable_functions(64))
+              (inst.reachable_functions(32, shared_cache) +
+              inst.reachable_functions(64, shared_cache))
             else
-              inst.reachable_functions(possible_xlens.fetch(0))
+              inst.reachable_functions(possible_xlens.fetch(0), shared_cache)
             end
           else
-            inst.reachable_functions(T.must(inst.base))
+            inst.reachable_functions(T.must(inst.base), shared_cache)
           end
 
         @reachable_functions.concat(fns)

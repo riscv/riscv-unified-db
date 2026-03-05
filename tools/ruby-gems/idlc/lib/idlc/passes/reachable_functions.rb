@@ -47,11 +47,17 @@ module Idl
         unless func_def_type.builtin? || func_def_type.generated?
           avals = func_def_type.apply_arguments(body_symtab, arg_nodes, symtab, self)
 
-          idx = [name, tvals, avals].hash
+          idx = [name, tvals, avals]
 
-          unless cache.key?(idx)
-            fns.concat(func_def_type.body.reachable_functions(body_symtab, cache))
-            cache[idx] = true
+          if cache.key?(idx)
+            # Use cached results from a prior traversal (e.g., same function called
+            # by an earlier instruction). The sentinel [] handles recursion cycles.
+            fns.concat(cache[idx])
+          else
+            cache[idx] = [] # sentinel: breaks recursion cycles before body is traversed
+            body_fns = func_def_type.body.reachable_functions(body_symtab, cache)
+            cache[idx] = body_fns
+            fns.concat(body_fns)
           end
         end
 
@@ -72,8 +78,10 @@ module Idl
       action.add_symbol(symtab) if action.is_a?(Declaration)
       value_try do
         action.execute(symtab) if action.is_a?(Executable)
+      rescue SystemStackError
+        type_error "There is a recursive function call with no escape that be determined at compile time. This is not representable in an HDL like IDL."
       end
-        # ok
+      # ok
 
       fns
     end
