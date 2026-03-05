@@ -19,6 +19,7 @@ path = [
     "Gemfile.lock",
     "lib/udb/Z3_VERSION",
     "lib/udb/ESPRESSO_VERSION",
+    "lib/udb/EQNTOTT_VERSION",
     "lib/udb/MUST_VERSION"
 ]
 SPDX-FileCopyrightText = "NONE"
