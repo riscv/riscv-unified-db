@@ -1,15 +1,30 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-
-# WARNING: This file is auto-generated from spec/std/isa/inst/Zalasr/lSIZE.AQRL.layout
-
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # yaml-language-server: $schema=../../../../schemas/inst_schema.json
+<%-
+  raise "'size' must be defined as 'b', 'h', 'w', or 'd'" unless %w[b h w d].include?(size)
+  raise "'rl' must be defined as true or false" unless [true, false].include?(rl)
+
+  size_info = {
+    "b" => { funct3: "000", long_name_suffix: "Byte" },
+    "h" => { funct3: "001", long_name_suffix: "Halfword" },
+    "w" => { funct3: "010", long_name_suffix: "Word" },
+    "d" => { funct3: "011", long_name_suffix: "Doubleword" }
+  }
+
+  current_size = size_info[size]
+
+  aq_rl_suffix = rl ? ".aqrl" : ".aq"
+  rl_bit = rl ? "1" : "0"
+  acquire_suffix = " Acquire"
+  release_suffix = rl ? " Release" : ""
+-%>
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: lw.aq
-long_name: Load Word Acquire
+name: l<%= size %><%= aq_rl_suffix %>
+long_name: Load <%= current_size[:long_name_suffix] %><%= acquire_suffix %><%= release_suffix %>
 description: |
   No description available.
 definedBy:
@@ -17,7 +32,7 @@ definedBy:
     name: Zalasr
 assembly: xd, (xs1)
 encoding:
-  match: 001101000000-----010-----0101111
+  match: 001101<%= rl_bit %>00000-----<%= current_size[:funct3] %>-----0101111
   variables:
     - name: xs1
       location: 19-15

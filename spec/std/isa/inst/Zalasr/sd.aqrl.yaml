@@ -8,8 +8,8 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: sh.rl
-long_name: Store Halfword Release
+name: sd.aqrl
+long_name: Store Doubleword Acquire Release
 description: |
   No description available.
 definedBy:
@@ -17,7 +17,7 @@ definedBy:
     name: Zalasr
 assembly: xs2, (xs1)
 encoding:
-  match: 0011101----------001000000101111
+  match: 0011111----------011000000101111
   variables:
     - name: xs2
       location: 24-20

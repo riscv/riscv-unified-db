@@ -8,29 +8,25 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: sc.w
-long_name: Store conditional word
+name: sc.d.aq
+long_name: Store conditional doubleword
 description: |
-  `sc.w` conditionally writes a word in _xs2_ to the address in _xs1_:
-  the `sc.w` succeeds only if the reservation is still valid and the
-  reservation set contains the bytes being written. If the `sc.w` succeeds,
-  the instruction writes the word in _xs2_ to memory, and it writes zero to _xd_.
-  If the `sc.w` fails, the instruction does not write to memory, and it writes a
-  nonzero value to _xd_. For the purposes of memory protection, a failed `sc.w`
+  `sc.d.aq` conditionally writes a doubleword in _xs2_ to the address in _xs1_:
+  the `sc.d.aq` succeeds only if the reservation is still valid and the
+  reservation set contains the bytes being written. If the `sc.d.aq` succeeds,
+  the instruction writes the doubleword in _xs2_ to memory, and it writes zero to _xd_.
+  If the `sc.d.aq` fails, the instruction does not write to memory, and it writes a
+  nonzero value to _xd_. For the purposes of memory protection, a failed `sc.d.aq`
   may be treated like a store. Regardless of success or failure, executing an
-  `sc.w` instruction invalidates any reservation held by this hart.
+  `sc.d.aq` instruction invalidates any reservation held by this hart.
 
   The failure code with value 1 encodes an unspecified failure.
   Other failure codes are reserved at this time.
   Portable software should only assume the failure code will be non-zero.
 
-  <%- if MXLEN == 64 -%>
-  [NOTE]
-   `sc.w` sign-extends the value placed in _xd_.
-  <%- end -%>
 
   The address held in _xs1_ must be naturally aligned to the size of the operand
-  (_i.e._, four-byte aligned).
+  (_i.e._, eight-byte aligned).
   If the address is not naturally aligned, an address-misaligned exception or an
   access-fault exception will be generated.
   The access-fault exception can be generated for a memory access that would otherwise
@@ -110,15 +106,17 @@ description: |
   LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
   with both bits clear, but may result in lower performance.
 definedBy:
-  extension:
-    name: Zalrsc
+  allOf:
+    - xlen: 64
+    - extension:
+        name: Zalrsc
 assembly: xd, xs2, (xs1)
 encoding:
-  match: 00011------------010-----0101111
+  match: 00011------------011-----0101111
   variables:
     - name: aq
       location: 26
-      not: 1
+      not: 0
     - name: rl
       location: 25
       not: 1
@@ -143,7 +141,7 @@ operation(): |
   XReg virtual_address = X[xs1];
   XReg value = X[xs2];
 
-  if (!is_naturally_aligned<32>(virtual_address)) {
+  if (!is_naturally_aligned<64>(virtual_address)) {
     # can raise either LoadAddressMisaligned *or* LoadAccessFault
     #
     # from the spec:
@@ -161,7 +159,7 @@ operation(): |
     }
   }
 
-  Boolean success = store_conditional<32>(virtual_address, value, aq, rl, $encoding);
+  Boolean success = store_conditional<64>(virtual_address, value, aq, rl, $encoding);
   X[xd] = success ? 0 : 1;
 
 # SPDX-SnippetBegin

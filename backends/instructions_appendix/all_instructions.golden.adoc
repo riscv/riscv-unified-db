@@ -27429,7 +27429,7 @@ Included in::
 == lb.aq
 
 Synopsis::
-No synopsis available
+Load Byte Acquire
 
 Base::
 
@@ -27448,6 +27448,57 @@ Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
 {"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x340,"type":2}]}
+....
+
+Description::
+No description available.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalasr*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:lb_aqrl]
+== lb.aqrl
+
+Synopsis::
+Load Byte Acquire Release
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+lb.aqrl xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x360,"type":2}]}
 ....
 
 Description::
@@ -27610,7 +27661,7 @@ xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd]
 == ld.aq
 
 Synopsis::
-No synopsis available
+Load Doubleword Acquire
 
 Base::
 
@@ -27629,6 +27680,57 @@ Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
 {"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x340,"type":2}]}
+....
+
+Description::
+No description available.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalasr*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:ld_aqrl]
+== ld.aqrl
+
+Synopsis::
+Load Doubleword Acquire Release
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+ld.aqrl xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x360,"type":2}]}
 ....
 
 Description::
@@ -27715,7 +27817,7 @@ Included in::
 == lh.aq
 
 Synopsis::
-No synopsis available
+Load Halfword Acquire
 
 Base::
 
@@ -27734,6 +27836,57 @@ Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
 {"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x340,"type":2}]}
+....
+
+Description::
+No description available.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalasr*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:lh_aqrl]
+== lh.aqrl
+
+Synopsis::
+Load Halfword Acquire Release
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+lh.aqrl xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x360,"type":2}]}
 ....
 
 Description::
@@ -27870,7 +28023,7 @@ Included in::
 == lr.d
 
 Synopsis::
-Load reserved doubleword
+Load Reserved Doubleword
 
 Base::
 
@@ -27958,11 +28111,287 @@ Additionally, this instruction requires the following:
 xlen+++()+++ == 64
 
 
+[#udb:doc:inst:lr_d_aq]
+== lr.d.aq
+
+Synopsis::
+Load Reserved Doubleword
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+|
+| &#x2713;
+|===
+
+Assembly::
+lr.d.aq xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x0,"type":2},{"bits":1,"name": "rl != 1","type":4},{"bits":1,"name": "aq != 0","type":4},{"bits":5,"name": 0x2,"type":2}]}
+....
+
+Description::
+Loads a word from the address in xs1, places the value in xd,
+and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
+addressed word.
+
+The address in xs1 must be 8-byte aligned.
+
+If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
+`LoadAccessFault` exception will be generated. The access-fault exception can be generated
+for a memory access that would otherwise be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+An implementation can register an arbitrarily large reservation set on each LR, provided the
+reservation set includes all bytes of the addressed data word or doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set can be
+observed to have occurred between the LR and the SC, and if there is no other SC between the
+LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes accessed by
+the LR instruction can be observed to have occurred between the LR and SC. Note this LR
+might have had a different effective address and data size, but reserved the SC's
+address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+Additionally, this instruction requires the following:
+
+xlen+++()+++ == 64
+
+
+[#udb:doc:inst:lr_d_aqrl]
+== lr.d.aqrl
+
+Synopsis::
+Load Reserved Doubleword
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+|
+| &#x2713;
+|===
+
+Assembly::
+lr.d.aqrl xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x0,"type":2},{"bits":1,"name": "rl != 0","type":4},{"bits":1,"name": "aq != 0","type":4},{"bits":5,"name": 0x2,"type":2}]}
+....
+
+Description::
+Loads a word from the address in xs1, places the value in xd,
+and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
+addressed word.
+
+The address in xs1 must be 8-byte aligned.
+
+If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
+`LoadAccessFault` exception will be generated. The access-fault exception can be generated
+for a memory access that would otherwise be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+An implementation can register an arbitrarily large reservation set on each LR, provided the
+reservation set includes all bytes of the addressed data word or doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set can be
+observed to have occurred between the LR and the SC, and if there is no other SC between the
+LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes accessed by
+the LR instruction can be observed to have occurred between the LR and SC. Note this LR
+might have had a different effective address and data size, but reserved the SC's
+address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+Additionally, this instruction requires the following:
+
+xlen+++()+++ == 64
+
+
+[#udb:doc:inst:lr_d_rl]
+== lr.d.rl
+
+Synopsis::
+Load Reserved Doubleword
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+|
+| &#x2713;
+|===
+
+Assembly::
+lr.d.rl xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x0,"type":2},{"bits":1,"name": "rl != 0","type":4},{"bits":1,"name": "aq != 1","type":4},{"bits":5,"name": 0x2,"type":2}]}
+....
+
+Description::
+Loads a word from the address in xs1, places the value in xd,
+and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
+addressed word.
+
+The address in xs1 must be 8-byte aligned.
+
+If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
+`LoadAccessFault` exception will be generated. The access-fault exception can be generated
+for a memory access that would otherwise be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+An implementation can register an arbitrarily large reservation set on each LR, provided the
+reservation set includes all bytes of the addressed data word or doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set can be
+observed to have occurred between the LR and the SC, and if there is no other SC between the
+LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes accessed by
+the LR instruction can be observed to have occurred between the LR and SC. Note this LR
+might have had a different effective address and data size, but reserved the SC's
+address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+Additionally, this instruction requires the following:
+
+xlen+++()+++ == 64
+
+
 [#udb:doc:inst:lr_w]
 == lr.w
 
 Synopsis::
-Load reserved word
+Load Reserved Word
 
 Base::
 
@@ -27981,6 +28410,288 @@ Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
 {"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x0,"type":2},{"bits":1,"name": "rl != 1","type":4},{"bits":1,"name": "aq != 1","type":4},{"bits":5,"name": 0x2,"type":2}]}
+....
+
+Description::
+Loads a word from the address in xs1, places the sign-extended value in xd,
+and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
+addressed word.
+
+<%- if MXLEN == 64 -%>
+The 32-bit load result is sign-extended to 64-bits.
+<%- end -%>
+
+The address in xs1 must be naturally aligned to the size of the operand
+(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+
+If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
+`LoadAccessFault` exception will be generated. The access-fault exception can be generated
+for a memory access that would otherwise be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+An implementation can register an arbitrarily large reservation set on each LR, provided the
+reservation set includes all bytes of the addressed data word or doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set can be
+observed to have occurred between the LR and the SC, and if there is no other SC between the
+LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes accessed by
+the LR instruction can be observed to have occurred between the LR and SC. Note this LR
+might have had a different effective address and data size, but reserved the SC's
+address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:lr_w_aq]
+== lr.w.aq
+
+Synopsis::
+Load Reserved Word
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+lr.w.aq xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x0,"type":2},{"bits":1,"name": "rl != 1","type":4},{"bits":1,"name": "aq != 0","type":4},{"bits":5,"name": 0x2,"type":2}]}
+....
+
+Description::
+Loads a word from the address in xs1, places the sign-extended value in xd,
+and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
+addressed word.
+
+<%- if MXLEN == 64 -%>
+The 32-bit load result is sign-extended to 64-bits.
+<%- end -%>
+
+The address in xs1 must be naturally aligned to the size of the operand
+(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+
+If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
+`LoadAccessFault` exception will be generated. The access-fault exception can be generated
+for a memory access that would otherwise be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+An implementation can register an arbitrarily large reservation set on each LR, provided the
+reservation set includes all bytes of the addressed data word or doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set can be
+observed to have occurred between the LR and the SC, and if there is no other SC between the
+LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes accessed by
+the LR instruction can be observed to have occurred between the LR and SC. Note this LR
+might have had a different effective address and data size, but reserved the SC's
+address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:lr_w_aqrl]
+== lr.w.aqrl
+
+Synopsis::
+Load Reserved Word
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+lr.w.aqrl xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x0,"type":2},{"bits":1,"name": "rl != 0","type":4},{"bits":1,"name": "aq != 0","type":4},{"bits":5,"name": 0x2,"type":2}]}
+....
+
+Description::
+Loads a word from the address in xs1, places the sign-extended value in xd,
+and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
+addressed word.
+
+<%- if MXLEN == 64 -%>
+The 32-bit load result is sign-extended to 64-bits.
+<%- end -%>
+
+The address in xs1 must be naturally aligned to the size of the operand
+(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+
+If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
+`LoadAccessFault` exception will be generated. The access-fault exception can be generated
+for a memory access that would otherwise be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+An implementation can register an arbitrarily large reservation set on each LR, provided the
+reservation set includes all bytes of the addressed data word or doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set can be
+observed to have occurred between the LR and the SC, and if there is no other SC between the
+LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes accessed by
+the LR instruction can be observed to have occurred between the LR and SC. Note this LR
+might have had a different effective address and data size, but reserved the SC's
+address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:lr_w_rl]
+== lr.w.rl
+
+Synopsis::
+Load Reserved Word
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+lr.w.rl xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x0,"type":2},{"bits":1,"name": "rl != 0","type":4},{"bits":1,"name": "aq != 1","type":4},{"bits":5,"name": 0x2,"type":2}]}
 ....
 
 Description::
@@ -28160,7 +28871,7 @@ Included in::
 == lw.aq
 
 Synopsis::
-No synopsis available
+Load Word Acquire
 
 Base::
 
@@ -28179,6 +28890,57 @@ Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
 {"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x340,"type":2}]}
+....
+
+Description::
+No description available.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalasr*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:lw_aqrl]
+== lw.aqrl
+
+Synopsis::
+Load Word Acquire Release
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+lw.aqrl xd, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":12,"name": 0x360,"type":2}]}
 ....
 
 Description::
@@ -32511,11 +33273,62 @@ Included in::
 
 
 
+[#udb:doc:inst:sb_aqrl]
+== sb.aqrl
+
+Synopsis::
+Store Byte Acquire Release
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+sb.aqrl xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":15,"name": 0x2f,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x1f,"type":2}]}
+....
+
+Description::
+No description available.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalasr*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:sb_rl]
 == sb.rl
 
 Synopsis::
-No synopsis available
+Store Byte Release
 
 Base::
 
@@ -32584,7 +33397,7 @@ sc.d xd, xs2, (xs1)
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":1,"name": "rl","type":4},{"bits":1,"name": "aq","type":4},{"bits":5,"name": 0x3,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":1,"name": "rl != 1","type":4},{"bits":1,"name": "aq != 1","type":4},{"bits":5,"name": 0x3,"type":2}]}
 ....
 
 Description::
@@ -32600,6 +33413,457 @@ xref:insts:sc_d.adoc#udb:doc:inst:sc_d[sc.d] instruction invalidates any reserva
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
+
+
+The address held in _xs1_ must be naturally aligned to the size of the operand
+(_i.e._, eight-byte aligned).
+If the address is not naturally aligned, an address-misaligned exception or an
+access-fault exception will be generated.
+The access-fault exception can be generated for a memory access that would otherwise
+be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+[NOTE]
+--
+Emulating misaligned LR/SC sequences is impractical in most systems.
+
+Misaligned LR/SC sequences also raise the possibility of accessing multiple
+reservation sets at once, which present definitions do not provide for.
+--
+
+An implementation can register an arbitrarily large reservation set on each LR,
+provided the reservation set includes all bytes of the addressed data word or
+doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set
+can be observed to have occurred between the LR and the SC,
+and if there is no other SC between the LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes
+accessed by the LR instruction can be observed to have occurred between the LR
+and SC.
+Note this LR might have had a different effective address and data size,
+but reserved the SC's address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+The SC must fail if the address is not within the reservation set of the most
+recent LR in program order.
+The SC must fail if a store to the reservation set from another hart can be
+observed to occur between the LR and SC.
+The SC must fail if a write from some other device to the bytes accessed by the
+LR can be observed to occur between the LR and SC.
+(If such a device writes the reservation set but does not write the bytes accessed
+by the LR, the SC may or may not fail.)
+An SC must fail if there is another SC (to any address) between the LR and the SC
+in program order.
+The precise statement of the atomicity requirements for successful LR/SC sequences
+is defined by the Atomicity Axiom of the memory model.
+
+[NOTE]
+--
+The platform should provide a means to determine the size and shape of the reservation set.
+
+A platform specification may constrain the size and shape of the reservation set.
+
+A store-conditional instruction to a scratch word of memory should be used to forcibly invalidate any existing load reservation:
+
+  * during a preemptive context switch, and
+  * if necessary when changing virtual to physical address mappings, such as when migrating pages that might contain an active reservation.
+
+The invalidation of a hart's reservation when it executes an LR or SC imply that a hart can only hold one reservation at a time, and that an SC can only pair with the most recent LR, and LR with the next following SC, in program order. This is a restriction to the Atomicity Axiom in Section 18.1 that ensures software runs correctly on expected common implementations that operate in this manner.
+--
+
+An SC instruction can never be observed by another RISC-V hart before the LR instruction that established the reservation.
+
+[NOTE]
+--
+The LR/SC sequence can be given acquire semantics by setting the aq bit on the LR instruction. The LR/SC sequence can be given release semantics by by setting the rl bit on the SC instruction. Assuming suitable mappings for other atomic operations, setting the aq bit on the LR instruction, and setting the rl bit on the SC instruction makes the LR/SC sequence sequentially consistent in the C++ memory_order_seq_cst sense. Such a sequence does not act as a fence for ordering ordinary load and store instructions before and after the sequence. Specific instruction mappings for other C++ atomic operations, or stronger notions of "sequential consistency", may require both bits to be set on either or both of the LR or SC instruction.
+
+If neither bit is set on either LR or SC, the LR/SC sequence can be observed to occur before or after surrounding memory operations from the same RISC-V hart. This can be appropriate when the LR/SC sequence is used to implement a parallel reduction operation.
+--
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+Additionally, this instruction requires the following:
+
+xlen+++()+++ == 64
+
+
+[#udb:doc:inst:sc_d_aq]
+== sc.d.aq
+
+Synopsis::
+Store conditional doubleword
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+|
+| &#x2713;
+|===
+
+Assembly::
+sc.d.aq xd, xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":1,"name": "rl != 1","type":4},{"bits":1,"name": "aq != 0","type":4},{"bits":5,"name": 0x3,"type":2}]}
+....
+
+Description::
+xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] conditionally writes a doubleword in _xs2_ to the address in _xs1_:
+the xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] succeeds,
+the instruction writes the doubleword in _xs2_ to memory, and it writes zero to _xd_.
+If the xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq]
+may be treated like a store. Regardless of success or failure, executing an
+xref:insts:sc_d_aq.adoc#udb:doc:inst:sc_d_aq[sc.d.aq] instruction invalidates any reservation held by this hart.
+
+The failure code with value 1 encodes an unspecified failure.
+Other failure codes are reserved at this time.
+Portable software should only assume the failure code will be non-zero.
+
+
+The address held in _xs1_ must be naturally aligned to the size of the operand
+(_i.e._, eight-byte aligned).
+If the address is not naturally aligned, an address-misaligned exception or an
+access-fault exception will be generated.
+The access-fault exception can be generated for a memory access that would otherwise
+be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+[NOTE]
+--
+Emulating misaligned LR/SC sequences is impractical in most systems.
+
+Misaligned LR/SC sequences also raise the possibility of accessing multiple
+reservation sets at once, which present definitions do not provide for.
+--
+
+An implementation can register an arbitrarily large reservation set on each LR,
+provided the reservation set includes all bytes of the addressed data word or
+doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set
+can be observed to have occurred between the LR and the SC,
+and if there is no other SC between the LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes
+accessed by the LR instruction can be observed to have occurred between the LR
+and SC.
+Note this LR might have had a different effective address and data size,
+but reserved the SC's address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+The SC must fail if the address is not within the reservation set of the most
+recent LR in program order.
+The SC must fail if a store to the reservation set from another hart can be
+observed to occur between the LR and SC.
+The SC must fail if a write from some other device to the bytes accessed by the
+LR can be observed to occur between the LR and SC.
+(If such a device writes the reservation set but does not write the bytes accessed
+by the LR, the SC may or may not fail.)
+An SC must fail if there is another SC (to any address) between the LR and the SC
+in program order.
+The precise statement of the atomicity requirements for successful LR/SC sequences
+is defined by the Atomicity Axiom of the memory model.
+
+[NOTE]
+--
+The platform should provide a means to determine the size and shape of the reservation set.
+
+A platform specification may constrain the size and shape of the reservation set.
+
+A store-conditional instruction to a scratch word of memory should be used to forcibly invalidate any existing load reservation:
+
+  * during a preemptive context switch, and
+  * if necessary when changing virtual to physical address mappings, such as when migrating pages that might contain an active reservation.
+
+The invalidation of a hart's reservation when it executes an LR or SC imply that a hart can only hold one reservation at a time, and that an SC can only pair with the most recent LR, and LR with the next following SC, in program order. This is a restriction to the Atomicity Axiom in Section 18.1 that ensures software runs correctly on expected common implementations that operate in this manner.
+--
+
+An SC instruction can never be observed by another RISC-V hart before the LR instruction that established the reservation.
+
+[NOTE]
+--
+The LR/SC sequence can be given acquire semantics by setting the aq bit on the LR instruction. The LR/SC sequence can be given release semantics by by setting the rl bit on the SC instruction. Assuming suitable mappings for other atomic operations, setting the aq bit on the LR instruction, and setting the rl bit on the SC instruction makes the LR/SC sequence sequentially consistent in the C++ memory_order_seq_cst sense. Such a sequence does not act as a fence for ordering ordinary load and store instructions before and after the sequence. Specific instruction mappings for other C++ atomic operations, or stronger notions of "sequential consistency", may require both bits to be set on either or both of the LR or SC instruction.
+
+If neither bit is set on either LR or SC, the LR/SC sequence can be observed to occur before or after surrounding memory operations from the same RISC-V hart. This can be appropriate when the LR/SC sequence is used to implement a parallel reduction operation.
+--
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+Additionally, this instruction requires the following:
+
+xlen+++()+++ == 64
+
+
+[#udb:doc:inst:sc_d_aqrl]
+== sc.d.aqrl
+
+Synopsis::
+Store conditional doubleword
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+|
+| &#x2713;
+|===
+
+Assembly::
+sc.d.aqrl xd, xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":1,"name": "rl != 0","type":4},{"bits":1,"name": "aq != 0","type":4},{"bits":5,"name": 0x3,"type":2}]}
+....
+
+Description::
+xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] conditionally writes a doubleword in _xs2_ to the address in _xs1_:
+the xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] succeeds,
+the instruction writes the doubleword in _xs2_ to memory, and it writes zero to _xd_.
+If the xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl]
+may be treated like a store. Regardless of success or failure, executing an
+xref:insts:sc_d_aqrl.adoc#udb:doc:inst:sc_d_aqrl[sc.d.aqrl] instruction invalidates any reservation held by this hart.
+
+The failure code with value 1 encodes an unspecified failure.
+Other failure codes are reserved at this time.
+Portable software should only assume the failure code will be non-zero.
+
+
+The address held in _xs1_ must be naturally aligned to the size of the operand
+(_i.e._, eight-byte aligned).
+If the address is not naturally aligned, an address-misaligned exception or an
+access-fault exception will be generated.
+The access-fault exception can be generated for a memory access that would otherwise
+be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+[NOTE]
+--
+Emulating misaligned LR/SC sequences is impractical in most systems.
+
+Misaligned LR/SC sequences also raise the possibility of accessing multiple
+reservation sets at once, which present definitions do not provide for.
+--
+
+An implementation can register an arbitrarily large reservation set on each LR,
+provided the reservation set includes all bytes of the addressed data word or
+doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set
+can be observed to have occurred between the LR and the SC,
+and if there is no other SC between the LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes
+accessed by the LR instruction can be observed to have occurred between the LR
+and SC.
+Note this LR might have had a different effective address and data size,
+but reserved the SC's address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+The SC must fail if the address is not within the reservation set of the most
+recent LR in program order.
+The SC must fail if a store to the reservation set from another hart can be
+observed to occur between the LR and SC.
+The SC must fail if a write from some other device to the bytes accessed by the
+LR can be observed to occur between the LR and SC.
+(If such a device writes the reservation set but does not write the bytes accessed
+by the LR, the SC may or may not fail.)
+An SC must fail if there is another SC (to any address) between the LR and the SC
+in program order.
+The precise statement of the atomicity requirements for successful LR/SC sequences
+is defined by the Atomicity Axiom of the memory model.
+
+[NOTE]
+--
+The platform should provide a means to determine the size and shape of the reservation set.
+
+A platform specification may constrain the size and shape of the reservation set.
+
+A store-conditional instruction to a scratch word of memory should be used to forcibly invalidate any existing load reservation:
+
+  * during a preemptive context switch, and
+  * if necessary when changing virtual to physical address mappings, such as when migrating pages that might contain an active reservation.
+
+The invalidation of a hart's reservation when it executes an LR or SC imply that a hart can only hold one reservation at a time, and that an SC can only pair with the most recent LR, and LR with the next following SC, in program order. This is a restriction to the Atomicity Axiom in Section 18.1 that ensures software runs correctly on expected common implementations that operate in this manner.
+--
+
+An SC instruction can never be observed by another RISC-V hart before the LR instruction that established the reservation.
+
+[NOTE]
+--
+The LR/SC sequence can be given acquire semantics by setting the aq bit on the LR instruction. The LR/SC sequence can be given release semantics by by setting the rl bit on the SC instruction. Assuming suitable mappings for other atomic operations, setting the aq bit on the LR instruction, and setting the rl bit on the SC instruction makes the LR/SC sequence sequentially consistent in the C++ memory_order_seq_cst sense. Such a sequence does not act as a fence for ordering ordinary load and store instructions before and after the sequence. Specific instruction mappings for other C++ atomic operations, or stronger notions of "sequential consistency", may require both bits to be set on either or both of the LR or SC instruction.
+
+If neither bit is set on either LR or SC, the LR/SC sequence can be observed to occur before or after surrounding memory operations from the same RISC-V hart. This can be appropriate when the LR/SC sequence is used to implement a parallel reduction operation.
+--
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+Additionally, this instruction requires the following:
+
+xlen+++()+++ == 64
+
+
+[#udb:doc:inst:sc_d_rl]
+== sc.d.rl
+
+Synopsis::
+Store conditional doubleword
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+|
+| &#x2713;
+|===
+
+Assembly::
+sc.d.rl xd, xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":1,"name": "rl != 0","type":4},{"bits":1,"name": "aq != 1","type":4},{"bits":5,"name": 0x3,"type":2}]}
+....
+
+Description::
+xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] conditionally writes a doubleword in _xs2_ to the address in _xs1_:
+the xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] succeeds,
+the instruction writes the doubleword in _xs2_ to memory, and it writes zero to _xd_.
+If the xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl]
+may be treated like a store. Regardless of success or failure, executing an
+xref:insts:sc_d_rl.adoc#udb:doc:inst:sc_d_rl[sc.d.rl] instruction invalidates any reservation held by this hart.
+
+The failure code with value 1 encodes an unspecified failure.
+Other failure codes are reserved at this time.
+Portable software should only assume the failure code will be non-zero.
+
 
 The address held in _xs1_ must be naturally aligned to the size of the operand
 (_i.e._, eight-byte aligned).
@@ -32746,18 +34010,470 @@ nonzero value to _xd_. For the purposes of memory protection, a failed xref:inst
 may be treated like a store. Regardless of success or failure, executing an
 xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] instruction invalidates any reservation held by this hart.
 
+The failure code with value 1 encodes an unspecified failure.
+Other failure codes are reserved at this time.
+Portable software should only assume the failure code will be non-zero.
+
 <%- if MXLEN == 64 -%>
 [NOTE]
-If a value other than 0 or 1 is defined as a result for xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w], the value will before
-sign-extended into _xd_.
+ xref:insts:sc_w.adoc#udb:doc:inst:sc_w[sc.w] sign-extends the value placed in _xd_.
 <%- end -%>
+
+The address held in _xs1_ must be naturally aligned to the size of the operand
+(_i.e._, four-byte aligned).
+If the address is not naturally aligned, an address-misaligned exception or an
+access-fault exception will be generated.
+The access-fault exception can be generated for a memory access that would otherwise
+be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+[NOTE]
+--
+Emulating misaligned LR/SC sequences is impractical in most systems.
+
+Misaligned LR/SC sequences also raise the possibility of accessing multiple
+reservation sets at once, which present definitions do not provide for.
+--
+
+An implementation can register an arbitrarily large reservation set on each LR,
+provided the reservation set includes all bytes of the addressed data word or
+doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set
+can be observed to have occurred between the LR and the SC,
+and if there is no other SC between the LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes
+accessed by the LR instruction can be observed to have occurred between the LR
+and SC.
+Note this LR might have had a different effective address and data size,
+but reserved the SC's address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+The SC must fail if the address is not within the reservation set of the most
+recent LR in program order.
+The SC must fail if a store to the reservation set from another hart can be
+observed to occur between the LR and SC.
+The SC must fail if a write from some other device to the bytes accessed by the
+LR can be observed to occur between the LR and SC.
+(If such a device writes the reservation set but does not write the bytes accessed
+by the LR, the SC may or may not fail.)
+An SC must fail if there is another SC (to any address) between the LR and the SC
+in program order.
+The precise statement of the atomicity requirements for successful LR/SC sequences
+is defined by the Atomicity Axiom of the memory model.
+
+[NOTE]
+--
+The platform should provide a means to determine the size and shape of the reservation set.
+
+A platform specification may constrain the size and shape of the reservation set.
+
+A store-conditional instruction to a scratch word of memory should be used to forcibly invalidate any existing load reservation:
+
+  * during a preemptive context switch, and
+  * if necessary when changing virtual to physical address mappings, such as when migrating pages that might contain an active reservation.
+
+The invalidation of a hart's reservation when it executes an LR or SC imply that a hart can only hold one reservation at a time, and that an SC can only pair with the most recent LR, and LR with the next following SC, in program order. This is a restriction to the Atomicity Axiom in Section 18.1 that ensures software runs correctly on expected common implementations that operate in this manner.
+--
+
+An SC instruction can never be observed by another RISC-V hart before the LR instruction that established the reservation.
+
+[NOTE]
+--
+The LR/SC sequence can be given acquire semantics by setting the aq bit on the LR instruction. The LR/SC sequence can be given release semantics by by setting the rl bit on the SC instruction. Assuming suitable mappings for other atomic operations, setting the aq bit on the LR instruction, and setting the rl bit on the SC instruction makes the LR/SC sequence sequentially consistent in the C++ memory_order_seq_cst sense. Such a sequence does not act as a fence for ordering ordinary load and store instructions before and after the sequence. Specific instruction mappings for other C++ atomic operations, or stronger notions of "sequential consistency", may require both bits to be set on either or both of the LR or SC instruction.
+
+If neither bit is set on either LR or SC, the LR/SC sequence can be observed to occur before or after surrounding memory operations from the same RISC-V hart. This can be appropriate when the LR/SC sequence is used to implement a parallel reduction operation.
+--
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:sc_w_aq]
+== sc.w.aq
+
+Synopsis::
+Store conditional word
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+sc.w.aq xd, xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":1,"name": "rl != 1","type":4},{"bits":1,"name": "aq != 0","type":4},{"bits":5,"name": 0x3,"type":2}]}
+....
+
+Description::
+xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] conditionally writes a word in _xs2_ to the address in _xs1_:
+the xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] succeeds,
+the instruction writes the word in _xs2_ to memory, and it writes zero to _xd_.
+If the xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq]
+may be treated like a store. Regardless of success or failure, executing an
+xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] instruction invalidates any reservation held by this hart.
 
 The failure code with value 1 encodes an unspecified failure.
 Other failure codes are reserved at this time.
 Portable software should only assume the failure code will be non-zero.
 
+<%- if MXLEN == 64 -%>
+[NOTE]
+ xref:insts:sc_w_aq.adoc#udb:doc:inst:sc_w_aq[sc.w.aq] sign-extends the value placed in _xd_.
+<%- end -%>
+
 The address held in _xs1_ must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+(_i.e._, four-byte aligned).
+If the address is not naturally aligned, an address-misaligned exception or an
+access-fault exception will be generated.
+The access-fault exception can be generated for a memory access that would otherwise
+be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+[NOTE]
+--
+Emulating misaligned LR/SC sequences is impractical in most systems.
+
+Misaligned LR/SC sequences also raise the possibility of accessing multiple
+reservation sets at once, which present definitions do not provide for.
+--
+
+An implementation can register an arbitrarily large reservation set on each LR,
+provided the reservation set includes all bytes of the addressed data word or
+doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set
+can be observed to have occurred between the LR and the SC,
+and if there is no other SC between the LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes
+accessed by the LR instruction can be observed to have occurred between the LR
+and SC.
+Note this LR might have had a different effective address and data size,
+but reserved the SC's address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+The SC must fail if the address is not within the reservation set of the most
+recent LR in program order.
+The SC must fail if a store to the reservation set from another hart can be
+observed to occur between the LR and SC.
+The SC must fail if a write from some other device to the bytes accessed by the
+LR can be observed to occur between the LR and SC.
+(If such a device writes the reservation set but does not write the bytes accessed
+by the LR, the SC may or may not fail.)
+An SC must fail if there is another SC (to any address) between the LR and the SC
+in program order.
+The precise statement of the atomicity requirements for successful LR/SC sequences
+is defined by the Atomicity Axiom of the memory model.
+
+[NOTE]
+--
+The platform should provide a means to determine the size and shape of the reservation set.
+
+A platform specification may constrain the size and shape of the reservation set.
+
+A store-conditional instruction to a scratch word of memory should be used to forcibly invalidate any existing load reservation:
+
+  * during a preemptive context switch, and
+  * if necessary when changing virtual to physical address mappings, such as when migrating pages that might contain an active reservation.
+
+The invalidation of a hart's reservation when it executes an LR or SC imply that a hart can only hold one reservation at a time, and that an SC can only pair with the most recent LR, and LR with the next following SC, in program order. This is a restriction to the Atomicity Axiom in Section 18.1 that ensures software runs correctly on expected common implementations that operate in this manner.
+--
+
+An SC instruction can never be observed by another RISC-V hart before the LR instruction that established the reservation.
+
+[NOTE]
+--
+The LR/SC sequence can be given acquire semantics by setting the aq bit on the LR instruction. The LR/SC sequence can be given release semantics by by setting the rl bit on the SC instruction. Assuming suitable mappings for other atomic operations, setting the aq bit on the LR instruction, and setting the rl bit on the SC instruction makes the LR/SC sequence sequentially consistent in the C++ memory_order_seq_cst sense. Such a sequence does not act as a fence for ordering ordinary load and store instructions before and after the sequence. Specific instruction mappings for other C++ atomic operations, or stronger notions of "sequential consistency", may require both bits to be set on either or both of the LR or SC instruction.
+
+If neither bit is set on either LR or SC, the LR/SC sequence can be observed to occur before or after surrounding memory operations from the same RISC-V hart. This can be appropriate when the LR/SC sequence is used to implement a parallel reduction operation.
+--
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:sc_w_aqrl]
+== sc.w.aqrl
+
+Synopsis::
+Store conditional word
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+sc.w.aqrl xd, xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":1,"name": "rl != 0","type":4},{"bits":1,"name": "aq != 0","type":4},{"bits":5,"name": 0x3,"type":2}]}
+....
+
+Description::
+xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] conditionally writes a word in _xs2_ to the address in _xs1_:
+the xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] succeeds,
+the instruction writes the word in _xs2_ to memory, and it writes zero to _xd_.
+If the xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl]
+may be treated like a store. Regardless of success or failure, executing an
+xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] instruction invalidates any reservation held by this hart.
+
+The failure code with value 1 encodes an unspecified failure.
+Other failure codes are reserved at this time.
+Portable software should only assume the failure code will be non-zero.
+
+<%- if MXLEN == 64 -%>
+[NOTE]
+ xref:insts:sc_w_aqrl.adoc#udb:doc:inst:sc_w_aqrl[sc.w.aqrl] sign-extends the value placed in _xd_.
+<%- end -%>
+
+The address held in _xs1_ must be naturally aligned to the size of the operand
+(_i.e._, four-byte aligned).
+If the address is not naturally aligned, an address-misaligned exception or an
+access-fault exception will be generated.
+The access-fault exception can be generated for a memory access that would otherwise
+be able to complete except for the misalignment,
+if the misaligned access should not be emulated.
+
+[NOTE]
+--
+Emulating misaligned LR/SC sequences is impractical in most systems.
+
+Misaligned LR/SC sequences also raise the possibility of accessing multiple
+reservation sets at once, which present definitions do not provide for.
+--
+
+An implementation can register an arbitrarily large reservation set on each LR,
+provided the reservation set includes all bytes of the addressed data word or
+doubleword.
+An SC can only pair with the most recent LR in program order.
+An SC may succeed only if no store from another hart to the reservation set
+can be observed to have occurred between the LR and the SC,
+and if there is no other SC between the LR and itself in program order.
+An SC may succeed only if no write from a device other than a hart to the bytes
+accessed by the LR instruction can be observed to have occurred between the LR
+and SC.
+Note this LR might have had a different effective address and data size,
+but reserved the SC's address as part of the reservation set.
+
+[NOTE]
+----
+Following this model, in systems with memory translation, an SC is allowed to succeed if the
+earlier LR reserved the same location using an alias with a different virtual address, but is
+also allowed to fail if the virtual address is different.
+
+To accommodate legacy devices and buses, writes from devices other than RISC-V harts are only
+required to invalidate reservations when they overlap the bytes accessed by the LR.
+These writes are not required to invalidate the reservation when they access other bytes in
+the reservation set.
+----
+
+The SC must fail if the address is not within the reservation set of the most
+recent LR in program order.
+The SC must fail if a store to the reservation set from another hart can be
+observed to occur between the LR and SC.
+The SC must fail if a write from some other device to the bytes accessed by the
+LR can be observed to occur between the LR and SC.
+(If such a device writes the reservation set but does not write the bytes accessed
+by the LR, the SC may or may not fail.)
+An SC must fail if there is another SC (to any address) between the LR and the SC
+in program order.
+The precise statement of the atomicity requirements for successful LR/SC sequences
+is defined by the Atomicity Axiom of the memory model.
+
+[NOTE]
+--
+The platform should provide a means to determine the size and shape of the reservation set.
+
+A platform specification may constrain the size and shape of the reservation set.
+
+A store-conditional instruction to a scratch word of memory should be used to forcibly invalidate any existing load reservation:
+
+  * during a preemptive context switch, and
+  * if necessary when changing virtual to physical address mappings, such as when migrating pages that might contain an active reservation.
+
+The invalidation of a hart's reservation when it executes an LR or SC imply that a hart can only hold one reservation at a time, and that an SC can only pair with the most recent LR, and LR with the next following SC, in program order. This is a restriction to the Atomicity Axiom in Section 18.1 that ensures software runs correctly on expected common implementations that operate in this manner.
+--
+
+An SC instruction can never be observed by another RISC-V hart before the LR instruction that established the reservation.
+
+[NOTE]
+--
+The LR/SC sequence can be given acquire semantics by setting the aq bit on the LR instruction. The LR/SC sequence can be given release semantics by by setting the rl bit on the SC instruction. Assuming suitable mappings for other atomic operations, setting the aq bit on the LR instruction, and setting the rl bit on the SC instruction makes the LR/SC sequence sequentially consistent in the C++ memory_order_seq_cst sense. Such a sequence does not act as a fence for ordering ordinary load and store instructions before and after the sequence. Specific instruction mappings for other C++ atomic operations, or stronger notions of "sequential consistency", may require both bits to be set on either or both of the LR or SC instruction.
+
+If neither bit is set on either LR or SC, the LR/SC sequence can be observed to occur before or after surrounding memory operations from the same RISC-V hart. This can be appropriate when the LR/SC sequence is used to implement a parallel reduction operation.
+--
+
+Software should not set the _rl_ bit on an LR instruction unless the _aq_ bit is also set.
+LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
+with both bits clear, but may result in lower performance.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|aq |$encoding[26]
+|rl |$encoding[25]
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|xd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalrsc*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:sc_w_rl]
+== sc.w.rl
+
+Synopsis::
+Store conditional word
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+sc.w.rl xd, xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2f,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":1,"name": "rl != 0","type":4},{"bits":1,"name": "aq != 1","type":4},{"bits":5,"name": 0x3,"type":2}]}
+....
+
+Description::
+xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] conditionally writes a word in _xs2_ to the address in _xs1_:
+the xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] succeeds only if the reservation is still valid and the
+reservation set contains the bytes being written. If the xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] succeeds,
+the instruction writes the word in _xs2_ to memory, and it writes zero to _xd_.
+If the xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] fails, the instruction does not write to memory, and it writes a
+nonzero value to _xd_. For the purposes of memory protection, a failed xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl]
+may be treated like a store. Regardless of success or failure, executing an
+xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] instruction invalidates any reservation held by this hart.
+
+The failure code with value 1 encodes an unspecified failure.
+Other failure codes are reserved at this time.
+Portable software should only assume the failure code will be non-zero.
+
+<%- if MXLEN == 64 -%>
+[NOTE]
+ xref:insts:sc_w_rl.adoc#udb:doc:inst:sc_w_rl[sc.w.rl] sign-extends the value placed in _xd_.
+<%- end -%>
+
+The address held in _xs1_ must be naturally aligned to the size of the operand
+(_i.e._, four-byte aligned).
 If the address is not naturally aligned, an address-misaligned exception or an
 access-fault exception will be generated.
 The access-fault exception can be generated for a memory access that would otherwise
@@ -33002,11 +34718,62 @@ xref:exts:I.adoc#udb:doc:ext:I[I]
 xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd]
 
 
+[#udb:doc:inst:sd_aqrl]
+== sd.aqrl
+
+Synopsis::
+Store Doubleword Acquire Release
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+sd.aqrl xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":15,"name": 0x302f,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x1f,"type":2}]}
+....
+
+Description::
+No description available.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalasr*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:sd_rl]
 == sd.rl
 
 Synopsis::
-No synopsis available
+Store Doubleword Release
 
 Base::
 
@@ -33557,11 +35324,62 @@ Included in::
 
 
 
+[#udb:doc:inst:sh_aqrl]
+== sh.aqrl
+
+Synopsis::
+Store Halfword Acquire Release
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+sh.aqrl xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":15,"name": 0x102f,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x1f,"type":2}]}
+....
+
+Description::
+No description available.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalasr*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:sh_rl]
 == sh.rl
 
 Synopsis::
-No synopsis available
+Store Halfword Release
 
 Base::
 
@@ -36507,11 +38325,62 @@ Included in::
 
 
 
+[#udb:doc:inst:sw_aqrl]
+== sw.aqrl
+
+Synopsis::
+Store Word Acquire Release
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+sw.aqrl xs2, (xs1)
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":15,"name": 0x202f,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x1f,"type":2}]}
+....
+
+Description::
+No description available.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zalasr*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:sw_rl]
 == sw.rl
 
 Synopsis::
-No synopsis available
+Store Word Release
 
 Base::
 

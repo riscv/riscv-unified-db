@@ -8,8 +8,8 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: lw.aq
-long_name: Load Word Acquire
+name: lw.aqrl
+long_name: Load Word Acquire Release
 description: |
   No description available.
 definedBy:
@@ -17,7 +17,7 @@ definedBy:
     name: Zalasr
 assembly: xd, (xs1)
 encoding:
-  match: 001101000000-----010-----0101111
+  match: 001101100000-----010-----0101111
   variables:
     - name: xs1
       location: 19-15

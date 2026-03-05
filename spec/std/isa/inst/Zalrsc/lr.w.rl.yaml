@@ -8,14 +8,19 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: lr.d
-long_name: Load Reserved Doubleword
+name: lr.w.rl
+long_name: Load Reserved Word
 description: |
-  Loads a word from the address in xs1, places the value in xd,
+  Loads a word from the address in xs1, places the sign-extended value in xd,
   and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
   addressed word.
 
-  The address in xs1 must be 8-byte aligned.
+  <%- if MXLEN == 64 -%>
+  The 32-bit load result is sign-extended to 64-bits.
+  <%- end -%>
+
+  The address in xs1 must be naturally aligned to the size of the operand
+  (_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
 
   If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
   `LoadAccessFault` exception will be generated. The access-fault exception can be generated
@@ -49,20 +54,18 @@ description: |
   LR.rl and SC.aq instructions are not guaranteed to provide any stronger ordering than those
   with both bits clear, but may result in lower performance.
 definedBy:
-  allOf:
-    - xlen: 64
-    - extension:
-        name: Zalrsc
+  extension:
+    name: Zalrsc
 assembly: xd, (xs1)
 encoding:
-  match: 00010--00000-----011-----0101111
+  match: 00010--00000-----010-----0101111
   variables:
     - name: aq
       location: 26
       not: 1
     - name: rl
       location: 25
-      not: 1
+      not: 0
     - name: xs1
       location: 19-15
     - name: xd
@@ -81,7 +84,7 @@ operation(): |
 
   XReg virtual_address = X[xs1];
 
-  if (!is_naturally_aligned<64>(virtual_address)) {
+  if (!is_naturally_aligned<32>(virtual_address)) {
     # can raise either LoadAddressMisaligned *or* LoadAccessFault
     #
     # from the spec:
@@ -99,8 +102,12 @@ operation(): |
     }
   }
 
-  XReg load_value = load_reserved<64>(virtual_address, aq, rl, $encoding);
-  X[xd] = load_value;
+  XReg load_value = load_reserved<32>(virtual_address, aq, rl, $encoding);
+  if (xlen() == 64) {
+    X[xd] = load_value;
+  } else {
+    X[xd] = sext(load_value[31:0], 32);
+  }
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>

@@ -8,7 +8,7 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: lr.d
+name: lr.d.aqrl
 long_name: Load Reserved Doubleword
 description: |
   Loads a word from the address in xs1, places the value in xd,
@@ -59,10 +59,10 @@ encoding:
   variables:
     - name: aq
       location: 26
-      not: 1
+      not: 0
     - name: rl
       location: 25
-      not: 1
+      not: 0
     - name: xs1
       location: 19-15
     - name: xd
