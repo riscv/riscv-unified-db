@@ -1,0 +1,25 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: VMID_WIDTH
+description:
+  "Number of bits supported in `hgatp.VMID` (i.e., the supported width
+  of a virtual machine ID).
+
+  "
+long_name: TODO
+schema:
+  type: integer
+  minimum: 0
+  maximum: 14
+definedBy:
+  extension:
+    name: H
+
+requirements:
+  idl(): |
+    (MXLEN == 32) -> VMID_WIDTH <= 7;

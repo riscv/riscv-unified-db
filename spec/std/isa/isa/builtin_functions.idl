@@ -110,6 +110,14 @@ builtin function unpredictable {
   }
 }
 
+builtin function unreachable {
+  description {
+    Indicate that the IDL line should be unreachable.
+
+    If this function is called, it represents a bug in the IDL code.
+  }
+}
+
 builtin function read_hpm_counter {
   returns Bits<64>
   arguments Bits<5> n
@@ -504,6 +512,30 @@ builtin function wfi {
   description {
     Wait-for-interrupt: hint that the processor
     should enter a low power state until the next interrupt.
+
+    A valid implementation is a no-op.
+
+    The model will advance the PC; this function does not need to.
+  }
+}
+
+builtin function wrs_nto {
+  description {
+    Wait-on-reservation-set with no timeout: hint that the processor
+    should enter a low power state until the reservation set is invalidated
+    or an interrupt is pending.
+
+    A valid implementation is a no-op.
+
+    The model will advance the PC; this function does not need to.
+  }
+}
+
+builtin function wrs_sto {
+  description {
+    Wait-on-reservation-set with short timeout: hint that the processor
+    should enter a low power state until the reservation set is invalidated,
+    an interrupt is pending, or an implementation-defined short timeout elapses.
 
     A valid implementation is a no-op.
 

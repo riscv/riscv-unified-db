@@ -12,13 +12,16 @@ description: |
   to a signed offset then clearing the least
   significant bit, and store the return address
   in xd.
-definedBy: I
+definedBy:
+  extension:
+    name: I
 assembly: xd, imm(xs1)
 encoding:
-  match: -----------------000-----1100111
+  match: "-----------------000-----1100111"
   variables:
     - name: imm
       location: 31-20
+      sign_extend: true
     - name: xs1
       location: 19-15
     - name: xd
@@ -31,7 +34,7 @@ access:
 pseudoinstructions:
   - when: xd == 0
     to: jr imm(xs1)
-  - when: (rd == 0 && xs1 == x1 && imm == 0)
+  - when: (xd == 0 && xs1 == x1 && imm == 0)
     to: ret
 operation(): |
   XReg addr = (X[xs1] + $signed(imm)) & ~MXLEN'1;

@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+
+  "title": "MMR description",
+  "description": "A memory-mapped register specification",
+
+  "type": "object",
+  "required": [
+    "$schema",
+    "kind",
+    "name",
+    "long_name",
+    "length",
+    "description",
+    "writable",
+    "physical_address",
+    "definedBy"
+  ],
+
+  "properties": {
+    "$schema": {
+      "format": "uri-reference",
+      "const": "mmr_schema.json#",
+      "description": "Path to schema, relative to <UDB ROOT>/schemas"
+    },
+    "kind": {
+      "const": "mmr",
+      "description": "Object type"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.]+$",
+      "description": "MMR name"
+    },
+    "long_name": {
+      "type": "string",
+      "description": "One line description for the MMR"
+    },
+    "description": {
+      "$ref": "schema_defs.json#/definitions/spec_text",
+      "description": "Function of the register"
+    },
+    "definedBy": {
+      "$ref": "schema_defs.json#/definitions/condition",
+      "description": "Extension(s) that define the MMR"
+    },
+    "physical_address": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Physical memory address of the register"
+    },
+    "writable": {
+      "type": "boolean",
+      "description": "Whether or not the register can be written by software"
+    },
+    "length": {
+      "description": "Length, in bits, of the register. Must be a fixed integer (no XLEN-dependent lengths for MMIO).",
+      "enum": [8, 16, 32, 64, 128]
+    },
+    "fields": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z].*$": {
+          "$ref": "csr_schema.json#/definitions/csr_field"
+        }
+      },
+      "description": "fields of this MMR",
+      "additionalProperties": false
+    },
+    "$source": {
+      "description": "Path to the source file this definition came from; used by downstream tooling -- not expected to be in handwritten files",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

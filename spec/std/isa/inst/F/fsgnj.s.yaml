@@ -12,7 +12,10 @@ description: |
   The result's sign bit is taken from `fs2`'s sign bit, and the result is written to the destination
   register `fd`. Sign-injection instructions do not set floating-point exception flags, nor do they
   canonicalize NaNs.
-definedBy: F
+
+definedBy:
+  extension:
+    name: F
 assembly: fd, fs1, fs2
 encoding:
   match: 0010000----------000-----1010011
@@ -30,8 +33,8 @@ access:
   vu: always
 data_independent_timing: true
 pseudoinstructions:
-  - when: (rs2 == rs1)
-    to: fmv.s
+  - when: (fs2 == fs1)
+    to: fmv.s fd,fs1
 
 operation(): |
   check_f_ok($encoding);

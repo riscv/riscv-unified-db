@@ -4,14 +4,13 @@
 # typed: true
 # frozen_string_literal: true
 
-require "sorbet-runtime"
-
 require_relative "type"
 require_relative "symbol_table"
 require_relative "syntax_node"
 
-module Idl
+require_relative "ast_decl"
 
+module Idl
   # type, from ruby's perspective, of any IDL value
   BasicValueRbType = T.type_alias {
     T.any(
@@ -34,11 +33,7 @@ module Idl
   EMPTY_ARRAY = [].freeze
 
   # base class for all nodes considered part of the Ast
-  # @abstract
   class AstNode
-    extend T::Sig
-    extend T::Helpers
-    abstract!
 
     Bits1Type = Type.new(:bits, width: 1, qualifiers: [:known].freeze).freeze
     PossiblyUnknownBits1Type = Type.new(:bits, width: 1).freeze
@@ -52,7 +47,7 @@ module Idl
     StringType = Type.new(:string).freeze
 
     # @return [String] Source input file
-    sig { returns(Pathname) }
+    sig { returns(T.nilable(Pathname)) }
     attr_reader :input_file
 
     # @return [Integer] Starting line in the source input file (i.e., position 0 of {#input} in the file)
@@ -60,16 +55,18 @@ module Idl
     attr_reader :starting_line
 
     # @return [String] Source string
-    sig { returns(String) }
+    sig { returns(T.nilable(String)) }
     attr_reader :input
 
     # @return [Range] Range within the input for this node
-    sig { returns(Range) }
+    sig { returns(T.nilable(T::Range[Integer])) }
     attr_reader :interval
 
     # @return [String] The IDL source of this node
     sig { returns(String) }
-    attr_reader :text_value
+    def text_value
+      T.must(@interval_text_value)
+    end
 
     # @return [AstNode] The parent node
     # @return [nil] if this is the root of the tree
@@ -188,6 +185,7 @@ module Idl
 
       yield
     end
+
     sig { params(value_result: T.untyped, block: T.proc.returns(T.untyped)).returns(T.untyped) }
     def value_else(value_result, &block) = self.class.value_else(value_result, &block)
 
@@ -200,13 +198,16 @@ module Idl
     # @param input [String] The source being compiled
     # @param interval [Range] The range in the source corresponding to this AstNode
     # @param children [Array<AstNode>] Children of this node
-    sig { params(input: String, interval: Range, children: T::Array[AstNode]).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), children: T::Array[AstNode]).void }
     def initialize(input, interval, children)
       @input = input
       @input_file = nil
       @starting_line = 0
       @interval = interval
-      @text_value = input[interval]
+      @interval_text_value =
+        unless input.nil? || interval.nil?
+          input[interval]
+        end
       @children = children
       @parent = nil # will be set later unless this is the root
       @children.each { |child| child.instance_variable_set(:@parent, self) }
@@ -247,7 +248,7 @@ module Idl
     # @return [Integer] the current line number
     sig { returns(Integer) }
     def lineno
-      T.must(input[0..interval.first]).count("\n") + 1 + (@starting_line.nil? ? 0 : @starting_line)
+      T.must(T.must(input)[0..T.must(interval).first]).count("\n") + 1 + (@starting_line.nil? ? 0 : @starting_line)
     end
 
     # @return [AstNode] the first ancestor that is_a?(+klass+)
@@ -273,27 +274,27 @@ module Idl
     sig { returns(LinesDescriptor) }
     def lines_around
       cnt = 0
-      interval_start = interval.min
+      interval_start = T.must(interval).min
       while cnt < 2
-        cnt += 1 if input[interval_start] == "\n"
+        cnt += 1 if T.must(input)[interval_start] == "\n"
         break if interval_start.zero?
 
         interval_start -= 1
       end
 
       cnt = 0
-      interval_end = interval.max
+      interval_end = T.must(interval).max
       while cnt < 3
-        cnt += 1 if input[interval_end] == "\n"
-        break if interval_end >= (input.size - 1)
+        cnt += 1 if T.must(input)[interval_end] == "\n"
+        break if interval_end >= (T.must(input).size - 1)
         break if cnt == 3
 
         interval_end += 1
       end
 
       LinesDescriptor.new(
-        lines: T.must(input[interval_start..interval_end]),
-        problem_interval: (interval.min - interval_start..interval.max - interval_start),
+        lines: T.must(T.must(input)[interval_start..interval_end]),
+        problem_interval: (T.must(interval).min - interval_start..T.must(interval).max - interval_start),
         lines_interval: (interval_start + 1)..interval_end
       )
     end
@@ -340,7 +341,7 @@ module Idl
           ].join("")
         end
 
-      starting_lineno = T.must(input[0..lines_interval.min]).count("\n")
+      starting_lineno = T.must(T.must(input)[0..lines_interval.min]).count("\n")
       lines = lines.lines.map do |line|
         starting_lineno += 1
         "#{@starting_line + starting_lineno - 1}: #{line}"
@@ -460,8 +461,8 @@ module Idl
 
     # @!macro type_check
     # @abstract
-    sig { abstract.params(symtab: SymbolTable).void }
-    def type_check(symtab); end
+    sig { abstract.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:); end
 
     # @!macro [new] to_idl
     #   Return valid IDL representation of the node (and its subtree)
@@ -475,6 +476,110 @@ module Idl
 
     sig { overridable.returns(String) }
     def to_idl_verbose = to_idl
+
+    # return yaml to indicate where the node comes from
+    sig { returns(T::Hash[String, T.untyped]) }
+    def source_yaml
+      {
+        "file" => @input_file.to_s,
+        "begin" => T.must(interval).begin,
+        "end" => T.must(interval).max
+      }
+    end
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(T.nilable(String)) }
+    def self.input_from_source_yaml(yaml, source_mapper)
+      f = yaml.fetch("file")
+      source_mapper.key?(f) ? source_mapper.fetch(f) : nil
+    end
+
+    sig { params(yaml: T::Hash[String, T.untyped]).returns(T.nilable(T::Range[Integer])) }
+    def self.interval_from_source_yaml(yaml)
+      yaml.fetch("begin")..yaml.fetch("end")
+    end
+
+    sig { abstract.returns(T::Hash[String, T.untyped]) }
+    def to_h; end
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      case yaml.fetch("kind")
+      when "array_access"              then AryElementAccessAst.from_h(yaml, source_mapper)
+      when "array_element_assignment"  then AryElementAssignmentAst.from_h(yaml, source_mapper)
+      when "array_includes_funcall"    then ArrayIncludesAst.from_h(yaml, source_mapper)
+      when "array_literal"             then ArrayLiteralAst.from_h(yaml, source_mapper)
+      when "array_range_access"        then AryRangeAccessAst.from_h(yaml, source_mapper)
+      when "array_range_assignment"    then AryRangeAssignmentAst.from_h(yaml, source_mapper)
+      when "array_size_funcall"        then ArraySizeAst.from_h(yaml, source_mapper)
+      when "binary_operator_expr"      then BinaryExpressionAst.from_h(yaml, source_mapper)
+      when "bitfield_decl"             then BitfieldDefinitionAst.from_h(yaml, source_mapper)
+      when "bitfield_field_decl"       then BitfieldFieldDefinitionAst.from_h(yaml, source_mapper)
+      when "bits_cast"                 then BitsCastAst.from_h(yaml, source_mapper)
+      when "bits_literal"              then IntLiteralAst.from_h(yaml, source_mapper)
+      when "bits_to_enum_cast"         then EnumCastAst.from_h(yaml, source_mapper)
+      when "bits_type"                 then BuiltinTypeNameAst.from_h(yaml, source_mapper)
+      when "bits_width_cast"           then WidthRevealAst.from_h(yaml, source_mapper)
+      when "builtin_enum_decl"         then BuiltinEnumDefinitionAst.from_h(yaml, source_mapper)
+      when "builtin_type"              then BuiltinTypeNameAst.from_h(yaml, source_mapper)
+      when "builtin_var_expr"          then BuiltinVariableAst.from_h(yaml, source_mapper)
+      when "comment"                   then CommentAst.from_h(yaml, source_mapper)
+      when "concat_expr"               then ConcatenationExpressionAst.from_h(yaml, source_mapper)
+      when "conditional_stmt"          then yaml.fetch("expr").fetch("kind") == "return_expr" ? ConditionalReturnStatementAst.from_h(yaml, source_mapper) : ConditionalStatementAst.from_h(yaml, source_mapper)
+      when "constraint_body"           then ConstraintBodyAst.from_h(yaml, source_mapper)
+      when "csr_access_expr"           then CsrWriteAst.from_h(yaml, source_mapper)
+      when "csr_field_assignment"      then CsrFieldAssignmentAst.from_h(yaml, source_mapper)
+      when "csr_field_read_expr"       then CsrFieldReadExpressionAst.from_h(yaml, source_mapper)
+      when "csr_funcall_expr"          then CsrFunctionCallAst.from_h(yaml, source_mapper)
+      when "csr_read_expr"             then CsrReadExpressionAst.from_h(yaml, source_mapper)
+      when "csr_sw_write_expr"         then CsrSoftwareWriteAst.from_h(yaml, source_mapper)
+      when "dont_care"                 then DontCareReturnAst.from_h(yaml, source_mapper)
+      when "dont_care_lval"            then DontCareLvalueAst.from_h(yaml, source_mapper)
+      when "else_if_stmt"              then ElseIfAst.from_h(yaml, source_mapper)
+      when "enum_decl"                 then EnumDefinitionAst.from_h(yaml, source_mapper)
+      when "enum_element_size_funcall" then EnumElementSizeAst.from_h(yaml, source_mapper)
+      when "enum_reference_expr"       then EnumRefAst.from_h(yaml, source_mapper)
+      when "enum_size_funcall"         then EnumSizeAst.from_h(yaml, source_mapper)
+      when "enum_to_array_cast"        then EnumArrayCastAst.from_h(yaml, source_mapper)
+      when "false"                     then FalseExpressionAst.from_h(yaml, source_mapper)
+      when "field_access_expr"         then FieldAccessExpressionAst.from_h(yaml, source_mapper)
+      when "field_assignment"          then FieldAssignmentAst.from_h(yaml, source_mapper)
+      when "fetch_decl"                then FetchAst.from_h(yaml, source_mapper)
+      when "for_loop_stmt"             then ForLoopAst.from_h(yaml, source_mapper)
+      when "funcall_expr"              then FunctionCallExpressionAst.from_h(yaml, source_mapper)
+      when "function_body"             then FunctionBodyAst.from_h(yaml, source_mapper)
+      when "function_decl"             then FunctionDefAst.from_h(yaml, source_mapper)
+      when "id"                        then IdAst.from_h(yaml, source_mapper)
+      when "if_body"                   then IfBodyAst.from_h(yaml, source_mapper)
+      when "if_stmt"                   then IfAst.from_h(yaml, source_mapper)
+      when "implication_expr"          then ImplicationExpressionAst.from_h(yaml, source_mapper)
+      when "implication_stmt"          then ImplicationStatementAst.from_h(yaml, source_mapper)
+      when "isa"                       then IsaAst.from_h(yaml, source_mapper)
+      when "global_var_decl_with_init" then GlobalWithInitializationAst.from_h(yaml, source_mapper)
+      when "global_var_decl"           then GlobalAst.from_h(yaml, source_mapper)
+      when "multi_var_assignment"      then MultiVariableAssignmentAst.from_h(yaml, source_mapper)
+      when "multi_var_decl"            then MultiVariableDeclarationAst.from_h(yaml, source_mapper)
+      when "noop_expr"                 then NoopAst.from_h(yaml, source_mapper)
+      when "paren_expr"                then ParenExpressionAst.from_h(yaml, source_mapper)
+      when "pc_assignment"             then PcAssignmentAst.from_h(yaml, source_mapper)
+      when "post_decrement_expr"       then PostDecrementExpressionAst.from_h(yaml, source_mapper)
+      when "post_increment_expr"       then PostIncrementExpressionAst.from_h(yaml, source_mapper)
+      when "repl_expr"                 then ReplicationExpressionAst.from_h(yaml, source_mapper)
+      when "return_expr"               then ReturnExpressionAst.from_h(yaml, source_mapper)
+      when "sign_cast"                 then SignCastAst.from_h(yaml, source_mapper)
+      when "stmt"                      then yaml.fetch("expr").fetch("kind") == "return_expr" ? ReturnStatementAst.from_h(yaml, source_mapper) : StatementAst.from_h(yaml, source_mapper)
+      when "string_literal"            then StringLiteralAst.from_h(yaml, source_mapper)
+      when "struct_decl"               then StructDefinitionAst.from_h(yaml, source_mapper)
+      when "ternary_operator_expr"     then TernaryOperatorExpressionAst.from_h(yaml, source_mapper)
+      when "true"                      then TrueExpressionAst.from_h(yaml, source_mapper)
+      when "unary_operator_expr"       then UnaryOperatorExpressionAst.from_h(yaml, source_mapper)
+      when "user_type_reference"       then UserTypeNameAst.from_h(yaml, source_mapper)
+      when "var_assignment"            then VariableAssignmentAst.from_h(yaml, source_mapper)
+      when "var_decl"                  then VariableDeclarationAst.from_h(yaml, source_mapper)
+      when "var_decl_init"             then VariableDeclarationWithInitializationAst.from_h(yaml, source_mapper)
+      else
+        raise "Bad YAML kind: '#{yaml.fetch("kind")}'"
+      end
+    end
 
     sig { returns(String) }
     def inspect = self.class.name.to_s
@@ -747,12 +852,108 @@ module Idl
     sig { override.returns(String) }
     def to_idl = "include \"#{filename}\""
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab); end
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:); end
+
+    def to_h
+      raise "unreachable"
+    end
+  end
+
+  class TrueExpressionSyntaxNode < SyntaxNode
+    def to_ast = TrueExpressionAst.new(input, interval)
+  end
+
+  class TrueExpressionAst < AstNode
+    include Rvalue
+
+    sig { params(input: String, interval: T::Range[Integer]).void }
+    def initialize(input, interval)
+      super(input, interval, [])
+    end
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab) = true
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:); end
+
+    sig { override.params(symtab: SymbolTable).returns(Type) }
+    def type(symtab) = BoolType
+
+    sig { override.params(symtab: SymbolTable).returns(TrueClass) }
+    def value(symtab) = true
+
+    sig { override.returns(String) }
+    def to_idl = "true"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "true",
+      "source" => source_yaml
+    }
+
+    sig { override.params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "bad yaml" unless yaml.key?("kind") && yaml.fetch("kind") == "true"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      if input.nil?
+        TrueExpressionAst.new("true", 0..3)
+      else
+        TrueExpressionAst.new(input, T.must(interval))
+      end
+    end
+  end
+
+  class FalseExpressionSyntaxNode < SyntaxNode
+    def to_ast = FalseExpressionAst.new(input, interval)
+  end
+
+  class FalseExpressionAst < AstNode
+    include Rvalue
+
+    sig { params(input: String, interval: T::Range[Integer]).void }
+    def initialize(input, interval)
+      super(input, interval, [])
+    end
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab) = true
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:); end
+
+    sig { override.params(symtab: SymbolTable).returns(Type) }
+    def type(symtab) = BoolType
+
+    sig { override.params(symtab: SymbolTable).returns(FalseClass) }
+    def value(symtab) = false
+
+    sig { override.returns(String) }
+    def to_idl = "false"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "false",
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      if input.nil?
+        FalseExpressionAst.new("false", 0..4)
+      else
+        FalseExpressionAst.new(input, T.must(interval))
+      end
+    end
   end
 
   class IdSyntaxNode < SyntaxNode
-    def to_ast = IdAst.new(input, interval)
+    def to_ast = IdAst.new(input, interval, input[interval])
   end
 
   # an identifier
@@ -766,16 +967,20 @@ module Idl
 
     # @return [String] The ID name
     sig { returns(String) }
-    def name = text_value
+    def name = @name
 
-    sig { params(input: String, interval: T::Range[Integer]).void }
-    def initialize(input, interval)
+    sig { override.returns(String) }
+    def text_value = @name
+
+    sig { params(input: String, interval: T::Range[Integer], name: String).void }
+    def initialize(input, interval, name)
       super(input, interval, EMPTY_ARRAY)
+      @name = name
       @const = T.let((text_value[0] == T.must(text_value[0]).upcase), T::Boolean)
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type_error "no symbol named '#{name}' on line #{lineno}" if symtab.get(name).nil?
     end
 
@@ -853,6 +1058,28 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = name
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "id",
+      "name" => name,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "id"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      if input.nil?
+        IdAst.new(yaml.fetch("name"), 0...yaml.fetch("name").length, yaml.fetch("name"))
+      else
+        raise "name does match input: '#{yaml.fetch("name")}', '#{input[T.must(interval)]}'" unless yaml.fetch("name") == input[T.must(interval)]
+
+        IdAst.new(input, T.must(interval), T.must(input[T.must(interval)]))
+      end
+    end
   end
 
   class GlobalWithInitializationSyntaxNode < SyntaxNode
@@ -891,8 +1118,8 @@ module Idl
     end
 
     # @1macro type_check
-    def type_check(symtab)
-      var_decl_with_init.type_check(symtab)
+    def type_check(symtab, strict:)
+      var_decl_with_init.type_check(symtab, strict:)
     end
 
     # @1macro type
@@ -924,6 +1151,24 @@ module Idl
     def to_idl
       var_decl_with_init.to_idl
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "global_var_decl_with_init",
+      "decl" => var_decl_with_init.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "global_var_decl_with_init"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      GlobalWithInitializationAst.new(
+        input, interval, VariableDeclarationWithInitializationAst.from_h(yaml.fetch("decl"), source_mapper)
+      )
+    end
   end
 
   class GlobalSyntaxNode < SyntaxNode
@@ -952,8 +1197,8 @@ module Idl
       declaration.make_global
     end
 
-    def type_check(symtab)
-      declaration.type_check(symtab)
+    def type_check(symtab, strict:)
+      declaration.type_check(symtab, strict:)
     end
 
     def type(symtab)
@@ -968,6 +1213,25 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = declaration.to_idl
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "global_var_decl",
+      "decl" => declaration.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "global_var_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      GlobalAst.new(
+        input, interval,
+        VariableDeclarationAst.from_h(yaml.fetch("decl"), source_mapper)
+      )
+    end
   end
 
   # @api private
@@ -983,8 +1247,20 @@ module Idl
     end
   end
 
+  class FetchAst < AstNode
+  end
   # top-level AST node
   class IsaAst < AstNode
+    class Memo < T::Struct
+      prop :fetch, T.nilable(FetchAst)
+    end
+
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), children: T::Array[AstNode]).void }
+    def initialize(input, interval, children)
+      super(input, interval, children)
+      @memo = Memo.new
+    end
+
     def definitions = children
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
@@ -1006,7 +1282,14 @@ module Idl
     def functions = definitions.grep(FunctionDefAst)
 
     # @return [FetchAst] Fetch body
-    def fetch = definitions.grep(FetchAst)[0]
+    def fetch
+      @memo.fetch ||=
+        begin
+          raise "No fetch block defined" if definitions.grep(FetchAst).size == 0
+
+          definitions.grep(FetchAst)[0]
+        end
+    end
 
     # Add all the global symbols to symtab
     #
@@ -1036,12 +1319,11 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      definitions.each { |d| d.type_check(symtab) }
+    def type_check(symtab, strict:)
+      definitions.each { |d| d.type_check(symtab, strict:) }
 
       fetch_blocks = definitions.grep(FetchAst)
       type_error "Multiple fetch blocks defined" if fetch_blocks.size > 1
-      type_error "No fetch block defined" if fetch_blocks.size.zero?
     end
 
     sig { override.returns(String) }
@@ -1057,6 +1339,118 @@ module Idl
         #{fetch.to_idl}
       IDL
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "isa",
+      "children" => children.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "isa"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      kids = yaml.fetch("children").map do |child_yaml|
+        child_kind = child_yaml.fetch("kind")
+
+        case child_kind
+        when "global_var_decl"
+          GlobalAst.from_h(child_yaml, source_mapper)
+        when "global_var_decl_with_init"
+          GlobalWithInitializationAst.from_h(child_yaml, source_mapper)
+        when "enum_decl"
+          EnumDefinitionAst.from_h(child_yaml, source_mapper)
+        when "builtin_enum_decl"
+          BuiltinEnumDefinitionAst.from_h(child_yaml, source_mapper)
+        when "bitfield_decl"
+          BitfieldDefinitionAst.from_h(child_yaml, source_mapper)
+        when "struct_decl"
+          StructDefinitionAst.from_h(child_yaml, source_mapper)
+        when "function_decl"
+          FunctionDefAst.from_h(child_yaml, source_mapper)
+        when "fetch_decl"
+          FetchAst.from_h(child_yaml, source_mapper)
+        else
+          raise "Unhandled ISA child: #{child_kind}"
+        end
+      end
+
+      IsaAst.new(input, interval, kids)
+    end
+  end
+
+  class ArrayIncludesSyntaxNode < SyntaxNode
+    def to_ast
+      ArrayIncludesAst.new(input, interval, send(:ary).to_ast, send(:value).to_ast)
+    end
+  end
+
+  class ArrayIncludesAst < AstNode
+    include Rvalue
+
+    sig { returns(RvalueAst) }
+    def ary = T.cast(children[0], RvalueAst)
+
+    sig { returns(RvalueAst) }
+    def expr = T.cast(children[1], RvalueAst)
+
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), ary: RvalueAst, value: RvalueAst).void }
+    def initialize(input, interval, ary, value)
+      super(input, interval, [ary, value])
+    end
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      ary.type_check(symtab, strict:)
+      ary_type = ary.type(symtab)
+      type_error "First argument of $array_includes? must be an array. Found #{ary_type}" unless ary_type.kind == :array
+
+      expr.type_check(symtab, strict:)
+      value_type = expr.type(symtab)
+      unless value_type.comparable_to?(ary_type.sub_type)
+        type_error "Second argument of $array_includes? must be comparable to the array element type. Found #{ary_type.sub_type} and #{value_type}"
+      end
+    end
+
+    sig { override.params(symtab: SymbolTable).returns(Type) }
+    def type(symtab)
+      BoolType
+    end
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def value(symtab)
+      T.cast(ary.value(symtab), T::Array[T.untyped]).include?(expr.value(symtab))
+    end
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab) = true
+
+    sig { override.returns(String) }
+    def to_idl = "$array_size(#{ary.to_idl}, #{expr.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "array_includes_funcall",
+      "array" => ary.to_h,
+      "expr" => expr.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "array_includes_funcall"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ArrayIncludesAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("array"), source_mapper), T.all(Rvalue, AstNode)),
+        T.cast(AstNode.from_h(yaml.fetch("expr"), source_mapper), T.all(Rvalue, AstNode))
+      )
+    end
   end
 
   class ArraySizeSyntaxNode < SyntaxNode
@@ -1066,6 +1460,8 @@ module Idl
   end
 
   class ArraySizeAst < AstNode
+    include Rvalue
+
     # @return [AstNode] Array expression
     def expression = children[0]
 
@@ -1076,8 +1472,8 @@ module Idl
       super(input, interval, [expression])
     end
 
-    def type_check(symtab)
-      expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
       expression_type = expression.type(symtab)
       type_error "#{expression.text_value} is not an array" unless expression_type.kind == :array
       type_error "#{expression.text_value} must be a constant" unless expression_type.const?
@@ -1093,12 +1489,34 @@ module Idl
       end
     end
 
+    sig { override.params(symtab: SymbolTable).returns(Integer) }
     def value(symtab)
-      expression.type(symtab).width
+      w = expression.type(symtab).width
+      value_error "Width of the array is unknown" if w == :unknown
+      T.cast(w, Integer)
     end
 
     sig { override.returns(String) }
     def to_idl = "$array_size(#{expression.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "array_size_funcall",
+      "array" => expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "array_size_funcall"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ArraySizeAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("array"), source_mapper), T.all(Rvalue, AstNode))
+      )
+    end
   end
 
 
@@ -1112,6 +1530,8 @@ module Idl
   #
   #  $enum_size(XRegWidth) #=> 2
   class EnumSizeAst < AstNode
+    include Rvalue
+
     def enum_class = children[0]
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
@@ -1121,8 +1541,8 @@ module Idl
       super(input, interval, [enum_class_name])
     end
 
-    def type_check(symtab)
-      enum_class.type_check(symtab)
+    def type_check(symtab, strict:)
+      enum_class.type_check(symtab, strict:)
     end
 
     def type(symtab)
@@ -1139,6 +1559,25 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "$enum_size(#{enum_class.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "enum_size_funcall",
+      "enum_class_name" => enum_class.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "enum_size_funcall"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      EnumSizeAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("enum_class_name"), source_mapper), T.all(Rvalue, AstNode))
+      )
+    end
   end
 
   class EnumElementSizeSyntaxNode < SyntaxNode
@@ -1151,17 +1590,20 @@ module Idl
   #
   #  $enum_element_size(PrivilegeMode) #=> 3
   class EnumElementSizeAst < AstNode
+    include Rvalue
+
     def enum_class = children[0]
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: UserTypeNameAst).void }
     def initialize(input, interval, enum_class_name)
       super(input, interval, [enum_class_name])
     end
 
-    def type_check(symtab)
-      enum_class.type_check(symtab)
+    def type_check(symtab, strict:)
+      enum_class.type_check(symtab, strict:)
     end
 
     def type(symtab)
@@ -1174,6 +1616,25 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "$enum_element_size(#{enum_class.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "enum_element_size_funcall",
+      "enum_class_name" => enum_class.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "enum_element_size_funcall"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      EnumElementSizeAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("enum_class_name"), source_mapper), UserTypeNameAst)
+      )
+    end
   end
 
   class EnumCastSyntaxNode < SyntaxNode
@@ -1194,13 +1655,22 @@ module Idl
     # @return [Rvalue] Value expression
     def expression = @children[1]
 
+    sig {
+      params(
+        input: T.nilable(String),
+        interval: T.nilable(T::Range[Integer]),
+        user_type_name: UserTypeNameAst,
+        expression: RvalueAst
+      )
+      .void
+    }
     def initialize(input, interval, user_type_name, expression)
       super(input, interval, [user_type_name, expression])
     end
 
-    def type_check(symtab)
-      enum_name.type_check(symtab)
-      expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      enum_name.type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
 
       if expression.type(symtab).kind != :bits
         type_error "Can only cast from Bits<N> to enum"
@@ -1225,6 +1695,27 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "$enum(#{enum_name.to_idl}, #{expression.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "bits_to_enum_cast",
+      "enum_class_name" => enum_name.to_h,
+      "expr" => expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "bits_to_enum_cast"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      EnumCastAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("enum_class_name"), source_mapper), UserTypeNameAst),
+        T.cast(AstNode.from_h(yaml.fetch("expr"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class EnumArrayCastSyntaxNode < SyntaxNode
@@ -1237,17 +1728,20 @@ module Idl
   #
   #  $enum_to_a(PrivilegeMode) #=> [3, 1, 1, 0, 5, 4]
   class EnumArrayCastAst < AstNode
+    include Rvalue
+
     def enum_class = children[0]
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: UserTypeNameAst).void }
     def initialize(input, interval, enum_class_name)
       super(input, interval, [enum_class_name])
     end
 
-    def type_check(symtab)
-      enum_class.type_check(symtab)
+    def type_check(symtab, strict:)
+      enum_class.type_check(symtab, strict:)
     end
 
     def type(symtab)
@@ -1265,6 +1759,25 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "$enum_to_a(#{enum_class.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "enum_to_array_cast",
+      "enum_class_name" => enum_class.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(EnumArrayCastAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "enum_to_array_cast"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      EnumArrayCastAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("enum_class_name"), source_mapper), UserTypeNameAst)
+      )
+    end
   end
 
   class EnumDefinitionSyntaxNode < SyntaxNode
@@ -1306,8 +1819,17 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
+    sig {
+      params(
+        input: T.nilable(String),
+        interval: T.nilable(T::Range[Integer]),
+        user_type: UserTypeNameAst,
+        element_names: T::Array[UserTypeNameAst],
+        element_values: T::Array[T.nilable(IntLiteralAst)]
+      ).void
+    }
     def initialize(input, interval, user_type, element_names, element_values)
-      super(input, interval, [user_type] + element_names + element_values.reject { |e| e.nil? })
+      super(input, interval, ([user_type] + element_names + element_values).compact)
       @user_type = user_type
       @element_name_asts = element_names
       @element_value_asts = element_values
@@ -1343,15 +1865,15 @@ module Idl
     def element_values = @element_values
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       @element_value_asts.each do |e|
         unless e.nil?
-          e.type_check(symtab)
+          e.type_check(symtab, strict:)
         end
       end
 
       add_symbol(symtab)
-      @user_type.type_check(symtab)
+      @user_type.type_check(symtab, strict:)
     end
 
     # @!macro add_symbol
@@ -1383,6 +1905,33 @@ module Idl
       idl << "}"
       idl
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "enum_decl",
+      "enum_class_name" => @user_type.to_h,
+      "members" => element_names.each_index.map do |idx|
+        {
+          "name" => @element_name_asts[idx].to_h,
+          "value" => @element_value_asts[idx]&.to_h
+        }
+      end,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "enum_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      EnumDefinitionAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("enum_class_name"), source_mapper), UserTypeNameAst),
+        yaml.fetch("members").map { |m| AstNode.from_h(m.fetch("name"), source_mapper) },
+        yaml.fetch("members").map { |m| m["value"].nil? ? nil : AstNode.from_h(m.fetch("value"), source_mapper) }
+      )
+    end
   end
 
   class BuiltinEnumDefinitionSyntaxNode < SyntaxNode
@@ -1402,13 +1951,14 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), user_type: UserTypeNameAst).void }
     def initialize(input, interval, user_type)
       super(input, interval, [user_type])
       @user_type = user_type
     end
 
     # @!macro type_check_no_args
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       sym = symtab.get(@user_type.text_value)
       type_error "Builtin enum #{@user_type.text_value} is not defined" if sym.nil?
       type_error "#{@user_type.text_value} is not an enum" unless sym.is_a?(EnumerationType)
@@ -1439,6 +1989,25 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "generated enum #{@user_type.text_value}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "builtin_enum_decl",
+      "name" => @user_type.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "builtin_enum_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      BuiltinEnumDefinitionAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("name"), source_mapper), UserTypeNameAst)
+      )
+    end
   end
 
   class BitfieldFieldDefinitionAst < AstNode
@@ -1461,8 +2030,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      @msb.type_check(symtab)
+    def type_check(symtab, strict:)
+      @msb.type_check(symtab, strict:)
 
       value_result = value_try do
         @msb.value(symtab)
@@ -1473,7 +2042,7 @@ module Idl
 
       return if @lsb.nil?
 
-      @lsb.type_check(symtab)
+      @lsb.type_check(symtab, strict:)
       value_result = value_try do
         @lsb.value(symtab)
       end
@@ -1498,6 +2067,31 @@ module Idl
       else
         "#{@name} #{@msb.to_idl}-#{@lsb.to_idl}"
       end
+    end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "bitfield_field_decl",
+      "name" => name,
+      "range" => {
+        "lsb" => @lsb.nil? ? @msb.to_h : @lsb.to_h,
+        "msb" => @msb.to_h
+      },
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "bitfield_field_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      BitfieldFieldDefinitionAst.new(
+        input, interval,
+        yaml.fetch("name"),
+        AstNode.from_h(yaml.fetch("range").fetch("msb"), source_mapper),
+        AstNode.from_h(yaml.fetch("range").fetch("lsb"), source_mapper)
+      )
     end
   end
 
@@ -1578,16 +2172,16 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      @size.type_check(symtab)
+    def type_check(symtab, strict:)
+      @size.type_check(symtab, strict:)
       @fields.each do |f|
-        f.type_check(symtab)
+        f.type_check(symtab, strict:)
         r = f.range(symtab)
         type_error "Field position (#{r}) is larger than the bitfield width (#{@size.value(symtab)} #{@size.text_value})" if r.first >= @size.value(symtab)
       end
 
       add_symbol(symtab)
-      @name.type_check(symtab)
+      @name.type_check(symtab, strict:)
     end
 
     # @!macro add_symbol
@@ -1627,6 +2221,29 @@ module Idl
       end
       idl << "}"
       idl.join("\n")
+    end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "bitfield_decl",
+      "name" => @name.to_h,
+      "size" => @size.to_h,
+      "fields" => @fields.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "bitfield_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      BitfieldDefinitionAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("name"), source_mapper),
+        AstNode.from_h(yaml.fetch("size"), source_mapper),
+        yaml.fetch("fields").map { |f| AstNode.from_h(f, source_mapper) }
+      )
     end
   end
 
@@ -1675,9 +2292,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       @member_types.each do |t|
-        t.type_check(symtab)
+        t.type_check(symtab, strict:)
       end
       add_symbol(symtab)
     end
@@ -1721,6 +2338,33 @@ module Idl
         member_decls << "#{member_types[i].to_idl} #{member_names[i]}"
       end
       "struct #{name} { #{member_decls.join("; ")}; }"
+    end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "struct_decl",
+      "name" => name,
+      "members" => num_members.times.map { |idx|
+        {
+          "name" => member_names[idx],
+          "type" => member_types[idx].to_h
+        }
+      },
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "struct_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      StructDefinitionAst.new(
+        input, interval,
+        yaml.fetch("name"),
+        yaml.fetch("members").map { |m| AstNode.from_h(m.fetch("type"), source_mapper) },
+        yaml.fetch("members").map { |m| m.fetch("name") }
+      )
     end
   end
 
@@ -1790,9 +2434,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      var.type_check(symtab)
-      index.type_check(symtab)
+    def type_check(symtab, strict:)
+      var.type_check(symtab, strict:)
+      index.type_check(symtab, strict:)
 
       type_error "Array index must be integral" unless index.type(symtab).integral?
 
@@ -1856,6 +2500,27 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{var.to_idl}[#{index.to_idl}]"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "array_access",
+      "array" => var.to_h,
+      "index" => index.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "array_access"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      AryElementAccessAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("array"), source_mapper),
+        AstNode.from_h(yaml.fetch("index"), source_mapper)
+      )
+    end
   end
 
   class AryRangeAccessAst < AstNode
@@ -1863,14 +2528,16 @@ module Idl
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab)
-      if var.name == "X"
+      v = var
+      if v.is_a?(IdAst) && v.name == "X"
         false
       else
-        var.const_eval?(symtab) && msb.const_eval?(symtab).const_eval? && lsb.const_eval?(symtab)
+        v.const_eval?(symtab) && msb.const_eval?(symtab).const_eval? && lsb.const_eval?(symtab)
       end
     end
 
-    def var = @children[0]
+    sig { returns(RvalueAst) }
+    def var = T.cast(@children[0], RvalueAst)
     def msb = @children[1]
     def lsb = @children[2]
 
@@ -1879,10 +2546,10 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      var.type_check(symtab)
-      msb.type_check(symtab)
-      lsb.type_check(symtab)
+    def type_check(symtab, strict:)
+      var.type_check(symtab, strict:)
+      msb.type_check(symtab, strict:)
+      lsb.type_check(symtab, strict:)
 
       type_error "Range operator only defined for integral types (found #{var.type(symtab)})" unless var.type(symtab).integral?
 
@@ -1894,7 +2561,7 @@ module Idl
         lsb_value = lsb.value(symtab)
 
         var_type = var.type(symtab)
-        if var_type.kind == :bits && var_type.width != :unknown && msb_value >= var_type.width
+        if strict && var_type.kind == :bits && var_type.width != :unknown && msb_value >= var_type.width
           type_error "Range too large for bits (msb = #{msb_value}, range size = #{var_type.width})"
         end
 
@@ -1922,12 +2589,37 @@ module Idl
     # @!macro value
     def value(symtab)
       mask = (1 << (msb.value(symtab) - lsb.value(symtab) + 1)) - 1
-      (var.value(symtab) >> lsb.value(symtab)) & mask
+      (T.cast(var.value(symtab), Integer) >> lsb.value(symtab)) & mask
     end
 
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{var.to_idl}[#{msb.to_idl}:#{lsb.to_idl}]"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "array_range_access",
+      "array" => var.to_h,
+      "range" => {
+        "lsb" => lsb.to_h,
+        "msb" => msb.to_h
+      },
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "array_range_access"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      AryRangeAccessAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("array"), source_mapper),
+        AstNode.from_h(yaml.fetch("range").fetch("msb"), source_mapper),
+        AstNode.from_h(yaml.fetch("range").fetch("lsb"), source_mapper)
+      )
+    end
 
   end
 
@@ -1947,7 +2639,7 @@ module Idl
     sig { returns(RvalueAst) }
     def rhs = T.cast(children.fetch(0), RvalueAst)
 
-    sig { params(input: String, interval: T::Range[Integer], rval: RvalueAst).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), rval: RvalueAst).void }
     def initialize(input, interval, rval)
       super(input, interval, [rval])
     end
@@ -1961,14 +2653,33 @@ module Idl
     def execute_unknown(symtab); end
 
     # @!macro type_check
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab)
-      rhs.type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      rhs.type_check(symtab, strict:)
     end
 
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "$pc = #{rhs.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "pc_assignment",
+      "value" => rhs.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(PcAssignmentAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "pc_assignment"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      PcAssignmentAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class VariableAssignmentSyntaxNode < SyntaxNode
@@ -2012,12 +2723,12 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      lhs.type_check(symtab)
+    def type_check(symtab, strict:)
+      lhs.type_check(symtab, strict:)
       lhs_var = symtab.get(lhs.name)
       type_error "Cannot assign to a const" if lhs_var.type.const? && !lhs_var.for_loop_iter?
 
-      rhs.type_check(symtab)
+      rhs.type_check(symtab, strict:)
       if lhs_var.type.const? && lhs_var.for_loop_iter?
         # also check that the rhs is const_eval
         type_error "Assignment would make iteration variable non-const" unless rhs.type(symtab).const?
@@ -2073,6 +2784,27 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{lhs.to_idl} = #{rhs.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "var_assignment",
+      "var" => lhs.to_h,
+      "value" => rhs.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(VariableAssignmentAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "var_assignment"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      VariableAssignmentAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("var"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class AryElementAssignmentSyntaxNode < SyntaxNode
@@ -2112,14 +2844,14 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      lhs.type_check(symtab)
+    def type_check(symtab, strict:)
+      lhs.type_check(symtab, strict:)
       unless [:array, :bits].include?(lhs.type(symtab).kind)
         type_error "#{lhs.text_value} must be an array or an integral type"
       end
       type_error "Assigning to a constant" if lhs.type(symtab).const?
 
-      idx.type_check(symtab)
+      idx.type_check(symtab, strict:)
 
       type_error "Index must be integral" unless idx.type(symtab).integral?
 
@@ -2129,7 +2861,7 @@ module Idl
       end
       # OK, doesn't need to be known
 
-      rhs.type_check(symtab)
+      rhs.type_check(symtab, strict:)
 
       case lhs.type(symtab).kind
       when :array
@@ -2212,6 +2944,29 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{lhs.to_idl}[#{idx.to_idl}] = #{rhs.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "array_element_assignment",
+      "array" => lhs.to_h,
+      "index" => idx.to_h,
+      "value" => rhs.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AryElementAssignmentAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "array_element_assignment"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      AryElementAssignmentAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("array"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("index"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class AryRangeAssignmentSyntaxNode < SyntaxNode
@@ -2252,13 +3007,13 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      variable.type_check(symtab)
+    def type_check(symtab, strict:)
+      variable.type_check(symtab, strict:)
       type_error "#{variable.text_value} must be integral" unless variable.type(symtab).kind == :bits
       type_error "Assigning to a constant" if variable.type(symtab).const?
 
-      msb.type_check(symtab)
-      lsb.type_check(symtab)
+      msb.type_check(symtab, strict:)
+      lsb.type_check(symtab, strict:)
 
       type_error "MSB must be integral" unless msb.type(symtab).integral?
       type_error "LSB must be integral" unless lsb.type(symtab).integral?
@@ -2272,7 +3027,7 @@ module Idl
       end
       # OK, don't have to know the value
 
-      write_value.type_check(symtab)
+      write_value.type_check(symtab, strict:)
 
       unless write_value.type(symtab).integral?
         type_error "Incompatible type in range assignment"
@@ -2319,6 +3074,33 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{variable.to_idl}[#{msb.to_idl}:#{lsb.to_idl}] = #{write_value.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "array_range_assignment",
+      "array" => variable.to_h,
+      "range" => {
+        "lsb" => lsb.to_h,
+        "msb" => msb.to_h
+      },
+      "value" => write_value.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AryRangeAssignmentAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "array_range_assignment"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      AryRangeAssignmentAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("array"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("range").fetch("msb"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("range").fetch("lsb"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class FieldAssignmentSyntaxNode < SyntaxNode
@@ -2360,7 +3142,7 @@ module Idl
       end
     end
 
-    sig { params(input: String, interval: T::Range[Integer], id: IdAst, field_name: String, rhs: RvalueAst).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), id: IdAst, field_name: String, rhs: RvalueAst).void }
     def initialize(input, interval, id, field_name, rhs)
       super(input, interval, [id, rhs])
       @field_name = field_name
@@ -2381,8 +3163,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      id.type_check(symtab)
+    def type_check(symtab, strict:)
+      id.type_check(symtab, strict:)
       var = symtab.get(id.name)
       type_error "#{id.name} has not been declared" if var.nil?
 
@@ -2399,7 +3181,7 @@ module Idl
 
       type_error "Cannot write const variable" if var.type.const?
 
-      rhs.type_check(symtab)
+      rhs.type_check(symtab, strict:)
       return if rhs.type(symtab).convertable_to?(type(symtab))
 
       type_error "Incompatible type in assignment (#{type(symtab)}, #{rhs.type(symtab)})"
@@ -2437,6 +3219,29 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{id.to_idl}.#{@field_name} = #{rhs.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "field_assignment",
+      "var" => id.to_h,
+      "field_name" => @field_name,
+      "value" => rhs.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(FieldAssignmentAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "field_assignment"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      FieldAssignmentAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("var"), source_mapper), IdAst),
+        yaml.fetch("field_name"),
+        T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class CsrFieldAssignmentSyntaxNode < SyntaxNode
@@ -2451,37 +3256,27 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = false
 
-    def csr_field = @children[0]
-    def write_value = @children[1]
+    def csr_field = T.cast(@children[0], CsrFieldReadExpressionAst)
+    def write_value = T.cast(@children[1], RvalueAst)
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), csr_field: CsrFieldReadExpressionAst, write_value: RvalueAst).void }
     def initialize(input, interval, csr_field, write_value)
       super(input, interval, [csr_field, write_value])
     end
 
+    sig { params(symtab: SymbolTable).returns(Type) }
     def type(symtab)
-      if field(symtab).defined_in_all_bases?
-        if symtab.mxlen == 64 && symtab.multi_xlen?
-          Type.new(:bits, width: [field(symtab).location(32).size, field(symtab).location(64).size].max)
-        else
-          Type.new(:bits, width: field(symtab).location(symtab.mxlen).size)
-        end
-      elsif field(symtab).base64_only?
-        Type.new(:bits, width: field(symtab).location(64).size)
-      elsif field(symtab).base32_only?
-        Type.new(:bits, width: field(symtab).location(32).size)
-      else
-        internal_error "Unexpected base for field"
-      end
+      csr_field.type(symtab)
     end
 
     def field(symtab)
       csr_field.field_def(symtab)
     end
 
-    def type_check(symtab)
-      csr_field.type_check(symtab)
+    def type_check(symtab, strict:)
+      csr_field.type_check(symtab, strict:)
 
-      write_value.type_check(symtab)
+      write_value.type_check(symtab, strict:)
       type_error "Incompatible type in assignment" unless write_value.type(symtab).convertable_to?(type(symtab))
     end
 
@@ -2495,6 +3290,27 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "#{csr_field.to_idl} = #{write_value.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "csr_field_assignment",
+      "csr_field" => csr_field.to_h,
+      "value" => write_value.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(CsrFieldAssignmentAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "csr_field_assignment"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      CsrFieldAssignmentAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("csr_field"), source_mapper), CsrFieldReadExpressionAst),
+        T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class MultiVariableAssignmentSyntaxNode < SyntaxNode
@@ -2543,9 +3359,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      function_call.type_check(symtab)
-      variables.each { |var| var.type_check(symtab) }
+    def type_check(symtab, strict:)
+      function_call.type_check(symtab, strict:)
+      variables.each { |var| var.type_check(symtab, strict:) }
 
       type_error "Assigning value to a constant" if variables.any? { |v| v.type(symtab).const? }
 
@@ -2607,6 +3423,27 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "(#{variables.map(&:to_idl).join(', ')}) = #{function_call.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "multi_var_assignment",
+      "assignments" => variables.map(&:to_h),
+      "value" => function_call.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(MultiVariableAssignmentAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "multi_var_assignment"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      MultiVariableAssignmentAst.new(
+        input, interval,
+        yaml.fetch("assignments").map { |a| AstNode.from_h(a, source_mapper) },
+        T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class MultiVariableDeclarationSyntaxNode < SyntaxNode
@@ -2635,6 +3472,7 @@ module Idl
     # @return [Array<AstNode>] Variable names
     def var_name_nodes = @children[1..]
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), type_name: T.any(BuiltinTypeNameAst, UserTypeNameAst), var_names: T::Array[IdAst]).void }
     def initialize(input, interval, type_name, var_names)
       super(input, interval, [type_name] + var_names)
 
@@ -2652,8 +3490,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      type_name.type_check(symtab)
+    def type_check(symtab, strict:)
+      type_name.type_check(symtab, strict:)
 
       add_symbol(symtab)
     end
@@ -2677,6 +3515,27 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{type_name.to_idl} #{var_name_nodes.map(&:to_idl).join(', ')}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "multi_var_decl",
+      "names" => var_name_nodes.map(&:to_h),
+      "type" => type_name.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(MultiVariableDeclarationAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "multi_var_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      MultiVariableDeclarationAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("type"), source_mapper), T.any(BuiltinTypeNameAst, UserTypeNameAst)),
+        yaml.fetch("names").map { |n| T.cast(AstNode.from_h(n, source_mapper), IdAst) }
+      )
+    end
   end
 
   class VariableDeclarationSyntaxNode < SyntaxNode
@@ -2713,8 +3572,8 @@ module Idl
 
     sig {
       params(
-        input: String,
-        interval: T::Range[Integer],
+        input: T.nilable(String),
+        interval: T.nilable(T::Range[Integer]),
         type_name: TypeNameAst,
         id: IdAst,
         ary_size: T.nilable(RvalueAst)
@@ -2745,13 +3604,13 @@ module Idl
       qualifiers << :const if T.must(id.text_value[0]).upcase == id.text_value[0]
       qualifiers << :global if @global
 
-      dtype = Type.new(:enum_ref, enum_class: dtype, qualifiers:) if dtype.kind == :enum
+      dtype = Type.new(:enum_ref, enum_class: T.cast(dtype, EnumerationType), qualifiers:) if dtype.kind == :enum
 
       # dtype = dtype.clone.qualify(q.text_value.to_sym) unless q.empty?
 
       unless ary_size.nil?
         value_result = value_try do
-          dtype = Type.new(:array, width: T.must(ary_size).value(symtab), sub_type: dtype, qualifiers:)
+          dtype = Type.new(:array, width: T.cast(T.must(ary_size).value(symtab), Integer), sub_type: dtype, qualifiers:)
         end
         value_else(value_result) do
           dtype = Type.new(:array, width: :unknown, sub_type: dtype, qualifiers:)
@@ -2764,8 +3623,8 @@ module Idl
     def type(symtab) = decl_type(symtab)
 
     # @!macro type_check
-    def type_check(symtab, add_sym = true)
-      type_name.type_check(symtab)
+    def type_check(symtab, add_sym: true, strict:)
+      type_name.type_check(symtab, strict:)
       dtype = type_name.type(symtab)
 
       type_error "No type '#{type_name.text_value}'" if dtype.nil?
@@ -2773,7 +3632,7 @@ module Idl
       type_error "Constants must be initialized at declaration" if id.text_value[0] == T.must(id.text_value[0]).upcase
 
       unless ary_size.nil?
-        T.must(ary_size).type_check(symtab)
+        T.must(ary_size).type_check(symtab, strict:)
         value_result = value_try do
           T.must(ary_size).value(symtab)
         end
@@ -2785,7 +3644,7 @@ module Idl
 
       add_symbol(symtab) if add_sym
 
-      id.type_check(symtab)
+      id.type_check(symtab, strict:)
     end
 
     # @!macro add_symbol
@@ -2807,6 +3666,41 @@ module Idl
         "#{type_name.to_idl} #{id.to_idl}"
       else
         "#{type_name.to_idl} #{id.to_idl}[#{T.must(ary_size).to_idl}]"
+      end
+    end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "var_decl",
+      "type" => ary_size.nil? ? type_name.to_h : {
+        "kind" => "array_decl",
+        "array_size" => ary_size.to_h,
+        "element_type" => type_name.to_h
+      },
+      "name" => id.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(VariableDeclarationAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "var_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      if yaml.fetch("type").key?("array_size")
+        VariableDeclarationAst.new(
+          input, interval,
+          T.cast(AstNode.from_h(yaml.fetch("type").fetch("element_type"), source_mapper), TypeNameAst),
+          T.cast(AstNode.from_h(yaml.fetch("name"), source_mapper), IdAst),
+          T.cast(AstNode.from_h(yaml.fetch("type").fetch("array_size"), source_mapper), RvalueAst)
+        )
+      else
+        VariableDeclarationAst.new(
+          input, interval,
+          T.cast(AstNode.from_h(yaml.fetch("type"), source_mapper), TypeNameAst),
+          T.cast(AstNode.from_h(yaml.fetch("name"), source_mapper), IdAst),
+          nil
+        )
       end
     end
   end
@@ -2871,8 +3765,8 @@ module Idl
 
     sig {
       params(
-        input: String,
-        interval: T::Range[Integer],
+        input: T.nilable(String),
+        interval: T.nilable(T::Range[Integer]),
         type_name_ast: TypeNameAst,
         var_write_ast: IdAst,
         ary_size: T.nilable(RvalueAst),
@@ -2910,7 +3804,7 @@ module Idl
 
       unless ary_size.nil?
         value_result = value_try do
-          decl_type = Type.new(:array, sub_type: decl_type, width: T.must(ary_size).value(symtab), qualifiers:)
+          decl_type = Type.new(:array, sub_type: decl_type, width: T.cast(T.must(ary_size).value(symtab), Integer), qualifiers:)
         end
         value_else(value_result) do
           type_error "Array size must be known at compile time"
@@ -2921,12 +3815,12 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      rhs.type_check(symtab)
+    def type_check(symtab, strict:)
+      rhs.type_check(symtab, strict:)
 
-      type_name.type_check(symtab)
+      type_name.type_check(symtab, strict:)
 
-      ary_size&.type_check(symtab)
+      ary_size&.type_check(symtab, strict:)
 
       decl_type = lhs_type(symtab)
 
@@ -2945,7 +3839,7 @@ module Idl
         symtab.add(lhs.text_value, Var.new(lhs.text_value, decl_type.clone, for_loop_iter: @for_iter_var))
       end
 
-      lhs.type_check(symtab)
+      lhs.type_check(symtab, strict:)
 
       # now check that the assignment is compatible
       return if rhs.type(symtab).convertable_to?(decl_type)
@@ -3013,6 +3907,47 @@ module Idl
         "#{type_name.to_idl} #{lhs.to_idl}[#{T.must(ary_size).to_idl}] = #{rhs.to_idl}"
       end
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "var_decl_init",
+      "type" => ary_size.nil? ? type_name.to_h : {
+        "kind" => "array_decl",
+        "array_size" => ary_size.to_h,
+        "element_type" => type_name.to_h
+      },
+      "name" => lhs.to_h,
+      "value" => rhs.to_h,
+      "in_for_loop" => @for_iter_var,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(VariableDeclarationWithInitializationAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "var_decl_init"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      if yaml.fetch("type").key?("array_size")
+        VariableDeclarationWithInitializationAst.new(
+          input, interval,
+          T.cast(AstNode.from_h(yaml.fetch("type").fetch("element_type"), source_mapper), TypeNameAst),
+          T.cast(AstNode.from_h(yaml.fetch("name"), source_mapper), IdAst),
+          T.cast(AstNode.from_h(yaml.fetch("type").fetch("array_size"), source_mapper), RvalueAst),
+          T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst),
+          yaml.fetch("in_for_loop")
+        )
+      else
+        VariableDeclarationWithInitializationAst.new(
+          input, interval,
+          T.cast(AstNode.from_h(yaml.fetch("type"), source_mapper), TypeNameAst),
+          T.cast(AstNode.from_h(yaml.fetch("name"), source_mapper), IdAst),
+          nil,
+          T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst),
+          yaml.fetch("in_for_loop")
+        )
+      end
+    end
   end
 
   class BinaryExpressionRightSyntaxNode < SyntaxNode
@@ -3036,8 +3971,208 @@ module Idl
       end
     end
 
-    def type_check(_symtab)
+    def type_check(_symtab, strict:)
       raise "you must have forgotten the to_ast pass"
+    end
+  end
+
+  class ImplicationExpressionSyntaxNode < SyntaxNode
+    sig { override.returns(ImplicationExpressionAst) }
+    def to_ast
+      antecedent = send(:antecedent)
+      ImplicationExpressionAst.new(
+        input, interval,
+        antecedent.empty? ? TrueExpressionAst.new(input, interval.first...interval.first) : antecedent.to_ast, send(:consequent).to_ast
+      )
+    end
+  end
+
+  class ImplicationExpressionAst < AstNode
+    sig {
+      params(
+        input: T.nilable(String),
+        interval: T.nilable(T::Range[Integer]),
+        antecedent: RvalueAst,
+        consequent: RvalueAst
+      ).void
+    }
+    def initialize(input, interval, antecedent, consequent)
+      super(input, interval, [antecedent, consequent])
+    end
+
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab)
+      antecedent.const_eval?(symtab) && consequent.const_eval?(symtab)
+    end
+
+    sig { returns(RvalueAst) }
+    def antecedent = T.cast(@children.fetch(0), RvalueAst)
+
+    sig { returns(RvalueAst) }
+    def consequent = T.cast(@children.fetch(1), RvalueAst)
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      antecedent.type_error "Antecedent must a boolean" unless antecedent.type(symtab).kind == :boolean
+      consequent.type_error "Consequent must a boolean" unless consequent.type(symtab).kind == :boolean
+    end
+
+    sig { params(symtab: SymbolTable).returns(T::Boolean) }
+    def satisfied?(symtab)
+      return true if antecedent.value(symtab) == false
+      T.cast(consequent.value(symtab), T::Boolean)
+    end
+
+    sig { override.returns(String) }
+    def to_idl = "#{antecedent.to_idl} -> #{consequent.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "implication_expr",
+      "antecedent" => antecedent.to_h,
+      "consequent" => consequent.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ImplicationExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "implication_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ImplicationExpressionAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("antecedent"), source_mapper), IdAst),
+        T.cast(AstNode.from_h(yaml.fetch("consequent"), source_mapper), IdAst)
+      )
+    end
+  end
+
+  class ImplicationStatementSyntaxNode < SyntaxNode
+    sig { override.returns(ImplicationStatementAst) }
+    def to_ast
+      ImplicationStatementAst.new(input, interval, send(:implication_expression).to_ast)
+    end
+  end
+
+  class ImplicationStatementAst < AstNode
+    sig {
+      params(
+        input: String,
+        interval: T::Range[Integer],
+        implication_expression: ImplicationExpressionAst
+      ).void
+    }
+    def initialize(input, interval, implication_expression)
+      super(input, interval, [implication_expression])
+    end
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab) = expression.const_eval?(symtab)
+
+    sig { returns(ImplicationExpressionAst) }
+    def expression = T.cast(@children.fetch(0), ImplicationExpressionAst)
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
+    end
+
+    sig { params(symtab: SymbolTable).returns(T::Boolean) }
+    def satisfied?(symtab)
+      expression.satisfied?(symtab)
+    end
+
+    sig { override.returns(String) }
+    def to_idl = "#{expression.to_idl};"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "implication_stmt",
+      "expr" => expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ImplicationExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "implication_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ImplicationExpressionAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("antecedent"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("consequent"), source_mapper), RvalueAst)
+      )
+    end
+  end
+
+  class ConstraintBodySyntaxNode < SyntaxNode
+    sig { override.returns(ConstraintBodyAst) }
+    def to_ast
+      stmts = []
+      send(:b).elements.each do |e|
+        stmts << e.i.to_ast
+      end
+      ConstraintBodyAst.new(input, interval, stmts)
+    end
+  end
+
+  class ConstraintBodyAst < AstNode
+    sig {
+      params(
+        input: T.nilable(String),
+        interval: T.nilable(T::Range[Integer]),
+        stmts: T::Array[T.any(ImplicationStatementAst, ForLoopAst)]
+      ).void
+    }
+    def initialize(input, interval, stmts)
+      super(input, interval, stmts)
+    end
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab) = stmts.all? { |stmt| stmt.const_eval?(symtab) }
+
+    sig { returns(T::Array[T.any(ImplicationStatementAst, ForLoopAst)]) }
+    def stmts = T.cast(@children, T::Array[T.any(ImplicationStatementAst, ForLoopAst)])
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      stmts.each do |stmt|
+        stmt.type_check(symtab, strict:)
+      end
+    end
+
+    sig { params(symtab: SymbolTable).returns(T::Boolean) }
+    def satisfied?(symtab)
+      stmts.all? do |stmt|
+        stmt.satisfied?(symtab)
+      end
+    end
+
+    sig { override.returns(String) }
+    def to_idl
+      stmts.map(&:to_idl).join("\n")
+    end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "constraint_body",
+      "stmts" => stmts.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ConstraintBodyAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "constraint_body"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ConstraintBodyAst.new(
+        input, interval,
+        yaml.fetch("stmts").map { |s| T.cast(AstNode.from_h(s, source_mapper), T.any(ImplicationStatementAst, ForLoopAst)) }
+      )
     end
   end
 
@@ -3056,14 +4191,14 @@ module Idl
     sig { returns(RvalueAst) }
     def expression = T.cast(@children.fetch(0), RvalueAst)
 
-    sig { params(input: String, interval: T::Range[Integer], e: AstNode).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), e: AstNode).void }
     def initialize(input, interval, e)
       super(input, interval, [e])
     end
 
-    sig { override.params(symtab: SymbolTable).void }
-    def type_check(symtab)
-      expression.type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
 
       e_type = expression.type(symtab)
       type_error "#{expression.text_value} is not a Bits<N> type" unless e_type.kind == :bits
@@ -3087,6 +4222,25 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "$width(#{expression.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "bits_width_cast",
+      "expr" => expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(WidthRevealAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "bits_width_cast"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      WidthRevealAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("expr"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class SignCastSyntaxNode < SyntaxNode
@@ -3106,8 +4260,9 @@ module Idl
     def initialize(input, interval, exp) = super(input, interval, [exp])
 
     # @!macro type_check
-    def type_check(symtab)
-      expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
+      type_error "$signed cast only works on Bits types" unless expression.type(symtab).kind == :bits
     end
 
     # @!macro type
@@ -3130,6 +4285,25 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "$signed(#{expression.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "sign_cast",
+      "expr" => expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(SignCastAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "sign_cast"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      SignCastAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("expr"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class BitsCastSyntaxNode < SyntaxNode
@@ -3157,10 +4331,10 @@ module Idl
     def initialize(input, interval, exp) = super(input, interval, [exp])
 
     # @!macro type_check
-    def type_check(symtab)
-      expr.type_check(symtab)
+    def type_check(symtab, strict:)
+      expr.type_check(symtab, strict:)
 
-      unless [:bits, :enum_ref, :csr].include?(expr.type(symtab).kind)
+      unless [:bits, :enum_ref, :bitfield, :csr].include?(expr.type(symtab).kind)
         type_error "#{expr.type(symtab)} Cannot be cast to bits"
       end
     end
@@ -3172,13 +4346,16 @@ module Idl
       case etype.kind
       when :bits
         etype
+      when :bitfield
+        Type.new(:bits, width: etype.width, qualifiers: [:known])
       when :enum_ref
         Type.new(:bits, width: etype.enum_class.width, qualifiers: [:known])
       when :csr
         if (etype.csr.is_a?(Symbol) && etype.csr == :unknown) || etype.csr.dynamic_length?
-          Type.new(:bits, width: :unknown)
+          Type.new(:bits, width: :unknown, max_width: 64)
         else
-          Type.new(:bits, width: etype.csr.length)
+          effective_xlen = symtab.get("__effective_xlen")
+          Type.new(:bits, width: etype.csr.length(effective_xlen.nil? ? nil : effective_xlen.value))
         end
       else
         type_error "$bits cast is only defined for CSRs and Enum references"
@@ -3190,8 +4367,10 @@ module Idl
       etype = expr.type(symtab)
 
       case etype.kind
-      # when :bits
-      #   expr.value(symtab)
+      when :bits
+        expr.value(symtab)
+      when :bitfield
+        expr.value(symtab)
       when :enum_ref
         if expr.is_a?(EnumRefAst)
           element_name = expr.text_value.split(":")[2]
@@ -3209,7 +4388,26 @@ module Idl
 
     # @!macro to_idl
     sig { override.returns(String) }
-    def to_idl = "$signed(#{expr.to_idl})"
+    def to_idl = "$bits(#{expr.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "bits_cast",
+      "expr" => expr.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(BitsCastAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "bits_cast"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      BitsCastAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("expr"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class BinaryExpressionAst < AstNode
@@ -3273,23 +4471,74 @@ module Idl
       "(#{lhs.to_idl} #{op} #{rhs.to_idl})"
     end
 
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "binary_operator_expr",
+      "op" => op,
+      "lhs" => lhs.to_h,
+      "rhs" => rhs.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(BinaryExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "binary_operator_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      BinaryExpressionAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("lhs"), source_mapper), RvalueAst),
+        yaml.fetch("op"),
+        T.cast(AstNode.from_h(yaml.fetch("rhs"), source_mapper), RvalueAst)
+      )
+    end
+
     # @!macro type
     def type(symtab)
-      lhs_type = lhs.type(symtab)
-      short_circuit = T.let(false, T::Boolean)
 
-      value_result = value_try do
-        lhs_value = lhs.value(symtab)
-        if (lhs_value == true && op == "||") || (lhs_value == false && op == "&&")
-          short_circuit = true
+      if op == "||" || op == "&&"
+        # see if we can short circuit
+        lhs_value = T.let(nil, T.untyped)
+        value_try do
+          lhs_value = lhs.value(symtab)
+        end
+        rhs_value = T.let(nil, T.untyped)
+        value_try do
+          rhs_value = rhs.value(symtab)
+        end
+
+        if (lhs_value == true || lhs_value == false) && (rhs_value == true || rhs_value == false)
+          # both are known and boolean. nothing more to check
+          return ConstBoolType
+        elsif lhs_value == false && op == "||"
+          rhs_type = rhs.type(symtab)
+          return rhs_type.const? ? ConstBoolType : BoolType
+        elsif lhs_value == true && op == "||"
+          return ConstBoolType
+        elsif lhs_value == true && op == "&&"
+          rhs_type = rhs.type(symtab)
+          return rhs_type.const? ? ConstBoolType : BoolType
+        elsif lhs_value == false && op == "&&"
+          return ConstBoolType
+        elsif rhs_value == false && op == "||"
+          lhs_type = lhs.type(symtab)
+          return lhs_type.const? ? ConstBoolType : BoolType
+        elsif rhs_value == true && op == "||"
+          return ConstBoolType
+        elsif rhs_value == true && op == "&&"
+          lhs_type = lhs.type(symtab)
+          return lhs_type.const? ? ConstBoolType : BoolType
+        elsif rhs_value == false && op == "&&"
+          return ConstBoolType
         end
       end
-      value_else(value_result) { short_circuit = false }
 
-      rhs_type = rhs.type(symtab) unless short_circuit
+      lhs_type = lhs.type(symtab)
+      rhs_type = rhs.type(symtab)
 
       qualifiers = []
-      qualifiers << :const if lhs_type.const? && (short_circuit || rhs_type.const?)
+      qualifiers << :const if lhs_type.const? && rhs_type.const?
 
       if LOGICAL_OPS.include?(op)
         if qualifiers.include?(:const)
@@ -3325,18 +4574,18 @@ module Idl
         end
       elsif op == "`*"
         qualifiers << :known if lhs_type.known? && rhs_type.known?
-        # widening multiply: result is 2x the width of the largest operand
+        # widening multiply: result sum of the widths of the operations
         value_result = value_try do
           value_error "lhs width is unknown" if lhs_type.width == :unknown
           value_error "rhs width is unknown" if rhs_type.width == :unknown
-          return Type.new(:bits, width: [lhs_type.width, rhs_type.width].max * 2, qualifiers:)
+          return Type.new(:bits, width: (lhs_type.width + rhs_type.width), qualifiers:)
         end
         value_else(value_result) do
           Type.new(:bits, width: :unknown, qualifiers:)
         end
       else
         qualifiers << :signed if lhs_type.signed? && rhs_type.signed?
-        qualifiers << :known if lhs_type.known? && (short_circuit || rhs_type.known?)
+        qualifiers << :known if lhs_type.known? && rhs_type.known?
         if [lhs_type.width, rhs_type.width].include?(:unknown)
           Type.new(:bits, width: :unknown, qualifiers:)
         else
@@ -3346,21 +4595,44 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       internal_error "No type_check function #{lhs.inspect}" unless lhs.respond_to?(:type_check)
 
-      lhs.type_check(symtab)
-      short_circuit = T.let(false, T::Boolean)
-      value_result = value_try do
-        lhs_value = lhs.value(symtab)
-        if (lhs_value == true && op == "||") || (lhs_value == false && op == "&&")
-          short_circuit = true
+      lhs_short_circuit = T.let(false, T::Boolean)
+      rhs_short_circuit = T.let(false, T::Boolean)
+      if op == "||" || op == "&&"
+        # see if we can short circuit
+        lhs_value = T.let(nil, T.untyped)
+        value_try do
+          lhs_value = lhs.value(symtab)
+        end
+        rhs_value = T.let(nil, T.untyped)
+        value_try do
+          rhs_value = rhs.value(symtab)
+        end
+
+        if (lhs_value == true || lhs_value == false) && (rhs_value == true || rhs_value == false)
+          # both are known and boolean. nothing more to check
+          return
+        elsif lhs_value == false && op == "||"
+          rhs.type_check(symtab, strict:)
+        elsif lhs_value == true && op == "||"
+          rhs_short_circuit = true
+        elsif lhs_value == true && op == "&&"
+          rhs.type_check(symtab, strict:)
+        elsif lhs_value == false && op == "&&"
+          rhs_short_circuit = true
+        elsif rhs_value == false && op == "||"
+          lhs.type_check(symtab, strict:)
+        elsif rhs_value == true && op == "||"
+          lhs_short_circuit = true
+        elsif rhs_value == true && op == "&&"
+          lhs.type_check(symtab, strict:)
+        elsif rhs_value == false && op == "&&"
+          lhs_short_circuit = true
         end
       end
-      value_else(value_result) do
-        short_circuit = false
-      end
-      rhs.type_check(symtab) unless short_circuit
+
 
       if ["<=", ">=", "<", ">", "!=", "=="].include?(op)
         rhs_type = rhs.type(symtab)
@@ -3371,12 +4643,14 @@ module Idl
         end
 
       elsif ["&&", "||"].include?(op)
-        lhs_type = lhs.type(symtab)
-        unless lhs_type.convertable_to?(:boolean)
-          type_error "left-hand side of #{op} needs to be boolean (is #{lhs_type}) (#{text_value})"
+        unless lhs_short_circuit
+          lhs_type = lhs.type(symtab)
+          unless lhs_type.convertable_to?(:boolean)
+            type_error "left-hand side of #{op} needs to be boolean (is #{lhs_type}) (#{text_value})"
+          end
         end
 
-        unless short_circuit
+        unless rhs_short_circuit
           rhs_type = rhs.type(symtab)
           unless rhs_type.convertable_to?(:boolean)
             type_error "right-hand side of #{op} needs to be boolean (is #{rhs_type}) (#{text_value})"
@@ -3879,8 +5153,10 @@ module Idl
         elsif op == "|"
           # if one side is all ones, we don't need to know the other side
           rhs_type = rhs.type(symtab)
+          type_error "Right-hand side of bitwise | must be a Bits type (is #{rhs_type})" unless rhs_type.kind == :bits
           value_error("Unknown width") if rhs_type.width == :unknown
           lhs_type = lhs.type(symtab)
+          type_error "Left-hand side of bitwise | must be a Bits type (is #{lhs_type})" unless lhs_type.kind == :bits
           value_error("unknown width") if lhs_type.width == :unknown
 
           value_result = value_try do
@@ -3965,7 +5241,7 @@ module Idl
     def invert(symtab) = expression.invert(symtab)
 
     # @!macro type_check
-    def type_check(symtab) = expression.type_check(symtab)
+    def type_check(symtab, strict:) = expression.type_check(symtab, strict:)
 
     # @!macro type
     def type(symtab) = expression.type(symtab)
@@ -3976,6 +5252,25 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "(#{expression.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "paren_expr",
+      "expr" => expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ParenExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "paren_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ParenExpressionAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("expr"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class ArrayLiteralSyntaxNode < SyntaxNode
@@ -3997,9 +5292,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       entries.each do |node|
-        node.type_check(symtab)
+        node.type_check(symtab, strict:)
       end
 
       unless element_nodes.all? { |e| e.type(symtab).equal_to?(element_nodes[0].type(symtab)) }
@@ -4017,6 +5312,25 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "[#{element_nodes.map(&:to_idl).join(',')}]"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "array_literal",
+      "values" => element_nodes.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ArrayLiteralAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "array_literal"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ArrayLiteralAst.new(
+        input, interval,
+        yaml.fetch("values").map { |v| AstNode.from_h(v, source_mapper) }
+      )
+    end
   end
 
   class ConcatenationExpressionSyntaxNode < SyntaxNode
@@ -4038,11 +5352,11 @@ module Idl
     def expressions = @children
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type_error "Must concatenate at least two objects" if expressions.size < 2
 
       expressions.each do |exp|
-        exp.type_check(symtab)
+        exp.type_check(symtab, strict:)
         e_type = exp.type(symtab)
         type_error "Concatenation only supports Bits<> types" unless e_type.kind == :bits
 
@@ -4087,18 +5401,41 @@ module Idl
 
     # @!macro value
     def value(symtab)
-      result = 0
+      result = T.let(UnknownLiteral.new(0, 0), T.any(Integer, UnknownLiteral))
       total_width = 0
       expressions.reverse_each do |exp|
         result |= (exp.value(symtab) << total_width)
         total_width += exp.type(symtab).width
       end
-      result
+      if result.is_a?(UnknownLiteral)
+        result.unknown_mask.zero? ? result.known_value : result
+      else
+        result
+      end
     end
 
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "{#{expressions.map { |exp| exp.to_idl }.join(',')}}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "concat_expr",
+      "exprs" => expressions.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ConcatenationExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "concat_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ConcatenationExpressionAst.new(
+        input, interval,
+        yaml.fetch("exprs").map { |v| AstNode.from_h(v, source_mapper) }
+      )
+    end
   end
 
   class ReplicationExpressionSyntaxNode < SyntaxNode
@@ -4126,9 +5463,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      n.type_check(symtab)
-      v.type_check(symtab)
+    def type_check(symtab, strict:)
+      n.type_check(symtab, strict:)
+      v.type_check(symtab, strict:)
 
       type_error "value of replication must be a Bits type" unless v.type(symtab).kind == :bits
       value_try do
@@ -4139,11 +5476,15 @@ module Idl
 
     # @!macro value
     def value(symtab)
-      result = 0
+      result = T.let(UnknownLiteral.new(0, 0), T.any(UnknownLiteral, Integer))
       n.value(symtab).times do |i|
         result |= v.value(symtab) << (i * v.type(symtab).width)
       end
-      result
+      if result.is_a?(UnknownLiteral)
+        result.unknown_mask.zero? ? result.known_value : result
+      else
+        result
+      end
     end
 
     # @!macro type
@@ -4160,6 +5501,27 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "{#{n.to_idl}{#{v.to_idl}}}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "repl_expr",
+      "count" => n.to_h,
+      "expr" => v.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ReplicationExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "repl_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ReplicationExpressionAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("count"), source_mapper),
+        AstNode.from_h(yaml.fetch("expr"), source_mapper)
+      )
+    end
   end
 
   class PostDecrementExpressionSyntaxNode < SyntaxNode
@@ -4185,8 +5547,8 @@ module Idl
       super(input, interval, [rval])
     end
 
-    def type_check(symtab)
-      rval.type_check(symtab)
+    def type_check(symtab, strict:)
+      rval.type_check(symtab, strict:)
       rval_immutable =
         rval.is_a?(IdAst) && (rval.type(symtab).const? && !symtab.get(T.cast(rval, IdAst).name).for_loop_iter?)
       type_error "Cannot decrement a const variable" if rval_immutable
@@ -4220,15 +5582,29 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "#{rval.to_idl}--"
-  end
 
-  class BuiltinVariableSyntaxNode < SyntaxNode
-    def to_ast
-      BuiltinVariableAst.new(input, interval)
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "post_decrement_expr",
+      "expr" => rval.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(PostDecrementExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "post_decrement_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      PostDecrementExpressionAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("expr"), source_mapper)
+      )
     end
   end
 
   class BuiltinVariableAst < AstNode
+    include Rvalue
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab)
@@ -4242,13 +5618,16 @@ module Idl
       end
     end
 
-    def name = text_value
+    def name = @name
+    def text_value = @name
 
-    def initialize(input, interval)
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), name: String).void }
+    def initialize(input, interval, name)
+      @name = name
       super(input, interval, EMPTY_ARRAY)
     end
 
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type_error "Not a builtin variable" unless ["$pc", "$encoding"].include?(name)
     end
 
@@ -4273,6 +5652,31 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = name
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "builtin_var_expr",
+      "name" => name,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(BuiltinVariableAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "builtin_var_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      BuiltinVariableAst.new(
+        input, interval,
+        yaml.fetch("name")
+      )
+    end
+  end
+
+  class BuiltinVariableSyntaxNode < SyntaxNode
+    def to_ast
+      BuiltinVariableAst.new(input, interval, input[interval])
+    end
   end
 
   class PostIncrementExpressionSyntaxNode < SyntaxNode
@@ -4298,8 +5702,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      rval.type_check(symtab)
+    def type_check(symtab, strict:)
+      rval.type_check(symtab, strict:)
       var = symtab.get(rval.text_value)
       rval_immutable =
         rval.is_a?(IdAst) && (rval.type(symtab).const? && !var.for_loop_iter?)
@@ -4337,6 +5741,25 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{rval.to_idl}++"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "post_increment_expr",
+      "expr" => rval.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(PostIncrementExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "post_increment_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      PostIncrementExpressionAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("expr"), source_mapper)
+      )
+    end
   end
 
   class FieldAccessExpressionSyntaxNode < SyntaxNode
@@ -4358,6 +5781,7 @@ module Idl
     sig { returns(RvalueAst) }
     def obj = T.cast(@children.fetch(0), RvalueAst)
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), bitfield: RvalueAst, field_name: String).void }
     def initialize(input, interval, bitfield, field_name)
       super(input, interval, [bitfield])
 
@@ -4381,8 +5805,8 @@ module Idl
       end
     end
 
-    def type_check(symtab)
-      obj.type_check(symtab)
+    def type_check(symtab, strict:)
+      obj.type_check(symtab, strict:)
 
       obj_type = obj.type(symtab)
 
@@ -4413,6 +5837,27 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{obj.to_idl}.#{@field_name}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "field_access_expr",
+      "expr" => obj.to_h,
+      "field_name" => @field_name,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(FieldAccessExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "field_access_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      FieldAccessExpressionAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("expr"), source_mapper), RvalueAst),
+        yaml.fetch("field_name")
+      )
+    end
   end
 
   class EnumRefSyntaxNode < SyntaxNode
@@ -4429,6 +5874,10 @@ module Idl
   class EnumRefAst < AstNode
     include Rvalue
 
+    class Memo < T::Struct
+      prop :enum_def_type, T::Hash[SymbolTable, EnumerationType], default: {}
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
@@ -4440,58 +5889,64 @@ module Idl
 
       @enum_class_name = class_name
       @member_name = member_name
-      @enum_def_type = nil
+      @memo = Memo.new
     end
 
-    # @!macro freeze_tree
-    def freeze_tree(global_symtab)
-      return if frozen?
-
-      @enum_def_type = global_symtab.get(@enum_class_name)
-
-      unless @enum_def_type.kind == :enum
-        type_error "#{@enum_class_name} is not a defined Enum"
-      end
-
-      freeze
+    def enum_def_type(symtab)
+      @memo.enum_def_type[symtab] ||=
+        begin
+          t = symtab.get(@enum_class_name)
+          if t.nil? || t.kind != :enum
+            type_error "#{@enum_class_name} is not a defined Enum"
+          end
+          t
+        end
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      enum_def_type = @enum_def_type
+    def type_check(symtab, strict:)
+      type_error "No symbol #{@enum_class_name} has been defined" if enum_def_type(symtab).nil?
 
-      type_error "No symbol #{@enum_class_name} has been defined" if enum_def_type.nil?
-
-      type_error "#{@enum_class_name} is not an enum type" unless enum_def_type.is_a?(EnumerationType)
-      type_error "#{@enum_class_name} has no member '#{@member_name}'" if enum_def_type.value(@member_name).nil?
+      type_error "#{@enum_class_name} is not an enum type" unless enum_def_type(symtab).is_a?(EnumerationType)
+      type_error "#{@enum_class_name} has no member '#{@member_name}'" if enum_def_type(symtab).value(@member_name).nil?
     end
 
     # @!macro type
     def type(symtab)
-      internal_error "Not frozen?" unless frozen?
-      type_error "No enum named #{@enum_class_name}" if @enum_def_type.nil?
+      type_error "No enum named #{@enum_class_name}" if enum_def_type(symtab).nil?
 
-      @enum_def_type.ref_type
+      enum_def_type(symtab).ref_type
     end
 
     # @!macro value_no
     def value(symtab)
-      @enum_def_type ||= begin
-        enum_def_ast = symtab.get(@enum_class_name)
-        if enum_def_ast.is_a?(BuiltinEnumDefinitionAst)
-          enum_def_ast.type(symtab)
-        else
-          enum_def_ast.type(nil)
-        end
-      end
-      internal_error "Must call type_check first" if @enum_def_type.nil?
-
-      @enum_def_type.value(@member_name)
+      enum_def_type(symtab).value(@member_name)
     end
 
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{@enum_class_name}::#{@member_name}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "enum_reference_expr",
+      "enum_class" => @enum_class_name,
+      "member_name" => @member_name,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(EnumRefAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "enum_reference_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      EnumRefAst.new(
+        input, interval,
+        yaml.fetch("enum_class"),
+        yaml.fetch("member_name"),
+      )
+    end
   end
 
   class UnaryOperatorExpressionSyntaxNode < SyntaxNode
@@ -4547,8 +6002,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      exp.type_check(symtab)
+    def type_check(symtab, strict:)
+      exp.type_check(symtab, strict:)
 
       case op
       when "-"
@@ -4615,6 +6070,27 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{op}#{expression.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "unary_operator_expr",
+      "op" => op,
+      "expr" => expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(UnaryOperatorExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "unary_operator_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      UnaryOperatorExpressionAst.new(
+        input, interval,
+        yaml.fetch("op"),
+        AstNode.from_h(yaml.fetch("expr"), source_mapper)
+      )
+    end
   end
 
   class TernaryOperatorExpressionSyntaxNode < SyntaxNode
@@ -4631,6 +6107,10 @@ module Idl
   class TernaryOperatorExpressionAst < AstNode
     include Rvalue
 
+    class Memo < T::Struct
+      prop :type, T::Hash[SymbolTable, Type], default: {}
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = condition.const_eval?(symtab) && true_expression.const_eval?(symtab) && false_expression.const_eval?(symtab)
 
@@ -4638,27 +6118,50 @@ module Idl
     def true_expression = @children[1]
     def false_expression = @children[2]
 
+    sig {
+      params(
+        input: T.nilable(String),
+        interval: T.nilable(T::Range[Integer]),
+        condition: RvalueAst,
+        true_expression: RvalueAst,
+        false_expression: RvalueAst
+      )
+      .void
+    }
     def initialize(input, interval, condition, true_expression, false_expression)
       super(input, interval, [condition, true_expression, false_expression])
+      @memo = Memo.new
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      condition.type_check(symtab)
+    def type_check(symtab, strict:)
+      condition.type_check(symtab, strict:)
       if condition.type(symtab).kind == :bits
         type_error "ternary selector must be bool (maybe you meant '#{condition.text_value} != 0'?)"
       else
         type_error "ternary selector must be bool" unless condition.type(symtab).kind == :boolean
       end
 
-      value_result = value_try do
-        cond = condition.value(symtab)
-        # if the condition is compile-time-known, only check the used field
-        cond ? true_expression.type_check(symtab) : false_expression.type_check(symtab)
-      end
-      value_else(value_result) do
-        true_expression.type_check(symtab)
-        false_expression.type_check(symtab)
+      if strict
+        value_result = value_try do
+          cond = condition.value(symtab)
+          # if the condition is compile-time-known, only check the used field
+          cond ? true_expression.type_check(symtab, strict:) : false_expression.type_check(symtab, strict:)
+        end
+        value_else(value_result) do
+          true_expression.type_check(symtab, strict:)
+          false_expression.type_check(symtab, strict:)
+
+          unless true_expression.type(symtab).equal_to?(false_expression.type(symtab))
+            # we'll allow dissimilar if they are both bits type
+            unless true_expression.type(symtab).kind == :bits && false_expression.type(symtab).kind == :bits
+              type_error "True and false options must be same type (have #{true_expression.type(symtab)} and #{false_expression.type(symtab)})"
+            end
+          end
+        end
+      else
+        true_expression.type_check(symtab, strict:)
+        false_expression.type_check(symtab, strict:)
 
         unless true_expression.type(symtab).equal_to?(false_expression.type(symtab))
           # we'll allow dissimilar if they are both bits type
@@ -4671,43 +6174,56 @@ module Idl
 
     # @!macro type
     def type(symtab)
-      condition.type_check(symtab)
-      value_result = value_try do
-        cond = condition.value(symtab)
-        # if the condition is compile-time-known, only check the used field
-        if cond
-          return true_expression.type(symtab)
-        else
-          return false_expression.type(symtab)
-        end
-      end
-      value_else(value_result) do
-        t =
-          if true_expression.type(symtab).kind == :bits && false_expression.type(symtab).kind == :bits
-            true_width = true_expression.type(symtab).width
-            false_width = false_expression.type(symtab).width
-            known = true_expression.type(symtab).known? && false_expression.type(symtab).known?
-            if true_width == :unknown || false_width == :unknown
-              if known
-                Type.new(:bits, width: :unknown, qualifiers: [:known])
+      return @memo.type.fetch(symtab) if @memo.type.key?(symtab)
+      t =
+        if true_expression.type(symtab).kind == :bits && false_expression.type(symtab).kind == :bits
+          true_type = true_expression.type(symtab)
+          false_type = false_expression.type(symtab)
+          true_width = true_type.width
+          false_width = false_type.width
+          known = true_expression.type(symtab).known? && false_expression.type(symtab).known?
+          if true_width == :unknown || false_width == :unknown
+            max_width =
+              if true_width == :unknown && false_width == :unknown
+                if true_type.max_width.nil? || false_type.max_width.nil?
+                  nil
+                else
+                  [true_type.max_width, false_type.max_width].max
+                end
+              elsif true_width == :unknown
+                if true_type.max_width.nil?
+                  nil
+                else
+                  [true_type.max_width, false_width].max
+                end
+              elsif false_width == :unknown
+                if false_type.max_width.nil?
+                  nil
+                else
+                  [false_type.max_width, true_width].max
+                end
               else
-                Type.new(:bits, width: :unknown)
+                raise "unreachable"
               end
+            if known
+              Type.new(:bits, width: :unknown, max_width:, qualifiers: [:known])
             else
-              if known
-                Type.new(:bits, width: [true_width, false_width].max, qualifiers: [:known])
-              else
-                Type.new(:bits, width: [true_width, false_width].max)
-              end
+              Type.new(:bits, width: :unknown, max_width:)
             end
           else
-            true_expression.type(symtab).clone
+            if known
+              Type.new(:bits, width: [true_width, false_width].max, qualifiers: [:known])
+            else
+              Type.new(:bits, width: [true_width, false_width].max)
+            end
           end
-        if condition.type(symtab).const? && true_expression.type(symtab).const? && false_expression.type(symtab).const?
-          t.make_const!
+        else
+          true_expression.type(symtab).clone
         end
-        return t
+      if condition.type(symtab).const? && true_expression.type(symtab).const? && false_expression.type(symtab).const?
+        t.make_const!
       end
+      @memo.type[symtab] = t
     end
 
     # @!macro value
@@ -4728,6 +6244,29 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{condition.to_idl} ? #{true_expression.to_idl} : #{false_expression.to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "ternary_operator_expr",
+      "condition" => condition.to_h,
+      "true_expression" => true_expression.to_h,
+      "false_expression" => false_expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(TernaryOperatorExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "ternary_operator_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      TernaryOperatorExpressionAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("condition"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("true_expression"), source_mapper), RvalueAst),
+        T.cast(AstNode.from_h(yaml.fetch("false_expression"), source_mapper), RvalueAst)
+      )
+    end
   end
 
   class StatementSyntaxNode < SyntaxNode
@@ -4745,7 +6284,7 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab); end
+    def type_check(symtab, strict:); end
 
     # @!macro execute
     def execute(symtab); end
@@ -4756,6 +6295,19 @@ module Idl
     # @1macro to_idl
     sig { override.returns(String) }
     def to_idl = ""
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "noop_expr",
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(NoopAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "noop_expr"
+
+      NoopAst.new
+    end
   end
 
   # represents a simple, one-line statement
@@ -4777,8 +6329,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      action.type_check(symtab)
+    def type_check(symtab, strict:)
+      action.type_check(symtab, strict:)
     end
 
     # @!macro execute
@@ -4804,6 +6356,25 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{action.to_idl};"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "stmt",
+      "expr" => action.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(StatementAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "stmt"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      StatementAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("expr"), source_mapper)
+      )
+    end
   end
 
   class ConditionalStatementSyntaxNode < SyntaxNode
@@ -4828,11 +6399,11 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      action.type_check(symtab)
+    def type_check(symtab, strict:)
+      action.type_check(symtab, strict:)
       type_error "Cannot declare from a conditional statement" if action.is_a?(Declaration)
 
-      condition.type_check(symtab)
+      condition.type_check(symtab, strict:)
       type_error "condition is not boolean" unless condition.type(symtab).convertable_to?(:boolean)
     end
 
@@ -4862,6 +6433,27 @@ module Idl
     def to_idl
       "#{action.to_idl} if (#{condition.to_idl});"
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "conditional_stmt",
+      "condition" => condition.to_h,
+      "expr" => action.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ConditionalStatementAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "conditional_stmt"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ConditionalStatementAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("expr"), source_mapper),
+        AstNode.from_h(yaml.fetch("condition"), source_mapper)
+      )
+    end
   end
 
   class DontCareReturnSyntaxNode < SyntaxNode
@@ -4885,7 +6477,7 @@ module Idl
     end
 
     # @!macro type_check_no_args
-    def type_check(_symtab)
+    def type_check(_symtab, strict:)
       # nothing to do!
     end
 
@@ -4914,6 +6506,23 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "-"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "dont_care",
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(DontCareReturnAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "dont_care"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      DontCareReturnAst.new(
+        input, interval
+      )
+    end
   end
 
   class DontCareLvalueSyntaxNode < SyntaxNode
@@ -4929,7 +6538,7 @@ module Idl
     def initialize(input, interval) = super(input, interval, EMPTY_ARRAY)
 
     # @!macro type_check_no_args
-    def type_check(_symtab)
+    def type_check(_symtab, strict:)
       # nothing to do!
     end
 
@@ -4943,6 +6552,23 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "-"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "dont_care_lval",
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(DontCareLvalueAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "dont_care_lval"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      DontCareLvalueAst.new(
+        input, interval
+      )
+    end
   end
 
   class ReturnStatementSyntaxNode < SyntaxNode
@@ -4986,8 +6612,8 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      return_expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      return_expression.type_check(symtab, strict:)
     end
 
     # @return [Array<AstNode>] List of return value nodes
@@ -5011,6 +6637,25 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "#{return_expression.to_idl};"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "stmt",
+      "expr" => return_expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ReturnStatementAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "stmt"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ReturnStatementAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("expr"), source_mapper)
+      )
+    end
   end
 
   class ReturnExpressionSyntaxNode < SyntaxNode
@@ -5063,9 +6708,9 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       return_value_nodes.each do |v|
-        v.type_check(symtab)
+        v.type_check(symtab, strict:)
         type_error "Unknown type for #{v.text_value}" if v.type(symtab).nil?
       end
 
@@ -5106,6 +6751,25 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "return #{return_value_nodes.map(&:to_idl).join(',')}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "return_expr",
+      "exprs" => return_value_nodes.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ReturnExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "return_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ReturnExpressionAst.new(
+        input, interval,
+        yaml.fetch("exprs").map { |r| AstNode.from_h(r, source_mapper) }
+      )
+    end
   end
 
   class ConditionalReturnStatementSyntaxNode < SyntaxNode
@@ -5128,10 +6792,10 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      condition.type_check(symtab)
+    def type_check(symtab, strict:)
+      condition.type_check(symtab, strict:)
       type_error "Condition must be boolean" unless condition.type(symtab).kind == :boolean
-      return_expression.type_check(symtab)
+      return_expression.type_check(symtab, strict:)
     end
 
     # @return [Type] The actual return type
@@ -5170,11 +6834,32 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "#{return_expression.to_idl} if (#{condition.to_idl});"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "conditional_stmt",
+      "condition" => condition.to_h,
+      "expr" => return_expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ConditionalReturnStatementAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "conditional_stmt"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ConditionalReturnStatementAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("expr"), source_mapper),
+        AstNode.from_h(yaml.fetch("condition"), source_mapper)
+      )
+    end
   end
 
   # @api private
   class CommentSyntaxNode < SyntaxNode
-    def to_ast = CommentAst.new(input, interval)
+    def to_ast = CommentAst.new(input, interval, input[interval])
   end
 
   # represents a comment
@@ -5182,12 +6867,15 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    def initialize(input, interval)
+    def initialize(input, interval, text)
       super(input, interval, EMPTY_ARRAY)
+      @text = text
     end
 
+    def text_value = @text
+
     # @!macro type_check
-    def type_check(symtab); end
+    def type_check(symtab, strict:); end
 
     # @return [String] The comment text, with the leading hash and any leading space removed
     # @example
@@ -5196,6 +6884,24 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = "# #{content}\n"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "comment",
+      "text" => content,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(CommentAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "comment"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      CommentAst.new(
+        input, interval, yaml.fetch("content")
+      )
+    end
   end
 
   # @api private
@@ -5237,15 +6943,17 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       if @type_name == "Bits"
-        bits_expression.type_check(symtab)
+        bits_expression.type_check(symtab, strict:)
         value_result = value_try do
           unless bits_expression.value(symtab).positive?
             type_error "Bits width (#{bits_expression.value(symtab)}) must be positive"
           end
         end
-        type_error "Bits width (#{bits_expression.text_value}) must be const" unless bits_expression.type(symtab).const?
+        unless bits_expression.type(symtab).const?
+          type_error "Bits width (#{bits_expression.text_value}) must be const"
+        end
       end
       unless ["Bits", "String", "XReg", "Boolean", "U32", "U64"].include?(@type_name)
         type_error "Unimplemented builtin type #{text_value}"
@@ -5312,12 +7020,46 @@ module Idl
         @type_name
       end
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h
+      if @type_name == "Bits"
+        {
+          "kind" => "bits_type",
+          "width_expr" => bits_expression.to_h,
+          "source" => source_yaml
+        }
+      else
+        {
+          "kind" => "builtin_type",
+          "type" => @type_name,
+          "source" => source_yaml
+        }
+      end
+    end
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(BuiltinTypeNameAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && (yaml.fetch("kind") == "builtin_type" || yaml.fetch("kind") == "bits_type")
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      if yaml.fetch("kind") == "bits_type"
+        BuiltinTypeNameAst.new(
+          input, interval, "Bits", AstNode.from_h(yaml.fetch("width_expr"), source_mapper)
+        )
+      else
+        BuiltinTypeNameAst.new(
+          input, interval, yaml.fetch("type"), nil
+        )
+      end
+    end
   end
 
   module StringLiteralSyntaxNode
     def to_ast
       T.bind(self, Treetop::Runtime::SyntaxNode)
-      StringLiteralAst.new(input, interval)
+      StringLiteralAst.new(input, interval, input[interval])
     end
   end
 
@@ -5325,20 +7067,25 @@ module Idl
   #
   # @example
   #   ">= 1.0"
-  #   "by_byte"
+  #   "sequential_bytes"
   class StringLiteralAst < AstNode
     include Rvalue
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    def initialize(input, interval)
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), text: String).void }
+    def initialize(input, interval, text)
+      @text = text
       super(input, interval, EMPTY_ARRAY)
       @type = Type.new(:string, width: value(nil).length, qualifiers: [:const])
     end
 
+    sig { override.returns(String) }
+    def text_value = @text
+
     # @!macro type_check
-    def type_check(_symtab); end
+    def type_check(_symtab, strict:); end
 
     def type(symtab)
       @type
@@ -5351,22 +7098,113 @@ module Idl
 
     sig { override.returns(String) }
     def to_idl = text_value
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "string_literal",
+      "text" => text_value.gsub('"', ""),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(StringLiteralAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "string_literal"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      StringLiteralAst.new(
+        input, interval, "\"#{yaml.fetch("text")}\""
+      )
+    end
   end
 
   module IntLiteralSyntaxNode
     def to_ast
       T.bind(self, Treetop::Runtime::SyntaxNode)
-      IntLiteralAst.new(input, interval)
+      IntLiteralAst.new(input, interval, input[interval])
     end
   end
 
   class UnknownLiteral
+    attr_reader :known_value, :unknown_mask
     def initialize(known_value, unknown_mask)
       @known_value = known_value
       @unknown_mask = unknown_mask
     end
     def bit_length
       [@known_value.bit_length, @unknown_mask.bit_length].max
+    end
+    def zero? = false
+    def &(other)
+      if other.is_a?(Integer)
+        new_known_value = @known_value & other
+        new_unknown_mask = @unknown_mask & other
+        if new_unknown_mask.zero?
+          new_known_value
+        else
+          UnknownLiteral.new(new_known_value, new_unknown_mask)
+        end
+      elsif other.is_a?(UnknownLiteral)
+        new_known_value = @known_value & other.known_value
+        new_unknown_mask = (@unknown_mask | other.unknown_mask) & ~(~@known_value & ~ @unknown_mask) & ~(~other.known_value & ~other.unknown_mask)
+        if new_unknown_mask.zero?
+          new_known_value
+        else
+          UnknownLiteral.new(new_known_value, new_unknown_mask)
+        end
+      else
+        raise "unexpected"
+      end
+    end
+    def ==(other)
+      if other.is_a?(Integer)
+        @known_value == other && @unknown_mask.zero?
+      elsif other.is_a?(UnknownLiteral)
+        (@known_value & ~@unknown_mask) == (other.known_value & ~other.unknown_mask) && @unknown_mask == other.unknown_mask
+      else
+        raise "unexpected"
+      end
+    end
+    def <=(other)
+      throw(:value_error, :unknown_value) unless @unknown_mask.zero?
+      if other.is_a?(Integer)
+        @known_value <= other
+      elsif other.is_a?(UnknownLiteral)
+        throw(:value_error, :unknown_value) unless other.unknown_mask.zero?
+        @known_value <= other.known_value
+      else
+        raise "unexpected"
+      end
+    end
+    def |(other)
+      if other.is_a?(Integer)
+        new_known_value = @known_value | other
+        new_unknown_mask = @unknown_mask & ~other
+        if new_unknown_mask.zero?
+          new_known_value
+        else
+          UnknownLiteral.new(new_known_value, new_unknown_mask)
+        end
+      elsif other.is_a?(UnknownLiteral)
+        new_known_value = @known_value | other.known_value
+        new_unknown_mask = (@unknown_mask | other.unknown_mask) & ~(@known_value & ~@unknown_mask) & ~(other.known_value & ~other.unknown_mask)
+        if new_unknown_mask.zero?
+          new_known_value
+        else
+          UnknownLiteral.new(new_known_value, new_unknown_mask)
+        end
+      else
+        raise "unexpected"
+      end
+    end
+    def <<(shamt)
+      if shamt.is_a?(Integer)
+        new_known_value = @known_value << shamt
+        new_unknown_mask = @unknown_mask << shamt
+        UnknownLiteral.new(new_known_value, new_unknown_mask)
+      else
+        raise "cannot left shift by unknown amount"
+      end
     end
     def to_s
       known_str = @known_value.to_s(2).reverse
@@ -5385,15 +7223,9 @@ module Idl
           end
         end
       end
-      "0b#{v.reverse.join("")}"
+      "#{[known_str.size, x.size].max}'b#{v.reverse.join("")}"
     end
   end
-
-  # TODO: move this into a unit test
-  tmp = UnknownLiteral.new(5, 4)
-  raise tmp.to_s unless tmp.to_s == "0bx01"
-  tmp = UnknownLiteral.new(0x7fff_ffff, 0b1000_0000_0000)
-  raise tmp.to_s unless tmp.to_s == "0b1111111111111111111x11111111111"
 
   # represents an integer literal
   class IntLiteralAst < AstNode
@@ -5402,9 +7234,13 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    def initialize(input, interval)
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), text: String).void }
+    def initialize(input, interval, text)
+      @text = text
       super(input, interval, EMPTY_ARRAY)
     end
+
+    def text_value = @text
 
     def freeze_tree(global_symtab)
       return if frozen?
@@ -5416,7 +7252,7 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       if text_value.delete("_") =~ /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
         # verilog-style literal
         width = ::Regexp.last_match(1)
@@ -5449,7 +7285,12 @@ module Idl
 
         qualifiers = signed == "s" ? [:signed, :const] : [:const]
         qualifiers << :known unless T.must(value).include?("x")
-        @type = Type.new(:bits, width:, qualifiers:)
+        @type =
+          if width == :unknown
+            Type.new(:bits, width:, max_width: 64, qualifiers:)
+          else
+            Type.new(:bits, width:, qualifiers:)
+          end
       when /^0([bdx]?)([0-9a-fA-F]*)(s?)$/
         # C++-style literal
         signed = ::Regexp.last_match(3)
@@ -5477,7 +7318,11 @@ module Idl
         # verilog-style literal
         width = ::Regexp.last_match(1)
         if width.nil? || width == "MXLEN"
-          width = symtab.mxlen.nil? ? :unknown : symtab.mxlen
+          if symtab.nil?
+            width = :unknown
+          else
+            width = symtab.mxlen.nil? ? :unknown : symtab.mxlen
+          end
         else
           width = width.to_i
         end
@@ -5511,7 +7356,7 @@ module Idl
         width = width(symtab)
 
         v =
-          if width == :unknown
+          if width == :unknown || width == "MXLEN"
             if !signed.empty?
               if unsigned_value > 0x7fff_ffff
                 value_error("Don't know if value will be negative")
@@ -5577,13 +7422,13 @@ module Idl
             known_value =
               case radix_id
               when "b"
-                value.gsub(/xX/, "0").to_i(2)
+                value.gsub(/[xX]/, "0").to_i(2)
               when "o"
-                value.gsub(/xX/, "0").to_i(8)
+                value.gsub(/[xX]/, "0").to_i(8)
               when "d"
                 raise "impossible"
               when "h"
-                value.gsub(/xX/, "0").to_i(16)
+                value.gsub(/[xX]/, "0").to_i(16)
               end
             unknown_mask =
               case radix_id
@@ -5639,6 +7484,96 @@ module Idl
       else
         "#{@width}'#{@type.signed? ? 's' : ''}d#{unsigned_value}"
       end
+    end
+
+    sig { returns(T::Boolean) }
+    def signed?
+      case text_value.delete("_")
+      when /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
+        signed = T.must(::Regexp.last_match(4))
+        !signed.empty?
+      when /^0([bdx]?)([0-9a-fA-F]*)(s?)$/
+        signed = T.must(::Regexp.last_match(3))
+        !signed.empty?
+      when /^([0-9]*)(s?)$/
+        signed = T.must(::Regexp.last_match(2))
+        !signed.empty?
+      else
+        raise "unhandled literal"
+      end
+    end
+
+    sig  { returns(Integer) }
+    def radix
+      case text_value.delete("_")
+      when /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
+        r = T.must(::Regexp.last_match(5))
+        if r.empty?
+          10
+        elsif r == "b"
+          2
+        elsif r == "o"
+          8
+        elsif r == "d"
+          10
+        elsif r == "h"
+          16
+        else
+          raise "unhandled literal"
+        end
+      when /^0([bdx]?)([0-9a-fA-F]*)(s?)$/
+        r = T.must(::Regexp.last_match(1))
+        if r.empty?
+          10
+        elsif r == "b"
+          2
+        elsif r == "d"
+          10
+        elsif r == "x"
+          16
+        else
+          raise "unhandled literal: #{r}"
+        end
+      when /^([0-9]*)(s?)$/
+        10
+      else
+        raise "unhandled literal"
+      end
+    end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h
+      {
+        "kind" => "bits_literal",
+        "width" => (width(nil) == :unknown) ? "MXLEN" : width(nil).to_s,
+        "value" => unsigned_value,
+        "signed" => signed?,
+        "radix" => radix,
+        "source" => source_yaml
+      }
+    end
+
+    def self.radix_to_verilog(r)
+      case r
+      when 2 then "b"
+      when 8 then "o"
+      when 10 then "d"
+      when 16 then "h"
+      else
+        raise "bad radix: #{r}"
+      end
+    end
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(IntLiteralAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "bits_literal"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      text = "#{yaml.fetch("width")}'#{yaml.fetch("signed") ? "s" : ""}#{radix_to_verilog(yaml.fetch("radix"))}#{yaml.fetch("value").to_s(yaml.fetch("radix"))}"
+      IntLiteralAst.new(
+        input, interval, text
+      )
     end
   end
 
@@ -5728,7 +7663,7 @@ module Idl
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       level = symtab.levels
 
       tvals = template_values(symtab, unknown_ok: true)
@@ -5746,7 +7681,7 @@ module Idl
         end
 
         template_arg_nodes.each_with_index do |t, idx|
-          t.type_check(symtab)
+          t.type_check(symtab, strict:)
           unless t.type(symtab).convertable_to?(func_def_type.template_types(symtab)[idx])
             type_error "Template argument #{idx + 1} has wrong type"
           end
@@ -5763,7 +7698,7 @@ module Idl
         type_error "Wrong number of arguments to '#{name}' function call. Expecting #{func_def_type.num_args}, got #{num_args}"
       end
       arg_nodes.each do |a|
-        a.type_check(symtab)
+        a.type_check(symtab, strict:)
       end
       arg_nodes.each_with_index do |a, idx|
         unless a.type(symtab).convertable_to?(func_def_type.argument_type(idx, tvals, arg_nodes, symtab, self))
@@ -5797,13 +7732,13 @@ module Idl
       func_def_type = func_type(symtab)
       type_error "#{name} is not a function" unless func_def_type.is_a?(FunctionType)
       if func_def_type.generated?
-        value_error "builtin functions not provided" if @builtin_funcs.nil?
+        value_error "builtin functions not provided" if symtab.builtin_funcs.nil?
 
         if name == "implemented?"
           extname_ref = arg_nodes[0]
           type_error "First argument should be a ExtensionName" unless extname_ref.type(symtab).kind == :enum_ref && extname_ref.class_name == "ExtensionName"
 
-          v = @builtin_funcs.implemented?.call(extname_ref.member_name)
+          v = symtab.builtin_funcs.implemented.call(extname_ref.member_name)
           if v.nil?
             value_error "implemented? is only known when evaluating in the context of a fully-configured arch def"
           end
@@ -5815,7 +7750,7 @@ module Idl
 
           ver_req = arg_nodes[1].text_value[1..-2]
 
-          v = @builtin_funcs.implemented_version?.call(extname_ref.member_name, ver_req)
+          v = symtab.builtin_funcs.implemented_version.call(extname_ref.member_name, ver_req)
           if v.nil?
             value_error "implemented_version? is only known when evaluating in the context of a fully-configured arch def"
           end
@@ -5823,7 +7758,7 @@ module Idl
 
         elsif name == "implemented_csr?"
           csr_addr = arg_nodes[0].value(symtab)
-          v = @builtin_funcs.implemented_csr?.call(csr_addr)
+          v = symtab.builtin_funcs.implemented_csr.call(csr_addr)
           if v.nil?
             value_error "implemented_csr? is only known when evaluating in the context of a fully-configured arch def"
           end
@@ -5864,7 +7799,8 @@ module Idl
 
       func_def_type.return_value(template_values, arg_nodes, symtab, self)
     end
-    alias execute value
+
+    def execute(symtab) = value(symtab)
 
     def name
       @name
@@ -5883,12 +7819,37 @@ module Idl
         "#{name}(#{arg_nodes.map(&:to_idl).join(',')})"
       end
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h
+      {
+        "kind" => "funcall_expr",
+        "func" => name,
+        "args" => arg_nodes.map(&:to_h),
+        "template_args" => template? ? template_arg_nodes.map(&:to_h) : nil,
+        "source" => source_yaml
+      }
+    end
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(FunctionCallExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "funcall_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      FunctionCallExpressionAst.new(
+        input, interval,
+        yaml.fetch("func"),
+        yaml.fetch("template_args").nil? ? [] : yaml.fetch("template_args").map { |t| AstNode.from_h(t, source_mapper) },
+        yaml.fetch("args").map { |a| AstNode.from_h(a, source_mapper) }
+      )
+    end
   end
 
 
   class UserTypeNameSyntaxNode < SyntaxNode
     def to_ast
-      UserTypeNameAst.new(input, interval)
+      UserTypeNameAst.new(input, interval, input[interval])
     end
   end
 
@@ -5896,13 +7857,16 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    def initialize(input, interval)
+    def initialize(input, interval, name)
       super(input, interval, EMPTY_ARRAY)
       @type_cache = {}
+      @name = name
     end
 
+    def text_value = @name
+
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type = type(symtab)
 
       type_error "#{text_value} is not a type" unless type.is_a?(Type)
@@ -5920,6 +7884,25 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = text_value
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "user_type_reference",
+      "name" => text_value,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(UserTypeNameAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "user_type_reference"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      UserTypeNameAst.new(
+        input, interval,
+        yaml.fetch("name")
+      )
+    end
   end
 
   TypeNameAst = T.type_alias { T.any(UserTypeNameAst, BuiltinTypeNameAst) }
@@ -5948,6 +7931,7 @@ module Idl
       end
     end
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), stmts: T::Array[ExecutableAst]).void }
     def initialize(input, interval, stmts)
       super(input, interval, stmts)
     end
@@ -5957,13 +7941,13 @@ module Idl
     def stmts = @children
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       internal_error "Function bodies should be at global + 1 scope (at #{symtab.levels})" unless symtab.levels == 2
 
       return_value_might_be_known = true
 
       stmts.each do |s|
-        s.type_check(symtab)
+        s.type_check(symtab, strict:)
         # next unless return_value_might_be_known
 
         # begin
@@ -6010,7 +7994,8 @@ module Idl
 
       value_error "No function body statement returned a value"
     end
-    alias execute return_value
+
+    def execute(symtab) = return_value(symtab)
 
     sig { override.params(symtab: SymbolTable).void }
     def execute_unknown(symtab)
@@ -6053,6 +8038,25 @@ module Idl
     def to_idl
       stmts.map(&:to_idl).join("\n")
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "function_body",
+      "stmts" => stmts.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(FunctionBodyAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "function_body"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      FunctionBodyAst.new(
+        input, interval,
+        yaml.fetch("stmts").map { |s| AstNode.from_h(s, source_mapper) }
+      )
+    end
   end
 
   class FetchSyntaxNode < SyntaxNode
@@ -6067,12 +8071,13 @@ module Idl
 
     def body = @children[0]
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), body: FunctionBodyAst).void }
     def initialize(input, interval, body)
       super(input, interval, [body])
     end
 
-    def type_check(symtab)
-      body.type_check(symtab)
+    def type_check(symtab, strict:)
+      body.type_check(symtab, strict:)
     end
 
     def return_type(symtab)
@@ -6086,6 +8091,25 @@ module Idl
           #{body.to_idl}
         }
       IDL
+    end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "fetch_decl",
+      "function_body" => body.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(FetchAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "fetch_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      FetchAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("function_body"), source_mapper), FunctionBodyAst)
+      )
     end
   end
 
@@ -6113,6 +8137,16 @@ end,
     include Declaration
 
     attr_reader :return_type_nodes
+
+    def <=>(other)
+      return nil unless other.is_a?(FunctionDefAst)
+
+      @name <=> other.name
+    end
+
+    def eql?(other)
+      name.eql?(other.name)
+    end
 
     # @param input [String] The source code
     # @param interval [Range] The range in the source code for this function definition
@@ -6319,7 +8353,7 @@ end,
     end
 
     # @param [Array<Integer>] template values to apply
-    def type_check_template_instance(symtab)
+    def type_check_template_instance(symtab, strict:)
       internal_error "Function definitions should be at global + 1 scope" unless symtab.levels == 2
 
       internal_error "Not a template function" unless templated?
@@ -6328,20 +8362,20 @@ end,
         internal_error "Template values missing" unless symtab.get(tname)
       end
 
-      type_check_return(symtab)
-      type_check_args(symtab)
+      type_check_return(symtab, strict:)
+      type_check_args(symtab, strict:)
       @argument_nodes.each { |a| symtab.add(a.name, Var.new(a.name, a.type(symtab))) }
-      type_check_body(symtab)
+      type_check_body(symtab, strict:)
     end
 
     # we do lazy type checking of the function body so that we never check
     # uncalled functions, which avoids dealing with mentions of CSRs that
     # may not exist in a given implementation
-    def type_check_from_call(symtab)
+    def type_check_from_call(symtab, strict:)
       internal_error "Function definitions should be at global + 1 scope" unless symtab.levels == 2
 
-      type_check_return(symtab)
-      type_check_args(symtab)
+      type_check_return(symtab, strict:)
+      type_check_args(symtab, strict:)
       # @argument_nodes.each do |a|
       #   value_result = value_try do
       #     symtab.add(a.name, Var.new(a.name, a.type(symtab), a.value(symtab)))
@@ -6350,7 +8384,7 @@ end,
       #     symtab.add(a.name, Var.new(a.name, a.type(symtab)))
       #   end
       # end
-      type_check_body(symtab)
+      type_check_body(symtab, strict:)
     end
 
     def apply_template_and_arg_syms(symtab)
@@ -6364,7 +8398,7 @@ end,
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       internal_error "Functions must be declared at global scope (at #{symtab.levels})" unless symtab.levels == 1
 
       type_check_targs(symtab)
@@ -6375,17 +8409,17 @@ end,
         symtab.add(tname, Var.new(tname, template_types(symtab)[index], template_index: index))
       end
 
-      type_check_return(symtab)
+      type_check_return(symtab, strict:)
 
       arguments(symtab).each do |arg_type, arg_name|
         symtab.add(arg_name, Var.new(arg_name, arg_type))
       end
-      type_check_args(symtab)
+      type_check_args(symtab, strict:)
 
 
       # template functions are checked as they are called
       unless templated?
-        type_check_body(symtab)
+        type_check_body(symtab, strict:)
       end
       symtab.pop
     end
@@ -6429,18 +8463,18 @@ end,
       @targs.each { |t| type_error "Template types must be integral" unless t.type(symtab).integral? }
     end
 
-    def type_check_return(symtab)
-      @return_type_nodes.each { |r| r.type_check(symtab) }
+    def type_check_return(symtab, strict:)
+      @return_type_nodes.each { |r| r.type_check(symtab, strict:) }
     end
 
-    def type_check_args(symtab)
-      @argument_nodes.each { |a| a.type_check(symtab, false) }
+    def type_check_args(symtab, strict:)
+      @argument_nodes.each { |a| a.type_check(symtab, add_sym: false, strict:) }
     end
 
-    def type_check_body(symtab)
+    def type_check_body(symtab, strict:)
       return if @body.nil?
 
-      @body.type_check(symtab)
+      @body.type_check(symtab, strict:)
     end
 
     def body
@@ -6461,18 +8495,21 @@ end,
       @external
     end
 
+    def qualifier_str
+      if external?
+        "external"
+      elsif builtin?
+        "builtin"
+      elsif generated?
+        "generated"
+      else
+        ""
+      end
+    end
+
     sig { override.returns(String) }
     def to_idl
-      qualifier =
-        if external?
-          "external"
-        elsif builtin?
-          "builtin"
-        elsif generated?
-          "generated"
-        else
-          ""
-        end
+      qualifier = qualifier_str
 
       targs_idl =
         if templated?
@@ -6512,6 +8549,37 @@ end,
         }
       IDL
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "function_decl",
+      "name" => name,
+      "qualifier" => qualifier_str.empty? ? "normal" : qualifier_str,
+      "return_types" => return_type_nodes.map(&:to_h),
+      "template_arguments" => templated? ? @targs.map(&:to_h) : nil,
+      "arguments" => @argument_nodes.map(&:to_h),
+      "description" => @desc,
+      "body" => @body&.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(FunctionDefAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "function_decl"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      FunctionDefAst.new(
+        input, interval,
+        yaml.fetch("name"),
+        yaml.fetch("template_arguments").nil? ? [] : yaml.fetch("template_arguments").map { |t| AstNode.from_h(t, source_mapper) },
+        yaml.fetch("return_types").map { |r| AstNode.from_h(r, source_mapper) },
+        yaml.fetch("arguments").map { |a| AstNode.from_h(a, source_mapper) },
+        yaml.fetch("description"),
+        yaml.fetch("qualifier").to_sym,
+        yaml.fetch("body").nil? ? nil : AstNode.from_h(yaml.fetch("body"), source_mapper)
+      )
+    end
   end
 
   class ForLoopSyntaxNode < SyntaxNode
@@ -6547,23 +8615,41 @@ end,
     sig { returns(ExecutableAst) }
     def update = T.cast(@children.fetch(2), ExecutableAst)
 
-    sig { returns(T::Array[T.any(StatementAst, ReturnStatementAst, IfAst, ForLoopAst)]) }
-    def stmts = T.cast(@children[3..], T::Array[T.any(StatementAst, ReturnStatementAst, IfAst, ForLoopAst)])
+    StmtType = T.type_alias { T.any(StatementAst, ReturnStatementAst, IfAst, ForLoopAst, ImplicationStatementAst) }
+    sig { returns(T::Array[StmtType]) }
+    def stmts = T.cast(@children[3..], T::Array[StmtType])
 
     def initialize(input, interval, init, condition, update, stmts)
       super(input, interval, [init, condition, update] + stmts)
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       symtab.push(self)
-      init.type_check(symtab)
-      condition.type_check(symtab)
-      update.type_check(symtab)
+      init.type_check(symtab, strict:)
+      condition.type_check(symtab, strict:)
+      update.type_check(symtab, strict:)
 
-      stmts.each { |stmt| stmt.type_check(symtab) }
+      stmts.each { |stmt| stmt.type_check(symtab, strict:) }
 
       symtab.pop
+    end
+
+    sig { params(symtab: SymbolTable).returns(T::Boolean) }
+    def satisfied?(symtab)
+      symtab.push(self)
+      begin
+        init.execute(symtab)
+        while condition.value(symtab)
+          stmts.each do |s|
+            return false unless T.cast(s, ImplicationStatementAst).satisfied?(symtab)
+          end
+          update.execute(symtab)
+        end
+        return true
+      ensure
+        symtab.pop
+      end
     end
 
     # @!macro return_value
@@ -6582,7 +8668,9 @@ end,
                   return v
                 end
               else
-                s.execute(symtab)
+                unless s.is_a?(ImplicationStatementAst)
+                  s.execute(symtab)
+                end
               end
             end
             update.execute(symtab)
@@ -6631,7 +8719,9 @@ end,
                     values += s.return_values(symtab)
                   end
                 else
-                  s.execute(symtab)
+                  unless s.is_a?(ImplicationStatementAst)
+                    s.execute(symtab)
+                  end
                 end
               end
               update.execute(symtab)
@@ -6647,7 +8737,7 @@ end,
     end
 
     # @!macro execute
-    alias execute return_value
+    def execute(symtab) = return_value(symtab)
 
     sig { override.params(symtab: SymbolTable).void }
     def execute_unknown(symtab)
@@ -6658,7 +8748,7 @@ end,
           init.execute_unknown(symtab)
 
           stmts.each do |s|
-            unless s.is_a?(ReturnStatementAst)
+            unless s.is_a?(ReturnStatementAst) || s.is_a?(ImplicationStatementAst)
               s.execute_unknown(symtab)
             end
           end
@@ -6680,6 +8770,31 @@ end,
       idl << "}"
       idl
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "for_loop_stmt",
+      "init_expr" => init.to_h,
+      "condition_expr" => condition.to_h,
+      "update_expr" => update.to_h,
+      "body" => stmts.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ForLoopAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "for_loop_stmt"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      ForLoopAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("init_expr"), source_mapper),
+        AstNode.from_h(yaml.fetch("condition_expr"), source_mapper),
+        AstNode.from_h(yaml.fetch("update_expr"), source_mapper),
+        yaml.fetch("body").map { |s| AstNode.from_h(s, source_mapper) }
+      )
+    end
   end
 
   class IfBodyAst < AstNode
@@ -6691,8 +8806,10 @@ end,
       stmts.all? { |stmt| stmt.const_eval?(symtab) }
     end
 
-    def stmts = @children
+    sig { returns(T::Array[StatementAst]) }
+    def stmts = T.cast(@children, T::Array[StatementAst])
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), body_stmts: T::Array[StatementAst]).void }
     def initialize(input, interval, body_stmts)
       if body_stmts.empty?
         super("", 0...0, EMPTY_ARRAY)
@@ -6702,12 +8819,12 @@ end,
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       symtab.push(self)
 
       begin
         stmts.each do |s|
-          s.type_check(symtab)
+          s.type_check(symtab, strict:)
         end
       ensure
         symtab.pop
@@ -6808,6 +8925,24 @@ end,
       stmts.map(&:to_idl).join("")
     end
 
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "if_body",
+      "stmts" => stmts.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(IfBodyAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "if_body"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      IfBodyAst.new(
+        input, interval,
+        yaml.fetch("stmts").map { |s| AstNode.from_h(s, source_mapper) }
+      )
+    end
   end
 
   class ElseIfAst < AstNode
@@ -6824,13 +8959,14 @@ end,
     sig { returns(IfBodyAst) }
     def body = T.cast(@children.fetch(1), IfBodyAst)
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), body_interval: T.nilable(T::Range[Integer]), cond: RvalueAst, body_stmts: T::Array[StatementAst]).void }
     def initialize(input, interval, body_interval, cond, body_stmts)
       body = IfBodyAst.new(input, body_interval, body_stmts)
       super(input, interval, [cond, body])
     end
 
-    def type_check(symtab)
-      cond.type_check(symtab)
+    def type_check(symtab, strict:)
+      cond.type_check(symtab, strict:)
 
       cond_value = T.let(nil, T.nilable(ValueRbType))
       value_try do
@@ -6841,7 +8977,7 @@ end,
         type_error "'#{cond.text_value}' is not boolean"
       end
 
-      body.type_check(symtab) unless cond_value == false
+      body.type_check(symtab, strict:) unless cond_value == false
     end
 
     sig { override.params(symtab: SymbolTable).returns(Type) }
@@ -6876,11 +9012,34 @@ end,
     def to_idl
       " else if (#{cond.to_idl}) { #{body.to_idl} }"
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "else_if_stmt",
+      "condition" => cond.to_h,
+      "body" => body.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(ElseIfAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "else_if_stmt"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      body = T.cast(AstNode.from_h(yaml.fetch("body"), source_mapper), IfBodyAst)
+      ElseIfAst.new(
+        input, interval,
+        body.interval,
+        T.cast(AstNode.from_h(yaml.fetch("condition"), source_mapper), RvalueAst),
+        body.stmts
+      )
+    end
   end
 
   class IfSyntaxNode < SyntaxNode
     def to_ast
-      if_body_stmts = T.let([], T::Array[AstNode])
+      if_body_stmts = T.let([], T::Array[StatementAst])
       send(:if_body).elements.each do |e|
         if_body_stmts << e.e.to_ast
       end
@@ -6891,10 +9050,11 @@ end,
           eif.body.elements.each do |e|
             stmts << e.e.to_ast
           end
-          eifs << ElseIfAst.new(input, eif.interval, eif.body.interval, eif.expression.to_ast, stmts)
+          elseif_body = IfBodyAst.new(input, eif.body.interval, stmts)
+          eifs << ElseIfAst.new(input, eif.interval, elseif_body.interval, eif.expression.to_ast, elseif_body.stmts)
         end
       end
-      final_else_stmts = T.let([], T::Array[AstNode])
+      final_else_stmts = T.let([], T::Array[StatementAst])
       unless send(:final_else).empty?
         send(:final_else).body.elements.each do |e|
           final_else_stmts << e.e.to_ast
@@ -6947,9 +9107,9 @@ end,
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       level = symtab.levels
-      if_cond.type_check(symtab)
+      if_cond.type_check(symtab, strict:)
 
 
       unless if_cond.type(symtab).convertable_to?(:boolean)
@@ -6966,19 +9126,19 @@ end,
       end
 
       # short-circuit the if body if we can
-      if_body.type_check(symtab) unless if_cond_value == false
+      if_body.type_check(symtab, strict:) unless if_cond_value == false
 
       internal_error "not at same level #{level} #{symtab.levels}" unless level == symtab.levels
 
       unless (if_cond_value == true) || elseifs.empty?
         elseifs.each do |eif|
-          eif.type_check(symtab)
+          eif.type_check(symtab, strict:)
         end
       end
 
       internal_error "not at same level #{level} #{symtab.levels}" unless level == symtab.levels
 
-      final_else_body.type_check(symtab) unless if_cond_value == true
+      final_else_body.type_check(symtab, strict:) unless if_cond_value == true
 
       internal_error "not at same level #{level} #{symtab.levels}" unless level == symtab.levels
     end
@@ -7172,62 +9332,94 @@ end,
       end
       result
     end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "if_stmt",
+      "condition" => if_cond.to_h,
+      "taken_body" => if_body.to_h,
+      "else_ifs" => elseifs.map(&:to_h),
+      "else" => final_else_body.stmts.empty? ? nil : final_else_body.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(IfAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "if_stmt"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      IfAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("condition"), source_mapper),
+        AstNode.from_h(yaml.fetch("taken_body"), source_mapper),
+        yaml.fetch("else_ifs").map { |eif| AstNode.from_h(eif, source_mapper) },
+        yaml.fetch("else").nil? ? IfBodyAst.new(nil, nil, []) : AstNode.from_h(yaml.fetch("else"), source_mapper)
+      )
+    end
   end
 
   class CsrFieldReadExpressionAst < AstNode
     include Rvalue
 
+    class MemoizedState < T::Struct
+      prop :csr, T.nilable(Csr)
+      prop :type, T.nilable(Type)
+      prop :value_calculated, T::Boolean
+      prop :value, T.nilable(Integer)
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = !@value.nil?
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), csr: CsrReadExpressionAst, field_name: String).void }
     def initialize(input, interval, csr, field_name)
       super(input, interval, [csr])
 
       @csr = csr
       @field_name = field_name
+      @memo = MemoizedState.new(value_calculated: false)
     end
 
-    def freeze_tree(symtab)
-      return if frozen?
+    sig { params(symtab: SymbolTable).returns(Csr) }
+    def csr_obj(symtab)
+      @memo.csr ||=
+        begin
+          obj = @csr.csr_def(symtab)
+          type_error "No CSR '#{@csr.text_value}'" if obj.nil?
 
-      @children.each { |child| child.freeze_tree(symtab) }
-
-      @csr_obj = @csr.csr_def(symtab)
-      type_error "No CSR '#{@csr.text_value}'" if @csr_obj.nil?
-
-      value_result = value_try do
-        @value = calc_value(symtab)
-      end
-      value_else(value_result) do
-        @value = nil
-      end
-
-      @type = calc_type(symtab)
-
-      freeze
+          obj
+        end
     end
 
     # @!macro type_check
-    def type_check(symtab)
-      @csr.type_check(symtab)
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      @csr.type_check(symtab, strict:)
 
-      type_error "CSR[#{csr_name}] has no field named #{@field_name}" if field_def(symtab).nil?
-      type_error "CSR[#{csr_name}].#{@field_name} is not defined in RV32" if symtab.mxlen == 32 && !field_def(symtab).defined_in_base32?
-      type_error "CSR[#{csr_name}].#{@field_name} is not defined in RV64" if symtab.mxlen == 64 && !field_def(symtab).defined_in_base64?
+      type_error "#{@field_name} is not a field of CSR[#{csr_name}]" unless csr_def(symtab).fields.any? { |f| f.name == @field_name }
+      if strict
+        type_error "CSR[#{csr_name}].#{@field_name} is not defined in RV32" if symtab.mxlen == 32 && !field_def(symtab).defined_in_base32?
+        type_error "CSR[#{csr_name}].#{@field_name} is not defined in RV64" if symtab.mxlen == 64 && !field_def(symtab).defined_in_base64?
+      end
     end
 
+    sig { params(symtab: SymbolTable).returns(Csr) }
     def csr_def(symtab)
-      @csr_obj
+      csr_obj(symtab)
     end
 
+    sig { returns(String) }
     def csr_name = @csr.csr_name
 
+    sig { params(symtab: SymbolTable).returns(CsrField) }
     def field_def(symtab)
-      @csr_obj.fields.find { |f| f.name == @field_name }
+      T.must(csr_obj(symtab).fields.find { |f| f.name == @field_name })
     end
 
+    sig { params(symtab: SymbolTable).returns(String) }
     def field_name(symtab)
-      field_def(symtab)&.name
+      field_def(symtab).name
     end
 
     # @!macro to_idl
@@ -7236,42 +9428,72 @@ end,
       "CSR[#{csr_name}].#{@field_name}"
     end
 
-    # @!macro type
-    def type(symtab)
-      @type
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "csr_field_read_expr",
+      "csr" => @csr.to_h,
+      "field_name" => @field_name,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(CsrFieldReadExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "csr_field_read_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      CsrFieldReadExpressionAst.new(
+        input, interval,
+        T.cast(AstNode.from_h(yaml.fetch("csr"), source_mapper), CsrReadExpressionAst),
+        yaml.fetch("field_name")
+      )
     end
 
+    # @!macro type
+    sig { override.params(symtab: SymbolTable).returns(Type) }
+    def type(symtab)
+      @memo.type ||= T.must(calc_type(symtab))
+    end
+
+    # @api private
+    sig { params(symtab: SymbolTable).returns(T.nilable(Type)) }
     def calc_type(symtab)
       fd = field_def(symtab)
-      internal_error "Could not find #{@csr.text_value}.#{@field_name}" if fd.nil?
 
       if fd.defined_in_all_bases?
         Type.new(:bits, width: symtab.possible_xlens.map { |xlen| fd.width(xlen) }.max)
       elsif fd.base64_only?
-        if symtab.possible_xlens.include?(64)
-          Type.new(:bits, width: fd.width(64))
-        end
+        Type.new(:bits, width: fd.width(64))
       elsif fd.base32_only?
-        if symtab.possible_xlens.include?(32)
-          Type.new(:bits, width: fd.width(32))
-        end
+        Type.new(:bits, width: fd.width(32))
       else
         internal_error "unexpected field base"
       end
     end
 
     # @!macro value
+    sig { override.params(symtab: SymbolTable).returns(ValueRbType) }
     def value(symtab)
-      if @value.nil?
+      calc_value(symtab) unless (@memo.value_calculated == true)
+
+
+      if @memo.value.nil?
         value_error "'#{csr_name}.#{field_name(symtab)}' is not RO"
       else
-        @value
+        @memo.value
       end
     end
 
+    # @api private
+    sig { params(symtab: SymbolTable).void }
     def calc_value(symtab)
       # field isn't implemented, so it must be zero
-      return 0 if field_def(symtab).nil? || !field_def(symtab).exists?
+      @memo.value_calculated = true
+
+      if !field_def(symtab).exists?
+        @memo.value = 0
+        return
+      end
 
       symtab.possible_xlens.each do |effective_xlen|
         unless field_def(symtab).type(effective_xlen) == "RO"
@@ -7281,6 +9503,7 @@ end,
 
       v = field_def(symtab).reset_value
       v = nil if v == "UNDEFINED_LEGAL"
+      @memo.value = v
     end
   end
 
@@ -7299,8 +9522,13 @@ end,
   class CsrReadExpressionAst < AstNode
     include Rvalue
 
+    class Memo < T::Struct
+      prop :csr_obj, T.nilable(Csr)
+      prop :type, T.nilable(Type)
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
-    def const_eval?(symtab) = !@csr_obj.value.nil?
+    def const_eval?(symtab) = !csr_def(symtab).value.nil?
 
     attr_reader :csr_name
 
@@ -7308,30 +9536,28 @@ end,
       super(input, interval, [])
 
       @csr_name = csr_name
+      @memo = Memo.new
     end
 
     def freeze_tree(symtab)
       return if frozen?
 
       type_error "CSR '#{@csr_name}' is not defined" unless symtab.csr?(@csr_name)
-      @csr_obj = symtab.csr(@csr_name)
-
-      @type = CsrType.new(@csr_obj).freeze
 
       @children.each { |child| child.freeze_tree(symtab) }
       freeze
     end
 
     # @!macro type
-    def type(symtab) = @type
+    def type(symtab) = @memo.type ||= CsrType.new(csr_def(symtab))
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       type_error "CSR '#{@csr_name}' is not defined" unless symtab.csr?(@csr_name)
     end
 
     def csr_def(symtab)
-      @csr_obj
+      @memo.csr_obj ||= symtab.csr(@csr_name)
     end
 
     def csr_known?(symtab)
@@ -7340,7 +9566,7 @@ end,
 
     # @!macro value
     def value(symtab)
-      v = @csr_obj.value
+      v = csr_def(symtab).value
       if v.nil?
         value_error "CSR is not defined"
       end
@@ -7350,6 +9576,24 @@ end,
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "CSR[#{@csr_name}]"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "csr_read_expr",
+      "csr_name" => @csr_name,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(CsrReadExpressionAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "csr_read_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      CsrReadExpressionAst.new(
+        input, interval, yaml.fetch("csr_name")
+      )
+    end
   end
 
   class CsrSoftwareWriteSyntaxNode < SyntaxNode
@@ -7371,9 +9615,9 @@ end,
       super(input, interval, [csr, expression])
     end
 
-    def type_check(symtab)
-      csr.type_check(symtab)
-      expression.type_check(symtab)
+    def type_check(symtab, strict:)
+      csr.type_check(symtab, strict:)
+      expression.type_check(symtab, strict:)
 
       e_type = expression.type(symtab)
       return if e_type.kind == :bits && ((e_type.width == :unknown || symtab.mxlen.nil?) || (e_type.width == symtab.mxlen))
@@ -7401,6 +9645,27 @@ end,
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{csr.to_idl}.sw_write(#{expression.to_idl})"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "csr_sw_write_expr",
+      "csr" => csr.to_h,
+      "value" => expression.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(CsrSoftwareWriteAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "csr_sw_write_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      CsrSoftwareWriteAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("csr"), source_mapper),
+        AstNode.from_h(yaml.fetch("value"), source_mapper)
+      )
+    end
   end
 
   # @api private
@@ -7442,14 +9707,11 @@ end,
       @function_name = function_name
     end
 
-    def type_check(symtab)
-      csr.type_check(symtab)
+    def type_check(symtab, strict:)
+      csr.type_check(symtab, strict:)
 
       if ["sw_read", "address"].include?(function_name)
         type_error "unexpected argument(s)" unless args.empty?
-      elsif ["implemented_without?"].include?(function_name)
-        type_error "Expecting one argument" unless args.size == 1
-        type_error "Expecting an ExtensionName" unless args[0].type(symtab).kind == :enum_ref && args[0].class_name == "ExtensionName"
       else
         type_error "'#{function_name}' is not a supported CSR function call"
       end
@@ -7467,8 +9729,6 @@ end,
         end
       when "address"
         Type.new(:bits, width: 12, qualifiers: [:const, :known])
-      when "implemented_without?"
-        ConstBoolType
       else
         internal_error "No function '#{function_name}' for CSR. call type check first!"
       end
@@ -7497,15 +9757,6 @@ end,
         value_error "CSR not knowable" unless csr_known?(symtab)
         cd = csr_def(symtab)
         cd.address
-      when "implemented_without?"
-        value_error "CSR not knowable" unless csr_known?(symtab)
-        cd = csr_def(symtab)
-        extension_name_enum_type = symtab.get("ExtensionName")
-        enum_value = args[0].value(symtab)
-        idx = extension_name_enum_type.element_values.index(enum_value)
-        ext_name = extension_name_enum_type.element_names[idx]
-
-        cd.implemented_without?(ext_name)
       else
         internal_error "TODO: #{function_name}"
       end
@@ -7515,6 +9766,29 @@ end,
     sig { override.returns(String) }
     def to_idl
       "#{csr_name}.#{function_name}(#{args.map(&:to_idl).join(', ')})"
+    end
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "csr_funcall_expr",
+      "csr" => csr.to_h,
+      "function_name" => function_name,
+      "arguments" => args.map(&:to_h),
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(CsrFunctionCallAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "csr_funcall_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      CsrFunctionCallAst.new(
+        input, interval,
+        yaml.fetch("function_name"),
+        AstNode.from_h(yaml.fetch("csr"), source_mapper),
+        yaml.fetch("arguments").map { |a| AstNode.from_h(a, source_mapper) }
+      )
     end
   end
 
@@ -7535,7 +9809,7 @@ end,
     end
 
     # @!macro type_check
-    def type_check(symtab)
+    def type_check(symtab, strict:)
       if idx.is_a?(IntLiteralAst)
         # make sure this value is a defined CSR
         index = symtab.csrs.index { |csr| csr.address == idx.value(symtab) }
@@ -7575,5 +9849,24 @@ end,
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "CSR[#{idx.text_value}]"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "csr_access_expr",
+      "csr_name_or_address_expr" => idx.to_h,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(CsrWriteAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "csr_access_expr"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      CsrWriteAst.new(
+        input, interval,
+        AstNode.from_h(yaml.fetch("csr_name_or_address_expr"), source_mapper)
+      )
+    end
   end
 end

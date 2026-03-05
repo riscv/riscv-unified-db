@@ -15,33 +15,26 @@ namespace :test do
   end
 end
 
-namespace :chore do
-  namespace :idlc do
-    task :update_deps do
-      ENV["BUNDLE_APP_CONFIG"] = ($root / ".bundle").to_s
-      Dir.chdir(IDLC_ROOT) do
-        sh "bundle update --gemfile #{IDLC_ROOT}/Gemfile"
-        sh "bundle exec --gemfile #{IDLC_ROOT}/Gemfile tapioca gems --all"
-        sh "bundle exec --gemfile #{IDLC_ROOT}/Gemfile tapioca dsl"
-        sh "bundle exec --gemfile #{IDLC_ROOT}/Gemfile tapioca annotations"
-      end
-    end
-  end
-end
-
 namespace :test do
   namespace :idlc do
     desc "Type check the Ruby IDL source code"
     task :sorbet  do
       Dir.chdir(IDLC_ROOT) do
+        Udb.logger.info "Type checking idlc gem"
         sh "bundle exec srb tc"
+      end
+    end
+
+    task :sorbet_coverage do
+      Dir.chdir(IDLC_ROOT) do
+        sh "bundle exec spoom srb coverage"
       end
     end
 
     desc "Run all unit tests"
     task :unit  do
-      Dir.chdir(IDLC_ROOT) do
-        sh "bundle exec ruby #{IDLC_ROOT}/test/run.rb"
+      Dir.chdir(IDLC_ROOT) do |d|
+        sh "bundle exec ruby test/run.rb"
       end
     end
   end

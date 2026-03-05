@@ -5,8 +5,9 @@ require "sorbet-runtime"
 T.bind(self, T.all(Rake::DSL, Object))
 extend T::Sig
 
-require 'pathname'
-require 'erb'
+require "pathname"
+require "erb"
+require "tty-command"
 
 Encoding.default_external = "UTF-8"
 
@@ -17,6 +18,7 @@ puts "Running with #{Rake.application.options.thread_pool_size} job(s)"
 require "etc"
 
 $root = Pathname.new(__dir__).realpath
+$rake_cmd_runner = TTY::Command.new
 $lib = $root / "lib"
 
 require "udb/resolver"
@@ -63,16 +65,6 @@ file "#{$root}/.stamps/dev_gems" => ["#{$root}/.stamps"] do |t|
 end
 
 namespace :chore do
-  desc "Update Ruby library dependencies"
-  task :update_deps do
-    # these should run in order,
-    # so don't change this to use task prereqs, which might run in any order
-    Rake::Task["chore:idlc:update_deps"].invoke
-    Rake::Task["chore:udb:update_deps"].invoke
-
-    sh "bundle update"
-  end
-
   desc "Update golden instruction appendix"
   task :update_golden_appendix do
     Rake::Task["gen:instruction_appendix_adoc"].invoke
@@ -95,7 +87,19 @@ namespace :gen do
     if cfg.nil?
       cfg = "_"
     end
-    $resolver.cfg_arch_for(cfg)
+    if ENV.key?("COMPILE_IDL")
+      resolver = Udb::Resolver.new($root, compile_idl: true)
+      resolver.cfg_arch_for(cfg)
+      Dir.glob(resolver.std_path / "isa" / "globals.isa") do |idl_file|
+        compiler = Idl::Compiler.new
+        ast = compiler.compile_file(Pathname.new(idl_file), {})
+        dst = resolver.cfg_info(cfg).resolved_spec_path / Pathname.new(idl_file).relative_path_from(resolver.std_path)
+        dst = dst.dirname / "#{dst.basename(".isa")}.yaml"
+        File.write dst, YAML.dump(ast.to_h)
+      end
+    else
+      $resolver.cfg_arch_for(cfg)
+    end
   end
 end
 
@@ -119,17 +123,17 @@ end
 
 sig { params(test_files: T::Array[String]).returns(String) }
 def make_test_cmd(test_files)
-  "-Ilib:test -w -e 'require \"minitest/autorun\"; #{test_files.map{ |f| "require \"#{f}\""}.join("; ")}' --"
+  "-Ilib:test -w -e 'require \"minitest/autorun\"; #{test_files.map { |f| "require \"#{f}\"" }.join("; ")}' --"
 end
 
 namespace :test do
 
   # "Run the cross-validation against LLVM"
   task :llvm do
-      begin
-        sh "/opt/venv/bin/python3 -m pytest ext/auto-inst/test_parsing.py -v"
-      rescue => e
-        raise unless e.message.include?("status (5)") # don't fail on skipped tests
+    begin
+      sh "uv run pytest tools/python/auto-inst/test_parsing.py -v"
+    rescue => e
+      raise unless e.message.include?("status (5)") # don't fail on skipped tests
     end
   end
   # "Run the IDL compiler test suite"
@@ -147,10 +151,9 @@ namespace :test do
 
   desc "Type-check the Ruby library"
   task :sorbet do
-    $logger.info "Type checking idlc gem"
     Rake::Task["test:idlc:sorbet"].invoke
-    $logger.info "Type checking udb gem"
     Rake::Task["test:udb:sorbet"].invoke
+    Rake::Task["test:udb_gen:sorbet"].invoke
     # sh "srb tc @.sorbet-config"
   end
 end
@@ -162,18 +165,27 @@ end
 
 desc "Clean up all generated files and container"
 task :clobber do
-  warn "Don't run clean using Rake. Run `./do clean` (alias for `./bin/clean`) instead."
+  warn "Don't run clobber using Rake. Run `./do clobber` (alias for `./bin/clobber`) instead."
 end
 
 
 namespace :test do
   desc "Check that instruction encodings in the DB are consistent and do not conflict"
   task :inst_encodings do
-    print "Checking for conflicts in instruction encodings.."
+    Udb.logger.info "Checking for conflicts in instruction encodings.."
+
+    failed = T.let(false, T::Boolean)
 
     cfg_arch = $resolver.cfg_arch_for("_")
     insts = cfg_arch.instructions
-    failed = T.let(false, T::Boolean)
+    inst_names = T.let(Set.new, T::Set[String])
+    insts.each do |i|
+      if inst_names.include?(i.name)
+        Udb.logger.warn "Duplicate instruction name: #{i.name}"
+        failed = true
+      end
+      inst_names.add(i.name)
+    end
     insts.each_with_index do |inst, idx|
       [32, 64].each do |xlen|
         next unless inst.defined_in_base?(xlen)
@@ -190,9 +202,12 @@ namespace :test do
         end
       end
     end
-    raise "Encoding test failed" if failed
+    if failed
+      Udb.logger.error "Encoding test failed"
+      exit 1
+    end
 
-    puts "done"
+    Udb.logger.info "Encoding test PASSED"
   end
 
   desc "Check that CSR definitions in the DB are consistent and do not conflict"
@@ -247,7 +262,7 @@ def insert_warning(str, from)
   # insert a warning on the second line
   lines = str.lines
   first_line = lines.shift
-  lines.unshift(first_line, "\n# WARNING: This file is auto-generated from #{Pathname.new(from).relative_path_from($root)}").join("")
+  lines.unshift(first_line, "\n# WARNING: This file is auto-generated from #{Pathname.new(from).relative_path_from($root)}\n\n").join("")
 end
 
 (3..31).each do |hpm_num|
@@ -387,11 +402,13 @@ aq_rl_variants = [
         "#{$resolver.std_path}/inst/Zaamo/#{op}.SIZE.AQRL.layout",
         __FILE__
       ] do |t|
+        FileUtils.rm_f(t.name)
         aq = variant[:aq]
         rl = variant[:rl]
         erb = ERB.new(File.read($resolver.std_path / "inst/Zaamo/#{op}.SIZE.AQRL.layout"), trim_mode: "-")
         erb.filename = "#{$resolver.std_path}/inst/Zaamo/#{op}.SIZE.AQRL.layout"
         File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+        File.chmod(0444, t.name)
       end
     end
   end
@@ -399,7 +416,7 @@ end
 
 # AMOCAS instruction generation from Zabha layout (supports both Zabha and Zacas)
 # Zabha variants (b, h) -> generated in Zabha directory
-["b", "h", "w", "d", "q" ].each do |size|
+["b", "h", "w", "d", "q"].each do |size|
   # Determine target extension directory based on size
   extension_dir = %w[w d q].include?(size) ? "Zacas" : "Zabha"
 
@@ -408,12 +425,120 @@ end
       "#{$resolver.std_path}/inst/Zacas/amocas.SIZE.AQRL.layout",
       __FILE__
     ] do |t|
+      FileUtils.rm_f(t.name)
       aq = variant[:aq]
       rl = variant[:rl]
       erb = ERB.new(File.read($resolver.std_path / "inst/Zacas/amocas.SIZE.AQRL.layout"), trim_mode: "-")
       erb.filename = "#{$resolver.std_path}/inst/Zacas/amocas.SIZE.AQRL.layout"
       File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+      File.chmod(0444, t.name)
     end
+  end
+end
+
+# LR/SC instruction generation from layouts
+%w[lr sc].each do |op|
+  ["w", "d"].each do |size|
+    aq_rl_variants.each do |variant|
+      file "#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{variant[:suffix]}.yaml" => [
+        "#{$resolver.std_path}/inst/Zalrsc/#{op}.SIZE.AQRL.layout",
+        __FILE__
+      ] do |t|
+        FileUtils.rm_f(t.name)
+        aq = variant[:aq]
+        rl = variant[:rl]
+        erb = ERB.new(File.read($resolver.std_path / "inst/Zalrsc/#{op}.SIZE.AQRL.layout"), trim_mode: "-")
+        erb.filename = "#{$resolver.std_path}/inst/Zalrsc/#{op}.SIZE.AQRL.layout"
+        File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+        File.chmod(0444, t.name)
+      end
+    end
+  end
+end
+
+# Zalasr load-acquire generation from layout
+zalasr_load_variants = [
+  { suffix: ".aq", rl: false },
+  { suffix: ".aqrl", rl: true }
+]
+
+["b", "h", "w", "d"].each do |size|
+  zalasr_load_variants.each do |variant|
+    file "#{$resolver.std_path}/inst/Zalasr/l#{size}#{variant[:suffix]}.yaml" => [
+      "#{$resolver.std_path}/inst/Zalasr/lSIZE.AQRL.layout",
+      __FILE__
+    ] do |t|
+      FileUtils.rm_f(t.name)
+      rl = variant[:rl]
+      erb = ERB.new(File.read($resolver.std_path / "inst/Zalasr/lSIZE.AQRL.layout"), trim_mode: "-")
+      erb.filename = "#{$resolver.std_path}/inst/Zalasr/lSIZE.AQRL.layout"
+      File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+      File.chmod(0444, t.name)
+    end
+  end
+end
+
+# Zalasr store-release generation from layout
+zalasr_store_variants = [
+  { suffix: ".rl", aq: false },
+  { suffix: ".aqrl", aq: true }
+]
+
+["b", "h", "w", "d"].each do |size|
+  zalasr_store_variants.each do |variant|
+    file "#{$resolver.std_path}/inst/Zalasr/s#{size}#{variant[:suffix]}.yaml" => [
+      "#{$resolver.std_path}/inst/Zalasr/sSIZE.AQRL.layout",
+      __FILE__
+    ] do |t|
+      FileUtils.rm_f(t.name)
+      aq = variant[:aq]
+      erb = ERB.new(File.read($resolver.std_path / "inst/Zalasr/sSIZE.AQRL.layout"), trim_mode: "-")
+      erb.filename = "#{$resolver.std_path}/inst/Zalasr/sSIZE.AQRL.layout"
+      File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+      File.chmod(0444, t.name)
+    end
+  end
+end
+
+# MOP.R instruction generation from layout (mop.r.0 through mop.r.31)
+(0..31).each do |n|
+  file "#{$resolver.std_path}/inst/Zimop/mop.r.#{n}.yaml" => [
+    "#{$resolver.std_path}/inst/Zimop/mop.r.N.layout",
+    __FILE__
+  ] do |t|
+    FileUtils.rm_f(t.name)
+    erb = ERB.new(File.read($resolver.std_path / "inst/Zimop/mop.r.N.layout"), trim_mode: "-")
+    erb.filename = "#{$resolver.std_path}/inst/Zimop/mop.r.N.layout"
+    File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+    File.chmod(0444, t.name)
+  end
+end
+
+# MOP.RR instruction generation from layout (mop.rr.0 through mop.rr.7)
+(0..7).each do |n|
+  file "#{$resolver.std_path}/inst/Zimop/mop.rr.#{n}.yaml" => [
+    "#{$resolver.std_path}/inst/Zimop/mop.rr.N.layout",
+    __FILE__
+  ] do |t|
+    FileUtils.rm_f(t.name)
+    erb = ERB.new(File.read($resolver.std_path / "inst/Zimop/mop.rr.N.layout"), trim_mode: "-")
+    erb.filename = "#{$resolver.std_path}/inst/Zimop/mop.rr.N.layout"
+    File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+    File.chmod(0444, t.name)
+  end
+end
+
+# C.MOP instruction generation from layout (c.mop.1, c.mop.3, c.mop.5, c.mop.7, c.mop.9, c.mop.11, c.mop.13, c.mop.15)
+[1, 3, 5, 7, 9, 11, 13, 15].each do |n|
+  file "#{$resolver.std_path}/inst/Zcmop/c.mop.#{n}.yaml" => [
+    "#{$resolver.std_path}/inst/Zcmop/c.mop.N.layout",
+    __FILE__
+  ] do |t|
+    FileUtils.rm_f(t.name)
+    erb = ERB.new(File.read($resolver.std_path / "inst/Zcmop/c.mop.N.layout"), trim_mode: "-")
+    erb.filename = "#{$resolver.std_path}/inst/Zcmop/c.mop.N.layout"
+    File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+    File.chmod(0444, t.name)
   end
 end
 
@@ -463,100 +588,123 @@ namespace :gen do
         Rake::Task["#{$resolver.std_path}/inst/#{extension_dir}/amocas.#{size}#{suffix}.yaml"].invoke
       end
     end
+
+    # Generate LR/SC instruction files
+    %w[lr sc].each do |op|
+      ["w", "d"].each do |size|
+        aq_rl_variants.each do |variant|
+          Rake::Task["#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{variant[:suffix]}.yaml"].invoke
+        end
+      end
+    end
+
+    # Generate Zalasr load/store instruction files
+    ["b", "h", "w", "d"].each do |size|
+      zalasr_load_variants.each do |variant|
+        Rake::Task["#{$resolver.std_path}/inst/Zalasr/l#{size}#{variant[:suffix]}.yaml"].invoke
+      end
+      zalasr_store_variants.each do |variant|
+        Rake::Task["#{$resolver.std_path}/inst/Zalasr/s#{size}#{variant[:suffix]}.yaml"].invoke
+      end
+    end
+
+    # Generate MOP.R instruction files (mop.r.0 through mop.r.31)
+    (0..31).each do |n|
+      Rake::Task["#{$resolver.std_path}/inst/Zimop/mop.r.#{n}.yaml"].invoke
+    end
+
+    # Generate MOP.RR instruction files (mop.rr.0 through mop.rr.7)
+    (0..7).each do |n|
+      Rake::Task["#{$resolver.std_path}/inst/Zimop/mop.rr.#{n}.yaml"].invoke
+    end
+
+    # Generate C.MOP instruction files (c.mop.1, c.mop.3, c.mop.5, c.mop.7, c.mop.9, c.mop.11, c.mop.13, c.mop.15)
+    [1, 3, 5, 7, 9, 11, 13, 15].each do |n|
+      Rake::Task["#{$resolver.std_path}/inst/Zcmop/c.mop.#{n}.yaml"].invoke
+    end
+  end
+
+  desc "DEPRECATED -- Run `./bin/udb-gen ext-doc --help` instead"
+  task :ext_pdf do
+    warn "DEPRECATED     `./do gen:ext_pdf` was removed in favor of `./bin/generate ext-doc `"
+    exit(1)
+  end
+
+  desc("DEPRECATED -- Run `./bin/udb-gen isa-explorer -t xlsx -o gen/isa_explorer` instead")
+  task :isa_explorer_spreadsheet do
+    Udb.logger.warn "DEPRECATED -- Run `./bin/generate isa-explorer -t xlsx -o gen/isa_explorer` instead"
+    exit(1)
+  end
+
+  desc("DEPRECATED -- Run `./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer` instead")
+  task :isa_explorer_browser_ext do
+    Udb.logger.warn "DEPRECATED -- Run `./bin/generate isa-explorer -t ext-browser -o gen/isa_explorer` instead"
+    exit(1)
+  end
+
+  desc("DEPRECATED -- Run `./bin/udb-gen isa-explorer -t inst-browser -o gen/isa_explorer` instead")
+  task :isa_explorer_browser_inst do
+    Udb.logger.warn "DEPRECATED -- Run `./bin/generate isa-explorer -t inst-browser -o gen/isa_explorer` instead"
+    exit(1)
+  end
+
+  desc("DEPRECATED -- Run `./bin/udb-gen isa-explorer -t csr-browser -o gen/isa_explorer` instead")
+  task :isa_explorer_browser_csr do
+    Udb.logger.warn "DEPRECATED -- Run `./bin/generate isa-explorer -t csr-browser -o gen/isa_explorer` instead"
+    exit(1)
+  end
+
+  desc("DEPRECATED")
+  task :isa_explorer_browser do
+    Udb.logger.warn "DEPRECATED -- Run `./bin/generate isa-explorer -t csr-browser -o gen/isa_explorer` instead"
+    Udb.logger.warn "DEPRECATED -- Run `./bin/generate isa-explorer -t inst-browser -o gen/isa_explorer` instead"
+    Udb.logger.warn "DEPRECATED -- Run `./bin/generate isa-explorer -t ext-browser -o gen/isa_explorer` instead"
+    exit(1)
+  end
+
+  task :html_manual do
+    Udb.logger.warn "DEPRECATED -- Run `./bin/generate manual -h` for help"
+    exit(1)
+  end
+
+  desc "Generate config files for profiles"
+  task :cfg do
+    cfg_arch = $resolver.cfg_arch_for("_")
+    FileUtils.mkdir_p $resolver.cfgs_path / "profile"
+    cfg_arch.profiles.each do |profile|
+      path = $resolver.cfgs_path / "profile" / "#{profile.name}.yaml"
+      FileUtils.rm_f path
+      File.write(
+        path,
+        <<~YAML.strip.concat("\n")
+          # SPDX-License-Identifier: CC0-1.0
+
+          # AUTO-GENERATED FILE. DO NOT EDIT
+          # To regenerate, run `./do gen:cfg` in the UDB root directory
+          # The data comes from the UDB profile definitions in spec/std/isa/profile/
+
+          #{YAML.dump(profile.to_config)}
+        YAML
+      )
+      File.chmod(0444, path)
+    end
   end
 end
 
 namespace :test do
   task :unit do
-    Rake::Task["test:idlc:unit"].invoke
-    Rake::Task["test:udb:unit"].invoke
-    Rake::Task["test:udb_helpers:unit"].invoke
+    Udb.logger.warn "Running unit tests through do/Rake has been deprecated"
+    Udb.logger.warn "Try `./bin/regress --tag unit` instead"
   end
-  desc <<~DESC
-    Run smoke tests
 
-    These are basic but fast-running tests to check the database and tools
-  DESC
   task :smoke do
-    $logger.info "Starting test:smoke"
-    $logger.info "Running test:sorbet"
-    Rake::Task["test:sorbet"].invoke
-    $logger.info "Running test:unit"
-    Rake::Task["test:unit"].invoke
-    $logger.info "Running gen:isa_explorer_browser_ext"
-    Rake::Task["gen:isa_explorer_browser_ext"].invoke
-    # $logger.info "Running test:lib"
-    # Rake::Task["test:lib"].invoke
-    $logger.info "Running test:schema"
-    Rake::Task["test:schema"].invoke
-    $logger.info "UPDATE: Running test:idl for rv32"
-    ENV["CFG"] = "rv32"
-    Rake::Task["test:idl"].invoke
-    $logger.info "UPDATE: Running test:idl for rv64"
-    ENV["CFG"] = "rv64"
-    Rake::Task["test:idl"].invoke
-    $logger.info "UPDATE: Running test:idl for qc_iu"
-    ENV["CFG"] = "qc_iu"
-    $logger.info "Running test:inst_encodings"
-    Rake::Task["test:inst_encodings"].invoke
-    $logger.info "Running test:llvm"
-    Rake::Task["test:llvm"].invoke
-    $logger.info "Done test:smoke"
+    Udb.logger.warn "Running smoke through do/Rake has been deprecated"
+    Udb.logger.warn "Try `./bin/regress --tag smoke` instead"
   end
 
-  desc <<~DESC
-    Run the regression tests
-
-    These tests must pass before a commit will be allowed in the main branch on GitHub
-  DESC
   task :regress do
-    $logger.info "Starting test:regress"
-    Rake::Task["test:smoke"].invoke
-
-    $logger.info "Running gen:isa_explorer_browser"
-    Rake::Task["gen:isa_explorer_browser"].invoke
-
-    $logger.info "Running gen:isa_explorer_spreadsheet"
-    Rake::Task["gen:isa_explorer_spreadsheet"].invoke
-
-    $logger.info "Running gen:html_manual MANUAL_NAME=isa VERSIONS=all"
-    ENV["MANUAL_NAME"] = "isa"
-    ENV["VERSIONS"] = "all"
-    Rake::Task["gen:html_manual"].invoke
-
-    $logger.info "Running gen:ext_pdf EXT=B VERSION=latest"
-    ENV["EXT"] = "B"
-    ENV["VERSION"] = "latest"
-    Rake::Task["gen:ext_pdf"].invoke
-
-    $logger.info "Running gen:html for example_rv64_with_overlay"
-    Rake::Task["gen:html"].invoke("example_rv64_with_overlay")
-
-    $logger.info "Generating MockProcessor-CRD.pdf"
-    Rake::Task["#{$root}/gen/proc_crd/pdf/MockProcessor-CRD.pdf"].invoke
-
-    $logger.info "Generating MockProcessor-CTP.pdf"
-    Rake::Task["#{$root}/gen/proc_ctp/pdf/MockProcessor-CTP.pdf"].invoke
-
-    $logger.info "Generating MockProfileRelease.pdf"
-    Rake::Task["#{$root}/gen/profile/pdf/MockProfileRelease.pdf"].invoke
-
-    $logger.info "Generating Go Language Support"
-    Rake::Task["gen:go"].invoke
-
-    $logger.info "Done test:regress"
-  end
-
-  desc <<~DESC
-    Run the nightly regression tests
-
-    Generally, this tries to build all artifacts
-  DESC
-  task :nightly do
-    Rake::Task["test:regress"].invoke
-    Rake::Task["portfolios"].invoke
-    puts
-    puts "Nightly regression test PASSED"
+    Udb.logger.warn "Running regression through do/Rake has been deprecated"
+    Udb.logger.warn "Try `./bin/regress --all` instead"
   end
 end
 

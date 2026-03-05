@@ -7,7 +7,7 @@ path = [
 ]
 SPDX-FileCopyrightText = [
     "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.",
-    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv-software-src/riscv-unified-db>",
+    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv/riscv-unified-db>",
 ]
 SPDX-License-Identifier = "BSD-3-Clause-Clear"
 
@@ -15,7 +15,12 @@ SPDX-License-Identifier = "BSD-3-Clause-Clear"
 [[annotations]]
 path = [
     "sorbet/**",
-    "Gemfile.lock"
+    "test/boolean_expressions.json",
+    "Gemfile.lock",
+    "lib/udb/Z3_VERSION",
+    "lib/udb/ESPRESSO_VERSION",
+    "lib/udb/EQNTOTT_VERSION",
+    "lib/udb/MUST_VERSION"
 ]
 SPDX-FileCopyrightText = "NONE"
 SPDX-License-Identifier = "CC0-1.0"

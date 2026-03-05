@@ -1,13 +1,10 @@
 {
   "name": "RISC-V UnifiedDB Dev",
   "build": { "dockerfile": "Dockerfile", "context": ".." },
-  "updateContentCommand": "${containerWorkspaceFolder}/.devcontainer/updateContentCommand.sh",
-  "onCreateCommand": "${containerWorkspaceFolder}/.devcontainer/onCreateCommand.sh",
+  "remoteUser": "ubuntu",
+  "updateRemoteUserUID": true,
   "remoteEnv": {
     "DISPLAY": ":0"
-  },
-  "containerEnv": {
-    "DEVCONTAINER_ENV": "true"
   },
   // vscode extensions
   "customizations": {
@@ -26,11 +23,15 @@
       },
       "extensions": [
         "asciidoctor.asciidoctor-vscode",
-        "castwide.solargraph",
+        "charliermarsh.ruff",
         "CraigMaslowski.erb",
         "HowerLimited.udb-extension-pack-vscode",
         "mathematic.vscode-pdf",
+        "ms-azuretools.vscode-containers",
         "redhat.vscode-yaml",
+        "Shopify.ruby-lsp",
+        "tamasfe.even-better-toml",
+        "timonwong.shellcheck",
         "zhwu95.riscv"
       ]
     }

@@ -6,10 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vghsh.vv
-long_name: No synopsis available
+long_name: Vector Galois field hash
 description: |
-  No description available.
-definedBy: Zvkg
+  Performs a Galois field hash operation on vector register vs2 using vector register vs1 as the hash polynomial, storing results in vector register vd according to mask vm. This instruction is used in cryptographic hash functions and error detection algorithms.
+definedBy:
+  extension:
+    name: Zvkg
 assembly: vd, vs2, vs1
 encoding:
   match: 1011001----------010-----1110111

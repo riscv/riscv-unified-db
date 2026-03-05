@@ -1,0 +1,162 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "IDL",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#constants"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "begin": "#",
+          "end": "$",
+          "name": "comment.line.number-sign"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.idl",
+          "match": "\\b(if|else|for|returns|return|arguments|body|builtin|enum|bitfield|struct|template)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.idl",
+          "match": "\\b(true|false|XLEN|XReg|U32|U64|Bits|String)\\b"
+        },
+        {
+          "name": "constant.language.idl",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.idl",
+      "begin": "\"",
+      "end": "\""
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "match": "\\b((\\d+)|(XLEN))'(s?[hH][0-9a-fA-F_]+)\\b",
+          "name": "constant.numeric.idl"
+        },
+        {
+          "match": "\\b((\\d+)|(XLEN))\\'(s?[dD]?[0-9_]+)\\b",
+          "name": "constant.numeric.idl"
+        },
+        {
+          "match": "\\b((\\d+)|(XLEN))'(s?[oO][0-7_]+)\\b",
+          "name": "constant.numeric.idl"
+        },
+        {
+          "match": "\\b((\\d+)|(XLEN))+'(s?[bB][01_]+)\\b",
+          "name": "constant.numeric.idl"
+        },
+        {
+          "match": "\\b0x[0-9a-fA-F_]+\\b",
+          "name": "constant.numeric.idl"
+        },
+        {
+          "match": "\\b0[0-7_]+\\b",
+          "name": "constant.numeric.idl"
+        },
+        {
+          "match": "\\b0b[01_]+\\b",
+          "name": "constant.numeric.idl"
+        },
+        {
+          "match": "\\b\\d+\\b",
+          "name": "constant.numeric.idl"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "begin": "\\b(function)\\s+([a-zA-Z][a-zA-Z0-9_]*\\??)\\s*",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.control.idl"
+            },
+            "2": {
+              "name": "entity.name.function.idl"
+            }
+          },
+          "end": "\\{"
+        },
+        {
+          "contentName": "string.other",
+          "begin": "\\b(description)\\s\\{",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.control.idl"
+            }
+          },
+          "end": "\\}"
+        },
+        {
+          "begin": "\\b(CSR)\\[([a-z0-9]+)\\]",
+          "end": "\\b",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.control.idl"
+            },
+            "2": {
+              "name": "constant.character.idl"
+            }
+          }
+        },
+        {
+          "match": "\\b([A-Z][a-zA-Z0-9_]*)[:][:]([A-Za-z][A-Za-z0-9_]*)\\b",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.idl"
+            },
+            "2": {
+              "name": "variable.other.idl"
+            }
+          }
+        },
+        {
+          "match": "([a-zA-Z][a-zA-Z0-9_]*\\??)\\s*<[^>]+>\\s*(\\()",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.idl"
+            }
+          }
+        },
+        {
+          "match": "([a-zA-Z][a-zA-Z0-9_]*\\??)\\s*(\\()",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.idl"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "scopeName": "source.idl"
+}

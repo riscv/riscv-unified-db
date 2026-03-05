@@ -6,10 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vclz.v
-long_name: No synopsis available
+long_name: Vector count leading zeros
 description: |
-  No description available.
-definedBy: Zvbb
+  Counts the number of leading zero bits in each element of vector register vs2, storing results in vector register vd according to mask vm. For zero elements, returns the element width.
+definedBy:
+  extension:
+    name: Zvbb
 assembly: vd, vs2, vm
 encoding:
   match: 010010------01100010-----1010111

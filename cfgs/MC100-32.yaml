@@ -8,14 +8,15 @@ description: An MC100-32 compliant system
 mandatory_extensions:
   - { name: Sm, version: "~> 1.11.0" }
   - { name: I, version: "~> 2.1" }
-  - { name: C, version: "~> 2.2" }
+  - { name: C, version: "~> 2.0" }
   - { name: M, version: "~> 2.0" }
   - { name: Zicsr, version: "~> 2.0" }
   - { name: Zicntr, version: "~> 2.0" }
 additional_extensions: false
 params:
   MXLEN: 32
-  MISALIGNED_SPLIT_STRATEGY: by_byte
+  MISALIGNED_LDST: true
+  MISALIGNED_SPLIT_STRATEGY: sequential_bytes
   PRECISE_SYNCHRONOUS_EXCEPTIONS: true
   TRAP_ON_ECALL_FROM_M: true
   TRAP_ON_EBREAK: true

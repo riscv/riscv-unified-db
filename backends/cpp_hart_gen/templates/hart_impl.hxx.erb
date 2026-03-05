@@ -84,7 +84,11 @@ namespace udb {
       this->Notify(FETCH_EVENT, (void*)&enc);
       m_cur_inst = reinterpret_cast<InstBase*>(m_run_one_inst_storage.data());
       if (_decode(m_pc, enc, m_cur_inst) == false) {
-        raise(ExceptionCode{ExceptionCode::IllegalInstruction}, mode(), m_params.REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION ? enc : decltype(enc){0});
+        try {
+          raise(ExceptionCode{ExceptionCode::IllegalInstruction}, mode(), m_params.REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION.value() ? enc : decltype(enc){0});
+        } catch (const AbortInstruction& e) {
+          return StopReason::Exception;
+        }
       }
       this->Notify(DECODE_EVENT, (void*)m_cur_inst);
 
@@ -165,7 +169,11 @@ namespace udb {
 
           m_cur_inst = current_bb->alloc_inst();
           if (_decode(m_pc, enc, m_cur_inst) == false) {
-            raise(ExceptionCode{ExceptionCode::IllegalInstruction}, mode(), m_params.REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION ? enc : decltype(enc){0});
+            try {
+              raise(ExceptionCode{ExceptionCode::IllegalInstruction}, mode(), m_params.REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION.value() ? enc : decltype(enc){0});
+            } catch (const AbortInstruction& e) {
+              return StopReason::Exception;
+            }            
           }
           this->Notify(DECODE_EVENT, (void*)m_cur_inst);
 

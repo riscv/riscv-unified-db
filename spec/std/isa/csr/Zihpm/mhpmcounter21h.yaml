@@ -1,6 +1,8 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 
-# WARNING: This file is auto-generated from spec/std/isa/csr/Zihpm/mhpmcounterNh.layout# SPDX-License-Identifier: BSD-3-Clause-Clear
+# WARNING: This file is auto-generated from spec/std/isa/csr/Zihpm/mhpmcounterNh.layout
+
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # yaml-language-server: $schema=../../../../schemas/csr_schema.json
 
@@ -12,10 +14,59 @@ address: 0xB95
 writable: true
 priv_mode: M
 length: 32
-base: 32
 description: |
   Upper half of mhpmcounter21.
-definedBy: Smhpm
+
+  The `hpmcounter21h` CSR is a read-only shadow of this CSR. Access to `hpmcounter21h`
+  is controlled with `mcounteren.HPM21`
+  <%- if ext?(:S) -%>
+  , `scounteren.HPM21`
+  <%- if ext?(:H) -%>
+  , and `hcounteren.HPM21`
+  <%- end -%>
+  <%- end -%>
+  as follows:
+
+  <%- if ext?(:H) -%>
+  [%autowidth,cols="1,1,1,1,1,1,1",separator="!"]
+  !===
+  .2+h![.rotate]#`mcounteren.HPM21`# .2+h! [.rotate]#`scounteren.HPM21`# .2+h! [.rotate]#`hcounteren.HPM21`#
+  4+^.>h! `hpmcounter21h` behavior
+  .^h! S-mode .^h! U-mode .^h! VS-mode .^h! VU-mode
+
+  ! 0 ! - ! - ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction`
+  ! 1 ! 0 ! 0 ! read-only ! `IllegalInstruction` ! `VirtualInstruction` ! `VirtualInstruction`
+  ! 1 ! 1 ! 0 ! read-only ! read-only ! `VirtualInstruction` ! `VirtualInstruction`
+  ! 1 ! 0 ! 1 ! read-only ! `IllegalInstruction` ! read-only ! `VirtualInstruction`
+  ! 1 ! 1 ! 1 ! read-only ! read-only ! read-only ! read-only
+  !===
+  <%- elsif ext?(:S) -%>
+  [%autowidth,cols="1,1,1,1",separator="!"]
+  !===
+  .2+h![.rotate]#`mcounteren.HPM21`# .2+h! [.rotate]#`scounteren.HPM21`#
+  2+^.>h! `hpmcounter21h` behavior
+  .^h! S-mode .^h! U-mode
+
+  ! 0 ! - ! `IllegalInstruction` ! `IllegalInstruction`
+  ! 1 ! 0 ! read-only ! `IllegalInstruction`
+  ! 1 ! 1 ! read-only ! read-only
+  !===
+  <%- else -%>
+  [%autowidth,cols="1,1",separator="!"]
+  !===
+  .2+h![.rotate]#`mcounteren.HPM21`#
+  ^.>h! `hpmcounter21h` behavior
+  .^h! U-mode
+
+  ! 0 ! `IllegalInstruction`
+  ! 1 ! read-only
+  !===
+  <%- end -%>
+definedBy:
+  allOf:
+    - xlen: 32
+    - extension:
+        name: Smhpm
 fields:
   COUNT:
     location: 31-0

@@ -13,7 +13,9 @@ description: |
   also sets mnstatus.NMIE. If MNRET changes the privilege mode to a mode less privileged than M, it
   also sets mstatus.MPRV to 0. If the Zicfilp extension is implemented, then if the new privileged mode is
   y, MNRET sets ELP to the logical AND of yLPE (see Section 22.1.1) and mnstatus.MNPELP.
-definedBy: Smrnmi
+definedBy:
+  extension:
+    name: Smrnmi
 assembly: ""
 encoding:
   match: "01110000001000000000000001110011"
@@ -26,7 +28,9 @@ access:
 data_independent_timing: false
 operation(): |
   if (CSR[mnstatus].MNPP != 2'b11) {
-    CSR[mstatus].MPRV = 0;
+    if (implemented?(ExtensionName::U)) {
+      CSR[mstatus].MPRV = 0;
+    }
     if (implemented?(ExtensionName::Smdbltrp)) {
       if (xlen() == 64) {
         CSR[mstatus].MDT = 1'b0;

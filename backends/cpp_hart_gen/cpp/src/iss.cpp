@@ -130,6 +130,34 @@ int ParseCommandLine(int argc, char *argv[], Options &options)
   return 0;
 }
 
+static const std::pair<uint64_t, uint64_t> get_memory_range(std::filesystem::path memmap, std::filesystem::path elf_file_path) {
+  json regions;
+  uint64_t memsz;
+
+  if(!memmap.empty()) {
+    std::ifstream f(memmap);
+    json data = json::parse(f);
+    regions = data["regions"];
+
+    for (const auto& region : regions) {
+      auto type = region["type"];
+      if (type == "ram") {
+        std::string base = region["base"]["value"];
+        std::string size = region["size"]["value"];
+        return std::make_pair(std::stoul(base, nullptr, 0), std::stoul(size, nullptr, 0));
+      }
+    }
+  }
+
+  udb::ElfReader elf_reader(elf_file_path.c_str());
+  auto range = elf_reader.mem_range();
+  memsz = range.second - range.first;
+  // round up to a page for good measure
+  memsz = (memsz + 0xfff) & ~0xfffull;
+
+  return std::make_pair(range.first, memsz);
+}
+
 int main(int argc, char *argv[])
 {
   Options opts;

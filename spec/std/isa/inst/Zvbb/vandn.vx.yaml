@@ -6,10 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vandn.vx
-long_name: No synopsis available
+long_name: Vector AND-NOT with scalar
 description: |
-  No description available.
-definedBy: Zvbb
+  Performs a bitwise AND operation between vector register vs2 and the bitwise NOT of scalar register xs1, storing results in vector register vd according to mask vm.
+definedBy:
+  extension:
+    name: Zvbb
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 000001-----------100-----1010111

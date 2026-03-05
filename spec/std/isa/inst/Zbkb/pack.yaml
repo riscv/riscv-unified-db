@@ -9,7 +9,9 @@ name: pack
 long_name: No synopsis available
 description: |
   No description available.
-definedBy: Zbkb
+definedBy:
+  extension:
+    name: Zbkb
 assembly: xd, xs1, xs2
 encoding:
   match: 0000100----------100-----0110011
@@ -27,6 +29,6 @@ access:
   vu: always
 data_independent_timing: true
 pseudoinstructions:
-  - when: (rs2 == 0) && (xlen() == 32)
+  - when: (xs2 == 0) && (xlen() == 32)
     to: zext.h xd, xs1
 operation(): |
