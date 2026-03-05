@@ -4045,6 +4045,9 @@ class Udb::Resolver
   sig { params(config_path: ::Pathname).returns(T::Hash[::String, T.untyped]) }
   def resolve_config(config_path); end
 
+  sig { void }
+  def resolve_schemas; end
+
   sig { params(cfg_path_or_name: T.any(::Pathname, ::String)).returns(::Pathname) }
   def resolved_spec_path(cfg_path_or_name); end
 
@@ -4069,6 +4072,8 @@ class Udb::Resolver::ConfigInfo < ::T::Struct
   const :resolved_spec_path, ::Pathname
   const :resolver, ::Udb::Resolver
 end
+
+Udb::Resolver::SCHEMAS_BASE_URL = T.let(T.unsafe(nil), String)
 
 class Udb::SatisfiedResult < ::T::Enum
   enums do
