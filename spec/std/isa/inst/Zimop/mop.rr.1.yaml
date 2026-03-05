@@ -1,0 +1,39 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+
+# WARNING: This file is auto-generated from spec/std/isa/inst/Zimop/mop.rr.N.layout
+
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: mop.rr.1
+long_name: May-be-operation 1 (2 source registers)
+description: |
+  The Zimop extension defines 8 MOP instructions named MOP.RR.n, where n is an integer between 0
+  and 7, inclusive. Unless redefined by another extension, this instruction simply writes 0 to X[xd].
+  Its encoding allows future extensions to define it to read X[xs1] and X[xs2], as well as write X[xd].
+
+  This is mop.rr.1 from the MOP.RR instruction family (n=1).
+definedBy:
+  extension:
+    name: Zimop
+assembly: xd, xs1, xs2
+encoding:
+  match: "1000011----------100-----1110011"
+  variables:
+    - name: xs2
+      location: 24-20
+    - name: xs1
+      location: 19-15
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: false
+operation(): |
+  X[xd] = 0;

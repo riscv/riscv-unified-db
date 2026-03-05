@@ -57,3 +57,14 @@ class TestValues < Minitest::Test
     assert_equal 0, ast.value(symtab)
   end
 end
+
+# test UnknownLiteral
+class TestUnknownLiteral < Minitest::Test
+  def test_to_s
+    tmp = Idl::UnknownLiteral.new(5, 4)
+    assert_equal "3'bx01", tmp.to_s
+
+    tmp = Idl::UnknownLiteral.new(0x7fff_ffff, 0b1000_0000_0000)
+    assert_equal "31'b1111111111111111111x11111111111", tmp.to_s
+  end
+end

@@ -1119,7 +1119,7 @@ namespace udb {
     >
     constexpr _Bits<N, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
       udb_assert(msb >= lsb, "Negative range is not allowed");
-      udb_assert(lsb.get() <= N, "Extract out of range");
+      udb_assert(lsb.get() < N && msb.get() < N, "Extract out of range");
 
       _Bits<N, false> mask = (_Bits<N, false>{1} << (msb - lsb + _Bits<N, false>{1})) - _Bits<N, false>{1};
       return _Bits<N, false>{(m_val >> lsb.get()) & mask.get()};

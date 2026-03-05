@@ -15,7 +15,7 @@ module Udb
 
   sig { returns(Pathname) }
   def self.gem_path
-    @gem_path ||= Pathname.new(Bundler.definition.specs.find { |s| s.name == "udb" }.full_gem_path)
+    @gem_path ||= Pathname.new(Gem::Specification.find_by_name("udb").full_gem_path)
   end
 
   sig { params(from_dir: Pathname).returns(Pathname) }
@@ -103,30 +103,22 @@ module Udb
     # path to merged spec (merged with custom overley, but prior to resolution)
     sig { params(cfg_path_or_name: T.any(String, Pathname)).returns(Pathname) }
     def merged_spec_path(cfg_path_or_name)
-      op = cfg_info(cfg_path_or_name).overlay_path
-      if op.nil?
+      if cfg_info(cfg_path_or_name).overlay_path.nil?
         @gen_path / "spec" / "_"
       else
-        @gen_path / "spec" / op.basename
+        @gen_path / "spec" / cfg_info(cfg_path_or_name).name
       end
-      # @gen_path / "spec" / cfg_info(cfg_path_or_name).name
     end
 
     # path to merged and resolved spec
     sig { params(cfg_path_or_name: T.any(String, Pathname)).returns(Pathname) }
     def resolved_spec_path(cfg_path_or_name)
-      # @gen_path / "resolved_spec" / cfg_info(cfg_path_or_name).name
-      op = cfg_info(cfg_path_or_name).overlay_path
-      if op.nil?
+      if cfg_info(cfg_path_or_name).overlay_path.nil?
         @gen_path / "resolved_spec" / "_"
       else
-        @gen_path / "resolved_spec" / op.basename
+        @gen_path / "resolved_spec" / cfg_info(cfg_path_or_name).name
       end
     end
-
-    # path to a python binary
-    sig { returns(Pathname) }
-    attr_reader :python_path
 
     # create a new resolver.
     #
@@ -144,7 +136,6 @@ module Udb
         gen_path_override: T.nilable(Pathname),
         std_path_override: T.nilable(Pathname),
         custom_path_override: T.nilable(Pathname),
-        python_path_override: T.nilable(Pathname),
         quiet: T::Boolean,
         compile_idl: T::Boolean
       ).void
@@ -156,7 +147,6 @@ module Udb
       gen_path_override: nil,
       std_path_override: nil,
       custom_path_override: nil,
-      python_path_override: nil,
       quiet: false,
       compile_idl: false
     )
@@ -166,7 +156,6 @@ module Udb
       @gen_path = gen_path_override || (@repo_root / "gen")
       @std_path = std_path_override || (@repo_root / "spec" / "std" / "isa")
       @custom_path = custom_path_override || (@repo_root / "spec" / "custom" / "isa")
-      @python_path = python_path_override || Pathname.new("/opt") / "venv" / "bin" / "python3"
       @quiet = quiet
       @compile_idl = compile_idl
       @mutex = Thread::Mutex.new
@@ -247,7 +236,7 @@ module Udb
 
         if any_newer?(merged_spec_path(config_name) / ".stamp", deps)
           run [
-            python_path.to_s,
+            "uv", "run",
             "#{Udb.gem_path}/python/yaml_resolver.py",
             "merge",
             std_path.to_s,
@@ -269,7 +258,7 @@ module Udb
         if any_newer?(resolved_spec_path(config_name) / ".stamp", deps)
           if @compile_idl
             run [
-              python_path.to_s,
+              "uv", "run",
               "#{Udb.gem_path}/python/yaml_resolver.py",
               "resolve",
               "--compile_idl",
@@ -278,7 +267,7 @@ module Udb
             ]
           else
             run [
-              python_path.to_s,
+              "uv", "run",
               "#{Udb.gem_path}/python/yaml_resolver.py",
               "resolve",
               merged_spec_path(config_name).to_s,
@@ -308,7 +297,12 @@ module Udb
 
             config_path_or_name.realpath
           when String
-            (@cfgs_path / "#{config_path_or_name}.yaml").realpath
+            if (@cfgs_path / "#{config_path_or_name}.yaml").file?
+              (@cfgs_path / "#{config_path_or_name}.yaml").realpath
+            else
+              Udb.logger.error "Could not find config: #{config_path_or_name}"
+              exit 1
+            end
           else
             T.absurd(config_path_or_name)
           end
@@ -330,14 +324,26 @@ module Udb
             raise "Cannot resolve path to overlay (#{config_yaml["arch_overlay"]})"
           end
 
+        merged_spec_path =
+          if overlay_path.nil?
+            @gen_path / "spec" / "_"
+          else
+            @gen_path / "spec" / config_yaml["name"]
+          end
+        resolved_spec_path =
+          if overlay_path.nil?
+            @gen_path / "resolved_spec" / "_"
+          else
+            @gen_path / "resolved_spec" / config_yaml["name"]
+          end
         info = ConfigInfo.new(
           name: config_yaml["name"],
           path: config_path,
           overlay_path:,
           unresolved_yaml: config_yaml,
           spec_path: std_path,
-          merged_spec_path: @gen_path / "spec" / (overlay_path.nil? ? "_" : File.basename(overlay_path)),
-          resolved_spec_path: @gen_path / "resolved_spec" / (overlay_path.nil? ? "_" : File.basename(overlay_path)),
+          merged_spec_path: @gen_path / "spec" / (overlay_path.nil? ? "_" : config_yaml["name"]),
+          resolved_spec_path: @gen_path / "resolved_spec" / (overlay_path.nil? ? "_" : config_yaml["name"]),
           resolver: self
         )
         @cfg_info[config_path] = info

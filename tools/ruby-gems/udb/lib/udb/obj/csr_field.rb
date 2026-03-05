@@ -21,8 +21,8 @@ module Udb
 
     include Idl::CsrField
 
-    # @return [Csr] The Csr that defines this field
-    sig { returns(Csr) }
+    # @return [Csr, Mmr] The Csr or Mmr that defines this field
+    sig { returns(T.any(Csr, Mmr)) }
     attr_reader :parent
 
     # @!attribute field
@@ -51,9 +51,9 @@ module Udb
       prop :reachable_functions, T::Hash[T.any(Symbol, Integer), T::Array[Idl::FunctionDefAst]]
     end
 
-    # @param parent_csr [Csr] The Csr that defined this field
+    # @param parent_csr [Csr, Mmr] The Csr or Mmr that defined this field
     # @param field_data [Hash<String,Object>] Field data from the arch spec
-    sig { params(parent_csr: Csr, field_name: String, field_data: T::Hash[String, T.untyped]).void }
+    sig { params(parent_csr: T.any(Csr, Mmr), field_name: String, field_data: T::Hash[String, T.untyped]).void }
     def initialize(parent_csr, field_name, field_data)
       super(field_data, parent_csr.data_path, parent_csr.arch, DatabaseObject::Kind::CsrField, name: field_name)
       @parent = parent_csr
@@ -352,8 +352,12 @@ module Udb
       # if there is no location_rv32, the the field never changes
       return false unless @data["location"].nil?
 
+      # MMR fields never have dynamic locations (no privilege modes)
+      parent_reg = parent
+      return false unless parent_reg.is_a?(Csr)
+
       # the field changes *if* some mode with access can change XLEN
-      csr.modes_with_access.any? { |mode| @cfg_arch.multi_xlen_in_mode?(mode) }
+      parent_reg.modes_with_access.any? { |mode| @cfg_arch.multi_xlen_in_mode?(mode) }
     end
 
     # @return [Idl::FunctionBodyAst] Abstract syntax tree of the reset_value function
@@ -529,7 +533,7 @@ module Udb
       @sw_write_ast
     end
 
-    sig { params(effective_xlen: T.nilable(Integer), ast: Idl::AstNode).returns(Idl::SymbolTable) }
+    sig { params(effective_xlen: T.nilable(Integer), ast: T.nilable(Idl::AstNode)).returns(Idl::SymbolTable) }
     def fill_symtab_for_sw_write(effective_xlen, ast)
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
@@ -561,7 +565,7 @@ module Udb
       symtab
     end
 
-    sig { params(effective_xlen: T.nilable(Integer), ast: Idl::AstNode).returns(Idl::SymbolTable) }
+    sig { params(effective_xlen: T.nilable(Integer), ast: T.nilable(Idl::AstNode)).returns(Idl::SymbolTable) }
     def fill_symtab_for_type(effective_xlen, ast)
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
@@ -597,10 +601,12 @@ module Udb
       symtab.add("__expected_return_type", Idl::Type.new(:bits, width: max_width))
 
       # XLEN at reset is always mxlen
-      symtab.add(
-        "__effective_xlen",
-        Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), cfg_arch.mxlen)
-      )
+      unless cfg_arch.mxlen.nil?
+        symtab.add(
+          "__effective_xlen",
+          Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), cfg_arch.mxlen)
+        )
+      end
 
       symtab
     end
@@ -711,7 +717,27 @@ module Udb
     # @return [Integer] Number of bits in the field
     sig { override.params(effective_xlen: T.nilable(Integer)).returns(Integer) }
     def width(effective_xlen)
-      T.must(location(effective_xlen).size)
+      loc =
+        if @data.key?("location")
+          @data.fetch("location")
+        else
+          if effective_xlen.nil?
+            # just pick one. they better be the same
+            @data.fetch("location_rv32")
+          else
+            @data.fetch("location_rv#{effective_xlen}")
+          end
+        end
+      if loc.is_a?(Integer)
+        return 1
+      else
+        raise "Unexpected location field" unless loc.is_a?(String)
+
+        e, s = loc.split("-").map(&:to_i)
+        raise "Invalid location" if T.must(s) > T.must(e)
+
+        T.must((s..e).size)
+      end
     end
 
     sig { returns(Integer) }

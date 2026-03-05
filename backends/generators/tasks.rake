@@ -66,7 +66,7 @@ namespace :gen do
 
     # Run the Go generator script
     # Note: The script uses --output not --output-dir
-    sh "/opt/venv/bin/python3 #{$root}/backends/generators/Go/go_generator.py --inst-dir=#{inst_dir} --csr-dir=#{csr_dir} --output=#{output_dir}inst.go"
+    sh "uv run #{$root}/backends/generators/Go/go_generator.py --inst-dir=#{inst_dir} --csr-dir=#{csr_dir} --output=#{output_dir}inst.go"
   end
 
   desc <<~DESC
@@ -92,7 +92,7 @@ namespace :gen do
     ext_dir = cfg_arch.path / "ext"
 
     with_resolved_exception_codes(cfg_arch) do |resolved_codes|
-      sh "/opt/venv/bin/python3 #{$root}/backends/generators/c_header/generate_encoding.py " \
+      sh "uv run #{$root}/backends/generators/c_header/generate_encoding.py " \
          "--inst-dir=#{inst_dir} --csr-dir=#{csr_dir} --ext-dir=#{ext_dir} " \
          "--resolved-codes=#{resolved_codes} " \
          "--output=#{output_dir}encoding.out.h --include-all"
@@ -121,7 +121,7 @@ namespace :gen do
     ext_dir = cfg_arch.path / "ext"
 
     with_resolved_exception_codes(cfg_arch) do |resolved_codes|
-      sh "/opt/venv/bin/python3 #{$root}/backends/generators/sverilog/sverilog_generator.py " \
+      sh "uv run #{$root}/backends/generators/sverilog/sverilog_generator.py " \
          "--inst-dir=#{inst_dir} --csr-dir=#{csr_dir} --ext-dir=#{ext_dir} " \
          "--resolved-codes=#{resolved_codes} " \
          "--output=#{output_dir}riscv_decode_package.svh --include-all"

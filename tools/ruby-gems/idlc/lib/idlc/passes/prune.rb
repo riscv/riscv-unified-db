@@ -1,7 +1,7 @@
-# typed: false
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
+# typed: false
 # frozen_string_literal: true
 
 # This file contains AST functions that prune out unreachable paths given
@@ -11,27 +11,31 @@
 
 require_relative "../ast"
 
-def create_int_literal(value)
-  str = value <= 512 ? value.to_s : "0x#{value.to_s(16)}"
+def create_int_literal(value, forced_type: nil)
+  width = forced_type ? forced_type.width : value.bit_length
+  raise "pruning error: attempting to prune an integer with unknown width" unless width.is_a?(Integer)
+  width = 1 if width == 0
+  v = value <= 512 ? value.to_s : "h#{value.to_s(16)}"
+  str = "#{width}'#{v}"
   Idl::IntLiteralAst.new(str, 0...str.size, str)
 end
 
 def create_bool_literal(value)
   if value
-    Idl::IdAst.new("true", 0..4, "true")
+    Idl::TrueExpressionAst.new("true", 0..4)
   else
-    Idl::IdAst.new("false", 0..5, "false")
+    Idl::FalseExpressionAst.new("false", 0..5)
   end
 end
 
-def create_literal(symtab, value, type)
+def create_literal(symtab, value, type, forced_type: nil)
   case type.kind
   when :enum_ref
     member_name = type.enum_class.element_names[type.enum_class.element_values.index(value)]
     str = "#{type.enum_class.name}::#{member_name}"
     Idl::EnumRefAst.new(str, 0...str.size, type.enum_class.name, member_name)
   when :bits
-    create_int_literal(value)
+    create_int_literal(value, forced_type:)
   when :boolean
     create_bool_literal(value)
   else
@@ -42,8 +46,11 @@ end
 module Idl
   # set up a default
   class AstNode
-    def prune(symtab)
-      new_children = children.map { |child| child.prune(symtab) }
+    # forced_type, when not nil, is the type that the pruned result must be
+    # if is used when pruning expressions to ensure that the prune doesn't change
+    # bit width just because a value is known and would fit in something smaller
+    def prune(symtab, forced_type: nil)
+      new_children = children.map { |child| child.prune(symtab, forced_type:) }
 
       new_node = dup
       new_node.instance_variable_set(:@children, new_children)
@@ -66,7 +73,7 @@ module Idl
     end
   end
   class VariableAssignmentAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       new_ast = VariableAssignmentAst.new(input, interval, lhs.dup, rhs.prune(symtab))
       new_ast.execute_unknown(symtab)
       new_ast
@@ -79,10 +86,21 @@ module Idl
     end
   end
   class FunctionCallExpressionAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       value_result = value_try do
         v = value(symtab)
-        return create_literal(symtab, v, type(symtab))
+        if type(symtab).kind == :bits
+          # can only prune if the bit width of the integer is known
+          if type(symtab).width == :unknown
+            value_error "Unknown width"
+          end
+        elsif type(symtab).kind == :struct
+          value_error <<~MSG
+            Literal struct values can't be pruned since a struct can't be initialized with a single expression.
+            This would require syntax like { .a = FOO, .b = BAR }
+          MSG
+        end
+        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         FunctionCallExpressionAst.new(input, interval, name, targs.map { |t| t.prune(symtab) }, args.map { |a| a.prune(symtab) })
@@ -90,7 +108,7 @@ module Idl
     end
   end
   class VariableDeclarationWithInitializationAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       add_symbol(symtab)
 
       # do we want to remove a constant? If so, need to add a prune for IdAst that
@@ -115,7 +133,7 @@ module Idl
     end
   end
   class ForLoopAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       symtab.push(self)
       symtab.add(init.lhs.name, Var.new(init.lhs.name, init.lhs_type(symtab)))
 
@@ -138,7 +156,7 @@ module Idl
     end
   end
   class FunctionDefAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       pruned_body =
         unless builtin? || generated?
           apply_template_and_arg_syms(symtab)
@@ -157,8 +175,20 @@ module Idl
       )
     end
   end
+  class ParenExpressionAst
+    def prune(symtab, forced_type: nil)
+      e = expression.prune(symtab, forced_type:)
+      if e.is_a?(ParenExpressionAst)
+        e
+      elsif e.is_a?(IntLiteralAst) || e.is_a?(TrueExpressionAst) || e.is_a?(FalseExpressionAst) || e.is_a?(IdAst)
+        e
+      else
+        ParenExpressionAst.new(input, interval, e)
+      end
+    end
+  end
   class FunctionBodyAst < AstNode
-    def prune(symtab, args_already_applied: false)
+    def prune(symtab, forced_type: nil, args_already_applied: false)
       symtab.push(self)
 
       begin
@@ -219,7 +249,7 @@ module Idl
     end
   end
   class StatementAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       pruned_action = action.prune(symtab)
 
       new_stmt = StatementAst.new(input, interval, pruned_action)
@@ -236,10 +266,16 @@ module Idl
   end
   class BinaryExpressionAst < AstNode
     # @!macro prune
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       value_try do
         val = value(symtab)
-        return create_literal(symtab, val, type(symtab))
+        if val.is_a?(Integer)
+          # can only prune if the bit width of the integer is known
+          if type(symtab).width == :unknown
+            value_error "Unknown width"
+          end
+        end
+        return create_literal(symtab, val, type(symtab), forced_type: forced_type || type(symtab))
       end
       # fall through
 
@@ -255,6 +291,7 @@ module Idl
       end
 
       if op == "&&"
+        raise "pruning error" unless forced_type.nil? || forced_type.kind == :boolean
         if !lhs_value.nil? && !rhs_value.nil?
           create_bool_literal(lhs_value && rhs_value)
         elsif lhs_value == true
@@ -267,6 +304,7 @@ module Idl
           BinaryExpressionAst.new(input, interval, lhs.prune(symtab), @op, rhs.prune(symtab))
         end
       elsif op == "||"
+        raise "pruning error" unless forced_type.nil? || forced_type.kind == :boolean
         if !lhs_value.nil? && !rhs_value.nil?
           create_bool_literal(lhs_value || rhs_value)
         elsif lhs_value == true || rhs_value == true
@@ -279,21 +317,20 @@ module Idl
           BinaryExpressionAst.new(input, interval, lhs.prune(symtab), @op, rhs.prune(symtab))
         end
       elsif op == "&"
-        if lhs_value == 0
-          # 0 & anything == 0
-          create_literal(symtab, 0, type(symtab))
-        elsif (rhs.type(symtab).width != :unknown) && lhs_value == ((1 << rhs.type(symtab).width) - 1)
+        if lhs_value == 0 && type(symtab).width != :unknown
+          create_literal(symtab, 0, forced_type: forced_type || type(symtab))
+        elsif (rhs.type(symtab).width != :unknown) && lhs_value == ((1 << rhs.type(symtab).width) - 1) && type(symtab).width != :unknown
           # rhs idenntity
-          rhs.prune(symtab)
-        elsif rhs_value == 0
+          rhs.prune(symtab, forced_type:)
+        elsif rhs_value == 0 && type(symtab).width != :unknown
           # anything & 0 == 0
-          create_literal(symtab, 0, type(symtab))
-        elsif (lhs.type(symtab).width != :unknown) && rhs_value == ((1 << lhs.type(symtab).width) - 1)
+          create_literal(symtab, 0, forced_type: forced_type || type(symtab))
+        elsif (lhs.type(symtab).width != :unknown) && rhs_value == ((1 << lhs.type(symtab).width) - 1) && type(symtab).width != :unknown
           # lhs identity
-          lhs.prune(symtab)
+          lhs.prune(symtab, forced_type:)
         else
           # neither lhs nor rhs were prunable
-          BinaryExpressionAst.new(input, interval, lhs.prune(symtab), @op, rhs.prune(symtab))
+          BinaryExpressionAst.new(input, interval, lhs.prune(symtab, forced_type:), @op, rhs.prune(symtab, forced_type:))
         end
       elsif op == "|"
         rhs_type = rhs.type(symtab)
@@ -301,19 +338,19 @@ module Idl
 
         if lhs_value == 0
           # rhs idenntity
-          rhs.prune(symtab)
-        elsif rhs_type.width != :unknown && lhs_value == ((1 << rhs.type(symtab).width) - 1)
+          rhs.prune(symtab, forced_type:)
+        elsif rhs_type.width != :unknown && lhs_value == ((1 << rhs.type(symtab).width) - 1) && type(symtab).width != :unknown
           # ~0 | anything == ~0
-          create_literal(symtab, lhs_value, type(symtab))
-        elsif rhs_value == 0
+          create_literal(symtab, lhs_value, forced_type: forced_type || type(symtab))
+        elsif rhs_value == 0 && type(symtab).width != :unknown
           # lhs identity
-          lhs.prune(symtab)
-        elsif lhs_type.width != :unknown && rhs_value == ((1 << lhs.type(symtab).width) - 1)
+          lhs.prune(symtab, forced_type:)
+        elsif lhs_type.width != :unknown && rhs_value == ((1 << lhs.type(symtab).width) - 1) && type(symtab).width != :unknown
           # anything | ~0 == ~0
-          create_literal(symtab, rhs_value, type(symtab))
+          create_literal(symtab, rhs_value, forced_type: forced_type || type(symtab))
         else
           # neither lhs nor rhs were prunable
-          BinaryExpressionAst.new(input, interval, lhs.prune(symtab), @op, rhs.prune(symtab))
+          BinaryExpressionAst.new(input, interval, lhs.prune(symtab, forced_type:), @op, rhs.prune(symtab, forced_type:))
         end
       elsif op == "=="
         if !lhs_value.nil? && !rhs_value.nil?
@@ -328,7 +365,7 @@ module Idl
   end
 
   class IfBodyAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       pruned_stmts = []
       stmts.each do |s|
         pruned_stmts << s.prune(symtab)
@@ -340,7 +377,7 @@ module Idl
   end
 
   class ElseIfAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       ElseIfAst.new(
         input, interval,
         body.interval,
@@ -352,7 +389,7 @@ module Idl
 
   class IfAst < AstNode
     # @!macro prune
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       value_result = value_try do
         if if_cond.value(symtab)
           return if_body.prune(symtab)
@@ -410,7 +447,7 @@ module Idl
   end
 
   class ConditionalReturnStatementAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       value_result = value_try do
         if condition.value(symtab)
           return return_expression.prune(symtab)
@@ -425,7 +462,7 @@ module Idl
   end
 
   class ConditionalStatementAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       value_result = value_try do
         if condition.value(symtab)
           pruned_action = action.prune(symtab)
@@ -452,13 +489,79 @@ module Idl
     end
   end
 
+  class ConcatenationExpressionAst
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        return create_int_literal(v, forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        c = ConcatenationExpressionAst.new(
+          input, interval, @children.map { |c| c.prune(symtab) }
+        )
+        if forced_type
+          if forced_type.width < type(symtab).width
+            c = AryRangeAccessAst.new(
+              input, interval, c, create_int_literal(forced_type.width - 1), create_int_literal(0)
+            )
+          elsif forced_type.width > type(symtab).width
+            extra = forced_type.width - type(symtab).width
+            mock_type = Struct.new(:width)
+            c = ConcatenationExpressionAst.new(
+              input, interval, [create_int_literal(0, forced_type: mock_type.new(extra))] + @children.map { |c| c.prune(symtab) }
+            )
+          end
+        end
+        c
+      end
+    end
+  end
+
+  class ReplicationExpressionAst
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        return create_int_literal(v, forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        c = ReplicationExpressionAst.new(input, interval, n.prune(symtab), v.prune(symtab))
+        if forced_type
+          if forced_type.width < type(symtab).width
+            c = AryRangeAccessAst.new(
+              input, interval, c, create_int_literal(forced_type.width - 1), create_int_literal(0)
+            )
+          elsif forced_type.width > type(symtab).width
+            extra = forced_type.width - type(symtab).width
+            mock_type = Struct.new(:width)
+            c = ConcatenationExpressionAst.new(
+              input, interval, [create_int_literal(0, forced_type: mock_type.new(extra))] + @children.map { |c| c.prune(symtab) }
+            )
+          end
+        end
+        c
+      end
+    end
+  end
+
+  class IntLiteralAst
+    def prune(symtab, forced_type: nil)
+      if forced_type
+        raise "pruning error: attempt to force bitwidth when width is unknown" if forced_type.width.nil? || forced_type.width == :unknown
+        s = "#{forced_type.width}'d#{value(symtab)}"
+        IntLiteralAst.new(s, 0...s.size, s)
+      else
+        dup
+      end
+    end
+  end
+
   class TernaryOperatorExpressionAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       value_result = value_try do
         if condition.value(symtab)
-          return true_expression.prune(symtab)
+          return true_expression.prune(symtab, forced_type: forced_type || type(symtab))
         else
-          return false_expression.prune(symtab)
+          return false_expression.prune(symtab, forced_type: forced_type || type(symtab))
         end
       end
       value_else(value_result) do
@@ -473,16 +576,19 @@ module Idl
   end
 
   class CsrFieldAssignmentAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       CsrFieldAssignmentAst.new(input, interval, csr_field.dup, write_value.prune(symtab))
     end
   end
 
   class CsrFieldReadExpressionAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       value_result = value_try do
         v = value(symtab)
-        return create_int_literal(v)
+        if type(symtab).width == :unknown
+          value_error "unknown width"
+        end
+        return create_int_literal(v, forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         CsrFieldReadExpressionAst.new(input, interval, @csr.dup, @field_name)
@@ -491,10 +597,13 @@ module Idl
   end
 
   class CsrReadExpressionAst < AstNode
-    def prune(symtab)
+    def prune(symtab, forced_type: nil)
       value_result = value_try do
         v = value(symtab)
-        return create_int_literal(v)
+        if type(symtab).width == :unknown
+          value_error "unknown width"
+        end
+        return create_int_literal(v, forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         CsrReadExpressionAst.new(input, interval, @csr_name)
@@ -503,8 +612,8 @@ module Idl
   end
 
   class BitsCastAst < AstNode
-    def prune(symtab)
-      p = expr.prune(symtab)
+    def prune(symtab, forced_type: nil)
+      p = expr.prune(symtab, forced_type:)
       if p.type(symtab).kind == :bits
         return p
       else

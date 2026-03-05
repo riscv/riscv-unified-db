@@ -5,5 +5,24 @@
 # Please instead update this file by running `bin/tapioca gem base64`.
 
 
-# THIS IS AN EMPTY RBI FILE.
-# see https://github.com/Shopify/tapioca#manually-requiring-parts-of-a-gem
+module Base64
+  private
+
+  def decode64(str); end
+  def encode64(bin); end
+  def strict_decode64(str); end
+  def strict_encode64(bin); end
+  def urlsafe_decode64(str); end
+  def urlsafe_encode64(bin, padding: T.unsafe(nil)); end
+
+  class << self
+    def decode64(str); end
+    def encode64(bin); end
+    def strict_decode64(str); end
+    def strict_encode64(bin); end
+    def urlsafe_decode64(str); end
+    def urlsafe_encode64(bin, padding: T.unsafe(nil)); end
+  end
+end
+
+Base64::VERSION = T.let(T.unsafe(nil), String)

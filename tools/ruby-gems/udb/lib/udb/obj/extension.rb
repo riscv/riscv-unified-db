@@ -107,31 +107,7 @@ module Udb
     #          excluding those required because of a requirement of extension
     sig { returns(T::Array[Parameter]) }
     def params
-      @params ||=
-        begin
-          pb =
-            Udb.create_progressbar(
-              "Finding params for #{name} [:bar] :current/:total",
-              total: cfg_arch.params.size,
-              clear: true
-            )
-          cfg_arch.params.select do |p|
-            pb.advance
-            if p.defined_by_condition.mentions?(self)
-              param_defined = p.defined_by_condition
-              ext_implemented = to_condition
-              preconditions_met = requirements_condition
-
-              # inst is defined transitively by self if:
-              (
-                (-param_defined & ext_implemented) # it must be defined when preconditions are met, and
-              ).unsatisfiable? && \
-              (
-                (-param_defined & preconditions_met) # it may not be defined when only self's requirements are met
-              ).satisfiable?
-            end
-          end
-        end
+      @params ||= all_params_that_must_be_implemented - implied_params
     end
 
     class ConditionallyApplicableParameter < T::Struct
@@ -178,7 +154,7 @@ module Udb
             param_defined = p.defined_by_condition
             preconditions_met = requirements_condition
 
-            (-param_defined & preconditions_met).unsatisfiable?
+            (-param_defined & preconditions_met).unsatisfiable_by_arch?(cfg_arch)
           end
         end
     end
@@ -186,7 +162,21 @@ module Udb
     # @return List of parameters that must be defined if some version of this extension is defined
     sig { returns(T::Array[Parameter]) }
     def all_params_that_must_be_implemented
-      @all_params_that_must_be_implemented = params + implied_params
+      @all_params_that_must_be_implemented ||=
+        begin
+          pb =
+            Udb.create_progressbar(
+              "Finding implied params for #{name} [:bar] :current/:total",
+              total: cfg_arch.params.size,
+              clear: true
+            )
+          cfg_arch.params.select do |p|
+            pb.advance
+            param_defined = p.defined_by_condition
+
+            (-param_defined & to_condition).unsatisfiable_by_arch?(cfg_arch)
+          end
+        end
     end
 
     # returns a condition representing *any* version of this extension being implemented
@@ -356,6 +346,35 @@ module Udb
     sig { returns(T::Array[Csr]) }
     def csrs_that_must_be_implemented
       @csrs_that_must_be_implemented ||= csrs + implied_csrs
+    end
+
+    # @return the list of MMRs implemented by *any version* of this extension (may be empty)
+    sig { returns(T::Array[Mmr]) }
+    def mmrs
+      @mmrs ||=
+        begin
+          pb =
+            Udb.create_progressbar(
+              "Finding mmrs for #{name} [:bar] :current/:total",
+              total: cfg_arch.mmrs.size,
+              clear: true
+            )
+          cfg_arch.mmrs.select do |mmr|
+            pb.advance
+            mmr_defined = mmr.defined_by_condition
+            next unless mmr_defined.mentions?(self)
+            requirement_met = to_condition
+            preconditions_met = requirements_condition
+
+            # mmr is defined exclusively by self if:
+            (
+              (-mmr_defined & requirement_met) # it must be defined when self is met, and
+            ).unsatisfiable? &
+            (
+              (-mmr_defined & preconditions_met)  # it may not be defined when only self's requirements are met
+            ).satisfiable?
+          end
+        end
     end
 
     # return the set of reachable functions from any of this extensions's CSRs or instructions in the given evaluation context
@@ -648,7 +667,7 @@ module Udb
     def params
       @params ||=
         ext.params.select do |param|
-          (param.defined_by_condition & to_condition).satisfiable?
+          (param.defined_by_condition & to_condition).satisfiable_by_cfg_arch?(@arch)
         end
     end
 
@@ -657,9 +676,7 @@ module Udb
     sig { returns(T::Array[Instruction]) }
     def directly_defined_instructions
       @instructions ||=
-        ext.instructions.select do |inst|
-          (inst.defined_by_condition & to_condition).satisfiable?
-        end
+        all_instructions_that_must_be_implemented - implied_instructions
     end
 
     # @api private
@@ -681,9 +698,7 @@ module Udb
           @arch.instructions.select do |i|
             pb.advance
 
-            next if directly_defined_instructions_set.include?(i)
-
-            (-i.defined_by_condition & to_condition).unsatisfiable?
+            (-i.defined_by_condition & requirements_condition).unsatisfiable_by_arch?(@arch)
           end
         end
     end
@@ -694,7 +709,19 @@ module Udb
     sig { returns(T::Array[Instruction]) }
     def all_instructions_that_must_be_implemented
       @all_instructions_that_must_be_implemented ||=
-        directly_defined_instructions + implied_instructions
+        begin
+          pb =
+            Udb.create_progressbar(
+              "Finding implied instructions for #{self} [:bar] :current/:total",
+              total: @arch.instructions.size,
+              clear: true
+            )
+          @arch.instructions.select do |i|
+            pb.advance
+
+            (-i.defined_by_condition & to_condition).unsatisfiable_by_arch?(@arch)
+          end
+        end
     end
 
     sig { returns(T::Set[Instruction]) }
@@ -706,7 +733,7 @@ module Udb
     def csrs
       @csrs ||=
         ext.csrs.select do |csr|
-          (csr.defined_by_condition & to_condition).satisfiable?
+          (csr.defined_by_condition & to_condition).satisfiable_by_cfg_arch?(@arch)
         end
     end
 
@@ -722,9 +749,7 @@ module Udb
             )
           @arch.csrs.select do |csr|
             pb.advance
-            if csr.defined_by_condition.mentions?(self, expand: true)
-              (-csr.defined_by_condition & requirements_condition).unsatisfiable?
-            end
+            (-csr.defined_by_condition & requirements_condition).satisfiable_by_cfg_arch?(@arch)
           end
         end
     end
@@ -982,7 +1007,7 @@ module Udb
                 node
               end
             end
-            !ctree.replace_terms(cb).satisfiable?
+            !ctree.replace_terms(cb).satisfiable?(@arch)
           end
 
           next if unconditional_terms.empty?

@@ -33,27 +33,8 @@
       "$ref": "schema_defs.json#/$defs/condition"
     },
     "schema": {
-      "oneOf": [
-        {
-          "type": "object",
-          "required": ["rv32", "rv64"],
-          "additionalProperties": false,
-          "properties": {
-            "rv32": {
-              "$ref": "json-schema-draft-07.json#",
-              "additionalProperties": false
-            },
-            "rv64": {
-              "$ref": "json-schema-draft-07.json#",
-              "additionalProperties": false
-            }
-          }
-        },
-        {
-          "$ref": "json-schema-draft-07.json#",
-          "additionalProperties": false
-        }
-      ]
+      "$ref": "json-schema-draft-07.json#",
+      "additionalProperties": false
     },
     "requirements": {
       "$ref": "schema_defs.json#/$defs/condition"

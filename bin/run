@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+help() {
+  echo "Run a command within the UDB development container"
+  echo ""
+  echo "Usage: run [OPTION] COMMAND [COMMAND_OPTIONS]"
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h: Print help"
+  echo ""
+  echo "Examples"
+  echo ""
+  echo "  run ruby --version     # ruby 3.4.8 (2025-12-17 revision 995b59f666) +YJIT +PRISM [x86_64-linux]"
+  echo "  run node --version     # v24.13.1"
+}
+
+while getopts ":h" opt; do # Go through the options
+  case $opt in
+    # help
+    h )
+      help
+      exit 0 # Exit correctly
+    ;;
+    # Invalid option
+    ? )
+        echo "[ERROR]: Invalid option: -${OPTARG}"
+        help
+        exit 1 # Exit with error
+    ;;
+  esac
+done
+shift $((OPTIND-1))
+
+if [ $# -eq 0 ]; then
+  help
+  exit 1
+fi
+
+ROOT=$(dirname $(realpath ${BASH_SOURCE[0]}))
+source $ROOT/setup
+
+$RUN "$@"

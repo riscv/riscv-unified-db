@@ -32,8 +32,8 @@ access:
   vu: always
 data_independent_timing: true
 pseudoinstructions:
-  - when: (xs2 == xs1)
-    to: fabs.s
+  - when: (fs2 == fs1)
+    to: fabs.s fd,fs1
 operation(): |
   check_f_ok($encoding);
 
