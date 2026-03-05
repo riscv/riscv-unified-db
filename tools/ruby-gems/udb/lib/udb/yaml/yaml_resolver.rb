@@ -377,7 +377,7 @@ module Udb
           targets.each do |target|
             next unless target.is_a?(String) && target.start_with?("#")
 
-            ref_path_str = target.split("#", 2)[1]
+            ref_path_str = T.must(target.split("#", 2)).fetch(1)
             ref_path = ref_path_str.split("/").drop(1)
             parent_obj = T.unsafe(self).dig(doc_root, *ref_path)
             next if parent_obj.nil? || !parent_obj.is_a?(Hash)
