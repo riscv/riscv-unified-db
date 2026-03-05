@@ -198,6 +198,9 @@ module Udb
     def default_gen_path; end
 
     sig { returns(::Pathname) }
+    def default_schemas_path; end
+
+    sig { returns(::Pathname) }
     def default_std_isa_path; end
 
     sig { void }
@@ -215,7 +218,7 @@ module Udb
     sig { returns(T.any(::Logger, ::TTY::Logger)) }
     def logger; end
 
-    sig { returns(::Pathname) }
+    sig { returns(T.nilable(::Pathname)) }
     def repo_root; end
 
     sig { params(logger: T.any(::Logger, ::TTY::Logger)).returns(T.any(::Logger, ::TTY::Logger)) }
@@ -228,7 +231,7 @@ module Udb
 
     private
 
-    sig { params(from_dir: ::Pathname).returns(::Pathname) }
+    sig { params(from_dir: ::Pathname).returns(T.nilable(::Pathname)) }
     def find_udb_root(from_dir); end
   end
 end
@@ -4003,7 +4006,7 @@ Udb::RequirementSpec::REQUIREMENT_REGEX = T.let(T.unsafe(nil), Regexp)
 class Udb::Resolver
   sig do
     params(
-      repo_root: ::Pathname,
+      repo_root: T.nilable(::Pathname),
       schemas_path_override: T.nilable(::Pathname),
       cfgs_path_override: T.nilable(::Pathname),
       gen_path_override: T.nilable(::Pathname),
