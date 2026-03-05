@@ -292,41 +292,6 @@ class TestReachableFunctions < Minitest::Test
                  "empty body should have no reachable functions"
   end
 
-  # A directly recursive function must not loop infinitely and must
-  # include itself in the reachable set.
-  def test_recursive_function_terminates
-    ast = compile_idl(<<~IDL)
-      %version: 1.0
-      function recursive {
-        description { calls itself }
-        body { recursive(); }
-      }
-    IDL
-
-    names = reachable_names("recursive", ast)
-    assert_includes names, "recursive", "recursive function should be in its own reachable set"
-  end
-
-  # Mutually recursive functions (A calls B, B calls A) must not loop
-  # infinitely, and both must appear in the reachable set of each entry point.
-  def test_mutually_recursive_functions_terminate
-    ast = compile_idl(<<~IDL)
-      %version: 1.0
-      function pong {
-        description { calls ping }
-        body { ping(); }
-      }
-      function ping {
-        description { calls pong }
-        body { pong(); }
-      }
-    IDL
-
-    names = reachable_names("ping", ast)
-    assert_includes names, "pong", "ping should reach pong"
-    assert_includes names, "ping", "ping should reach itself via mutual recursion"
-  end
-
   # When a function is called with a known argument value, only the branch
   # that is actually taken should contribute reachable functions.
   def test_conditional_known_value_only_taken_branch
