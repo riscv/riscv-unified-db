@@ -2554,8 +2554,13 @@ class Udb::Instruction < ::Udb::TopLevelDatabaseObject
   def reachable_exceptions(effective_xlen); end
   def reachable_exceptions_str(effective_xlen = T.unsafe(nil)); end
 
-  sig { params(effective_xlen: ::Integer).returns(T::Array[::Idl::FunctionDefAst]) }
-  def reachable_functions(effective_xlen); end
+  sig do
+    params(
+      effective_xlen: ::Integer,
+      cache: T::Hash[T.untyped, T.untyped]
+    ).returns(T::Array[::Idl::FunctionDefAst])
+  end
+  def reachable_functions(effective_xlen, cache = T.unsafe(nil)); end
 
   def rv32?; end
   def rv64?; end
