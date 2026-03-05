@@ -5,2122 +5,844 @@
 # Please instead update this file by running `bin/tapioca gem highline`.
 
 
-# source://highline//lib/highline/terminal.rb#14
 class HighLine
   include ::HighLine::BuiltinStyles
   include ::HighLine::CustomErrors
   extend ::HighLine::BuiltinStyles::ClassMethods
   extend ::SingleForwardable
 
-  # source://highline//lib/highline.rb#101
   def initialize(input = T.unsafe(nil), output = T.unsafe(nil), wrap_at = T.unsafe(nil), page_at = T.unsafe(nil), indent_size = T.unsafe(nil), indent_level = T.unsafe(nil)); end
 
-  # source://highline//lib/highline.rb#192
   def agree(yes_or_no_question, character = T.unsafe(nil)); end
-
-  # source://highline//lib/highline.rb#216
   def ask(template_or_question, answer_type = T.unsafe(nil), &details); end
-
-  # source://highline//lib/highline.rb#244
   def choose(*items, &details); end
-
-  # source://highline//lib/highline.rb#320
   def color(string, *colors); end
-
-  # source://highline//lib/highline.rb#340
   def color_code(*colors); end
-
-  # source://highline//lib/highline.rb#620
   def get_response_character_mode(question); end
-
-  # source://highline//lib/highline.rb#610
   def get_response_getc_mode(question); end
-
-  # source://highline//lib/highline.rb#523
   def get_response_line_mode(question); end
-
-  # source://highline//lib/highline.rb#440
   def indent(increase = T.unsafe(nil), statement = T.unsafe(nil), multiline = T.unsafe(nil)); end
-
-  # source://highline//lib/highline.rb#157
   def indent_level; end
-
-  # source://highline//lib/highline.rb#157
   def indent_level=(_arg0); end
-
-  # source://highline//lib/highline.rb#154
   def indent_size; end
-
-  # source://highline//lib/highline.rb#154
   def indent_size=(_arg0); end
-
-  # source://highline//lib/highline.rb#428
   def indentation; end
-
-  # source://highline//lib/highline.rb#160
   def input; end
-
-  # source://highline//lib/highline.rb#170
   def key; end
-
-  # source://highline//lib/highline.rb#170
   def key=(_arg0); end
-
-  # source://highline//lib/highline.rb#357
   def list(items, mode = T.unsafe(nil), option = T.unsafe(nil)); end
-
-  # source://highline//lib/highline.rb#151
   def multi_indent; end
-
-  # source://highline//lib/highline.rb#151
   def multi_indent=(_arg0); end
-
-  # source://highline//lib/highline.rb#494
   def new_scope; end
-
-  # source://highline//lib/highline.rb#459
   def newline; end
-
-  # source://highline//lib/highline.rb#163
   def output; end
-
-  # source://highline//lib/highline.rb#467
   def output_cols; end
-
-  # source://highline//lib/highline.rb#478
   def output_rows; end
-
-  # source://highline//lib/highline.rb#148
   def page_at; end
-
-  # source://highline//lib/highline.rb#421
   def page_at=(setting); end
-
-  # source://highline//lib/highline.rb#487
   def puts(*args); end
-
-  # source://highline//lib/highline.rb#392
   def render_and_ident_statement(statement); end
-
-  # source://highline//lib/highline.rb#401
   def render_statement(statement); end
-
-  # source://highline//lib/highline.rb#132
   def reset_use_color; end
-
-  # source://highline//lib/highline.rb#372
   def say(statement); end
-
-  # source://highline//lib/highline.rb#284
   def shell_style_lambda(menu); end
-
-  # source://highline//lib/highline.rb#176
   def terminal; end
-
-  # source://highline//lib/highline.rb#137
   def track_eof; end
-
-  # source://highline//lib/highline.rb#137
   def track_eof=(_arg0); end
-
-  # source://highline//lib/highline.rb#140
   def track_eof?; end
-
-  # source://highline//lib/highline.rb#347
   def uncolor(string); end
-
-  # source://highline//lib/highline.rb#124
   def use_color; end
-
-  # source://highline//lib/highline.rb#124
   def use_color=(_arg0); end
-
-  # source://highline//lib/highline.rb#127
   def use_color?; end
-
-  # source://highline//lib/highline.rb#145
   def wrap_at; end
-
-  # source://highline//lib/highline.rb#411
   def wrap_at=(setting); end
 
   private
 
-  # source://highline//lib/highline.rb#641
   def actual_length(text); end
-
-  # source://highline//lib/highline.rb#503
   def confirm(question); end
-
-  # source://highline//lib/highline.rb#652
   def default_use_color; end
-
-  # source://highline//lib/highline.rb#633
   def erase_current_line; end
-
-  # source://highline//lib/highline.rb#540
   def get_line(question); end
-
-  # source://highline//lib/highline.rb#544
   def get_line_raw_no_echo_mode(question); end
-
-  # source://highline//lib/highline.rb#588
   def ignore_arrow_key; end
-
-  # source://highline//lib/highline.rb#516
   def last_answer(answers); end
-
-  # source://highline//lib/highline.rb#599
   def line_overflow_for_question?(line, question); end
-
-  # source://highline//lib/highline.rb#603
   def output_erase_char; end
-
-  # source://highline//lib/highline.rb#594
   def say_last_char_or_echo_char(line, question); end
-
-  # source://highline//lib/highline.rb#579
   def say_new_line_or_overwrite(question); end
-
-  # source://highline//lib/highline.rb#512
   def unique_answers(list); end
 
   class << self
-    # source://highline//lib/highline/string_extensions.rb#7
     def String(s); end
-
-    # source://highline//lib/highline/style.rb#16
     def Style(*args); end
-
-    # source://highline//lib/highline.rb#48
     def agree(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#48
     def ask(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#48
     def choose(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#48
     def color(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#48
     def color_code(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#57
     def color_scheme; end
-
-    # source://highline//lib/highline.rb#57
     def color_scheme=(_arg0); end
-
-    # source://highline//lib/highline/string_extensions.rb#127
     def colorize_strings; end
-
-    # source://highline//lib/highline.rb#54
     def default_instance; end
-
-    # source://highline//lib/highline.rb#54
     def default_instance=(_arg0); end
-
-    # source://highline//lib/highline/style.rb#30
     def find_or_create_style(arg); end
-
-    # source://highline//lib/highline/style.rb#62
     def find_or_create_style_list(*args); end
-
-    # source://highline//lib/highline.rb#71
     def reset; end
-
-    # source://highline//lib/highline.rb#65
     def reset_color_scheme; end
-
-    # source://highline//lib/highline.rb#48
     def reset_use_color(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#48
     def say(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#82
     def supports_rgb_color?; end
-
-    # source://highline//lib/highline.rb#48
     def track_eof=(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#48
     def track_eof?(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#48
     def uncolor(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#48
     def use_color=(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#48
     def use_color?(*args, **_arg1, &block); end
-
-    # source://highline//lib/highline.rb#60
     def using_color_scheme?; end
   end
 end
 
-# source://highline//lib/highline/builtin_styles.rb#6
 module HighLine::BuiltinStyles
   mixes_in_class_methods ::HighLine::BuiltinStyles::ClassMethods
 
   class << self
-    # source://highline//lib/highline/builtin_styles.rb#9
     def included(base); end
   end
 end
 
-# source://highline//lib/highline/builtin_styles.rb#69
 HighLine::BuiltinStyles::BASIC_COLORS = T.let(T.unsafe(nil), Array)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BLACK = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::BLACK_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::BLINK = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::BLINK_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BLUE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::BLUE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::BOLD = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::BOLD_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_BLACK = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_BLACK_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_BLUE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_BLUE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_CYAN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_CYAN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_GRAY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_GRAY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_GREEN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_GREEN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_GREY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_GREY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_MAGENTA = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_MAGENTA_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_NONE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_NONE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_RED = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_RED_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_WHITE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_WHITE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::BRIGHT_YELLOW = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#77
 HighLine::BuiltinStyles::BRIGHT_YELLOW_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::CLEAR = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::CLEAR_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#85
 HighLine::BuiltinStyles::COLORS = T.let(T.unsafe(nil), Array)
-
-# source://highline//lib/highline/builtin_styles.rb#41
 HighLine::BuiltinStyles::COLOR_LIST = T.let(T.unsafe(nil), Hash)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::CONCEALED = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::CONCEALED_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::CYAN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::CYAN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
 
-# source://highline//lib/highline/builtin_styles.rb#96
 module HighLine::BuiltinStyles::ClassMethods
-  # source://highline//lib/highline/builtin_styles.rb#103
   def const_missing(name); end
 end
 
-# source://highline//lib/highline/builtin_styles.rb#98
 HighLine::BuiltinStyles::ClassMethods::RGB_COLOR_PATTERN = T.let(T.unsafe(nil), Regexp)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::DARK = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::DARK_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::ERASE_CHAR = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::ERASE_CHAR_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::ERASE_LINE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::ERASE_LINE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::GRAY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::GRAY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::GREEN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::GREEN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::GREY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::GREY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_BLACK = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_BLACK_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_BLUE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_BLUE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_CYAN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_CYAN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_GRAY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_GRAY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_GREEN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_GREEN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_GREY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_GREY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_MAGENTA = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_MAGENTA_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_NONE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_NONE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_RED = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_RED_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_WHITE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_WHITE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::LIGHT_YELLOW = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#81
 HighLine::BuiltinStyles::LIGHT_YELLOW_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::MAGENTA = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::MAGENTA_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::NONE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::NONE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BLACK = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BLACK_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BLUE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BLUE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_BLACK = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_BLACK_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_BLUE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_BLUE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_CYAN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_CYAN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_GRAY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_GRAY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_GREEN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_GREEN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_GREY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_GREY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_MAGENTA = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_MAGENTA_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_NONE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_NONE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_RED = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_RED_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_WHITE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_WHITE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_BRIGHT_YELLOW = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_BRIGHT_YELLOW_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_CYAN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_CYAN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_GRAY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_GRAY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_GREEN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_GREEN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_GREY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_GREY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_BLACK = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_BLACK_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_BLUE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_BLUE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_CYAN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_CYAN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_GRAY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_GRAY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_GREEN = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_GREEN_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_GREY = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_GREY_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_MAGENTA = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_MAGENTA_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_NONE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_NONE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_RED = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_RED_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_WHITE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_WHITE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_LIGHT_YELLOW = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_LIGHT_YELLOW_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_MAGENTA = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_MAGENTA_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_NONE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_NONE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_RED = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_RED_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_WHITE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_WHITE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#90
 HighLine::BuiltinStyles::ON_YELLOW = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#89
 HighLine::BuiltinStyles::ON_YELLOW_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::RED = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::RED_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::RESET = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::RESET_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::REVERSE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::REVERSE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#37
 HighLine::BuiltinStyles::STYLES = T.let(T.unsafe(nil), Array)
-
-# source://highline//lib/highline/builtin_styles.rb#14
 HighLine::BuiltinStyles::STYLE_LIST = T.let(T.unsafe(nil), Hash)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::UNDERLINE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::UNDERLINE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#31
 HighLine::BuiltinStyles::UNDERSCORE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#32
 HighLine::BuiltinStyles::UNDERSCORE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::WHITE = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::WHITE_STYLE = T.let(T.unsafe(nil), HighLine::Style)
-
-# source://highline//lib/highline/builtin_styles.rb#88
 HighLine::BuiltinStyles::YELLOW = T.let(T.unsafe(nil), String)
-
-# source://highline//lib/highline/builtin_styles.rb#65
 HighLine::BuiltinStyles::YELLOW_STYLE = T.let(T.unsafe(nil), HighLine::Style)
 
-# source://highline//lib/highline/color_scheme.rb#44
 class HighLine::ColorScheme
-  # source://highline//lib/highline/color_scheme.rb#52
   def initialize(h = T.unsafe(nil)); end
 
-  # source://highline//lib/highline/color_scheme.rb#76
   def [](color_tag); end
-
-  # source://highline//lib/highline/color_scheme.rb#96
   def []=(color_tag, constants); end
-
-  # source://highline//lib/highline/color_scheme.rb#82
   def definition(color_tag); end
-
-  # source://highline//lib/highline/color_scheme.rb#69
   def include?(color_tag); end
-
-  # source://highline//lib/highline/color_scheme.rb#89
   def keys; end
-
-  # source://highline//lib/highline/color_scheme.rb#60
   def load_from_hash(h); end
-
-  # source://highline//lib/highline/color_scheme.rb#105
   def to_hash; end
 
   private
 
-  # source://highline//lib/highline/color_scheme.rb#120
   def to_constant(v); end
-
-  # source://highline//lib/highline/color_scheme.rb#115
   def to_symbol(t); end
 end
 
-# source://highline//lib/highline/custom_errors.rb#5
 module HighLine::CustomErrors; end
 
-# source://highline//lib/highline/custom_errors.rb#7
 class HighLine::CustomErrors::ExplainableError < ::StandardError
-  # source://highline//lib/highline/custom_errors.rb#12
   def explanation_key; end
 end
 
-# source://highline//lib/highline/custom_errors.rb#50
 class HighLine::CustomErrors::NoAutoCompleteMatch < ::HighLine::CustomErrors::ExplainableError
-  # source://highline//lib/highline/custom_errors.rb#52
   def explanation_key; end
 end
 
-# source://highline//lib/highline/custom_errors.rb#42
 class HighLine::CustomErrors::NoConfirmationQuestionError < ::HighLine::CustomErrors::ExplainableError
-  # source://highline//lib/highline/custom_errors.rb#44
   def explanation_key; end
 end
 
-# source://highline//lib/highline/custom_errors.rb#34
 class HighLine::CustomErrors::NotInRangeQuestionError < ::HighLine::CustomErrors::ExplainableError
-  # source://highline//lib/highline/custom_errors.rb#36
   def explanation_key; end
 end
 
-# source://highline//lib/highline/custom_errors.rb#26
 class HighLine::CustomErrors::NotValidQuestionError < ::HighLine::CustomErrors::ExplainableError
-  # source://highline//lib/highline/custom_errors.rb#28
   def explanation_key; end
 end
 
-# source://highline//lib/highline/custom_errors.rb#18
 class HighLine::CustomErrors::QuestionError < ::HighLine::CustomErrors::ExplainableError
-  # source://highline//lib/highline/custom_errors.rb#20
   def explanation_key; end
 end
 
-# source://highline//lib/highline/list.rb#5
 class HighLine::List
-  # source://highline//lib/highline/list.rb#61
   def initialize(items, options = T.unsafe(nil)); end
 
-  # source://highline//lib/highline/list.rb#81
   def col_down; end
-
-  # source://highline//lib/highline/list.rb#53
   def col_down_mode; end
-
-  # source://highline//lib/highline/list.rb#14
   def cols; end
-
-  # source://highline//lib/highline/list.rb#104
   def cols=(cols); end
-
-  # source://highline//lib/highline/list.rb#10
   def items; end
-
-  # source://highline//lib/highline/list.rb#112
   def list; end
-
-  # source://highline//lib/highline/list.rb#148
   def row_join_str_size; end
-
-  # source://highline//lib/highline/list.rb#136
   def row_join_string; end
-
-  # source://highline//lib/highline/list.rb#142
   def row_join_string=(_arg0); end
-
-  # source://highline//lib/highline/list.rb#97
   def slice_by_cols; end
-
-  # source://highline//lib/highline/list.rb#90
   def slice_by_rows; end
-
-  # source://highline//lib/highline/list.rb#117
   def to_a; end
-
-  # source://highline//lib/highline/list.rb#129
   def to_s; end
-
-  # source://highline//lib/highline/list.rb#72
   def transpose; end
-
-  # source://highline//lib/highline/list.rb#32
   def transpose_mode; end
 
   private
 
-  # source://highline//lib/highline/list.rb#154
   def build; end
-
-  # source://highline//lib/highline/list.rb#161
   def items_sliced_by_cols; end
-
-  # source://highline//lib/highline/list.rb#165
   def items_sliced_by_rows; end
-
-  # source://highline//lib/highline/list.rb#169
   def row_count; end
-
-  # source://highline//lib/highline/list.rb#173
   def stringfy(row); end
 end
 
-# source://highline//lib/highline/list_renderer.rb#12
 class HighLine::ListRenderer
-  # source://highline//lib/highline/list_renderer.rb#62
   def initialize(items, mode = T.unsafe(nil), option = T.unsafe(nil), highline); end
 
-  # source://highline//lib/highline/list_renderer.rb#27
   def highline; end
-
-  # source://highline//lib/highline/list_renderer.rb#15
   def items; end
-
-  # source://highline//lib/highline/list_renderer.rb#19
   def mode; end
-
-  # source://highline//lib/highline/list_renderer.rb#24
   def option; end
-
-  # source://highline//lib/highline/list_renderer.rb#71
   def render; end
 
   private
 
-  # source://highline//lib/highline/list_renderer.rb#212
   def actual_length(text); end
-
-  # source://highline//lib/highline/list_renderer.rb#195
   def actual_lengths_for(line); end
-
-  # source://highline//lib/highline/list_renderer.rb#243
   def col_count; end
-
-  # source://highline//lib/highline/list_renderer.rb#238
   def col_count_calculate; end
-
-  # source://highline//lib/highline/list_renderer.rb#180
   def get_col_widths(lines); end
-
-  # source://highline//lib/highline/list_renderer.rb#185
   def get_row_widths(lines); end
-
-  # source://highline//lib/highline/list_renderer.rb#189
   def get_segment_widths(lines); end
-
-  # source://highline//lib/highline/list_renderer.rb#207
   def inside_line_size_limit?(widths); end
-
-  # source://highline//lib/highline/list_renderer.rb#216
   def items_max_length; end
-
-  # source://highline//lib/highline/list_renderer.rb#224
   def line_size_limit; end
-
-  # source://highline//lib/highline/list_renderer.rb#120
   def list_columns_across_mode; end
-
-  # source://highline//lib/highline/list_renderer.rb#124
   def list_columns_down_mode; end
-
-  # source://highline//lib/highline/list_renderer.rb#106
   def list_default_mode; end
-
-  # source://highline//lib/highline/list_renderer.rb#110
   def list_inline_mode; end
-
-  # source://highline//lib/highline/list_renderer.rb#148
   def list_uneven_columns_down_mode; end
-
-  # source://highline//lib/highline/list_renderer.rb#132
   def list_uneven_columns_mode(list = T.unsafe(nil)); end
-
-  # source://highline//lib/highline/list_renderer.rb#220
   def max_length(items); end
-
-  # source://highline//lib/highline/list_renderer.rb#253
   def pad_char; end
-
-  # source://highline//lib/highline/list_renderer.rb#153
   def pad_uneven_rows(list, widths); end
-
-  # source://highline//lib/highline/list_renderer.rb#92
   def render_list_items(items); end
-
-  # source://highline//lib/highline/list_renderer.rb#174
   def right_pad_field(field, width); end
-
-  # source://highline//lib/highline/list_renderer.rb#168
   def right_pad_row(row, widths); end
-
-  # source://highline//lib/highline/list_renderer.rb#247
   def right_padded_items; end
-
-  # source://highline//lib/highline/list_renderer.rb#257
   def row_count; end
-
-  # source://highline//lib/highline/list_renderer.rb#234
   def row_join_str_size; end
-
-  # source://highline//lib/highline/list_renderer.rb#228
   def row_join_string; end
-
-  # source://highline//lib/highline/list_renderer.rb#232
   def row_join_string=(_arg0); end
-
-  # source://highline//lib/highline/list_renderer.rb#164
   def row_to_s(row); end
-
-  # source://highline//lib/highline/list_renderer.rb#160
   def stringfy_list(list); end
-
-  # source://highline//lib/highline/list_renderer.rb#201
   def transpose(lines); end
 end
 
-# source://highline//lib/highline/menu/item.rb#4
 class HighLine::Menu < ::HighLine::Question
-  # source://highline//lib/highline/menu.rb#52
   def initialize; end
 
-  # source://highline//lib/highline/menu.rb#217
   def add_item(item); end
-
-  # source://highline//lib/highline/menu.rb#390
   def all_items; end
-
-  # source://highline//lib/highline/menu.rb#206
   def build_item(*args); end
-
-  # source://highline//lib/highline/menu.rb#191
   def choice(name, help = T.unsafe(nil), text = T.unsafe(nil), &action); end
-
-  # source://highline//lib/highline/menu.rb#237
   def choices(*names, &action); end
-
-  # source://highline//lib/highline/menu.rb#495
   def decorate_index(index); end
-
-  # source://highline//lib/highline/menu.rb#512
   def decorate_item(text, ix); end
-
-  # source://highline//lib/highline/menu.rb#418
   def find_item_from_selection(items, selection); end
-
-  # source://highline//lib/highline/menu.rb#116
   def flow; end
-
-  # source://highline//lib/highline/menu.rb#116
   def flow=(_arg0); end
-
-  # source://highline//lib/highline/menu.rb#457
   def gather_selected(highline_context, selections, details = T.unsafe(nil)); end
-
-  # source://highline//lib/highline/menu.rb#434
   def get_item_by_letter(items, selection); end
-
-  # source://highline//lib/highline/menu.rb#428
   def get_item_by_number(items, selection); end
-
-  # source://highline//lib/highline/menu.rb#127
   def header; end
-
-  # source://highline//lib/highline/menu.rb#127
   def header=(_arg0); end
-
-  # source://highline//lib/highline/menu.rb#317
   def help(topic, help); end
-
-  # source://highline//lib/highline/menu.rb#248
   def hidden(name, help = T.unsafe(nil), &action); end
-
-  # source://highline//lib/highline/menu.rb#92
   def index; end
-
-  # source://highline//lib/highline/menu.rb#269
   def index=(style); end
-
-  # source://highline//lib/highline/menu.rb#158
   def index_color; end
-
-  # source://highline//lib/highline/menu.rb#158
   def index_color=(_arg0); end
-
-  # source://highline//lib/highline/menu.rb#97
   def index_suffix; end
-
-  # source://highline//lib/highline/menu.rb#97
   def index_suffix=(_arg0); end
-
-  # source://highline//lib/highline/menu.rb#283
   def init_help; end
-
-  # source://highline//lib/highline/menu.rb#137
   def layout; end
-
-  # source://highline//lib/highline/menu.rb#350
   def layout=(new_layout); end
-
-  # source://highline//lib/highline/menu.rb#122
   def list_option; end
-
-  # source://highline//lib/highline/menu.rb#122
   def list_option=(_arg0); end
-
-  # source://highline//lib/highline/menu.rb#376
   def map_items_by_index; end
-
-  # source://highline//lib/highline/menu.rb#386
   def map_items_by_name; end
-
-  # source://highline//lib/highline/menu.rb#517
   def mark_for_decoration(text, ix); end
-
-  # source://highline//lib/highline/menu.rb#153
   def nil_on_handled; end
-
-  # source://highline//lib/highline/menu.rb#153
   def nil_on_handled=(_arg0); end
-
-  # source://highline//lib/highline/menu.rb#365
   def options; end
-
-  # source://highline//lib/highline/menu.rb#557
   def parse_list; end
-
-  # source://highline//lib/highline/menu.rb#132
   def prompt; end
-
-  # source://highline//lib/highline/menu.rb#132
   def prompt=(_arg0); end
-
-  # source://highline//lib/highline/menu.rb#406
   def select(highline_context, selection, details = T.unsafe(nil)); end
-
-  # source://highline//lib/highline/menu.rb#111
   def select_by; end
-
-  # source://highline//lib/highline/menu.rb#111
   def select_by=(_arg0); end
-
-  # source://highline//lib/highline/menu.rb#145
   def shell; end
-
-  # source://highline//lib/highline/menu.rb#145
   def shell=(_arg0); end
-
-  # source://highline//lib/highline/menu.rb#562
   def show_default_if_any; end
-
-  # source://highline//lib/highline/menu.rb#508
   def to_ary; end
-
-  # source://highline//lib/highline/menu.rb#535
   def to_s; end
-
-  # source://highline//lib/highline/menu.rb#572
   def update_responses; end
-
-  # source://highline//lib/highline/menu.rb#471
   def value_for_array_selections(items, selections, details); end
-
-  # source://highline//lib/highline/menu.rb#484
   def value_for_hash_selections(items, selections, details); end
-
-  # source://highline//lib/highline/menu.rb#444
   def value_for_selected_item(item, details); end
 
   class << self
-    # source://highline//lib/highline/menu.rb#34
     def index_color; end
-
-    # source://highline//lib/highline/menu.rb#26
     def index_color=(_arg0); end
   end
 end
 
-# source://highline//lib/highline/menu/item.rb#7
 class HighLine::Menu::Item
-  # source://highline//lib/highline/menu/item.rb#19
   def initialize(name, attributes); end
 
-  # source://highline//lib/highline/menu/item.rb#8
   def action; end
-
-  # source://highline//lib/highline/menu/item.rb#8
   def help; end
-
-  # source://highline//lib/highline/menu/item.rb#26
   def item_help; end
-
-  # source://highline//lib/highline/menu/item.rb#8
   def name; end
-
-  # source://highline//lib/highline/menu/item.rb#8
   def text; end
 end
 
-# source://highline//lib/highline/paginator.rb#5
 class HighLine::Paginator
-  # source://highline//lib/highline/paginator.rb#14
   def initialize(highline); end
 
-  # source://highline//lib/highline/paginator.rb#45
   def continue_paging?; end
-
-  # source://highline//lib/highline/paginator.rb#7
   def highline; end
-
-  # source://highline//lib/highline/paginator.rb#28
   def page_print(text); end
 end
 
-# source://highline//lib/highline/question/answer_converter.rb#6
 class HighLine::Question
   include ::HighLine::CustomErrors
 
-  # source://highline//lib/highline/question.rb#52
   def initialize(template, answer_type); end
 
-  # source://highline//lib/highline/question.rb#155
   def above; end
-
-  # source://highline//lib/highline/question.rb#155
   def above=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#81
   def answer; end
-
-  # source://highline//lib/highline/question.rb#81
   def answer=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#249
   def answer_or_default(answer_string); end
-
-  # source://highline//lib/highline/question.rb#84
   def answer_type; end
-
-  # source://highline//lib/highline/question.rb#84
   def answer_type=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#576
   def ask_on_error_msg; end
-
-  # source://highline//lib/highline/question.rb#155
   def below; end
-
-  # source://highline//lib/highline/question.rb#155
   def below=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#263
   def build_responses(message_source = T.unsafe(nil)); end
-
-  # source://highline//lib/highline/question.rb#282
   def build_responses_new_hash(message_source); end
-
-  # source://highline//lib/highline/question.rb#138
   def case; end
-
-  # source://highline//lib/highline/question.rb#138
   def case=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#327
   def change_case(answer_string); end
-
-  # source://highline//lib/highline/question.rb#96
   def character; end
-
-  # source://highline//lib/highline/question.rb#96
   def character=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#373
   def check_range; end
-
-  # source://highline//lib/highline/question.rb#380
   def choices_complete(answer_string); end
-
-  # source://highline//lib/highline/question.rb#86
   def completion; end
-
-  # source://highline//lib/highline/question.rb#86
   def completion=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#169
   def confirm; end
-
-  # source://highline//lib/highline/question.rb#169
   def confirm=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#553
   def confirm_question(highline); end
-
-  # source://highline//lib/highline/question.rb#368
   def convert; end
-
-  # source://highline//lib/highline/question.rb#140
   def default; end
-
-  # source://highline//lib/highline/question.rb#140
   def default=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#144
   def default_hint_show; end
-
-  # source://highline//lib/highline/question.rb#144
   def default_hint_show=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#272
   def default_responses_hash; end
-
-  # source://highline//lib/highline/question.rb#202
   def directory; end
-
-  # source://highline//lib/highline/question.rb#202
   def directory=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#117
   def echo; end
-
-  # source://highline//lib/highline/question.rb#117
   def echo=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#390
   def expected_range; end
-
-  # source://highline//lib/highline/question.rb#301
   def final_response(error); end
-
-  # source://highline//lib/highline/question.rb#297
   def final_responses; end
-
-  # source://highline//lib/highline/question.rb#406
   def first_answer; end
-
-  # source://highline//lib/highline/question.rb#196
   def first_answer=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#413
   def first_answer?; end
-
-  # source://highline//lib/highline/question.rb#471
   def format_answer(answer_string); end
-
-  # source://highline//lib/highline/question.rb#183
   def gather; end
-
-  # source://highline//lib/highline/question.rb#183
   def gather=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#595
   def get_echo_for_response(response); end
-
-  # source://highline//lib/highline/question.rb#525
   def get_response(highline); end
-
-  # source://highline//lib/highline/question.rb#545
   def get_response_or_default(highline); end
-
-  # source://highline//lib/highline/question.rb#207
   def glob; end
-
-  # source://highline//lib/highline/question.rb#207
   def glob=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#157
   def in; end
-
-  # source://highline//lib/highline/question.rb#157
   def in=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#423
   def in_range?; end
-
-  # source://highline//lib/highline/question.rb#102
   def limit; end
-
-  # source://highline//lib/highline/question.rb#102
   def limit=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#241
   def overwrite; end
-
-  # source://highline//lib/highline/question.rb#241
   def overwrite=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#127
   def readline; end
-
-  # source://highline//lib/highline/question.rb#127
   def readline=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#450
   def remove_whitespace(answer_string); end
-
-  # source://highline//lib/highline/question.rb#232
   def responses; end
-
-  # source://highline//lib/highline/question.rb#482
   def selection; end
-
-  # source://highline//lib/highline/question.rb#586
   def show_question(highline); end
-
-  # source://highline//lib/highline/question.rb#78
   def template; end
-
-  # source://highline//lib/highline/question.rb#78
   def template=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#495
   def to_s; end
-
-  # source://highline//lib/highline/question.rb#506
   def valid_answer?; end
-
-  # source://highline//lib/highline/question.rb#153
   def validate; end
-
-  # source://highline//lib/highline/question.rb#153
   def validate=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#189
   def verify_match; end
-
-  # source://highline//lib/highline/question.rb#189
   def verify_match=(_arg0); end
-
-  # source://highline//lib/highline/question.rb#133
   def whitespace; end
-
-  # source://highline//lib/highline/question.rb#133
   def whitespace=(_arg0); end
 
   private
 
-  # source://highline//lib/highline/question.rb#615
   def append_default_to_template; end
-
-  # source://highline//lib/highline/question.rb#632
   def choice_error_str(message_source); end
 
   class << self
-    # source://highline//lib/highline/question.rb#35
     def build(template_or_question, answer_type = T.unsafe(nil), &details); end
   end
 end
 
-# source://highline//lib/highline/question/answer_converter.rb#8
 class HighLine::Question::AnswerConverter
   extend ::Forwardable
 
-  # source://highline//lib/highline/question/answer_converter.rb#21
   def initialize(question); end
 
-  # source://highline//lib/highline/question/answer_converter.rb#11
   def answer(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/question/answer_converter.rb#11
   def answer=(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/question/answer_converter.rb#11
   def answer_type(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/question/answer_converter.rb#11
   def choices_complete(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/question/answer_converter.rb#28
   def convert; end
-
-  # source://highline//lib/highline/question/answer_converter.rb#11
   def directory(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/question/answer_converter.rb#77
   def to_array; end
-
-  # source://highline//lib/highline/question/answer_converter.rb#65
   def to_file; end
-
-  # source://highline//lib/highline/question/answer_converter.rb#50
   def to_float; end
-
-  # source://highline//lib/highline/question/answer_converter.rb#45
   def to_integer; end
-
-  # source://highline//lib/highline/question/answer_converter.rb#71
   def to_pathname; end
-
-  # source://highline//lib/highline/question/answer_converter.rb#83
   def to_proc; end
-
-  # source://highline//lib/highline/question/answer_converter.rb#60
   def to_regexp; end
-
-  # source://highline//lib/highline/question/answer_converter.rb#34
   def to_string; end
-
-  # source://highline//lib/highline/question/answer_converter.rb#55
   def to_symbol; end
 
   private
 
-  # source://highline//lib/highline/question/answer_converter.rb#89
   def convert_by_answer_type; end
 end
 
-# source://highline//lib/highline/question_asker.rb#5
 class HighLine::QuestionAsker
   include ::HighLine::CustomErrors
 
-  # source://highline//lib/highline/question_asker.rb#17
   def initialize(question, highline); end
 
-  # source://highline//lib/highline/question_asker.rb#26
   def ask_once; end
-
-  # source://highline//lib/highline/question_asker.rb#70
   def gather_answers; end
-
-  # source://highline//lib/highline/question_asker.rb#108
   def gather_hash; end
-
-  # source://highline//lib/highline/question_asker.rb#89
   def gather_integer; end
-
-  # source://highline//lib/highline/question_asker.rb#98
   def gather_regexp; end
-
-  # source://highline//lib/highline/question_asker.rb#7
   def question; end
 
   private
 
-  # source://highline//lib/highline/question_asker.rb#133
   def answer_matches_regex(answer); end
-
-  # source://highline//lib/highline/question_asker.rb#119
   def explain_error(explanation_key); end
-
-  # source://highline//lib/highline/question_asker.rb#141
   def gather_answers_based_on_type; end
-
-  # source://highline//lib/highline/question_asker.rb#124
   def gather_with_array; end
 end
 
-# source://highline//lib/highline/color_scheme.rb#131
 class HighLine::SampleColorScheme < ::HighLine::ColorScheme
-  # source://highline//lib/highline/color_scheme.rb#147
   def initialize(_h = T.unsafe(nil)); end
 end
 
-# source://highline//lib/highline/color_scheme.rb#132
 HighLine::SampleColorScheme::SAMPLE_SCHEME = T.let(T.unsafe(nil), Hash)
 
-# source://highline//lib/highline/statement.rb#13
 class HighLine::Statement
-  # source://highline//lib/highline/statement.rb#28
   def initialize(source, highline); end
 
-  # source://highline//lib/highline/statement.rb#19
   def highline; end
-
-  # source://highline//lib/highline/statement.rb#15
   def source; end
-
-  # source://highline//lib/highline/statement.rb#38
   def statement; end
-
-  # source://highline//lib/highline/statement.rb#23
   def template_string; end
-
-  # source://highline//lib/highline/statement.rb#44
   def to_s; end
 
   private
 
-  # source://highline//lib/highline/statement.rb#58
   def format_statement; end
-
-  # source://highline//lib/highline/statement.rb#72
   def render_template; end
-
-  # source://highline//lib/highline/statement.rb#54
   def stringfy(template_string); end
-
-  # source://highline//lib/highline/statement.rb#80
   def template; end
 
   class << self
-    # source://highline//lib/highline/statement.rb#48
     def const_missing(constant); end
   end
 end
 
-# source://highline//lib/highline/string.rb#33
 class HighLine::String < ::String
   include ::HighLine::StringExtensions
 
-  # source://highline//lib/highline/string.rb#34
   def black; end
-
-  # source://highline//lib/highline/string.rb#34
   def blink; end
-
-  # source://highline//lib/highline/string.rb#34
   def blue; end
-
-  # source://highline//lib/highline/string.rb#34
   def bold; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_black; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_blue; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_cyan; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_gray; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_green; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_grey; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_magenta; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_none; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_red; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_white; end
-
-  # source://highline//lib/highline/string.rb#34
   def bright_yellow; end
-
-  # source://highline//lib/highline/string.rb#34
   def clear; end
-
-  # source://highline//lib/highline/string.rb#34
   def color(*args); end
-
-  # source://highline//lib/highline/string.rb#34
   def concealed; end
-
-  # source://highline//lib/highline/string.rb#34
   def cyan; end
-
-  # source://highline//lib/highline/string.rb#34
   def dark; end
-
-  # source://highline//lib/highline/string.rb#34
   def foreground(*args); end
-
-  # source://highline//lib/highline/string.rb#34
   def gray; end
-
-  # source://highline//lib/highline/string.rb#34
   def green; end
-
-  # source://highline//lib/highline/string.rb#34
   def grey; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_black; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_blue; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_cyan; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_gray; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_green; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_grey; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_magenta; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_none; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_red; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_white; end
-
-  # source://highline//lib/highline/string.rb#34
   def light_yellow; end
-
-  # source://highline//lib/highline/string.rb#34
   def magenta; end
-
-  # source://highline//lib/highline/string.rb#34
   def method_missing(method, *_args); end
-
-  # source://highline//lib/highline/string.rb#34
   def none; end
-
-  # source://highline//lib/highline/string.rb#34
   def on(arg); end
-
-  # source://highline//lib/highline/string.rb#34
   def on_black; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_blue; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_black; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_blue; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_cyan; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_gray; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_green; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_grey; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_magenta; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_none; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_red; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_white; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_bright_yellow; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_cyan; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_gray; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_green; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_grey; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_black; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_blue; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_cyan; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_gray; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_green; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_grey; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_magenta; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_none; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_red; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_white; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_light_yellow; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_magenta; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_none; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_red; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_rgb(*colors); end
-
-  # source://highline//lib/highline/string.rb#34
   def on_white; end
-
-  # source://highline//lib/highline/string.rb#34
   def on_yellow; end
-
-  # source://highline//lib/highline/string.rb#34
   def red; end
-
-  # source://highline//lib/highline/string.rb#34
   def reset; end
-
-  # source://highline//lib/highline/string.rb#34
   def reverse; end
-
-  # source://highline//lib/highline/string.rb#34
   def rgb(*colors); end
-
-  # source://highline//lib/highline/string.rb#34
   def uncolor; end
-
-  # source://highline//lib/highline/string.rb#34
   def underline; end
-
-  # source://highline//lib/highline/string.rb#34
   def underscore; end
-
-  # source://highline//lib/highline/string.rb#34
   def white; end
-
-  # source://highline//lib/highline/string.rb#34
   def yellow; end
 
   private
 
-  # source://highline//lib/highline/string.rb#34
   def respond_to_missing?(method_name, include_private = T.unsafe(nil)); end
-
-  # source://highline//lib/highline/string.rb#34
   def setup_color_code(*colors); end
 end
 
-# source://highline//lib/highline/string_extensions.rb#13
 module HighLine::StringExtensions
   class << self
-    # source://highline//lib/highline/string_extensions.rb#96
     def define_builtin_style_methods(base); end
-
-    # source://highline//lib/highline/string_extensions.rb#29
     def define_style_support_methods(base); end
-
-    # source://highline//lib/highline/string_extensions.rb#18
     def included(base); end
   end
 end
 
-# source://highline//lib/highline/string_extensions.rb#14
 HighLine::StringExtensions::STYLE_METHOD_NAME_PATTERN = T.let(T.unsafe(nil), Regexp)
 
-# source://highline//lib/highline/style.rb#68
 class HighLine::Style
-  # source://highline//lib/highline/style.rb#204
   def initialize(defn = T.unsafe(nil)); end
 
-  # source://highline//lib/highline/style.rb#261
   def blue; end
-
-  # source://highline//lib/highline/style.rb#296
   def bright; end
-
-  # source://highline//lib/highline/style.rb#198
   def builtin; end
-
-  # source://highline//lib/highline/style.rb#198
   def builtin=(_arg0); end
-
-  # source://highline//lib/highline/style.rb#242
   def code; end
-
-  # source://highline//lib/highline/style.rb#235
   def color(string); end
-
-  # source://highline//lib/highline/style.rb#222
   def dup; end
-
-  # source://highline//lib/highline/style.rb#256
   def green; end
-
-  # source://highline//lib/highline/style.rb#301
   def light; end
-
-  # source://highline//lib/highline/style.rb#192
   def list; end
-
-  # source://highline//lib/highline/style.rb#188
   def name; end
-
-  # source://highline//lib/highline/style.rb#290
   def on; end
-
-  # source://highline//lib/highline/style.rb#251
   def red; end
-
-  # source://highline//lib/highline/style.rb#195
   def rgb; end
-
-  # source://highline//lib/highline/style.rb#195
   def rgb=(_arg0); end
-
-  # source://highline//lib/highline/style.rb#227
   def to_hash; end
-
-  # source://highline//lib/highline/style.rb#269
   def variant(new_name, options = T.unsafe(nil)); end
 
   private
 
-  # source://highline//lib/highline/style.rb#307
   def create_bright_variant(variant_name); end
-
-  # source://highline//lib/highline/style.rb#321
   def find_style(name); end
 
   class << self
-    # source://highline//lib/highline/style.rb#157
     def ansi_rgb_to_hex(ansi_number); end
-
-    # source://highline//lib/highline/style.rb#92
     def clear_index; end
-
-    # source://highline//lib/highline/style.rb#175
     def code_index; end
-
-    # source://highline//lib/highline/style.rb#73
     def index(style); end
-
-    # source://highline//lib/highline/style.rb#170
     def list; end
-
-    # source://highline//lib/highline/style.rb#133
     def rgb(*colors); end
-
-    # source://highline//lib/highline/style.rb#107
     def rgb_hex(*colors); end
-
-    # source://highline//lib/highline/style.rb#147
     def rgb_number(*parts); end
-
-    # source://highline//lib/highline/style.rb#119
     def rgb_parts(hex); end
-
-    # source://highline//lib/highline/style.rb#182
     def uncolor(string); end
   end
 end
 
-# source://highline//lib/highline/template_renderer.rb#8
 class HighLine::TemplateRenderer
   extend ::Forwardable
 
-  # source://highline//lib/highline/template_renderer.rb#30
   def initialize(template, source, highline); end
 
-  # source://highline//lib/highline/template_renderer.rb#12
   def answer(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/template_renderer.rb#12
   def answer_type(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/template_renderer.rb#11
   def color(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/template_renderer.rb#12
   def header(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/template_renderer.rb#21
   def highline; end
-
-  # source://highline//lib/highline/template_renderer.rb#11
   def key(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/template_renderer.rb#11
   def list(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/template_renderer.rb#51
   def menu; end
-
-  # source://highline//lib/highline/template_renderer.rb#44
   def method_missing(method, *args); end
-
-  # source://highline//lib/highline/template_renderer.rb#12
   def prompt(*args, **_arg1, &block); end
-
-  # source://highline//lib/highline/template_renderer.rb#37
   def render; end
-
-  # source://highline//lib/highline/template_renderer.rb#18
   def source; end
-
-  # source://highline//lib/highline/template_renderer.rb#15
   def template; end
 
   class << self
-    # source://highline//lib/highline/template_renderer.rb#58
     def const_missing(name); end
   end
 end
 
-# source://highline//lib/highline/terminal.rb#18
 class HighLine::Terminal
-  # source://highline//lib/highline/terminal.rb#46
   def initialize(input, output); end
 
-  # source://highline//lib/highline/terminal.rb#164
   def character_mode; end
-
-  # source://highline//lib/highline/terminal.rb#78
   def get_character; end
-
-  # source://highline//lib/highline/terminal.rb#84
   def get_line(question, highline); end
-
-  # source://highline//lib/highline/terminal.rb#137
   def get_line_default(highline); end
-
-  # source://highline//lib/highline/terminal.rb#97
   def get_line_with_readline(question, highline); end
-
-  # source://highline//lib/highline/terminal.rb#53
   def initialize_system_extensions; end
-
-  # source://highline//lib/highline/terminal.rb#38
   def input; end
-
-  # source://highline//lib/highline/terminal.rb#146
   def jruby?; end
-
-  # source://highline//lib/highline/terminal.rb#41
   def output; end
-
-  # source://highline//lib/highline/terminal.rb#62
   def raw_no_echo_mode; end
-
-  # source://highline//lib/highline/terminal.rb#66
   def raw_no_echo_mode_exec; end
-
-  # source://highline//lib/highline/terminal.rb#112
   def readline_read(question, highline); end
-
-  # source://highline//lib/highline/terminal.rb#74
   def restore_mode; end
-
-  # source://highline//lib/highline/terminal.rb#151
   def rubinius?; end
-
-  # source://highline//lib/highline/terminal.rb#57
   def terminal_size; end
-
-  # source://highline//lib/highline/terminal.rb#156
   def windows?; end
 
   private
 
-  # source://highline//lib/highline/terminal.rb#188
   def restore_stty; end
-
-  # source://highline//lib/highline/terminal.rb#171
   def run_preserving_stty; end
-
-  # source://highline//lib/highline/terminal.rb#179
   def save_stty; end
 
   class << self
-    # source://highline//lib/highline/terminal.rb#22
     def get_terminal(input, output); end
   end
 end
 
-# source://highline//lib/highline/terminal/io_console.rb#9
 class HighLine::Terminal::IOConsole < ::HighLine::Terminal
-  # source://highline//lib/highline/terminal/io_console.rb#29
   def get_character; end
-
-  # source://highline//lib/highline/terminal/io_console.rb#17
   def raw_no_echo_mode; end
-
-  # source://highline//lib/highline/terminal/io_console.rb#23
   def restore_mode; end
-
-  # source://highline//lib/highline/terminal/io_console.rb#11
   def terminal_size; end
 end
 
-# source://highline//lib/highline/version.rb#5
 HighLine::VERSION = T.let(T.unsafe(nil), String)
 
-# source://highline//lib/highline/wrapper.rb#9
 module HighLine::Wrapper
   class << self
-    # source://highline//lib/highline/wrapper.rb#49
     def actual_length(string_with_escapes); end
-
-    # source://highline//lib/highline/wrapper.rb#17
     def wrap(text, wrap_at); end
   end
 end
 
-# source://highline//lib/highline/import.rb#30
 class Object < ::BasicObject
   include ::Kernel
   include ::PP::ObjectMixin
 
-  # source://highline//lib/highline/import.rb#41
   def or_ask(*args, &details); end
 end

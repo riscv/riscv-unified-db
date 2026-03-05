@@ -58,12 +58,12 @@ class ConstraintTestFactory
             if test["r"].nil?
               assert_raises Idl::AstNode::TypeError do
                 ast = @compiler.compile_constraint(test["c"], @symtab, pass_error: true)
-                ast.type_check(@symtab)
+                ast.type_check(@symtab, strict: false)
               end
             else
               out, err = capture_io do
                 constraint_ast = @compiler.compile_constraint(test["c"], @symtab)
-                constraint_ast.type_check(@symtab)
+                constraint_ast.type_check(@symtab, strict: false)
               end
 
               if test["r"]

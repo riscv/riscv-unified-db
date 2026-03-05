@@ -17,12 +17,122 @@
       "type": "string",
       "description": "One line description of profile"
     },
+    "$inherits": {
+      "type": "string",
+      "pattern": "^profile/.*#$"
+    },
+    "$parent_of": {
+      "type": "string"
+    },
+    "$child_of": {
+      "type": "string"
+    },
     "base": {
       "type": "integer",
       "description": "32 for RV32I or 64 for RV64I"
     },
     "cert_normative_rules": {
       "$ref": "schema_defs.json#/$defs/cert_normative_rules"
-    }
-  }
+    },
+    "requirements": {
+      "$ref": "schema_defs.json#/$defs/condition"
+    },
+    "marketing_name": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": ["M", "S", "U", "Unpriv"]
+    },
+    "release": {
+      "type": "object",
+      "required": ["$ref"],
+      "properties": {
+        "$ref": {
+          "type": "string",
+          "pattern": "^profile_release.*#$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "introduction": {
+      "type": "string"
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "additionalProperties": false,
+        "properties": {
+          "text": { "type": "string" }
+        },
+        "minItems": 1
+      }
+    },
+    "extra_notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text", "presence"],
+        "additionalProperties": false,
+        "properties": {
+          "text": { "type": "string" },
+          "presence": { "enum": ["optional", "mandatory"] }
+        },
+        "minItems": 1
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "patternProperties": {
+        "\\$inherits": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^profile/.*#/extensions$"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^profile/.*#/extensions$"
+              }
+            }
+          ]
+        },
+        "[A-Z][a-z0-9]*": {
+          "type": "object",
+          "required": ["presence", "version"],
+          "properties": {
+            "presence": {
+              "oneOf": [
+                {
+                  "enum": ["mandatory", "optional"]
+                },
+                {
+                  "type": "object",
+                  "required": ["optional"],
+                  "properties": {
+                    "optional": {
+                      "enum": ["expansion", "localized", "development"]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "version": {
+              "$ref": "schema_defs.json#/$defs/version_requirements"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "$source": { "type": "string" }
+  },
+  "additionalProperties": false
 }

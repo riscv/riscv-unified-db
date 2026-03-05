@@ -14,7 +14,7 @@ require "sorbet-runtime"
 require "zip"
 
 require_relative "log"
-require_relative "z3_version"
+require_relative "dep_versions"
 
 module FFI
   class DynamicLibrary
