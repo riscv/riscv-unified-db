@@ -55,6 +55,21 @@ namespace :gen do
         sh "bundle exec yard --plugin sorbet lib --no-save --embed-mixins --hide-void-return -o #{$root}/gen/udb_api_doc"
       end
     end
+
+    desc "Generate UDB JSON-RPC API documentation site using Docusaurus. Set DEST_DIR env var to override output directory (default: gen/udb_api_doc)"
+    task :rpc_api_doc do
+      require "yaml"
+      require "json"
+      require "erb"
+      spec = YAML.safe_load_file("#{RUBY_UDB_ROOT}/lib/udb/openrpc.yaml")
+      template = ERB.new(File.read("#{RUBY_UDB_ROOT}/templates/api-reference.md.erb"), trim_mode: "-")
+      File.write("#{$root}/doc/udb-api/docs/api-reference.md", template.result(binding))
+      out_dir = ENV.fetch("DEST_DIR", "#{$root}/gen/udb_api_doc")
+      Dir.chdir("#{$root}/doc/udb-api") do
+        sh "npm install" unless File.exist?("node_modules")
+        sh "npm run build -- --out-dir #{out_dir}"
+      end
+    end
   end
 end
 

@@ -1,0 +1,56 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=https://github.com/open-rpc/meta-schema/releases/download/1.14.9/open-rpc-meta-schema.json
+
+openrpc: "1.3.2"
+info:
+  title: UDB JSON-RPC API
+  version: "0.1.0"
+  description: |
+    JSON-RPC 2.0 API for the RISC-V Unified Database.
+    Provides programmatic access to RISC-V architecture data.
+methods:
+  - name: list_extensions
+    summary: List all extensions for the configured architecture
+    description: |
+      Returns all RISC-V extensions available in the configured architecture,
+      including their names, long names, versions, and instruction counts.
+    params: []
+    result:
+      name: extensions_result
+      description: List of extensions with metadata
+      schema:
+        type: object
+        required: [extensions, count]
+        properties:
+          extensions:
+            type: array
+            items:
+              type: object
+              required: [name, long_name, versions, instruction_count]
+              properties:
+                name:
+                  type: string
+                  description: Short extension name (e.g., "I", "M", "A")
+                long_name:
+                  type: string
+                  description: Full extension name
+                versions:
+                  type: array
+                  items:
+                    type: string
+                  description: List of version strings
+                instruction_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of instructions defined by this extension
+          count:
+            type: integer
+            minimum: 0
+            description: Total number of extensions
+    errors:
+      - code: -32603
+        message: Internal error
+        data:
+          type: string

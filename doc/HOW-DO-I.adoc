@@ -147,6 +147,62 @@ To remove the local container image:
 ./bin/chore container rm
 ----
 
+=== Add a new JSON-RPC method to the udb server
+
+The udb JSON-RPC server uses a spec-first design: `tools/ruby-gems/udb/lib/udb/openrpc.yaml` is the single source of truth.
+Adding a new method requires two edits — one to the spec, one to the handler module.
+
+. *Add the method to `openrpc.yaml`*
++
+Append a new entry under `methods:` with a `name`, `summary`, `params` list, `result` schema, and optional `errors` list.
+For example, to add a `list_csrs` method:
++
+[source,yaml]
+----
+  - name: list_csrs
+    summary: List all CSRs for the configured architecture
+    params: []
+    result:
+      name: csrs_result
+      description: List of CSR names
+      schema:
+        type: object
+        required: [csrs, count]
+        properties:
+          csrs:
+            type: array
+            items:
+              type: string
+          count:
+            type: integer
+            minimum: 0
+    errors:
+      - code: -32603
+        message: Internal error
+        data:
+          type: string
+----
+
+. *Add a handler method to `json_rpc_handlers.rb`*
++
+Add a method named `handle_<method_name>` (replace dots with underscores) to the `Udb::JsonRpcHandlers` module in
+`tools/ruby-gems/udb/lib/udb/json_rpc_handlers.rb`.
+The method receives a `params` Hash and must return a Hash matching the result schema.
+The `@cfg_arch` instance variable provides access to the configured architecture.
++
+[source,ruby]
+----
+sig { params(_params: T::Hash[String, T.untyped]).returns(T::Hash[String, T.untyped]) }
+def handle_list_csrs(_params)
+  csrs = @cfg_arch.csrs.map(&:name)
+  { "csrs" => csrs, "count" => csrs.length }
+end
+----
+
+The server validates at startup that every method in the spec has a corresponding handler; it will raise a `RuntimeError` if one is missing.
+
+See `tools/ruby-gems/udb/JSON_RPC_SERVER.md` for full protocol details and client examples.
+
 === Generate Ruby type definitions
 
 To generate Sorbet type definitions for all Ruby gems:

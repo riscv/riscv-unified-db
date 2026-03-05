@@ -27,6 +27,8 @@ jobs:
 
       - name: Make _site
         run: mkdir _site
+      - name: Generate UDB RPC API docs
+        run: bin/generate doc udb_rpc_api --output _site/udb_rpc_api
       - name: Download reuse BOM
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:

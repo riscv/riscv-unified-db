@@ -1,0 +1,129 @@
+<!--
+Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+SPDX-License-Identifier: BSD-3-Clause-Clear
+-->
+
+
+---
+sidebar_position: 2
+---
+
+# API Reference
+
+> **API Version:** <%= spec["info"]["version"] %>
+> **OpenRPC Version:** <%= spec["openrpc"] %>
+
+<%= spec["info"]["description"].strip %>
+
+---
+
+<% spec["methods"].each do |method| -%>
+## `<%= method["name"] %>`
+
+**<%= method["summary"] %>**
+
+<%= method["description"].strip %>
+
+### Parameters
+
+<% if method["params"].nil? || method["params"].empty? -%>
+This method takes no parameters.
+<% else -%>
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+<% method["params"].each do |param| -%>
+| `<%= param["name"] %>` | `<%= param.dig("schema", "type") || "any" %>` | <%= param["required"] ? "Yes" : "No" %> | <%= param["description"] || "" %> |
+<% end -%>
+<% end -%>
+
+### Result
+
+**Name:** `<%= method.dig("result", "name") %>`
+
+<%= method.dig("result", "description") %>
+
+<% result_schema = method.dig("result", "schema") -%>
+<% if result_schema -%>
+#### Result Schema
+
+```json
+<%= JSON.pretty_generate(result_schema) %>
+```
+<% end -%>
+
+### Errors
+
+<% errors = method["errors"] -%>
+<% if errors.nil? || errors.empty? -%>
+No method-specific errors. Standard JSON-RPC 2.0 errors apply.
+<% else -%>
+| Code | Message | Description |
+|------|---------|-------------|
+<% errors.each do |err| -%>
+| `<%= err["code"] %>` | <%= err["message"] %> | <%= err.dig("data", "type") ? "Error detail: `#{err.dig("data", "type")}`" : "" %> |
+<% end -%>
+<% end -%>
+
+### Example
+
+**Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "<%= method["name"] %>",
+  "params": {},
+  "id": 1
+}
+```
+
+**Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "result": { ... },
+  "id": 1
+}
+```
+
+---
+
+<% end -%>
+
+## `rpc.discover`
+
+**Returns the OpenRPC service discovery document.**
+
+This built-in method returns the full machine-readable API specification
+following the [OpenRPC 1.3.2](https://open-rpc.org/) standard.
+
+### Parameters
+
+This method takes no parameters.
+
+### Example
+
+**Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "rpc.discover",
+  "params": {},
+  "id": 1
+}
+```
+
+**Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "openrpc": "1.3.2",
+    "info": { "title": "UDB JSON-RPC API", "version": "0.1.0" },
+    "methods": [ ... ]
+  },
+  "id": 1
+}

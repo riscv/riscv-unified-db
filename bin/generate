@@ -24,9 +24,23 @@ help() {
   echo ""
   echo "Commands:"
   echo ""
+  echo "  doc:           Generate documentation                  ('generate doc -h' for more)"
   echo "  ext-doc:       Generate documentation for an extension ('generate ext-doc -h' for more)"
   echo "  isa-explorer:  Generate tables of ISA information      ('generate isa-explorer -h' for more)"
   echo "  manual:        Generate ISA manual                     ('generate manual -h' for more)"
+  echo ""
+}
+
+doc_help() {
+  echo "Usage: generate doc SUBCOMMAND [OPTIONS]"
+  echo ""
+  echo "Subcommands:"
+  echo ""
+  echo "  udb_rpc_api:  Generate UDB JSON-RPC API documentation from openrpc.yaml"
+  echo ""
+  echo "Options for udb_rpc_api:"
+  echo ""
+  echo "  -o, --output DIR  Output directory (default: gen/udb_api_doc)"
   echo ""
 }
 
@@ -48,6 +62,42 @@ done
 subcommand=$1
 
 case "$subcommand" in
+  doc )
+    doc_subcommand=$2
+    case "$doc_subcommand" in
+      udb_rpc_api )
+        OUTPUT_DIR="${ROOT}/../gen/udb_api_doc"
+        shift 2
+        while [[ $# -gt 0 ]]; do
+          case "$1" in
+            -o | --output )
+              OUTPUT_DIR="$2"
+              shift 2
+              ;;
+            -h | --help )
+              doc_help
+              exit 0
+              ;;
+            * )
+              echo "[ERROR]: Unknown option: $1"
+              doc_help
+              exit 1
+              ;;
+          esac
+        done
+        exec "${ROOT}/rake" "gen:udb:rpc_api_doc" "DEST_DIR=${OUTPUT_DIR}"
+        ;;
+      -h | --help | "" )
+        doc_help
+        exit 0
+        ;;
+      * )
+        echo "[ERROR]: Unknown doc subcommand: $doc_subcommand"
+        doc_help
+        exit 1
+        ;;
+    esac
+    ;;
   ext-doc | isa-explorer | manual )
     exec "${ROOT}/udb-gen" "${@:1}"
     exit 0

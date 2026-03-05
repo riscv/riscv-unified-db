@@ -143,3 +143,5 @@ ENV PATH="/workspace/bin/container:$PATH"
 # Grant the default ubuntu user sudo access
 RUN echo ubuntu ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu
+
+EXPOSE 9123
