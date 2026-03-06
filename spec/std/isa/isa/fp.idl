@@ -411,23 +411,26 @@ function f32_muladd {
   }
   body {
     Bits<1>  signA    = signF32UI(a);
-    Bits<8>  expA     = expF32UI(a);
+    Bits<16>  expA     = expF32UI(a);
     Bits<32> sigA     = fracF32UI(a);
     Bits<1>  signB    = signF32UI(b);
-    Bits<8>  expB     = expF32UI(b);
+    Bits<16>  expB     = expF32UI(b);
     Bits<32> sigB     = fracF32UI(b);
     Bits<1>  signC    = signF32UI(c) ^ ((op == F32MulAddOp::Softfloat_mulAdd_subC) ? 1 : 0);
-    Bits<8>  expC     = expF32UI(c);
+    Bits<16>  expC     = expF32UI(c);
     Bits<32> sigC     = fracF32UI(c);
     Bits<1>  signProd = (signA ^ signB) ^ ((op == F32MulAddOp::Softfloat_mulAdd_subProd) ? 1 : 0);
+
+    Bits<32> magBits;
+    Bits<64> sig64Z;
 
     # Handle NaN/Inf in A
     if (expA == 0xFF) {
       if ((sigA != 0) || ((expB == 0xFF) && (sigB != 0))) {
         return SP_CANONICAL_NAN;
       }
-      U32 magBitsA = expB | sigB;
-      if (magBitsA != 0) {
+      magBits = expB | sigB;
+      if (magBits != 0) {
         U32 zA = packToF32UI(signProd, 0xFF, 0);
         if (expC != 0xFF) {
           return zA;
@@ -448,8 +451,8 @@ function f32_muladd {
       if (sigB != 0) {
         return SP_CANONICAL_NAN;
       }
-      U32 magBitsB = expA | sigA;
-      if (magBitsB != 0) {
+      magBits = expA | sigA;
+      if (magBits != 0) {
         U32 zB = packToF32UI(signProd, 0xFF, 0);
         if (expC != 0xFF) {
           return zB;
@@ -481,7 +484,7 @@ function f32_muladd {
         }
         return c;
       }
-      ExpAndSig norm = softfloat_normSubnormalF32Sig(sigA[22:0]);
+      ExpAndSig norm = softfloat_normSubnormalF32Sig(sigA);
       expA = norm.exp;
       sigA = norm.sig;
     }
@@ -494,15 +497,15 @@ function f32_muladd {
         }
         return c;
       }
-      ExpAndSig norm = softfloat_normSubnormalF32Sig(sigB[22:0]);
+      ExpAndSig norm = softfloat_normSubnormalF32Sig(sigB);
       expB = norm.exp;
       sigB = norm.sig;
     }
 
     # Compute product exponent and significand
     Bits<16> expProd = expA + expB - 16'h007E;
-    sigA = (sigA | 0x00800000) << 7;
-    sigB = (sigB | 0x00800000) << 7;
+    sigA = (sigA | 32'h00800000) << 7;
+    sigB = (sigB | 32'h00800000) << 7;
     U64 sigProd = sigA `* sigB;
     if (sigProd < 64'h2000000000000000) {
       expProd = expProd - 1;
@@ -519,7 +522,7 @@ function f32_muladd {
         sigZ = softfloat_shiftRightJam64(sigProd, 31);
         return softfloat_roundPackToF32(signZ, expZ, sigZ, mode);
       }
-      ExpAndSig norm = softfloat_normSubnormalF32Sig(sigC[22:0]);
+      ExpAndSig norm = softfloat_normSubnormalF32Sig(sigC);
       expC = norm.exp;
       sigC = norm.sig;
     }
@@ -534,8 +537,8 @@ function f32_muladd {
         sigZ = sigC + softfloat_shiftRightJam64(sigProd, 32 - expDiff);
       } else {
         expZ = expProd;
-        U64 sig64ZA = sigProd + softfloat_shiftRightJam64(sigC `<< 32, expDiff);
-        sigZ = softfloat_shiftRightJam64(sig64ZA, 32);
+        sig64Z = sigProd + softfloat_shiftRightJam64(sigC `<< 32, expDiff);
+        sigZ = softfloat_shiftRightJam64(sig64Z, 32);
       }
       if (sigZ < 0x40000000) {
         expZ = expZ - 1;
@@ -545,32 +548,31 @@ function f32_muladd {
     } else {
       # Different signs: subtract magnitudes
       U64 sig64C = sigC `<< 32;
-      U64 sig64ZB;
       if ($signed(expDiff) < 0s) {
         signZ = signC;
         expZ = expC;
-        sig64ZB = sig64C - softfloat_shiftRightJam64(sigProd, -expDiff);
+        sig64Z = sig64C - softfloat_shiftRightJam64(sigProd, -expDiff);
       } else if (expDiff == 0) {
         expZ = expProd;
-        sig64ZB = sigProd - sig64C;
-        if (sig64ZB == 0) {
+        sig64Z = sigProd - sig64C;
+        if (sig64Z == 0) {
           return packToF32UI((mode == RoundingMode::RDN) ? 1 : 0, 0, 0);
         }
-        if ((sig64ZB & 64'h8000000000000000) != 0) {
+        if ((sig64Z & 64'h8000000000000000) != 0) {
           signZ = signZ ^ 1;
-          sig64ZB = -sig64ZB;
+          sig64Z = -sig64Z;
         }
       } else {
         expZ = expProd;
-        sig64ZB = sigProd - softfloat_shiftRightJam64(sig64C, expDiff);
+        sig64Z = sigProd - softfloat_shiftRightJam64(sig64C, expDiff);
       }
-      Bits<8> shiftDist = count_leading_zeros<64>(sig64ZB) - 1;
+      Bits<8> shiftDist = count_leading_zeros<64>(sig64Z) - 1;
       expZ = expZ - shiftDist;
       shiftDist = shiftDist - 8'h20;
       if ($signed(shiftDist) < 0s) {
-        sigZ = softfloat_shiftRightJam64(sig64ZB, -shiftDist);
+        sigZ = softfloat_shiftRightJam64(sig64Z, -shiftDist);
       } else {
-        sigZ = sig64ZB << shiftDist;
+        sigZ = sig64Z << shiftDist;
       }
       return softfloat_roundPackToF32(signZ, expZ, sigZ, mode);
     }
