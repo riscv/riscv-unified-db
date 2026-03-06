@@ -68,7 +68,7 @@ namespace :chore do
   desc "Update golden instruction appendix"
   task :update_golden_appendix do
     Rake::Task["gen:instruction_appendix_adoc"].invoke
-    sh "mv #{$root}/gen/instructions_appendix/all_instructions.adoc #{$root}/backends/instructions_appendix/all_instructions.golden.adoc"
+    sh "mv #{$root}/gen/instructions_appendix/all_instructions.adoc #{$root}/tests/golden/all_instructions.golden.adoc"
   end
 end
 

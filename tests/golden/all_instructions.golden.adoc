@@ -10936,11 +10936,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-<<<<<<< HEAD:tests/golden/all_instructions.golden.adoc
-|imm |{$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}
-=======
 |imm |sext({$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}, 13)
->>>>>>> origin/main:backends/instructions_appendix/all_instructions.golden.adoc
 |xs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
@@ -11179,11 +11175,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-<<<<<<< HEAD:tests/golden/all_instructions.golden.adoc
-|imm |{$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}
-=======
 |imm |sext({$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}, 13)
->>>>>>> origin/main:backends/instructions_appendix/all_instructions.golden.adoc
 |xs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
@@ -27360,11 +27352,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-<<<<<<< HEAD:tests/golden/all_instructions.golden.adoc
-|imm |$encoding[31:20]
-=======
 |imm |sext($encoding[31:20], 12)
->>>>>>> origin/main:backends/instructions_appendix/all_instructions.golden.adoc
 |xs1 |$encoding[19:15]
 |xd |$encoding[11:7]
 |===
@@ -47241,7 +47229,7 @@ Included in::
 == vle8.v
 
 Synopsis::
-Vector load 8-bit elements
+Vector 8-bit unit-stride load
 
 Base::
 
@@ -62819,7 +62807,7 @@ Included in::
 == vse8.v
 
 Synopsis::
-Vector store 8-bit elements
+Vector 8-bit unit-stride store
 
 Base::
 

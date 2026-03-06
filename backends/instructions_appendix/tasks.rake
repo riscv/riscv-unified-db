@@ -95,7 +95,7 @@ namespace :test do
     files = {
       golden: {
         file: Tempfile.new("golden"),
-        path: "#{File.dirname(__FILE__)}/all_instructions.golden.adoc"
+        path: "#{$root}/tests/golden/all_instructions.golden.adoc"
       },
       output: {
         file: Tempfile.new("output"),
@@ -120,8 +120,8 @@ namespace :test do
       warn <<~MSG
         The golden output for the instruction appendix has changed. If this is expected, run
 
-        cp gen/instructions_appendix/all_instructions.adoc backends/instructions_appendix/all_instructions.golden.adoc
-        git add backends/instructions_appendix/all_instructions.golden.adoc
+        cp gen/instructions_appendix/all_instructions.adoc tests/golden/all_instructions.golden.adoc
+        git add tests/golden/all_instructions.golden.adoc
 
         And commit
       MSG
