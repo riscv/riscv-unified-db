@@ -466,7 +466,7 @@ namespace :test do
       "rem", "remu", "remuw", "remw"]
 
     rv32ufTests = [
-      "fadd", "fclass", "fcmp", "fcvt", "fcvt_w", "fdiv", "fmadd", "fmin", "ldst"
+      "fadd", "fclass", "fcmp", "fcvt", "fcvt_w", "fdiv", "fmadd", "fmin", "ldst", "move"
     ]
     rv64ufTests = rv32ufTests
 
