@@ -32,12 +32,12 @@ def force_plain_if_values(node)
   end
 end
 
-def dump_workflow(data, line_width: 300)
+def dump_workflow(data, line_width: -1)
   visitor = Psych::Visitors::YAMLTree.create({ line_width: line_width })
   visitor << data
   tree = visitor.tree
   force_plain_if_values(tree)
-  tree.yaml
+  tree.yaml(nil, line_width:)
 end
 
 def create_job(job_name, job_data, workflow_yaml)
@@ -89,16 +89,16 @@ def create_job(job_name, job_data, workflow_yaml)
 
   if job_data.key?("gh_save_artifact")
     job_data["gh_save_artifact"].each do |artifact|
-        gh_job_yaml["steps"] << {
-          "name" => "Upload artifact",
-          "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][1]["uses"],
-          "if" => "((github.event_name == 'push') && (github.ref_name == 'main'))",
-          # Note: plain (unquoted) style is enforced by force_plain_if_values / dump_workflow
-        "with" => {
-          "name" => artifact["artifact_name"],
-          "path" => artifact["path"]
-        }
+      gh_job_yaml["steps"] << {
+        "name" => "Upload artifact",
+        "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][1]["uses"],
+        "if" => "((github.event_name == 'push') && (github.ref_name == 'main'))",
+        # Note: plain (unquoted) style is enforced by force_plain_if_values / dump_workflow
+      "with" => {
+        "name" => artifact["artifact_name"],
+        "path" => artifact["path"]
       }
+    }
       if artifact["include-hidden-files"]
         gh_job_yaml["steps"].last["with"]["include-hidden-files"] = true
       end
