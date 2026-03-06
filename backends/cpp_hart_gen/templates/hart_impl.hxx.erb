@@ -173,7 +173,7 @@ namespace udb {
               raise(ExceptionCode{ExceptionCode::IllegalInstruction}, mode(), m_params.REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION.value() ? enc : decltype(enc){0});
             } catch (const AbortInstruction& e) {
               return StopReason::Exception;
-            }            
+            }
           }
           this->Notify(DECODE_EVENT, (void*)m_cur_inst);
 

@@ -465,10 +465,10 @@ namespace udb {
       return result;
     }
 
-    PrivilegeMode GetMode() override {
+    PrivilegeMode _get_mode() override {
       return current_mode;
     }
-    void SetMode(const PrivilegeMode& next_mode) override {
+    void _set_mode(const PrivilegeMode& next_mode) override {
       current_mode = next_mode;
     }
 

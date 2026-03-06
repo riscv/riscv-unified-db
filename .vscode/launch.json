@@ -73,7 +73,7 @@
               "description": "Enable pretty-printing for gdb",
               "text": "-enable-pretty-printing",
               "ignoreFailures": true
-          },          
+          },
           {
               "description": "Set default value display to hex",
               "text": "-gdb-set output-radix 16",

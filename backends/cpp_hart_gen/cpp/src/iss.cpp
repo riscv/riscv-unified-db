@@ -54,18 +54,6 @@ typedef struct _MEMORYMAP
   uint64_t size;
 } MEMORYMAP, *PMEMORYMAP;
 
-
-// RISCV/GDB register ranges
-constexpr int REG_GPR_FIRST = 0;
-constexpr int REG_GPR_LAST = 0x1F;
-constexpr int REG_PC = 0x20;
-constexpr int REG_FPR_FIRST = 0x21;
-constexpr int REG_FPR_LAST = 0x40;
-constexpr int REG_CSR_FIRST = 0x41;
-constexpr int REG_CSR_LAST = 0x1040;
-constexpr int REG_PRIV = 0x1041;
-
-
 class InstructionSetSimulator : public GDBServer, public NotificationHandler
 {
 public:
@@ -382,7 +370,7 @@ int InstructionSetSimulator::OnReadMemory(uint64_t uiAddress, uint64_t& uiLen, v
   try
   {
     auto translationResult = m_pHart->translate_native(uiAddress, udb::MemoryOperation{udb::MemoryOperation::Read},
-      m_pHart->GetMode(), uiAddress);
+      m_pHart->_get_mode(), uiAddress);
 
     if(m_pSoC->memcpy_to_host((uint8_t*)pBuffer, translationResult.pAddr, uiLen) == 0)
       return 0;
@@ -401,7 +389,7 @@ int InstructionSetSimulator::OnWriteMemory(uint64_t uiAddress, uint64_t& uiLen, 
   try
   {
     auto translationResult = m_pHart->translate_native(uiAddress, udb::MemoryOperation{udb::MemoryOperation::Write},
-      m_pHart->GetMode(), uiAddress);
+      m_pHart->_get_mode(), uiAddress);
 
     if(m_pSoC->memcpy_from_host(translationResult.pAddr, (const uint8_t*)pMemBuffer, uiLen) == 0)
       return 0;

@@ -94,8 +94,8 @@ namespace udb {
     // get the next instruction encoding
     virtual uint64_t fetch() = 0;
 
-    virtual PrivilegeMode GetMode() = 0;
-    virtual void SetMode(const PrivilegeMode& next_mode) = 0;
+    virtual PrivilegeMode _get_mode() = 0;
+    virtual void _set_mode(const PrivilegeMode& next_mode) = 0;
 
     // access a physical address. All translations and physical checks
     // should have already occurred
