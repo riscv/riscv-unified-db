@@ -57,12 +57,12 @@ operation(): |
       f[fd] = sp_value_a;
     }
   } else {
-    # -0.0 is considered less than +0.0
     Boolean sign_a = sp_value_a[31] == 1;
     Boolean sign_b = sp_value_b[31] == 1;
     Boolean a_lt_b;
     if (sign_a != sign_b) {
-      a_lt_b = sign_a && ((sp_value_a[30:0] | sp_value_b[30:0]) != 0);
+      # -0.0 is considered less than +0.0, so it's not a special case
+      a_lt_b = sign_a;
     } else {
       a_lt_b = (sp_value_a != sp_value_b) && (sign_a != (sp_value_a < sp_value_b));
     }
