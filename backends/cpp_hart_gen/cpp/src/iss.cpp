@@ -277,7 +277,7 @@ int InstructionSetSimulator::CreateMemoryMap(std::filesystem::path memMapPath,
 
 int InstructionSetSimulator::Run()
 {
-  int result;
+  int result = 0;
 
   udb::ElfReader elfReader(m_opts.elfFilePath.c_str());
   auto entryPC = elfReader.loadLoadableSegments(*m_pSoC);
