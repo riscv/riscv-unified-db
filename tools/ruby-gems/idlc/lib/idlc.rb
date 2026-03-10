@@ -13,9 +13,10 @@ require_relative "idlc/syntax_node"
 class IdlParser < Treetop::Runtime::CompiledParser
   attr_reader :input_file
 
-  def set_input_file(filename, starting_line = 0)
+  def set_input_file(filename, starting_line = 0, starting_offset = 0)
     @input_file = filename
     @starting_line = starting_line
+    @starting_offset = starting_offset
   end
 
   # alias instantiate_node so we can call it from the override
@@ -24,7 +25,7 @@ class IdlParser < Treetop::Runtime::CompiledParser
   # override instatiate_node so we can set the input file
   def instantiate_node(node_type, *args)
     node = T.unsafe(self).idlc_instantiate_node(node_type, *args)
-    node.set_input_file(input_file, @starting_line.nil? ? 0 : @starting_line)
+    node.set_input_file(input_file, @starting_line.nil? ? 0 : @starting_line, @starting_offset.nil? ? 0 : @starting_offset)
     node
   end
 end

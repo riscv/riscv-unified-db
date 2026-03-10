@@ -161,7 +161,7 @@ class TestYamlResolver < Minitest::Test
 
       source_map.each do |entry|
         # Parse entry: key_path -> file:line:column
-        match = entry.match(/^([\w\/$]+)\s+->\s+(.+):(\d+):(\d+)$/)
+        match = entry.match(/^([\w\/$()?]+)\s+->\s+(.+):(\d+):(\d+)$/)
         next unless match
 
         key_path = match[1]
@@ -368,8 +368,21 @@ class TestYamlResolver < Minitest::Test
       source_bytes = File.binread(input_path)
       source_size  = source_bytes.bytesize
 
-      # ── Checks 1–3: verify source info in every compiled AST hash ─────────
-      find_ast_hashes(resolved_data).each do |ast_hash|
+      # ── Checks 1–4: verify source info in every compiled AST hash ─────────
+      ast_hashes = find_ast_hashes(resolved_data)
+
+      # Ensure at least some AST hashes were found if the file contains IDL
+      # (files without IDL keys like operation() won't have AST hashes)
+      original_parser = Udb::Yaml::CommentParser.new
+      original_data = original_parser.parse_file(input_path)[:data]
+      has_idl_keys = data_contains_idl_keys?(original_data)
+
+      if has_idl_keys
+        assert ast_hashes.any?,
+          "File #{rel_path} contains IDL keys but no compiled AST hashes were found"
+      end
+
+      ast_hashes.each do |ast_hash|
         source = ast_hash["source"]
 
         # ── 1. file field ──────────────────────────────────────────────────────
@@ -387,9 +400,14 @@ class TestYamlResolver < Minitest::Test
           "AST source begin (#{source["begin"]}) >= file size (#{source_size}) in #{rel_path}"
         assert source["end"] < source_size,
           "AST source end (#{source["end"]}) >= file size (#{source_size}) in #{rel_path}"
+
+        # ── 4. byte slice contains non-whitespace content ─────────────────────
+        slice = source_bytes[source["begin"]..source["end"]]
+        assert slice && !slice.strip.empty?,
+          "AST source interval [#{source["begin"]}...#{source["end"]}) is empty or whitespace-only in #{rel_path}."
       end
 
-      # ── Check 4: re-parse each IDL snippet and compare to_h ──────────────
+      # ── Check 5: re-parse each IDL snippet and compare to_h ──────────────
       #
       # Walk the original YAML data and resolved data in parallel.  For each
       # IDL key (ending with `()`) found in the original data, re-parse the
@@ -406,8 +424,7 @@ class TestYamlResolver < Minitest::Test
       # so that the IDL strings we re-parse are identical to those the resolver
       # compiled — in particular, CommentParser strips `#` comment lines from
       # literal block scalars, while Psych preserves them.
-      original_parser = Udb::Yaml::CommentParser.new
-      original_data = original_parser.parse_file(input_path)[:data]
+      # Note: original_data was already parsed above for has_idl_keys check
 
       find_idl_pairs(original_data, resolved_data).each do |pair|
         idl_text   = pair[:idl_text]
@@ -534,6 +551,22 @@ class TestYamlResolver < Minitest::Test
     end
   end
 
+  # Check if data contains IDL keys (keys ending with () except sail())
+  def data_contains_idl_keys?(data)
+    case data
+    when Hash
+      data.each do |key, value|
+        return true if key.is_a?(String) && key.end_with?(")") && key != "sail()"
+        return true if data_contains_idl_keys?(value)
+      end
+      false
+    when Array
+      data.any? { |item| data_contains_idl_keys?(item) }
+    else
+      false
+    end
+  end
+
   # Compare two data structures with tolerance for trailing whitespace in strings
   def compare_with_whitespace_tolerance(data1, data2)
     return true if data1 == data2
@@ -558,6 +591,238 @@ class TestYamlResolver < Minitest::Test
   # Normalize a string for comparison (collapse whitespace)
   def normalize_string(str)
     str.strip.gsub(/\s+/, " ")
+  end
+
+  # Test cross-file inheritance $parent_of back-references
+  def test_cross_file_parent_of_relationships
+    # Use mock_spec directory with parent.yaml and child.yaml
+    mock_spec_dir = Pathname.new(__dir__) / "mock_spec"
+    output_dir = Pathname.new(@test_dir) / "cross_file_test"
+
+    # Run resolver
+    resolver = Udb::Yaml::Resolver.new(quiet: true)
+    resolver.resolve_files(mock_spec_dir, output_dir, no_checks: true)
+
+    # Load resolved files
+    parent_resolved = Psych.safe_load_file(output_dir / "parent.yaml", permitted_classes: [Date, Symbol], aliases: true)
+    child_resolved = Psych.safe_load_file(output_dir / "child.yaml", permitted_classes: [Date, Symbol], aliases: true)
+
+    # Verify child has $child_of pointing to parent
+    assert child_resolved["derived_item"].key?("$child_of"),
+      "Child derived_item should have $child_of"
+    assert_equal "parent.yaml#/base_item", child_resolved["derived_item"]["$child_of"],
+      "Child $child_of should reference parent.yaml#/base_item"
+
+    # Verify parent has $parent_of pointing back to child
+    assert parent_resolved["base_item"].key?("$parent_of"),
+      "Parent base_item should have $parent_of back-reference"
+    assert_equal "child.yaml#/derived_item", parent_resolved["base_item"]["$parent_of"],
+      "Parent $parent_of should reference child.yaml#/derived_item"
+
+    # Verify inheritance worked correctly
+    assert_equal 200, child_resolved["derived_item"]["value"],
+      "Child should override value to 200"
+    assert_equal "Base item from parent", child_resolved["derived_item"]["description"],
+      "Child should inherit description from parent"
+    assert_equal "Added in child", child_resolved["derived_item"]["extra_field"],
+      "Child should have its own extra_field"
+  end
+
+  # Test edge cases in source location tracking
+  def test_source_location_edge_cases
+    # Test various YAML edge cases that might cause offset tracking issues
+    edge_case_yaml = <<~YAML
+      # Single-quoted strings with escaped quotes
+      single_quoted: 'value with ''escaped'' quotes'
+
+      # Double-quoted strings with escape sequences
+      double_quoted: "value with \\n newline and \\t tab"
+
+      # Empty quoted strings
+      empty_double: ""
+      empty_single: ''
+
+      # Multi-line plain scalars
+      multiline_plain: this is a very long value that
+        continues on the next line
+
+      # Literal block with chomping indicators
+      literal_strip: |-
+        content without trailing newline
+      literal_keep: |+
+        content with trailing newlines
+      #{'  '}
+      #{'  '}
+
+      # Folded scalar with blank lines
+      folded_blank: >
+        Line 1
+      #{'  '}
+        Line 2 after blank line
+
+      # Unicode and multi-byte characters
+      unicode: "日本語"
+      emoji: "emoji 🎉"
+
+      # Values starting with special characters
+      colon_start: :value_starting_with_colon
+      at_start: @value_with_at
+
+      # Null/empty values
+      null_explicit: null
+      null_tilde: ~
+      empty_value:
+
+      # Numbers and booleans
+      number: 42
+      float: 3.14
+      bool_true: true
+      bool_false: false
+    YAML
+
+    # Write to temp file
+    temp_file = Pathname.new(@test_dir) / "edge_cases.yaml"
+    File.write(temp_file, edge_case_yaml)
+
+    # Parse with CommentParser
+    parser = Udb::Yaml::CommentParser.new
+    result = parser.parse_file(temp_file)
+
+    # Verify all keys were parsed
+    assert result[:data].key?("single_quoted"), "single_quoted key not found"
+    assert result[:data].key?("double_quoted"), "double_quoted key not found"
+    assert result[:data].key?("empty_double"), "empty_double key not found"
+    assert result[:data].key?("multiline_plain"), "multiline_plain key not found"
+    assert result[:data].key?("literal_strip"), "literal_strip key not found"
+    assert result[:data].key?("unicode"), "unicode key not found"
+    assert result[:data].key?("emoji"), "emoji key not found"
+
+    # Verify values are correct
+    assert_equal "value with 'escaped' quotes", result[:data]["single_quoted"]
+    assert_includes result[:data]["double_quoted"], "newline"
+    assert_equal "", result[:data]["empty_double"]
+    assert_equal "", result[:data]["empty_single"]
+    assert_includes result[:data]["multiline_plain"], "continues"
+    assert_equal "日本語", result[:data]["unicode"]
+    assert_includes result[:data]["emoji"], "🎉"
+    assert_equal ":value_starting_with_colon", result[:data]["colon_start"]
+    assert_equal "@value_with_at", result[:data]["at_start"]
+    assert_nil result[:data]["null_explicit"]
+    assert_nil result[:data]["null_tilde"]
+    assert_nil result[:data]["empty_value"]
+    assert_equal 42, result[:data]["number"]
+    assert_equal 3.14, result[:data]["float"]
+    assert_equal true, result[:data]["bool_true"]
+    assert_equal false, result[:data]["bool_false"]
+
+    # Test that source location tracking works with edge cases
+    # by running through the resolver
+    output_dir = Pathname.new(@test_dir) / "edge_cases_resolved"
+    input_dir = Pathname.new(@test_dir)
+
+    resolver = Udb::Yaml::Resolver.new(quiet: true)
+    resolver.resolve_files(input_dir, output_dir, no_checks: true)
+
+    # Verify resolved file exists and is valid
+    resolved_file = output_dir / "edge_cases.yaml"
+    assert resolved_file.exist?, "Resolved file not created"
+
+    resolved_data = Psych.safe_load_file(resolved_file, permitted_classes: [Date, Symbol], aliases: true)
+    assert resolved_data.key?("$source"), "Resolved file missing $source"
+
+    # Verify key values are preserved
+    assert_equal "value with 'escaped' quotes", resolved_data["single_quoted"]
+    assert_equal "日本語", resolved_data["unicode"]
+  end
+
+  # Test source location tracking with complex nested structures
+  def test_source_location_nested_structures
+    nested_yaml = <<~YAML
+      top_level:
+        nested_map:
+          deep_key: deep_value
+          another_deep: "quoted value"
+        nested_sequence:
+          - first_item
+          - second_item
+          - nested_in_seq:
+              key: value
+        mixed_content:
+          - item1
+          - key2: value2
+            key3: value3
+          - item3
+    YAML
+
+    temp_file = Pathname.new(@test_dir) / "nested.yaml"
+    File.write(temp_file, nested_yaml)
+
+    parser = Udb::Yaml::CommentParser.new
+    result = parser.parse_file(temp_file)
+
+    # Verify nested structure is correct
+    assert_equal result[:data]["top_level"]["nested_map"]["deep_key"], "deep_value"
+    assert result[:data]["top_level"]["nested_sequence"].is_a?(Array)
+    assert_equal 3, result[:data]["top_level"]["nested_sequence"].length
+    assert result[:data]["top_level"]["nested_sequence"][2].is_a?(Hash)
+    assert_equal "value", result[:data]["top_level"]["nested_sequence"][2]["nested_in_seq"]["key"]
+
+    # Test resolver handles nested structures
+    output_dir = Pathname.new(@test_dir) / "nested_resolved"
+    input_dir = Pathname.new(@test_dir)
+
+    resolver = Udb::Yaml::Resolver.new(quiet: true)
+    resolver.resolve_files(input_dir, output_dir, no_checks: true)
+
+    resolved_file = output_dir / "nested.yaml"
+    assert resolved_file.exist?, "Resolved nested file not created"
+
+    resolved_data = Psych.safe_load_file(resolved_file, permitted_classes: [Date, Symbol], aliases: true)
+    assert_equal "deep_value", resolved_data["top_level"]["nested_map"]["deep_key"]
+  end
+
+  # Test handling of block scalars with various indentation
+  def test_block_scalar_indentation
+    block_yaml = <<~YAML
+      explicit_indent: |2
+        This has explicit
+        2-space indent
+
+      implicit_indent: |
+        This has implicit
+        indent detection
+
+      folded_explicit: >2
+        Folded with
+        explicit indent
+
+      nested:
+        block_in_nested: |
+          Content in nested
+          mapping
+    YAML
+
+    temp_file = Pathname.new(@test_dir) / "blocks.yaml"
+    File.write(temp_file, block_yaml)
+
+    parser = Udb::Yaml::CommentParser.new
+    result = parser.parse_file(temp_file)
+
+    # Verify block scalars are parsed correctly
+    assert_includes result[:data]["explicit_indent"], "This has explicit"
+    assert_includes result[:data]["implicit_indent"], "This has implicit"
+    assert_includes result[:data]["folded_explicit"], "Folded with"
+    assert_includes result[:data]["nested"]["block_in_nested"], "Content in nested"
+
+    # Test resolver handles block scalars
+    output_dir = Pathname.new(@test_dir) / "blocks_resolved"
+    input_dir = Pathname.new(@test_dir)
+
+    resolver = Udb::Yaml::Resolver.new(quiet: true)
+    resolver.resolve_files(input_dir, output_dir, no_checks: true)
+
+    resolved_file = output_dir / "blocks.yaml"
+    assert resolved_file.exist?, "Resolved blocks file not created"
   end
 
   # Extract source map entries from YAML content

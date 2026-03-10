@@ -142,7 +142,7 @@ module Udb
       sig {
         params(
           key_path: T::Array[T.any(String, Integer)],
-          file: String,
+          file: T.any(String, Pathname),
           line: Integer,
           column: Integer,
           offset: T.nilable(Integer)
@@ -150,7 +150,7 @@ module Udb
       }
       def set_source_location(key_path, file, line, column, offset = nil)
         path_key = key_path.join("/")
-        @source_locations[path_key] = { file: file, line: line, column: column, offset: offset }
+        @source_locations[path_key] = { file: file.to_s, line: line, column: column, offset: offset }
       end
 
       sig {

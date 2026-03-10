@@ -483,12 +483,20 @@ module Idl
     def to_idl_verbose = to_idl
 
     # return yaml to indicate where the node comes from
+    # the retrun value will be:
+    #  file: <path to input file (or nil if input was given as a string)>
+    #  begin: <0-indexed position of the starting character in the input>
+    #  end: <0-indexed position of the ending character in the input>
     sig { returns(T::Hash[String, T.untyped]) }
     def source_yaml
+      base_offset = @starting_offset || 0
+      interval_begin = T.must(interval).begin
+      interval_end = T.must(interval).size == 0 ? T.must(interval).begin + 1 : T.must(interval).end
+
       {
         "file" => @input_file.to_s,
-        "begin" => (@starting_offset || 0) + T.must(interval).begin,
-        "end" => (@starting_offset || 0) + ((T.must(interval).size == 0) ? T.must(interval).begin : T.must(interval).max)
+        "begin" => base_offset + interval_begin,
+        "end" => base_offset + interval_end
       }
     end
 
