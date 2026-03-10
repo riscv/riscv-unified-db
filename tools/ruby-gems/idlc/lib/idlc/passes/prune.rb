@@ -49,12 +49,10 @@ module Idl
       new_node.instance_variable_set(:@children, new_children)
 
       if is_a?(Executable)
-        value_result = value_try do
+        value_try do
           execute(symtab)
         end
-        value_else(value_result) do
-          execute_unknown(symtab)
-        end
+        # value_else: execute raised ValueError; symtab state is already correct
       end
       add_symbol(symtab) if is_a?(Declaration)
 
@@ -68,7 +66,10 @@ module Idl
   class VariableAssignmentAst < AstNode
     def prune(symtab)
       new_ast = VariableAssignmentAst.new(input, interval, lhs.dup, rhs.prune(symtab))
-      new_ast.execute_unknown(symtab)
+      value_try do
+        new_ast.execute(symtab)
+      end
+      # value_else: execute already sets nil on failure, nothing more to do
       new_ast
     end
     def nullify_assignments(symtab)
@@ -76,6 +77,62 @@ module Idl
       unless sym.nil?
         sym.value = nil
       end
+    end
+  end
+  class AryElementAssignmentAst < AstNode
+    def nullify_assignments(symtab)
+      case lhs.type(symtab).kind
+      when :array
+        value_result = value_try do
+          lhs_value = lhs.value(symtab)
+          value_result2 = value_try do
+            lhs_value[idx.value(symtab)] = nil
+          end
+          value_else(value_result2) do
+            # index unknown: nullify entire array
+            lhs_value.map! { |_v| nil }
+          end
+        end
+        value_else(value_result) do
+          # array var itself is unknown; nothing more to do
+        end
+      when :bits
+        var = symtab.get(lhs.text_value)
+        var.value = nil unless var.nil?
+      end
+    end
+  end
+  class AryRangeAssignmentAst < AstNode
+    def nullify_assignments(symtab)
+      return if variable.type(symtab).global?
+      var = symtab.get(variable.name)
+      var.value = nil unless var.nil?
+    end
+  end
+  class FieldAssignmentAst < AstNode
+    def nullify_assignments(symtab)
+      var = symtab.get(id.name)
+      var.value = nil unless var.nil?
+    end
+  end
+  class MultiVariableAssignmentAst < AstNode
+    def nullify_assignments(symtab)
+      variables.each do |v|
+        sym = symtab.get(v.text_value)
+        sym.value = nil unless sym.nil?
+      end
+    end
+  end
+  class PostIncrementExpressionAst < AstNode
+    def nullify_assignments(symtab)
+      var = symtab.get(rval.text_value)
+      var.value = nil unless var.nil?
+    end
+  end
+  class PostDecrementExpressionAst < AstNode
+    def nullify_assignments(symtab)
+      var = symtab.get(rval.text_value)
+      var.value = nil unless var.nil?
     end
   end
   class FunctionCallExpressionAst < AstNode
@@ -118,9 +175,7 @@ module Idl
     def prune(symtab)
       symtab.push(self)
       symtab.add(init.lhs.name, Var.new(init.lhs.name, init.lhs_type(symtab)))
-
-      # make sure that any variable assigned within the loop is considered unknown
-      stmts.each { |stmt| stmt.nullify_assignments(symtab) }
+      snapshot = symtab.snapshot_values
 
       begin
         new_loop =
@@ -132,8 +187,12 @@ module Idl
             stmts.map { |s| s.prune(symtab) }
           )
       ensure
+        symtab.restore_values(snapshot)
         symtab.pop
       end
+      # Nullify any outer-scope variable assigned in the loop body, since we
+      # don't know how many iterations ran (or if any ran at all)
+      stmts.each { |stmt| stmt.nullify_assignments(symtab) }
       new_loop
     end
   end
@@ -226,10 +285,7 @@ module Idl
       pruned_action.freeze_tree(symtab) unless pruned_action.frozen?
 
       pruned_action.add_symbol(symtab) if pruned_action.is_a?(Declaration)
-      value_try do
-        pruned_action.execute(symtab) if pruned_action.is_a?(Executable)
-      end
-      # || ok
+      # action#prune already handles symtab update (execute)
 
       new_stmt
     end
@@ -328,13 +384,19 @@ module Idl
   end
 
   class IfBodyAst < AstNode
-    def prune(symtab)
+    def prune(symtab, restore: true)
       pruned_stmts = []
+      symtab.push(nil)
+      snapshot = symtab.snapshot_values if restore
       stmts.each do |s|
         pruned_stmts << s.prune(symtab)
 
         break if pruned_stmts.last.is_a?(StatementAst) && pruned_stmts.last.action.is_a?(FunctionCallExpressionAst) && pruned_stmts.last.action.name == "raise"
       end
+      if restore
+        symtab.restore_values(snapshot)
+      end
+      symtab.pop
       IfBodyAst.new(input, interval, pruned_stmts)
     end
   end
@@ -355,7 +417,7 @@ module Idl
     def prune(symtab)
       value_result = value_try do
         if if_cond.value(symtab)
-          return if_body.prune(symtab)
+          return if_body.prune(symtab, restore: false)
         elsif !elseifs.empty?
           # we know that the if condition is false, so now we treat the else if
           # as the starting point and try again
@@ -367,7 +429,7 @@ module Idl
             final_else_body.dup).prune(symtab)
         elsif !final_else_body.stmts.empty?
           # the if is false, and there are no else ifs, so the result of the prune is just the pruned else body
-          return final_else_body.prune(symtab)
+          return final_else_body.prune(symtab, restore: false)
         else
           # the if is false, and there are no else ifs or elses. This is just a no-op
           return NoopAst.new
@@ -398,13 +460,18 @@ module Idl
           end
         end
         # we get here, then we don't know the value of anything. just return this if with everything pruned
-        IfAst.new(
+        result = IfAst.new(
           input, interval,
           if_cond.prune(symtab),
           if_body.prune(symtab),
           unknown_elsifs.map { |eif| eif.prune(symtab) },
           final_else_body.prune(symtab)
         )
+        # Nullify any variable assigned in any branch, since we don't know which ran
+        if_body.nullify_assignments(symtab)
+        unknown_elsifs.each { |eif| eif.body.nullify_assignments(symtab) }
+        final_else_body.nullify_assignments(symtab)
+        result
       end
     end
   end

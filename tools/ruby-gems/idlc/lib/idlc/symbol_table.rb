@@ -469,6 +469,25 @@ module Idl
       @scopes.size == 1
     end
 
+    # Returns a Hash mapping each Var in non-global scopes to its current value.
+    # Only captures Vars (not Types or other objects).
+    def snapshot_values
+      snapshot = {}
+      @scopes[1..].each do |scope|
+        scope.each_value do |v|
+          snapshot[v] = v.value if v.is_a?(Var)
+        end
+      end
+      snapshot
+    end
+
+    # Restores Var values from a snapshot produced by snapshot_values.
+    def restore_values(snapshot)
+      snapshot.each do |var, value|
+        var.value = value
+      end
+    end
+
     # @return [SymbolTable] a mutable clone of the global scope of this SymbolTable
     def global_clone
       # raise "symtab isn't frozen" if @global_clone.nil?
