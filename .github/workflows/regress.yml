@@ -34,7 +34,7 @@ jobs:
       packages: read
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Get container tag
       run: |
         TAG=$(cat bin/.container-tag)
@@ -73,7 +73,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
     - name: Upload container
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@v6
       with:
         name: docker_image
         path: "${{ runner.temp }}/docker_image.tar"
@@ -84,13 +84,13 @@ jobs:
     - name: Use download-artifact
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
     - name: Use upload-artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       with:
         path: "."
   regress-pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v6
       with:
         submodules: 'true'
     - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037
@@ -101,7 +101,7 @@ jobs:
     - build-llvm
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -126,7 +126,7 @@ jobs:
     outputs:
       configs: "${{ steps.configs.outputs.configs }}"
     steps:
-    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+    - uses: actions/checkout@v6
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.2'
@@ -142,7 +142,7 @@ jobs:
     - regress-udb-unit-test
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -170,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository (no submodules, shallow fetch)
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
       with:
         submodules: false
         fetch-depth: 1
@@ -213,7 +213,7 @@ jobs:
     - name: Show riscv.json output
       run: ls -l ext/llvm-project/riscv.json
     - name: Upload RISC-V JSON as Artifact
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@v6
       with:
         name: riscv-json
         path: ext/llvm-project/riscv.json
@@ -224,7 +224,7 @@ jobs:
       run:
         working-directory: tools/eclipse/dev/org.xtext.udb.parent
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v6
     - name: Setup Temurin JDK 21
       uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
       with:
@@ -238,7 +238,7 @@ jobs:
       run: mvn -B -U -Dheadless=true verify
     - name: Archive surefire reports (always)
       if: always()
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@v6
       with:
         name: surefire-reports
         path: |
@@ -252,7 +252,7 @@ jobs:
       run:
         working-directory: tools/eclipse/udb-vscode
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v6
     - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
       with:
         node-version: '20'
@@ -271,7 +271,7 @@ jobs:
       run: xvfb-run -a npm test
     - name: Archive VS Code test logs (always)
       if: always()
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@v6
       with:
         name: vscode-test-logs
         path: |
@@ -288,7 +288,7 @@ jobs:
         - udb
         - udb_helpers
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v6
     - name: Copy the gem directory to resolve symlinks
       run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
     - name: Create the ${{ matrix.gem }} gem
@@ -296,7 +296,7 @@ jobs:
         cd gem-build-dir && \
         gem build -o ${{ matrix.gem }}.gem ${{ matrix.gem }}.gemspec
     - name: Upload the ${{ matrix.gem }} gem
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@v6
       with:
         name: "${{ matrix.gem }}.gem"
         path: gem-build-dir/${{ matrix.gem }}.gem
@@ -315,7 +315,7 @@ jobs:
     container: "${{ matrix.container }}"
     needs: create-gems
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v6
     - if: matrix.container == 'almalinux:8'
       name: Install ruby
       run: |
@@ -353,7 +353,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -375,7 +375,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -390,7 +390,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -405,7 +405,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -420,7 +420,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -442,7 +442,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -457,7 +457,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -476,7 +476,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -493,7 +493,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -508,7 +508,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -523,7 +523,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -538,7 +538,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -553,7 +553,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -568,7 +568,7 @@ jobs:
     - name: Rename coverage file
       run: mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
     - name: Save coverage report
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@v6
       with:
         name: udb-${{ matrix.test }}-cov
         path: tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
@@ -593,7 +593,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -608,7 +608,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -623,7 +623,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -638,7 +638,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -653,7 +653,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -670,7 +670,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -687,7 +687,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -702,7 +702,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -717,7 +717,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -732,7 +732,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -743,7 +743,7 @@ jobs:
     - name: Create reuse manifest
       run: "./bin/reuse spdx -o reuse_bom.txt"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: reuse-manifest
@@ -754,7 +754,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -765,7 +765,7 @@ jobs:
     - name: Generate UDB API Docs
       run: "./do gen:udb:api_doc"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: udb-api
@@ -777,7 +777,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -790,7 +790,7 @@ jobs:
     - name: Tar unconfig
       run: tar czf gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_ && mv gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_/resolved_spec.tar.gz
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: resolved-spec
@@ -802,7 +802,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -813,7 +813,7 @@ jobs:
     - name: Generate ISA Explorer CSR
       run: "./bin/udb-gen isa-explorer -t csr-browser -o gen/isa_explorer/browser"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: isa-explorer-csr
@@ -824,7 +824,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -835,7 +835,7 @@ jobs:
     - name: Generate ISA Explorer Extension
       run: "./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer/browser"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: isa-explorer-ext
@@ -846,7 +846,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -857,7 +857,7 @@ jobs:
     - name: Generate ISA Explorer Instruction
       run: "./bin/udb-gen isa-explorer -t inst-browser -o gen/isa_explorer/browser"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: isa-explorer-inst
@@ -868,7 +868,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -879,7 +879,7 @@ jobs:
     - name: Generate ISA Explorer Spreadsheet
       run: "./bin/udb-gen isa-explorer -t xlsx -o gen/isa_explorer/spreadsheet"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: isa-explorer-spreadsheet
@@ -890,7 +890,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -901,7 +901,7 @@ jobs:
     - name: Generate HTML ISA manual
       run: "./bin/generate manual -v all -f html"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: isa-html-manual
@@ -912,7 +912,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -923,7 +923,7 @@ jobs:
     - name: Generate HTML ISA manual for a config
       run: "./do gen:html[example_rv64_with_overlay]"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: cfg-html-manual
@@ -934,7 +934,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -947,7 +947,7 @@ jobs:
     - name: Generate instruction appendix
       run: "./do gen:instruction_appendix"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: inst-appendix
@@ -958,7 +958,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -972,7 +972,7 @@ jobs:
         UPPER_PROFILE="${PROFILE_NAME^^}"
         ./do gen:profile_release_pdf[${PROFILE_NAME}]
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: "${{ matrix.profile }}"
@@ -991,7 +991,7 @@ jobs:
     needs: build-container
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      uses: actions/checkout@v6
     - name: Download docker image
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
@@ -1002,7 +1002,7 @@ jobs:
     - name: Build IDL doc
       run: "./bin/bundle exec asciidoctor -r idl_highlighter -a toc=left -a source-highlighter=rouge -o idl.html doc/idl.adoc"
     - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      uses: actions/upload-artifact@v6
       if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
       with:
         name: idl-doc

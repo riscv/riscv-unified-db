@@ -43,7 +43,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@v6 # v6.0.2
 
       - name: Build and upload Eqntott for ${{ matrix.arch }}
         env:
@@ -69,7 +69,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@v6 # v6.0.2
 
       - name: Build and upload Z3 for ${{ matrix.arch }}
         env:
@@ -95,7 +95,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@v6 # v6.0.2
 
       - name: Build and upload Espresso for ${{ matrix.arch }}
         env:
@@ -121,7 +121,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@v6 # v6.0.2
 
       - name: Build and upload Must for ${{ matrix.arch }}
         env:
