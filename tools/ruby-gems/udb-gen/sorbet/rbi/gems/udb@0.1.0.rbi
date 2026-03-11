@@ -4305,6 +4305,367 @@ class Udb::XlenTerm
   def xlen; end
 end
 
+module Udb::Yaml; end
+
+class Udb::Yaml::Comment
+  sig { params(line: ::Integer, column: ::Integer, content: ::String, type: ::Symbol, indent: ::Integer).void }
+  def initialize(line, column, content, type, indent); end
+
+  sig { returns(::Integer) }
+  def column; end
+
+  sig { returns(::String) }
+  def content; end
+
+  sig { returns(::Integer) }
+  def indent; end
+
+  sig { returns(::Integer) }
+  def line; end
+
+  sig { returns(::String) }
+  def to_s; end
+
+  sig { returns(::Symbol) }
+  def type; end
+end
+
+class Udb::Yaml::CommentMap
+  sig { void }
+  def initialize; end
+
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)], comment: ::Udb::Yaml::Comment).void }
+  def add_comment(key_path, comment); end
+
+  sig { params(comment: ::Udb::Yaml::Comment).void }
+  def add_header_comment(comment); end
+
+  sig { params(comment: ::Udb::Yaml::Comment).void }
+  def add_trailing_comment(comment); end
+
+  sig { returns(T::Array[::Udb::Yaml::Comment]) }
+  def all_comments; end
+
+  sig { returns(T::Hash[::String, T::Hash[::Symbol, T.untyped]]) }
+  def all_source_locations; end
+
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(T::Array[::Udb::Yaml::Comment]) }
+  def get_comments(key_path); end
+
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(T.nilable(T::Array[::String])) }
+  def get_multiline_content(key_path); end
+
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(T.nilable(T::Hash[::Symbol, T.untyped])) }
+  def get_source_location(key_path); end
+
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(T.nilable(::Symbol)) }
+  def get_string_style(key_path); end
+
+  sig { returns(T::Array[::Udb::Yaml::Comment]) }
+  def header_comments; end
+
+  sig { params(base_map: ::Udb::Yaml::CommentMap).void }
+  def merge_styles_from(base_map); end
+
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)], lines: T::Array[::String]).void }
+  def set_multiline_content(key_path, lines); end
+
+  sig do
+    params(
+      key_path: T::Array[T.any(::Integer, ::String)],
+      file: T.any(::Pathname, ::String),
+      line: ::Integer,
+      column: ::Integer,
+      offset: T.nilable(::Integer),
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).void
+  end
+  def set_source_location(key_path, file, line, column, offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
+
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)], style: ::Symbol).void }
+  def set_string_style(key_path, style); end
+
+  sig { returns(T::Array[::Udb::Yaml::Comment]) }
+  def trailing_comments; end
+
+  private
+
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(::String) }
+  def path_key_for(key_path); end
+end
+
+class Udb::Yaml::CommentParser
+  sig { params(yaml_string: ::String).returns(T::Hash[::Symbol, T.untyped]) }
+  def parse(yaml_string); end
+
+  sig { params(file_path: T.any(::Pathname, ::String)).returns(T::Hash[::Symbol, T.untyped]) }
+  def parse_file(file_path); end
+
+  private
+
+  sig do
+    params(
+      comments_by_line: T::Hash[::Integer, ::Udb::Yaml::Comment],
+      line_to_path: T::Hash[::Integer, T::Array[::String]],
+      comment_map: ::Udb::Yaml::CommentMap,
+      data: T.untyped
+    ).void
+  end
+  def associate_comments(comments_by_line, line_to_path, comment_map, data); end
+
+  sig { params(yaml_string: ::String).returns(T::Hash[::Integer, T::Array[::String]]) }
+  def build_line_to_path_map(yaml_string); end
+
+  sig do
+    params(
+      yaml_string: ::String,
+      line_to_path: T::Hash[::Integer, T::Array[::String]],
+      comment_map: ::Udb::Yaml::CommentMap
+    ).void
+  end
+  def detect_string_styles(yaml_string, line_to_path, comment_map); end
+
+  sig { params(lines: T::Array[::String]).returns(T::Hash[::Integer, ::Udb::Yaml::Comment]) }
+  def extract_comments(lines); end
+
+  sig { params(line: ::String).returns(T.nilable(::Integer)) }
+  def find_comment_position(line); end
+end
+
+class Udb::Yaml::PreservingEmitter
+  sig { params(comment_map: T.nilable(::Udb::Yaml::CommentMap)).void }
+  def initialize(comment_map = T.unsafe(nil)); end
+
+  sig { params(data: T.untyped, io: T.nilable(T.any(::IO, ::String))).returns(::String) }
+  def emit(data, io = T.unsafe(nil)); end
+
+  sig { params(data: T.untyped, file_path: T.any(::Pathname, ::String)).void }
+  def emit_file(data, file_path); end
+
+  private
+
+  sig do
+    params(
+      array: T::Array[T.untyped],
+      output: ::StringIO,
+      path: T::Array[T.any(::Integer, ::String)],
+      indent: ::Integer
+    ).void
+  end
+  def emit_array(array, output, path, indent); end
+
+  sig do
+    params(
+      hash: T::Hash[T.untyped, T.untyped],
+      output: ::StringIO,
+      path: T::Array[T.any(::Integer, ::String)],
+      indent: ::Integer
+    ).void
+  end
+  def emit_hash(hash, output, path, indent); end
+
+  sig do
+    params(
+      value: T.untyped,
+      output: ::StringIO,
+      path: T::Array[T.any(::Integer, ::String)],
+      indent: ::Integer,
+      inline: T::Boolean,
+      preserve_style: T::Boolean
+    ).void
+  end
+  def emit_scalar(value, output, path, indent, inline: T.unsafe(nil), preserve_style: T.unsafe(nil)); end
+
+  sig do
+    params(
+      value: T.untyped,
+      output: ::StringIO,
+      path: T::Array[T.any(::Integer, ::String)],
+      indent: ::Integer
+    ).void
+  end
+  def emit_value(value, output, path, indent); end
+
+  sig do
+    params(
+      value: T.untyped,
+      path: T::Array[T.any(::Integer, ::String)],
+      preserve_style: T::Boolean
+    ).returns(::String)
+  end
+  def format_scalar(value, path = T.unsafe(nil), preserve_style = T.unsafe(nil)); end
+
+  sig do
+    params(
+      str: ::String,
+      path: T::Array[T.any(::Integer, ::String)],
+      preserve_style: T::Boolean
+    ).returns(::String)
+  end
+  def format_string(str, path = T.unsafe(nil), preserve_style = T.unsafe(nil)); end
+
+  sig { params(str: ::String).returns(T::Boolean) }
+  def needs_quoting?(str); end
+end
+
+class Udb::Yaml::Resolver
+  sig { params(quiet: T::Boolean, compile_idl: T::Boolean).void }
+  def initialize(quiet: T.unsafe(nil), compile_idl: T.unsafe(nil)); end
+
+  sig { params(parent_obj: T::Hash[::String, T.untyped], child_ref: ::String).void }
+  def add_parent_of_reference(parent_obj, child_ref); end
+
+  sig do
+    params(
+      idl_string: ::String,
+      first_line_file_offset: ::Integer,
+      file_contents: ::String
+    ).returns(T::Array[::Integer])
+  end
+  def build_line_file_offsets(idl_string, first_line_file_offset, file_contents); end
+
+  sig do
+    params(
+      line: ::String,
+      value_part: T.nilable(::String),
+      line_num: ::Integer,
+      lines: T::Array[::String],
+      cumulative_offsets: T::Array[::Integer],
+      file_bytes: ::String
+    ).returns(::Integer)
+  end
+  def calculate_content_offset(line, value_part, line_num, lines, cumulative_offsets, file_bytes); end
+
+  sig do
+    params(
+      line: ::String,
+      value_part: T.nilable(::String),
+      line_num: ::Integer,
+      lines: T::Array[::String]
+    ).returns(::Integer)
+  end
+  def calculate_value_column(line, value_part, line_num, lines); end
+
+  sig { params(obj: T.untyped).returns(T.untyped) }
+  def deep_copy(obj); end
+
+  sig do
+    params(
+      base: T::Hash[T.untyped, T.untyped],
+      other: T::Hash[T.untyped, T.untyped]
+    ).returns(T::Hash[T.untyped, T.untyped])
+  end
+  def deep_merge(base, other); end
+
+  sig do
+    params(
+      base: T::Hash[T.untyped, T.untyped],
+      other: T::Hash[T.untyped, T.untyped]
+    ).returns(T::Hash[T.untyped, T.untyped])
+  end
+  def deep_merge!(base, other); end
+
+  sig do
+    params(
+      rel_path: ::String,
+      arch_root: ::Pathname,
+      no_checks: T::Boolean
+    ).returns(T::Hash[::String, T.untyped])
+  end
+  def get_resolved_object(rel_path, arch_root, no_checks); end
+
+  sig { params(base: T.untyped, patch: T.untyped).returns(T.untyped) }
+  def json_merge_patch(base, patch); end
+
+  sig do
+    params(
+      rel_path: ::String,
+      base_dir: ::Pathname,
+      overlay_dir: T.nilable(::Pathname),
+      output_dir: ::Pathname
+    ).void
+  end
+  def merge_file(rel_path, base_dir, overlay_dir, output_dir); end
+
+  sig do
+    params(
+      base_dir: T.any(::Pathname, ::String),
+      overlay_dir: T.nilable(T.any(::Pathname, ::String)),
+      output_dir: T.any(::Pathname, ::String)
+    ).void
+  end
+  def merge_files(base_dir, overlay_dir, output_dir); end
+
+  sig { params(rel_path: ::String, input_dir: ::Pathname, output_dir: ::Pathname, no_checks: T::Boolean).void }
+  def resolve_file(rel_path, input_dir, output_dir, no_checks); end
+
+  sig do
+    params(
+      input_dir: T.any(::Pathname, ::String),
+      output_dir: T.any(::Pathname, ::String),
+      options: T::Hash[::Symbol, T.untyped]
+    ).void
+  end
+  def resolve_files(input_dir, output_dir, options = T.unsafe(nil)); end
+
+  sig do
+    params(
+      obj: T::Hash[::String, T.untyped],
+      obj_path: T::Array[T.untyped],
+      obj_file_path: T.any(::Pathname, ::String),
+      doc_obj: T.untyped,
+      arch_root: ::Pathname,
+      no_checks: T::Boolean
+    ).returns(T::Hash[::String, T.untyped])
+  end
+  def resolve_inherits(obj, obj_path, obj_file_path, doc_obj, arch_root, no_checks); end
+
+  sig do
+    params(
+      obj: T.untyped,
+      obj_path: T::Array[T.untyped],
+      obj_file_path: T.any(::Pathname, ::String),
+      doc_obj: T.untyped,
+      arch_root: ::Pathname,
+      no_checks: T::Boolean
+    ).returns(T.untyped)
+  end
+  def resolve_object(obj, obj_path, obj_file_path, doc_obj, arch_root, no_checks); end
+
+  sig { params(resolved_data: T::Hash[::String, T.untyped], rel_path: ::String).void }
+  def set_parent_of_relationships(resolved_data, rel_path); end
+
+  sig { params(file_path: T.any(::Pathname, ::String), comment_map: ::Udb::Yaml::CommentMap).void }
+  def track_source_locations(file_path, comment_map); end
+
+  sig do
+    params(
+      keys: T::Array[::String],
+      contents: ::String,
+      file: T.any(::Pathname, ::String),
+      cumulative_offsets: T::Array[::Integer],
+      offset_map: ::Udb::Yaml::CommentMap,
+      node: ::Psych::Nodes::Node
+    ).void
+  end
+  def track_source_locations_helper(keys, contents, file, cumulative_offsets, offset_map, node); end
+
+  def validate_idl_scalars(node, keys, file_path); end
+
+  sig do
+    params(
+      obj: T.untyped,
+      path: T::Array[::String],
+      doc_root: T::Hash[::String, T.untyped],
+      rel_path: ::String
+    ).void
+  end
+  def walk_for_parent_of(obj, path, doc_root, rel_path); end
+
+  sig { params(rel_path: ::String, input_dir: ::Pathname, output_dir: ::Pathname, no_checks: T::Boolean).void }
+  def write_resolved_file(rel_path, input_dir, output_dir, no_checks); end
+end
+
 class Udb::Z3ExtensionRequirement
   sig do
     params(

@@ -523,11 +523,25 @@ class Idl::AstNode
   def reachable_exceptions(symtab, cache = T.unsafe(nil)); end
   def reachable_functions(symtab, cache = T.unsafe(nil)); end
 
-  sig { params(filename: T.any(::Pathname, ::String), starting_line: ::Integer).void }
-  def set_input_file(filename, starting_line = T.unsafe(nil)); end
+  sig do
+    params(
+      filename: T.any(::Pathname, ::String),
+      starting_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).void
+  end
+  def set_input_file(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
-  sig { params(filename: T.any(::Pathname, ::String), starting_line: ::Integer).void }
-  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil)); end
+  sig do
+    params(
+      filename: T.any(::Pathname, ::String),
+      starting_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).void
+  end
+  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
   sig { returns(T::Hash[::String, T.untyped]) }
   def source_yaml; end
@@ -567,6 +581,11 @@ class Idl::AstNode
 
   sig { params(block: T.proc.params(arg0: ::Object).returns(T.untyped)).returns(T.untyped) }
   def value_try(&block); end
+
+  private
+
+  sig { params(pos: ::Integer, lfo: T::Array[::Integer]).returns(::Integer) }
+  def idl_pos_to_file_offset(pos, lfo); end
 
   class << self
     sig do
@@ -1098,8 +1117,18 @@ end
 class Idl::Compiler
   def initialize; end
 
-  sig { params(body: ::String, symtab: ::Idl::SymbolTable, pass_error: T::Boolean).returns(::Idl::ConstraintBodyAst) }
-  def compile_constraint(body, symtab, pass_error: T.unsafe(nil)); end
+  sig do
+    params(
+      body: ::String,
+      symtab: ::Idl::SymbolTable,
+      pass_error: T::Boolean,
+      input_file: T.nilable(T.any(::Pathname, ::String)),
+      input_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).returns(::Idl::ConstraintBodyAst)
+  end
+  def compile_constraint(body, symtab, pass_error: T.unsafe(nil), input_file: T.unsafe(nil), input_line: T.unsafe(nil), starting_offset: T.unsafe(nil), line_file_offsets: T.unsafe(nil)); end
 
   def compile_expression(expression, symtab, pass_error: T.unsafe(nil)); end
   def compile_file(path, source_mapper = T.unsafe(nil)); end
@@ -1107,9 +1136,9 @@ class Idl::Compiler
   sig { params(loop: ::String, symtab: ::Idl::SymbolTable, pass_error: T::Boolean).returns(::Idl::ForLoopAst) }
   def compile_for_loop(loop, symtab, pass_error: T.unsafe(nil)); end
 
-  def compile_func_body(body, return_type: T.unsafe(nil), symtab: T.unsafe(nil), name: T.unsafe(nil), input_file: T.unsafe(nil), input_line: T.unsafe(nil), no_rescue: T.unsafe(nil), extra_syms: T.unsafe(nil), type_check: T.unsafe(nil)); end
-  def compile_inst_operation(inst, symtab:, input_file: T.unsafe(nil), input_line: T.unsafe(nil)); end
-  def compile_inst_scope(idl, symtab:, input_file:, input_line: T.unsafe(nil)); end
+  def compile_func_body(body, return_type: T.unsafe(nil), symtab: T.unsafe(nil), name: T.unsafe(nil), input_file: T.unsafe(nil), input_line: T.unsafe(nil), starting_offset: T.unsafe(nil), line_file_offsets: T.unsafe(nil), no_rescue: T.unsafe(nil), extra_syms: T.unsafe(nil), type_check: T.unsafe(nil)); end
+  def compile_inst_operation(inst, symtab:, input_file: T.unsafe(nil), input_line: T.unsafe(nil), starting_offset: T.unsafe(nil), line_file_offsets: T.unsafe(nil)); end
+  def compile_inst_scope(idl, symtab:, input_file:, input_line: T.unsafe(nil), starting_offset: T.unsafe(nil), line_file_offsets: T.unsafe(nil)); end
   def parser; end
   def pb=(pb); end
   def type_check(ast, symtab, what); end
@@ -5027,7 +5056,7 @@ class IdlParser < ::Treetop::Runtime::CompiledParser
 
   def input_file; end
   def instantiate_node(node_type, *args); end
-  def set_input_file(filename, starting_line = T.unsafe(nil)); end
+  def set_input_file(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
   protected
 
@@ -5050,11 +5079,25 @@ module Treetop; end
 module Treetop::Runtime; end
 
 class Treetop::Runtime::SyntaxNode
-  sig { params(filename: T.nilable(::String), starting_line: ::Integer).void }
-  def set_input_file(filename, starting_line = T.unsafe(nil)); end
+  sig do
+    params(
+      filename: T.nilable(::String),
+      starting_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).void
+  end
+  def set_input_file(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
-  sig { params(filename: T.nilable(::String), starting_line: ::Integer).void }
-  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil)); end
+  sig do
+    params(
+      filename: T.nilable(::String),
+      starting_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).void
+  end
+  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
   sig { returns(T::Boolean) }
   def space?; end

@@ -1,0 +1,155 @@
+{
+  "scopeName": "yaml.idl.injection",
+  "injectionSelector": "L:source.yaml",
+  "patterns": [
+    {
+      "comment": "Match description key with implicit multi-line value (no quotes or block scalar) - use AsciiDoc highlighting",
+      "begin": "^(\\s*)(description)\\s*:\\s*$",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.name.tag.yaml"
+        }
+      },
+      "end": "^(?!\\1\\s+|\\s*$)",
+      "contentName": "meta.embedded.block.asciidoc",
+      "patterns": [
+        {
+          "include": "text.asciidoc"
+        }
+      ]
+    },
+    {
+      "comment": "Match description key with quoted string - use AsciiDoc highlighting",
+      "begin": "^(\\s*)(description)\\s*:\\s*(['\"])",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.name.tag.yaml"
+        },
+        "3": {
+          "name": "punctuation.definition.string.begin.yaml"
+        }
+      },
+      "end": "\\3",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.yaml"
+        }
+      },
+      "contentName": "meta.embedded.block.asciidoc",
+      "patterns": [
+        {
+          "include": "text.asciidoc"
+        }
+      ]
+    },
+    {
+      "comment": "Match description key with block scalar (literal |) - use AsciiDoc highlighting",
+      "begin": "^(\\s*)(description)\\s*:\\s*\\|[-+]?\\s*$",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.name.tag.yaml"
+        }
+      },
+      "end": "^(?!\\1\\s+|\\s*$)",
+      "contentName": "meta.embedded.block.asciidoc",
+      "patterns": [
+        {
+          "include": "text.asciidoc"
+        }
+      ]
+    },
+    {
+      "comment": "Match description key with block scalar (folded >) - use AsciiDoc highlighting",
+      "begin": "^(\\s*)(description)\\s*:\\s*>[-+]?\\s*$",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.name.tag.yaml"
+        }
+      },
+      "end": "^(?!\\1\\s+|\\s*$)",
+      "contentName": "meta.embedded.block.asciidoc",
+      "patterns": [
+        {
+          "include": "text.asciidoc"
+        }
+      ]
+    },
+    {
+      "comment": "Match quoted string values after keys ending with ()",
+      "begin": "^(\\s*)([\\w-]+)(\\([^)]*\\))\\s*:\\s*(['\"])",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.name.function.yaml"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "source.idl"
+            }
+          ]
+        },
+        "4": {
+          "name": "punctuation.definition.string.begin.yaml"
+        }
+      },
+      "end": "\\4",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.yaml"
+        }
+      },
+      "contentName": "meta.embedded.block.idl",
+      "patterns": [
+        {
+          "include": "source.idl"
+        }
+      ]
+    },
+    {
+      "comment": "Match block scalar (literal |) values after keys ending with ()",
+      "begin": "^(\\s*)([\\w-]+)(\\([^)]*\\))\\s*:\\s*\\|[-+]?\\s*$",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.name.function.yaml"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "source.idl"
+            }
+          ]
+        }
+      },
+      "end": "^(?!\\1\\s+|\\s*$)",
+      "contentName": "meta.embedded.block.idl",
+      "patterns": [
+        {
+          "include": "source.idl"
+        }
+      ]
+    },
+    {
+      "comment": "Match block scalar (folded >) values after keys ending with ()",
+      "begin": "^(\\s*)([\\w-]+)(\\([^)]*\\))\\s*:\\s*>[-+]?\\s*$",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.name.function.yaml"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "source.idl"
+            }
+          ]
+        }
+      },
+      "end": "^(?!\\1\\s+|\\s*$)",
+      "contentName": "meta.embedded.block.idl",
+      "patterns": [
+        {
+          "include": "source.idl"
+        }
+      ]
+    }
+  ]
+}

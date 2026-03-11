@@ -54,7 +54,11 @@ module Udb
       @cfg_arch = cfg_arch
       symtab = cfg_arch.symtab.global_clone
       begin
-        @ast = @cfg_arch.idl_compiler.compile_constraint(idl, symtab)
+        @ast = @cfg_arch.idl_compiler.compile_constraint(
+          idl, symtab,
+          input_file: input_file || "[CONSTRAINT]",
+          input_line: input_line || 0
+        )
       rescue SyntaxError
         Udb.logger.error "Could not compile IDL constraint: \n#{idl}"
         raise

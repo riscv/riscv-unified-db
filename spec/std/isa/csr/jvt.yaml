@@ -86,5 +86,4 @@ fields:
       return 0;
 sw_read(): |
   check_zcmt_enabled($encoding);
-
   return $bits(CSR[jvt]);

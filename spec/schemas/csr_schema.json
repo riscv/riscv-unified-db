@@ -129,7 +129,7 @@
 
       "allOf": [
         {
-          "$comment": "Location is required, but it can either be a static value or a function",
+          "$comment": "Location is required, but it can either be a single XLEN-independent value or a value for each XLEN",
           "oneOf": [
             {
               "required": ["location"]
