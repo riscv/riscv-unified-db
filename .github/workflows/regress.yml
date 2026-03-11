@@ -93,8 +93,7 @@ jobs:
     - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       with:
         submodules: 'true'
-    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-    - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
+    - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037
   regress-llvm:
     runs-on: ubuntu-latest
     needs:
@@ -429,14 +428,15 @@ jobs:
         path: "${{ runner.temp }}"
     - name: Load image
       run: docker load --input ${{ runner.temp }}/docker_image.tar
-    - name: Type check IDL for _
-      run: "./do test:idl CFG=_"
-    - name: Type check IDL for rv32
-      run: "./do test:idl CFG=rv32"
-    - name: Type check IDL for rv64
-      run: "./do test:idl CFG=rv64"
-    - name: Type check IDL for qc_iu
-      run: "./do test:idl CFG=qc_iu"
+    - name: Type check IDL for ${{ matrix.cfg }}
+      run: "./do test:idl CFG=${{ matrix.cfg }}"
+    strategy:
+      matrix:
+        cfg:
+        - _
+        - rv32
+        - rv64
+        - qc_iu
   regress-test-inst-encodings:
     runs-on: ubuntu-latest
     needs: build-container
@@ -532,7 +532,7 @@ jobs:
     - name: Load image
       run: docker load --input ${{ runner.temp }}/docker_image.tar
     - name: Generate extension PDF
-      run: "./do gen:proc_crd_pdf[MockProcessor]"
+      run: "./do gen:proc_crd_pdf[RVI20-32]"
   regress-gen-profile:
     runs-on: ubuntu-latest
     needs: build-container
@@ -547,7 +547,7 @@ jobs:
     - name: Load image
       run: docker load --input ${{ runner.temp }}/docker_image.tar
     - name: Generate extension PDF
-      run: "./do gen:profile_release_pdf[Mock]"
+      run: "./do gen:profile_release_pdf[RVI20]"
   regress-udb-unit-test:
     runs-on: ubuntu-latest
     needs: build-container
@@ -581,9 +581,13 @@ jobs:
         - yaml_loader
         - cfg_arch
         - cfg
-        - z3
         - mmr
         - mmr_schema
+        - instruction
+        - z3
+        - z3_extensions
+        - z3_finite_array
+        - z3_parameter_constraints
   regress-gen-go:
     runs-on: ubuntu-latest
     needs: build-container

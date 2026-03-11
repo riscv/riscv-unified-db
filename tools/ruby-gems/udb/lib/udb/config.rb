@@ -261,6 +261,19 @@ module Udb
     end
 
     sig { returns(T::Array[T::Hash[String, T.any(String, T::Array[String])]]) }
+    def non_mandatory_extensions
+      @non_mandatory_extensions ||=
+        if @data["non_mandatory_extensions"].nil?
+          []
+        else
+          @data["non_mandatory_extensions"].map do |e|
+            # convert the requirement to always be an array
+            { "name" => e["name"], "version" => e["version"].is_a?(String) ? [e["version"]] : e["version"] }
+          end
+        end
+    end
+
+    sig { returns(T::Array[T::Hash[String, T::Array[String]]]) }
     def prohibited_extensions
       @prohibited_extensions ||=
         if @data["prohibited_extensions"].nil?
@@ -268,7 +281,15 @@ module Udb
         else
           @data["prohibited_extensions"].map do |e|
             # convert the requirement to always be an array
-            { "name" => e["name"], "version" => e["version"].is_a?(String) ? [e["version"]] : e["version"] }
+            {
+              "name" => e["name"],
+              "version" =>
+                if e.key?("version")
+                  e["version"].is_a?(String) ? [e["version"]] : e["version"]
+                else
+                  ">=0"
+                end
+            }
           end
         end
     end
@@ -277,6 +298,9 @@ module Udb
     # in mandatory_extensions/non_mandatory_extensions.
     sig { returns(T::Boolean) }
     def additional_extensions_allowed? = @data.key?("additional_extensions") ? @data["additional_extensions"] : true
+
+    sig { returns(T.nilable(T::Hash[String, T.untyped])) }
+    def requirements = @data["requirements"]
   end
 
   ################################################################################################################

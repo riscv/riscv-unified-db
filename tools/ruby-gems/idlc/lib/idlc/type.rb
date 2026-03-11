@@ -10,6 +10,11 @@ module Idl
 
   class AstNode; end
   class EnumDefinitionAst < AstNode; end
+  class Type; end
+  class EnumerationType < Type; end
+  module Csr
+    include Kernel
+  end
 
   # Data types
   class Type
@@ -52,7 +57,7 @@ module Idl
       when :bits
         @kind == :bits && @width == other.width
       when :enum_ref
-        @kind == :enum_ref && @enum_class.name == other.name
+        @kind == :enum_ref && T.must(@enum_class).name == other.name
       else
         raise "TODO: Type == for #{other.kind}"
       end
@@ -60,7 +65,7 @@ module Idl
 
     def runtime?
       if @kind == :array
-        @sub_type.runtime?
+        T.must(@sub_type).runtime?
       else
         @kind == :bits && @width == :unknown
       end
@@ -76,12 +81,12 @@ module Idl
         if @width == :unknown
           Array.new
         else
-          Array.new(@width, sub_type.default)
+          Array.new(T.cast(@width, Integer), sub_type.default)
         end
       when :string
         ""
       when :enum_ref
-        @enum_class.element_values.min
+        T.must(@enum_class).element_values.min
       when :enum
         raise "?"
       else
@@ -96,19 +101,22 @@ module Idl
     attr_reader :qualifiers
 
     sig { returns(T.any(Integer, Symbol)) }
-    attr_reader :width
+    def width = T.must(@width)
 
     sig { returns(T.nilable(AstNode)) }
     attr_reader :width_ast
 
+    sig { returns(T.nilable(Integer)) }
+    attr_reader :max_width
+
     sig { returns(Type) }
-    attr_reader :sub_type
+    def sub_type = T.must(@sub_type)
 
     sig { returns(T::Array[Type]) }
-    attr_reader :tuple_types
+    def tuple_types = T.must(@tuple_types)
 
     sig { returns(EnumerationType) }
-    attr_reader :enum_class
+    def enum_class = T.must(@enum_class)
 
     def qualify(qualifier)
       @qualifiers << qualifier
@@ -119,17 +127,29 @@ module Idl
     def self.from_typename(type_name, cfg_arch)
       case type_name
       when "XReg"
-        return Type.new(:bits, width: cfg_arch.param_values["MXLEN"])
-      when "FReg"
-        return Type.new(:freg, width: 32)
-      when "DReg"
-        return Type.new(:dreg, width: 64)
+        return Type.new(:bits, width: cfg_arch.param_values.key?("MXLEN") ? cfg_arch.param_values.fetch("MXLEN") : :unknown, max_width: 64)
       when /Bits<((?:0x)?[0-9a-fA-F]+)>/
         Type.new(:bits, width: $1.to_i)
       end
     end
 
-    def initialize(kind, qualifiers: [], width: nil, width_ast: nil, max_width: nil, sub_type: nil, name: nil, tuple_types: nil, return_type: nil, arguments: nil, enum_class: nil, csr: nil)
+    sig {
+      params(
+        kind: Symbol,
+        qualifiers: T::Array[Symbol],
+        width: T.nilable(T.any(Integer, Symbol)),
+        width_ast: T.nilable(AstNode),
+        max_width: T.nilable(Integer),
+        sub_type: T.nilable(Type),
+        name: T.nilable(String),
+        tuple_types: T.nilable(T::Array[Type]),
+        return_type: T.nilable(Type),
+        enum_class: T.nilable(EnumerationType),
+        csr: T.nilable(Csr)
+      )
+      .void
+    }
+    def initialize(kind, qualifiers: [], width: nil, width_ast: nil, max_width: nil, sub_type: nil, name: nil, tuple_types: nil, return_type: nil, enum_class: nil, csr: nil)
       raise "Invalid kind '#{kind}'" unless KINDS.include?(kind)
 
       @kind = kind
@@ -140,7 +160,6 @@ module Idl
 
       raise "Should be a FunctionType" if kind == :function && !self.is_a?(FunctionType)
 
-      raise "Width must be an Integer, is a #{width.class}" unless width.nil? || width.is_a?(Integer) || width == :unknown
       @width = width
       @width_ast = width_ast
       @max_width = max_width
@@ -173,7 +192,7 @@ module Idl
     def clone
       Type.new(
         @kind,
-        qualifiers: @qualifiers&.map(&:clone),
+        qualifiers: @qualifiers.map(&:clone),
         width: @width,
         sub_type: @sub_type&.clone,
         name: @name.dup,
@@ -197,8 +216,8 @@ module Idl
         return type.kind == :boolean
       when :enum_ref
         return \
-          (type.kind == :enum_ref && type.enum_class.name == @enum_class.name) \
-          || (type.kind == :enum && type.name == @enum_class.name)
+          (type.kind == :enum_ref && type.enum_class.name == T.must(@enum_class).name) \
+          || (type.kind == :enum && type.name == T.must(@enum_class).name)
       when :bits
         return type.convertable_to?(self) && (signed? == type.signed?)
       when :enum
@@ -228,7 +247,7 @@ module Idl
       when :boolean
         type.kind == :boolean
       when :enum_ref
-        type.kind == :enum_ref && type.name == @enum_class.name
+        type.kind == :enum_ref && type.name == T.must(@enum_class).name
       when :dontcare
         true
       when :bits
@@ -267,8 +286,8 @@ module Idl
         return type.kind == :boolean
       when :enum_ref
         return \
-          (type.kind == :enum && type.name == @enum_class.name) || \
-          (type.kind == :enum_ref && type.enum_class.name == @enum_class.name)
+          (type.kind == :enum && type.name == T.must(@enum_class).name) || \
+          (type.kind == :enum_ref && type.enum_class.name == T.must(@enum_class).name)
       when :dontcare
         return true
       when :bits
@@ -287,10 +306,10 @@ module Idl
           return false
         end
       when :tuple
-        is_tuple_of_same_size = (type.kind == :tuple) && (@tuple_types.size == type.tuple_types.size)
+        is_tuple_of_same_size = (type.kind == :tuple) && (T.must(@tuple_types).size == type.tuple_types.size)
         if is_tuple_of_same_size
-          @tuple_types.each_index do |i|
-            unless @tuple_types[i].convertable_to?(type.tuple_types[i])
+          T.must(@tuple_types).each_index do |i|
+            unless T.must(@tuple_types).fetch(i).convertable_to?(type.tuple_types.fetch(i))
               return false
             end
           end
@@ -345,7 +364,7 @@ module Idl
     end
 
     def to_s
-      ((@qualifiers.nil? || @qualifiers.empty?) ? "" : "#{@qualifiers.map(&:to_s).join(' ')} ") + \
+      ((@qualifiers.empty?) ? "" : "#{@qualifiers.map(&:to_s).join(' ')} ") + \
         if @kind == :bits
           "Bits<#{@width}>"
         elsif @kind == :enum
@@ -353,9 +372,9 @@ module Idl
         elsif @kind == :boolean
           "Boolean"
         elsif @kind == :enum_ref
-          "enum #{@enum_class.name}"
+          "enum #{T.must(@enum_class).name}"
         elsif @kind == :tuple
-          "(#{@tuple_types.map { |t| t.to_s }.join(',')})"
+          "(#{T.must(@tuple_types).map { |t| t.to_s }.join(',')})"
         elsif @kind == :bitfield
           "bitfield #{@name}"
         elsif @kind == :array
@@ -388,7 +407,7 @@ module Idl
       elsif @kind == :csr
         @csr.name
       elsif @kind == :enum_ref
-        @enum_class.name
+        T.must(@enum_class).name
       else
         raise @kind.to_s
       end
@@ -643,7 +662,7 @@ module Idl
 
     # @return [Integer] The bit width of the enumeration elements
     sig { returns(Integer) }
-    attr_reader :width
+    def width = T.cast(@width, Integer)
 
     # @return [Array<String>] The names of the enumeration elements, in the same order as element_values
     sig { returns(T::Array[String]) }
@@ -687,7 +706,7 @@ module Idl
 
     sig { returns(EnumerationType) }
     def clone
-      EnumerationType.new(@name, @element_names, @element_values)
+      EnumerationType.new(T.must(@name), @element_names, @element_values)
     end
 
     sig { params(element_name: String).returns(T.nilable(Integer)) }
@@ -709,6 +728,7 @@ module Idl
   end
 
   class BitfieldType < Type
+    def width = @field_ranges.map(&:size).reduce(&:+)
     def initialize(type_name, width, field_names, field_ranges)
       super(:bitfield, name: type_name, width:)
 
@@ -790,7 +810,7 @@ module Idl
         symtab = apply_template_values(template_values, func_call_ast)
         apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast)
 
-        @func_def_ast.type_check_template_instance(symtab)
+        @func_def_ast.type_check_template_instance(symtab, strict: false)
 
         symtab.pop
         symtab.release
@@ -801,7 +821,7 @@ module Idl
 
         apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast)
 
-        @func_def_ast.type_check_from_call(symtab)
+        @func_def_ast.type_check_from_call(symtab, strict: false)
         symtab.pop
         symtab.release
       end

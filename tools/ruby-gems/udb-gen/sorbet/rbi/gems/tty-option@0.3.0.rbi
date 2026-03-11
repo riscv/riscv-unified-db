@@ -5,10 +5,8 @@
 # Please instead update this file by running `bin/tapioca gem tty-option`.
 
 
-# source://tty-option//lib/tty/option/const.rb#3
 module TTY; end
 
-# source://tty-option//lib/tty/option/const.rb#4
 module TTY::Option
   include ::TTY::Option::Interface
 
@@ -16,1377 +14,673 @@ module TTY::Option
   mixes_in_class_methods ::TTY::Option::Inheritance
 
   class << self
-    # source://tty-option//lib/tty/option.rb#15
     def included(base); end
   end
 end
 
-# source://tty-option//lib/tty/option/aggregate_errors.rb#9
 class TTY::Option::AggregateErrors
   include ::Enumerable
   include ::TTY::Option::UsageWrapper
   extend ::Forwardable
 
-  # source://tty-option//lib/tty/option/aggregate_errors.rb#19
   def initialize(errors = T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/aggregate_errors.rb#26
   def add(error); end
-
-  # source://tty-option//lib/tty/option/aggregate_errors.rb#14
   def any?(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/aggregate_errors.rb#14
   def clear(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/aggregate_errors.rb#40
   def each(&block); end
-
-  # source://tty-option//lib/tty/option/aggregate_errors.rb#14
   def empty?(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/aggregate_errors.rb#53
   def messages; end
-
-  # source://tty-option//lib/tty/option/aggregate_errors.rb#14
   def size(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/aggregate_errors.rb#72
   def summary(width: T.unsafe(nil), indent: T.unsafe(nil)); end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#47
 class TTY::Option::AmbiguousOption < ::TTY::Option::ParseError; end
-
-# source://tty-option//lib/tty/option/errors.rb#8
 class TTY::Option::ConfigurationError < ::TTY::Option::Error; end
-
-# source://tty-option//lib/tty/option/const.rb#5
 module TTY::Option::Const; end
-
-# source://tty-option//lib/tty/option/const.rb#6
 TTY::Option::Const::Undefined = T.let(T.unsafe(nil), Object)
-
-# source://tty-option//lib/tty/option/errors.rb#14
 class TTY::Option::ConversionAlreadyDefined < ::TTY::Option::Error; end
-
-# source://tty-option//lib/tty/option/errors.rb#17
 class TTY::Option::ConversionError < ::TTY::Option::Error; end
 
-# source://tty-option//lib/tty/option/conversions.rb#8
 module TTY::Option::Conversions
   extend ::TTY::Option::Converter
 end
 
-# source://tty-option//lib/tty/option/conversions.rb#12
 TTY::Option::Conversions::FALSE_VALUES = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/conversions.rb#11
 TTY::Option::Conversions::TRUE_VALUES = T.let(T.unsafe(nil), Regexp)
 
-# source://tty-option//lib/tty/option/converter.rb#5
 module TTY::Option::Converter
-  # source://tty-option//lib/tty/option/converter.rb#48
   def [](name); end
-
-  # source://tty-option//lib/tty/option/converter.rb#20
   def contain?(name); end
-
-  # source://tty-option//lib/tty/option/converter.rb#9
   def conversions; end
-
-  # source://tty-option//lib/tty/option/converter.rb#31
   def convert(*names, &block); end
-
-  # source://tty-option//lib/tty/option/converter.rb#52
   def fetch(name); end
-
-  # source://tty-option//lib/tty/option/converter.rb#57
   def raise_unsupported_error(conv_name); end
 end
 
-# source://tty-option//lib/tty/option/dsl/arity.rb#5
 module TTY::Option::DSL
   include ::TTY::Option::DSL::Arity
   include ::TTY::Option::DSL::Conversion
   include ::TTY::Option::Inflection
   extend ::Forwardable
 
-  # source://tty-option//lib/tty/option/dsl.rb#40
   def argument(name, **settings, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#23
   def banner(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#23
   def command(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#23
   def desc(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#53
   def env(name, **settings, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#50
   def environment(name, **settings, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#23
   def example(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#71
   def flag(name, **settings, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#23
   def footer(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#23
   def header(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#92
   def ignore(*names); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#61
   def keyword(name, **settings, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#23
   def no_command(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#87
   def opt(name, **settings, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#84
   def option(name, **settings, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#100
   def parameters; end
-
-  # source://tty-option//lib/tty/option/dsl.rb#23
   def program(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#95
   def skip(*names); end
-
-  # source://tty-option//lib/tty/option/dsl.rb#29
   def usage(**properties, &block); end
 end
 
-# source://tty-option//lib/tty/option/dsl/arity.rb#6
 module TTY::Option::DSL::Arity
-  # source://tty-option//lib/tty/option/dsl/arity.rb#23
   def any; end
-
-  # source://tty-option//lib/tty/option/dsl/arity.rb#24
   def any_args; end
-
-  # source://tty-option//lib/tty/option/dsl/arity.rb#43
   def at_least(number); end
-
-  # source://tty-option//lib/tty/option/dsl/arity.rb#8
   def one; end
-
-  # source://tty-option//lib/tty/option/dsl/arity.rb#29
   def one_or_more; end
-
-  # source://tty-option//lib/tty/option/dsl/arity.rb#13
   def two; end
-
-  # source://tty-option//lib/tty/option/dsl/arity.rb#36
   def two_or_more; end
-
-  # source://tty-option//lib/tty/option/dsl/arity.rb#20
   def zero_or_more; end
 end
 
-# source://tty-option//lib/tty/option/dsl/conversion.rb#6
 module TTY::Option::DSL::Conversion
-  # source://tty-option//lib/tty/option/dsl/conversion.rb#11
   def list_of(type); end
-
-  # source://tty-option//lib/tty/option/dsl/conversion.rb#7
   def map_of(type); end
 end
 
-# source://tty-option//lib/tty/option/deep_dup.rb#8
 module TTY::Option::DeepDup
   class << self
-    # source://tty-option//lib/tty/option/deep_dup.rb#26
     def deep_dup(object, cache = T.unsafe(nil)); end
 
     private
 
-    # source://tty-option//lib/tty/option/deep_dup.rb#46
     def deep_dup_array(object, cache); end
-
-    # source://tty-option//lib/tty/option/deep_dup.rb#63
     def deep_dup_hash(object, cache); end
   end
 end
 
-# source://tty-option//lib/tty/option/deep_dup.rb#9
 TTY::Option::DeepDup::NONDUPLICATABLE = T.let(T.unsafe(nil), Array)
-
-# source://tty-option//lib/tty/option/errors.rb#5
 class TTY::Option::Error < ::StandardError; end
 
-# source://tty-option//lib/tty/option/error_aggregator.rb#7
 class TTY::Option::ErrorAggregator
   include ::TTY::Option::Inflection
 
-  # source://tty-option//lib/tty/option/error_aggregator.rb#13
   def initialize(errors = T.unsafe(nil), raise_on_parse_error: T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/error_aggregator.rb#24
   def call(error, message = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/error_aggregator.rb#11
   def errors; end
 end
 
-# source://tty-option//lib/tty/option/formatter.rb#11
 class TTY::Option::Formatter
   include ::TTY::Option::UsageWrapper
 
-  # source://tty-option//lib/tty/option/formatter.rb#59
   def initialize(parameters, usage, param_display: T.unsafe(nil), width: T.unsafe(nil), order: T.unsafe(nil), indent: T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/formatter.rb#89
   def help; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#165
   def help_arguments; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#141
   def help_banner; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#153
   def help_description; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#208
   def help_environments; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#221
   def help_examples; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#234
   def help_footer; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#129
   def help_header; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#180
   def help_keywords; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#195
   def help_options; end
 
   private
 
-  # source://tty-option//lib/tty/option/formatter.rb#454
   def find_longest_long_option; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#469
   def find_longest_parameter(params, &name_selector); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#442
   def find_longest_short_option; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#280
   def format_argument_usage(arg); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#262
   def format_arguments_usage; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#643
   def format_default(param); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#414
   def format_description; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#658
   def format_examples; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#333
   def format_keyword_usage(kwarg); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#315
   def format_keywords_usage; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#541
   def format_long_option(option, longest); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#672
   def format_multiline(lines, indent); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#487
   def format_option(option, longest_short, longest_long); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#423
   def format_options; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#579
   def format_parameter_description(param); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#295
   def format_parameter_usage(param, param_name); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#629
   def format_permitted(values); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#370
   def format_section(params, name_selector = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#392
   def format_section_parameter(param, longest_param, name_selector); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#521
   def format_short_option(option, longest); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#245
   def format_usage; end
-
-  # source://tty-option//lib/tty/option/formatter.rb#348
   def kwarg_param_display(kwarg, param_display = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#617
   def parameter_default?(param); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#605
   def parameter_description?(param); end
-
-  # source://tty-option//lib/tty/option/formatter.rb#561
   def short_and_long_option_separator(option); end
 
   class << self
-    # source://tty-option//lib/tty/option/formatter.rb#39
     def help(parameters, usage, **config, &block); end
   end
 end
 
-# source://tty-option//lib/tty/option/formatter.rb#14
 TTY::Option::Formatter::BOOLEANS = T.let(T.unsafe(nil), Array)
-
-# source://tty-option//lib/tty/option/formatter.rb#24
 TTY::Option::Formatter::DEFAULT_NAME_SELECTOR = T.let(T.unsafe(nil), Proc)
-
-# source://tty-option//lib/tty/option/formatter.rb#25
 TTY::Option::Formatter::DEFAULT_ORDER = T.let(T.unsafe(nil), Proc)
-
-# source://tty-option//lib/tty/option/formatter.rb#26
 TTY::Option::Formatter::DEFAULT_PARAM_DISPLAY = T.let(T.unsafe(nil), Proc)
-
-# source://tty-option//lib/tty/option/formatter.rb#15
 TTY::Option::Formatter::DEFAULT_WIDTH = T.let(T.unsafe(nil), Integer)
-
-# source://tty-option//lib/tty/option/formatter.rb#16
 TTY::Option::Formatter::DOUBLE_SPACE = T.let(T.unsafe(nil), String)
-
-# source://tty-option//lib/tty/option/formatter.rb#17
 TTY::Option::Formatter::ELLIPSIS = T.let(T.unsafe(nil), String)
-
-# source://tty-option//lib/tty/option/formatter.rb#18
 TTY::Option::Formatter::EMPTY = T.let(T.unsafe(nil), String)
-
-# source://tty-option//lib/tty/option/formatter.rb#19
 TTY::Option::Formatter::LIST_SEPARATOR = T.let(T.unsafe(nil), String)
-
-# source://tty-option//lib/tty/option/formatter.rb#20
 TTY::Option::Formatter::MAP_SEPARATOR = T.let(T.unsafe(nil), String)
-
-# source://tty-option//lib/tty/option/formatter.rb#21
 TTY::Option::Formatter::NEWLINE = T.let(T.unsafe(nil), String)
-
-# source://tty-option//lib/tty/option/formatter.rb#27
 TTY::Option::Formatter::NOOP_PROC = T.let(T.unsafe(nil), Proc)
-
-# source://tty-option//lib/tty/option/formatter.rb#22
 TTY::Option::Formatter::SPACE = T.let(T.unsafe(nil), String)
 
-# source://tty-option//lib/tty/option/inflection.rb#5
 module TTY::Option::Inflection
   private
 
-  # source://tty-option//lib/tty/option/inflection.rb#44
   def dasherize(name); end
-
-  # source://tty-option//lib/tty/option/inflection.rb#15
   def demodulize(name); end
-
-  # source://tty-option//lib/tty/option/inflection.rb#29
   def underscore(name); end
 
   class << self
-    # source://tty-option//lib/tty/option/inflection.rb#47
     def dasherize(name); end
-
-    # source://tty-option//lib/tty/option/inflection.rb#18
     def demodulize(name); end
-
-    # source://tty-option//lib/tty/option/inflection.rb#35
     def underscore(name); end
   end
 end
 
-# source://tty-option//lib/tty/option.rb#23
 module TTY::Option::Inheritance
-  # source://tty-option//lib/tty/option.rb#27
   def inherited(subclass); end
 end
 
-# source://tty-option//lib/tty/option.rb#33
 module TTY::Option::Interface
-  # source://tty-option//lib/tty/option.rb#63
   def help(**config, &block); end
-
-  # source://tty-option//lib/tty/option.rb#37
   def params; end
-
-  # source://tty-option//lib/tty/option.rb#49
   def parse(argv = T.unsafe(nil), env = T.unsafe(nil), check_invalid_params: T.unsafe(nil), raise_on_parse_error: T.unsafe(nil)); end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#50
 class TTY::Option::InvalidArgument < ::TTY::Option::ParseError
-  # source://tty-option//lib/tty/option/errors.rb#53
   def initialize(param_or_message, value = T.unsafe(nil)); end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#51
 TTY::Option::InvalidArgument::MESSAGE = T.let(T.unsafe(nil), String)
 
-# source://tty-option//lib/tty/option/errors.rb#70
 class TTY::Option::InvalidArity < ::TTY::Option::ParseError
-  # source://tty-option//lib/tty/option/errors.rb#73
   def initialize(param_or_message, arity = T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/errors.rb#94
   def pluralize(noun, count = T.unsafe(nil)); end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#71
 TTY::Option::InvalidArity::MESSAGE = T.let(T.unsafe(nil), String)
 
-# source://tty-option//lib/tty/option/errors.rb#100
 class TTY::Option::InvalidConversionArgument < ::TTY::Option::ParseError
-  # source://tty-option//lib/tty/option/errors.rb#104
   def initialize(param, value); end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#101
 TTY::Option::InvalidConversionArgument::MESSAGE = T.let(T.unsafe(nil), String)
-
-# source://tty-option//lib/tty/option/errors.rb#44
 class TTY::Option::InvalidParameter < ::TTY::Option::ParseError; end
 
-# source://tty-option//lib/tty/option/errors.rb#113
 class TTY::Option::MissingArgument < ::TTY::Option::ParseError
-  # source://tty-option//lib/tty/option/errors.rb#116
   def initialize(param); end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#114
 TTY::Option::MissingArgument::MESSAGE = T.let(T.unsafe(nil), String)
 
-# source://tty-option//lib/tty/option/errors.rb#124
 class TTY::Option::MissingParameter < ::TTY::Option::ParseError
-  # source://tty-option//lib/tty/option/errors.rb#127
   def initialize(param_or_message); end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#125
 TTY::Option::MissingParameter::MESSAGE = T.let(T.unsafe(nil), String)
 
-# source://tty-option//lib/tty/option/param_conversion.rb#8
 module TTY::Option::ParamConversion
   private
 
-  # source://tty-option//lib/tty/option/param_conversion.rb#32
   def [](param, value); end
-
-  # source://tty-option//lib/tty/option/param_conversion.rb#17
   def call(param, value); end
 
   class << self
-    # source://tty-option//lib/tty/option/param_conversion.rb#33
     def [](param, value); end
-
-    # source://tty-option//lib/tty/option/param_conversion.rb#30
     def call(param, value); end
   end
 end
 
-# source://tty-option//lib/tty/option/param_permitted.rb#7
 module TTY::Option::ParamPermitted
   private
 
-  # source://tty-option//lib/tty/option/param_permitted.rb#30
   def [](param, value); end
-
-  # source://tty-option//lib/tty/option/param_permitted.rb#15
   def call(param, value); end
 
   class << self
-    # source://tty-option//lib/tty/option/param_permitted.rb#31
     def [](param, value); end
-
-    # source://tty-option//lib/tty/option/param_permitted.rb#28
     def call(param, value); end
   end
 end
 
-# source://tty-option//lib/tty/option/param_validation.rb#10
 module TTY::Option::ParamValidation
   private
 
-  # source://tty-option//lib/tty/option/param_validation.rb#41
   def [](param, value); end
-
-  # source://tty-option//lib/tty/option/param_validation.rb#25
   def call(param, value); end
-
-  # source://tty-option//lib/tty/option/param_validation.rb#140
   def valid?(param, value); end
-
-  # source://tty-option//lib/tty/option/param_validation.rb#122
   def valid_or_error(param, value); end
-
-  # source://tty-option//lib/tty/option/param_validation.rb#82
   def validate_array(param, values); end
-
-  # source://tty-option//lib/tty/option/param_validation.rb#103
   def validate_hash(param, values); end
-
-  # source://tty-option//lib/tty/option/param_validation.rb#56
   def validate_object(param, value, &block); end
 
   class << self
-    # source://tty-option//lib/tty/option/param_validation.rb#42
     def [](param, value); end
-
-    # source://tty-option//lib/tty/option/param_validation.rb#39
     def call(param, value); end
 
     private
 
-    # source://tty-option//lib/tty/option/param_validation.rb#148
     def valid?(param, value); end
-
-    # source://tty-option//lib/tty/option/param_validation.rb#127
     def valid_or_error(param, value); end
-
-    # source://tty-option//lib/tty/option/param_validation.rb#88
     def validate_array(param, values); end
-
-    # source://tty-option//lib/tty/option/param_validation.rb#109
     def validate_hash(param, values); end
-
-    # source://tty-option//lib/tty/option/param_validation.rb#67
     def validate_object(param, value, &block); end
   end
 end
 
-# source://tty-option//lib/tty/option/parameter.rb#9
 class TTY::Option::Parameter
   include ::Comparable
   include ::TTY::Option::DSL::Arity
   include ::TTY::Option::DSL::Conversion
 
-  # source://tty-option//lib/tty/option/parameter.rb#38
   def initialize(key, **settings, &block); end
 
-  # source://tty-option//lib/tty/option/parameter.rb#203
   def <=>(other); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#210
   def ==(other); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#60
   def arity(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#88
   def convert(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#96
   def convert?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#100
   def default(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#109
   def default?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#68
   def default_arity; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#180
   def default_name; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#107
   def defaults(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#113
   def desc(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#121
   def desc?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#156
   def display?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#244
   def dup; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#219
   def eql?(other); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#148
   def hidden; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#152
   def hidden?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#30
   def key; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#75
   def min_arity; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#128
   def multi_argument?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#84
   def multiple?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#172
   def name(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#132
   def optional; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#136
   def optional?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#160
   def permit(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#168
   def permit?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#140
   def required; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#144
   def required?; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#230
   def to_h(&block); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#196
   def to_sym; end
-
-  # source://tty-option//lib/tty/option/parameter.rb#184
   def validate(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#192
   def validate?; end
 
   private
 
-  # source://tty-option//lib/tty/option/parameter.rb#254
   def check_arity(value); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#282
   def check_default(value); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#272
   def check_permitted(value); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#292
   def check_required(value); end
-
-  # source://tty-option//lib/tty/option/parameter.rb#302
   def check_validation(value); end
 
   class << self
-    # source://tty-option//lib/tty/option/parameter.rb#23
     def create(key, **settings, &block); end
   end
 end
 
-# source://tty-option//lib/tty/option/parameter/argument.rb#8
 class TTY::Option::Parameter::Argument < ::TTY::Option::Parameter
-  # source://tty-option//lib/tty/option/parameter/argument.rb#12
   def required?; end
 end
 
-# source://tty-option//lib/tty/option/parameter/environment.rb#6
 class TTY::Option::Parameter::Environment < ::TTY::Option::Parameter
-  # source://tty-option//lib/tty/option/parameter/environment.rb#14
   def <=>(other); end
-
-  # source://tty-option//lib/tty/option/parameter/environment.rb#7
   def default_name; end
 end
 
-# source://tty-option//lib/tty/option/parameter/keyword.rb#8
 class TTY::Option::Parameter::Keyword < ::TTY::Option::Parameter
-  # source://tty-option//lib/tty/option/parameter/keyword.rb#9
   def required?; end
 end
 
-# source://tty-option//lib/tty/option/parameter.rb#18
 TTY::Option::Parameter::ONE_OR_MORE_ARITY = T.let(T.unsafe(nil), Regexp)
 
-# source://tty-option//lib/tty/option/parameter/option.rb#6
 class TTY::Option::Parameter::Option < ::TTY::Option::Parameter
-  # source://tty-option//lib/tty/option/parameter/option.rb#91
   def <=>(other); end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#83
   def argument_optional?; end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#73
   def argument_required?; end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#53
   def default_long; end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#22
   def default_name; end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#45
   def long(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#57
   def long?; end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#64
   def long_name; end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#26
   def short(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#34
   def short?; end
-
-  # source://tty-option//lib/tty/option/parameter/option.rb#41
   def short_name; end
 end
 
-# source://tty-option//lib/tty/option/parameter/option.rb#17
 TTY::Option::Parameter::Option::LONG_ARGUMENT_OPTIONAL_RE = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/parameter/option.rb#11
 TTY::Option::Parameter::Option::LONG_ARGUMENT_REQUIRED_RE = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/parameter/option.rb#14
 TTY::Option::Parameter::Option::SHORT_ARGUMENT_OPTIONAL_RE = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/parameter/option.rb#8
 TTY::Option::Parameter::Option::SHORT_ARGUMENT_REQUIRED_RE = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/parameter.rb#15
 TTY::Option::Parameter::ZERO_OR_MORE_ARITY = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/errors.rb#11
 class TTY::Option::ParameterConflict < ::TTY::Option::Error; end
 
-# source://tty-option//lib/tty/option/parameters.rb#8
 class TTY::Option::Parameters
   include ::Enumerable
 
-  # source://tty-option//lib/tty/option/parameters.rb#57
   def initialize; end
 
-  # source://tty-option//lib/tty/option/parameters.rb#74
   def <<(parameter); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#87
   def add(parameter); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#24
   def argument?(param); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#30
   def arguments; end
-
-  # source://tty-option//lib/tty/option/parameters.rb#15
   def arguments?; end
-
-  # source://tty-option//lib/tty/option/parameters.rb#98
   def delete(*keys); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#125
   def dup; end
-
-  # source://tty-option//lib/tty/option/parameters.rb#114
   def each(&block); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#24
   def environment?(param); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#36
   def environments; end
-
-  # source://tty-option//lib/tty/option/parameters.rb#15
   def environments?; end
-
-  # source://tty-option//lib/tty/option/parameters.rb#24
   def keyword?(param); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#33
   def keywords; end
-
-  # source://tty-option//lib/tty/option/parameters.rb#15
   def keywords?; end
-
-  # source://tty-option//lib/tty/option/parameters.rb#42
   def list; end
-
-  # source://tty-option//lib/tty/option/parameters.rb#24
   def option?(param); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#39
   def options; end
-
-  # source://tty-option//lib/tty/option/parameters.rb#15
   def options?; end
 
   private
 
-  # source://tty-option//lib/tty/option/parameters.rb#137
   def check_key_uniqueness!(key); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#159
   def check_long_option_uniqueness!(long_name); end
-
-  # source://tty-option//lib/tty/option/parameters.rb#147
   def check_short_option_uniqueness!(short_name); end
 
   class << self
-    # source://tty-option//lib/tty/option/parameters.rb#23
     def define_param_query(name); end
-
-    # source://tty-option//lib/tty/option/parameters.rb#14
     def define_query(name); end
   end
 end
 
-# source://tty-option//lib/tty/option/params.rb#9
 class TTY::Option::Params
   extend ::Forwardable
 
-  # source://tty-option//lib/tty/option/params.rb#33
   def initialize(parameters, remaining: T.unsafe(nil), errors: T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/params.rb#88
   def ==(other); end
-
-  # source://tty-option//lib/tty/option/params.rb#52
   def [](key); end
-
-  # source://tty-option//lib/tty/option/params.rb#59
   def []=(key, value); end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def each_key(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def each_value(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def empty?(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#93
   def eql?(other); end
-
-  # source://tty-option//lib/tty/option/params.rb#28
   def errors; end
-
-  # source://tty-option//lib/tty/option/params.rb#66
   def fetch(key, *args, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def has_key?(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def has_value?(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#95
   def hash; end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def include?(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#108
   def inspect; end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def key?(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def keys(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def member?(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/params.rb#73
   def merge(other_params); end
-
-  # source://tty-option//lib/tty/option/params.rb#77
   def merge!(other_params); end
-
-  # source://tty-option//lib/tty/option/params.rb#23
   def remaining; end
-
-  # source://tty-option//lib/tty/option/params.rb#99
   def to_h; end
-
-  # source://tty-option//lib/tty/option/params.rb#117
   def to_s; end
-
-  # source://tty-option//lib/tty/option/params.rb#84
   def valid?; end
-
-  # source://tty-option//lib/tty/option/params.rb#16
   def value?(*args, **_arg1, &block); end
 
   class << self
-    # source://tty-option//lib/tty/option/params.rb#12
     def create(parameters = T.unsafe(nil), remaining = T.unsafe(nil), errors = T.unsafe(nil)); end
   end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#23
 class TTY::Option::ParseError < ::TTY::Option::Error
-  # source://tty-option//lib/tty/option/errors.rb#38
   def format_value(value); end
-
-  # source://tty-option//lib/tty/option/errors.rb#24
   def param; end
-
-  # source://tty-option//lib/tty/option/errors.rb#24
   def param=(_arg0); end
 end
 
-# source://tty-option//lib/tty/option/parser/param_types.rb#5
 class TTY::Option::Parser
-  # source://tty-option//lib/tty/option/parser.rb#26
   def initialize(parameters, **config); end
 
-  # source://tty-option//lib/tty/option/parser.rb#24
   def config; end
-
-  # source://tty-option//lib/tty/option/parser.rb#22
   def parameters; end
-
-  # source://tty-option//lib/tty/option/parser.rb#31
   def parse(argv, env); end
 end
 
-# source://tty-option//lib/tty/option/parser.rb#20
 TTY::Option::Parser::ARGUMENT_SEPARATOR = T.let(T.unsafe(nil), Regexp)
 
-# source://tty-option//lib/tty/option/parser/arguments.rb#11
 class TTY::Option::Parser::Arguments
   include ::TTY::Option::Parser::ParamTypes
 
-  # source://tty-option//lib/tty/option/parser/arguments.rb#22
   def initialize(arguments, check_invalid_params: T.unsafe(nil), raise_on_parse_error: T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/parser/arguments.rb#55
   def parse(argv); end
 
   private
 
-  # source://tty-option//lib/tty/option/parser/arguments.rb#144
   def assign_argument(arg, values); end
-
-  # source://tty-option//lib/tty/option/parser/arguments.rb#77
   def next_argument(arg); end
-
-  # source://tty-option//lib/tty/option/parser/arguments.rb#85
   def process_exact_arity(arg); end
-
-  # source://tty-option//lib/tty/option/parser/arguments.rb#108
   def process_infinite_arity(arg); end
 end
 
-# source://tty-option//lib/tty/option/parser/arity_check.rb#6
 class TTY::Option::Parser::ArityCheck
-  # source://tty-option//lib/tty/option/parser/arity_check.rb#7
   def initialize(error_aggregator); end
 
-  # source://tty-option//lib/tty/option/parser/arity_check.rb#15
   def <<(param); end
-
-  # source://tty-option//lib/tty/option/parser/arity_check.rb#12
   def add(param); end
-
-  # source://tty-option//lib/tty/option/parser/arity_check.rb#22
   def call(arities); end
 end
 
-# source://tty-option//lib/tty/option/parser/environments.rb#12
 class TTY::Option::Parser::Environments
   include ::TTY::Option::Parser::ParamTypes
 
-  # source://tty-option//lib/tty/option/parser/environments.rb#25
   def initialize(environments, check_invalid_params: T.unsafe(nil), raise_on_parse_error: T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/parser/environments.rb#62
   def parse(argv, env); end
 
   private
 
-  # source://tty-option//lib/tty/option/parser/environments.rb#145
   def assign_envvar(env_arg, val); end
-
-  # source://tty-option//lib/tty/option/parser/environments.rb#132
   def consume_arguments(values: T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parser/environments.rb#96
   def next_envvar; end
 end
 
-# source://tty-option//lib/tty/option/parser/environments.rb#15
 TTY::Option::Parser::Environments::ENV_VAR_RE = T.let(T.unsafe(nil), Regexp)
 
-# source://tty-option//lib/tty/option/parser/keywords.rb#12
 class TTY::Option::Parser::Keywords
   include ::TTY::Option::Parser::ParamTypes
 
-  # source://tty-option//lib/tty/option/parser/keywords.rb#25
   def initialize(keywords, check_invalid_params: T.unsafe(nil), raise_on_parse_error: T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/parser/keywords.rb#59
   def parse(argv); end
 
   private
 
-  # source://tty-option//lib/tty/option/parser/keywords.rb#134
   def assign_keyword(kwarg, val); end
-
-  # source://tty-option//lib/tty/option/parser/keywords.rb#123
   def consume_arguments(values: T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parser/keywords.rb#87
   def next_keyword; end
 end
 
-# source://tty-option//lib/tty/option/parser/keywords.rb#15
 TTY::Option::Parser::Keywords::KEYWORD_ARG_RE = T.let(T.unsafe(nil), Regexp)
 
-# source://tty-option//lib/tty/option/parser/options.rb#12
 class TTY::Option::Parser::Options
   include ::TTY::Option::Parser::ParamTypes
 
-  # source://tty-option//lib/tty/option/parser/options.rb#27
   def initialize(options, check_invalid_params: T.unsafe(nil), raise_on_parse_error: T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/parser/options.rb#74
   def parse(argv); end
-
-  # source://tty-option//lib/tty/option/parser/options.rb#48
   def setup_opts; end
 
   private
 
-  # source://tty-option//lib/tty/option/parser/options.rb#253
   def assign_option(opt, val); end
-
-  # source://tty-option//lib/tty/option/parser/options.rb#242
   def consume_arguments(values: T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/parser/options.rb#103
   def next_option; end
-
-  # source://tty-option//lib/tty/option/parser/options.rb#131
   def process_double_option(long, sep, rest); end
-
-  # source://tty-option//lib/tty/option/parser/options.rb#198
   def process_single_option(short, other_singles); end
 end
 
-# source://tty-option//lib/tty/option/parser/options.rb#15
 TTY::Option::Parser::Options::LONG_OPTION_RE = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/parser/options.rb#17
 TTY::Option::Parser::Options::SHORT_OPTION_RE = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/parser.rb#13
 TTY::Option::Parser::PARAMETER_PARSERS = T.let(T.unsafe(nil), Hash)
 
-# source://tty-option//lib/tty/option/parser/param_types.rb#6
 module TTY::Option::Parser::ParamTypes
-  # source://tty-option//lib/tty/option/parser/param_types.rb#26
   def argument?(value); end
-
-  # source://tty-option//lib/tty/option/parser/param_types.rb#37
   def env_var?(value); end
-
-  # source://tty-option//lib/tty/option/parser/param_types.rb#46
   def keyword?(value); end
-
-  # source://tty-option//lib/tty/option/parser/param_types.rb#57
   def option?(value); end
 end
 
-# source://tty-option//lib/tty/option/parser/param_types.rb#8
 TTY::Option::Parser::ParamTypes::ARGUMENT_PARAMETER = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/parser/param_types.rb#11
 TTY::Option::Parser::ParamTypes::ENV_VAR_PARAMETER = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/parser/param_types.rb#14
 TTY::Option::Parser::ParamTypes::KEYWORD_PARAMETER = T.let(T.unsafe(nil), Regexp)
-
-# source://tty-option//lib/tty/option/parser/param_types.rb#17
 TTY::Option::Parser::ParamTypes::OPTION_PARAMETER = T.let(T.unsafe(nil), Regexp)
 
-# source://tty-option//lib/tty/option/parser/required_check.rb#6
 class TTY::Option::Parser::RequiredCheck
-  # source://tty-option//lib/tty/option/parser/required_check.rb#7
   def initialize(error_aggregator); end
 
-  # source://tty-option//lib/tty/option/parser/required_check.rb#15
   def <<(param); end
-
-  # source://tty-option//lib/tty/option/parser/required_check.rb#12
   def add(param); end
-
-  # source://tty-option//lib/tty/option/parser/required_check.rb#26
   def call; end
-
-  # source://tty-option//lib/tty/option/parser/required_check.rb#17
   def delete(param); end
 end
 
-# source://tty-option//lib/tty/option/pipeline.rb#9
 class TTY::Option::Pipeline
-  # source://tty-option//lib/tty/option/pipeline.rb#19
   def initialize(error_aggregator); end
 
-  # source://tty-option//lib/tty/option/pipeline.rb#26
   def call(param, value); end
 end
 
-# source://tty-option//lib/tty/option/pipeline.rb#10
 TTY::Option::Pipeline::PROCESSORS = T.let(T.unsafe(nil), Array)
 
-# source://tty-option//lib/tty/option/result.rb#6
 class TTY::Option::Result
-  # source://tty-option//lib/tty/option/result.rb#29
   def error; end
-
-  # source://tty-option//lib/tty/option/result.rb#45
   def failure?; end
-
-  # source://tty-option//lib/tty/option/result.rb#36
   def success?; end
-
-  # source://tty-option//lib/tty/option/result.rb#24
   def value; end
 
   class << self
-    # source://tty-option//lib/tty/option/result.rb#17
     def failure(value); end
-
-    # source://tty-option//lib/tty/option/result.rb#10
     def success(value); end
   end
 end
 
-# source://tty-option//lib/tty/option/result.rb#61
 class TTY::Option::Result::Failure < ::TTY::Option::Result
-  # source://tty-option//lib/tty/option/result.rb#62
   def initialize(error); end
 end
 
-# source://tty-option//lib/tty/option/result.rb#52
 class TTY::Option::Result::Success < ::TTY::Option::Result
-  # source://tty-option//lib/tty/option/result.rb#53
   def initialize(value); end
 end
 
-# source://tty-option//lib/tty/option/section.rb#5
 class TTY::Option::Section
-  # source://tty-option//lib/tty/option/section.rb#8
   def initialize(name, content = T.unsafe(nil)); end
 
-  # source://tty-option//lib/tty/option/section.rb#6
   def content; end
-
-  # source://tty-option//lib/tty/option/section.rb#6
   def content=(_arg0); end
-
-  # source://tty-option//lib/tty/option/section.rb#17
   def empty?; end
-
-  # source://tty-option//lib/tty/option/section.rb#6
   def name; end
-
-  # source://tty-option//lib/tty/option/section.rb#6
   def name=(_arg0); end
-
-  # source://tty-option//lib/tty/option/section.rb#13
   def to_a; end
-
-  # source://tty-option//lib/tty/option/section.rb#21
   def to_s; end
 end
 
-# source://tty-option//lib/tty/option/sections.rb#9
 class TTY::Option::Sections
   include ::Enumerable
   extend ::Forwardable
 
-  # source://tty-option//lib/tty/option/sections.rb#15
   def initialize; end
 
-  # source://tty-option//lib/tty/option/sections.rb#19
   def [](name); end
-
-  # source://tty-option//lib/tty/option/sections.rb#23
   def add(name, content); end
-
-  # source://tty-option//lib/tty/option/sections.rb#31
   def add_after(name, sect_name, sect_content); end
-
-  # source://tty-option//lib/tty/option/sections.rb#27
   def add_before(name, sect_name, sect_content); end
-
-  # source://tty-option//lib/tty/option/sections.rb#39
   def delete(*names); end
-
-  # source://tty-option//lib/tty/option/sections.rb#43
   def each(&block); end
-
-  # source://tty-option//lib/tty/option/sections.rb#35
   def replace(name, content); end
-
-  # source://tty-option//lib/tty/option/sections.rb#13
   def size(*args, **_arg1, &block); end
-
-  # source://tty-option//lib/tty/option/sections.rb#13
   def to_a(*args, **_arg1, &block); end
 
   private
 
-  # source://tty-option//lib/tty/option/sections.rb#49
   def find_index(name); end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#140
 class TTY::Option::UnpermittedArgument < ::TTY::Option::ParseError
-  # source://tty-option//lib/tty/option/errors.rb#144
   def initialize(param_or_message, value = T.unsafe(nil)); end
 
   private
 
-  # source://tty-option//lib/tty/option/errors.rb#169
   def format_choices(choices); end
 end
 
-# source://tty-option//lib/tty/option/errors.rb#141
 TTY::Option::UnpermittedArgument::MESSAGE = T.let(T.unsafe(nil), String)
-
-# source://tty-option//lib/tty/option/errors.rb#20
 class TTY::Option::UnsupportedConversion < ::TTY::Option::Error; end
 
-# source://tty-option//lib/tty/option/usage.rb#7
 class TTY::Option::Usage
-  # source://tty-option//lib/tty/option/usage.rb#18
   def initialize(**properties, &block); end
 
-  # source://tty-option//lib/tty/option/usage.rb#119
   def banner(value = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/usage.rb#132
   def banner?; end
-
-  # source://tty-option//lib/tty/option/usage.rb#56
   def command(*values); end
-
-  # source://tty-option//lib/tty/option/usage.rb#88
   def command?; end
-
-  # source://tty-option//lib/tty/option/usage.rb#64
   def commands(*values); end
-
-  # source://tty-option//lib/tty/option/usage.rb#141
   def desc(*values); end
-
-  # source://tty-option//lib/tty/option/usage.rb#155
   def desc?; end
-
-  # source://tty-option//lib/tty/option/usage.rb#148
   def description(*values); end
-
-  # source://tty-option//lib/tty/option/usage.rb#158
   def description?; end
-
-  # source://tty-option//lib/tty/option/usage.rb#165
   def example(*values); end
-
-  # source://tty-option//lib/tty/option/usage.rb#179
   def example?; end
-
-  # source://tty-option//lib/tty/option/usage.rb#172
   def examples(*values); end
-
-  # source://tty-option//lib/tty/option/usage.rb#182
   def examples?; end
-
-  # source://tty-option//lib/tty/option/usage.rb#189
   def footer(*values); end
-
-  # source://tty-option//lib/tty/option/usage.rb#202
   def footer?; end
-
-  # source://tty-option//lib/tty/option/usage.rb#97
   def header(*values); end
-
-  # source://tty-option//lib/tty/option/usage.rb#110
   def header?; end
-
-  # source://tty-option//lib/tty/option/usage.rb#69
   def no_command; end
-
-  # source://tty-option//lib/tty/option/usage.rb#79
   def no_command?; end
-
-  # source://tty-option//lib/tty/option/usage.rb#43
   def program(name = T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/usage.rb#211
   def to_h(&block); end
 
   class << self
-    # source://tty-option//lib/tty/option/usage.rb#11
     def create(**properties, &block); end
   end
 end
 
-# source://tty-option//lib/tty/option/usage_wrapper.rb#5
 module TTY::Option::UsageWrapper
   private
 
-  # source://tty-option//lib/tty/option/usage_wrapper.rb#39
   def next_line(text, wrap: T.unsafe(nil)); end
-
-  # source://tty-option//lib/tty/option/usage_wrapper.rb#14
   def wrap(text, width: T.unsafe(nil), indent: T.unsafe(nil), indent_first: T.unsafe(nil)); end
 
   class << self
-    # source://tty-option//lib/tty/option/usage_wrapper.rb#29
     def wrap(text, width: T.unsafe(nil), indent: T.unsafe(nil), indent_first: T.unsafe(nil)); end
 
     private
 
-    # source://tty-option//lib/tty/option/usage_wrapper.rb#55
     def next_line(text, wrap: T.unsafe(nil)); end
   end
 end
 
-# source://tty-option//lib/tty/option/version.rb#5
 TTY::Option::VERSION = T.let(T.unsafe(nil), String)

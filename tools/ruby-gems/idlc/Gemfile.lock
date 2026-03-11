@@ -7,6 +7,7 @@ PATH
       pp
       sorbet-runtime
       treetop (= 1.6.12)
+      tty-progressbar
 
 GEM
   remote: https://rubygems.org/
@@ -38,7 +39,7 @@ GEM
       reline (>= 0.3.8)
     docile (1.4.1)
     drb (2.2.3)
-    erb (6.0.1)
+    erb (6.0.2)
     erubi (1.13.1)
     highline (3.0.1)
     i18n (1.14.8)
@@ -53,7 +54,8 @@ GEM
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
-    minitest (6.0.1)
+    minitest (6.0.2)
+      drb (~> 2.0)
       prism (~> 1.5)
     netrc (0.11.0)
     ostruct (0.6.3)
@@ -126,7 +128,7 @@ GEM
     rubocop-sorbet (0.12.0)
       lint_roller
       rubocop (>= 1.75.2)
-    ruby-lsp (0.26.6)
+    ruby-lsp (0.26.7)
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
@@ -161,6 +163,7 @@ GEM
       sorbet-static-and-runtime (>= 0.5.10187)
       thor (>= 0.19.2)
     stringio (3.2.0)
+    strings-ansi (0.2.0)
     tapioca (0.17.10)
       benchmark
       bundler (>= 2.2.25)
@@ -176,6 +179,13 @@ GEM
     treetop (1.6.12)
       polyglot (~> 0.3)
     tsort (0.2.0)
+    tty-cursor (0.7.1)
+    tty-progressbar (0.18.3)
+      strings-ansi (~> 0.2)
+      tty-cursor (~> 0.7)
+      tty-screen (~> 0.8)
+      unicode-display_width (>= 1.6, < 3.0)
+    tty-screen (0.8.2)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.6.0)
@@ -210,4 +220,4 @@ DEPENDENCIES
   yard-sorbet
 
 BUNDLED WITH
-  4.0.6
+  4.0.7

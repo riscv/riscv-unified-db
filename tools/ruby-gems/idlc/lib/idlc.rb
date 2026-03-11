@@ -18,23 +18,11 @@ class IdlParser < Treetop::Runtime::CompiledParser
     @starting_line = starting_line
   end
 
-  def set_pb(pb)
-    raise "Progressbar was already set" unless @pb.nil?
-
-    @pb = pb
-  end
-
-  def unset_pb
-    raise "No progressbar set" if @pb.nil?
-  end
-
   # alias instantiate_node so we can call it from the override
   alias idlc_instantiate_node instantiate_node
 
   # override instatiate_node so we can set the input file
   def instantiate_node(node_type, *args)
-    @pb.advance unless @pb.nil?
-
     node = T.unsafe(self).idlc_instantiate_node(node_type, *args)
     node.set_input_file(input_file, @starting_line.nil? ? 0 : @starting_line)
     node
@@ -71,13 +59,12 @@ module Idl
 
     # set a progressbar
     def pb=(pb)
-      @parser.set_pb(pb)
       @pb = pb
     end
 
     # unset a progressbar
     def unset_pb
-      @parser.unset_pb
+      @pb.finish unless @pb.nil?
       @pb = nil
     end
 
@@ -88,8 +75,22 @@ module Idl
         source_mapper[path.to_s] = path.read
       end
 
+      old_format = @pb.format unless @pb.nil?
       @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
+      pid = unless @pb.nil?
+              fork {
+                loop do
+                  sleep 1
+                  @pb.advance unless @pb.nil?
+                end
+              }
+      end
       m = @parser.parse path.read
+      unless @pb.nil?
+        Process.kill("TERM", T.must(pid))
+        Process.wait(T.must(pid))
+        @pb.format = old_format
+      end
 
       if m.nil?
         raise SyntaxError, <<~MSG
@@ -171,7 +172,7 @@ module Idl
         exit 1
       end
       begin
-        ast.type_check(symtab)
+        ast.type_check(symtab, strict: false)
       rescue AstNode::TypeError => e
         raise e if pass_error
 
@@ -239,7 +240,7 @@ module Idl
 
         begin
           ast.statements.each do |s|
-            s.type_check(cloned_symtab)
+            s.type_check(cloned_symtab, strict: false)
           end
         rescue AstNode::TypeError => e
           raise e if no_rescue
@@ -307,7 +308,7 @@ module Idl
 
       begin
         value_result = AstNode.value_try do
-          ast.type_check(symtab)
+          ast.type_check(symtab, strict: false)
         end
         AstNode.value_else(value_result) do
           warn "While type checking #{what}, got a value error on:"
@@ -352,7 +353,7 @@ module Idl
         exit 1
       end
       begin
-        ast.type_check(symtab)
+        ast.type_check(symtab, strict: false)
       rescue AstNode::TypeError => e
         raise e if pass_error
 
@@ -387,24 +388,6 @@ module Idl
       ast = m.to_ast
       ast.set_input_file("[CONSTRAINT]", 0)
       ast.freeze_tree(symtab)
-
-      # begin
-      #   ast.type_check(symtab)
-      # rescue AstNode::TypeError => e
-      #   raise e if pass_error
-
-      #   warn "Compiling #{body}"
-      #   warn e.what
-      #   warn T.must(e.backtrace).join("\n")
-      #   exit 1
-      # rescue AstNode::InternalError => e
-      #   raise e if pass_error
-
-      #   warn "Compiling #{body}"
-      #   warn e.what
-      #   warn T.must(e.backtrace).join("\n")
-      #   exit 1
-      # end
 
       ast
     end

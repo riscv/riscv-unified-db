@@ -4,6 +4,8 @@
 # typed: false
 # frozen_string_literal: true
 
+require "pathname"
+
 IDLC_ROOT = (Pathname.new(__dir__) / "..").realpath
 
 require "simplecov"
@@ -34,3 +36,7 @@ require_relative "test_prune"
 require_relative "test_ast_type"
 require_relative "test_values"
 require_relative "test_std"
+require_relative "test_type_checking_comprehensive"
+require_relative "test_strictness_and_unknowns"
+require_relative "test_type_checking_data_driven"
+require_relative "test_control_flow"

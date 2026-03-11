@@ -436,6 +436,70 @@ end
   end
 end
 
+# LR/SC instruction generation from layouts
+%w[lr sc].each do |op|
+  ["w", "d"].each do |size|
+    aq_rl_variants.each do |variant|
+      file "#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{variant[:suffix]}.yaml" => [
+        "#{$resolver.std_path}/inst/Zalrsc/#{op}.SIZE.AQRL.layout",
+        __FILE__
+      ] do |t|
+        FileUtils.rm_f(t.name)
+        aq = variant[:aq]
+        rl = variant[:rl]
+        erb = ERB.new(File.read($resolver.std_path / "inst/Zalrsc/#{op}.SIZE.AQRL.layout"), trim_mode: "-")
+        erb.filename = "#{$resolver.std_path}/inst/Zalrsc/#{op}.SIZE.AQRL.layout"
+        File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+        File.chmod(0444, t.name)
+      end
+    end
+  end
+end
+
+# Zalasr load-acquire generation from layout
+zalasr_load_variants = [
+  { suffix: ".aq", rl: false },
+  { suffix: ".aqrl", rl: true }
+]
+
+["b", "h", "w", "d"].each do |size|
+  zalasr_load_variants.each do |variant|
+    file "#{$resolver.std_path}/inst/Zalasr/l#{size}#{variant[:suffix]}.yaml" => [
+      "#{$resolver.std_path}/inst/Zalasr/lSIZE.AQRL.layout",
+      __FILE__
+    ] do |t|
+      FileUtils.rm_f(t.name)
+      rl = variant[:rl]
+      erb = ERB.new(File.read($resolver.std_path / "inst/Zalasr/lSIZE.AQRL.layout"), trim_mode: "-")
+      erb.filename = "#{$resolver.std_path}/inst/Zalasr/lSIZE.AQRL.layout"
+      File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+      File.chmod(0444, t.name)
+    end
+  end
+end
+
+# Zalasr store-release generation from layout
+zalasr_store_variants = [
+  { suffix: ".rl", aq: false },
+  { suffix: ".aqrl", aq: true }
+]
+
+["b", "h", "w", "d"].each do |size|
+  zalasr_store_variants.each do |variant|
+    file "#{$resolver.std_path}/inst/Zalasr/s#{size}#{variant[:suffix]}.yaml" => [
+      "#{$resolver.std_path}/inst/Zalasr/sSIZE.AQRL.layout",
+      __FILE__
+    ] do |t|
+      FileUtils.rm_f(t.name)
+      aq = variant[:aq]
+      erb = ERB.new(File.read($resolver.std_path / "inst/Zalasr/sSIZE.AQRL.layout"), trim_mode: "-")
+      erb.filename = "#{$resolver.std_path}/inst/Zalasr/sSIZE.AQRL.layout"
+      File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+      File.chmod(0444, t.name)
+    end
+  end
+end
+
 # MOP.R instruction generation from layout (mop.r.0 through mop.r.31)
 (0..31).each do |n|
   file "#{$resolver.std_path}/inst/Zimop/mop.r.#{n}.yaml" => [
@@ -522,6 +586,25 @@ namespace :gen do
         extension_dir = %w[w d q].include?(size) ? "Zacas" : "Zabha"
 
         Rake::Task["#{$resolver.std_path}/inst/#{extension_dir}/amocas.#{size}#{suffix}.yaml"].invoke
+      end
+    end
+
+    # Generate LR/SC instruction files
+    %w[lr sc].each do |op|
+      ["w", "d"].each do |size|
+        aq_rl_variants.each do |variant|
+          Rake::Task["#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{variant[:suffix]}.yaml"].invoke
+        end
+      end
+    end
+
+    # Generate Zalasr load/store instruction files
+    ["b", "h", "w", "d"].each do |size|
+      zalasr_load_variants.each do |variant|
+        Rake::Task["#{$resolver.std_path}/inst/Zalasr/l#{size}#{variant[:suffix]}.yaml"].invoke
+      end
+      zalasr_store_variants.each do |variant|
+        Rake::Task["#{$resolver.std_path}/inst/Zalasr/s#{size}#{variant[:suffix]}.yaml"].invoke
       end
     end
 

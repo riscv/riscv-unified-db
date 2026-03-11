@@ -131,7 +131,7 @@ module Idl
         end
 
       ast = compiler.compile_inst_scope(idl, symtab:, input_file: args[0])
-      ast.type_check(symtab)
+      ast.type_check(symtab, strict: options.strict)
     end
 
     def run
@@ -196,6 +196,7 @@ module Idl
 
         add_define_option.call(c)
         c.option "-k", "--key KEY", String, "When FILE is a YAML file, type check just the contents of KEY"
+        c.option "-s", "--strict", "Run strict type checking (only consider reachable code, and fail if using a variable/field is not known to be defined)"
         c.option "-d", "--var NAME=WIDTH", (<<~DESC
           Define decode variable, e.g., xs2=5
           NAME is the name of the variable, and must be a valid IDL identifier

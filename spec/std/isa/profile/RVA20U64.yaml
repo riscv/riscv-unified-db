@@ -102,7 +102,7 @@ recommendations:
   - text: |
       Implementations are strongly recommended to raise illegal-instruction
       exceptions on attempts to execute unimplemented opcodes.
-param_constraints:
-  U_MODE_ENDIANNESS:
-    schema:
-      const: little
+requirements:
+  param:
+    name: U_MODE_ENDIANNESS
+    equal: little
