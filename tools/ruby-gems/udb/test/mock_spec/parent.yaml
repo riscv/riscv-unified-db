@@ -1,0 +1,4 @@
+name: parent
+base_item:
+  value: 100
+  description: "Base item from parent"

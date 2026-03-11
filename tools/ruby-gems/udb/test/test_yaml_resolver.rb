@@ -161,7 +161,7 @@ class TestYamlResolver < Minitest::Test
 
       source_map.each do |entry|
         # Parse entry: key_path -> file:line:column
-        match = entry.match(/^([\w\/$()?]+)\s+->\s+(.+):(\d+):(\d+)$/)
+        match = entry.match(/^([\w\/$()? ]+)\s+->\s+(.+):(\d+):(\d+)$/)
         next unless match
 
         key_path = match[1]
@@ -375,11 +375,11 @@ class TestYamlResolver < Minitest::Test
       # (files without IDL keys like operation() won't have AST hashes)
       original_parser = Udb::Yaml::CommentParser.new
       original_data = original_parser.parse_file(input_path)[:data]
-      has_idl_keys = data_contains_idl_keys?(original_data)
+      has_non_empty_idl_keys = data_contains_non_empty_idl_keys?(original_data)
 
-      if has_idl_keys
+      if has_non_empty_idl_keys
         assert ast_hashes.any?,
-          "File #{rel_path} contains IDL keys but no compiled AST hashes were found"
+          "File #{rel_path} contains non-empty IDL keys but no compiled AST hashes were found"
       end
 
       ast_hashes.each do |ast_hash|
@@ -546,6 +546,26 @@ class TestYamlResolver < Minitest::Test
       data.values.any? { |v| data_contains_key?(v, key) }
     when Array
       data.any? { |v| data_contains_key?(v, key) }
+    else
+      false
+    end
+  end
+
+  # Check if data contains non-empty IDL keys (keys ending with () except sail())
+  def data_contains_non_empty_idl_keys?(data)
+    case data
+    when Hash
+      data.each do |key, value|
+        if key.is_a?(String) && key.end_with?(")") && key != "sail()"
+          # Check if the value is non-empty
+          return true if value.is_a?(String) && !value.strip.empty?
+          return true if !value.is_a?(String) && value.present?
+        end
+        return true if data_contains_non_empty_idl_keys?(value)
+      end
+      false
+    when Array
+      data.any? { |item| data_contains_non_empty_idl_keys?(item) }
     else
       false
     end

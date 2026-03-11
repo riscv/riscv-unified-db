@@ -14,6 +14,7 @@ require "idlc"
 
 require_relative "comment_parser"
 require_relative "preserving_emitter"
+require_relative "../log"
 
 module Udb
   module Yaml
@@ -47,13 +48,24 @@ module Udb
 
         base_files = Dir.glob((base_dir / "**" / "*.yaml").to_s).map { |f| Pathname.new(f).relative_path_from(base_dir).to_s }
         overlay_files = overlay_dir.nil? ? [] : Dir.glob((overlay_dir / "**" / "*.yaml").to_s).map { |f| Pathname.new(f).relative_path_from(overlay_dir).to_s }
-        all_files = (base_files + overlay_files).uniq
 
+        # Include existing output files to detect stale entries
+        existing_output_files = Dir.glob((output_dir / "**" / "*.yaml").to_s).map { |f| Pathname.new(f).relative_path_from(output_dir).to_s }
+
+        all_files = (base_files + overlay_files + existing_output_files).uniq
+
+        pb =
+            Udb.create_progressbar(
+              "Merging spec files [:bar] :current/:total",
+              total: all_files.size,
+              clear: true
+            )
         all_files.each do |rel_path|
+          pb.advance
           merge_file(rel_path, base_dir, overlay_dir, output_dir)
         end
 
-        puts "[INFO] Merged architecture files written to #{output_dir}" unless @quiet
+        Udb.logger.info "Merged architecture files written to #{output_dir}" unless @quiet
       end
 
       sig {
@@ -114,7 +126,14 @@ module Udb
           Pathname.new(f).relative_path_from(input_dir).to_s
         end
 
+        pb =
+            Udb.create_progressbar(
+              "Resolving spec files [:bar] :current/:total",
+              total: yaml_files.size,
+              clear: true
+            )
         yaml_files.each do |rel_path|
+          pb.advance
           resolve_file(rel_path, input_dir, output_dir, no_checks)
         end
 
@@ -122,11 +141,22 @@ module Udb
           write_resolved_file(rel_path, input_dir, output_dir, no_checks)
         end
 
+        # Remove stale resolved files that no longer have a corresponding input
+        existing_output_files = Dir.glob((output_dir / "**" / "*.yaml").to_s).map do |f|
+          Pathname.new(f).relative_path_from(output_dir).to_s
+        end.reject { |rel| rel == "index.yaml" || rel == "index.json" }
+
+        stale_files = existing_output_files - yaml_files
+        stale_files.each do |rel_path|
+          output_path = output_dir / rel_path
+          FileUtils.rm_f(output_path) if output_path.exist?
+        end
+
         FileUtils.mkdir_p(output_dir)
         File.write(output_dir / "index.yaml", Psych.dump(yaml_files))
         File.write(output_dir / "index.json", JSON.pretty_generate(yaml_files))
 
-        puts "[INFO] Resolved architecture files written to #{output_dir}" unless @quiet
+        Udb.logger.info "Resolved architecture files written to #{output_dir}" unless @quiet
       end
 
       sig {
@@ -236,6 +266,18 @@ module Udb
         if @compile_idl
           idl_keys = obj.keys.select { |k| k.end_with?(")") }.reject { |k| k == "sail()" }
           idl_keys.each do |key|
+            idl_source = obj[key]
+
+            # Skip compilation for nil or blank IDL blocks, matching previous resolver behavior.
+            next if idl_source.nil?
+            if idl_source.respond_to?(:strip) && idl_source.strip.empty?
+              next
+            end
+
+            unless idl_source.is_a?(String)
+              raise TypeError, "Expected IDL body for #{(obj_path + [key]).join('.')} to be a String, got #{idl_source.class}"
+            end
+
             key_minus_args = key.split("(")[0]
             source_loc = @current_comment_map&.get_source_location(obj_path + [key])
             # :line is 1-based; set_input_file expects 0-based, so subtract 1
@@ -252,7 +294,7 @@ module Udb
               end
             compiler = T.must(@compiler)
             compiler.parser.set_input_file(obj_file_path.to_s, starting_line, starting_offset, line_file_offsets)
-            m = compiler.parser.parse(obj.fetch(key), root: parse_root)
+            m = compiler.parser.parse(idl_source, root: parse_root)
             if m.nil?
               raise SyntaxError, <<~MSG
                 While parsing #{obj_file_path}:#{compiler.parser.failure_line}
@@ -305,7 +347,11 @@ module Udb
 
           ref_obj = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
           if ref_file_path.empty?
-            ref_obj = T.unsafe(doc_obj).dig(*ref_obj_path)
+            ref_obj = if ref_obj_path.empty?
+                        doc_obj
+            else
+              T.unsafe(doc_obj).dig(*ref_obj_path)
+            end
             raise "#{ref_obj_path.join("/")} cannot be found in #{obj_file_path}" if ref_obj.nil?
             ref_obj = resolve_object(ref_obj, ref_obj_path, obj_file_path, doc_obj, arch_root, no_checks)
           else
@@ -313,7 +359,11 @@ module Udb
             raise "#{ref_file_path} does not exist in #{arch_root}/" unless ref_full_path.exist?
 
             ref_doc_obj = get_resolved_object(ref_file_path, arch_root, no_checks)
-            ref_obj = T.unsafe(ref_doc_obj).dig(*ref_obj_path)
+            ref_obj = if ref_obj_path.empty?
+                        ref_doc_obj
+            else
+              T.unsafe(ref_doc_obj).dig(*ref_obj_path)
+            end
             raise "#{ref_obj_path.join("/")} cannot be found in #{ref_file_path}" if ref_obj.nil?
           end
 
@@ -402,7 +452,7 @@ module Udb
               next unless @resolved_objs.key?(T.must(ref_file_path))
 
               ref_doc = @resolved_objs.fetch(T.must(ref_file_path)).fetch(:data)
-              parent_obj = T.unsafe(ref_doc).dig(*ref_obj_path)
+              parent_obj = ref_obj_path.empty? ? ref_doc : T.unsafe(ref_doc).dig(*ref_obj_path)
               next if parent_obj.nil? || !parent_obj.is_a?(Hash)
 
               add_parent_of_reference(parent_obj, child_ref)
