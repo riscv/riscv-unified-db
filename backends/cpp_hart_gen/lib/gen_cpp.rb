@@ -111,9 +111,9 @@ module Idl
     def to_cxx
       (if (@qualifiers.nil? || @qualifiers.empty?)
          ""
-else
-  "#{@qualifiers.include?(:const) ? 'const' : ''} "
-end) + \
+      else
+        "#{@qualifiers.include?(:const) ? 'const' : ''} "
+      end) + \
       to_cxx_no_qualifiers
     end
   end
@@ -591,9 +591,9 @@ module Idl
 
       if w == :unknown
         if t.known?
-          "#{' ' * indent}_RuntimeBits<#{symtab.cfg_arch.possible_xlens.max}, #{t.signed?}>{#{v}_b, __UDB_XLEN}"
+          "#{' ' * indent}_RuntimeBits<#{symtab.possible_xlens.max}, #{t.signed?}>{#{v}_b, __UDB_XLEN}"
         else
-          "#{' ' * indent}_PossiblyUnknownRuntimeBits<#{symtab.cfg_arch.possible_xlens.max}, #{t.signed?}>{\"#{v}\"_xb, __UDB_XLEN}"
+          "#{' ' * indent}_PossiblyUnknownRuntimeBits<#{symtab.possible_xlens.max}, #{t.signed?}>{\"#{v}\"_xb, __UDB_XLEN}"
         end
       else
         if t.known?

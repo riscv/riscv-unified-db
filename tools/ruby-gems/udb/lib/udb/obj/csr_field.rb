@@ -533,7 +533,7 @@ module Udb
       @sw_write_ast
     end
 
-    sig { params(effective_xlen: T.nilable(Integer), ast: Idl::AstNode).returns(Idl::SymbolTable) }
+    sig { params(effective_xlen: T.nilable(Integer), ast: T.nilable(Idl::AstNode)).returns(Idl::SymbolTable) }
     def fill_symtab_for_sw_write(effective_xlen, ast)
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
@@ -565,7 +565,7 @@ module Udb
       symtab
     end
 
-    sig { params(effective_xlen: T.nilable(Integer), ast: Idl::AstNode).returns(Idl::SymbolTable) }
+    sig { params(effective_xlen: T.nilable(Integer), ast: T.nilable(Idl::AstNode)).returns(Idl::SymbolTable) }
     def fill_symtab_for_type(effective_xlen, ast)
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
@@ -601,10 +601,12 @@ module Udb
       symtab.add("__expected_return_type", Idl::Type.new(:bits, width: max_width))
 
       # XLEN at reset is always mxlen
-      symtab.add(
-        "__effective_xlen",
-        Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), cfg_arch.mxlen)
-      )
+      unless cfg_arch.mxlen.nil?
+        symtab.add(
+          "__effective_xlen",
+          Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), cfg_arch.mxlen)
+        )
+      end
 
       symtab
     end
@@ -715,7 +717,27 @@ module Udb
     # @return [Integer] Number of bits in the field
     sig { override.params(effective_xlen: T.nilable(Integer)).returns(Integer) }
     def width(effective_xlen)
-      T.must(location(effective_xlen).size)
+      loc =
+        if @data.key?("location")
+          @data.fetch("location")
+        else
+          if effective_xlen.nil?
+            # just pick one. they better be the same
+            @data.fetch("location_rv32")
+          else
+            @data.fetch("location_rv#{effective_xlen}")
+          end
+        end
+      if loc.is_a?(Integer)
+        return 1
+      else
+        raise "Unexpected location field" unless loc.is_a?(String)
+
+        e, s = loc.split("-").map(&:to_i)
+        raise "Invalid location" if T.must(s) > T.must(e)
+
+        T.must((s..e).size)
+      end
     end
 
     sig { returns(Integer) }

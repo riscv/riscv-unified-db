@@ -16,6 +16,8 @@ schema:
     type: integer
     minimum: 0
     maximum: 288230376151711743
+  minItems: 0
+  maxItems: 18446744073709551616 # 2**64
 definedBy:
   extension:
     name: Smhpm

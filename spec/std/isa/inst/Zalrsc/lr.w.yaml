@@ -1,4 +1,7 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+
+# WARNING: This file is auto-generated from spec/std/isa/inst/Zalrsc/lr.SIZE.AQRL.layout
+
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # yaml-language-server: $schema=../../../../schemas/inst_schema.json
@@ -6,7 +9,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: lr.w
-long_name: Load reserved word
+long_name: Load Reserved Word
 description: |
   Loads a word from the address in xs1, places the sign-extended value in xd,
   and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the

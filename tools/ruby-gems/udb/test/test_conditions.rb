@@ -13,6 +13,17 @@ require "yaml"
 require "udb/condition"
 require "udb/resolver"
 
+# this is needed for tty-progressbar to work with minitest
+unless StringIO.method_defined? :ioctl
+  class StringIO
+    def ioctl(*)
+      # :nocov:
+      80
+      # :nocov:
+    end
+  end
+end
+
 begin
   $db_resolver = Udb::Resolver.new(Udb.repo_root)
   $db_cfg_arch = $db_resolver.cfg_arch_for("_")
@@ -47,6 +58,169 @@ class TestConditions < Minitest::Test
   # def teardown
   #   FileUtils.rm_rf @gen_path
   # end
+
+  def constrain(solver, term, schema_hsh, name: nil)
+    if schema_hsh["maximum"]
+      solver.assert(term <= schema_hsh["maximum"])
+    end
+  end
+
+  def test_z3_array
+    solver = Udb::Z3Solver.new
+    ary = solver.param("test", { "type" => "array", "items" => { "type" => "integer", "maximum" => 100 }, "maxItems" => 2 })
+
+    solver.push
+    solver.assert(ary.has_value?(5))
+    assert solver.satisfiable? # hasn't been assigned, so shoud do just fine
+    solver.pop
+
+    solver.push
+    solver.assert(ary.has_value?(101))
+    refute solver.satisfiable?, proc { "Finite array satisfied by out-of-range element. Model:\n#{solver.model}\nAssertions: #{solver.assertions}" }
+    solver.pop
+
+    solver.push
+    solver.assert(ary == [2, 5])
+    assert(
+      solver.satisfiable?,
+      proc {
+        core = Z3::LowLevel.solver_get_unsat_core(solver.solver)
+        "Array equality failed.\n\nUnsat core:\n#{Z3::LowLevel.unpack_ast_vector(core)}\n\nAssertions:\n#{solver.assertions}"
+      }
+    )
+    solver.pop
+
+    solver.push
+
+    solver.assert(ary == [2, 5])
+    assert solver.satisfiable?
+
+    solver.push
+    solver.assert(ary == [2, 5])
+    assert(
+      solver.satisfiable?,
+      proc {
+        core = Z3::LowLevel.solver_get_unsat_core(solver.solver)
+        "Array equality failed.\n\nUnsat core:\n#{Z3::LowLevel.unpack_ast_vector(core)}\n\nAssertions:\n#{solver.assertions}"
+      }
+    )
+    solver.pop
+
+    solver.push
+    solver.assert(ary == [2, 6])
+    refute(
+      solver.satisfiable?,
+      proc {
+        "Array equality check failed. Model:\n#{solver.model}\nAssertions: #{solver.assertions}"
+      }
+    )
+    solver.pop
+
+    solver.push
+    solver.assert(ary.has_value?(5))
+    assert(
+      solver.satisfiable?,
+      proc {
+        core = Z3::LowLevel.solver_get_unsat_core(solver.solver)
+        "Array inclusion check failed.\n\nUnsat core:\n#{Z3::LowLevel.unpack_ast_vector(core)}\n\nAssertions:\n#{solver.assertions}"
+      }
+    )
+    solver.pop
+
+    solver.push
+    solver.assert(~ary.has_value?(6))
+    assert(
+      solver.satisfiable?,
+      proc {
+        core = Z3::LowLevel.solver_get_unsat_core(solver.solver)
+        "Array inclusion check failed.\n\nUnsat core:\n#{Z3::LowLevel.unpack_ast_vector(core)}\n\nAssertions:\n#{solver.assertions}"
+      }
+    )
+    solver.pop
+
+    solver.assert(ary.has_value?(1))
+    refute solver.satisfiable?, proc { "Finite array satisfied by missing element. Model:\n#{solver.model}\nAssertions: #{solver.assertions}" }
+
+  end
+
+  def test_z3_array_2
+    solver = Udb::Z3Solver.new
+    uxlen = solver.param("UXLEN", { "type" => "array", "items" => { "type" => "integer", "enum" => [32, 64] }, "maxItems" => 2 })
+    solver.assert(uxlen == [64])
+
+    mxlen = solver.param("MXLEN", { "type" => "integer", "enum" => [32, 64] })
+    solver.assert(mxlen == 32)
+
+    solver.assert Z3.Implies(
+      mxlen == 32,
+      ~uxlen.has_value?(64)
+    )
+
+    refute solver.satisfiable?, proc { "Should be unsat:\n#{solver.model}" }
+  end
+
+  def test_z3_array_3
+    solver = Udb::Z3Solver.new
+    uxlen = solver.param("UXLEN", { "type" => "array", "items" => { "type" => "integer", "enum" => [32, 64] }, "maxItems" => 2 })
+    solver.assert(uxlen == [32, 64])
+
+    mxlen = solver.param("MXLEN", { "type" => "integer", "enum" => [32, 64] })
+    solver.assert(mxlen == 32)
+
+    solver.assert(uxlen.has_value? 32)
+    solver.assert(uxlen.has_value? 64)
+    assert solver.satisfiable?
+    solver.push
+    solver.assert(uxlen.has_value? 0)
+    refute solver.satisfiable?
+    solver.pop
+
+    solver.assert Z3.Implies(
+      mxlen == 32,
+      ~uxlen.has_value?(64)
+    )
+
+    puts solver.assertions
+    refute solver.satisfiable?, proc { "Should be unsat:\n#{solver.model}" }
+  end
+
+  def test_xlen
+    xlen32 = Condition.new({ "xlen" => 32 }, $db_cfg_arch)
+    xlen64 = Condition.new({ "xlen" => 64 }, $db_cfg_arch)
+
+    mxlen32 = Condition.new({ "param" => { "name" => "MXLEN", "equal" => 32 } }, $db_cfg_arch)
+    mxlen64 = Condition.new({ "param" => { "name" => "MXLEN", "equal" => 64 } }, $db_cfg_arch)
+
+    assert (xlen32 & mxlen32).satisfiable_by_arch?($db_cfg_arch)
+    refute (xlen64 & mxlen32).satisfiable_by_arch?($db_cfg_arch)
+
+    uxlen32 = Condition.new({ "param" => { "name" => "UXLEN", "equal" => [32] } }, $db_cfg_arch)
+    uxlen64 = Condition.new({ "param" => { "name" => "UXLEN", "equal" => [64] } }, $db_cfg_arch)
+    uxlen3264 = Condition.new({ "param" => { "name" => "UXLEN", "equal" => [32, 64] } }, $db_cfg_arch)
+
+    s = Condition.new({ "extension" => { "name" => "S" } }, $db_cfg_arch)
+    u = Condition.new({ "extension" => { "name" => "U" } }, $db_cfg_arch)
+
+    assert (u & uxlen64).satisfiable_by_arch?($db_cfg_arch)
+    assert (u & uxlen32).satisfiable_by_arch?($db_cfg_arch)
+    assert (u & uxlen3264).satisfiable_by_arch?($db_cfg_arch)
+    assert (u & uxlen64 & mxlen64).satisfiable_by_arch?($db_cfg_arch)
+    refute (u & uxlen64 & mxlen32).satisfiable_by_arch?($db_cfg_arch)
+    refute (u & uxlen3264 & mxlen32).satisfiable_by_arch?($db_cfg_arch)
+    assert (u & uxlen64 & xlen64).satisfiable_by_arch?($db_cfg_arch)
+    assert (u & uxlen32 & xlen32).satisfiable_by_arch?($db_cfg_arch)
+    assert (u & uxlen3264 & xlen32).satisfiable_by_arch?($db_cfg_arch)
+    assert (u & uxlen64 & -s).satisfiable_by_arch?($db_cfg_arch)
+    assert (u & uxlen64 & mxlen64 & xlen32).satisfiable_by_arch?($db_cfg_arch)
+    assert (u & uxlen64 & mxlen64 & xlen64).satisfiable_by_arch?($db_cfg_arch)
+    assert (-s & u & uxlen64 & mxlen64 & xlen64).satisfiable_by_arch?($db_cfg_arch)
+    # (-s & uxlen64 & mxlen64 & xlen64).sat_arch_model($db_cfg_arch)
+    refute (-s & u & uxlen64 & mxlen64 & xlen32).satisfiable_by_arch?($db_cfg_arch)
+    assert (-s & u & uxlen32 & mxlen64 & xlen64).satisfiable_by_arch?($db_cfg_arch)
+    assert (-s & u & uxlen32 & mxlen64 & xlen32).satisfiable_by_arch?($db_cfg_arch)
+    assert (-s & u & uxlen3264 & mxlen64 & xlen32).satisfiable_by_arch?($db_cfg_arch)
+    assert (-s & u & uxlen3264 & mxlen64 & xlen64).satisfiable_by_arch?($db_cfg_arch)
+  end
 
   def test_single_extension_req
     cond_str = <<~COND
@@ -559,5 +733,42 @@ class TestConditions < Minitest::Test
 
       end
     end
+  end
+
+  def test_z3_assertions
+    c = Condition.new(
+      {
+        "extension" => { "name" => "A" }
+      },
+      $db_cfg_arch
+    )
+    assert_instance_of String, c.z3_assertions($db_cfg_arch).to_s
+  end
+
+  def test_unsat_core
+    f = Condition.new(
+      {
+        "extension" => { "name" => "F" }
+      },
+      $db_cfg_arch
+    )
+    zfinx = Condition.new(
+      {
+        "extension" => { "name" => "Zfinx" }
+      },
+      $db_cfg_arch
+    )
+    assert_match (/F|Zfinx/), (f & zfinx).unsat_arch_core($db_cfg_arch).to_s
+    assert_nil (f & zfinx).sat_arch_model($db_cfg_arch)
+  end
+
+  def test_sat_arch_model
+    f = Condition.new(
+      {
+        "extension" => { "name" => "F" }
+      },
+      $db_cfg_arch
+    )
+    assert_match (/F/), f.sat_arch_model($db_cfg_arch).to_s
   end
 end

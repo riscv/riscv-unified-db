@@ -9,26 +9,13 @@
 $schema: csr_schema.json#
 kind: csr
 name: hpmcounter4h
-long_name: Unprivileged Hardware Performance Counter 1, high half
+long_name: Unprivileged Hardware Performance Counter 4, high half
 address: 0xC84
 writable: false
 description: |
   Alias for M-mode CSR `mhpmcounter4h`.
 
-  Privilege mode access is controlled with `mcounteren.HPM4`, `scounteren.HPM4`, and `hcounteren.HPM4` as follows:
-
-  [%autowidth,cols="1,1,1,1,1,1,1",separator="!"]
-  !===
-  .2+h![.rotate]#`mcounteren.HPM4`# .2+h! [.rotate]#`scounteren.HPM4`# .2+h! [.rotate]#`hcounteren.HPM4`#
-  4+^.>h! `hpmcounter4h` behavior
-  .^h! S-mode .^h! U-mode .^h! VS-mode .^h! VU-mode
-
-  ! 0 ! - ! - ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction`
-  ! 1 ! 0 ! 0 ! read-only ! `IllegalInstruction` ! `VirtualInstruction` ! `VirtualInstruction`
-  ! 1 ! 1 ! 0 ! read-only ! read-only ! `VirtualInstruction` ! `VirtualInstruction`
-  ! 1 ! 0 ! 1 ! read-only ! `IllegalInstruction` ! read-only ! `VirtualInstruction`
-  ! 1 ! 1 ! 1 ! read-only ! read-only ! read-only ! read-only
-  !===
+  See `mhpmcounter4h` for information on privilege mode access control.
 priv_mode: U
 length: 32
 definedBy:

@@ -9,56 +9,13 @@
 $schema: csr_schema.json#
 kind: csr
 name: hpmcounter31
-long_name: Unprivileged Hardware Performance Counter 28
+long_name: Unprivileged Hardware Performance Counter 31
 address: 0xC1F
 writable: false
 description: |
   Alias for M-mode CSR `mhpmcounter31`.
 
-  Privilege mode access is controlled with `mcounteren.HPM31`
-  <%- if ext?(:S) -%>
-  , `scounteren.HPM31`
-  <%- if ext?(:H) -%>
-  , and `hcounteren.HPM31`
-  <%- end -%>
-  <%- end -%>
-  as follows:
-
-  <%- if ext?(:H) -%>
-  [%autowidth,cols="1,1,1,1,1,1,1",separator="!"]
-  !===
-  .2+h![.rotate]#`mcounteren.HPM31`# .2+h! [.rotate]#`scounteren.HPM31`# .2+h! [.rotate]#`hcounteren.HPM31`#
-  4+^.>h! `hpmcounter31` behavior
-  .^h! S-mode .^h! U-mode .^h! VS-mode .^h! VU-mode
-
-  ! 0 ! - ! - ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction`
-  ! 1 ! 0 ! 0 ! read-only ! `IllegalInstruction` ! `VirtualInstruction` ! `VirtualInstruction`
-  ! 1 ! 1 ! 0 ! read-only ! read-only ! `VirtualInstruction` ! `VirtualInstruction`
-  ! 1 ! 0 ! 1 ! read-only ! `IllegalInstruction` ! read-only ! `VirtualInstruction`
-  ! 1 ! 1 ! 1 ! read-only ! read-only ! read-only ! read-only
-  !===
-  <%- elsif ext?(:S) -%>
-  [%autowidth,cols="1,1,1,1",separator="!"]
-  !===
-  .2+h![.rotate]#`mcounteren.HPM31`# .2+h! [.rotate]#`scounteren.HPM31`#
-  2+^.>h! `hpmcounter31` behavior
-  .^h! S-mode .^h! U-mode
-
-  ! 0 ! - ! `IllegalInstruction` ! `IllegalInstruction`
-  ! 1 ! 0 ! read-only ! `IllegalInstruction`
-  ! 1 ! 1 ! read-only ! read-only
-  !===
-  <%- else -%>
-  [%autowidth,cols="1,1",separator="!"]
-  !===
-  .2+h![.rotate]#`mcounteren.HPM31`#
-  ^.>h! `hpmcounter31` behavior
-  .^h! U-mode
-
-  ! 0 ! `IllegalInstruction`
-  ! 1 ! read-only
-  !===
-  <%- end -%>
+  See `mhpmcounter31` for information on privilege mode access control.
 priv_mode: U
 length: 64
 definedBy:

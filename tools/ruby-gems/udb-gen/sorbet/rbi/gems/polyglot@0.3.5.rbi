@@ -5,39 +5,26 @@
 # Please instead update this file by running `bin/tapioca gem polyglot`.
 
 
-# source://polyglot//lib/polyglot.rb#61
 module Kernel
-  # source://polyglot//lib/polyglot.rb#64
   def require(*a, &b); end
 
   private
 
-  # source://polyglot//lib/polyglot.rb#62
   def polyglot_original_require(name); end
 end
 
-# source://polyglot//lib/polyglot.rb#3
 module Polyglot
   class << self
-    # source://polyglot//lib/polyglot.rb#25
     def find(file, *options, &block); end
-
-    # source://polyglot//lib/polyglot.rb#42
     def load(*a, &b); end
-
-    # source://polyglot//lib/polyglot.rb#18
     def register(extension, klass); end
   end
 end
 
-# source://polyglot//lib/polyglot.rb#9
 class Polyglot::NestedLoadError < ::LoadError
-  # source://polyglot//lib/polyglot.rb#10
   def initialize(le); end
 
-  # source://polyglot//lib/polyglot.rb#13
   def reraise; end
 end
 
-# source://polyglot//lib/polyglot.rb#7
 class Polyglot::PolyglotLoadError < ::LoadError; end

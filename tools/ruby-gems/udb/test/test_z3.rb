@@ -1,6 +1,7 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
+# typed: false
 # frozen_string_literal: true
 
 require_relative "test_helper"
@@ -13,6 +14,11 @@ class TestZ3Solver < Minitest::Test
 
   def test_solver_initialization
     assert_instance_of Udb::Z3Solver, @solver
+  end
+
+  def test_assert_as_tracks_assertion
+    @solver.assert_as(Z3.Bool("tracked_true"), "tracked_true_constraint")
+    assert @solver.satisfiable?
   end
 
   def test_xlen_returns_int_expr
@@ -295,13 +301,13 @@ class TestZ3FiniteArray < Minitest::Test
   end
 
   def test_finite_array_initialization
-    array = Udb::Z3FiniteArray.new(@solver, "test_array", Z3::IntSort, 5)
+    array = Udb::Z3FiniteArray.new(@solver, "test_array", Z3::IntSort, Udb::ArrayConstraints.new(max_size: 5))
 
     assert_equal 5, array.max_size
   end
 
   def test_finite_array_element_access
-    array = Udb::Z3FiniteArray.new(@solver, "test_array", Z3::IntSort, 5)
+    array = Udb::Z3FiniteArray.new(@solver, "test_array", Z3::IntSort, Udb::ArrayConstraints.new)
 
     elem0 = array[0]
     elem1 = array[1]
@@ -311,21 +317,21 @@ class TestZ3FiniteArray < Minitest::Test
   end
 
   def test_finite_array_with_bitvec
-    array = Udb::Z3FiniteArray.new(@solver, "bv_array", Z3::BitvecSort, 3, bitvec_width: 32)
+    array = Udb::Z3FiniteArray.new(@solver, "bv_array", Z3::BitvecSort, Udb::ArrayConstraints.new, bitvec_width: 32)
 
     elem = array[0]
     assert_instance_of Z3::BitvecExpr, elem
   end
 
   def test_finite_array_with_bool
-    array = Udb::Z3FiniteArray.new(@solver, "bool_array", Z3::BoolSort, 3)
+    array = Udb::Z3FiniteArray.new(@solver, "bool_array", Z3::BoolSort, Udb::ArrayConstraints.new)
 
     elem = array[0]
     assert_instance_of Z3::BoolExpr, elem
   end
 
   def test_finite_array_size_term
-    array = Udb::Z3FiniteArray.new(@solver, "test_array", Z3::IntSort, 5)
+    array = Udb::Z3FiniteArray.new(@solver, "test_array", Z3::IntSort, Udb::ArrayConstraints.new)
 
     size = array.size_term
     assert_instance_of Z3::IntExpr, size
