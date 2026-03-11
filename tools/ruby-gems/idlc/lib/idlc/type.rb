@@ -173,7 +173,7 @@ module Idl
       if kind == :enum
         raise "Enum type must have width" unless @width
       end
-      if kind == :array
+      if kind == :array && width != 0
         raise "Array must have a subtype" unless @sub_type
       end
       if kind == :csr
@@ -896,7 +896,7 @@ module Idl
         argument_nodes: T::Array[Rvalue], # arguments
         call_site_symtab: SymbolTable,  # symbol table at the function call site
         func_call_ast: FunctionCallExpressionAst
-      ).returns(T.nilable(T.any(Integer, T::Boolean, Symbol)))
+      ).returns(T.nilable(T.any(Integer, T::Boolean, Symbol, T::Hash[String, T.untyped])))
     }
     def return_value(argument_nodes, call_site_symtab, func_call_ast)
       symtab = @symtab.global_clone

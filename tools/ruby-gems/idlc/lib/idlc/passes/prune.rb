@@ -38,6 +38,9 @@ def create_literal(symtab, value, type, forced_type: nil)
     create_int_literal(value, forced_type:)
   when :boolean
     create_bool_literal(value)
+  when :array
+    elements = value.map { |e| create_literal(symtab, e, type.sub_type) }
+    Idl::ArrayLiteralAst.new("ary", 0..3, elements)
   else
     raise "TODO: #{type}"
   end

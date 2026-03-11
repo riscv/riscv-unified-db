@@ -1380,7 +1380,7 @@ module Idl
 
       expr.type_check(symtab, strict:)
       value_type = expr.type(symtab)
-      unless value_type.comparable_to?(ary_type.sub_type)
+      unless ary_type.width == 0 || value_type.comparable_to?(ary_type.sub_type)
         type_error "Second argument of $array_includes? must be comparable to the array element type. Found #{ary_type.sub_type} and #{value_type}"
       end
     end
@@ -5284,13 +5284,17 @@ module Idl
         node.type_check(symtab, strict:)
       end
 
-      unless element_nodes.all? { |e| e.type(symtab).equal_to?(element_nodes[0].type(symtab)) }
+      unless element_nodes.all? { |e| e.type(symtab).equal_to?(element_nodes.fetch(0).type(symtab)) }
         type_error "Array elements must be identical"
       end
     end
 
     def type(symtab)
-      Type.new(:array, width: element_nodes.size, sub_type: element_nodes[0].type(symtab))
+      if element_nodes.size > 0
+        Type.new(:array, width: element_nodes.size, sub_type: element_nodes.fetch(0).type(symtab))
+      else
+        Type.new(:array, width: element_nodes.size, sub_type: nil)
+      end
     end
 
     def value(symtab)
