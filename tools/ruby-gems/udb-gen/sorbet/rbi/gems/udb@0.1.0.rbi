@@ -4381,6 +4381,11 @@ class Udb::Yaml::CommentMap
 
   sig { returns(T::Array[::Udb::Yaml::Comment]) }
   def trailing_comments; end
+
+  private
+
+  sig { params(key_path: T::Array[T.any(::Integer, ::String)]).returns(::String) }
+  def path_key_for(key_path); end
 end
 
 class Udb::Yaml::CommentParser
@@ -4553,9 +4558,6 @@ class Udb::Yaml::Resolver
     ).returns(T::Hash[T.untyped, T.untyped])
   end
   def deep_merge!(base, other); end
-
-  sig { params(obj: T.untyped, keys: T.untyped).returns(T.untyped) }
-  def dig(obj, *keys); end
 
   sig do
     params(
