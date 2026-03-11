@@ -2770,7 +2770,7 @@ class Idl::FunctionType < ::Idl::Type
       argument_nodes: T::Array[::Idl::Rvalue],
       call_site_symtab: ::Idl::SymbolTable,
       func_call_ast: ::Idl::FunctionCallExpressionAst
-    ).returns(T.nilable(T.any(::Integer, ::Symbol, T::Boolean)))
+    ).returns(T.nilable(T.any(::Integer, ::Symbol, T::Boolean, T::Hash[::String, T.untyped])))
   end
   def return_value(argument_nodes, call_site_symtab, func_call_ast); end
 end
