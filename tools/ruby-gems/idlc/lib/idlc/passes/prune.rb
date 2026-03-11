@@ -193,14 +193,6 @@ module Idl
       begin
         func_def = find_ancestor(FunctionDefAst)
         unless args_already_applied || func_def.nil?
-          # if func_def.templated? # can't prune a template because we don't have all types
-          #   return dup
-          # end
-
-          # push template values
-          func_def.template_names.each_with_index do |tname, idx|
-            symtab.add(tname, Var.new(tname, func_def.template_types(symtab)[idx]))
-          end
 
           # push args
           func_def.arguments(symtab).each do |arg_type, arg_name|
