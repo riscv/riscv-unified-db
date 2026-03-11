@@ -4361,6 +4361,9 @@ class Udb::Yaml::CommentMap
   sig { returns(T::Array[::Udb::Yaml::Comment]) }
   def header_comments; end
 
+  sig { params(base_map: ::Udb::Yaml::CommentMap).void }
+  def merge_styles_from(base_map); end
+
   sig { params(key_path: T::Array[T.any(::Integer, ::String)], lines: T::Array[::String]).void }
   def set_multiline_content(key_path, lines); end
 
