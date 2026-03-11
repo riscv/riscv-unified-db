@@ -94,11 +94,11 @@ def create_job(job_name, job_data, workflow_yaml)
         "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][1]["uses"],
         "if" => "((github.event_name == 'push') && (github.ref_name == 'main'))",
         # Note: plain (unquoted) style is enforced by force_plain_if_values / dump_workflow
-      "with" => {
-        "name" => artifact["artifact_name"],
-        "path" => artifact["path"]
+        "with" => {
+          "name" => artifact["artifact_name"],
+          "path" => artifact["path"]
+        }
       }
-    }
       if artifact["include-hidden-files"]
         gh_job_yaml["steps"].last["with"]["include-hidden-files"] = true
       end
