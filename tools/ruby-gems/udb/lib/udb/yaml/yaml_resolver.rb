@@ -102,7 +102,20 @@ module Udb
             base_result = parser.parse_file(base_path)
             overlay_result = parser.parse_file(overlay_path)
 
+            # Validate IDL scalar styles in both source files before merging so
+            # that any error message points to the correct source file rather than
+            # the generated merged output.
+            [base_path, overlay_path].each do |src_path|
+              yaml_string = File.read(src_path, encoding: "utf-8")
+              ast = Psych.parse(yaml_string, filename: src_path.to_s)
+              validate_idl_scalars(ast, [], src_path)
+            end
+
             merged_data = json_merge_patch(base_result[:data], overlay_result[:data])
+
+            # Fill in styles for keys that exist only in the base file so the
+            # emitter uses the correct (base-file) style for those keys.
+            overlay_result[:comments].merge_styles_from(base_result[:comments])
 
             emitter = PreservingEmitter.new(overlay_result[:comments])
             emitter.emit_file(merged_data, output_path)

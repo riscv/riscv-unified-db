@@ -129,6 +129,16 @@ module Udb
         @string_styles[path_key]
       end
 
+      # Copy string styles from +base_map+ for any keys not already present in this map.
+      # Used when merging an overlay on top of a base file so that keys only present
+      # in the base retain their original style.
+      sig { params(base_map: CommentMap).void }
+      def merge_styles_from(base_map)
+        base_map.instance_variable_get(:@string_styles).each do |path_key, style|
+          @string_styles[path_key] ||= style
+        end
+      end
+
       sig {
         params(
           key_path: T::Array[T.any(String, Integer)],
