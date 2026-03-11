@@ -936,6 +936,8 @@ function xlen {
         } else {
           unreachable();
         }
+      } else {
+        unreachable();
       }
     }
   }

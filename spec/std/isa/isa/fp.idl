@@ -875,42 +875,77 @@ function f32_to_i64 {
   }
   body {
     Bits<1> sign = signF32UI(a);
-    Bits<8> exp  = expF32UI(a);
-    Bits<23> frac = fracF32UI(a);
+    Bits<16> exp  = expF32UI(a);
+    Bits<32> sig = fracF32UI(a);
 
-    Bits<32> sig32;
-    Bits<8> shiftDist;
+    Bits<16> shiftDist = 16'hBE - exp;
     Bits<64> sig64;
     Bits<64> extra;
 
-    if (exp == 8'hFF) {
+    if ($signed(shiftDist) < 0s) {
       set_fp_flag(FpFlag::NV);
-      return (frac != 0) ? I64_NAN : (sign == 1 ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW);
+      if ((exp == 16'hFF) && (sig != 0)) {
+        return I64_NAN;
+      } else {
+        return (sign == 1) ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
+      }
     }
 
     if (exp != 0) {
-      sig32 = {9'b0_1000_0000, frac};
-    } else {
-      sig32 = {9'b0, frac};
+      sig = sig | 32'h00800000;
     }
 
-    # shiftDist = 0xBE - exp  (0xBE = 190 = 127 + 63)
-    shiftDist = 8'hBE - exp;
-
-    if (shiftDist <= 0) {
-      # value is too large to fit in I64
-      if (shiftDist < -6) {
-        set_fp_flag(FpFlag::NV);
-        return sign == 1 ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
-      }
-      sig64 = {32'b0, sig32} << (-shiftDist + 32);
-      extra = 0;
-    } else {
-      sig64 = softfloat_shiftRightJam64({32'b0, sig32} << 32, shiftDist);
-      extra = 0;
+    sig64 = sig `<< 40;
+    extra = 0;
+    if (shiftDist != 0) {
+      TwoU64s sig64Extra = softfloat_shiftRightJam64Extra( sig64, 0, $signed(shiftDist) );
+      sig64 = sig64Extra.u1;
+      extra = sig64Extra.u2;
     }
+    return softfloat_roundToI64( sign, sig64, extra, mode );
+  }
+}
 
-    return softfloat_roundToI64(sign, sig64, mode);
+struct TwoU64s {
+  Bits<64> u1;
+  Bits<64> u2;
+}
+
+function softfloat_shiftRightJam64Extra {
+  returns TwoU64s
+  arguments
+    Bits<64> a,
+    Bits<64> extra,
+    Bits<32> dist
+  description {
+    Shifts the 128 bits formed by concatenating 'a' and 'extra' right by 64
+    _plus_ the number of bits given in 'dist', which must not be zero.  This
+    shifted value is at most 64 nonzero bits and is returned in the 'v' field
+    of the 'struct uint64_extra' result.  The 64-bit 'extra' field of the result
+    contains a value formed as follows from the bits that were shifted off:  The
+    _last_ bit shifted off is the most-significant bit of the 'extra' field, and
+    the other 63 bits of the 'extra' field are all zero if and only if _all_but_
+    _the_last_ bits shifted off were all zero.
+      (This function makes more sense if 'a' and 'extra' are considered to form
+    an unsigned fixed-point number with binary point between 'a' and 'extra'.
+    This fixed-point value is shifted right by the number of bits given in
+    'dist', and the integer part of this shifted value is returned in the 'v'
+    field of the result.  The fractional part of the shifted value is modified
+    as described above and returned in the 'extra' field of the result.)
+  }
+  body {
+    TwoU64s z;
+
+    if (dist < 64) {
+      z.u1 = a >> dist;
+      z.u2 = a << (-dist & 63);
+    } else {
+      z.u1 = 0;
+      z.u2 = (dist == 64) ? a : ((a != 0) ? 1 : 0);
+    }
+    z.u2 = z.u2 | ((extra != 0) ? 1 : 0);
+
+    return z;
   }
 }
 
@@ -925,38 +960,37 @@ function f32_to_ui64 {
   }
   body {
     Bits<1> sign = signF32UI(a);
-    Bits<8> exp  = expF32UI(a);
-    Bits<23> frac = fracF32UI(a);
+    Bits<16> exp  = expF32UI(a);
+    Bits<32> sig = fracF32UI(a);
 
-    Bits<32> sig32;
-    Bits<8> shiftDist;
-    Bits<64> sig64;
+    Bits<16> shiftDist;
+    Bits<64> sig64, extra;
 
-    if (exp == 8'hFF) {
+    # shiftDist = 0xBE - exp  (0xBE = 190 = 127 + 63)
+    shiftDist = 16'hBE - exp;
+
+    if ($signed(shiftDist) < 0s) {
       set_fp_flag(FpFlag::NV);
-      return (frac != 0) ? UI64_NAN : (sign == 1 ? UI64_NEG_OVERFLOW : UI64_POS_OVERFLOW);
+      if ((exp == 0xFF) && (sig != 0)) {
+        return UI64_NAN;
+      } else if (sign != 0) {
+        return UI64_NEG_OVERFLOW;
+      } else {
+        return UI64_POS_OVERFLOW;
+      }
     }
 
     if (exp != 0) {
-      sig32 = {9'b0_1000_0000, frac};
-    } else {
-      sig32 = {9'b0, frac};
+      sig = sig | 32'h00800000;
     }
-
-    # shiftDist = 0xBE - exp  (0xBE = 190 = 127 + 63)
-    shiftDist = 8'hBE - exp;
-
-    if (shiftDist <= 0) {
-      if (shiftDist < -7) {
-        set_fp_flag(FpFlag::NV);
-        return sign == 1 ? UI64_NEG_OVERFLOW : UI64_POS_OVERFLOW;
-      }
-      sig64 = {32'b0, sig32} << (-shiftDist + 32);
-    } else {
-      sig64 = softfloat_shiftRightJam64({32'b0, sig32} << 32, shiftDist);
+    sig64 = sig `<< 40;
+    extra = 0;
+    if (shiftDist != 0) {
+      TwoU64s sig64Extra = softfloat_shiftRightJam64Extra(sig64, 0, $signed(shiftDist));
+      sig64 = sig64Extra.u1;
+      extra = sig64Extra.u2;
     }
-
-    return softfloat_roundToUI64(sign, sig64, mode);
+    return softfloat_roundToUI64( sign, sig64, extra, mode );
   }
 }
 
@@ -979,24 +1013,26 @@ function i64_to_f32 {
       absA = a;
     }
 
-    if (absA == 0) {
-      return 0;
-    }
-
     # count_leading_zeros<64> returns the number of leading zeros
     Bits<8> shiftDist = count_leading_zeros<64>(absA) - 40;
     Bits<32> sig;
 
-    if (shiftDist >= 0) {
+    if ($signed(shiftDist) >= 0s) {
+      if (a != 0) {
+        return packToF32UI(sign, 16'h95 - shiftDist, absA << shiftDist);
+      } else {
+        return 0;
+      }
       sig = absA << shiftDist;
     } else {
-      sig = softfloat_shiftRightJam64(absA, -shiftDist);
+      shiftDist = shiftDist + 7;
+      if ($signed(shiftDist) < 0s) {
+        sig = softfloat_shortShiftRightJam64( absA, -shiftDist );
+      } else {
+        sig = absA << shiftDist;
+      }
+      return softfloat_roundPackToF32(sign, 8'h9C - shiftDist, sig, mode);
     }
-
-    # exp = 0xBE - shiftDist  (biased exponent for 64-bit integer)
-    Bits<16> exp = 16'h00BE - shiftDist;
-
-    return softfloat_roundPackToF32(sign, exp, sig, mode);
   }
 }
 
@@ -1010,22 +1046,24 @@ function ui64_to_f32 {
     Translated from Berkeley Softfloat ui64_to_f32.
   }
   body {
-    if (a == 0) {
-      return 0;
-    }
-
     Bits<8> shiftDist = count_leading_zeros<64>(a) - 40;
     Bits<32> sig;
 
-    if (shiftDist >= 0) {
-      sig = a << shiftDist;
+    if (0s <= $signed(shiftDist)) {
+      if (a != 0) {
+        return packToF32UI(0, 8'h95 - shiftDist, a << shiftDist);
+      } else {
+        return 0;
+      }
     } else {
-      sig = softfloat_shiftRightJam64(a, -shiftDist);
+      shiftDist = shiftDist + 7;
+      if ($signed(shiftDist) < 0s) {
+        sig = softfloat_shortShiftRightJam64(a, -shiftDist);
+      } else {
+        sig = a << shiftDist;
+      }
+      return softfloat_roundPackToF32(0, 8'h9C - shiftDist, sig, mode);
     }
-
-    Bits<16> exp = 16'h00BE - shiftDist;
-
-    return softfloat_roundPackToF32(0, exp, sig, mode);
   }
 }
 
@@ -1633,7 +1671,7 @@ function f32_to_ui32 {
     Bits<1> sign = signF32UI(a);
     Bits<16> exp  = expF32UI(a);
     Bits<32> sig = fracF32UI(a);
-    Bits<8> shiftDist;
+    Bits<16> shiftDist;
     U64 sig64;
     # for NaN return the highest positive value and set floating-point flag to invalid.
     if ((exp == 8'hFF) && (sig != 0)) {
@@ -1887,11 +1925,7 @@ function softfloat_shortShiftRightJam64 {
     shifted-off bits into the least-significant bit of the result.
   }
   body {
-    # negate dist using 2's complement to avoid a truncation warning from the IDL compiler
-    # that would happen if you use -dist
-    # (because '-dist' is a signed type, which, when masked, loses information)
-    Bits<32> neg_dist = ~dist + 1;
-    return a >> dist | (((a << (neg_dist & 63)) != 0) ? 1 : 0);
+    return a >> dist | (((a & ((64'1 << dist) - 1)) != 0) ? 1 : 0);
   }
 }
 
@@ -1900,41 +1934,47 @@ function softfloat_roundToI64 {
   arguments
     Bits<1> sign,
     Bits<64> sig,
+    Bits<64> sigExtra,
     RoundingMode roundingMode
   description {
     Round to signed 64-bit integer, using +roundingMode+.
     Translated from Berkeley Softfloat softfloat_roundToI64.
   }
   body {
-    Bits<16> roundIncrement = 0x800;
-    if ((roundingMode != RoundingMode::RMM) && (roundingMode != RoundingMode::RNE)) {
-      roundIncrement = 0;
-      if (sign == 1
-            ? (roundingMode == RoundingMode::RDN)
-            : (roundingMode == RoundingMode::RUP)) {
-        roundIncrement = 0xFFF;
+    Bits<64> z;
+    Boolean needs_increment = false;
+
+    if ((roundingMode == RoundingMode::RMM) || (roundingMode == RoundingMode::RNE)) {
+      if (64'h8000000000000000 <= sigExtra) {
+        needs_increment = true;
+      }
+    } else {
+      if ((sigExtra != 0) && ((sign != 0) ? (roundingMode == RoundingMode::RDN) : (roundingMode == RoundingMode::RUP))) {
+        needs_increment = true;
       }
     }
-    Bits<16> roundBits = sig & 0xFFF;
-    sig = sig + roundIncrement;
 
-    # Check for overflow: if the top 12 bits are non-zero after adding roundIncrement
-    # the value exceeds 52 significant bits, which overflows I64
-    Bits<64> sig64 = sig >> 12;
-    if ((roundBits == 0x800) && (roundingMode == RoundingMode::RNE)) {
-      sig64 = sig64 & ~64'b1;
-    }
-
-    Bits<64> z = (sign == 1) ? -sig64 : sig64;
-    if (sig64 != 0) {
-      if ((sign == 1) != ($signed(z) < 's0)) {
+    if (needs_increment) {
+      sig = sig + 1;
+      if (sig == 0) {
         set_fp_flag(FpFlag::NV);
-        return sign == 1 ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
+        return (sign == 1) ? I64_NEG_OVERFLOW : I64_NEG_OVERFLOW;
+      }
+      if ((sigExtra == 64'h8000000000000000) && (roundingMode == RoundingMode::RNE)) {
+        sig = sig & ~64'h1;
       }
     }
-    if (roundBits != 0) {
+
+    z = (sign == 1) ? -sig : sig;
+    if ((z != 0) && (((($signed(z) < 0s) ? 1 : 0) ^ sign) == 1)) {
+      set_fp_flag(FpFlag::NV);
+      return (sign == 1) ? I64_NEG_OVERFLOW : I64_NEG_OVERFLOW;
+    }
+
+    if (sigExtra != 0) {
       set_fp_flag(FpFlag::NX);
     }
+
     return z;
   }
 }
@@ -1944,39 +1984,66 @@ function softfloat_roundToUI64 {
   arguments
     Bits<1> sign,
     Bits<64> sig,
+    Bits<64> sigExtra,
     RoundingMode roundingMode
   description {
     Round to unsigned 64-bit integer, using +roundingMode+.
     Translated from Berkeley Softfloat softfloat_roundToUI64.
   }
   body {
-    Bits<16> roundIncrement = 0x800;
-    if ((roundingMode != RoundingMode::RMM) && (roundingMode != RoundingMode::RNE)) {
-      roundIncrement = 0;
-      if (sign == 1) {
-        if (sig == 0) { return 0; }
-        if (roundingMode == RoundingMode::RDN) { set_fp_flag(FpFlag::NV); }
-        return UI64_NEG_OVERFLOW;
+    Boolean needs_increment = false;
+
+    if ((roundingMode == RoundingMode::RMM) || (roundingMode == RoundingMode::RNE)) {
+      if (64'h8000000000000000 <= sigExtra) {
+        needs_increment = true;
+      }
+    } else {
+      if (sign != 0) {
+        if ((sig | sigExtra) == 0) {
+          return 0;
+        }
+        if (roundingMode == RoundingMode::RDN) {
+          set_fp_flag(FpFlag::NV);
+          if (sign == 1) {
+            return UI64_NEG_OVERFLOW;
+          } else {
+            return UI64_POS_OVERFLOW;
+          }
+        }
       } else {
-        if (roundingMode == RoundingMode::RUP) { roundIncrement = 0xFFF; }
+        if ( (roundingMode == RoundingMode::RUP) && (sigExtra != 0)) {
+          needs_increment = true;
+        }
       }
     }
 
-    Bits<16> roundBits = sig & 0xFFF;
-    sig = sig + roundIncrement;
-
-    Bits<64> z = sig >> 12;
-    if ((roundBits == 0x800) && (roundingMode == RoundingMode::RNE)) {
-      z = z & ~64'b1;
+    if (needs_increment) {
+      sig = sig + 1;
+      if (sig == 0) {
+        set_fp_flag(FpFlag::NV);
+        if (sign == 1) {
+          return UI64_NEG_OVERFLOW;
+        } else {
+          return UI64_POS_OVERFLOW;
+        }
+      }
+      if ( (sigExtra == 64'h8000000000000000) && (roundingMode == RoundingMode::RNE)) {
+        sig = sig & ~64'1;
+      }
     }
 
-    if ((z != 0) && (sign == 1)) {
+    if ( (sign != 0) && (sig != 0) ) {
       set_fp_flag(FpFlag::NV);
-      return UI64_NEG_OVERFLOW;
+      if (sign == 1) {
+        return UI64_NEG_OVERFLOW;
+      } else {
+        return UI64_POS_OVERFLOW;
+      }
     }
-    if (roundBits != 0) {
+
+    if (sigExtra != 0) {
       set_fp_flag(FpFlag::NX);
     }
-    return z;
+    return sig;
   }
 }
