@@ -305,7 +305,7 @@ module Udb
 
           ref_obj = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
           if ref_file_path.empty?
-            ref_obj = T.unsafe(self).dig(doc_obj, *ref_obj_path)
+            ref_obj = T.unsafe(doc_obj).dig(*ref_obj_path)
             raise "#{ref_obj_path.join("/")} cannot be found in #{obj_file_path}" if ref_obj.nil?
             ref_obj = resolve_object(ref_obj, ref_obj_path, obj_file_path, doc_obj, arch_root, no_checks)
           else
@@ -313,7 +313,7 @@ module Udb
             raise "#{ref_file_path} does not exist in #{arch_root}/" unless ref_full_path.exist?
 
             ref_doc_obj = get_resolved_object(ref_file_path, arch_root, no_checks)
-            ref_obj = T.unsafe(self).dig(ref_doc_obj, *ref_obj_path)
+            ref_obj = T.unsafe(ref_doc_obj).dig(*ref_obj_path)
             raise "#{ref_obj_path.join("/")} cannot be found in #{ref_file_path}" if ref_obj.nil?
           end
 
@@ -389,7 +389,7 @@ module Udb
               # Same-document reference
               ref_path_str = T.must(target.split("#", 2)).fetch(1)
               ref_path = ref_path_str.split("/").drop(1)
-              parent_obj = T.unsafe(self).dig(doc_root, *ref_path)
+              parent_obj = T.unsafe(doc_root).dig(*ref_path)
               next if parent_obj.nil? || !parent_obj.is_a?(Hash)
 
               add_parent_of_reference(parent_obj, child_ref)
@@ -402,7 +402,7 @@ module Udb
               next unless @resolved_objs.key?(T.must(ref_file_path))
 
               ref_doc = @resolved_objs.fetch(T.must(ref_file_path)).fetch(:data)
-              parent_obj = T.unsafe(self).dig(ref_doc, *ref_obj_path)
+              parent_obj = T.unsafe(ref_doc).dig(*ref_obj_path)
               next if parent_obj.nil? || !parent_obj.is_a?(Hash)
 
               add_parent_of_reference(parent_obj, child_ref)
@@ -451,18 +451,6 @@ module Udb
         @resolved_objs[rel_path] = { data: resolved_data, comments: result[:comments] }
 
         resolved_data
-      end
-
-      sig { params(obj: T.untyped, keys: T.untyped).returns(T.untyped) }
-      def dig(obj, *keys)
-        return nil if obj.nil?
-        return obj if keys.empty?
-
-        key = keys[0]
-        next_obj = obj[key]
-        return nil if next_obj.nil?
-
-        T.unsafe(self).dig(next_obj, *keys[1..])
       end
 
       sig {
@@ -729,7 +717,7 @@ module Udb
           # For literal block scalars, YAML strips the minimum common indentation from all lines.
           # We need to calculate what that indentation is and point to the content after it's stripped.
 
-          line_lens = value_stripped.lines.map { |l| T.must(line[/^\s*/]).length }
+          line_lens = value_stripped.lines.map { |l| T.must(l[/^\s*/]).length }
           min_indent =
             if value_stripped[1] == "\n"
               # implicit indent, need to find min # of starting spaces
@@ -741,22 +729,23 @@ module Udb
 
           # also find the line that the content actually starts on (skipping blank lines at the beginning)
 
-          if 1 == line_lens.size
-            # there is no content!!
-            puts value_stripped
-            puts file_bytes
-            raise "?"
-          end
-          first_non_empty_line_num = 1
-          while (line_lens.fetch(first_non_empty_line_num).zero?)
-            first_non_empty_line_num += 1
-
-            if first_non_empty_line_num >= line_lens.size
-              raise "Couldn't parse block scalar"
-            end
+          if line_lens.size <= 1
+            # Block scalar has no content lines (only the indicator line)
+            raise StandardError, "Block scalar at #{@current_file_path}:#{line_num} has no content lines"
           end
 
-          return cumulative_offsets.fetch(first_non_empty_line_num) + T.must(min_indent)
+          # Find the first line with actual content (non-zero indentation)
+          first_content_line_num = 1
+          while first_content_line_num < line_lens.size && T.must(line_lens[first_content_line_num]).zero?
+            first_content_line_num += 1
+          end
+
+          if first_content_line_num >= line_lens.size
+            # No content found - empty literal block
+            raise StandardError, "Block scalar at #{@current_file_path}:#{line_num} has no content lines"
+          end
+
+          return cumulative_offsets.fetch(first_content_line_num) + T.must(min_indent)
         end
 
         # For inline plain scalar values (value on the same line as the key)

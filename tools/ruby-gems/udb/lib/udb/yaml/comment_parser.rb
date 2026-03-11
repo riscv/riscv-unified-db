@@ -71,6 +71,15 @@ module Udb
       sig { returns(T::Array[Comment]) }
       attr_reader :trailing_comments
 
+      private
+
+      sig { params(key_path: T::Array[T.any(String, Integer)]).returns(String) }
+      def path_key_for(key_path)
+        key_path.join("/")
+      end
+
+      public
+
       sig {
         params(
           key_path: T::Array[T.any(String, Integer)],
@@ -78,7 +87,7 @@ module Udb
         ).void
       }
       def add_comment(key_path, comment)
-        path_key = key_path.join("/")
+        path_key = path_key_for(key_path)
         @comments[path_key] ||= []
         @comments.fetch(path_key) << comment
       end
@@ -87,7 +96,7 @@ module Udb
         params(key_path: T::Array[T.any(String, Integer)]).returns(T::Array[Comment])
       }
       def get_comments(key_path)
-        path_key = key_path.join("/")
+        path_key = path_key_for(key_path)
         @comments[path_key] || []
       end
 
@@ -108,7 +117,7 @@ module Udb
         ).void
       }
       def set_string_style(key_path, style)
-        path_key = key_path.join("/")
+        path_key = path_key_for(key_path)
         @string_styles[path_key] = style
       end
 
@@ -116,7 +125,7 @@ module Udb
         params(key_path: T::Array[T.any(String, Integer)]).returns(T.nilable(Symbol))
       }
       def get_string_style(key_path)
-        path_key = key_path.join("/")
+        path_key = path_key_for(key_path)
         @string_styles[path_key]
       end
 
@@ -127,7 +136,7 @@ module Udb
         ).void
       }
       def set_multiline_content(key_path, lines)
-        path_key = key_path.join("/")
+        path_key = path_key_for(key_path)
         @multiline_content[path_key] = lines
       end
 
@@ -135,7 +144,7 @@ module Udb
         params(key_path: T::Array[T.any(String, Integer)]).returns(T.nilable(T::Array[String]))
       }
       def get_multiline_content(key_path)
-        path_key = key_path.join("/")
+        path_key = path_key_for(key_path)
         @multiline_content[path_key]
       end
 
@@ -150,7 +159,7 @@ module Udb
         ).void
       }
       def set_source_location(key_path, file, line, column, offset = nil, line_file_offsets = nil)
-        path_key = key_path.join("/")
+        path_key = path_key_for(key_path)
         @source_locations[path_key] = { file: file.to_s, line: line, column: column, offset: offset, line_file_offsets: line_file_offsets }
       end
 
@@ -158,7 +167,7 @@ module Udb
         params(key_path: T::Array[T.any(String, Integer)]).returns(T.nilable(T::Hash[Symbol, T.untyped]))
       }
       def get_source_location(key_path)
-        path_key = key_path.join("/")
+        path_key = path_key_for(key_path)
         @source_locations[path_key]
       end
 

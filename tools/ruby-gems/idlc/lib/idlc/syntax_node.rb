@@ -17,11 +17,6 @@ module Treetop
       # @param filename [String] Filename
       # @param starting_line [Integer] Starting line in the file
       # @param starting_offset [Integer] Starting byte offset in the file
-      # remember where the code comes from
-      #
-      # @param filename [String] Filename
-      # @param starting_line [Integer] Starting line in the file
-      # @param starting_offset [Integer] Starting byte offset in the file
       # @param line_file_offsets [Array<Integer>, nil] Per-IDL-line file byte offsets
       sig { params(filename: T.nilable(String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
       def set_input_file(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
