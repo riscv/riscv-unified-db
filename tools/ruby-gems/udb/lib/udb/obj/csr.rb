@@ -527,8 +527,6 @@ module Udb
 
       raise "unexpected #{@sw_read_ast.class}" unless @sw_read_ast.is_a?(Idl::FunctionBodyAst)
 
-      @sw_read_ast.set_input_file_unless_already_set(T.must(__source), source_line(["sw_read()"]))
-
       @sw_read_ast
     end
 

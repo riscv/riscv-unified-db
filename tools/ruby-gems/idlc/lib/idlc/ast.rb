@@ -204,6 +204,7 @@ module Idl
       @input_file = nil
       @starting_line = 0
       @starting_offset = 0
+      @line_file_offsets = T.let(nil, T.nilable(T::Array[Integer]))
       @interval = interval
       @interval_text_value =
         unless input.nil? || interval.nil?
@@ -221,15 +222,24 @@ module Idl
     # @param [String] filename The name of the input file.
     # @param [Integer] starting_line The starting line number in the input file.
     # @param [Integer] starting_offset The byte offset in the file where the IDL content starts.
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer).void }
-    def set_input_file_unless_already_set(filename, starting_line = 0, starting_offset = 0)
+    # Sets the input file for this syntax node unless it has already been set.
+    #
+    # If the input file has not been set, it will be set with the given filename and starting line number.
+    #
+    # @param [String] filename The name of the input file.
+    # @param [Integer] starting_line The starting line number in the input file.
+    # @param [Integer] starting_offset The byte offset in the file where the IDL content starts.
+    # @param [Array<Integer>, nil] line_file_offsets Per-IDL-line file byte offsets (nil = use starting_offset).
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+    def set_input_file_unless_already_set(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
       return unless @input_file.nil?
 
       @input_file = Pathname.new(filename)
       @starting_line = starting_line
       @starting_offset = starting_offset
+      @line_file_offsets = line_file_offsets
       children.each do |child|
-        child.set_input_file_unless_already_set(filename, starting_line, starting_offset)
+        child.set_input_file_unless_already_set(filename, starting_line, starting_offset, line_file_offsets)
       end
       raise "?" if @starting_line.nil?
     end
@@ -239,13 +249,15 @@ module Idl
     # @param filename [String] Filename
     # @param starting_line [Integer] Starting line in the file
     # @param starting_offset [Integer] Byte offset in the file where the IDL content starts
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer).void }
-    def set_input_file(filename, starting_line = 0, starting_offset = 0)
+    # @param line_file_offsets [Array<Integer>, nil] Per-IDL-line file byte offsets (nil = use starting_offset).
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+    def set_input_file(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
       @input_file = Pathname.new(filename)
       @starting_line = starting_line
       @starting_offset = starting_offset
+      @line_file_offsets = line_file_offsets
       children.each do |child|
-        child.set_input_file(filename, starting_line, starting_offset)
+        child.set_input_file(filename, starting_line, starting_offset, line_file_offsets)
       end
       raise "?" if @starting_line.nil?
     end
@@ -493,12 +505,60 @@ module Idl
       interval_begin = T.must(interval).begin
       interval_end = T.must(interval).size == 0 ? T.must(interval).begin + 1 : T.must(interval).end
 
+      lfo = @line_file_offsets
+      if lfo
+        # Map an IDL-string position to a file byte offset using the per-line table.
+        # Each entry lfo[i] is the file offset of the first character of IDL line i.
+        # For position p: find the line it's on, then add the column within that line.
+        file_begin = idl_pos_to_file_offset(interval_begin, lfo)
+        # Find the last non-whitespace character in the interval so that end points to
+        # real content and stays within file bounds.
+        # For zero-size intervals, use interval_begin + 1 (matching the non-lfo path).
+        inp = T.must(input)
+        if T.must(interval).size == 0
+          last_char = interval_begin + 1
+        else
+          last_char = interval_end - 1
+          last_char -= 1 while last_char > interval_begin && inp[last_char] =~ /\s/
+        end
+        file_end = idl_pos_to_file_offset(last_char, lfo)
+      else
+        file_begin = base_offset + interval_begin
+        file_end   = base_offset + interval_end
+      end
+
       {
         "file" => @input_file.to_s,
-        "begin" => base_offset + interval_begin,
-        "end" => base_offset + interval_end
+        "begin" => file_begin,
+        "end"   => file_end
       }
     end
+
+    private
+
+    # Given an IDL-string position +pos+ and the per-line file-offset table +lfo+,
+    # return the corresponding file byte offset.
+    sig { params(pos: Integer, lfo: T::Array[Integer]).returns(Integer) }
+    def idl_pos_to_file_offset(pos, lfo)
+      inp = T.must(input)
+      # Count which line pos falls on by scanning newlines
+      line = 0
+      col  = 0
+      i    = 0
+      while i < pos
+        if inp[i] == "\n"
+          line += 1
+          col = 0
+        else
+          col += 1
+        end
+        i += 1
+      end
+      line_offset = line < lfo.size ? T.must(lfo[line]) : T.must(lfo.last)
+      line_offset + col
+    end
+
+    public
 
     sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(T.nilable(String)) }
     def self.input_from_source_yaml(yaml, source_mapper)
@@ -508,7 +568,7 @@ module Idl
 
     sig { params(yaml: T::Hash[String, T.untyped]).returns(T.nilable(T::Range[Integer])) }
     def self.interval_from_source_yaml(yaml)
-      yaml.fetch("begin")..yaml.fetch("end")
+      yaml.fetch("begin")...yaml.fetch("end")
     end
 
     sig { abstract.returns(T::Hash[String, T.untyped]) }

@@ -146,14 +146,14 @@ module Udb
         result = parser.parse_file(input_path)
         data = result[:data]
 
-        track_source_locations(input_path, result[:comments])
-        @current_comment_map = result[:comments]
-
         # Validate that multiline IDL functions use literal block scalars
         # We need to check the raw YAML to detect multiline plain scalars
         yaml_string = File.read(input_path, encoding: "utf-8")
         ast = Psych.parse(yaml_string, filename: input_path.to_s)
         validate_idl_scalars(ast, [], input_path)
+
+        track_source_locations(input_path, result[:comments])
+        @current_comment_map = result[:comments]
 
         if !no_checks && data.key?("name")
           fn_name = Pathname.new(rel_path).basename(".yaml").to_s
@@ -238,8 +238,10 @@ module Udb
           idl_keys.each do |key|
             key_minus_args = key.split("(")[0]
             source_loc = @current_comment_map&.get_source_location(obj_path + [key])
-            starting_line = source_loc ? source_loc[:line] : 1
+            # :line is 1-based; set_input_file expects 0-based, so subtract 1
+            starting_line = source_loc ? source_loc[:line] - 1 : 0
             starting_offset = source_loc ? (source_loc[:offset] || 0) : 0
+            line_file_offsets = source_loc ? source_loc[:line_file_offsets] : nil
             parse_root =
               if key == "operation()"
                 :instruction_operation
@@ -249,7 +251,7 @@ module Udb
                 :function_body
               end
             compiler = T.must(@compiler)
-            compiler.parser.set_input_file(obj_file_path.to_s, starting_line - 1, starting_offset)
+            compiler.parser.set_input_file(obj_file_path.to_s, starting_line, starting_offset, line_file_offsets)
             m = compiler.parser.parse(obj.fetch(key), root: parse_root)
             if m.nil?
               raise SyntaxError, <<~MSG
@@ -262,7 +264,7 @@ module Udb
             if ast.nil?
               raise "IDL compiler could not convert to ast"
             end
-            ast.set_input_file_unless_already_set(obj_file_path, starting_line - 1, starting_offset)
+            ast.set_input_file_unless_already_set(obj_file_path, starting_line, starting_offset, line_file_offsets)
             resolved[key_minus_args] = ast.to_h
           end
         end
@@ -394,12 +396,12 @@ module Udb
             elsif target.include?("#")
               # Cross-file reference
               ref_file_path, ref_obj_path_str = target.split("#", 2)
-              ref_obj_path = ref_obj_path_str.split("/").drop(1)
+              ref_obj_path = T.must(ref_obj_path_str).split("/").drop(1)
 
               # Get the resolved object from the cache
-              next unless @resolved_objs.key?(ref_file_path)
+              next unless @resolved_objs.key?(T.must(ref_file_path))
 
-              ref_doc = @resolved_objs.fetch(ref_file_path).fetch(:data)
+              ref_doc = @resolved_objs.fetch(T.must(ref_file_path)).fetch(:data)
               parent_obj = T.unsafe(self).dig(ref_doc, *ref_obj_path)
               next if parent_obj.nil? || !parent_obj.is_a?(Hash)
 
@@ -579,7 +581,7 @@ module Udb
           file: T.any(String, Pathname),
           cumulative_offsets: T::Array[Integer],
           offset_map: CommentMap,
-          node: Psych::Nodes
+          node: Psych::Nodes::Node
         ).void
       }
       def track_source_locations_helper(keys, contents, file, cumulative_offsets, offset_map, node)
@@ -602,38 +604,29 @@ module Udb
           end
           # Don't track source locations for sequences - only for IDL function scalar values
         when Psych::Nodes::Scalar
-          # Only track source locations for IDL function values (keys ending with () except sail())
-          # Check if the last key in the path is an IDL function
-          return unless keys.any? && keys.last.is_a?(String) && keys.last.end_with?(")") && keys.last != "sail()"
+          return unless keys.any?
 
-          marked_offset = cumulative_offsets[node.start_line] + node.start_column
-          actual_offset =
-            if node.value.empty?
-              marked_offset
-            else
-              # For literal block scalars, account for indentation stripping
-              # For plain scalars, only single-line is supported for IDL
-              if node.style == Psych::Nodes::Scalar::LITERAL
-                # to account for the indentation of literal block, allow any number of spaces after a newline
-                contents.index(Regexp.new(Regexp.escape(node.value).gsub(/\\(?:r\\)?n(?:\\ )*/, '\\n\\s*')), marked_offset)
+          is_idl_key = keys.last.is_a?(String) && T.must(keys.last).end_with?(")") && keys.last != "sail()"
+          marked_offset = cumulative_offsets.fetch(node.start_line) + node.start_column
+
+          if is_idl_key
+            actual_offset =
+              if node.value.empty?
+                marked_offset
+              elsif node.style == Psych::Nodes::Scalar::LITERAL
+                # The first content line always starts at the beginning of the line
+                # immediately after the key line (node.start_line + 1).
+                cumulative_offsets[node.start_line + 1]
               elsif node.style == Psych::Nodes::Scalar::PLAIN
                 # Single-line plain scalar - find it directly
                 contents.index(node.value, marked_offset)
               else
                 style_name = case node.style
-                       when Psych::Nodes::Scalar::PLAIN
-                         "PLAIN"
-                       when Psych::Nodes::Scalar::SINGLE_QUOTED
-                         "SINGLE_QUOTED"
-                       when Psych::Nodes::Scalar::DOUBLE_QUOTED
-                         "DOUBLE_QUOTED"
-                       when Psych::Nodes::Scalar::LITERAL
-                         "LITERAL"
-                       when Psych::Nodes::Scalar::FOLDED
-                         "FOLDED"
-                       else
-                         "UNKNOWN (#{node.style})"
-                       end
+                             when Psych::Nodes::Scalar::SINGLE_QUOTED then "SINGLE_QUOTED"
+                             when Psych::Nodes::Scalar::DOUBLE_QUOTED then "DOUBLE_QUOTED"
+                             when Psych::Nodes::Scalar::FOLDED then "FOLDED"
+                             else "UNKNOWN (#{node.style})"
+                             end
                 raise "ERROR: Unsupported YAML style for IDL function '#{keys.last}' in #{file}.\n" \
                   "IDL functions must use either PLAIN (single-line) or LITERAL block scalar (|) style.\n" \
                   "Examples:\n" \
@@ -643,10 +636,14 @@ module Udb
                   "                             y = 10\n" \
                   "Found style: #{style_name}"
               end
-            end
-          raise "could not find #{node.value.inspect} in #{file} \n\n\n  #{contents[marked_offset..(marked_offset + node.value.size + 10)].inspect} \n\n\nstarting at #{marked_offset} #{node.start_line} #{node.start_column} #{cumulative_offsets[node.start_line] + node.start_column}" if !node.value.empty? && actual_offset.nil?
-          raise "index #{actual_offset} was off for #{node.value.inspect}" unless node.value.empty? || contents[actual_offset] == node.value[0]
-          offset_map.set_source_location(keys, file, node.start_line, node.start_column, actual_offset)
+            line_file_offsets =
+              if node.style == Psych::Nodes::Scalar::LITERAL && !node.value.empty? && actual_offset
+                build_line_file_offsets(node.value, actual_offset, contents)
+              end
+            offset_map.set_source_location(keys, file, node.start_line + 1, node.start_column + 1, actual_offset, line_file_offsets)
+          else
+            offset_map.set_source_location(keys, file, node.start_line + 1, node.start_column + 1)
+          end
         end
       end
 
@@ -664,11 +661,14 @@ module Udb
         offset = 0
         lines.each do |line|
           cumulative_offsets << offset
-          offset += line.size
+          offset += line.bytesize
         end
 
+        # Use binary encoding for all byte-offset operations so that multi-byte
+        # UTF-8 characters don't cause character/byte index mismatches.
+        yaml_bytes = yaml_string.b
         ast = Psych.parse(yaml_string, filename: file_path.to_s)
-        track_source_locations_helper([], yaml_string, file_path, cumulative_offsets, comment_map, ast)
+        track_source_locations_helper([], yaml_bytes, file_path, cumulative_offsets, comment_map, ast)
       end
 
       sig {
@@ -730,13 +730,14 @@ module Udb
           # We need to calculate what that indentation is and point to the content after it's stripped.
 
           line_lens = value_stripped.lines.map { |l| T.must(line[/^\s*/]).length }
-          if value_stripped[1] == "\n"
-            # implicit indent, need to find min # of starting spaces
-            min_indent = line_lens[1..].min
-          else
-            # explicit indent (e.g., "key: |2")
-            min_indent = value_stripped[1..].to_i
-          end
+          min_indent =
+            if value_stripped[1] == "\n"
+              # implicit indent, need to find min # of starting spaces
+              T.must(line_lens[1..]).min
+            else
+              # explicit indent (e.g., "key: |2")
+              value_stripped[1..].to_i
+            end
 
           # also find the line that the content actually starts on (skipping blank lines at the beginning)
 
@@ -755,7 +756,7 @@ module Udb
             end
           end
 
-          return cumulative_offsets.fetch(first_non_empty_line_num) + min_indent
+          return cumulative_offsets.fetch(first_non_empty_line_num) + T.must(min_indent)
         end
 
         # For inline plain scalar values (value on the same line as the key)
@@ -766,7 +767,7 @@ module Udb
         initial_offset = cumulative_offsets.fetch(line_num) + value_start
 
         # Check if there's actual content on this line
-        if value_start < line.length && !line[value_start..].strip.empty?
+        if value_start < line.length && !T.must(line[value_start..]).strip.empty?
           # Value is on the same line - skip only spaces/tabs on this line, not newlines
           offset = initial_offset
           while offset < file_bytes.bytesize && [" ", "\t"].include?(file_bytes[offset])
@@ -784,6 +785,77 @@ module Udb
           # If we've skipped past the end, return the initial offset
           return offset >= file_bytes.bytesize ? initial_offset : offset
         end
+      end
+
+      # Build a per-line file-offset table for a literal block scalar.
+      #
+      # +idl_string+ is the YAML-parsed value (indentation stripped, comments preserved).
+      # +first_line_file_offset+ is the file byte offset of the first character of the first IDL line
+      #   (i.e. after the stripped indentation).
+      # +file_contents+ is the full raw file string.
+      #
+      # Returns an array where entry [i] is the file byte offset of the first character of IDL line i
+      # (after stripping indentation). This correctly handles indentation stripping and empty lines.
+      #
+      # All offsets are byte offsets. We use String#getbyte / binary-encoded slices to avoid
+      # character-vs-byte indexing mismatches with UTF-8 content.
+      sig {
+        params(
+          idl_string: String,
+          first_line_file_offset: Integer,
+          file_contents: String
+        ).returns(T::Array[Integer])
+      }
+      def build_line_file_offsets(idl_string, first_line_file_offset, file_contents)
+        offsets = T.let([], T::Array[Integer])
+
+        # Work in binary (byte) space to avoid UTF-8 character/byte index mismatches.
+        file_bytes = file_contents.b
+
+        # first_line_file_offset is the byte offset of the start of the first content line
+        # in the file (i.e. cumulative_offsets[node.start_line + 1]).  Determine the
+        # indentation width by counting leading spaces on the first non-empty content line.
+        indent_width = 0
+        scan_pos = first_line_file_offset
+        while scan_pos < file_bytes.bytesize
+          spaces = 0
+          while scan_pos + spaces < file_bytes.bytesize &&
+                file_bytes.getbyte(scan_pos + spaces) == 32
+            spaces += 1
+          end
+          # If this line has non-whitespace content, use its indent
+          if scan_pos + spaces < file_bytes.bytesize &&
+             file_bytes.getbyte(scan_pos + spaces) != 10  # 10 = \n
+            indent_width = spaces
+            break
+          end
+          # Skip to next line
+          nl = file_bytes.index("\n".b, scan_pos)
+          scan_pos = nl ? nl + 1 : file_bytes.bytesize
+        end
+
+        # file_pos tracks the byte offset of the start of the current file line.
+        file_pos = first_line_file_offset
+
+        idl_string.each_line do |_idl_line|
+          # Skip up to indent_width space bytes to reach the content start.
+          # Empty file lines (just "\n") have no spaces to skip.
+          content_pos = file_pos
+          skipped = 0
+          while skipped < indent_width &&
+                content_pos < file_bytes.bytesize &&
+                file_bytes.getbyte(content_pos) == 32  # 32 = ASCII space
+            content_pos += 1
+            skipped += 1
+          end
+          offsets << content_pos
+
+          # Advance to the start of the next file line.
+          newline_pos = file_bytes.index("\n".b, file_pos)
+          file_pos = newline_pos ? newline_pos + 1 : file_bytes.bytesize
+        end
+
+        offsets
       end
     end
   end

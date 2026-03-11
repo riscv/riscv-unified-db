@@ -4367,13 +4367,14 @@ class Udb::Yaml::CommentMap
   sig do
     params(
       key_path: T::Array[T.any(::Integer, ::String)],
-      file: ::String,
+      file: T.any(::Pathname, ::String),
       line: ::Integer,
       column: ::Integer,
-      offset: T.nilable(::Integer)
+      offset: T.nilable(::Integer),
+      line_file_offsets: T.nilable(T::Array[::Integer])
     ).void
   end
-  def set_source_location(key_path, file, line, column, offset = T.unsafe(nil)); end
+  def set_source_location(key_path, file, line, column, offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
   sig { params(key_path: T::Array[T.any(::Integer, ::String)], style: ::Symbol).void }
   def set_string_style(key_path, style); end
@@ -4500,16 +4501,29 @@ class Udb::Yaml::Resolver
   sig { params(quiet: T::Boolean, compile_idl: T::Boolean).void }
   def initialize(quiet: T.unsafe(nil), compile_idl: T.unsafe(nil)); end
 
+  sig { params(parent_obj: T::Hash[::String, T.untyped], child_ref: ::String).void }
+  def add_parent_of_reference(parent_obj, child_ref); end
+
+  sig do
+    params(
+      idl_string: ::String,
+      first_line_file_offset: ::Integer,
+      file_contents: ::String
+    ).returns(T::Array[::Integer])
+  end
+  def build_line_file_offsets(idl_string, first_line_file_offset, file_contents); end
+
   sig do
     params(
       line: ::String,
       value_part: T.nilable(::String),
       line_num: ::Integer,
       lines: T::Array[::String],
-      cumulative_offsets: T::Array[::Integer]
+      cumulative_offsets: T::Array[::Integer],
+      file_bytes: ::String
     ).returns(::Integer)
   end
-  def calculate_content_offset(line, value_part, line_num, lines, cumulative_offsets); end
+  def calculate_content_offset(line, value_part, line_num, lines, cumulative_offsets, file_bytes); end
 
   sig do
     params(
@@ -4615,6 +4629,20 @@ class Udb::Yaml::Resolver
 
   sig { params(file_path: T.any(::Pathname, ::String), comment_map: ::Udb::Yaml::CommentMap).void }
   def track_source_locations(file_path, comment_map); end
+
+  sig do
+    params(
+      keys: T::Array[::String],
+      contents: ::String,
+      file: T.any(::Pathname, ::String),
+      cumulative_offsets: T::Array[::Integer],
+      offset_map: ::Udb::Yaml::CommentMap,
+      node: ::Psych::Nodes::Node
+    ).void
+  end
+  def track_source_locations_helper(keys, contents, file, cumulative_offsets, offset_map, node); end
+
+  def validate_idl_scalars(node, keys, file_path); end
 
   sig do
     params(

@@ -145,12 +145,13 @@ module Udb
           file: T.any(String, Pathname),
           line: Integer,
           column: Integer,
-          offset: T.nilable(Integer)
+          offset: T.nilable(Integer),
+          line_file_offsets: T.nilable(T::Array[Integer])
         ).void
       }
-      def set_source_location(key_path, file, line, column, offset = nil)
+      def set_source_location(key_path, file, line, column, offset = nil, line_file_offsets = nil)
         path_key = key_path.join("/")
-        @source_locations[path_key] = { file: file.to_s, line: line, column: column, offset: offset }
+        @source_locations[path_key] = { file: file.to_s, line: line, column: column, offset: offset, line_file_offsets: line_file_offsets }
       end
 
       sig {

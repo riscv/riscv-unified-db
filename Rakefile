@@ -542,31 +542,37 @@ end
   end
 end
 
+def gen_arch_file(f)
+  FileUtils.rm_f f
+  Rake::Task[f].invoke
+  FileUtils.chmod 0444, f
+end
+
 namespace :gen do
   desc "Generate architecture files from layouts"
   task :arch do
     (3..31).each do |hpm_num|
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}h.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}h.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}h.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}h.yaml")
 
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}h.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}h.yaml")
     end
 
-    Rake::Task["#{$resolver.std_path}/csr/I/mcounteren.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/S/scounteren.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/Sscofpmf/scountovf.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/H/hcounteren.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/Zicntr/mcountinhibit.yaml"].invoke
+    gen_arch_file("#{$resolver.std_path}/csr/I/mcounteren.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/S/scounteren.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/Sscofpmf/scountovf.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/H/hcounteren.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/Zicntr/mcountinhibit.yaml")
 
     (0..63).each do |pmpaddr_num|
-      Rake::Task["#{$resolver.std_path}/csr/I/pmpaddr#{pmpaddr_num}.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/I/pmpaddr#{pmpaddr_num}.yaml")
     end
 
     (0..15).each do |pmpcfg_num|
-      Rake::Task["#{$resolver.std_path}/csr/I/pmpcfg#{pmpcfg_num}.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/I/pmpcfg#{pmpcfg_num}.yaml")
     end
 
     # Generate AMO instruction files
@@ -574,7 +580,7 @@ namespace :gen do
       ["b", "h", "w", "d"].each do |size|
         extension_dir = %w[b h].include?(size) ? "Zabha" : "Zaamo"
         ["", ".aq", ".rl", ".aqrl"].each do |suffix|
-          Rake::Task["#{$resolver.std_path}/inst/#{extension_dir}/#{op}.#{size}#{suffix}.yaml"].invoke
+          gen_arch_file("#{$resolver.std_path}/inst/#{extension_dir}/#{op}.#{size}#{suffix}.yaml")
         end
       end
     end
@@ -585,7 +591,7 @@ namespace :gen do
         # Determine target extension directory based on size
         extension_dir = %w[w d q].include?(size) ? "Zacas" : "Zabha"
 
-        Rake::Task["#{$resolver.std_path}/inst/#{extension_dir}/amocas.#{size}#{suffix}.yaml"].invoke
+        gen_arch_file("#{$resolver.std_path}/inst/#{extension_dir}/amocas.#{size}#{suffix}.yaml")
       end
     end
 
@@ -593,7 +599,7 @@ namespace :gen do
     %w[lr sc].each do |op|
       ["w", "d"].each do |size|
         aq_rl_variants.each do |variant|
-          Rake::Task["#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{variant[:suffix]}.yaml"].invoke
+          gen_arch_file("#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{variant[:suffix]}.yaml")
         end
       end
     end
@@ -601,26 +607,26 @@ namespace :gen do
     # Generate Zalasr load/store instruction files
     ["b", "h", "w", "d"].each do |size|
       zalasr_load_variants.each do |variant|
-        Rake::Task["#{$resolver.std_path}/inst/Zalasr/l#{size}#{variant[:suffix]}.yaml"].invoke
+        gen_arch_file("#{$resolver.std_path}/inst/Zalasr/l#{size}#{variant[:suffix]}.yaml")
       end
       zalasr_store_variants.each do |variant|
-        Rake::Task["#{$resolver.std_path}/inst/Zalasr/s#{size}#{variant[:suffix]}.yaml"].invoke
+        gen_arch_file("#{$resolver.std_path}/inst/Zalasr/s#{size}#{variant[:suffix]}.yaml")
       end
     end
 
     # Generate MOP.R instruction files (mop.r.0 through mop.r.31)
     (0..31).each do |n|
-      Rake::Task["#{$resolver.std_path}/inst/Zimop/mop.r.#{n}.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/inst/Zimop/mop.r.#{n}.yaml")
     end
 
     # Generate MOP.RR instruction files (mop.rr.0 through mop.rr.7)
     (0..7).each do |n|
-      Rake::Task["#{$resolver.std_path}/inst/Zimop/mop.rr.#{n}.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/inst/Zimop/mop.rr.#{n}.yaml")
     end
 
     # Generate C.MOP instruction files (c.mop.1, c.mop.3, c.mop.5, c.mop.7, c.mop.9, c.mop.11, c.mop.13, c.mop.15)
     [1, 3, 5, 7, 9, 11, 13, 15].each do |n|
-      Rake::Task["#{$resolver.std_path}/inst/Zcmop/c.mop.#{n}.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/inst/Zcmop/c.mop.#{n}.yaml")
     end
   end
 
