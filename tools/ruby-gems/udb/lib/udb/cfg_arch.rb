@@ -1494,7 +1494,7 @@ module Udb
       global_ast.functions.select { |fn| fn.external? }.each do |fn|
         st.push(fn)
         @reachable_functions << fn
-        fn.apply_template_and_arg_syms(st)
+        fn.apply_arg_syms(st)
         @reachable_functions += fn.reachable_functions(st)
         bar.advance if show_progress
         st.pop

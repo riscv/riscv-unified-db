@@ -21,25 +21,12 @@ module Idl
     def reachable_functions(symtab, cache = {})
       func_def_type = func_type(symtab)
 
-      tvals = nil
-      value_result = value_try do
-        tvals = template_values(symtab)
-      end
-      value_else(value_result) do
-        raise "In #{input_file}:#{input_line}\n  Cannot find reachable functions for #{text_value} because template values are not known"
-      end
-
-      body_symtab = func_def_type.apply_template_values(tvals, self)
+      body_symtab = symtab.global_clone
+      body_symtab.push(func_def_type.func_def_ast)
 
       fns = []
 
       begin
-        if template?
-          template_arg_nodes.each do |t|
-            fns.concat(t.reachable_functions(symtab, cache))
-          end
-        end
-
         arg_nodes.each do |a|
           fns.concat(a.reachable_functions(symtab, cache))
         end
@@ -47,7 +34,7 @@ module Idl
         unless func_def_type.builtin? || func_def_type.generated?
           avals = func_def_type.apply_arguments(body_symtab, arg_nodes, symtab, self)
 
-          idx = [name, tvals, avals].hash
+          idx = [name, [], avals].hash
 
           unless cache.key?(idx)
             fns.concat(func_def_type.body.reachable_functions(body_symtab, cache))

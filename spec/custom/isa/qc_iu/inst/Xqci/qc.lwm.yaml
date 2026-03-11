@@ -41,6 +41,6 @@ operation(): |
   XReg num_words = X[rs2][4:0];
   raise (ExceptionCode::IllegalInstruction, effective_ldst_mode(), $encoding) if ((rd + num_words) > 32);
   for (U32 i = 0; i < num_words; i++) {
-    X[rd + i] = read_memory<32>(vaddr, $encoding);
+    X[rd + i] = read_memory(32, vaddr, $encoding);
     vaddr = vaddr + 4;
   }

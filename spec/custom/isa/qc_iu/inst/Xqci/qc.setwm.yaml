@@ -40,6 +40,6 @@ operation(): |
   Bits<32> write_value = X[rs3][31:0];
   XReg num_words = X[rs2][4:0];
   for (U32 i = 0; i < num_words; i++) {
-    write_memory<32>(vaddr, write_value, $encoding);
+    write_memory(32, vaddr, write_value, $encoding);
     vaddr = vaddr + 4;
   }

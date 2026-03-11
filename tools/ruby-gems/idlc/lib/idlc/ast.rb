@@ -672,39 +672,9 @@ module Idl
       else
         global_symtab = symtab.global_clone
         global_symtab.push(nil)
-        if func_def.templated?
-          # add template vars
-          ttypes = func_def.template_types(global_symtab)
-          func_def.template_names.each_with_index do |tname, i|
-            global_symtab.add!(tname, Var.new(tname, ttypes[i], template_index: i))
-          end
-        end
         rtype = func_def.return_type(global_symtab)
         global_symtab.release
         rtype
-        # # need to find the type to get the right symbol table
-        # func_type = @func_type_cache[symtab.name]
-        # return func_type.return_type(EMPTY_ARRAY, self) unless func_type.nil?
-
-        # func_type = symtab.get_global(func_def.name)
-        # internal_error "Couldn't find function type for '#{func_def.name}'" if func_type.nil?
-
-        # # to get the return type, we need to find the template values in case this is
-        # # a templated function definition
-        # #
-        # # that information should be up the stack in the symbol table
-        # if func_type.templated?
-        #   template_values = symtab.find_all(single_scope: true) do |o|
-        #     o.is_a?(Var) && o.template_value_for?(func_def.name)
-        #   end
-        #   unless template_values.size == func_type.template_names.size
-        #     internal_error "Did not find correct number of template arguments (found #{template_values.size}, need #{func_type.template_names.size}) #{symtab.keys_pretty}"
-        #   end
-        #   func_type.return_type(template_values.sort { |a, b| a.template_index <=> b.template_index }.map(&:value), self)
-        # else
-        #   @func_type_cache[symtab.name]= func_type
-        #   func_type.return_type(EMPTY_ARRAY, self)
-        # end
       end
     end
   end
@@ -2912,26 +2882,33 @@ module Idl
       value_result = T.let(nil, T.nilable(Symbol))
       case lhs.type(symtab).kind
       when :array
-        lhs_value = T.let(lhs.value(symtab), T::Array[T.nilable(ValueRbType)])
+        lhs_value = T.let(nil, T.nilable(T::Array[T.nilable(ValueRbType)]))
+        value_result = value_try do
+          lhs_value = T.let(lhs.value(symtab), T::Array[T.nilable(ValueRbType)])
+        end
+        value_else(value_result) do
+          # the array is already unknown, nothing more to do
+          return
+        end
         value_result = value_try do
           idx_value = idx.value(symtab)
           value_result = value_try do
-            lhs_value[idx_value] = rhs.value(symtab)
+            T.must(lhs_value)[idx_value] = rhs.value(symtab)
           end
           value_else(value_result) do
-            lhs_value[idx_value] = nil
+            T.must(lhs_value)[idx_value] = nil
             value_error "right-hand side of array element assignment is unknown"
           end
         end
         value_else(value_result) do
           # the idx isn't known; the entire array must become unknown
-          lhs_value.map! { |_v| nil }
+          T.must(lhs_value).map! { |_v| nil }
         end
       when :bits
         var = symtab.get(lhs.text_value)
         value_result = value_try do
           v = rhs.value(symtab)
-          var.value = (lhs.value & ~0) | ((v & 1) << idx.value(symtab))
+          var.value = (lhs.value(symtab) & ~0) | ((v & 1) << idx.value(symtab))
         end
         value_else(value_result) do
           var.value = nil
@@ -3023,7 +3000,13 @@ module Idl
         lsb_value = lsb.value(symtab)
 
         type_error "MSB must be > LSB" unless msb_value > lsb_value
-        type_error "MSB is out of range" if msb_value >= variable.type(symtab).width
+        if variable.type(symtab).width == :unknown
+          unless variable.type(symtab).max_width.nil?
+            type_error "MSB is out of range" if msb_value >= variable.type(symtab).max_width
+          end
+        else
+          type_error "MSB is out of range" if msb_value >= variable.type(symtab).width
+        end
       end
       # OK, don't have to know the value
 
@@ -3623,13 +3606,17 @@ module Idl
     def type(symtab) = decl_type(symtab)
 
     # @!macro type_check
-    def type_check(symtab, add_sym: true, strict:)
+    def type_check(symtab, add_sym: true, strict:, is_function_arg: false)
       type_name.type_check(symtab, strict:)
       dtype = type_name.type(symtab)
 
       type_error "No type '#{type_name.text_value}'" if dtype.nil?
 
-      type_error "Constants must be initialized at declaration" if id.text_value[0] == T.must(id.text_value[0]).upcase
+      # Constants must be initialized at declaration, unless they are function arguments
+      # (function arguments are initialized when the function is called)
+      if !is_function_arg && id.text_value[0] == T.must(id.text_value[0]).upcase
+        type_error "Constants must be initialized at declaration"
+      end
 
       unless ary_size.nil?
         T.must(ary_size).type_check(symtab, strict:)
@@ -6685,6 +6672,7 @@ module Idl
     end
 
     # @return [Array<Type>] List of actual return types
+    sig { params(symtab: SymbolTable).returns(T::Array[Type]) }
     def return_types(symtab)
       if return_value_nodes.empty?
         [Type.new(:void)]
@@ -6696,6 +6684,7 @@ module Idl
     end
 
     # @return [Type] The actual return type
+    sig { override.params(symtab: SymbolTable).returns(Type) }
     def return_type(symtab)
       types = return_types(symtab)
       if types.empty?
@@ -6703,7 +6692,7 @@ module Idl
       elsif types.size > 1
         Type.new(:tuple, tuple_types: types)
       else
-        types[0]
+        types.fetch(0)
       end
     end
 
@@ -6970,7 +6959,7 @@ module Idl
             @bits_type = Type.new(:bits, width: bits_expression.value(symtab))
           end
         rescue TypeError
-          # ok, probably in a function template
+          # ok, probably using a parameter
         end
         bits_expression&.freeze_tree(symtab)
       end
@@ -7579,11 +7568,10 @@ module Idl
 
   class FunctionCallExpressionSyntaxNode < SyntaxNode
     def to_ast
-      targs = send(:t).empty? ? EMPTY_ARRAY : [send(:t).targs.first.to_ast] + send(:t).targs.rest.elements.map { |e| e.arg.to_ast }
       args = []
       args << send(:function_arg_list).first.to_ast unless send(:function_arg_list).first.empty?
       args += send(:function_arg_list).rest.elements.map { |e| e.expression.to_ast }
-      FunctionCallExpressionAst.new(input, interval, send(:function_name).text_value, targs, args)
+      FunctionCallExpressionAst.new(input, interval, send(:function_name).text_value, args)
     end
   end
 
@@ -7594,58 +7582,23 @@ module Idl
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab)
-      targs.all? { |targ| targ.const_eval?(symtab) } && \
-        args.all? { |arg| arg.const_eval?(symtab) } && \
+      @children.all? { |arg| arg.const_eval?(symtab) } && \
         func_type(symtab).func_def_ast.const_eval?(symtab)
     end
 
-    def targs = children[0...@num_targs]
-    def args = children[@num_targs..]
-
-    def initialize(input, interval, function_name, targs, args)
-      raise ArgumentError, "targs should be an array" unless targs.is_a?(Array)
+    def initialize(input, interval, function_name, args)
       raise ArgumentError, "args should be an array" unless args.is_a?(Array)
 
-      super(input, interval, targs + args)
-      @num_targs = targs.size
+      super(input, interval, args)
 
       @name = function_name
       @reachable_exceptions_func_call_cache = {}
       @func_def_type_cache = {}
     end
 
-    # @return [Boolean] whether or not the function call has a template argument
-    def template?
-      !targs.empty?
-    end
-
-    # @return [Array<AstNode>] Template argument nodes
-    def template_arg_nodes
-      targs
-    end
-
-    def template_values(symtab, unknown_ok: false)
-      return EMPTY_ARRAY unless template?
-
-      if unknown_ok
-        template_arg_nodes.map do |e|
-          val = T.let(nil, T.nilable(T.any(Integer, Symbol)))
-          value_result = value_try do
-            val = e.value(symtab)
-          end
-          value_else(value_result) do
-            val = :unknown
-          end
-          val
-        end
-      else
-        template_arg_nodes.map { |e| e.value(symtab) }
-      end
-    end
-
     # @return [Array<AstNode>] Function argument nodes
     def arg_nodes
-      args
+      @children
     end
 
     def func_type(symtab)
@@ -7666,32 +7619,7 @@ module Idl
     def type_check(symtab, strict:)
       level = symtab.levels
 
-      tvals = template_values(symtab, unknown_ok: true)
-
       func_def_type = func_type(symtab)
-
-      type_error "Template arguments provided in call to non-template function #{@name}" if template? && func_def_type.template_names.empty?
-
-      type_error "Missing template arguments in call to #{@name}" if !template? && !func_def_type.template_names.empty?
-
-      if template?
-        num_targs = template_arg_nodes.size
-        if func_def_type.template_names.size != num_targs
-          type_error "Wrong number of template arguments (expecting #{func_def_type.template_names.size}, got #{num_targs})"
-        end
-
-        template_arg_nodes.each_with_index do |t, idx|
-          t.type_check(symtab, strict:)
-          unless t.type(symtab).convertable_to?(func_def_type.template_types(symtab)[idx])
-            type_error "Template argument #{idx + 1} has wrong type"
-          end
-        end
-
-        func_def_type.type_check_call(tvals, arg_nodes, symtab, self)
-      else
-        # no need to type check this function; it will be done on its own
-        # func_def_type.type_check_call([], arg_nodes, symtab, self)
-      end
 
       num_args = arg_nodes.size
       if func_def_type.num_args != num_args
@@ -7701,12 +7629,18 @@ module Idl
         a.type_check(symtab, strict:)
       end
       arg_nodes.each_with_index do |a, idx|
-        unless a.type(symtab).convertable_to?(func_def_type.argument_type(idx, tvals, arg_nodes, symtab, self))
-          type_error "Wrong type for argument number #{idx + 1}. Expecting #{func_def_type.argument_type(idx, tvals, arg_nodes, symtab, self)}, got #{a.type(symtab)}"
+        unless a.type(symtab).convertable_to?(func_def_type.argument_type(idx, arg_nodes, symtab, self))
+          type_error "Wrong type for argument number #{idx + 1}. Expecting #{func_def_type.argument_type(idx, [], arg_nodes, symtab, self)}, got #{a.type(symtab)}"
+        end
+        arg_name = func_def_type.argument_nodes.fetch(idx).name
+        if arg_name[0].upcase == arg_name[0]
+          unless a.type(symtab).const?
+            type_error "You cannot pass a mutable expression to '#{arg_name}' const argument of #{name}"
+          end
         end
       end
 
-      if func_def_type.return_type(tvals, arg_nodes, self).nil?
+      if func_def_type.return_type(arg_nodes, self).nil?
         internal_error "No type determined for function"
       end
 
@@ -7717,7 +7651,7 @@ module Idl
     def type(symtab)
       return ConstBoolType if name == "implemented?" || name == "implemented_version?" || name == "implemented_csr?"
 
-      rtype = func_type(symtab).return_type(template_values(symtab, unknown_ok: true), arg_nodes, self)
+      rtype = func_type(symtab).return_type(arg_nodes, self)
       rtype = rtype.make_const if arg_nodes.all? { |a| a.type(symtab).const? } && func_type(symtab).func_def_ast.const_eval?(symtab)
       rtype
     end
@@ -7788,16 +7722,7 @@ module Idl
         value_error "value of builtin functions aren't knowable"
       end
 
-      template_values =
-        if !template?
-          EMPTY_ARRAY
-        else
-          template_arg_nodes.map do |targ|
-            targ.value(symtab)
-          end
-        end
-
-      func_def_type.return_value(template_values, arg_nodes, symtab, self)
+      func_def_type.return_value(arg_nodes, symtab, self)
     end
 
     def execute(symtab) = value(symtab)
@@ -7813,11 +7738,7 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl
-      if template?
-        "#{name}<#{template_arg_nodes.map(&:to_idl).join(',')}>(#{arg_nodes.map(&:to_idl).join(',')})"
-      else
-        "#{name}(#{arg_nodes.map(&:to_idl).join(',')})"
-      end
+      "#{name}(#{arg_nodes.map(&:to_idl).join(',')})"
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -7826,7 +7747,6 @@ module Idl
         "kind" => "funcall_expr",
         "func" => name,
         "args" => arg_nodes.map(&:to_h),
-        "template_args" => template? ? template_arg_nodes.map(&:to_h) : nil,
         "source" => source_yaml
       }
     end
@@ -7840,7 +7760,6 @@ module Idl
       FunctionCallExpressionAst.new(
         input, interval,
         yaml.fetch("func"),
-        yaml.fetch("template_args").nil? ? [] : yaml.fetch("template_args").map { |t| AstNode.from_h(t, source_mapper) },
         yaml.fetch("args").map { |a| AstNode.from_h(a, source_mapper) }
       )
     end
@@ -7978,7 +7897,7 @@ module Idl
 
     # @!macro return_value
     #
-    # @note arguments and template arguments must be put on the symtab before calling
+    # @note arguments must be put on the symtab before calling
     def return_value(symtab)
       internal_error "Function bodies should be at global + 1 scope" unless symtab.levels == 2
 
@@ -8119,12 +8038,11 @@ module Idl
         input,
         interval,
         send(:function_name).text_value,
-        (!respond_to?(:targs) || send(:targs).empty?) ? [] : [send(:targs).first.to_ast] + send(:targs).rest.elements.map { |r| r.single_declaration.to_ast },
         if send(:ret).empty?
           []
-else
-  [send(:ret).first.to_ast] + (send(:ret).respond_to?(:rest) ? send(:ret).rest.elements.map { |r| r.type_name.to_ast } : [])
-end,
+        else
+          [send(:ret).first.to_ast] + (send(:ret).respond_to?(:rest) ? send(:ret).rest.elements.map { |r| r.type_name.to_ast } : [])
+        end,
         send(:args).empty? ? [] : [send(:args).first.to_ast] + send(:args).rest.elements.map { |r| r.single_declaration.to_ast },
         send(:desc).text_value,
         respond_to?(:type) ? send(:type).text_value.strip.to_sym : :normal,
@@ -8137,6 +8055,10 @@ end,
     include Declaration
 
     attr_reader :return_type_nodes
+
+    class Memo < T::Struct
+      prop :arguments, T.nilable(T::Array[T::Array[T.any(Type, String)]])
+    end
 
     def <=>(other)
       return nil unless other.is_a?(FunctionDefAst)
@@ -8151,21 +8073,19 @@ end,
     # @param input [String] The source code
     # @param interval [Range] The range in the source code for this function definition
     # @param name [String] The name of the function
-    # @param targs [Array<AstNode>] Template arguments
     # @param return_types [Array<AstNode>] Return types
     # @param arguments [Array<AstNode>] Arguments
     # @param desc [String] Description
     # @param type [:normal, :builtin, :generated, :external] Type of function
     # @param body [AstNode,nil] Body, unless the function is builtin
-    def initialize(input, interval, name, targs, return_types, arguments, desc, type, body)
+    def initialize(input, interval, name, return_types, arguments, desc, type, body)
       if body.nil?
-        super(input, interval, targs + return_types + arguments)
+        super(input, interval, return_types + arguments)
       else
-        super(input, interval, targs + return_types + arguments + [body])
+        super(input, interval, return_types + arguments + [body])
       end
 
       @name = name
-      @targs = targs
       @return_type_nodes = return_types
       @argument_nodes = arguments
       @desc = desc
@@ -8176,30 +8096,14 @@ end,
 
       @cached_return_type = {}
       @reachable_functions_cache ||= {}
+      @memo = Memo.new
     end
 
     attr_reader :reachable_functions_cache, :argument_nodes
 
-    # @!macro freeze_tree
-    def freeze_tree(global_symtab)
-      return if frozen?
-
-      unless templated?
-        arguments(global_symtab)
-      end
-
-      @children.each { |child| child.freeze_tree(global_symtab) }
-      freeze
-    end
-
     # @return [String] Asciidoc formatted function description
     def description
       unindent(@desc)
-    end
-
-    # @return [Boolean] whether or not the function is templated
-    def templated?
-      !@targs.empty?
     end
 
     # @return [Integer] The number of arguments to the function
@@ -8209,13 +8113,7 @@ end,
 
     # @return [Array<Array(Type,String)>] containing the argument types and names, in order
     def arguments(symtab)
-      return @arglist unless @arglist.nil?
-
-      if templated?
-        template_names.each do |tname|
-          internal_error "Template values missing in symtab" unless symtab.get(tname)
-        end
-      end
+      return @memo.arguments unless @memo.arguments.nil?
 
       return EMPTY_ARRAY if @argument_nodes.empty?
 
@@ -8227,25 +8125,23 @@ end,
 
         atype = atype.ref_type if atype.kind == :enum
 
+        atype = atype.make_const if a.id.text_value[0].upcase == a.id.text_value[0]
         arglist << [atype, a.name]
       end
 
       arglist.freeze
-      unless templated?
-        @arglist = arglist
-      end
-      arglist
+      @memo.arguments = arglist
     end
 
     # returns an array of arguments, as a string
-    # function (or template instance) does not need to be resolved
+    # function does not need to be resolved
     def arguments_list_str
       @argument_nodes.map(&:text_value)
     end
 
     # return the return type, which may be a tuple of multiple types
     def return_type(symtab)
-      cached = @cached_return_type[symtab.name] # only chaced for non-template functions
+      cached = @cached_return_type[symtab.name]
       return cached unless cached.nil?
 
       unless symtab.levels == 2
@@ -8259,54 +8155,29 @@ end,
 
       rtype = T.let(nil, T.nilable(Type))
 
-      unless templated?
-        # with no templates, the return type does not change
-        rtype =
-          if @return_type_nodes.size == 1
-            rtype = @return_type_nodes[0].type(symtab)
-            rtype = rtype.ref_type if rtype.kind == :enum
-            rtype
-          else
-            tuple_types = @return_type_nodes.map do |r|
-              rtype = r.type(symtab)
-              rtype = rtype.ref_type if rtype.kind == :enum
-              rtype
-            end
 
-            Type.new(:tuple, tuple_types:)
-          end
-
-        raise "??????" if rtype.nil?
-
-        return @cached_return_type[symtab.name] = rtype
-      end
-
-      if templated?
-        template_names.each do |tname|
-          internal_error "Template values missing" unless symtab.get(tname)
-        end
-      end
-
-
-
-      if @return_type_nodes.size == 1
-        rtype = @return_type_nodes[0].type(symtab)
-        rtype = rtype.ref_type if rtype.kind == :enum
-        rtype
-      else
-
-        tuple_types = @return_type_nodes.map do |r|
-          rtype = r.type(symtab)
+      rtype =
+        if @return_type_nodes.size == 1
+          rtype = @return_type_nodes[0].type(symtab)
           rtype = rtype.ref_type if rtype.kind == :enum
           rtype
+        else
+          tuple_types = @return_type_nodes.map do |r|
+            rtype = r.type(symtab)
+            rtype = rtype.ref_type if rtype.kind == :enum
+            rtype
+          end
+
+          Type.new(:tuple, tuple_types:)
         end
 
-        Type.new(:tuple, tuple_types:)
-      end
+      raise "??????" if rtype.nil?
+
+      return @cached_return_type[symtab.name] = rtype
     end
 
     # @return [Array<String>] return type strings
-    # function (or template instance) does not need to be resolved
+    # function does not need to be resolved
     def return_type_list_str
       if @return_type_nodes.empty?
         ["void"]
@@ -8322,14 +8193,9 @@ end,
     def const_eval?(symtab)
       return false if builtin? || generated?
 
-      # set up the template args (if present) and dummy const args, and see if the type comes out
-      # const
+      # set up dummy const args, and see if the type comes out is const
       symtab = symtab.global_clone
       symtab.push(self)
-
-      template_names.each_with_index do |tname, index|
-        symtab.add(tname, Var.new(tname, template_types(symtab)[index], template_index: index, function_name: name))
-      end
 
       arguments(symtab).each do |arg_type, arg_name|
         # make the argument constant for this evaluation
@@ -8352,46 +8218,7 @@ end,
       @name
     end
 
-    # @param [Array<Integer>] template values to apply
-    def type_check_template_instance(symtab, strict:)
-      internal_error "Function definitions should be at global + 1 scope" unless symtab.levels == 2
-
-      internal_error "Not a template function" unless templated?
-
-      template_names.each do |tname|
-        internal_error "Template values missing" unless symtab.get(tname)
-      end
-
-      type_check_return(symtab, strict:)
-      type_check_args(symtab, strict:)
-      @argument_nodes.each { |a| symtab.add(a.name, Var.new(a.name, a.type(symtab))) }
-      type_check_body(symtab, strict:)
-    end
-
-    # we do lazy type checking of the function body so that we never check
-    # uncalled functions, which avoids dealing with mentions of CSRs that
-    # may not exist in a given implementation
-    def type_check_from_call(symtab, strict:)
-      internal_error "Function definitions should be at global + 1 scope" unless symtab.levels == 2
-
-      type_check_return(symtab, strict:)
-      type_check_args(symtab, strict:)
-      # @argument_nodes.each do |a|
-      #   value_result = value_try do
-      #     symtab.add(a.name, Var.new(a.name, a.type(symtab), a.value(symtab)))
-      #   end
-      #   value_else(value_result) do
-      #     symtab.add(a.name, Var.new(a.name, a.type(symtab)))
-      #   end
-      # end
-      type_check_body(symtab, strict:)
-    end
-
-    def apply_template_and_arg_syms(symtab)
-      template_names.each_with_index do |tname, index|
-        symtab.add(tname, Var.new(tname, template_types(symtab)[index], template_index: index, function_name: name))
-      end
-
+    def apply_arg_syms(symtab)
       arguments(symtab).each do |arg_type, arg_name|
         symtab.add(arg_name, Var.new(arg_name, arg_type))
       end
@@ -8401,26 +8228,16 @@ end,
     def type_check(symtab, strict:)
       internal_error "Functions must be declared at global scope (at #{symtab.levels})" unless symtab.levels == 1
 
-      type_check_targs(symtab)
-
       symtab = symtab.deep_clone
       symtab.push(self)
-      template_names.each_with_index do |tname, index|
-        symtab.add(tname, Var.new(tname, template_types(symtab)[index], template_index: index))
-      end
 
       type_check_return(symtab, strict:)
 
-      arguments(symtab).each do |arg_type, arg_name|
-        symtab.add(arg_name, Var.new(arg_name, arg_type))
-      end
+      apply_arg_syms(symtab)
       type_check_args(symtab, strict:)
 
+      type_check_body(symtab, strict:)
 
-      # template functions are checked as they are called
-      unless templated?
-        type_check_body(symtab, strict:)
-      end
       symtab.pop
     end
 
@@ -8438,37 +8255,12 @@ end,
       symtab.add!(name, def_type)
     end
 
-    # @return [Array<String>] Template argument names, in order
-    def template_names
-      @targs.map(&:name)
-    end
-
-    # @param symtab [SymbolTable] The context for evaluation
-    # @return [Array<Type>] Template argument types, in order
-    def template_types(symtab)
-      return EMPTY_ARRAY unless templated?
-
-      ttypes = T.let([], T::Array[Type])
-      @targs.each do |a|
-        ttype = a.type(symtab)
-        ttype = ttype.ref_type if ttype.kind == :enum
-        ttypes << ttype.make_const
-        T.must(ttypes.last).qualify(:template_var)
-      end
-      ttypes
-    end
-
-    def type_check_targs(symtab)
-      @targs.each { |t| type_error "Template arguments must be uppercase" unless t.text_value[0] == t.text_value[0].upcase }
-      @targs.each { |t| type_error "Template types must be integral" unless t.type(symtab).integral? }
-    end
-
     def type_check_return(symtab, strict:)
       @return_type_nodes.each { |r| r.type_check(symtab, strict:) }
     end
 
     def type_check_args(symtab, strict:)
-      @argument_nodes.each { |a| a.type_check(symtab, add_sym: false, strict:) }
+      @argument_nodes.each { |a| a.type_check(symtab, add_sym: false, strict:, is_function_arg: true) }
     end
 
     def type_check_body(symtab, strict:)
@@ -8511,13 +8303,6 @@ end,
     def to_idl
       qualifier = qualifier_str
 
-      targs_idl =
-        if templated?
-          "template #{@targs.map(&:to_idl).join(', ')}"
-        else
-          ""
-        end
-
       returns_idl =
         if return_type_nodes.empty?
           ""
@@ -8541,7 +8326,6 @@ end,
 
       <<~IDL
         #{qualifier} function #{name} {
-          #{targs_idl}
           #{returns_idl}
           #{args_idl}
           description { #{description} }
@@ -8556,7 +8340,6 @@ end,
       "name" => name,
       "qualifier" => qualifier_str.empty? ? "normal" : qualifier_str,
       "return_types" => return_type_nodes.map(&:to_h),
-      "template_arguments" => templated? ? @targs.map(&:to_h) : nil,
       "arguments" => @argument_nodes.map(&:to_h),
       "description" => @desc,
       "body" => @body&.to_h,
@@ -8572,7 +8355,6 @@ end,
       FunctionDefAst.new(
         input, interval,
         yaml.fetch("name"),
-        yaml.fetch("template_arguments").nil? ? [] : yaml.fetch("template_arguments").map { |t| AstNode.from_h(t, source_mapper) },
         yaml.fetch("return_types").map { |r| AstNode.from_h(r, source_mapper) },
         yaml.fetch("arguments").map { |a| AstNode.from_h(a, source_mapper) },
         yaml.fetch("description"),

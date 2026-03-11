@@ -19,12 +19,6 @@ module Idl
   class FunctionCallExpressionAst
     def reachable_functions_unevaluated(cfg_arch)
       fns = []
-      if template?
-        template_arg_nodes.each do |t|
-          fns.concat(t.reachable_functions_unevaluated(cfg_arch))
-        end
-      end
-
       arg_nodes.each do |a|
         fns.concat(a.reachable_functions_unevaluated(cfg_arch))
       end

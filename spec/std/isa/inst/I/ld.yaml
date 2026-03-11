@@ -53,7 +53,7 @@ operation(): |
 
   if (xlen() == 32) {
     if (implemented?(ExtensionName::Zilsd)) {
-      Bits<64> data = read_memory<64>(virtual_address, $encoding);
+      Bits<64> data = read_memory(64, virtual_address, $encoding);
 
       X[xd] = data[31:0];
       X[xd+1] = data[63:32];
@@ -61,7 +61,7 @@ operation(): |
       raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
     }
   } else {
-    X[xd] = read_memory<64>(virtual_address, $encoding);
+    X[xd] = read_memory(64, virtual_address, $encoding);
   }
 
 # SPDX-SnippetBegin

@@ -103,7 +103,7 @@ module Idl
         return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
-        FunctionCallExpressionAst.new(input, interval, name, targs.map { |t| t.prune(symtab) }, args.map { |a| a.prune(symtab) })
+        FunctionCallExpressionAst.new(input, interval, name, @children.map { |a| a.prune(symtab) })
       end
     end
   end
@@ -159,14 +159,13 @@ module Idl
     def prune(symtab, forced_type: nil)
       pruned_body =
         unless builtin? || generated?
-          apply_template_and_arg_syms(symtab)
+          apply_arg_syms(symtab)
           @body.prune(symtab, args_already_applied: true)
         end
 
       FunctionDefAst.new(
         input, interval,
         name,
-        @targs.map(&:dup),
         @return_type_nodes.map(&:dup),
         @argument_nodes.map(&:dup),
         @desc,
@@ -619,6 +618,243 @@ module Idl
       else
         return BitsCastAst.new(input, interval, p)
       end
+    end
+  end
+
+  class IdAst < AstNode
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        if type(symtab).kind == :bits
+          if type(symtab).width == :unknown
+            value_error "Unknown width"
+          end
+        end
+        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        dup
+      end
+    end
+  end
+
+  class UnaryOperatorExpressionAst < AstNode
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        if type(symtab).kind == :bits
+          if type(symtab).width == :unknown
+            value_error "Unknown width"
+          end
+        end
+        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        UnaryOperatorExpressionAst.new(input, interval, @op, exp.prune(symtab, forced_type:))
+      end
+    end
+  end
+
+  class AryElementAccessAst < AstNode
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        if type(symtab).kind == :bits
+          if type(symtab).width == :unknown
+            value_error "Unknown width"
+          end
+        end
+        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        AryElementAccessAst.new(input, interval, var.prune(symtab), index.prune(symtab))
+      end
+    end
+  end
+
+  class AryRangeAccessAst < AstNode
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        if type(symtab).width == :unknown
+          value_error "Unknown width"
+        end
+        return create_int_literal(v, forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        AryRangeAccessAst.new(input, interval, var.prune(symtab), msb.prune(symtab), lsb.prune(symtab))
+      end
+    end
+  end
+
+  class FieldAccessExpressionAst < AstNode
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        if type(symtab).kind == :bits
+          if type(symtab).width == :unknown
+            value_error "Unknown width"
+          end
+        end
+        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        FieldAccessExpressionAst.new(input, interval, obj.prune(symtab), @field_name)
+      end
+    end
+  end
+
+  class EnumRefAst < AstNode
+    def prune(symtab, forced_type: nil)
+      value_result = value_try do
+        v = value(symtab)
+        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+      end
+      value_else(value_result) do
+        dup
+      end
+    end
+  end
+
+  class ReturnStatementAst < AstNode
+    def prune(symtab, forced_type: nil)
+      ReturnStatementAst.new(input, interval, return_expression.prune(symtab))
+    end
+  end
+
+  class ReturnExpressionAst < AstNode
+    def prune(symtab, forced_type: nil)
+      ReturnExpressionAst.new(input, interval, return_value_nodes.map { |n| n.prune(symtab) })
+    end
+  end
+
+  class MultiVariableAssignmentAst < AstNode
+    def prune(symtab, forced_type: nil)
+      new_ast = MultiVariableAssignmentAst.new(
+        input, interval,
+        variables.map(&:dup),
+        function_call.prune(symtab)
+      )
+      new_ast.execute_unknown(symtab)
+      new_ast
+    end
+
+    def nullify_assignments(symtab)
+      variables.each do |v|
+        next if v.is_a?(DontCareLvalueAst)
+        sym = symtab.get(v.text_value)
+        sym.value = nil unless sym.nil?
+      end
+    end
+  end
+
+  class AryElementAssignmentAst < AstNode
+    def prune(symtab, forced_type: nil)
+      new_ast = AryElementAssignmentAst.new(
+        input, interval,
+        lhs.dup,
+        idx.prune(symtab),
+        rhs.prune(symtab)
+      )
+      new_ast.execute_unknown(symtab)
+      new_ast
+    end
+
+    def nullify_assignments(symtab)
+      sym = symtab.get(lhs.text_value)
+      unless sym.nil?
+        # array element assignment makes the whole array unknown
+        sym.value = nil
+      end
+    end
+  end
+
+  class AryRangeAssignmentAst < AstNode
+    def prune(symtab, forced_type: nil)
+      new_ast = AryRangeAssignmentAst.new(
+        input, interval,
+        variable.dup,
+        msb.prune(symtab),
+        lsb.prune(symtab),
+        write_value.prune(symtab)
+      )
+      new_ast.execute_unknown(symtab)
+      new_ast
+    end
+
+    def nullify_assignments(symtab)
+      sym = symtab.get(variable.text_value)
+      sym.value = nil unless sym.nil?
+    end
+  end
+
+  class FieldAssignmentAst < AstNode
+    def prune(symtab, forced_type: nil)
+      new_ast = FieldAssignmentAst.new(
+        input, interval,
+        id.dup,
+        @field_name,
+        rhs.prune(symtab)
+      )
+      new_ast.execute_unknown(symtab)
+      new_ast
+    end
+
+    def nullify_assignments(symtab)
+      sym = symtab.get(id.name)
+      sym.value = nil unless sym.nil?
+    end
+  end
+
+  class VariableDeclarationAst < AstNode
+    def prune(symtab, forced_type: nil)
+      add_symbol(symtab)
+      dup
+    end
+  end
+
+  class MultiVariableDeclarationAst < AstNode
+    def prune(symtab, forced_type: nil)
+      add_symbol(symtab)
+      dup
+    end
+  end
+
+  class PostIncrementExpressionAst < AstNode
+    def prune(symtab, forced_type: nil)
+      new_ast = PostIncrementExpressionAst.new(input, interval, rval.dup)
+      new_ast.execute_unknown(symtab)
+      new_ast
+    end
+
+    def nullify_assignments(symtab)
+      sym = symtab.get(rval.text_value)
+      sym.value = nil unless sym.nil?
+    end
+  end
+
+  class PostDecrementExpressionAst < AstNode
+    def prune(symtab, forced_type: nil)
+      new_ast = PostDecrementExpressionAst.new(input, interval, rval.dup)
+      new_ast.execute_unknown(symtab)
+      new_ast
+    end
+
+    def nullify_assignments(symtab)
+      sym = symtab.get(rval.text_value)
+      sym.value = nil unless sym.nil?
+    end
+  end
+
+  class PcAssignmentAst < AstNode
+    def prune(symtab, forced_type: nil)
+      PcAssignmentAst.new(input, interval, rhs.prune(symtab))
+    end
+  end
+
+  class CsrSoftwareWriteAst < AstNode
+    def prune(symtab, forced_type: nil)
+      CsrSoftwareWriteAst.new(input, interval, csr.dup, expression.prune(symtab))
     end
   end
 end
