@@ -236,8 +236,7 @@ jobs:
         run: |
           # Collect all per-schema release tags (schemas/<schema_name>/<version>)
           SCHEMA_TAGS=$(gh release list --limit 200 --json tagName --jq '.[] | .tagName | select(startswith("schemas/"))' 2>/dev/null || true)
-          if [ -n "$SCHEMA_TAGS" ]; then
-            for tag in $SCHEMA_TAGS; do
+          for tag in $SCHEMA_TAGS; do
               # tag format: schemas/<schema_name>/<version>
               rest="${tag#schemas/}"
               schema_name="${rest%%/*}"
