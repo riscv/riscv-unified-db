@@ -15,6 +15,9 @@ diag-ditaa-*
 arch/manual/isa/**/riscv-isa-manual
 gen
 node_modules
+doc/.docusaurus
+doc/build
+# doc/package-lock.json is intentionally absent — the root package-lock.json is the lockfile
 _site
 images
 __pycache__/
