@@ -239,6 +239,23 @@ do_gen_regress() {
 do_gen_all() {
   do_gen_regress
   do_ruby_type_def all
+  do_gen_xqci_golden
+}
+
+#
+# Generate Xqci golden adoc file
+#
+do_gen_xqci_golden() {
+  source_setup
+  echo "Generating Xqci golden adoc"
+  local xqci_version
+  xqci_version=$($RUBY -e "require 'yaml'; puts YAML.load_file('spec/custom/isa/qc_iu/ext/Xqci.yaml')['versions'].last['version']")
+  $RUBY tools/scripts/gen_xqci.rb
+  mkdir -p tests/data/golden
+  # Remove any stale golden files from previous versions
+  rm -f tests/data/golden/Xqci@*.adoc
+  cp "gen/ext-doc/pdf/Xqci-${xqci_version}.pdf/Xqci@${xqci_version}.adoc" \
+     "tests/data/golden/Xqci@${xqci_version}.adoc"
 }
 
 #
