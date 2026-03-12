@@ -79,3 +79,9 @@ version should be released.  Follow these steps:
   changes are merged to `main`.
 . Previous schema versions remain available via their GitHub release tags and
   at `https://riscv.github.io/riscv-unified-db/schemas/<schema_name>/<old-version>/<schema_name>`.
+
+== When to make a new release
+
+A new release is required whenever the schema changes. This includes non-breaking additions and breaking changes.
+
+A new release is not required if the only thing changing is metadata like descriptions or examples.
