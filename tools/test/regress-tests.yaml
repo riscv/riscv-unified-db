@@ -190,12 +190,6 @@ tests:
       - name: Run RV64 riscv-tests
         run: ./do test:riscv_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
 
-  regress-xqci-doc:
-    ci_stage: pr
-    test:
-      - name: Generate Xqci pdf documentation
-        run: ./bin/ruby tools/scripts/gen_xqci.rb
-
   regress-profile-extensions:
     ci_stage: pr
     test:

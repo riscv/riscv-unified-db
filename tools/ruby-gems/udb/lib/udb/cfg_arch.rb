@@ -1325,16 +1325,23 @@ module Udb
     end
 
     # @return List of all implemented instructions, sorted by name
-    sig { returns(T::Array[Instruction]) }
-    def implemented_instructions
+    sig { params(show_progress: T::Boolean).returns(T::Array[Instruction]) }
+    def implemented_instructions(show_progress: false)
       unless fully_configured?
         raise ArgumentError, "implemented_instructions is only defined for fully configured systems"
       end
 
       @implemented_instructions ||=
-        instructions.select do |inst|
-          inst.defined_by_condition.satisfiable_by_cfg_arch?(self)
-          # inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
+        begin
+          bar =
+            if show_progress
+              Udb.create_progressbar("determining implemented instructions [:bar] :current/:total", total: instructions.size)
+            end
+          instructions.select do |inst|
+            bar.advance if show_progress
+            inst.defined_by_condition.satisfiable_by_cfg_arch?(self)
+            # inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
+          end
         end
     end
 
@@ -1367,11 +1374,11 @@ module Udb
 
       @not_prohibited_instructions ||=
         if @config.fully_configured?
-          implemented_instructions
+          implemented_instructions(show_progress)
         elsif @config.partially_configured?
           bar =
             if show_progress
-              TTY::ProgressBar.new("determining possible instructions [:bar]", total: instructions.size, output: $stdout)
+              TTY::ProgressBar.new("determining possible instructions [:bar] :current/:total", total: instructions.size, clear: true)
             end
           instructions.select do |inst|
             bar.advance if show_progress
@@ -1389,6 +1396,25 @@ module Udb
     end
 
     alias not_prohibited_instructions possible_instructions
+
+    sig { params(show_progress: T::Boolean).returns(T::Array[Csr]) }
+    def instructions_that_must_be_implemented(show_progress: false)
+      @instructions_that_must_be_implemented ||=
+        if @config.fully_configured?
+          implemented_instructions
+        elsif @config.partially_configured?
+          bar =
+            if show_progress
+              Udb.create_progressbar("determining instructions that must be implemented [:bar]", total: instructions.size, clear: true)
+            end
+          instructions.select do |inst|
+            bar.advance if show_progress
+            (-inst.defined_by_condition).unsatisfiable_by_cfg_arch?(self)
+          end
+        else
+          []
+        end
+    end
 
     # @return [Integer] The largest instruction encoding in the config
     sig { returns(Integer) }

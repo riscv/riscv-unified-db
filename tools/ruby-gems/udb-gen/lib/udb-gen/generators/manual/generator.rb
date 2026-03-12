@@ -7,9 +7,9 @@
 require "rake"
 require "tty-exit"
 
-require_relative "../common-opts"
-require_relative "../defines"
-require_relative "../template_helpers"
+require_relative "../../common_opts"
+require_relative "../../defines"
+require_relative "../../template_helpers"
 
 require "udb/obj/extension"
 
@@ -82,7 +82,7 @@ module UdbGen
         resolver:
       )
       Rake.with_application(app) do |rake|
-        rake.init("manual", ["-f", "#{Pathname.new(__dir__).realpath}/manual/tasks.rake"])
+        rake.init("manual", ["-f", "#{Pathname.new(__dir__).realpath}/tasks.rake"])
         rake.load_rakefile
         puts rake.top_level_tasks
         rake.invoke_task("gen:html_manual")
