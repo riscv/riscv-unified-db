@@ -1081,8 +1081,8 @@ class Udb::ConfiguredArchitecture < ::Udb::Architecture
   sig { returns(T::Array[::Idl::FunctionDefAst]) }
   def implemented_functions; end
 
-  sig { returns(T::Array[::Udb::Instruction]) }
-  def implemented_instructions; end
+  sig { params(show_progress: T::Boolean).returns(T::Array[::Udb::Instruction]) }
+  def implemented_instructions(show_progress: T.unsafe(nil)); end
 
   sig { returns(T::Array[::Udb::InterruptCode]) }
   def implemented_interrupt_codes; end
@@ -1106,6 +1106,10 @@ class Udb::ConfiguredArchitecture < ::Udb::Architecture
   def instruction_type_hash; end
   def instruction_types; end
   def instructions; end
+
+  sig { params(show_progress: T::Boolean).returns(T::Array[::Udb::Csr]) }
+  def instructions_that_must_be_implemented(show_progress: T.unsafe(nil)); end
+
   def interrupt_code(name); end
   def interrupt_code_hash; end
   def interrupt_codes; end
@@ -1833,6 +1837,11 @@ class Udb::Extension < ::Udb::TopLevelDatabaseObject
   sig { override.params(other_ext: ::Object).returns(T.nilable(::Integer)) }
   def <=>(other_ext); end
 
+  sig { returns(T::Array[::Udb::Csr]) }
+  def all_csrs_that_must_be_implemented; end
+
+  def all_instructions_that_must_be_implemented; end
+
   sig { returns(T::Array[::Udb::Parameter]) }
   def all_params_that_must_be_implemented; end
 
@@ -1865,7 +1874,6 @@ class Udb::Extension < ::Udb::TopLevelDatabaseObject
   sig { returns(T::Array[::Udb::Csr]) }
   def implied_csrs; end
 
-  sig { returns(T::Array[::Udb::Instruction]) }
   def implied_instructions; end
 
   sig { returns(T::Set[::Udb::Instruction]) }
@@ -2047,6 +2055,9 @@ class Udb::ExtensionRequirement
 
   sig { returns(::Udb::Condition) }
   def to_condition; end
+
+  sig { returns(::Udb::Condition) }
+  def to_condition_exclusive; end
 
   sig { returns(::Udb::ExtensionVersion) }
   def to_ext_ver; end
@@ -2307,6 +2318,9 @@ class Udb::ExtensionVersion
   sig { returns(::Udb::AbstractCondition) }
   def to_condition; end
 
+  sig { returns(::Udb::AbstractCondition) }
+  def to_condition_exclusive; end
+
   sig { returns(::Udb::ExtensionRequirement) }
   def to_ext_req; end
 
@@ -2377,6 +2391,7 @@ class Udb::ExtensionVersion::MemomizedState < ::T::Struct
   prop :unexpanded_ext_conflicts, T.nilable(T::Array[::Udb::ConditionalExtensionRequirement])
   prop :term, T.nilable(::Udb::ExtensionTerm)
   prop :condition, T.nilable(::Udb::AbstractCondition)
+  prop :condition_exclusive, T.nilable(::Udb::AbstractCondition)
   prop :compatible_versions, T.nilable(T::Array[::Udb::ExtensionVersion])
   prop :key, T.nilable(::Integer)
 end
