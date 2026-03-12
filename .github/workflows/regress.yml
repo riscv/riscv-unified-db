@@ -1025,6 +1025,13 @@ jobs:
       run: "./bin/npm ci"
     - name: Build Docusaurus site
       run: "./bin/npm run build --workspace=doc"
+    - name: Upload artifact
+      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
+      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      with:
+        name: docs-site
+        path: doc/build
+    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
   regress-complete:
     runs-on: ubuntu-latest
     needs:

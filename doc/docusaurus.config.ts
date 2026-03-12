@@ -15,7 +15,7 @@ const config: Config = {
   },
 
   url: 'https://riscv.github.io',
-  baseUrl: '/riscv-unified-db/',
+  baseUrl: '/riscv-unified-db/docs-preview/',
 
   organizationName: 'riscv',
   projectName: 'riscv-unified-db',
@@ -65,10 +65,27 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
+          type: 'dropdown',
+          label: 'Getting Started',
           position: 'left',
-          label: 'Docs',
+          items: [
+            {label: 'For Users', to: '/docs/getting-started/users'},
+            {label: 'For Spec Writers', to: '/docs/getting-started/spec-writers'},
+            {label: 'For Developers', to: '/docs/getting-started/developers'},
+          ],
+        },
+        {
+          type: 'dropdown',
+          label: 'Documentation',
+          position: 'left',
+          items: [
+            {label: 'Introduction', to: '/docs/intro/what-is-udb'},
+            {label: 'IDL Language', to: '/docs/idl/overview'},
+            {label: 'Schemas', to: '/docs/schemas/overview'},
+            {label: 'Configuration', to: '/docs/configuration/overview'},
+            {label: 'Tools', to: '/docs/tools/overview'},
+            {label: 'Generators', to: '/docs/generators/overview'},
+          ],
         },
         {
           label: 'API Reference',
@@ -76,9 +93,14 @@ const config: Config = {
           position: 'left',
         },
         {
+          label: 'Contributing',
+          to: '/docs/contributing',
+          position: 'left',
+        },
+        {
           label: 'Browse Spec',
           href: 'https://riscv.github.io/riscv-unified-db/',
-          position: 'left',
+          position: 'right',
         },
         {
           label: 'GitHub',
