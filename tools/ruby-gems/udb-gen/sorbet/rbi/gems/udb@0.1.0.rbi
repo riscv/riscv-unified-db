@@ -4511,25 +4511,8 @@ class Udb::Yaml::PreservingEmitter
 end
 
 class Udb::Yaml::Resolver
-  sig { params(quiet: T::Boolean, compile_idl: T::Boolean, schemas_path: T.nilable(T.any(::String, ::Pathname))).void }
+  sig { params(quiet: T::Boolean, compile_idl: T::Boolean, schemas_path: T.nilable(T.any(::Pathname, ::String))).void }
   def initialize(quiet: T.unsafe(nil), compile_idl: T.unsafe(nil), schemas_path: T.unsafe(nil)); end
-
-  sig { returns(::Pathname) }
-  def schemas_path; end
-
-  sig { returns(T::Hash[::String, ::String]) }
-  def schema_version_map; end
-
-  sig { params(uri: ::String).returns(::String) }
-  def versioned_schema_uri(uri); end
-
-  sig {
-    params(
-      resolved_obj: T::Hash[::String, T.untyped],
-      rel_path: ::String
-    ).void
-  }
-  def validate_against_schema(resolved_obj, rel_path); end
 
   sig { params(parent_obj: T::Hash[::String, T.untyped], child_ref: ::String).void }
   def add_parent_of_reference(parent_obj, child_ref); end
@@ -4651,6 +4634,12 @@ class Udb::Yaml::Resolver
   end
   def resolve_object(obj, obj_path, obj_file_path, doc_obj, arch_root, no_checks); end
 
+  sig { returns(T::Hash[::String, ::String]) }
+  def schema_version_map; end
+
+  sig { returns(::Pathname) }
+  def schemas_path; end
+
   sig { params(resolved_data: T::Hash[::String, T.untyped], rel_path: ::String).void }
   def set_parent_of_relationships(resolved_data, rel_path); end
 
@@ -4669,7 +4658,13 @@ class Udb::Yaml::Resolver
   end
   def track_source_locations_helper(keys, contents, file, cumulative_offsets, offset_map, node); end
 
+  sig { params(resolved_obj: T::Hash[::String, T.untyped], rel_path: ::String).void }
+  def validate_against_schema(resolved_obj, rel_path); end
+
   def validate_idl_scalars(node, keys, file_path); end
+
+  sig { params(uri: ::String).returns(::String) }
+  def versioned_schema_uri(uri); end
 
   sig do
     params(
