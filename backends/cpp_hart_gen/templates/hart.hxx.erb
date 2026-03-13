@@ -456,6 +456,22 @@ namespace udb {
     //   refresh_pending_interrupts();
     // }
 
+    TranslateResult translate_native(uint64_t vaddr, MemoryOperation op, PrivilegeMode mode,
+                                     uint64_t encoding) override {
+      TranslateResult result;
+      auto translateResult = translate(Bits<64>(vaddr), op, mode, Bits<64>(encoding));
+
+      result.pAddr = translateResult.paddr.get();
+      return result;
+    }
+
+    PrivilegeMode _get_mode() override {
+      return current_mode;
+    }
+    void _set_mode(const PrivilegeMode& next_mode) override {
+      current_mode = next_mode;
+    }
+
     private:
       XReg m_pc;
       XReg m_next_pc;

@@ -4,6 +4,19 @@
 # typed: false
 # frozen_string_literal: true
 
+require "stringio"
+
+# this is needed for tty-progressbar to work with minitest
+unless StringIO.method_defined? :ioctl
+  class StringIO
+    def ioctl(*)
+      # :nocov:
+      80
+      # :nocov:
+    end
+  end
+end
+
 require "simplecov"
 require "simplecov-cobertura"
 

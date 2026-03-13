@@ -9,6 +9,7 @@ require "concurrent/hash"
 require "sorbet-runtime"
 
 require_relative "cfg_arch"
+require_relative "yaml/yaml_resolver"
 
 module Udb
   extend T::Sig
@@ -235,14 +236,13 @@ module Udb
         raise "custom directory '#{overlay_path}' does not exist" if !overlay_path.nil? && !overlay_path.directory?
 
         if any_newer?(merged_spec_path(config_name) / ".stamp", deps)
-          run [
-            "uv", "run",
-            "#{Udb.gem_path}/python/yaml_resolver.py",
-            "merge",
+          # Use Ruby YAML resolver instead of Python
+          yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
+          yaml_resolver.merge_files(
             std_path.to_s,
-            overlay_path.nil? ? "/does/not/exist" : overlay_path.to_s,
+            overlay_path&.to_s,
             merged_spec_path(config_name).to_s
-          ]
+          )
           FileUtils.touch(merged_spec_path(config_name) / ".stamp")
         end
       end
@@ -256,24 +256,13 @@ module Udb
 
         deps = Dir[merged_spec_path(config_name) / "**" / "*.yaml"].map { |p| Pathname.new(p) }
         if any_newer?(resolved_spec_path(config_name) / ".stamp", deps)
-          if @compile_idl
-            run [
-              "uv", "run",
-              "#{Udb.gem_path}/python/yaml_resolver.py",
-              "resolve",
-              "--compile_idl",
-              merged_spec_path(config_name).to_s,
-              resolved_spec_path(config_name).to_s
-            ]
-          else
-            run [
-              "uv", "run",
-              "#{Udb.gem_path}/python/yaml_resolver.py",
-              "resolve",
-              merged_spec_path(config_name).to_s,
-              resolved_spec_path(config_name).to_s
-            ]
-          end
+          # Use Ruby YAML resolver instead of Python
+          yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
+          yaml_resolver.resolve_files(
+            merged_spec_path(config_name).to_s,
+            resolved_spec_path(config_name).to_s,
+            no_checks: false
+          )
           FileUtils.touch(resolved_spec_path(config_name) / ".stamp")
         end
 

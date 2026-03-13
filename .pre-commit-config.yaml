@@ -25,6 +25,9 @@ repos:
         stages: [pre-commit]
         args: [--markdown-linebreak-ext=md]
         exclude: \.svg$
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+        exclude: ^.*\.bat$
       - id: check-merge-conflict
         stages: [pre-commit]
         args: ["--assume-in-merge"]
