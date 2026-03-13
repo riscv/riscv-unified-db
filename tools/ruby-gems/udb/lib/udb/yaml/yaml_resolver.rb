@@ -84,7 +84,7 @@ module Udb
       def versioned_schema_uri(uri)
         fragment_sep = uri.index("#")
         if fragment_sep
-          base = uri[0...fragment_sep]
+          base = T.must(uri[0...fragment_sep])
           fragment = T.must(uri[fragment_sep..])
         else
           base = uri
@@ -520,7 +520,7 @@ module Udb
         if obj.key?("$child_of")
           child_of = obj["$child_of"]
           targets = child_of.is_a?(Array) ? child_of : [child_of]
-          child_ref = path.empty? ? rel_path : "#{rel_path}#/#{path.join("/")}"
+          child_ref = path.empty? ? "#{rel_path}#/" : "#{rel_path}#/#{path.join("/")}"
 
           targets.each do |target|
             next unless target.is_a?(String)
