@@ -28,6 +28,39 @@ def create_bool_literal(value)
   end
 end
 
+# returns nil if array holds bools
+# otherwise (it holds bits), returns max bitwidth of all elements
+sig { params(symtab: Idl::SymbolTable, node: Idl::AstNode, max: T.nilable(Integer)).returns(T.nilable(Integer)) }
+def find_max_element_width(symtab, node, max = nil)
+  if node.is_a?(Idl::ArrayLiteralAst)
+    node.entries.map do |e|
+      e_max = find_max_element_width(symtab, e)
+      max.nil? ? e_max : [max, e_max].max
+    end.max
+  else
+    if node.is_a?(Idl::TrueExpressionAst) || node.is_a?(Idl::FalseExpressionAst)
+      nil
+    else
+      node_width = node.type(symtab).width
+      max.nil? ? node_width : [max, node_width].max
+    end
+  end
+end
+
+def coerce_ary_element_widths(symtab, elements, max_element_width)
+  if elements.is_a?(Array) && elements.empty?
+    Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18, [])
+  elsif elements.fetch(0).is_a?(Idl::ArrayLiteralAst)
+    # Recursively coerce nested arrays - pass e.entries, not e
+    Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18,
+      elements.map { |e| coerce_ary_element_widths(symtab, e.entries, max_element_width) })
+  else
+    # Base case: elements is an array of leaf nodes, coerce each to max_element_width
+    coerced = elements.map { |node| create_int_literal(node.value(symtab), forced_type: Idl::Type.new(:bits, width: max_element_width)) }
+    Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18, coerced)
+  end
+end
+
 def create_literal(symtab, value, type, forced_type: nil)
   case type.kind
   when :enum_ref
@@ -40,7 +73,15 @@ def create_literal(symtab, value, type, forced_type: nil)
     create_bool_literal(value)
   when :array
     elements = value.map { |e| create_literal(symtab, e, type.sub_type) }
-    Idl::ArrayLiteralAst.new("ary", 0..3, elements)
+    # array elements MUST have the same type, so we need to coerce them
+    # find the leaf level, and get the bit widths if needed
+    ary = Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18, elements)
+    max_element_width = find_max_element_width(symtab, ary)
+    if max_element_width.nil?
+      ary
+    else
+      coerce_ary_element_widths(symtab, elements, max_element_width)
+    end
   else
     raise "TODO: #{type}"
   end
