@@ -14,12 +14,12 @@ At the heart of UDB is a structured database containing instructions, CSRs, exte
 UDB is a relational database, but it doesn't use SQL like most. Rather, UDB stores information in plain-text YAML files. Using relational database terminology, UDB stores _tables_ in folders like `inst`, `ext`, _etc._ and _rows_ as YAML files in those folders.
 
 ```
-📁 spec/std/isa/inst/    →    📊 Table: instructions
+📁 spec/std/isa/inst/    →    ▤ Table: instructions
   📄 add.yaml            →    📋 Row (record)
   📄 sub.yaml            →    📋 Row (record)
   📄 mul.yaml            →    📋 Row (record)
 
-📁 spec/std/isa/ext/     →    📊 Table: extensions
+📁 spec/std/isa/ext/     →    ▤ Table: extensions
   📄 M.yaml              →    📋 Row (record)
   📄 A.yaml              →    📋 Row (record)
 ```
@@ -68,10 +68,10 @@ Instead, UDB is designed as **input to tools** that transform, serve, or integra
     <strong>Example workflows:</strong>
   </div>
   <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
-    <div>📊 Database + ⚙️ Config (RV32IMC) → 📄 Generator → C Header → 💻 Firmware</div>
-    <div>📊 Database + ⚙️ Config (RV64GC) → 🌐 MCP Server → Claude/IDE → 🛠️ Development</div>
-    <div>📊 Database + ⚙️ Custom Config → 💎 Ruby Gem → Script → 📦 Your Artifact</div>
-    <div>📊 Database + ⚙️ Profile Config → ✅ Validator → Report → 🎯 Certification</div>
+    <div>⛁ Database + ⚙️ Config (RV32IMC) → 📄 Generator → C Header → 💻 Firmware</div>
+    <div>⛁ Database + ⚙️ Config (RV64GC) → 🌐 MCP Server → Claude/IDE → 🛠️ Development</div>
+    <div>⛁ Database + ⚙️ Custom Config → 💎 Ruby Gem → Script → 📦 Your Artifact</div>
+    <div>⛁ Database + ⚙️ Profile Config → ✅ Validator → Report → 🎯 Certification</div>
   </div>
 </div>
 
