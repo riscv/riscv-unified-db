@@ -337,6 +337,7 @@ PLATFORMS
 DEPENDENCIES
   idlc!
   minitest
+  rake
   rdbg
   rouge
   rubocop-github

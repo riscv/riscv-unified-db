@@ -74,4 +74,4 @@ sw_read(): |
     }
   }
 
-  return CSR[minstret].COUNT;
+  return $bits(CSR[minstret]);

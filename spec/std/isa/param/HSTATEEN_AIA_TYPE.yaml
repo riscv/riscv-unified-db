@@ -20,7 +20,7 @@ schema:
     - read-only-0
     - read-only-1
 requirements:
-  idl():
+  idl(): |
     MSTATEEN_AIA_TYPE == "read-only-0" -> HSTATEEN_AIA_TYPE == "read-only-0";
     MSTATEEN_AIA_TYPE == "read-only-1" -> HSTATEEN_AIA_TYPE == "read-only-1";
   reason: |

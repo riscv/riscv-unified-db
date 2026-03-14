@@ -127,6 +127,7 @@ tests:
           - cfg
           - mmr
           - mmr_schema
+          - schema_versioning
           - instruction
           - z3
           - z3_extensions
@@ -201,6 +202,16 @@ tests:
     test:
       - name: Check profile_extensions
         run: ./do test:profile_extensions
+
+  regress-build-udb-gem:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Build udb gem via chore
+        run: ./bin/chore build udb-gem
+      - name: Verify udb gem was built
+        run: ls gen/udb_gem/udb-*.gem
 
   regress-regress:
     ci_stage: pr
@@ -334,6 +345,14 @@ tests:
           PROFILE_NAME="${{ matrix.profile }}"
           UPPER_PROFILE="${PROFILE_NAME^^}"
           ./do gen:profile_release_pdf[${PROFILE_NAME}]
+
+  regress-schema-versions:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Check schema versions against published URLs
+        run: ./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb
 
   build-idl-doc:
     ci_stage: merge_queue

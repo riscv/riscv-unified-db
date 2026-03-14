@@ -79,7 +79,7 @@ jobs:
         path: "${{ runner.temp }}/docker_image.tar"
   never-runs:
     runs-on: ubuntu-latest
-    if: 'false'
+    if: false
     steps:
     - name: Use download-artifact
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
@@ -184,24 +184,24 @@ jobs:
         path: ext/llvm-project/riscv.json
         key: "${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}"
     - name: Initialize LLVM submodule (shallow + sparse)
-      if: "${{ steps.cache-riscv.outputs.cache-hit != 'true' }}"
+      if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
       run: |
         rm -rf ext/llvm-project
         git submodule sync --recursive
         git submodule update --init --recursive --depth=1 ext/llvm-project
     - name: Check for required directories and files
-      if: "${{ steps.cache-riscv.outputs.cache-hit != 'true' }}"
+      if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
       run: |
         ls -l ext/llvm-project/llvm/include
         ls -l ext/llvm-project/llvm/lib/Target/RISCV
         ls -l ext/llvm-project/llvm/lib/Target/RISCV/RISCV.td
     - name: Configure and build llvm-tblgen
-      if: "${{ steps.cache-riscv.outputs.cache-hit != 'true' }}"
+      if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
       run: |
         cmake -S ext/llvm-project/llvm -B ext/llvm-project/build -DCMAKE_BUILD_TYPE=Release
         cmake --build ext/llvm-project/build --target llvm-tblgen
     - name: Generate RISC-V JSON
-      if: "${{ steps.cache-riscv.outputs.cache-hit != 'true' }}"
+      if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
       run: |
         chmod +x ./ext/llvm-project/build/bin/llvm-tblgen
         ./ext/llvm-project/build/bin/llvm-tblgen \
@@ -583,6 +583,7 @@ jobs:
         - cfg
         - mmr
         - mmr_schema
+        - schema_versioning
         - instruction
         - z3
         - z3_extensions
@@ -712,6 +713,23 @@ jobs:
       run: docker load --input ${{ runner.temp }}/docker_image.tar
     - name: Check profile_extensions
       run: "./do test:profile_extensions"
+  regress-build-udb-gem:
+    runs-on: ubuntu-latest
+    needs: build-container
+    steps:
+    - name: Clone Github Repo Action
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Download docker image
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      with:
+        name: docker_image
+        path: "${{ runner.temp }}"
+    - name: Load image
+      run: docker load --input ${{ runner.temp }}/docker_image.tar
+    - name: Build udb gem via chore
+      run: "./bin/chore build udb-gem"
+    - name: Verify udb gem was built
+      run: ls gen/udb_gem/udb-*.gem
   regress-regress:
     runs-on: ubuntu-latest
     needs: build-container
@@ -744,11 +762,11 @@ jobs:
       run: "./bin/reuse spdx -o reuse_bom.txt"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: reuse-manifest
         path: reuse_bom.txt
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   build-udb-api-docs:
     runs-on: ubuntu-latest
     needs: build-container
@@ -766,12 +784,12 @@ jobs:
       run: "./do gen:udb:api_doc"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: udb-api
         path: gen/udb_api_doc
         include-hidden-files: true
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   resolve-unconfig:
     runs-on: ubuntu-latest
     needs: build-container
@@ -791,12 +809,12 @@ jobs:
       run: tar czf gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_ && mv gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_/resolved_spec.tar.gz
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: resolved-spec
         path: gen/resolved_spec/_
         include-hidden-files: true
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   build-isa-explorer-csr:
     runs-on: ubuntu-latest
     needs: build-container
@@ -814,11 +832,11 @@ jobs:
       run: "./bin/udb-gen isa-explorer -t csr-browser -o gen/isa_explorer/browser"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-explorer-csr
         path: gen/isa_explorer/browser
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   build-isa-explorer-ext:
     runs-on: ubuntu-latest
     needs: build-container
@@ -836,11 +854,11 @@ jobs:
       run: "./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer/browser"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-explorer-ext
         path: gen/isa_explorer/browser
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   build-isa-explorer-inst:
     runs-on: ubuntu-latest
     needs: build-container
@@ -858,11 +876,11 @@ jobs:
       run: "./bin/udb-gen isa-explorer -t inst-browser -o gen/isa_explorer/browser"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-explorer-inst
         path: gen/isa_explorer/browser
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   build-isa-explorer-spreadsheet:
     runs-on: ubuntu-latest
     needs: build-container
@@ -880,11 +898,11 @@ jobs:
       run: "./bin/udb-gen isa-explorer -t xlsx -o gen/isa_explorer/spreadsheet"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-explorer-spreadsheet
         path: gen/isa_explorer/spreadsheet
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   build-html-isa-manual:
     runs-on: ubuntu-latest
     needs: build-container
@@ -902,11 +920,11 @@ jobs:
       run: "./bin/generate manual -v all -f html"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-html-manual
         path: gen/manual/isa/top/all/html
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   build-html-cfg-isa-manual:
     runs-on: ubuntu-latest
     needs: build-container
@@ -924,11 +942,11 @@ jobs:
       run: "./do gen:html[example_rv64_with_overlay]"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: cfg-html-manual
         path: gen/cfg_html_doc/example_rv64_with_overlay/html
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   build-instruction-appendix:
     runs-on: ubuntu-latest
     needs: build-container
@@ -948,11 +966,11 @@ jobs:
       run: "./do gen:instruction_appendix"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: inst-appendix
         path: gen/instructions_appendix/instructions_appendix.pdf
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   build-profile:
     runs-on: ubuntu-latest
     needs: build-container
@@ -973,11 +991,11 @@ jobs:
         ./do gen:profile_release_pdf[${PROFILE_NAME}]
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: "${{ matrix.profile }}"
         path: gen/profile/pdf/RVA20ProfileRelease.pdf
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     strategy:
       matrix:
         profile:
@@ -986,6 +1004,21 @@ jobs:
         - rva22
         - rva23
         - rvb23
+  regress-schema-versions:
+    runs-on: ubuntu-latest
+    needs: build-container
+    steps:
+    - name: Clone Github Repo Action
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Download docker image
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      with:
+        name: docker_image
+        path: "${{ runner.temp }}"
+    - name: Load image
+      run: docker load --input ${{ runner.temp }}/docker_image.tar
+    - name: Check schema versions against published URLs
+      run: "./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb"
   build-idl-doc:
     runs-on: ubuntu-latest
     needs: build-container
@@ -1003,11 +1036,11 @@ jobs:
       run: "./bin/bundle exec asciidoctor -r idl_highlighter -a toc=left -a source-highlighter=rouge -o idl.html doc/idl.adoc"
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: "((github.event_name == 'push') && (github.ref_name == 'main'))"
+      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: idl-doc
         path: idl.html
-    if: "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
   regress-complete:
     runs-on: ubuntu-latest
     needs:
@@ -1032,6 +1065,7 @@ jobs:
     - regress-riscv-tests-64
     - regress-xqci-doc
     - regress-profile-extensions
+    - regress-build-udb-gem
     - regress-regress
     - build-reuse-manifest
     - build-udb-api-docs
@@ -1044,6 +1078,7 @@ jobs:
     - build-html-cfg-isa-manual
     - build-instruction-appendix
     - build-profile
+    - regress-schema-versions
     - build-idl-doc
     - regress-pre-commit
     - regress-llvm
@@ -1054,11 +1089,11 @@ jobs:
     - vscode-tests
     - create-gems
     - udb-gem-z3
-    if: "${{ always() }}"
+    if: always()
     steps:
     - name: exit failure
-      if: "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}"
+      if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
       run: exit 1
     - name: exit success
-      if: "${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}"
+      if: '!contains(needs.*.result, ''failure'') && !contains(needs.*.result, ''cancelled'')'
       run: exit 0

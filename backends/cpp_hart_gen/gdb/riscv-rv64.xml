@@ -1,0 +1,337 @@
+<?xml version="1.0"?>
+<!DOCTYPE target SYSTEM "gdb-target.dtd">
+<!--
+  GDB Target Description for RISC-V RV64 with Floating-Point and CSRs
+  =====================================================================
+  Register numbering matches the UDB ISS GDB server (iss.cpp):
+
+    x0  - x31  : regnum   0 - 31   (0x00 - 0x1F)  GPRs
+    pc         : regnum  32         (0x20)           Program Counter
+    f0  - f31  : regnum  33 - 64   (0x21 - 0x40)  FP registers
+    CSR <addr> : regnum  0x41 + <addr>              CSRs
+
+  Usage (GDB command line):
+    set tdesc filename riscv-rv64.xml
+
+  Usage (gdbopts.cfg / .gdbinit):
+    set tdesc filename /path/to/riscv-rv64.xml
+-->
+<target version="1.0">
+  <architecture>riscv:rv64</architecture>
+
+  <!-- ================================================================
+       Integer registers  -  regnum 0-31 (x0-x31) + regnum 32 (pc)
+       ================================================================ -->
+  <feature name="org.gnu.gdb.riscv.cpu">
+    <!-- x0 / zero -->
+    <reg name="zero" bitsize="64" type="int"      group="general" regnum="0"/>
+    <!-- x1 / ra -->
+    <reg name="ra"   bitsize="64" type="code_ptr" group="general"/>
+    <!-- x2 / sp -->
+    <reg name="sp"   bitsize="64" type="data_ptr" group="general"/>
+    <!-- x3 / gp -->
+    <reg name="gp"   bitsize="64" type="data_ptr" group="general"/>
+    <!-- x4 / tp -->
+    <reg name="tp"   bitsize="64" type="data_ptr" group="general"/>
+    <!-- x5 / t0 -->
+    <reg name="t0"   bitsize="64" type="int"      group="general"/>
+    <!-- x6 / t1 -->
+    <reg name="t1"   bitsize="64" type="int"      group="general"/>
+    <!-- x7 / t2 -->
+    <reg name="t2"   bitsize="64" type="int"      group="general"/>
+    <!-- x8 / s0 / fp -->
+    <reg name="fp"   bitsize="64" type="data_ptr" group="general"/>
+    <!-- x9 / s1 -->
+    <reg name="s1"   bitsize="64" type="int"      group="general"/>
+    <!-- x10 / a0 -->
+    <reg name="a0"   bitsize="64" type="int"      group="general"/>
+    <!-- x11 / a1 -->
+    <reg name="a1"   bitsize="64" type="int"      group="general"/>
+    <!-- x12 / a2 -->
+    <reg name="a2"   bitsize="64" type="int"      group="general"/>
+    <!-- x13 / a3 -->
+    <reg name="a3"   bitsize="64" type="int"      group="general"/>
+    <!-- x14 / a4 -->
+    <reg name="a4"   bitsize="64" type="int"      group="general"/>
+    <!-- x15 / a5 -->
+    <reg name="a5"   bitsize="64" type="int"      group="general"/>
+    <!-- x16 / a6 -->
+    <reg name="a6"   bitsize="64" type="int"      group="general"/>
+    <!-- x17 / a7 -->
+    <reg name="a7"   bitsize="64" type="int"      group="general"/>
+    <!-- x18 / s2 -->
+    <reg name="s2"   bitsize="64" type="int"      group="general"/>
+    <!-- x19 / s3 -->
+    <reg name="s3"   bitsize="64" type="int"      group="general"/>
+    <!-- x20 / s4 -->
+    <reg name="s4"   bitsize="64" type="int"      group="general"/>
+    <!-- x21 / s5 -->
+    <reg name="s5"   bitsize="64" type="int"      group="general"/>
+    <!-- x22 / s6 -->
+    <reg name="s6"   bitsize="64" type="int"      group="general"/>
+    <!-- x23 / s7 -->
+    <reg name="s7"   bitsize="64" type="int"      group="general"/>
+    <!-- x24 / s8 -->
+    <reg name="s8"   bitsize="64" type="int"      group="general"/>
+    <!-- x25 / s9 -->
+    <reg name="s9"   bitsize="64" type="int"      group="general"/>
+    <!-- x26 / s10 -->
+    <reg name="s10"  bitsize="64" type="int"      group="general"/>
+    <!-- x27 / s11 -->
+    <reg name="s11"  bitsize="64" type="int"      group="general"/>
+    <!-- x28 / t3 -->
+    <reg name="t3"   bitsize="64" type="int"      group="general"/>
+    <!-- x29 / t4 -->
+    <reg name="t4"   bitsize="64" type="int"      group="general"/>
+    <!-- x30 / t5 -->
+    <reg name="t5"   bitsize="64" type="int"      group="general"/>
+    <!-- x31 / t6 -->
+    <reg name="t6"   bitsize="64" type="int"      group="general"/>
+    <!-- pc  : regnum 32 (0x20) -->
+    <reg name="pc"   bitsize="64" type="code_ptr" group="general" regnum="32"/>
+  </feature>
+
+  <!-- ================================================================
+       Floating-point registers  -  regnum 33-64 (0x21-0x40)
+       FP CSRs live in the CSR address space:
+         fflags  CSR 0x001  regnum 0x41+0x001 = 0x42 = 66
+         frm     CSR 0x002  regnum 0x41+0x002 = 0x43 = 67
+         fcsr    CSR 0x003  regnum 0x41+0x003 = 0x44 = 68
+       ================================================================ -->
+  <feature name="org.gnu.gdb.riscv.fpu">
+    <!-- f0  / ft0  : regnum 33 (0x21) -->
+    <reg name="ft0"  bitsize="64" type="ieee_double" group="float" regnum="33"/>
+    <!-- f1  / ft1  : regnum 34 -->
+    <reg name="ft1"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f2  / ft2  : regnum 35 -->
+    <reg name="ft2"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f3  / ft3  : regnum 36 -->
+    <reg name="ft3"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f4  / ft4  : regnum 37 -->
+    <reg name="ft4"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f5  / ft5  : regnum 38 -->
+    <reg name="ft5"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f6  / ft6  : regnum 39 -->
+    <reg name="ft6"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f7  / ft7  : regnum 40 -->
+    <reg name="ft7"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f8  / fs0  : regnum 41 -->
+    <reg name="fs0"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f9  / fs1  : regnum 42 -->
+    <reg name="fs1"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f10 / fa0  : regnum 43 -->
+    <reg name="fa0"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f11 / fa1  : regnum 44 -->
+    <reg name="fa1"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f12 / fa2  : regnum 45 -->
+    <reg name="fa2"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f13 / fa3  : regnum 46 -->
+    <reg name="fa3"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f14 / fa4  : regnum 47 -->
+    <reg name="fa4"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f15 / fa5  : regnum 48 -->
+    <reg name="fa5"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f16 / fa6  : regnum 49 -->
+    <reg name="fa6"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f17 / fa7  : regnum 50 -->
+    <reg name="fa7"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f18 / fs2  : regnum 51 -->
+    <reg name="fs2"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f19 / fs3  : regnum 52 -->
+    <reg name="fs3"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f20 / fs4  : regnum 53 -->
+    <reg name="fs4"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f21 / fs5  : regnum 54 -->
+    <reg name="fs5"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f22 / fs6  : regnum 55 -->
+    <reg name="fs6"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f23 / fs7  : regnum 56 -->
+    <reg name="fs7"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f24 / fs8  : regnum 57 -->
+    <reg name="fs8"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f25 / fs9  : regnum 58 -->
+    <reg name="fs9"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f26 / fs10 : regnum 59 -->
+    <reg name="fs10" bitsize="64" type="ieee_double" group="float"/>
+    <!-- f27 / fs11 : regnum 60 -->
+    <reg name="fs11" bitsize="64" type="ieee_double" group="float"/>
+    <!-- f28 / ft8  : regnum 61 -->
+    <reg name="ft8"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f29 / ft9  : regnum 62 -->
+    <reg name="ft9"  bitsize="64" type="ieee_double" group="float"/>
+    <!-- f30 / ft10 : regnum 63 -->
+    <reg name="ft10" bitsize="64" type="ieee_double" group="float"/>
+    <!-- f31 / ft11 : regnum 64 (0x40) -->
+    <reg name="ft11" bitsize="64" type="ieee_double" group="float"/>
+
+    <!-- FP control/status CSRs  (regnum = 0x41 + CSR_address) -->
+    <!-- fflags  CSR 0x001  regnum 66 (0x42) -->
+    <reg name="fflags" bitsize="32" type="int" group="float" regnum="66" save-restore="no"/>
+    <!-- frm     CSR 0x002  regnum 67 (0x43) -->
+    <reg name="frm"    bitsize="32" type="int" group="float"             save-restore="no"/>
+    <!-- fcsr    CSR 0x003  regnum 68 (0x44) -->
+    <reg name="fcsr"   bitsize="32" type="int" group="float"             save-restore="no"/>
+  </feature>
+
+  <!-- ================================================================
+       CSRs  -  regnum = 0x41 + CSR_address
+       Only CSRs present in the UDB spec are listed; the GDB server
+       returns an error for any regnum that maps to an absent CSR.
+       ================================================================ -->
+  <feature name="org.gnu.gdb.riscv.csr">
+
+    <!--Zcmt: Jump Vector Table -->
+    <!--  jvt        CSR 0x017  regnum  88 (0x058) -->
+    <reg name="jvt"           bitsize="64" type="data_ptr" group="system" regnum="88"   save-restore="no"/>
+
+    <!--Supervisor trap setup -->
+    <!-- sstatus    CSR 0x100  regnum 321 (0x141) -->
+    <reg name="sstatus"       bitsize="64" type="int"      group="system" regnum="321"  save-restore="no"/>
+    <!-- sie        CSR 0x104  regnum 325 (0x145) -->
+    <reg name="sie"           bitsize="64" type="int"      group="system" regnum="325"  save-restore="no"/>
+    <!-- stvec      CSR 0x105  regnum 326 (0x146) -->
+    <reg name="stvec"         bitsize="64" type="code_ptr" group="system"               save-restore="no"/>
+    <!-- scounteren CSR 0x106  regnum 327 (0x147) -->
+    <reg name="scounteren"    bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- senvcfg    CSR 0x10A  regnum 331 (0x14B) -->
+    <reg name="senvcfg"       bitsize="64" type="int"      group="system" regnum="331"  save-restore="no"/>
+    <!-- sstateen0  CSR 0x10C  regnum 333 (0x14D) -->
+    <reg name="sstateen0"     bitsize="64" type="int"      group="system" regnum="333"  save-restore="no"/>
+    <!-- sstateen1  CSR 0x10D  regnum 334 (0x14E) -->
+    <reg name="sstateen1"     bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- sstateen2  CSR 0x10E  regnum 335 (0x14F) -->
+    <reg name="sstateen2"     bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- sstateen3  CSR 0x10F  regnum 336 (0x150) -->
+    <reg name="sstateen3"     bitsize="64" type="int"      group="system"               save-restore="no"/>
+
+    <!--Supervisor trap handling -->
+    <!-- sscratch   CSR 0x140  regnum 385 (0x181) -->
+    <reg name="sscratch"      bitsize="64" type="int"      group="system" regnum="385"  save-restore="no"/>
+    <!-- sepc       CSR 0x141  regnum 386 (0x182) -->
+    <reg name="sepc"          bitsize="64" type="code_ptr" group="system"               save-restore="no"/>
+    <!-- scause     CSR 0x142  regnum 387 (0x183) -->
+    <reg name="scause"        bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- stval      CSR 0x143  regnum 388 (0x184) -->
+    <reg name="stval"         bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- sip        CSR 0x144  regnum 389 (0x185) -->
+    <reg name="sip"           bitsize="64" type="int"      group="system"               save-restore="no"/>
+
+    <!--Supervisor address translation -->
+    <!-- satp       CSR 0x180  regnum 449 (0x1C1) -->
+    <reg name="satp"          bitsize="64" type="int"      group="system" regnum="449"  save-restore="no"/>
+
+    <!--Supervisor context register -->
+    <!-- scontext   CSR 0x5A8  regnum 1513 (0x5E9) -->
+    <reg name="scontext"      bitsize="64" type="int"      group="system" regnum="1513" save-restore="no"/>
+
+    <!--Machine trap setup -->
+    <!-- mstatus    CSR 0x300  regnum 833 (0x341) -->
+    <reg name="mstatus"       bitsize="64" type="int"      group="system" regnum="833"  save-restore="no"/>
+    <!-- misa       CSR 0x301  regnum 834 (0x342) -->
+    <reg name="misa"          bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- medeleg    CSR 0x302  regnum 835 (0x343) -->
+    <reg name="medeleg"       bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mideleg    CSR 0x303  regnum 836 (0x344) -->
+    <reg name="mideleg"       bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mie        CSR 0x304  regnum 837 (0x345) -->
+    <reg name="mie"           bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mtvec      CSR 0x305  regnum 838 (0x346) -->
+    <reg name="mtvec"         bitsize="64" type="code_ptr" group="system"               save-restore="no"/>
+    <!-- mcounteren CSR 0x306  regnum 839 (0x347) -->
+    <reg name="mcounteren"    bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- menvcfg    CSR 0x30A  regnum 843 (0x34B) -->
+    <reg name="menvcfg"       bitsize="64" type="int"      group="system" regnum="843"  save-restore="no"/>
+    <!-- mstateen0  CSR 0x30C  regnum 845 (0x34D) -->
+    <reg name="mstateen0"     bitsize="64" type="int"      group="system" regnum="845"  save-restore="no"/>
+    <!-- mstateen1  CSR 0x30D  regnum 846 (0x34E) -->
+    <reg name="mstateen1"     bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mstateen2  CSR 0x30E  regnum 847 (0x34F) -->
+    <reg name="mstateen2"     bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mstateen3  CSR 0x30F  regnum 848 (0x350) -->
+    <reg name="mstateen3"     bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mcountinhibit CSR 0x320  regnum 865 (0x361) -->
+    <reg name="mcountinhibit" bitsize="64" type="int"      group="system" regnum="865"  save-restore="no"/>
+
+    <!--Machine trap handling -->
+    <!-- mscratch   CSR 0x340  regnum 897 (0x381) -->
+    <reg name="mscratch"      bitsize="64" type="int"      group="system" regnum="897"  save-restore="no"/>
+    <!-- mepc       CSR 0x341  regnum 898 (0x382) -->
+    <reg name="mepc"          bitsize="64" type="code_ptr" group="system"               save-restore="no"/>
+    <!-- mcause     CSR 0x342  regnum 899 (0x383) -->
+    <reg name="mcause"        bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mtval      CSR 0x343  regnum 900 (0x384) -->
+    <reg name="mtval"         bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mip        CSR 0x344  regnum 901 (0x385) -->
+    <reg name="mip"           bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mtinst     CSR 0x34A  regnum 907 (0x38B) -->
+    <reg name="mtinst"        bitsize="64" type="int"      group="system" regnum="907"  save-restore="no"/>
+    <!-- mtval2     CSR 0x34B  regnum 908 (0x38C) -->
+    <reg name="mtval2"        bitsize="64" type="int"      group="system"               save-restore="no"/>
+
+    <!--Machine security configuration -->
+    <!-- mseccfg    CSR 0x747  regnum 1928 (0x788) -->
+    <reg name="mseccfg"       bitsize="64" type="int"      group="system" regnum="1928" save-restore="no"/>
+
+    <!--Machine context register -->
+    <!-- mcontext  CSR 0x7A8  regnum 2025 (0x7E9) -->
+    <reg name="mcontext"      bitsize="64" type="int"      group="system" regnum="2025" save-restore="no"/>
+
+    <!--Trigger module -->
+    <!-- tselect    CSR 0x7A0  regnum 2017 (0x7E1) -->
+    <reg name="tselect"       bitsize="64" type="int"      group="system" regnum="2017" save-restore="no"/>
+    <!-- tdata1     CSR 0x7A1  regnum 2018 (0x7E2) -->
+    <reg name="tdata1"        bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- tdata2     CSR 0x7A2  regnum 2019 (0x7E3) -->
+    <reg name="tdata2"        bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- tdata3     CSR 0x7A3  regnum 2020 (0x7E4) -->
+    <reg name="tdata3"        bitsize="64" type="int"      group="system"               save-restore="no"/>
+
+    <!--Debug mode CSRs -->
+    <!-- dcsr       CSR 0x7B0  regnum 2033 (0x7F1) -->
+    <reg name="dcsr"          bitsize="32" type="int"      group="system" regnum="2033" save-restore="no"/>
+    <!-- dpc        CSR 0x7B1  regnum 2034 (0x7F2) -->
+    <reg name="dpc"           bitsize="64" type="code_ptr" group="system"               save-restore="no"/>
+    <!-- dscratch0  CSR 0x7B2  regnum 2035 (0x7F3) -->
+    <reg name="dscratch0"     bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- dscratch1  CSR 0x7B3  regnum 2036 (0x7F4) -->
+    <reg name="dscratch1"     bitsize="64" type="int"      group="system"               save-restore="no"/>
+
+    <!--Machine counter/timer -->
+    <!-- mcycle     CSR 0xB00  regnum 2881 (0xB41) -->
+    <reg name="mcycle"        bitsize="64" type="int"      group="system" regnum="2881" save-restore="no"/>
+    <!-- minstret   CSR 0xB02  regnum 2883 (0xB43) -->
+    <reg name="minstret"      bitsize="64" type="int"      group="system" regnum="2883" save-restore="no"/>
+
+    <!--Unprivileged counter/timer -->
+    <!-- cycle      CSR 0xC00  regnum 3137 (0xC41) -->
+    <reg name="cycle"         bitsize="64" type="int"      group="system" regnum="3137" save-restore="no"/>
+    <!-- time       CSR 0xC01  regnum 3138 (0xC42) -->
+    <reg name="time"          bitsize="64" type="int"      group="system" regnum="3138" save-restore="no"/>
+    <!-- instret    CSR 0xC02  regnum 3139 (0xC43) -->
+    <reg name="instret"       bitsize="64" type="int"      group="system" regnum="3139" save-restore="no"/>
+
+    <!--Machine information registers -->
+    <!-- mvendorid  CSR 0xF11  regnum 3922 (0xF52) -->
+    <reg name="mvendorid"     bitsize="32" type="int"      group="system" regnum="3922" save-restore="no"/>
+    <!-- marchid    CSR 0xF12  regnum 3923 (0xF53) -->
+    <reg name="marchid"       bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mimpid     CSR 0xF13  regnum 3924 (0xF54) -->
+    <reg name="mimpid"        bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mhartid    CSR 0xF14  regnum 3925 (0xF55) -->
+    <reg name="mhartid"       bitsize="64" type="int"      group="system"               save-restore="no"/>
+    <!-- mconfigptr CSR 0xF15  regnum 3926 (0xF56) -->
+    <reg name="mconfigptr"    bitsize="64" type="int"      group="system"               save-restore="no"/>
+
+  </feature>
+
+  <!-- ================================================================
+       Virtual registers
+       priv: current privilege level (not a real CSR, synthesised by
+             the GDB server)  -  regnum 0x1041 = 4161
+       ================================================================ -->
+  <feature name="org.gnu.gdb.riscv.virtual">
+    <!-- priv  regnum 4161 (0x1041) -->
+    <reg name="priv" bitsize="8" type="int" group="system" regnum="4161" save-restore="no"/>
+  </feature>
+
+</target>
