@@ -139,7 +139,7 @@ module Udb
       .returns(T::Array[Idl::FunctionDefAst])
     }
     def reachable_functions(effective_xlen = nil, cache = T.let({}, T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType]))
-      cache_key = effective_xlen.nil? ? :nil : effective_xlen
+      cache_key = effective_xlen
       return @memo.reachable_functions[cache_key] unless @memo.reachable_functions[cache_key].nil?
 
       fns = []

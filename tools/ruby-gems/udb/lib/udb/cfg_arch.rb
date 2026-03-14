@@ -1414,47 +1414,7 @@ module Udb
     # @return [Array<FuncDefAst>] List of all reachable IDL functions for the config
     sig { returns(T::Array[Idl::FunctionDefAst]) }
     def implemented_functions
-      return @implemented_functions unless @implemented_functions.nil?
-
-      @implemented_functions = []
-
-      Udb.logger.info "  Finding all reachable functions from instruction operations"
-
-      implemented_instructions.each do |inst|
-        @implemented_functions <<
-          if inst.base.nil?
-            if multi_xlen?
-              (inst.reachable_functions(32) +
-               inst.reachable_functions(64))
-            else
-              inst.reachable_functions(possible_xlens.fetch(0))
-            end
-          else
-            inst.reachable_functions(T.must(inst.base))
-          end
-      end
-      @implemented_functions = @implemented_functions.flatten
-      @implemented_functions.uniq!(&:name)
-
-      Udb.logger.info "  Finding all reachable functions from CSR operations"
-
-      implemented_csrs.each do |csr|
-        csr_funcs = csr.reachable_functions
-        csr_funcs.each do |f|
-          @implemented_functions << f unless @implemented_functions.any? { |i| i.name == f.name }
-        end
-      end
-
-      # now add everything from fetch
-      st = symtab.global_clone
-      st.push(global_ast.fetch.body)
-      fetch_fns = global_ast.fetch.body.reachable_functions(st)
-      fetch_fns.each do |f|
-        @implemented_functions << f unless @implemented_functions.any? { |i| i.name == f.name }
-      end
-      st.release
-
-      @implemented_functions
+      reachable_functions(show_progress: false)
     end
 
     # @return [Array<FunctionDefAst>] List of functions that can be reached by the configuration

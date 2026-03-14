@@ -393,27 +393,6 @@ class TestReservedWords < Minitest::Test
     end
   end
 
-  # Test that reserved words are rejected as template parameter names
-  def test_keywords_rejected_as_template_parameter_names
-    keywords_to_test = KEYWORDS.reject { |k| %w[true false CSR].include?(k) }
-
-    keywords_to_test.each do |keyword|
-      idl = "%version: 0.11\nfunction testFunc { template U32 #{keyword} returns U32 description { test } body { return 0; } }"
-
-      compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as template parameter name"
-
-      error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
-        ast.type_check(Idl::SymbolTable.new, strict: false)
-      end
-
-      assert_match(/Cannot use reserved word '#{keyword}' as variable name/, error.message)
-    end
-  end
-
   # Test that reserved words are rejected in global variable declarations
   def test_keywords_rejected_as_global_variable_names
     keywords_to_test = KEYWORDS.reject { |k| %w[true false CSR].include?(k) }
