@@ -1374,7 +1374,7 @@ module Udb
 
       @not_prohibited_instructions ||=
         if @config.fully_configured?
-          implemented_instructions(show_progress)
+          implemented_instructions(show_progress:)
         elsif @config.partially_configured?
           bar =
             if show_progress

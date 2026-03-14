@@ -229,8 +229,6 @@ module UdbGen
       # @return [String] m=mandatory, o=optional, n=not present
       sig { params(presence: String).returns(String) }
       def presence2char(presence)
-        raise ArgumentError, "Expecting String but got class #{presence}" unless presence.is_a?(String)
-
         if presence == "mandatory"
           "m"
         elsif presence == "optional"

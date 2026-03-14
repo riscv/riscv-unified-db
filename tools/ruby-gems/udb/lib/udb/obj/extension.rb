@@ -1479,7 +1479,7 @@ module Udb
 
     # returns a condition that meets the requirement _and_ exludes any other version
     # from the same extension
-    sig { returns(Condition) }
+    sig { returns(AbstractCondition) }
     def to_condition_exclusive
       if (satisfying_versions.size == 0) || (extension.versions.size == satisfying_versions.size)
         to_condition

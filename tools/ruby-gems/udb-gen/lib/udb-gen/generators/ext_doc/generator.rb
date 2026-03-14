@@ -18,6 +18,7 @@ module UdbGen
     include TTY::Exit
     include TemplateHelpers
     include ExtDocHelpers
+    include AdocHelpers
 
     NAME = "ext-doc"
 
