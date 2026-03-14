@@ -80,12 +80,16 @@ const config: Config = {
           position: 'left',
           items: [
             {label: 'Introduction', to: '/docs/intro/what-is-udb'},
-            {label: 'IDL Language', to: '/docs/idl/overview'},
             {label: 'Schemas', to: '/docs/schemas/overview'},
             {label: 'Configuration', to: '/docs/configuration/overview'},
             {label: 'Tools', to: '/docs/tools/overview'},
             {label: 'Generators', to: '/docs/generators/overview'},
           ],
+        },
+        {
+          label: 'IDL',
+          to: '/docs/idl',
+          position: 'left',
         },
         {
           label: 'API Reference',

@@ -183,40 +183,35 @@ Build the custom landing page (`src/pages/index.tsx`).
 
 ### 1.1 — Hero section
 
-- [ ] **1.1.1** Display UDB logo, tagline, and three CTA buttons:
+- [x] **1.1.1** Display UDB logo, tagline, and three CTA buttons:
   - "Browse the spec" (external, new tab → generated artifacts URL)
   - "Get started" (→ `/docs/getting-started/users`)
   - "GitHub" (external, new tab → `https://github.com/riscv/riscv-unified-db`)
-- [ ] **1.1.2** Style hero with a subtle background (gradient or light pattern).
+- [x] **1.1.2** Style hero with a subtle background (gradient or light pattern).
 
 ### 1.2 — "What is UDB?" summary
 
-- [ ] **1.2.1** Write a 3–4 sentence summary paragraph.
-- [ ] **1.2.2** Add "Learn more →" link to the full "What is UDB?" doc page.
+- [x] **1.2.1** Write a 3–4 sentence summary paragraph.
+- [x] **1.2.2** Add "Learn more →" link to the full "What is UDB?" doc page.
 
 ### 1.3 — Role-based "I want to..." cards
 
-- [ ] **1.3.1** Implement a 2×2 card grid (or 4-column row on wide screens) with:
+- [x] **1.3.1** Implement a 2×2 card grid (or 4-column row on wide screens) with:
   - 🔍 Browse the RISC-V spec → generated artifacts (external)
   - ⚙️ Generate artifacts for my design → `/docs/getting-started/users`
   - 📝 Contribute data → `/docs/getting-started/spec-writers`
   - 🛠️ Build tools / contribute code → `/docs/getting-started/developers`
-- [ ] **1.3.2** Each card: icon, headline, 1–2 sentence body, primary link button.
+- [x] **1.3.2** Each card: icon, headline, 1–2 sentence body, primary link button.
 
 ### 1.4 — "What can UDB generate?" showcase
 
-- [ ] **1.4.1** Create a visual grid (3–5 items) showing example outputs:
-  - PRM PDF screenshot
-  - HTML config doc screenshot
-  - C header code snippet
-  - SystemVerilog snippet
-  - Profile doc screenshot
-- [ ] **1.4.2** Each item links to the relevant generator docs page.
-- [ ] **1.4.3** Gather/create screenshots or code snippets for each item.
+- [x] **1.4.1** Create a visual grid (3–5 items) showing example outputs. Implemented as a compact generator grid rather than screenshot-based showcase.
+- [x] **1.4.2** Each item links to the relevant generator docs page.
+- [-] **1.4.3** Gather/create screenshots or code snippets for each item. Deferred — using text cards only.
 
 ### 1.5 — Quick links bar
 
-- [ ] **1.5.1** Add a compact row of links:
+- [x] **1.5.1** Add a compact row of links:
   - IDL Language Reference
   - Schema Reference
   - Configuration Format
@@ -350,23 +345,30 @@ For each table, create a page with: description, schema summary (auto-generated 
 
 All content sourced from `doc/idl.adoc` (41.6 KB — comprehensive). Convert to Markdown and split into sections.
 
-- [ ] **6.1** Convert `doc/idl.adoc` → Markdown. Use `pandoc` for the initial conversion, then clean up manually.
-- [ ] **6.2** Split into the following pages under `docs/idl/`:
-  - [ ] **6.2.1** `overview.md` — Overview and design goals
-  - [ ] **6.2.2** `data-types.md` — Bits<N>, Boolean, enumerations, bitfields, structs, arrays
-  - [ ] **6.2.3** `literals.md` — Integer, array, string literals
-  - [ ] **6.2.4** `operators.md` — Full operator precedence table
-  - [ ] **6.2.5** `variables.md` — Variables and constants
-  - [ ] **6.2.6** `type-conversions.md` — Type conversions and casting
-  - [ ] **6.2.7** `builtins.md` — Built-in functions and constants
-  - [ ] **6.2.8** `control-flow.md` — if/else, loops, etc.
-  - [ ] **6.2.9** `functions.md` — User-defined, generated, and built-in functions
-  - [ ] **6.2.10** `scope.md` — Scope rules
-  - [ ] **6.2.11** `in-instructions.md` — How IDL appears in instruction operation fields
-  - [ ] **6.2.12** `in-csrs.md` — How IDL appears in CSR definitions
-- [ ] **6.3** Write `docs/idl/idlc.md` — the `idlc` compiler: CLI, AST API, installation.
-- [ ] **6.4** Write `docs/idl/idl-highlighter.md` — the `idl_highlighter` gem: what it is, how to use it in editors, how it integrates with Docusaurus. This is the canonical page; `docs/tools/idl-highlighter.md` (Phase 7.2.5) will be a brief overview that links here.
-- [ ] **6.5** Add IDL syntax highlighting to Docusaurus (Prism custom language or use `idl_highlighter` output).
+- [x] **6.1** Convert `doc/idl.adoc` → Markdown. Used manual conversion rather than pandoc; content was substantially revised, expanded, and restructured rather than mechanically converted.
+- [x] **6.2** Split into the following pages under `docs/idl/`:
+  - [x] **6.2.1** `index.mdx` — IDL section landing page with logo, tagline, reader guide cards, and language reference card grid
+  - [x] **6.2.2** `overview.mdx` — Overview and design goals; IDL for Verilog/C users entry points; use cases; worked BLTU example; basics (comments, case sensitivity, keywords)
+  - [x] **6.2.3** `data-types.mdx` — Bits\<N\>, Boolean, strings, enumerations, bitfields, structs, arrays, tuples
+  - [x] **6.2.4** `variables.mdx` — Assignment, mutable variables, constants, naming rules table, compile-time vs. runtime
+  - [x] **6.2.5** `literals.mdx` — Verilog-style, C-style, binary, array, string literals; warning callouts for sign-bit truncation
+  - [x] **6.2.6** `operators.mdx` — Full HTML precedence table with rowspan, widening operators section with summary table
+  - [x] **6.2.7** `type-conversions.mdx` — Implicit widening table, $signed/$bits/$enum/$enum_to_a casts; warning callouts
+  - [x] **6.2.8** `control-flow.mdx` — if/else, for loops, const loop variables
+  - [x] **6.2.9** `functions.mdx` — Calling functions, return statement, declarations, rules with hardware rationale, builtin functions
+  - [x] **6.2.10** `scope.mdx` — Global, function, instruction, CSR scopes; .idl file organization
+  - [x] **6.2.11** `builtins.mdx` — $pc, $encoding (with type table), $array_size, $enum_size, $enum_element_size
+  - [x] **6.2.12** `standard-library.mdx` — CSR access, extension checks, raise() with full ExceptionCode table, read_memory/write_memory
+  - [x] **6.2.13** `in-instructions.mdx` — How operation() bodies work
+  - [x] **6.2.14** `in-csrs.mdx` — sw_read(), sw_write(), field types and reset values
+- [x] **6.3** Reader guide pages:
+  - [x] `guide-for-c-users.mdx` — IDL for Programmers: C-family language lineage, what carries over, what differs
+  - [x] `guide-for-verilog-users.mdx` — IDL for Verilog Users: bit-vector model familiar, behavioral vs. structural distinction
+  - [x] `common-misunderstandings.mdx` — Eight common mistakes with examples and fixes
+  - [x] `for-spec-writers.mdx` — Patterns for writing new instructions and CSR definitions
+  - [x] `quick-reference.mdx` — Dense syntax cheat sheet covering all language constructs
+- [ ] **6.4** Write `docs/idl/idlc.md` — the `idlc` compiler: CLI, AST API, installation.
+- [x] **6.5** IDL syntax highlighting in Docusaurus — see D5 in `decisions.md`.
 
 ---
 
@@ -495,7 +497,7 @@ All existing `.adoc` files must be converted. This is a one-time migration.
 
 | Source file | Target location | Status |
 |---|---|---|
-| `doc/idl.adoc` | `docs/idl/` (split into 12 pages) | `[ ]` |
+| `doc/idl.adoc` | `docs/idl/` (split into 14 pages + 5 reader guides) | `[x]` |
 | `doc/HOW-DO-I.adoc` | `docs/getting-started/developers/faq.md` | `[ ]` |
 | `doc/data-templates.adoc` | `docs/getting-started/spec-writers/data-templates.md` | `[ ]` |
 | `doc/ci.adoc` | `docs/getting-started/developers/ci.md` | `[ ]` |

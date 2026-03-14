@@ -1,0 +1,53 @@
+---
+sidebar_position: 10
+title: Builtins
+---
+
+IDL provides several builtins to access implicit machine state or query data structure properties.
+
+## Implicit Machine State
+
+Two special variables give access to the current instruction's context. They are available in Instruction and CSR scope only — not in function scope or global scope.
+
+| Name | Type | Scope | Description |
+|------|------|-------|-------------|
+| `$pc` | `Bits<MXLEN>` | Instruction, CSR | The virtual address of the instruction currently executing. |
+| `$encoding` | `Bits<N>` (N = length of the last fetched instruction) | Instruction, CSR | The binary encoding of the instruction currently executing. |
+
+```idl
+# $pc: use the current PC to compute a branch target
+jump(PC + $signed(imm));
+
+# $encoding: pass the current instruction encoding to a memory access
+X[xd] = read_memory<32>(virtual_address, $encoding);
+
+# raise() uses $encoding as the tval for illegal instruction exceptions
+raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+```
+
+## Data Type Queries
+
+### `$enum_size`
+
+Returns the number of members in an enum:
+
+```idl
+$enum_size(RoundingMode) # => 5
+```
+
+### `$enum_element_size`
+
+Returns the number of bits needed to represent the largest value in an enum:
+
+```idl
+$enum_element_size(RoundingMode) # => 3
+```
+
+### `$array_size`
+
+Returns the number of elements in an array:
+
+```idl
+Bits<32> array [13];
+$array_size(array) # => 13
+```

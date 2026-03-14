@@ -198,3 +198,77 @@ If this decision were reversed (deploy on every push to `main` instead of waitin
 3. Regenerate the workflow with `./bin/chore gen regress`.
 4. Update `pages.yml` to download the `docusaurus-site` artifact and place it at `_site/` (see Phase 0.4.3 for the merge plan).
 5. Update Q4 resolution in the implementation plan to reflect immediate deployment.
+
+---
+
+## D5 — IDL syntax highlighting: Prism definition as canonical source
+
+**Status**: Decided
+**Resolved from**: Phase 6.5
+**Date**: 2026-03
+
+### Decision
+IDL syntax highlighting is implemented as a Prism language definition (`doc/src/prism/idl.js`), which is the single canonical source. The TextMate grammar used by the VSCode extension (`tools/vscode/idl/syntaxes/idl.tmLanguage.json`) is auto-generated from the Prism definition via `bin/chore gen vscode-idl`. The Prism definition is registered with Docusaurus via a swizzled `prism-include-languages.js`.
+
+### Rationale
+- VSCode uses TextMate grammars; Docusaurus uses Prism — these are incompatible formats with no shared source possible without a conversion step.
+- Shiki (which natively consumes TextMate grammars) was considered but is not supported by Docusaurus 3.9.x as a built-in highlighter. Using `@shikijs/rehype` as a rehype plugin was investigated but would conflict with Docusaurus's built-in Prism rendering and add ~1 MB WASM to the bundle.
+- The Prism definition is the natural source for the web context; the conversion to TextMate is mechanical and fully automated.
+- The `bin/chore gen vscode-idl` command (and `bin/chore gen all`) regenerates the TextMate grammar automatically. The `-f` (fail-on-change) flag enables CI enforcement.
+
+### Implemented in
+- `doc/src/prism/idl.js` — canonical Prism language definition (module.exports function form)
+- `doc/src/theme/prism-include-languages.js` — Docusaurus swizzle that registers the IDL language
+- `tools/node/idl-grammar-gen/index.js` — Node.js generator script
+- `tools/vscode/idl/syntaxes/idl.tmLanguage.json` — auto-generated TextMate grammar (do not edit by hand)
+- `bin/chore` — added `do_gen_vscode_idl` function and `vscode-idl` case; added to `do_gen_all`
+
+### Reversal: make TextMate the canonical source
+If this decision were reversed (TextMate grammar as canonical, Prism generated from it):
+
+1. Write a TextMate → Prism converter (reverse of `tools/node/idl-grammar-gen/index.js`).
+2. Update `bin/chore gen vscode-idl` to run the new converter instead.
+3. Edit `tools/vscode/idl/syntaxes/idl.tmLanguage.json` directly to change token definitions.
+4. Remove the `THIS IS THE CANONICAL SOURCE` comment from `doc/src/prism/idl.js` and update it to note it is generated.
+
+---
+
+## D6 — IDL landing page as `docs/idl/index.mdx` with card-based layout
+
+**Status**: Decided
+**Date**: 2026-03
+
+### Decision
+The IDL section has a dedicated landing page at `docs/idl/index.mdx` (sidebar_position: 0) that serves as the entry point for the entire IDL section. It uses a card-based layout with two sections: Reader Guides (audience-oriented entry points) and Language Reference (page-by-page index). The page uses `react-icons` (Phosphor icon set) for card icons and inline JSX components for the card and badge layout.
+
+IDL has its own top-level navbar entry pointing to `/docs/idl`, separate from the Documentation dropdown.
+
+### Reader Guides pages
+- `guide-for-c-users.mdx` — IDL for Programmers (C-family language lineage)
+- `guide-for-verilog-users.mdx` — IDL for Verilog Users
+- `common-misunderstandings.mdx` — Common mistakes
+- `for-spec-writers.mdx` — Writing new instructions and CSRs
+- `quick-reference.mdx` — Syntax cheat sheet (placed first in Language Reference, not in Reader Guides)
+
+### Rationale
+- A card-based landing page provides immediate navigation to the right entry point for each audience without requiring users to read sequentially.
+- Reader Guides and Language Reference serve distinct audiences (new readers vs. existing users looking up syntax) and benefit from visual separation.
+- `react-icons` (Phosphor set via `react-icons/pi`) provides consistent, semantically matched icons with no custom SVG work required.
+- Quick Reference belongs in Language Reference, not Reader Guides — it serves users who already know the language, not those learning it.
+
+### Implemented in
+- `doc/docs/idl/index.mdx` — landing page
+- `doc/docs/idl/guide-for-c-users.mdx`
+- `doc/docs/idl/guide-for-verilog-users.mdx`
+- `doc/docs/idl/common-misunderstandings.mdx`
+- `doc/docs/idl/for-spec-writers.mdx`
+- `doc/docs/idl/quick-reference.mdx`
+- `doc/src/css/custom.css` — `.idl-landing-hero`, `.idl-section-label`, `.idl-card` (hover state)
+- `doc/docusaurus.config.ts` — IDL navbar item; IDL removed from Documentation dropdown
+- `doc/package.json` — added `react-icons ^5.6.0`
+
+### Reversal: remove dedicated IDL landing page
+1. Delete `doc/docs/idl/index.mdx`.
+2. Update the IDL navbar item to point to `/docs/idl/overview` instead of `/docs/idl`.
+3. Remove the `.idl-landing-*` CSS classes from `doc/src/css/custom.css`.
+4. Optionally remove `react-icons` from `doc/package.json` if no other pages use it.
