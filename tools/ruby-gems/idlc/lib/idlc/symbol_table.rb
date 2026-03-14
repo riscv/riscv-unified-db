@@ -136,7 +136,7 @@ module Idl
     def hash
       return @frozen_hash unless @frozen_hash.nil?
 
-      [@scopes.hash, @name.hash].hash
+      object_id
     end
 
     class EnumDef < T::Struct

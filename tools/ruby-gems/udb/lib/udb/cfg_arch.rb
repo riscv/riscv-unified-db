@@ -689,26 +689,29 @@ module Udb
         progressbar.advance if show_progress
         if @mxlen == 32
           if inst.rv32?
-            s = inst.fill_symtab(32, inst.operation_ast)
-            unless inst.operation_ast.nil?
-              inst.operation_ast.prune(s).type_check(s, strict: true)
+            op_ast = inst.operation_ast
+            unless op_ast.nil?
+              s = inst.fill_symtab(32, op_ast)
+              op_ast.prune(s).type_check(s, strict: true)
+              s.release
             end
-            s.release
           end
         else
           if inst.rv64?
-            s = inst.fill_symtab(64, inst.operation_ast)
-            unless inst.operation_ast.nil?
-              inst.operation_ast.prune(s).type_check(s, strict: true)
+            op_ast = inst.operation_ast
+            unless op_ast.nil?
+              s = inst.fill_symtab(64, op_ast)
+              op_ast.prune(s).type_check(s, strict: true)
+              s.release
             end
-            s.release
           end
           if xlens.include?(32) && inst.rv32?
-            s = inst.fill_symtab(32, inst.operation_ast)
-            unless inst.operation_ast.nil?
-              inst.operation_ast.prune(s).type_check(s, strict: true)
+            op_ast = inst.operation_ast
+            unless op_ast.nil?
+              s = inst.fill_symtab(32, op_ast)
+              op_ast.prune(s).type_check(s, strict: true)
+              s.release
             end
-            s.release
           end
         end
       end
@@ -721,47 +724,59 @@ module Udb
 
       csr_list.each do |csr|
         progressbar.advance if show_progress
+        # Cache CSR base checks to avoid repeated method calls
+        csr_in_base32 = csr.defined_in_base32?
+        csr_in_base64 = csr.defined_in_base64?
+
         if csr.has_custom_sw_read?
-          if (xlens.include?(32) && csr.defined_in_base32?)
+          if (xlens.include?(32) && csr_in_base32)
             s = csr.fill_symtab(nil, 32)
             csr.sw_read_ast(s).prune(s).type_check(s, strict: true)
+            s.release
           end
-          if (xlens.include?(64) && csr.defined_in_base64?)
+          if (xlens.include?(64) && csr_in_base64)
             s = csr.fill_symtab(nil, 64)
             csr.sw_read_ast(s).prune(s).type_check(s, strict: true)
+            s.release
           end
         end
         csr.possible_fields.each do |field|
-          unless field.reset_value_ast.nil?
-            if xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
+          reset_ast = field.reset_value_ast
+          unless reset_ast.nil?
+            if xlens.include?(32) && csr_in_base32 && field.defined_in_base32?
               s = field.fill_symtab_for_reset(nil)
-              field.reset_value_ast.prune(s).type_check(s, strict: true)
+              reset_ast.prune(s).type_check(s, strict: true)
               s.release
             end
-            if xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
+            if xlens.include?(64) && csr_in_base64 && field.defined_in_base64?
               s = field.fill_symtab_for_reset(nil)
-              field.reset_value_ast.prune(s).type_check(s, strict: true)
+              reset_ast.prune(s).type_check(s, strict: true)
               s.release
             end
           end
-          unless field.sw_write_ast(symtab).nil?
-            if xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
+          if field.has_custom_sw_write?
+            if xlens.include?(32) && csr_in_base32 && field.defined_in_base32?
               s = field.fill_symtab_for_sw_write(32, nil)
               field.sw_write_ast(s).prune(s).type_check(s, strict: true)
+              s.release
             end
-            if xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
+            if xlens.include?(64) && csr_in_base64 && field.defined_in_base64?
               s = field.fill_symtab_for_sw_write(64, nil)
               field.sw_write_ast(s).prune(s).type_check(s, strict: true)
+              s.release
             end
           end
-          unless field.type_ast.nil?
-            if xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
+          type_ast = field.type_ast
+          unless type_ast.nil?
+            if xlens.include?(32) && csr_in_base32 && field.defined_in_base32?
               s = field.fill_symtab_for_type(32, nil)
-              field.type_ast.prune(s).type_check(s, strict: true)
+              type_ast.prune(s).type_check(s, strict: true)
+              s.release
             end
-            if xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
+            if xlens.include?(64) && csr_in_base64 && field.defined_in_base64?
               s = field.fill_symtab_for_type(64, nil)
-              field.type_ast.prune(s).type_check(s, strict: true)
+              type_ast.prune(s).type_check(s, strict: true)
+              s.release
             end
           end
         end
@@ -1459,7 +1474,10 @@ module Udb
 
       # Shared cache across all instructions/CSRs so that common utility functions
       # are only traversed once rather than once per instruction.
-      shared_cache = {}
+      shared_cache = {
+        32 => T.let({}, Idl::AstNode::ReachableFunctionCacheType),
+        64 => T.let({}, Idl::AstNode::ReachableFunctionCacheType)
+      }
 
       possible_instructions.each do |inst|
         bar.advance if show_progress
@@ -1467,13 +1485,13 @@ module Udb
         fns =
           if inst.base.nil?
             if multi_xlen?
-              (inst.reachable_functions(32, shared_cache) +
-              inst.reachable_functions(64, shared_cache))
+              (inst.reachable_functions(32, shared_cache.fetch(32)) +
+              inst.reachable_functions(64, shared_cache.fetch(32)))
             else
-              inst.reachable_functions(possible_xlens.fetch(0), shared_cache)
+              inst.reachable_functions(possible_xlens.fetch(0), shared_cache.fetch(possible_xlens.fetch(0)))
             end
           else
-            inst.reachable_functions(T.must(inst.base), shared_cache)
+            inst.reachable_functions(T.must(inst.base), shared_cache.fetch(T.must(inst.base)))
           end
 
         @reachable_functions.concat(fns)
@@ -1483,13 +1501,15 @@ module Udb
         possible_csrs.flat_map do |csr|
           bar.advance if show_progress
 
-          csr.reachable_functions
+          csr.reachable_functions(nil, shared_cache)
         end.uniq
 
       # now add everything from fetch
       st = @symtab.global_clone
       st.push(global_ast.fetch.body)
-      @reachable_functions += global_ast.fetch.body.reachable_functions(st)
+      possible_xlens.each do |xlen|
+        @reachable_functions += global_ast.fetch.body.reachable_functions(st, shared_cache.fetch(xlen))
+      end
       bar.advance if show_progress
       st.release
 
@@ -1498,8 +1518,6 @@ module Udb
       global_ast.functions.select { |fn| fn.external? }.each do |fn|
         st.push(fn)
         @reachable_functions << fn
-        fn.apply_template_and_arg_syms(st)
-        @reachable_functions += fn.reachable_functions(st)
         bar.advance if show_progress
         st.pop
       end
