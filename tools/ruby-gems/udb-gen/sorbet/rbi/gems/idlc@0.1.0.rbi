@@ -181,6 +181,7 @@ class Idl::ArrayLiteralAst < ::Idl::AstNode
 
   def element_nodes; end
   def entries; end
+  def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -3752,6 +3753,24 @@ class Idl::PostIncrementExpressionSyntaxNode < ::Idl::SyntaxNode
   def to_ast; end
 end
 
+module Idl::PruneHelpers
+  class << self
+    def coerce_ary_element_widths(symtab, elements, max_element_width); end
+    def create_bool_literal(value); end
+    def create_int_literal(value, forced_type: T.unsafe(nil)); end
+    def create_literal(symtab, value, type, forced_type: T.unsafe(nil)); end
+
+    sig do
+      params(
+        symtab: ::Idl::SymbolTable,
+        node: ::Idl::AstNode,
+        max: T.nilable(::Integer)
+      ).returns(T.nilable(::Integer))
+    end
+    def find_max_element_width(symtab, node, max = T.unsafe(nil)); end
+  end
+end
+
 module Idl::ReplicationExpression0
   def n; end
   def v; end
@@ -5061,18 +5080,6 @@ class IdlParser < ::Treetop::Runtime::CompiledParser
   protected
 
   def idlc_instantiate_node(node_type, *args); end
-end
-
-class Object < ::BasicObject
-  include ::Kernel
-  include ::PP::ObjectMixin
-  include ::Udb::Helpers::WavedromUtil
-
-  private
-
-  def create_bool_literal(value); end
-  def create_int_literal(value, forced_type: T.unsafe(nil)); end
-  def create_literal(symtab, value, type, forced_type: T.unsafe(nil)); end
 end
 
 module Treetop; end
