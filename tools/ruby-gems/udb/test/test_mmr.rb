@@ -14,6 +14,17 @@ require "udb/logic"
 require "udb/cfg_arch"
 require "udb/resolver"
 
+# this is needed for tty-progressbar to work with minitest
+unless StringIO.method_defined? :ioctl
+  class StringIO
+    def ioctl(*)
+      # :nocov:
+      80
+      # :nocov:
+    end
+  end
+end
+
 class TestMmr < Minitest::Test
   include Udb
 
@@ -178,7 +189,7 @@ class TestMmr < Minitest::Test
 
   def test_fields_empty_when_no_fields
     mmr = make_mmr  # no "fields" key
-    assert_equal [], mmr.fields
+    assert_empty mmr.fields
   end
 
   def test_fields_with_single_field
