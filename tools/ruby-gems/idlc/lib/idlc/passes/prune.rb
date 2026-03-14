@@ -9,81 +9,88 @@
 # It adds a `prune` function to every AstNode that returns a new,
 # pruned subtree.
 
+require "sorbet-runtime"
+
 require_relative "../ast"
 
-def create_int_literal(value, forced_type: nil)
-  width = forced_type ? forced_type.width : value.bit_length
-  raise "pruning error: attempting to prune an integer with unknown width" unless width.is_a?(Integer)
-  width = 1 if width == 0
-  v = value <= 512 ? value.to_s : "h#{value.to_s(16)}"
-  str = "#{width}'#{v}"
-  Idl::IntLiteralAst.new(str, 0...str.size, str)
-end
-
-def create_bool_literal(value)
-  if value
-    Idl::TrueExpressionAst.new("true", 0..4)
-  else
-    Idl::FalseExpressionAst.new("false", 0..5)
-  end
-end
-
-# returns nil if array holds bools
-# otherwise (it holds bits), returns max bitwidth of all elements
-sig { params(symtab: Idl::SymbolTable, node: Idl::AstNode, max: T.nilable(Integer)).returns(T.nilable(Integer)) }
-def find_max_element_width(symtab, node, max = nil)
-  if node.is_a?(Idl::ArrayLiteralAst)
-    node.entries.map do |e|
-      e_max = find_max_element_width(symtab, e)
-      max.nil? ? e_max : [max, e_max].max
-    end.max
-  else
-    if node.is_a?(Idl::TrueExpressionAst) || node.is_a?(Idl::FalseExpressionAst)
-      nil
-    else
-      node_width = node.type(symtab).width
-      max.nil? ? node_width : [max, node_width].max
+module Idl
+  module PruneHelpers
+    extend T::Sig
+    def self.create_int_literal(value, forced_type: nil)
+      width = forced_type ? forced_type.width : value.bit_length
+      raise "pruning error: attempting to prune an integer with unknown width" unless width.is_a?(Integer)
+      width = 1 if width == 0
+      v = value <= 512 ? value.to_s : "h#{value.to_s(16)}"
+      str = "#{width}'#{v}"
+      Idl::IntLiteralAst.new(str, 0...str.size, str)
     end
-  end
-end
 
-def coerce_ary_element_widths(symtab, elements, max_element_width)
-  if elements.is_a?(Array) && elements.empty?
-    Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18, [])
-  elsif elements.fetch(0).is_a?(Idl::ArrayLiteralAst)
-    # Recursively coerce nested arrays - pass e.entries, not e
-    Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18,
-      elements.map { |e| coerce_ary_element_widths(symtab, e.entries, max_element_width) })
-  else
-    # Base case: elements is an array of leaf nodes, coerce each to max_element_width
-    coerced = elements.map { |node| create_int_literal(node.value(symtab), forced_type: Idl::Type.new(:bits, width: max_element_width)) }
-    Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18, coerced)
-  end
-end
-
-def create_literal(symtab, value, type, forced_type: nil)
-  case type.kind
-  when :enum_ref
-    member_name = type.enum_class.element_names[type.enum_class.element_values.index(value)]
-    str = "#{type.enum_class.name}::#{member_name}"
-    Idl::EnumRefAst.new(str, 0...str.size, type.enum_class.name, member_name)
-  when :bits
-    create_int_literal(value, forced_type:)
-  when :boolean
-    create_bool_literal(value)
-  when :array
-    elements = value.map { |e| create_literal(symtab, e, type.sub_type) }
-    # array elements MUST have the same type, so we need to coerce them
-    # find the leaf level, and get the bit widths if needed
-    ary = Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18, elements)
-    max_element_width = find_max_element_width(symtab, ary)
-    if max_element_width.nil?
-      ary
-    else
-      coerce_ary_element_widths(symtab, elements, max_element_width)
+    def self.create_bool_literal(value)
+      if value
+        Idl::TrueExpressionAst.new("true", 0..4)
+      else
+        Idl::FalseExpressionAst.new("false", 0..5)
+      end
     end
-  else
-    raise "TODO: #{type}"
+
+    # returns nil if array holds bools
+    # otherwise (it holds bits), returns max bitwidth of all elements
+    sig { params(symtab: Idl::SymbolTable, node: Idl::AstNode, max: T.nilable(Integer)).returns(T.nilable(Integer)) }
+    def self.find_max_element_width(symtab, node, max = nil)
+      if node.is_a?(Idl::ArrayLiteralAst)
+        node.entries.map do |e|
+          e_max = find_max_element_width(symtab, e)
+          max.nil? ? e_max : [max, e_max].max
+        end.max
+      else
+        if node.is_a?(Idl::TrueExpressionAst) || node.is_a?(Idl::FalseExpressionAst)
+          nil
+        else
+          node_width = node.type(symtab).width
+          max.nil? ? node_width : [max, node_width].max
+        end
+      end
+    end
+
+    def self.coerce_ary_element_widths(symtab, elements, max_element_width)
+      if elements.is_a?(Array) && elements.empty?
+        Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18, [])
+      elsif elements.fetch(0).is_a?(Idl::ArrayLiteralAst)
+        # Recursively coerce nested arrays - pass e.entries, not e
+        Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18,
+          elements.map { |e| coerce_ary_element_widths(symtab, e.entries, max_element_width) })
+      else
+        # Base case: elements is an array of leaf nodes, coerce each to max_element_width
+        coerced = elements.map { |node| create_int_literal(node.value(symtab), forced_type: Idl::Type.new(:bits, width: max_element_width)) }
+        Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18, coerced)
+      end
+    end
+
+    def self.create_literal(symtab, value, type, forced_type: nil)
+      case type.kind
+      when :enum_ref
+        member_name = type.enum_class.element_names[type.enum_class.element_values.index(value)]
+        str = "#{type.enum_class.name}::#{member_name}"
+        Idl::EnumRefAst.new(str, 0...str.size, type.enum_class.name, member_name)
+      when :bits
+        create_int_literal(value, forced_type:)
+      when :boolean
+        create_bool_literal(value)
+      when :array
+        elements = value.map { |e| create_literal(symtab, e, type.sub_type) }
+        # array elements MUST have the same type, so we need to coerce them
+        # find the leaf level, and get the bit widths if needed
+        ary = Idl::ArrayLiteralAst.new("pruned_literal_ary", 0..18, elements)
+        max_element_width = find_max_element_width(symtab, ary)
+        if max_element_width.nil?
+          ary
+        else
+          coerce_ary_element_widths(symtab, elements, max_element_width)
+        end
+      else
+        raise "TODO: #{type}"
+      end
+    end
   end
 end
 
@@ -144,7 +151,7 @@ module Idl
             This would require syntax like { .a = FOO, .b = BAR }
           MSG
         end
-        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         FunctionCallExpressionAst.new(input, interval, name, @children.map { |a| a.prune(symtab) })
@@ -310,7 +317,7 @@ module Idl
             value_error "Unknown width"
           end
         end
-        return create_literal(symtab, val, type(symtab), forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_literal(symtab, val, type(symtab), forced_type: forced_type || type(symtab))
       end
       # fall through
 
@@ -328,22 +335,22 @@ module Idl
       if op == "&&"
         raise "pruning error" unless forced_type.nil? || forced_type.kind == :boolean
         if !lhs_value.nil? && !rhs_value.nil?
-          create_bool_literal(lhs_value && rhs_value)
+          PruneHelpers.create_bool_literal(lhs_value && rhs_value)
         elsif lhs_value == true
           rhs.prune(symtab)
         elsif rhs_value == true
           lhs.prune(symtab)
         elsif lhs_value == false || rhs_value == false
-          create_bool_literal(false)
+          PruneHelpers.create_bool_literal(false)
         else
           BinaryExpressionAst.new(input, interval, lhs.prune(symtab), @op, rhs.prune(symtab))
         end
       elsif op == "||"
         raise "pruning error" unless forced_type.nil? || forced_type.kind == :boolean
         if !lhs_value.nil? && !rhs_value.nil?
-          create_bool_literal(lhs_value || rhs_value)
+          PruneHelpers.create_bool_literal(lhs_value || rhs_value)
         elsif lhs_value == true || rhs_value == true
-          create_bool_literal(true)
+          PruneHelpers.create_bool_literal(true)
         elsif lhs_value == false
           rhs.prune(symtab)
         elsif rhs_value == false
@@ -353,13 +360,13 @@ module Idl
         end
       elsif op == "&"
         if lhs_value == 0 && type(symtab).width != :unknown
-          create_literal(symtab, 0, forced_type: forced_type || type(symtab))
+          PruneHelpers.create_literal(symtab, 0, forced_type: forced_type || type(symtab))
         elsif (rhs.type(symtab).width != :unknown) && lhs_value == ((1 << rhs.type(symtab).width) - 1) && type(symtab).width != :unknown
           # rhs idenntity
           rhs.prune(symtab, forced_type:)
         elsif rhs_value == 0 && type(symtab).width != :unknown
           # anything & 0 == 0
-          create_literal(symtab, 0, forced_type: forced_type || type(symtab))
+          PruneHelpers.create_literal(symtab, 0, forced_type: forced_type || type(symtab))
         elsif (lhs.type(symtab).width != :unknown) && rhs_value == ((1 << lhs.type(symtab).width) - 1) && type(symtab).width != :unknown
           # lhs identity
           lhs.prune(symtab, forced_type:)
@@ -376,20 +383,20 @@ module Idl
           rhs.prune(symtab, forced_type:)
         elsif rhs_type.width != :unknown && lhs_value == ((1 << rhs.type(symtab).width) - 1) && type(symtab).width != :unknown
           # ~0 | anything == ~0
-          create_literal(symtab, lhs_value, forced_type: forced_type || type(symtab))
+          PruneHelpers.create_literal(symtab, lhs_value, forced_type: forced_type || type(symtab))
         elsif rhs_value == 0 && type(symtab).width != :unknown
           # lhs identity
           lhs.prune(symtab, forced_type:)
         elsif lhs_type.width != :unknown && rhs_value == ((1 << lhs.type(symtab).width) - 1) && type(symtab).width != :unknown
           # anything | ~0 == ~0
-          create_literal(symtab, rhs_value, forced_type: forced_type || type(symtab))
+          PruneHelpers.create_literal(symtab, rhs_value, forced_type: forced_type || type(symtab))
         else
           # neither lhs nor rhs were prunable
           BinaryExpressionAst.new(input, interval, lhs.prune(symtab, forced_type:), @op, rhs.prune(symtab, forced_type:))
         end
       elsif op == "=="
         if !lhs_value.nil? && !rhs_value.nil?
-          create_bool_literal(lhs_value == rhs_value)
+          PruneHelpers.create_bool_literal(lhs_value == rhs_value)
         else
           BinaryExpressionAst.new(input, interval, lhs.prune(symtab), @op, rhs.prune(symtab))
         end
@@ -528,7 +535,7 @@ module Idl
     def prune(symtab, forced_type: nil)
       value_result = value_try do
         v = value(symtab)
-        return create_int_literal(v, forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_int_literal(v, forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         c = ConcatenationExpressionAst.new(
@@ -537,13 +544,13 @@ module Idl
         if forced_type
           if forced_type.width < type(symtab).width
             c = AryRangeAccessAst.new(
-              input, interval, c, create_int_literal(forced_type.width - 1), create_int_literal(0)
+              input, interval, c, PruneHelpers.create_int_literal(forced_type.width - 1), create_int_literal(0)
             )
           elsif forced_type.width > type(symtab).width
             extra = forced_type.width - type(symtab).width
             mock_type = Struct.new(:width)
             c = ConcatenationExpressionAst.new(
-              input, interval, [create_int_literal(0, forced_type: mock_type.new(extra))] + @children.map { |c| c.prune(symtab) }
+              input, interval, [PruneHelpers.create_int_literal(0, forced_type: mock_type.new(extra))] + @children.map { |c| c.prune(symtab) }
             )
           end
         end
@@ -556,20 +563,20 @@ module Idl
     def prune(symtab, forced_type: nil)
       value_result = value_try do
         v = value(symtab)
-        return create_int_literal(v, forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_int_literal(v, forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         c = ReplicationExpressionAst.new(input, interval, n.prune(symtab), v.prune(symtab))
         if forced_type
           if forced_type.width < type(symtab).width
             c = AryRangeAccessAst.new(
-              input, interval, c, create_int_literal(forced_type.width - 1), create_int_literal(0)
+              input, interval, c, PruneHelpers.create_int_literal(forced_type.width - 1), create_int_literal(0)
             )
           elsif forced_type.width > type(symtab).width
             extra = forced_type.width - type(symtab).width
             mock_type = Struct.new(:width)
             c = ConcatenationExpressionAst.new(
-              input, interval, [create_int_literal(0, forced_type: mock_type.new(extra))] + @children.map { |c| c.prune(symtab) }
+              input, interval, [PruneHelpers.create_int_literal(0, forced_type: mock_type.new(extra))] + @children.map { |c| c.prune(symtab) }
             )
           end
         end
@@ -623,7 +630,7 @@ module Idl
         if type(symtab).width == :unknown
           value_error "unknown width"
         end
-        return create_int_literal(v, forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_int_literal(v, forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         CsrFieldReadExpressionAst.new(input, interval, @csr.dup, @field_name)
@@ -638,7 +645,7 @@ module Idl
         if type(symtab).width == :unknown
           value_error "unknown width"
         end
-        return create_int_literal(v, forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_int_literal(v, forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         CsrReadExpressionAst.new(input, interval, @csr_name)
@@ -666,7 +673,7 @@ module Idl
             value_error "Unknown width"
           end
         end
-        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         dup
@@ -683,7 +690,7 @@ module Idl
             value_error "Unknown width"
           end
         end
-        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         UnaryOperatorExpressionAst.new(input, interval, @op, exp.prune(symtab, forced_type:))
@@ -700,7 +707,7 @@ module Idl
             value_error "Unknown width"
           end
         end
-        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         AryElementAccessAst.new(input, interval, var.prune(symtab), index.prune(symtab))
@@ -715,7 +722,7 @@ module Idl
         if type(symtab).width == :unknown
           value_error "Unknown width"
         end
-        return create_int_literal(v, forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_int_literal(v, forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         AryRangeAccessAst.new(input, interval, var.prune(symtab), msb.prune(symtab), lsb.prune(symtab))
@@ -732,7 +739,7 @@ module Idl
             value_error "Unknown width"
           end
         end
-        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         FieldAccessExpressionAst.new(input, interval, obj.prune(symtab), @field_name)
@@ -744,7 +751,7 @@ module Idl
     def prune(symtab, forced_type: nil)
       value_result = value_try do
         v = value(symtab)
-        return create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
+        return PruneHelpers.create_literal(symtab, v, type(symtab), forced_type: forced_type || type(symtab))
       end
       value_else(value_result) do
         dup
