@@ -18,7 +18,6 @@ module Idl
   def _nt_builtin_function_definition; end
   def _nt_builtin_read_only_var; end
   def _nt_builtin_read_write_var; end
-  def _nt_builtin_type_name; end
   def _nt_comment; end
   def _nt_concatenation_expression; end
   def _nt_constraint_body; end
@@ -43,7 +42,6 @@ module Idl
   def _nt_function_arg_list; end
   def _nt_function_body; end
   def _nt_function_call; end
-  def _nt_function_call_template_arguments; end
   def _nt_function_definition; end
   def _nt_function_if_block; end
   def _nt_function_name; end
@@ -57,7 +55,6 @@ module Idl
   def _nt_instruction_operation; end
   def _nt_int; end
   def _nt_isa; end
-  def _nt_keyword; end
   def _nt_p0_binary_expression; end
   def _nt_p0_binary_operator; end
   def _nt_p1_binary_expression; end
@@ -83,7 +80,6 @@ module Idl
   def _nt_post_dec; end
   def _nt_post_inc; end
   def _nt_replication_expression; end
-  def _nt_reserved; end
   def _nt_return_expression; end
   def _nt_return_statement; end
   def _nt_rval; end
@@ -106,7 +102,6 @@ module Idl
   def _nt_type_name; end
   def _nt_unary_expression; end
   def _nt_unary_operator; end
-  def _nt_user_type_name; end
   def _nt_var_write; end
   def _nt_version_string; end
   def root; end
@@ -182,6 +177,7 @@ class Idl::ArrayLiteralAst < ::Idl::AstNode
 
   def element_nodes; end
   def entries; end
+  def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -274,6 +270,7 @@ class Idl::AryElementAccessAst < ::Idl::AstNode
 
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def index; end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -306,10 +303,11 @@ class Idl::AryElementAssignmentAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def idx; end
   def lhs; end
+  def nullify_assignments(symtab); end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
   def rhs; end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -346,6 +344,7 @@ class Idl::AryRangeAccessAst < ::Idl::AstNode
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def lsb; end
   def msb; end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -380,10 +379,11 @@ class Idl::AryRangeAssignmentAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def lsb; end
   def msb; end
+  def nullify_assignments(symtab); end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
   def rhs; end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -521,13 +521,34 @@ class Idl::AstNode
 
   def prune(symtab, forced_type: T.unsafe(nil)); end
   def reachable_exceptions(symtab, cache = T.unsafe(nil)); end
+
+  sig do
+    params(
+      symtab: ::Idl::SymbolTable,
+      cache: T::Hash[T::Array[T.untyped], T::Array[::Idl::FunctionDefAst]]
+    ).returns(T::Array[::Idl::FunctionDefAst])
+  end
   def reachable_functions(symtab, cache = T.unsafe(nil)); end
 
-  sig { params(filename: T.any(::Pathname, ::String), starting_line: ::Integer).void }
-  def set_input_file(filename, starting_line = T.unsafe(nil)); end
+  sig do
+    params(
+      filename: T.any(::Pathname, ::String),
+      starting_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).void
+  end
+  def set_input_file(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
-  sig { params(filename: T.any(::Pathname, ::String), starting_line: ::Integer).void }
-  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil)); end
+  sig do
+    params(
+      filename: T.any(::Pathname, ::String),
+      starting_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).void
+  end
+  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
   sig { returns(T::Hash[::String, T.untyped]) }
   def source_yaml; end
@@ -567,6 +588,11 @@ class Idl::AstNode
 
   sig { params(block: T.proc.params(arg0: ::Object).returns(T.untyped)).returns(T.untyped) }
   def value_try(&block); end
+
+  private
+
+  sig { params(pos: ::Integer, lfo: T::Array[::Integer]).returns(::Integer) }
+  def idl_pos_to_file_offset(pos, lfo); end
 
   class << self
     sig do
@@ -630,6 +656,7 @@ end
 Idl::AstNode::PossiblyUnknownBits1Type = T.let(T.unsafe(nil), Idl::Type)
 Idl::AstNode::PossiblyUnknownBits32Type = T.let(T.unsafe(nil), Idl::Type)
 Idl::AstNode::PossiblyUnknownBits64Type = T.let(T.unsafe(nil), Idl::Type)
+Idl::AstNode::ReachableFunctionCacheType = T.type_alias { T::Hash[T::Array[T.untyped], T::Array[::Idl::FunctionDefAst]] }
 Idl::AstNode::StringType = T.let(T.unsafe(nil), Idl::Type)
 
 class Idl::AstNode::TypeError < ::StandardError
@@ -733,7 +760,7 @@ end
 module Idl::BitfieldDefinition3
   def e; end
   def int; end
-  def user_type_name; end
+  def type_name; end
 end
 
 class Idl::BitfieldDefinitionAst < ::Idl::AstNode
@@ -863,7 +890,7 @@ Idl::BitsUnknownType = T.let(T.unsafe(nil), Idl::Type)
 module Idl::BodyFunctionDefinition0; end
 
 module Idl::BodyFunctionDefinition1
-  def single_declaration; end
+  def type_name; end
 end
 
 module Idl::BodyFunctionDefinition2
@@ -872,7 +899,7 @@ module Idl::BodyFunctionDefinition2
 end
 
 module Idl::BodyFunctionDefinition3
-  def type_name; end
+  def single_declaration; end
 end
 
 module Idl::BodyFunctionDefinition4
@@ -881,25 +908,15 @@ module Idl::BodyFunctionDefinition4
 end
 
 module Idl::BodyFunctionDefinition5
-  def single_declaration; end
-end
-
-module Idl::BodyFunctionDefinition6
-  def first; end
-  def rest; end
-end
-
-module Idl::BodyFunctionDefinition7
   def function_body; end
 end
 
-module Idl::BodyFunctionDefinition8
+module Idl::BodyFunctionDefinition6
   def args; end
   def body_block; end
   def desc; end
   def function_name; end
   def ret; end
-  def targs; end
   def type; end
 end
 
@@ -971,17 +988,6 @@ module Idl::BuiltinFunctionDefinition3
   def type; end
 end
 
-module Idl::BuiltinTypeName0; end
-
-module Idl::BuiltinTypeName1
-  def i; end
-end
-
-module Idl::BuiltinTypeName2; end
-module Idl::BuiltinTypeName3; end
-module Idl::BuiltinTypeName4; end
-module Idl::BuiltinTypeName5; end
-
 class Idl::BuiltinTypeNameAst < ::Idl::AstNode
   def initialize(input, interval, type_name, bits_expression); end
 
@@ -1013,10 +1019,6 @@ class Idl::BuiltinTypeNameAst < ::Idl::AstNode
     end
     def from_h(yaml, source_mapper); end
   end
-end
-
-class Idl::BuiltinTypeNameSyntaxNode < ::Idl::SyntaxNode
-  def to_ast; end
 end
 
 class Idl::BuiltinVariableAst < ::Idl::AstNode
@@ -1098,8 +1100,18 @@ end
 class Idl::Compiler
   def initialize; end
 
-  sig { params(body: ::String, symtab: ::Idl::SymbolTable, pass_error: T::Boolean).returns(::Idl::ConstraintBodyAst) }
-  def compile_constraint(body, symtab, pass_error: T.unsafe(nil)); end
+  sig do
+    params(
+      body: ::String,
+      symtab: ::Idl::SymbolTable,
+      pass_error: T::Boolean,
+      input_file: T.nilable(T.any(::Pathname, ::String)),
+      input_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).returns(::Idl::ConstraintBodyAst)
+  end
+  def compile_constraint(body, symtab, pass_error: T.unsafe(nil), input_file: T.unsafe(nil), input_line: T.unsafe(nil), starting_offset: T.unsafe(nil), line_file_offsets: T.unsafe(nil)); end
 
   def compile_expression(expression, symtab, pass_error: T.unsafe(nil)); end
   def compile_file(path, source_mapper = T.unsafe(nil)); end
@@ -1107,9 +1119,9 @@ class Idl::Compiler
   sig { params(loop: ::String, symtab: ::Idl::SymbolTable, pass_error: T::Boolean).returns(::Idl::ForLoopAst) }
   def compile_for_loop(loop, symtab, pass_error: T.unsafe(nil)); end
 
-  def compile_func_body(body, return_type: T.unsafe(nil), symtab: T.unsafe(nil), name: T.unsafe(nil), input_file: T.unsafe(nil), input_line: T.unsafe(nil), no_rescue: T.unsafe(nil), extra_syms: T.unsafe(nil), type_check: T.unsafe(nil)); end
-  def compile_inst_operation(inst, symtab:, input_file: T.unsafe(nil), input_line: T.unsafe(nil)); end
-  def compile_inst_scope(idl, symtab:, input_file:, input_line: T.unsafe(nil)); end
+  def compile_func_body(body, return_type: T.unsafe(nil), symtab: T.unsafe(nil), name: T.unsafe(nil), input_file: T.unsafe(nil), input_line: T.unsafe(nil), starting_offset: T.unsafe(nil), line_file_offsets: T.unsafe(nil), no_rescue: T.unsafe(nil), extra_syms: T.unsafe(nil), type_check: T.unsafe(nil)); end
+  def compile_inst_operation(inst, symtab:, input_file: T.unsafe(nil), input_line: T.unsafe(nil), starting_offset: T.unsafe(nil), line_file_offsets: T.unsafe(nil)); end
+  def compile_inst_scope(idl, symtab:, input_file:, input_line: T.unsafe(nil), starting_offset: T.unsafe(nil), line_file_offsets: T.unsafe(nil)); end
   def parser; end
   def pb=(pb); end
   def type_check(ast, symtab, what); end
@@ -1177,7 +1189,15 @@ class Idl::ConditionalReturnStatementAst < ::Idl::AstNode
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def prune(symtab, forced_type: T.unsafe(nil)); end
   def reachable_exceptions(symtab, cache = T.unsafe(nil)); end
-  def reachable_functions(symtab, cache); end
+
+  sig do
+    params(
+      symtab: ::Idl::SymbolTable,
+      cache: T::Hash[T::Array[T.untyped], T::Array[::Idl::FunctionDefAst]]
+    ).returns(T::Array[::Idl::FunctionDefAst])
+  end
+  def reachable_functions(symtab, cache = T.unsafe(nil)); end
+
   def return_expression; end
   def return_type(symtab); end
   def return_types(symtab); end
@@ -1217,10 +1237,16 @@ class Idl::ConditionalStatementAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def prune(symtab, forced_type: T.unsafe(nil)); end
   def reachable_exceptions(symtab, cache = T.unsafe(nil)); end
+
+  sig do
+    params(
+      symtab: ::Idl::SymbolTable,
+      cache: T::Hash[T::Array[T.untyped], T::Array[::Idl::FunctionDefAst]]
+    ).returns(T::Array[::Idl::FunctionDefAst])
+  end
   def reachable_functions(symtab, cache = T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -1386,7 +1412,6 @@ class Idl::CsrFieldAssignmentAst < ::Idl::AstNode
 
   def csr_field; end
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def field(symtab); end
   def gen_adoc(indent, indent_spaces: T.unsafe(nil)); end
   def prune(symtab, forced_type: T.unsafe(nil)); end
@@ -1607,9 +1632,9 @@ class Idl::CsrSoftwareWriteAst < ::Idl::AstNode
   def csr_known?(symtab); end
   def csr_name; end
   def execute(_symtab); end
-  def execute_unknown(_symtab); end
   def expression; end
   def gen_adoc(indent, indent_spaces: T.unsafe(nil)); end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -1656,7 +1681,6 @@ class Idl::CsrWriteAst < ::Idl::AstNode
 
   def csr_def(symtab); end
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def idx; end
   def name(symtab); end
 
@@ -1872,11 +1896,11 @@ class Idl::EnumCastAst < ::Idl::AstNode
     params(
       input: T.nilable(::String),
       interval: T.nilable(T::Range[::Integer]),
-      user_type_name: ::Idl::UserTypeNameAst,
+      type_name: ::Idl::UserTypeNameAst,
       expression: T.all(::Idl::AstNode, ::Idl::Rvalue)
     ).void
   end
-  def initialize(input, interval, user_type_name, expression); end
+  def initialize(input, interval, type_name, expression); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
@@ -1911,7 +1935,7 @@ class Idl::EnumCastSyntaxNode < ::Idl::SyntaxNode
 end
 
 module Idl::EnumDefinition0
-  def user_type_name; end
+  def type_name; end
 end
 
 module Idl::EnumDefinition1
@@ -1920,12 +1944,12 @@ end
 
 module Idl::EnumDefinition2
   def i; end
-  def user_type_name; end
+  def type_name; end
 end
 
 module Idl::EnumDefinition3
   def e; end
-  def user_type_name; end
+  def type_name; end
 end
 
 class Idl::EnumDefinitionAst < ::Idl::AstNode
@@ -2042,6 +2066,7 @@ class Idl::EnumRefAst < ::Idl::AstNode
   def gen_adoc(indent, indent_spaces: T.unsafe(nil)); end
   def gen_option_adoc; end
   def member_name; end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -2065,7 +2090,7 @@ class Idl::EnumRefAst < ::Idl::AstNode
 end
 
 class Idl::EnumRefAst::Memo < ::T::Struct
-  prop :enum_def_type, T::Hash[::Idl::SymbolTable, ::Idl::EnumerationType], default: T.unsafe(nil)
+  prop :enum_def_type, T::Hash[::String, ::Idl::EnumerationType], default: T.unsafe(nil)
 end
 
 class Idl::EnumRefSyntaxNode < ::Idl::SyntaxNode
@@ -2109,7 +2134,7 @@ class Idl::EnumSizeSyntaxNode < ::Idl::SyntaxNode
 end
 
 module Idl::EnumToA0
-  def user_type_name; end
+  def type_name; end
 end
 
 class Idl::EnumerationType < ::Idl::Type
@@ -2153,9 +2178,6 @@ module Idl::Executable
 
   sig { abstract.params(symtab: ::Idl::SymbolTable).void }
   def execute(symtab); end
-
-  sig { abstract.params(symtab: ::Idl::SymbolTable).void }
-  def execute_unknown(symtab); end
 end
 
 Idl::ExecutableAst = T.type_alias { T.all(::Idl::AstNode, ::Idl::Executable) }
@@ -2301,6 +2323,8 @@ class Idl::FieldAccessExpressionAst < ::Idl::AstNode
   sig { returns(T.all(::Idl::AstNode, ::Idl::Rvalue)) }
   def obj; end
 
+  def prune(symtab, forced_type: T.unsafe(nil)); end
+
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
 
@@ -2344,7 +2368,6 @@ class Idl::FieldAssignmentAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
 
   sig { returns(::String) }
   def field_name; end
@@ -2353,6 +2376,9 @@ class Idl::FieldAssignmentAst < ::Idl::AstNode
 
   sig { returns(::Idl::IdAst) }
   def id; end
+
+  def nullify_assignments(symtab); end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
 
   sig { returns(T.all(::Idl::AstNode, ::Idl::Rvalue)) }
   def rhs; end
@@ -2407,10 +2433,6 @@ class Idl::ForLoopAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-
-  sig { override.params(symtab: ::Idl::SymbolTable).void }
-  def execute_unknown(symtab); end
-
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
 
   sig { returns(::Idl::VariableDeclarationWithInitializationAst) }
@@ -2418,6 +2440,13 @@ class Idl::ForLoopAst < ::Idl::AstNode
 
   def prune(symtab, forced_type: T.unsafe(nil)); end
   def reachable_exceptions(symtab, cache = T.unsafe(nil)); end
+
+  sig do
+    params(
+      symtab: ::Idl::SymbolTable,
+      cache: T::Hash[T::Array[T.untyped], T::Array[::Idl::FunctionDefAst]]
+    ).returns(T::Array[::Idl::FunctionDefAst])
+  end
   def reachable_functions(symtab, cache = T.unsafe(nil)); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(::Idl::Type) }
@@ -2507,10 +2536,6 @@ class Idl::FunctionBodyAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-
-  sig { override.params(symtab: ::Idl::SymbolTable).void }
-  def execute_unknown(symtab); end
-
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def gen_option_adoc; end
   def pass_find_return_values(symtab); end
@@ -2556,40 +2581,36 @@ module Idl::FunctionCall1
 end
 
 module Idl::FunctionCall2
-  def targs; end
-end
-
-module Idl::FunctionCall3
   def function_arg_list; end
   def function_name; end
-  def t; end
 end
 
 class Idl::FunctionCallExpressionAst < ::Idl::AstNode
   include ::Idl::Rvalue
   include ::Idl::Executable
 
-  def initialize(input, interval, function_name, targs, args); end
+  def initialize(input, interval, function_name, args); end
 
   def arg_nodes; end
-  def args; end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def func_type(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def gen_option_adoc; end
   def name; end
   def prune(symtab, forced_type: T.unsafe(nil)); end
   def reachable_exceptions(symtab, cache = T.unsafe(nil)); end
+
+  sig do
+    params(
+      symtab: ::Idl::SymbolTable,
+      cache: T::Hash[T::Array[T.untyped], T::Array[::Idl::FunctionDefAst]]
+    ).returns(T::Array[::Idl::FunctionDefAst])
+  end
   def reachable_functions(symtab, cache = T.unsafe(nil)); end
-  def targs; end
-  def template?; end
-  def template_arg_nodes; end
-  def template_values(symtab, unknown_ok: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -2616,23 +2637,14 @@ class Idl::FunctionCallExpressionSyntaxNode < ::Idl::SyntaxNode
   def to_ast; end
 end
 
-module Idl::FunctionCallTemplateArguments0
-  def arg; end
-end
-
-module Idl::FunctionCallTemplateArguments1
-  def first; end
-  def rest; end
-end
-
 class Idl::FunctionDefAst < ::Idl::AstNode
   include ::Idl::Declaration
 
-  def initialize(input, interval, name, targs, return_types, arguments, desc, type, body); end
+  def initialize(input, interval, name, return_types, arguments, desc, type, body); end
 
   def <=>(other); end
   def add_symbol(symtab); end
-  def apply_template_and_arg_syms(symtab); end
+  def apply_arg_syms(symtab); end
   def argument_nodes; end
   def arguments(symtab); end
   def arguments_list_str; end
@@ -2645,19 +2657,14 @@ class Idl::FunctionDefAst < ::Idl::AstNode
   def description; end
   def eql?(other); end
   def external?; end
-  def freeze_tree(global_symtab); end
   def generated?; end
   def name; end
   def num_args; end
   def prune(symtab, forced_type: T.unsafe(nil)); end
   def qualifier_str; end
-  def reachable_functions_cache; end
   def return_type(symtab); end
   def return_type_list_str; end
   def return_type_nodes; end
-  def template_names; end
-  def template_types(symtab); end
-  def templated?; end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -2668,10 +2675,7 @@ class Idl::FunctionDefAst < ::Idl::AstNode
   def type_check(symtab, strict:); end
   def type_check_args(symtab, strict:); end
   def type_check_body(symtab, strict:); end
-  def type_check_from_call(symtab, strict:); end
   def type_check_return(symtab, strict:); end
-  def type_check_targs(symtab); end
-  def type_check_template_instance(symtab, strict:); end
 
   class << self
     sig do
@@ -2682,6 +2686,10 @@ class Idl::FunctionDefAst < ::Idl::AstNode
     end
     def from_h(yaml, source_mapper); end
   end
+end
+
+class Idl::FunctionDefAst::Memo < ::T::Struct
+  prop :arguments, T.nilable(T::Array[T::Array[T.any(::Idl::Type, ::String)]])
 end
 
 class Idl::FunctionDefSyntaxNode < ::Idl::SyntaxNode
@@ -2719,6 +2727,7 @@ end
 module Idl::FunctionName0; end
 
 class Idl::FunctionType < ::Idl::Type
+  sig { params(func_name: ::String, func_def_ast: ::Idl::FunctionDefAst, symtab: ::Idl::SymbolTable).void }
   def initialize(func_name, func_def_ast, symtab); end
 
   sig do
@@ -2731,33 +2740,67 @@ class Idl::FunctionType < ::Idl::Type
   end
   def apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast); end
 
-  def apply_template_values(template_values, func_call_ast); end
-  def argument_name(index, template_values = T.unsafe(nil), func_call_ast); end
-  def argument_type(index, template_values, argument_nodes, call_site_symtab, func_call_ast); end
+  sig { params(index: ::Integer, func_call_ast: ::Idl::FunctionCallExpressionAst).returns(T.nilable(::String)) }
+  def argument_name(index, func_call_ast); end
+
+  def argument_nodes; end
+
+  sig do
+    params(
+      index: ::Integer,
+      argument_nodes: T::Array[::Idl::Rvalue],
+      call_site_symtab: ::Idl::SymbolTable,
+      func_call_ast: ::Idl::FunctionCallExpressionAst
+    ).returns(T.nilable(::Idl::Type))
+  end
+  def argument_type(index, argument_nodes, call_site_symtab, func_call_ast); end
+
+  sig do
+    params(
+      symtab: ::Idl::SymbolTable,
+      argument_nodes: T::Array[::Idl::Rvalue],
+      call_site_symtab: ::Idl::SymbolTable,
+      func_call_ast: ::Idl::FunctionCallExpressionAst
+    ).returns(T.nilable(T::Array[T.any(::Integer, ::Symbol, T::Boolean)]))
+  end
   def argument_values(symtab, argument_nodes, call_site_symtab, func_call_ast); end
+
+  sig { returns(::Idl::FunctionBodyAst) }
   def body; end
+
+  sig { returns(T::Boolean) }
   def builtin?; end
+
+  sig { returns(::Idl::FunctionType) }
   def clone; end
+
+  sig { returns(T::Boolean) }
   def external?; end
+
   def func_def_ast; end
+
+  sig { returns(T::Boolean) }
   def generated?; end
+
+  sig { returns(::Integer) }
   def num_args; end
 
   sig do
     params(
-      template_values: T::Array[::Integer],
       argument_nodes: T::Array[::Idl::Rvalue],
       func_call_ast: ::Idl::FunctionCallExpressionAst
     ).returns(::Idl::Type)
   end
-  def return_type(template_values, argument_nodes, func_call_ast); end
+  def return_type(argument_nodes, func_call_ast); end
 
-  def return_types(template_values, argument_nodes, call_site_symtab, func_call_ast); end
-  def return_value(template_values, argument_nodes, call_site_symtab, func_call_ast); end
-  def template_names; end
-  def template_types(symtab); end
-  def templated?; end
-  def type_check_call(template_values, argument_nodes, call_site_symtab, func_call_ast); end
+  sig do
+    params(
+      argument_nodes: T::Array[::Idl::Rvalue],
+      call_site_symtab: ::Idl::SymbolTable,
+      func_call_ast: ::Idl::FunctionCallExpressionAst
+    ).returns(T.nilable(T.any(::Integer, ::Symbol, T::Boolean, T::Hash[::String, T.untyped])))
+  end
+  def return_value(argument_nodes, call_site_symtab, func_call_ast); end
 end
 
 class Idl::GlobalAst < ::Idl::AstNode
@@ -2823,9 +2866,6 @@ class Idl::GlobalWithInitializationAst < ::Idl::AstNode
   sig { override.params(symtab: ::Idl::SymbolTable).void }
   def execute(symtab); end
 
-  sig { override.params(symtab: ::Idl::SymbolTable).void }
-  def execute_unknown(symtab); end
-
   def id; end
   def rhs; end
 
@@ -2881,6 +2921,8 @@ class Idl::IdAst < ::Idl::AstNode
   sig { returns(::String) }
   def name; end
 
+  def prune(symtab, forced_type: T.unsafe(nil)); end
+
   sig { override.returns(::String) }
   def text_value; end
 
@@ -2924,7 +2966,6 @@ class Idl::IfAst < ::Idl::AstNode
   def elseifs; end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
 
   sig { returns(::Idl::IfBodyAst) }
   def final_else_body; end
@@ -2941,6 +2982,13 @@ class Idl::IfAst < ::Idl::AstNode
   def pass_find_return_values(values, current_conditions, symtab); end
   def prune(symtab, forced_type: T.unsafe(nil)); end
   def reachable_exceptions(symtab, cache = T.unsafe(nil)); end
+
+  sig do
+    params(
+      symtab: ::Idl::SymbolTable,
+      cache: T::Hash[T::Array[T.untyped], T::Array[::Idl::FunctionDefAst]]
+    ).returns(T::Array[::Idl::FunctionDefAst])
+  end
   def reachable_functions(symtab, cache = T.unsafe(nil)); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(::Idl::Type) }
@@ -2961,7 +3009,6 @@ class Idl::IfAst < ::Idl::AstNode
   private
 
   def execute_after_if(symtab); end
-  def execute_unknown_after_if(symtab); end
   def return_values_after_if(symtab); end
 
   class << self
@@ -2992,10 +3039,9 @@ class Idl::IfBodyAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def gen_option_adoc; end
-  def prune(symtab, forced_type: T.unsafe(nil)); end
+  def prune(symtab, restore: T.unsafe(nil), forced_type: T.unsafe(nil)); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(::Idl::Type) }
   def return_type(symtab); end
@@ -3314,23 +3360,6 @@ class Idl::IsaSyntaxNode < ::Idl::SyntaxNode
   def to_ast; end
 end
 
-module Idl::Keyword0; end
-module Idl::Keyword1; end
-module Idl::Keyword10; end
-module Idl::Keyword11; end
-module Idl::Keyword12; end
-module Idl::Keyword13; end
-module Idl::Keyword14; end
-module Idl::Keyword15; end
-module Idl::Keyword2; end
-module Idl::Keyword3; end
-module Idl::Keyword4; end
-module Idl::Keyword5; end
-module Idl::Keyword6; end
-module Idl::Keyword7; end
-module Idl::Keyword8; end
-module Idl::Keyword9; end
-
 class Idl::MultiVariableAssignmentAst < ::Idl::AstNode
   include ::Idl::Executable
 
@@ -3340,9 +3369,10 @@ class Idl::MultiVariableAssignmentAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def function_call; end
   def gen_adoc(indent, indent_spaces: T.unsafe(nil)); end
+  def nullify_assignments(symtab); end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
   def rhs; end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -3390,6 +3420,7 @@ class Idl::MultiVariableDeclarationAst < ::Idl::AstNode
 
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def make_global; end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -3425,7 +3456,6 @@ class Idl::NoopAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -3611,10 +3641,8 @@ class Idl::PcAssignmentAst < ::Idl::AstNode
   sig { override.params(symtab: ::Idl::SymbolTable).void }
   def execute(symtab); end
 
-  sig { override.params(symtab: ::Idl::SymbolTable).void }
-  def execute_unknown(symtab); end
-
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
 
   sig { returns(T.all(::Idl::AstNode, ::Idl::Rvalue)) }
   def rhs; end
@@ -3656,8 +3684,9 @@ class Idl::PostDecrementExpressionAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent, indent_spaces: T.unsafe(nil)); end
+  def nullify_assignments(symtab); end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
 
   sig { returns(T.any(::Idl::BuiltinVariableAst, ::Idl::IdAst, ::Idl::IntLiteralAst, ::Idl::StringLiteralAst)) }
   def rval; end
@@ -3699,8 +3728,9 @@ class Idl::PostIncrementExpressionAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent, indent_spaces: T.unsafe(nil)); end
+  def nullify_assignments(symtab); end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
   def rval; end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -3725,6 +3755,24 @@ end
 
 class Idl::PostIncrementExpressionSyntaxNode < ::Idl::SyntaxNode
   def to_ast; end
+end
+
+module Idl::PruneHelpers
+  class << self
+    def coerce_ary_element_widths(symtab, elements, max_element_width); end
+    def create_bool_literal(value); end
+    def create_int_literal(value, forced_type: T.unsafe(nil)); end
+    def create_literal(symtab, value, type, forced_type: T.unsafe(nil)); end
+
+    sig do
+      params(
+        symtab: ::Idl::SymbolTable,
+        node: ::Idl::AstNode,
+        max: T.nilable(::Integer)
+      ).returns(T.nilable(::Integer))
+    end
+    def find_max_element_width(symtab, node, max = T.unsafe(nil)); end
+  end
 end
 
 module Idl::ReplicationExpression0
@@ -3770,6 +3818,11 @@ class Idl::ReplicationExpressionSyntaxNode < ::Idl::SyntaxNode
   def to_ast; end
 end
 
+module Idl::ReservedWords; end
+Idl::ReservedWords::BUILTIN_TYPES = T.let(T.unsafe(nil), Array)
+Idl::ReservedWords::KEYWORDS = T.let(T.unsafe(nil), Array)
+Idl::ReservedWords::RESERVED = T.let(T.unsafe(nil), Array)
+
 module Idl::ReturnExpression0
   def e; end
 end
@@ -3798,8 +3851,14 @@ class Idl::ReturnExpressionAst < ::Idl::AstNode
   def enclosing_function; end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def gen_option_adoc; end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
+
+  sig { override.params(symtab: ::Idl::SymbolTable).returns(::Idl::Type) }
   def return_type(symtab); end
+
+  sig { params(symtab: ::Idl::SymbolTable).returns(T::Array[::Idl::Type]) }
   def return_types(symtab); end
+
   def return_value(symtab); end
   def return_value_nodes; end
   def return_values(symtab); end
@@ -3849,6 +3908,7 @@ class Idl::ReturnStatementAst < ::Idl::AstNode
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def gen_option_adoc; end
   def pass_find_return_values(values, current_conditions, symtab); end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
   def return_expression; end
   def return_type(symtab); end
   def return_types(symtab); end
@@ -4061,11 +4121,17 @@ class Idl::StatementAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def gen_option_adoc; end
   def prune(symtab, forced_type: T.unsafe(nil)); end
   def reachable_exceptions(symtab, cache = T.unsafe(nil)); end
+
+  sig do
+    params(
+      symtab: ::Idl::SymbolTable,
+      cache: T::Hash[T::Array[T.untyped], T::Array[::Idl::FunctionDefAst]]
+    ).returns(T::Array[::Idl::FunctionDefAst])
+  end
   def reachable_functions(symtab, cache = T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -4142,7 +4208,7 @@ end
 
 module Idl::StructDefinition1
   def member; end
-  def user_type_name; end
+  def type_name; end
 end
 
 class Idl::StructDefinitionAst < ::Idl::AstNode
@@ -4278,6 +4344,8 @@ class Idl::SymbolTable
 
   def push(ast); end
   def release; end
+  def restore_values(snapshot); end
+  def snapshot_values; end
 
   class << self
     sig do
@@ -4466,7 +4534,7 @@ class Idl::TernaryOperatorExpressionAst < ::Idl::AstNode
 end
 
 class Idl::TernaryOperatorExpressionAst::Memo < ::T::Struct
-  prop :type, T::Hash[::Idl::SymbolTable, ::Idl::Type], default: T.unsafe(nil)
+  prop :type, T::Hash[::String, ::Idl::Type], default: T.unsafe(nil)
 end
 
 class Idl::TernaryOperatorExpressionSyntaxNode < ::Idl::SyntaxNode
@@ -4584,8 +4652,6 @@ class Idl::Type
   sig { returns(::Idl::Type) }
   def sub_type; end
 
-  def template_var?; end
-
   sig { returns(::String) }
   def to_idl; end
 
@@ -4619,7 +4685,17 @@ end
 Idl::Type::KINDS = T.let(T.unsafe(nil), Array)
 Idl::Type::QUALIFIERS = T.let(T.unsafe(nil), Array)
 Idl::Type::TYPE_FROM_KIND = T.let(T.unsafe(nil), Hash)
+
+module Idl::TypeName0
+  def i; end
+end
+
+module Idl::TypeName1; end
 Idl::TypeNameAst = T.type_alias { T.any(::Idl::BuiltinTypeNameAst, ::Idl::UserTypeNameAst) }
+
+module Idl::TypeNameSyntaxNode
+  def to_ast; end
+end
 
 module Idl::UnaryExpression0
   def expression; end
@@ -4639,16 +4715,16 @@ module Idl::UnaryExpression3
 end
 
 module Idl::UnaryExpression4
-  def user_type_name; end
+  def type_name; end
 end
 
 module Idl::UnaryExpression5
-  def user_type_name; end
+  def type_name; end
 end
 
 module Idl::UnaryExpression6
   def expression; end
-  def user_type_name; end
+  def type_name; end
 end
 
 module Idl::UnaryExpression7
@@ -4678,6 +4754,7 @@ class Idl::UnaryOperatorExpressionAst < ::Idl::AstNode
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def invert(symtab); end
   def op; end
+  def prune(symtab, forced_type: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
@@ -4719,8 +4796,6 @@ class Idl::UnknownLiteral
   def |(other); end
 end
 
-module Idl::UserTypeName0; end
-
 class Idl::UserTypeNameAst < ::Idl::AstNode
   def initialize(input, interval, name); end
 
@@ -4752,14 +4827,10 @@ class Idl::UserTypeNameAst < ::Idl::AstNode
   end
 end
 
-class Idl::UserTypeNameSyntaxNode < ::Idl::SyntaxNode
-  def to_ast; end
-end
-
 Idl::ValueRbType = T.type_alias { T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean, T::Hash[::String, T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean)]) }
 
 class Idl::Var
-  def initialize(name, type, value = T.unsafe(nil), decode_var: T.unsafe(nil), template_index: T.unsafe(nil), function_name: T.unsafe(nil), param: T.unsafe(nil), for_loop_iter: T.unsafe(nil)); end
+  def initialize(name, type, value = T.unsafe(nil), decode_var: T.unsafe(nil), function_name: T.unsafe(nil), param: T.unsafe(nil), for_loop_iter: T.unsafe(nil)); end
 
   def clone; end
   def const?; end
@@ -4778,10 +4849,6 @@ class Idl::Var
   def hash; end
   def name; end
   def param?; end
-  def template_index; end
-  def template_val?; end
-  def template_value?; end
-  def template_value_for?(function_name); end
   def to_cxx; end
   def to_s; end
   def type; end
@@ -4802,7 +4869,6 @@ class Idl::VariableAssignmentAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
 
   sig { returns(::Idl::IdAst) }
@@ -4875,6 +4941,8 @@ class Idl::VariableDeclarationAst < ::Idl::AstNode
   sig { returns(::String) }
   def name; end
 
+  def prune(symtab, forced_type: T.unsafe(nil)); end
+
   sig { override.returns(T::Hash[::String, T.untyped]) }
   def to_h; end
 
@@ -4882,7 +4950,7 @@ class Idl::VariableDeclarationAst < ::Idl::AstNode
   def to_idl; end
 
   def type(symtab); end
-  def type_check(symtab, strict:, add_sym: T.unsafe(nil)); end
+  def type_check(symtab, strict:, add_sym: T.unsafe(nil), is_function_arg: T.unsafe(nil)); end
 
   sig { returns(T.any(::Idl::BuiltinTypeNameAst, ::Idl::UserTypeNameAst)) }
   def type_name; end
@@ -4928,7 +4996,6 @@ class Idl::VariableDeclarationWithInitializationAst < ::Idl::AstNode
   def const_eval?(symtab); end
 
   def execute(symtab); end
-  def execute_unknown(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
 
   sig { returns(::String) }
@@ -5027,34 +5094,36 @@ class IdlParser < ::Treetop::Runtime::CompiledParser
 
   def input_file; end
   def instantiate_node(node_type, *args); end
-  def set_input_file(filename, starting_line = T.unsafe(nil)); end
+  def set_input_file(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
   protected
 
   def idlc_instantiate_node(node_type, *args); end
 end
 
-class Object < ::BasicObject
-  include ::Kernel
-  include ::PP::ObjectMixin
-  include ::Udb::Helpers::WavedromUtil
-
-  private
-
-  def create_bool_literal(value); end
-  def create_int_literal(value, forced_type: T.unsafe(nil)); end
-  def create_literal(symtab, value, type, forced_type: T.unsafe(nil)); end
-end
-
 module Treetop; end
 module Treetop::Runtime; end
 
 class Treetop::Runtime::SyntaxNode
-  sig { params(filename: T.nilable(::String), starting_line: ::Integer).void }
-  def set_input_file(filename, starting_line = T.unsafe(nil)); end
+  sig do
+    params(
+      filename: T.nilable(::String),
+      starting_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).void
+  end
+  def set_input_file(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
-  sig { params(filename: T.nilable(::String), starting_line: ::Integer).void }
-  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil)); end
+  sig do
+    params(
+      filename: T.nilable(::String),
+      starting_line: ::Integer,
+      starting_offset: ::Integer,
+      line_file_offsets: T.nilable(T::Array[::Integer])
+    ).void
+  end
+  def set_input_file_unless_already_set(filename, starting_line = T.unsafe(nil), starting_offset = T.unsafe(nil), line_file_offsets = T.unsafe(nil)); end
 
   sig { returns(T::Boolean) }
   def space?; end

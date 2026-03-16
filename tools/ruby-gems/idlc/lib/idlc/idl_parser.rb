@@ -431,7 +431,7 @@ module Idl
   end
 
   module EnumDefinition0
-    def user_type_name
+    def type_name
       elements[4]
     end
 
@@ -445,7 +445,7 @@ module Idl
   end
 
   module EnumDefinition2
-    def user_type_name
+    def type_name
       elements[0]
     end
 
@@ -455,7 +455,7 @@ module Idl
   end
 
   module EnumDefinition3
-    def user_type_name
+    def type_name
       elements[2]
     end
 
@@ -530,7 +530,7 @@ module Idl
           end
           s1 << r6
           if r6
-            r8 = _nt_user_type_name
+            r8 = _nt_type_name
             s1 << r8
             if r8
               s9, i9 = [], index
@@ -597,7 +597,7 @@ module Idl
         end
         s12 << r14
         if r14
-          r16 = _nt_user_type_name
+          r16 = _nt_type_name
           s12 << r16
           if r16
             s17, i17 = [], index
@@ -641,7 +641,7 @@ module Idl
                   s22, i22 = [], index
                   loop do
                     i23, s23 = index, []
-                    r24 = _nt_user_type_name
+                    r24 = _nt_type_name
                     s23 << r24
                     if r24
                       s25, i25 = [], index
@@ -789,7 +789,7 @@ module Idl
     end
 
     i0, s0 = index, []
-    r1 = _nt_user_type_name
+    r1 = _nt_type_name
     s0 << r1
     if r1
       s2, i2 = [], index
@@ -825,7 +825,7 @@ module Idl
           r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
           s0 << r5
           if r5
-            r7 = _nt_user_type_name
+            r7 = _nt_type_name
             s0 << r7
           end
         end
@@ -876,7 +876,7 @@ module Idl
       elements[4]
     end
 
-    def user_type_name
+    def type_name
       elements[8]
     end
 
@@ -976,7 +976,7 @@ module Idl
                   r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
                   s0 << r11
                   if r11
-                    r13 = _nt_user_type_name
+                    r13 = _nt_type_name
                     s0 << r13
                     if r13
                       s14, i14 = [], index
@@ -1200,7 +1200,7 @@ module Idl
   end
 
   module StructDefinition1
-    def user_type_name
+    def type_name
       elements[2]
     end
 
@@ -1243,7 +1243,7 @@ module Idl
       r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
       s0 << r2
       if r2
-        r4 = _nt_user_type_name
+        r4 = _nt_type_name
         s0 << r4
         if r4
           s5, i5 = [], index
@@ -6690,7 +6690,7 @@ module Idl
   end
 
   module EnumToA0
-    def user_type_name
+    def type_name
       elements[4]
     end
 
@@ -6750,7 +6750,7 @@ module Idl
           r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
           s0 << r5
           if r5
-            r7 = _nt_user_type_name
+            r7 = _nt_type_name
             s0 << r7
             if r7
               if (match_len = has_terminal?(')', false, index))
@@ -6811,21 +6811,21 @@ module Idl
   end
 
   module UnaryExpression4
-    def user_type_name
+    def type_name
       elements[4]
     end
 
   end
 
   module UnaryExpression5
-    def user_type_name
+    def type_name
       elements[4]
     end
 
   end
 
   module UnaryExpression6
-    def user_type_name
+    def type_name
       elements[4]
     end
 
@@ -7234,7 +7234,7 @@ module Idl
                         r48 = instantiate_node(SyntaxNode,input, i48...index, s48)
                         s43 << r48
                         if r48
-                          r50 = _nt_user_type_name
+                          r50 = _nt_type_name
                           s43 << r50
                           if r50
                             if (match_len = has_terminal?(')', false, index))
@@ -7304,7 +7304,7 @@ module Idl
                           r57 = instantiate_node(SyntaxNode,input, i57...index, s57)
                           s52 << r57
                           if r57
-                            r59 = _nt_user_type_name
+                            r59 = _nt_type_name
                             s52 << r59
                             if r59
                               if (match_len = has_terminal?(')', false, index))
@@ -7379,7 +7379,7 @@ module Idl
                               r67 = instantiate_node(SyntaxNode,input, i67...index, s67)
                               s62 << r67
                               if r67
-                                r69 = _nt_user_type_name
+                                r69 = _nt_type_name
                                 s62 << r69
                                 if r69
                                   s70, i70 = [], index
@@ -8765,107 +8765,6 @@ module Idl
     r0
   end
 
-  module FunctionCallTemplateArguments0
-    def arg
-      elements[3]
-    end
-  end
-
-  module FunctionCallTemplateArguments1
-    def first
-      elements[0]
-    end
-
-    def rest
-      elements[1]
-    end
-  end
-
-  def _nt_function_call_template_arguments
-    start_index = index
-    if node_cache[:function_call_template_arguments].has_key?(index)
-      cached = node_cache[:function_call_template_arguments][index]
-      if cached
-        node_cache[:function_call_template_arguments][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-        @index = cached.interval.end
-      end
-      return cached
-    end
-
-    i0, s0 = index, []
-    r1 = _nt_template_safe_expression
-    s0 << r1
-    if r1
-      s2, i2 = [], index
-      loop do
-        i3, s3 = index, []
-        s4, i4 = [], index
-        loop do
-          r5 = _nt_space
-          if r5
-            s4 << r5
-          else
-            break
-          end
-        end
-        r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
-        s3 << r4
-        if r4
-          if (match_len = has_terminal?(',', false, index))
-            r6 = true
-            @index += match_len
-          else
-            terminal_parse_failure('\',\'')
-            r6 = nil
-          end
-          s3 << r6
-          if r6
-            s7, i7 = [], index
-            loop do
-              r8 = _nt_space
-              if r8
-                s7 << r8
-              else
-                break
-              end
-            end
-            r7 = instantiate_node(SyntaxNode,input, i7...index, s7)
-            s3 << r7
-            if r7
-              r9 = _nt_template_safe_expression
-              s3 << r9
-            end
-          end
-        end
-        if s3.last
-          r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-          r3.extend(FunctionCallTemplateArguments0)
-        else
-          @index = i3
-          r3 = nil
-        end
-        if r3
-          s2 << r3
-        else
-          break
-        end
-      end
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-      s0 << r2
-    end
-    if s0.last
-      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-      r0.extend(FunctionCallTemplateArguments1)
-    else
-      @index = i0
-      r0 = nil
-    end
-
-    node_cache[:function_call_template_arguments][start_index] = r0
-
-    r0
-  end
-
   module FunctionCall0
     def csr
       elements[0]
@@ -8893,23 +8792,12 @@ module Idl
   end
 
   module FunctionCall2
-    def targs
-      elements[3]
-    end
-
-  end
-
-  module FunctionCall3
     def function_name
       elements[0]
     end
 
-    def t
-      elements[1]
-    end
-
     def function_arg_list
-      elements[5]
+      elements[4]
     end
 
   end
@@ -9170,139 +9058,62 @@ module Idl
         r36 = _nt_function_name
         s35 << r36
         if r36
-          i38, s38 = index, []
-          s39, i39 = [], index
+          s37, i37 = [], index
           loop do
-            r40 = _nt_space
-            if r40
-              s39 << r40
+            r38 = _nt_space
+            if r38
+              s37 << r38
             else
               break
             end
           end
-          r39 = instantiate_node(SyntaxNode,input, i39...index, s39)
-          s38 << r39
-          if r39
-            if (match_len = has_terminal?('<', false, index))
-              r41 = true
+          r37 = instantiate_node(SyntaxNode,input, i37...index, s37)
+          s35 << r37
+          if r37
+            if (match_len = has_terminal?('(', false, index))
+              r39 = true
               @index += match_len
             else
-              terminal_parse_failure('\'<\'')
-              r41 = nil
+              terminal_parse_failure('\'(\'')
+              r39 = nil
             end
-            s38 << r41
-            if r41
-              s42, i42 = [], index
+            s35 << r39
+            if r39
+              s40, i40 = [], index
               loop do
-                r43 = _nt_space
-                if r43
-                  s42 << r43
+                r41 = _nt_space
+                if r41
+                  s40 << r41
                 else
                   break
                 end
               end
-              r42 = instantiate_node(SyntaxNode,input, i42...index, s42)
-              s38 << r42
-              if r42
-                r44 = _nt_function_call_template_arguments
-                s38 << r44
-                if r44
-                  s45, i45 = [], index
+              r40 = instantiate_node(SyntaxNode,input, i40...index, s40)
+              s35 << r40
+              if r40
+                r42 = _nt_function_arg_list
+                s35 << r42
+                if r42
+                  s43, i43 = [], index
                   loop do
-                    r46 = _nt_space
-                    if r46
-                      s45 << r46
+                    r44 = _nt_space
+                    if r44
+                      s43 << r44
                     else
                       break
                     end
                   end
-                  r45 = instantiate_node(SyntaxNode,input, i45...index, s45)
-                  s38 << r45
-                  if r45
-                    if (match_len = has_terminal?('>', false, index))
-                      r47 = true
+                  r43 = instantiate_node(SyntaxNode,input, i43...index, s43)
+                  s35 << r43
+                  if r43
+                    if (match_len = has_terminal?(')', false, index))
+                      r45 = true
                       @index += match_len
                     else
-                      terminal_parse_failure('\'>\'')
-                      r47 = nil
+                      terminal_parse_failure('\')\'')
+                      r45 = nil
                     end
-                    s38 << r47
-                  end
-                end
-              end
-            end
-          end
-          if s38.last
-            r38 = instantiate_node(SyntaxNode,input, i38...index, s38)
-            r38.extend(FunctionCall2)
-          else
-            @index = i38
-            r38 = nil
-          end
-          if r38
-            r37 = r38
-          else
-            r37 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s35 << r37
-          if r37
-            s48, i48 = [], index
-            loop do
-              r49 = _nt_space
-              if r49
-                s48 << r49
-              else
-                break
-              end
-            end
-            r48 = instantiate_node(SyntaxNode,input, i48...index, s48)
-            s35 << r48
-            if r48
-              if (match_len = has_terminal?('(', false, index))
-                r50 = true
-                @index += match_len
-              else
-                terminal_parse_failure('\'(\'')
-                r50 = nil
-              end
-              s35 << r50
-              if r50
-                s51, i51 = [], index
-                loop do
-                  r52 = _nt_space
-                  if r52
-                    s51 << r52
-                  else
-                    break
-                  end
-                end
-                r51 = instantiate_node(SyntaxNode,input, i51...index, s51)
-                s35 << r51
-                if r51
-                  r53 = _nt_function_arg_list
-                  s35 << r53
-                  if r53
-                    s54, i54 = [], index
-                    loop do
-                      r55 = _nt_space
-                      if r55
-                        s54 << r55
-                      else
-                        break
-                      end
-                    end
-                    r54 = instantiate_node(SyntaxNode,input, i54...index, s54)
-                    s35 << r54
-                    if r54
-                      if (match_len = has_terminal?(')', false, index))
-                        r56 = true
-                        @index += match_len
-                      else
-                        terminal_parse_failure('\')\'')
-                        r56 = nil
-                      end
-                      s35 << r56
-                    end
+                    s35 << r45
                   end
                 end
               end
@@ -9311,7 +9122,7 @@ module Idl
         end
         if s35.last
           r35 = instantiate_node(Idl::FunctionCallExpressionSyntaxNode,input, i35...index, s35)
-          r35.extend(FunctionCall3)
+          r35.extend(FunctionCall2)
         else
           @index = i35
           r35 = nil
@@ -9346,58 +9157,46 @@ module Idl
     end
 
     i0, s0 = index, []
-    i1 = index
-    r2 = _nt_reserved
-    if r2
-      @index = i1
-      r1 = nil
+    if has_terminal?(@regexps[gr = '\A[a-zA-Z]'] ||= Regexp.new(gr), :regexp, index)
+      r1 = true
+      @index += 1
     else
-      @index = i1
-      r1 = instantiate_node(SyntaxNode,input, index...index)
+      terminal_parse_failure('[a-zA-Z]')
+      r1 = nil
     end
     s0 << r1
     if r1
-      if has_terminal?(@regexps[gr = '\A[a-zA-Z]'] ||= Regexp.new(gr), :regexp, index)
-        r3 = true
-        @index += 1
-      else
-        terminal_parse_failure('[a-zA-Z]')
-        r3 = nil
+      s2, i2 = [], index
+      loop do
+        if has_terminal?(@regexps[gr = '\A[a-zA-Z0-9_]'] ||= Regexp.new(gr), :regexp, index)
+          r3 = true
+          @index += 1
+        else
+          terminal_parse_failure('[a-zA-Z0-9_]')
+          r3 = nil
+        end
+        if r3
+          s2 << r3
+        else
+          break
+        end
       end
-      s0 << r3
-      if r3
-        s4, i4 = [], index
-        loop do
-          if has_terminal?(@regexps[gr = '\A[a-zA-Z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-            r5 = true
-            @index += 1
-          else
-            terminal_parse_failure('[a-zA-Z0-9_]')
-            r5 = nil
-          end
-          if r5
-            s4 << r5
-          else
-            break
-          end
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
+      if r2
+        if (match_len = has_terminal?('?', false, index))
+          r5 = true
+          @index += match_len
+        else
+          terminal_parse_failure('\'?\'')
+          r5 = nil
         end
-        r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+        if r5
+          r4 = r5
+        else
+          r4 = instantiate_node(SyntaxNode,input, index...index)
+        end
         s0 << r4
-        if r4
-          if (match_len = has_terminal?('?', false, index))
-            r7 = true
-            @index += match_len
-          else
-            terminal_parse_failure('\'?\'')
-            r7 = nil
-          end
-          if r7
-            r6 = r7
-          else
-            r6 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s0 << r6
-        end
       end
     end
     if s0.last
@@ -9523,7 +9322,7 @@ module Idl
   end
 
   module BodyFunctionDefinition1
-    def single_declaration
+    def type_name
       elements[3]
     end
   end
@@ -9540,7 +9339,7 @@ module Idl
   end
 
   module BodyFunctionDefinition3
-    def type_name
+    def single_declaration
       elements[3]
     end
   end
@@ -9557,30 +9356,13 @@ module Idl
   end
 
   module BodyFunctionDefinition5
-    def single_declaration
-      elements[3]
-    end
-  end
-
-  module BodyFunctionDefinition6
-    def first
-      elements[2]
-    end
-
-    def rest
-      elements[3]
-    end
-
-  end
-
-  module BodyFunctionDefinition7
     def function_body
       elements[4]
     end
 
   end
 
-  module BodyFunctionDefinition8
+  module BodyFunctionDefinition6
     def type
       elements[0]
     end
@@ -9589,24 +9371,20 @@ module Idl
       elements[3]
     end
 
-    def targs
+    def ret
       elements[7]
     end
 
-    def ret
+    def args
       elements[8]
     end
 
-    def args
-      elements[9]
-    end
-
     def desc
-      elements[14]
+      elements[13]
     end
 
     def body_block
-      elements[17]
+      elements[16]
     end
 
   end
@@ -9727,11 +9505,11 @@ module Idl
                 s0 << r13
                 if r13
                   i16, s16 = index, []
-                  if (match_len = has_terminal?('template', false, index))
+                  if (match_len = has_terminal?('returns', false, index))
                     r17 = instantiate_node(SyntaxNode,input, index...(index + match_len))
                     @index += match_len
                   else
-                    terminal_parse_failure('\'template\'')
+                    terminal_parse_failure('\'returns\'')
                     r17 = nil
                   end
                   s16 << r17
@@ -9753,7 +9531,7 @@ module Idl
                     end
                     s16 << r18
                     if r18
-                      r20 = _nt_single_declaration
+                      r20 = _nt_type_name
                       s16 << r20
                       if r20
                         s21, i21 = [], index
@@ -9792,7 +9570,7 @@ module Idl
                               r26 = instantiate_node(SyntaxNode,input, i26...index, s26)
                               s22 << r26
                               if r26
-                                r28 = _nt_single_declaration
+                                r28 = _nt_type_name
                                 s22 << r28
                               end
                             end
@@ -9848,11 +9626,11 @@ module Idl
                   s0 << r15
                   if r15
                     i32, s32 = index, []
-                    if (match_len = has_terminal?('returns', false, index))
+                    if (match_len = has_terminal?('arguments', false, index))
                       r33 = instantiate_node(SyntaxNode,input, index...(index + match_len))
                       @index += match_len
                     else
-                      terminal_parse_failure('\'returns\'')
+                      terminal_parse_failure('\'arguments\'')
                       r33 = nil
                     end
                     s32 << r33
@@ -9874,7 +9652,7 @@ module Idl
                       end
                       s32 << r34
                       if r34
-                        r36 = _nt_type_name
+                        r36 = _nt_single_declaration
                         s32 << r36
                         if r36
                           s37, i37 = [], index
@@ -9913,7 +9691,7 @@ module Idl
                                 r42 = instantiate_node(SyntaxNode,input, i42...index, s42)
                                 s38 << r42
                                 if r42
-                                  r44 = _nt_type_name
+                                  r44 = _nt_single_declaration
                                   s38 << r44
                                 end
                               end
@@ -9968,59 +9746,99 @@ module Idl
                     end
                     s0 << r31
                     if r31
-                      i48, s48 = index, []
-                      if (match_len = has_terminal?('arguments', false, index))
-                        r49 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+                      if (match_len = has_terminal?('description', false, index))
+                        r47 = instantiate_node(SyntaxNode,input, index...(index + match_len))
                         @index += match_len
                       else
-                        terminal_parse_failure('\'arguments\'')
-                        r49 = nil
+                        terminal_parse_failure('\'description\'')
+                        r47 = nil
                       end
-                      s48 << r49
-                      if r49
-                        s50, i50 = [], index
+                      s0 << r47
+                      if r47
+                        s48, i48 = [], index
                         loop do
-                          r51 = _nt_space
-                          if r51
-                            s50 << r51
+                          r49 = _nt_space
+                          if r49
+                            s48 << r49
                           else
                             break
                           end
                         end
-                        if s50.empty?
-                          @index = i50
-                          r50 = nil
-                        else
-                          r50 = instantiate_node(SyntaxNode,input, i50...index, s50)
-                        end
-                        s48 << r50
-                        if r50
-                          r52 = _nt_single_declaration
-                          s48 << r52
-                          if r52
-                            s53, i53 = [], index
+                        r48 = instantiate_node(SyntaxNode,input, i48...index, s48)
+                        s0 << r48
+                        if r48
+                          if (match_len = has_terminal?('{', false, index))
+                            r50 = true
+                            @index += match_len
+                          else
+                            terminal_parse_failure('\'{\'')
+                            r50 = nil
+                          end
+                          s0 << r50
+                          if r50
+                            s51, i51 = [], index
                             loop do
-                              i54, s54 = index, []
-                              s55, i55 = [], index
+                              r52 = _nt_space
+                              if r52
+                                s51 << r52
+                              else
+                                break
+                              end
+                            end
+                            r51 = instantiate_node(SyntaxNode,input, i51...index, s51)
+                            s0 << r51
+                            if r51
+                              s53, i53 = [], index
                               loop do
-                                r56 = _nt_space
-                                if r56
-                                  s55 << r56
+                                i54 = index
+                                if has_terminal?(@regexps[gr = '\A[^}]'] ||= Regexp.new(gr), :regexp, index)
+                                  r55 = true
+                                  @index += 1
+                                else
+                                  terminal_parse_failure('[^}]')
+                                  r55 = nil
+                                end
+                                if r55
+                                  r55 = SyntaxNode.new(input, (index-1)...index) if r55 == true
+                                  r54 = r55
+                                else
+                                  if (match_len = has_terminal?("\n", false, index))
+                                    r56 = true
+                                    @index += match_len
+                                  else
+                                    terminal_parse_failure('"\\n"')
+                                    r56 = nil
+                                  end
+                                  if r56
+                                    r56 = SyntaxNode.new(input, (index-1)...index) if r56 == true
+                                    r54 = r56
+                                  else
+                                    @index = i54
+                                    r54 = nil
+                                  end
+                                end
+                                if r54
+                                  s53 << r54
                                 else
                                   break
                                 end
                               end
-                              r55 = instantiate_node(SyntaxNode,input, i55...index, s55)
-                              s54 << r55
-                              if r55
-                                if (match_len = has_terminal?(',', false, index))
+                              if s53.empty?
+                                @index = i53
+                                r53 = nil
+                              else
+                                r53 = instantiate_node(SyntaxNode,input, i53...index, s53)
+                              end
+                              s0 << r53
+                              if r53
+                                if (match_len = has_terminal?('}', false, index))
                                   r57 = true
                                   @index += match_len
                                 else
-                                  terminal_parse_failure('\',\'')
+                                  terminal_parse_failure('\'}\'')
                                   r57 = nil
                                 end
-                                s54 << r57
+                                s0 << r57
                                 if r57
                                   s58, i58 = [], index
                                   loop do
@@ -10032,272 +9850,110 @@ module Idl
                                     end
                                   end
                                   r58 = instantiate_node(SyntaxNode,input, i58...index, s58)
-                                  s54 << r58
+                                  s0 << r58
                                   if r58
-                                    r60 = _nt_single_declaration
-                                    s54 << r60
-                                  end
-                                end
-                              end
-                              if s54.last
-                                r54 = instantiate_node(SyntaxNode,input, i54...index, s54)
-                                r54.extend(BodyFunctionDefinition5)
-                              else
-                                @index = i54
-                                r54 = nil
-                              end
-                              if r54
-                                s53 << r54
-                              else
-                                break
-                              end
-                            end
-                            r53 = instantiate_node(SyntaxNode,input, i53...index, s53)
-                            s48 << r53
-                            if r53
-                              s61, i61 = [], index
-                              loop do
-                                r62 = _nt_space
-                                if r62
-                                  s61 << r62
-                                else
-                                  break
-                                end
-                              end
-                              if s61.empty?
-                                @index = i61
-                                r61 = nil
-                              else
-                                r61 = instantiate_node(SyntaxNode,input, i61...index, s61)
-                              end
-                              s48 << r61
-                            end
-                          end
-                        end
-                      end
-                      if s48.last
-                        r48 = instantiate_node(SyntaxNode,input, i48...index, s48)
-                        r48.extend(BodyFunctionDefinition6)
-                      else
-                        @index = i48
-                        r48 = nil
-                      end
-                      if r48
-                        r47 = r48
-                      else
-                        r47 = instantiate_node(SyntaxNode,input, index...index)
-                      end
-                      s0 << r47
-                      if r47
-                        if (match_len = has_terminal?('description', false, index))
-                          r63 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                          @index += match_len
-                        else
-                          terminal_parse_failure('\'description\'')
-                          r63 = nil
-                        end
-                        s0 << r63
-                        if r63
-                          s64, i64 = [], index
-                          loop do
-                            r65 = _nt_space
-                            if r65
-                              s64 << r65
-                            else
-                              break
-                            end
-                          end
-                          r64 = instantiate_node(SyntaxNode,input, i64...index, s64)
-                          s0 << r64
-                          if r64
-                            if (match_len = has_terminal?('{', false, index))
-                              r66 = true
-                              @index += match_len
-                            else
-                              terminal_parse_failure('\'{\'')
-                              r66 = nil
-                            end
-                            s0 << r66
-                            if r66
-                              s67, i67 = [], index
-                              loop do
-                                r68 = _nt_space
-                                if r68
-                                  s67 << r68
-                                else
-                                  break
-                                end
-                              end
-                              r67 = instantiate_node(SyntaxNode,input, i67...index, s67)
-                              s0 << r67
-                              if r67
-                                s69, i69 = [], index
-                                loop do
-                                  i70 = index
-                                  if has_terminal?(@regexps[gr = '\A[^}]'] ||= Regexp.new(gr), :regexp, index)
-                                    r71 = true
-                                    @index += 1
-                                  else
-                                    terminal_parse_failure('[^}]')
-                                    r71 = nil
-                                  end
-                                  if r71
-                                    r71 = SyntaxNode.new(input, (index-1)...index) if r71 == true
-                                    r70 = r71
-                                  else
-                                    if (match_len = has_terminal?("\n", false, index))
-                                      r72 = true
+                                    i60, s60 = index, []
+                                    if (match_len = has_terminal?('body', false, index))
+                                      r61 = instantiate_node(SyntaxNode,input, index...(index + match_len))
                                       @index += match_len
                                     else
-                                      terminal_parse_failure('"\\n"')
-                                      r72 = nil
+                                      terminal_parse_failure('\'body\'')
+                                      r61 = nil
                                     end
-                                    if r72
-                                      r72 = SyntaxNode.new(input, (index-1)...index) if r72 == true
-                                      r70 = r72
-                                    else
-                                      @index = i70
-                                      r70 = nil
-                                    end
-                                  end
-                                  if r70
-                                    s69 << r70
-                                  else
-                                    break
-                                  end
-                                end
-                                if s69.empty?
-                                  @index = i69
-                                  r69 = nil
-                                else
-                                  r69 = instantiate_node(SyntaxNode,input, i69...index, s69)
-                                end
-                                s0 << r69
-                                if r69
-                                  if (match_len = has_terminal?('}', false, index))
-                                    r73 = true
-                                    @index += match_len
-                                  else
-                                    terminal_parse_failure('\'}\'')
-                                    r73 = nil
-                                  end
-                                  s0 << r73
-                                  if r73
-                                    s74, i74 = [], index
-                                    loop do
-                                      r75 = _nt_space
-                                      if r75
-                                        s74 << r75
-                                      else
-                                        break
-                                      end
-                                    end
-                                    r74 = instantiate_node(SyntaxNode,input, i74...index, s74)
-                                    s0 << r74
-                                    if r74
-                                      i76, s76 = index, []
-                                      if (match_len = has_terminal?('body', false, index))
-                                        r77 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                                        @index += match_len
-                                      else
-                                        terminal_parse_failure('\'body\'')
-                                        r77 = nil
-                                      end
-                                      s76 << r77
-                                      if r77
-                                        s78, i78 = [], index
-                                        loop do
-                                          r79 = _nt_space
-                                          if r79
-                                            s78 << r79
-                                          else
-                                            break
-                                          end
-                                        end
-                                        r78 = instantiate_node(SyntaxNode,input, i78...index, s78)
-                                        s76 << r78
-                                        if r78
-                                          if (match_len = has_terminal?('{', false, index))
-                                            r80 = true
-                                            @index += match_len
-                                          else
-                                            terminal_parse_failure('\'{\'')
-                                            r80 = nil
-                                          end
-                                          s76 << r80
-                                          if r80
-                                            s81, i81 = [], index
-                                            loop do
-                                              r82 = _nt_space
-                                              if r82
-                                                s81 << r82
-                                              else
-                                                break
-                                              end
-                                            end
-                                            r81 = instantiate_node(SyntaxNode,input, i81...index, s81)
-                                            s76 << r81
-                                            if r81
-                                              r83 = _nt_function_body
-                                              s76 << r83
-                                              if r83
-                                                s84, i84 = [], index
-                                                loop do
-                                                  r85 = _nt_space
-                                                  if r85
-                                                    s84 << r85
-                                                  else
-                                                    break
-                                                  end
-                                                end
-                                                r84 = instantiate_node(SyntaxNode,input, i84...index, s84)
-                                                s76 << r84
-                                                if r84
-                                                  if (match_len = has_terminal?('}', false, index))
-                                                    r86 = true
-                                                    @index += match_len
-                                                  else
-                                                    terminal_parse_failure('\'}\'')
-                                                    r86 = nil
-                                                  end
-                                                  s76 << r86
-                                                  if r86
-                                                    s87, i87 = [], index
-                                                    loop do
-                                                      r88 = _nt_space
-                                                      if r88
-                                                        s87 << r88
-                                                      else
-                                                        break
-                                                      end
-                                                    end
-                                                    r87 = instantiate_node(SyntaxNode,input, i87...index, s87)
-                                                    s76 << r87
-                                                  end
-                                                end
-                                              end
-                                            end
-                                          end
+                                    s60 << r61
+                                    if r61
+                                      s62, i62 = [], index
+                                      loop do
+                                        r63 = _nt_space
+                                        if r63
+                                          s62 << r63
+                                        else
+                                          break
                                         end
                                       end
-                                      if s76.last
-                                        r76 = instantiate_node(SyntaxNode,input, i76...index, s76)
-                                        r76.extend(BodyFunctionDefinition7)
-                                      else
-                                        @index = i76
-                                        r76 = nil
-                                      end
-                                      s0 << r76
-                                      if r76
-                                        if (match_len = has_terminal?('}', false, index))
-                                          r89 = true
+                                      r62 = instantiate_node(SyntaxNode,input, i62...index, s62)
+                                      s60 << r62
+                                      if r62
+                                        if (match_len = has_terminal?('{', false, index))
+                                          r64 = true
                                           @index += match_len
                                         else
-                                          terminal_parse_failure('\'}\'')
-                                          r89 = nil
+                                          terminal_parse_failure('\'{\'')
+                                          r64 = nil
                                         end
-                                        s0 << r89
+                                        s60 << r64
+                                        if r64
+                                          s65, i65 = [], index
+                                          loop do
+                                            r66 = _nt_space
+                                            if r66
+                                              s65 << r66
+                                            else
+                                              break
+                                            end
+                                          end
+                                          r65 = instantiate_node(SyntaxNode,input, i65...index, s65)
+                                          s60 << r65
+                                          if r65
+                                            r67 = _nt_function_body
+                                            s60 << r67
+                                            if r67
+                                              s68, i68 = [], index
+                                              loop do
+                                                r69 = _nt_space
+                                                if r69
+                                                  s68 << r69
+                                                else
+                                                  break
+                                                end
+                                              end
+                                              r68 = instantiate_node(SyntaxNode,input, i68...index, s68)
+                                              s60 << r68
+                                              if r68
+                                                if (match_len = has_terminal?('}', false, index))
+                                                  r70 = true
+                                                  @index += match_len
+                                                else
+                                                  terminal_parse_failure('\'}\'')
+                                                  r70 = nil
+                                                end
+                                                s60 << r70
+                                                if r70
+                                                  s71, i71 = [], index
+                                                  loop do
+                                                    r72 = _nt_space
+                                                    if r72
+                                                      s71 << r72
+                                                    else
+                                                      break
+                                                    end
+                                                  end
+                                                  r71 = instantiate_node(SyntaxNode,input, i71...index, s71)
+                                                  s60 << r71
+                                                end
+                                              end
+                                            end
+                                          end
+                                        end
                                       end
+                                    end
+                                    if s60.last
+                                      r60 = instantiate_node(SyntaxNode,input, i60...index, s60)
+                                      r60.extend(BodyFunctionDefinition5)
+                                    else
+                                      @index = i60
+                                      r60 = nil
+                                    end
+                                    s0 << r60
+                                    if r60
+                                      if (match_len = has_terminal?('}', false, index))
+                                        r73 = true
+                                        @index += match_len
+                                      else
+                                        terminal_parse_failure('\'}\'')
+                                        r73 = nil
+                                      end
+                                      s0 << r73
                                     end
                                   end
                                 end
@@ -10317,7 +9973,7 @@ module Idl
     end
     if s0.last
       r0 = instantiate_node(Idl::FunctionDefSyntaxNode,input, i0...index, s0)
-      r0.extend(BodyFunctionDefinition8)
+      r0.extend(BodyFunctionDefinition6)
     else
       @index = i0
       r0 = nil
@@ -13213,12 +12869,12 @@ module Idl
                         loop do
                           i17, s17 = index, []
                           i18 = index
-                          r19 = _nt_statement
+                          r19 = _nt_return_statement
                           if r19
                             r19 = SyntaxNode.new(input, (index-1)...index) if r19 == true
                             r18 = r19
                           else
-                            r20 = _nt_return_statement
+                            r20 = _nt_statement
                             if r20
                               r20 = SyntaxNode.new(input, (index-1)...index) if r20 == true
                               r18 = r20
@@ -13427,12 +13083,12 @@ module Idl
                                                         loop do
                                                           i49, s49 = index, []
                                                           i50 = index
-                                                          r51 = _nt_statement
+                                                          r51 = _nt_return_statement
                                                           if r51
                                                             r51 = SyntaxNode.new(input, (index-1)...index) if r51 == true
                                                             r50 = r51
                                                           else
-                                                            r52 = _nt_return_statement
+                                                            r52 = _nt_statement
                                                             if r52
                                                               r52 = SyntaxNode.new(input, (index-1)...index) if r52 == true
                                                               r50 = r52
@@ -13585,12 +13241,12 @@ module Idl
                                         loop do
                                           i69, s69 = index, []
                                           i70 = index
-                                          r71 = _nt_statement
+                                          r71 = _nt_return_statement
                                           if r71
                                             r71 = SyntaxNode.new(input, (index-1)...index) if r71 == true
                                             r70 = r71
                                           else
-                                            r72 = _nt_return_statement
+                                            r72 = _nt_statement
                                             if r72
                                               r72 = SyntaxNode.new(input, (index-1)...index) if r72 == true
                                               r70 = r72
@@ -14572,12 +14228,12 @@ module Idl
                                         loop do
                                           i32, s32 = index, []
                                           i33 = index
-                                          r34 = _nt_statement
+                                          r34 = _nt_return_statement
                                           if r34
                                             r34 = SyntaxNode.new(input, (index-1)...index) if r34 == true
                                             r33 = r34
                                           else
-                                            r35 = _nt_return_statement
+                                            r35 = _nt_statement
                                             if r35
                                               r35 = SyntaxNode.new(input, (index-1)...index) if r35 == true
                                               r33 = r35
@@ -14686,1148 +14342,6 @@ module Idl
     r0
   end
 
-  module BuiltinTypeName0
-  end
-
-  module BuiltinTypeName1
-    def i
-      elements[4]
-    end
-
-  end
-
-  module BuiltinTypeName2
-  end
-
-  module BuiltinTypeName3
-  end
-
-  module BuiltinTypeName4
-  end
-
-  module BuiltinTypeName5
-  end
-
-  def _nt_builtin_type_name
-    start_index = index
-    if node_cache[:builtin_type_name].has_key?(index)
-      cached = node_cache[:builtin_type_name][index]
-      if cached
-        node_cache[:builtin_type_name][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-        @index = cached.interval.end
-      end
-      return cached
-    end
-
-    i0 = index
-    i1, s1 = index, []
-    if (match_len = has_terminal?('XReg', false, index))
-      r2 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-      @index += match_len
-    else
-      terminal_parse_failure('\'XReg\'')
-      r2 = nil
-    end
-    s1 << r2
-    if r2
-      i3 = index
-      if has_terminal?(@regexps[gr = '\A[A-Za-z0-9]'] ||= Regexp.new(gr), :regexp, index)
-        r4 = true
-        @index += 1
-      else
-        terminal_parse_failure('[A-Za-z0-9]')
-        r4 = nil
-      end
-      if r4
-        @index = i3
-        r3 = nil
-        terminal_parse_failure('[A-Za-z0-9]', true)
-      else
-        @terminal_failures.pop
-        @index = i3
-        r3 = instantiate_node(SyntaxNode,input, index...index)
-      end
-      s1 << r3
-    end
-    if s1.last
-      r1 = instantiate_node(Idl::BuiltinTypeNameSyntaxNode,input, i1...index, s1)
-      r1.extend(BuiltinTypeName0)
-    else
-      @index = i1
-      r1 = nil
-    end
-    if r1
-      r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
-      r0 = r1
-    else
-      i5, s5 = index, []
-      if (match_len = has_terminal?('Bits', false, index))
-        r6 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-        @index += match_len
-      else
-        terminal_parse_failure('\'Bits\'')
-        r6 = nil
-      end
-      s5 << r6
-      if r6
-        s7, i7 = [], index
-        loop do
-          r8 = _nt_space
-          if r8
-            s7 << r8
-          else
-            break
-          end
-        end
-        r7 = instantiate_node(SyntaxNode,input, i7...index, s7)
-        s5 << r7
-        if r7
-          if (match_len = has_terminal?('<', false, index))
-            r9 = true
-            @index += match_len
-          else
-            terminal_parse_failure('\'<\'')
-            r9 = nil
-          end
-          s5 << r9
-          if r9
-            s10, i10 = [], index
-            loop do
-              r11 = _nt_space
-              if r11
-                s10 << r11
-              else
-                break
-              end
-            end
-            r10 = instantiate_node(SyntaxNode,input, i10...index, s10)
-            s5 << r10
-            if r10
-              r12 = _nt_template_safe_expression
-              s5 << r12
-              if r12
-                s13, i13 = [], index
-                loop do
-                  r14 = _nt_space
-                  if r14
-                    s13 << r14
-                  else
-                    break
-                  end
-                end
-                r13 = instantiate_node(SyntaxNode,input, i13...index, s13)
-                s5 << r13
-                if r13
-                  if (match_len = has_terminal?('>', false, index))
-                    r15 = true
-                    @index += match_len
-                  else
-                    terminal_parse_failure('\'>\'')
-                    r15 = nil
-                  end
-                  s5 << r15
-                  if r15
-                    i16 = index
-                    if has_terminal?(@regexps[gr = '\A[A-Za-z0-9]'] ||= Regexp.new(gr), :regexp, index)
-                      r17 = true
-                      @index += 1
-                    else
-                      terminal_parse_failure('[A-Za-z0-9]')
-                      r17 = nil
-                    end
-                    if r17
-                      @index = i16
-                      r16 = nil
-                      terminal_parse_failure('[A-Za-z0-9]', true)
-                    else
-                      @terminal_failures.pop
-                      @index = i16
-                      r16 = instantiate_node(SyntaxNode,input, index...index)
-                    end
-                    s5 << r16
-                  end
-                end
-              end
-            end
-          end
-        end
-      end
-      if s5.last
-        r5 = instantiate_node(Idl::BuiltinTypeNameSyntaxNode,input, i5...index, s5)
-        r5.extend(BuiltinTypeName1)
-      else
-        @index = i5
-        r5 = nil
-      end
-      if r5
-        r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
-        r0 = r5
-      else
-        i18, s18 = index, []
-        if (match_len = has_terminal?('Boolean', false, index))
-          r19 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-          @index += match_len
-        else
-          terminal_parse_failure('\'Boolean\'')
-          r19 = nil
-        end
-        s18 << r19
-        if r19
-          i20 = index
-          if has_terminal?(@regexps[gr = '\A[A-Za-z0-9]'] ||= Regexp.new(gr), :regexp, index)
-            r21 = true
-            @index += 1
-          else
-            terminal_parse_failure('[A-Za-z0-9]')
-            r21 = nil
-          end
-          if r21
-            @index = i20
-            r20 = nil
-            terminal_parse_failure('[A-Za-z0-9]', true)
-          else
-            @terminal_failures.pop
-            @index = i20
-            r20 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s18 << r20
-        end
-        if s18.last
-          r18 = instantiate_node(Idl::BuiltinTypeNameSyntaxNode,input, i18...index, s18)
-          r18.extend(BuiltinTypeName2)
-        else
-          @index = i18
-          r18 = nil
-        end
-        if r18
-          r18 = SyntaxNode.new(input, (index-1)...index) if r18 == true
-          r0 = r18
-        else
-          i22, s22 = index, []
-          if (match_len = has_terminal?('String', false, index))
-            r23 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-            @index += match_len
-          else
-            terminal_parse_failure('\'String\'')
-            r23 = nil
-          end
-          s22 << r23
-          if r23
-            i24 = index
-            if has_terminal?(@regexps[gr = '\A[A-Za-z0-9]'] ||= Regexp.new(gr), :regexp, index)
-              r25 = true
-              @index += 1
-            else
-              terminal_parse_failure('[A-Za-z0-9]')
-              r25 = nil
-            end
-            if r25
-              @index = i24
-              r24 = nil
-              terminal_parse_failure('[A-Za-z0-9]', true)
-            else
-              @terminal_failures.pop
-              @index = i24
-              r24 = instantiate_node(SyntaxNode,input, index...index)
-            end
-            s22 << r24
-          end
-          if s22.last
-            r22 = instantiate_node(Idl::BuiltinTypeNameSyntaxNode,input, i22...index, s22)
-            r22.extend(BuiltinTypeName3)
-          else
-            @index = i22
-            r22 = nil
-          end
-          if r22
-            r22 = SyntaxNode.new(input, (index-1)...index) if r22 == true
-            r0 = r22
-          else
-            i26, s26 = index, []
-            if (match_len = has_terminal?('U64', false, index))
-              r27 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-              @index += match_len
-            else
-              terminal_parse_failure('\'U64\'')
-              r27 = nil
-            end
-            s26 << r27
-            if r27
-              i28 = index
-              if has_terminal?(@regexps[gr = '\A[A-Za-z0-9]'] ||= Regexp.new(gr), :regexp, index)
-                r29 = true
-                @index += 1
-              else
-                terminal_parse_failure('[A-Za-z0-9]')
-                r29 = nil
-              end
-              if r29
-                @index = i28
-                r28 = nil
-                terminal_parse_failure('[A-Za-z0-9]', true)
-              else
-                @terminal_failures.pop
-                @index = i28
-                r28 = instantiate_node(SyntaxNode,input, index...index)
-              end
-              s26 << r28
-            end
-            if s26.last
-              r26 = instantiate_node(Idl::BuiltinTypeNameSyntaxNode,input, i26...index, s26)
-              r26.extend(BuiltinTypeName4)
-            else
-              @index = i26
-              r26 = nil
-            end
-            if r26
-              r26 = SyntaxNode.new(input, (index-1)...index) if r26 == true
-              r0 = r26
-            else
-              i30, s30 = index, []
-              if (match_len = has_terminal?('U32', false, index))
-                r31 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                @index += match_len
-              else
-                terminal_parse_failure('\'U32\'')
-                r31 = nil
-              end
-              s30 << r31
-              if r31
-                i32 = index
-                if has_terminal?(@regexps[gr = '\A[A-Za-z0-9]'] ||= Regexp.new(gr), :regexp, index)
-                  r33 = true
-                  @index += 1
-                else
-                  terminal_parse_failure('[A-Za-z0-9]')
-                  r33 = nil
-                end
-                if r33
-                  @index = i32
-                  r32 = nil
-                  terminal_parse_failure('[A-Za-z0-9]', true)
-                else
-                  @terminal_failures.pop
-                  @index = i32
-                  r32 = instantiate_node(SyntaxNode,input, index...index)
-                end
-                s30 << r32
-              end
-              if s30.last
-                r30 = instantiate_node(Idl::BuiltinTypeNameSyntaxNode,input, i30...index, s30)
-                r30.extend(BuiltinTypeName5)
-              else
-                @index = i30
-                r30 = nil
-              end
-              if r30
-                r30 = SyntaxNode.new(input, (index-1)...index) if r30 == true
-                r0 = r30
-              else
-                @index = i0
-                r0 = nil
-              end
-            end
-          end
-        end
-      end
-    end
-
-    node_cache[:builtin_type_name][start_index] = r0
-
-    r0
-  end
-
-  module Keyword0
-  end
-
-  module Keyword1
-  end
-
-  module Keyword2
-  end
-
-  module Keyword3
-  end
-
-  module Keyword4
-  end
-
-  module Keyword5
-  end
-
-  module Keyword6
-  end
-
-  module Keyword7
-  end
-
-  module Keyword8
-  end
-
-  module Keyword9
-  end
-
-  module Keyword10
-  end
-
-  module Keyword11
-  end
-
-  module Keyword12
-  end
-
-  module Keyword13
-  end
-
-  module Keyword14
-  end
-
-  module Keyword15
-  end
-
-  def _nt_keyword
-    start_index = index
-    if node_cache[:keyword].has_key?(index)
-      cached = node_cache[:keyword][index]
-      if cached
-        node_cache[:keyword][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-        @index = cached.interval.end
-      end
-      return cached
-    end
-
-    i0 = index
-    i1, s1 = index, []
-    if (match_len = has_terminal?('if', false, index))
-      r2 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-      @index += match_len
-    else
-      terminal_parse_failure('\'if\'')
-      r2 = nil
-    end
-    s1 << r2
-    if r2
-      i3 = index
-      if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-        r4 = true
-        @index += 1
-      else
-        terminal_parse_failure('[A-Za-z0-9_]')
-        r4 = nil
-      end
-      if r4
-        @index = i3
-        r3 = nil
-        terminal_parse_failure('[A-Za-z0-9_]', true)
-      else
-        @terminal_failures.pop
-        @index = i3
-        r3 = instantiate_node(SyntaxNode,input, index...index)
-      end
-      s1 << r3
-    end
-    if s1.last
-      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-      r1.extend(Keyword0)
-    else
-      @index = i1
-      r1 = nil
-    end
-    if r1
-      r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
-      r0 = r1
-    else
-      i5, s5 = index, []
-      if (match_len = has_terminal?('else', false, index))
-        r6 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-        @index += match_len
-      else
-        terminal_parse_failure('\'else\'')
-        r6 = nil
-      end
-      s5 << r6
-      if r6
-        i7 = index
-        if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-          r8 = true
-          @index += 1
-        else
-          terminal_parse_failure('[A-Za-z0-9_]')
-          r8 = nil
-        end
-        if r8
-          @index = i7
-          r7 = nil
-          terminal_parse_failure('[A-Za-z0-9_]', true)
-        else
-          @terminal_failures.pop
-          @index = i7
-          r7 = instantiate_node(SyntaxNode,input, index...index)
-        end
-        s5 << r7
-      end
-      if s5.last
-        r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
-        r5.extend(Keyword1)
-      else
-        @index = i5
-        r5 = nil
-      end
-      if r5
-        r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
-        r0 = r5
-      else
-        i9, s9 = index, []
-        if (match_len = has_terminal?('for', false, index))
-          r10 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-          @index += match_len
-        else
-          terminal_parse_failure('\'for\'')
-          r10 = nil
-        end
-        s9 << r10
-        if r10
-          i11 = index
-          if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-            r12 = true
-            @index += 1
-          else
-            terminal_parse_failure('[A-Za-z0-9_]')
-            r12 = nil
-          end
-          if r12
-            @index = i11
-            r11 = nil
-            terminal_parse_failure('[A-Za-z0-9_]', true)
-          else
-            @terminal_failures.pop
-            @index = i11
-            r11 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s9 << r11
-        end
-        if s9.last
-          r9 = instantiate_node(SyntaxNode,input, i9...index, s9)
-          r9.extend(Keyword2)
-        else
-          @index = i9
-          r9 = nil
-        end
-        if r9
-          r9 = SyntaxNode.new(input, (index-1)...index) if r9 == true
-          r0 = r9
-        else
-          i13, s13 = index, []
-          if (match_len = has_terminal?('return', false, index))
-            r14 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-            @index += match_len
-          else
-            terminal_parse_failure('\'return\'')
-            r14 = nil
-          end
-          s13 << r14
-          if r14
-            i15 = index
-            if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-              r16 = true
-              @index += 1
-            else
-              terminal_parse_failure('[A-Za-z0-9_]')
-              r16 = nil
-            end
-            if r16
-              @index = i15
-              r15 = nil
-              terminal_parse_failure('[A-Za-z0-9_]', true)
-            else
-              @terminal_failures.pop
-              @index = i15
-              r15 = instantiate_node(SyntaxNode,input, index...index)
-            end
-            s13 << r15
-          end
-          if s13.last
-            r13 = instantiate_node(SyntaxNode,input, i13...index, s13)
-            r13.extend(Keyword3)
-          else
-            @index = i13
-            r13 = nil
-          end
-          if r13
-            r13 = SyntaxNode.new(input, (index-1)...index) if r13 == true
-            r0 = r13
-          else
-            i17, s17 = index, []
-            if (match_len = has_terminal?('returns', false, index))
-              r18 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-              @index += match_len
-            else
-              terminal_parse_failure('\'returns\'')
-              r18 = nil
-            end
-            s17 << r18
-            if r18
-              i19 = index
-              if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                r20 = true
-                @index += 1
-              else
-                terminal_parse_failure('[A-Za-z0-9_]')
-                r20 = nil
-              end
-              if r20
-                @index = i19
-                r19 = nil
-                terminal_parse_failure('[A-Za-z0-9_]', true)
-              else
-                @terminal_failures.pop
-                @index = i19
-                r19 = instantiate_node(SyntaxNode,input, index...index)
-              end
-              s17 << r19
-            end
-            if s17.last
-              r17 = instantiate_node(SyntaxNode,input, i17...index, s17)
-              r17.extend(Keyword4)
-            else
-              @index = i17
-              r17 = nil
-            end
-            if r17
-              r17 = SyntaxNode.new(input, (index-1)...index) if r17 == true
-              r0 = r17
-            else
-              i21, s21 = index, []
-              if (match_len = has_terminal?('arguments', false, index))
-                r22 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                @index += match_len
-              else
-                terminal_parse_failure('\'arguments\'')
-                r22 = nil
-              end
-              s21 << r22
-              if r22
-                i23 = index
-                if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                  r24 = true
-                  @index += 1
-                else
-                  terminal_parse_failure('[A-Za-z0-9_]')
-                  r24 = nil
-                end
-                if r24
-                  @index = i23
-                  r23 = nil
-                  terminal_parse_failure('[A-Za-z0-9_]', true)
-                else
-                  @terminal_failures.pop
-                  @index = i23
-                  r23 = instantiate_node(SyntaxNode,input, index...index)
-                end
-                s21 << r23
-              end
-              if s21.last
-                r21 = instantiate_node(SyntaxNode,input, i21...index, s21)
-                r21.extend(Keyword5)
-              else
-                @index = i21
-                r21 = nil
-              end
-              if r21
-                r21 = SyntaxNode.new(input, (index-1)...index) if r21 == true
-                r0 = r21
-              else
-                i25, s25 = index, []
-                if (match_len = has_terminal?('description', false, index))
-                  r26 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
-                else
-                  terminal_parse_failure('\'description\'')
-                  r26 = nil
-                end
-                s25 << r26
-                if r26
-                  i27 = index
-                  if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                    r28 = true
-                    @index += 1
-                  else
-                    terminal_parse_failure('[A-Za-z0-9_]')
-                    r28 = nil
-                  end
-                  if r28
-                    @index = i27
-                    r27 = nil
-                    terminal_parse_failure('[A-Za-z0-9_]', true)
-                  else
-                    @terminal_failures.pop
-                    @index = i27
-                    r27 = instantiate_node(SyntaxNode,input, index...index)
-                  end
-                  s25 << r27
-                end
-                if s25.last
-                  r25 = instantiate_node(SyntaxNode,input, i25...index, s25)
-                  r25.extend(Keyword6)
-                else
-                  @index = i25
-                  r25 = nil
-                end
-                if r25
-                  r25 = SyntaxNode.new(input, (index-1)...index) if r25 == true
-                  r0 = r25
-                else
-                  i29, s29 = index, []
-                  if (match_len = has_terminal?('body', false, index))
-                    r30 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                    @index += match_len
-                  else
-                    terminal_parse_failure('\'body\'')
-                    r30 = nil
-                  end
-                  s29 << r30
-                  if r30
-                    i31 = index
-                    if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                      r32 = true
-                      @index += 1
-                    else
-                      terminal_parse_failure('[A-Za-z0-9_]')
-                      r32 = nil
-                    end
-                    if r32
-                      @index = i31
-                      r31 = nil
-                      terminal_parse_failure('[A-Za-z0-9_]', true)
-                    else
-                      @terminal_failures.pop
-                      @index = i31
-                      r31 = instantiate_node(SyntaxNode,input, index...index)
-                    end
-                    s29 << r31
-                  end
-                  if s29.last
-                    r29 = instantiate_node(SyntaxNode,input, i29...index, s29)
-                    r29.extend(Keyword7)
-                  else
-                    @index = i29
-                    r29 = nil
-                  end
-                  if r29
-                    r29 = SyntaxNode.new(input, (index-1)...index) if r29 == true
-                    r0 = r29
-                  else
-                    i33, s33 = index, []
-                    if (match_len = has_terminal?('function', false, index))
-                      r34 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                      @index += match_len
-                    else
-                      terminal_parse_failure('\'function\'')
-                      r34 = nil
-                    end
-                    s33 << r34
-                    if r34
-                      i35 = index
-                      if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                        r36 = true
-                        @index += 1
-                      else
-                        terminal_parse_failure('[A-Za-z0-9_]')
-                        r36 = nil
-                      end
-                      if r36
-                        @index = i35
-                        r35 = nil
-                        terminal_parse_failure('[A-Za-z0-9_]', true)
-                      else
-                        @terminal_failures.pop
-                        @index = i35
-                        r35 = instantiate_node(SyntaxNode,input, index...index)
-                      end
-                      s33 << r35
-                    end
-                    if s33.last
-                      r33 = instantiate_node(SyntaxNode,input, i33...index, s33)
-                      r33.extend(Keyword8)
-                    else
-                      @index = i33
-                      r33 = nil
-                    end
-                    if r33
-                      r33 = SyntaxNode.new(input, (index-1)...index) if r33 == true
-                      r0 = r33
-                    else
-                      i37, s37 = index, []
-                      if (match_len = has_terminal?('builtin', false, index))
-                        r38 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                        @index += match_len
-                      else
-                        terminal_parse_failure('\'builtin\'')
-                        r38 = nil
-                      end
-                      s37 << r38
-                      if r38
-                        i39 = index
-                        if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                          r40 = true
-                          @index += 1
-                        else
-                          terminal_parse_failure('[A-Za-z0-9_]')
-                          r40 = nil
-                        end
-                        if r40
-                          @index = i39
-                          r39 = nil
-                          terminal_parse_failure('[A-Za-z0-9_]', true)
-                        else
-                          @terminal_failures.pop
-                          @index = i39
-                          r39 = instantiate_node(SyntaxNode,input, index...index)
-                        end
-                        s37 << r39
-                      end
-                      if s37.last
-                        r37 = instantiate_node(SyntaxNode,input, i37...index, s37)
-                        r37.extend(Keyword9)
-                      else
-                        @index = i37
-                        r37 = nil
-                      end
-                      if r37
-                        r37 = SyntaxNode.new(input, (index-1)...index) if r37 == true
-                        r0 = r37
-                      else
-                        i41, s41 = index, []
-                        if (match_len = has_terminal?('generated', false, index))
-                          r42 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                          @index += match_len
-                        else
-                          terminal_parse_failure('\'generated\'')
-                          r42 = nil
-                        end
-                        s41 << r42
-                        if r42
-                          i43 = index
-                          if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                            r44 = true
-                            @index += 1
-                          else
-                            terminal_parse_failure('[A-Za-z0-9_]')
-                            r44 = nil
-                          end
-                          if r44
-                            @index = i43
-                            r43 = nil
-                            terminal_parse_failure('[A-Za-z0-9_]', true)
-                          else
-                            @terminal_failures.pop
-                            @index = i43
-                            r43 = instantiate_node(SyntaxNode,input, index...index)
-                          end
-                          s41 << r43
-                        end
-                        if s41.last
-                          r41 = instantiate_node(SyntaxNode,input, i41...index, s41)
-                          r41.extend(Keyword10)
-                        else
-                          @index = i41
-                          r41 = nil
-                        end
-                        if r41
-                          r41 = SyntaxNode.new(input, (index-1)...index) if r41 == true
-                          r0 = r41
-                        else
-                          i45, s45 = index, []
-                          if (match_len = has_terminal?('enum', false, index))
-                            r46 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                            @index += match_len
-                          else
-                            terminal_parse_failure('\'enum\'')
-                            r46 = nil
-                          end
-                          s45 << r46
-                          if r46
-                            i47 = index
-                            if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                              r48 = true
-                              @index += 1
-                            else
-                              terminal_parse_failure('[A-Za-z0-9_]')
-                              r48 = nil
-                            end
-                            if r48
-                              @index = i47
-                              r47 = nil
-                              terminal_parse_failure('[A-Za-z0-9_]', true)
-                            else
-                              @terminal_failures.pop
-                              @index = i47
-                              r47 = instantiate_node(SyntaxNode,input, index...index)
-                            end
-                            s45 << r47
-                          end
-                          if s45.last
-                            r45 = instantiate_node(SyntaxNode,input, i45...index, s45)
-                            r45.extend(Keyword11)
-                          else
-                            @index = i45
-                            r45 = nil
-                          end
-                          if r45
-                            r45 = SyntaxNode.new(input, (index-1)...index) if r45 == true
-                            r0 = r45
-                          else
-                            i49, s49 = index, []
-                            if (match_len = has_terminal?('bitfield', false, index))
-                              r50 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                              @index += match_len
-                            else
-                              terminal_parse_failure('\'bitfield\'')
-                              r50 = nil
-                            end
-                            s49 << r50
-                            if r50
-                              i51 = index
-                              if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                                r52 = true
-                                @index += 1
-                              else
-                                terminal_parse_failure('[A-Za-z0-9_]')
-                                r52 = nil
-                              end
-                              if r52
-                                @index = i51
-                                r51 = nil
-                                terminal_parse_failure('[A-Za-z0-9_]', true)
-                              else
-                                @terminal_failures.pop
-                                @index = i51
-                                r51 = instantiate_node(SyntaxNode,input, index...index)
-                              end
-                              s49 << r51
-                            end
-                            if s49.last
-                              r49 = instantiate_node(SyntaxNode,input, i49...index, s49)
-                              r49.extend(Keyword12)
-                            else
-                              @index = i49
-                              r49 = nil
-                            end
-                            if r49
-                              r49 = SyntaxNode.new(input, (index-1)...index) if r49 == true
-                              r0 = r49
-                            else
-                              i53, s53 = index, []
-                              if (match_len = has_terminal?('CSR', false, index))
-                                r54 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                                @index += match_len
-                              else
-                                terminal_parse_failure('\'CSR\'')
-                                r54 = nil
-                              end
-                              s53 << r54
-                              if r54
-                                i55 = index
-                                if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                                  r56 = true
-                                  @index += 1
-                                else
-                                  terminal_parse_failure('[A-Za-z0-9_]')
-                                  r56 = nil
-                                end
-                                if r56
-                                  @index = i55
-                                  r55 = nil
-                                  terminal_parse_failure('[A-Za-z0-9_]', true)
-                                else
-                                  @terminal_failures.pop
-                                  @index = i55
-                                  r55 = instantiate_node(SyntaxNode,input, index...index)
-                                end
-                                s53 << r55
-                              end
-                              if s53.last
-                                r53 = instantiate_node(SyntaxNode,input, i53...index, s53)
-                                r53.extend(Keyword13)
-                              else
-                                @index = i53
-                                r53 = nil
-                              end
-                              if r53
-                                r53 = SyntaxNode.new(input, (index-1)...index) if r53 == true
-                                r0 = r53
-                              else
-                                i57, s57 = index, []
-                                if (match_len = has_terminal?('true', false, index))
-                                  r58 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                                  @index += match_len
-                                else
-                                  terminal_parse_failure('\'true\'')
-                                  r58 = nil
-                                end
-                                s57 << r58
-                                if r58
-                                  i59 = index
-                                  if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                                    r60 = true
-                                    @index += 1
-                                  else
-                                    terminal_parse_failure('[A-Za-z0-9_]')
-                                    r60 = nil
-                                  end
-                                  if r60
-                                    @index = i59
-                                    r59 = nil
-                                    terminal_parse_failure('[A-Za-z0-9_]', true)
-                                  else
-                                    @terminal_failures.pop
-                                    @index = i59
-                                    r59 = instantiate_node(SyntaxNode,input, index...index)
-                                  end
-                                  s57 << r59
-                                end
-                                if s57.last
-                                  r57 = instantiate_node(SyntaxNode,input, i57...index, s57)
-                                  r57.extend(Keyword14)
-                                else
-                                  @index = i57
-                                  r57 = nil
-                                end
-                                if r57
-                                  r57 = SyntaxNode.new(input, (index-1)...index) if r57 == true
-                                  r0 = r57
-                                else
-                                  i61, s61 = index, []
-                                  if (match_len = has_terminal?('false', false, index))
-                                    r62 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                                    @index += match_len
-                                  else
-                                    terminal_parse_failure('\'false\'')
-                                    r62 = nil
-                                  end
-                                  s61 << r62
-                                  if r62
-                                    i63 = index
-                                    if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-                                      r64 = true
-                                      @index += 1
-                                    else
-                                      terminal_parse_failure('[A-Za-z0-9_]')
-                                      r64 = nil
-                                    end
-                                    if r64
-                                      @index = i63
-                                      r63 = nil
-                                      terminal_parse_failure('[A-Za-z0-9_]', true)
-                                    else
-                                      @terminal_failures.pop
-                                      @index = i63
-                                      r63 = instantiate_node(SyntaxNode,input, index...index)
-                                    end
-                                    s61 << r63
-                                  end
-                                  if s61.last
-                                    r61 = instantiate_node(SyntaxNode,input, i61...index, s61)
-                                    r61.extend(Keyword15)
-                                  else
-                                    @index = i61
-                                    r61 = nil
-                                  end
-                                  if r61
-                                    r61 = SyntaxNode.new(input, (index-1)...index) if r61 == true
-                                    r0 = r61
-                                  else
-                                    @index = i0
-                                    r0 = nil
-                                  end
-                                end
-                              end
-                            end
-                          end
-                        end
-                      end
-                    end
-                  end
-                end
-              end
-            end
-          end
-        end
-      end
-    end
-
-    node_cache[:keyword][start_index] = r0
-
-    r0
-  end
-
-  module UserTypeName0
-  end
-
-  def _nt_user_type_name
-    start_index = index
-    if node_cache[:user_type_name].has_key?(index)
-      cached = node_cache[:user_type_name][index]
-      if cached
-        node_cache[:user_type_name][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-        @index = cached.interval.end
-      end
-      return cached
-    end
-
-    i0, s0 = index, []
-    i1 = index
-    r2 = _nt_reserved
-    if r2
-      @index = i1
-      r1 = nil
-    else
-      @index = i1
-      r1 = instantiate_node(SyntaxNode,input, index...index)
-    end
-    s0 << r1
-    if r1
-      if has_terminal?(@regexps[gr = '\A[A-Z]'] ||= Regexp.new(gr), :regexp, index)
-        r3 = true
-        @index += 1
-      else
-        terminal_parse_failure('[A-Z]')
-        r3 = nil
-      end
-      s0 << r3
-      if r3
-        s4, i4 = [], index
-        loop do
-          if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
-            r5 = true
-            @index += 1
-          else
-            terminal_parse_failure('[A-Za-z0-9_]')
-            r5 = nil
-          end
-          if r5
-            s4 << r5
-          else
-            break
-          end
-        end
-        r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
-        s0 << r4
-      end
-    end
-    if s0.last
-      r0 = instantiate_node(Idl::UserTypeNameSyntaxNode,input, i0...index, s0)
-      r0.extend(UserTypeName0)
-    else
-      @index = i0
-      r0 = nil
-    end
-
-    node_cache[:user_type_name][start_index] = r0
-
-    r0
-  end
-
   module FieldName0
   end
 
@@ -15883,6 +14397,16 @@ module Idl
     r0
   end
 
+  module TypeName0
+    def i
+      elements[4]
+    end
+
+  end
+
+  module TypeName1
+  end
+
   def _nt_type_name
     start_index = index
     if node_cache[:type_name].has_key?(index)
@@ -15895,15 +14419,149 @@ module Idl
     end
 
     i0 = index
-    r1 = _nt_builtin_type_name
+    i1, s1 = index, []
+    if (match_len = has_terminal?('Bits', false, index))
+      r2 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+      @index += match_len
+    else
+      terminal_parse_failure('\'Bits\'')
+      r2 = nil
+    end
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        r4 = _nt_space
+        if r4
+          s3 << r4
+        else
+          break
+        end
+      end
+      r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+      s1 << r3
+      if r3
+        if (match_len = has_terminal?('<', false, index))
+          r5 = true
+          @index += match_len
+        else
+          terminal_parse_failure('\'<\'')
+          r5 = nil
+        end
+        s1 << r5
+        if r5
+          s6, i6 = [], index
+          loop do
+            r7 = _nt_space
+            if r7
+              s6 << r7
+            else
+              break
+            end
+          end
+          r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
+          s1 << r6
+          if r6
+            r8 = _nt_template_safe_expression
+            s1 << r8
+            if r8
+              s9, i9 = [], index
+              loop do
+                r10 = _nt_space
+                if r10
+                  s9 << r10
+                else
+                  break
+                end
+              end
+              r9 = instantiate_node(SyntaxNode,input, i9...index, s9)
+              s1 << r9
+              if r9
+                if (match_len = has_terminal?('>', false, index))
+                  r11 = true
+                  @index += match_len
+                else
+                  terminal_parse_failure('\'>\'')
+                  r11 = nil
+                end
+                s1 << r11
+                if r11
+                  i12 = index
+                  if has_terminal?(@regexps[gr = '\A[A-Za-z0-9]'] ||= Regexp.new(gr), :regexp, index)
+                    r13 = true
+                    @index += 1
+                  else
+                    terminal_parse_failure('[A-Za-z0-9]')
+                    r13 = nil
+                  end
+                  if r13
+                    @index = i12
+                    r12 = nil
+                    terminal_parse_failure('[A-Za-z0-9]', true)
+                  else
+                    @terminal_failures.pop
+                    @index = i12
+                    r12 = instantiate_node(SyntaxNode,input, index...index)
+                  end
+                  s1 << r12
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    if s1.last
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+      r1.extend(TypeName0)
+    else
+      @index = i1
+      r1 = nil
+    end
     if r1
       r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
       r0 = r1
+      r0.extend(Idl::TypeNameSyntaxNode)
     else
-      r2 = _nt_user_type_name
-      if r2
-        r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
-        r0 = r2
+      i14, s14 = index, []
+      if has_terminal?(@regexps[gr = '\A[A-Z]'] ||= Regexp.new(gr), :regexp, index)
+        r15 = true
+        @index += 1
+      else
+        terminal_parse_failure('[A-Z]')
+        r15 = nil
+      end
+      s14 << r15
+      if r15
+        s16, i16 = [], index
+        loop do
+          if has_terminal?(@regexps[gr = '\A[A-Za-z0-9_]'] ||= Regexp.new(gr), :regexp, index)
+            r17 = true
+            @index += 1
+          else
+            terminal_parse_failure('[A-Za-z0-9_]')
+            r17 = nil
+          end
+          if r17
+            s16 << r17
+          else
+            break
+          end
+        end
+        r16 = instantiate_node(SyntaxNode,input, i16...index, s16)
+        s14 << r16
+      end
+      if s14.last
+        r14 = instantiate_node(SyntaxNode,input, i14...index, s14)
+        r14.extend(TypeName1)
+      else
+        @index = i14
+        r14 = nil
+      end
+      if r14
+        r14 = SyntaxNode.new(input, (index-1)...index) if r14 == true
+        r0 = r14
+        r0.extend(Idl::TypeNameSyntaxNode)
       else
         @index = i0
         r0 = nil
@@ -15911,38 +14569,6 @@ module Idl
     end
 
     node_cache[:type_name][start_index] = r0
-
-    r0
-  end
-
-  def _nt_reserved
-    start_index = index
-    if node_cache[:reserved].has_key?(index)
-      cached = node_cache[:reserved][index]
-      if cached
-        node_cache[:reserved][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-        @index = cached.interval.end
-      end
-      return cached
-    end
-
-    i0 = index
-    r1 = _nt_builtin_type_name
-    if r1
-      r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
-      r0 = r1
-    else
-      r2 = _nt_keyword
-      if r2
-        r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
-        r0 = r2
-      else
-        @index = i0
-        r0 = nil
-      end
-    end
-
-    node_cache[:reserved][start_index] = r0
 
     r0
   end
@@ -16295,44 +14921,32 @@ module Idl
     end
 
     i0, s0 = index, []
-    i1 = index
-    r2 = _nt_reserved
-    if r2
-      @index = i1
-      r1 = nil
+    if has_terminal?(@regexps[gr = '\A[A-Za-z]'] ||= Regexp.new(gr), :regexp, index)
+      r1 = true
+      @index += 1
     else
-      @index = i1
-      r1 = instantiate_node(SyntaxNode,input, index...index)
+      terminal_parse_failure('[A-Za-z]')
+      r1 = nil
     end
     s0 << r1
     if r1
-      if has_terminal?(@regexps[gr = '\A[A-Za-z]'] ||= Regexp.new(gr), :regexp, index)
-        r3 = true
-        @index += 1
-      else
-        terminal_parse_failure('[A-Za-z]')
-        r3 = nil
-      end
-      s0 << r3
-      if r3
-        s4, i4 = [], index
-        loop do
-          if has_terminal?(@regexps[gr = '\A[A-Za-z_0-9]'] ||= Regexp.new(gr), :regexp, index)
-            r5 = true
-            @index += 1
-          else
-            terminal_parse_failure('[A-Za-z_0-9]')
-            r5 = nil
-          end
-          if r5
-            s4 << r5
-          else
-            break
-          end
+      s2, i2 = [], index
+      loop do
+        if has_terminal?(@regexps[gr = '\A[A-Za-z_0-9]'] ||= Regexp.new(gr), :regexp, index)
+          r3 = true
+          @index += 1
+        else
+          terminal_parse_failure('[A-Za-z_0-9]')
+          r3 = nil
         end
-        r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
-        s0 << r4
+        if r3
+          s2 << r3
+        else
+          break
+        end
       end
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
     end
     if s0.last
       r0 = instantiate_node(Idl::IdSyntaxNode,input, i0...index, s0)

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
+  "$id": "v0.1",
   "$defs": {
     "identifier": {
       "type": "string",
@@ -132,7 +132,9 @@
         },
         "exclude_content": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Content IDs to exclude (excludes entire sections/chapters and their subsections by AsciiDoc ID)"
         },
         "level_offset": {
@@ -147,7 +149,6 @@
       "additionalProperties": false
     }
   },
-
   "type": "object",
   "required": [
     "$schema",

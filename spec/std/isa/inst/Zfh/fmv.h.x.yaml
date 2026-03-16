@@ -33,7 +33,7 @@ operation(): |
 
   Bits<16> hp_value = X[xs1][15:0];
 
-  f[fd] = nan_box<16, FLEN>(hp_value);
+  f[fd] = nan_box(16, FLEN, hp_value);
 
   mark_f_state_dirty();
 

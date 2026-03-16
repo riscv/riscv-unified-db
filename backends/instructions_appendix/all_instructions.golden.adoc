@@ -59388,7 +59388,7 @@ Included in::
 == vmv.x.s
 
 Synopsis::
-No synopsis available
+Vector move scalar to integer register
 
 Base::
 
@@ -59410,7 +59410,11 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies the first element of the source vector register vs2 to the
+destination integer register xd, sign-extending to XLEN bits if SEW < XLEN.
+
+This is a scalar read instruction that always reads element 0 of vs2,
+regardless of vstart. The vstart CSR is reset to 0 after execution.
 
 
 Decode Variables::

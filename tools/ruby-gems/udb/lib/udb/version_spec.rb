@@ -40,6 +40,16 @@ module Udb
     # MAJOR[.MINOR[.PATCH[-pre]]]
     VERSION_REGEX = /([0-9]+)(?:\.([0-9]+)(?:\.([0-9]+)(?:-(pre))?)?)?/
 
+    # Intern cache: VersionSpec.new with the same string returns the same object.
+    # increment_patch/decrement_patch use dup+instance_variable_set so they bypass .new
+    # and are not affected by this cache.
+    @intern_cache = T.let({}, T::Hash[String, VersionSpec])
+
+    sig { params(version_str: String).returns(VersionSpec) }
+    def self.new(version_str)
+      @intern_cache[version_str] ||= super
+    end
+
     # @return [Integer] Major version number
     attr_reader :major
 
@@ -70,6 +80,7 @@ module Udb
         raise ArgumentError, "#{version_str} is not a valid Version spec"
       end
       @version_str = version_str
+      @hash = [@major, @minor, @patch, @pre].hash
     end
 
     sig { returns(String) }
@@ -97,10 +108,10 @@ module Udb
     end
 
     # @return [String] The exact string used during construction
-    sig { returns(String) }
+    sig { returns(String).checked(:never) }
     def to_s = @version_str
 
-    sig { params(other: T.untyped).returns(T.nilable(Integer)) }
+    sig { params(other: T.untyped).returns(T.nilable(Integer)).checked(:never) }
     def <=>(other)
       if other.is_a?(String)
         VersionSpec.new(other) <=> self
@@ -132,7 +143,7 @@ module Udb
 
     sig { override.returns(Integer).checked(:never) }
     def hash
-      [@major, @minor, @patch, @pre].hash
+      @hash
     end
 
     sig { returns(VersionSpec) }

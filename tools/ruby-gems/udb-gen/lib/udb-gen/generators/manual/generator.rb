@@ -57,7 +57,7 @@ module UdbGen
       short "-o"
       long "--output-directory=path"
       convert :path
-      default Udb.repo_root / "gen" / "manual"
+      default Udb.default_gen_path / "manual"
     end
 
     RakeApp = Class.new(Rake::Application) do

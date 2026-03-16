@@ -141,7 +141,7 @@ operation(): |
   XReg virtual_address = X[xs1];
   XReg value = X[xs2];
 
-  if (!is_naturally_aligned<64>(virtual_address)) {
+  if (!is_naturally_aligned(64, virtual_address)) {
     # can raise either LoadAddressMisaligned *or* LoadAccessFault
     #
     # from the spec:
@@ -159,7 +159,7 @@ operation(): |
     }
   }
 
-  Boolean success = store_conditional<64>(virtual_address, value, aq, rl, $encoding);
+  Boolean success = store_conditional(64, virtual_address, value, aq, rl, $encoding);
   X[xd] = success ? 0 : 1;
 
 # SPDX-SnippetBegin

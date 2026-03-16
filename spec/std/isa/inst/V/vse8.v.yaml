@@ -34,7 +34,7 @@ operation(): |
   for (U32 i = 0; i < CSR[vl].VALUE; i++) {
     U32 start_bit_pos = (CSR[vstart].VALUE + i) * 8;
     U32 end_bit_pos = start_bit_pos + 7;
-    write_memory<8>(virtual_address, v[vs3][end_bit_pos:start_bit_pos], $encoding);
+    write_memory(8, virtual_address, v[vs3][end_bit_pos:start_bit_pos], $encoding);
     virtual_address = virtual_address + 1;
   }
 

@@ -59,7 +59,7 @@ operation(): |
     data = X[xs2];
   }
 
-  write_memory<64>(virtual_address, data, $encoding);
+  write_memory(64, virtual_address, data, $encoding);
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>

@@ -19,18 +19,16 @@ module Idl
 
     attr_reader :name, :type, :value
 
-    def initialize(name, type, value = nil, decode_var: false, template_index: nil, function_name: nil, param: false, for_loop_iter: false)
+    def initialize(name, type, value = nil, decode_var: false, function_name: nil, param: false, for_loop_iter: false)
       @name = name
       raise ArgumentError, "Expecting a Type, got #{type.class.name}" unless type.is_a?(Type)
 
       @type = type
-      @type.qualify(:template_var) unless template_index.nil?
       @type.freeze
       @value = value
       raise "unexpected" unless decode_var.is_a?(TrueClass) || decode_var.is_a?(FalseClass)
 
       @decode_var = decode_var
-      @template_index = template_index
       @function_name = function_name
       @param = param
       @for_loop_iter = for_loop_iter
@@ -58,7 +56,7 @@ module Idl
     end
 
     def hash
-      [@name, @type, @value, @decode_var, @template_index, @function_name, @param].hash
+      [@name, @type, @value, @decode_var, @function_name, @param].hash
     end
 
     def to_s
@@ -71,7 +69,6 @@ module Idl
         type.clone,
         value&.clone,
         decode_var: @decode_var,
-        template_index: @template_index,
         function_name: @function_name,
         param: @param
       )
@@ -87,26 +84,6 @@ module Idl
 
     def param?
       @param
-    end
-
-    # @param function_name [#to_s] A function name
-    # @return [Boolean] whether or not this variable is a function template argument from a call site for the function 'function_name'
-    def template_value_for?(function_name)
-      !@template_index.nil? && (function_name.to_s == @function_name)
-    end
-
-    def template_value? = !@template_index.nil?
-
-    # @return [Integer] the template value position
-    # @raise if Var is not a template value
-    def template_index
-      raise "Not a template value" if @template_index.nil?
-
-      @template_index
-    end
-
-    def template_val?
-      !@template_index.nil?
     end
 
     def to_cxx
@@ -136,7 +113,7 @@ module Idl
     def hash
       return @frozen_hash unless @frozen_hash.nil?
 
-      [@scopes.hash, @name.hash].hash
+      object_id
     end
 
     class EnumDef < T::Struct
@@ -350,7 +327,7 @@ module Idl
     end
 
     def keys_pretty
-      @scopes.map { |s| s.map { |k, v| v.is_a?(Var) && v.template_val? ? "#{k} (template)" : k } }
+      @scopes.map { |s| s.keys }
     end
 
     # searches the symbol table scope-by-scope to find 'name'
@@ -467,6 +444,28 @@ module Idl
     # @return [Boolean] true if the symbol table is at the global scope
     def at_global_scope?
       @scopes.size == 1
+    end
+
+    # Returns a Hash mapping each Var in non-global scopes to its current value.
+    # Only captures Vars (not Types or other objects).
+    # skips frozen vars since they can't be modified
+    def snapshot_values
+      snapshot = {}
+      @scopes[1..].each do |scope|
+        scope.each_value do |v|
+          if v.is_a?(Var) && !v.frozen?
+            snapshot[v] = v.value
+          end
+        end
+      end
+      snapshot
+    end
+
+    # Restores Var values from a snapshot produced by snapshot_values.
+    def restore_values(snapshot)
+      snapshot.each do |var, value|
+        var.value = value
+      end
     end
 
     # @return [SymbolTable] a mutable clone of the global scope of this SymbolTable

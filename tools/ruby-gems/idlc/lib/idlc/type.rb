@@ -31,7 +31,6 @@ module Idl
       :array,    # array of other types
       :tuple,    # tuple of other dissimilar types
       :function, # function
-      :template_function, # template function, where the template arguments are known but template values need to be applied to become a full function
       :csr,      # a CSR register type
       :dontcare, # matches everything
       :string    # fixed-length character string
@@ -40,8 +39,7 @@ module Idl
       :const,
       :signed,
       :global,
-      :known,
-      :template_var
+      :known
     ].freeze
 
     # true for any type that can generally be treated as a scalar integer
@@ -175,7 +173,7 @@ module Idl
       if kind == :enum
         raise "Enum type must have width" unless @width
       end
-      if kind == :array
+      if kind == :array && width != 0
         raise "Array must have a subtype" unless @sub_type
       end
       if kind == :csr
@@ -402,7 +400,7 @@ module Idl
         @name
       elsif @kind == :bitfield
         @name
-      elsif @kind == :function || @kind == :template_function
+      elsif @kind == :function
         @name
       elsif @kind == :csr
         @csr.name
@@ -431,10 +429,6 @@ module Idl
 
     def global?
       @qualifiers.include?(:global)
-    end
-
-    def template_var?
-      @qualifiers.include?(:template_var)
     end
 
     def known?
@@ -783,6 +777,14 @@ module Idl
   class FunctionType < Type
     attr_reader :func_def_ast
 
+    sig {
+      params(
+        func_name: String,
+        func_def_ast: FunctionDefAst,
+        symtab: SymbolTable
+      )
+      .void
+    }
     def initialize(func_name, func_def_ast, symtab)
       super(:function, name: func_name)
       @func_def_ast = func_def_ast
@@ -791,66 +793,26 @@ module Idl
       raise "symtab should be at level 1" unless symtab.levels == 1
     end
 
+    def argument_nodes = @func_def_ast.argument_nodes
+
+    sig {
+      returns(FunctionType)
+    }
     def clone
       FunctionType.new(name, @func_def_ast, @symtab)
     end
 
+    sig { returns(T::Boolean) }
     def builtin? = @func_def_ast.builtin?
 
+    sig { returns(T::Boolean) }
     def generated? = @func_def_ast.generated?
 
+    sig { returns(T::Boolean) }
     def external? = @func_def_ast.external?
 
+    sig { returns(Integer) }
     def num_args = @func_def_ast.num_args
-
-    def type_check_call(template_values, argument_nodes, call_site_symtab, func_call_ast)
-      raise "Missing template values" if templated? && template_values.empty?
-
-      if templated?
-        symtab = apply_template_values(template_values, func_call_ast)
-        apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast)
-
-        @func_def_ast.type_check_template_instance(symtab, strict: false)
-
-        symtab.pop
-        symtab.release
-      else
-        symtab = @symtab.global_clone
-
-        symtab.push(func_call_ast) # to keep things consistent with template functions, push a scope
-
-        apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast)
-
-        @func_def_ast.type_check_from_call(symtab, strict: false)
-        symtab.pop
-        symtab.release
-      end
-    end
-
-    def template_names = @func_def_ast.template_names
-
-    def template_types(symtab) = @func_def_ast.template_types(symtab)
-
-    def templated? = @func_def_ast.templated?
-
-    def apply_template_values(template_values, func_call_ast)
-      func_call_ast.type_error "Missing template values" if templated? && template_values.empty?
-
-      func_call_ast.type_error "wrong number of template values in call to #{name}" unless template_names.size == template_values.size
-
-      symtab = @symtab.global_clone
-
-      func_call_ast.type_error "Symbol table should be at global scope" unless symtab.levels == 1
-
-      symtab.push(func_call_ast)
-
-      template_values.each_with_index do |value, idx|
-        func_call_ast.type_error "template value should be an Integer (found #{value.class.name})" unless value == :unknown || value.is_a?(Integer)
-
-        symtab.add!(template_names[idx], Var.new(template_names[idx], template_types(symtab)[idx], value, template_index: idx, function_name: @func_def_ast.name))
-      end
-      symtab
-    end
 
     # apply the arguments as Vars.
     # then add the value to the Var
@@ -883,13 +845,21 @@ module Idl
 
     # @return [Array<Integer,Boolean>] Array of argument values, if known
     # @return [nil] if at least one argument value is not known
+    sig {
+      params(
+        symtab: SymbolTable,  # global symbol table
+        argument_nodes: T::Array[Rvalue], # arguments
+        call_site_symtab: SymbolTable,  # symbol table at the function call site
+        func_call_ast: FunctionCallExpressionAst
+      ).returns(T.nilable(T::Array[T.any(Integer, T::Boolean, Symbol)]))
+    }
     def argument_values(symtab, argument_nodes, call_site_symtab, func_call_ast)
       idx = 0
       values = []
       @func_def_ast.arguments(symtab).each do |atype, aname|
         func_call_ast.type_error "Missing argument #{idx}" if idx >= argument_nodes.size
         value_result = Idl::AstNode.value_try do
-          values << argument_nodes[idx].value(call_site_symtab)
+          values << argument_nodes.fetch(idx).value(call_site_symtab)
         end
         Idl::AstNode.value_else(value_result) do
           return nil
@@ -899,20 +869,19 @@ module Idl
       values
     end
 
-    # @param template_values [Array<Integer>] Template values for the call, in declaration order
     # @param func_call_ast [FunctionCallExpressionAst] The function call interested in the return type
     # return [Type] type of the call return
     sig {
       params(
-        template_values: T::Array[Integer],
         argument_nodes: T::Array[Rvalue],
         func_call_ast: FunctionCallExpressionAst
       ).returns(Type)
     }
-    def return_type(template_values, argument_nodes, func_call_ast)
+    def return_type(argument_nodes, func_call_ast)
       rtype =
         begin
-          symtab = apply_template_values(template_values, func_call_ast)
+          symtab = @symtab.global_clone
+          symtab.push(func_call_ast)
           @func_def_ast.return_type(symtab)
         ensure
           symtab.pop
@@ -922,8 +891,16 @@ module Idl
       T.must(rtype)
     end
 
-    def return_value(template_values, argument_nodes, call_site_symtab, func_call_ast)
-      symtab = apply_template_values(template_values, func_call_ast)
+    sig {
+      params(
+        argument_nodes: T::Array[Rvalue], # arguments
+        call_site_symtab: SymbolTable,  # symbol table at the function call site
+        func_call_ast: FunctionCallExpressionAst
+      ).returns(T.nilable(T.any(Integer, T::Boolean, Symbol, T::Hash[String, T.untyped])))
+    }
+    def return_value(argument_nodes, call_site_symtab, func_call_ast)
+      symtab = @symtab.global_clone
+      symtab.push(func_call_ast)
       apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast)
 
       begin
@@ -936,26 +913,19 @@ module Idl
       value
     end
 
-    # @param template_values [Array<Integer>] Template values to apply, required if {#templated?}
-    # @return [Array<Type>] return types
-    def return_types(template_values, argument_nodes, call_site_symtab, func_call_ast)
-      symtab = apply_template_values(template_values, func_call_ast)
-      apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast)
-
-      begin
-        types = @func_def_ast.return_types(symtab)
-      ensure
-        symtab.pop
-        symtab.release
-      end
-      types
-    end
-
-    def argument_type(index, template_values, argument_nodes, call_site_symtab, func_call_ast)
+    sig {
+      params(
+        index: Integer,
+        argument_nodes: T::Array[Rvalue], # arguments
+        call_site_symtab: SymbolTable,  # symbol table at the function call site
+        func_call_ast: FunctionCallExpressionAst
+      ).returns(T.nilable(Type))
+    }
+    def argument_type(index, argument_nodes, call_site_symtab, func_call_ast)
       return nil if index >= @func_def_ast.num_args
 
-      symtab = apply_template_values(template_values, func_call_ast)
-      # apply_arguments(symtab, argument_nodes, call_site_symtab, func_call_ast)
+      symtab = @symtab.global_clone
+      symtab.push(func_call_ast)
 
       begin
         arguments = @func_def_ast.arguments(symtab)
@@ -966,11 +936,17 @@ module Idl
       arguments[index][0]
     end
 
-    def argument_name(index, template_values = [], func_call_ast)
+    sig {
+      params(
+        index: Integer,
+        func_call_ast: FunctionCallExpressionAst
+      ).returns(T.nilable(String))
+    }
+    def argument_name(index, func_call_ast)
       return nil if index >= @func_def_ast.num_args
 
-      symtab = apply_template_values(template_values, func_call_ast)
-      # apply_arguments(symtab, argument_nodes, call_site_symtab)
+      symtab = @symtab.global_clone
+      symtab.push(func_call_ast)
 
       begin
         arguments = @func_def_ast.arguments(symtab)
@@ -981,20 +957,11 @@ module Idl
       arguments[index][1]
     end
 
+    sig {
+      returns(FunctionBodyAst)
+    }
     def body = @func_def_ast.body
   end
-
-  # # a function that is templated, and hasn't been fully typed checked yet
-  # # because it needs to have template arguments resolved
-  # class TemplateFunctionType < Type
-  #   attr_reader :template_types, :ast
-
-  #   def initialize(func_name, template_types, ast)
-  #     super(:template_function, name: func_name, arguments: arguments)
-  #     @template_types = template_types
-  #     @ast = ast
-  #   end
-  # end
 
   # XReg is really a Bits<> type, so we override it just to get
   # prettier prints

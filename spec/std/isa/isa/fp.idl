@@ -116,15 +116,14 @@ function mark_f_state_dirty {
 }
 
 function nan_box {
-  template U32 FROM_SIZE, U32 TO_SIZE
-  returns Bits<TO_SIZE>
-  arguments Bits<FROM_SIZE> from_value
+  returns XReg
+  arguments U32 FROM_SIZE, U32 TO_SIZE, XReg from_value
   description {
     Produces a properly NaN-boxed floating-point value from a floating-point value
     of smaller size by adding all 1's to the upper bits.
   }
   body {
-    assert(FROM_SIZE < TO_SIZE, "Bad template arguments; FROM_SIZE must be less than TO_SIZE");
+    assert(FROM_SIZE < TO_SIZE, "Bad arguments; FROM_SIZE must be less than TO_SIZE");
 
     return {{TO_SIZE - FROM_SIZE{1'b1}}, from_value};
   }
@@ -470,7 +469,7 @@ function softfloat_normSubnormalF16Sig {
     normalize subnormal half-precision value
   }
   body {
-    Bits<8> shift_dist = count_leading_zeros<16>(hp_value);
+    Bits<8> shift_dist = count_leading_zeros(16, hp_value);
     return 1 - shift_dist, hp_value << shift_dist;
   }
 }
@@ -535,7 +534,7 @@ function softfloat_normRoundPackToF32 {
     Normalize, round, and pack into a 32-bit floating point value
   }
   body {
-    Bits<8> shiftDist = count_leading_zeros<32>(sig) - 1;
+    Bits<8> shiftDist = count_leading_zeros(32, sig) - 1;
     exp = exp - shiftDist;
     if ((7 <= shiftDist) && (exp < 0xFD)) {
       return packToF32UI(sign, (sig != 0) ? exp : 0, sig << (shiftDist - 7));
@@ -843,7 +842,7 @@ function softfloat_subMagsF32 {
         sigDiff = -32'sh1 * sigDiff;
       }
 
-      shiftDist = count_leading_zeros<32>(sigDiff) - 8;
+      shiftDist = count_leading_zeros(32, sigDiff) - 8;
       expZ = expA - shiftDist;
 
       if (expZ < 0) {
@@ -1096,7 +1095,7 @@ function softfloat_normRoundPackToF32_no_flag {
     No flags to be set
   }
   body {
-    Bits<8> shiftDist = count_leading_zeros<32>(sig) - 1;
+    Bits<8> shiftDist = count_leading_zeros(32, sig) - 1;
     exp = exp - shiftDist;
     if ((7 <= shiftDist) && (exp < 0xFD)) {
       return packToF32UI(sign, (sig != 0) ? exp : 0, sig << (shiftDist - 7));
