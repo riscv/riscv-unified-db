@@ -41,9 +41,9 @@ class TestBackendHelpers < Minitest::Test
   end
 
   def test_csr_field
-    assert_equal("%%UDB_DOC_LINK%csr_field;foo.bar;foo.bar%%", link_to_udb_doc_csr_field("foo","bar"))
+    assert_equal("%%UDB_DOC_LINK%csr_field;foo*bar;foo.bar%%", link_to_udb_doc_csr_field("foo","bar"))
     assert_equal("[#udb:doc:csr_field:foo:bar]", anchor_for_udb_doc_csr_field("foo","bar"))
-    assert_equal("%%UDB_DOC_LINK%csr_field;fo_o.ba_r;fo.o.ba.r%%", link_to_udb_doc_csr_field("fo.o","ba.r"))
+    assert_equal("%%UDB_DOC_LINK%csr_field;fo.o*ba.r;fo.o.ba.r%%", link_to_udb_doc_csr_field("fo.o","ba.r"))
     assert_equal("[#udb:doc:csr_field:fo_o:ba_r]", anchor_for_udb_doc_csr_field("fo.o","ba.r"))
   end
 
@@ -95,7 +95,7 @@ class TestAsciidocUtils < Minitest::Test
   end
 
   def test_resolve_links_csr_field
-    assert_equal("<<udb:doc:csr_field:foo:bar,zort>>", AsciidocUtils.resolve_links("%%UDB_DOC_LINK%csr_field;foo.bar;zort%%"))
+    assert_equal("<<udb:doc:csr_field:foo:bar,zort>>", AsciidocUtils.resolve_links("%%UDB_DOC_LINK%csr_field;foo*bar;zort%%"))
     assert_equal("<<udb:doc:csr_field:foo:bar,foo.bar>>", AsciidocUtils.resolve_links(link_to_udb_doc_csr_field("foo","bar")))
   end
 
@@ -141,7 +141,7 @@ class TestAntoraUtils < Minitest::Test
   end
 
   def test_resolve_links_csr_field
-    assert_equal("xref:csrs:foo.adoc#udb:doc:csr_field:foo:bar[zort]", AntoraUtils.resolve_links("%%UDB_DOC_LINK%csr_field;foo.bar;zort%%"))
+    assert_equal("xref:csrs:foo.adoc#udb:doc:csr_field:foo:bar[zort]", AntoraUtils.resolve_links("%%UDB_DOC_LINK%csr_field;foo*bar;zort%%"))
     assert_equal("xref:csrs:foo.adoc#udb:doc:csr_field:foo:bar[foo.bar]", AntoraUtils.resolve_links(link_to_udb_doc_csr_field("foo","bar")))
   end
 
