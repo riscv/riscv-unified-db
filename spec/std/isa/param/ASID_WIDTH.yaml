@@ -7,10 +7,8 @@ $schema: param_schema.json#
 kind: parameter
 name: ASID_WIDTH
 description:
-  "Number of implemented ASID bits. Maximum is 16 for XLEN==64, and 9 for
+  Number of implemented ASID bits. Maximum is 16 for XLEN==64, and 9 for
   XLEN==32
-
-  "
 long_name: TODO
 schema:
   type: integer

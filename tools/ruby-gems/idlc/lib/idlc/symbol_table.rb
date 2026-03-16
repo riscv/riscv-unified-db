@@ -136,7 +136,7 @@ module Idl
     def hash
       return @frozen_hash unless @frozen_hash.nil?
 
-      [@scopes.hash, @name.hash].hash
+      object_id
     end
 
     class EnumDef < T::Struct
@@ -467,6 +467,28 @@ module Idl
     # @return [Boolean] true if the symbol table is at the global scope
     def at_global_scope?
       @scopes.size == 1
+    end
+
+    # Returns a Hash mapping each Var in non-global scopes to its current value.
+    # Only captures Vars (not Types or other objects).
+    # skips frozen vars since they can't be modified
+    def snapshot_values
+      snapshot = {}
+      @scopes[1..].each do |scope|
+        scope.each_value do |v|
+          if v.is_a?(Var) && !v.frozen?
+            snapshot[v] = v.value
+          end
+        end
+      end
+      snapshot
+    end
+
+    # Restores Var values from a snapshot produced by snapshot_values.
+    def restore_values(snapshot)
+      snapshot.each do |var, value|
+        var.value = value
+      end
     end
 
     # @return [SymbolTable] a mutable clone of the global scope of this SymbolTable

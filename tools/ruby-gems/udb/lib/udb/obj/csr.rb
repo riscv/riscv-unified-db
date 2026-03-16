@@ -6,6 +6,7 @@
 
 require "idlc/ast"
 require "idlc/interfaces"
+require "idlc/passes/reachable_functions"
 
 require_relative "database_obj"
 require_relative "certifiable_obj"
@@ -15,6 +16,11 @@ module Udb
 
 # CSR definition
   class Csr < TopLevelDatabaseObject
+    # Frozen constant Type/Var objects reused across all fill_symtab calls
+    BITS6_TYPE = Idl::Type.new(:bits, width: 6).freeze
+    BITS6_CONST_TYPE = Idl::Type.new(:bits, width: 6, qualifiers: [:const]).freeze
+    BITS128_TYPE = Idl::Type.new(:bits, width: 128).freeze
+    ENCODING_SIZE_VAR = Idl::Var.new("__instruction_encoding_size", BITS6_TYPE, 32).freeze
     # Add all methods in this module to this type of database object.
     include CertifiableObject
     include HasFields
@@ -125,9 +131,15 @@ module Udb
 
     # @param effective_xlen [Integer or nil] 32 or 64 for fixed xlen, nil for dynamic
     # @return [Array<Idl::FunctionDefAst>] List of functions reachable from this CSR's sw_read or a field's sw_write function
-    sig { params(effective_xlen: T.nilable(Integer)).returns(T::Array[Idl::FunctionDefAst]) }
-    def reachable_functions(effective_xlen = nil)
-      cache_key = effective_xlen.nil? ? :nil : effective_xlen
+    sig {
+      params(
+        effective_xlen: T.nilable(Integer),
+        cache: T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType]
+      )
+      .returns(T::Array[Idl::FunctionDefAst])
+    }
+    def reachable_functions(effective_xlen = nil, cache = T.let({}, T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType]))
+      cache_key = effective_xlen
       return @memo.reachable_functions[cache_key] unless @memo.reachable_functions[cache_key].nil?
 
       fns = []
@@ -143,20 +155,20 @@ module Udb
           ast = pruned_sw_read_ast(xlen)
           symtab = cfg_arch.symtab.deep_clone
           symtab.push(ast)
-          fns.concat(ast.reachable_functions(symtab))
+          fns.concat(ast.reachable_functions(symtab, cache.fetch(xlen)))
         end
       end
 
       if cfg_arch.multi_xlen?
         possible_fields_for(32).each do |field|
-          fns.concat(field.reachable_functions(32))
+          fns.concat(field.reachable_functions(32, cache.fetch(32)))
         end
         possible_fields_for(64).each do |field|
-          fns.concat(field.reachable_functions(64))
+          fns.concat(field.reachable_functions(64, cache.fetch(64)))
         end
       else
         possible_fields_for(cfg_arch.mxlen).each do |field|
-          fns.concat(field.reachable_functions(cfg_arch.mxlen))
+          fns.concat(field.reachable_functions(cfg_arch.mxlen, cache.fetch(T.must(cfg_arch.mxlen))))
         end
       end
 
@@ -457,7 +469,8 @@ module Udb
     # @param effective_xlen [Integer or nil] 32 or 64 for fixed xlen, nil for dynamic
     # @return [Idl::BitfieldType] A bitfield type that can represent all fields of the CSR
     def bitfield_type(cfg_arch, effective_xlen = nil)
-      Idl::BitfieldType.new(
+      @bitfield_type_cache ||= {}
+      @bitfield_type_cache[effective_xlen] ||= Idl::BitfieldType.new(
         "Csr#{name.capitalize}Bitfield",
         length(effective_xlen),
         fields_for(effective_xlen).map(&:name),
@@ -481,18 +494,14 @@ module Udb
       symtab.push(ast)
       # all CSR instructions are 32-bit
       unless effective_xlen.nil?
-        symtab.add(
-          "__effective_xlen",
-          Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), effective_xlen)
-        )
+        @xlen_var_cache ||= {}
+        @xlen_var_cache[effective_xlen] ||= Idl::Var.new("__effective_xlen", BITS6_TYPE, effective_xlen).freeze
+        symtab.add("__effective_xlen", @xlen_var_cache[effective_xlen])
       end
-      symtab.add(
-        "__instruction_encoding_size",
-        Idl::Var.new("__instruction_encoding_size", Idl::Type.new(:bits, width: 6), 32)
-      )
+      symtab.add("__instruction_encoding_size", ENCODING_SIZE_VAR)
       symtab.add(
         "__expected_return_type",
-        Idl::Type.new(:bits, width: 128)
+        BITS128_TYPE
        )
 
       ast = sw_read_ast(symtab)
@@ -527,8 +536,6 @@ module Udb
 
       raise "unexpected #{@sw_read_ast.class}" unless @sw_read_ast.is_a?(Idl::FunctionBodyAst)
 
-      @sw_read_ast.set_input_file_unless_already_set(T.must(__source), source_line(["sw_read()"]))
-
       @sw_read_ast
     end
 
@@ -539,29 +546,23 @@ module Udb
       symtab.push(ast)
       # all CSR instructions are 32-bit
       if effective_xlen
-        symtab.add(
-          "__effective_xlen",
-          Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), effective_xlen)
-        )
+        @xlen_var_cache ||= {}
+        @xlen_var_cache[effective_xlen] ||= Idl::Var.new("__effective_xlen", BITS6_TYPE, effective_xlen).freeze
+        symtab.add("__effective_xlen", @xlen_var_cache[effective_xlen])
       end
-      symtab.add(
-        "__instruction_encoding_size",
-        Idl::Var.new("__instruction_encoding_size", Idl::Type.new(:bits, width: 6), 32)
-      )
-      symtab.add(
-        "__expected_return_type",
-        Idl::Type.new(:bits, width: 128)
-      )
+      symtab.add("__instruction_encoding_size", ENCODING_SIZE_VAR)
+      symtab.add("__expected_return_type", BITS128_TYPE)
       if symtab.get("MXLEN").value.nil?
-        symtab.add(
+        # Cache per-xlen MXLEN var; use :nil_xlen sentinel so nil key doesn't collide with unset
+        mxlen_key = effective_xlen.nil? ? :nil_xlen : effective_xlen
+        @mxlen_var_cache ||= {}
+        @mxlen_var_cache[mxlen_key] ||= Idl::Var.new(
           "MXLEN",
-          Idl::Var.new(
-            "MXLEN",
-            Idl::Type.new(:bits, width: 6, qualifiers: [:const]),
-            effective_xlen,
-            param: true
-          )
-        )
+          BITS6_CONST_TYPE,
+          effective_xlen,
+          param: true
+        ).freeze
+        symtab.add("MXLEN", @mxlen_var_cache[mxlen_key])
       end
       symtab
     end
