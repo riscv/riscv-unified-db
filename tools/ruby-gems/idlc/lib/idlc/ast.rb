@@ -688,21 +688,9 @@ module Idl
     #   @raise ValueError if some part of the statement cannot be executed at compile time
     #   @return [void]
 
-    # @!macro [new] execute_unknown
-    #   "execute" the statement, forcing any variable assignments to an unknown state
-    #   This is used down unknown conditional paths.
-    #
-    #   @param symtab [SymbolTable] The symbol table for the context
-    #   @raise ValueError if some part of the statement cannot be executed at compile time
-    #   @return [void]
-
     # @!macro execute
     sig { abstract.params(symtab: SymbolTable).void }
     def execute(symtab); end
-
-    # @!macro execute_unknown
-    sig { abstract.params(symtab: SymbolTable).void }
-    def execute_unknown(symtab); end
   end
 
   ExecutableAst = T.type_alias { T.all(Executable, AstNode) }
@@ -1195,9 +1183,6 @@ module Idl
 
     sig { override.params(symtab: SymbolTable).void }
     def execute(symtab) = var_decl_with_init.execute(symtab)
-
-    sig { override.params(symtab: SymbolTable).void }
-    def execute_unknown(symtab) = var_decl_with_init.execute_unknown(symtab)
 
     sig { override.params(symtab: SymbolTable).void }
     def add_symbol(symtab)
@@ -2728,10 +2713,6 @@ module Idl
     sig { override.params(symtab: SymbolTable).void }
     def execute(symtab) = value_error "$pc is never statically known"
 
-    # @macro execute_unknown
-    sig { override.params(symtab: SymbolTable).void }
-    def execute_unknown(symtab); end
-
     # @!macro type_check
     sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
     def type_check(symtab, strict:)
@@ -2845,19 +2826,6 @@ module Idl
             value_error ""
           end
         end
-      end
-    end
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      if lhs.is_a?(CsrWriteAst)
-        value_error "CSR writes are never compile-time-known"
-      else
-        variable = var(symtab)
-
-        internal_error "No variable #{lhs.text_value}" if variable.nil?
-
-        variable.value = nil
       end
     end
 
@@ -2987,47 +2955,6 @@ module Idl
       end
     end
 
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      value_result = T.let(nil, T.nilable(Symbol))
-      case lhs.type(symtab).kind
-      when :array
-        lhs_value = T.let(nil, T.nilable(T::Array[T.nilable(ValueRbType)]))
-        value_result = value_try do
-          lhs_value = T.let(lhs.value(symtab), T::Array[T.nilable(ValueRbType)])
-        end
-        value_else(value_result) do
-          # the array is already unknown, nothing more to do
-          return
-        end
-        value_result = value_try do
-          idx_value = idx.value(symtab)
-          value_result = value_try do
-            T.must(lhs_value)[idx_value] = rhs.value(symtab)
-          end
-          value_else(value_result) do
-            T.must(lhs_value)[idx_value] = nil
-            value_error "right-hand side of array element assignment is unknown"
-          end
-        end
-        value_else(value_result) do
-          # the idx isn't known; the entire array must become unknown
-          T.must(lhs_value).map! { |_v| nil }
-        end
-      when :bits
-        var = symtab.get(lhs.text_value)
-        value_result = value_try do
-          v = rhs.value(symtab)
-          var.value = (lhs.value(symtab) & ~0) | ((v & 1) << idx.value(symtab))
-        end
-        value_else(value_result) do
-          var.value = nil
-        end
-      else
-        internal_error "unexpected type for array element assignment"
-      end
-    end
-
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{lhs.to_idl}[#{idx.to_idl}] = #{rhs.to_idl}"
@@ -3135,6 +3062,9 @@ module Idl
     def execute(symtab)
       return if variable.type(symtab).global?
 
+      var = symtab.get(variable.name)
+      internal_error "Variable #{variable.name} not found" if var.nil?
+
       value_result = value_try do
         var_val = variable.value(symtab)
 
@@ -3145,23 +3075,15 @@ module Idl
 
         rval_val = write_value.value(symtab)
 
-        mask = ((1 << msb_val) - 1) << lsb_val
+        mask = ((1 << (msb_val - lsb_val + 1)) - 1) << lsb_val
 
-        var_val &= ~mask
-
-        var_val | ((rval_val << lsb_val) & mask)
-        symtab.add(variable.name, Var.new(variable.name, variable.type(symtab), var_val))
+        var.value = (var_val & ~mask) | ((rval_val << lsb_val) & mask)
         :ok
       end
       value_else(value_result) do
-        symtab.add(variable.name, Var.new(variable.name, variable.type(symtab)))
+        var.value = nil
         value_error "Either the range or right-hand side of an array range assignment is unknown"
       end
-    end
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      symtab.add(variable.name, Var.new(variable.name, variable.type(symtab)))
     end
 
     # @!macro to_idl
@@ -3303,12 +3225,6 @@ module Idl
       end
     end
 
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      var = symtab.get(id.name)
-      var.value = nil
-    end
-
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{id.to_idl}.#{@field_name} = #{rhs.to_idl}"
@@ -3377,9 +3293,6 @@ module Idl
     def execute(symtab)
       value_error "CSR field writes are never compile-time-executable"
     end
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab); end
 
     sig { override.returns(String) }
     def to_idl = "#{csr_field.to_idl} = #{write_value.to_idl}"
@@ -3503,13 +3416,6 @@ module Idl
           symtab.get(v.text_value).value = nil
         end
         value_error "value of right-hand side of multi-variable assignment is unknown"
-      end
-    end
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      variables.each do |v|
-        symtab.get(v.text_value).value = nil
       end
     end
 
@@ -3993,11 +3899,6 @@ module Idl
         value_error "value of right-hand side of variable initialization is unknown"
       end
       symtab.add(lhs.text_value, Var.new(lhs.text_value, lhs_type(symtab), rhs_value))
-    end
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      symtab.add(lhs.text_value, Var.new(lhs.text_value, lhs_type(symtab), nil, for_loop_iter: @for_iter_var))
     end
 
     # @!macro to_idl
@@ -5271,10 +5172,8 @@ module Idl
         elsif op == "|"
           # if one side is all ones, we don't need to know the other side
           rhs_type = rhs.type(symtab)
-          type_error "Right-hand side of bitwise | must be a Bits type (is #{rhs_type})" unless rhs_type.kind == :bits
           value_error("Unknown width") if rhs_type.width == :unknown
           lhs_type = lhs.type(symtab)
-          type_error "Left-hand side of bitwise | must be a Bits type (is #{lhs_type})" unless lhs_type.kind == :bits
           value_error("unknown width") if lhs_type.width == :unknown
 
           rhs_val = T.let(nil, T.nilable(Integer))
@@ -5706,11 +5605,6 @@ module Idl
       end
     end
 
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      symtab.get(rval.text_value).value = nil
-    end
-
     sig { override.returns(String) }
     def to_idl = "#{rval.to_idl}--"
 
@@ -5862,11 +5756,6 @@ module Idl
         var.value = nil
         value_error "#{rval.text_value} is not compile-time-known" if var.value.nil?
       end
-    end
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      symtab.get(rval.text_value).value = nil
     end
 
     # @!macro to_idl
@@ -6422,9 +6311,6 @@ module Idl
     # @!macro execute
     def execute(symtab); end
 
-    # @!macro execute_unknown
-    def execute_unknown(symtab); end
-
     # @1macro to_idl
     sig { override.returns(String) }
     def to_idl = ""
@@ -6473,16 +6359,6 @@ module Idl
       end
       if action.is_a?(Executable)
         action.execute(symtab)
-      end
-    end
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      if action.is_a?(Declaration)
-        action.add_symbol(symtab)
-      end
-      if action.is_a?(Executable)
-        action.execute_unknown(symtab)
       end
     end
 
@@ -6550,15 +6426,10 @@ module Idl
         end
       end
       value_else(value_result) do
-        # force action to set any values to nil
-        action.execute_unknown(symtab)
+        # condition is unknown; nullify any variables the action would assign
+        action.nullify_assignments(symtab)
         value_error ""
       end
-    end
-
-      # @!macro execute
-    def execute_unknown(symtab)
-      action.execute_unknown(symtab)
     end
 
     # @!macro to_idl
@@ -7882,10 +7753,6 @@ module Idl
       @name
     end
 
-    # @!macro execute_unknown
-    #  nothing to do for a function call
-    def execute_unknown(symtab); end
-
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl
@@ -8060,13 +7927,6 @@ module Idl
     end
 
     def execute(symtab) = return_value(symtab)
-
-    sig { override.params(symtab: SymbolTable).void }
-    def execute_unknown(symtab)
-      stmts.each do |s|
-        s.execute(symtab)
-      end
-    end
 
     # @!macro return_values
     def return_values(symtab)
@@ -8667,27 +8527,6 @@ module Idl
     # @!macro execute
     def execute(symtab) = return_value(symtab)
 
-    sig { override.params(symtab: SymbolTable).void }
-    def execute_unknown(symtab)
-      symtab.push(self)
-
-      begin
-        value_result = value_try do
-          init.execute_unknown(symtab)
-
-          stmts.each do |s|
-            unless s.is_a?(ReturnStatementAst) || s.is_a?(ImplicationStatementAst)
-              s.execute_unknown(symtab)
-            end
-          end
-          update.execute_unknown(symtab)
-        end
-      ensure
-        symtab.pop
-      end
-      nil
-    end
-
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl
@@ -8838,13 +8677,6 @@ module Idl
         end
       end
       throw err unless err.nil?
-    end
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      stmts.each do |s|
-        s.execute_unknown(symtab)
-      end
     end
 
     # @!macro to_idl
@@ -9229,21 +9061,6 @@ module Idl
       value_error "" unless err.nil?
     end
 
-    # return values starting at the first else if
-    def execute_unknown_after_if(symtab)
-      elseifs.each do |eif|
-        eif.body.execute_unknown(symtab)
-      end
-      final_else_body.execute_unknown(symtab) unless final_else_body.nil?
-    end
-    private :execute_unknown_after_if
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab)
-      if_body.execute_unknown(symtab)
-      execute_unknown_after_if(symtab)
-    end
-
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl
@@ -9567,9 +9384,6 @@ module Idl
     # @!macro execute
     def execute(_symtab) = value_error "CSR writes are global"
 
-    # @!macro execute_unknown
-    def execute_unknown(_symtab); end
-
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "#{csr.to_idl}.sw_write(#{expression.to_idl})"
@@ -9770,9 +9584,6 @@ module Idl
     def execute(symtab)
       value_error "CSR write"
     end
-
-    # @!macro execute_unknown
-    def execute_unknown(symtab); end
 
     # @!macro to_idl
     sig { override.returns(String) }
