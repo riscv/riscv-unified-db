@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vle32.v
-long_name: Vector load 32-bit elements
+long_name: Vector 32-bit unit-stride load
 description: |
   Loads 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. The effective element width is 32 bits regardless of SEW setting.
 definedBy:
@@ -29,6 +29,27 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+
+  if (!VECTOR_LS_MISALIGNED_LEGAL) {
+    unpredictable("Implementations should raise address misaligned exception");
+  }
+
+  XReg virtual_address = X[xs1];
+  # Per RISC-V ISA: "A simple in-order implementation can ignore the settings and simply execute all vector instructions using the undisturbed policy"
+  for (U32 i = 0; i < CSR[vl].VALUE; i++) {
+    U32 start_bit_pos = (CSR[vstart].VALUE + i) * 32;
+    U32 end_bit_pos = start_bit_pos + 31;
+    if (vm == 0) {
+      unpredictable("TODO: add masking support");
+    } else {
+      v[vd] = {
+        v[vd][VLEN-1:end_bit_pos + 1],
+        read_memory<32>(virtual_address, $encoding),
+        v[vd][start_bit_pos-1:0]
+      };
+    }
+    virtual_address = virtual_address + 4;
+  }
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>

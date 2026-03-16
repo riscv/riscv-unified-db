@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vse64.v
-long_name: Vector store 64-bit elements
+long_name: Vector 64-bit unit-stride store
 description: |
   Stores 64-bit elements from vector register vs3 to memory starting at address in xs1 register, using vector mask vm. The effective element width is 64 bits regardless of SEW setting.
 definedBy:
@@ -29,6 +29,23 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+
+  if (!VECTOR_LS_MISALIGNED_LEGAL) {
+    unpredictable("Implementations should raise address misaligned exception");
+  }
+
+  XReg virtual_address = X[xs1];
+  # Per RISC-V ISA: "A simple in-order implementation can ignore the settings and simply execute all vector instructions using the undisturbed policy"
+  for (U32 i = 0; i < CSR[vl].VALUE; i++) {
+    U32 start_bit_pos = (CSR[vstart].VALUE + i) * 64;
+    U32 end_bit_pos = start_bit_pos + 63;
+    if (vm == 0) {
+      unpredictable("TODO: add masking support");
+    } else {
+      write_memory<64>(virtual_address, v[vs3][end_bit_pos:start_bit_pos], $encoding);
+    }
+    virtual_address = virtual_address + 8;
+  }
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>

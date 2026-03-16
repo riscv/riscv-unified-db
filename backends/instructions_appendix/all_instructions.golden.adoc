@@ -46917,7 +46917,7 @@ Included in::
 == vle16.v
 
 Synopsis::
-Vector load 16-bit elements
+Vector 16-bit unit-stride load
 
 Base::
 
@@ -47021,7 +47021,7 @@ Included in::
 == vle32.v
 
 Synopsis::
-Vector load 32-bit elements
+Vector 32-bit unit-stride load
 
 Base::
 
@@ -47125,7 +47125,7 @@ Included in::
 == vle64.v
 
 Synopsis::
-Vector load 64-bit elements
+Vector 64-bit unit-stride load
 
 Base::
 
@@ -62651,7 +62651,7 @@ Included in::
 == vse16.v
 
 Synopsis::
-Vector store 16-bit elements
+Vector 16-bit unit-stride store
 
 Base::
 
@@ -62703,7 +62703,7 @@ Included in::
 == vse32.v
 
 Synopsis::
-Vector store 32-bit elements
+Vector 32-bit unit-stride store
 
 Base::
 
@@ -62755,7 +62755,7 @@ Included in::
 == vse64.v
 
 Synopsis::
-Vector store 64-bit elements
+Vector 64-bit unit-stride store
 
 Base::
 
