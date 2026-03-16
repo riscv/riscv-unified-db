@@ -195,6 +195,10 @@ module Idl
       symtab.add(init.lhs.name, Var.new(init.lhs.name, init.lhs_type(symtab)))
       snapshot = symtab.snapshot_values
 
+      # Nullify any outer-scope variable assigned in the loop body, since we
+      # don't know how many iterations ran (or if any ran at all)
+      stmts.each { |stmt| stmt.nullify_assignments(symtab) }
+
       begin
         new_loop =
           ForLoopAst.new(
@@ -208,9 +212,6 @@ module Idl
         symtab.restore_values(snapshot)
         symtab.pop
       end
-      # Nullify any outer-scope variable assigned in the loop body, since we
-      # don't know how many iterations ran (or if any ran at all)
-      stmts.each { |stmt| stmt.nullify_assignments(symtab) }
       new_loop
     end
   end
