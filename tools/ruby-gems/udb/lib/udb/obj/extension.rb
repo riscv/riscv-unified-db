@@ -224,6 +224,14 @@ module Udb
         end
     end
 
+    # @return the list of instructions implemented *indirectly* by *any version* of this extension because
+    # a requirement of the extension directly defines the instruction
+    #
+    # For example, the "C" extension implies c.addi because c.addi is directly defined by Zca and C
+    # requires Zca to be implemented
+    #
+    # This list may be empty
+    sig { returns(T::Array[Instruction]) }
     def implied_instructions
       @implied_instructions ||=
         begin
@@ -257,37 +265,6 @@ module Udb
       @instructions_set ||= Set.new(instructions)
     end
 
-    # # @return the list of instructions implemented *indirectly* by *any version* of this extension because
-    # # a requirement of the extension directly defines the instruction
-    # #
-    # # For example, the "C" extension implies c.addi because c.addi is directly defined by Zca and C
-    # # requires Zca to be implemented
-    # #
-    # # This list may be empty
-    # sig { returns(T::Array[Instruction]) }
-    # def implied_instructions
-    #   @implied_instructions ||=
-    #     begin
-    #       pb =
-    #         Udb.create_progressbar(
-    #           "Finding implied instructions for #{name} [:bar] :current/:total",
-    #           total: cfg_arch.instructions.size,
-    #           clear: true
-    #         )
-    #       cfg_arch.instructions.select do |i|
-    #         pb.advance
-    #         if i.defined_by_condition.mentions?(to_ext_req)
-    #           inst_defined = i.defined_by_condition
-    #           preconditions_met = requirements_condition
-
-    #           # inst is defined transitively by self if:
-    #           (
-    #             (-inst_defined & preconditions_met) # it must be defined when preconditions are met, and
-    #           ).unsatisfiable?
-    #         end
-    #       end
-    #     end
-    # end
 
     # @api private
     sig { returns(T::Set[Instruction]) }
