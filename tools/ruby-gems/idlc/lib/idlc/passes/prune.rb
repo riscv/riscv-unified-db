@@ -140,6 +140,13 @@ module Idl
       # make sure that any variable assigned within the loop is considered unknown
       stmts.each { |stmt| stmt.nullify_assignments(symtab) }
 
+      # Nullify any outer-scope variable assigned in the loop body before pruning,
+      # since we don't know how many iterations ran (or if any ran at all).
+      # This must happen before pruning the body so that optimizations (e.g.,
+      # "0 | x => x") don't incorrectly fire using the pre-loop value of a
+      # variable that is updated inside the loop.
+      stmts.each { |stmt| stmt.nullify_assignments(symtab) }
+
       begin
         new_loop =
           ForLoopAst.new(

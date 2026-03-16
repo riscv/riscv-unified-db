@@ -6464,6 +6464,53 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = action.const_eval?(symtab)
 
+    # Check if this statement guarantees a return
+    # @param symtab [SymbolTable] Symbol table for context
+    # @return [Boolean] true if it guarantees a return, false otherwise
+    def all_paths_return?(symtab)
+      if action.is_a?(ReturnStatementAst) || action.is_a?(ReturnExpressionAst)
+        return true
+      end
+      # Treat unreachable() as a guaranteed return path
+      if action.is_a?(FunctionCallExpressionAst) && action.name == "unreachable"
+        return true
+      end
+      # Treat unpredictable() as a guaranteed return path
+      if action.is_a?(FunctionCallExpressionAst) && action.name == "unpredictable"
+        return true
+      end
+      # Treat abort_current_instruction() as a guaranteed return path
+      if action.is_a?(FunctionCallExpressionAst) && action.name == "abort_current_instruction"
+        return true
+      end
+
+      # Check if the function call always terminates (recursive check via callee's body)
+      if action.is_a?(FunctionCallExpressionAst)
+        ft = symtab.get(action.name)
+        if ft.is_a?(FunctionType) && ft.func_def_ast.always_terminates?(symtab)
+          return true
+        end
+      end
+
+      # treat assert with a known false condition as a guaranteed return path
+      if action.is_a?(FunctionCallExpressionAst) && action.name == "assert"
+        fc = T.cast(action, FunctionCallExpressionAst)
+        if fc.args.size == 0
+          type_error "assert is missing a condition"
+        end
+        cond = fc.args.fetch(0)
+        value_try do
+          if cond.value(symtab) == false
+            return true
+          end
+        end
+      end
+      if action.is_a?(IfAst)
+        return action.all_paths_return?(symtab)
+      end
+      false
+    end
+
     def action = @children[0]
 
     def initialize(input, interval, action)
@@ -8081,6 +8128,40 @@ module Idl
 
     def stmts = @children
 
+    # Check if all execution paths in this function body end with a return statement
+    # @param symtab [SymbolTable] Symbol table for context
+    # @return [Boolean] true if all paths return, false otherwise
+    def all_paths_return?(symtab)
+      # Check each statement in order
+      stmts.each do |stmt|
+        # If we find a return statement, all paths from here return
+        if stmt.is_a?(ReturnStatementAst)
+          return true
+        end
+
+        # Treat unreachable() as a guaranteed return path
+        if stmt.is_a?(StatementAst) && stmt.action.is_a?(FunctionCallExpressionAst) && stmt.action.name == "unreachable"
+          return true
+        end
+
+        # If we find an if statement, check if all its paths return
+        if stmt.is_a?(IfAst) && stmt.all_paths_return?(symtab)
+          return true
+        end
+
+        # A StatementAst might contain an IfAst or a return
+        if stmt.is_a?(StatementAst) && stmt.all_paths_return?(symtab)
+          return true
+        end
+
+        # For loops can't guarantee a return (might not execute)
+        # Other statements don't affect control flow for returns
+      end
+
+      # If we get here, no statement guaranteed a return
+      false
+    end
+
     # @!macro type_check
     def type_check(symtab, strict:)
       internal_error "Function bodies should be at global + 1 scope (at #{symtab.levels})" unless symtab.levels == 2
@@ -8279,6 +8360,11 @@ end,
 
     attr_reader :return_type_nodes
 
+    class Memo < T::Struct
+      prop :always_terminates, T::Hash[SymbolTable, T::Boolean], default: {}
+      prop :computing_always_terminates, T::Boolean, default: false
+    end
+
     def <=>(other)
       return nil unless other.is_a?(FunctionDefAst)
 
@@ -8315,6 +8401,7 @@ end,
       @generated = type == :generated
       @external = type == :external
 
+      @memo = Memo.new
       @cached_return_type = {}
     end
 
@@ -8618,6 +8705,35 @@ end,
       return if @body.nil?
 
       @body.type_check(symtab, strict:)
+
+      # Check that all paths return if the function return type is non-void
+      rtype = return_type(symtab)
+
+      # TODO: uncomment this once we merge with removal of template functions
+      # if rtype.kind != :void && rtype.kind != :tuple && !@body.all_paths_return?(symtab)
+      #   type_error "Function '#{name}' has a non-void return type but not all execution paths return a value"
+      # end
+    end
+
+    # Returns true if every execution path in this function ends in a terminal
+    # (return, unreachable, unpredictable, raise_precise, or a call to another
+    # always-terminating function). Memoized after first calculation.
+    # @param symtab [SymbolTable] Symbol table for context
+    # @return [Boolean]
+    def always_terminates?(symtab)
+      return @memo.always_terminates[symtab] if @memo.always_terminates.key?(symtab)
+
+      # Guard against infinite recursion (mutual recursion between functions)
+      return false if @memo.computing_always_terminates
+
+      @memo.computing_always_terminates = true
+      begin
+        result = !builtin? && !generated? && !external? && !@body.nil? && @body.all_paths_return?(symtab)
+        @memo.always_terminates[symtab] = result
+      ensure
+        @memo.computing_always_terminates = false
+      end
+      @memo.always_terminates[symtab]
     end
 
     def body
@@ -8903,6 +9019,13 @@ end,
       nil
     end
 
+    # A for loop cannot guarantee a return because it might not execute
+    # @param symtab [SymbolTable] Symbol table for context
+    # @return [Boolean] always false
+    def all_paths_return?(symtab)
+      false
+    end
+
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl
@@ -8959,6 +9082,26 @@ end,
       else
         super(input, interval, body_stmts)
       end
+    end
+
+    # Check if all execution paths in this block end with a return statement
+    # @param symtab [SymbolTable] Symbol table for context
+    # @return [Boolean] true if all paths return, false otherwise
+    def all_paths_return?(symtab)
+      stmts.each do |stmt|
+        if stmt.is_a?(ReturnStatementAst)
+          return true
+        end
+
+        if stmt.is_a?(IfAst) && stmt.all_paths_return?(symtab)
+          return true
+        end
+
+        if stmt.is_a?(StatementAst) && stmt.all_paths_return?(symtab)
+          return true
+        end
+      end
+      false
     end
 
     # @!macro type_check
@@ -9101,6 +9244,13 @@ end,
 
     sig { returns(IfBodyAst) }
     def body = T.cast(@children.fetch(1), IfBodyAst)
+
+    # Check if all execution paths in this block end with a return statement
+    # @param symtab [SymbolTable] Symbol table for context
+    # @return [Boolean] true if all paths return, false otherwise
+    def all_paths_return?(symtab)
+      body.all_paths_return?(symtab)
+    end
 
     sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), body_interval: T.nilable(T::Range[Integer]), cond: RvalueAst, body_stmts: T::Array[StatementAst]).void }
     def initialize(input, interval, body_interval, cond, body_stmts)
@@ -9247,6 +9397,24 @@ end,
       @func_type_cache = {}
 
       super(input, interval, children_nodes)
+    end
+
+    # Check if all execution paths in this if structure end with a return statement
+    # For an if statement to guarantee a return, the if body, all else ifs, AND the final else
+    # must all guarantee a return. Also, there MUST be a final else.
+    # @param symtab [SymbolTable] Symbol table for context
+    # @return [Boolean] true if all paths return, false otherwise
+    def all_paths_return?(symtab)
+      # If there is no final else block, we can't guarantee a return
+      # because the condition might be false and we just fall through
+      if final_else_body.stmts.empty?
+        return false
+      end
+
+      # All branches must guarantee a return
+      if_body.all_paths_return?(symtab) &&
+        elseifs.all? { |eif| eif.all_paths_return?(symtab) } &&
+        final_else_body.all_paths_return?(symtab)
     end
 
     # @!macro type_check
@@ -9666,7 +9834,7 @@ end,
     include Rvalue
 
     class Memo < T::Struct
-      prop :csr_obj, T.nilable(Csr)
+      prop :csr_obj, T::Hash[SymbolTable, Csr]
       prop :type, T.nilable(Type)
     end
 
@@ -9679,7 +9847,7 @@ end,
       super(input, interval, [])
 
       @csr_name = csr_name
-      @memo = Memo.new
+      @memo = Memo.new(csr_obj: {})
     end
 
     def freeze_tree(symtab)
@@ -9692,7 +9860,7 @@ end,
     end
 
     # @!macro type
-    def type(symtab) = @memo.type ||= CsrType.new(csr_def(symtab))
+    def type(symtab) = @memo.type ||= CsrType.new(csr_def(symtab)).freeze
 
     # @!macro type_check
     def type_check(symtab, strict:)
@@ -9700,7 +9868,7 @@ end,
     end
 
     def csr_def(symtab)
-      @memo.csr_obj ||= symtab.csr(@csr_name)
+      @memo.csr_obj[symtab] ||= symtab.csr(@csr_name)
     end
 
     def csr_known?(symtab)

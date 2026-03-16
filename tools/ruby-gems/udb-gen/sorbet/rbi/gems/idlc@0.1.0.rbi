@@ -1616,7 +1616,7 @@ class Idl::CsrReadExpressionAst < ::Idl::AstNode
 end
 
 class Idl::CsrReadExpressionAst::Memo < ::T::Struct
-  prop :csr_obj, T.nilable(::Idl::Csr)
+  prop :csr_obj, T::Hash[::Idl::SymbolTable, ::Idl::Csr]
   prop :type, T.nilable(::Idl::Type)
 end
 
@@ -1818,6 +1818,8 @@ class Idl::ElseIfAst < ::Idl::AstNode
     ).void
   end
   def initialize(input, interval, body_interval, cond, body_stmts); end
+
+  def all_paths_return?(symtab); end
 
   sig { returns(::Idl::IfBodyAst) }
   def body; end
@@ -2433,6 +2435,8 @@ class Idl::ForLoopAst < ::Idl::AstNode
 
   def initialize(input, interval, init, condition, update, stmts); end
 
+  def all_paths_return?(symtab); end
+
   sig { returns(T.all(::Idl::AstNode, ::Idl::Rvalue)) }
   def condition; end
 
@@ -2542,6 +2546,8 @@ class Idl::FunctionBodyAst < ::Idl::AstNode
     ).void
   end
   def initialize(input, interval, stmts); end
+
+  def all_paths_return?(symtab); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
@@ -2680,6 +2686,7 @@ class Idl::FunctionDefAst < ::Idl::AstNode
 
   def <=>(other); end
   def add_symbol(symtab); end
+  def always_terminates?(symtab); end
   def apply_template_and_arg_syms(symtab); end
   def argument_nodes; end
   def arguments(symtab); end
@@ -2729,6 +2736,11 @@ class Idl::FunctionDefAst < ::Idl::AstNode
     end
     def from_h(yaml, source_mapper); end
   end
+end
+
+class Idl::FunctionDefAst::Memo < ::T::Struct
+  prop :always_terminates, T::Hash[::Idl::SymbolTable, T::Boolean], default: T.unsafe(nil)
+  prop :computing_always_terminates, T::Boolean, default: T.unsafe(nil)
 end
 
 class Idl::FunctionDefSyntaxNode < ::Idl::SyntaxNode
@@ -2964,6 +2976,8 @@ class Idl::IfAst < ::Idl::AstNode
 
   def initialize(input, interval, if_cond, if_body, elseifs, final_else_body); end
 
+  def all_paths_return?(symtab); end
+
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
 
@@ -3041,6 +3055,8 @@ class Idl::IfBodyAst < ::Idl::AstNode
     ).void
   end
   def initialize(input, interval, body_stmts); end
+
+  def all_paths_return?(symtab); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
@@ -4098,6 +4114,7 @@ class Idl::StatementAst < ::Idl::AstNode
   def initialize(input, interval, action); end
 
   def action; end
+  def all_paths_return?(symtab); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
