@@ -2074,7 +2074,7 @@ class Udb::ExtensionRequirement
   sig { returns(::Udb::Condition) }
   def to_condition; end
 
-  sig { returns(::Udb::Condition) }
+  sig { returns(::Udb::AbstractCondition) }
   def to_condition_exclusive; end
 
   sig { returns(::Udb::ExtensionVersion) }
