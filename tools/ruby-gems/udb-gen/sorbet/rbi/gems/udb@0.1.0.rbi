@@ -1892,6 +1892,7 @@ class Udb::Extension < ::Udb::TopLevelDatabaseObject
   sig { returns(T::Array[::Udb::Csr]) }
   def implied_csrs; end
 
+  sig { returns(T::Array[::Udb::Instruction]) }
   def implied_instructions; end
 
   sig { returns(T::Set[::Udb::Instruction]) }
