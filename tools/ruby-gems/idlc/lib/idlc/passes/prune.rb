@@ -244,11 +244,13 @@ module Idl
     def prune(symtab, forced_type: nil)
       symtab.push(self)
       symtab.add(init.lhs.name, Var.new(init.lhs.name, init.lhs_type(symtab)))
-      snapshot = symtab.snapshot_values
 
       # Nullify any outer-scope variable assigned in the loop body, since we
       # don't know how many iterations ran (or if any ran at all)
       stmts.each { |stmt| stmt.nullify_assignments(symtab) }
+
+      # Snapshot after nullification so restore brings back nil values, not pre-loop values
+      snapshot = symtab.snapshot_values
 
       begin
         new_loop =
@@ -593,7 +595,8 @@ module Idl
         value_result = value_try do
           pruned_action.execute(symtab) if pruned_action.is_a?(Executable)
         end
-          # ok
+        # Condition is unknown, so the assignment may not have run; nullify to prevent leakage
+        pruned_action.nullify_assignments(symtab)
         ConditionalStatementAst.new(input, interval, pruned_action, condition.prune(symtab))
       end
     end
@@ -846,16 +849,11 @@ module Idl
         variables.map(&:dup),
         function_call.prune(symtab)
       )
-      new_ast.execute_unknown(symtab)
-      new_ast
-    end
-
-    def nullify_assignments(symtab)
-      variables.each do |v|
-        next if v.is_a?(DontCareLvalueAst)
-        sym = symtab.get(v.text_value)
-        sym.value = nil unless sym.nil?
+      value_try do
+        new_ast.execute(symtab)
       end
+      # value_else: execute already sets nil on failure, nothing more to do
+      new_ast
     end
   end
 
@@ -867,16 +865,11 @@ module Idl
         idx.prune(symtab),
         rhs.prune(symtab)
       )
-      new_ast.execute_unknown(symtab)
-      new_ast
-    end
-
-    def nullify_assignments(symtab)
-      sym = symtab.get(lhs.text_value)
-      unless sym.nil?
-        # array element assignment makes the whole array unknown
-        sym.value = nil
+      value_try do
+        new_ast.execute(symtab)
       end
+      # value_else: execute already sets nil on failure, nothing more to do
+      new_ast
     end
   end
 
@@ -889,13 +882,11 @@ module Idl
         lsb.prune(symtab),
         write_value.prune(symtab)
       )
-      new_ast.execute_unknown(symtab)
+      value_try do
+        new_ast.execute(symtab)
+      end
+      # value_else: execute already sets nil on failure, nothing more to do
       new_ast
-    end
-
-    def nullify_assignments(symtab)
-      sym = symtab.get(variable.text_value)
-      sym.value = nil unless sym.nil?
     end
   end
 
@@ -907,13 +898,11 @@ module Idl
         @field_name,
         rhs.prune(symtab)
       )
-      new_ast.execute_unknown(symtab)
+      value_try do
+        new_ast.execute(symtab)
+      end
+      # value_else: execute already sets nil on failure, nothing more to do
       new_ast
-    end
-
-    def nullify_assignments(symtab)
-      sym = symtab.get(id.name)
-      sym.value = nil unless sym.nil?
     end
   end
 
@@ -934,26 +923,22 @@ module Idl
   class PostIncrementExpressionAst < AstNode
     def prune(symtab, forced_type: nil)
       new_ast = PostIncrementExpressionAst.new(input, interval, rval.dup)
-      new_ast.execute_unknown(symtab)
+      value_try do
+        new_ast.execute(symtab)
+      end
+      # value_else: execute already sets nil on failure, nothing more to do
       new_ast
-    end
-
-    def nullify_assignments(symtab)
-      sym = symtab.get(rval.text_value)
-      sym.value = nil unless sym.nil?
     end
   end
 
   class PostDecrementExpressionAst < AstNode
     def prune(symtab, forced_type: nil)
       new_ast = PostDecrementExpressionAst.new(input, interval, rval.dup)
-      new_ast.execute_unknown(symtab)
+      value_try do
+        new_ast.execute(symtab)
+      end
+      # value_else: execute already sets nil on failure, nothing more to do
       new_ast
-    end
-
-    def nullify_assignments(symtab)
-      sym = symtab.get(rval.text_value)
-      sym.value = nil unless sym.nil?
     end
   end
 
