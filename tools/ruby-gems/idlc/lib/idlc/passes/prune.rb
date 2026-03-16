@@ -738,6 +738,7 @@ module Idl
   class IdAst < AstNode
     def prune(symtab, forced_type: nil)
       value_result = value_try do
+        value_error "Not pruning struct types" if type(symtab).kind == :struct
         v = value(symtab)
         if type(symtab).kind == :bits
           if type(symtab).width == :unknown
