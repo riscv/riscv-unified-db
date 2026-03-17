@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <style>
+    .bg   { fill: var(--idl-logo-bg, #161b22); }
+    .mark { stroke: var(--idl-logo-fg, #33f1ff); }
+  </style>
+  <rect width="16" height="16" class="bg"/>
+  <!--
+    App icon content: x=15..95, y=19..80 (80w x 61h).
+    Scale s=0.164 → 13.1w x 10h. dx=1.5, dy=3.
+    x' = 1.5 + (x-15)*0.164,  y' = 3 + (y-19)*0.164
+  -->
+  <g class="mark" stroke-width="0.9" stroke-linecap="butt" stroke-linejoin="miter" fill="none">
+    <!-- I: top serif -->
+    <line x1="1.5" y1="4.1" x2="3.8" y2="4.1" />
+    <!-- I: top stem -->
+    <line x1="2.6" y1="3.0" x2="2.6" y2="5.3" />
+    <!-- I: entry stroke + lower stem -->
+    <path d="M 1.5 8.6 L 2.6 7.5 L 2.6 13.0" />
+    <!-- I: bottom serif -->
+    <line x1="1.5" y1="13.0" x2="3.8" y2="13.0" />
+    <!-- D: stem -->
+    <line x1="6.4" y1="3.0" x2="6.4" y2="13.0" />
+    <!-- D: curve -->
+    <path d="M 7.2 3.0 C 10.5 3.0, 10.5 13.0, 7.2 13.0" />
+    <!-- L: stem -->
+    <line x1="11.3" y1="3.0" x2="11.3" y2="11.4" />
+    <!-- L: foot -->
+    <line x1="11.3" y1="13.0" x2="14.6" y2="13.0" />
+  </g>
+</svg>

@@ -1,0 +1,261 @@
+---
+sidebar_position: 5
+title: Operators
+---
+
+Integer types (`Bits<N>`, `U64`) support most of the same operators as Verilog and use the same order of precedence. Notably excluded are many bitwise reduction operators (e.g., and-reduce, or-reduce).
+
+Binary operators between operands of different bit widths extend the smaller operand to the size of the larger operand prior to the operation. When the smaller operand is signed, the extension is a sign extension; otherwise it is a zero extension.
+
+The result of a binary operation is signed if both operands are signed; otherwise the result is unsigned.
+
+## Widening Operators
+
+IDL includes widening variants of several binary operators, indicated by a backtick (`` ` ``) prefix. These are unique to IDL and have no direct C or Verilog equivalent. They are useful when you need to preserve the full result of an operation that would otherwise overflow or lose bits.
+
+| Operator | Operation | Result width |
+|----------|-----------|-------------|
+| `` i `* j `` | Widening multiply | `L(i) + L(j)` |
+| `` i `+ j `` | Widening addition | `max(L(i), L(j)) + 1` |
+| `` i `- j `` | Widening subtraction | `max(L(i), L(j)) + 1` |
+| `` i `<< j `` | Widening left shift (`j` must be compile-time constant) | `L(i) + value(j)` |
+
+```idl title="Widening operator examples"
+Bits<32> a = 0xFFFFFFFF;
+Bits<32> b = 0x00000002;
+
+# Standard multiply: upper bits discarded, result stays 32 bits
+Bits<32> narrow_mul = a * b;     # 0xFFFFFFFE (truncated)
+
+# Widening multiply: full 64-bit result
+Bits<64> wide_mul = a `* b;      # 0x00000001FFFFFFFE
+
+# Standard addition: carry bit lost
+Bits<32> wrapped_add = a + b;    # 0x00000001 (overflow)
+
+# Widening addition: carry preserved in extra bit, result is 33 bits
+Bits<33> wide_add = a `+ b;      # 0x100000001
+
+# Widening left shift by compile-time constant 4: result is 36 bits
+Bits<36> wide_shl = a `<< 4;     # 0xFFFFFFFF0
+```
+
+:::note
+`` `<< `` requires the shift amount to be known at compile time. Use `<<` for variable shift amounts (discarding the upper bits).
+:::
+
+## Operator Precedence Table
+
+For an operand `i` (which may be an expression), `L(i)` is the number of bits in `i` and `typeof(i)` is the exact type of `i`. Precedence 0 is highest.
+
+<table>
+  <thead>
+    <tr>
+      <th>Precedence</th>
+      <th>Operator</th>
+      <th>Result Type</th>
+      <th>Comments</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowSpan={2}>0</td>
+      <td><code>i[idx]</code></td>
+      <td><code>Bits&lt;1&gt;</code></td>
+      <td>Extract a single bit from bit position <code>idx</code>.<br/>
+          <code>i</code> must be an integral type or an array.<br/>
+          Result is unsigned, regardless of the sign of <code>i</code>.</td>
+    </tr>
+    <tr>
+      <td><code>i[msb:lsb]</code></td>
+      <td><code>Bits&lt;msb - lsb + 1&gt;</code></td>
+      <td>Extract a range of bits between <code>msb</code> and <code>lsb</code>, inclusive.<br/>
+          <code>i</code> must be an integral type.<br/>
+          Result is unsigned, regardless of the sign of <code>i</code>.</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><code>(i)</code></td>
+      <td><code>typeof(i)</code></td>
+      <td>Grouping.</td>
+    </tr>
+    <tr>
+      <td rowSpan={2}>2</td>
+      <td><code>!i</code></td>
+      <td><code>Boolean</code></td>
+      <td>Logical negation. <code>i</code> must be a Boolean type.</td>
+    </tr>
+    <tr>
+      <td><code>~i</code></td>
+      <td><code>typeof(i)</code></td>
+      <td>Bitwise negation. <code>i</code> must be an integral type.</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><code>-i</code></td>
+      <td><code>typeof(i)</code></td>
+      <td>Unary minus in two's complement, i.e., 2<sup>N</sup> - i.<br/>
+          <code>i</code> must be an integral type.</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><code>&#123;i, j, ...&#125;</code></td>
+      <td><code>Bits&lt;L(i) + L(j) + ...&gt;</code></td>
+      <td>Concatenation. All operands must be <code>Bits&lt;N&gt;</code> type. Result is always unsigned.</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><code>&#123;N&#123;i&#125;&#125;</code></td>
+      <td><code>Bits&lt;N * L(i)&gt;</code></td>
+      <td>Replicates <code>i</code> N times. <code>i</code> must be a <code>Bits&lt;N&gt;</code> type.<br/>
+          N must be a literal or compile-time constant.</td>
+    </tr>
+    <tr>
+      <td rowSpan={4}>6</td>
+      <td><code>i * j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j))&gt;</code></td>
+      <td>Multiply <code>i</code> times <code>j</code>. Result is the same width as the widest operand. Upper half of the result is discarded.</td>
+    </tr>
+    <tr>
+      <td><code>i `* j</code></td>
+      <td><code>Bits&lt;L(i) + L(j)&gt;</code></td>
+      <td>Widening multiply <code>i</code> times <code>j</code>.</td>
+    </tr>
+    <tr>
+      <td><code>i / j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j))&gt;</code></td>
+      <td>Divide <code>i</code> by <code>j</code>. Result is the same width as the widest operand. Remainder is discarded.<br/>
+          Division by zero is undefined and must be avoided.<br/>
+          When both are signed, signed overflow is undefined and must be avoided.</td>
+    </tr>
+    <tr>
+      <td><code>i % j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j))&gt;</code></td>
+      <td>Remainder of the division of <code>i</code> by <code>j</code>. Quotient is discarded.<br/>
+          Division by zero is undefined and must be avoided.<br/>
+          When both are signed, signed overflow is undefined and must be avoided.</td>
+    </tr>
+    <tr>
+      <td rowSpan={4}>7</td>
+      <td><code>i + j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j))&gt;</code></td>
+      <td>Addition. Carry bit is discarded. To preserve carry, widen operands before adding.</td>
+    </tr>
+    <tr>
+      <td><code>i `+ j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j)) + 1&gt;</code></td>
+      <td>Widening addition.</td>
+    </tr>
+    <tr>
+      <td><code>i - j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j))&gt;</code></td>
+      <td>Subtraction. Carry bit is discarded. To preserve carry, widen operands before subtracting.</td>
+    </tr>
+    <tr>
+      <td><code>i `- j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j)) + 1&gt;</code></td>
+      <td>Widening subtraction.</td>
+    </tr>
+    <tr>
+      <td rowSpan={4}>8</td>
+      <td><code>i &lt;&lt; j</code></td>
+      <td><code>typeof(i)</code></td>
+      <td>Left logical shift.</td>
+    </tr>
+    <tr>
+      <td><code>i `&lt;&lt; j</code></td>
+      <td><code>Bits&lt;L(i) + value(j)&gt;</code></td>
+      <td>Widening left logical shift. <code>j</code> <strong>must</strong> be known at compile time — otherwise a type error.</td>
+    </tr>
+    <tr>
+      <td><code>i &gt;&gt; j</code></td>
+      <td><code>typeof(i)</code></td>
+      <td>Right logical shift.</td>
+    </tr>
+    <tr>
+      <td><code>i &gt;&gt;&gt; j</code></td>
+      <td><code>typeof(i)</code></td>
+      <td>Right arithmetic shift.</td>
+    </tr>
+    <tr>
+      <td rowSpan={4}>9</td>
+      <td><code>i &gt; j</code></td>
+      <td><code>Boolean</code></td>
+      <td>Greater than. <code>i</code> and <code>j</code> must be integral.</td>
+    </tr>
+    <tr>
+      <td><code>i &lt; j</code></td>
+      <td><code>Boolean</code></td>
+      <td>Less than. <code>i</code> and <code>j</code> must be integral.</td>
+    </tr>
+    <tr>
+      <td><code>i &gt;= j</code></td>
+      <td><code>Boolean</code></td>
+      <td>Greater than or equal. <code>i</code> and <code>j</code> must be integral.</td>
+    </tr>
+    <tr>
+      <td><code>i &lt;= j</code></td>
+      <td><code>Boolean</code></td>
+      <td>Less than or equal. <code>i</code> and <code>j</code> must be integral.</td>
+    </tr>
+    <tr>
+      <td rowSpan={2}>10</td>
+      <td><code>i == j</code></td>
+      <td><code>Boolean</code></td>
+      <td>Equality. <code>i</code> and <code>j</code> must be the same type: integral, boolean, or string.</td>
+    </tr>
+    <tr>
+      <td><code>i != j</code></td>
+      <td><code>Boolean</code></td>
+      <td>Inequality. <code>i</code> and <code>j</code> must be the same type: integral, boolean, or string.</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td><code>i &amp; j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j))&gt;</code></td>
+      <td>Bitwise AND. <code>i</code> and <code>j</code> must be integral.</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td><code>i ^ j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j))&gt;</code></td>
+      <td>Bitwise exclusive OR. <code>i</code> and <code>j</code> must be integral.</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td><code>i | j</code></td>
+      <td><code>Bits&lt;max(L(i), L(j))&gt;</code></td>
+      <td>Bitwise OR. <code>i</code> and <code>j</code> must be integral.</td>
+    </tr>
+    <tr>
+      <td rowSpan={2}>14</td>
+      <td><code>i &amp;&amp; j</code></td>
+      <td><code>Boolean</code></td>
+      <td>Logical AND. <code>i</code> and <code>j</code> must be boolean.</td>
+    </tr>
+    <tr>
+      <td><code>i || j</code></td>
+      <td><code>Boolean</code></td>
+      <td>Logical OR. <code>i</code> and <code>j</code> must be boolean.</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td><code>c ? t : f</code></td>
+      <td><code>typeof(t)</code></td>
+      <td>Ternary operator. Result is <code>t</code> if <code>c</code> is true, <code>f</code> otherwise.<br/>
+          <code>c</code> must be boolean; <code>t</code> and <code>f</code> must be compatible types.<br/>
+          When <code>t</code> and <code>f</code> are <code>Bits</code> types of different widths, the result is the larger of the two widths.</td>
+    </tr>
+  </tbody>
+</table>
+
+:::danger Division by zero and signed overflow are undefined behavior
+The `/` and `%` operators produce **undefined behavior** when the divisor is zero. When both operands are signed, overflow (e.g., `MIN_INT / -1`) is also undefined. The IDL compiler does not insert runtime guards — it is the programmer's responsibility to ensure these cases cannot occur.
+
+```idl
+# Safe pattern: guard before dividing
+if (b != 0) {
+  result = a / b;
+}
+```
+:::

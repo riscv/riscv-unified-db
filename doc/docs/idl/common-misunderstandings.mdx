@@ -1,0 +1,147 @@
+---
+sidebar_position: 16
+title: Common Misunderstandings
+---
+
+These are the most frequent points of confusion when reading or writing IDL for the first time.
+
+## `Bits<N>` width must be known at compile time
+
+`N` must be a literal, a named constant, or a constant expression — it cannot be a variable. The width is a structural property of the hardware being described, resolved during elaboration before any instruction executes.
+
+```idl
+Bits<32>    word;             # OK: literal
+Bits<MXLEN> reg;              # OK: configuration constant
+Bits<1>     bit = word[31];
+
+# Bits<bit> x;                # error: bit is a variable
+```
+
+See [Data Types](./data-types#bitsn) and [Variables & Constants](./variables#compile-time-and-runtime).
+
+## Case determines the kind of identifier — it is not just style
+
+A name that starts with a **lowercase** letter is always a mutable variable or a function. A name that starts with an **uppercase** letter is always a constant or a type (enum, bitfield, struct). This is enforced by the compiler:
+
+```idl
+Bits<8> value = 0;     # mutable variable (lowercase)
+Bits<8> Value = 0;     # constant (uppercase) — different thing entirely
+```
+
+You cannot name a mutable variable `Count` or a constant `mxlen`.
+
+See [Naming Rules](./variables#naming-rules).
+
+## Integers are not implicitly boolean
+
+`if (x)` is a compilation error. An `if` condition must have type `Boolean`. You must write an explicit comparison:
+
+```idl
+XReg src1 = X[rs1];
+
+if (src1 != 0) { ... }  # correct
+# if (src1) { ... }     # compilation error
+```
+
+This applies everywhere a boolean is required: `if`, `for` conditions, and the `?:` ternary condition.
+
+## There are no compound assignment operators
+
+`+=`, `-=`, `&=`, `|=`, `<<=`, etc. do not exist. Write the full expression on the right-hand side:
+
+```idl
+count = count + 1;
+mask  = mask & 0xFF;
+```
+
+## Enumeration members are not in the surrounding scope
+
+Unlike C enums, you cannot reference `Sv39` — you must fully qualify it with the enum name and `::`:
+
+```idl
+SatpMode mode = SatpMode::Sv39;   # correct
+# SatpMode mode = Sv39;           # compilation error
+```
+
+See [Enumerations](./data-types#enumerations).
+
+## `$signed` changes widening, not the stored bits
+
+`$signed(x)` does not permanently change the type of `x`. It tells the compiler to **sign-extend** `x` when it needs to be widened to match a wider operand, instead of zero-extending. The bits in `x` are unchanged; only the extension behavior changes.
+
+```idl
+Bits<2> b = 3;         # 0b11 — unsigned 3, or signed -1
+
+Bits<4> a = 1;
+Bits<4> e = a + b;             # b zero-extends to 0b0011 = 3.  1+3 = 4
+Bits<4> f = a + $signed(b);    # b sign-extends to 0b1111 = 15. 1+15 wraps to 0
+```
+
+For comparison operators like `<` and `<=`, mixing a signed and an unsigned operand is a **type error**. Apply `$signed` to both operands when comparing signed values.
+
+See [Type Conversions](./type-conversions#casting).
+
+## `raise()` does not return
+
+A call to `raise()` terminates the current instruction's execution immediately. Any code after it in the same block does not execute. There is no exception value to check — the exception is raised and execution ends:
+
+```idl
+if (access_fault) {
+  raise(ExceptionCode::LoadAccessFault, vaddr);
+  # code here never runs
+}
+```
+
+See [Standard Library](./standard-library#raising-exceptions).
+
+## Enum auto-assigned values follow the previous member, not position
+
+When an enum member has no explicit value, it gets the value of the **previous member** plus one — not its declaration position:
+
+```idl
+enum Example {
+  First  1
+  Second 2
+  Zero   0
+  Third    # value is 1 (0 + 1), NOT 3
+}
+```
+
+`Third` gets value 1, not 3, because it follows `Zero`. Always assign values explicitly when the sequence is non-trivial.
+
+See [Enumerations](./data-types#enumerations).
+
+## Narrowing assignments silently discard high bits
+
+Assigning a wider value into a narrower variable truncates the high bits without a warning:
+
+```idl
+Bits<32> wide   = 0xDEADBEEF;
+Bits<8>  narrow = wide;         # narrow = 0xEF — upper 24 bits gone
+```
+
+Extract the bits you need explicitly before assigning:
+
+```idl
+Bits<8> low_byte  = wide[7:0];    # 0xEF
+Bits<8> high_byte = wide[31:24];  # 0xDE
+```
+
+See [Type Conversions](./type-conversions#implicit-conversions).
+
+## Negative literals may lose their sign bit
+
+A Verilog-style literal with an explicit width that is too narrow to hold the value silently truncates:
+
+```idl
+Bits<4> x = 4'd-1;   # -1 in 4 bits = 0b1111 = 15 (unsigned) — OK
+Bits<3> y = 3'd-1;   # truncates to 3 bits: 0b111 = 7 — sign bit lost
+```
+
+When encoding negative values, ensure the width is sufficient to hold the sign bit. Or use the 2's complement positive equivalent:
+
+```idl
+Bits<4> neg_one = 4'b1111;   # explicit 2's complement representation
+```
+
+See [Literals](./literals).

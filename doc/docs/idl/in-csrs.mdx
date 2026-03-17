@@ -1,0 +1,80 @@
+---
+sidebar_position: 13
+title: IDL in CSRs
+---
+
+IDL is used in several places within CSR definitions in `arch/csr/`. Each use executes in **CSR scope**.
+
+:::note
+`sw_read()` is specified for the entire CSR; `sw_write(csr_value)` is specified per CSR field.
+:::
+
+## `sw_read()`
+
+The `sw_read()` function executes when a software read (via a `Zicsr` instruction) occurs. It takes no arguments and must return a `Bits<N>` value, where N is the width of the CSR. If a CSR does not specify `sw_read()`, the CSR value is formed directly from its field values.
+
+```yaml title="Example sw_read() (instret.yaml)"
+instret:
+  # ...
+  sw_read(): |
+    # ..bunch of permission checks...
+
+    return CSR[minstret].COUNT;
+```
+
+## `field.sw_write(csr_value)`
+
+The `sw_write(csr_value)` function of a CSR field executes when a software write (via a `Zicsr` instruction) occurs. It receives `csr_value` — an implicitly-defined bitfield of the CSR populated with the values software is trying to write — and returns a `Bits<N>` value representing what hardware will actually write into the field (where N is the width of the field).
+
+`sw_write` may also return one of two special values instead of a concrete `Bits<N>`:
+
+| Value | Meaning |
+|-------|---------|
+| `UNDEFINED_LEGAL` | The written value is unpredictable but guaranteed to be a legal value for the field. Use when hardware is free to write anything legal. |
+| `UNDEFINED_LEGAL_DETERMINISTIC` | The written value is legal and deterministically determined by the implementation's prior instruction sequence, but not architecturally defined. Use when the outcome is reproducible on a given implementation but not specified across implementations. |
+
+```yaml title="Example field.sw_write(csr_value) (mepc.yaml)"
+mepc:
+  # ...
+  fields:
+    PC:
+      # ...
+      sw_write(csr_value): |
+        # csr_value is:
+        #    a 'bitfield (64) { PC 63-0 }' when MXLEN == 64
+        #    a 'bitfield (32) { PC 31-0 }' when MXLEN == 32
+        return csr_value.PC & ~MXLEN'b1;
+```
+
+## `field.type()`
+
+The `type()` function specifies the type of a CSR field when the type is configuration-dependent. It takes no arguments and returns a `CsrFieldType` (defined in `globals.idl`) enumeration value.
+
+```yaml title="Example field.type() (mstatus.yaml)"
+mstatus:
+  # ...
+  fields:
+    # ...
+    MBE:
+      # ...
+      type(): |
+        return (M_MODE_ENDIANNESS == "dynamic") ? CsrFieldType::RW : CsrFieldType::RO;
+```
+
+## `field.reset_value()`
+
+The `reset_value()` function specifies the reset value of a CSR field when the value is configuration-dependent. It takes no arguments and returns a `Bits<N>` value (where N is the width of the field).
+
+`reset_value()` may also return `UNDEFINED_LEGAL` to indicate that the reset value is unpredictable but guaranteed to be a legal value for the field (as opposed to `UNDEFINED_LEGAL_DETERMINISTIC`, which would imply a reproducible but implementation-defined value).
+
+```yaml title="Example field.reset_value() (mstatus.yaml)"
+mstatus:
+  # ...
+  fields:
+    # ...
+    MBE:
+      # ...
+      # if endianness is mutable, MBE comes out of reset in little-endian mode
+      reset_value(): |
+        return (M_MODE_ENDIANNESS == "big") ? 1 : 0;
+```

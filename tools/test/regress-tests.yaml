@@ -360,3 +360,17 @@ tests:
     test:
       - name: Build IDL doc
         run: ./bin/bundle exec asciidoctor -r idl_highlighter -a toc=left -a source-highlighter=rouge -o idl.html doc/idl.adoc
+
+  build-docs-site:
+    ci_stage: merge_queue
+    gh_save_artifact:
+      - artifact_name: docs-site
+        path: doc/build
+    tags:
+      - smoke
+      - artifacts
+    test:
+      - name: Install Node dependencies
+        run: ./bin/npm ci
+      - name: Build Docusaurus site
+        run: ./bin/npm run build --workspace=doc

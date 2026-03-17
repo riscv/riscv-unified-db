@@ -1,0 +1,205 @@
+---
+sidebar_position: 17
+title: Quick Reference
+---
+
+A dense summary of IDL syntax for quick lookup. Follow the links for full details on each topic.
+
+## Naming Conventions
+
+| First character | Kind | Example |
+|---|---|---|
+| `[a-z]` | Mutable variable | `virtual_address`, `src1` |
+| `[A-Z]` | Constant | `MXLEN`, `PhysAddrWidth` |
+| `[A-Z]` | Type (enum, bitfield, struct) | `SatpMode`, `Sv39PageTableEntry` |
+| `[A-Z]` | Enum / bitfield member | `Bare`, `PBMT` |
+| `[a-z]` | Function | `read_memory`, `implemented?` |
+| `$` | Builtin (reserved) | `$pc`, `$encoding` |
+
+## Types
+
+```idl
+Bits<32>      word;            # N-bit unsigned integer (N must be compile-time constant)
+Bits<MXLEN>   reg;             # width from configuration constant
+Boolean       flag;            # true or false
+XReg          x;               # alias for Bits<MXLEN>
+U64           a;               # alias for Bits<64>
+U32           b;               # alias for Bits<32>
+
+enum SatpMode { Bare 0  Sv39 8  Sv48 9 }
+bitfield (64) Sv39Pte { PPN 53-10  V 0 }
+struct Foo { Bits<32> field; }
+
+Bits<32> array[8];             # fixed-size array
+```
+
+See [Data Types](./data-types).
+
+## Literals
+
+```idl
+32'hDEAD_BEEF    # Verilog-style: <width>'<radix><value>  (h=hex, d=dec, b=bin, o=oct)
+8'd255           # 8-bit decimal 255
+1'b1             # 1-bit binary 1
+0xDEAD           # C-style hex (width inferred)
+255              # decimal (width inferred)
+true  false      # boolean
+"hello"          # string (comparison only)
+[1, 2, 3]        # array literal
+```
+
+See [Literals](./literals).
+
+## Operators
+
+```idl
+# Arithmetic
++  -  *  /  %               # standard; result width = wider operand
+`+  `-  `*  `<<             # widening: result is wider than either operand
+
+# Bitwise
+&  |  ^  ~  <<  >>
+
+# Comparison (result is Boolean)
+==  !=  <  <=  >  >=
+
+# Logical (Boolean operands only)
+&&  ||  !
+
+# Ternary
+condition ? a : b
+
+# Bit manipulation
+x[3]       # single bit select
+x[7:0]     # slice
+{a, b}     # concatenation
+{4{x}}     # replication
+```
+
+See [Operators](./operators).
+
+## Casts
+
+```idl
+$signed(x)            # treat x as signed for widening/comparison
+$bits(MyEnum::Val)    # enum/bitfield/CSR → Bits<N>
+$enum(MyEnum, x)      # Bits<N> → enum
+$enum_to_a(MyEnum)    # enum → array of values
+```
+
+See [Type Conversions](./type-conversions).
+
+## Variables and Constants
+
+```idl
+Bits<32> value = 0;          # mutable variable (lowercase name)
+Bits<32> Value = 0;          # constant (uppercase name) — cannot be reassigned
+
+value = value + 1;           # re-assign (no +=)
+```
+
+See [Variables & Constants](./variables).
+
+## Control Flow
+
+```idl
+if (x != 0) {         # condition must be Boolean
+  ...
+} else if (x == 1) {
+  ...
+} else {
+  ...
+}
+
+for (U32 i = 0; i < 32; i++) { ... }   # mutable loop variable
+for (U32 I = 0; I < 32; I++) { ... }   # const loop variable (can be unrolled)
+```
+
+See [Control Flow](./control-flow).
+
+## Functions
+
+```idl
+function my_func {
+  returns Bits<32>                # optional; omit for void
+  arguments Bits<32> a, Boolean b # optional; omit for zero-argument
+  description { Description text. }
+  body {
+    return a + 1;
+  }
+}
+
+# Multiple return values
+function divmod {
+  returns Bits<32>, Bits<32>
+  arguments Bits<32> a, Bits<32> b
+  description { Returns quotient and remainder. }
+  body { return a / b, a % b; }
+}
+(quot, rem) = divmod(x, y);     # decompose at call site
+(-, rem)    = divmod(x, y);     # discard unwanted return values with -
+```
+
+See [Functions](./functions).
+
+## Builtins
+
+```idl
+$pc                      # current instruction PC (Bits<MXLEN>)
+$encoding                # raw instruction word (Bits<32>)
+
+$array_size(arr)         # compile-time size of an array
+$enum_size(MyEnum)       # number of members in an enum
+$enum_element_size(MyEnum) # bit width needed to represent any member
+```
+
+See [Builtins](./builtins).
+
+## Standard Library
+
+```idl
+# Architectural register file
+X[rs1]                   # read x register (Bits<MXLEN>)
+X[rd] = value;           # write x register (x0 writes are discarded)
+
+# CSR access
+CSR[mstatus]             # read/write entire CSR
+CSR[mstatus].MIE         # read/write a field
+CSR[csr_name_var]        # dynamic CSR lookup by name
+
+# Extension checks
+implemented?(ExtensionName::C)                  # Boolean: is extension implemented?
+implemented_version?(ExtensionName::C, "1.0")   # Boolean: is version implemented?
+implemented_csr?(CsrName::mstatus)              # Boolean: is CSR implemented?
+
+# Exceptions
+raise(ExceptionCode::IllegalInstruction);
+raise(ExceptionCode::LoadAccessFault, vaddr);   # with tval
+
+# Memory
+read_memory<32>(vaddr, $encoding)               # read N bits from virtual address
+write_memory<32>(vaddr, value, $encoding)       # write N bits to virtual address
+```
+
+See [Standard Library](./standard-library).
+
+## Declaration Syntax Summary
+
+```idl
+enum Name { Member1 0  Member2 1  Member3 }   # values optional; auto-increments
+
+bitfield (64) Name {
+  FieldA 63-32
+  FieldB 7
+}
+
+struct Name {
+  Bits<32> mutable_field;   # lowercase = mutable
+  Bits<32> ConstField;      # uppercase = const
+}
+
+builtin function name {     # no body; backend provides implementation
+  arguments Bits<32> x
+  description { ... }
+}
+```

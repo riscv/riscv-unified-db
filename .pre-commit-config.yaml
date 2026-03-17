@@ -24,7 +24,7 @@ repos:
       - id: trailing-whitespace
         stages: [pre-commit]
         args: [--markdown-linebreak-ext=md]
-        exclude: \.svg$
+        exclude: \.svg$|tests/data/golden/.*
       - id: mixed-line-ending
         args: ["--fix=lf"]
         exclude: ^.*\.bat$
@@ -34,7 +34,7 @@ repos:
         exclude: \.adoc$ # sections titles Level 6 "=======" get flagged otherwise
       - id: check-json
         stages: [pre-commit]
-        exclude: ^\.devcontainer|tools/vscode/\.vscode/launch\.json # Uses JSONC (comments)
+        exclude: ^\.devcontainer|tools/vscode/\.vscode/launch\.json|doc/tsconfig\.json # Uses JSONC (comments)
       - id: check-yaml
         stages: [pre-commit]
 
