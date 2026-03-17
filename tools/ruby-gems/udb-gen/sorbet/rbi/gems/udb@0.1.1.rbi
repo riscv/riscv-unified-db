@@ -695,18 +695,6 @@ class Udb::ArrayConstraints < ::T::Struct
   prop :min_size, T.nilable(::Integer)
 end
 
-class Udb::CertNormativeRule
-  def initialize(data, db_obj); end
-
-  def description; end
-  def doc_links; end
-  def id; end
-end
-
-module Udb::CertifiableObject
-  def cert_normative_rules; end
-end
-
 module Udb::Code
   sig { returns(::String) }
   def display_name; end
@@ -1201,12 +1189,6 @@ class Udb::ConfiguredArchitecture < ::Udb::Architecture
   def prm(name); end
   def prm_hash; end
   def prms; end
-  def proc_cert_class(name); end
-  def proc_cert_class_hash; end
-  def proc_cert_classes; end
-  def proc_cert_model(name); end
-  def proc_cert_model_hash; end
-  def proc_cert_models; end
   def profile(name); end
   def profile_families; end
   def profile_family(name); end
@@ -1329,7 +1311,6 @@ class Udb::Constraint
 end
 
 class Udb::Csr < ::Udb::TopLevelDatabaseObject
-  include ::Udb::CertifiableObject
   include ::Udb::HasFields
   include ::Idl::Csr
 
@@ -1423,7 +1404,6 @@ class Udb::Csr::MemoizedState < ::T::Struct
 end
 
 class Udb::CsrField < ::Udb::DatabaseObject
-  include ::Udb::CertifiableObject
   include ::Idl::CsrField
 
   sig do
@@ -1678,8 +1658,6 @@ class Udb::DatabaseObject::Kind < ::T::Enum
     NonIsaSpec = new
     Parameter = new
     Prm = new
-    ProcessorCertificateClass = new
-    ProcessorCertificateModel = new
     Profile = new
     ProfileFamily = new
     ProfileRelease = new
@@ -1852,7 +1830,6 @@ class Udb::ExceptionCode < ::Udb::TopLevelDatabaseObject
 end
 
 class Udb::Extension < ::Udb::TopLevelDatabaseObject
-  include ::Udb::CertifiableObject
   include ::Comparable
 
   sig { override.params(other_ext: ::Object).returns(T.nilable(::Integer)) }
@@ -2519,8 +2496,6 @@ class Udb::IdlCondition < ::Udb::Condition
 end
 
 class Udb::Instruction < ::Udb::TopLevelDatabaseObject
-  include ::Udb::CertifiableObject
-
   sig do
     override
       .params(
@@ -3851,44 +3826,6 @@ class Udb::Prm < ::Udb::TopLevelDatabaseObject
   def processor_config; end
   def resolver; end
   def resolver=(_arg0); end
-end
-
-class Udb::ProcCertClass < ::Udb::PortfolioClass; end
-
-class Udb::ProcCertModel < ::Udb::Portfolio
-  def initialize(obj_yaml, yaml_path, arch); end
-
-  def all_in_scope_exts_with_param(param); end
-  def all_in_scope_exts_without_param(param); end
-  def all_in_scope_params; end
-  def all_out_of_scope_params; end
-  def debug_manual_revision; end
-  def in_scope_priv_modes; end
-  def out_of_scope_params(ext_name); end
-  def priv_isa_manual_revision; end
-  def proc_cert_class; end
-  def requirement_groups; end
-  def tsc_profile_release; end
-  def unpriv_isa_manual_revision; end
-end
-
-class Udb::ProcCertModel::Requirement
-  def initialize(data, arch); end
-
-  def description; end
-  def name; end
-  def when; end
-  def when_pretty; end
-end
-
-class Udb::ProcCertModel::RequirementGroup
-  def initialize(data, arch); end
-
-  def description; end
-  def name; end
-  def requirements; end
-  def when; end
-  def when_pretty; end
 end
 
 class Udb::Profile < ::Udb::Portfolio
