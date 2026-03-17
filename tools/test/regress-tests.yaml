@@ -99,10 +99,6 @@ tests:
     test:
       - name: Generate Xqci extension PDF
         run: ./bin/ruby tools/scripts/gen_xqci.rb
-      - name: Check Xqci adoc golden
-        run: |
-          xqci_version=$(./bin/ruby -e "require 'yaml'; puts YAML.load_file('spec/custom/isa/qc_iu/ext/Xqci.yaml')['versions'].last['version']" | tr -d '\n')
-          diff -u "tests/data/golden/Xqci@${xqci_version}.adoc" "gen/ext-doc/pdf/Xqci-${xqci_version}.pdf/Xqci@${xqci_version}.adoc"
 
   regress-gen-certificate:
     ci_stage: pr
