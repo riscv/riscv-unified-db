@@ -114,7 +114,7 @@ Version requirements are specified as conditions using the following operators:
 [#insns,reftext="Instructions (in alphabetical order)"]
 == Instructions (in alphabetical order)
 
-<%- bar = Udb.create_progressbar("Creating instruction defintions [:bar] :current/:total", total: all_documented_instructions.size) -%>
+<%- bar = Udb.create_progressbar("Creating instruction definitions [:bar] :current/:total", total: all_documented_instructions.size) -%>
 <%-   all_documented_instructions.sort.each do |i| -%>
 :leveloffset: +2
 <%- bar.advance -%>
@@ -125,4 +125,20 @@ Version requirements are specified as conditions using the following operators:
 <%-   end -%>
 <%- end -%>
 
-<%= partial "ext_doc/_idl_functions.adoc.erb", { ext_reqs:, cfg_arch: } %>
+<%-
+  cache = T.let({ 32 => {}, 64 => {}, nil => {} }, T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType])
+  reachable_functions = all_documented_instructions.map do |i|
+   f = []
+   f += i.reachable_functions(32, cache.fetch(32)) if cfg_arch.possible_xlen?(32) && i.defined_in_base?(32)
+   f += i.reachable_functions(64, cache.fetch(64)) if cfg_arch.possible_xlen?(64) && i.defined_in_base?(64)
+   f
+  end
+  reachable_functions += all_documented_csrs.map do |csr|
+    f = []
+    f += csr.reachable_functions(32, cache) if cfg_arch.possible_xlen?(32) && csr.defined_in_base?(32)
+    f += csr.reachable_functions(64, cache) if cfg_arch.possible_xlen?(64) && csr.defined_in_base?(64)
+    f
+  end
+  reachable_functions = reachable_functions.flatten.uniq
+-%>
+<%= partial "ext_doc/_idl_functions.adoc.erb", { reachable_functions:, cfg_arch: } %>

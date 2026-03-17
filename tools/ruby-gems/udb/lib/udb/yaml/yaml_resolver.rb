@@ -368,7 +368,7 @@ module Udb
               raise TypeError, "Expected IDL body for #{(obj_path + [key]).join('.')} to be a String, got #{idl_source.class}"
             end
 
-            key_minus_args = key.split("(")[0]
+            key_minus_args = key.split("(")[0] + "_ast"
             source_loc = @current_comment_map&.get_source_location(obj_path + [key])
             # :line is 1-based; set_input_file expects 0-based, so subtract 1
             starting_line = source_loc ? source_loc[:line] - 1 : 0

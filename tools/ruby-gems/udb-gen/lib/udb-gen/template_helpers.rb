@@ -27,7 +27,7 @@ module UdbGen
       erb.result(context.instance_eval { binding })
     end
 
-    LinkableObj = T.type_alias { T.any(Udb::Instruction, Udb::Csr, Udb::CsrField, Idl::FunctionDefAst) }
+    LinkableObj = T.type_alias { T.any(Udb::Instruction, Udb::Csr, Udb::CsrField, Udb::Extension, Idl::FunctionDefAst) }
 
     # return an asciidoc link to obj, with text "text"
     sig { params(obj: LinkableObj, text: String).returns(String) }
@@ -46,14 +46,16 @@ module UdbGen
     sig { params(obj: LinkableObj).returns(String) }
     def link_name(obj)
       case obj
-      when Udb::Instruction
-        "udb-insn-#{obj.name.gsub(".", "_")}"
+      when Idl::FunctionDefAst
+        "udb-function-#{obj.name.gsub(".", "_")}"
       when Udb::Csr
         "udb-csr-#{obj.name.gsub(".", "_")}"
       when Udb::CsrField
         "udb-csrfield-#{obj.parent.name.gsub(".", "_")}-#{obj.name.gsub(".", "_")}"
-      when Idl::FunctionDefAst
-        "udb-function-#{obj.name.gsub(".", "_")}"
+      when Udb::Extension
+        "udb-extension-#{obj.name.gsub(".", "_")}"
+      when Udb::Instruction
+        "udb-insn-#{obj.name.gsub(".", "_")}"
       else
         T.absurd(obj)
       end

@@ -388,13 +388,16 @@ module Udb
 
       Udb.logger.info "Finding all reachable functions from extension #{name}"
 
+      cache = T.let({ 32 => {}, 64 => {}, nil => {} }, T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType])
+
       instructions.each do |inst|
-        funcs += inst.reachable_functions(32) if inst.defined_in_base?(32)
-        funcs += inst.reachable_functions(64) if inst.defined_in_base?(64)
+        funcs += inst.reachable_functions(32, cache.fetch(32)) if inst.defined_in_base?(32)
+        funcs += inst.reachable_functions(64, cache.fetch(64)) if inst.defined_in_base?(64)
       end
 
       csrs.each do |csr|
-        funcs += csr.reachable_functions
+        funcs += csr.reachable_functions(32, cache) if csr.defined_in_base?(32)
+        funcs += csr.reachable_functions(64, cache) if csr.defined_in_base?(64)
       end
 
       @reachable_functions = funcs.uniq
@@ -1597,15 +1600,18 @@ module Udb
 
       bar = Udb.create_progressbar("Finding reachable functions for #{name} [:bar] :current/:total", total: instructions.size + csrs.size)
 
+      cache = T.let({ 32 => {}, 64 => {}, nil => {} }, T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType])
+
       instructions.each do |inst|
         bar.advance
-        funcs += inst.reachable_functions(32) if inst.defined_in_base?(32)
-        funcs += inst.reachable_functions(64) if inst.defined_in_base?(64)
+        funcs += inst.reachable_functions(32, cache.fetch(32)) if inst.defined_in_base?(32)
+        funcs += inst.reachable_functions(64, cache.fetch(32)) if inst.defined_in_base?(64)
       end
 
       csrs.each do |csr|
         bar.advance
-        funcs += csr.reachable_functions
+        funcs += csr.reachable_functions(32, cache) if csr.defined_in_base?(32)
+        funcs += csr.reachable_functions(64, cache) if csr.defined_in_base?(64)
       end
 
       @reachable_functions = funcs.uniq

@@ -976,23 +976,22 @@ jobs:
     - name: Generate ${{ matrix.profile }}
       run: |
         PROFILE_NAME="${{ matrix.profile }}"
-        UPPER_PROFILE="${PROFILE_NAME^^}"
         ./do gen:profile_release_pdf[${PROFILE_NAME}]
     - name: Upload artifact
       uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: "${{ matrix.profile }}"
-        path: gen/profile/pdf/RVA20ProfileRelease.pdf
+        path: gen/profile/pdf/${{ matrix.profile }}ProfileRelease.pdf
     if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     strategy:
       matrix:
         profile:
-        - rvi20
-        - rva20
-        - rva22
-        - rva23
-        - rvb23
+        - RVI20
+        - RVA20
+        - RVA22
+        - RVA23
+        - RVB23
   regress-schema-versions:
     runs-on: ubuntu-latest
     needs: build-container

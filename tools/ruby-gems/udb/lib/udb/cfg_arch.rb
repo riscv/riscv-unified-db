@@ -182,6 +182,9 @@ module Udb
     sig { returns(T::Array[Integer]) }
     def possible_xlens = multi_xlen? ? [32, 64] : [mxlen]
 
+    sig { params(xlen: Integer).returns(T::Boolean) }
+    def possible_xlen?(xlen) = possible_xlens.include?(xlen)
+
     # @api private
     # hash for Hash lookup
     sig { override.returns(Integer) }
