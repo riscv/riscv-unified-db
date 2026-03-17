@@ -213,9 +213,6 @@ module UdbGen
         # Get array of profile releases and sort by name
         sorted = @arch.profile_releases.sort_by(&:name)
 
-        # Remove Mock profile release if present.
-        sorted.delete_if { |pr| pr.name == "Mock" }
-
         # Move RVI20 to the beginning of the array if it exists.
         if sorted.any? { |pr| pr.name == "RVI20" }
           sorted.delete_if { |pr| pr.name == "RVI20" }
