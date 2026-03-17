@@ -275,7 +275,7 @@ do_gen_xqci_golden() {
   source_setup
   echo "Generating Xqci golden adoc"
   local xqci_version
-  xqci_version=$($RUBY -e "require 'yaml'; puts YAML.load_file('spec/custom/isa/qc_iu/ext/Xqci.yaml')['versions'].last['version']")
+  xqci_version=$($RUBY -e "require 'yaml'; puts YAML.load_file('spec/custom/isa/qc_iu/ext/Xqci.yaml')['versions'].last['version']" | tr -d '\r\n')
   $RUBY tools/scripts/gen_xqci.rb
   mkdir -p tests/data/golden
   # Remove any stale golden files from previous versions

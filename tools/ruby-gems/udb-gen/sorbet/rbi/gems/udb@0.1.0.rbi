@@ -1192,6 +1192,9 @@ class Udb::ConfiguredArchitecture < ::Udb::Architecture
   sig { returns(T::Array[T.untyped]) }
   def possible_non_isa_specs; end
 
+  sig { params(xlen: ::Integer).returns(T::Boolean) }
+  def possible_xlen?(xlen); end
+
   sig { returns(T::Array[::Integer]) }
   def possible_xlens; end
 
