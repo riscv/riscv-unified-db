@@ -754,4 +754,146 @@ class TestVariables < Minitest::Test
     refute_nil(expected_ast)
     assert_equal expected_ast.to_idl, pruned_ast.to_idl
   end
+
+  def test_post_increment_does_not_leak
+    # i++ is the update expression in a for loop; after the loop, a variable
+    # assigned using i should remain unknown
+    orig_idl = <<~IDL
+      Bits<32> result = 0;
+      for (Bits<8> i = 0; i < 4; i++) {
+        result = i;
+      }
+      Bits<32> final = result;
+    IDL
+    expected_idl = <<~IDL
+      Bits<32> result = 0;
+      for (Bits<8> i = 0; i < 4; i++) {
+        result = i;
+      }
+      Bits<32> final = result;
+    IDL
+    symtab = build_mock_symtab
+    pruned_ast = compile_and_prune(orig_idl, symtab)
+    expected_ast = @compiler.compile_func_body(
+      expected_idl,
+      return_type: Idl::Type.new(:bits, width: 32),
+      symtab:,
+      input_file: "temp"
+    )
+    refute_nil(expected_ast)
+    assert_equal expected_ast.to_idl, pruned_ast.to_idl
+  end
+
+  def test_post_decrement_does_not_leak
+    # i-- as a for-loop update expression; after the loop, a variable
+    # assigned using i should remain unknown
+    orig_idl = <<~IDL
+      Bits<32> result = 0;
+      for (Bits<8> i = 3; i > 0; i--) {
+        result = i;
+      }
+      Bits<32> final = result;
+    IDL
+    expected_idl = <<~IDL
+      Bits<32> result = 0;
+      for (Bits<8> i = 3; i > 0; i--) {
+        result = i;
+      }
+      Bits<32> final = result;
+    IDL
+    symtab = build_mock_symtab
+    pruned_ast = compile_and_prune(orig_idl, symtab)
+    expected_ast = @compiler.compile_func_body(
+      expected_idl,
+      return_type: Idl::Type.new(:bits, width: 32),
+      symtab:,
+      input_file: "temp"
+    )
+    refute_nil(expected_ast)
+    assert_equal expected_ast.to_idl, pruned_ast.to_idl
+  end
+
+  def test_multiple_assignments_in_unknown_branch_do_not_leak
+    # Multiple variables assigned in same unknown branch; all should be unknown after
+    orig_idl = <<~IDL
+      Bits<32> a = 1;
+      Bits<32> b = 2;
+      if (CSR[mockcsr].UNKNOWN == 1) {
+        a = 10;
+        b = 20;
+      }
+      Bits<32> result_a = a;
+      Bits<32> result_b = b;
+    IDL
+    expected_idl = <<~IDL
+      Bits<32> a = 1;
+      Bits<32> b = 2;
+      if (CSR[mockcsr].UNKNOWN == 1) {
+        a = 10;
+        b = 20;
+      }
+      Bits<32> result_a = a;
+      Bits<32> result_b = b;
+    IDL
+    symtab = build_mock_symtab
+    pruned_ast = compile_and_prune(orig_idl, symtab)
+    expected_ast = @compiler.compile_func_body(
+      expected_idl,
+      return_type: Idl::Type.new(:bits, width: 32),
+      symtab:,
+      input_file: "temp"
+    )
+    refute_nil(expected_ast)
+    assert_equal expected_ast.to_idl, pruned_ast.to_idl
+  end
+
+  def test_multiple_conditional_modifiers_do_not_leak
+    # Two consecutive conditional modifiers with unknown conditions; final value should be unknown.
+    # After first modifier (unknown cond), result is nullified.
+    # After second modifier (unknown cond), result stays unknown.
+    # final = result must NOT fold to 0x2222.
+    orig_idl = <<~IDL
+      Bits<32> result = 0;
+      result = 0x1111 if (CSR[mockcsr].UNKNOWN == 1);
+      result = 0x2222 if (CSR[mockcsr].UNKNOWN == 2);
+      Bits<32> final = result;
+    IDL
+    symtab = build_mock_symtab
+    pruned_ast = compile_and_prune(orig_idl, symtab)
+    pruned_idl = pruned_ast.to_idl
+    # The key assertion: 'final' must not be folded to a literal constant
+    refute_match(/final = \d+'\h/, pruned_idl, "value leaked through conditional modifiers: #{pruned_idl}")
+  end
+
+  def test_for_loop_nested_in_unknown_if_does_not_leak
+    # For loop nested inside unknown if branch; variables assigned in loop should be unknown
+    orig_idl = <<~IDL
+      Bits<32> result = 0;
+      if (CSR[mockcsr].UNKNOWN == 1) {
+        for (Bits<8> i = 0; i < 4; i++) {
+          result = 1;
+        }
+      }
+      Bits<32> final = result;
+    IDL
+    expected_idl = <<~IDL
+      Bits<32> result = 0;
+      if (CSR[mockcsr].UNKNOWN == 1) {
+        for (Bits<8> i = 0; i < 4; i++) {
+          result = 1;
+        }
+      }
+      Bits<32> final = result;
+    IDL
+    symtab = build_mock_symtab
+    pruned_ast = compile_and_prune(orig_idl, symtab)
+    expected_ast = @compiler.compile_func_body(
+      expected_idl,
+      return_type: Idl::Type.new(:bits, width: 32),
+      symtab:,
+      input_file: "temp"
+    )
+    refute_nil(expected_ast)
+    assert_equal expected_ast.to_idl, pruned_ast.to_idl
+  end
 end

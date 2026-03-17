@@ -39,4 +39,4 @@ operation(): |
 
   XReg virtual_address = X[2] + imm;
 
-  write_memory<64>(virtual_address, f[fs2][63:0], $encoding);
+  write_memory(64, virtual_address, f[fs2][63:0], $encoding);

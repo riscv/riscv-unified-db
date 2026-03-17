@@ -36,26 +36,13 @@ module Idl
     def reachable_functions(symtab, cache = T.let({}, ReachableFunctionCacheType))
       func_def_type = func_type(symtab)
 
-      tvals = nil
-      value_result = value_try do
-        tvals = template_values(symtab)
-      end
-      value_else(value_result) do
-        raise "In #{input_file}:#{input_line}\n  Cannot find reachable functions for #{text_value} because template values are not known"
-      end
-
-      body_symtab = func_def_type.apply_template_values(tvals, self)
+      body_symtab = symtab.global_clone
+      body_symtab.push(func_def_type.func_def_ast)
 
       # Use a hash keyed by name to accumulate unique functions without repeated uniq scans
       fns_by_name = {}
 
       begin
-        if template?
-          template_arg_nodes.each do |t|
-            t.reachable_functions(symtab, cache).each { |fn| fns_by_name[fn.name] ||= fn }
-          end
-        end
-
         arg_nodes.each do |a|
           a.reachable_functions(symtab, cache).each { |fn| fns_by_name[fn.name] ||= fn }
         end
@@ -63,7 +50,7 @@ module Idl
         unless func_def_type.builtin? || func_def_type.generated?
           avals = func_def_type.apply_arguments(body_symtab, arg_nodes, symtab, self)
 
-          idx = [name, tvals, avals]
+          idx = [name, avals].hash
 
           if cache.key?(idx)
             # Use cached results from a prior traversal (e.g., same function called

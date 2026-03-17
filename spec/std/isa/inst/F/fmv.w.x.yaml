@@ -34,7 +34,7 @@ operation(): |
   Bits<32> sp_value = X[xs1][31:0];
 
   if (implemented?(ExtensionName::D)) {
-    f[fd] = nan_box<32, 64>(sp_value);
+    f[fd] = nan_box(32, 64, sp_value);
   } else {
     f[fd] = sp_value;
   }

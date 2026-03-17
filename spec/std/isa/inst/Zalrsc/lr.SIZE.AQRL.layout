@@ -127,7 +127,7 @@ operation(): |
 
   XReg virtual_address = X[xs1];
 
-  if (!is_naturally_aligned<<%= current_size[:align_bits] %>>(virtual_address)) {
+  if (!is_naturally_aligned(<%= current_size[:align_bits] %>, virtual_address)) {
     # can raise either LoadAddressMisaligned *or* LoadAccessFault
     #
     # from the spec:
@@ -145,7 +145,7 @@ operation(): |
     }
   }
 
-  XReg load_value = load_reserved<<%= current_size[:load_reserved_bits] %>>(virtual_address, aq, rl, $encoding);
+  XReg load_value = load_reserved(<%= current_size[:load_reserved_bits] %>, virtual_address, aq, rl, $encoding);
 <%- if size == "w" -%>
   if (xlen() == 64) {
     X[xd] = load_value;

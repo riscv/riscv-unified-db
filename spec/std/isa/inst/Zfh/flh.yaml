@@ -37,9 +37,9 @@ operation(): |
 
   XReg virtual_address = X[xs1] + $signed(imm);
 
-  Bits<16> hp_value = read_memory<16>(virtual_address, $encoding);
+  Bits<16> hp_value = read_memory(16, virtual_address, $encoding);
 
-  f[fd] = nan_box<16, FLEN>(hp_value);
+  f[fd] = nan_box(16, FLEN, hp_value);
 
   mark_f_state_dirty();
 

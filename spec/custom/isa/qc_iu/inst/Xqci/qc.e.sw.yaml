@@ -33,4 +33,4 @@ access:
   vu: always
 operation(): |
   XReg virtual_address = X[rs1] + $signed(imm);
-  write_memory<32>(virtual_address, X[rs2][31:0], $encoding);
+  write_memory(32, virtual_address, X[rs2][31:0], $encoding);

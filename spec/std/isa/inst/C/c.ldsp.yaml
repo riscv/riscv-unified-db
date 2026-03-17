@@ -54,7 +54,7 @@ operation(): |
   }
 
   XReg virtual_address = X[2] + imm;
-  Bits<64> value = read_memory<64>(virtual_address, $encoding);
+  Bits<64> value = read_memory(64, virtual_address, $encoding);
 
   if (xlen()== 64) {
     X[creg2reg(xd)] = value;

@@ -2803,7 +2803,8 @@ namespace udb {
     template <unsigned msb, unsigned lsb>
     constexpr _PossiblyUnknownBits<msb - lsb + 1, false> extract() const {
       static_assert(msb >= lsb);
-      return _PossiblyUnknownBits<msb - lsb + 1, false>{m_val.template extract<msb, lsb>(), m_unknown_mask.template extract<msb, lsb>()};
+      static_assert(msb < N);
+      return _PossiblyUnknownBits<msb - lsb + 1, false>(m_val.template extract<msb, lsb>(), m_unknown_mask.template extract<msb, lsb>());
     }
 
     template <
