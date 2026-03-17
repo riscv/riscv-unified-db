@@ -1,0 +1,129 @@
+---
+sidebar_position: 6
+title: Type Conversions
+---
+
+## Implicit Conversions
+
+Type conversions occur when dissimilar types are used in binary operators or assignments.
+
+`Bits<N>` types are converted as follows:
+
+| Expression                    | `N < M`                                          | `N > M`                                    |
+|-------------------------------|--------------------------------------------------|--------------------------------------------|
+| `Bits<N> binary_op Bits<M>`   | `Bits<N>` is expanded to `Bits<M>`              | `Bits<M>` is expanded to `Bits<N>`         |
+| `Bits<N> = Bits<M>`           | Upper `M-N` bits of `Bits<M>` are discarded     | `Bits<M>` is expanded to `Bits<N>`         |
+
+When expansion occurs, the value is **zero extended** when the type is unsigned and **sign extended** when the type is signed.
+
+:::warning Narrowing assignments silently discard high bits
+Assigning a wider value into a narrower variable truncates without warning:
+
+```idl
+Bits<32> wide  = 0xDEADBEEF;
+Bits<8>  narrow = wide;      # narrow = 0xEF — upper 24 bits silently discarded
+```
+
+If you need the upper bits, extract them explicitly before assigning:
+
+```idl
+Bits<8> high_byte = wide[31:24]; # 0xDE
+Bits<8> low_byte  = wide[7:0];   # 0xEF
+```
+:::
+
+For more on how binary operators handle mixed bit widths see [Operators](./operators.mdx).
+
+## Casting {#casting}
+
+### Explicit Casting
+
+There are four explicit cast operators in IDL: `$signed`, `$bits`, `$enum`, and `$enum_to_a`.
+
+#### `$signed`
+
+Unsigned `Bits<N>` values may be cast to signed using `$signed`. This affects comparison and arithmetic operators that behave differently for signed vs. unsigned operands.
+
+```idl
+XReg src1 = -1;
+XReg src2 = 0;
+
+XReg cmp1 = (src1 < src2) ? 1 : 0;                    # cmp1 = 0 (unsigned: -1 is large)
+XReg cmp2 = ($signed(src1) < $signed(src2)) ? 1 : 0;  # cmp2 = 1 (signed: -1 < 0)
+```
+
+#### `$bits`
+
+The `$bits` cast converts enumeration references, bitfields, and CSRs into a `Bits<N>` type:
+
+- **Enumeration**: the result type is large enough to hold the largest value in the enumeration, regardless of the specific reference value.
+- **CSR**: the result type is the width of the CSR, or the maximum width when the CSR width is dynamic.
+- **Bitfield**: the result type is the width of the bitfield.
+
+```idl
+# assuming:
+# enum RoundingMode {
+#   RNE 0  # Round to nearest, ties to even
+#   RTZ 1  # Round toward zero
+#   RDN 2  # Round down (towards -inf)
+#   RUP 3  # Round up (towards +inf)
+#   RMM 4  # Round to nearest, ties to Max Magnitude
+# }
+$bits(RoundingMode::RNE)  # => 3'd0
+$bits(RoundingMode::RUP)  # => 3'd3
+
+$bits(CSR[mstatus])       # => MXLEN'd??
+
+# assuming:
+#   bitfield (64) Sv39PageTableEntry { ... }
+$bits(Sv39PageTableEntry) # => 64'd??
+```
+
+#### `$enum`
+
+The `$enum` cast converts a `Bits<N>` value into an enum:
+
+```idl
+$enum(RoundingMode, 1'b1)  # => RoundingMode::RTZ
+```
+
+#### `$enum_to_a`
+
+The `$enum_to_a` cast converts an enumeration type into an array of its values, in declaration order:
+
+```idl
+$enum_to_a(RoundingMode)  # => [0, 1, 2, 3, 4]
+```
+
+### Implicit Casting
+
+Operations involving `Bits<N>` with different widths involve an implicit cast to the larger width, as described in [Operators](./operators.mdx).
+
+- When the `Bits<N>` type is **unsigned**, it zero-extends to the larger width.
+- When the `Bits<N>` type is **signed**, it sign-extends to the larger width.
+
+```idl
+Bits<4> a = 1;
+Bits<2> b = 3;
+
+Bits<4> c = a | b;           # c = 3    (b zero-extended: 0b0011)
+Bits<4> d = a | $signed(b);  # d = 0xf  (b sign-extended: 0b1111)
+
+Bits<4> e = a + b;           # e = 4
+Bits<4> f = a + $signed(b);  # f = 0    (b sign-extended to -1)
+
+Bits<4> g = $signed(a) | b;  # g = 3
+```
+
+:::warning `$signed` changes how an operand is widened, which affects arithmetic
+`$signed(b)` reinterprets `b` as a signed value before widening. If the high bit of `b` is set, widening sign-extends it rather than zero-extending, which can produce a very different result:
+
+```idl
+Bits<2> b = 3;       # 0b11 unsigned = 3, signed = -1
+
+Bits<4> e = a + b;           # b zero-extends to 4: 0b0011 = 3.  1+3 = 4
+Bits<4> f = a + $signed(b);  # b sign-extends to 4: 0b1111 = 15. 1+15 wraps to 0
+```
+
+Note: for comparison operators (`<`, `<=`, etc.) where signedness changes the result, mixing a signed and an unsigned operand is a **type error**. Use `$signed` on both operands when comparing signed values.
+:::

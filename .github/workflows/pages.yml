@@ -230,6 +230,13 @@ jobs:
           path: idl.html
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
+      - name: Download Docusaurus site
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: docs-site
+          path: _site/docs-preview
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
       - name: Download and publish schema files
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -105,6 +105,7 @@ gen_subcmd_usage() {
   echo "Commands:"
   echo ""
   echo "  all:           Generate all development artifacts"
+  echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
   echo ""
@@ -260,10 +261,32 @@ do_gen_regress() {
 }
 
 #
+# Generate the IDL TextMate grammar for the VSCode extension from
+# the canonical Prism definition at doc/src/prism/idl.js
+#
+do_gen_vscode_idl() {
+  local out="$UDB_ROOT/tools/vscode/idl/syntaxes/idl.tmLanguage.json"
+  echo "Generating tools/vscode/idl/syntaxes/idl.tmLanguage.json"
+  if [ $fail_on_change -eq 1 ]; then
+    local sha_before
+    sha_before=$(sha256sum "$out")
+  fi
+  node "$UDB_ROOT/tools/node/idl-grammar-gen/index.js"
+  if [ $fail_on_change -eq 1 ]; then
+    local sha_after
+    sha_after=$(sha256sum "$out")
+    if [ "$sha_before" != "$sha_after" ]; then
+      exit 1
+    fi
+  fi
+}
+
+#
 # Generate all development artifacts
 #
 do_gen_all() {
   do_gen_regress
+  do_gen_vscode_idl
   do_ruby_type_def all
 }
 
@@ -514,6 +537,10 @@ case "$subcommand" in
     case "$target" in
       all )
         do_gen_all
+        exit 0
+        ;;
+      vscode-idl )
+        do_gen_vscode_idl
         exit 0
         ;;
       regress )

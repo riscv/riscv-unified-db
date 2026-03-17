@@ -1,0 +1,196 @@
+---
+sidebar_position: 2
+title: Data Types
+---
+
+IDL has the following types:
+
+- **Primitive**
+  - Arbitrary-length bit vectors (`Bits<N>`)
+  - Booleans
+- **Composite**
+  - Enumerations
+  - Bitfields
+  - Structs
+  - Arrays
+  - Tuples
+- **Other**
+  - Strings (limited operators; mainly for configuration parameter checking)
+
+## Primitive Types
+
+IDL has two primitive types: `Bits<N>` and `Boolean`.
+
+### `Bits<N>`
+
+`Bits<N>` is a vector of N bits treated like an integer for arithmetic and logical operators. `Bits<N>` is unsigned by default, but can be cast to a signed version when it would make a difference (e.g., for signed comparison — see [Casting](./type-conversions.mdx#casting)).
+
+`N` must be known at compile time — a literal, a constant, or a constant expression. This is because the bit width of a signal is a structural property of the hardware being described: the compiler must resolve all widths before it can type-check operations or generate code. A runtime variable cannot serve as `N` because its value isn't known until execution. See [Compile-time and Runtime](./variables.mdx#compile-time-and-runtime) for the broader context.
+
+```idl title="Examples of Bits<N> declarations"
+Bits<1>             sign_bit;            # 1-bit unsigned variable
+Bits<MXLEN>         virtual_address;     # MXLEN-bit unsigned variable (MXLEN is a config constant)
+Bits<{MXLEN, 1'b0}> multiplication_result # width = MXLEN*2, resolved at compile time
+
+# Bits<sign_bit> invalid;  # compilation error: sign_bit is a variable, not known at compile time
+```
+
+#### Aliases
+
+Several aliases of `Bits<N>` are available:
+
+| Alias   | Type                                            |
+|---------|-------------------------------------------------|
+| `XReg`  | `Bits<MXLEN>`, where `MXLEN` is configuration-dependent |
+| `U64`   | `Bits<64>`                                      |
+| `U32`   | `Bits<32>`                                      |
+
+### `Boolean`
+
+The `Boolean` type is either `true` or `false`, and cannot be mixed with `Bits<N>`.
+
+### Character strings
+
+IDL has fixed-length character strings, though they are limited to comparison with other strings and cannot be converted into `Bits<N>`. They exist mostly to facilitate configuration parameter checking.
+
+All strings must be compile-time-known values.
+
+## Composite Types
+
+IDL supports four main composite types — enumerations, bitfields, structs, and arrays — plus a restricted tuple type used only for multi-value function returns.
+
+### Enumerations
+
+An enumeration is a set of named integer values. Unlike C/C++ enums, enumeration members are **not** promoted to the surrounding scope — to reference a member, it must be fully qualified using the scope operator `::`.
+
+Enumerations are declared using the `enum` keyword. Both enumeration names and members must begin with a capital letter. Members may optionally be assigned a value; if no value is given, it receives the value of the previous member plus one. Duplicate values are allowed.
+
+Enumeration members can be treated like integers. When that occurs, their type is `Bits<N>`, where N is the bit width required to represent any member of the enumeration.
+
+When an enumeration reference is declared without an initial value, it defaults to the smallest value of any enum member.
+
+```idl
+enum SatpMode {
+  Bare 0
+  Sv32 1
+  Sv39 8
+  Sv48 9
+  Sv57 10
+}
+
+enum MemoryOperation {
+  Read            # will get value 0
+  Write           # will get value 1
+  ReadModifyWrite # will get value 2
+  Fetch           # will get value 3
+}
+```
+
+:::warning Auto-assigned values follow the previous member, not the declaration position
+When a member has no explicit value, it gets the value of the previous member plus one — regardless of what that previous value was:
+
+```idl
+enum DuplicateValueEnum {
+  First  1
+  Second 2
+  Zero   0
+  Third    # value is 1 (0 + 1), NOT 3
+}
+```
+
+`Third` gets value 1, not 3, because it follows `Zero` (value 0). Always assign values explicitly when the sequence is non-trivial.
+:::
+
+```idl
+# references
+SatpMode cur_mode = SatpMode::Sv39;
+Bits<2> op = $bits(MemoryOperation::Fetch); # op gets 2'd3, see Casting
+```
+
+### Bitfields
+
+Bitfields represent named ranges within a contiguous vector of bits. They are useful for describing fields in a page table entry, for example. Bitfield names and members must begin with a capital letter. Bitfields are explicitly declared with a compile-time-known bit width. Bitfield members specify the range they occupy. Members may overlap, which enables aliasing. Gaps (where no member exists) are read-only zero bits.
+
+```idl
+# declare a 64-bit bitfield
+bitfield (64) Sv39PageTableEntry {
+  N 63
+  PBMT 62-61
+  # Reserved 60-54  # will be read-only zero
+  PPN2 53-28
+  PPN1 27-19
+  PPN0 18-10
+  PPN 53-10 # overlaps with PPN0/1/2
+  RSW  9-8
+  D 7
+  A 6
+  G 5
+  U 4
+  X 3
+  W 2
+  R 1
+  V 0
+}
+
+# references
+Bits<64> pte_data = get_pte(...);
+
+# bitfields can be assigned with Bits<N>,
+# where N must be the width of the bitfield
+Sv39PageTableEntry pte = pte_data;
+
+# members are accessed with the '.' operator
+Bits<2> pbmt = pte.PBMT;
+```
+
+### Structs
+
+A struct is a collection of unrelated types, similar to a `struct` in C/C++ or Verilog. Struct names must begin with a capital letter. Struct members that begin with **lowercase** are mutable; members that begin with **uppercase** are const. Struct members may be any type, including other structs.
+
+Struct declarations do _not_ need to be followed by a semicolon (unlike C/C++).
+
+```idl title="Example struct"
+struct TranslationResult {
+  Bits<PHYS_ADDR_WIDTH> paddr; # a bit vector
+  Pbmt pbmt;                   # an enum
+  PteFlags pte_flags;          # another enum
+}
+```
+
+Structs can be the return value of a function. Like every other variable in IDL, structs are always passed by value.
+
+### Arrays
+
+Fixed-size arrays of any data type may be created in IDL. The size must be known at compile time — there are no dynamically-sized or unbounded arrays. This mirrors the hardware reality that IDL describes: all storage must be statically allocatable so the compiler can determine sizes and types at elaboration.
+
+Arrays are declared by appending the size in brackets after the variable name:
+
+```idl title="Array declarations"
+Bits<32> array_of_words[10];      # array of ten words
+Boolean  array_of_bools[12];      # array of twelve booleans
+Bits<32> matrix_of_words[32][32]; # array of arrays of 32 words
+```
+
+Array elements are referenced using the bracket operator:
+
+```idl title="Array element references"
+array_of_words[2]      # Bits<32>; the second word in array_of_words
+array_of_bools[3]      # Boolean; the third element in array_of_bools
+matrix_of_words[3][4]  # Bits<32>; fourth word in the third array of matrix_of_words
+```
+
+Arrays cannot be cast to `Bits<N>`, so storage order is irrelevant and unspecified.
+
+### Tuples
+
+IDL has a tuple type used to return multiple values from a function. Tuples cannot be instantiated outside of a function call — they must be immediately decomposed into individual variables (no tuple variables).
+
+```idl title="Multiple value function return"
+(quot, remainder) = divmod(32, 5);
+```
+
+When one or more values in a tuple are not needed, assign them to the don't-care symbol (`-`):
+
+```idl title="Discarding a return value"
+(-, remainder) = divmod(value); # quotient is discarded
+```
