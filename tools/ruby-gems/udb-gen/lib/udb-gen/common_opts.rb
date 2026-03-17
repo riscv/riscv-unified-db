@@ -32,11 +32,6 @@ module UdbGen
       desc "Print usage"
     end
 
-    sig { params(name: String, desc: String).void }
-    def initialize(name:, desc:)
-      super(name:, desc:)
-    end
-
     sig { returns(Udb::Resolver) }
     def resolver
       @resolver ||= Udb::Resolver.new

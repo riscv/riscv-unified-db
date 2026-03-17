@@ -207,43 +207,21 @@ module Udb
       end
     end
 
-    # @return the list of instructions implemented *directly* by *any version* of this extension (may be empty)
-    #  Direct means that the instruction must be defined when the extension is implemented and may not be
-    #  implemented when just the extension's requirements are met
-    #
-    #  In other words, direct is the set of instructions that are defined without transitivity
-    sig { returns(T::Array[Instruction]) }
-    def instructions
-      @instructions ||=
+    def all_instructions_that_must_be_implemented
+      @all_instructions_that_must_be_implemented ||=
         begin
           pb =
             Udb.create_progressbar(
-              "Finding instructions for #{name} [:bar] :current/:total",
-              total: cfg_arch.instructions.size,
+              "Finding all required instructions for #{name} [:bar] :current/:total",
+              total: @arch.instructions.size,
               clear: true
             )
-          cfg_arch.instructions.select do |i|
+          @arch.instructions.select do |i|
             pb.advance
-            inst_defined = i.defined_by_condition
-            next unless inst_defined.mentions?(self)
-            requirement_met = to_condition
-            preconditions_met = requirements_condition
 
-            # inst is defined exclusively by self if:
-            (
-              (-inst_defined & requirement_met) # it must be defined when self is met, and
-            ).unsatisfiable? &
-            (
-              (-inst_defined & preconditions_met)  # it may not be defined when only self's requirements are met
-            ).satisfiable?
+            (-i.defined_by_condition & to_condition).unsatisfiable_by_arch?(@arch)
           end
         end
-    end
-
-    # @api private
-    sig { returns(T::Set[Instruction]) }
-    def instructions_set
-      @instructions_set ||= Set.new(instructions)
     end
 
     # @return the list of instructions implemented *indirectly* by *any version* of this extension because
@@ -255,28 +233,38 @@ module Udb
     # This list may be empty
     sig { returns(T::Array[Instruction]) }
     def implied_instructions
-      @instructions ||=
+      @implied_instructions ||=
         begin
           pb =
             Udb.create_progressbar(
               "Finding implied instructions for #{name} [:bar] :current/:total",
-              total: cfg_arch.instructions.size,
+              total: @arch.instructions.size,
               clear: true
             )
-          cfg_arch.instructions.select do |i|
+          @arch.instructions.select do |i|
             pb.advance
-            if i.defined_by_condition.mentions?(to_ext_req)
-              inst_defined = i.defined_by_condition
-              preconditions_met = requirements_condition
 
-              # inst is defined transitively by self if:
-              (
-                (-inst_defined & preconditions_met) # it must be defined when preconditions are met, and
-              ).unsatisfiable?
-            end
+            (-i.defined_by_condition & requirements_condition).unsatisfiable_by_arch?(@arch)
           end
         end
     end
+
+    # @return the list of instructions implemented *directly* by *any version* of this extension (may be empty)
+    #  Direct means that the instruction must be defined when the extension is implemented and may not be
+    #  implemented when just the extension's requirements are met
+    #
+    #  In other words, direct is the set of instructions that are defined without transitivity
+    sig { returns(T::Array[Instruction]) }
+    def instructions
+      @instructions ||= all_instructions_that_must_be_implemented - implied_instructions
+    end
+
+    # @api private
+    sig { returns(T::Set[Instruction]) }
+    def instructions_set
+      @instructions_set ||= Set.new(instructions)
+    end
+
 
     # @api private
     sig { returns(T::Set[Instruction]) }
@@ -284,34 +272,46 @@ module Udb
       @implied_instructions_set ||= Set.new(implied_instructions)
     end
 
+    sig { returns(T::Array[Csr]) }
+    def all_csrs_that_must_be_implemented
+      @all_csrs_that_must_be_implemented ||=
+        begin
+          pb =
+            Udb.create_progressbar(
+              "Finding all required csrs for #{name} [:bar] :current/:total",
+              total: @arch.csrs.size,
+              clear: true
+            )
+          @arch.csrs.select do |csr|
+            pb.advance
+
+            (-csr.defined_by_condition & to_condition).unsatisfiable_by_arch?(@arch)
+          end
+        end
+    end
+
+    def implied_csrs
+      @implied_csrs ||=
+        begin
+          pb =
+            Udb.create_progressbar(
+              "Finding implied csrs for #{name} [:bar] :current/:total",
+              total: @arch.csrs.size,
+              clear: true
+            )
+          @arch.csrs.select do |csr|
+            pb.advance
+
+            (-csr.defined_by_condition & requirements_condition).unsatisfiable_by_arch?(@arch)
+          end
+        end
+    end
+
     # @return the list of CSRs implemented by *any version* of this extension (may be empty),
     # not including those defined by requirements of this extension
     sig { returns(T::Array[Csr]) }
     def csrs
-      @csrs ||=
-        begin
-          pb =
-            Udb.create_progressbar(
-              "Finding csrs for #{name} [:bar] :current/:total",
-              total: cfg_arch.csrs.size,
-              clear: true
-            )
-          cfg_arch.csrs.select do |csr|
-            pb.advance
-            csr_defined = csr.defined_by_condition
-            next unless csr_defined.mentions?(self)
-            requirement_met = to_condition
-            preconditions_met = requirements_condition
-
-            # csr is defined exclusively by self if:
-            (
-              (-csr_defined & requirement_met) # it must be defined when self is met, and
-            ).unsatisfiable? &
-            (
-              (-csr_defined & preconditions_met)  # it may not be defined when only self's requirements are met
-            ).satisfiable?
-          end
-        end
+      @csrs ||= all_csrs_that_must_be_implemented - implied_csrs
     end
 
     # @return the list of csrs implemented *indirectly* by *any version* of this extension because
@@ -388,13 +388,16 @@ module Udb
 
       Udb.logger.info "Finding all reachable functions from extension #{name}"
 
+      cache = T.let({ 32 => {}, 64 => {}, nil => {} }, T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType])
+
       instructions.each do |inst|
-        funcs += inst.reachable_functions(32) if inst.defined_in_base?(32)
-        funcs += inst.reachable_functions(64) if inst.defined_in_base?(64)
+        funcs += inst.reachable_functions(32, cache.fetch(32)) if inst.defined_in_base?(32)
+        funcs += inst.reachable_functions(64, cache.fetch(64)) if inst.defined_in_base?(64)
       end
 
       csrs.each do |csr|
-        funcs += csr.reachable_functions
+        funcs += csr.reachable_functions(32, cache) if csr.defined_in_base?(32)
+        funcs += csr.reachable_functions(64, cache) if csr.defined_in_base?(64)
       end
 
       @reachable_functions = funcs.uniq
@@ -506,6 +509,7 @@ module Udb
       prop :unexpanded_ext_conflicts, T.nilable(T::Array[ConditionalExtensionRequirement])
       prop :term, T.nilable(ExtensionTerm)
       prop :condition, T.nilable(AbstractCondition)
+      prop :condition_exclusive, T.nilable(AbstractCondition)
       prop :compatible_versions, T.nilable(T::Array[ExtensionVersion])
       prop :key, T.nilable(Integer)
     end
@@ -580,6 +584,22 @@ module Udb
     def to_condition
       @memo.condition ||=
         Condition.new(condition_hash, @arch)
+    end
+
+    # condition that requires this version and prohibits any other version from the same extension
+    sig { returns(AbstractCondition) }
+    def to_condition_exclusive
+      @memo.condition_exclusive ||=
+        begin
+          other_versions = @ext.versions - [self]
+          if other_versions.empty?
+            to_condition
+          elsif other_versions.size == 1
+            to_condition & -other_versions.fetch(0).to_condition
+          else
+            to_condition & -Condition.disjunction(other_versions.map(&:to_condition), @arch)
+          end
+        end
     end
 
     sig { returns(T.any(T::Hash[String, T.untyped], FalseClass)) }
@@ -1437,6 +1457,22 @@ module Udb
         Condition.new(condition_hash, @arch)
     end
 
+    # returns a condition that meets the requirement _and_ exludes any other version
+    # from the same extension
+    sig { returns(AbstractCondition) }
+    def to_condition_exclusive
+      if (satisfying_versions.size == 0) || (extension.versions.size == satisfying_versions.size)
+        to_condition
+      else
+        exclusions = extension.versions - satisfying_versions
+        if exclusions.size == 1
+          to_condition & -exclusions.fetch(0).to_condition
+        else
+          to_condition & -Condition.disjunction(exclusions.map(&:to_condition), @arch)
+        end
+      end
+    end
+
     # return the UDB YAML representation of a Condition representing this ExtensionRequirement
     sig { returns(T.any(T::Hash[String, T.untyped], FalseClass)) }
     def condition_hash
@@ -1497,7 +1533,7 @@ module Udb
     def instructions
       @instructions ||=
         extension.instructions.select do |inst|
-          (inst.defined_by_condition & to_condition).satisfiable?
+          (inst.defined_by_condition & to_condition).satisfiable_by_arch?(@arch)
         end
     end
 
@@ -1529,7 +1565,7 @@ module Udb
 
             next if instructions_set.include?(i)
 
-            (-i.defined_by_condition & to_condition).unsatisfiable?
+            (-i.defined_by_condition & to_condition).unsatisfiable_by_arch?(@arch)
           end
         end
     end
@@ -1552,7 +1588,7 @@ module Udb
     def csrs
       @csrs ||=
         extension.csrs.select do |csr|
-          (csr.defined_by_condition & to_condition).satisfiable?
+          (csr.defined_by_condition & to_condition).satisfiable_by_arch?(@arch)
         end
     end
 
@@ -1564,15 +1600,18 @@ module Udb
 
       bar = Udb.create_progressbar("Finding reachable functions for #{name} [:bar] :current/:total", total: instructions.size + csrs.size)
 
+      cache = T.let({ 32 => {}, 64 => {}, nil => {} }, T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType])
+
       instructions.each do |inst|
         bar.advance
-        funcs += inst.reachable_functions(32) if inst.defined_in_base?(32)
-        funcs += inst.reachable_functions(64) if inst.defined_in_base?(64)
+        funcs += inst.reachable_functions(32, cache.fetch(32)) if inst.defined_in_base?(32)
+        funcs += inst.reachable_functions(64, cache.fetch(32)) if inst.defined_in_base?(64)
       end
 
       csrs.each do |csr|
         bar.advance
-        funcs += csr.reachable_functions
+        funcs += csr.reachable_functions(32, cache) if csr.defined_in_base?(32)
+        funcs += csr.reachable_functions(64, cache) if csr.defined_in_base?(64)
       end
 
       @reachable_functions = funcs.uniq

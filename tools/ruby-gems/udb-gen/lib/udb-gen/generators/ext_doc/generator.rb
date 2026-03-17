@@ -6,9 +6,10 @@
 
 require "tty-exit"
 
-require_relative "../common-opts"
-require_relative "../defines"
-require_relative "../template_helpers"
+require_relative "../../common_opts"
+require_relative "../../defines"
+require_relative "../../template_helpers"
+require_relative "helpers"
 
 require "udb/obj/extension"
 
@@ -16,6 +17,8 @@ module UdbGen
   class GenExtPdfOptions < SubcommandWithCommonOptions
     include TTY::Exit
     include TemplateHelpers
+    include ExtDocHelpers
+    include AdocHelpers
 
     NAME = "ext-doc"
 
@@ -156,8 +159,9 @@ module UdbGen
       end
 
       primary_ext = ext_reqs.fetch(0).extension
+      max_version = ext_reqs.fetch(0).satisfying_versions.max
 
-      template_path = Pathname.new(Gem.loaded_specs["udb-gen"].full_gem_path) / "templates" / "ext-doc" / "ext_pdf.adoc.erb"
+      template_path = Pathname.new(Gem.loaded_specs["udb-gen"].full_gem_path) / "templates" / "ext_doc" / "ext_pdf.adoc.erb"
       gen_filename = params[:output_dir] / "#{basename}.adoc"
 
       erb = ERB.new(template_path.read, trim_mode: "-")

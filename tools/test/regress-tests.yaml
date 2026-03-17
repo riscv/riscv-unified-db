@@ -191,12 +191,6 @@ tests:
       - name: Run RV64 riscv-tests
         run: ./do test:riscv_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
 
-  regress-xqci-doc:
-    ci_stage: pr
-    test:
-      - name: Generate Xqci pdf documentation
-        run: ./bin/ruby tools/scripts/gen_xqci.rb
-
   regress-profile-extensions:
     ci_stage: pr
     test:
@@ -329,21 +323,20 @@ tests:
     ci_stage: merge_queue
     gh_save_artifact:
       - artifact_name: ${{ matrix.profile }}
-        path: gen/profile/pdf/RVA20ProfileRelease.pdf
+        path: gen/profile/pdf/${{ matrix.profile }}ProfileRelease.pdf
     strategy:
       matrix:
         profile:
-          - rvi20
-          - rva20
-          - rva22
-          - rva23
-          - rvb23
+          - RVI20
+          - RVA20
+          - RVA22
+          - RVA23
+          - RVB23
     tags: [artifacts]
     test:
       - name: Generate ${{ matrix.profile }}
         run: |
           PROFILE_NAME="${{ matrix.profile }}"
-          UPPER_PROFILE="${PROFILE_NAME^^}"
           ./do gen:profile_release_pdf[${PROFILE_NAME}]
 
   regress-schema-versions:

@@ -8,9 +8,10 @@
 require "sorbet-runtime"
 require "tty-table"
 
-require_relative "../lib/udb-gen/subcommands/ext-doc"
-require_relative "../lib/udb-gen/subcommands/isa-explorer"
-require_relative "../lib/udb-gen/subcommands/manual"
+# Auto-load all generators
+Dir[File.join(__dir__, "../lib/udb-gen/generators/*/generator.rb")].sort.each do |f|
+  require f
+end
 
 include TTY::Exit
 
