@@ -7,7 +7,7 @@ PATH
 PATH
   remote: tools/ruby-gems/idlc
   specs:
-    idlc (0.1.0)
+    idlc (0.1.1)
       activesupport
       commander (~> 5)
       pp
@@ -18,7 +18,7 @@ PATH
 PATH
   remote: tools/ruby-gems/udb-gen
   specs:
-    udb-gen (0.1.0)
+    udb-gen (0.1.1)
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf
@@ -34,12 +34,12 @@ PATH
 PATH
   remote: tools/ruby-gems/udb_helpers
   specs:
-    udb_helpers (0.1.0)
+    udb_helpers (0.1.1)
 
 PATH
   remote: tools/ruby-gems/udb
   specs:
-    udb (0.1.0)
+    udb (0.1.1)
       activesupport
       asciidoctor
       awesome_print
