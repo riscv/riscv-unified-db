@@ -38,11 +38,21 @@ GEMS = [
 ].freeze
 
 def get_changed_files(base_ref)
-  # Get list of changed files compared to base branch
-  output = `git diff --name-only #{base_ref}...HEAD 2>&1`
+  # Get list of changed files compared to base branch. Retry fetch if needed
+  cmd = "git diff --name-only #{base_ref}...HEAD 2>&1"
+  output = `#{cmd}`
   if $?.exitstatus != 0
-    warn "Failed to get changed files: #{output}"
-    exit 1
+    warn "Initial git diff failed: #{output}"
+    # Try fetching the base branch and retry
+    system("git fetch --no-tags --prune --no-recurse-submodules origin main")
+    output = `#{cmd}`
+    if $?.exitstatus != 0
+      warn "Retry git diff failed: #{output}"
+      # Fallback: list all tracked files to avoid false negatives in CI
+      files = `git ls-files 2>/dev/null`.lines.map(&:strip)
+      warn "Falling back to listing all tracked files (#{files.size} files)"
+      return files
+    end
   end
   output.lines.map(&:strip)
 end
