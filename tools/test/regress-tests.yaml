@@ -370,7 +370,7 @@ tests:
       - smoke
     test:
       - name: Check gem versions bumped when source changes
-        run: git fetch --depth=0 origin && ./bin/ruby tools/scripts/check_gem_version_bump.rb origin/main
+        run: git fetch --depth=2 origin && ./bin/ruby tools/scripts/check_gem_version_bump.rb origin/main
 
   build-docs-site:
     ci_stage: merge_queue
