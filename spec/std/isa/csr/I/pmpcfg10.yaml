@@ -21,7 +21,7 @@ definedBy:
         name: Sm
     - param:
         name: NUM_PMP_ENTRIES
-        notEqual: 0
+        greaterThan: 16
 fields:
   pmp40cfg:
     location: 7-0

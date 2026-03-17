@@ -21,7 +21,7 @@ definedBy:
         name: Sm
     - param:
         name: NUM_PMP_ENTRIES
-        greaterThan: 47
+        greaterThan: 16
 fields:
   ADDR:
     location_rv32: 31-0
