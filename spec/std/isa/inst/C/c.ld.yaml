@@ -56,7 +56,7 @@ operation(): |
 
   if (xlen() == 32) {
     if (implemented?(ExtensionName::Zclsd)) {
-      Bits<64> val = read_memory<64>(X[creg2reg(xs1)] + imm, $encoding);
+      Bits<64> val = read_memory(64, X[creg2reg(xs1)] + imm, $encoding);
       X[creg2reg(xd)] = val[31:0];
       X[creg2reg(xd + 1)] = val[63:32];
     } else {
@@ -64,7 +64,7 @@ operation(): |
     }
   } else {
     XReg virtual_address = X[creg2reg(xs1)] + imm;
-    X[creg2reg(xd)] = sext(read_memory<64>(virtual_address, $encoding), 64);
+    X[creg2reg(xd)] = sext(read_memory(64, virtual_address, $encoding), 64);
   }
 
 # SPDX-SnippetBegin

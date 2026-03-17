@@ -1545,16 +1545,16 @@ function translate_gstage {
       return result;
     } else if (SV32X4_TRANSLATION && CSR[hgatp].MODE == $bits(HgatpMode::Sv32x4)) {
       # Sv39
-      return gstage_page_walk<32, 34, 32, 2>(gpaddr, vaddr, op, effective_mode, false, encoding);
+      return gstage_page_walk(32, 34, 32, 2, gpaddr, vaddr, op, effective_mode, false, encoding);
     } else if (SV39X4_TRANSLATION && CSR[hgatp].MODE == $bits(HgatpMode::Sv39x4)) {
       # Sv39
-      return gstage_page_walk<39, 56, 64, 3>(gpaddr, vaddr, op, effective_mode, false, encoding);
+      return gstage_page_walk(39, 56, 64, 3, gpaddr, vaddr, op, effective_mode, false, encoding);
     } else if (SV48X4_TRANSLATION && CSR[hgatp].MODE == $bits(HgatpMode::Sv48x4)) {
       # Sv48
-      return gstage_page_walk<48, 56, 64, 4>(gpaddr, vaddr, op, effective_mode, false, encoding);
+      return gstage_page_walk(48, 56, 64, 4, gpaddr, vaddr, op, effective_mode, false, encoding);
     } else if (SV57X4_TRANSLATION && CSR[hgatp].MODE == $bits(HgatpMode::Sv57x4)) {
       # Sv57
-      return gstage_page_walk<57, 56, 64, 5>(gpaddr, vaddr, op, effective_mode, false, encoding);
+      return gstage_page_walk(57, 56, 64, 5, gpaddr, vaddr, op, effective_mode, false, encoding);
     } else {
       # Invalid mode
       if (op == MemoryOperation::Read) {
@@ -1791,14 +1791,13 @@ function tinst_value {
 }
 
 function gstage_page_walk {
-  template
-    U32 VA_SIZE,     # virtual address size  (Sv32 = 32, Sv39 = 39, Sv48 = 48, Sv57 = 57)
-    U32 PA_SIZE,     # physical address size (Sv32 = 34, Sv39 = 56, Sv48 = 56, Sv57 = 56)
-    U32 PTESIZE,     # length, in bits, of a Page Table Entry (Sv32 = 32, others = 64)
-    U32 LEVELS       # levels in the page table (Sv32 = 2, Sv39 = 3, Sv48 = 4, Sv57 = 5)
   returns
     TranslationResult  # the translated address and attributes
   arguments
+    U32 VA_SIZE,                     # virtual address size  (Sv32 = 32, Sv39 = 39, Sv48 = 48, Sv57 = 57)
+    U32 PA_SIZE,                     # physical address size (Sv32 = 34, Sv39 = 56, Sv48 = 56, Sv57 = 56)
+    U32 PTESIZE,                     # length, in bits, of a Page Table Entry (Sv32 = 32, others = 64)
+    U32 LEVELS,                      # levels in the page table (Sv32 = 2, Sv39 = 3, Sv48 = 4, Sv57 = 5)
     XReg gpaddr,                     # the guest physical address to translate
     XReg vaddr,                      # the original virtual address to translate
     MemoryOperation op,              # the operation type
@@ -1867,33 +1866,35 @@ function gstage_page_walk {
       }
       access_check(pte_paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
 
-      Bits<PTESIZE> pte = read_physical_memory<PTESIZE>(pte_paddr);
+      XReg pte = read_physical_memory(PTESIZE, pte_paddr);
       PteFlags pte_flags = pte[9:0];
 
-      # check if any reserved bits are set
-      # Sv32 has no reserved bits, and Sv39/48/57 all have reserved bits at 58:54
-      if ((VA_SIZE != 32) && (pte[58:54] != 0)) {
-        raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
-      }
-      if (!implemented?(ExtensionName::Svrsw60t59b)) {
-        if ((PTESIZE >= 64) && pte[60:59] != 0) {
-          # 60:59 are reserved if Svrsw60t59b is not supported
+      if (xlen() == 64) {
+        # check if any reserved bits are set
+        # Sv32 has no reserved bits, and Sv39/48/57 all have reserved bits at 58:54
+        if ((VA_SIZE != 32) && (pte[58:54] != 0)) {
           raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
         }
-      }
-      if (!implemented?(ExtensionName::Svnapot)) {
-        if ((PTESIZE >= 64) && pte[63] != 0) {
-          # N is reserved if Svnapot is not supported
+        if (!implemented?(ExtensionName::Svrsw60t59b)) {
+          if ((PTESIZE >= 64) && pte[60:59] != 0) {
+            # 60:59 are reserved if Svrsw60t59b is not supported
+            raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
+          }
+        }
+        if (!implemented?(ExtensionName::Svnapot)) {
+          if ((PTESIZE >= 64) && pte[63] != 0) {
+            # N is reserved if Svnapot is not supported
+            raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
+          }
+        }
+        if ((PTESIZE >= 64) && !pbmte && (pte[62:61] != 0)) {
+          # PBMTE is reserved when Svpbmt is not enabled
           raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
         }
-      }
-      if ((PTESIZE >= 64) && !pbmte && (pte[62:61] != 0)) {
-        # PBMTE is reserved when Svpbmt is not enabled
-        raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
-      }
-      if ((PTESIZE >= 64) && pbmte && (pte[62:61] == 3)) {
-        # PBMTE == 3 is reserved
-        raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
+        if ((PTESIZE >= 64) && pbmte && (pte[62:61] == 3)) {
+          # PBMTE == 3 is reserved
+          raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
+        }
       }
 
       if (pte_flags.V == 0) {
@@ -1980,7 +1981,7 @@ function gstage_page_walk {
             } else {
               # successful translation and update
               result.paddr = pte_paddr;
-              if (PTESIZE >= 64) {
+              if ((xlen() == 64) && (PTESIZE >= 64)) {
                 result.pbmt = $enum(Pbmt, pte[62:61]);
               }
               result.pte_flags = pte_flags;
@@ -2004,14 +2005,16 @@ function gstage_page_walk {
           raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
         }
 
-        if ((VA_SIZE != 32) && (pte[62:61] != 0)) {
-          # PBMT must be zero in a pointer PTE
-          raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
-        }
+        if (xlen() == 64) {
+          if ((VA_SIZE != 32) && (pte[62:61] != 0)) {
+            # PBMT must be zero in a pointer PTE
+            raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
+          }
 
-        if ((VA_SIZE != 32) && pte[63] != 0) {
-          # N must be zero in a pointer PTE
-          raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
+          if ((VA_SIZE != 32) && pte[63] != 0) {
+            # N must be zero in a pointer PTE
+            raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
+          }
         }
 
         # fall through to next level
@@ -2023,14 +2026,13 @@ function gstage_page_walk {
 
 
 function stage1_page_walk {
-  template
-    U32 VA_SIZE,     # virtual address size  (Sv32 = 32, Sv39 = 39, Sv48 = 48, Sv57 = 57)
-    U32 PA_SIZE,     # physical address size (Sv32 = 34, Sv39 = 56, Sv48 = 56, Sv57 = 56)
-    U32 PTESIZE,     # length, in bits, of a Page Table Entry (Sv32 = 4, others = 8)
-    U32 LEVELS       # levels in the page table (Sv32 = 2, Sv39 = 3, Sv48 = 4, Sv57 = 5)
   returns
     TranslationResult  # the translated address and attributes
   arguments
+    U32 VA_SIZE,                  # virtual address size  (Sv32 = 32, Sv39 = 39, Sv48 = 48, Sv57 = 57)
+    U32 PA_SIZE,                  # physical address size (Sv32 = 34, Sv39 = 56, Sv48 = 56, Sv57 = 56)
+    U32 PTESIZE,                  # length, in bits, of a Page Table Entry (Sv32 = 4, others = 8)
+    U32 LEVELS,                   # levels in the page table (Sv32 = 2, Sv39 = 3, Sv48 = 4, Sv57 = 5)
     Bits<MXLEN> vaddr,            # the virtual address to translate
     MemoryOperation op,           # the operation type
     PrivilegeMode effective_mode, # the mode for this walk (usually effective_ldst_mode(), though different for HLV/HLX/HSV)
@@ -2094,7 +2096,7 @@ function stage1_page_walk {
 
     # Page-based memory type enable?
     Boolean pbmte;
-    if (VA_SIZE == 32) {
+    if ((xlen() == 32) || VA_SIZE == 32) {
       # not Sv32 (PBMT is not defined for Sv32)
       pbmte = false;
     } else {
@@ -2154,7 +2156,7 @@ function stage1_page_walk {
       # perform access check on the physical address of pte before it's used
       access_check(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
 
-      Bits<PTESIZE> pte = read_physical_memory<PTESIZE>(pte_phys.paddr);
+      XReg pte = read_physical_memory(PTESIZE, pte_phys.paddr);
       PteFlags pte_flags = pte[9:0];
 
       # shadow stack page?
@@ -2162,7 +2164,7 @@ function stage1_page_walk {
 
       # check if any reserved bits are set
       # Sv32 has no reserved bits, and Sv39/48/57 all have reserved bits at 58:54
-      if ((VA_SIZE != 32) && (pte[58:54] != 0)) {
+      if ((xlen() == 64) && (VA_SIZE != 32) && (pte[58:54] != 0)) {
         raise(page_fault_code, mode(), vaddr);
       }
 
@@ -2178,29 +2180,31 @@ function stage1_page_walk {
         }
       }
 
-      if (pbmte) {
-        # PBMT == 3 is reserved
-        if (pte[62:61] == 3) {
-          raise (page_fault_code, mode(), vaddr);
+      if (xlen() == 64) {
+        if (pbmte) {
+          # PBMT == 3 is reserved
+          if (pte[62:61] == 3) {
+            raise (page_fault_code, mode(), vaddr);
+          }
+        } else {
+          # PBMT is reserved if Svpbmt is not supported)
+          if ((PTESIZE >= 64) && (pte[62:61] != 0)) {
+            raise (page_fault_code, mode(), vaddr);
+          }
         }
-      } else {
-        # PBMT is reserved if Svpbmt is not supported)
-        if ((PTESIZE >= 64) && (pte[62:61] != 0)) {
-          raise (page_fault_code, mode(), vaddr);
-        }
-      }
 
-      if (!implemented?(ExtensionName::Svrsw60t59b)) {
-        if ((PTESIZE >= 64) && pte[60:59] != 0) {
-          # 60:59 are reserved if Svrsw60t59b is not supported
-          raise (page_fault_code, mode(), vaddr);
+        if (!implemented?(ExtensionName::Svrsw60t59b)) {
+          if ((PTESIZE >= 64) && pte[60:59] != 0) {
+            # 60:59 are reserved if Svrsw60t59b is not supported
+            raise (page_fault_code, mode(), vaddr);
+          }
         }
-      }
 
-      if (!implemented?(ExtensionName::Svnapot)) {
-        if ((PTESIZE >= 64) && (pte[63] != 0)) {
-          # N is reserved if Svnapot is not supported
-          raise (page_fault_code, mode(), vaddr);
+        if (!implemented?(ExtensionName::Svnapot)) {
+          if ((PTESIZE >= 64) && (pte[63] != 0)) {
+            # N is reserved if Svnapot is not supported
+            raise (page_fault_code, mode(), vaddr);
+          }
         }
       }
 
@@ -2309,7 +2313,9 @@ function stage1_page_walk {
                   encoding
                 );
               result.paddr = pte_phys.paddr;
-              result.pbmt = pte_phys.pbmt == Pbmt::PMA ? $enum(Pbmt, pte[62:61]) : pte_phys.pbmt;
+              if (xlen() == 64) {
+                result.pbmt = pte_phys.pbmt == Pbmt::PMA ? $enum(Pbmt, pte[62:61]) : pte_phys.pbmt;
+              }
               result.pte_flags = pte_flags;
               return result;
             }
@@ -2329,7 +2335,7 @@ function stage1_page_walk {
             encoding
           );
         result.paddr = pte_phys.paddr;
-        if (PTESIZE >= 64) {
+        if (xlen() == 64 && PTESIZE >= 64) {
           result.pbmt = pte_phys.pbmt == Pbmt::PMA ? $enum(Pbmt, pte[62:61]) : pte_phys.pbmt;
         }
         result.pte_flags = pte_flags;
@@ -2347,12 +2353,12 @@ function stage1_page_walk {
           raise (page_fault_code, mode(), vaddr);
         }
 
-        if ((VA_SIZE != 32) && (pte[62:61] != 0)) {
+        if ((xlen() == 64) && (VA_SIZE != 32) && (pte[62:61] != 0)) {
           # PBMT must be zero in a pointer PTE
           raise (page_fault_code, mode(), vaddr);
         }
 
-        if ((VA_SIZE != 32) && pte[63] != 0) {
+        if ((xlen() == 64) && (VA_SIZE != 32) && pte[63] != 0) {
           # N must be zero in a pointer PTE
           raise (page_fault_code, mode(), vaddr);
         }
@@ -2430,16 +2436,16 @@ function translate {
       result.paddr = vaddr;
     } else if (xlen() == 32 && translation_mode == SatpMode::Sv32) {
       # Sv32 page table walk
-      result = stage1_page_walk<32, 34, 32, 2>(vaddr, op, effective_mode, encoding);
+      result = stage1_page_walk(32, 34, 32, 2, vaddr, op, effective_mode, encoding);
     } else if (xlen() == 64 && translation_mode == SatpMode::Sv39) {
       # Sv39 page table walk
-      result = stage1_page_walk<39, 56, 64, 3>(vaddr, op, effective_mode, encoding);
+      result = stage1_page_walk(39, 56, 64, 3, vaddr, op, effective_mode, encoding);
     } else if (xlen() == 64 && translation_mode == SatpMode::Sv48) {
       # Sv48 page table walk
-      result = stage1_page_walk<48, 56, 64, 4>(vaddr, op, effective_mode, encoding);
+      result = stage1_page_walk(48, 56, 64, 4, vaddr, op, effective_mode, encoding);
     } else if (xlen() == 64 && translation_mode == SatpMode::Sv57) {
       # Sv57 page table walk
-      result = stage1_page_walk<57, 56, 64, 5>(vaddr, op, effective_mode, encoding);
+      result = stage1_page_walk(57, 56, 64, 5, vaddr, op, effective_mode, encoding);
     } else {
       assert(false, "Unexpected SatpMode");
     }
@@ -2517,9 +2523,8 @@ function canonical_gpaddr? {
 }
 
 function misaligned_is_atomic? {
-  template U32 N
   returns Boolean
-  arguments Bits<PHYS_ADDR_WIDTH> physical_address
+  arguments U32 N, Bits<PHYS_ADDR_WIDTH> physical_address
   description {
     Returns true if an access starting at +physical_address+ that is +N+ bits long is atomic.
 
@@ -2532,16 +2537,16 @@ function misaligned_is_atomic? {
     return false if MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE == 0;
 
     if (pma_applies?(PmaAttribute::MAG16, physical_address, N) &&
-        in_naturally_aligned_region?<128>(physical_address, N)) {
+        in_naturally_aligned_region?(128, physical_address, N)) {
       return true;
     } else if (pma_applies?(PmaAttribute::MAG8, physical_address, N) &&
-                in_naturally_aligned_region?<64>(physical_address, N)) {
+                in_naturally_aligned_region?(64, physical_address, N)) {
       return true;
     } else if (pma_applies?(PmaAttribute::MAG4, physical_address, N) &&
-                in_naturally_aligned_region?<32>(physical_address, N)) {
+                in_naturally_aligned_region?(32, physical_address, N)) {
       return true;
     } else if (pma_applies?(PmaAttribute::MAG2, physical_address, N) &&
-                in_naturally_aligned_region?<16>(physical_address, N)) {
+                in_naturally_aligned_region?(16, physical_address, N)) {
       return true;
     } else {
       # not saved by a Misaligned Atomicity Granule
@@ -2551,9 +2556,9 @@ function misaligned_is_atomic? {
 }
 
 function read_memory_aligned {
-  template U32 LEN
-  returns Bits<LEN>
+  returns XReg
   arguments
+    U32 LEN,
     XReg virtual_address,
     Bits<INSTR_ENC_SIZE> encoding   # the encoding of an instruction causing this access
   description {
@@ -2571,14 +2576,14 @@ function read_memory_aligned {
     # may raise an exception
     access_check(result.paddr, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
 
-    return read_physical_memory<LEN>(result.paddr);
+    return read_physical_memory(LEN, result.paddr);
   }
 }
 
 function read_memory {
-  template U32 LEN
-  returns Bits<LEN>
+  returns XReg
   arguments
+    U32 LEN,
     XReg virtual_address,
     Bits<INSTR_ENC_SIZE> encoding   # the encoding of an instruction causing this access, or 0 if a fetch
   description {
@@ -2586,11 +2591,11 @@ function read_memory {
 
   }
   body {
-    Boolean aligned = is_naturally_aligned<LEN>(virtual_address);
+    Boolean aligned = is_naturally_aligned(LEN, virtual_address);
     XReg physical_address;
 
     if (aligned) {
-      return read_memory_aligned<LEN>(virtual_address, encoding);
+      return read_memory_aligned(LEN, virtual_address, encoding);
     }
 
     # access isn't naturally aligned, but it still might be atomic if this hart supports
@@ -2605,9 +2610,9 @@ function read_memory {
         ? translate(virtual_address, MemoryOperation::Read, effective_ldst_mode(), encoding).paddr
         : virtual_address;
 
-      if (misaligned_is_atomic?<LEN>(physical_address)) {
+      if (misaligned_is_atomic?(LEN, physical_address)) {
         access_check(physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
-        return read_physical_memory<LEN>(physical_address);
+        return read_physical_memory(LEN, physical_address);
       }
     }
 
@@ -2627,9 +2632,9 @@ function read_memory {
 
       # misaligned, must break into multiple reads
       if (MISALIGNED_SPLIT_STRATEGY == "sequential_bytes") {
-        Bits<LEN> result = 0;
+        XReg result = 0;
         for (U32 I = 0; I < (LEN/8); I++) {
-          result = result | (read_memory_aligned<8>(virtual_address + I, encoding) `<< (8*I));
+          result = result | (read_memory_aligned(8, virtual_address + I, encoding) `<< (8*I));
         }
         return result;
       } else if (MISALIGNED_SPLIT_STRATEGY == "custom") {
@@ -2649,9 +2654,9 @@ function read_memory_xlen {
   }
   body {
     if (xlen() == 32) {
-      return read_memory<32>(virtual_address, encoding);
+      return read_memory(32, virtual_address, encoding);
     } else {
-      return read_memory<64>(virtual_address, encoding);
+      return read_memory(64, virtual_address, encoding);
     }
   }
 }
@@ -2666,9 +2671,9 @@ function write_memory_xlen {
   }
   body {
     if (xlen() == 32) {
-      return write_memory<32>(virtual_address, value, encoding);
+      return write_memory(32, virtual_address, value, encoding);
     } else {
-      return write_memory<64>(virtual_address, value, encoding);
+      return write_memory(64, virtual_address, value, encoding);
     }
   }
 }
@@ -2694,9 +2699,9 @@ function read_memory_xlen_aligned {
     access_check(result.paddr, xlen(), virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
 
     if (xlen() == 32) {
-      return read_physical_memory<32>(result.paddr);
+      return read_physical_memory(32, result.paddr);
     } else {
-      return read_physical_memory<64>(result.paddr);
+      return read_physical_memory(64, result.paddr);
     }
   }
 }
@@ -2757,9 +2762,9 @@ function register_reservation_set {
 }
 
 function load_reserved {
-  template U32 N                # the number of bits being loaded
-  returns Bits<N>               # the value of memory at virtual_address
+  returns XReg               # the value of memory at virtual_address
   arguments
+    U32 N,                       # the number of bits being loaded
     Bits<MXLEN> virtual_address, # the virtual address to load
     Bits<1>    aq,              # acquire semantics? 0=no, 1=yes
     Bits<1>    rl,              # release semantics? 0=no, 1=yes
@@ -2798,14 +2803,14 @@ function load_reserved {
       reservation_virtual_address = virtual_address;
     }
 
-    return read_memory_aligned<N>(physical_address, encoding);
+    return read_memory_aligned(N, physical_address, encoding);
   }
 }
 
 function store_conditional {
-  template U32 N                  # number of bits being stored
   returns Boolean                 # whether or not the store conditional succeeded
   arguments
+    U32 N,                        # number of bits being stored
     Bits<MXLEN> virtual_address,  # the virtual address to store to
     Bits<MXLEN> value,            # the value to store
     Bits<1>    aq,                # acquire semantics? 0=no, 1=yes
@@ -2869,18 +2874,18 @@ function store_conditional {
     }
 
     # success. perform the store
-    write_physical_memory<N>(physical_address, value);
+    write_physical_memory(N, physical_address, value);
 
     return true;
   }
 }
 
 function amo {
-  template U32 N           # number of bits being loaded/stored
-  returns Bits<N>
+  returns XReg
   arguments
+    U32 N,                 # number of bits being loaded/stored
     XReg virtual_address,  # the virtual address to load from/store to
-    Bits<N> value,         # the value for the second half of the atomic operation
+    XReg value,            # the value for the second half of the atomic operation
     AmoOperation op,       # atomic operation to apply
     Bits<1>    aq,         # acquire semantics? 0=no, 1=yes
     Bits<1>    rl,         # release semantics? 0=no, 1=yes
@@ -2894,7 +2899,7 @@ function amo {
     If +rl+ is 1, then the amo also acts as a memory model release.
   }
   body {
-    Boolean aligned = is_naturally_aligned<N>(virtual_address);
+    Boolean aligned = is_naturally_aligned(N, virtual_address);
 
     if (!aligned && MISALIGNED_LDST_EXCEPTION_PRIORITY == "high") {
       raise(ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
@@ -2924,7 +2929,7 @@ function amo {
 
     # pma alignment checks
     if (!aligned &&
-         !misaligned_is_atomic?<N>(physical_address)) {
+         !misaligned_is_atomic?(N, physical_address)) {
       raise (ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
     }
 
@@ -2940,10 +2945,10 @@ function amo {
 
 
 function write_memory_aligned {
-  template U32 LEN
   arguments
+    U32 LEN,
     XReg virtual_address,
-    Bits<LEN> value,
+    XReg value,
     Bits<INSTR_ENC_SIZE> encoding # encoding of the instruction causing this access
   description {
     Write to virtual memory using a known aligned address.
@@ -2958,25 +2963,25 @@ function write_memory_aligned {
     # may raise an exception
     access_check(physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
 
-    write_physical_memory<LEN>(physical_address, value);
+    write_physical_memory(LEN, physical_address, value);
   }
 }
 
 function write_memory {
-  template U32 LEN
   arguments
+    U32 LEN,
     XReg virtual_address,
-    Bits<LEN> value,
+    XReg value,
     Bits<INSTR_ENC_SIZE> encoding # encoding of the instruction causing this access
   description {
     Write to virtual memory
   }
   body {
-    Boolean aligned = is_naturally_aligned<LEN>(virtual_address);
+    Boolean aligned = is_naturally_aligned(LEN, virtual_address);
     XReg physical_address;
 
     if (aligned) {
-      write_memory_aligned<LEN>(virtual_address, value, encoding);
+      write_memory_aligned(LEN, virtual_address, value, encoding);
       return;
     }
 
@@ -2992,9 +2997,9 @@ function write_memory {
         ? translate(virtual_address, MemoryOperation::Write, effective_ldst_mode(), encoding).paddr
         : virtual_address;
 
-      if (misaligned_is_atomic?<LEN>(physical_address)) {
+      if (misaligned_is_atomic?(LEN, physical_address)) {
         access_check(physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
-        write_physical_memory<LEN>(physical_address, value);
+        write_physical_memory(LEN, physical_address, value);
         return;
       }
     }
@@ -3015,7 +3020,7 @@ function write_memory {
       # misaligned, must break into multiple reads
       if (MISALIGNED_SPLIT_STRATEGY == "sequential_bytes") {
         for (U32 I = 0; I < (LEN/8); I++) {
-          write_memory_aligned<8>(virtual_address + I, (value >> (8*I))[7:0], encoding);
+          write_memory_aligned(8, virtual_address + I, (value >> (8*I))[7:0], encoding);
         }
       } else if (MISALIGNED_SPLIT_STRATEGY == "custom") {
         unpredictable("An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
@@ -3043,9 +3048,9 @@ function write_memory_xlen_aligned {
     access_check(physical_address, xlen(), virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
 
     if (xlen() == 32) {
-      write_physical_memory<32>(physical_address, value);
+      write_physical_memory(32, physical_address, value);
     } else {
-      write_physical_memory<64>(physical_address, value);
+      write_physical_memory(64, physical_address, value);
     }
   }
 }

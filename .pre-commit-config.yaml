@@ -20,18 +20,21 @@ repos:
       - id: end-of-file-fixer
         stages: [pre-commit]
         # Exclude reference and generated files
-        exclude: (cfgs/profile.*|.*\.golden\.adoc$|.*\.svg|amo.*\.yaml|container\.def|\.github/workflows/regress\.yml|Z3_VERSION$)
+        exclude: (cfgs/profile.*|.*\.golden\.adoc$|.*\.svg|amo.*\.yaml|\.github/workflows/regress\.yml|tests/data/golden/.*)
       - id: trailing-whitespace
         stages: [pre-commit]
         args: [--markdown-linebreak-ext=md]
-        exclude: \.svg$
+        exclude: \.svg$|tests/data/golden/.*
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+        exclude: ^.*\.bat$
       - id: check-merge-conflict
         stages: [pre-commit]
         args: ["--assume-in-merge"]
         exclude: \.adoc$ # sections titles Level 6 "=======" get flagged otherwise
       - id: check-json
         stages: [pre-commit]
-        exclude: ^\.devcontainer/ # Uses JSONC (comments)
+        exclude: ^\.devcontainer|tools/vscode/\.vscode/launch\.json|doc/tsconfig\.json # Uses JSONC (comments)
       - id: check-yaml
         stages: [pre-commit]
 
@@ -53,13 +56,25 @@ repos:
         stages: [pre-commit]
         alias: check-jsonschema-inst
         files: ^spec/std/isa/inst/.*\.(yaml|yml)$
-        args: ["--schemafile", "spec/schemas/inst_schema.json"]
+        args:
+          [
+            "--schemafile",
+            "spec/schemas/inst_schema.json",
+            "--base-uri",
+            "file://spec/schemas/",
+          ]
       - id: check-jsonschema
         name: Validate CSR files with jsonschema
         stages: [pre-commit]
         alias: check-jsonschema-csr
         files: ^spec/std/isa/csr/.*\.(yaml|yml)$
-        args: ["--schemafile", "spec/schemas/csr_schema.json"]
+        args:
+          [
+            "--schemafile",
+            "spec/schemas/csr_schema.json",
+            "--base-uri",
+            "file://spec/schemas/",
+          ]
       - id: check-jsonschema
         name: Validate MMR files with jsonschema
         stages: [pre-commit]
@@ -71,36 +86,73 @@ repos:
         stages: [pre-commit]
         alias: check-jsonschema-ext
         files: ^spec/std/isa/ext/.*\.(yaml|yml)$
-        args: ["--schemafile", "spec/schemas/ext_schema.json"]
+        args:
+          [
+            "--schemafile",
+            "spec/schemas/ext_schema.json",
+            "--base-uri",
+            "file://spec/schemas/",
+          ]
       - id: check-jsonschema
         name: Validate cert model files with jsonschema
         stages: [pre-commit]
         alias: check-jsonschema-cert-model
         files: ^spec/std/isa/proc_cert_model/.*\.(yaml|yml)$
-        args: ["--schemafile", "spec/schemas/proc_cert_model_schema.json"]
+        args:
+          [
+            "--schemafile",
+            "spec/schemas/proc_cert_model_schema.json",
+            "--base-uri",
+            "file://spec/schemas/",
+          ]
       - id: check-jsonschema
         name: Validate cert class files with jsonschema
         stages: [pre-commit]
         alias: check-jsonschema-cert-class
         files: ^spec/std/isa/proc_cert_class/.*\.(yaml|yml)$
-        args: ["--schemafile", "spec/schemas/proc_cert_class_schema.json"]
+        args:
+          [
+            "--schemafile",
+            "spec/schemas/proc_cert_class_schema.json",
+            "--base-uri",
+            "file://spec/schemas/",
+          ]
       - id: check-jsonschema
         name: Validate profile family files with jsonschema
         stages: [pre-commit]
         alias: check-jsonschema-profile-family
         files: ^spec/std/isa/profile_family/.*\.(yaml|yml)$
-        args: ["--schemafile", "spec/schemas/profile_family_schema.json"]
+        args:
+          [
+            "--schemafile",
+            "spec/schemas/profile_family_schema.json",
+            "--base-uri",
+            "file://spec/schemas/",
+          ]
       - id: check-jsonschema
         name: Validate profile release files with jsonschema
         stages: [pre-commit]
         alias: check-jsonschema-profile-release
         files: ^spec/std/isa/profile_release/.*\.(yaml|yml)$
-        args: ["--schemafile", "spec/schemas/profile_release_schema.json"]
+        args:
+          [
+            "--schemafile",
+            "spec/schemas/profile_release_schema.json",
+            "--base-uri",
+            "file://spec/schemas/",
+          ]
       # Commenting because throwing errors and not sure this is complete yet
       # - id: check-jsonschema
+      #   name: Validate manual version files with jsonschema
       #   alias: check-jsonschema-manual-version
       #   files: ^spec/std/isa/manual/.*\.(yaml|yml)$
-      #   args: ["--schemafile", "spec/schemas/manual_version_schema.json"]
+      #   args:
+      #     [
+      #       "--schemafile",
+      #       "spec/schemas/manual_version_schema.json",
+      #       "--base-uri",
+      #       "file://spec/schemas/",
+      #     ]
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: "v20.1.8"
@@ -140,7 +192,7 @@ repos:
           - --case-indent
 
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v5.1.1
+    rev: v6.2.0
     hooks:
       - id: reuse-lint-file
         exclude: COMMIT_EDITMSG|MERGE_MSG

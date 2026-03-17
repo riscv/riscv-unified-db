@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.files       = Dir["lib/**/*.rb", "templates/*.erb", "LICENSE"]
+  s.files       = Dir["lib/**/*.rb", "lib/**/*.rake", "templates/**/*.erb", "templates/**/*.js", "LICENSE"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
     "homepage_uri" => "https://github.com/riscv/riscv-unified-db",

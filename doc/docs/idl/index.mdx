@@ -1,0 +1,118 @@
+---
+sidebar_position: 0
+title: IDL
+hide_title: true
+hide_table_of_contents: true
+---
+
+import IdlLogo from '@site/static/img/idl-app-icon.svg';
+import Link from '@docusaurus/Link';
+import {
+  PiBookOpenText, PiCube, PiTextT, PiHashStraight, PiPlusMinus,
+  PiArrowsCounterClockwise, PiArrowsSplit, PiFunction, PiCirclesThree,
+  PiLightning, PiBooks, PiTerminal, PiDatabase, PiWarningCircle,
+  PiListMagnifyingGlass, PiPencilLine,
+} from 'react-icons/pi';
+
+export const Badge = ({label, color}) => (
+  <div style={{
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: '2.25rem', height: '2.25rem', borderRadius: '6px',
+    background: color, marginBottom: '0.6rem',
+    fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+    fontSize: '0.75rem', fontWeight: 700, color: '#fff', letterSpacing: '0.02em',
+  }}>{label}</div>
+);
+
+export const IconBox = ({icon: Icon, color}) => (
+  <div style={{
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: '2.25rem', height: '2.25rem', borderRadius: '6px',
+    background: color || 'var(--ifm-color-primary)', marginBottom: '0.6rem',
+    color: '#fff', fontSize: '1.25rem',
+  }}><Icon /></div>
+);
+
+export const Card = ({to, badge, icon, iconColor, title, description}) => (
+  <Link to={to} style={{textDecoration: 'none', color: 'inherit', display: 'block'}}>
+    <div className="idl-card">
+      {badge}
+      {icon && <IconBox icon={icon} color={iconColor} />}
+      <div><strong>{title}</strong></div>
+      <p style={{margin: '0.4rem 0 0', fontSize: '0.875rem', color: 'var(--ifm-color-emphasis-700)'}}>{description}</p>
+    </div>
+  </Link>
+);
+
+export const SectionLabel = ({children}) => (
+  <div className="idl-section-label">{children}</div>
+);
+
+<div className="idl-landing-hero">
+  <IdlLogo style={{display: 'block', height: '88px', width: '88px', margin: '0 auto 1rem'}} />
+  <p style={{fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace", fontSize: '1.5rem', fontWeight: 500, letterSpacing: '0.05em', marginBottom: '1.25rem', color: 'var(--idl-logo-fg, #33f1ff)'}}>
+    ISA Description Language
+  </p>
+  <p style={{fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.75rem', letterSpacing: '-0.01em'}}>
+    ISA semantics you can compile.
+  </p>
+  <p style={{fontSize: '1.05rem', color: 'var(--ifm-color-emphasis-600)', maxWidth: '560px', margin: '0 auto', lineHeight: 1.6}}>
+    IDL is embedded in the RISC-V Unified Database to describe what every instruction and CSR does.
+    It compiles into a compliant ISS and drives documentation, decoder, and formal model generation.
+  </p>
+</div>
+
+<SectionLabel>Reader Guides</SectionLabel>
+
+<div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem'}}>
+
+<Card to="./guide-for-c-users"
+  badge={<Badge label="</>" color="#5c8fd6" />}
+  title="IDL for Programmers"
+  description="What carries over from C-family languages and what you need to unlearn." />
+
+<Card to="./guide-for-verilog-users"
+  badge={<Badge label="SV" color="#8a6bbf" />}
+  title="IDL for Verilog Users"
+  description="What carries over from Verilog/SV and what is different." />
+
+</div>
+
+<div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '2.5rem'}}>
+
+<Card to="./for-spec-writers"
+  icon={PiPencilLine} iconColor="#2a9d8f"
+  title="IDL for Spec Writers"
+  description="Patterns and conventions for writing new instructions and CSR definitions." />
+
+<Card to="./common-misunderstandings"
+  icon={PiWarningCircle} iconColor="#e76f51"
+  title="Common Misunderstandings"
+  description="The most common mistakes when reading or writing IDL." />
+
+</div>
+
+<SectionLabel>Language Reference</SectionLabel>
+
+<div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '2rem'}}>
+
+<Card to="./quick-reference"
+  icon={PiListMagnifyingGlass} iconColor="#457b9d"
+  title="Quick Reference"
+  description="Dense syntax cheat sheet — types, operators, builtins, and declaration forms on one page." />
+
+<Card to="./overview"         icon={PiBookOpenText}           title="Overview"                  description="Design goals, use cases, worked example, and language basics." />
+<Card to="./data-types"       icon={PiCube}                   title="Data Types"                description="Bits&lt;N&gt;, Boolean, enumerations, bitfields, structs, arrays, tuples." />
+<Card to="./variables"        icon={PiTextT}                  title="Variables &amp; Constants" description="Assignment, naming rules, compile-time vs. runtime." />
+<Card to="./literals"         icon={PiHashStraight}           title="Literals"                  description="Verilog-style, C-style, array, and string literals." />
+<Card to="./operators"        icon={PiPlusMinus}              title="Operators"                 description="Precedence table, widening operators, and arithmetic rules." />
+<Card to="./type-conversions" icon={PiArrowsCounterClockwise} title="Type Conversions"          description="Implicit widening, $signed, $bits, $enum casts." />
+<Card to="./control-flow"     icon={PiArrowsSplit}            title="Control Flow"              description="if/else and for loops, including const loop variables." />
+<Card to="./functions"        icon={PiFunction}               title="Functions"                 description="Declarations, return values, rules, and builtin functions." />
+<Card to="./scope"            icon={PiCirclesThree}           title="Scope"                     description="Global, function, instruction, and CSR scopes." />
+<Card to="./builtins"         icon={PiLightning}  iconColor="#e9c46a" title="Builtins"          description="$pc, $encoding, $array_size, $enum_size, and more." />
+<Card to="./standard-library" icon={PiBooks}      iconColor="#e9c46a" title="Standard Library"  description="CSR access, extension checks, exceptions, memory operations." />
+<Card to="./in-instructions"  icon={PiTerminal}   iconColor="#2a9d8f" title="IDL in Instructions" description="How operation() bodies describe instruction semantics." />
+<Card to="./in-csrs"          icon={PiDatabase}   iconColor="#2a9d8f" title="IDL in CSRs"       description="sw_read(), sw_write(), field types and reset values." />
+
+</div>

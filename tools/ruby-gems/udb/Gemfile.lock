@@ -1,22 +1,23 @@
 PATH
   remote: ../idlc
   specs:
-    idlc (0.1.0)
+    idlc (0.1.1)
       activesupport
       commander (~> 5)
       pp
       sorbet-runtime
       treetop (= 1.6.12)
+      tty-progressbar
 
 PATH
   remote: ../udb_helpers
   specs:
-    udb_helpers (0.1.0)
+    udb_helpers (0.1.1)
 
 PATH
   remote: .
   specs:
-    udb (0.1.0)
+    udb (0.1.1)
       activesupport
       asciidoctor
       awesome_print
@@ -69,7 +70,7 @@ GEM
       reline (>= 0.3.8)
     docile (1.4.1)
     drb (2.2.3)
-    erb (6.0.1)
+    erb (6.0.2)
     erubi (1.13.1)
     ffi (1.17.3-aarch64-linux-gnu)
     ffi (1.17.3-x86_64-linux-gnu)
@@ -92,7 +93,8 @@ GEM
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
-    minitest (6.0.1)
+    minitest (6.0.2)
+      drb (~> 2.0)
       prism (~> 1.5)
     netrc (0.11.0)
     numbers_and_words (1.0.3)
@@ -115,6 +117,7 @@ GEM
     racc (1.8.1)
     rack (3.2.5)
     rainbow (3.1.1)
+    rake (13.3.1)
     rbi (0.3.9)
       prism (~> 1.0)
       rbs (>= 3.4.4)
@@ -169,7 +172,7 @@ GEM
     rubocop-sorbet (0.12.0)
       lint_roller
       rubocop (>= 1.75.2)
-    ruby-lsp (0.26.6)
+    ruby-lsp (0.26.7)
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
@@ -256,6 +259,7 @@ PLATFORMS
 DEPENDENCIES
   idlc!
   minitest
+  rake
   rdbg
   rouge
   rubocop-github
@@ -275,4 +279,4 @@ DEPENDENCIES
   yard-sorbet
 
 BUNDLED WITH
-  4.0.6
+  4.0.7

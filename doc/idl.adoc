@@ -509,7 +509,8 @@ The result of a binary operation is signed if both operands are signed; otherwis
                                                              `i` and `j` must be boolean.
 | 15            | `c ? t : f` | `typeof(t)`                | Ternary operator. +
                                                              The result is `t` if `c` is true, and `f` otherwise. +
-                                                             `c` must be boolean, and `t` and `f` must be identical types.
+                                                             `c` must be boolean, and `t` and `f` must be compatible types. +
+                                                             When `t` and `f` are Bits types of different width, the result is the larger of the two widths.
 |===
 
 === Implications
@@ -787,18 +788,28 @@ for (U32 i = 0; i < 32; i++) {
 }
 ----
 
-for loop iterations may be declared const if and only if all assignments to the variable are const
+For loop iteration variables may be declared as constants (starting with an uppercase letter) if and only if all assignments to the variable within the loop are compile-time constants. This allows the loop to be statically unrolled while maintaining const semantics.
 
 [source,idl]
 ----
-# OK; all updates to I would be const in a loop unrolling
+# Valid: iteration variable I is const, and all updates are const
 for (U32 I = 0; I < 32; I++) {
   X[I] = 0;
 }
 
-# raises a type error
+# Valid: iteration variable I is const, incremented by a const value
+for (U32 I = 0; I < 32; I = I + 2) {
+  X[I] = 0;
+}
+
+# Type error: iteration variable I is const, but incremented by a mutable variable
 for (U32 I = 0; I < 32; I = I + mutable_variable) {
   X[I] = 0;
+}
+
+# Valid: iteration variable i is mutable (lowercase), can be incremented by anything
+for (U32 i = 0; i < 32; i = i + mutable_variable) {
+  X[i] = 0;
 }
 ----
 
@@ -809,23 +820,21 @@ The basic form of a function declaration is below.
 [source,idl]
 ----
 function NAME { <1>
-  template TYPE_1 t1[, TYPE_2 t2[, ...]] <2>
-  returns [TYPE_1, [TYPE_2[, ...]]] <3>
-  arguments [TYPE_A a[, TYPE_B B[, ...]]] <4>
+  returns [TYPE_1, [TYPE_2[, ...]]] <2>
+  arguments [TYPE_A a[, TYPE_B B[, ...]]] <3>
   description {
-    A text description. <5>
+    A text description. <4>
   }
   body {
-    <6>
+    <5>
   }
 }
 ----
 <1> Declare a function named NAME.
-<2> Optionally declare any template arguments, discussed in <<Templated functions>>
-<3> Optionally declare return type(s). May be omitted for void functions. May be a list if function returns multiple values.
-<4> Optionally declare function argument(s). May be omitted if function has no arguments. May be a list if function accepts multiple arguments.
-<5> A description of the function. May contain any character except '}', including newlines.
-<6> The executable statements of the function.
+<2> Optionally declare return type(s). May be omitted for void functions. May be a list if function returns multiple values.
+<3> Optionally declare function argument(s). May be omitted if function has no arguments. May be a list if function accepts multiple arguments.
+<4> A description of the function. May contain any character except '}', including newlines.
+<5> The executable statements of the function.
 
 Functions must be given a textual description; this is to promote IDL as an executable documentation source.
 
@@ -837,41 +846,9 @@ A function may return zero or more values of any valid type. A function may acce
 
 Functions have no address. They can only be called, and function objects cannot be assigned to a variable (no function pointers).
 
+Function arguments can be constant (by using a capitialized variable name). When constant, it is a type error to pass a mutable variable to the arugment at the call site.
+
 As IDL is intended to represent hardware implementations, recursive functions are not allowed.
-
-=== Templated functions
-
-IDL supports templated functions that take a compile-time-known constant as an argument. A templated function in IDL is analogous to a templated function in C++ or a parameterized module/function in Verilog.
-
-IDL only supports template values (_i.e._, you cannot pass a type as a template argument). Template values must be a Bits<N> type.
-
-Template functions are called using C++-style syntax, with the template argument enclosed in angle brackets.
-
-IDL cannot infer template arguments; they must be provided explicitly.
-
-.Example of template function
-[example]
-====
-.Declaring a templated function
-[source,idl]
-----
-function popcount {
-  template U64 INPUT_LEN, U64 OUTPUT_LEN
-  returns Bits<OUTPUT_LEN>
-  arguments Bits<INPUT_LEN> value
-  description { Returns the number of 1s in `value`. }
-  body {
-    # ...
-  }
-}
-----
-.Calling template arguments
-[source,idl]
-----
-Bits<5> cnt = popcount<32, 5>(32'haaaaaaaa); # cnt = 16
-# Bits<5> cnt = popcount(32'haaaaaaaa); # compilation error: no template arguments given
-----
-====
 
 === Builtin functions
 
@@ -908,7 +885,7 @@ Variables and/or constants are defined in the scope of the declaration.
 
 Variables and constants in Global scope can be accessed anywhere. Many global constants and variables are automatically populated, such as configuration parameters and CSRs. User-defined globals are declared in the outer-most scope of any .idl file. Global variable and constant names must be unique; it is a compilation error if two globals have the same name.
 
-Function scope is created by declaring a function in an .idl file. Function scope includes the template variables, arguments, and body of a function. Variables and constants declared in function scope can only be accessed within the function body.
+Function scope is created by declaring a function in an .idl file. Function scope includes the arguments and body of a function. Variables and constants declared in function scope can only be accessed within the function body.
 
 Instruction execution, specified in an instruction's `operation()`, occurs in Instruction scope. Decode variables are automatically added from the encoding before the `operation()` body begins. Variables and constants declared `operation()` are not available outside the body. The `$encoding` builtin variable is available in Instruction scope.
 
@@ -1057,3 +1034,38 @@ mstatus:
       reset_value(): |
         return (M_MODE_ENDIANNESS == "big") ? 1 : 0;
 ----
+
+== FAQ
+
+=== Why do I get different result when type checking with different configurations?
+
+The IDL compiler can only _completely_ type check IDL code when all parameters are known.
+There are two reasons why some type errors may be caught in one context but not the other.
+
+First, without known parameter values, then types like `Bits<MXLEN>` have an unknown (though, in
+this case, bounded) width.
+When some parameter values are not known, the IDL compiler type checking is best effort.
+It checks as much as it can given the known values.
+It does value analysis to try to bound the problem (like the example above) in order to provide as
+much feedback as possible without knowning all values.
+But, generally, when it can't prove that there is type error, it reports nothing.
+
+Second, when type checking with some known values, the compiler has to do some value analysis to know
+which paths are impossible. Take the following code:
+
+[source,idl]
+----
+if (xlen() == 32) {
+  CSR[mstatush].MPV = 1;
+} else {
+  CSR[mstatus].MPV = 1;
+}
+----
+
+When xlen() is 64, the 'then' path would be a type error because `mstatush` doesn't exist.
+Thus, with known values, unreachable paths are not type checked at all.
+If the above example had a real type error but was checked in the context of a config that can never
+have xlen() == 32, the type error would not be reported.
+
+In general, a best practice is to always type check the unconfig _and_ type check for any
+configuration(s) that you care about.

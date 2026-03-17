@@ -4,6 +4,8 @@
 # typed: false
 # frozen_string_literal: true
 
+require "pathname"
+
 IDLC_ROOT = (Pathname.new(__dir__) / "..").realpath
 
 require "simplecov"
@@ -24,13 +26,20 @@ puts "[SimpleCov] Coverage started."
 
 require "minitest/autorun"
 
-require_relative "test_expressions"
-require_relative "test_constraints"
-require_relative "test_functions"
-require_relative "test_variables"
+require_relative "test_ast_type"
 require_relative "test_cli"
+require_relative "test_const_function_arguments"
+require_relative "test_constraints"
+require_relative "test_control_flow"
+require_relative "test_expressions"
+require_relative "test_functions"
 require_relative "test_loops"
 require_relative "test_prune"
-require_relative "test_ast_type"
-require_relative "test_values"
 require_relative "test_std"
+require_relative "test_strictness_and_unknowns"
+require_relative "test_type_checking_comprehensive"
+require_relative "test_type_checking_data_driven"
+require_relative "test_values"
+require_relative "test_variables"
+require_relative "test_control_flow"
+require_relative "test_reserved_words"

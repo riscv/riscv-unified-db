@@ -117,10 +117,8 @@ Included in::
 | Extension | Version
 
 <%- ext_reqs.each do |ext_req| -%>
-<%-   if ext_req.all_instructions_that_must_be_implemented.include?(inst) -%>
-<%# for display purposes, figure out what the maximal requirement is %>
-<%-     vers = ext_req.satisfying_versions.select { |v| (-inst.defined_by_condition & v.to_condition).unsatisfiable? } -%>
-<%#     vers = ext_req.extension.versions.select { |ext_ver| ext_ver.all_instructions_that_must_be_implemented.include?(inst) } -%>
+<%-   vers = ext_req.satisfying_versions.select { |v| (-inst.defined_by_condition & v.to_condition_exclusive).unsatisfiable_by_arch?(cfg_arch) } -%>
+<%-   unless vers.empty? -%>
 <%-     max_ext_req = Udb::ExtensionRequirement.create_from_ext_vers(vers) -%>
 | *<%= max_ext_req.name %>*
 | <%= inst.fix_entities(max_ext_req.requirement_specs_to_s_pretty) %>

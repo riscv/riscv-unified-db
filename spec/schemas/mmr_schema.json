@@ -1,9 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
+  "$id": "v0.1",
   "title": "MMR description",
   "description": "A memory-mapped register specification",
-
   "type": "object",
   "required": [
     "$schema",
@@ -16,12 +15,11 @@
     "physical_address",
     "definedBy"
   ],
-
   "properties": {
     "$schema": {
       "format": "uri-reference",
-      "const": "mmr_schema.json#",
-      "description": "Path to schema, relative to <UDB ROOT>/schemas"
+      "description": "Path to schema, relative to <UDB ROOT>/schemas",
+      "const": "mmr_schema.json#"
     },
     "kind": {
       "const": "mmr",

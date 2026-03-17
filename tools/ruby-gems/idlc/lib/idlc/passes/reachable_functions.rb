@@ -8,72 +8,87 @@
 
 module Idl
   class AstNode
+    ReachableFunctionCacheType = T.type_alias { T::Hash[T::Array[T.untyped], T::Array[FunctionDefAst]] }
+
     # @return [Array<FunctionDefAst>] List of all functions that can be reached (via function calls) from this node
-    def reachable_functions(symtab, cache = {})
-      children.reduce([]) do |list, e|
-        fns = e.reachable_functions(symtab, cache)
-        list.concat fns
-      end.uniq(&:name)
+    sig {
+      params(symtab: SymbolTable, cache: ReachableFunctionCacheType )
+      .returns(T::Array[FunctionDefAst])
+    }
+    def reachable_functions(symtab, cache = T.let({}, ReachableFunctionCacheType))
+      seen = {}
+      children.each_with_object([]) do |child, result|
+        child.reachable_functions(symtab, cache).each do |fn|
+          unless seen.key?(fn.name)
+            seen[fn.name] = true
+            result << fn
+          end
+        end
+      end
     end
   end
 
   class FunctionCallExpressionAst
-    def reachable_functions(symtab, cache = {})
+    sig {
+      params(symtab: SymbolTable, cache: ReachableFunctionCacheType )
+      .returns(T::Array[FunctionDefAst])
+    }
+    def reachable_functions(symtab, cache = T.let({}, ReachableFunctionCacheType))
       func_def_type = func_type(symtab)
 
-      tvals = nil
-      value_result = value_try do
-        tvals = template_values(symtab)
-      end
-      value_else(value_result) do
-        raise "In #{input_file}:#{input_line}\n  Cannot find reachable functions for #{text_value} because template values are not known"
-      end
+      body_symtab = symtab.global_clone
+      body_symtab.push(func_def_type.func_def_ast)
 
-      body_symtab = func_def_type.apply_template_values(tvals, self)
-
-      fns = []
+      # Use a hash keyed by name to accumulate unique functions without repeated uniq scans
+      fns_by_name = {}
 
       begin
-        if template?
-          template_arg_nodes.each do |t|
-            fns.concat(t.reachable_functions(symtab, cache))
-          end
-        end
-
         arg_nodes.each do |a|
-          fns.concat(a.reachable_functions(symtab, cache))
+          a.reachable_functions(symtab, cache).each { |fn| fns_by_name[fn.name] ||= fn }
         end
 
         unless func_def_type.builtin? || func_def_type.generated?
           avals = func_def_type.apply_arguments(body_symtab, arg_nodes, symtab, self)
 
-          idx = [name, tvals, avals].hash
+          idx = [name, avals].hash
 
-          unless cache.key?(idx)
-            fns.concat(func_def_type.body.reachable_functions(body_symtab, cache))
-            cache[idx] = true
+          if cache.key?(idx)
+            # Use cached results from a prior traversal (e.g., same function called
+            # by an earlier instruction). The sentinel [] handles recursion cycles.
+            cache[idx].each { |fn| fns_by_name[fn.name] ||= fn }
+          else
+            cache[idx] = [] # sentinel: breaks recursion cycles before body is traversed
+            body_fns = func_def_type.body.reachable_functions(body_symtab, cache)
+            cache[idx] = body_fns
+            body_fns.each { |fn| fns_by_name[fn.name] ||= fn }
           end
         end
 
-        fns = fns.push(func_def_type.func_def_ast).uniq(&:name)
+        fns_by_name[func_def_type.func_def_ast.name] ||= func_def_type.func_def_ast
       ensure
         body_symtab.pop
         body_symtab.release
       end
 
-      fns
+      fns_by_name.values
     end
   end
 
   class StatementAst
-    def reachable_functions(symtab, cache = {})
+    sig {
+      params(symtab: SymbolTable, cache: ReachableFunctionCacheType )
+      .returns(T::Array[FunctionDefAst])
+    }
+    def reachable_functions(symtab, cache = T.let({}, ReachableFunctionCacheType))
       fns = action.reachable_functions(symtab, cache)
 
       action.add_symbol(symtab) if action.is_a?(Declaration)
       value_try do
         action.execute(symtab) if action.is_a?(Executable)
+      rescue SystemStackError
+        type_error "Detected unbounded recursion during compile-time constant evaluation at #{input_file}:#{input_line}.. This recursion cannot be represented or validated."
       end
-        # ok
+      # ok
 
       fns
     end
@@ -81,7 +96,11 @@ module Idl
 
 
   class IfAst
-    def reachable_functions(symtab, cache = {})
+    sig {
+      params(symtab: SymbolTable, cache: ReachableFunctionCacheType )
+      .returns(T::Array[FunctionDefAst])
+    }
+    def reachable_functions(symtab, cache = T.let({}, ReachableFunctionCacheType))
       fns = []
       value_try do
         fns.concat if_cond.reachable_functions(symtab, cache)
@@ -134,7 +153,11 @@ module Idl
   end
 
   class ConditionalReturnStatementAst
-    def reachable_functions(symtab, cache)
+    sig {
+      params(symtab: SymbolTable, cache: ReachableFunctionCacheType )
+      .returns(T::Array[FunctionDefAst])
+    }
+    def reachable_functions(symtab, cache = T.let({}, ReachableFunctionCacheType))
       fns = condition.is_a?(FunctionCallExpressionAst) ? condition.reachable_functions(symtab, cache) : []
       value_result = value_try do
         cv = condition.value(symtab)
@@ -151,7 +174,11 @@ module Idl
   end
 
   class ConditionalStatementAst
-    def reachable_functions(symtab, cache = {})
+    sig {
+      params(symtab: SymbolTable, cache: ReachableFunctionCacheType )
+      .returns(T::Array[FunctionDefAst])
+    }
+    def reachable_functions(symtab, cache = T.let({}, ReachableFunctionCacheType))
 
       fns = condition.is_a?(FunctionCallExpressionAst) ? condition.reachable_functions(symtab, cache) : []
 
@@ -171,7 +198,11 @@ module Idl
   end
 
   class ForLoopAst
-    def reachable_functions(symtab, cache = {})
+    sig {
+      params(symtab: SymbolTable, cache: ReachableFunctionCacheType )
+      .returns(T::Array[FunctionDefAst])
+    }
+    def reachable_functions(symtab, cache = T.let({}, ReachableFunctionCacheType))
       symtab.push(self)
       begin
         symtab.add(init.lhs.name, Var.new(init.lhs.name, init.lhs_type(symtab)))

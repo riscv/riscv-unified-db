@@ -37,7 +37,7 @@ operation(): |
 
   XReg virtual_address = X[creg2reg(xs1)] + imm;
 
-  X[creg2reg(xd)] = sext(read_memory<16>(virtual_address, $encoding), 16);
+  X[creg2reg(xd)] = sext(read_memory(16, virtual_address, $encoding), 16);
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>

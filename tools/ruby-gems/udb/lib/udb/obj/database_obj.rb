@@ -384,12 +384,16 @@ module Udb
     sig { params(udb_resolver: Resolver).returns(T.proc.params(pattern: Regexp).returns(T.untyped)) }
     def self.create_json_schemer_resolver(udb_resolver)
       proc do |pattern|
-        if pattern.to_s =~ /^http/
+        uri_str = pattern.to_s
+        if uri_str =~ /^http/
           JSON.parse(T.must(Net::HTTP.get(pattern)))
-        elsif pattern.to_s =~ /^json-schemer:\/\/schema/
-          JSON.load_file("#{udb_resolver.schemas_path}#{URI(pattern.to_s).path}")
+        elsif uri_str =~ /^json-schemer:\/\/schema/
+          JSON.load_file("#{udb_resolver.schemas_path}#{URI(uri_str).path}")
         else
-          JSON.load_file(udb_resolver.schemas_path / pattern.to_s)
+          # Relative $ref values (e.g. "schema_defs.json") are resolved directly
+          # from the schemas directory.
+          local_path = udb_resolver.schemas_path / File.basename(uri_str)
+          JSON.load_file(local_path)
         end
       end
     end
@@ -405,19 +409,21 @@ module Udb
       if @data.key?("$schema")
         schema_path = data["$schema"]
         schema_file, obj_path = schema_path.split("#")
+        # Strip version prefix (e.g. 'v0.1/ext_schema.json' -> 'ext_schema.json')
+        schema_basename = File.basename(schema_file)
         schema =
-          if schemas.key?(schema_file)
-            schemas[schema_file]
+          if schemas.key?(schema_basename)
+            schemas[schema_basename]
           else
-            schemas[schema_file] = JSONSchemer.schema(
-              File.read("#{resolver.schemas_path}/#{schema_file}"),
+            schemas[schema_basename] = JSONSchemer.schema(
+              File.read("#{resolver.schemas_path}/#{schema_basename}"),
               regexp_resolver: "ecma",
               ref_resolver:,
               insert_property_defaults: true
             )
-            raise SchemaError, T.must(schemas[schema_file]).validate_schema unless T.must(schemas[schema_file]).valid_schema?
+            raise SchemaError, T.must(schemas[schema_basename]).validate_schema unless T.must(schemas[schema_basename]).valid_schema?
 
-            schemas[schema_file]
+            schemas[schema_basename]
           end
 
         unless obj_path.nil?
@@ -433,6 +439,14 @@ module Udb
         jsonified_obj = JSON.parse(JSON.generate(@data))
 
         raise "Nothing there?" if jsonified_obj.nil?
+
+        # Normalize the $schema field to the bare filename before validation so that
+        # the schema enum (which lists bare names like 'ext_schema.json#') matches
+        # even when the resolved file uses a versioned path like 'v0.1/ext_schema.json#'.
+        if jsonified_obj.key?("$schema")
+          bare_schema = File.basename(jsonified_obj["$schema"].split("#").first) + "#"
+          jsonified_obj = jsonified_obj.merge("$schema" => bare_schema)
+        end
 
         raise SchemaValidationError.new(@data_path, schema.validate(jsonified_obj)) unless schema.valid?(jsonified_obj)
       else

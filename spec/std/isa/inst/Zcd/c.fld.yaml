@@ -38,4 +38,4 @@ operation(): |
 
   XReg virtual_address = X[creg2reg(xs1)] + imm;
 
-  f[fd] = sext(read_memory<64>(virtual_address, $encoding), 64);
+  f[fd] = sext(read_memory(64, virtual_address, $encoding), 64);

@@ -5,173 +5,71 @@
 # Please instead update this file by running `bin/tapioca gem tty-exit`.
 
 
-# source://tty-exit//lib/tty/exit/code.rb#3
 module TTY; end
 
-# source://tty-exit//lib/tty/exit/code.rb#4
 module TTY::Exit
   extend ::TTY::Exit
 
-  # source://tty-exit//lib/tty/exit.rb#180
   def exit_code(name_or_code = T.unsafe(nil)); end
-
-  # source://tty-exit//lib/tty/exit.rb#201
   def exit_codes; end
-
-  # source://tty-exit//lib/tty/exit.rb#156
   def exit_message(name_or_code = T.unsafe(nil)); end
-
-  # source://tty-exit//lib/tty/exit.rb#164
   def exit_messages; end
-
-  # source://tty-exit//lib/tty/exit.rb#132
   def exit_reserved?(code); end
-
-  # source://tty-exit//lib/tty/exit.rb#143
   def exit_success?(code); end
-
-  # source://tty-exit//lib/tty/exit.rb#120
   def exit_valid?(code); end
-
-  # source://tty-exit//lib/tty/exit.rb#217
   def exit_with(name_or_code = T.unsafe(nil), message = T.unsafe(nil), io: T.unsafe(nil)); end
 
   class << self
-    # source://tty-exit//lib/tty/exit.rb#15
     def included(base); end
   end
 end
 
-# source://tty-exit//lib/tty/exit.rb#71
 TTY::Exit::CODE_TO_EXIT_MESSAGE = T.let(T.unsafe(nil), Hash)
-
-# source://tty-exit//lib/tty/exit/code.rb#6
 module TTY::Exit::Code; end
-
-# source://tty-exit//lib/tty/exit/code.rb#118
 TTY::Exit::Code::ABORT = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#134
 TTY::Exit::Code::ALARM = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#19
 TTY::Exit::Code::BASE = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#125
 TTY::Exit::Code::BUS_ERROR = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#85
 TTY::Exit::Code::CANNOT_EXECUTE = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#61
 TTY::Exit::Code::CANT_CREATE = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#89
 TTY::Exit::Code::COMMAND_NOT_FOUND = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#81
 TTY::Exit::Code::CONFIG_ERROR = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#27
 TTY::Exit::Code::DATA_ERROR = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#11
 TTY::Exit::Code::ERROR = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#101
 TTY::Exit::Code::HANGUP = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#112
 TTY::Exit::Code::ILLEGAL_INSTRUCTION = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#106
 TTY::Exit::Code::INTERRUPT = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#96
 TTY::Exit::Code::INVALID_ARGUMENT = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#64
 TTY::Exit::Code::IO_ERROR = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#121
 TTY::Exit::Code::KILL = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#128
 TTY::Exit::Code::MEMORY_ERROR = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#38
 TTY::Exit::Code::NO_HOST = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#30
 TTY::Exit::Code::NO_INPUT = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#78
 TTY::Exit::Code::NO_PERM = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#34
 TTY::Exit::Code::NO_USER = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#131
 TTY::Exit::Code::PIPE = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#73
 TTY::Exit::Code::PROTOCOL = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#109
 TTY::Exit::Code::QUIT = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#44
 TTY::Exit::Code::SERVICE_UNAVAILABLE = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#15
 TTY::Exit::Code::SHELL_MISUSE = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#92
 TTY::Exit::Code::SIGNAL_BASE = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#48
 TTY::Exit::Code::SOFTWARE_ERROR = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#8
 TTY::Exit::Code::SUCCESS = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#54
 TTY::Exit::Code::SYSTEM_ERROR = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#58
 TTY::Exit::Code::SYSTEM_FILE_MISSING = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#69
 TTY::Exit::Code::TEMP_FAIL = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#115
 TTY::Exit::Code::TRACE_TRAP = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#23
 TTY::Exit::Code::USAGE_ERROR = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#137
 TTY::Exit::Code::USER1 = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit/code.rb#140
 TTY::Exit::Code::USER2 = T.let(T.unsafe(nil), Integer)
-
-# source://tty-exit//lib/tty/exit.rb#12
 class TTY::Exit::Error < ::StandardError; end
-
-# source://tty-exit//lib/tty/exit.rb#23
 TTY::Exit::NAME_TO_EXIT_CODE = T.let(T.unsafe(nil), Hash)
 
-# source://tty-exit//lib/tty/exit/registry.rb#5
 module TTY::Exit::Registry
   class << self
-    # source://tty-exit//lib/tty/exit/registry.rb#9
     def exits; end
-
-    # source://tty-exit//lib/tty/exit/registry.rb#20
     def register_exit(name, code, message); end
   end
 end
 
-# source://tty-exit//lib/tty/exit/version.rb#5
 TTY::Exit::VERSION = T.let(T.unsafe(nil), String)

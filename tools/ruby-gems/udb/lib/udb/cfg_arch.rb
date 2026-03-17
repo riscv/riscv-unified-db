@@ -182,6 +182,9 @@ module Udb
     sig { returns(T::Array[Integer]) }
     def possible_xlens = multi_xlen? ? [32, 64] : [mxlen]
 
+    sig { params(xlen: Integer).returns(T::Boolean) }
+    def possible_xlen?(xlen) = possible_xlens.include?(xlen)
+
     # @api private
     # hash for Hash lookup
     sig { override.returns(Integer) }
@@ -222,8 +225,7 @@ module Udb
           pb =
             Udb.create_progressbar(
               "Compiling IDL for #{name} [:bar]",
-              clear: true,
-              frequency: 2
+              clear: true
             )
           @idl_compiler.pb = pb
           ast = @idl_compiler.compile_file(
@@ -262,12 +264,28 @@ module Udb
       # check extension requirements
       reasons = []
 
-      explicitly_implemented_extension_versions.each do |ext_ver|
-        unless ext_ver.valid?
-          reasons << "Extension version has no definition: #{ext_ver}"
-          next
+      # check as much as we can before going into full SMT solving
+      config.param_values.each do |param_name, param_value|
+        reasons << "Parameter has no definition: '#{param_name}'" if param(param_name).nil?
+        if !param(param_name).nil? && !T.must(param(param_name)).schema.validate(param_value, udb_resolver: @config.info.resolver)
+          reasons << "Parameter value violates the schema: '#{param_name}' = '#{param_value}'"
         end
+      end
 
+      T.cast(config, FullConfig).implemented_extensions.each do |h|
+        unless extensions.any? { |e| e.name == h["name"] }
+          reasons << "#{h.fetch("name")} is not a known extension"
+        end
+        if extensions.any? { |e| e.name == h.fetch("name") } && !T.must(extension(h.fetch("name"))).versions.any? { |v| v.version_spec == h.fetch("version") }
+          reasons << "#{h.fetch("version")} is not a known extension"
+        end
+      end
+
+      # shouldn't go any further if there is already a problem because constructing a
+      # cfg_arch condition will fail
+      return ValidationResult.new(valid: false, reasons:) unless reasons.empty?
+
+      explicitly_implemented_extension_versions.each do |ext_ver|
         unless ext_ver.requirements_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
           reasons << "Extension requirement is unmet: #{ext_ver}. Needs: #{ext_ver.requirements_condition.minimize(expand: true).to_s_with_value(self, expand: false)}"
         end
@@ -275,14 +293,7 @@ module Udb
 
       # check parameter requirements
       config.param_values.each do |param_name, param_value|
-        p = param(param_name)
-        if p.nil?
-          reasons << "Parameter has no definition: '#{param_name}'"
-          next
-        end
-        unless p.schema.validate(param_value, udb_resolver: @config.info.resolver)
-          reasons << "Parameter value violates the schema: '#{param_name}' = '#{param_value}'"
-        end
+        p = T.must(param(param_name))
         unless p.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
           reasons << [
             "Parameter is not defined by this config: '#{param_name}'.",
@@ -311,12 +322,47 @@ module Udb
       end
 
       if reasons.empty?
-        ValidationResult.new(valid: true, reasons: [])
+        raise "bad validity check" unless to_condition.satisfiable?
+        ValidationResult.new(valid: true, reasons:)
       else
         ValidationResult.new(valid: false, reasons:)
       end
     end
     private :full_config_valid?
+
+    # returns whether or not the partial config transitively lists all requirements of
+    # mandatory extensions (as other mandatory extension and/or parameters)
+    #
+    # For example:
+    #   ----
+    #   mandatory_extensions:
+    #     - name: A
+    #   ----
+    #   is not strictly specified
+    #
+    #   but
+    #   ----
+    #   mandatory_extensions:
+    #     - name: A
+    #     - name: Zaamo
+    #     - name: Zalrsc
+    #   ---
+    #   is
+    sig { returns(ValidationResult) }
+    def partial_config_strictly_specified?
+      raise "not a partial config" unless partially_configured?
+
+      v = partial_config_valid?
+
+      reasons = []
+      mandatory_extension_reqs.each do |ext_req|
+        if ext_req.requirements_condition.satisfied_by_cfg_arch?(self) != SatisfiedResult::Yes
+          reasons << "Requirement of #{ext_req} are not met: #{ext_req.requirements_condition.to_s_with_value(self, expand: false)}"
+        end
+      end
+
+      ValidationResult.new(valid: v.valid & reasons.empty?, reasons: v.reasons + reasons)
+    end
 
     # @api private
     sig { returns(ValidationResult) }
@@ -328,6 +374,24 @@ module Udb
           reasons << "Extension requirement can never be met (no match in the database): #{ext_req}"
         end
       end
+
+      # check that provided param values are defined and match the schema
+      config.param_values.each do |param_name, param_value|
+        p = param(param_name)
+        # pwv.name is not a defined parameter
+        if p.nil?
+          reasons << "Parameter has no definition: '#{param_name}'"
+          next
+        end
+
+        unless p.schema.validate(param_value, udb_resolver: @config.info.resolver)
+          reasons << "Parameter value violates the schema: '#{param_name}' = '#{param_value}'"
+        end
+      end
+
+      # shouldn't go any further if there is already a problem because constructing a
+      # cfg_arch condition will fail
+      return ValidationResult.new(valid: false, reasons:) unless reasons.empty?
 
       # first check extension requirements
       # need to make sure that it is possible to construct a config that
@@ -345,16 +409,7 @@ module Udb
 
       # check that provided param values are defined and match the schema
       config.param_values.each do |param_name, param_value|
-        p = param(param_name)
-        # pwv.name is not a defined parameter
-        if p.nil?
-          reasons << "Parameter has no definition: '#{param_name}'"
-          next
-        end
-
-        unless p.schema.validate(param_value, udb_resolver: @config.info.resolver)
-          reasons << "Parameter value violates the schema: '#{param_name}' = '#{param_value}'"
-        end
+        p = T.must(param(param_name))
 
         # check that parameter is defined by the partial config (e.g., is defined by a mandatory
         # extension and/or other param value).
@@ -367,11 +422,20 @@ module Udb
         end
       end
 
-      unless reasons.empty?
-        return ValidationResult.new(valid: false, reasons:)
+      unless T.cast(config, PartialConfig).requirements.nil?
+        unless (to_condition).satisfiable?
+          to_condition.to_logic_tree(expand: true).minimal_unsat_subsets.each do |min|
+            reasons << "Requirements cannot be met. This is not satisfiable: #{min.to_s(format: LogicNode::LogicSymbolFormat::C)}"
+          end
+        end
       end
 
-      ValidationResult.new(valid: true, reasons: [])
+      if reasons.empty?
+        raise "Bad validation" unless to_condition.satisfiable?
+        return ValidationResult.new(valid: true, reasons: [])
+      else
+        return ValidationResult.new(valid: false, reasons:)
+      end
     end
     private :partial_config_valid?
 
@@ -616,68 +680,124 @@ module Udb
     sig { params(show_progress: T::Boolean, io: IO).void }
     def type_check(show_progress: true, io: $stdout)
       io.puts "Type checking IDL code for #{@config.name}..." if show_progress
-      insts = possible_instructions(show_progress:)
+      insts = @config.unconfigured? ? instructions : possible_instructions(show_progress:)
+      xlens = @config.unconfigured? ? [32, 64] : possible_xlens
 
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking possible instructions [:bar]", total: insts.size, output: $stdout)
+          TTY::ProgressBar.new("type checking possible instructions [:bar] :current/:total", total: insts.size, output: $stdout)
         end
 
-      possible_instructions.each do |inst|
+      insts.each do |inst|
         progressbar.advance if show_progress
         if @mxlen == 32
-          inst.type_checked_operation_ast(32) if inst.rv32?
-        elsif @mxlen == 64
-          inst.type_checked_operation_ast(64) if inst.rv64?
-          inst.type_checked_operation_ast(32) if possible_xlens.include?(32) && inst.rv32?
+          if inst.rv32?
+            op_ast = inst.operation_ast
+            unless op_ast.nil?
+              s = inst.fill_symtab(32, op_ast)
+              op_ast.prune(s).type_check(s, strict: true)
+              s.release
+            end
+          end
+        else
+          if inst.rv64?
+            op_ast = inst.operation_ast
+            unless op_ast.nil?
+              s = inst.fill_symtab(64, op_ast)
+              op_ast.prune(s).type_check(s, strict: true)
+              s.release
+            end
+          end
+          if xlens.include?(32) && inst.rv32?
+            op_ast = inst.operation_ast
+            unless op_ast.nil?
+              s = inst.fill_symtab(32, op_ast)
+              op_ast.prune(s).type_check(s, strict: true)
+              s.release
+            end
+          end
         end
       end
 
+      csr_list = @config.unconfigured? ? csrs : possible_csrs
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking CSRs [:bar]", total: possible_csrs.size, output: $stdout)
+          TTY::ProgressBar.new("type checking CSRs [:bar]", total: csr_list.size, output: $stdout)
         end
 
-      possible_csrs.each do |csr|
+      csr_list.each do |csr|
         progressbar.advance if show_progress
+        # Cache CSR base checks to avoid repeated method calls
+        csr_in_base32 = csr.defined_in_base32?
+        csr_in_base64 = csr.defined_in_base64?
+
         if csr.has_custom_sw_read?
-          if (possible_xlens.include?(32) && csr.defined_in_base32?)
-            csr.type_checked_sw_read_ast(32)
+          if (xlens.include?(32) && csr_in_base32)
+            s = csr.fill_symtab(nil, 32)
+            csr.sw_read_ast(s).prune(s).type_check(s, strict: true)
+            s.release
           end
-          if (possible_xlens.include?(64) && csr.defined_in_base64?)
-            csr.type_checked_sw_read_ast(64)
+          if (xlens.include?(64) && csr_in_base64)
+            s = csr.fill_symtab(nil, 64)
+            csr.sw_read_ast(s).prune(s).type_check(s, strict: true)
+            s.release
           end
         end
         csr.possible_fields.each do |field|
-          unless field.type_ast.nil?
-            if possible_xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
-              field.type_checked_type_ast(32)
+          reset_ast = field.reset_value_ast
+          unless reset_ast.nil?
+            if xlens.include?(32) && csr_in_base32 && field.defined_in_base32?
+              s = field.fill_symtab_for_reset(nil)
+              reset_ast.prune(s).type_check(s, strict: true)
+              s.release
             end
-            if possible_xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
-              field.type_checked_type_ast(64)
+            if xlens.include?(64) && csr_in_base64 && field.defined_in_base64?
+              s = field.fill_symtab_for_reset(nil)
+              reset_ast.prune(s).type_check(s, strict: true)
+              s.release
             end
           end
-          unless field.reset_value_ast.nil?
-            if ((possible_xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?) ||
-                (possible_xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?))
-              field.type_checked_reset_value_ast if csr.defined_in_base32? && field.defined_in_base32?
+          if field.has_custom_sw_write?
+            if xlens.include?(32) && csr_in_base32 && field.defined_in_base32?
+              s = field.fill_symtab_for_sw_write(32, nil)
+              field.sw_write_ast(s).prune(s).type_check(s, strict: true)
+              s.release
+            end
+            if xlens.include?(64) && csr_in_base64 && field.defined_in_base64?
+              s = field.fill_symtab_for_sw_write(64, nil)
+              field.sw_write_ast(s).prune(s).type_check(s, strict: true)
+              s.release
             end
           end
-          unless field.sw_write_ast(symtab).nil?
-            field.type_checked_sw_write_ast(symtab, 32) if possible_xlens.include?(32) && csr.defined_in_base32? && field.defined_in_base32?
-            field.type_checked_sw_write_ast(symtab, 64) if possible_xlens.include?(64) && csr.defined_in_base64? && field.defined_in_base64?
+          type_ast = field.type_ast
+          unless type_ast.nil?
+            if xlens.include?(32) && csr_in_base32 && field.defined_in_base32?
+              s = field.fill_symtab_for_type(32, nil)
+              type_ast.prune(s).type_check(s, strict: true)
+              s.release
+            end
+            if xlens.include?(64) && csr_in_base64 && field.defined_in_base64?
+              s = field.fill_symtab_for_type(64, nil)
+              type_ast.prune(s).type_check(s, strict: true)
+              s.release
+            end
           end
         end
       end
 
-      func_list = reachable_functions(show_progress:)
+      func_list = @config.unconfigured? ? functions : reachable_functions(show_progress:)
       progressbar =
         if show_progress
           TTY::ProgressBar.new("type checking functions [:bar]", total: func_list.size, output: $stdout)
         end
       func_list.each do |func|
         progressbar.advance if show_progress
-        func.type_check(symtab)
+        s = symtab.global_clone
+        s.push(func)
+        pruned = func.prune(s)
+        s.pop
+        pruned.type_check(s, strict: true)
+        s.release
       end
 
       puts "done" if show_progress
@@ -842,6 +962,25 @@ module Udb
         end
     end
 
+    # @return List of all mandatory extension requirements (not transitive)
+    sig { returns(T::Array[ExtensionRequirement]) }
+    def non_mandatory_extension_reqs
+      @non_mandatory_extension_reqs ||=
+        begin
+          raise "Only partial configs have non-mandatory extension requirements" unless @config.is_a?(PartialConfig)
+
+          @config.non_mandatory_extensions.map do |e|
+            ename = T.cast(e["name"], String)
+
+            if e["version"].nil?
+              extension_requirement(ename, ">= 0")
+            else
+              extension_requirement(ename, e.fetch("version"))
+            end
+          end
+        end
+    end
+
     # list of all the extension versions that optional, i.e:
     # lis of all the extension versions would not fufill a mandatory requirement and are not prhohibited
     sig { returns(T::Array[ExtensionRequirement]) }
@@ -872,8 +1011,8 @@ module Udb
         if @config.fully_configured?
           implemented_extension_versions.map { |ext_ver| ext_ver.ext }.uniq
         elsif @config.partially_configured?
-          # reject any extension in which all of the extension versions are prohibited
-          extensions.reject { |ext| (ext.versions - prohibited_extension_versions).empty? }
+          pb = Udb.create_progressbar("determining possible exts [:bar] :current/:total", total: extensions.size)
+          extensions.select { |e| pb.advance; (e.to_condition).satisfiable_by_cfg_arch?(self) }
         else
           extensions
         end
@@ -894,48 +1033,7 @@ module Udb
       @possible_extension_versions ||=
         begin
           if @config.partially_configured?
-            # collect all the explictly prohibited extensions
-            prohibited_ext_reqs =
-              T.cast(@config, PartialConfig).prohibited_extensions.map do |ext_req_yaml|
-                ExtensionRequirement.create_from_yaml(ext_req_yaml, self)
-              end
-            prohibition_condition =
-              Condition.conjunction(prohibited_ext_reqs.map(&:to_condition), self)
-
-            # collect all mandatory
-            mandatory_ext_reqs =
-              T.cast(@config, PartialConfig).mandatory_extensions.map do |ext_req_yaml|
-                ExtensionRequirement.create_from_yaml(ext_req_yaml, self)
-              end
-            mandatory_condition =
-              Condition.conjunction(mandatory_ext_reqs.map(&:to_condition), self)
-
-            if T.cast(@config, PartialConfig).additional_extensions_allowed?
-              # non-mandatory extensions are OK.
-              extensions.map(&:versions).flatten.select do |ext_ver|
-                # select all versions that can be satisfied simultaneous with
-                # the mandatory and !prohibition conditions
-                condition = ext_ver.to_condition & mandatory_condition & -prohibition_condition
-
-                # can't just call condition.could_be_satisfied_by_cfg_arch? here because
-                # that implementation calls possible_extension_versions (this function),
-                # and we'll get stuck in an infinite loop
-                #
-                # so, instead, we partially evaluate whatever parameters are known and then
-                # see if the formula is satisfiable
-                condition.partially_evaluate_for_params(self, expand: true).satisfiable?
-              end
-            else
-              # non-mandatory extensions are NOT allowed
-              # we want to return the list of extension versions implied by mandatory,
-              # minus any that are explictly prohibited
-              mandatory_extension_reqs.map(&:satisfying_versions).flatten.select do |ext_ver|
-                condition = -prohibition_condition & ext_ver.to_condition
-
-                # see comment above for why we don't call could_be_satisfied_by_cfg_arch?
-                condition.partially_evaluate_for_params(self, expand: true).satisfiable?
-              end
-            end
+            extension_versions.select { |ext_ver| ext_ver.to_condition.satisfiable_by_cfg_arch?(self) }
           elsif @config.fully_configured?
             # full config: only the implemented versions are possible
             implemented_extension_versions
@@ -1018,14 +1116,14 @@ module Udb
     sig { returns(T::Array[ExceptionCode]) }
     def implemented_exception_codes
       @implemented_exception_codes ||=
-        exception_codes.select { |code| code.defined_by_condition.satisfied_by_cfg_arch?(self) }
+        exception_codes.select { |code| code.defined_by_condition.satisfiable_by_cfg_arch?(self) }
     end
 
     # @return [Array<InteruptCode>] All interrupt codes known to be implemented
     sig { returns(T::Array[InterruptCode]) }
     def implemented_interrupt_codes
       @implemented_interupt_codes ||=
-        implemented_exception_codes.select { |code| code.defined_by_condition.satisfied_by_cfg_arch?(self) }
+        implemented_exception_codes.select { |code| code.defined_by_condition.satisfiable_by_cfg_arch?(self) }
     end
 
     # @return [Array<Idl::FunctionBodyAst>] List of all functions defined by the architecture
@@ -1089,7 +1187,7 @@ module Udb
             end
           csrs.select do |csr|
             bar.advance if show_progress
-            csr.defined_by_condition.satisfied_by_cfg_arch?(self) != SatisfiedResult::No
+            csr.defined_by_condition.satisfiable_by_cfg_arch?(self)
           end
         else
           csrs
@@ -1097,16 +1195,171 @@ module Udb
     end
     alias not_prohibited_csrs possible_csrs
 
+    sig { params(show_progress: T::Boolean).returns(T::Array[Csr]) }
+    def csrs_that_must_be_implemented(show_progress: false)
+      @csrs_that_must_be_implemented ||=
+        if @config.fully_configured?
+          implemented_csrs
+        elsif @config.partially_configured?
+          bar =
+            if show_progress
+              Udb.create_progressbar("determining CSRs that must be implemented [:bar]", total: csrs.size, output: $stdout)
+            end
+          csrs.select do |csr|
+            bar.advance if show_progress
+            (-csr.defined_by_condition).unsatisfiable_by_cfg_arch?(self)
+          end
+        else
+          []
+        end
+    end
+
+    # CSRs that are defined by mentioned extensions in the config
+    #
+    # For a full config, this is CSRs defined by the implemented extensions
+    #
+    # For a partial config, this is CSRs defined by the mandatory or
+    # non-mandatory extensions
+    sig { params(show_progress: T::Boolean).returns(T::Array[Csr]) }
+    def in_scope_csrs(show_progress: false)
+      @mentioned_csrs ||=
+        if @config.fully_configured?
+          implemented_csrs
+        elsif @config.partially_configured?
+          bar =
+            if show_progress
+              Udb.create_progressbar("determining in scope CSRs [:bar]", total: csrs.size, output: $stdout)
+            end
+          csrs.select do |csr|
+            bar.advance if show_progress
+            (-csr.defined_by_condition & in_scope_condition).unsatisfiable?
+          end
+        else
+          []
+        end
+    end
+
+    # a condition representing the architecture, independent of the config
+    sig { returns(Condition) }
+    def arch_condition
+      @arch_condition ||=
+        begin
+          extension_version_conditions =
+            extension_versions.map do |ext_ver|
+              unless ext_ver.requirements_condition.empty?
+                ext_ver.to_condition.implies(ext_ver.requirements_condition)
+              end
+            end.compact
+          c = Condition.conjunction(extension_version_conditions, self)
+          params.each do |param|
+            unless param.requirements_condition.empty?
+              c = c & param.defined_by_condition.implies(param.requirements_condition)
+            end
+          end
+          c
+        end
+    end
+
+    # represent the config and architecture defintion as a Condition
+    sig { returns(Condition) }
+    def to_condition
+      @to_condition ||=
+        begin
+          if fully_configured?
+            (
+              arch_condition \
+              & \
+              Condition.conjunction(implemented_extension_versions.map(&:to_condition), self) \
+              & \
+              Condition.conjunction(
+                params_with_value.map do |pv|
+                  Condition.new({ "param" => { "name" => pv.name, "equal" => pv.value } }, self)
+                end,
+                self
+              )
+            )
+          elsif partially_configured?
+            c = arch_condition
+            c = c & Condition.conjunction(mandatory_extension_reqs.map(&:to_condition), self)
+            unless params_with_value.empty?
+              c = c & Condition.conjunction(
+                params_with_value.map do |pv|
+                  Condition.new({ "param" => { "name" => pv.name, "equal" => pv.value } }, self)
+                end,
+                self
+              )
+            end
+            unless T.cast(@config, PartialConfig).prohibited_extensions.empty?
+              prohib = T.cast(@config, PartialConfig).prohibited_extensions.map do |e|
+                extension_requirement(T.cast(e.fetch("name"), String), e.fetch("version"))
+              end
+              c = c & -Condition.disjunction(prohib.map(&:to_condition), self)
+            end
+            reqs = T.cast(@config, PartialConfig).requirements
+            unless reqs.nil?
+              c = (c & Condition.new(reqs, self))
+            end
+            c
+          else
+            arch_condition
+          end
+        end
+    end
+
+    # a condition where both mandatory and non-mandatory extensions are required
+    sig { returns(Condition) }
+    def in_scope_condition
+      @in_scope_condition ||=
+        begin
+          if fully_configured?
+            (
+              Condition.conjunction(implemented_extension_versions.map(&:to_condition), self) \
+              & \
+              Condition.conjunction(
+                params_with_value.map do |pv|
+                  Condition.new({ "param" => { "name" => pv.name, "equal" => pv.value } }, self)
+                end,
+                self
+              )
+            )
+          elsif partially_configured?
+            c = (
+              Condition.conjunction(mandatory_extension_reqs.map(&:to_condition) + non_mandatory_extension_reqs.map(&:to_condition), self) \
+              & \
+              Condition.conjunction(
+                params_with_value.map do |pv|
+                  Condition.new({ "param" => { "name" => pv.name, "equal" => pv.value } }, self)
+                end,
+                self
+              )
+            )
+            reqs = T.cast(@config, PartialConfig).requirements
+            unless reqs.nil?
+              c = (c & Condition.new(reqs, self))
+            end
+            c
+          end
+        end
+    end
+
     # @return List of all implemented instructions, sorted by name
-    sig { returns(T::Array[Instruction]) }
-    def implemented_instructions
+    sig { params(show_progress: T::Boolean).returns(T::Array[Instruction]) }
+    def implemented_instructions(show_progress: false)
       unless fully_configured?
         raise ArgumentError, "implemented_instructions is only defined for fully configured systems"
       end
 
       @implemented_instructions ||=
-        instructions.select do |inst|
-          inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
+        begin
+          bar =
+            if show_progress
+              Udb.create_progressbar("determining implemented instructions [:bar] :current/:total", total: instructions.size)
+            end
+          instructions.select do |inst|
+            bar.advance if show_progress
+            inst.defined_by_condition.satisfiable_by_cfg_arch?(self)
+            # inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
+          end
         end
     end
 
@@ -1116,14 +1369,14 @@ module Udb
     # @return [Array<Instruction>] List of all prohibited instructions, sorted by name
     sig { returns(T::Array[Instruction]) }
     def prohibited_instructions
-      # an instruction is prohibited if it is not defined by any .... TODO LEFT OFF HERE....
       @prohibited_instructions ||=
         if fully_configured?
-          instructions - implemented_instructions
+          (instructions - implemented_instructions).sort
         elsif partially_configured?
           instructions.select do |inst|
-            inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::No
-          end
+            inst.defined_by_condition.unsatisfiable_by_cfg_arch?(self)
+            # inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::No
+          end.sort
         else
           []
         end
@@ -1139,17 +1392,19 @@ module Udb
 
       @not_prohibited_instructions ||=
         if @config.fully_configured?
-          implemented_instructions
+          implemented_instructions(show_progress:)
         elsif @config.partially_configured?
           bar =
             if show_progress
-              TTY::ProgressBar.new("determining possible instructions [:bar]", total: instructions.size, output: $stdout)
+              TTY::ProgressBar.new("determining possible instructions [:bar] :current/:total", total: instructions.size, clear: true)
             end
           instructions.select do |inst|
             bar.advance if show_progress
 
-            possible_xlens.any? { |xlen| inst.defined_in_base?(xlen) } && \
-              inst.defined_by_condition.satisfied_by_cfg_arch?(self) != SatisfiedResult::No
+            inst.defined_by_condition.satisfiable_by_cfg_arch?(self)
+
+            # possible_xlens.any? { |xlen| inst.defined_in_base?(xlen) } && \
+            #   inst.defined_by_condition.satisfied_by_cfg_arch?(self) != SatisfiedResult::No
           end
         else
           instructions
@@ -1160,6 +1415,25 @@ module Udb
 
     alias not_prohibited_instructions possible_instructions
 
+    sig { params(show_progress: T::Boolean).returns(T::Array[Csr]) }
+    def instructions_that_must_be_implemented(show_progress: false)
+      @instructions_that_must_be_implemented ||=
+        if @config.fully_configured?
+          implemented_instructions
+        elsif @config.partially_configured?
+          bar =
+            if show_progress
+              Udb.create_progressbar("determining instructions that must be implemented [:bar]", total: instructions.size, clear: true)
+            end
+          instructions.select do |inst|
+            bar.advance if show_progress
+            (-inst.defined_by_condition).unsatisfiable_by_cfg_arch?(self)
+          end
+        else
+          []
+        end
+    end
+
     # @return [Integer] The largest instruction encoding in the config
     sig { returns(Integer) }
     def largest_encoding
@@ -1169,47 +1443,7 @@ module Udb
     # @return [Array<FuncDefAst>] List of all reachable IDL functions for the config
     sig { returns(T::Array[Idl::FunctionDefAst]) }
     def implemented_functions
-      return @implemented_functions unless @implemented_functions.nil?
-
-      @implemented_functions = []
-
-      Udb.logger.info "  Finding all reachable functions from instruction operations"
-
-      implemented_instructions.each do |inst|
-        @implemented_functions <<
-          if inst.base.nil?
-            if multi_xlen?
-              (inst.reachable_functions(32) +
-               inst.reachable_functions(64))
-            else
-              inst.reachable_functions(possible_xlens.fetch(0))
-            end
-          else
-            inst.reachable_functions(T.must(inst.base))
-          end
-      end
-      @implemented_functions = @implemented_functions.flatten
-      @implemented_functions.uniq!(&:name)
-
-      Udb.logger.info "  Finding all reachable functions from CSR operations"
-
-      implemented_csrs.each do |csr|
-        csr_funcs = csr.reachable_functions
-        csr_funcs.each do |f|
-          @implemented_functions << f unless @implemented_functions.any? { |i| i.name == f.name }
-        end
-      end
-
-      # now add everything from fetch
-      st = symtab.global_clone
-      st.push(global_ast.fetch.body)
-      fetch_fns = global_ast.fetch.body.reachable_functions(st)
-      fetch_fns.each do |f|
-        @implemented_functions << f unless @implemented_functions.any? { |i| i.name == f.name }
-      end
-      st.release
-
-      @implemented_functions
+      reachable_functions(show_progress: false)
     end
 
     # @return [Array<FunctionDefAst>] List of functions that can be reached by the configuration
@@ -1227,19 +1461,26 @@ module Udb
           TTY::ProgressBar.new("determining reachable IDL functions [:bar]", total: insts.size + csrs.size + 1 + global_ast.functions.size, output: $stdout)
         end
 
+      # Shared cache across all instructions/CSRs so that common utility functions
+      # are only traversed once rather than once per instruction.
+      shared_cache = {
+        32 => T.let({}, Idl::AstNode::ReachableFunctionCacheType),
+        64 => T.let({}, Idl::AstNode::ReachableFunctionCacheType)
+      }
+
       possible_instructions.each do |inst|
         bar.advance if show_progress
 
         fns =
           if inst.base.nil?
             if multi_xlen?
-              (inst.reachable_functions(32) +
-              inst.reachable_functions(64))
+              (inst.reachable_functions(32, shared_cache.fetch(32)) +
+              inst.reachable_functions(64, shared_cache.fetch(32)))
             else
-              inst.reachable_functions(possible_xlens.fetch(0))
+              inst.reachable_functions(possible_xlens.fetch(0), shared_cache.fetch(possible_xlens.fetch(0)))
             end
           else
-            inst.reachable_functions(T.must(inst.base))
+            inst.reachable_functions(T.must(inst.base), shared_cache.fetch(T.must(inst.base)))
           end
 
         @reachable_functions.concat(fns)
@@ -1249,13 +1490,15 @@ module Udb
         possible_csrs.flat_map do |csr|
           bar.advance if show_progress
 
-          csr.reachable_functions
+          csr.reachable_functions(nil, shared_cache)
         end.uniq
 
       # now add everything from fetch
       st = @symtab.global_clone
       st.push(global_ast.fetch.body)
-      @reachable_functions += global_ast.fetch.body.reachable_functions(st)
+      possible_xlens.each do |xlen|
+        @reachable_functions += global_ast.fetch.body.reachable_functions(st, shared_cache.fetch(xlen))
+      end
       bar.advance if show_progress
       st.release
 
@@ -1264,8 +1507,6 @@ module Udb
       global_ast.functions.select { |fn| fn.external? }.each do |fn|
         st.push(fn)
         @reachable_functions << fn
-        fn.apply_template_and_arg_syms(st)
-        @reachable_functions += fn.reachable_functions(st)
         bar.advance if show_progress
         st.pop
       end

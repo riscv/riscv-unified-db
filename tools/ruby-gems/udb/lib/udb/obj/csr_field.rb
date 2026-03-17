@@ -308,8 +308,14 @@ module Udb
     # @return [Array<Idl::FunctionDefAst>] List of functions called through this field
     # @param cfg_arch [ConfiguredArchitecture] a configuration
     # @Param effective_xlen [Integer] 32 or 64; needed because fields can change in different XLENs
-    sig { params(effective_xlen: T.nilable(Integer)).returns(T::Array[Idl::FunctionDefAst]) }
-    def reachable_functions(effective_xlen)
+    sig {
+      params(
+        effective_xlen: T.nilable(Integer),
+        cache: Idl::AstNode::ReachableFunctionCacheType
+      )
+      .returns(T::Array[Idl::FunctionDefAst])
+    }
+    def reachable_functions(effective_xlen, cache = T.let({}, Idl::AstNode::ReachableFunctionCacheType))
       cache_key = effective_xlen.nil? ? :nil : effective_xlen
       return @memo.reachable_functions[cache_key] unless @memo.reachable_functions[cache_key].nil?
 
@@ -318,7 +324,7 @@ module Udb
         ast = pruned_sw_write_ast(effective_xlen)
         unless ast.nil?
           sw_write_symtab = fill_symtab_for_sw_write(effective_xlen, ast)
-          fns.concat ast.reachable_functions(sw_write_symtab)
+          fns.concat ast.reachable_functions(sw_write_symtab, cache)
           sw_write_symtab.release
         end
       end
@@ -326,7 +332,7 @@ module Udb
         ast = pruned_type_ast(effective_xlen)
         unless ast.nil?
           type_symtab = fill_symtab_for_type(effective_xlen, ast)
-          fns.concat ast.reachable_functions(type_symtab)
+          fns.concat ast.reachable_functions(type_symtab, cache)
           type_symtab.release
         end
       end
@@ -334,7 +340,7 @@ module Udb
         ast = pruned_reset_value_ast
         unless ast.nil?
           symtab = fill_symtab_for_reset(ast)
-          fns.concat ast.reachable_functions(symtab)
+          fns.concat ast.reachable_functions(symtab, cache)
           symtab.release
         end
       end
@@ -476,22 +482,19 @@ module Udb
     sig { params(symtab: Idl::SymbolTable, effective_xlen: T.nilable(Integer)).returns(T.nilable(Idl::FunctionBodyAst)) }
     def type_checked_sw_write_ast(symtab, effective_xlen)
       @type_checked_sw_write_asts ||= {}
-      ast = @type_checked_sw_write_asts[symtab.hash]
+      symtab_key = "#{symtab.name}/#{symtab.mxlen}"
+      ast = @type_checked_sw_write_asts[symtab_key]
       return ast unless ast.nil?
 
       return nil unless @data.key?("sw_write(csr_value)")
 
-      symtab_hash = symtab.hash
       symtab = symtab.global_clone
       symtab.push(ast)
       # all CSR instructions are 32-bit
-      symtab.add(
-        "__instruction_encoding_size",
-        Idl::Var.new("__instruction_encoding_size", Idl::Type.new(:bits, width: 6), 32)
-      )
+      symtab.add("__instruction_encoding_size", Csr::ENCODING_SIZE_VAR)
       symtab.add(
         "__expected_return_type",
-        Idl::Type.new(:bits, width: 128) # to accommodate special return values (e.g., UNDEFIEND_LEGAL_DETERMINISITIC)
+        Csr::BITS128_TYPE # to accommodate special return values (e.g., UNDEFIEND_LEGAL_DETERMINISITIC)
       )
       symtab.add(
         "csr_value",
@@ -506,7 +509,7 @@ module Udb
       )
       symtab.pop
       symtab.release
-      @type_checked_sw_write_asts[symtab_hash] = ast
+      @type_checked_sw_write_asts[symtab_key] = ast
     end
 
     # @return [Idl::FunctionBodyAst] The abstract syntax tree of the sw_write() function
@@ -533,62 +536,53 @@ module Udb
       @sw_write_ast
     end
 
-    sig { params(effective_xlen: T.nilable(Integer), ast: Idl::AstNode).returns(Idl::SymbolTable) }
+    sig { params(effective_xlen: T.nilable(Integer), ast: T.nilable(Idl::AstNode)).returns(Idl::SymbolTable) }
     def fill_symtab_for_sw_write(effective_xlen, ast)
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
 
       # all CSR instructions are 32-bit
-      symtab.add(
-        "__instruction_encoding_size",
-        Idl::Var.new("__instruction_encoding_size", Idl::Type.new(:bits, width: 6), 32)
-      )
-      symtab.add(
-        "__expected_return_type",
-        Idl::Type.new(:bits, width: 128)
-      )
+      symtab.add("__instruction_encoding_size", Csr::ENCODING_SIZE_VAR)
+      symtab.add("__expected_return_type", Csr::BITS128_TYPE)
       symtab.add(
         "csr_value",
         Idl::Var.new("csr_value", csr.bitfield_type(@cfg_arch, effective_xlen))
       )
       if symtab.get("MXLEN").value.nil?
-        symtab.add(
+        mxlen_key = effective_xlen.nil? ? :nil_xlen : effective_xlen
+        @mxlen_var_cache ||= {}
+        @mxlen_var_cache[mxlen_key] ||= Idl::Var.new(
           "MXLEN",
-          Idl::Var.new(
-            "MXLEN",
-            Idl::Type.new(:bits, width: 6, qualifiers: [:const]),
-            effective_xlen,
-            param: true
-          )
-        )
+          Csr::BITS6_CONST_TYPE,
+          effective_xlen,
+          param: true
+        ).freeze
+        symtab.add("MXLEN", @mxlen_var_cache[mxlen_key])
       end
       symtab
     end
 
-    sig { params(effective_xlen: T.nilable(Integer), ast: Idl::AstNode).returns(Idl::SymbolTable) }
+    sig { params(effective_xlen: T.nilable(Integer), ast: T.nilable(Idl::AstNode)).returns(Idl::SymbolTable) }
     def fill_symtab_for_type(effective_xlen, ast)
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
 
       # all CSR instructions are 32-bit
-      symtab.add(
-        "__instruction_encoding_size",
-        Idl::Var.new("__instruction_encoding_size", Idl::Type.new(:bits, width: 6), 32)
-      )
+      symtab.add("__instruction_encoding_size", Csr::ENCODING_SIZE_VAR)
       symtab.add(
         "__expected_return_type",
         Idl::Type.new(:enum_ref, enum_class: symtab.get("CsrFieldType"))
       )
       if symtab.get("MXLEN").value.nil?
-        symtab.add(
+        mxlen_key = effective_xlen.nil? ? :nil_xlen : effective_xlen
+        @mxlen_var_cache ||= {}
+        @mxlen_var_cache[mxlen_key] ||= Idl::Var.new(
           "MXLEN",
-          Idl::Var.new(
-            "MXLEN",
-            Idl::Type.new(:bits, width: 6, qualifiers: [:const]),
-            effective_xlen,
-            param: true
-          )
-        )
+          Csr::BITS6_CONST_TYPE,
+          effective_xlen,
+          param: true
+        ).freeze
+        symtab.add("MXLEN", @mxlen_var_cache[mxlen_key])
       end
 
       symtab
@@ -598,13 +592,15 @@ module Udb
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
 
-      symtab.add("__expected_return_type", Idl::Type.new(:bits, width: max_width))
+      @reset_return_type ||= Idl::Type.new(:bits, width: max_width).freeze
+      symtab.add("__expected_return_type", @reset_return_type)
 
       # XLEN at reset is always mxlen
-      symtab.add(
-        "__effective_xlen",
-        Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), cfg_arch.mxlen)
-      )
+      unless cfg_arch.mxlen.nil?
+        mxlen = cfg_arch.mxlen
+        @reset_xlen_var ||= Idl::Var.new("__effective_xlen", Csr::BITS6_TYPE, mxlen).freeze
+        symtab.add("__effective_xlen", @reset_xlen_var)
+      end
 
       symtab
     end
@@ -715,7 +711,27 @@ module Udb
     # @return [Integer] Number of bits in the field
     sig { override.params(effective_xlen: T.nilable(Integer)).returns(Integer) }
     def width(effective_xlen)
-      T.must(location(effective_xlen).size)
+      loc =
+        if @data.key?("location")
+          @data.fetch("location")
+        else
+          if effective_xlen.nil?
+            # just pick one. they better be the same
+            @data.fetch("location_rv32")
+          else
+            @data.fetch("location_rv#{effective_xlen}")
+          end
+        end
+      if loc.is_a?(Integer)
+        return 1
+      else
+        raise "Unexpected location field" unless loc.is_a?(String)
+
+        e, s = loc.split("-").map(&:to_i)
+        raise "Invalid location" if T.must(s) > T.must(e)
+
+        T.must((s..e).size)
+      end
     end
 
     sig { returns(Integer) }

@@ -33,8 +33,8 @@ access:
   vu: always
 data_independent_timing: true
 pseudoinstructions:
-  - when: (rs2 == rs1)
-    to: fmv.s
+  - when: (fs2 == fs1)
+    to: fmv.s fd,fs1
 
 operation(): |
   check_f_ok($encoding);
@@ -42,7 +42,7 @@ operation(): |
   Bits<32> sp_value = {f[fs2][31], f[fs1][30:0]};
 
   if (implemented?(ExtensionName::D)) {
-    f[fd] = nan_box<32, 64>(sp_value);
+    f[fd] = nan_box(32, 64, sp_value);
   } else {
     f[fd] = sp_value;
   }

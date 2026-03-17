@@ -1,8 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
+  "$id": "v0.1",
   "title": "Common patterns used by all schemas",
-
   "$defs": {
     "$source": {
       "type": "string",
@@ -34,7 +33,10 @@
     },
     "field_location": {
       "oneOf": [
-        { "type": "integer", "description": "Location of a single bit" },
+        {
+          "type": "integer",
+          "description": "Location of a single bit"
+        },
         {
           "type": "string",
           "pattern": "^[0-9]+-[0-9]+$",
@@ -148,7 +150,9 @@
           "type": "string",
           "description": "IDL boolean expression. When true, the text applies"
         },
-        "when_ast": { "type": "object" }
+        "when_ast": {
+          "type": "object"
+        }
       },
       "additionalProperties": false
     },
@@ -275,7 +279,9 @@
     },
     "requires_entry": {
       "oneOf": [
-        { "$ref": "#/$defs/extension_requirement" },
+        {
+          "$ref": "#/$defs/extension_requirement"
+        },
         {
           "type": "object",
           "properties": {
@@ -560,6 +566,24 @@
                     },
                     {
                       "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "boolean"
+                      }
                     }
                   ]
                 },
@@ -685,12 +709,10 @@
       },
       "additionalProperties": false
     },
-
     "idl": {
       "description": "IDL code",
       "type": "string"
     },
-
     "idl_condition": {
       "description": "A condition expressed with IDL",
       "type": "object",
@@ -710,7 +732,6 @@
       },
       "additionalProperties": false
     },
-
     "yaml_condition": {
       "oneOf": [
         {
@@ -753,6 +774,19 @@
           "additionalProperties": false
         },
         {
+          "type": "object",
+          "required": ["if", "then"],
+          "properties": {
+            "if": {
+              "$ref": "#/$defs/yaml_condition"
+            },
+            "then": {
+              "$ref": "#/$defs/yaml_condition"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
           "$ref": "#/$defs/extension_condition"
         },
         {
@@ -763,7 +797,6 @@
         }
       ]
     },
-
     "xlen_condition": {
       "type": "object",
       "required": ["xlen"],
@@ -774,7 +807,6 @@
       },
       "additionalProperties": false
     },
-
     "condition": {
       "oneOf": [
         {
@@ -785,7 +817,6 @@
         }
       ]
     },
-
     "extension_requirement_list_item": {
       "description": "A list of extension requirements, possibly with a condition",
       "oneOf": [
@@ -832,7 +863,6 @@
         }
       ]
     },
-
     "uint32": {
       "type": "integer",
       "minimum": 0,

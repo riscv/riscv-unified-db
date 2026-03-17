@@ -1,6 +1,6 @@
 <!-- Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. -->
 <!-- SPDX-License-Identifier: BSD-3-Clause-Clear -->
-
+<%- require "json" -%>
 <!doctype html>
 <html lang="en-us">
   <head>
@@ -135,6 +135,15 @@
 
       <div class="row">
         <div class="col">
+          <h3>UDB Documentation Site (Preview)</h3>
+          <ul>
+            <li><a href="<%= ENV["PAGES_URL"] %>/docs-preview/">Documentation site built with Docusaurus</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
           <h3>UDB Gem Documentation</h3>
           <ul>
             <li><a href="<%= ENV["PAGES_URL"] %>/htmls/udb_api_doc/index.html"><code>udb</code> Ruby API</a></li>
@@ -158,6 +167,30 @@
             <li><a href="<%= ENV["PAGES_URL"] %>/reuse_bom.txt">Reuse Bill of Materials (LICENSE information)</a></li>
             <li><a href="https://dhower-qc.github.io/udb-stats/riscv/riscv-unified-db/latest-report/report.html">GitHub usage statistics (updated daily)</a></li>
           </ul>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <h3>JSON Schemas</h3>
+          <p>
+            JSON Schema files for validating riscv-unified-db data files.
+            Each version is immutable once published.
+          </p>
+          <%- schema_index_path = File.join(ENV["DEPLOY_DIR"] || "_site", "schemas", "index.json") -%>
+          <%- if File.exist?(schema_index_path) -%>
+            <%- schema_index = JSON.parse(File.read(schema_index_path)) -%>
+            <%- schema_index["schemas"].sort.each do |schema_name, versions| -%>
+          <h4><%= schema_name %></h4>
+          <ul>
+              <%- versions.sort.reverse.each do |version| -%>
+            <li><a href="<%= ENV["PAGES_URL"] %>/schemas/<%= schema_name %>/<%= version %>/<%= schema_name %>"><%= version %></a></li>
+              <%- end -%>
+          </ul>
+            <%- end -%>
+          <%- else -%>
+          <p><em>No schema versions published yet.</em></p>
+          <%- end -%>
         </div>
       </div>
     </div>
