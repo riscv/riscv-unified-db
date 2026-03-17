@@ -100,7 +100,7 @@ class TestYamlResolver < Minitest::Test
 
       # Normalize $schema: strip the version prefix the resolver adds so the
       # comparison is against the bare name in the original source file.
-      # (e.g. 'v0.1/csr_schema.json#' -> 'csr_schema.json#')
+      # (e.g. 'v0.2/csr_schema.json#' -> 'csr_schema.json#')
       if resolved_data_without_source.key?("$schema")
         bare = File.basename(resolved_data_without_source["$schema"].split("#").first) + "#"
         resolved_data_without_source["$schema"] = bare
@@ -461,7 +461,7 @@ class TestYamlResolver < Minitest::Test
 
   # Test that versioned_schema_uri rewrites bare URIs when the schema has a $id
   def test_versioned_schema_uri_rewrites_bare_ref
-    # Use the gem's schemas directory which has $id: "v0.1" fields
+    # Use the gem's schemas directory which has $id fields (e.g. "v0.1", "v0.2")
     gem_schemas = Pathname.new(__dir__).parent / "schemas"
     skip "gem schemas directory not found" unless gem_schemas.exist?
 
@@ -469,7 +469,7 @@ class TestYamlResolver < Minitest::Test
 
     # Bare ref should get the version prefix
     assert_equal "v0.1/ext_schema.json#", resolver.versioned_schema_uri("ext_schema.json#")
-    assert_equal "v0.1/csr_schema.json#", resolver.versioned_schema_uri("csr_schema.json#")
+    assert_equal "v0.2/csr_schema.json#", resolver.versioned_schema_uri("csr_schema.json#")
   end
 
   # Test that versioned_schema_uri leaves already-versioned URIs unchanged

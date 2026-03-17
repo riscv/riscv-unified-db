@@ -33,8 +33,11 @@ published as GitHub releases under the tag `schemas/<schema_name>/<version>`.
 |===
 | Version | Published URL
 
-| 0.1 (current)
-| https://riscv.github.io/riscv-unified-db/schemas/csr_schema.json/v0.1/csr_schema.json (example)
+| 0.1 (current for all schemas except csr_schema.json)
+| https://riscv.github.io/riscv-unified-db/schemas/ext_schema.json/v0.1/ext_schema.json (example)
+
+| 0.2 (current for csr_schema.json)
+| https://riscv.github.io/riscv-unified-db/schemas/csr_schema.json/v0.2/csr_schema.json
 |===
 
 == Schema Identification (`$id`)
@@ -43,7 +46,7 @@ Every schema file contains a top-level `$id` key whose value is the version
 string (e.g. `v0.1`).  Source data files reference schemas using the bare
 filename (e.g. `csr_schema.json#`).  When data files are resolved, the
 `$schema` field is rewritten to include the version prefix
-(e.g. `v0.1/csr_schema.json#`) so that the resolved file records the exact
+(e.g. `v0.2/csr_schema.json#`) so that the resolved file records the exact
 schema version used.
 
 [source,json]
