@@ -305,6 +305,9 @@ do_gen_xqci_golden() {
   rm -f tests/data/golden/Xqci@*.adoc
   cp "gen/ext-doc/pdf/Xqci-${xqci_version}.pdf/Xqci@${xqci_version}.adoc" \
      "tests/data/golden/Xqci@${xqci_version}.adoc"
+  # Remove the commit info line from the golden file
+  sed -i '/^This document was created using the http:\/\/github\.org\/riscv\/riscv-unified-db\[RISC-V Unified Database\] at commit/d' \
+    "tests/data/golden/Xqci@${xqci_version}.adoc"
 }
 
 #

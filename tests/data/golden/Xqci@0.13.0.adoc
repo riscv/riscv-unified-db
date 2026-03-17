@@ -68,8 +68,6 @@ This document is released under the https://creativecommons.org/licenses/by/4.0/
 
 Copyright 2026 by Qualcomm Technologies, Inc..
 
-This document was created using the http://github.org/riscv/riscv-unified-db[RISC-V Unified Database] at commit 51df1e7b8bb7d062f9fbbb010e479a6dadeaf0c2
-.
 
 [preface]
 == Acknowledgements
