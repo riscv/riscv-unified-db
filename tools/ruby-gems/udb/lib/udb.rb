@@ -6,14 +6,11 @@
 
 module Udb; end
 
-require_relative "udb/cert_normative_rule"
 require_relative "udb/doc_link"
 require_relative "udb/condition"
 require_relative "udb/schema"
 require_relative "udb/version"
 
-require_relative "udb/obj/certifiable_obj"
-require_relative "udb/obj/certificate"
 require_relative "udb/obj/csr_field"
 require_relative "udb/obj/csr"
 require_relative "udb/obj/database_obj"

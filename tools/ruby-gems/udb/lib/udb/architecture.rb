@@ -6,7 +6,7 @@
 
 # The Architecture class is the API to the architecture database.
 # The "database" contains RISC-V standards including extensions, instructions,
-# CSRs, Profiles, and Certificates.
+# CSRs, and Profiles.
 # The Architecture class is used by backends to export the information in the
 # architecture database to create various outputs.
 #
@@ -21,8 +21,6 @@
 #   Instruction     instructions()      instruction_hash()      instruction(name)
 #   Csr             csrs()              csr_hash()              csr(name)
 #   Mmr             mmrs()              mmr_hash()              mmr(name)
-#   ProcCertClass   proc_cert_classes() proc_cert_class_hash()  proc_cert_class(name)
-#   ProcCertModel   proc_cert_models()  proc_cert_model_hash()  proc_cert_model(name)
 #   ProfileFamily   profile_families()  profile_family_hash()   profile_family(name)
 #   ProfileRelease  profile_releases()  profile_release_hash()  profile_release(name)
 #   Profile         profiles()          profile_hash()          profile(name)
@@ -48,7 +46,6 @@ require "pathname"
 require "sorbet-runtime"
 require "yaml"
 
-require_relative "obj/certificate"
 require_relative "obj/csr"
 require_relative "obj/csr_field"
 require_relative "obj/register_file"
@@ -157,18 +154,6 @@ module Udb
         kind: DatabaseObject::Kind::InterruptCode
       },
       {
-        fn_name: "proc_cert_class",
-        arch_dir: "proc_cert_class",
-        klass: ProcCertClass,
-        kind: DatabaseObject::Kind::ProcessorCertificateClass
-      },
-      {
-        fn_name: "proc_cert_model",
-        arch_dir: "proc_cert_model",
-        klass: ProcCertModel,
-        kind: DatabaseObject::Kind::ProcessorCertificateModel
-      },
-      {
         fn_name: "manual",
         arch_dir: "manual",
         klass: Manual,
@@ -229,7 +214,7 @@ module Udb
     def portfolio_classes
       return @portfolio_classes unless @portfolio_classes.nil?
 
-      @portfolio_classes = profile_families.concat(proc_cert_classes).sort_by!(&:name).freeze
+      @portfolio_classes = profile_families.sort_by!(&:name).freeze
     end
 
     # @return Hash of all portfolio classes defined in the architecture
@@ -252,7 +237,7 @@ module Udb
     def portfolios
       return @portfolios unless @portfolios.nil?
 
-      @portfolios = @profiles.concat(@certificates).sort_by!(&:name)
+      @portfolios = profiles.sort_by!(&:name)
     end
 
     # @return [Hash<String, Portfolio>] Hash of all portfolios defined in the architecture
@@ -285,12 +270,6 @@ module Udb
       obj = T.let(nil, T.untyped)
       obj =
         case file_path
-        when /^proc_cert_class.*/
-          proc_cert_class_name = File.basename(file_path, ".yaml")
-          proc_cert_class(proc_cert_class_name)
-        when /^proc_cert_model.*/
-          proc_cert_model_name = File.basename(file_path, ".yaml")
-          proc_cert_model(proc_cert_model_name)
         when /^csr.*/
           csr_name = File.basename(file_path, ".yaml")
           csr(csr_name)

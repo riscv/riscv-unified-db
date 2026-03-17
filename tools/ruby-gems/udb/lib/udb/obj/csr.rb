@@ -9,7 +9,6 @@ require "idlc/interfaces"
 require "idlc/passes/reachable_functions"
 
 require_relative "database_obj"
-require_relative "certifiable_obj"
 require_relative "has_fields"
 
 module Udb
@@ -22,7 +21,6 @@ module Udb
     BITS128_TYPE = Idl::Type.new(:bits, width: 128).freeze
     ENCODING_SIZE_VAR = Idl::Var.new("__instruction_encoding_size", BITS6_TYPE, 32).freeze
     # Add all methods in this module to this type of database object.
-    include CertifiableObject
     include HasFields
 
     include Idl::Csr

@@ -380,30 +380,6 @@
         }
       }
     },
-    "cert_normative_rules": {
-      "description": "Architecturally visible behaviors requiring validation by certification tests",
-      "type": "array",
-      "required": ["id", "name", "doc_links", "description"],
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "doc_links": {
-          "description": "Link to UDB documentation, ISA manual, Sail code, or IDL code",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "description": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
     "encoding_match": {
       "oneOf": [
         {
