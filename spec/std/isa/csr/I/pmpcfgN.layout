@@ -21,14 +21,14 @@ definedBy:
     - xlen: 32 # odd numbered pmpcfg registers do not exist in RV64
     - param:
         name: NUM_PMP_ENTRIES
-        <%= pmpcfg_num < 4 ? "notEqual: 0" : "greaterThan: 16" %>
+        <%= pmpcfg_num < 4 ? "greaterThan: 0" : "greaterThan: 16" %>
 <%- else -%>
   allOf:
     - extension:
         name: Sm
     - param:
         name: NUM_PMP_ENTRIES
-        <%= pmpcfg_num < 4 ? "notEqual: 0" : "greaterThan: 16" %>
+        <%= pmpcfg_num < 4 ? "greaterThan: 0" : "greaterThan: 16" %>
 <%- end -%>
 fields:
   <%- (pmpcfg_num.odd? ? 4 : 8).times do |i| -%>

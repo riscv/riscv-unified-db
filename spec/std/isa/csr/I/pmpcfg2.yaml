@@ -21,7 +21,7 @@ definedBy:
         name: Sm
     - param:
         name: NUM_PMP_ENTRIES
-        notEqual: 0
+        greaterThan: 0
 fields:
   pmp8cfg:
     location: 7-0
