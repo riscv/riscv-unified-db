@@ -23,10 +23,30 @@ encoding:
       location: 31|7|30-25|11-8
       left_shift: 1
       sign_extend: true
+      encode(operands): return operands[2].value;
     - name: xs2
       location: 24-20
+      encode(operands): return operands[1].value;
     - name: xs1
       location: 19-15
+      encode(operands): return operands[0].value;
+operands:
+- name: xs1
+  type: register
+  reg_file: gpr
+  source: true
+  destination: false
+  decode(): return xs1;
+- name: xs2
+  type: register
+  reg_file: gpr
+  source: true
+  destination: false
+  decode(): return xs2;
+- name: imm
+  type: immediate
+  possible_values: -4096-4095
+  decode(): return imm;
 access:
   s: always
   u: always

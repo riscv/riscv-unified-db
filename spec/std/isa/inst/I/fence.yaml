@@ -127,58 +127,153 @@ definedBy:
   extension:
     name: I
 assembly: pred, succ
-operands:
-  - type: fence_scope
-    possible_values:
-      [
-        "I",
-        "O",
-        "R",
-        "W",
-        "IO",
-        "IR",
-        "IW",
-        "OR",
-        "OW",
-        "RW",
-        "IOR",
-        "IOW",
-        "IRW",
-        "ORW",
-        "IORW",
-      ]
-  - type: fence_scope
-    possible_values:
-      [
-        "I",
-        "O",
-        "R",
-        "W",
-        "IO",
-        "IR",
-        "IW",
-        "OR",
-        "OW",
-        "RW",
-        "IOR",
-        "IOW",
-        "IRW",
-        "ORW",
-        "IORW",
-      ]
 encoding:
   match: "-----------------000-----0001111"
   variables:
     - name: fm
       location: 31-28
+      encode(operands): return 0;  # fm is reserved for future use, so it must be encoded as 0
     - name: pred
       location: 27-24
+      encode(operands): |
+        if operands[0] == "I" {
+          return 0b1000;  # I/O
+        } else if operands[0] == "O" {
+          return 0b0100;  # O
+        } else if operands[0] == "R" {
+          return 0b0010;  # R
+        } else if operands[0] == "W" {
+          return 0b0001;  # W
+        } else if operands[0] == "IO" {
+          return 0b1100;  # I/O
+        } else if operands[0] == "IR" {
+          return 0b1010;  # I/R
+        } else if operands[0] == "IW" {
+          return 0b1001;  # I/W
+        } else if operands[0] == "OR" {
+          return 0b0110;  # O/R
+        } else if operands[0] == "OW" {
+          return 0b0101;  # O/W
+        } else if operands[0] == "RW" {
+          return 0b0011;  # R/W
+        } else if operands[0] == "IOR" {
+          return 0b1110;  # I/O/R
+        } else if operands[0] == "IOW" {
+          return 0b1101;  # I/O/W
+        } else if operands[0] == "ORW" {
+          return 0b0111;  # O/R/W
+        } else if operands[0] == "IORW" {
+          return 0b1111;  # I/O/R/W
+        } else {
+          raise(`Invalid predecessor operand: ${operands[0]}`);
+        }
+        decode(): |
+          if pred == 0b1000 {
+            return "I";
+          } else if pred == 0b0100 {
+            return "O";
+          } else if pred == 0b0010 {
+            return "R";
+          } else if pred == 0b0001 {
+            return "W";
+          } else if pred == 0b1100 {
+            return "IO";
+          } else if pred == 0b1010 {
+            return "IR";
+          } else if pred == 0b1001 {
+            return "IW";
+          } else if pred == 0b0110 {
+            return "OR";
+          } else if pred == 0b0101 {
+            return "OW";
+          } else if pred == 0b0011 {
+            return "RW";
+          } else if pred == 0b1110 {
+            return "IOR";
+          } else if pred == 0b1101 {
+            return "IOW";
+          } else if pred == 0b0111 {
+            return "ORW";
+          } else {
+            return "IORW";
+          }
     - name: succ
       location: 23-20
+      encode(operands): |
+        if operands[1] == "I" {
+          return 0b1000;  # I/O
+        } else if operands[1] == "O" {
+          return 0b0100;  # O
+        } else if operands[1] == "R" {
+          return 0b0010;  # R
+        } else if operands[1] == "W" {
+          return 0b0001;  # W
+        } else if operands[1] == "IO" {
+          return 0b1100;  # I/O
+        } else if operands[1] == "IR" {
+          return 0b1010;  # I/R
+        } else if operands[1] == "IW" {
+          return 0b1001;  # I/W
+        } else if operands[1] == "OR" {
+          return 0b0110;  # O/R
+        } else if operands[1] == "OW" {
+          return 0b0101;  # O/W
+        } else if operands[1] == "RW" {
+          return 0b0011;  # R/W
+        } else if operands[1] == "IOR" {
+          return 0b1110;  # I/O/R
+        } else if operands[1] == "IOW" {
+          return 0b1101;  # I/O/W
+        } else if operands[1] == "ORW" {
+          return 0b0111;  # O/R/W
+        } else if operands[1] == "IORW" {
+          return 0b1111;  # I/O/R/W
+        } else {
+          raise(`Invalid successor operand: ${operands[1]}`);
+        }
+      decode(): |
+        if succ == 0b1000 {
+          return "I";
+        } else if succ == 0b0100 {
+          return "O";
+        } else if succ == 0b0010 {
+          return "R";
+        } else if succ == 0b0001 {
+          return "W";
+        } else if succ == 0b1100 {
+          return "IO";
+        } else if succ == 0b1010 {
+          return "IR";
+        } else if succ == 0b1001 {
+          return "IW";
+        } else if succ == 0b0110 {
+          return "OR";
+        } else if succ == 0b0101 {
+          return "OW";
+        } else if succ == 0b0011 {
+          return "RW";
+        } else if succ == 0b1110 {
+          return "IOR";
+        } else if succ == 0b1101 {
+          return "IOW";
+        } else if succ == 0b0111 {
+          return "ORW";
+        } else {
+          return "IORW";
+        }
     - name: xs1
       location: 19-15
+      encode(operands): return 0;  # xs1 is unused, so it must be encoded as 0
     - name: xd
       location: 11-7
+      encode(operands): return 0;  # xd is unused, so it must be encoded as 0
+operands:
+- name: pred
+  type: fence_scope
+  possible_values: [ "I", "O", "R", "W", "IO", "IR", "IW", "OR", "OW", "RW", "IOR", "IOW", "ORW", "IORW" ]
+- name: succ
+  type: fence_scope
+  possible_values: [ "I", "O", "R", "W", "IO", "IR", "IW", "OR", "OW", "RW", "IOR", "IOW", "ORW", "IORW" ]
 access:
   s: always
   u: always

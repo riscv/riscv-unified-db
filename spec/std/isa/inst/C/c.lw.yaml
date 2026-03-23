@@ -22,10 +22,36 @@ encoding:
     - name: imm
       location: 5|12-10|6
       left_shift: 2
+      encode(operands): |
+        return operands[1].offset;
     - name: xd
       location: 4-2
+      encode(operands): |
+        return reg2creg(operands[0]);
+      decode(): |
+        return creg2reg(xd);
     - name: xs1
       location: 9-7
+      encode(operands): |
+        return reg2creg(operands[1]);
+      decode(): |
+        return creg2reg(xd);
+operands:
+  - name: xd
+    type: register
+    reg_file: gpr
+    source: false
+    destination: true
+    possible_values: [ 8, 9, 10, 11, 12, 13, 14, 15 ]
+  - name: xs1
+    type: register
+    reg_file: gpr
+    possible_values: [ 8, 9, 10, 11, 12, 13, 14, 15 ]
+    offset:
+      name: imm
+      type: unsigned
+      length: 5
+      left_shifted: 2
 access:
   s: always
   u: always
