@@ -175,6 +175,8 @@ class NonIsaSpecificationLoadError < ::NonIsaSpecificationError; end
 class NonIsaSpecificationValidationError < ::NonIsaSpecificationError; end
 
 module Udb
+  def global_options; end
+
   class << self
     sig { params(fmt: ::String, options: T.untyped).returns(T.any(::TTY::ProgressBar, ::Udb::DummyProgressBar)) }
     def create_progressbar(fmt, **options); end
@@ -2475,6 +2477,10 @@ class Udb::FullConfig < ::Udb::AbstractConfig
 
   sig { override.returns(T::Boolean) }
   def unconfigured?; end
+end
+
+class Udb::GlobalOptions < ::T::Struct
+  prop :parallel_z3, T::Boolean, default: T.unsafe(nil)
 end
 
 module Udb::HasFields
@@ -4928,8 +4934,8 @@ end
 class Udb::Z3Solver
   extend ::Forwardable
 
-  sig { params(parallel: T::Boolean).void }
-  def initialize(parallel: T.unsafe(nil)); end
+  sig { void }
+  def initialize; end
 
   def assert(*args, **_arg1, &block); end
   def assert_as(*args, **_arg1, &block); end
