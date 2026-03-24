@@ -12,7 +12,7 @@ module Udb
     prop :parallel_z3, T::Boolean, default: true
   end
 
-  def global_options
+  def self.global_options
     @global_options ||= GlobalOptions.new
   end
 end
