@@ -37,7 +37,7 @@ def parse_location(location):
     """Parse location string into a list of bit positions"""
     print(f"# Parsing location: {location}")
     bit_positions = []
-    
+
     # Handle concatenated locations (separated by '|')
     if '|' in location:
         segments = location.split('|')
@@ -45,7 +45,7 @@ def parse_location(location):
             bit_positions.extend(parse_location(segment))
         print(f"# Parsed concatenated location '{location}' into bit positions: {bit_positions}")
         return bit_positions
-    
+
     # Handle range locations (e.g., '31-25')
     if '-' in location:
         start, end = location.split('-')
@@ -56,17 +56,17 @@ def parse_location(location):
         # Single bit location
         bit_positions.append(int(location))
 
-    print(f"# Parsed location '{location}' into bit positions: {bit_positions}")    
+    print(f"# Parsed location '{location}' into bit positions: {bit_positions}")
     return bit_positions
 
 def extract_bits(binary_str, positions):
     """Extract bits from specified positions in the binary string"""
     width = len(positions)
     result = 0
-    
+
     # Convert binary string to list for easier manipulation
     binary_list = list(binary_str)
-    
+
     # Extract bits from specified positions
     print(f"# Extracting bits from binary string '{binary_str}' at positions {positions}")
     for pos in positions:
@@ -75,18 +75,18 @@ def extract_bits(binary_str, positions):
         bit_value = 1 if binary_str[idx] == '1' else 0
         result = (result << 1) | bit_value
         print(f"# Bit at position {pos} is '{binary_str[idx]}' result {result}")
-    
+
     return result
 
 def matches_pattern(opcode, pattern):
     """Check if opcode matches the pattern (considering '-' as wildcards)"""
     if len(opcode) != len(pattern):
         return False
-    
+
     for i in range(len(opcode)):
         if pattern[i] != '-' and opcode[i] != pattern[i]:
             return False
-    
+
     return True
 
 def find_matching_instruction(opcode, xlen=64):
@@ -95,7 +95,7 @@ def find_matching_instruction(opcode, xlen=64):
         if 'encoding' in instruction:
             encoding = instruction['encoding']
             match_pattern = None
-            
+
             # Extract match pattern based on encoding format and xlen
             if f'RV{xlen}' in encoding and 'match' in encoding[f'RV{xlen}']:
                 match_pattern = encoding[f'RV{xlen}']['match']
@@ -105,17 +105,17 @@ def find_matching_instruction(opcode, xlen=64):
                 match_pattern = encoding['RV32']['match']
             elif 'RV64' in encoding and 'match' in encoding['RV64'] and xlen == 64:
                 match_pattern = encoding['RV64']['match']
-            
+
             if match_pattern and matches_pattern(opcode, match_pattern):
                 return instruction
-    
+
     return None
 
 def extract_variable_values(opcode, instruction, xlen=64):
     """Extract variable values from opcode based on instruction definition"""
     encoding = instruction['encoding']
     variables = []
-    
+
     # Extract variables based on encoding format and xlen
     if f'RV{xlen}' in encoding and 'variables' in encoding[f'RV{xlen}']:
         variables = encoding[f'RV{xlen}']['variables']
@@ -125,22 +125,22 @@ def extract_variable_values(opcode, instruction, xlen=64):
         variables = encoding['RV32']['variables']
     elif 'RV64' in encoding and 'variables' in encoding['RV64'] and xlen == 64:
         variables = encoding['RV64']['variables']
-    
+
     variable_values = {}
-    
+
     # Process each variable
     for variable in variables:
         var_name = variable['name']
         location = variable['location']
-        
+
         # Parse the location string to get bit positions
         bit_positions = parse_location(location)
         print(f"# Variable '{var_name}' is located at bits {bit_positions} in the opcode")
-        
+
         # Extract the value from the opcode
         value = extract_bits(opcode, bit_positions)
         print(f"# Extracted raw value for variable '{var_name}': {value} from bits {bit_positions}")
-        
+
         # Apply any transformations
 
         if 'sign_extend' in variable:
@@ -151,25 +151,25 @@ def extract_variable_values(opcode, instruction, xlen=64):
         if 'left_shift' in variable:
             value = value << variable['left_shift']
             print(f"# Value after left shift for variable '{var_name}': {value}")
-        
+
         if 'decode()' in variable and 'creg2reg' in variable['decode()']:
             value += 8
             print(f"# Value after creg2reg transformation for variable '{var_name}': {value}")
-        
+
         variable_values[var_name] = value
-    
+
     return variable_values
 
 def format_assembly(instruction, variable_values, xlen=64):
     """Format assembly instruction based on instruction definition and variable values"""
     mnemonic = instruction['name']
     assembly_format = instruction.get('assembly', '')
-    
+
     # Handle special cases for different instruction types
     if 'operands' not in instruction:
-        print(f"# ERROR: No operands defined for instruction '{mnemonic}'")
+        print(f"# INFO: No operands defined for instruction '{mnemonic}'")
         return None
-    
+
     if 'RV32' in instruction['operands'] and xlen == 32:
         operands = instruction['operands']['RV32']
     elif 'RV64' in instruction['operands'] and xlen == 64:
@@ -178,7 +178,7 @@ def format_assembly(instruction, variable_values, xlen=64):
         operands = instruction['operands']
 
     assembly_parts = []
-        
+
     # For regular instructions with operands
     for i, operand in enumerate(operands):
         operand_name = operand['name']
@@ -241,53 +241,53 @@ def format_assembly(instruction, variable_values, xlen=64):
 
     if assembly_parts:
         return f"{mnemonic} {', '.join(assembly_parts)}"
-    
+
     # Default case: just return the mnemonic
     return mnemonic
 
 def decode(opcode, xlen=64):
     """Decode an opcode into an assembly instruction"""
     print(f"# Decoding opcode: {opcode} with xlen={xlen}")
-    
+
     # Find matching instruction
     instruction = find_matching_instruction(opcode, xlen)
     if not instruction:
         print(f"# No matching instruction found for opcode: {opcode}")
         return None
-    
+
     print(f"# Found matching instruction: {instruction['name']}")
-    
+
     # Extract variable values from opcode
     variable_values = extract_variable_values(opcode, instruction, xlen)
     print(f"# Extracted variable values: {variable_values}")
-    
+
     # Format assembly instruction
     assembly = format_assembly(instruction, variable_values, xlen)
     print(f"# Formatted assembly: {assembly}")
-    
+
     return assembly
 
 def main():
     args = parse_args()
-    
+
     # Validate xlen parameter
     xlen = args.xlen
     if xlen not in [32, 64]:
         print(f"Error: xlen must be either 32 or 64, got {xlen}")
         sys.exit(1)
     print(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
-    
+
     for path in args.dirs:
         find_and_load_yamls(path, kind="instruction")
-    
+
     # Create a dictionary mapping instruction mnemonics to their definitions
     for instruction in yamls:
         instructions[instruction['name']] = instruction
-    
+
     opcodes = []
     if args.opcodes:
         opcodes = read_opcodes_file(args.opcodes)
-    
+
     # Process opcodes and print assembly instructions
     if opcodes:
         for opcode in opcodes:
