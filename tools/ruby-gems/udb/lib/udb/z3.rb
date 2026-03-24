@@ -1057,9 +1057,11 @@ module Udb
     sig { returns(Z3::Solver) }
     attr_reader :solver
 
-    sig { void }
-    def initialize
+    # @param parallel Use Z3's parallel solving algorithm
+    sig { params(parallel: T::Boolean).void }
+    def initialize(parallel: true)
       @solver = T.let(Z3::Solver.new, Z3::Solver)
+      Z3.set_param("parallel.enable", "true") if parallel
       # Stacks for incremental solving with push/pop
       @ext_vers = T.let([{}], T::Array[T::Hash[String, Z3ExtensionVersion]])
       @ext_reqs = T.let([{}], T::Array[T::Hash[String, Z3ExtensionRequirement]])
