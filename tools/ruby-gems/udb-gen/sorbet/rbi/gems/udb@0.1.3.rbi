@@ -175,8 +175,6 @@ class NonIsaSpecificationLoadError < ::NonIsaSpecificationError; end
 class NonIsaSpecificationValidationError < ::NonIsaSpecificationError; end
 
 module Udb
-  def global_options; end
-
   class << self
     sig { params(fmt: ::String, options: T.untyped).returns(T.any(::TTY::ProgressBar, ::Udb::DummyProgressBar)) }
     def create_progressbar(fmt, **options); end
@@ -210,6 +208,8 @@ module Udb
 
     sig { returns(::Pathname) }
     def gem_path; end
+
+    def global_options; end
 
     sig { returns(::Udb::LogLevel) }
     def log_level; end
@@ -4994,6 +4994,17 @@ class Udb::Z3Solver
 
   sig { returns(::Z3::IntExpr) }
   def xlen; end
+
+  class << self
+    sig { params(desired: T::Boolean).void }
+    def configure_parallelization(desired); end
+
+    sig { returns(T.nilable(T::Boolean)) }
+    def parallel_enabled; end
+
+    sig { params(value: T.nilable(T::Boolean)).void }
+    def parallel_enabled=(value); end
+  end
 end
 
 class Udb::Z3Sovler; end
