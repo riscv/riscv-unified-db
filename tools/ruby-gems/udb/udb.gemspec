@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower", "James Ball"]
   s.email       = ["dhower@qti.qualcomm.com", "jamesball@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.files       = Dir["lib/**/*.rb", "LICENSE", "ext/udb_download/extconf.rb", "lib/udb/Z3_VERSION", "lib/udb/ESPRESSO_VERSION", "lib/udb/MUST_VERSION", "lib/udb/EQNTOTT_VERSION"]
+  s.files       = Dir["lib/**/*.rb", "LICENSE", "ext/udb_download/extconf.rb", "lib/udb/Z3_VERSION", "lib/udb/ESPRESSO_VERSION", "lib/udb/MUST_VERSION", "lib/udb/EQNTOTT_VERSION", ".data/**/*"]
   s.extensions  = ["ext/udb_download/extconf.rb"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
@@ -26,7 +26,7 @@ Gem::Specification.new do |s|
     "mailing_list_uri" => "https://lists.riscv.org/g/tech-unifieddb",
     "bug_tracker_uri" => "https://github.com/riscv/riscv-unified-db/issues"
   }
-  s.required_ruby_version = "~> 3.2"
+  s.required_ruby_version = [">= 3.2", "< 4.0"]
 
   s.require_paths = ["lib"]
   s.bindir = "bin"
@@ -52,6 +52,7 @@ Gem::Specification.new do |s|
   s.add_dependency "udb_helpers"
   s.add_dependency "z3"
 
+  s.add_development_dependency "rake"
   s.add_development_dependency "rubocop-github"
   s.add_development_dependency "rubocop-minitest"
   s.add_development_dependency "rubocop-performance"

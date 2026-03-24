@@ -32,6 +32,23 @@ module Idl
 
   EMPTY_ARRAY = [].freeze
 
+  # Module for reserved word validation
+  module ReservedWords
+    # All keywords in the IDL language
+    KEYWORDS = %w[
+      if else for return returns arguments description body
+      function builtin generated enum bitfield CSR true false
+    ].freeze
+
+    # All builtin type names
+    BUILTIN_TYPES = %w[
+      XReg Bits Boolean String U64 U32
+    ].freeze
+
+    # Combined set of all reserved words
+    RESERVED = (KEYWORDS + BUILTIN_TYPES).freeze
+  end
+
   # base class for all nodes considered part of the Ast
   class AstNode
 
@@ -176,17 +193,17 @@ module Idl
     def self.value_try(&block)
       catch(:value_error, &block)
     end
-    sig { params(block: T.proc.params(arg0: Object).returns(T.untyped)).returns(T.untyped) }
+    sig { params(block: T.proc.params(arg0: Object).returns(T.untyped)).returns(T.untyped).checked(:never) }
     def value_try(&block) = self.class.value_try(&block)
 
-    sig { params(value_result: T.untyped, _block: T.proc.returns(T.untyped)).returns(T.untyped) }
+    sig { params(value_result: T.untyped, _block: T.proc.returns(T.untyped)).returns(T.untyped).checked(:never) }
     def self.value_else(value_result, &_block)
       return unless value_result == :unknown_value
 
       yield
     end
 
-    sig { params(value_result: T.untyped, block: T.proc.returns(T.untyped)).returns(T.untyped) }
+    sig { params(value_result: T.untyped, block: T.proc.returns(T.untyped)).returns(T.untyped).checked(:never) }
     def value_else(value_result, &block) = self.class.value_else(value_result, &block)
 
     # is this node const evaluatable?
@@ -203,6 +220,8 @@ module Idl
       @input = input
       @input_file = nil
       @starting_line = 0
+      @starting_offset = 0
+      @line_file_offsets = T.let(nil, T.nilable(T::Array[Integer]))
       @interval = interval
       @interval_text_value =
         unless input.nil? || interval.nil?
@@ -219,14 +238,25 @@ module Idl
     #
     # @param [String] filename The name of the input file.
     # @param [Integer] starting_line The starting line number in the input file.
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer).void }
-    def set_input_file_unless_already_set(filename, starting_line = 0)
+    # @param [Integer] starting_offset The byte offset in the file where the IDL content starts.
+    # Sets the input file for this syntax node unless it has already been set.
+    #
+    # If the input file has not been set, it will be set with the given filename and starting line number.
+    #
+    # @param [String] filename The name of the input file.
+    # @param [Integer] starting_line The starting line number in the input file.
+    # @param [Integer] starting_offset The byte offset in the file where the IDL content starts.
+    # @param [Array<Integer>, nil] line_file_offsets Per-IDL-line file byte offsets (nil = use starting_offset).
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+    def set_input_file_unless_already_set(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
       return unless @input_file.nil?
 
       @input_file = Pathname.new(filename)
       @starting_line = starting_line
+      @starting_offset = starting_offset
+      @line_file_offsets = line_file_offsets
       children.each do |child|
-        child.set_input_file_unless_already_set(filename, starting_line)
+        child.set_input_file_unless_already_set(filename, starting_line, starting_offset, line_file_offsets)
       end
       raise "?" if @starting_line.nil?
     end
@@ -235,12 +265,16 @@ module Idl
     #
     # @param filename [String] Filename
     # @param starting_line [Integer] Starting line in the file
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer).void }
-    def set_input_file(filename, starting_line = 0)
+    # @param starting_offset [Integer] Byte offset in the file where the IDL content starts
+    # @param line_file_offsets [Array<Integer>, nil] Per-IDL-line file byte offsets (nil = use starting_offset).
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+    def set_input_file(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
       @input_file = Pathname.new(filename)
       @starting_line = starting_line
+      @starting_offset = starting_offset
+      @line_file_offsets = line_file_offsets
       children.each do |child|
-        child.set_input_file(filename, starting_line)
+        child.set_input_file(filename, starting_line, starting_offset, line_file_offsets)
       end
       raise "?" if @starting_line.nil?
     end
@@ -394,7 +428,7 @@ module Idl
       throw(:value_error, :unknown_value)
       #raise AstNode::ValueError.new(lineno, input_file, reason), reason, []
     end
-    sig { params(reason: String).returns(T.noreturn) }
+    sig { params(reason: String).returns(T.noreturn).checked(:never) }
     def value_error(reason) = self.class.value_error(reason, self)
 
     # unindent a multiline string, getting rid of all common leading whitespace (like <<~ heredocs)
@@ -427,9 +461,6 @@ module Idl
     #   This is also an opportunity to pre-calculate anything that only needs global symbols
     #
     #   @param global_symtab [SymbolTable] Symbol table with global scope populated
-
-
-    # @!macro freeze_tree
     sig { params(global_symtab: SymbolTable).returns(AstNode) }
     def freeze_tree(global_symtab)
       return self if frozen?
@@ -474,18 +505,71 @@ module Idl
     sig { abstract.returns(String) }
     def to_idl; end
 
-    sig { overridable.returns(String) }
-    def to_idl_verbose = to_idl
-
     # return yaml to indicate where the node comes from
+    # the retrun value will be:
+    #  file: <path to input file (or nil if input was given as a string)>
+    #  begin: <0-indexed position of the starting character in the input>
+    #  end: <0-indexed position of the ending character in the input>
     sig { returns(T::Hash[String, T.untyped]) }
     def source_yaml
+      base_offset = @starting_offset || 0
+      interval_begin = T.must(interval).begin
+      interval_end = T.must(interval).size == 0 ? T.must(interval).begin + 1 : T.must(interval).end
+
+      lfo = @line_file_offsets
+      if lfo
+        # Map an IDL-string position to a file byte offset using the per-line table.
+        # Each entry lfo[i] is the file offset of the first character of IDL line i.
+        # For position p: find the line it's on, then add the column within that line.
+        file_begin = idl_pos_to_file_offset(interval_begin, lfo)
+        # Find the last non-whitespace character in the interval so that end points to
+        # real content and stays within file bounds.
+        # For zero-size intervals, use interval_begin + 1 (matching the non-lfo path).
+        inp = T.must(input)
+        if T.must(interval).size == 0
+          last_char = interval_begin + 1
+        else
+          last_char = interval_end - 1
+          last_char -= 1 while last_char > interval_begin && inp[last_char] =~ /\s/
+        end
+        file_end = idl_pos_to_file_offset(last_char, lfo)
+      else
+        file_begin = base_offset + interval_begin
+        file_end   = base_offset + interval_end
+      end
+
       {
         "file" => @input_file.to_s,
-        "begin" => T.must(interval).begin,
-        "end" => T.must(interval).max
+        "begin" => file_begin,
+        "end"   => file_end
       }
     end
+
+    private
+
+    # Given an IDL-string position +pos+ and the per-line file-offset table +lfo+,
+    # return the corresponding file byte offset.
+    sig { params(pos: Integer, lfo: T::Array[Integer]).returns(Integer) }
+    def idl_pos_to_file_offset(pos, lfo)
+      inp = T.must(input)
+      # Count which line pos falls on by scanning newlines
+      line = 0
+      col  = 0
+      i    = 0
+      while i < pos
+        if inp[i] == "\n"
+          line += 1
+          col = 0
+        else
+          col += 1
+        end
+        i += 1
+      end
+      line_offset = line < lfo.size ? T.must(lfo[line]) : T.must(lfo.last)
+      line_offset + col
+    end
+
+    public
 
     sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(T.nilable(String)) }
     def self.input_from_source_yaml(yaml, source_mapper)
@@ -495,7 +579,7 @@ module Idl
 
     sig { params(yaml: T::Hash[String, T.untyped]).returns(T.nilable(T::Range[Integer])) }
     def self.interval_from_source_yaml(yaml)
-      yaml.fetch("begin")..yaml.fetch("end")
+      yaml.fetch("begin")...yaml.fetch("end")
     end
 
     sig { abstract.returns(T::Hash[String, T.untyped]) }
@@ -660,39 +744,9 @@ module Idl
       else
         global_symtab = symtab.global_clone
         global_symtab.push(nil)
-        if func_def.templated?
-          # add template vars
-          ttypes = func_def.template_types(global_symtab)
-          func_def.template_names.each_with_index do |tname, i|
-            global_symtab.add!(tname, Var.new(tname, ttypes[i], template_index: i))
-          end
-        end
         rtype = func_def.return_type(global_symtab)
         global_symtab.release
         rtype
-        # # need to find the type to get the right symbol table
-        # func_type = @func_type_cache[symtab.name]
-        # return func_type.return_type(EMPTY_ARRAY, self) unless func_type.nil?
-
-        # func_type = symtab.get_global(func_def.name)
-        # internal_error "Couldn't find function type for '#{func_def.name}'" if func_type.nil?
-
-        # # to get the return type, we need to find the template values in case this is
-        # # a templated function definition
-        # #
-        # # that information should be up the stack in the symbol table
-        # if func_type.templated?
-        #   template_values = symtab.find_all(single_scope: true) do |o|
-        #     o.is_a?(Var) && o.template_value_for?(func_def.name)
-        #   end
-        #   unless template_values.size == func_type.template_names.size
-        #     internal_error "Did not find correct number of template arguments (found #{template_values.size}, need #{func_type.template_names.size}) #{symtab.keys_pretty}"
-        #   end
-        #   func_type.return_type(template_values.sort { |a, b| a.template_index <=> b.template_index }.map(&:value), self)
-        # else
-        #   @func_type_cache[symtab.name]= func_type
-        #   func_type.return_type(EMPTY_ARRAY, self)
-        # end
       end
     end
   end
@@ -969,7 +1023,8 @@ module Idl
 
     # @!macro type_check
     def type_check(symtab, strict:)
-      type_error "no symbol named '#{name}' on line #{lineno}" if symtab.get(name).nil?
+      type_error "Cannot use reserved word '#{name}' as variable name" if ReservedWords::RESERVED.include?(name)
+      type_error "no symbol named '#{name}'" if symtab.get(name).nil?
     end
 
     # @!macro type
@@ -1395,7 +1450,7 @@ module Idl
 
       expr.type_check(symtab, strict:)
       value_type = expr.type(symtab)
-      unless value_type.comparable_to?(ary_type.sub_type)
+      unless ary_type.width == 0 || value_type.comparable_to?(ary_type.sub_type)
         type_error "Second argument of $array_includes? must be comparable to the array element type. Found #{ary_type.sub_type} and #{value_type}"
       end
     end
@@ -1507,7 +1562,7 @@ module Idl
 
   class EnumSizeSyntaxNode < SyntaxNode
     def to_ast
-      EnumSizeAst.new(input, interval, send(:user_type_name).to_ast)
+      EnumSizeAst.new(input, interval, send(:type_name).to_ast)
     end
   end
 
@@ -1567,7 +1622,7 @@ module Idl
 
   class EnumElementSizeSyntaxNode < SyntaxNode
     def to_ast
-      EnumElementSizeAst.new(input, interval, send(:user_type_name).to_ast)
+      EnumElementSizeAst.new(input, interval, send(:type_name).to_ast)
     end
   end
 
@@ -1624,7 +1679,7 @@ module Idl
 
   class EnumCastSyntaxNode < SyntaxNode
     def to_ast
-      EnumCastAst.new(input, interval, send(:user_type_name).to_ast, send(:expression).to_ast)
+      EnumCastAst.new(input, interval, send(:type_name).to_ast, send(:expression).to_ast)
     end
   end
 
@@ -1644,13 +1699,13 @@ module Idl
       params(
         input: T.nilable(String),
         interval: T.nilable(T::Range[Integer]),
-        user_type_name: UserTypeNameAst,
+        type_name: UserTypeNameAst,
         expression: RvalueAst
       )
       .void
     }
-    def initialize(input, interval, user_type_name, expression)
-      super(input, interval, [user_type_name, expression])
+    def initialize(input, interval, type_name, expression)
+      super(input, interval, [type_name, expression])
     end
 
     def type_check(symtab, strict:)
@@ -1705,7 +1760,7 @@ module Idl
 
   class EnumArrayCastSyntaxNode < SyntaxNode
     def to_ast
-      EnumArrayCastAst.new(input, interval, send(:user_type_name).to_ast)
+      EnumArrayCastAst.new(input, interval, send(:type_name).to_ast)
     end
   end
 
@@ -1780,8 +1835,8 @@ module Idl
       EnumDefinitionAst.new(
         input,
         interval,
-        send(:user_type_name).to_ast,
-        send(:e).elements.map { |entry| entry.user_type_name.to_ast },
+        send(:type_name).to_ast,
+        send(:e).elements.map { |entry| entry.type_name.to_ast },
         values
       )
     end
@@ -1851,6 +1906,12 @@ module Idl
 
     # @!macro type_check
     def type_check(symtab, strict:)
+      type_error "Cannot use reserved word '#{name}' as user-defined type name" if ReservedWords::RESERVED.include?(name)
+
+      @element_name_asts.each do |e|
+        type_error "Cannot use reserved word '#{e.text_value}' as enum member" if ReservedWords::RESERVED.include?(e.text_value)
+      end
+
       @element_value_asts.each do |e|
         unless e.nil?
           e.type_check(symtab, strict:)
@@ -1864,6 +1925,7 @@ module Idl
     # @!macro add_symbol
     def add_symbol(symtab)
       internal_error "All enums should be declared in global scope" unless symtab.levels == 1
+      type_error "Cannot use reserved word '#{name}' as user-defined type name" if ReservedWords::RESERVED.include?(name)
 
       internal_error "Type is nil?" if type(symtab).nil?
       symtab.add!(name, type(symtab))
@@ -1921,7 +1983,7 @@ module Idl
 
   class BuiltinEnumDefinitionSyntaxNode < SyntaxNode
     def to_ast
-      BuiltinEnumDefinitionAst.new(input, interval, send(:user_type_name).to_ast)
+      BuiltinEnumDefinitionAst.new(input, interval, send(:type_name).to_ast)
     end
   end
 
@@ -2016,6 +2078,7 @@ module Idl
 
     # @!macro type_check
     def type_check(symtab, strict:)
+      type_error "Cannot use reserved word '#{@name}' as field name" if ReservedWords::RESERVED.include?(@name)
       @msb.type_check(symtab, strict:)
 
       value_result = value_try do
@@ -2039,7 +2102,8 @@ module Idl
     # @return Range The field's location in the bitfield
     def range(symtab)
       if @lsb.nil?
-        @msb.value(symtab)..@msb.value(symtab)
+        msb_val = @msb.value(symtab)
+        msb_val..msb_val
       else
         @lsb.value(symtab)..@msb.value(symtab)
       end
@@ -2086,7 +2150,7 @@ module Idl
       send(:e).elements.each do |f|
         fields << BitfieldFieldDefinitionAst.new(f.input, f.interval, f.field_name.text_value, f.range.int.to_ast, f.range.lsb.empty? ? nil : f.range.lsb.int.to_ast)
       end
-      BitfieldDefinitionAst.new(input, interval, send(:user_type_name).to_ast, send(:int).to_ast, fields)
+      BitfieldDefinitionAst.new(input, interval, send(:type_name).to_ast, send(:int).to_ast, fields)
     end
   end
 
@@ -2113,6 +2177,10 @@ module Idl
   #  }
   class BitfieldDefinitionAst < AstNode
     include Declaration
+    
+    class Memo < T::Struct
+      prop :type, T.nilable(Type)
+    end
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
@@ -2123,17 +2191,7 @@ module Idl
       @name = name
       @size = size
       @fields = fields
-    end
-
-    # @!macro freeze_tree
-    def freeze_tree(global_symtab)
-      return if frozen?
-
-      type(global_symtab)
-
-      @children.each { |child| child.freeze_tree(global_symtab) }
-
-      freeze
+      @memo = Memo.new
     end
 
     # @return [Integer] The number of bits in the Bitfield
@@ -2158,6 +2216,8 @@ module Idl
 
     # @!macro type_check
     def type_check(symtab, strict:)
+      type_error "Cannot use reserved word '#{name}' as user-defined type name" if ReservedWords::RESERVED.include?(name)
+
       @size.type_check(symtab, strict:)
       @fields.each do |f|
         f.type_check(symtab, strict:)
@@ -2181,9 +2241,9 @@ module Idl
 
     # @!macro type_no_args
     def type(symtab)
-      return @type unless @type.nil?
+      return @memo.type unless @memo.type.nil?
 
-      @type = BitfieldType.new(
+      @memo.type = BitfieldType.new(
         name,
         @size.value(symtab),
         element_names,
@@ -2240,7 +2300,7 @@ module Idl
         member_types << m.type_name.to_ast
         member_names << m.id.text_value
       end
-      StructDefinitionAst.new(input, interval, send(:user_type_name).text_value, member_types, member_names)
+      StructDefinitionAst.new(input, interval, send(:type_name).text_value, member_types, member_names)
     end
   end
 
@@ -2278,6 +2338,10 @@ module Idl
 
     # @!macro type_check
     def type_check(symtab, strict:)
+      type_error "Cannot use reserved word '#{@name}' as user-defined type name" if ReservedWords::RESERVED.include?(@name)
+      @member_names.each do |member_name|
+        type_error "Cannot use reserved word '#{member_name}' as variable name" if ReservedWords::RESERVED.include?(member_name)
+      end
       @member_types.each do |t|
         t.type_check(symtab, strict:)
       end
@@ -2297,6 +2361,7 @@ module Idl
 
     # @!macro add_symbol
     def add_symbol(symtab)
+      type_error "Cannot use reserved word '#{@name}' as user-defined type name" if ReservedWords::RESERVED.include?(@name)
       internal_error "Structs should be declared at global scope" unless symtab.levels == 1
 
       t = type(symtab)
@@ -2465,20 +2530,20 @@ module Idl
     end
 
     def value(symtab)
+      var_val = var.value(symtab)
       if var.type(symtab).integral?
-        (var.value(symtab) >> index.value(symtab)) & 1
+        (var_val >> index.value(symtab)) & 1
       else
         value_error "X registers are not compile-time-known" if var.text_value == "X"
 
-        ary = var.value(symtab)
         # internal_error "Not an array" unless ary.type.kind == :array
 
-        internal_error "Not an array (is a #{ary.class.name})" unless ary.is_a?(Array)
+        internal_error "Not an array (is a #{var_val.class.name})" unless var_val.is_a?(Array)
 
         idx = index.value(symtab)
-        internal_error "Index out of range; make sure type_check is called" if idx >= ary.size
+        internal_error "Index out of range; make sure type_check is called" if idx >= var_val.size
 
-        ary[idx]
+        var_val[idx]
       end
     end
 
@@ -2573,8 +2638,11 @@ module Idl
 
     # @!macro value
     def value(symtab)
-      mask = (1 << (msb.value(symtab) - lsb.value(symtab) + 1)) - 1
-      (T.cast(var.value(symtab), Integer) >> lsb.value(symtab)) & mask
+      msb_val = msb.value(symtab)
+      lsb_val = lsb.value(symtab)
+      var_val = T.cast(var.value(symtab), Integer)
+      mask = (1 << (msb_val - lsb_val + 1)) - 1
+      (var_val >> lsb_val) & mask
     end
 
     # @!macro to_idl
@@ -2957,7 +3025,13 @@ module Idl
         lsb_value = lsb.value(symtab)
 
         type_error "MSB must be > LSB" unless msb_value > lsb_value
-        type_error "MSB is out of range" if msb_value >= variable.type(symtab).width
+        if variable.type(symtab).width == :unknown
+          unless variable.type(symtab).max_width.nil?
+            type_error "MSB is out of range" if msb_value >= variable.type(symtab).max_width
+          end
+        else
+          type_error "MSB is out of range" if msb_value >= variable.type(symtab).width
+        end
       end
       # OK, don't have to know the value
 
@@ -3405,6 +3479,9 @@ module Idl
     # @!macro type_check
     def type_check(symtab, strict:)
       type_name.type_check(symtab, strict:)
+      var_names.each do |v|
+        type_error "reserved keyword" if ReservedWords::RESERVED.include?(v)
+      end
 
       add_symbol(symtab)
     end
@@ -3536,13 +3613,19 @@ module Idl
     def type(symtab) = decl_type(symtab)
 
     # @!macro type_check
-    def type_check(symtab, add_sym: true, strict:)
+    def type_check(symtab, add_sym: true, strict:, is_function_arg: false)
       type_name.type_check(symtab, strict:)
       dtype = type_name.type(symtab)
 
       type_error "No type '#{type_name.text_value}'" if dtype.nil?
 
-      type_error "Constants must be initialized at declaration" if id.text_value[0] == T.must(id.text_value[0]).upcase
+      # Constants must be initialized at declaration, unless they are function arguments
+      # (function arguments are initialized when the function is called)
+      if !is_function_arg && id.text_value[0] == T.must(id.text_value[0]).upcase
+        type_error "Constants must be initialized at declaration"
+      end
+
+      type_error "Cannot use reserved word '#{id.text_value}' as variable name" if ReservedWords::RESERVED.include?(id.text_value)
 
       unless ary_size.nil?
         T.must(ary_size).type_check(symtab, strict:)
@@ -4966,7 +5049,9 @@ module Idl
           end
         elsif op == "=="
           value_result = value_try do
-            return lhs.value(symtab) == rhs.value(symtab)
+            lhs_val = lhs.value(symtab)
+            rhs_val = rhs.value(symtab)
+            return lhs_val == rhs_val
           end
           value_else(value_result) do
             # even if we don't know the exact value of @lhs and @rhs, we can still
@@ -4980,7 +5065,9 @@ module Idl
           end
         elsif op == "!="
           value_result = value_try do
-            return lhs.value(symtab) != rhs.value(symtab)
+            lhs_val = lhs.value(symtab)
+            rhs_val = rhs.value(symtab)
+            return lhs_val != rhs_val
           end
           value_else(value_result) do
             # even if we don't know the exact value of @lhs and @rhs, we can still
@@ -4993,7 +5080,9 @@ module Idl
           end
         elsif op == "<="
           value_result = value_try do
-            return lhs.value(symtab) <= rhs.value(symtab)
+            lhs_val = lhs.value(symtab)
+            rhs_val = rhs.value(symtab)
+            return lhs_val <= rhs_val
           end
           value_else(value_result) do
             # even if we don't know the exact value of @lhs and @rhs, we can still
@@ -5007,7 +5096,9 @@ module Idl
           end
         elsif op == ">="
           value_result = value_try do
-            return lhs.value(symtab) >= rhs.value(symtab)
+            lhs_val = lhs.value(symtab)
+            rhs_val = rhs.value(symtab)
+            return lhs_val >= rhs_val
           end
           value_else(value_result) do
             # even if we don't know the exact value of @lhs and @rhs, we can still
@@ -5021,7 +5112,9 @@ module Idl
           end
         elsif op == "<"
           value_result = value_try do
-            return lhs.value(symtab) < rhs.value(symtab)
+            lhs_val = lhs.value(symtab)
+            rhs_val = rhs.value(symtab)
+            return lhs_val < rhs_val
           end
           value_else(value_result) do
             # even if we don't know the exact value of @lhs and @rhs, we can still
@@ -5035,7 +5128,9 @@ module Idl
           end
         elsif op == ">"
           value_result = value_try do
-            return lhs.value(symtab) > rhs.value(symtab)
+            lhs_val = lhs.value(symtab)
+            rhs_val = rhs.value(symtab)
+            return lhs_val > rhs_val
           end
           value_else(value_result) do
             # even if we don't know the exact value of @lhs and @rhs, we can still
@@ -5049,14 +5144,18 @@ module Idl
           end
         elsif op == "&"
           # if one side is zero, we don't need to know the other side
+          lhs_val = T.let(nil, T.nilable(Integer))
           value_result = value_try do
-            return 0 if lhs.value(symtab).zero?
+            lhs_val = lhs.value(symtab)
+            return 0 if lhs_val.zero?
           end
           # ok, try rhs
+          rhs_val = rhs.value(symtab)
+          return 0 if rhs_val.zero?
 
-          return 0 if rhs.value(symtab).zero?
-
-          lhs.value(symtab) & rhs.value(symtab)
+          # If we got here, both sides must have values
+          value_error "lhs value not known" if lhs_val.nil?
+          lhs_val & rhs_val
 
         elsif op == "|"
           # if one side is all ones, we don't need to know the other side
@@ -5065,16 +5164,25 @@ module Idl
           lhs_type = lhs.type(symtab)
           value_error("unknown width") if lhs_type.width == :unknown
 
+          rhs_val = T.let(nil, T.nilable(Integer))
           value_result = value_try do
             rhs_mask = ((1 << rhs_type.width) - 1)
-            return rhs_mask if (rhs.value(symtab) == rhs_mask) && (lhs_type.width <= rhs_type.width)
+            rhs_val = rhs.value(symtab)
+            return rhs_mask if (rhs_val == rhs_mask) && (lhs_type.width <= rhs_type.width)
           end
-          # ok, try rhs
+          # ok, try lhs
 
           lhs_mask = ((1 << lhs_type.width) - 1)
-          return lhs_mask if (lhs.value(symtab) == lhs_mask) && (rhs_type.width <= lhs_type.width)
+          lhs_val = T.let(nil, T.nilable(Integer))
+          value_try do
+            lhs_val = lhs.value(symtab)
+            return lhs_mask if (lhs_val == lhs_mask) && (rhs_type.width <= lhs_type.width)
+          end
 
-          lhs.value(symtab) | rhs.value(symtab)
+          # If we got here, we need both values
+          value_error "lhs value not known" if lhs_val.nil?
+          value_error "rhs value not known" if rhs_val.nil?
+          lhs_val | rhs_val
 
         else
           v =
@@ -5203,13 +5311,17 @@ module Idl
         node.type_check(symtab, strict:)
       end
 
-      unless element_nodes.all? { |e| e.type(symtab).equal_to?(element_nodes[0].type(symtab)) }
+      unless element_nodes.all? { |e| e.type(symtab).equal_to?(element_nodes.fetch(0).type(symtab)) }
         type_error "Array elements must be identical"
       end
     end
 
     def type(symtab)
-      Type.new(:array, width: element_nodes.size, sub_type: element_nodes[0].type(symtab))
+      if element_nodes.size > 0
+        Type.new(:array, width: element_nodes.size, sub_type: element_nodes.fetch(0).type(symtab))
+      else
+        Type.new(:array, width: element_nodes.size, sub_type: nil)
+      end
     end
 
     def value(symtab)
@@ -5771,7 +5883,7 @@ module Idl
     include Rvalue
 
     class Memo < T::Struct
-      prop :enum_def_type, T::Hash[SymbolTable, EnumerationType], default: {}
+      prop :enum_def_type, T::Hash[String, EnumerationType], default: {}
     end
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
@@ -5789,7 +5901,7 @@ module Idl
     end
 
     def enum_def_type(symtab)
-      @memo.enum_def_type[symtab] ||=
+      @memo.enum_def_type[symtab.name] ||=
         begin
           t = symtab.get(@enum_class_name)
           if t.nil? || t.kind != :enum
@@ -5868,6 +5980,7 @@ module Idl
     def initialize(input, interval, op, expression)
       super(input, interval, [expression])
 
+      raise "Bad op #{op.inspect}" unless ["~", "!", "-"].include?(op)
       @op = op
     end
 
@@ -6004,7 +6117,7 @@ module Idl
     include Rvalue
 
     class Memo < T::Struct
-      prop :type, T::Hash[SymbolTable, Type], default: {}
+      prop :type, T::Hash[String, Type], default: {}
     end
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
@@ -6070,7 +6183,8 @@ module Idl
 
     # @!macro type
     def type(symtab)
-      return @memo.type.fetch(symtab) if @memo.type.key?(symtab)
+      key = "#{symtab.name}/#{symtab.mxlen}"
+      return @memo.type.fetch(key) if @memo.type.key?(key)
       t =
         if true_expression.type(symtab).kind == :bits && false_expression.type(symtab).kind == :bits
           true_type = true_expression.type(symtab)
@@ -6119,7 +6233,7 @@ module Idl
       if condition.type(symtab).const? && true_expression.type(symtab).const? && false_expression.type(symtab).const?
         t.make_const!
       end
-      @memo.type[symtab] = t
+      @memo.type[key] = t
     end
 
     # @!macro value
@@ -6563,6 +6677,7 @@ module Idl
     end
 
     # @return [Array<Type>] List of actual return types
+    sig { params(symtab: SymbolTable).returns(T::Array[Type]) }
     def return_types(symtab)
       if return_value_nodes.empty?
         [Type.new(:void)]
@@ -6574,6 +6689,7 @@ module Idl
     end
 
     # @return [Type] The actual return type
+    sig { override.params(symtab: SymbolTable).returns(Type) }
     def return_type(symtab)
       types = return_types(symtab)
       if types.empty?
@@ -6581,7 +6697,7 @@ module Idl
       elsif types.size > 1
         Type.new(:tuple, tuple_types: types)
       else
-        types[0]
+        types.fetch(0)
       end
     end
 
@@ -6782,13 +6898,17 @@ module Idl
     end
   end
 
-  # @api private
-  class BuiltinTypeNameSyntaxNode < SyntaxNode
+  module TypeNameSyntaxNode
     def to_ast
-      if !respond_to?(:i)
-        BuiltinTypeNameAst.new(input, interval, elements[0].text_value, nil)
+      me = T.cast(self, SyntaxNode)
+      if !me.respond_to?(:i)
+        if ReservedWords::BUILTIN_TYPES.include?(me.text_value)
+          BuiltinTypeNameAst.new(me.input, me.interval, me.text_value, nil)
+        else
+          UserTypeNameAst.new(me.input, me.interval, me.text_value)
+        end
       else
-        BuiltinTypeNameAst.new(input, interval, elements[0].text_value, send(:i).to_ast)
+        BuiltinTypeNameAst.new(me.input, me.interval, me.elements.fetch(0).text_value, T.unsafe(self).i.to_ast)
       end
     end
   end
@@ -6806,6 +6926,10 @@ module Idl
   #  * U64 (Bits<64>)
   class BuiltinTypeNameAst < AstNode
 
+    class Memo < T::Struct
+      prop :bits_type, T.nilable(Type)
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = (@type_name == "bits") ? bits_expression.const_eval?(symtab) : true
 
@@ -6818,6 +6942,7 @@ module Idl
         super(input, interval, [bits_expression])
       end
       @type_name = type_name
+      @memo = Memo.new
     end
 
     # @!macro type_check
@@ -6838,21 +6963,22 @@ module Idl
       end
     end
 
-    def freeze_tree(symtab)
-      return if frozen?
-
-      if @type_name == "Bits"
-        # precalculate size if possible
+    sig { params(symtab: SymbolTable).returns(Type) }
+    def bits_type(symtab)
+      @memo.bits_type ||=
         begin
-          value_try do
-            @bits_type = Type.new(:bits, width: bits_expression.value(symtab))
+          # precalculate size if possible
+          begin
+            t = T.let(nil, T.nilable(Type))
+            value_result = value_try do
+              t = Type.new(:bits, width: bits_expression.value(symtab))
+            end
+            value_else(value_result) do
+              t = Type.new(:bits, width: :unknown, width_ast: bits_expression)
+            end
+            T.must(t)
           end
-        rescue TypeError
-          # ok, probably in a function template
         end
-        bits_expression&.freeze_tree(symtab)
-      end
-      freeze
     end
 
     # @!macro type
@@ -6876,14 +7002,7 @@ module Idl
       when "String"
         StringType
       when "Bits"
-        return @bits_type unless @bits_type.nil?
-
-        value_result = value_try do
-          return Type.new(:bits, width: bits_expression.value(symtab))
-        end
-        value_else(value_result) do
-          return Type.new(:bits, width: :unknown, width_ast: bits_expression)
-        end
+        bits_type(symtab)
       else
         internal_error "TODO: #{text_value}"
       end
@@ -7109,6 +7228,13 @@ module Idl
   class IntLiteralAst < AstNode
     include Rvalue
 
+    class Memo < T::Struct
+      prop :type, T.nilable(Type)
+      prop :width, T.nilable(T.any(Integer, Symbol))
+      prop :value, T.nilable(T.any(Integer, UnknownLiteral))
+      prop :unsigned_value, T.nilable(T.any(Integer, UnknownLiteral))
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
@@ -7116,18 +7242,10 @@ module Idl
     def initialize(input, interval, text)
       @text = text
       super(input, interval, EMPTY_ARRAY)
+      @memo = Memo.new
     end
 
     def text_value = @text
-
-    def freeze_tree(global_symtab)
-      return if frozen?
-
-      # initialize the cached objects
-      type(global_symtab)
-      value(global_symtab)
-      freeze
-    end
 
     # @!macro type_check
     def type_check(symtab, strict:)
@@ -7147,7 +7265,7 @@ module Idl
 
     # @!macro type
     def type(symtab)
-      return @type unless @type.nil?
+      return @memo.type unless @memo.type.nil?
 
       case text_value.delete("_")
       when /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
@@ -7163,7 +7281,7 @@ module Idl
 
         qualifiers = signed == "s" ? [:signed, :const] : [:const]
         qualifiers << :known unless T.must(value).include?("x")
-        @type =
+        @memo.type =
           if width == :unknown
             Type.new(:bits, width:, max_width: 64, qualifiers:)
           else
@@ -7174,20 +7292,20 @@ module Idl
         signed = ::Regexp.last_match(3)
 
         qualifiers = signed == "s" ? [:signed, :const, :known] : [:const, :known]
-        @type = Type.new(:bits, width: width(symtab), qualifiers:)
+        @memo.type = Type.new(:bits, width: width(symtab), qualifiers:)
       when /^([0-9]*)(s?)$/
         # basic decimal
         signed = ::Regexp.last_match(2)
 
         qualifiers = signed == "s" ? [:signed, :const, :known] : [:const, :known]
-        @type = Type.new(:bits, width: width(symtab), qualifiers:)
+        @memo.type = Type.new(:bits, width: width(symtab), qualifiers:)
       else
         internal_error "Unhandled int value '#{text_value}'"
       end
     end
 
     def width(symtab)
-      return @width unless @width.nil?
+      return @memo.width unless @memo.width.nil?
 
       text_value_no_underscores = text_value.delete("_")
 
@@ -7204,21 +7322,21 @@ module Idl
         else
           width = width.to_i
         end
-        @width = width
+        @memo.width = width
       when /^0([bdx]?)([0-9a-fA-F]*)(s?)$/
         signed = ::Regexp.last_match(3)
 
         width = signed == "s" ? value(symtab).bit_length + 1 : value(symtab).bit_length
         width = 1 if width.zero? # happens when the literal is '0'
 
-        @width = width
+        @memo.width = width
       when /^([0-9]*)(s?)$/
         signed = ::Regexp.last_match(3)
 
         width = signed == "s" ? value(symtab).bit_length + 1 : value(symtab).bit_length
         width = 1 if width.zero? # happens when the literal is '0'
 
-        @width = width
+        @memo.width = width
       else
         internal_error "No match on int literal"
       end
@@ -7226,7 +7344,7 @@ module Idl
 
     # @!macro value
     def value(symtab)
-      return @value unless @value.nil?
+      return @memo.value unless @memo.value.nil?
 
       if text_value.delete("_") =~ /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
         # verilog-style literal
@@ -7264,18 +7382,18 @@ module Idl
             end
           end
 
-        @value = v
+        @memo.value = v
       else
-        @value = unsigned_value
+        @memo.value = unsigned_value
       end
     end
 
 
     # @return [Integer] the unsigned value of this literal (i.e., treating it as unsigned even if the signed specifier is present)
     def unsigned_value
-      return @unsigned_value unless @unsigned_value.nil?
+      return @memo.unsigned_value unless @memo.unsigned_value.nil?
 
-      @unsigned_value =
+      @memo.unsigned_value =
         case text_value.delete("_")
         when /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
           # verilog-style literal
@@ -7354,15 +7472,6 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = text_value
-
-    sig { override.returns(String) }
-    def to_idl_verbose
-      if @width == :unknown
-        "MXLEN'#{@type.signed? ? 's' : ''}d#{unsigned_value}"
-      else
-        "#{@width}'#{@type.signed? ? 's' : ''}d#{unsigned_value}"
-      end
-    end
 
     sig { returns(T::Boolean) }
     def signed?
@@ -7457,11 +7566,10 @@ module Idl
 
   class FunctionCallExpressionSyntaxNode < SyntaxNode
     def to_ast
-      targs = send(:t).empty? ? EMPTY_ARRAY : [send(:t).targs.first.to_ast] + send(:t).targs.rest.elements.map { |e| e.arg.to_ast }
       args = []
       args << send(:function_arg_list).first.to_ast unless send(:function_arg_list).first.empty?
       args += send(:function_arg_list).rest.elements.map { |e| e.expression.to_ast }
-      FunctionCallExpressionAst.new(input, interval, send(:function_name).text_value, targs, args)
+      FunctionCallExpressionAst.new(input, interval, send(:function_name).text_value, args)
     end
   end
 
@@ -7472,58 +7580,23 @@ module Idl
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab)
-      targs.all? { |targ| targ.const_eval?(symtab) } && \
-        args.all? { |arg| arg.const_eval?(symtab) } && \
+      @children.all? { |arg| arg.const_eval?(symtab) } && \
         func_type(symtab).func_def_ast.const_eval?(symtab)
     end
 
-    def targs = children[0...@num_targs]
-    def args = children[@num_targs..]
-
-    def initialize(input, interval, function_name, targs, args)
-      raise ArgumentError, "targs should be an array" unless targs.is_a?(Array)
+    def initialize(input, interval, function_name, args)
       raise ArgumentError, "args should be an array" unless args.is_a?(Array)
 
-      super(input, interval, targs + args)
-      @num_targs = targs.size
+      super(input, interval, args)
 
       @name = function_name
       @reachable_exceptions_func_call_cache = {}
       @func_def_type_cache = {}
     end
 
-    # @return [Boolean] whether or not the function call has a template argument
-    def template?
-      !targs.empty?
-    end
-
-    # @return [Array<AstNode>] Template argument nodes
-    def template_arg_nodes
-      targs
-    end
-
-    def template_values(symtab, unknown_ok: false)
-      return EMPTY_ARRAY unless template?
-
-      if unknown_ok
-        template_arg_nodes.map do |e|
-          val = T.let(nil, T.nilable(T.any(Integer, Symbol)))
-          value_result = value_try do
-            val = e.value(symtab)
-          end
-          value_else(value_result) do
-            val = :unknown
-          end
-          val
-        end
-      else
-        template_arg_nodes.map { |e| e.value(symtab) }
-      end
-    end
-
     # @return [Array<AstNode>] Function argument nodes
     def arg_nodes
-      args
+      @children
     end
 
     def func_type(symtab)
@@ -7542,34 +7615,10 @@ module Idl
 
     # @!macro type_check
     def type_check(symtab, strict:)
+      type_error "Cannot use reserved word '#{@name}' as function name" if ReservedWords::RESERVED.include?(@name)
       level = symtab.levels
 
-      tvals = template_values(symtab, unknown_ok: true)
-
       func_def_type = func_type(symtab)
-
-      type_error "Template arguments provided in call to non-template function #{@name}" if template? && func_def_type.template_names.empty?
-
-      type_error "Missing template arguments in call to #{@name}" if !template? && !func_def_type.template_names.empty?
-
-      if template?
-        num_targs = template_arg_nodes.size
-        if func_def_type.template_names.size != num_targs
-          type_error "Wrong number of template arguments (expecting #{func_def_type.template_names.size}, got #{num_targs})"
-        end
-
-        template_arg_nodes.each_with_index do |t, idx|
-          t.type_check(symtab, strict:)
-          unless t.type(symtab).convertable_to?(func_def_type.template_types(symtab)[idx])
-            type_error "Template argument #{idx + 1} has wrong type"
-          end
-        end
-
-        func_def_type.type_check_call(tvals, arg_nodes, symtab, self)
-      else
-        # no need to type check this function; it will be done on its own
-        # func_def_type.type_check_call([], arg_nodes, symtab, self)
-      end
 
       num_args = arg_nodes.size
       if func_def_type.num_args != num_args
@@ -7579,12 +7628,18 @@ module Idl
         a.type_check(symtab, strict:)
       end
       arg_nodes.each_with_index do |a, idx|
-        unless a.type(symtab).convertable_to?(func_def_type.argument_type(idx, tvals, arg_nodes, symtab, self))
-          type_error "Wrong type for argument number #{idx + 1}. Expecting #{func_def_type.argument_type(idx, tvals, arg_nodes, symtab, self)}, got #{a.type(symtab)}"
+        unless a.type(symtab).convertable_to?(func_def_type.argument_type(idx, arg_nodes, symtab, self))
+          type_error "Wrong type for argument number #{idx + 1}. Expecting #{func_def_type.argument_type(idx, [], arg_nodes, symtab, self)}, got #{a.type(symtab)}"
+        end
+        arg_name = func_def_type.argument_nodes.fetch(idx).name
+        if arg_name[0].upcase == arg_name[0]
+          unless a.type(symtab).const?
+            type_error "You cannot pass a mutable expression to '#{arg_name}' const argument of #{name}"
+          end
         end
       end
 
-      if func_def_type.return_type(tvals, arg_nodes, self).nil?
+      if func_def_type.return_type(arg_nodes, self).nil?
         internal_error "No type determined for function"
       end
 
@@ -7595,7 +7650,7 @@ module Idl
     def type(symtab)
       return ConstBoolType if name == "implemented?" || name == "implemented_version?" || name == "implemented_csr?"
 
-      rtype = func_type(symtab).return_type(template_values(symtab, unknown_ok: true), arg_nodes, self)
+      rtype = func_type(symtab).return_type(arg_nodes, self)
       rtype = rtype.make_const if arg_nodes.all? { |a| a.type(symtab).const? } && func_type(symtab).func_def_ast.const_eval?(symtab)
       rtype
     end
@@ -7666,16 +7721,7 @@ module Idl
         value_error "value of builtin functions aren't knowable"
       end
 
-      template_values =
-        if !template?
-          EMPTY_ARRAY
-        else
-          template_arg_nodes.map do |targ|
-            targ.value(symtab)
-          end
-        end
-
-      func_def_type.return_value(template_values, arg_nodes, symtab, self)
+      func_def_type.return_value(arg_nodes, symtab, self)
     end
 
     def execute(symtab) = value(symtab)
@@ -7687,11 +7733,7 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl
-      if template?
-        "#{name}<#{template_arg_nodes.map(&:to_idl).join(',')}>(#{arg_nodes.map(&:to_idl).join(',')})"
-      else
-        "#{name}(#{arg_nodes.map(&:to_idl).join(',')})"
-      end
+      "#{name}(#{arg_nodes.map(&:to_idl).join(',')})"
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -7700,7 +7742,6 @@ module Idl
         "kind" => "funcall_expr",
         "func" => name,
         "args" => arg_nodes.map(&:to_h),
-        "template_args" => template? ? template_arg_nodes.map(&:to_h) : nil,
         "source" => source_yaml
       }
     end
@@ -7714,16 +7755,8 @@ module Idl
       FunctionCallExpressionAst.new(
         input, interval,
         yaml.fetch("func"),
-        yaml.fetch("template_args").nil? ? [] : yaml.fetch("template_args").map { |t| AstNode.from_h(t, source_mapper) },
         yaml.fetch("args").map { |a| AstNode.from_h(a, source_mapper) }
       )
-    end
-  end
-
-
-  class UserTypeNameSyntaxNode < SyntaxNode
-    def to_ast
-      UserTypeNameAst.new(input, interval, input[interval])
     end
   end
 
@@ -7741,6 +7774,7 @@ module Idl
 
     # @!macro type_check
     def type_check(symtab, strict:)
+      type_error "Cannot use reserved word '#{text_value}' as user-defined type name" if ReservedWords::RESERVED.include?(text_value)
       type = type(symtab)
 
       type_error "#{text_value} is not a type" unless type.is_a?(Type)
@@ -7852,7 +7886,7 @@ module Idl
 
     # @!macro return_value
     #
-    # @note arguments and template arguments must be put on the symtab before calling
+    # @note arguments must be put on the symtab before calling
     def return_value(symtab)
       internal_error "Function bodies should be at global + 1 scope" unless symtab.levels == 2
 
@@ -7986,12 +8020,11 @@ module Idl
         input,
         interval,
         send(:function_name).text_value,
-        (!respond_to?(:targs) || send(:targs).empty?) ? [] : [send(:targs).first.to_ast] + send(:targs).rest.elements.map { |r| r.single_declaration.to_ast },
         if send(:ret).empty?
           []
-else
-  [send(:ret).first.to_ast] + (send(:ret).respond_to?(:rest) ? send(:ret).rest.elements.map { |r| r.type_name.to_ast } : [])
-end,
+        else
+          [send(:ret).first.to_ast] + (send(:ret).respond_to?(:rest) ? send(:ret).rest.elements.map { |r| r.type_name.to_ast } : [])
+        end,
         send(:args).empty? ? [] : [send(:args).first.to_ast] + send(:args).rest.elements.map { |r| r.single_declaration.to_ast },
         send(:desc).text_value,
         respond_to?(:type) ? send(:type).text_value.strip.to_sym : :normal,
@@ -8004,6 +8037,10 @@ end,
     include Declaration
 
     attr_reader :return_type_nodes
+
+    class Memo < T::Struct
+      prop :arguments, T.nilable(T::Array[T::Array[T.any(Type, String)]])
+    end
 
     def <=>(other)
       return nil unless other.is_a?(FunctionDefAst)
@@ -8018,21 +8055,19 @@ end,
     # @param input [String] The source code
     # @param interval [Range] The range in the source code for this function definition
     # @param name [String] The name of the function
-    # @param targs [Array<AstNode>] Template arguments
     # @param return_types [Array<AstNode>] Return types
     # @param arguments [Array<AstNode>] Arguments
     # @param desc [String] Description
     # @param type [:normal, :builtin, :generated, :external] Type of function
     # @param body [AstNode,nil] Body, unless the function is builtin
-    def initialize(input, interval, name, targs, return_types, arguments, desc, type, body)
+    def initialize(input, interval, name, return_types, arguments, desc, type, body)
       if body.nil?
-        super(input, interval, targs + return_types + arguments)
+        super(input, interval, return_types + arguments)
       else
-        super(input, interval, targs + return_types + arguments + [body])
+        super(input, interval, return_types + arguments + [body])
       end
 
       @name = name
-      @targs = targs
       @return_type_nodes = return_types
       @argument_nodes = arguments
       @desc = desc
@@ -8042,31 +8077,14 @@ end,
       @external = type == :external
 
       @cached_return_type = {}
-      @reachable_functions_cache ||= {}
+      @memo = Memo.new
     end
 
-    attr_reader :reachable_functions_cache, :argument_nodes
-
-    # @!macro freeze_tree
-    def freeze_tree(global_symtab)
-      return if frozen?
-
-      unless templated?
-        arguments(global_symtab)
-      end
-
-      @children.each { |child| child.freeze_tree(global_symtab) }
-      freeze
-    end
+    attr_reader :argument_nodes
 
     # @return [String] Asciidoc formatted function description
     def description
       unindent(@desc)
-    end
-
-    # @return [Boolean] whether or not the function is templated
-    def templated?
-      !@targs.empty?
     end
 
     # @return [Integer] The number of arguments to the function
@@ -8076,13 +8094,7 @@ end,
 
     # @return [Array<Array(Type,String)>] containing the argument types and names, in order
     def arguments(symtab)
-      return @arglist unless @arglist.nil?
-
-      if templated?
-        template_names.each do |tname|
-          internal_error "Template values missing in symtab" unless symtab.get(tname)
-        end
-      end
+      return @memo.arguments unless @memo.arguments.nil?
 
       return EMPTY_ARRAY if @argument_nodes.empty?
 
@@ -8094,25 +8106,24 @@ end,
 
         atype = atype.ref_type if atype.kind == :enum
 
+        atype = atype.make_const if a.id.text_value[0].upcase == a.id.text_value[0]
         arglist << [atype, a.name]
       end
 
       arglist.freeze
-      unless templated?
-        @arglist = arglist
-      end
-      arglist
+      @memo.arguments = arglist
     end
 
     # returns an array of arguments, as a string
-    # function (or template instance) does not need to be resolved
+    # function does not need to be resolved
     def arguments_list_str
       @argument_nodes.map(&:text_value)
     end
 
     # return the return type, which may be a tuple of multiple types
     def return_type(symtab)
-      cached = @cached_return_type[symtab.name] # only chaced for non-template functions
+      cache_key = "#{symtab.name}/#{symtab.mxlen}"
+      cached = @cached_return_type[cache_key] # only cached for non-template functions
       return cached unless cached.nil?
 
       unless symtab.levels == 2
@@ -8120,60 +8131,35 @@ end,
       end
 
       if @return_type_nodes.empty?
-        @cached_return_type[symtab.name] = VoidType
+        @cached_return_type[cache_key] = VoidType
         return VoidType
       end
 
       rtype = T.let(nil, T.nilable(Type))
 
-      unless templated?
-        # with no templates, the return type does not change
-        rtype =
-          if @return_type_nodes.size == 1
-            rtype = @return_type_nodes[0].type(symtab)
-            rtype = rtype.ref_type if rtype.kind == :enum
-            rtype
-          else
-            tuple_types = @return_type_nodes.map do |r|
-              rtype = r.type(symtab)
-              rtype = rtype.ref_type if rtype.kind == :enum
-              rtype
-            end
 
-            Type.new(:tuple, tuple_types:)
-          end
-
-        raise "??????" if rtype.nil?
-
-        return @cached_return_type[symtab.name] = rtype
-      end
-
-      if templated?
-        template_names.each do |tname|
-          internal_error "Template values missing" unless symtab.get(tname)
-        end
-      end
-
-
-
-      if @return_type_nodes.size == 1
-        rtype = @return_type_nodes[0].type(symtab)
-        rtype = rtype.ref_type if rtype.kind == :enum
-        rtype
-      else
-
-        tuple_types = @return_type_nodes.map do |r|
-          rtype = r.type(symtab)
+      rtype =
+        if @return_type_nodes.size == 1
+          rtype = @return_type_nodes[0].type(symtab)
           rtype = rtype.ref_type if rtype.kind == :enum
           rtype
+        else
+          tuple_types = @return_type_nodes.map do |r|
+            rtype = r.type(symtab)
+            rtype = rtype.ref_type if rtype.kind == :enum
+            rtype
+          end
+
+          Type.new(:tuple, tuple_types:)
         end
 
-        Type.new(:tuple, tuple_types:)
-      end
+      raise "??????" if rtype.nil?
+
+      return @cached_return_type[symtab.name] = rtype
     end
 
     # @return [Array<String>] return type strings
-    # function (or template instance) does not need to be resolved
+    # function does not need to be resolved
     def return_type_list_str
       if @return_type_nodes.empty?
         ["void"]
@@ -8189,14 +8175,9 @@ end,
     def const_eval?(symtab)
       return false if builtin? || generated?
 
-      # set up the template args (if present) and dummy const args, and see if the type comes out
-      # const
+      # set up dummy const args, and see if the type comes out is const
       symtab = symtab.global_clone
       symtab.push(self)
-
-      template_names.each_with_index do |tname, index|
-        symtab.add(tname, Var.new(tname, template_types(symtab)[index], template_index: index, function_name: name))
-      end
 
       arguments(symtab).each do |arg_type, arg_name|
         # make the argument constant for this evaluation
@@ -8219,46 +8200,7 @@ end,
       @name
     end
 
-    # @param [Array<Integer>] template values to apply
-    def type_check_template_instance(symtab, strict:)
-      internal_error "Function definitions should be at global + 1 scope" unless symtab.levels == 2
-
-      internal_error "Not a template function" unless templated?
-
-      template_names.each do |tname|
-        internal_error "Template values missing" unless symtab.get(tname)
-      end
-
-      type_check_return(symtab, strict:)
-      type_check_args(symtab, strict:)
-      @argument_nodes.each { |a| symtab.add(a.name, Var.new(a.name, a.type(symtab))) }
-      type_check_body(symtab, strict:)
-    end
-
-    # we do lazy type checking of the function body so that we never check
-    # uncalled functions, which avoids dealing with mentions of CSRs that
-    # may not exist in a given implementation
-    def type_check_from_call(symtab, strict:)
-      internal_error "Function definitions should be at global + 1 scope" unless symtab.levels == 2
-
-      type_check_return(symtab, strict:)
-      type_check_args(symtab, strict:)
-      # @argument_nodes.each do |a|
-      #   value_result = value_try do
-      #     symtab.add(a.name, Var.new(a.name, a.type(symtab), a.value(symtab)))
-      #   end
-      #   value_else(value_result) do
-      #     symtab.add(a.name, Var.new(a.name, a.type(symtab)))
-      #   end
-      # end
-      type_check_body(symtab, strict:)
-    end
-
-    def apply_template_and_arg_syms(symtab)
-      template_names.each_with_index do |tname, index|
-        symtab.add(tname, Var.new(tname, template_types(symtab)[index], template_index: index, function_name: name))
-      end
-
+    def apply_arg_syms(symtab)
       arguments(symtab).each do |arg_type, arg_name|
         symtab.add(arg_name, Var.new(arg_name, arg_type))
       end
@@ -8268,32 +8210,23 @@ end,
     def type_check(symtab, strict:)
       internal_error "Functions must be declared at global scope (at #{symtab.levels})" unless symtab.levels == 1
 
-      type_check_targs(symtab)
-
       symtab = symtab.deep_clone
       symtab.push(self)
-      template_names.each_with_index do |tname, index|
-        symtab.add(tname, Var.new(tname, template_types(symtab)[index], template_index: index))
-      end
 
       type_check_return(symtab, strict:)
 
-      arguments(symtab).each do |arg_type, arg_name|
-        symtab.add(arg_name, Var.new(arg_name, arg_type))
-      end
+      apply_arg_syms(symtab)
       type_check_args(symtab, strict:)
 
+      type_check_body(symtab, strict:)
 
-      # template functions are checked as they are called
-      unless templated?
-        type_check_body(symtab, strict:)
-      end
       symtab.pop
     end
 
     # @!macro add_symbol
     def add_symbol(symtab)
       internal_error "Functions should be declared at global scope" unless symtab.levels == 1
+      type_error "Cannot use reserved word '#{name}' as function name" if ReservedWords::RESERVED.include?(name)
 
       # now add the function in global scope
       def_type = FunctionType.new(
@@ -8305,37 +8238,12 @@ end,
       symtab.add!(name, def_type)
     end
 
-    # @return [Array<String>] Template argument names, in order
-    def template_names
-      @targs.map(&:name)
-    end
-
-    # @param symtab [SymbolTable] The context for evaluation
-    # @return [Array<Type>] Template argument types, in order
-    def template_types(symtab)
-      return EMPTY_ARRAY unless templated?
-
-      ttypes = T.let([], T::Array[Type])
-      @targs.each do |a|
-        ttype = a.type(symtab)
-        ttype = ttype.ref_type if ttype.kind == :enum
-        ttypes << ttype.make_const
-        T.must(ttypes.last).qualify(:template_var)
-      end
-      ttypes
-    end
-
-    def type_check_targs(symtab)
-      @targs.each { |t| type_error "Template arguments must be uppercase" unless t.text_value[0] == t.text_value[0].upcase }
-      @targs.each { |t| type_error "Template types must be integral" unless t.type(symtab).integral? }
-    end
-
     def type_check_return(symtab, strict:)
       @return_type_nodes.each { |r| r.type_check(symtab, strict:) }
     end
 
     def type_check_args(symtab, strict:)
-      @argument_nodes.each { |a| a.type_check(symtab, add_sym: false, strict:) }
+      @argument_nodes.each { |a| a.type_check(symtab, add_sym: false, strict:, is_function_arg: true) }
     end
 
     def type_check_body(symtab, strict:)
@@ -8378,13 +8286,6 @@ end,
     def to_idl
       qualifier = qualifier_str
 
-      targs_idl =
-        if templated?
-          "template #{@targs.map(&:to_idl).join(', ')}"
-        else
-          ""
-        end
-
       returns_idl =
         if return_type_nodes.empty?
           ""
@@ -8408,7 +8309,6 @@ end,
 
       <<~IDL
         #{qualifier} function #{name} {
-          #{targs_idl}
           #{returns_idl}
           #{args_idl}
           description { #{description} }
@@ -8423,7 +8323,6 @@ end,
       "name" => name,
       "qualifier" => qualifier_str.empty? ? "normal" : qualifier_str,
       "return_types" => return_type_nodes.map(&:to_h),
-      "template_arguments" => templated? ? @targs.map(&:to_h) : nil,
       "arguments" => @argument_nodes.map(&:to_h),
       "description" => @desc,
       "body" => @body&.to_h,
@@ -8439,7 +8338,6 @@ end,
       FunctionDefAst.new(
         input, interval,
         yaml.fetch("name"),
-        yaml.fetch("template_arguments").nil? ? [] : yaml.fetch("template_arguments").map { |t| AstNode.from_h(t, source_mapper) },
         yaml.fetch("return_types").map { |r| AstNode.from_h(r, source_mapper) },
         yaml.fetch("arguments").map { |a| AstNode.from_h(a, source_mapper) },
         yaml.fetch("description"),
@@ -9361,15 +9259,6 @@ end,
 
       @csr_name = csr_name
       @memo = Memo.new
-    end
-
-    def freeze_tree(symtab)
-      return if frozen?
-
-      type_error "CSR '#{@csr_name}' is not defined" unless symtab.csr?(@csr_name)
-
-      @children.each { |child| child.freeze_tree(symtab) }
-      freeze
     end
 
     # @!macro type

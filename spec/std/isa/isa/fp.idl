@@ -131,15 +131,14 @@ function mark_f_state_dirty {
 }
 
 function nan_box {
-  template U32 FROM_SIZE, U32 TO_SIZE
-  returns Bits<TO_SIZE>
-  arguments Bits<FROM_SIZE> from_value
+  returns XReg
+  arguments U32 FROM_SIZE, U32 TO_SIZE, XReg from_value
   description {
     Produces a properly NaN-boxed floating-point value from a floating-point value
     of smaller size by adding all 1's to the upper bits.
   }
   body {
-    assert(FROM_SIZE < TO_SIZE, "Bad template arguments; FROM_SIZE must be less than TO_SIZE");
+    assert(FROM_SIZE < TO_SIZE, "Bad arguments; FROM_SIZE must be less than TO_SIZE");
 
     return {{TO_SIZE - FROM_SIZE{1'b1}}, from_value};
   }
@@ -566,7 +565,7 @@ function f32_muladd {
         expZ = expProd;
         sig64Z = sigProd - softfloat_shiftRightJam64(sig64C, expDiff);
       }
-      Bits<8> shiftDist = count_leading_zeros<64>(sig64Z) - 1;
+      Bits<8> shiftDist = count_leading_zeros(64, sig64Z) - 1;
       expZ = expZ - shiftDist;
       shiftDist = shiftDist - 8'h20;
       if ($signed(shiftDist) < 0s) {
@@ -1014,7 +1013,7 @@ function i64_to_f32 {
     }
 
     # count_leading_zeros<64> returns the number of leading zeros
-    Bits<8> shiftDist = count_leading_zeros<64>(absA) - 40;
+    Bits<8> shiftDist = count_leading_zeros(64, absA) - 40;
     Bits<32> sig;
 
     if ($signed(shiftDist) >= 0s) {
@@ -1046,7 +1045,7 @@ function ui64_to_f32 {
     Translated from Berkeley Softfloat ui64_to_f32.
   }
   body {
-    Bits<8> shiftDist = count_leading_zeros<64>(a) - 40;
+    Bits<8> shiftDist = count_leading_zeros(64, a) - 40;
     Bits<32> sig;
 
     if (0s <= $signed(shiftDist)) {
@@ -1153,7 +1152,7 @@ function softfloat_normSubnormalF16Sig {
     normalize subnormal half-precision value
   }
   body {
-    Bits<8> shift_dist = count_leading_zeros<16>(hp_value);
+    Bits<8> shift_dist = count_leading_zeros(16, hp_value);
     return 1 - shift_dist, hp_value << shift_dist;
   }
 }
@@ -1221,7 +1220,7 @@ function softfloat_normRoundPackToF32 {
     Normalize, round, and pack into a 32-bit floating point value
   }
   body {
-    Bits<8> shiftDist = count_leading_zeros<32>(sig) - 1;
+    Bits<8> shiftDist = count_leading_zeros(32, sig) - 1;
     exp = exp - shiftDist;
     if ((7 <= shiftDist) && (exp < 0xFD)) {
       return packToF32UI(sign, (sig != 0) ? exp : 0, sig << (shiftDist - 7));
@@ -1497,7 +1496,7 @@ function softfloat_subMagsF32 {
         sigDiff = -32'sh1 * sigDiff;
       }
 
-      shiftDist = count_leading_zeros<32>(sigDiff) - 8;
+      shiftDist = count_leading_zeros(32, sigDiff) - 8;
       expZ = expA - shiftDist;
 
       if (expZ < 0) {
@@ -1512,7 +1511,7 @@ function softfloat_subMagsF32 {
       signZ = signF32UI(a);
       sigA = sigA << 7;
       sigB = sigB << 7;
-      if ($signed(expDiff) < 0) {
+      if ($signed(expDiff) < 0s) {
         signZ = ~signZ;
         if (expB == 0xFF) {
           if (sigB != 0) {
@@ -1750,7 +1749,7 @@ function softfloat_normRoundPackToF32_no_flag {
     No flags to be set
   }
   body {
-    Bits<8> shiftDist = count_leading_zeros<32>(sig) - 1;
+    Bits<8> shiftDist = count_leading_zeros(32, sig) - 1;
     exp = exp - shiftDist;
     if ((7 <= shiftDist) && (exp < 0xFD)) {
       return packToF32UI(sign, (sig != 0) ? exp : 0, sig << (shiftDist - 7));
@@ -1907,7 +1906,7 @@ function softfloat_normSubnormalF32Sig {
     at bit 23.
   }
   body {
-    Bits<8> shiftDist = count_leading_zeros<32>(sig) - 8;
+    Bits<8> shiftDist = count_leading_zeros(32, sig) - 8;
     ExpAndSig ret;
     ret.exp = 1 - shiftDist;
     ret.sig = sig << shiftDist;

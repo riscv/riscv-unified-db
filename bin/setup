@@ -46,7 +46,7 @@ source "${ROOT}/bin/.functions.sh"
 CONTAINER_TYPE=$(get_container_type)
 
 if [ "${CONTAINER_TYPE}" != "docker" ] && [ "${CONTAINER_TYPE}" != "podman" ] && [ "${CONTAINER_TYPE}" != "native" ]; then
-  echo "BAD CONTAINER TYPE: ${CONTAINER_TYPE}"
+  echo "BAD CONTAINER TYPE: ${CONTAINER_TYPE}" 1>&2
 fi
 
 if [ ! -f "${ROOT}/.container-type" ]; then
@@ -59,7 +59,7 @@ NEEDS_CLOBBER=false
 if [ ! -v IN_UDB_CONTAINER ] && [ -f "${ROOT}/.cache/previous-container-type" ]; then
   PREVIOUS_CONTAINER_TYPE=$(cat "${ROOT}/.cache/previous-container-type")
   if [ "${PREVIOUS_CONTAINER_TYPE}" != "${CONTAINER_TYPE}" ]; then
-    echo "Container type changed from ${PREVIOUS_CONTAINER_TYPE} to ${CONTAINER_TYPE}"
+    echo "Container type changed from ${PREVIOUS_CONTAINER_TYPE} to ${CONTAINER_TYPE}" 1>&2
     NEEDS_CLOBBER=true
   fi
 fi
@@ -67,13 +67,13 @@ fi
 if [ ! -v IN_UDB_CONTAINER ] && [ -f "${ROOT}/.cache/previous-container-tag" ]; then
   PREVIOUS_CONTAINER_TAG=$(cat "${ROOT}/.cache/previous-container-tag")
   if [ "${PREVIOUS_CONTAINER_TAG}" != "${CONTAINER_TAG}" ]; then
-    echo "Container tag changed from ${PREVIOUS_CONTAINER_TAG} to ${CONTAINER_TAG}"
+    echo "Container tag changed from ${PREVIOUS_CONTAINER_TAG} to ${CONTAINER_TAG}" 1>&2
     NEEDS_CLOBBER=true
   fi
 fi
 
 if [ "${NEEDS_CLOBBER}" = true ]; then
-  echo "Running clobber due to container changes..."
+  echo "Running clobber due to container changes..." 1>&2
   ./do clobber
 fi
 
@@ -84,15 +84,15 @@ if [ ! -v IN_UDB_CONTAINER ]; then
   echo "${CONTAINER_TAG}" > "${ROOT}/.cache/previous-container-tag"
 fi
 
-echo "Using ${CONTAINER_TYPE} environment"
+echo "Using ${CONTAINER_TYPE} environment" 1>&2
 
 if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
     if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" --format table | grep -q udb ; then
-        echo "Image not found locally. Attempting to pull from registry..."
+        echo "Image not found locally. Attempting to pull from registry..." 1>&2
         if ${CONTAINER_TYPE} pull "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" 2>/dev/null; then
-            echo "Successfully pulled image from registry."
+            echo "Successfully pulled image from registry." 1>&2
         else
-            echo "Could not pull image from registry. Building locally..."
+            echo "Could not pull image from registry. Building locally..." 1>&2
             build_container "${ROOT}"
         fi
     fi
@@ -207,12 +207,12 @@ setup_z3() {
   fi
 
 
-  echo "Downloading Z3 (${z3_version}, ${cpu}) from GitHub Releases..."
+  echo "Downloading Z3 (${z3_version}, ${cpu}) from GitHub Releases..." 1>&2
   mkdir -p "${dest_dir}"
   curl -o "${dest_file}" -L https://github.com/riscv/riscv-unified-db/releases/download/"${z3_version}"/libz3-${cpu}.so
   curl -o "${checksum_file}" -L https://github.com/riscv/riscv-unified-db/releases/download/"${z3_version}"/libz3-${cpu}.checksum
 
-  echo "  Verifying checksum..."
+  echo "  Verifying checksum..." 1>&2
   $RUN ruby -e "
     require 'digest'
     checksum_content = File.read('${checksum_file}').strip
@@ -228,7 +228,7 @@ setup_z3() {
     puts '  Checksum verified successfully.'
   " || exit 1
 
-  echo "  Saved to ${dest_file}"
+  echo "  Saved to ${dest_file}" 1>&2
 }
 
 setup_z3

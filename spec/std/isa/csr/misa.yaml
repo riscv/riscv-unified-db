@@ -109,8 +109,6 @@ fields:
 
       # fall-through; write the intended value
       return csr_value.F;
-    legal?(csr_value): |
-      return !(csr_value.F == 0 && csr_value.D == 1);
   G:
     location: 6
     description: |
@@ -195,8 +193,6 @@ fields:
 
       # fall-through; write the intended value
       return csr_value.Q;
-    legal?(csr_value): |
-      return !(csr_value.Q == 1 && csr_value.D == 0);
   S:
     location: 18
     description: |

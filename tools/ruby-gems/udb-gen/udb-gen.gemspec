@@ -16,14 +16,14 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.files       = Dir["lib/**/*.rb", "templates/*.erb", "LICENSE"]
+  s.files       = Dir["lib/**/*.rb", "lib/**/*.rake", "templates/**/*.erb", "templates/**/*.js", "LICENSE"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
     "homepage_uri" => "https://github.com/riscv/riscv-unified-db",
     "mailing_list_uri" => "https://lists.riscv.org/g/tech-unifieddb",
     "bug_tracker_uri" => "https://github.com/riscv/riscv-unified-db/issues"
   }
-  s.required_ruby_version = "~> 3.2"
+  s.required_ruby_version = [">= 3.2", "< 4.0"]
 
   s.require_paths = ["lib"]
   s.bindir = "bin"

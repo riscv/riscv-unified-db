@@ -23,6 +23,8 @@ do_update_gems() {
   $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
   rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
   $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile.lock
+  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
   rm "${UDB_ROOT}"/Gemfile.lock
   $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
 

@@ -31,7 +31,7 @@ access:
 operation(): |
   XReg virtual_address = X[xs1] + $signed(imm);
 
-  write_memory<16>(virtual_address, X[xs2][15:0], $encoding);
+  write_memory(16, virtual_address, X[xs2][15:0], $encoding);
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>

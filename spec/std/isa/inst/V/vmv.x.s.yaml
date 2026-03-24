@@ -6,9 +6,13 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmv.x.s
-long_name: No synopsis available
+long_name: Vector move scalar to integer register
 description: |
-  No description available.
+  Copies the first element of the source vector register vs2 to the
+  destination integer register xd, sign-extending to XLEN bits if SEW < XLEN.
+
+  This is a scalar read instruction that always reads element 0 of vs2,
+  regardless of vstart. The vstart CSR is reset to 0 after execution.
 definedBy:
   extension:
     name: Zvl32b
@@ -27,6 +31,12 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  VectorState state = vector_state();
+
+  # vmv.x.s copies element 0 of vs2 to xd, sign-extending to XLEN
+  X[xd] = $signed(v[vs2][state.sew-1:0]);
+
+  CSR[vstart].VALUE = 0;
 
 # SPDX-SnippetBegin
 # SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>

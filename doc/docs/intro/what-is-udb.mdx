@@ -1,0 +1,99 @@
+---
+sidebar_position: 1
+title: What is UDB?
+---
+
+The **RISC-V Unified Database (UDB)** is a machine-readable database of the RISC-V ISA specification and a suite of tools for working with that data. Think of it as the "source code" for the RISC-V architecture — structured, validated, and ready to generate whatever you need.
+
+UDB eliminates manual transcription and interpretation errors by letting you query instruction encodings, generate CSR headers, produce documentation, and build tooling directly from the database. Chip designers, compiler developers, and spec writers can all work from the same validated source, ensuring consistency across the entire RISC-V ecosystem.
+
+## The Database
+
+At the heart of UDB is a structured database containing instructions, CSRs, extensions, profiles, and architectural definitions for the RISC-V ISA.
+
+UDB is a relational database, but it doesn't use SQL like most. Rather, UDB stores information in plain-text YAML files. Using relational database terminology, UDB stores _tables_ in folders like `inst`, `ext`, _etc._ and _rows_ as YAML files in those folders.
+
+```
+📁 spec/std/isa/inst/    →    ▤ Table: instructions
+  📄 add.yaml            →    📋 Row (record)
+  📄 sub.yaml            →    📋 Row (record)
+  📄 mul.yaml            →    📋 Row (record)
+
+📁 spec/std/isa/ext/     →    ▤ Table: extensions
+  📄 M.yaml              →    📋 Row (record)
+  📄 A.yaml              →    📋 Row (record)
+```
+
+The YAML files follow a [strict data schema](/docs/schemas/overview) defined using [JSON Schema](https://json-schema.org/).
+
+## Configuration
+
+UDB contains the **entire** RISC-V specification — all ISAs, all extensions, all privilege modes. But your project doesn't need everything. Maybe you're building an RV32I core with just the M extension, or an RV64GC application processor.
+
+**Configuration lets you select what matters:**
+
+- Choose your base ISA (RV32I, RV64I, etc.)
+- Select extensions (M, A, F, D, C, and many more)
+- Pick privilege modes (M-mode only, M+S, M+S+U)
+- Define implementation parameters (XLEN, MXLEN, address space size)
+- Use standard profiles or create custom ones
+
+UDB tools can then generate artifacts tailored to your exact configuration — headers with only your CSRs, documentation for only your instructions, validators that check only your requirements.
+
+See the [Configuration documentation](/docs/configuration/overview) to learn how to define and use configurations.
+
+## Customization
+
+The RISC-V specification is designed for customization — vendors can add custom extensions, instructions, and CSRs to meet their specific needs. UDB embraces this through **data overlays**.
+
+**Overlays let you extend or modify the standard spec:**
+
+- Add custom instructions unique to your design
+- Define vendor-specific CSRs and their behavior
+- Modify instruction encodings for your implementation
+- Add implementation-specific parameters and constraints
+
+Your overlay sits alongside the standard UDB data, and when tools process your configuration, they automatically merge your customizations with the base spec. The result: all your tooling — generators, validators, documentation — works with your complete, customized specification as a unified whole.
+
+See the [Data Customization documentation](/docs/configuration/customization) to learn how overlays work and how data resolution merges standard and custom data.
+
+## Working with UDB Data
+
+The UDB database is structured for machines, not humans. The YAML files are organized for easy programmatic access, validation, and transformation — but they're not meant to be read directly or used as-is in your projects.
+
+Instead, UDB is designed as **input to tools** that transform, serve, or integrate the data into your workflow:
+
+<div style={{background: 'var(--ifm-color-emphasis-100)', padding: '1.5rem', borderRadius: '8px', margin: '2rem 0', fontFamily: 'monospace', fontSize: '0.95rem'}}>
+  <div style={{marginBottom: '0.75rem'}}>
+    <strong>Example workflows:</strong>
+  </div>
+  <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+    <div>⛁ Database + ⚙️ Config (RV32IMC) → 📄 Generator → C Header → 💻 Firmware</div>
+    <div>⛁ Database + ⚙️ Config (RV64GC) → 🌐 MCP Server → Claude/IDE → 🛠️ Development</div>
+    <div>⛁ Database + ⚙️ Custom Config → 💎 Ruby Gem → Script → 📦 Your Artifact</div>
+    <div>⛁ Database + ⚙️ Profile Config → ✅ Validator → Report → 🎯 Certification</div>
+  </div>
+</div>
+
+**Different patterns for different needs:**
+
+- **Generators** produce files (C headers, PDFs, SystemVerilog) that you integrate into projects
+- **Servers** provide on-demand queries (MCP servers, JSON APIs, web UIs) for dynamic access
+- **Libraries** let you embed UDB directly into your toolchain (Ruby gems, Python bindings)
+- **Validators** check your custom data or implementations against the spec
+
+**Why so many tools?**
+
+UDB aims to serve many audiences — chip designers, compiler writers, educators, spec authors — each with different workflows. Rather than forcing everyone through a single interface, UDB provides building blocks you can compose or extend to fit your needs.
+
+See the [Tools documentation](/docs/tools/overview) to explore what's available and [Generators documentation](/docs/generators/overview) for artifact generation specifically.
+
+## Learn More
+
+Ready to dive deeper? Choose your path:
+
+- **[Getting Started for Users](/docs/getting-started/users)** — Query the database and generate artifacts
+- **[Getting Started for Spec Writers](/docs/getting-started/spec-writers)** — Contribute specification data
+- **[Getting Started for Developers](/docs/getting-started/developers)** — Build custom generators and extend UDB
+- **[Tools & Generators](/docs/generators/overview)** — Explore what UDB can generate
+- **[Browse the Generated Spec](https://riscv.github.io/riscv-unified-db/)** — See UDB's output in action

@@ -6,6 +6,6 @@
 module Udb
   module Helpers
     # Version of the gem
-    def self.version = "0.1.0"
+    def self.version = "0.1.1"
   end
 end

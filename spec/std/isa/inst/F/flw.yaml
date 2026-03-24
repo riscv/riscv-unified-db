@@ -35,10 +35,10 @@ operation(): |
 
   XReg virtual_address = X[xs1] + $signed(imm);
 
-  Bits<32> sp_value = read_memory<32>(virtual_address, $encoding);
+  Bits<32> sp_value = read_memory(32, virtual_address, $encoding);
 
   if (implemented?(ExtensionName::D)) {
-    f[fd] = nan_box<32, 64>(sp_value);
+    f[fd] = nan_box(32, 64, sp_value);
   } else {
     f[fd] = sp_value;
   }

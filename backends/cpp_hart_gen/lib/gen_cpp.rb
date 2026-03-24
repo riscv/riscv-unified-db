@@ -320,12 +320,6 @@ module Idl
   class FunctionDefAst < AstNode
     sig { params(symtab: SymbolTable).returns(String) }
     def gen_return_type(symtab)
-      if templated?
-        template_names.each_with_index do |tname, idx|
-          symtab.add!(tname, Var.new(tname, template_types(symtab)[idx]))
-        end
-      end
-
       cpp =
         if @return_type_nodes.empty?
           "void"
@@ -335,12 +329,6 @@ module Idl
           rts = @return_type_nodes.map { |rt| rt.gen_cpp(symtab, 0) }
           "std::tuple<#{rts.join(', ')}>"
         end
-
-      if templated?
-        template_names.each do |tname|
-          symtab.del(tname)
-        end
-      end
 
       cpp
     end
@@ -359,7 +347,7 @@ module Idl
     sig { params(symtab: SymbolTable).returns(String) }
     def gen_cpp_argument_list(symtab)
       symtab.push(self)
-      apply_template_and_arg_syms(symtab)
+      apply_arg_syms(symtab)
 
       list = []
       @argument_nodes.each_with_index do |arg, idx|
@@ -389,7 +377,7 @@ module Idl
     sig { params(symtab: SymbolTable).returns(String) }
     def gen_c_argument_list(symtab)
       symtab.push(self)
-      apply_template_and_arg_syms(symtab)
+      apply_arg_syms(symtab)
 
       list = @argument_nodes.map do |arg|
         arg.gen_c(symtab)
@@ -402,37 +390,17 @@ module Idl
 
     sig { params(symtab: SymbolTable).returns(String) }
     def gen_cpp_template(symtab)
-      if !templated?
-        list = []
-        @argument_nodes.each_with_index do |arg, idx|
-          if arg.type(symtab).kind == :bits
-            list << "template <unsigned, bool> class _Arg#{idx}BitsType"
-            list << "unsigned _Arg#{idx}BitsTypeN"
-            list << "bool _Arg#{idx}BitsTypeSigned"
-          end
+      list = []
+      @argument_nodes.each_with_index do |arg, idx|
+        if arg.type(symtab).kind == :bits
+          list << "template <unsigned, bool> class _Arg#{idx}BitsType"
+          list << "unsigned _Arg#{idx}BitsTypeN"
+          list << "bool _Arg#{idx}BitsTypeSigned"
         end
-        if list.empty?
-          ""
-        else
-          "template <#{list.join(', ')}>"
-        end
+      end
+      if list.empty?
+        ""
       else
-        list = []
-        ttypes = template_types(symtab)
-        ttypes.each_index { |i|
-          list << "#{ttypes[i].to_cxx_no_qualifiers} #{template_names[i]}"
-          symtab.add!(template_names[i], Var.new(template_names[i], ttypes[i], template_index: i, function_name: name))
-        }
-        @argument_nodes.each_with_index do |arg, idx|
-          if arg.type(symtab).kind == :bits
-            list << "template <unsigned, bool> class _Arg#{idx}BitsType"
-            list << "unsigned _Arg#{idx}BitsTypeN"
-            list << "bool _Arg#{idx}BitsTypeSigned"
-          end
-        end
-        ttypes.each_index { |i|
-          symtab.del(template_names[i])
-        }
         "template <#{list.join(', ')}>"
       end
     end
@@ -1011,21 +979,12 @@ module Idl
       elsif name == "implemented_version?"
         "__UDB_FUNC_CALL template _implemented_version_Q_<#{arg_nodes[0].gen_cpp(symtab, 0)}, #{arg_nodes[1].text_value}>()"
       else
-        targs_cpp = template_arg_nodes.map { |t| t.gen_cpp(symtab, 0, indent_spaces:) }
         args_cpp = arg_nodes.map { |a| a.gen_cpp(symtab, 0, indent_spaces:) }
         ftype = func_type(symtab)
         if ftype.func_def_ast.constexpr?(symtab)
-          if targs_cpp.empty?
-            "__UDB_CONSTEXPR_FUNC_CALL #{name.gsub("?", "_Q_")}(#{args_cpp.join(', ')})"
-          else
-            "__UDB_CONSTEXPR_FUNC_CALL template #{name.gsub("?", "_Q_")}<#{targs_cpp.join(', ')}>(#{args_cpp.join(', ')})"
-          end
+          "__UDB_CONSTEXPR_FUNC_CALL #{name.gsub("?", "_Q_")}(#{args_cpp.join(', ')})"
         else
-          if targs_cpp.empty?
-            "__UDB_FUNC_CALL #{name.gsub("?", "_Q_")}(#{args_cpp.join(', ')})"
-          else
-            "__UDB_FUNC_CALL template #{name.gsub("?", "_Q_")}<#{targs_cpp.join(', ')}>(#{args_cpp.join(', ')})"
-          end
+          "__UDB_FUNC_CALL #{name.gsub("?", "_Q_")}(#{args_cpp.join(', ')})"
         end
       end
     end

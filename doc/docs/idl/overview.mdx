@@ -1,0 +1,161 @@
+---
+sidebar_position: 1
+title: IDL Overview
+---
+
+# ISA Description Language (IDL)
+
+The **ISA Description Language (IDL)** is a domain-specific language for formally specifying RISC-V instruction set architectures. IDL is designed to be:
+
+- **Human readable** — serves as a reliable documentation source alongside the spec.
+- **Familiar** — syntax resembles a mix of Verilog and C++, so hardware and software designers can read it with minimal ramp-up.
+- **Strongly typed** — reduces ambiguity as a documentation source.
+- **Modular** — reflects RISC-V's modular ISA structure. IDL can describe a wide range of devices, then be customized with configuration variables to generate an implementation-specific description.
+
+IDL is used to describe the behavior of RISC-V instructions, fetch, and (in cases where behavior is specialized) CSRs. Taken together, the IDL can be converted into a fully functioning Instruction Set Simulator (ISS) that is a golden model of execution.
+
+:::tip Choose your starting point
+- **Hardware engineers** — see [IDL for Verilog Users](./guide-for-verilog-users)
+- **Software engineers** — see [IDL for C Users](./guide-for-c-users)
+:::
+
+---
+
+## Use Cases
+
+IDL specifications in the RISC-V Unified Database enable multiple workflows:
+
+### 📚 Documentation generation
+
+Generate comprehensive, accurate documentation directly from specifications:
+
+- Instruction references with precise behavioral descriptions
+- CSR field definitions with read/write semantics
+- Extension documentation showing interactions and dependencies
+- Configuration-specific manuals tailored to a specific implementation
+
+### 🔍 Design verification
+
+Ensure hardware implementations match specifications:
+
+- Reference models for comparing against RTL simulations
+- Test generation based on formal specifications
+- Coverage analysis to identify untested corner cases
+- Consistency checking across instruction set extensions
+
+### ✅ Formal verification
+
+Prove correctness properties mathematically:
+
+- Configuration validation using constraint solvers
+- Dead code detection for unreachable specifications
+- Dependency analysis between extensions and parameters
+
+### 💻 Software development
+
+Enable software development before hardware availability:
+
+- Instruction Set Simulators (ISS) generated from specifications
+- Compiler testing against golden reference models
+- OS development with accurate architectural behavior
+
+---
+
+## Worked Example
+
+The following example shows how the Branch if Less Than or Equal Unsigned (`BLTU`) instruction is specified in IDL. `rs1`, `rs2`, and `imm` are decode fields extracted automatically from the instruction encoding before execution.
+
+```idl title="BLTU instruction"
+Bits<MXLEN> src1 = X[rs1]; # (1) Read X[rs1]
+Bits<MXLEN> src2 = X[rs2]; # (2) Read X[rs2]
+
+if (src1 <= src2) {        # (3) Unsigned comparison
+  jump(PC + $signed(imm)); # (4) Jump to target
+}
+# fall through: advance to next instruction
+```
+
+1. Read general-purpose register `rs1` into an MXLEN-bit variable `src1`. `MXLEN` is a configuration parameter available as a global constant.
+2. Read general-purpose register `rs2` into `src2`.
+3. Check if unsigned `src1` is less than or equal to unsigned `src2`.
+4. Call `jump` with a target address formed by adding a signed immediate to the PC.
+
+The `jump` function called above is itself defined in IDL:
+
+```idl title="jump function"
+function jump {
+  arguments XReg target_addr  # (1)
+  description {               # (2)
+    Jump to virtual address `target_addr`.
+
+    If target address is misaligned, raise a `MisalignedAddress` exception.
+  }
+  body {                      # (3)
+    # raise a misaligned exception if address is not aligned to IALIGN
+    if (implemented?(ExtensionName::C) &&         # C is implemented
+        (CSR[misa].C == 0x1) &&                   # and C is enabled dynamically
+        ((target_addr & 0x1) != 0)) {             # and the target PC is odd
+      raise(ExceptionCode::InstructionAddressMisaligned); # (4)
+    } else if ((target_addr & 0x3) != 0) {
+      raise(ExceptionCode::InstructionAddressMisaligned);
+    }
+
+    PC = target_addr; # (5)
+  }
+}
+```
+
+1. `jump` takes a single argument of type `XReg` (an alias of `Bits<MXLEN>`).
+2. A textual description is mandatory — IDL is intended as executable documentation.
+3. Executable statements go inside `body { ... }`.
+4. Trigger a synchronous exception by calling `raise`.
+5. Set the new PC to the target address.
+
+---
+
+## Basics
+
+### Comments
+
+Comments start with `#` and run to the end of the line. There is no multi-line comment syntax.
+
+```idl
+# this is a comment
+Boolean condition; # this is also a comment
+```
+
+### Case sensitivity
+
+IDL is case sensitive. Variable names must begin with a lowercase letter; constant names must begin with an uppercase letter — so `a` and `A` are different, and their case determines their mutability.
+
+```idl
+XReg a; # mutable variable
+XReg A; # constant (uppercase)
+```
+
+### Reserved keywords
+
+```
+function      returns
+arguments     return
+description   builtin
+body          for
+if            else
+enum          bitfield
+struct
+```
+
+---
+
+## Learn More
+
+- **[Data Types](./data-types.mdx)** — `Bits<N>`, enums, bitfields, structs, arrays
+- **[Operators](./operators.mdx)** — Full precedence table
+- **[Functions](./functions.mdx)** — Declaring and calling functions
+- **[Scope](./scope.mdx)** — How scoping works across instructions, CSRs, and functions
+- **[Standard Library](./standard-library.mdx)** — `CSR[...]` access, `implemented?()`, `raise()`, memory access
+- **[IDL in Instructions](./in-instructions.mdx)** — How `operation()` works
+- **[IDL in CSRs](./in-csrs.mdx)** — `sw_read()`, `sw_write()`, and field hooks
+- **[IDL for C Users](./guide-for-c-users.mdx)** — Side-by-side comparison
+- **[IDL for Verilog Users](./guide-for-verilog-users.mdx)** — Side-by-side comparison
+- **[Common Misunderstandings](./common-misunderstandings.mdx)** — Frequent points of confusion

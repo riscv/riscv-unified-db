@@ -406,9 +406,8 @@ generated function invalidate_translations {
 }
 
 function read_physical_memory {
-  template U32 len
-  returns Bits<len>
-  arguments XReg paddr
+  returns XReg
+  arguments U32 len, XReg paddr
   description {
     Read from physical memory.
   }
@@ -460,8 +459,7 @@ builtin function read_physical_memory_64 {
 }
 
 function write_physical_memory {
-  template U32 len
-  arguments XReg paddr, Bits<len> value
+  arguments U32 len, XReg paddr, XReg value
   description {
     Write to physical memory.
   }

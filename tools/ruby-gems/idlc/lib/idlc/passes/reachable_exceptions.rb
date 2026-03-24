@@ -40,24 +40,17 @@ module Idl
 
       func_def_type = func_type(symtab)
 
-      tvals = template_values(symtab)
-
       mask = 0
-      if template?
-        template_arg_nodes.each do |t|
-          mask |= t.reachable_exceptions(symtab, cache) if t.is_a?(FunctionCallExpressionAst)
-        end
-      end
-
       arg_nodes.each do |a|
         mask |= a.reachable_exceptions(symtab, cache) if a.is_a?(FunctionCallExpressionAst)
       end
 
       unless func_def_type.builtin? || func_def_type.generated?
-        body_symtab = func_def_type.apply_template_values(template_values(symtab), self)
+        body_symtab = symtab.global_clone
+        body_symtab.push(func_def_type.func_def_ast)
         avals = func_def_type.apply_arguments(body_symtab, arg_nodes, symtab, self)
 
-        idx = [name, tvals, avals].hash
+        idx = [name, [], avals].hash
 
         begin
           body_mask =

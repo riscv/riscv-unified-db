@@ -127,6 +127,7 @@ tests:
           - cfg
           - mmr
           - mmr_schema
+          - schema_versioning
           - instruction
           - z3
           - z3_extensions
@@ -190,17 +191,21 @@ tests:
       - name: Run RV64 riscv-tests
         run: ./do test:riscv_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
 
-  regress-xqci-doc:
-    ci_stage: pr
-    test:
-      - name: Generate Xqci pdf documentation
-        run: ./bin/ruby tools/scripts/gen_xqci.rb
-
   regress-profile-extensions:
     ci_stage: pr
     test:
       - name: Check profile_extensions
         run: ./do test:profile_extensions
+
+  regress-build-udb-gem:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Build udb gem via chore
+        run: ./bin/chore build udb-gem
+      - name: Verify udb gem was built
+        run: ls gen/udb_gem/udb-*.gem
 
   regress-regress:
     ci_stage: pr
@@ -318,22 +323,29 @@ tests:
     ci_stage: merge_queue
     gh_save_artifact:
       - artifact_name: ${{ matrix.profile }}
-        path: gen/profile/pdf/RVA20ProfileRelease.pdf
+        path: gen/profile/pdf/${{ matrix.profile }}ProfileRelease.pdf
     strategy:
       matrix:
         profile:
-          - rvi20
-          - rva20
-          - rva22
-          - rva23
-          - rvb23
+          - RVI20
+          - RVA20
+          - RVA22
+          - RVA23
+          - RVB23
     tags: [artifacts]
     test:
       - name: Generate ${{ matrix.profile }}
         run: |
           PROFILE_NAME="${{ matrix.profile }}"
-          UPPER_PROFILE="${PROFILE_NAME^^}"
           ./do gen:profile_release_pdf[${PROFILE_NAME}]
+
+  regress-schema-versions:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Check schema versions against published URLs
+        run: ./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb
 
   build-idl-doc:
     ci_stage: merge_queue
@@ -344,3 +356,25 @@ tests:
     test:
       - name: Build IDL doc
         run: ./bin/bundle exec asciidoctor -r idl_highlighter -a toc=left -a source-highlighter=rouge -o idl.html doc/idl.adoc
+
+  regress-gem-version-bump:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Check gem versions bumped when source changes
+        run: git fetch --no-tags --prune --no-recurse-submodules origin main && ./bin/ruby tools/scripts/check_gem_version_bump.rb origin/main
+
+  build-docs-site:
+    ci_stage: merge_queue
+    gh_save_artifact:
+      - artifact_name: docs-site
+        path: doc/build
+    tags:
+      - smoke
+      - artifacts
+    test:
+      - name: Install Node dependencies
+        run: ./bin/npm ci
+      - name: Build Docusaurus site
+        run: ./bin/npm run build --workspace=doc

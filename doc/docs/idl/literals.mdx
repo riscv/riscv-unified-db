@@ -1,0 +1,130 @@
+---
+sidebar_position: 4
+title: Literals
+---
+
+## Integer Literals
+
+Integer literal values can be expressed using either C style or Verilog style.
+
+- **Verilog style**: the literal bit width can be specified explicitly. If the width is omitted, the bit width defaults to `MXLEN`.
+- **C style**: the bit width is the minimum number of bits needed to represent the value.
+
+A signed literal is allocated an extra bit to support negation. The literal itself is always positive, but may be immediately negated to get a negative value — be careful when constructing negative literals (see examples below).
+
+Literals may contain any number of underscores after the initial digit for clarity. Underscores are ignored when determining the value.
+
+### Verilog style
+
+```idl title="Verilog style literals"
+8'd13         # 13 decimal, unsigned, 8-bit wide
+16'hd         # 13 decimal, unsigned, 16-bit wide
+12'o15        # 13 decimal, unsigned, 12-bit wide
+4'b1101       # 13 decimal, unsigned, 4-bit wide
+
+-8'sd13       # -13 decimal, signed, 8-bit wide
+-16'shd       # -13 decimal, signed, 16-bit wide
+-12'so15      # -13 decimal, signed, 12-bit wide
+4'sb1101      # -3 decimal, signed, 4-bit wide
+-4'sb1101     #  3 decimal, signed, 4-bit wide
+
+32'h80000000  # 0x80000000, unsigned, 32-bit wide
+32'h8000_0000 # same as above (underscores ignored)
+
+8'13          # 13 decimal, 8-bit wide (default radix is 10)
+
+'13           # 13 decimal, unsigned MXLEN-bit wide
+'s13          # 13 decimal, signed MXLEN-bit wide
+# 'h100000000 # compilation error when MXLEN == 32; does not fit in MXLEN bits
+
+-4'd13        # 3 decimal: literal is 13, unsigned, 4-bit; when negated, sign bit is lost
+# -8'sd200    # compilation error: -200 does not fit in 8 bits
+# 0'15        # compilation error: cannot have integer with 0 length
+# 4'hff       # compilation error: value does not fit in 4 bits
+```
+
+:::warning Negating an unsigned literal discards the sign bit
+To negate a Verilog-style literal and get a negative value, the literal must be declared signed (prefix `s`). Without `s`, the literal is unsigned — negation wraps in two's complement and the sign bit is lost:
+
+```idl
+-8'sd13   # -13: literal is signed, negation works correctly
+-4'd13    #   3: literal is 13 unsigned in 4 bits → negated → sign bit lost
+```
+
+Use the `s` prefix whenever you intend a negative literal.
+:::
+
+### C style
+
+```idl title="C style literals"
+# four radix options
+13          # 13 decimal, unsigned, 4-bit wide
+0xd         # 13 decimal, unsigned, 4-bit wide
+015         # 13 decimal, unsigned, 4-bit wide
+0b1101      # 13 decimal, unsigned, 4-bit wide
+
+# C-style literal is sized to fit
+31          # 31 decimal, unsigned, 5-bit wide
+32          # 32 decimal, unsigned, 6-bit wide
+0xfff       # 4095 decimal, unsigned, 12-bit wide
+0x0fff      # 4095 decimal, unsigned, 12-bit wide (leading zeros have no impact)
+0           # 0 decimal, unsigned, 1-bit wide (0 is specially defined to be 1-bit wide)
+
+0x80000000  # 0x80000000, unsigned, 32-bit wide
+0x8000_0000 # same as above (underscores ignored)
+
+# negative literals
+-13s        # -13 decimal, signed, 5-bit wide (13s is the literal, then negated)
+-0xds       # -13 decimal, signed, 5-bit wide (0xds is the literal, then negated)
+
+# gotcha
+-17         # 15 decimal: literal is 17, unsigned, 5-bit; sign bit lost when negated
+-13         # 3 decimal: literal is 13, unsigned, 4-bit; sign bit lost when negated
+```
+
+:::warning Unsigned C-style literals lose the sign bit when negated
+A bare negative C-style literal like `-13` is **not** a negative number. It is the positive literal `13` (4-bit unsigned) with unary minus applied — and since the result has no sign bit, the high bit is discarded:
+
+```idl
+-13    # 3, not -13: 13 is 0b1101, negated in 4 bits → 0b0011
+-13s   # -13: the 's' suffix makes the literal signed before negation
+```
+
+Use the `s` suffix (e.g., `-13s`, `-0xds`) whenever you need a true negative C-style literal.
+:::
+
+## Array Literals
+
+Array literals are composed of a comma-separated list of values in brackets, similar to C/C++/Verilog.
+
+```idl title="Array literals"
+Bits<32> array_of_words[10] = [0,1,2,3,4,5,6,7,8,9];
+Boolean  array_of_bools[12] =
+  [
+    true,true,true,true,true,true,
+    false,false,false,false,false
+  ];
+Bits<32> matrix_of_words[32][32] =
+  [
+    [0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7],
+    [0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7],
+    ...
+    [0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7],
+  ]
+```
+
+## String Literals
+
+String literals are enclosed in double quotes. There is no escape character — it is impossible to represent a double quote, newline, or other special characters in a string literal.
+
+```idl
+"The cow jumped over the moon"
+""  # empty string
+
+# "The dog said "woof"" # compilation error: the second " ends the string
+# "not\na\nmultiline"   # \n is two literal characters, not a newline
+```
+
+:::note
+String literals are primarily used for configuration parameter comparisons (`M_MODE_ENDIANNESS == "little"`). They are not general-purpose strings and cannot be converted to `Bits<N>`.
+:::

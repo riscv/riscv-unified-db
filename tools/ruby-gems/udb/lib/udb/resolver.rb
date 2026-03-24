@@ -9,58 +9,10 @@ require "concurrent/hash"
 require "sorbet-runtime"
 
 require_relative "cfg_arch"
+require_relative "paths"
+require_relative "yaml/yaml_resolver"
 
 module Udb
-  extend T::Sig
-
-  sig { returns(Pathname) }
-  def self.gem_path
-    @gem_path ||= Pathname.new(Gem::Specification.find_by_name("udb").full_gem_path)
-  end
-
-  sig { params(from_dir: Pathname).returns(Pathname) }
-  def self.find_udb_root(from_dir)
-    if (from_dir / "do").executable?
-      from_dir
-    else
-      raise "Cannot find UDB repository root in directory hierarchy" if from_dir.dirname == from_dir
-
-      find_udb_root(from_dir.dirname)
-    end
-  end
-  private_class_method :find_udb_root
-
-  sig { returns(Pathname) }
-  def self.repo_root
-    @root ||=
-      if ENV.key?("UDB_ROOT")
-        Pathname.new(ENV["UDB_ROOT"])
-      else
-        # try to find the root in the directory hierarchy by looking for the do script
-        find_udb_root(Pathname.new(__dir__))
-      end
-  end
-
-  sig { returns(Pathname) }
-  def self.default_std_isa_path
-    repo_root / "spec" / "std" / "isa"
-  end
-
-  sig { returns(Pathname) }
-  def self.default_custom_isa_path
-    repo_root / "spec" / "custom" / "isa"
-  end
-
-  sig { returns(Pathname) }
-  def self.default_gen_path
-    repo_root / "gen"
-  end
-
-  sig { returns(Pathname) }
-  def self.default_cfgs_path
-    repo_root / "cfgs"
-  end
-
   # resolves the specification in the context of a config, and writes to a generation folder
   #
   # The primary interface for users will be #cfg_arch_for
@@ -130,7 +82,7 @@ module Udb
     # Any specific path can be overridden. If all paths are overridden, it doesn't matter what repo_root is.
     sig {
       params(
-        repo_root: Pathname,
+        repo_root: T.nilable(Pathname),
         schemas_path_override: T.nilable(Pathname),
         cfgs_path_override: T.nilable(Pathname),
         gen_path_override: T.nilable(Pathname),
@@ -151,11 +103,11 @@ module Udb
       compile_idl: false
     )
       @repo_root = repo_root
-      @schemas_path = schemas_path_override || (@repo_root / "spec" / "schemas")
-      @cfgs_path = cfgs_path_override || (@repo_root / "cfgs")
-      @gen_path = gen_path_override || (@repo_root / "gen")
-      @std_path = std_path_override || (@repo_root / "spec" / "std" / "isa")
-      @custom_path = custom_path_override || (@repo_root / "spec" / "custom" / "isa")
+      @schemas_path = schemas_path_override || Udb.default_schemas_path
+      @cfgs_path = cfgs_path_override || Udb.default_cfgs_path
+      @gen_path = gen_path_override || Udb.default_gen_path
+      @std_path = std_path_override || Udb.default_std_isa_path
+      @custom_path = custom_path_override || Udb.default_custom_isa_path
       @quiet = quiet
       @compile_idl = compile_idl
       @mutex = Thread::Mutex.new
@@ -235,14 +187,13 @@ module Udb
         raise "custom directory '#{overlay_path}' does not exist" if !overlay_path.nil? && !overlay_path.directory?
 
         if any_newer?(merged_spec_path(config_name) / ".stamp", deps)
-          run [
-            "uv", "run",
-            "#{Udb.gem_path}/python/yaml_resolver.py",
-            "merge",
+          # Use Ruby YAML resolver instead of Python
+          yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
+          yaml_resolver.merge_files(
             std_path.to_s,
-            overlay_path.nil? ? "/does/not/exist" : overlay_path.to_s,
+            overlay_path&.to_s,
             merged_spec_path(config_name).to_s
-          ]
+          )
           FileUtils.touch(merged_spec_path(config_name) / ".stamp")
         end
       end
@@ -256,24 +207,13 @@ module Udb
 
         deps = Dir[merged_spec_path(config_name) / "**" / "*.yaml"].map { |p| Pathname.new(p) }
         if any_newer?(resolved_spec_path(config_name) / ".stamp", deps)
-          if @compile_idl
-            run [
-              "uv", "run",
-              "#{Udb.gem_path}/python/yaml_resolver.py",
-              "resolve",
-              "--compile_idl",
-              merged_spec_path(config_name).to_s,
-              resolved_spec_path(config_name).to_s
-            ]
-          else
-            run [
-              "uv", "run",
-              "#{Udb.gem_path}/python/yaml_resolver.py",
-              "resolve",
-              merged_spec_path(config_name).to_s,
-              resolved_spec_path(config_name).to_s
-            ]
-          end
+          # Use Ruby YAML resolver instead of Python
+          yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
+          yaml_resolver.resolve_files(
+            merged_spec_path(config_name).to_s,
+            resolved_spec_path(config_name).to_s,
+            no_checks: false
+          )
           FileUtils.touch(resolved_spec_path(config_name) / ".stamp")
         end
 
@@ -369,6 +309,38 @@ module Udb
           config_info.name,
           Udb::AbstractConfig.create(gen_path / "cfgs" / "#{config_info.name}.yaml", config_info)
         )
+      end
+    end
+
+    SCHEMAS_BASE_URL = "https://riscv.github.io/riscv-unified-db/schemas"
+
+    # Resolve schema files by rewriting their $id to the full published URL and
+    # writing the result to gen/schemas/SCHEMA_NAME/VERSION/SCHEMA_FILENAME.
+    #
+    # Each schema file has its own independent version (the $id field, e.g. "v0.1").
+    # The resolved file is written to gen/schemas/<schema_name>/<version>/<schema_name>
+    # with $id set to
+    # https://riscv.github.io/riscv-unified-db/schemas/<schema_name>/<version>/<schema_name>.
+    sig { void }
+    def resolve_schemas
+      require "json"
+
+      schemas_path.glob("*.json").each do |schema_file|
+        next if schema_file.basename.to_s == "json-schema-draft-07.json"
+
+        schema_data = JSON.parse(schema_file.read)
+        version = schema_data["$id"]
+        next if version.nil?
+
+        schema_name = schema_file.basename.to_s
+        resolved_id = "#{SCHEMAS_BASE_URL}/#{schema_name}/#{version}/#{schema_name}"
+
+        resolved_schema = schema_data.merge("$id" => resolved_id)
+
+        out_dir = gen_path / "schemas" / schema_name / version
+        out_dir.mkpath
+        out_path = out_dir / schema_name
+        out_path.write(JSON.pretty_generate(resolved_schema) + "\n")
       end
     end
   end
