@@ -1061,20 +1061,42 @@ module Udb
 
     @parallel_enabled = nil
 
+    class << self
+      extend T::Sig
+
+      sig { returns(T.nilable(T::Boolean)) }
+      def parallel_enabled
+        @parallel_enabled
+      end
+
+      sig { params(value: T.nilable(T::Boolean)).void }
+      def parallel_enabled=(value)
+        @parallel_enabled = value
+      end
+
+      sig { params(desired: T::Boolean).void }
+      def configure_parallelization(desired)
+        previous = parallel_enabled
+
+        if !previous.nil? && previous != desired
+          if desired
+            Udb.logger.warn "Z3 parallelization was previously disabled, but is now being enabled"
+          else
+            Udb.logger.warn "Z3 parallelization was previously enabled, but is now being disabled"
+          end
+        end
+
+        Z3.set_param("parallel.enable", desired ? "true" : "false")
+        self.parallel_enabled = desired
+      end
+    end
+
     sig { void }
     def initialize
       if Udb.global_options.parallel_z3
-        if Z3Solver.class_eval { @parallel_enabled == false }
-          Udb.logger.warn "Z3 parallelization was previously disabled, but is now being enabled"
-        end
-        Z3.set_param("parallel.enable", "true")
-        Z3Solver.class_eval { @parallel_enabled = true }
+        Z3Solver.configure_parallelization(true)
       else
-        if Z3Solver.class_eval { @parallel_enabled == true }
-          Udb.logger.warn "Z3 parallelization was previously enabled, but is now being disabled"
-        end
-        Z3.set_param("parallel.enable", "false")
-        Z3Solver.class_eval { @parallel_enabled = false }
+        Z3Solver.configure_parallelization(false)
       end
 
       @solver = T.let(Z3::Solver.new, Z3::Solver)
