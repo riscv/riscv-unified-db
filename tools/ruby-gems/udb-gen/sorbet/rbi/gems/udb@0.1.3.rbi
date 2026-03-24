@@ -4928,8 +4928,8 @@ end
 class Udb::Z3Solver
   extend ::Forwardable
 
-  sig { void }
-  def initialize; end
+  sig { params(parallel: T::Boolean).void }
+  def initialize(parallel: T.unsafe(nil)); end
 
   def assert(*args, **_arg1, &block); end
   def assert_as(*args, **_arg1, &block); end
