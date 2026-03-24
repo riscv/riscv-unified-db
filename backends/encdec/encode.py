@@ -12,7 +12,7 @@ operand_list = []
 def parse_args():
     parser = argparse.ArgumentParser(description='Process RISC-V instruction definitions')
     parser.add_argument('--assembly', type=str, help='Assembly language file to process')
-    parser.add_argument('--xlen', type=int, choices=[32, 64], default=64, help='RISC-V architecture width (32 or 64 bits)')
+    parser.add_argument('--xlen', type=int, choices=[32, 64], default=64, help='RISC-V architecture width (32 or 64 bits, default: 64)')
     parser.add_argument('dirs', nargs='*', default=["."], help='Directories to search for YAML files')
     return parser.parse_args()
 
@@ -231,8 +231,37 @@ def parse_assembly_operands(line, instruction_operands):
                 operand_values[instruction_operands[i]['name']] = imm_value
                 print(f"#    Final value for '{operand_name}': {imm_value}")
 
+            elif operand_def['type'] == 'fence_scope':
+                print(f"#    Detected fence_scope operand: {operands[i]}")
+
+                operand_values[instruction_operands[i]['name']] = operands[i]
+                print(f"#    Final value for '{operand_name}': {operands[i]}")
+
     print(f"#    Parsed operand values: {operand_values}")
     return operand_values
+
+def builtin_encode_fence_scope(scope):
+    scope_map = {
+        'I'   : 0b1000,
+         'O'  : 0b0100,
+          'R' : 0b0010,
+           'W': 0b0001,
+        'IO'  : 0b1100,
+        'IR'  : 0b1010,
+        'IW'  : 0b1001,
+        'OR'  : 0b0110,
+        'OW'  : 0b0101,
+        'RW'  : 0b0011,
+        'IOR' : 0b1110,
+        'IOW' : 0b1101,
+        'IRW' : 0b1011,
+        'ORW' : 0b0111,
+        'IORW': 0b1111
+    }
+    if scope in scope_map:
+        return scope_map[scope]
+    print(f"# ERROR: invalid fence scope \"{scope}\"")
+    return None
 
 def fill_in_variables(inst, assembly, xlen=64):
     """Fill in variables in the match pattern based on the instruction's operands"""
@@ -293,11 +322,23 @@ def fill_in_variables(inst, assembly, xlen=64):
 
         # Try to find the operand value based on the variable name
         if var_name not in assembly_operands:
-            print(f"#  ERROR: Variable '{var_name}' not found in assembly operands")
-            return None
-
-        print(f"#  Found direct match for variable '{var_name}' in assembly operands {assembly_operands[var_name]}")
-        operand_value = assembly_operands[var_name]
+            if 'encode(operands)' in variable:
+                if 'return 0;' in variable['encode(operands)']:
+                    operand_value = 0
+                else:
+                    print(f"#  ERROR: unsupported variable encoding")
+                    return None
+            else:
+                print(f"#  ERROR: unknown variable encoding")
+                return None
+        else:
+            print(f"#  Found direct match for variable '{var_name}' in assembly operands {assembly_operands[var_name]}")
+            if 'encode(operands)' in variable and 'IORW' in variable['encode(operands)']:
+                operand_value = builtin_encode_fence_scope(assembly_operands[var_name])
+                if operand_value is None:
+                    return None
+            else:
+                operand_value = assembly_operands[var_name]
 
         print(f"#  Variable '{var_name}' value: {operand_value}")
 

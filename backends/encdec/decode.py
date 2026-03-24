@@ -190,7 +190,32 @@ def format_assembly(instruction, variable_values, xlen=64):
         value = variable_values[operand_name]
         print(f"# Processing operand '{operand_name}' with value {value} {variable_values}'")
 
-        if 'offset' in operand:
+        print(f"# Operand type: {operand['type']}")
+        if operand['type'] == 'fence_scope':
+            scope_map = {
+                0b1111: "IORW",
+                0b1110: "IOR",
+                0b1101: "IOW",
+                0b1011: "IRW",
+                0b0111: "ORW",
+                0b1100: "IO",
+                0b1010: "IR",
+                0b1001: "IW",
+                0b0110: "OR",
+                0b0101: "OW",
+                0b0011: "RW",
+                0b1000: "I",
+                0b0100: "O",
+                0b0010: "R",
+                0b0001: "W"
+            }
+
+            if value not in scope_map:
+                print(f"# ERROR: unknown fence scope {value}")
+                continue
+            assembly_parts.append(scope_map[value])
+
+        elif 'offset' in operand:
             print(f"# Handling offset for operand '{operand_name}' with value {value}")
             offset_value = variable_values[operand['offset']['name']]
             if 'left_shift' in operand['offset']:
