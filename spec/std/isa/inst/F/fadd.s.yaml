@@ -21,10 +21,43 @@ encoding:
       location: 24-20
     - name: fs1
       location: 19-15
-    - name: rm
-      location: 14-12
     - name: fd
       location: 11-7
+    - name: rm
+      location: 14-12
+      encode(operands): |
+        if (operands[3] == "RNE") {
+          return 3b'000;
+        } else if (operands[3] == "RTZ") {
+          return 3b'001;
+        } else if (operands[3] == "RDN") {
+          return 3b'010;
+        } else if (operands[3] == "RUP") {
+          return 3b'011;
+        } else if (operands[3] == "RMM") {
+          return 3b'100;
+        } else if (operands[3] == "DYN") {
+          return 3b'111;
+        } # else reserved
+operands:
+- name: fd
+  type: register
+  reg_file: fpr
+  source: false
+  destination: true
+- name: fs1
+  type: register
+  reg_file: fpr
+  source: true
+  destination: false
+- name: fs2
+  type: register
+  reg_file: fpr
+  source: true
+  destination: false
+- name: rm
+  type: rounding_mode
+  possible_values: ["RNE", "RTZ", "RDN", "RUP", "RMM", "DYN"]
 access:
   s: always
   u: always

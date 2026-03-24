@@ -215,6 +215,21 @@ def format_assembly(instruction, variable_values, xlen=64):
                 continue
             assembly_parts.append(scope_map[value])
 
+        elif operand['type'] == 'rounding_mode':
+            rm_map = {
+                0b000: "RNE",
+                0b001: "RTZ",
+                0b010: "RDN",
+                0b011: "RUP",
+                0b100: "RMM",
+                0b111: "DYN"
+            }
+
+            if value not in rm_map:
+                print(f"# ERROR: unknown rounding mode {value}")
+                continue
+            assembly_parts.append(rm_map[value])
+
         elif 'offset' in operand:
             print(f"# Handling offset for operand '{operand_name}' with value {value}")
             offset_value = variable_values[operand['offset']['name']]

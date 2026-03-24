@@ -237,6 +237,12 @@ def parse_assembly_operands(line, instruction_operands):
                 operand_values[instruction_operands[i]['name']] = operands[i]
                 print(f"#    Final value for '{operand_name}': {operands[i]}")
 
+            elif operand_def['type'] == 'rounding_mode':
+                print(f"#    Detected rounding_mode operand: {operands[i]}")
+
+                operand_values[instruction_operands[i]['name']] = operands[i]
+                print(f"#    Final value for '{operand_name}': {operands[i]}")
+
     print(f"#    Parsed operand values: {operand_values}")
     return operand_values
 
@@ -261,6 +267,20 @@ def builtin_encode_fence_scope(scope):
     if scope in scope_map:
         return scope_map[scope]
     print(f"# ERROR: invalid fence scope \"{scope}\"")
+    return None
+
+def builtin_encode_rounding_mode(rm):
+    rm_map = {
+        'RNE' : 0b000,
+        'RTZ' : 0b001,
+        'RDN' : 0b010,
+        'RUP' : 0b011,
+        'RMM' : 0b100,
+        'DYN' : 0b111
+    }
+    if rm in rm_map:
+        return rm_map[rm]
+    print(f"# ERROR: invalid rounding mode \"{rm}\"")
     return None
 
 def fill_in_variables(inst, assembly, xlen=64):
@@ -335,6 +355,10 @@ def fill_in_variables(inst, assembly, xlen=64):
             print(f"#  Found direct match for variable '{var_name}' in assembly operands {assembly_operands[var_name]}")
             if 'encode(operands)' in variable and 'IORW' in variable['encode(operands)']:
                 operand_value = builtin_encode_fence_scope(assembly_operands[var_name])
+                if operand_value is None:
+                    return None
+            elif 'encode(operands)' in variable and 'RTZ' in variable['encode(operands)']:
+                operand_value = builtin_encode_rounding_mode(assembly_operands[var_name])
                 if operand_value is None:
                     return None
             else:
