@@ -30,7 +30,7 @@ jobs:
       - name: Build Docusaurus site
         env:
           DOCUSAURUS_URL: https://dhower-qc.github.io
-          DOCUSAURUS_BASE_URL: /
+          DOCUSAURUS_BASE_URL: /riscv-unified-db/
         run: npm run build --workspace=doc
 
       - name: Setup Pages
