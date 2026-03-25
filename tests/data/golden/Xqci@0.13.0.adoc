@@ -1,13 +1,8 @@
 [[header]]
 :description: Qualcomm uC extensions (Xqci)
-:revdate: 2026-03-22
+:revdate: 2025-06
 :revnumber: 0.13.0
-:revmark: This document is in the http://riscv.org/spec-state[Frozen state]. + \
-+ \
-Change is extremely unlikely. + \
-A high threshold will be used, and a change will only occur because of some truly + \
-critical issue being identified during the public review cycle. + \
-Any other desired or needed changes can be the subject of a follow-on new extension. + \
+:revmark: This document is the Release State. Changes will result in a new version number. + \
 
 :company: Qualcomm Technologies, Inc.
 :url-riscv: https://riscv.org
@@ -52,14 +47,7 @@ endif::[]
 = Qualcomm uC extensions
 
 // Preamble
-[WARNING]
-This document is in the http://riscv.org/spec-state[Frozen state].
-====
-Change is extremely unlikely.
-A high threshold will be used, and a change will only occur because of some truly
-critical issue being identified during the public review cycle.
-Any other desired or needed changes can be the subject of a follow-on new extension.
-====
+This document is the Release State. Changes will result in a new version number. + \
 
 
 [preface]
@@ -229,7 +217,7 @@ a|
 [frame="none",grid="none",cols="1,4"]
 !===
 
-h! State ! frozen
+h! State ! nonstandard-released
 h! Changes a!
 
     * Fix version history of releases v0.11.0 and v0.12.0
