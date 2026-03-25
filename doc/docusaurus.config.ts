@@ -14,8 +14,8 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://riscv.github.io',
-  baseUrl: '/riscv-unified-db/docs-preview/',
+  url: process.env.DOCUSAURUS_URL ?? 'https://riscv.github.io',
+  baseUrl: process.env.DOCUSAURUS_BASE_URL ?? '/riscv-unified-db/docs-preview/',
 
   organizationName: 'riscv',
   projectName: 'riscv-unified-db',
