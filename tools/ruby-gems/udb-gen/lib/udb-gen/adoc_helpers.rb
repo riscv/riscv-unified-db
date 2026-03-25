@@ -80,9 +80,13 @@ module UdbGen
           ====
         ADOC
       when "nonstandard-released"
-        <<~STATE
-          This document is the Release State. Changes will result in a new version number. + \\
-        STATE
+        <<~ADOC
+          [WARNING]
+          This document is the Release State.
+          ====
+          Changes will result in a new version number.
+          ====
+        ADOC
       else
         raise "Unknown state: #{version.state}"
       end
