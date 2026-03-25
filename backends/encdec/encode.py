@@ -51,6 +51,7 @@ def parse_value_range(range_str):
     try:
         if '-' in s:
             # Split at the last '-' to preserve a leading minus on the start
+            # Note: this does not well handle a -X..-Y range
             idx = s.rfind('-')
             start_str = s[:idx]
             end_str = s[idx + 1:]
