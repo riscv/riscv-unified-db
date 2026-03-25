@@ -10,8 +10,6 @@
   "customizations": {
     "vscode": {
       "settings": {
-        "solargraph.bundlerPath": "bundle",
-        "solargraph.useBundler": true,
         "files.exclude": {
           "**/.home": true,
           "**/.yardoc": true
