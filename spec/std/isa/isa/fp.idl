@@ -565,7 +565,7 @@ function f32_muladd {
         expZ = expProd;
         sig64Z = sigProd - softfloat_shiftRightJam64(sig64C, expDiff);
       }
-      Bits<8> shiftDist = count_leading_zeros(64, sig64Z) - 1;
+      Bits<8> shiftDist = count_leading_zeros_64(64, sig64Z) - 1;
       expZ = expZ - shiftDist;
       shiftDist = shiftDist - 8'h20;
       if ($signed(shiftDist) < 0s) {

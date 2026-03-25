@@ -21,6 +21,7 @@ implemented_extensions:
   - [Zifencei, "2.0.0"]
   - [Sv32, "1.11.0"]
   - [F, "2.2.0"]
+  - [Zcf, "1.0"]
 
 params:
   MXLEN: 32

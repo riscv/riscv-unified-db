@@ -65,7 +65,7 @@ module Idl
       if @kind == :array
         T.must(@sub_type).runtime?
       else
-        @kind == :bits && @width == :unknown
+        @kind == :bits && !@width.is_a?(Integer)
       end
     end
 

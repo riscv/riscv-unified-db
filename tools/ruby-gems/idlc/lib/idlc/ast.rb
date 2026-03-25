@@ -2180,11 +2180,14 @@ module Idl
     
     class Memo < T::Struct
       prop :type, T.nilable(Type)
+      prop :element_names, T.nilable(T::Array[String])
+      prop :element_ranges, T.nilable(T::Hash[SymbolTable, T::Array[String]]), default: {}
     end
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), name: T.any(BuiltinTypeNameAst, UserTypeNameAst), size: IntLiteralAst, fields: T::Array[String]).void }
     def initialize(input, interval, name, size, fields)
       super(input, interval, [name, size] + fields)
 
@@ -2194,27 +2197,31 @@ module Idl
       @memo = Memo.new
     end
 
-    # @return [Integer] The number of bits in the Bitfield
+    # @return The number of bits in the Bitfield
+    sig { params(symtab: SymbolTable).returns(Integer) }
     def size(symtab)
       @size.value(symtab)
     end
 
-    # @return [Array<String>] Array of all element names, in the same order as those from {#element_ranges}
+    # @return Array of all element names, in the same order as those from {#element_ranges}
+    sig { returns(T::Array[String]) }
     def element_names
-      return @element_names unless @element_names.nil?
+      return @memo.element_names unless @memo.element_names.nil?
 
-      @element_names = @fields.map(&:name)
+      @memo.element_names = @fields.map(&:name)
     end
 
     # @return [Array<Range>]
     #    Array of all element ranges, in the same order as those from {#element_names}.
+    sig { params(symtab: SymbolTable).returns(T::Array[T::Range[Integer]]) }
     def element_ranges(symtab)
-      return @element_ranges unless @element_ranges.nil?
+      return @memo.element_ranges[symtab] unless @memo.element_ranges[symtab].nil?
 
-      @element_ranges = @fields.map { |f| f.range(symtab) }
+      @memo.element_ranges[symtab] = @fields.map { |f| f.range(symtab) }
     end
 
     # @!macro type_check
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
     def type_check(symtab, strict:)
       type_error "Cannot use reserved word '#{name}' as user-defined type name" if ReservedWords::RESERVED.include?(name)
 
@@ -2230,6 +2237,7 @@ module Idl
     end
 
     # @!macro add_symbol
+    sig { override.params(symtab: SymbolTable).void }
     def add_symbol(symtab)
       internal_error "All Bitfields should be declared at global scope" unless symtab.levels == 1
 
@@ -2240,6 +2248,7 @@ module Idl
     end
 
     # @!macro type_no_args
+    sig { params(symtab: SymbolTable).returns(Type) }
     def type(symtab)
       return @memo.type unless @memo.type.nil?
 
@@ -2252,9 +2261,11 @@ module Idl
     end
 
     # @return [String] bitfield name
+    sig { returns(String) }
     def name = @name.text_value
 
     # @!macro value_no_args
+    sig { override.params(_symtab: SymbolTable).returns(ValueRbType) }
     def value(_symtab) = raise AstNode::InternalError, "Bitfield definitions have no value"
 
     # @!macro to_idl
@@ -2277,7 +2288,7 @@ module Idl
       "source" => source_yaml
     }
 
-    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    sig { override.params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
     def self.from_h(yaml, source_mapper)
       raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "bitfield_decl"
 
@@ -6927,7 +6938,7 @@ module Idl
   class BuiltinTypeNameAst < AstNode
 
     class Memo < T::Struct
-      prop :bits_type, T.nilable(Type)
+      prop :bits_type, T::Hash[SymbolTable, T.nilable(Type)], default: {}
     end
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
@@ -6965,19 +6976,16 @@ module Idl
 
     sig { params(symtab: SymbolTable).returns(Type) }
     def bits_type(symtab)
-      @memo.bits_type ||=
+      @memo.bits_type[symtab] ||=
         begin
-          # precalculate size if possible
-          begin
-            t = T.let(nil, T.nilable(Type))
-            value_result = value_try do
-              t = Type.new(:bits, width: bits_expression.value(symtab))
-            end
-            value_else(value_result) do
-              t = Type.new(:bits, width: :unknown, width_ast: bits_expression)
-            end
-            T.must(t)
+          t = T.let(nil, T.nilable(Type))
+          value_result = value_try do
+            t = Type.new(:bits, width: bits_expression.value(symtab))
           end
+          value_else(value_result) do
+            t = Type.new(:bits, width: :unknown, width_ast: bits_expression)
+          end
+          T.must(t)
         end
     end
 
