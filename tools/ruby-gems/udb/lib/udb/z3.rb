@@ -1059,7 +1059,7 @@ module Udb
     sig { returns(Z3::Solver) }
     attr_reader :solver
 
-    @parallel_enabled = nil
+    @parallel_enabled = T.let(nil, T.nilable(T::Boolean))
 
     class << self
       extend T::Sig
