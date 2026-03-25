@@ -763,16 +763,33 @@ end
 class Idl::BitfieldDefinitionAst < ::Idl::AstNode
   include ::Idl::Declaration
 
+  sig do
+    params(
+      input: T.nilable(::String),
+      interval: T.nilable(T::Range[::Integer]),
+      name: T.any(::Idl::BuiltinTypeNameAst, ::Idl::UserTypeNameAst),
+      size: ::Idl::IntLiteralAst,
+      fields: T::Array[::String]
+    ).void
+  end
   def initialize(input, interval, name, size, fields); end
 
+  sig { override.params(symtab: ::Idl::SymbolTable).void }
   def add_symbol(symtab); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
 
+  sig { returns(T::Array[::String]) }
   def element_names; end
+
+  sig { params(symtab: ::Idl::SymbolTable).returns(T::Array[T::Range[::Integer]]) }
   def element_ranges(symtab); end
+
+  sig { returns(::String) }
   def name; end
+
+  sig { params(symtab: ::Idl::SymbolTable).returns(::Integer) }
   def size(symtab); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -781,16 +798,22 @@ class Idl::BitfieldDefinitionAst < ::Idl::AstNode
   sig { override.returns(::String) }
   def to_idl; end
 
+  sig { params(symtab: ::Idl::SymbolTable).returns(::Idl::Type) }
   def type(symtab); end
+
+  sig { override.params(symtab: ::Idl::SymbolTable, strict: T::Boolean).void }
   def type_check(symtab, strict:); end
+
+  sig { params(_symtab: T.untyped).returns(T.untyped) }
   def value(_symtab); end
 
   class << self
     sig do
-      params(
-        yaml: T::Hash[::String, T.untyped],
-        source_mapper: T::Hash[::String, ::String]
-      ).returns(::Idl::AstNode)
+      override
+        .params(
+          yaml: T::Hash[::String, T.untyped],
+          source_mapper: T::Hash[::String, ::String]
+        ).returns(::Idl::AstNode)
     end
     def from_h(yaml, source_mapper); end
   end
@@ -798,6 +821,8 @@ end
 
 class Idl::BitfieldDefinitionAst::Memo < ::T::Struct
   prop :type, T.nilable(::Idl::Type)
+  prop :element_names, T.nilable(T::Array[::String])
+  prop :element_ranges, T.nilable(T::Hash[::Idl::SymbolTable, T::Array[::String]]), default: T.unsafe(nil)
 end
 
 class Idl::BitfieldDefinitionSyntaxNode < ::Idl::SyntaxNode
@@ -1024,7 +1049,7 @@ class Idl::BuiltinTypeNameAst < ::Idl::AstNode
 end
 
 class Idl::BuiltinTypeNameAst::Memo < ::T::Struct
-  prop :bits_type, T.nilable(::Idl::Type)
+  prop :bits_type, T::Hash[::Idl::SymbolTable, T.nilable(::Idl::Type)], default: T.unsafe(nil)
 end
 
 class Idl::BuiltinVariableAst < ::Idl::AstNode
