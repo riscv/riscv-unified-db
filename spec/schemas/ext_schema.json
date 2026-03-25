@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "v0.1",
-  "description": "An ISA extension defines a named set of instructions, CSRs, and behaviors that can be implemented by a RISC-V processor. Each extension has one or more versioned releases, each with a ratification state (development, frozen, or ratified).\n\n## Key Fields\n\n- `name`: Short identifier used throughout the database (e.g., `I`, `M`, `Zicsr`, `Smstateen`)\n- `long_name`: Human-readable one-line description\n- `description`: Full AsciiDoc documentation of the extension\n- `type`: Whether the extension is `unprivileged` or `privileged`\n- `versions`: Array of versioned releases, each with a `state` and optional `ratification_date`\n- `requirements`: Optional condition that must be true for the extension to be implementable (e.g., requires another extension)\n- `company`: Organization that developed the extension (defaults to RISC-V International for standard extensions)\n- `doc_license`: License for the extension documentation",
+  "description": "An ISA extension defines a named set of instructions, CSRs, and behaviors that can be implemented by a RISC-V processor. Each extension has one or more versioned releases, with various ratification states (development, frozen, public-review, ratification-ready, ratified, or nonstandard-released).\n\n## Key Fields\n\n- `name`: Short identifier used throughout the database (e.g., `I`, `M`, `Zicsr`, `Smstateen`)\n- `long_name`: Human-readable one-line description\n- `description`: Full AsciiDoc documentation of the extension\n- `type`: Whether the extension is `unprivileged` or `privileged`\n- `versions`: Array of versioned releases, each with a `state` and optional `ratification_date`\n- `requirements`: Optional condition that must be true for the extension to be implementable (e.g., requires another extension)\n- `company`: Organization that developed the extension (defaults to RISC-V International for standard extensions)\n- `doc_license`: License for the extension documentation",
   "type": "object",
   "required": [
     "$schema",
@@ -131,7 +131,7 @@
           },
           "state": {
             "$ref": "schema_defs.json#/$defs/spec_state",
-            "description": "Ratification state of this version: `development` (actively being worked on), `frozen` (feature-complete, under review), or `ratified` (officially approved by RISC-V International)"
+            "description": "Ratification state of this version. See `spec_state` in schema_defs for all possible values and their meanings."
           },
           "repositories": {
             "description": "Source repositories where this version of the extension is developed",

@@ -109,9 +109,11 @@ See [Config File Format](./config-file-format.md) for the complete reference.
 
 ## What's Next
 
-- [Full Configurations](./full-configs.md) — Detailed format and examples
-- [Partial Configurations](./partial-configs.md) — Specifying requirements without full detail
-- [Unconfigured](./unconfig.md) — The `_` config and when to use it
-- [Config File Format](./config-file-format.md) — Complete YAML reference
-- [Validating Configs](./validating-configs.md) — Checking compliance and catching errors
-- [The Data Pipeline](../data-pipeline/overview.md) — How overlays and configurations flow through UDB
+More detailed documentation on configurations is coming soon, including:
+
+- Full Configurations — Detailed format and examples
+- Partial Configurations — Specifying requirements without full detail
+- Unconfigured — The `_` config and when to use it
+- Config File Format — Complete YAML reference
+- Validating Configs — Checking compliance and catching errors
+

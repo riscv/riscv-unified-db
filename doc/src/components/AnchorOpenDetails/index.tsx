@@ -23,13 +23,18 @@ function openDetailsForId(id: string): void {
   const target = document.getElementById(id);
   if (!target) return;
 
-  // Walk up the DOM looking for Docusaurus's <Details> component wrapper.
+  // Walk up the DOM looking for Docusaurus's <Details> component wrapper
+  // or native HTML <details> elements.
   // Docusaurus renders <details> as a div with data-collapsed="true" when closed.
   let el: HTMLElement | null = target.parentElement;
   while (el) {
     if (el.dataset.collapsed === 'true') {
       const summary = el.querySelector(':scope > summary') as HTMLElement | null;
       if (summary) summary.click();
+    }
+    // Also handle native HTML <details> elements
+    if (el instanceof HTMLDetailsElement && !el.open) {
+      el.open = true;
     }
     el = el.parentElement;
   }

@@ -438,7 +438,7 @@
     "reference": {
       "type": "string",
       "pattern": "^.+\\.yaml#(/.*)?$",
-      "description": "refrence to another database object, as a JSON Reference"
+      "description": "reference to another database object, as a JSON Reference"
     },
     "integer": {
       "description": "An integer, either native to JSON or a number-like string",

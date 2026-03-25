@@ -353,7 +353,7 @@ tests:
       - smoke
     test:
       - name: Generate schema documentation
-        run: ./bin/chore gen schema-docs -f
+        run: ./bin/chore gen -f schema-docs
 
   build-idl-doc:
     ci_stage: merge_queue

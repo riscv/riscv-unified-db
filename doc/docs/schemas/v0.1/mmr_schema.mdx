@@ -28,8 +28,8 @@ A memory-mapped register specification
 | `kind` | `any` | ✓ | Object type |
 | `name` | `string` | ✓ | MMR name |
 | `long_name` | `string` | ✓ | One line description for the MMR |
-| `description` | [`schema_defs#-definitions-spec_text`](./schema_defs.mdx#-definitions-spec_text) | ✓ | Function of the register |
-| `definedBy` | [`schema_defs#-definitions-condition`](./schema_defs.mdx#-definitions-condition) | ✓ | Extension(s) that define the MMR |
+| `description` | `string` \| Array&lt;[`conditional_text`](#conditional-text)&gt; | ✓ | Function of the register |
+| `definedBy` | A condition (YAML structure or IDL function). See the conditions reference for details. | ✓ | Extension(s) that define the MMR |
 | `physical_address` | `integer` | ✓ | Physical memory address of the register |
 | `writable` | `boolean` | ✓ | Whether or not the register can be written by software |
 | `length` | `8` \| `16` \| `32` \| `64` \| `128` | ✓ | Length, in bits, of the register. Must be a fixed integer (no XLEN-dependent lengths for MMIO). |

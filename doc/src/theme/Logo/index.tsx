@@ -6,12 +6,16 @@ import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import {useThemeConfig} from '@docusaurus/theme-common';
-import ThemedImage from '@theme/ThemedImage';
 
 // Import the SVG as a React component so CSS variables work
 import UdbLogoSvg from '@site/static/img/udb-navbar.svg';
 
-export default function Logo({imageClassName, titleClassName, ...rest}: {imageClassName?: string; titleClassName?: string}): React.JSX.Element {
+type LogoProps = {
+  imageClassName?: string;
+  titleClassName?: string;
+} & React.ComponentProps<typeof Link>;
+
+export default function Logo({imageClassName, titleClassName, ...rest}: LogoProps): React.JSX.Element {
   const {
     siteConfig: {title},
   } = useDocusaurusContext();

@@ -21,7 +21,7 @@ import AnchorOpenDetails from '@site/src/components/AnchorOpenDetails';
 This page is generated from [`ext_schema.json`](https://github.com/riscv/riscv-unified-db/blob/main/spec/schemas/ext_schema.json) by the [schema doc generator](https://github.com/riscv/riscv-unified-db/blob/main/tools/ruby-gems/schema_doc_gen/lib/schema_doc_gen.rb). To update this page, edit the schema file and run `bin/chore gen schema-docs`.
 :::
 
-An ISA extension defines a named set of instructions, CSRs, and behaviors that can be implemented by a RISC-V processor. Each extension has one or more versioned releases, each with a ratification state (development, frozen, or ratified).
+An ISA extension defines a named set of instructions, CSRs, and behaviors that can be implemented by a RISC-V processor. Each extension has one or more versioned releases, with various ratification states (development, frozen, public-review, ratification-ready, ratified, or nonstandard-released).
 
 ## Key Fields
 
@@ -77,7 +77,7 @@ versions:
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `version` | `string` | ✓ | Version number in `MAJOR.MINOR.PATCH` format (e.g., `1.0.0`, `2.1.0`) |
-| `state` | `development` \| `frozen` \| `public-review` \| `ratification-ready` \| `ratified` \| `nonstandard-released` | ✓ | Ratification state of this version: `development` (actively being worked on), `frozen` (feature-complete, under review), or `ratified` (officially approved by RISC-V International) |
+| `state` | `development` \| `frozen` \| `public-review` \| `ratification-ready` \| `ratified` \| `nonstandard-released` | ✓ | Ratification state of this version. See `spec_state` in schema_defs for all possible values and their meanings. |
 | `repositories` | Array&lt;object&gt; |  | Source repositories where this version of the extension is developed |
 | `ratification_date` | One of: `string` \| `string` \| `null` |  | Month when this version was ratified, in `YYYY-MM` format. Use `unknown` if the date is not recorded. Required when `state` is `ratified`. |
 | `changes` | Array&lt;`string`&gt; |  | List of changes introduced in this version relative to the previous version |

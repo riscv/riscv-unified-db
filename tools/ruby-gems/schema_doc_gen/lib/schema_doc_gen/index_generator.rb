@@ -11,7 +11,7 @@ module SchemaDocGen
     attr_reader :output_dir
 
     def initialize(output_dir)
-      @output_dir = Pathname.new(output_dir)
+      @output_dir = Pathname(output_dir.to_s)
     end
 
     # Scan the output directory for generated schema docs and create an index

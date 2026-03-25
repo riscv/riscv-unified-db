@@ -828,15 +828,22 @@ module SchemaDocGen
           "[`#{ref_name}`](##{ref_name.downcase.gsub("_", "-")})"
         else
           # External reference
+          # Check if this is an absolute URL (http:// or https://) BEFORE splitting
+          if ref.start_with?("http://", "https://")
+            # Link directly to the external URL
+            return "[`#{ref}`](#{ref})"
+          end
+
           # Split at # first to separate file from anchor
           parts = ref.split("#", 2)
           ref_file_name = File.basename(parts[0], ".json")
 
           # Check if this is a reference to schema_defs - if so, inline it
           if ref_file_name == "schema_defs" && parts.length > 1
-            # Extract the definition name from the anchor (e.g., "/$defs/extension_name")
+            # Extract the definition name from the anchor
+            # Handle both draft-07 /definitions/ and draft-2020-12 /$defs/
             def_path = parts[1].split("/")
-            if def_path[0] == "" && def_path[1] == "$defs" && def_path.length == 3
+            if def_path[0] == "" && (def_path[1] == "$defs" || def_path[1] == "definitions") && def_path.length == 3
               def_name = def_path[2]
               # Get the definition from schema_defs
               def_schema = schema_defs[def_name]
@@ -860,6 +867,11 @@ module SchemaDocGen
             rescue
               # If we can't read it, assume same version
             end
+          end
+
+          # If the referenced schema's $id is a URL, link to it directly
+          if ref_version&.start_with?("http://", "https://")
+            return "[`#{ref_file_name}`](#{ref_version})"
           end
 
           # Build the relative path
