@@ -443,8 +443,8 @@ versions:
         - { name: Xqcisls, version: "= 0.2.0" }
         - { name: Xqcisync, version: "= 0.3.0" }
 - version: "0.13.0"
-  state: frozen
-  ratification_date: null
+  state: nonstandard-released
+  release_date: 2025-06
   contributors:
   - name: Albert Yosher
     company: Qualcomm Technologies, Inc.

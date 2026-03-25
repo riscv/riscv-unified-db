@@ -664,6 +664,9 @@ module Udb
     sig { returns(T.nilable(String)) }
     def ratification_date = @data["ratification_date"]
 
+    sig { returns(T.nilable(String)) }
+    def release_date = @data["release_date"]
+
     sig { returns(T.nilable(T::Array[String])) }
     def changes = @data["changes"].nil? ? [] : T.cast(@data.fetch("changes"), T::Array[String])
 

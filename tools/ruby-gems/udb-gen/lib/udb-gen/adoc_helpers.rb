@@ -38,6 +38,10 @@ module UdbGen
           + \\
           Change should be expected + \\
         STATE
+      when "nonstandard-released"
+        <<~STATE
+          This document is the Release State. Changes will result in a new version number. + \\
+        STATE
       else
         raise "Unknown state: #{version.state}"
       end
@@ -75,6 +79,10 @@ module UdbGen
           Change should be expected
           ====
         ADOC
+      when "nonstandard-released"
+        <<~STATE
+          This document is the Release State. Changes will result in a new version number. + \\
+        STATE
       else
         raise "Unknown state: #{version.state}"
       end
