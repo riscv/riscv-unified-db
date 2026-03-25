@@ -9,8 +9,23 @@ export default function prismIncludeLanguages(PrismObject) {
   } = siteConfig;
   const {additionalLanguages} = prism;
 
+  // Set up global Prism BEFORE loading any components
+  globalThis.Prism = PrismObject;
+  if (typeof window !== 'undefined') {
+    window.Prism = PrismObject;
+  }
+
+  // Now dynamically import and load YAML
   additionalLanguages.forEach((lang) => {
-    require(`prismjs/components/prism-${lang}`);
+    try {
+      const langModule = require(`prismjs/components/prism-${lang}`);
+      // If the module exports a function, call it with PrismObject
+      if (typeof langModule === 'function') {
+        langModule(PrismObject);
+      }
+    } catch (e) {
+      console.error(`Failed to load Prism language: ${lang}`, e);
+    }
   });
 
   // Load IDL language definition (canonical source: doc/src/prism/idl.js)

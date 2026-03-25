@@ -108,6 +108,7 @@ gen_subcmd_usage() {
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
+  echo "  schema-docs:   Generate schema documentation from JSON Schema files"
   echo ""
 }
 
@@ -282,6 +283,30 @@ do_gen_vscode_idl() {
 }
 
 #
+# Generate schema documentation from JSON Schema files
+#
+do_gen_schema_docs() {
+  source_setup
+  echo "Generating schema documentation"
+  if [ $fail_on_change -eq 1 ]; then
+    # Calculate checksum before generation
+    local sha_before
+    sha_before=$(find "$UDB_ROOT"/doc/docs/schemas -type f -name "*.mdx" -exec sha256sum {} \; 2>/dev/null | sort | sha256sum)
+  fi
+  $RUBY -I tools/ruby-gems/schema_doc_gen/lib tools/ruby-gems/schema_doc_gen/bin/schema-docs-all \
+    --schema-dir "$UDB_ROOT/spec/schemas" \
+    --output-dir "$UDB_ROOT/doc/docs/schemas" \
+    --generate-index
+  if [ $fail_on_change -eq 1 ]; then
+    local sha_after
+    sha_after=$(find "$UDB_ROOT"/doc/docs/schemas -type f -name "*.mdx" -exec sha256sum {} \; 2>/dev/null | sort | sha256sum)
+    if [ "$sha_before" != "$sha_after" ]; then
+      exit 1
+    fi
+  fi
+}
+
+#
 # Generate all development artifacts
 #
 do_gen_all() {
@@ -289,6 +314,7 @@ do_gen_all() {
   do_gen_vscode_idl
   do_ruby_type_def all
   do_gen_xqci_golden
+  do_gen_schema_docs
 }
 
 #
@@ -566,6 +592,10 @@ case "$subcommand" in
         ;;
       regress )
         do_gen_regress
+        exit 0
+        ;;
+      schema-docs )
+        do_gen_schema_docs
         exit 0
         ;;
       ruby-type-def )

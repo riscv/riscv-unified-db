@@ -347,6 +347,14 @@ tests:
       - name: Check schema versions against published URLs
         run: ./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb
 
+  regress-schema-docs:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Generate schema documentation
+        run: ./bin/chore gen schema-docs -f
+
   build-idl-doc:
     ci_stage: merge_queue
     gh_save_artifact:

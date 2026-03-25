@@ -58,7 +58,6 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'UDB',
       logo: {
         alt: 'UDB Logo',
         src: 'img/udb.svg',
@@ -80,8 +79,8 @@ const config: Config = {
           position: 'left',
           items: [
             {label: 'Introduction', to: '/docs/intro/what-is-udb'},
-            {label: 'Schemas', to: '/docs/schemas/overview'},
-            {label: 'Configuration', to: '/docs/configuration/overview'},
+            {label: 'Schema Reference', to: '/docs/schemas'},
+            {label: 'Configurations', to: '/docs/concepts/configurations/overview'},
             {label: 'Tools', to: '/docs/tools/overview'},
             {label: 'Generators', to: '/docs/generators/overview'},
           ],
@@ -143,6 +142,7 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
+      additionalLanguages: ['yaml', 'json', 'bash'],
     },
   } satisfies Preset.ThemeConfig,
 };
