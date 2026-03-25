@@ -52,25 +52,7 @@ tests:
     test:
       - name: Ensure that extensions.json and devcontainer.json agree
         run: |
-          ruby -r json -e %Q{
-            ext = JSON.load_file('.vscode/extensions.json')['recommendations']
-            dev = JSON.load_file('.devcontainer/devcontainer.json')['customizations']['vscode']['extensions']
-
-            if ext != dev
-              only_in_extensions = ext - dev
-              only_in_devcontainer = dev - ext
-
-              puts "Mismatch between .vscode/extensions.json[\"recommendations\"] and .devcontainer/devcontainer.json[\"customizations\"][\"vscode\"][\"extensions\"]"
-              unless only_in_extensions.empty?
-                puts "  Present only in .vscode/extensions.json: #{only_in_extensions.inspect}"
-              end
-              unless only_in_devcontainer.empty?
-                puts "  Present only in .devcontainer/devcontainer.json: #{only_in_devcontainer.inspect}"
-              end
-
-              exit 1
-            end
-          }
+          ./bin/ruby tools/scripts/check_vscode_extensions.rb
 
   regress-idl-typecheck:
     ci_stage: pr
