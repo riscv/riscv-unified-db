@@ -72,7 +72,7 @@ class TestArrays < Minitest::Test
     refute_nil m
   end
 
-  def test_range_access_mixed_range
+  def test_range_access_var_to_const
     idl = "ary[var1:3]"
 
     symtab = Idl::SymbolTable.new(
@@ -187,5 +187,68 @@ class TestArrays < Minitest::Test
     m = @compiler.parser.parse(idl, root: :assignment)
     refute_nil m
     assert_instance_of Idl::AryRangeAssignmentAst, m.to_ast
+  end
+
+  def test_triple_nested_element_assignment
+    idl = "ary[0][1][2] = 5"
+
+    symtab = Idl::SymbolTable.new(
+      possible_xlens_cb: proc { [32, 64] }
+    )
+    @compiler.parser.set_input_file(idl, 0)
+    m = @compiler.parser.parse(idl, root: :assignment)
+    refute_nil m
+    assert_instance_of Idl::AryElementAssignmentAst, m.to_ast
+    # Verify the lhs is AryElementAccessAst(AryElementAccessAst(ary, 0), 1)
+    # The final [2] index is in the assignment itself
+    ast = m.to_ast
+    assert_instance_of Idl::AryElementAccessAst, ast.lhs
+    assert_instance_of Idl::AryElementAccessAst, ast.lhs.var
+    assert_instance_of Idl::IdAst, ast.lhs.var.var
+  end
+
+  def test_triple_nested_range_assignment
+    idl = "ary[0][1][7:0] = 5"
+
+    symtab = Idl::SymbolTable.new(
+      possible_xlens_cb: proc { [32, 64] }
+    )
+    @compiler.parser.set_input_file(idl, 0)
+    m = @compiler.parser.parse(idl, root: :assignment)
+    refute_nil m
+    assert_instance_of Idl::AryRangeAssignmentAst, m.to_ast
+    # Verify the variable is AryElementAccessAst(AryElementAccessAst(ary, 0), 1)
+    ast = m.to_ast
+    assert_instance_of Idl::AryElementAccessAst, ast.variable
+    assert_instance_of Idl::AryElementAccessAst, ast.variable.var
+  end
+
+  def test_deeply_nested_vmv_style
+    idl = "matrix[i][j][15:8] = value"
+
+    symtab = Idl::SymbolTable.new(
+      possible_xlens_cb: proc { [32, 64] }
+    )
+    @compiler.parser.set_input_file(idl, 0)
+    m = @compiler.parser.parse(idl, root: :assignment)
+    refute_nil m
+    assert_instance_of Idl::AryRangeAssignmentAst, m.to_ast
+  end
+
+  def test_x_register_range_assignment
+    idl = "X[rs1][7:0] = value"
+
+    symtab = Idl::SymbolTable.new(
+      possible_xlens_cb: proc { [32, 64] }
+    )
+    @compiler.parser.set_input_file(idl, 0)
+    m = @compiler.parser.parse(idl, root: :assignment)
+    refute_nil m
+    ast = m.to_ast
+    assert_instance_of Idl::AryRangeAssignmentAst, ast
+    # Verify the variable is AryElementAccessAst(X, rs1)
+    assert_instance_of Idl::AryElementAccessAst, ast.variable
+    assert_instance_of Idl::IdAst, ast.variable.var
+    assert_equal "X", ast.variable.var.name
   end
 end

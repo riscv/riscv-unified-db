@@ -386,6 +386,49 @@ module Idl
       attr_accessor :value_error_reason, :value_error_ast
     end
 
+    # Extract the base variable name from a potentially nested access chain
+    # @param node [RvalueAst] The node to extract from
+    # @return [String, nil] The base variable name, or nil if not extractable
+    sig { params(node: RvalueAst).returns(T.nilable(String)) }
+    def self.extract_base_var_name(node)
+      case node
+      when IdAst
+        node.name
+      when AryElementAccessAst, AryRangeAccessAst
+        extract_base_var_name(node.var)
+      else
+        nil
+      end
+    end
+
+    # Perform write-back for nested array access assignments
+    # Handles arbitrary nesting depth: v[a][b][c] = val recursively writes back through the chain
+    # @param target [RvalueAst] The target expression (possibly nested)
+    # @param new_value [Integer] The new value to write
+    # @param symtab [SymbolTable] The symbol table
+    # @return [void]
+    sig { params(target: RvalueAst, new_value: Integer, symtab: SymbolTable).void }
+    def self.write_back_nested(target, new_value, symtab)
+      case target
+      when IdAst
+        # Base case: simple variable
+        symtab.add(target.name, Var.new(target.name, target.type(symtab), new_value))
+      when AryElementAccessAst
+        # Recursive case: v[idx] = val
+        # Read parent, modify element, write back parent
+        parent_value = target.var.value(symtab)
+        idx_val = target.index.value(symtab)
+        parent_value[idx_val] = new_value
+        # Recursively write back the parent (which may itself be nested)
+        write_back_nested(target.var, parent_value, symtab)
+      when AryRangeAccessAst
+        # Range access can't be on LHS of assignment
+        raise InternalError, "Cannot write back through range access"
+      else
+        raise InternalError, "Unknown target type for write-back: #{target.class.name}"
+      end
+    end
+
     # raise a value error, indicating that the value is not known at compile time
     #
     # @param reason [String] Error message
@@ -2808,8 +2851,10 @@ module Idl
       if idx.const_eval?(symtab) && rhs.const_eval?(symtab)
         true
       else
-        lhs_var = symtab.get(lhs.name)
-        type_error "array #{lhs.name} has not been declared" if lhs_var.nil?
+        base_name = AstNode.extract_base_var_name(lhs)
+        type_error "Cannot determine base variable for #{lhs.text_value}" if base_name.nil?
+        lhs_var = symtab.get(base_name)
+        type_error "array #{base_name} has not been declared" if lhs_var.nil?
 
         lhs_var.const_incompatible!
         false
@@ -2875,7 +2920,9 @@ module Idl
           value_error "right-hand side of array element assignment is unknown"
         end
       when :bits
-        var = symtab.get(lhs.text_value)
+        base_name = AstNode.extract_base_var_name(lhs)
+        internal_error "Cannot determine base variable for bits assignment" if base_name.nil?
+        var = symtab.get(base_name)
         value_result = value_try do
           v = rhs.value(symtab)
           var.value = (lhs.value(symtab) & ~0) | ((v & 1) << idx.value(symtab))
@@ -2909,7 +2956,8 @@ module Idl
           lhs_value.map! { |_v| nil }
         end
       when :bits
-        var = symtab.get(lhs.text_value)
+        base_name = AstNode.extract_base_var_name(lhs)
+        var = symtab.get(base_name)
         value_result = value_try do
           v = rhs.value(symtab)
           var.value = (lhs.value & ~0) | ((v & 1) << idx.value(symtab))
@@ -2953,7 +3001,10 @@ module Idl
   class AryRangeAssignmentSyntaxNode < SyntaxNode
     def to_ast
       var = send(:var).to_ast
-      send(:brackets).elements[0..-1].each do |bracket|
+      brackets = send(:brackets).elements
+
+      # Build access chain for all but the last bracket
+      brackets[0..-2].each do |bracket|
         var =
           if bracket.msb.empty?
             AryElementAccessAst.new(input, interval, var, bracket.lsb.to_ast)
@@ -2962,11 +3013,13 @@ module Idl
                                   bracket.msb.expression.to_ast, bracket.lsb.to_ast)
           end
       end
-      last_bracket = send(:brackets).elements[-1]
+
+      # Use accumulated `var` for the assignment target
+      last_bracket = brackets[-1]
       if last_bracket.msb.empty?
-        AryElementAssignmentAst.new(input, interval, send(:var).to_ast, last_bracket.lsb.to_ast, send(:rval).to_ast)
+        AryElementAssignmentAst.new(input, interval, var, last_bracket.lsb.to_ast, send(:rval).to_ast)
       else
-        AryRangeAssignmentAst.new(input, interval, send(:var).to_ast, last_bracket.msb.expression.to_ast, last_bracket.lsb.to_ast, send(:rval).to_ast)
+        AryRangeAssignmentAst.new(input, interval, var, last_bracket.msb.expression.to_ast, last_bracket.lsb.to_ast, send(:rval).to_ast)
       end
     end
   end
@@ -2985,8 +3038,10 @@ module Idl
       if lsb.const_eval?(symtab) && msb.const_eval?(symtab) && write_value.const_eval?(symtab)
         true
       else
-        lhs_var = symtab.get(variable.name)
-        type_error "array #{variable.name} has not be declared" if lhs_var.nil?
+        base_name = AstNode.extract_base_var_name(variable)
+        type_error "Cannot determine base variable for #{variable.text_value}" if base_name.nil?
+        lhs_var = symtab.get(base_name)
+        type_error "array #{base_name} has not be declared" if lhs_var.nil?
 
         lhs_var.const_incompatible!
         false
@@ -3039,32 +3094,35 @@ module Idl
       return if variable.type(symtab).global?
 
       value_result = value_try do
-        var_val = variable.value(symtab)
-
         msb_val = msb.value(symtab)
         lsb_val = lsb.value(symtab)
 
         type_error "MSB (#{msb_val}) is <= LSB (#{lsb_val})" if msb_val <= lsb_val
 
         rval_val = write_value.value(symtab)
+        mask = ((1 << (msb_val - lsb_val + 1)) - 1) << lsb_val
 
-        mask = ((1 << msb_val) - 1) << lsb_val
-
+        # Read current value, modify bits
+        var_val = variable.value(symtab)
         var_val &= ~mask
+        new_val = var_val | ((rval_val << lsb_val) & mask)
 
-        var_val | ((rval_val << lsb_val) & mask)
-        symtab.add(variable.name, Var.new(variable.name, variable.type(symtab), var_val))
+        # Write back through the access chain
+        AstNode.write_back_nested(variable, new_val, symtab)
         :ok
       end
       value_else(value_result) do
-        symtab.add(variable.name, Var.new(variable.name, variable.type(symtab)))
+        base_name = AstNode.extract_base_var_name(variable)
+        symtab.add(base_name, Var.new(base_name, variable.type(symtab)))
         value_error "Either the range or right-hand side of an array range assignment is unknown"
       end
     end
 
     # @!macro execute_unknown
     def execute_unknown(symtab)
-      symtab.add(variable.name, Var.new(variable.name, variable.type(symtab)))
+      base_name = AstNode.extract_base_var_name(variable)
+      internal_error "Cannot determine base variable" if base_name.nil?
+      symtab.add(base_name, Var.new(base_name, variable.type(symtab)))
     end
 
     # @!macro to_idl

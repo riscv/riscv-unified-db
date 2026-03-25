@@ -177,6 +177,27 @@ module Idl
   class AryRangeAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
+      base_name = Idl::AstNode.extract_base_var_name(variable)
+
+      # Special handling for X register range assignment: X[idx][msb:lsb] = val
+      if base_name == "X" && variable.is_a?(Idl::AryElementAccessAst) &&
+         variable.var.is_a?(Idl::IdAst) && variable.var.name == "X"
+        # X[idx][msb:lsb] = val
+        # Read X[idx], modify bits, write back
+        value_result = value_try do
+          msb_val = msb.value(symtab)
+          lsb_val = lsb.value(symtab)
+          # Use bit_insert to modify the value, then set_xreg
+          return "#{' ' * indent}__UDB_HART->_set_xreg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, bit_insert<#{msb_val}, #{lsb_val}, #{variable.type(symtab).width}>(#{variable.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}))"
+        end
+
+        value_else(value_result) do
+          # Runtime msb/lsb
+          return "#{' ' * indent}__UDB_HART->_set_xreg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, bit_insert(#{variable.gen_cpp(symtab)}, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}))"
+        end
+      end
+
+      # Standard range assignment (non-X register)
       expression = nil
       value_result = value_try do
         # see if msb and lsb are compile-time-known
@@ -186,7 +207,7 @@ module Idl
       end
 
       value_else(value_result) do
-        expression = "bit_insert(#{variable.gen_cpp(symtab)}, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)})"
+        expression = "#{variable.gen_cpp(symtab, 0, indent_spaces:)} = bit_insert(#{variable.gen_cpp(symtab)}, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)})"
       end
 
       "#{' ' * indent}#{expression}"
@@ -926,7 +947,8 @@ module Idl
   class AryElementAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      if lhs.text_value.start_with?("X")
+      base_name = Idl::AstNode.extract_base_var_name(lhs)
+      if base_name == "X"
         #"#{' '*indent}  #{lhs.gen_cpp(symtab, 0, indent_spaces:)}[#{idx.gen_cpp(symtab, 0, indent_spaces:)}] = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
         "#{' ' * indent}__UDB_HART->_set_xreg( #{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
       elsif lhs.type(symtab).kind == :bits

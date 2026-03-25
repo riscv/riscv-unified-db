@@ -103,14 +103,17 @@ module Idl
   class AryElementAssignmentAst
     def find_dst_registers(symtab)
       value_result = value_try do
-        if lhs.text_value == "X"
+        # Extract base variable name from potentially nested access
+        base_name = Idl::AstNode.extract_base_var_name(lhs)
+        if base_name == "X"
           return [idx.value(symtab)]
         else
           return []
         end
       end
       value_else(value_result) do
-        if lhs.text_value == "X"
+        base_name = Idl::AstNode.extract_base_var_name(lhs)
+        if base_name == "X"
           if idx.type(symtab).const?
             return [idx.gen_cpp(symtab, 0)]
           else
@@ -119,6 +122,34 @@ module Idl
         else
           return []
         end
+      end
+    end
+  end
+
+  class AryRangeAssignmentAst
+    def find_dst_registers(symtab)
+      # Check if this is an X register assignment
+      base_name = Idl::AstNode.extract_base_var_name(variable)
+      if base_name == "X"
+        # For X[idx][msb:lsb] = val, we need the idx
+        if variable.is_a?(Idl::AryElementAccessAst) && variable.var.is_a?(Idl::IdAst) && variable.var.name == "X"
+          # Direct X register access: X[idx][msb:lsb] = val
+          value_result = value_try do
+            return [variable.index.value(symtab)]
+          end
+          value_else(value_result) do
+            if variable.index.type(symtab).const?
+              return [variable.index.gen_cpp(symtab, 0)]
+            else
+              raise ComplexRegDetermination
+            end
+          end
+        else
+          # More complex X register nesting
+          raise ComplexRegDetermination
+        end
+      else
+        return []
       end
     end
   end
