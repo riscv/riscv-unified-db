@@ -47,7 +47,11 @@ endif::[]
 = Qualcomm uC extensions
 
 // Preamble
-This document is the Release State. Changes will result in a new version number. + \
+[WARNING]
+This document is the Release State.
+====
+Changes will result in a new version number.
+====
 
 
 [preface]
