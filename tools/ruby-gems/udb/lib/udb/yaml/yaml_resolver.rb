@@ -16,6 +16,7 @@ require "idlc"
 require_relative "comment_parser"
 require_relative "preserving_emitter"
 require_relative "../log"
+require_relative "../paths"
 
 module Udb
   module Yaml
@@ -44,11 +45,11 @@ module Udb
       end
 
       # Returns the path to JSON schema files.
-      # Defaults to <repo_root>/spec/schemas but can be overridden via the constructor.
+      # Defaults to Udb.default_schemas_path but can be overridden via the constructor.
       sig { returns(Pathname) }
       def schemas_path
         if @schemas_path.nil?
-          @schemas_path = Pathname.new(__dir__).parent.parent.parent.parent.parent.parent / "spec" / "schemas"
+          @schemas_path = Udb.default_schemas_path
         end
         T.must(@schemas_path)
       end

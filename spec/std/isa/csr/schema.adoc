@@ -212,12 +212,6 @@ Custom Write Function::
 | *description* | Function implementing custom write behavior for the CSR. The csr_value parameter is the *entire* attempted CSR write value. Fields within the attempted write value can be accessed with a dot operator (e.g., csr_value.SXL, csr_value.VGEIN, ...)
 |===
 
-|===
-| *key*         | legal?(csr_value)
-| *value type*  | String of IDL code that returns whether or not an attempted write is legal
-| *description* | Function that returns whether or not an attempted value for the field is legal. The csr_value parameter is the *entire* attempted CSR write value. Fields within the attempted write value can be accessed with a dot operator (e.g., csr_value.SXL, csr_value.VGEIN, ...)
-|===
-
 Alias::
 
 Some fields are aliases for another field, often in a different CSR. THe `alias` key is used to indicate that this field just points somewhere else.
