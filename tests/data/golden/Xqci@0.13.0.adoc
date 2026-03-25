@@ -1,6 +1,6 @@
 [[header]]
 :description: Qualcomm uC extensions (Xqci)
-:revdate: 2026-03-22
+:revdate: 2026-03-25
 :revnumber: 0.13.0
 :revmark: This document is in the http://riscv.org/spec-state[Frozen state]. + \
 + \
