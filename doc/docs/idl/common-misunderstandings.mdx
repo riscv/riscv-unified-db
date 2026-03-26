@@ -37,7 +37,7 @@ See [Naming Rules](./variables#naming-rules).
 `if (x)` is a compilation error. An `if` condition must have type `Boolean`. You must write an explicit comparison:
 
 ```idl
-XReg src1 = X[rs1];
+XReg src1 = X[xs1];
 
 if (src1 != 0) { ... }  # correct
 # if (src1) { ... }     # compilation error
@@ -135,7 +135,7 @@ A Verilog-style literal with an explicit width that is too narrow to hold the va
 
 ```idl
 Bits<4> x = 4'd-1;   # -1 in 4 bits = 0b1111 = 15 (unsigned) — OK
-Bits<3> y = 3'd-1;   # truncates to 3 bits: 0b111 = 7 — sign bit lost
+Bits<3> y = 4'd-1;   # truncates to 3 bits: 0b111 = 7 — sign bit lost
 ```
 
 When encoding negative values, ensure the width is sufficient to hold the sign bit. Or use the 2's complement positive equivalent:

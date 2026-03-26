@@ -23,7 +23,7 @@ Function scope is created by declaring a function in an `.idl` file. It includes
 
 ### Instruction Scope
 
-Instruction execution — specified in an instruction's `operation()` — occurs in Instruction scope. Decode variables are automatically populated from the encoding before the `operation()` body begins. The `$encoding` builtin variable is available in Instruction scope.
+Instruction execution — specified in an instruction's `operation()` — occurs in Instruction scope. Decode variables are predefined in scope from the encoding before the `operation()` body begins. The `$encoding` and `$pc` builtin variables are available in Instruction scope.
 
 ### CSR Scope
 

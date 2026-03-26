@@ -696,6 +696,16 @@ Resolved decisions are recorded in [`decisions.md`](decisions.md) with rationale
 
 ---
 
+## Known Issues / Future Work
+
+Items identified during PR reviews or implementation that should be addressed in future updates:
+
+- **IDL examples using misa checks**: Several IDL code examples (e.g., in `overview.mdx` and `standard-library.mdx`) use `CSR[misa].C` checks to demonstrate dynamic extension enabling/disabling. However, the handling of mutable vs. immutable `misa` is still being finalized in the specification. These examples should be reviewed and potentially replaced with examples that don't depend on misa mutability semantics once the spec is settled. (Identified in PR 1723 review, comments 56-57)
+
+- **ERB syntax in function descriptions**: Function descriptions in `.idl` files may be processed through ERB templates. If ERB delimiters (like `<%-`) appear in a description, they could be interpreted as ERB code. Consider documenting this as a known limitation or adding validation to warn about ERB syntax in descriptions. (Identified in PR 1723 review, comment 55)
+
+---
+
 ## Suggested Work Order (First Sprint)
 
 For someone picking this up fresh, the highest-value first steps are:

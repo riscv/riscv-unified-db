@@ -3,11 +3,11 @@ sidebar_position: 12
 title: IDL in Instructions
 ---
 
-Instruction definitions in `arch/inst/` use IDL to formally specify execution behavior via the `operation()` key. See also [IDL in CSRs](./in-csrs.mdx) and [Scope](./scope.mdx) for how IDL source is organized across `.idl` files.
+Instruction definitions in `spec/std/isa/inst/` use IDL to formally specify execution behavior via the `operation()` key. See also [IDL in CSRs](./in-csrs.mdx) and [Scope](./scope.mdx) for how IDL source is organized across `.idl` files.
 
 ## Instruction `operation()`
 
-Instruction definitions in `arch/inst/` use IDL to formally specify execution behavior via the `operation()` key. The IDL executes at **Instruction scope** when the instruction executes on a hart.
+Instruction definitions in `spec/std/isa/inst/` use IDL to formally specify execution behavior via the `operation()` key. The IDL executes at **Instruction scope** when the instruction executes on a hart.
 
 `operation()` has no arguments and no return value, though decode variables are automatically populated from the encoding before execution begins.
 
@@ -17,14 +17,14 @@ add:
   encoding:
     # ...
     variables:
-    - name: rs2
+    - name: xs2
       location: 24-20
-    - name: rs1
+    - name: xs1
       location: 19-15
-    - name: rd
+    - name: xd
       location: 11-7
   operation(): |
-    X[rd] = X[rs1] + X[rs2];
+    X[xd] = X[xs1] + X[xs2];
 ```
 
-In the `operation()` body, the decoded fields (`rs1`, `rs2`, `rd`) are automatically available as variables. The `$encoding` and `$pc` builtins are also available.
+In the `operation()` body, the decoded fields (`xs1`, `xs2`, `xd`) are automatically available as variables. The `$encoding` and `$pc` builtins are also available.

@@ -16,6 +16,10 @@ Type conversions occur when dissimilar types are used in binary operators or ass
 
 When expansion occurs, the value is **zero extended** when the type is unsigned and **sign extended** when the type is signed.
 
+:::note Widening operators are an exception
+Widening operators (`` `+ ``, `` `- ``, `` `* ``, `` `<< ``) produce a result wider than both operands and do not follow the standard conversion rules above. See [Widening Operators](./operators#widening-operators) for details.
+:::
+
 :::warning Narrowing assignments silently discard high bits
 Assigning a wider value into a narrower variable truncates without warning:
 

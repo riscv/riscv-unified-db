@@ -3,13 +3,17 @@ sidebar_position: 3
 title: Variables and Constants
 ---
 
+Variables and constants are the primary way to name and store values during execution. Variables are mutable; constants are immutable.
+
+Variable declarations can appear anywhere an IDL statement can — at the top level of an `.idl` file (global scope), within function bodies, within instruction `operation()` bodies, or within `if`/`for` block bodies.
+
 ## Assignment
 
 Variables are assigned using `=`. Assignment is a statement, not an expression — it cannot appear inside a condition or as a subexpression.
 
 ```idl
 XReg result;
-result = X[rs1] + X[rs2]; # assign after declaration
+result = X[xs1] + X[xs2]; # assign after declaration
 
 Bits<8> flags = 0xFF;     # assign at declaration
 flags = flags & mask;     # re-assign
@@ -26,7 +30,7 @@ mask  = mask & 0xFF;
 ```
 
 :::note
-The x register file is assigned through `X[rd] = value`. The x0 register is hardwired to zero — writes to it are silently discarded.
+The x register file is assigned through `X[xd] = value`. The x0 register is hardwired to zero — writes to it are silently discarded, and reads from it always return `XLEN'd0`.
 :::
 
 ## Mutable Variables
@@ -48,7 +52,7 @@ Bits<8> ary[2];                 # declare ary, initialized to [8'd0, 8'd0]
 
 The general-purpose RISC-V x registers are builtin state for IDL (rather than being declared state). This avoids needing special language support (e.g., operator overloading) or verbose function calls on every x register access. Three special cases apply:
 
-1. The x0 register is hardwired to 0.
+1. The x0 register is hardwired to 0. Writes to x0 are ignored, and reads from it always return `XLEN'd0`.
 2. All writes to an x register when `MXLEN != XLEN` are sign-extended to `MXLEN`.
 3. All reads from an x register when `MXLEN != XLEN` ignore the upper bits of the register.
 

@@ -470,7 +470,7 @@ Compiles an entire `.idl` file.
 **Example**:
 
 ```ruby
-ast = compiler.compile_file(Pathname.new("arch/inst.idl"))
+ast = compiler.compile_file(Pathname.new("spec/std/isa/inst.idl"))
 ```
 
 #### `compile_func_body(body, return_type:, symtab:, name:, input_file:, input_line:)`
