@@ -48,7 +48,7 @@ def create_job(job_name, job_data, workflow_yaml)
 
   # Add 'if' condition before 'steps' to ensure correct YAML ordering
   if job_data["ci_stage"] == "merge_queue"
-    gh_job_yaml["if"] = "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    gh_job_yaml["if"] = "(github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
     # Note: plain (unquoted) style is enforced by force_plain_if_values / dump_workflow
   end
 

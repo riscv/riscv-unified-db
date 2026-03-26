@@ -733,7 +733,7 @@ jobs:
   build-reuse-manifest:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -755,7 +755,7 @@ jobs:
   build-udb-api-docs:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -778,7 +778,7 @@ jobs:
   resolve-unconfig:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -803,7 +803,7 @@ jobs:
   build-isa-explorer-csr:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -825,7 +825,7 @@ jobs:
   build-isa-explorer-ext:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -847,7 +847,7 @@ jobs:
   build-isa-explorer-inst:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -869,7 +869,7 @@ jobs:
   build-isa-explorer-spreadsheet:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -891,7 +891,7 @@ jobs:
   build-html-isa-manual:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -913,7 +913,7 @@ jobs:
   build-html-cfg-isa-manual:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -935,7 +935,7 @@ jobs:
   build-instruction-appendix:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -959,7 +959,7 @@ jobs:
   build-profile:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -1006,7 +1006,7 @@ jobs:
   build-idl-doc:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -1045,7 +1045,7 @@ jobs:
   build-docs-site:
     runs-on: ubuntu-latest
     needs: build-container
-    if: (github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))
+    if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
