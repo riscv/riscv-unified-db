@@ -148,15 +148,6 @@ RV64::
 ----
 <% end -%>
 
-<% if inst.key?("sail()") -%>
-==== Sail Operation
-
-[source,sail]
-----
-<%= inst.data["sail()"] %>
-----
-<% end -%>
-
 ==== Exceptions
 
 <% exception_list = inst.reachable_exceptions_str() -%>

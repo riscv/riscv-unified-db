@@ -56,5 +56,3 @@ operation(): |
   addr = addr & $signed(2'b10);
 
   jump(addr);
-
-sail(): |
