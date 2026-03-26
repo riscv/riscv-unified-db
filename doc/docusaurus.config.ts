@@ -56,7 +56,7 @@ const config: Config = {
     image: 'img/udb-social-card.jpg',
     announcementBar: {
       id: 'under_construction',
-      content: '🚧 This documentation site is under active construction. See <a href="/riscv-unified-db/docs-preview/docs/intro/doc-status">Documentation Status</a> for details.',
+      content: '🚧 This documentation site is under active construction. See <a href="/docs/intro/doc-status">Documentation Status</a> for details.',
       backgroundColor: '#ffa500',
       textColor: '#000000',
       isCloseable: true,
