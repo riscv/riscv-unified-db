@@ -23,7 +23,7 @@ module UdbGen
     sig { params(version: Udb::ExtensionVersion).returns(T.any(String, Date)) }
     def revdate(version)
       if version.state == "nonstandard-released"
-        version.release_date.nil?  ? Date.today : version.release_date
+        version.release_date.nil? ? Date.today : version.release_date
       elsif version.state == "ratified"
         version.ratification_date.nil? ? Date.today : version.ratification_date
       else
