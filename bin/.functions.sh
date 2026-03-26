@@ -46,7 +46,7 @@ build_container() {
   fi
 
   if [ -v MISE_GITHUB_TOKEN ]; then
-    DOCKER_ENV_VARS="--secret id=MISE_GITHUB_TOKEN.github.com,env=$MISE_GITHUB_TOKEN"
+    DOCKER_ENV_VARS="--secret id=MISE_GITHUB_TOKEN.github.com,env=MISE_GITHUB_TOKEN"
   fi
 
   ${CONTAINER_TYPE} build $DOCKER_ENV_VARS -t "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" -f "${root}"/.devcontainer/Dockerfile "${root}"

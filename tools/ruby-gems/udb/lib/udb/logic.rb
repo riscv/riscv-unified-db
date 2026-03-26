@@ -1700,17 +1700,9 @@ module Udb
         else T.absurd(r)
         end
       end
-      substituted = replace_terms(replace_cb)
-      reduced = substituted.reduce
 
-      if @type == LogicNodeType::And && reduced.type == LogicNodeType::And
-        # Zip original children with reduced children; keep originals whose reduced form is False
-        node_children.zip(reduced.node_children).filter_map do |orig, red|
-          orig if T.must(red).type == LogicNodeType::False
-        end
-      elsif @type == LogicNodeType::And
-        # The And reduced to something other than And (e.g., False or a single term)
-        # Find which children are individually false
+      if @type == LogicNodeType::And
+        # Evaluate each original child independently to find failing conjuncts
         child_replace_cb = LogicNode.make_replace_cb do |tn|
           r = eval_cb.call(T.cast(tn.children.fetch(0), TermType))
           case r

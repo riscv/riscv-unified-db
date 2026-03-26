@@ -2057,7 +2057,7 @@ namespace udb {
       requires(BitsType<RhsBitsType<RhsN, RhsSigned>>)
     BitwiseReturnType<RhsBitsType, RhsN, RhsSigned> operator^(
         const RhsBitsType<RhsN, RhsSigned> &_rhs) const {
-      if constexpr (RhsBitsType<RhsN, RhsSigned>::PossiblyUknown) {
+      if constexpr (RhsBitsType<RhsN, RhsSigned>::PossiblyUnknown) {
         _RuntimeBits<constmax_v<MaxN, RhsN>, Signed> lhs{*this};
         RhsBitsType<constmax_v<MaxN, RhsN>, RhsSigned> rhs{_rhs};
 

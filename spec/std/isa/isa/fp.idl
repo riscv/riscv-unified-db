@@ -22,7 +22,7 @@ Bits<32> SP_POS_ZERO      = 32'b0_00000000_00000000000000000000000;
 Bits<32> SP_NEG_ZERO      = 32'b1_00000000_00000000000000000000000;
 Bits<32> SP_CANONICAL_NAN = 32'b0_11111111_10000000000000000000000;
 
-Bits<16> HP_CANONICAL_NAN = 16'b0_11111_1111111111;
+Bits<16> HP_CANONICAL_NAN = 16'b0_11111_1000000000;
 
 Bits<32> WORD_NEG_OVERFLOW = 32'h8000_0000; # minimum signed 32-bit integer
 Bits<32> WORD_POS_OVERFLOW = 32'h7FFF_FFFF; # maximum signed 32-bit integer
@@ -763,7 +763,7 @@ function f32_div {
     sigA = sigA | 32'h00800000;
     sigB = sigB | 32'h00800000;
 
-    if ($signed(sigA) < $signed(sigB)) {
+    if (sigA < sigB) {
       expZ = expZ - 1;
       sigA = sigA << 8;
     } else {
@@ -1957,7 +1957,7 @@ function softfloat_roundToI64 {
       sig = sig + 1;
       if (sig == 0) {
         set_fp_flag(FpFlag::NV);
-        return (sign == 1) ? I64_NEG_OVERFLOW : I64_NEG_OVERFLOW;
+        return (sign == 1) ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
       }
       if ((sigExtra == 64'h8000000000000000) && (roundingMode == RoundingMode::RNE)) {
         sig = sig & ~64'h1;
@@ -1967,7 +1967,7 @@ function softfloat_roundToI64 {
     z = (sign == 1) ? -sig : sig;
     if ((z != 0) && (((($signed(z) < 0s) ? 1 : 0) ^ sign) == 1)) {
       set_fp_flag(FpFlag::NV);
-      return (sign == 1) ? I64_NEG_OVERFLOW : I64_NEG_OVERFLOW;
+      return (sign == 1) ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
     }
 
     if (sigExtra != 0) {

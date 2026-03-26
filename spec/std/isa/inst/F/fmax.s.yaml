@@ -50,7 +50,7 @@ operation(): |
     }
     # If both are NaN, return canonical NaN; otherwise return the non-NaN operand
     if (is_sp_nan?(sp_value_a) && is_sp_nan?(sp_value_b)) {
-      f[fd] = 32'h7fc00000; # canonical NaN
+      f[fd] = SP_CANONICAL_NAN;
     } else if (is_sp_nan?(sp_value_a)) {
       f[fd] = sp_value_b;
     } else {

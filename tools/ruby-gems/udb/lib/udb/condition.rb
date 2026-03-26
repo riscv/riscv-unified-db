@@ -1155,7 +1155,7 @@ module Udb
         elsif cfg_arch.partially_configured?
           cb = make_cb_proc do |term|
             if term.is_a?(ExtensionTerm)
-              if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| cfg_ext_req.satisfied_by?(term.to_ext_req(cfg_arch)) }
+              if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_req) }
                 SatisfiedResult::Yes
               elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
                 SatisfiedResult::Maybe
@@ -1277,7 +1277,7 @@ module Udb
               SatisfiedResult::Yes
             end
           elsif cfg_arch.partially_configured?
-            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| cfg_ext_req.satisfied_by?(term.to_ext_req(cfg_arch)) }
+            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_req) }
               SatisfiedResult::Yes
             elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
               SatisfiedResult::Maybe
@@ -1329,7 +1329,7 @@ module Udb
               SatisfiedResult::Yes
             end
           elsif cfg_arch.partially_configured?
-            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| cfg_ext_req.satisfied_by?(term.to_ext_req(cfg_arch)) }
+            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_req) }
               SatisfiedResult::Yes
             elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
               SatisfiedResult::Maybe
