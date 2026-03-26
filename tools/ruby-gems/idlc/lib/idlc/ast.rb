@@ -407,7 +407,7 @@ module Idl
     # @param new_value [Integer] The new value to write
     # @param symtab [SymbolTable] The symbol table
     # @return [void]
-    sig { params(target: RvalueAst, new_value: Integer, symtab: SymbolTable).void }
+    sig { params(target: RvalueAst, new_value: ValueRbType, symtab: SymbolTable).void }
     def self.write_back_nested(target, new_value, symtab)
       case target
       when IdAst
@@ -2920,8 +2920,7 @@ module Idl
           value_error "right-hand side of array element assignment is unknown"
         end
       when :bits
-        base_name = AstNode.extract_base_var_name(lhs)
-        internal_error "Cannot determine base variable for bits assignment" if base_name.nil?
+        base_name = T.must(AstNode.extract_base_var_name(lhs))
         var = symtab.get(base_name)
         value_result = value_try do
           v = rhs.value(symtab)
@@ -2956,11 +2955,11 @@ module Idl
           lhs_value.map! { |_v| nil }
         end
       when :bits
-        base_name = AstNode.extract_base_var_name(lhs)
+        base_name = T.must(AstNode.extract_base_var_name(lhs))
         var = symtab.get(base_name)
         value_result = value_try do
           v = rhs.value(symtab)
-          var.value = (lhs.value & ~0) | ((v & 1) << idx.value(symtab))
+          var.value = (lhs.value(symtab) & ~0) | ((v & 1) << idx.value(symtab))
         end
         value_else(value_result) do
           var.value = nil
@@ -3112,7 +3111,7 @@ module Idl
         :ok
       end
       value_else(value_result) do
-        base_name = AstNode.extract_base_var_name(variable)
+        base_name = T.must(AstNode.extract_base_var_name(variable))
         symtab.add(base_name, Var.new(base_name, variable.type(symtab)))
         value_error "Either the range or right-hand side of an array range assignment is unknown"
       end
@@ -3120,8 +3119,7 @@ module Idl
 
     # @!macro execute_unknown
     def execute_unknown(symtab)
-      base_name = AstNode.extract_base_var_name(variable)
-      internal_error "Cannot determine base variable" if base_name.nil?
+      base_name = T.must(AstNode.extract_base_var_name(variable))
       symtab.add(base_name, Var.new(base_name, variable.type(symtab)))
     end
 
