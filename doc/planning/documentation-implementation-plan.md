@@ -177,6 +177,54 @@ All four use CSS custom properties (`var(--idl-logo-bg)`, `var(--idl-logo-fg)`) 
 
 ---
 
+## Phase 0.9 — Documentation Status Indicators
+
+Make it clear to readers which documentation is complete vs. in-progress while the site is under active development.
+
+**Goal**: Set proper expectations for visitors during the construction phase and make the site feel professional rather than incomplete.
+
+- [x] **0.9.1** Create a `PageStatus` component (or use Docusaurus admonitions) to indicate completion status at the top of pages. Status values: "complete", "in-progress", "planned". Start with admonitions for MVP:
+  ```markdown
+  :::info[Status: Complete]
+  This documentation is complete and reviewed.
+  :::
+
+  :::warning[Status: In Progress]
+  This documentation is partially complete. Some sections may be missing or outdated.
+  :::
+
+  :::caution[Status: Planned]
+  This documentation is planned but not yet written. Check back soon.
+  :::
+  ```
+  Can be upgraded to a custom React component later for more polish.
+
+- [ ] **0.9.2** Add status indicators to the sidebar using custom CSS or sidebar item customization. Consider emoji (✅/🚧/📋) or colored dots for quick scanning. This makes status visible during navigation without requiring users to open each page.
+
+- [x] **0.9.3** Create a "Documentation Status" page at `docs/intro/doc-status.md` that lists all planned documentation sections with their current status, so readers can see at a glance what exists and what's coming. Structure it by the main categories from the site design (Getting Started, Concepts, Database, IDL, Tools, Generators). Use a table format:
+  | Section | Status |
+  |---------|--------|
+  | Getting Started for Users | 🚧 In Progress |
+  | Getting Started for Spec Writers | 📋 Planned |
+  | ... | ... |
+
+- [x] **0.9.4** Add a frontmatter field `status: complete|in-progress|planned` to all documentation pages. This can be consumed by the PageStatus component (if built) or by a build script that validates status consistency. Added to key pages as they are created.
+
+- [x] **0.9.5** (Optional) Add a global banner at the top of the site (using Docusaurus announcement bar) that says "🚧 This documentation site is under active construction. See [Documentation Status](/intro/doc-status) for details." Remove this once the site reaches stable status. Configure in `docusaurus.config.ts`:
+  ```typescript
+  announcementBar: {
+    id: 'under_construction',
+    content: '🚧 This documentation site is under active construction. See <a href="/intro/doc-status">Documentation Status</a> for details.',
+    backgroundColor: '#ffa500',
+    textColor: '#000000',
+    isCloseable: true,
+  }
+  ```
+
+**Acceptance**: Readers can immediately see which pages are trustworthy vs. incomplete. Status is visible both at the page level and in navigation. The Documentation Status page provides a roadmap of what's coming.
+
+---
+
 ## Phase 1 — Landing Page
 
 Build the custom landing page (`src/pages/index.tsx`).

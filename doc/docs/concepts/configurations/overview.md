@@ -1,8 +1,13 @@
 ---
 sidebar_position: 1
+status: in-progress
 ---
 
 # Configurations Overview
+
+:::warning[Status: In Progress]
+This documentation is partially complete. Some sections may be missing or outdated.
+:::
 
 A **configuration** is a YAML file that describes a RISC-V system or family of systems by specifying which extensions are implemented, what their parameter values are, and how implementation-defined behavior is resolved. Configurations control how UDB generates artifacts — from fully general tools to highly specialized ISS code — and also provide a **standard machine-readable format** for precisely describing RISC-V implementations (used, for example, in RISC-V certification applications).
 

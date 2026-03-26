@@ -1,8 +1,13 @@
 ---
 sidebar_position: 15
+status: in-progress
 ---
 
 # The IDL Compiler
+
+:::warning[Status: In Progress]
+This documentation is partially complete. Some sections may be missing or outdated.
+:::
 
 The IDL compiler (`idlc`) is the Ruby-based compiler that parses IDL source code, builds an abstract syntax tree (AST), performs type checking, and runs analysis passes to extract semantic information. This page describes how the compiler works internally — its architecture, compilation pipeline, and extension points for building custom analysis tools.
 
