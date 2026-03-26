@@ -30,24 +30,3 @@ access:
 operation(): |
   # shamt is between 0-63
   X[creg2reg(xd)] = X[creg2reg(xd)] & $signed(imm);
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let rd_val = X(rd+8);
-    let immext : xlenbits = sign_extend(imm);
-    let result : xlenbits = match op {
-      RISCV_ADDI  => rd_val + immext,
-      RISCV_SLTI  => zero_extend(bool_to_bits(rd_val <_s immext)),
-      RISCV_SLTIU => zero_extend(bool_to_bits(rd_val <_u immext)),
-      RISCV_ANDI  => rd_val & immext,
-      RISCV_ORI   => rd_val | immext,
-      RISCV_XORI  => rd_val ^ immext
-    };
-    X(rd+8) = result;
-    RETIRE_SUCCESS
-  }
-
-# SPDX-SnippetEnd

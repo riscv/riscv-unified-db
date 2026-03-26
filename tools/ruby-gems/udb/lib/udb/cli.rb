@@ -10,6 +10,7 @@ require "pastel"
 require "thor"
 require "terminal-table"
 
+require_relative "global_opts"
 require_relative "resolver"
 
 class SubCommandBase < Thor
@@ -81,8 +82,11 @@ module Udb
       method_option :custom, type: :string, desc: "Path to custom specification directory, if needed", default: Udb.default_custom_isa_path.to_s
       method_option :config_dir, type: :string, desc: "Path to directory with config files", default: Udb.default_cfgs_path.to_s
       method_option :gen, type: :string, desc: "Path to folder used for generation", default: Udb.default_gen_path.to_s
+      method_option :z3parallel, type: :boolean, desc: "Use parallel.enable for Z3", default: true
       def cfg(name_or_path)
         raise ArgumentError, "Spec directory does not exist: #{options[:std]}" unless File.directory?(options[:std])
+
+        Udb.global_options.parallel_z3 = options[:z3parallel]
 
         cfg_file =
           if File.file?(name_or_path)

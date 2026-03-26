@@ -222,24 +222,30 @@ namespace udb {
           "(m_parent->xlen() == #{term.xlen}_b)"
         elsif term.is_a?(Udb::ParameterTerm)
           var = "m_parent->m_params.#{term.name}.value()"
+          unless term.index.nil?
+            var = "#{var}[#{term.index}]"
+          end
+          unless term.size.nil?
+            var = "#{var}.size()"
+          end
           comparison_type = term.comparison_type
           case comparison_type
           when Udb::ParameterTerm::ParameterComparisonType::Equal
-            "(#{var} == #{term.comparison_value})"
+            "(#{var} == #{term.comparison_value_cxx})"
           when Udb::ParameterTerm::ParameterComparisonType::NotEqual
-            "(#{var} != #{term.comparison_value})"
+            "(#{var} != #{term.comparison_value_cxx})"
           when Udb::ParameterTerm::ParameterComparisonType::LessThan
-            "(#{var} < #{term.comparison_value})"
+            "(#{var} < #{term.comparison_value_cxx})"
           when Udb::ParameterTerm::ParameterComparisonType::GreaterThan
-            "(#{var} > #{term.comparison_value})"
+            "(#{var} > #{term.comparison_value_cxx})"
           when Udb::ParameterTerm::ParameterComparisonType::LessThanOrEqual
-            "(#{var} <= #{term.comparison_value})"
+            "(#{var} <= #{term.comparison_value_cxx})"
           when Udb::ParameterTerm::ParameterComparisonType::GreaterThanOrEqual
-            "(#{var} >= #{term.comparison_value})"
+            "(#{var} >= #{term.comparison_value_cxx})"
           when Udb::ParameterTerm::ParameterComparisonType::Includes
-            "(#{var}.find(#{term.comparison_value}) != #{var}.end())"
+            "(#{var}.find(#{term.comparison_value_cxx}) != #{var}.end())"
           when Udb::ParameterTerm::ParameterComparisonType::OneOf
-            vals = term.comparison_value
+            vals = term.comparison_value_cxx
             tests = vals.map { |v| "(#{var} == #{v})" }.join(" || ")
             "(#{tests})"
           else

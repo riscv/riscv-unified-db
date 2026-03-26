@@ -19,9 +19,13 @@ description: |
   32-bits of `mhpmevent#{hpm_num}`.
 definedBy:
   allOf:
-    - xlen: 32
     - extension:
-        name: Sscofpmf
+        name: Sm
+    - xlen: 32
+    - param:
+        name: HPM_COUNTER_EN
+        index: <%= hpm_num %>
+        equal: true
 fields:
   OF:
     location: 31

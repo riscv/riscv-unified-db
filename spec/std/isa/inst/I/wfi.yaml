@@ -115,17 +115,3 @@ operation(): |
 
   # passed, so now do the wait
   wfi();
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  match cur_privilege {
-      Machine    => { platform_wfi(); RETIRE_SUCCESS },
-      Supervisor => if   mstatus.TW() == 0b1
-                    then { handle_illegal(); RETIRE_FAIL }
-                    else { platform_wfi(); RETIRE_SUCCESS },
-      User       => { handle_illegal(); RETIRE_FAIL }
-    }
-
-# SPDX-SnippetEnd
