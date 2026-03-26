@@ -20,7 +20,6 @@ implemented_extensions:
   - [Sv39, "1.11.0"]
   - [Zca, "1.0.0"]
   - [F, "2.2.0"]
-  - [Zcf, "1.0"]
 
 params:
   MXLEN: 64

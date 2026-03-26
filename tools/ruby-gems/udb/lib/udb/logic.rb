@@ -1058,8 +1058,10 @@ module Udb
           cv <=> T.cast(other_param.comparison_value, String)
         elsif cv.is_a?(Array)
           cv <=> T.cast(other_param.comparison_value, T::Array[T.any(String, T::Boolean, Integer)])
-        else
+        elsif cv.is_a?(Integer)
           T.cast(comparison_value, Integer) <=> T.cast(other_param.comparison_value, Integer)
+        else
+          T.cast(comparison_value, T::Boolean) <=> T.cast(other_param.comparison_value, T::Boolean)
         end
       else
         # these are the same (ignoring reason)
