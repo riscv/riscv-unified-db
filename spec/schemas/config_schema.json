@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
+  "$id": "v0.1",
   "$defs": {
     "full_configuration": {
       "type": "object",
@@ -139,6 +139,9 @@
           "type": "boolean",
           "default": true,
           "description": "Whether or not a compliant instance of this partial config can have more extensions than those listed in mandatory_extensions/non_mandatory_extensions"
+        },
+        "requirements": {
+          "$ref": "schema_defs.json#/$defs/condition"
         }
       },
       "additionalProperties": false
@@ -181,10 +184,15 @@
       "additionalProperties": false
     }
   },
-
   "oneOf": [
-    { "$ref": "#/$defs/full_configuration" },
-    { "$ref": "#/$defs/partial_configuration" },
-    { "$ref": "#/$defs/unconfiguration" }
+    {
+      "$ref": "#/$defs/full_configuration"
+    },
+    {
+      "$ref": "#/$defs/partial_configuration"
+    },
+    {
+      "$ref": "#/$defs/unconfiguration"
+    }
   ]
 }

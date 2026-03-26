@@ -5,219 +5,111 @@
 # Please instead update this file by running `bin/tapioca gem bigdecimal`.
 
 
-# source://bigdecimal//lib/bigdecimal.rb#13
 class BigDecimal < ::Numeric
-  # call-seq:
-  #    self ** other -> bigdecimal
-  #
-  #  Returns the \BigDecimal value of +self+ raised to power +other+:
-  #
-  #    b = BigDecimal('3.14')
-  #    b ** 2              # => 0.98596e1
-  #    b ** 2.0            # => 0.98596e1
-  #    b ** Rational(2, 1) # => 0.98596e1
-  #
-  #  Related: BigDecimal#power.
-  #
-  # source://bigdecimal//lib/bigdecimal.rb#77
+  def %(_arg0); end
+  def *(_arg0); end
   def **(y); end
-
-  # call-seq:
-  #   power(n)
-  #   power(n, prec)
-  #
-  # Returns the value raised to the power of n.
-  #
-  # Also available as the operator **.
-  #
-  # source://bigdecimal//lib/bigdecimal.rb#97
+  def +(_arg0); end
+  def +@; end
+  def -(_arg0); end
+  def -@; end
+  def /(_arg0); end
+  def <(_arg0); end
+  def <=(_arg0); end
+  def <=>(_arg0); end
+  def ==(_arg0); end
+  def ===(_arg0); end
+  def >(_arg0); end
+  def >=(_arg0); end
+  def _decimal_shift(_arg0); end
+  def _dump(*_arg0); end
+  def abs; end
+  def add(_arg0, _arg1); end
+  def ceil(*_arg0); end
+  def clone; end
+  def coerce(_arg0); end
+  def div(*_arg0); end
+  def divmod(_arg0); end
+  def dup; end
+  def eql?(_arg0); end
+  def exponent; end
+  def finite?; end
+  def fix; end
+  def floor(*_arg0); end
+  def frac; end
+  def hash; end
+  def infinite?; end
+  def inspect; end
+  def modulo(_arg0); end
+  def mult(_arg0, _arg1); end
+  def n_significant_digits; end
+  def nan?; end
+  def nonzero?; end
   def power(y, prec = T.unsafe(nil)); end
-
-  # Returns the square root of the value.
-  #
-  # Result has at least prec significant digits.
-  #
-  # @raise [FloatDomainError]
-  #
-  # source://bigdecimal//lib/bigdecimal.rb#212
+  def precision; end
+  def precision_scale; end
+  def quo(*_arg0); end
+  def remainder(_arg0); end
+  def round(*_arg0); end
+  def scale; end
+  def sign; end
+  def split; end
   def sqrt(prec); end
-
-  # call-seq:
-  #     a.to_d -> bigdecimal
-  #
-  # Returns self.
-  #
-  #     require 'bigdecimal/util'
-  #
-  #     d = BigDecimal("3.14")
-  #     d.to_d                       # => 0.314e1
-  #
-  # source://bigdecimal//lib/bigdecimal/util.rb#110
+  def sub(_arg0, _arg1); end
   def to_d; end
-
-  # call-seq:
-  #     a.to_digits -> string
-  #
-  # Converts a BigDecimal to a String of the form "nnnnnn.mmm".
-  # This method is deprecated; use BigDecimal#to_s("F") instead.
-  #
-  #     require 'bigdecimal/util'
-  #
-  #     d = BigDecimal("3.14")
-  #     d.to_digits                  # => "3.14"
-  #
-  # source://bigdecimal//lib/bigdecimal/util.rb#90
   def to_digits; end
+  def to_f; end
+  def to_i; end
+  def to_int; end
+  def to_r; end
+  def to_s(format = T.unsafe(nil)); end
+  def truncate(*_arg0); end
+  def zero?; end
+
+  class << self
+    def _load(_arg0); end
+    def double_fig; end
+    def interpret_loosely(_arg0); end
+    def limit(*_arg0); end
+    def mode(*_arg0); end
+    def save_exception_mode; end
+    def save_limit; end
+    def save_rounding_mode; end
+  end
 end
 
-# source://bigdecimal//lib/bigdecimal.rb#14
 module BigDecimal::Internal
   class << self
-    # Coerce x to BigDecimal with the specified precision.
-    # TODO: some methods (example: BigMath.exp) require more precision than specified to coerce.
-    #
-    # @raise [ArgumentError]
-    #
-    # source://bigdecimal//lib/bigdecimal.rb#18
     def coerce_to_bigdecimal(x, prec, method_name); end
-
-    # source://bigdecimal//lib/bigdecimal.rb#30
     def coerce_validate_prec(prec, method_name, accept_zero: T.unsafe(nil)); end
-
-    # source://bigdecimal//lib/bigdecimal.rb#50
     def infinity_computation_result; end
-
-    # source://bigdecimal//lib/bigdecimal.rb#57
     def nan_computation_result; end
   end
 end
 
 BigDecimal::VERSION = T.let(T.unsafe(nil), String)
 
-# Core BigMath methods for BigDecimal (log, exp) are defined here.
-# Other methods (sin, cos, atan) are defined in 'bigdecimal/math.rb'.
-#
-# source://bigdecimal//lib/bigdecimal.rb#240
 module BigMath
   private
 
-  # source://bigdecimal//lib/bigdecimal.rb#310
   def _exp_taylor(x, prec); end
-
-  # call-seq:
-  #   BigMath.exp(decimal, numeric)    -> BigDecimal
-  #
-  # Computes the value of e (the base of natural logarithms) raised to the
-  # power of +decimal+, to the specified number of digits of precision.
-  #
-  # If +decimal+ is infinity, returns Infinity.
-  #
-  # If +decimal+ is NaN, returns NaN.
-  #
-  # source://bigdecimal//lib/bigdecimal.rb#332
   def exp(x, prec); end
-
-  # call-seq:
-  #   BigMath.log(decimal, numeric)    -> BigDecimal
-  #
-  # Computes the natural logarithm of +decimal+ to the specified number of
-  # digits of precision, +numeric+.
-  #
-  # If +decimal+ is zero or negative, raises Math::DomainError.
-  #
-  # If +decimal+ is positive infinity, returns Infinity.
-  #
-  # If +decimal+ is NaN, returns NaN.
-  #
-  # source://bigdecimal//lib/bigdecimal.rb#255
   def log(x, prec); end
 
   class << self
-    # call-seq:
-    #   BigMath.exp(decimal, numeric)    -> BigDecimal
-    #
-    # Computes the value of e (the base of natural logarithms) raised to the
-    # power of +decimal+, to the specified number of digits of precision.
-    #
-    # If +decimal+ is infinity, returns Infinity.
-    #
-    # If +decimal+ is NaN, returns NaN.
-    #
-    # source://bigdecimal//lib/bigdecimal.rb#332
     def exp(x, prec); end
-
-    # call-seq:
-    #   BigMath.log(decimal, numeric)    -> BigDecimal
-    #
-    # Computes the natural logarithm of +decimal+ to the specified number of
-    # digits of precision, +numeric+.
-    #
-    # If +decimal+ is zero or negative, raises Math::DomainError.
-    #
-    # If +decimal+ is positive infinity, returns Infinity.
-    #
-    # If +decimal+ is NaN, returns NaN.
-    #
-    # @raise [Math::DomainError]
-    #
-    # source://bigdecimal//lib/bigdecimal.rb#255
     def log(x, prec); end
 
     private
 
-    # source://bigdecimal//lib/bigdecimal.rb#310
     def _exp_taylor(x, prec); end
   end
 end
 
-# source://bigdecimal//lib/bigdecimal/util.rb#141
 class Complex < ::Numeric
-  # call-seq:
-  #     cmp.to_d             -> bigdecimal
-  #     cmp.to_d(precision)  -> bigdecimal
-  #
-  # Returns the value as a BigDecimal.
-  # If the imaginary part is not +0+, an error is raised
-  #
-  # The +precision+ parameter is used to determine the number of
-  # significant digits for the result. When +precision+ is set to +0+,
-  # the number of digits to represent the float being converted is determined
-  # automatically.
-  # The default +precision+ is +0+.
-  #
-  #     require 'bigdecimal'
-  #     require 'bigdecimal/util'
-  #
-  #     Complex(0.1234567, 0).to_d(4)   # => 0.1235e0
-  #     Complex(Rational(22, 7), 0).to_d(3)   # => 0.314e1
-  #     Complex(1, 1).to_d   # raises ArgumentError
-  #
-  # See also Kernel.BigDecimal.
-  #
-  # source://bigdecimal//lib/bigdecimal/util.rb#164
   def to_d(precision = T.unsafe(nil)); end
 end
 
-# source://bigdecimal//lib/bigdecimal/util.rb#116
 class Rational < ::Numeric
-  # call-seq:
-  #     rat.to_d(precision)  -> bigdecimal
-  #
-  # Returns the value as a BigDecimal.
-  #
-  # The +precision+ parameter is used to determine the number of
-  # significant digits for the result. When +precision+ is set to +0+,
-  # the number of digits to represent the float being converted is determined
-  # automatically.
-  # The default +precision+ is +0+.
-  #
-  #     require 'bigdecimal'
-  #     require 'bigdecimal/util'
-  #
-  #     Rational(22, 7).to_d(3)   # => 0.314e1
-  #
-  # See also Kernel.BigDecimal.
-  #
-  # source://bigdecimal//lib/bigdecimal/util.rb#135
   def to_d(precision = T.unsafe(nil)); end
 end

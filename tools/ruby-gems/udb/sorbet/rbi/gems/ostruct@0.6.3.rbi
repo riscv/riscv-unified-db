@@ -5,126 +5,95 @@
 # Please instead update this file by running `bin/tapioca gem ostruct`.
 
 
-# source://ostruct//lib/ostruct.rb#109
 class OpenStruct
-  # source://ostruct//lib/ostruct.rb#134
   def initialize(hash = T.unsafe(nil)); end
 
-  # source://ostruct//lib/ostruct.rb#426
   def ==(other); end
-
-  # source://ostruct//lib/ostruct.rb#306
   def [](name); end
-
-  # source://ostruct//lib/ostruct.rb#321
   def []=(name, value); end
-
-  # source://ostruct//lib/ostruct.rb#374
+  def __id__!; end
+  def __send__!(*_arg0); end
+  def abort!(*_args, **_kwargs, &_block); end
+  def class!; end
+  def clone!(freeze: T.unsafe(nil)); end
+  def define_singleton_method!(*_arg0); end
   def delete_field(name, &block); end
-
-  # source://ostruct//lib/ostruct.rb#374
   def delete_field!(name, &block); end
-
-  # source://ostruct//lib/ostruct.rb#343
   def dig(name, *names); end
-
-  # source://ostruct//lib/ostruct.rb#343
   def dig!(name, *names); end
-
-  # source://ostruct//lib/ostruct.rb#211
+  def display!(*_arg0); end
+  def dup!; end
   def each_pair; end
-
-  # source://ostruct//lib/ostruct.rb#211
   def each_pair!; end
-
-  # source://ostruct//lib/ostruct.rb#449
   def encode_with(coder); end
-
-  # source://ostruct//lib/ostruct.rb#449
   def encode_with!(coder); end
-
-  # source://ostruct//lib/ostruct.rb#436
+  def enum_for!(*_arg0); end
   def eql?(other); end
-
-  # source://ostruct//lib/ostruct.rb#272
+  def exit!(*_args, **_kwargs, &_block); end
+  def extend!(*_arg0); end
   def freeze; end
-
-  # source://ostruct//lib/ostruct.rb#272
   def freeze!; end
-
-  # source://ostruct//lib/ostruct.rb#442
   def hash; end
-
-  # source://ostruct//lib/ostruct.rb#442
   def hash!; end
-
-  # source://ostruct//lib/ostruct.rb#462
   def init_with(coder); end
-
-  # source://ostruct//lib/ostruct.rb#462
   def init_with!(coder); end
-
-  # source://ostruct//lib/ostruct.rb#391
   def inspect; end
-
-  # source://ostruct//lib/ostruct.rb#391
   def inspect!; end
-
-  # source://ostruct//lib/ostruct.rb#220
+  def instance_eval!(*_arg0); end
+  def instance_exec!(*_arg0); end
+  def instance_variable_get!(_arg0); end
+  def instance_variable_set!(_arg0, _arg1); end
+  def instance_variables!; end
+  def itself!; end
   def marshal_dump; end
-
-  # source://ostruct//lib/ostruct.rb#220
   def marshal_dump!; end
-
-  # source://ostruct//lib/ostruct.rb#409
+  def method!(_arg0); end
+  def methods!(*_arg0); end
+  def object_id!; end
+  def pretty_inspect!; end
+  def pretty_print!(q); end
+  def pretty_print_cycle!(q); end
+  def pretty_print_inspect!; end
+  def pretty_print_instance_variables!; end
+  def private_methods!(*_arg0); end
+  def protected_methods!(*_arg0); end
+  def public_method!(_arg0); end
+  def public_methods!(*_arg0); end
+  def public_send!(*_arg0); end
+  def remove_instance_variable!(_arg0); end
+  def send!(*_arg0); end
+  def singleton_class!; end
+  def singleton_method!(_arg0); end
+  def singleton_methods!(*_arg0); end
   def table; end
-
-  # source://ostruct//lib/ostruct.rb#182
+  def tap!; end
+  def then!; end
+  def to_enum!(*_arg0); end
   def to_h(&block); end
-
-  # source://ostruct//lib/ostruct.rb#182
   def to_h!(&block); end
-
-  # source://ostruct//lib/ostruct.rb#391
+  def to_json!(*_arg0); end
   def to_s; end
-
-  # source://ostruct//lib/ostruct.rb#391
   def to_s!; end
+  def to_yaml!(options = T.unsafe(nil)); end
+  def yield_self!; end
 
   protected
 
-  # source://ostruct//lib/ostruct.rb#409
   def table!; end
 
   private
 
-  # source://ostruct//lib/ostruct.rb#147
+  def block_given!; end
   def initialize_clone(orig); end
-
-  # source://ostruct//lib/ostruct.rb#152
   def initialize_dup(orig); end
-
-  # source://ostruct//lib/ostruct.rb#254
   def is_method_protected!(name); end
-
-  # source://ostruct//lib/ostruct.rb#157
   def marshal_load(hash); end
-
-  # source://ostruct//lib/ostruct.rb#277
   def method_missing(mid, *args); end
-
-  # source://ostruct//lib/ostruct.rb#234
   def new_ostruct_member!(name); end
-
-  # source://ostruct//lib/ostruct.rb#321
+  def raise!(*_arg0); end
   def set_ostruct_member_value!(name, value); end
-
-  # source://ostruct//lib/ostruct.rb#157
   def update_to_values!(hash); end
 end
 
-# source://ostruct//lib/ostruct.rb#112
 OpenStruct::HAS_PERFORMANCE_WARNINGS = T.let(T.unsafe(nil), TrueClass)
-
-# source://ostruct//lib/ostruct.rb#110
 OpenStruct::VERSION = T.let(T.unsafe(nil), String)

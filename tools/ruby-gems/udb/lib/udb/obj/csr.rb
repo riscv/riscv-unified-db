@@ -6,16 +6,24 @@
 
 require "idlc/ast"
 require "idlc/interfaces"
+require "idlc/passes/reachable_functions"
 
 require_relative "database_obj"
 require_relative "certifiable_obj"
+require_relative "has_fields"
 
 module Udb
 
 # CSR definition
   class Csr < TopLevelDatabaseObject
+    # Frozen constant Type/Var objects reused across all fill_symtab calls
+    BITS6_TYPE = Idl::Type.new(:bits, width: 6).freeze
+    BITS6_CONST_TYPE = Idl::Type.new(:bits, width: 6, qualifiers: [:const]).freeze
+    BITS128_TYPE = Idl::Type.new(:bits, width: 128).freeze
+    ENCODING_SIZE_VAR = Idl::Var.new("__instruction_encoding_size", BITS6_TYPE, 32).freeze
     # Add all methods in this module to this type of database object.
     include CertifiableObject
+    include HasFields
 
     include Idl::Csr
 
@@ -85,10 +93,6 @@ module Udb
     end
     alias reset_value value
 
-    def writable
-      @data["writable"]
-    end
-
     # @return [Integer] 32 or 64, the XLEN this CSR is exclusively defined in
     # @return [nil] if this CSR is defined in all bases
     sig { returns(T.nilable(Integer)) }
@@ -127,9 +131,15 @@ module Udb
 
     # @param effective_xlen [Integer or nil] 32 or 64 for fixed xlen, nil for dynamic
     # @return [Array<Idl::FunctionDefAst>] List of functions reachable from this CSR's sw_read or a field's sw_write function
-    sig { params(effective_xlen: T.nilable(Integer)).returns(T::Array[Idl::FunctionDefAst]) }
-    def reachable_functions(effective_xlen = nil)
-      cache_key = effective_xlen.nil? ? :nil : effective_xlen
+    sig {
+      params(
+        effective_xlen: T.nilable(Integer),
+        cache: T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType]
+      )
+      .returns(T::Array[Idl::FunctionDefAst])
+    }
+    def reachable_functions(effective_xlen = nil, cache = T.let({}, T::Hash[Integer, Idl::AstNode::ReachableFunctionCacheType]))
+      cache_key = effective_xlen
       return @memo.reachable_functions[cache_key] unless @memo.reachable_functions[cache_key].nil?
 
       fns = []
@@ -145,20 +155,20 @@ module Udb
           ast = pruned_sw_read_ast(xlen)
           symtab = cfg_arch.symtab.deep_clone
           symtab.push(ast)
-          fns.concat(ast.reachable_functions(symtab))
+          fns.concat(ast.reachable_functions(symtab, cache.fetch(xlen)))
         end
       end
 
       if cfg_arch.multi_xlen?
         possible_fields_for(32).each do |field|
-          fns.concat(field.reachable_functions(32))
+          fns.concat(field.reachable_functions(32, cache.fetch(32)))
         end
         possible_fields_for(64).each do |field|
-          fns.concat(field.reachable_functions(64))
+          fns.concat(field.reachable_functions(64, cache.fetch(64)))
         end
       else
         possible_fields_for(cfg_arch.mxlen).each do |field|
-          fns.concat(field.reachable_functions(cfg_arch.mxlen))
+          fns.concat(field.reachable_functions(cfg_arch.mxlen, cache.fetch(T.must(cfg_arch.mxlen))))
         end
       end
 
@@ -450,71 +460,17 @@ module Udb
         end
     end
 
-    # @param effective_xlen [Integer or nil] 32 or 64 for fixed xlen, nil for dynamic
-    # @return [Array<CsrField>] All implemented fields for this CSR at the given effective XLEN, sorted by location (smallest location first)
-    #                           Excluded any fields that are defined by unimplemented extensions or a base that is not effective_xlen
-    def possible_fields_for(effective_xlen)
-
-      raise ArgumentError, "effective_xlen is non-nil and is a #{effective_xlen.class} but must be an Integer" unless effective_xlen.nil? || effective_xlen.is_a?(Integer)
-
-      @possible_fields_for ||= {}
-      @possible_fields_for[effective_xlen] ||=
-        possible_fields.select do |f|
-          f.base.nil? || f.base == effective_xlen
-        end
-    end
-
-    # @return [Array<CsrField>] All implemented fields for this CSR
-    #                           Excluded any fields that are defined by unimplemented extensions
-    sig { returns(T::Array[CsrField]) }
-    def possible_fields
-      @possible_fields ||= fields.select do |f|
-        f.exists_in_cfg?(cfg_arch)
-      end
-    end
-
-    # @return [Array<CsrField>] All known fields of this CSR
+    # Sorbet override to satisfy Idl::Csr abstract method.
+    # HasFields#fields returns CsrField instances but Sorbet can't see through
+    # the untyped module, so we cast explicitly.
     sig { override.returns(T::Array[CsrField]) }
-    def fields
-      return @fields unless @fields.nil?
-
-      @fields = @data["fields"].map { |field_name, field_data| CsrField.new(self, field_name, field_data) }
-    end
-
-    # @param effective_xlen [Integer or nil] 32 or 64 for fixed xlen, nil for dynamic
-    # @return [Array<CsrField>] All known fields of this CSR when XLEN == +effective_xlen+
-    # equivalent to {#fields} if +effective_xlen+ is nil
-    sig { params(effective_xlen: T.nilable(Integer)).returns(T::Array[CsrField]) }
-    def fields_for(effective_xlen)
-      fields.select { |f| effective_xlen.nil? || f.base.nil? || f.base == effective_xlen }
-    end
-
-    # @return [Hash<String,CsrField>] Hash of fields, indexed by field name
-    def field_hash
-      return @field_hash unless @field_hash.nil?
-
-      @field_hash = {}
-      fields.each do |field|
-        @field_hash[field.name] = field
-      end
-
-      @field_hash
-    end
-
-    # @return [Boolean] true if a field named 'field_name' is defined in the csr, and false otherwise
-    def field?(field_name)
-      field_hash.key?(field_name.to_s)
-    end
-
-    # returns [CsrField,nil] field named 'field_name' if it exists, and nil otherwise
-    def field(field_name)
-      field_hash[field_name.to_s]
-    end
+    def fields = T.unsafe(super)
 
     # @param effective_xlen [Integer or nil] 32 or 64 for fixed xlen, nil for dynamic
     # @return [Idl::BitfieldType] A bitfield type that can represent all fields of the CSR
     def bitfield_type(cfg_arch, effective_xlen = nil)
-      Idl::BitfieldType.new(
+      @bitfield_type_cache ||= {}
+      @bitfield_type_cache[effective_xlen] ||= Idl::BitfieldType.new(
         "Csr#{name.capitalize}Bitfield",
         length(effective_xlen),
         fields_for(effective_xlen).map(&:name),
@@ -538,18 +494,14 @@ module Udb
       symtab.push(ast)
       # all CSR instructions are 32-bit
       unless effective_xlen.nil?
-        symtab.add(
-          "__effective_xlen",
-          Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), effective_xlen)
-        )
+        @xlen_var_cache ||= {}
+        @xlen_var_cache[effective_xlen] ||= Idl::Var.new("__effective_xlen", BITS6_TYPE, effective_xlen).freeze
+        symtab.add("__effective_xlen", @xlen_var_cache[effective_xlen])
       end
-      symtab.add(
-        "__instruction_encoding_size",
-        Idl::Var.new("__instruction_encoding_size", Idl::Type.new(:bits, width: 6), 32)
-      )
+      symtab.add("__instruction_encoding_size", ENCODING_SIZE_VAR)
       symtab.add(
         "__expected_return_type",
-        Idl::Type.new(:bits, width: 128)
+        BITS128_TYPE
        )
 
       ast = sw_read_ast(symtab)
@@ -584,8 +536,6 @@ module Udb
 
       raise "unexpected #{@sw_read_ast.class}" unless @sw_read_ast.is_a?(Idl::FunctionBodyAst)
 
-      @sw_read_ast.set_input_file_unless_already_set(T.must(__source), source_line(["sw_read()"]))
-
       @sw_read_ast
     end
 
@@ -596,29 +546,23 @@ module Udb
       symtab.push(ast)
       # all CSR instructions are 32-bit
       if effective_xlen
-        symtab.add(
-          "__effective_xlen",
-          Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 6), effective_xlen)
-        )
+        @xlen_var_cache ||= {}
+        @xlen_var_cache[effective_xlen] ||= Idl::Var.new("__effective_xlen", BITS6_TYPE, effective_xlen).freeze
+        symtab.add("__effective_xlen", @xlen_var_cache[effective_xlen])
       end
-      symtab.add(
-        "__instruction_encoding_size",
-        Idl::Var.new("__instruction_encoding_size", Idl::Type.new(:bits, width: 6), 32)
-      )
-      symtab.add(
-        "__expected_return_type",
-        Idl::Type.new(:bits, width: 128)
-      )
+      symtab.add("__instruction_encoding_size", ENCODING_SIZE_VAR)
+      symtab.add("__expected_return_type", BITS128_TYPE)
       if symtab.get("MXLEN").value.nil?
-        symtab.add(
+        # Cache per-xlen MXLEN var; use :nil_xlen sentinel so nil key doesn't collide with unset
+        mxlen_key = effective_xlen.nil? ? :nil_xlen : effective_xlen
+        @mxlen_var_cache ||= {}
+        @mxlen_var_cache[mxlen_key] ||= Idl::Var.new(
           "MXLEN",
-          Idl::Var.new(
-            "MXLEN",
-            Idl::Type.new(:bits, width: 6, qualifiers: [:const]),
-            effective_xlen,
-            param: true
-          )
-        )
+          BITS6_CONST_TYPE,
+          effective_xlen,
+          param: true
+        ).freeze
+        symtab.add("MXLEN", @mxlen_var_cache[mxlen_key])
       end
       symtab
     end
@@ -648,88 +592,11 @@ module Udb
       @pruned_sw_read_ast[effective_xlen] = ast
     end
 
-    # @example Result for an I-type instruction
-    #   {reg: [
-    #     {bits: 7,  name: 'OP-IMM',    attr: ['{op_major_name}'], type: 8},
-    #     {bits: 5,  name: 'rd',        attr: [''], type: 2},
-    #     {bits: 3,  name: {funct3},    attr: ['{mnemonic}'], type: 8},
-    #     {bits: 5,  name: 'rs1',       attr: [''], type: 4},
-    #     {bits: 12, name: 'imm12',     attr: [''], type: 6}
-    #   ]}
-    #
-    # @param cfg_arch [ConfiguredArchitecture] A configuration
-    # @param effective_xlen [Integer,nil] Effective XLEN to use when CSR length is dynamic
-    # @param exclude_unimplemented [Boolean] If true, do not create include unimplemented fields in the figure
-    # @param optional_type [Integer] Wavedrom type (Fill color) for fields that are optional (not mandatory) in a partially-specified cfg_arch
-    # @return [Hash] A representation of the WaveDrom drawing for the CSR (should be turned into JSON for wavedrom)
-    def wavedrom_desc(cfg_arch, effective_xlen, exclude_unimplemented: false, optional_type: 2)
-      unless cfg_arch.is_a?(ConfiguredArchitecture)
-        raise ArgumentError, "cfg_arch is a class #{cfg_arch.class} but must be a ConfiguredArchitecture"
-      end
-      raise ArgumentError, "effective_xlen is non-nil and is a #{effective_xlen.class} but must be an Integer" unless effective_xlen.nil? || effective_xlen.is_a?(Integer)
-
-      desc = {
-        "reg" => []
-      }
-      last_idx = -1
-
-      field_list =
-        if exclude_unimplemented
-          possible_fields_for(effective_xlen)
-        else
-          fields_for(effective_xlen)
-        end
-
-      field_list.sort! { |a, b| a.location(effective_xlen).min <=> b.location(effective_xlen).min }
-      field_list.each do |field|
-
-        if field.location(effective_xlen).min != last_idx + 1
-          # have some reserved space
-          n = field.location(effective_xlen).min - last_idx - 1
-          raise "negative reserved space? #{n} #{name} #{field.location(effective_xlen).min} #{last_idx + 1}" if n <= 0
-
-          desc["reg"] << { "bits" => n, :type => 1 }
-        end
-        if cfg_arch.partially_configured? && field.optional_in_cfg?(cfg_arch)
-          desc["reg"] << { "bits" => field.location(effective_xlen).size, "name" => field.name, :type => optional_type }
-        else
-          desc["reg"] << { "bits" => field.location(effective_xlen).size, "name" => field.name, :type => 3 }
-        end
-        last_idx = T.cast(field.location(effective_xlen).max, Integer)
-      end
-      if !field_list.empty? && (field_list.last.location(effective_xlen).max != (T.must(length(effective_xlen)) - 1))
-        # reserved space at the end
-        desc["reg"] << { "bits" => (T.must(length(effective_xlen)) - 1 - last_idx), :type => 1 }
-        # desc['reg'] << { 'bits' => 1, type: 1 }
-      end
-      desc["config"] = { "bits" => length(effective_xlen) }
-      desc["config"]["lanes"] = T.must(length(effective_xlen)) / 16
-      desc
-    end
-
     # @param cfg_arch [ConfiguredArchitecture] Architecture def
     # @return [Boolean] whether or not the CSR is possibly implemented given the supplied config options
     sig { params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
     def exists_in_cfg?(cfg_arch)
       @exists_in_cfg ||= defined_by_condition.could_be_satisfied_by_cfg_arch?(cfg_arch)
-    end
-
-    # @param cfg_arch [ConfiguredArchitecture] Architecture def
-    # @return [Boolean] whether or not the CSR is optional in the config
-    sig { params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
-    def optional_in_cfg?(cfg_arch)
-      raise "optional_in_cfg? should only be used by a partially-specified arch def" unless cfg_arch.partially_configured?
-
-      # exists in config and isn't satisfied by some combo of mandatory extensions
-      @optional_in_cfg ||=
-        exists_in_cfg?(cfg_arch) &&
-          (defined_by_condition.satisfied_by_cfg_arch?(cfg_arch) == SatisfiedResult::Maybe)
-    end
-
-    # @return [Boolean] Whether or not the presence of ext_ver affects this CSR definition
-    def affected_by?(ext_ver)
-      defined_by_condition.satisfiability_depends_on_ext_req?(ext_ver.to_ext_req) || \
-        fields.any? { |field| field.affected_by?(ext_ver) }
     end
   end
 

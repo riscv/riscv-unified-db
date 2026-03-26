@@ -1,0 +1,90 @@
+= Schema Versioning
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Overview
+
+This directory contains the JSON schemas used to validate UDB data files.
+Schemas are versioned so that data files can declare which schema version they
+conform to, and so that older versions remain available as the schemas evolve.
+
+== Directory Layout
+
+----
+spec/schemas/
+├── README.adoc                  # this file
+├── json-schema-draft-07.json    # unversioned copy of the JSON Schema Draft-07 meta-schema
+└── <schema>.json                # schema files (current version)
+----
+
+The `.json` files (except `json-schema-draft-07.json`) are the current versions
+of each schema.  Each schema file contains a `$id` field set to the version
+string (e.g. `v0.1`).  When a schema is resolved for publication, the `$id` is
+expanded to the full canonical URL:
+`https://riscv.github.io/riscv-unified-db/schemas/<version>/<schema>.json`.
+
+Resolved schema files are written to `gen/schemas/<schema_name>/<version>/` and
+published as GitHub releases under the tag `schemas/<schema_name>/<version>`.
+
+== Schema Versions
+
+[cols="1,3",options="header"]
+|===
+| Version | Published URL
+
+| 0.1 (current for all schemas except csr_schema.json)
+| https://riscv.github.io/riscv-unified-db/schemas/ext_schema.json/v0.1/ext_schema.json (example)
+
+| 0.2 (current for csr_schema.json)
+| https://riscv.github.io/riscv-unified-db/schemas/csr_schema.json/v0.2/csr_schema.json
+|===
+
+== Schema Identification (`$id`)
+
+Every schema file contains a top-level `$id` key whose value is the version
+string (e.g. `v0.1`).  Source data files reference schemas using the bare
+filename (e.g. `csr_schema.json#`).  When data files are resolved, the
+`$schema` field is rewritten to include the version prefix
+(e.g. `v0.2/csr_schema.json#`) so that the resolved file records the exact
+schema version used.
+
+[source,json]
+----
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "v0.1",
+  ...
+}
+----
+
+== Special Files
+
+`json-schema-draft-07.json`::
+  A verbatim copy of the
+  https://json-schema.org/draft-07/schema[JSON Schema Draft-07 meta-schema].
+  It is *not* versioned alongside the UDB schemas and is left as a plain file
+  in the top-level directory.  It carries its own `$id` assigned by the JSON
+  Schema specification (`http://json-schema.org/draft-07/schema#`) and should
+  not be modified.
+
+== Releasing a New Schema Version
+
+When breaking or significant changes are made to one or more schemas, a new
+version should be released.  Follow these steps:
+
+. Update the `$id` field in the changed schema file to the new version string
+  (e.g. `v0.2`). Other schemas that did not change keep their current `$id`.
+. Run `./do gen:schemas` to generate the resolved schema files in
+  `gen/schemas/<schema_name>/<version>/`.
+. The CI `schema-release` workflow will automatically publish the new version
+  as a GitHub release under the tag `schemas/<schema_name>/<version>` when the
+  changes are merged to `main`.
+. Previous schema versions remain available via their GitHub release tags and
+  at `https://riscv.github.io/riscv-unified-db/schemas/<schema_name>/<old-version>/<schema_name>`.
+
+== When to make a new release
+
+A new release is required whenever the schema changes. This includes non-breaking additions and breaking changes.
+
+A new release is not required if the only thing changing is metadata like descriptions or examples.

@@ -1,0 +1,63 @@
+---
+sidebar_position: 7
+title: Control Flow
+---
+
+IDL provides `if`/`else` and `for` loops for control flow.
+
+## `if` / `else`
+
+An `if` statement condition must be a `Boolean` type.
+
+:::warning Integers are not implicitly converted to booleans
+Unlike C, a non-zero integer does **not** count as `true`. Using an integer directly as a condition is a compilation error — you must write an explicit comparison:
+
+```idl
+XReg src1 = X[rs1];
+
+if (src1 != 0) { ... }  # correct: explicit comparison
+# if (src1) { ... }     # compilation error: src1 is not Boolean
+```
+:::
+
+```idl
+if (src1 == 0) {
+  # then statements
+} else if (src1 == 1) {
+  # else if statements
+} else {
+  # else statements
+}
+```
+
+## `for` loops
+
+`for` loops specify an initialization, an ending condition, and a loop operation — similar to C/C++ and Verilog. The condition expression must be a `Boolean` type.
+
+```idl
+# iterate 32 times
+for (U32 i = 0; i < 32; i = i + 1) {
+  X[i] = 0;
+}
+
+# equivalent: the post-increment operator is available in the loop operation expression
+for (U32 i = 0; i < 32; i++) {
+  X[i] = 0;
+}
+```
+
+### Const loop variables
+
+A `for` loop variable may be declared as a constant (uppercase name) if and only if all updates to the variable are compile-time-known. This enables loop unrolling when all iterations are constant.
+
+```idl
+# OK: all updates to I are const
+for (U32 I = 0; I < 32; I++) {
+  X[I] = 0;
+}
+
+# type error: I = I + mutable_variable is not const
+for (U32 I = 0; I < 32; I = I + mutable_variable) {
+  X[I] = 0;
+}
+```

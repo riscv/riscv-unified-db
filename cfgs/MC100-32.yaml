@@ -8,7 +8,7 @@ description: An MC100-32 compliant system
 mandatory_extensions:
   - { name: Sm, version: "~> 1.11.0" }
   - { name: I, version: "~> 2.1" }
-  - { name: C, version: "~> 2.2" }
+  - { name: C, version: "~> 2.0" }
   - { name: M, version: "~> 2.0" }
   - { name: Zicsr, version: "~> 2.0" }
   - { name: Zicntr, version: "~> 2.0" }

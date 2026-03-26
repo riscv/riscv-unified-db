@@ -11,7 +11,7 @@ address: 0x740
 writable: true
 priv_mode: M
 length: MXLEN
-description:
+description: |
   Scratch register for software use in NMI / double trap. Bits are not
   interpreted by hardware.
 definedBy:

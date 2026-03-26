@@ -13,19 +13,11 @@ require_relative "idlc/syntax_node"
 class IdlParser < Treetop::Runtime::CompiledParser
   attr_reader :input_file
 
-  def set_input_file(filename, starting_line = 0)
+  def set_input_file(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
     @input_file = filename
     @starting_line = starting_line
-  end
-
-  def set_pb(pb)
-    raise "Progressbar was already set" unless @pb.nil?
-
-    @pb = pb
-  end
-
-  def unset_pb
-    raise "No progressbar set" if @pb.nil?
+    @starting_offset = starting_offset
+    @line_file_offsets = line_file_offsets
   end
 
   # alias instantiate_node so we can call it from the override
@@ -33,10 +25,8 @@ class IdlParser < Treetop::Runtime::CompiledParser
 
   # override instatiate_node so we can set the input file
   def instantiate_node(node_type, *args)
-    @pb.advance unless @pb.nil?
-
     node = T.unsafe(self).idlc_instantiate_node(node_type, *args)
-    node.set_input_file(input_file, @starting_line.nil? ? 0 : @starting_line)
+    node.set_input_file(input_file, @starting_line.nil? ? 0 : @starting_line, @starting_offset.nil? ? 0 : @starting_offset, @line_file_offsets)
     node
   end
 end
@@ -71,13 +61,12 @@ module Idl
 
     # set a progressbar
     def pb=(pb)
-      @parser.set_pb(pb)
       @pb = pb
     end
 
     # unset a progressbar
     def unset_pb
-      @parser.unset_pb
+      @pb.finish unless @pb.nil?
       @pb = nil
     end
 
@@ -88,8 +77,22 @@ module Idl
         source_mapper[path.to_s] = path.read
       end
 
+      old_format = @pb.format unless @pb.nil?
       @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
+      pid = unless @pb.nil?
+              fork {
+                loop do
+                  sleep 1
+                  @pb.advance unless @pb.nil?
+                end
+              }
+      end
       m = @parser.parse path.read
+      unless @pb.nil?
+        Process.kill("TERM", T.must(pid))
+        Process.wait(T.must(pid))
+        @pb.format = old_format
+      end
 
       if m.nil?
         raise SyntaxError, <<~MSG
@@ -171,7 +174,7 @@ module Idl
         exit 1
       end
       begin
-        ast.type_check(symtab)
+        ast.type_check(symtab, strict: false)
       rescue AstNode::TypeError => e
         raise e if pass_error
 
@@ -201,8 +204,8 @@ module Idl
     # @param input_line [Integer] Starting line in the input file that this source comes from
     # @param no_rescue [Boolean] Whether or not to automatically catch any errors
     # @return [Ast] The root of the abstract syntax tree
-    def compile_func_body(body, return_type: nil, symtab: nil, name: nil, input_file: nil, input_line: 0, no_rescue: false, extra_syms: {}, type_check: true)
-      @parser.set_input_file(input_file, input_line)
+    def compile_func_body(body, return_type: nil, symtab: nil, name: nil, input_file: nil, input_line: 0, starting_offset: 0, line_file_offsets: nil, no_rescue: false, extra_syms: {}, type_check: true)
+      @parser.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
 
       m = @parser.parse(body, root: :function_body)
       if m.nil?
@@ -223,7 +226,7 @@ module Idl
 
       # fix up left recursion
       ast = m.to_ast
-      ast.set_input_file(input_file, input_line)
+      ast.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
       ast.freeze_tree(symtab)
 
       # type check
@@ -239,7 +242,7 @@ module Idl
 
         begin
           ast.statements.each do |s|
-            s.type_check(cloned_symtab)
+            s.type_check(cloned_symtab, strict: false)
           end
         rescue AstNode::TypeError => e
           raise e if no_rescue
@@ -263,8 +266,8 @@ module Idl
       ast
     end
 
-    def compile_inst_scope(idl, symtab:, input_file:, input_line: 0)
-      @parser.set_input_file(input_file, input_line)
+    def compile_inst_scope(idl, symtab:, input_file:, input_line: 0, starting_offset: 0, line_file_offsets: nil)
+      @parser.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
 
       m = @parser.parse(idl, root: :instruction_operation)
       if m.nil?
@@ -277,7 +280,7 @@ module Idl
 
       # fix up left recursion
       ast = m.to_ast
-      ast.set_input_file(input_file, input_line)
+      ast.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
       ast.freeze_tree(symtab)
 
       ast
@@ -290,9 +293,9 @@ module Idl
     # @param input_file [Pathname] Path to the input file this source comes from
     # @param input_line [Integer] Starting line in the input file that this source comes from
     # @return [Ast] The root of the abstract syntax tree
-    def compile_inst_operation(inst, symtab:, input_file: nil, input_line: 0)
+    def compile_inst_operation(inst, symtab:, input_file: nil, input_line: 0, starting_offset: 0, line_file_offsets: nil)
       operation = inst.data["operation()"]
-      compile_inst_scope(operation, symtab:, input_file:, input_line:)
+      compile_inst_scope(operation, symtab:, input_file:, input_line:, starting_offset:, line_file_offsets:)
     end
 
     # Type check an abstract syntax tree
@@ -307,7 +310,7 @@ module Idl
 
       begin
         value_result = AstNode.value_try do
-          ast.type_check(symtab)
+          ast.type_check(symtab, strict: false)
         end
         AstNode.value_else(value_result) do
           warn "While type checking #{what}, got a value error on:"
@@ -352,7 +355,7 @@ module Idl
         exit 1
       end
       begin
-        ast.type_check(symtab)
+        ast.type_check(symtab, strict: false)
       rescue AstNode::TypeError => e
         raise e if pass_error
 
@@ -372,8 +375,20 @@ module Idl
       ast
     end
 
-    sig { params(body: String, symtab: SymbolTable, pass_error: T::Boolean).returns(ConstraintBodyAst) }
-    def compile_constraint(body, symtab, pass_error: false)
+    sig {
+      params(
+        body: String,
+        symtab: SymbolTable,
+        pass_error: T::Boolean,
+        input_file: T.nilable(T.any(String, Pathname)),
+        input_line: Integer,
+        starting_offset: Integer,
+        line_file_offsets: T.nilable(T::Array[Integer])
+      ).returns(ConstraintBodyAst)
+    }
+    def compile_constraint(body, symtab, pass_error: false,
+                           input_file: "[CONSTRAINT]", input_line: 0,
+                           starting_offset: 0, line_file_offsets: nil)
       m = @parser.parse(body, root: :constraint_body)
       if m.nil?
         raise SyntaxError, <<~MSG
@@ -385,26 +400,8 @@ module Idl
 
       # fix up left recursion
       ast = m.to_ast
-      ast.set_input_file("[CONSTRAINT]", 0)
+      ast.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
       ast.freeze_tree(symtab)
-
-      # begin
-      #   ast.type_check(symtab)
-      # rescue AstNode::TypeError => e
-      #   raise e if pass_error
-
-      #   warn "Compiling #{body}"
-      #   warn e.what
-      #   warn T.must(e.backtrace).join("\n")
-      #   exit 1
-      # rescue AstNode::InternalError => e
-      #   raise e if pass_error
-
-      #   warn "Compiling #{body}"
-      #   warn e.what
-      #   warn T.must(e.backtrace).join("\n")
-      #   exit 1
-      # end
 
       ast
     end

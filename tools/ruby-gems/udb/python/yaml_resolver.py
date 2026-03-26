@@ -36,8 +36,50 @@ UDB_ROOT = (
 SCHEMAS_PATH = Path(os.path.join(UDB_ROOT, "spec", "schemas"))
 
 
+# Map from schema filename -> version string, built by reading the $id field from each schema.
+# e.g. 'csr_schema.json' -> 'v0.1'
+_SCHEMA_VERSION_MAP: dict[str, str] = {}
+for _entry in SCHEMAS_PATH.iterdir():
+    if _entry.suffix == ".json" and _entry.name != "json-schema-draft-07.json":
+        try:
+            _schema_data = json.loads(_entry.read_text())
+            _version = _schema_data.get("$id")
+            if _version:
+                _SCHEMA_VERSION_MAP[_entry.name] = _version
+        except Exception:
+            pass
+
+
+def _versioned_schema_uri(uri: str) -> str:
+    """Rewrite a bare schema URI to include the version prefix.
+
+    For example, 'csr_schema.json#' becomes 'v0.1/csr_schema.json#' (where v0.1
+    is the version recorded in the $id field of csr_schema.json).
+    URIs that already contain a version prefix are returned unchanged.
+    """
+    fragment_sep = uri.find("#")
+    if fragment_sep == -1:
+        base, fragment = uri, ""
+    else:
+        base, fragment = uri[:fragment_sep], uri[fragment_sep:]
+    # If the base already contains a '/', it already has a version prefix
+    if "/" in base:
+        return uri
+    version = _SCHEMA_VERSION_MAP.get(base)
+    if version:
+        return f"{version}/{base}{fragment}"
+    return uri
+
+
 def retrieve_from_filesystem(uri: str):
+    # The referencing library resolves relative $ref values against the schema's $id.
+    # Since $id is now just the version string (e.g. "v0.1"), relative refs like
+    # "schema_defs.json" resolve to just "schema_defs.json" (no prefix).
+    # We look up the file directly in SCHEMAS_PATH.
     path = SCHEMAS_PATH / Path(uri)
+    if not path.exists():
+        # Fall back to just the filename at the root level.
+        path = SCHEMAS_PATH / Path(uri).name
     contents = json.loads(path.read_text())
     return Resource.from_contents(contents)
 
@@ -449,7 +491,7 @@ def _resolve(obj, obj_path, obj_file_path, doc_obj, arch_root, do_checks, compil
         if compile_idl:
             idl_keys = {key for key in obj.keys() if key.endswith("()")}
             for key in idl_keys:
-                if key != "sail()" and key.endswith("()") and obj[key]:
+                if key.endswith("()") and obj[key]:
                     r = (
                         "instruction_operation"
                         if key == "operation()"
@@ -552,7 +594,10 @@ class SchemaNotFoundException(Exception):
 
 
 def _get_schema(uri):
+    # Strip version prefix (e.g. 'v0.1/csr_schema.json#' -> 'csr_schema.json')
     rel_path = uri.split("#")[0]
+    if "/" in rel_path:
+        rel_path = rel_path.split("/", 1)[1]
 
     if rel_path in schemas:
         return schemas[rel_path]
@@ -614,8 +659,10 @@ def write_resolved_file_and_validate(
     resolved_path = os.path.join(resolved_dir, rel_path)
     resolved_obj = resolve(rel_path, args.arch_dir, do_checks, compile_idl)
     resolved_obj["$source"] = os.path.join(args.arch_dir, rel_path)
-    write_yaml(resolved_path, resolved_obj)
 
+    # Validate against the schema using the bare (unversioned) $schema URI, before
+    # rewriting it to the versioned form.  This way the schema enum only needs to
+    # list the bare name (e.g. 'csr_schema.json#') and source data files use that form.
     if do_checks and ("$schema" in resolved_obj):
         schema = _get_schema(resolved_obj["$schema"])
         try:
@@ -624,6 +671,13 @@ def write_resolved_file_and_validate(
             print(f"JSON Schema Validation Error for {rel_path}:")
             print(best_match(schema.iter_errors(resolved_obj)).message)
             exit(1)
+
+    # Rewrite the $schema field to include the version prefix, so the written file
+    # records the exact schema version that was used (e.g. 'v0.1/csr_schema.json#').
+    if "$schema" in resolved_obj:
+        resolved_obj["$schema"] = _versioned_schema_uri(resolved_obj["$schema"])
+
+    write_yaml(resolved_path, resolved_obj)
 
     os.chmod(resolved_path, 0o666)
 

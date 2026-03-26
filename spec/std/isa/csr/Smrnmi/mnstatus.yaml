@@ -50,17 +50,18 @@ fields:
       } else {
         return csr_value.MNPP;
       }
-    legal?(csr_value): |
-      if (csr_value.MNPP == 2'b01 && !implemented?(ExtensionName::S)) {
-        return false;
-      } else if (csr_value.MNPP == 2'b00 && !implemented?(ExtensionName::U)) {
-        return false;
-      } else if (csr_value.MNPP == 2'b10) {
-        # never a valid value
-        return false;
-      } else {
-        return true;
-      }
+  MNPELP:
+    location: 9
+    description: |
+      M-mode NMI Previous Expected Landing Pad state.
+
+      Defined by the Zicfilp extension. Holds the previous
+      Expected Landing Pad (ELP) state when entering M-mode NMI.
+    type: RW-H
+    reset_value: UNDEFINED_LEGAL
+    definedBy:
+      extension:
+        name: Zicfilp
   MNPV:
     location: 7
     description: |

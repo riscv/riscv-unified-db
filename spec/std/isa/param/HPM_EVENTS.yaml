@@ -6,9 +6,7 @@
 $schema: param_schema.json#
 kind: parameter
 name: HPM_EVENTS
-description: "List of defined event numbers that can be written into hpmeventN
-
-  "
+description: List of defined event numbers that can be written into mhpmeventN
 long_name: TODO
 schema:
   type: array
@@ -16,6 +14,101 @@ schema:
     type: integer
     minimum: 0
     maximum: 288230376151711743
+  minItems: 0
+  maxItems: 18446744073709551616 # 2**64
 definedBy:
-  extension:
-    name: Smhpm
+  allOf:
+    - extension:
+        name: Sm
+    - param:
+        anyOf:
+          - name: HPM_COUNTER_EN
+            index: 3
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 4
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 4
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 5
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 6
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 7
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 8
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 9
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 10
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 11
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 12
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 13
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 14
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 15
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 16
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 17
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 18
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 19
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 20
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 21
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 22
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 23
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 24
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 25
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 26
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 27
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 28
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 29
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 30
+            equal: true
+          - name: HPM_COUNTER_EN
+            index: 31
+            equal: true

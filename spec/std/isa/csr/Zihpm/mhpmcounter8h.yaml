@@ -16,19 +16,71 @@ priv_mode: M
 length: 32
 description: |
   Upper half of mhpmcounter8.
+
+  The `hpmcounter8h` CSR is a read-only shadow of this CSR. Access to `hpmcounter8h`
+  is controlled with `mcounteren.HPM8`
+  <%- if ext?(:S) -%>
+  , `scounteren.HPM8`
+  <%- if ext?(:H) -%>
+  , and `hcounteren.HPM8`
+  <%- end -%>
+  <%- end -%>
+  as follows:
+
+  <%- if ext?(:H) -%>
+  [%autowidth,cols="1,1,1,1,1,1,1",separator="!"]
+  !===
+  .2+h![.rotate]#`mcounteren.HPM8`# .2+h! [.rotate]#`scounteren.HPM8`# .2+h! [.rotate]#`hcounteren.HPM8`#
+  4+^.>h! `hpmcounter8h` behavior
+  .^h! S-mode .^h! U-mode .^h! VS-mode .^h! VU-mode
+
+  ! 0 ! - ! - ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction`
+  ! 1 ! 0 ! 0 ! read-only ! `IllegalInstruction` ! `VirtualInstruction` ! `VirtualInstruction`
+  ! 1 ! 1 ! 0 ! read-only ! read-only ! `VirtualInstruction` ! `VirtualInstruction`
+  ! 1 ! 0 ! 1 ! read-only ! `IllegalInstruction` ! read-only ! `VirtualInstruction`
+  ! 1 ! 1 ! 1 ! read-only ! read-only ! read-only ! read-only
+  !===
+  <%- elsif ext?(:S) -%>
+  [%autowidth,cols="1,1,1,1",separator="!"]
+  !===
+  .2+h![.rotate]#`mcounteren.HPM8`# .2+h! [.rotate]#`scounteren.HPM8`#
+  2+^.>h! `hpmcounter8h` behavior
+  .^h! S-mode .^h! U-mode
+
+  ! 0 ! - ! `IllegalInstruction` ! `IllegalInstruction`
+  ! 1 ! 0 ! read-only ! `IllegalInstruction`
+  ! 1 ! 1 ! read-only ! read-only
+  !===
+  <%- else -%>
+  [%autowidth,cols="1,1",separator="!"]
+  !===
+  .2+h![.rotate]#`mcounteren.HPM8`#
+  ^.>h! `hpmcounter8h` behavior
+  .^h! U-mode
+
+  ! 0 ! `IllegalInstruction`
+  ! 1 ! read-only
+  !===
+  <%- end -%>
 definedBy:
   allOf:
-    - xlen: 32
     - extension:
-        name: Smhpm
+        name: Sm
+    - xlen: 32
+    - param:
+        name: HPM_COUNTER_EN
+        index: 8
+        equal: true
 fields:
   COUNT:
     location: 31-0
     alias: mhpmcounter.COUNT8[63:32]
     description: |
       Upper bits of counter.
-    type(): "return (HPM_COUNTER_EN[8]) ? CsrFieldType::RWH : CsrFieldType::RO;"
-    reset_value(): "return (HPM_COUNTER_EN[8]) ? UNDEFINED_LEGAL : 0;"
+    type(): |
+      return (HPM_COUNTER_EN[8]) ? CsrFieldType::RWH : CsrFieldType::RO;
+    reset_value(): |
+      return (HPM_COUNTER_EN[8]) ? UNDEFINED_LEGAL : 0;
 sw_read(): |
   if (HPM_COUNTER_EN[8]) {
     return read_hpm_counter(8)[63:32];

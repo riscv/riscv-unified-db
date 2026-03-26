@@ -11,7 +11,11 @@ doc
 --ignore
 ext
 --ignore
+test
+--ignore
 python
+--ignore
+lib/tapioca
 --cache-dir=.sorbet-cache
 --suppress-payload-superclass-redefinition-for=RDoc::Markup::BlankLine
 --suppress-payload-superclass-redefinition-for=RDoc::Markup::HardBreak

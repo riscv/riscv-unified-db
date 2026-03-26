@@ -29,6 +29,6 @@ access:
   vu: always
 data_independent_timing: true
 pseudoinstructions:
-  - when: (rs2 == 0) && (xlen() == 32)
+  - when: (xs2 == 0) && (xlen() == 32)
     to: zext.h xd, xs1
 operation(): |

@@ -1,0 +1,151 @@
+---
+sidebar_position: 11
+title: Standard Library
+---
+
+IDL provides a set of built-in functions and special syntax for accessing architectural state. These are defined in `spec/std/isa/isa/` and are always available in any IDL scope where they are applicable.
+
+## CSR Access
+
+Control and Status Registers are accessed using the `CSR[name]` syntax. Individual fields within a CSR are accessed with the `.` operator.
+
+```idl
+# Read a CSR field
+Bits<1> mie_bit = CSR[mstatus].MIE;
+
+# Write a CSR field
+CSR[mstatus].MIE = 1'b0;
+
+# Write an entire CSR
+CSR[mtvec].BASE = handler_addr[MXLEN-1:2];
+```
+
+The type of `CSR[name]` is an implicitly-defined bitfield whose members correspond to the fields declared in the CSR's YAML definition.
+
+:::note
+`CSR[name]` uses the CSR's YAML key (lowercase), not the address. For example, `CSR[mstatus]` not `CSR[0x300]`. For dynamic CSR access by address, use `direct_csr_lookup()`.
+:::
+
+### Dynamic CSR Access
+
+When the CSR address is not known at compile time (e.g., in `Zicsr` instruction implementations), use the `direct_csr_lookup()` / `csr_sw_read()` / `csr_sw_write()` family:
+
+```idl
+# Look up a CSR by its 12-bit address
+Csr csr_handle = direct_csr_lookup(csr_addr);
+
+# Check whether the CSR exists
+if (csr_handle.valid == false) {
+  raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+}
+
+# Software-visible read (applies any sw_read() transformation)
+XReg value = csr_sw_read(csr_handle);
+
+# Software write (applies WARL transformations)
+csr_sw_write(csr_handle, new_value);
+```
+
+## Extension Checks
+
+### `implemented?(extension)`
+
+Returns `true` if the given extension is present in the implementation.
+
+```idl
+if (implemented?(ExtensionName::C) && (CSR[misa].C == 1'b0)) {
+  # C is implemented in hardware but disabled by software
+  raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+}
+```
+
+### `implemented_version?(extension, requirement)`
+
+Returns `true` if the given extension is present and meets the version requirement string.
+
+```idl
+if (implemented_version?(ExtensionName::Zicsr, "~> 1.0")) {
+  # ...
+}
+```
+
+### `implemented_csr?(csr_addr)`
+
+Returns `true` if the given 12-bit CSR address corresponds to an implemented CSR.
+
+## Raising Exceptions
+
+### `raise(exception_code, from_mode, tval)`
+
+Raises a synchronous exception. Terminates execution of the current instruction and transfers control to the exception handler.
+
+```idl
+raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+raise(ExceptionCode::LoadAddressMisaligned, mode(), virtual_address);
+```
+
+**Arguments:**
+- `exception_code` — an `ExceptionCode` enum value identifying the exception
+- `from_mode` — the privilege mode from which the exception is raised; use `mode()` for the current mode
+- `tval` — the value to write into the `*tval` CSR (e.g., the faulting address or instruction encoding)
+
+**Exception codes** include (among others):
+
+| Code | Description |
+|------|-------------|
+| `ExceptionCode::IllegalInstruction` | Instruction is not legal in the current mode/configuration |
+| `ExceptionCode::InstructionAddressMisaligned` | PC is misaligned |
+| `ExceptionCode::LoadAddressMisaligned` | Load address is misaligned |
+| `ExceptionCode::StoreAmoAddressMisaligned` | Store/AMO address is misaligned |
+| `ExceptionCode::InstructionAccessFault` | Instruction fetch access fault |
+| `ExceptionCode::LoadAccessFault` | Load access fault |
+| `ExceptionCode::StoreAmoAccessFault` | Store/AMO access fault |
+| `ExceptionCode::LoadPageFault` | Load page fault |
+| `ExceptionCode::StoreAmoPageFault` | Store/AMO page fault |
+| `ExceptionCode::InstructionPageFault` | Instruction page fault |
+| `ExceptionCode::Ucall` / `Scall` / `Mcall` | Environment call from U/S/M mode |
+| `ExceptionCode::Breakpoint` | Breakpoint |
+
+The full list is defined in `spec/std/isa/exception_code/`.
+
+:::warning
+`raise()` terminates the current instruction immediately — no IDL statements after the call execute. It is not a return value; it is a control-flow transfer.
+:::
+
+## Memory Access
+
+Memory access functions handle virtual-to-physical address translation, PMP/PMA checks, and misalignment handling automatically. They should be used in preference to direct physical memory access in most instruction implementations.
+
+### `read_memory<LEN>(virtual_address, encoding)`
+
+Reads `LEN` bits from virtual memory. `LEN` must be 8, 16, 32, or 64.
+
+```idl
+# Load byte (zero-extended)
+X[xd] = read_memory<8>(virtual_address, $encoding);
+
+# Load word (sign-extended via sext helper)
+X[xd] = sext(read_memory<32>(virtual_address, $encoding), 32);
+
+# Load doubleword
+Bits<64> data = read_memory<64>(virtual_address, $encoding);
+```
+
+### `write_memory<LEN>(virtual_address, value, encoding)`
+
+Writes `LEN` bits to virtual memory.
+
+```idl
+# Store byte
+write_memory<8>(virtual_address, X[xs2][7:0], $encoding);
+
+# Store halfword
+write_memory<16>(virtual_address, X[xs2][15:0], $encoding);
+
+# Store word
+write_memory<32>(virtual_address, X[xs2][31:0], $encoding);
+```
+
+:::note
+Both `read_memory` and `write_memory` may raise exceptions (access fault, page fault, misaligned) as a side effect of the access. No explicit error handling is needed in the calling code — the exception propagates automatically via `raise()`.
+:::

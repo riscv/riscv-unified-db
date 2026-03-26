@@ -7,10 +7,8 @@ $schema: param_schema.json#
 kind: parameter
 name: MISALIGNED_AMO
 description:
-  "whether or not the implementation supports misaligned atomics in main
+  Whether or not the implementation supports misaligned atomics in main
   memory
-
-  "
 long_name: TODO
 schema:
   type: boolean

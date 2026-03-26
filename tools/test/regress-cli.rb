@@ -127,7 +127,7 @@ class Cli
     end
 
     test = test_data.fetch("tests").fetch(test_name)
-    cmd = TTY::Command.new(uuid: false)
+    cmd = TTY::Command.new(uuid: false, pty: true)
     test.fetch("test").each do |step|
       env = test.key?("env") ? test.fetch("env") : {}
       if step.key?("env")

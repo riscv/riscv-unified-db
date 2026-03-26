@@ -26,17 +26,8 @@ module Idl
     sig { abstract.returns(String) }
     def description; end
 
-    sig { abstract.returns(T::Boolean) }
-    def schema_known?; end
-
     sig { abstract.returns(Schema) }
     def schema; end
-
-    sig { abstract.returns(T::Array[Schema]) }
-    def possible_schemas; end
-
-    sig { abstract.returns(T::Array[Schema]) }
-    def all_schemas; end
 
     sig { abstract.returns(T::Boolean) }
     def value_known?; end

@@ -3,7 +3,6 @@
 
 # frozen_string_literal: true
 
-require_relative "lib/gem_versions.rb"
 require_relative "lib/udb-gen/version"
 
 Gem::Specification.new do |s|
@@ -17,7 +16,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.files       = Dir["lib/**/*.rb", "templates/*.erb", "LICENSE"]
+  s.files       = Dir["lib/**/*.rb", "lib/**/*.rake", "templates/**/*.erb", "templates/**/*.js", "LICENSE"]
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
     "homepage_uri" => "https://github.com/riscv/riscv-unified-db",
@@ -34,7 +33,7 @@ Gem::Specification.new do |s|
   s.add_dependency "asciidoctor-diagram"
   s.add_dependency "asciidoctor-pdf"
   s.add_dependency "rake"
-  s.add_dependency "sorbet-runtime", "= #{UdbGems::SORBET_VERSION}"
+  s.add_dependency "sorbet-runtime"
   s.add_dependency "tty-exit"
   s.add_dependency "tty-option"
   s.add_dependency "tty-progressbar"
@@ -42,6 +41,6 @@ Gem::Specification.new do |s|
   s.add_dependency "udb"
   s.add_dependency "write_xlsx"
 
-  s.add_development_dependency "sorbet", "= #{UdbGems::SORBET_VERSION}"
-  s.add_development_dependency "tapioca", "= #{UdbGems::TAPIOCA_VERSION}"
+  s.add_development_dependency "sorbet"
+  s.add_development_dependency "tapioca", ">= 0.17.10"
 end

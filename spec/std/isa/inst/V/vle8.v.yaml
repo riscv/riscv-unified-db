@@ -36,29 +36,8 @@ operation(): |
     U32 end_bit_pos = start_bit_pos + 7;
     v[vd] = {
       v[vd][VLEN-1:end_bit_pos + 1],
-      sext(read_memory<8>(virtual_address, $encoding), 8),
+      sext(read_memory(8, virtual_address, $encoding), 8),
       v[vd][start_bit_pos-1:0]
     };
     virtual_address = virtual_address + 1;
   }
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let load_width_bytes = vlewidth_bytesnumber(width);
-    let EEW = load_width_bytes * 8;
-    let EEW_pow = vlewidth_pow(width);
-    let SEW_pow = get_sew_pow();
-    let LMUL_pow = get_lmul_pow();
-    let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-    let num_elem = get_num_elem(EMUL_pow, EEW); /* # of element of each register group */
-    let nf_int = nfields_int(nf);
-
-    if illegal_load(vd, vm, nf_int, EEW, EMUL_pow) then { handle_illegal(); return RETIRE_FAIL };
-
-    process_vlseg(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
-  }
-
-# SPDX-SnippetEnd

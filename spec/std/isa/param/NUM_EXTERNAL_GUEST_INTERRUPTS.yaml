@@ -12,23 +12,13 @@ description: |
   Corresponds to the `GEILEN` parameter in the RVI specs
 long_name: TODO
 schema:
-  oneOf:
-    - when:
-        param:
-          name: MXLEN
-          equal: 32
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 31
-    - when:
-        param:
-          name: MXLEN
-          equal: 64
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 63
+  type: integer
+  minimum: 1
+  maximum: 63
 definedBy:
   extension:
     name: H
+
+requirements:
+  idl(): |
+    (MXLEN == 32) -> NUM_EXTERNAL_GUEST_INTERRUPTS <= 31;

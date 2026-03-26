@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv-software-src/riscv-unified-db>
+# SPDX-FileCopyrightText: 2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv/riscv-unified-db>
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 [project]
@@ -9,10 +9,10 @@ dependencies = [
     "check-jsonschema>=0.36.1",
     "jsonschema>=4.26.0",
     "mergedeep>=1.3.4",
-    "pre-commit>=4.5.1",
+    "pycobertura>=4.1.0",
     "pytest>=9.0.2",
+    "pyyaml>=6.0.3",
     "reuse>=6.2.0",
-    "ruamel.yaml>=0.19.1",
     "ruff>=0.15.0",
     "tqdm>=4.67.3",
 ]

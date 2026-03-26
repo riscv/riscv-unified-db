@@ -31,6 +31,6 @@ access:
   vu: always
 data_independent_timing: false
 pseudoinstructions:
-  - when: (rs2 == rs1)
-    to: fmv.q
+  - when: (fs2 == fs1)
+    to: fmv.q fd,fs1
 operation(): |

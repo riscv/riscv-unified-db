@@ -101,6 +101,12 @@ namespace :gen do
       $resolver.cfg_arch_for(cfg)
     end
   end
+
+  desc "Resolve schema files and write them to gen/schemas/VERSION/SCHEMA with full $id URLs"
+  task :schemas do
+    $resolver.resolve_schemas
+    puts "Resolved schema files written to gen/schemas/"
+  end
 end
 
 namespace :serve do
@@ -165,7 +171,7 @@ end
 
 desc "Clean up all generated files and container"
 task :clobber do
-  warn "Don't run clean using Rake. Run `./do clean` (alias for `./bin/clean`) instead."
+  warn "Don't run clobber using Rake. Run `./do clobber` (alias for `./bin/clobber`) instead."
 end
 
 
@@ -436,31 +442,143 @@ end
   end
 end
 
+# LR/SC instruction generation from layouts
+%w[lr sc].each do |op|
+  ["w", "d"].each do |size|
+    aq_rl_variants.each do |variant|
+      file "#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{variant[:suffix]}.yaml" => [
+        "#{$resolver.std_path}/inst/Zalrsc/#{op}.SIZE.AQRL.layout",
+        __FILE__
+      ] do |t|
+        FileUtils.rm_f(t.name)
+        aq = variant[:aq]
+        rl = variant[:rl]
+        erb = ERB.new(File.read($resolver.std_path / "inst/Zalrsc/#{op}.SIZE.AQRL.layout"), trim_mode: "-")
+        erb.filename = "#{$resolver.std_path}/inst/Zalrsc/#{op}.SIZE.AQRL.layout"
+        File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+        File.chmod(0444, t.name)
+      end
+    end
+  end
+end
+
+# Zalasr load-acquire generation from layout
+zalasr_load_variants = [
+  { suffix: ".aq", rl: false },
+  { suffix: ".aqrl", rl: true }
+]
+
+["b", "h", "w", "d"].each do |size|
+  zalasr_load_variants.each do |variant|
+    file "#{$resolver.std_path}/inst/Zalasr/l#{size}#{variant[:suffix]}.yaml" => [
+      "#{$resolver.std_path}/inst/Zalasr/lSIZE.AQRL.layout",
+      __FILE__
+    ] do |t|
+      FileUtils.rm_f(t.name)
+      rl = variant[:rl]
+      erb = ERB.new(File.read($resolver.std_path / "inst/Zalasr/lSIZE.AQRL.layout"), trim_mode: "-")
+      erb.filename = "#{$resolver.std_path}/inst/Zalasr/lSIZE.AQRL.layout"
+      File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+      File.chmod(0444, t.name)
+    end
+  end
+end
+
+# Zalasr store-release generation from layout
+zalasr_store_variants = [
+  { suffix: ".rl", aq: false },
+  { suffix: ".aqrl", aq: true }
+]
+
+["b", "h", "w", "d"].each do |size|
+  zalasr_store_variants.each do |variant|
+    file "#{$resolver.std_path}/inst/Zalasr/s#{size}#{variant[:suffix]}.yaml" => [
+      "#{$resolver.std_path}/inst/Zalasr/sSIZE.AQRL.layout",
+      __FILE__
+    ] do |t|
+      FileUtils.rm_f(t.name)
+      aq = variant[:aq]
+      erb = ERB.new(File.read($resolver.std_path / "inst/Zalasr/sSIZE.AQRL.layout"), trim_mode: "-")
+      erb.filename = "#{$resolver.std_path}/inst/Zalasr/sSIZE.AQRL.layout"
+      File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+      File.chmod(0444, t.name)
+    end
+  end
+end
+
+# MOP.R instruction generation from layout (mop.r.0 through mop.r.31)
+(0..31).each do |n|
+  file "#{$resolver.std_path}/inst/Zimop/mop.r.#{n}.yaml" => [
+    "#{$resolver.std_path}/inst/Zimop/mop.r.N.layout",
+    __FILE__
+  ] do |t|
+    FileUtils.rm_f(t.name)
+    erb = ERB.new(File.read($resolver.std_path / "inst/Zimop/mop.r.N.layout"), trim_mode: "-")
+    erb.filename = "#{$resolver.std_path}/inst/Zimop/mop.r.N.layout"
+    File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+    File.chmod(0444, t.name)
+  end
+end
+
+# MOP.RR instruction generation from layout (mop.rr.0 through mop.rr.7)
+(0..7).each do |n|
+  file "#{$resolver.std_path}/inst/Zimop/mop.rr.#{n}.yaml" => [
+    "#{$resolver.std_path}/inst/Zimop/mop.rr.N.layout",
+    __FILE__
+  ] do |t|
+    FileUtils.rm_f(t.name)
+    erb = ERB.new(File.read($resolver.std_path / "inst/Zimop/mop.rr.N.layout"), trim_mode: "-")
+    erb.filename = "#{$resolver.std_path}/inst/Zimop/mop.rr.N.layout"
+    File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+    File.chmod(0444, t.name)
+  end
+end
+
+# C.MOP instruction generation from layout (c.mop.1, c.mop.3, c.mop.5, c.mop.7, c.mop.9, c.mop.11, c.mop.13, c.mop.15)
+[1, 3, 5, 7, 9, 11, 13, 15].each do |n|
+  file "#{$resolver.std_path}/inst/Zcmop/c.mop.#{n}.yaml" => [
+    "#{$resolver.std_path}/inst/Zcmop/c.mop.N.layout",
+    __FILE__
+  ] do |t|
+    FileUtils.rm_f(t.name)
+    erb = ERB.new(File.read($resolver.std_path / "inst/Zcmop/c.mop.N.layout"), trim_mode: "-")
+    erb.filename = "#{$resolver.std_path}/inst/Zcmop/c.mop.N.layout"
+    File.write(t.name, insert_warning(erb.result(binding), t.prerequisites.first))
+    File.chmod(0444, t.name)
+  end
+end
+
+def gen_arch_file(f)
+  FileUtils.rm_f f
+  Rake::Task[f].invoke
+  FileUtils.chmod 0444, f
+end
+
 namespace :gen do
   desc "Generate architecture files from layouts"
   task :arch do
     (3..31).each do |hpm_num|
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}h.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}h.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmcounter#{hpm_num}h.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/mhpmevent#{hpm_num}h.yaml")
 
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}.yaml"].invoke
-      Rake::Task["#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}h.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}.yaml")
+      gen_arch_file("#{$resolver.std_path}/csr/Zihpm/hpmcounter#{hpm_num}h.yaml")
     end
 
-    Rake::Task["#{$resolver.std_path}/csr/I/mcounteren.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/S/scounteren.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/Sscofpmf/scountovf.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/H/hcounteren.yaml"].invoke
-    Rake::Task["#{$resolver.std_path}/csr/Zicntr/mcountinhibit.yaml"].invoke
+    gen_arch_file("#{$resolver.std_path}/csr/I/mcounteren.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/S/scounteren.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/Sscofpmf/scountovf.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/H/hcounteren.yaml")
+    gen_arch_file("#{$resolver.std_path}/csr/Zicntr/mcountinhibit.yaml")
 
     (0..63).each do |pmpaddr_num|
-      Rake::Task["#{$resolver.std_path}/csr/I/pmpaddr#{pmpaddr_num}.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/I/pmpaddr#{pmpaddr_num}.yaml")
     end
 
     (0..15).each do |pmpcfg_num|
-      Rake::Task["#{$resolver.std_path}/csr/I/pmpcfg#{pmpcfg_num}.yaml"].invoke
+      gen_arch_file("#{$resolver.std_path}/csr/I/pmpcfg#{pmpcfg_num}.yaml")
     end
 
     # Generate AMO instruction files
@@ -468,7 +586,7 @@ namespace :gen do
       ["b", "h", "w", "d"].each do |size|
         extension_dir = %w[b h].include?(size) ? "Zabha" : "Zaamo"
         ["", ".aq", ".rl", ".aqrl"].each do |suffix|
-          Rake::Task["#{$resolver.std_path}/inst/#{extension_dir}/#{op}.#{size}#{suffix}.yaml"].invoke
+          gen_arch_file("#{$resolver.std_path}/inst/#{extension_dir}/#{op}.#{size}#{suffix}.yaml")
         end
       end
     end
@@ -479,8 +597,42 @@ namespace :gen do
         # Determine target extension directory based on size
         extension_dir = %w[w d q].include?(size) ? "Zacas" : "Zabha"
 
-        Rake::Task["#{$resolver.std_path}/inst/#{extension_dir}/amocas.#{size}#{suffix}.yaml"].invoke
+        gen_arch_file("#{$resolver.std_path}/inst/#{extension_dir}/amocas.#{size}#{suffix}.yaml")
       end
+    end
+
+    # Generate LR/SC instruction files
+    %w[lr sc].each do |op|
+      ["w", "d"].each do |size|
+        aq_rl_variants.each do |variant|
+          gen_arch_file("#{$resolver.std_path}/inst/Zalrsc/#{op}.#{size}#{variant[:suffix]}.yaml")
+        end
+      end
+    end
+
+    # Generate Zalasr load/store instruction files
+    ["b", "h", "w", "d"].each do |size|
+      zalasr_load_variants.each do |variant|
+        gen_arch_file("#{$resolver.std_path}/inst/Zalasr/l#{size}#{variant[:suffix]}.yaml")
+      end
+      zalasr_store_variants.each do |variant|
+        gen_arch_file("#{$resolver.std_path}/inst/Zalasr/s#{size}#{variant[:suffix]}.yaml")
+      end
+    end
+
+    # Generate MOP.R instruction files (mop.r.0 through mop.r.31)
+    (0..31).each do |n|
+      gen_arch_file("#{$resolver.std_path}/inst/Zimop/mop.r.#{n}.yaml")
+    end
+
+    # Generate MOP.RR instruction files (mop.rr.0 through mop.rr.7)
+    (0..7).each do |n|
+      gen_arch_file("#{$resolver.std_path}/inst/Zimop/mop.rr.#{n}.yaml")
+    end
+
+    # Generate C.MOP instruction files (c.mop.1, c.mop.3, c.mop.5, c.mop.7, c.mop.9, c.mop.11, c.mop.13, c.mop.15)
+    [1, 3, 5, 7, 9, 11, 13, 15].each do |n|
+      gen_arch_file("#{$resolver.std_path}/inst/Zcmop/c.mop.#{n}.yaml")
     end
   end
 

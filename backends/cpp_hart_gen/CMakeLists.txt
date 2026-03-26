@@ -133,6 +133,8 @@ target_link_libraries(hart_renode PUBLIC hart)
 add_executable(iss
   ${CMAKE_SOURCE_DIR}/src/iss.cpp
   ${CMAKE_SOURCE_DIR}/src/elf_reader.cpp
+  ${CMAKE_SOURCE_DIR}/src/GDBServer.cpp
+  ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
 )
 if(IGNOREUNDEFINED STREQUAL "YES")
 target_compile_definitions(iss PUBLIC IGNOREUNDEFINED)

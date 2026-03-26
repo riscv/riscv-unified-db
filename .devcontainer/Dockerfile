@@ -2,6 +2,7 @@ FROM ubuntu:24.04@sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f
 LABEL org.opencontainers.image.source=https://github.com/riscv/riscv-unified-db
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV IN_UDB_CONTAINER=true
 
 WORKDIR /workspace
 
@@ -27,7 +28,6 @@ RUN apt-get update && \
   libgmp-dev \
   libnewlib-dev \
   libyaml-dev \
-  libz3-dev \
   parallel \
   ssh \
   sudo \
@@ -56,33 +56,6 @@ RUN mise install
 RUN mise reshim
 RUN mkdir -p /mise/state && chmod -R 777 /mise
 
-# build/install eqntott
-RUN git clone --depth=1 https://github.com/TheProjecter/eqntott.git && \
-    cd eqntott && \
-    ./configure && \
-    make && make install && \
-    cd .. && \
-    rm -rf eqntott
-
-# build/install espresso
-RUN git clone --depth=1 https://github.com/psksvp/espresso-ab-1.0.git && \
-    cd espresso-ab-1.0 && \
-    ./configure && \
-    make && make install && \
-    cd .. && \
-    rm -rf espresso-ab-1.0
-
-# build / install must
-# mcsmus/mcsmus/control.cc is missing #include <cstdio>, thus the sed below
-RUN git clone https://github.com/jar-ben/mustool.git && \
-    cd mustool && \
-    git checkout 17fa9f9542a9ce05328dfccd1cd410f05f741ab3 && \
-    sed -i -e 's/#include <signal.h>/#include <signal.h>\n#include <cstdio>/' mcsmus/mcsmus/control.cc && \
-    make -j && \
-    install must -m 0777 /usr/bin/must && \
-    cd .. && \
-    rm -rf mustool
-
 # Sync Python project dependencies with uv
 COPY pyproject.toml uv.lock /opt/python/
 RUN cd /opt/python && uv sync
@@ -97,7 +70,6 @@ RUN cd /opt/node && \
   rm /opt/node/package.json /opt/node/package-lock.json
 ENV NODE_PATH="/opt/node/node_modules"
 ENV PATH="/opt/node/node_modules/.bin:$PATH"
-ENV IN_UDB_CONTAINER=true
 
 # install gems
 ENV BUNDLE_PATH=/usr/local/bundle
@@ -115,19 +87,16 @@ COPY Gemfile.lock /opt/Gemfile.lock
 COPY tools/ruby-gems/idlc/Gemfile /opt/tools/ruby-gems/idlc/
 COPY tools/ruby-gems/idlc/Gemfile.lock /opt/tools/ruby-gems/idlc/
 COPY tools/ruby-gems/idlc/idlc.gemspec /opt/tools/ruby-gems/idlc/
-COPY tools/ruby-gems/idlc/lib/gem_versions.rb /opt/tools/ruby-gems/idlc/lib/
 COPY tools/ruby-gems/idlc/lib/idlc/version.rb /opt/tools/ruby-gems/idlc/lib/idlc/
 COPY tools/ruby-gems/idl_highlighter/idl_highlighter.gemspec /opt/tools/ruby-gems/idl_highlighter/
 COPY tools/ruby-gems/idl_highlighter/lib/idl_highlighter/version.rb /opt/tools/ruby-gems/idl_highlighter/lib/idl_highlighter/
 COPY tools/ruby-gems/udb/Gemfile /opt/tools/ruby-gems/udb/
 COPY tools/ruby-gems/udb/Gemfile.lock /opt/tools/ruby-gems/udb/
 COPY tools/ruby-gems/udb/udb.gemspec /opt/tools/ruby-gems/udb/
-COPY tools/ruby-gems/udb/lib/gem_versions.rb /opt/tools/ruby-gems/udb/lib/
 COPY tools/ruby-gems/udb/lib/udb/version.rb /opt/tools/ruby-gems/udb/lib/udb/
 COPY tools/ruby-gems/udb-gen/Gemfile /opt/tools/ruby-gems/udb-gen/
 COPY tools/ruby-gems/udb-gen/Gemfile.lock /opt/tools/ruby-gems/udb-gen/
 COPY tools/ruby-gems/udb-gen/udb-gen.gemspec /opt/tools/ruby-gems/udb-gen/
-COPY tools/ruby-gems/udb-gen/lib/gem_versions.rb /opt/tools/ruby-gems/udb-gen/lib/
 COPY tools/ruby-gems/udb-gen/lib/udb-gen/version.rb /opt/tools/ruby-gems/udb-gen/lib/udb-gen/
 COPY tools/ruby-gems/udb_helpers/udb_helpers.gemspec /opt/tools/ruby-gems/udb_helpers/
 COPY tools/ruby-gems/udb_helpers/lib/udb_helpers/version.rb /opt/tools/ruby-gems/udb_helpers/lib/udb_helpers/

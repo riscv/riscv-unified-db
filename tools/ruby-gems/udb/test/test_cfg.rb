@@ -21,7 +21,7 @@ class TestCfg < Minitest::Test
     @gen_dir = Dir.mktmpdir
     @resolver = Udb::Resolver.new(
       Udb.repo_root,
-      gen_path_override: @gen_path
+      gen_path_override: Pathname.new(@gen_dir)
     )
   end
 

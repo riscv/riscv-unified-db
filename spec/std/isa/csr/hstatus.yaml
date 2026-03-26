@@ -145,8 +145,6 @@ fields:
         return CsrFieldType::RWR;
       }
     reset_value: UNDEFINED_LEGAL
-    legal?(csr_value): |
-      return csr_value.VGEIN <= NUM_EXTERNAL_GUEST_INTERRUPTS;
     sw_write(csr_value): |
       if (csr_value.VGEIN <= NUM_EXTERNAL_GUEST_INTERRUPTS) {
         return csr_value.VGEIN;

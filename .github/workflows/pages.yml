@@ -100,35 +100,35 @@ jobs:
       - name: Download RVI20
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: rvi20
+          name: RVI20
           path: _site/pdfs
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
       - name: Download RVA20
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: rva20
+          name: RVA20
           path: _site/pdfs
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
       - name: Download RVA22
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: rva22
+          name: RVA22
           path: _site/pdfs
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
       - name: Download RVA23
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: rva23
+          name: RVA23
           path: _site/pdfs
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
       - name: Download RVB23
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: rvb23
+          name: RVB23
           path: _site/pdfs
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
@@ -230,6 +230,31 @@ jobs:
           path: idl.html
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
+      - name: Download Docusaurus site
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: docs-site
+          path: _site/docs-preview
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - name: Download and publish schema files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Collect all per-schema release tags (schemas/<schema_name>/<version>)
+          SCHEMA_TAGS=$(gh release list --limit 200 --json tagName --jq '.[] | .tagName | select(startswith("schemas/"))' 2>/dev/null || true)
+          for tag in $SCHEMA_TAGS; do
+              # tag format: schemas/<schema_name>/<version>
+              rest="${tag#schemas/}"
+              schema_name="${rest%%/*}"
+              version="${rest#*/}"
+              mkdir -p "_site/schemas/${schema_name}/${version}"
+              gh release download "${tag}" --dir "_site/schemas/${schema_name}/${version}" --pattern "*.json" 2>/dev/null || true
+            done
+          fi
+          # Write a JSON index of all available schema versions and files
+          ruby tools/scripts/gen_schema_index.rb _site/schemas _site/schemas/index.json
+
       - name: Create index
         env:
           PAGES_URL: https://riscv.github.io/riscv-unified-db

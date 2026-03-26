@@ -17,6 +17,7 @@
 #include "udb/soc_model.hpp"
 #include "udb/stop_reason.h"
 #include "udb/version.hpp"
+#include "udb/NotificationHandler.hpp"
 
 #if !defined(JSON_ASSERT)
 #define JSON_ASSERT(cond) udb_assert(cond, "JSON assert");
@@ -43,6 +44,20 @@ namespace udb {
 
   class InstBase;
 
+  struct TranslateResult
+  {
+    uint64_t pAddr;
+  };
+
+  enum HART_NOTIFICATION_EVENT
+  {
+    PREFETCH_EVENT = 0,
+    FETCH_EVENT,
+    DECODE_EVENT,
+    PREEXECUTE_EVENT,
+    EXECUTE_EVENT
+  };
+
   template <SocModel SocType>
   class HartBase {
    public:
@@ -51,9 +66,9 @@ namespace udb {
           m_soc(soc),
           m_cfg(cfg),
           m_tracer(nullptr),
-          m_current_priv_mode(PrivilegeMode::M),
           m_exit_requested(false),
-          m_num_inst_exec(0) {}
+          m_num_inst_exec(0),
+          m_pNotifier(nullptr) {}
 
     virtual void reset(uint64_t reset_pc) {
       m_exit_requested = 0;
@@ -65,6 +80,12 @@ namespace udb {
       m_tracer = t;
     }
 
+    void attach_notifier(NotificationHandler* n) {
+      //Single sink limitation for notifications
+      //Furure applications may require list/vector of NotificationHandlers
+      m_pNotifier = n;
+    }
+
     virtual void set_pc(uint64_t new_pc) = 0;
     virtual void set_next_pc(uint64_t next_pc) = 0;
     virtual uint64_t pc() const = 0;
@@ -73,10 +94,8 @@ namespace udb {
     // get the next instruction encoding
     virtual uint64_t fetch() = 0;
 
-    PrivilegeMode mode() const { return m_current_priv_mode; }
-    void set_mode(const PrivilegeMode& next_mode) {
-      m_current_priv_mode = next_mode;
-    }
+    virtual PrivilegeMode _get_mode() = 0;
+    virtual void _set_mode(const PrivilegeMode& next_mode) = 0;
 
     // access a physical address. All translations and physical checks
     // should have already occurred
@@ -375,12 +394,14 @@ namespace udb {
 
     uint64_t num_insts_exec() const { return m_num_inst_exec; }
 
+    virtual TranslateResult translate_native(uint64_t vaddr, MemoryOperation op, PrivilegeMode mode, uint64_t encoding) = 0;
+
    protected:
     const unsigned m_hart_id;
     SocType& m_soc;
     const Config m_cfg;
     AbstractTracer* m_tracer;
-    PrivilegeMode m_current_priv_mode;
+    NotificationHandler* m_pNotifier;
 
     int m_exit_code;
     std::string m_exit_reason;
@@ -390,6 +411,13 @@ namespace udb {
     // the number of instruction *executed*
     // THIS IS NOT minstret (some executed instructions do not retire)
     uint64_t m_num_inst_exec;
+
+    inline int Notify(uint64_t uiEvent, void* pData) {
+      if(m_pNotifier) {
+        return m_pNotifier->Notify(uiEvent, pData);
+      }
+      return 0;
+    }
   };
 
 }  // namespace udb

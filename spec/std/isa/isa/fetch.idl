@@ -22,7 +22,7 @@ function fetch_memory_aligned_16 {
     # may raise an exception
     access_check(result.paddr, 16, virtual_address, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
 
-    return read_physical_memory<16>(result.paddr);
+    return read_physical_memory(16, result.paddr);
   }
 }
 
@@ -45,7 +45,7 @@ function fetch_memory_aligned_32 {
     # may raise an exception
     access_check(result.paddr, 32, virtual_address, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
 
-    return read_physical_memory<32>(result.paddr);
+    return read_physical_memory(32, result.paddr);
   }
 }
 

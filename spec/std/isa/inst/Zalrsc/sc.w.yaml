@@ -1,4 +1,7 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+
+# WARNING: This file is auto-generated from spec/std/isa/inst/Zalrsc/sc.SIZE.AQRL.layout
+
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # yaml-language-server: $schema=../../../../schemas/inst_schema.json
@@ -17,18 +20,17 @@ description: |
   may be treated like a store. Regardless of success or failure, executing an
   `sc.w` instruction invalidates any reservation held by this hart.
 
-  <%- if MXLEN == 64 -%>
-  [NOTE]
-  If a value other than 0 or 1 is defined as a result for `sc.w`, the value will before
-  sign-extended into _xd_.
-  <%- end -%>
-
   The failure code with value 1 encodes an unspecified failure.
   Other failure codes are reserved at this time.
   Portable software should only assume the failure code will be non-zero.
 
+  <%- if MXLEN == 64 -%>
+  [NOTE]
+   `sc.w` sign-extends the value placed in _xd_.
+  <%- end -%>
+
   The address held in _xs1_ must be naturally aligned to the size of the operand
-  (_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+  (_i.e._, four-byte aligned).
   If the address is not naturally aligned, an address-misaligned exception or an
   access-fault exception will be generated.
   The access-fault exception can be generated for a memory access that would otherwise
@@ -141,7 +143,7 @@ operation(): |
   XReg virtual_address = X[xs1];
   XReg value = X[xs2];
 
-  if (!is_naturally_aligned<32>(virtual_address)) {
+  if (!is_naturally_aligned(32, virtual_address)) {
     # can raise either LoadAddressMisaligned *or* LoadAccessFault
     #
     # from the spec:
@@ -159,87 +161,5 @@ operation(): |
     }
   }
 
-  Boolean success = store_conditional<32>(virtual_address, value, aq, rl, $encoding);
+  Boolean success = store_conditional(32, virtual_address, value, aq, rl, $encoding);
   X[xd] = success ? 0 : 1;
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    if speculate_conditional () == false then {
-      /* should only happen in rmem
-       * rmem: allow SC to fail very early
-       */
-      X(rd) = zero_extend(0b1); RETIRE_SUCCESS
-    } else {
-      if extension("A") then {
-        /* normal non-rmem case
-         * rmem: SC is allowed to succeed (but might fail later)
-         */
-        /* Get the address, X(rs1) (no offset).
-         * Extensions might perform additional checks on address validity.
-         */
-        match ext_data_get_addr(rs1, zeros(), Write(Data), width) {
-          Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
-          Ext_DataAddr_OK(vaddr) => {
-            let aligned : bool =
-              /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
-               * to treat them as valid here; otherwise we'd need to throw an internal_error.
-               */
-              match width {
-                BYTE   => true,
-                HALF   => vaddr[0..0] == 0b0,
-                WORD   => vaddr[1..0] == 0b00,
-                DOUBLE => vaddr[2..0] == 0b000
-              };
-            if not(aligned)
-            then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
-            else {
-              if match_reservation(vaddr) == false then {
-                /* cannot happen in rmem */
-                X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
-              } else {
-                match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
-                                                            * both result in a SAMO exception */
-                  TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-                  TR_Address(addr, _) => {
-                    let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
-                      (BYTE, _)    => mem_write_ea(addr, 1, aq & rl, rl, true),
-                      (HALF, _)    => mem_write_ea(addr, 2, aq & rl, rl, true),
-                      (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
-                      (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
-                      _            => internal_error(__FILE__, __LINE__, "STORECON expected word or double")
-                    };
-                    match (eares) {
-                      MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-                      MemValue(_) => {
-                        rs2_val = X(rs2);
-                        let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
-                          (BYTE, _)    => mem_write_value(addr, 1, rs2_val[7..0], aq & rl, rl, true),
-                          (HALF, _)    => mem_write_value(addr, 2, rs2_val[15..0], aq & rl, rl, true),
-                          (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq & rl, rl, true),
-                          (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq & rl, rl, true),
-                          _            => internal_error(__FILE__, __LINE__, "STORECON expected word or double")
-                        };
-                        match (res) {
-                          MemValue(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
-                          MemValue(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
-                          MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      } else {
-        handle_illegal();
-        RETIRE_FAIL
-      }
-    }
-  }
-
-# SPDX-SnippetEnd
