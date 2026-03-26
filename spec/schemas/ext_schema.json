@@ -68,7 +68,14 @@
               }
             },
             "then": {
-              "required": ["ratification_date"]
+              "required": ["ratification_date"],
+              "properties": {
+                "ratification_date": {
+                  "not": {
+                    "type": "null"
+                  }
+                }
+              }
             }
           },
           {
