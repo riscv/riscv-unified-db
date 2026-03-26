@@ -2177,7 +2177,7 @@ module Idl
   #  }
   class BitfieldDefinitionAst < AstNode
     include Declaration
-    
+
     class Memo < T::Struct
       prop :type, T.nilable(Type)
       prop :element_names, T.nilable(T::Array[String])
