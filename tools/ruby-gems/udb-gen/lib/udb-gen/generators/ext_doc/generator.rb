@@ -68,15 +68,6 @@ module UdbGen
       desc "Do not generate a long descrption of each CSR field (just a summary table)"
     end
 
-    option :pseudo do
-      T.bind(self, TTY::Option::Parameter::Option)
-      short "-p"
-      long "--p=type"
-      desc "Which pdeudocode(s) to include in the documentation"
-      permit ["sail", "idl", "both"]
-      default "idl"
-    end
-
     option :format do
       T.bind(self, TTY::Option::Parameter::Option)
       short "-f"

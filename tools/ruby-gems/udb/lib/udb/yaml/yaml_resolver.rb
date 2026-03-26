@@ -355,7 +355,7 @@ module Udb
         end
 
         if @compile_idl
-          idl_keys = obj.keys.select { |k| k.end_with?(")") }.reject { |k| k == "sail()" }
+          idl_keys = obj.keys.select { |k| k.end_with?(")") }
           idl_keys.each do |key|
             idl_source = obj[key]
 
@@ -677,7 +677,7 @@ module Udb
             key_text = key_node.value
 
             # Check if this is an IDL function key
-            if key_text.is_a?(String) && key_text.end_with?(")") && key_text != "sail()"
+            if key_text.is_a?(String) && key_text.end_with?(")")
               # Validate the value node
               if value_node.is_a?(Psych::Nodes::Scalar)
                 # Check if it's a multiline plain scalar
@@ -735,7 +735,7 @@ module Udb
         when Psych::Nodes::Scalar
           return unless keys.any?
 
-          is_idl_key = keys.last.is_a?(String) && T.must(keys.last).end_with?(")") && keys.last != "sail()"
+          is_idl_key = keys.last.is_a?(String) && T.must(keys.last).end_with?(")")
           marked_offset = cumulative_offsets.fetch(node.start_line) + node.start_column
 
           if is_idl_key

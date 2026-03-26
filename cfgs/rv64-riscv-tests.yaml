@@ -15,7 +15,6 @@ implemented_extensions:
   - [Zicntr, "2.0"]
   - [Smrnmi, "1.0"]
   - [S, "1.11.0"]
-  - [Smpmp, "1.11.0"]
   - [U, "1.0.0"]
   - [Zifencei, "2.0.0"]
   - [Sv39, "1.11.0"]
@@ -204,3 +203,38 @@ params:
   MSTATEEN_ENVCFG_TYPE: rw
   HW_MSTATUS_FS_DIRTY_UPDATE: precise
   MUTABLE_MISA_F: false
+  HPM_COUNTER_EN:
+    [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]
