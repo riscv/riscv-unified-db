@@ -329,10 +329,6 @@ class Idl::AryElementAssignmentAst < ::Idl::AstNode
   end
 end
 
-class Idl::AryElementAssignmentSyntaxNode < ::Idl::SyntaxNode
-  def to_ast; end
-end
-
 class Idl::AryRangeAccessAst < ::Idl::AstNode
   include ::Idl::Rvalue
 
@@ -446,14 +442,16 @@ module Idl::Assignment5
 end
 
 module Idl::Assignment6
-  def lsb; end
-  def msb; end
-  def rval; end
-  def var; end
+  def expression; end
 end
 
 module Idl::Assignment7
-  def idx; end
+  def lsb; end
+  def msb; end
+end
+
+module Idl::Assignment8
+  def brackets; end
   def rval; end
   def var; end
 end
@@ -595,6 +593,9 @@ class Idl::AstNode
   def idl_pos_to_file_offset(pos, lfo); end
 
   class << self
+    sig { params(node: T.all(::Idl::AstNode, ::Idl::Rvalue)).returns(T.nilable(::String)) }
+    def extract_base_var_name(node); end
+
     sig do
       params(
         yaml: T::Hash[::String, T.untyped],
@@ -627,6 +628,15 @@ class Idl::AstNode
 
     sig { params(block: T.proc.params(arg0: ::Object).returns(T.untyped)).returns(T.untyped) }
     def value_try(&block); end
+
+    sig do
+      params(
+        target: T.all(::Idl::AstNode, ::Idl::Rvalue),
+        new_value: T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean, T::Hash[::String, T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean)]),
+        symtab: ::Idl::SymbolTable
+      ).void
+    end
+    def write_back_nested(target, new_value, symtab); end
   end
 end
 
