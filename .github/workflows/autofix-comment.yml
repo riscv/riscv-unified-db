@@ -34,29 +34,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cat << 'EOF' > pr-comment.md
+          ## ⚠️ Autofix Failed: Workflow File Update Required
+          
+          The `autofix.ci` check failed because it cannot commit changes to `.github/workflows/regress.yml` due to security restrictions.
+          
+          **To fix this:**
+          
+          1. Run the following command locally:
+             ```bash
+             ./bin/chore gen regress
+             ```
+          
+          2. Review the changes to `.github/workflows/regress.yml`
+          
+          3. Commit the changes:
+             ```bash
+             git add .github/workflows/regress.yml
+             git commit -m "Regenerate regress workflow"
+             git push
+             ```
+          
+          The autofix check should pass once the workflow file is updated.
+          
+          ---
+          <sub>This is an automated message. The workflow file needs to be regenerated because you modified one of: `tools/test/regress-tests.yaml`, `tools/test/regress-gh-template.yaml`, or `tools/test/gen_regress.rb`.</sub>
+          EOF
+          
           gh pr comment ${{ steps.check.outputs.pr_number }} \
             --repo ${{ github.repository }} \
-            --body "## ⚠️ Autofix Failed: Workflow File Update Required
-
-          The \`autofix.ci\` check failed because it cannot commit changes to \`.github/workflows/regress.yml\` due to security restrictions.
-
-          **To fix this:**
-
-          1. Run the following command locally:
-             \`\`\`bash
-             ./bin/chore gen regress
-             \`\`\`
-
-          2. Review the changes to \`.github/workflows/regress.yml\`
-
-          3. Commit the changes:
-             \`\`\`bash
-             git add .github/workflows/regress.yml
-             git commit -m \"Regenerate regress workflow\"
-             git push
-             \`\`\`
-
-          The autofix check should pass once the workflow file is updated.
-
-          ---
-          <sub>This is an automated message. The workflow file needs to be regenerated because you modified one of: \`tools/test/regress-tests.yaml\`, \`tools/test/regress-gh-template.yaml\`, or \`tools/test/gen_regress.rb\`.</sub>"
+            --body-file pr-comment.md
