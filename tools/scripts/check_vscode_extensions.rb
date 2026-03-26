@@ -9,7 +9,7 @@ require 'json'
 ext = JSON.load_file('.vscode/extensions.json')['recommendations']
 dev = JSON.load_file('.devcontainer/devcontainer.json')['customizations']['vscode']['extensions']
 
-if ext != dev
+if ext.sort != dev.sort
   only_in_extensions = ext - dev
   only_in_devcontainer = dev - ext
 
