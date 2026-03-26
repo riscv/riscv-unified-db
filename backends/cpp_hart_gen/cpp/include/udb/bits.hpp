@@ -3257,13 +3257,13 @@ namespace udb {
       if (shamt.get() >= m_width) {
         if ((m_val.unknown_mask().get() >> (m_width-1)) & 1) {
           // entire result is unknown
-          return _PossiblyUnknownRuntimeBits{0, m_width, ~_Bits<MaxN, false>{0}};
+          return _PossiblyUnknownRuntimeBits(0, m_width, (~_Bits<MaxN, false>{0}).get());
         } else {
           // entire result is known
           if ((m_val.value().get() >> (m_width - 1)) & 1) {
-            return _PossiblyUnknownRuntimeBits{(~_Bits<MaxN, false>{0}).get(), m_width, 0_b};
+            return _PossiblyUnknownRuntimeBits((~_Bits<MaxN, false>{0}).get(), m_width, 0);
           } else {
-            return _PossiblyUnknownRuntimeBits{0, m_width, 0_b};
+            return _PossiblyUnknownRuntimeBits(0, m_width, 0);
           }
         }
       } else {
@@ -3272,21 +3272,21 @@ namespace udb {
           return _PossiblyUnknownRuntimeBits(
             m_val.sra(shamt).get_ignore_unknown(),
             m_width,
-            (unknown_mask() >> shamt) | (~_Bits<MaxN, false>{0} << _Bits<32, false>(m_width))
+            (unknown_mask() >> shamt).get() | (~_Bits<MaxN, false>{0} << _Bits<32, false>(m_width)).get()
           );
         } else if ((m_val.value().get() >> (m_width - 1)) & 1) {
           // shift in 1
           return _PossiblyUnknownRuntimeBits(
-            (m_val.sra(shamt) | (~_Bits<MaxN, false>{0} << _Bits<32, false>(m_width))).get_ignore_unknown(),
+            m_val.sra(shamt).get_ignore_unknown() | (~_Bits<MaxN, false>{0} << _Bits<32, false>(m_width)).get_ignore_unknown(),
             m_width,
-            unknown_mask() >> shamt
+            (unknown_mask() >> shamt).get()
           );
         } else {
           // shift in 0
           return _PossiblyUnknownRuntimeBits(
             m_val.sra(shamt).get_ignore_unknown(),
             m_width,
-            unknown_mask() >> shamt
+            (unknown_mask()>> shamt).get()
           );
         }
       }

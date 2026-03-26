@@ -1692,11 +1692,12 @@ module Udb
     sig { params(eval_cb: EvalCallbackType).returns(T::Array[LogicNode]) }
     def failing_conjuncts(eval_cb)
       replace_cb = LogicNode.make_replace_cb do |term_node|
-        case eval_cb.call(T.cast(term_node.children.fetch(0), TermType))
+        r = eval_cb.call(T.cast(term_node.children.fetch(0), TermType))
+        case r
         when SatisfiedResult::Yes   then LogicNode::True
         when SatisfiedResult::No    then LogicNode::False
         when SatisfiedResult::Maybe then term_node
-        else T.absurd(eval_cb.call(T.cast(term_node.children.fetch(0), TermType)))
+        else T.absurd(r)
         end
       end
       substituted = replace_terms(replace_cb)
@@ -1705,17 +1706,18 @@ module Udb
       if @type == LogicNodeType::And && reduced.type == LogicNodeType::And
         # Zip original children with reduced children; keep originals whose reduced form is False
         node_children.zip(reduced.node_children).filter_map do |orig, red|
-          orig if red.type == LogicNodeType::False
+          orig if T.must(red).type == LogicNodeType::False
         end
       elsif @type == LogicNodeType::And
         # The And reduced to something other than And (e.g., False or a single term)
         # Find which children are individually false
         child_replace_cb = LogicNode.make_replace_cb do |tn|
-          case eval_cb.call(T.cast(tn.children.fetch(0), TermType))
+          r = eval_cb.call(T.cast(tn.children.fetch(0), TermType))
+          case r
           when SatisfiedResult::Yes   then LogicNode::True
           when SatisfiedResult::No    then LogicNode::False
           when SatisfiedResult::Maybe then tn
-          else T.absurd(eval_cb.call(T.cast(tn.children.fetch(0), TermType)))
+          else T.absurd(r)
           end
         end
         node_children.select do |child|

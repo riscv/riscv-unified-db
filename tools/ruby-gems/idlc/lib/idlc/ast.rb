@@ -2187,7 +2187,7 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), name: T.any(BuiltinTypeNameAst, UserTypeNameAst), size: IntLiteralAst, fields: T::Array[String]).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), name: T.any(BuiltinTypeNameAst, UserTypeNameAst), size: IntLiteralAst, fields: T::Array[BitfieldFieldDefinitionAst]).void }
     def initialize(input, interval, name, size, fields)
       super(input, interval, [name, size] + fields)
 
@@ -2242,7 +2242,6 @@ module Idl
       internal_error "All Bitfields should be declared at global scope" unless symtab.levels == 1
 
       t = type(symtab)
-      internal_error "Type is nil" if t.nil?
 
       symtab.add!(name, t)
     end
@@ -2265,7 +2264,7 @@ module Idl
     def name = @name.text_value
 
     # @!macro value_no_args
-    sig { override.params(_symtab: SymbolTable).returns(ValueRbType) }
+    sig { params(_symtab: SymbolTable).returns(ValueRbType) }
     def value(_symtab) = raise AstNode::InternalError, "Bitfield definitions have no value"
 
     # @!macro to_idl
@@ -2296,8 +2295,8 @@ module Idl
       interval = interval_from_source_yaml(yaml.fetch("source"))
       BitfieldDefinitionAst.new(
         input, interval,
-        AstNode.from_h(yaml.fetch("name"), source_mapper),
-        AstNode.from_h(yaml.fetch("size"), source_mapper),
+        T.cast(AstNode.from_h(yaml.fetch("name"), source_mapper), T.any(BuiltinTypeNameAst, UserTypeNameAst)),
+        T.cast(AstNode.from_h(yaml.fetch("size"), source_mapper), IntLiteralAst),
         yaml.fetch("fields").map { |f| AstNode.from_h(f, source_mapper) }
       )
     end
