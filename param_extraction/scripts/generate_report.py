@@ -13,10 +13,10 @@ Reads:
   - data/spec_mappings.json
 """
 
-import json
 import csv
-from pathlib import Path
+import json
 from collections import defaultdict
+from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
@@ -58,29 +58,29 @@ def generate_csv(params, mappings, out_path):
         candidates = m.get("candidates", [])
         best = candidates[0] if candidates else {}
 
-        rows.append({
-            "parameter_name": p["name"],
-            "long_name": p["long_name"],
-            "classification": p["classification"],
-            "classification_confidence": p["classification_confidence"],
-            "classification_reasoning": p["classification_reasoning"],
-            "value_type": p["value_type"]["type"],
-            "value_details": _format_value_details(p["value_type"]),
-            "defined_by_extensions": ", ".join(p["defined_by"]["extensions"]),
-            "defined_by_summary": p["defined_by"]["summary"],
-            "has_requirements": p["has_requirements"],
-            "num_csr_references": len(p["csr_references"]),
-            "csr_names": ", ".join(sorted(set(
-                r["csr"] for r in p["csr_references"]
-            ))),
-            "spec_file": best.get("file", ""),
-            "spec_line": best.get("line_number", ""),
-            "spec_score": best.get("score", 0),
-            "spec_is_normative": best.get("is_normative", ""),
-            "spec_in_note": best.get("in_note", ""),
-            "spec_text": best.get("line_text", "")[:200],
-            "description": p["description"][:300],
-        })
+        rows.append(
+            {
+                "parameter_name": p["name"],
+                "long_name": p["long_name"],
+                "classification": p["classification"],
+                "classification_confidence": p["classification_confidence"],
+                "classification_reasoning": p["classification_reasoning"],
+                "value_type": p["value_type"]["type"],
+                "value_details": _format_value_details(p["value_type"]),
+                "defined_by_extensions": ", ".join(p["defined_by"]["extensions"]),
+                "defined_by_summary": p["defined_by"]["summary"],
+                "has_requirements": p["has_requirements"],
+                "num_csr_references": len(p["csr_references"]),
+                "csr_names": ", ".join(sorted(set(r["csr"] for r in p["csr_references"]))),
+                "spec_file": best.get("file", ""),
+                "spec_line": best.get("line_number", ""),
+                "spec_score": best.get("score", 0),
+                "spec_is_normative": best.get("is_normative", ""),
+                "spec_in_note": best.get("in_note", ""),
+                "spec_text": best.get("line_text", "")[:200],
+                "description": p["description"][:300],
+            }
+        )
 
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
@@ -133,8 +133,12 @@ def generate_report(params, mappings, stats, mapping_meta, out_path):
     w(f"  Total real parameters in UDB:    {len(params)}")
     w(f"  Spec files searched:             {mapping_meta['spec_files_searched']}")
     w(f"  Total spec lines:                {mapping_meta['total_spec_lines']}")
-    w(f"  Parameters with spec matches:    {mapping_meta['params_with_matches']} ({mapping_meta['params_with_matches']*100//len(params)}%)")
-    w(f"  Parameters with strong matches:  {mapping_meta['params_with_strong_matches']} ({mapping_meta['params_with_strong_matches']*100//len(params)}%)")
+    w(
+        f"  Parameters with spec matches:    {mapping_meta['params_with_matches']} ({mapping_meta['params_with_matches'] * 100 // len(params)}%)"
+    )
+    w(
+        f"  Parameters with strong matches:  {mapping_meta['params_with_strong_matches']} ({mapping_meta['params_with_strong_matches'] * 100 // len(params)}%)"
+    )
     w("")
 
     # --- Classification breakdown ---
@@ -226,7 +230,9 @@ def generate_report(params, mappings, stats, mapping_meta, out_path):
             w(f"      Type: {vt_str}  |  Exts: {p['defined_by']['summary']}{csr_str}")
             if spec_loc:
                 w(f"      Spec:{spec_loc}")
-            w(f"      Conf: {p['classification_confidence']}  |  {p['classification_reasoning'][:90]}")
+            w(
+                f"      Conf: {p['classification_confidence']}  |  {p['classification_reasoning'][:90]}"
+            )
 
     w("")
     w("=" * 72)

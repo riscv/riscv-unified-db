@@ -13,8 +13,8 @@ Output: data/spec_mappings.json
 
 import json
 import re
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SPEC_DIR = REPO_ROOT / "ext" / "riscv-isa-manual" / "src"
@@ -24,6 +24,7 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 # ---------------------------------------------------------------------------
 # Spec file loading and indexing
 # ---------------------------------------------------------------------------
+
 
 def load_spec_files():
     """Load all .adoc files from the spec directory, returning {filename: [lines]}."""
@@ -63,6 +64,7 @@ def is_note_block(lines, line_idx):
 # Search strategy: build search terms from parameter metadata
 # ---------------------------------------------------------------------------
 
+
 def build_search_terms(param):
     """
     Build a list of (pattern, weight, reason) tuples to search for this parameter.
@@ -70,9 +72,7 @@ def build_search_terms(param):
     """
     name = param["name"]
     desc = param.get("description", "")
-    long_name = param.get("long_name", "")
     csr_refs = param.get("csr_references", [])
-    defined_by = param.get("defined_by", {})
     value_type = param.get("value_type", {})
 
     terms = []
@@ -80,30 +80,49 @@ def build_search_terms(param):
     # Strategy 0: The parameter name itself (may appear verbatim in spec)
     # Match as a whole word, case-sensitive for ALL_CAPS names
     if name == name.upper() and len(name) >= 3:
-        terms.append((
-            re.compile(rf'\b{re.escape(name)}\b'),
-            6,
-            f"Exact parameter name '{name}'",
-        ))
+        terms.append(
+            (
+                re.compile(rf"\b{re.escape(name)}\b"),
+                6,
+                f"Exact parameter name '{name}'",
+            )
+        )
     # Also search for the name in italic/emphasis form: _NAME_
-    terms.append((
-        re.compile(rf'_{re.escape(name)}_'),
-        6,
-        f"Parameter name in emphasis '_{name}_'",
-    ))
+    terms.append(
+        (
+            re.compile(rf"_{re.escape(name)}_"),
+            6,
+            f"Parameter name in emphasis '_{name}_'",
+        )
+    )
 
     # Strategy 0b: Search for key segments of multi-word param names
-    name_segments = name.split('_')
+    name_segments = name.split("_")
     # For short distinctive segments (>=4 chars, not common words), search directly
-    common_words = {'MODE', 'TYPE', 'VALUE', 'WIDTH', 'LEGAL', 'VALUES', 'READ',
-                    'ONLY', 'WHEN', 'ZERO', 'BASE', 'TRAP', 'REPORT'}
+    common_words = {
+        "MODE",
+        "TYPE",
+        "VALUE",
+        "WIDTH",
+        "LEGAL",
+        "VALUES",
+        "READ",
+        "ONLY",
+        "WHEN",
+        "ZERO",
+        "BASE",
+        "TRAP",
+        "REPORT",
+    }
     for seg in name_segments:
         if len(seg) >= 4 and seg not in common_words:
-            terms.append((
-                re.compile(rf'\b{re.escape(seg)}\b', re.IGNORECASE),
-                1,
-                f"Name segment '{seg}'",
-            ))
+            terms.append(
+                (
+                    re.compile(rf"\b{re.escape(seg)}\b", re.IGNORECASE),
+                    1,
+                    f"Name segment '{seg}'",
+                )
+            )
 
     # Strategy 1: CSR name + field name (for CSR-related params)
     # Cap to avoid score inflation for params with hundreds of CSR refs
@@ -117,50 +136,65 @@ def build_search_terms(param):
         csr = ref["csr"]
         field = ref["field"]
         if csr not in csr_names_seen:
-            terms.append((
-                re.compile(rf'`{re.escape(csr)}`', re.IGNORECASE),
-                3,
-                f"CSR name '{csr}' in backticks",
-            ))
+            terms.append(
+                (
+                    re.compile(rf"`{re.escape(csr)}`", re.IGNORECASE),
+                    3,
+                    f"CSR name '{csr}' in backticks",
+                )
+            )
             csr_names_seen.add(csr)
             csr_term_count += 1
         if field != "(csr-level)" and field not in fields_seen:
-            terms.append((
-                re.compile(rf'\b{re.escape(field)}\b', re.IGNORECASE),
-                2,
-                f"CSR field name '{field}'",
-            ))
+            terms.append(
+                (
+                    re.compile(rf"\b{re.escape(field)}\b", re.IGNORECASE),
+                    2,
+                    f"CSR field name '{field}'",
+                )
+            )
             fields_seen.add(field)
             csr_term_count += 1
 
     # Strategy 2: Extract key nouns/phrases from parameter description (cap to avoid noise)
     desc_keywords = _extract_description_keywords(name, desc)
     for kw, weight in desc_keywords[:12]:
-        terms.append((
-            re.compile(rf'\b{re.escape(kw)}\b', re.IGNORECASE),
-            weight,
-            f"Description keyword '{kw}'",
-        ))
+        terms.append(
+            (
+                re.compile(rf"\b{re.escape(kw)}\b", re.IGNORECASE),
+                weight,
+                f"Description keyword '{kw}'",
+            )
+        )
 
     # Strategy 3: Look for WARL near CSR names (for WARL params)
     if param.get("classification") in ("NORM_CSR_WARL", "NORM_CSR_RW"):
         for csr in csr_names_seen:
-            terms.append((
-                re.compile(rf'WARL.*`{re.escape(csr)}`|`{re.escape(csr)}`.*WARL', re.IGNORECASE),
-                5,
-                f"WARL + CSR '{csr}'",
-            ))
+            terms.append(
+                (
+                    re.compile(
+                        rf"WARL.*`{re.escape(csr)}`|`{re.escape(csr)}`.*WARL", re.IGNORECASE
+                    ),
+                    5,
+                    f"WARL + CSR '{csr}'",
+                )
+            )
 
     # Strategy 4: Specific value mentions for enum/binary params
     if value_type.get("type") == "binary":
         choices = value_type.get("details", {}).get("choices", [])
         if choices == [True, False]:
             # For boolean params, look for "may" / "optionally" / "read-only" patterns
-            terms.append((
-                re.compile(r'\b(may\s+optionally|optionally|read-only\s+zero|read-only\s+0)\b', re.IGNORECASE),
-                1,
-                "Optional/read-only pattern for boolean param",
-            ))
+            terms.append(
+                (
+                    re.compile(
+                        r"\b(may\s+optionally|optionally|read-only\s+zero|read-only\s+0)\b",
+                        re.IGNORECASE,
+                    ),
+                    1,
+                    "Optional/read-only pattern for boolean param",
+                )
+            )
 
     return terms
 
@@ -173,32 +207,51 @@ def _extract_description_keywords(name, description):
     keywords = []
 
     # Extract CSR names from description (things in backticks)
-    backtick_refs = re.findall(r'`([a-zA-Z][a-zA-Z0-9_.]*)`', description)
+    backtick_refs = re.findall(r"`([a-zA-Z][a-zA-Z0-9_.]*)`", description)
     for ref in backtick_refs:
         keywords.append((ref, 3))
 
     # Look for capitalized CSR field references like MODE, BASE, etc.
-    field_refs = re.findall(r'\b([A-Z]{2,}(?:\.[A-Z]+)?)\b', description)
+    field_refs = re.findall(r"\b([A-Z]{2,}(?:\.[A-Z]+)?)\b", description)
     for ref in field_refs:
-        if ref not in ('WARL', 'WLRL', 'CSR', 'ISA', 'RISC', 'TODO', 'XLEN',
-                       'MXLEN', 'AND', 'NOT', 'THE', 'FOR', 'WHEN', 'SXLEN',
-                       'UXLEN', 'ALL', 'PMP', 'HPM', 'AMO', 'NMI'):
+        if ref not in (
+            "WARL",
+            "WLRL",
+            "CSR",
+            "ISA",
+            "RISC",
+            "TODO",
+            "XLEN",
+            "MXLEN",
+            "AND",
+            "NOT",
+            "THE",
+            "FOR",
+            "WHEN",
+            "SXLEN",
+            "UXLEN",
+            "ALL",
+            "PMP",
+            "HPM",
+            "AMO",
+            "NMI",
+        ):
             keywords.append((ref, 2))
 
     # Extract meaningful phrases based on parameter name segments
-    name_parts = name.split('_')
+    name_parts = name.split("_")
     # Find multi-word concepts in the name
     name_to_phrase = {
-        'ENDIANNESS': 'endian',
-        'MISALIGNED': 'misaligned',
-        'ALIGNMENT': 'align',
-        'TRANSLATION': 'translation',
-        'RESERVATION': 'reservation',
-        'GRANULARITY': 'granularity',
-        'BREAKPOINT': 'breakpoint',
-        'INSTRUCTION': 'instruction',
-        'VECTORED': 'vectored',
-        'IMPLEMENTED': 'implemented',
+        "ENDIANNESS": "endian",
+        "MISALIGNED": "misaligned",
+        "ALIGNMENT": "align",
+        "TRANSLATION": "translation",
+        "RESERVATION": "reservation",
+        "GRANULARITY": "granularity",
+        "BREAKPOINT": "breakpoint",
+        "INSTRUCTION": "instruction",
+        "VECTORED": "vectored",
+        "IMPLEMENTED": "implemented",
     }
     for part in name_parts:
         phrase = name_to_phrase.get(part)
@@ -212,6 +265,7 @@ def _extract_description_keywords(name, description):
 # Core matching engine
 # ---------------------------------------------------------------------------
 
+
 def find_spec_locations(param, spec_files):
     """
     Search all spec files for text related to this parameter.
@@ -223,9 +277,14 @@ def find_spec_locations(param, spec_files):
     if not search_terms:
         return []
 
-    candidates = defaultdict(lambda: {
-        "score": 0, "reasons": [], "is_normative": False, "in_note": False,
-    })
+    candidates = defaultdict(
+        lambda: {
+            "score": 0,
+            "reasons": [],
+            "is_normative": False,
+            "in_note": False,
+        }
+    )
 
     for filename, lines in spec_files.items():
         for line_idx, line in enumerate(lines):
@@ -234,7 +293,7 @@ def find_spec_locations(param, spec_files):
                 continue
 
             # Skip table-heavy lines (pipes indicate table cells, not prose)
-            if line_stripped.count('|') >= 3:
+            if line_stripped.count("|") >= 3:
                 continue
 
             line_key = (filename, line_idx + 1)
@@ -272,7 +331,7 @@ def find_spec_locations(param, spec_files):
     # Convert to list, filter low-score noise, sort by score descending
     results = []
     MAX_SCORE = 50
-    for key, entry in candidates.items():
+    for _key, entry in candidates.items():
         if entry["score"] >= 3:
             entry["score"] = min(entry["score"], MAX_SCORE)
             entry["reasons"] = list(set(entry["reasons"]))
@@ -286,6 +345,7 @@ def find_spec_locations(param, spec_files):
 # Context extraction: get surrounding lines for each match
 # ---------------------------------------------------------------------------
 
+
 def extract_context(spec_files, filename, line_number, context_lines=2):
     """Get the matched line plus surrounding context lines."""
     lines = spec_files.get(filename, [])
@@ -298,7 +358,7 @@ def extract_context(spec_files, filename, line_number, context_lines=2):
     context_parts = []
     for i in range(start, end):
         prefix = ">>>" if i == line_number - 1 else "   "
-        context_parts.append(f"{prefix} {i+1:5d}| {lines[i].rstrip()}")
+        context_parts.append(f"{prefix} {i + 1:5d}| {lines[i].rstrip()}")
 
     return "\n".join(context_parts)
 
@@ -306,6 +366,7 @@ def extract_context(spec_files, filename, line_number, context_lines=2):
 # ---------------------------------------------------------------------------
 # Main mapping logic
 # ---------------------------------------------------------------------------
+
 
 def main():
     # Load ground truth
@@ -346,9 +407,7 @@ def main():
 
         # Add context to top candidates
         for cand in candidates[:5]:
-            cand["context"] = extract_context(
-                spec_files, cand["file"], cand["line_number"]
-            )
+            cand["context"] = extract_context(spec_files, cand["file"], cand["line_number"])
 
         entry = {
             "parameter_name": param["name"],
@@ -361,7 +420,7 @@ def main():
         mappings.append(entry)
 
         if (i + 1) % 20 == 0:
-            print(f"  Processed {i+1}/{len(params)} parameters...")
+            print(f"  Processed {i + 1}/{len(params)} parameters...")
 
     # Output
     output = {
@@ -380,16 +439,20 @@ def main():
         json.dump(output, f, indent=2, ensure_ascii=False)
 
     print(f"\nWritten mappings to {out_path}")
-    print(f"\n{'='*60}")
-    print(f"SPEC MAPPING SUMMARY")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("SPEC MAPPING SUMMARY")
+    print(f"{'=' * 60}")
     print(f"Total parameters:          {len(params)}")
-    print(f"With any match (score>=3): {params_with_matches} ({params_with_matches*100//len(params)}%)")
-    print(f"With strong match (>=5):   {params_with_strong_matches} ({params_with_strong_matches*100//len(params)}%)")
+    print(
+        f"With any match (score>=3): {params_with_matches} ({params_with_matches * 100 // len(params)}%)"
+    )
+    print(
+        f"With strong match (>=5):   {params_with_strong_matches} ({params_with_strong_matches * 100 // len(params)}%)"
+    )
     print(f"No matches found:          {len(params) - params_with_matches}")
 
     # Show a few examples of strong matches
-    print(f"\n--- Sample strong matches ---")
+    print("\n--- Sample strong matches ---")
     shown = 0
     for m in mappings:
         if m["best_score"] >= 7 and shown < 5:

@@ -51,9 +51,7 @@
       "long_name": "Vendor-specific architecture ID in `marchid`",
       "description": "The value of `marchid`\nThe combination of mvendorid and marchid should uniquely identify the type of hart microarchitecture that is implemented.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [
           {
             "name": "MARCHID_IMPLEMENTED",
@@ -124,9 +122,7 @@
       "long_name": "TODO",
       "description": "Number of implemented ASID bits. Maximum is 16 for XLEN==64, and 9 for XLEN==32",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -175,11 +171,7 @@
       "long_name": "TODO",
       "description": "The observable size of a cache block, in bytes",
       "defined_by": {
-        "extensions": [
-          "Zicbom",
-          "Zicbop",
-          "Zicboz"
-        ],
+        "extensions": ["Zicbom", "Zicbop", "Zicboz"],
         "params": [],
         "raw": {
           "extension": {
@@ -218,9 +210,7 @@
       "long_name": "Physical address in `mconfigptr`",
       "description": "The value returned from `mconfigptr`",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -274,9 +264,7 @@
       "long_name": "TODO",
       "description": "Indicates which hardware performance monitor counters can be disabled from `mcountinhibit`.\n\nAn unimplemented counter cannot be specified, i.e., if HPM_COUNTER_EN[3] is false,\nit would be illegal to set COUNTINHIBIT_EN[3] to true.\n\nCOUNTINHIBIT_EN[1] can never be true, since it corresponds to `mcountinhibit.TM`,\nwhich is always read-only-0.\n\nCOUNTINHIBIT_EN[3:31] must all be false if `Zihpm` is not implemented.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -615,9 +603,7 @@
       "long_name": "TODO",
       "description": "Specifies the size of HCONTEXT",
       "defined_by": {
-        "extensions": [
-          "Sdtrig"
-        ],
+        "extensions": ["Sdtrig"],
         "params": [],
         "raw": {
           "extension": {
@@ -657,9 +643,7 @@
       "long_name": "TODO",
       "description": "Specifies the size of SCONTEXT",
       "defined_by": {
-        "extensions": [
-          "Sdtrig"
-        ],
+        "extensions": ["Sdtrig"],
         "params": [],
         "raw": {
           "extension": {
@@ -694,9 +678,7 @@
       "long_name": "TODO",
       "description": "Implementation of dcsr.MPRVEN is optional.\nIt may be tied to either 0 or 1.\n\nBehavior of the dcsr.MPRVEN bit:\n  * 'read-only-0': tied to 0\n  * 'read-only-1': tied to 1\n  * 'rw': read-write",
       "defined_by": {
-        "extensions": [
-          "Sdtrig"
-        ],
+        "extensions": ["Sdtrig"],
         "params": [],
         "raw": {
           "extension": {
@@ -708,11 +690,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "read-only-0",
-            "read-only-1",
-            "rw"
-          ]
+          "values": ["read-only-0", "read-only-1", "rw"]
         }
       },
       "has_requirements": false,
@@ -739,9 +717,7 @@
       "long_name": "TODO",
       "description": "Implementation of dcsr.STEPIE is optional.\nIt may be tied to either 0 or 1.\n\nBehavior of the dcsr.STEPIE bit:\n  * 'read-only-0': tied to 0\n  * 'read-only-1': tied to 1\n  * 'rw': read-write",
       "defined_by": {
-        "extensions": [
-          "Sdtrig"
-        ],
+        "extensions": ["Sdtrig"],
         "params": [],
         "raw": {
           "extension": {
@@ -753,11 +729,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "read-only-0",
-            "read-only-1",
-            "rw"
-          ]
+          "values": ["read-only-0", "read-only-1", "rw"]
         }
       },
       "has_requirements": false,
@@ -784,9 +756,7 @@
       "long_name": "TODO",
       "description": "Implementation of dcsr.STOPCOUNT is optional.\nIt may be tied to either 0 or 1.\n\nBehavior of the dcsr.STOPCOUNT bit:\n  * 'read-only-0': tied to 0\n  * 'read-only-1': tied to 1\n  * 'rw': read-write",
       "defined_by": {
-        "extensions": [
-          "Sdtrig"
-        ],
+        "extensions": ["Sdtrig"],
         "params": [],
         "raw": {
           "extension": {
@@ -798,11 +768,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "read-only-0",
-            "read-only-1",
-            "rw"
-          ]
+          "values": ["read-only-0", "read-only-1", "rw"]
         }
       },
       "has_requirements": false,
@@ -829,9 +795,7 @@
       "long_name": "TODO",
       "description": "Implementation of dcsr.STOPTIME is optional.\nIt may be tied to either 0 or 1.\n\nBehavior of the dcsr.STOPTIME bit:\n  * 'read-only-0': tied to 0\n  * 'read-only-1': tied to 1\n  * 'rw': read-write",
       "defined_by": {
-        "extensions": [
-          "Sdtrig"
-        ],
+        "extensions": ["Sdtrig"],
         "params": [],
         "raw": {
           "extension": {
@@ -843,11 +807,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "read-only-0",
-            "read-only-1",
-            "rw"
-          ]
+          "values": ["read-only-0", "read-only-1", "rw"]
         }
       },
       "has_requirements": false,
@@ -874,9 +834,7 @@
       "long_name": "TODO",
       "description": "The maximum size in bits of a vector element that any operation can produce or consume.",
       "defined_by": {
-        "extensions": [
-          "V"
-        ],
+        "extensions": ["V"],
         "params": [],
         "raw": {
           "extension": {
@@ -904,9 +862,7 @@
       "long_name": "TODO",
       "description": "It is recommended that at reset, vtype.vill is set, the remaining bits in vtype are zero, and vl is set to zero.\nIf this parameter is set to true, this recommendation is followed. If it is false, at reset the respective fields\nwill be UNDEFINED_LEGAL.",
       "defined_by": {
-        "extensions": [
-          "V"
-        ],
+        "extensions": ["V"],
         "params": [],
         "raw": {
           "extension": {
@@ -918,10 +874,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -968,9 +921,7 @@
       "long_name": "TODO",
       "description": "When true, an implementation prohibits setting `menvcfg.CBIE` == `11` such that all `cbo.inval`\ninstructions either trap (when `menvcfg.CBIE` == '00') or flush (when `menvcfg.CBIE` == '01').\n\nWhen false, an implementation allows a true INVAL operation for `cbo.inval`, and thus supports\nthe setting `menvcfg.CBIE` == `11`.",
       "defined_by": {
-        "extensions": [
-          "Zicbom"
-        ],
+        "extensions": ["Zicbom"],
         "params": [],
         "raw": {
           "extension": {
@@ -982,10 +933,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -1007,9 +955,7 @@
       "long_name": "TODO",
       "description": "Whether or not writing mode=Bare is supported in the `hgatp` register.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -1021,10 +967,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -1046,9 +989,7 @@
       "long_name": "TODO",
       "description": "Specifies if HCONTEXT is available",
       "defined_by": {
-        "extensions": [
-          "Sdtrig"
-        ],
+        "extensions": ["Sdtrig"],
         "params": [],
         "raw": {
           "extension": {
@@ -1060,10 +1001,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -1090,9 +1028,7 @@
       "long_name": "TODO",
       "description": "Indicates which counters can delegated via `hcounteren`\n\nAn unimplemented counter cannot be specified, i.e., if\nHPM_COUNTER_EN[3] is false, it would be illegal to set\nHCOUNTENABLE_EN[3] to true.\n\nHCOUNTENABLE_EN[0:2] must all be false if `Zicntr` is not implemented.\nHCOUNTENABLE_EN[3:31] must all be false if `Zihpm` is not implemented.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -1441,9 +1377,7 @@
       "long_name": "TODO",
       "description": "List of HPM counters that are enabled.\nThere is one entry for each hpmcounter.\n\nThe first three entries *must* be false (as they correspond to CY, IR, TM in, _e.g._ `mhmpcountinhibit`)\nIndex 3 in HPM_COUNTER_EN corresponds to hpmcounter3.\nIndex 31 in HPM_COUNTER_EN corresponds to hpmcounter31.",
       "defined_by": {
-        "extensions": [
-          "Smhpm"
-        ],
+        "extensions": ["Smhpm"],
         "params": [],
         "raw": {
           "extension": {
@@ -6692,9 +6626,7 @@
       "long_name": "TODO",
       "description": "List of defined event numbers that can be written into hpmeventN",
       "defined_by": {
-        "extensions": [
-          "Smhpm"
-        ],
+        "extensions": ["Smhpm"],
         "params": [],
         "raw": {
           "extension": {
@@ -6870,11 +6802,7 @@
       "long_name": "TODO",
       "description": "Behavior of the hstateen0.AIA bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "H",
-          "Ssaia",
-          "Ssstateen"
-        ],
+        "extensions": ["H", "Ssaia", "Ssstateen"],
         "params": [],
         "raw": {
           "extension": {
@@ -6896,11 +6824,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": true,
@@ -6916,11 +6840,7 @@
       "long_name": "TODO",
       "description": "Behavior of the hstateen0.CONTEXT bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "H",
-          "Sdtrig",
-          "Ssstateen"
-        ],
+        "extensions": ["H", "Sdtrig", "Ssstateen"],
         "params": [],
         "raw": {
           "extension": {
@@ -6942,11 +6862,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": true,
@@ -6962,11 +6878,7 @@
       "long_name": "TODO",
       "description": "Behavior of the hstateen0.CSRIND bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "H",
-          "Sscsrind",
-          "Ssstateen"
-        ],
+        "extensions": ["H", "Sscsrind", "Ssstateen"],
         "params": [],
         "raw": {
           "extension": {
@@ -6988,11 +6900,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": true,
@@ -7008,10 +6916,7 @@
       "long_name": "TODO",
       "description": "Behavior of the hstateen0.ENVCFG bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "H",
-          "Ssstateen"
-        ],
+        "extensions": ["H", "Ssstateen"],
         "params": [],
         "raw": {
           "extension": {
@@ -7032,11 +6937,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": true,
@@ -7052,11 +6953,7 @@
       "long_name": "TODO",
       "description": "Behavior of the hstateen0.IMSIC bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "H",
-          "Ssaia",
-          "Ssstateen"
-        ],
+        "extensions": ["H", "Ssaia", "Ssstateen"],
         "params": [],
         "raw": {
           "extension": {
@@ -7078,11 +6975,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": true,
@@ -7098,11 +6991,7 @@
       "long_name": "TODO",
       "description": "Behavior of the hstateen0.JVT bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "H",
-          "Ssstateen",
-          "Zcmt"
-        ],
+        "extensions": ["H", "Ssstateen", "Zcmt"],
         "params": [],
         "raw": {
           "extension": {
@@ -7124,11 +7013,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": true,
@@ -7144,9 +7029,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not hardware will write to `mstatus.FS`\n\nValues are:\n[separator=\"!\"]\n!===\nh! never  ! Hardware never writes `mstatus.FS`\nh! precise  ! Hardware writes `mstatus.FS` to the Dirty (3) state precisely when F registers are modified\nh! imprecise ! Hardware writes `mstatus.FS` imprecisely. This will result in a call to unpredictable() on any attempt to read `mstatus` or write FP state.\n!===",
       "defined_by": {
-        "extensions": [
-          "F"
-        ],
+        "extensions": ["F"],
         "params": [],
         "raw": {
           "extension": {
@@ -7158,11 +7041,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "never",
-            "precise",
-            "imprecise"
-          ]
+          "values": ["never", "precise", "imprecise"]
         }
       },
       "has_requirements": false,
@@ -7184,9 +7063,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not hardware will write to `mstatus.VS`\n\nValues are:\n[separator=\"!\"]\n!===\nh! never  ! Hardware never writes `mstatus.VS`\nh! precise  ! Hardware writes `mstatus.VS` to the Dirty (3) state precisely when V registers are modified\nh! imprecise ! Hardware writes `mstatus.VS` imprecisely. This will result in a call to unpredictable() on any attempt to read `mstatus` or write vector state.\n!===",
       "defined_by": {
-        "extensions": [
-          "V"
-        ],
+        "extensions": ["V"],
         "params": [],
         "raw": {
           "extension": {
@@ -7198,11 +7075,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "never",
-            "precise",
-            "imprecise"
-          ]
+          "values": ["never", "precise", "imprecise"]
         }
       },
       "has_requirements": false,
@@ -7224,9 +7097,7 @@
       "long_name": "TODO",
       "description": "Whether writes from M-mode, U-mode, or S-mode to vsatp with an illegal mode setting are\nignored (as they are with satp), or if they are treated as WARL, leading to undpredictable\nbehavior.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -7238,10 +7109,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -7273,9 +7141,7 @@
       "long_name": "Vendor-specific implementation ID in `mimpid`",
       "description": "A unique encoding of the version of the processor implementation.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [
           {
             "name": "MIMPID_IMPLEMENTED",
@@ -7346,9 +7212,7 @@
       "long_name": "Mask representing the implemented bits of jvt.BASE",
       "description": "Mask representing the implemented bits of jvt.BASE.\nIncludes the implicitly-zero bits of jvt.BASE, so JVT_BASE_MASK[5:0] must always be 0.",
       "defined_by": {
-        "extensions": [
-          "Zcmt"
-        ],
+        "extensions": ["Zcmt"],
         "params": [
           {
             "name": "JVT_BASE_TYPE",
@@ -7400,9 +7264,7 @@
       "long_name": "Type of the jvt.BASE CSR field",
       "description": "Type of the jvt.BASE CSR field. One of:\n\n* mask: jvt.BASE contains one or more implemented bits, which are indicated by JVT_BASE_MASK.\n* custom: Custom behavior. Will cause hart to enter 'unpredictable' state on a write to jvt.BASE.",
       "defined_by": {
-        "extensions": [
-          "Zcmt"
-        ],
+        "extensions": ["Zcmt"],
         "params": [],
         "raw": {
           "extension": {
@@ -7414,10 +7276,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "mask",
-            "custom"
-          ]
+          "choices": ["mask", "custom"]
         }
       },
       "has_requirements": false,
@@ -7439,9 +7298,7 @@
       "long_name": "Whether or not the JVT CSR is read-only",
       "description": "If Zcmt is implemented, JVT is implemented, but can contain a read-only value",
       "defined_by": {
-        "extensions": [
-          "Zcmt"
-        ],
+        "extensions": ["Zcmt"],
         "params": [],
         "raw": {
           "extension": {
@@ -7453,10 +7310,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -7488,9 +7342,7 @@
       "long_name": "TODO",
       "description": "Whether or not a Store Conditional fails if its physical address and size do not\nexactly match the physical address and size of the last Load Reserved in program order\n(independent of whether or not the SC is in the current reservation set)",
       "defined_by": {
-        "extensions": [
-          "Zalrsc"
-        ],
+        "extensions": ["Zalrsc"],
         "params": [],
         "raw": {
           "extension": {
@@ -7502,10 +7354,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -7521,9 +7370,7 @@
       "long_name": "TODO",
       "description": "Whether or not an `sc.l`/`sc.d` will fail if its VA does not match the VA of the prior\n`lr.l`/`lr.d`, even if the physical address of the SC and LR are the same",
       "defined_by": {
-        "extensions": [
-          "Zalrsc"
-        ],
+        "extensions": ["Zalrsc"],
         "params": [],
         "raw": {
           "extension": {
@@ -7535,10 +7382,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -7554,9 +7398,7 @@
       "long_name": "TODO",
       "description": "What to do when an LR/SC address is misaligned and MISALIGNED_AMO == false.\n\n  * 'always raise misaligned exception': self-explainitory\n  * 'always raise access fault': self-explainitory\n  * 'custom': Custom behavior; misaligned LR/SC may sometimes raise a misaligned exception and sometimes raise a access fault. Will lead to an 'unpredictable' call on any misaligned LR/SC access",
       "defined_by": {
-        "extensions": [
-          "Zalrsc"
-        ],
+        "extensions": ["Zalrsc"],
         "params": [],
         "raw": {
           "extension": {
@@ -7588,9 +7430,7 @@
       "long_name": "TODO",
       "description": "Strategy used to handle reservation sets.\n\n  * \"reserve naturally-aligned 64-byte region\": Always reserve the 64-byte block containing the LR/SC address\n  * \"reserve naturally-aligned 128-byte region\": Always reserve the 128-byte block containing the LR/SC address\n  * \"reserve exactly enough to cover the access\": Always reserve exactly the LR/SC access, and no more\n  * \"custom\": Custom behavior, leading to an 'unpredictable' call on any LR/SC",
       "defined_by": {
-        "extensions": [
-          "Zalrsc"
-        ],
+        "extensions": ["Zalrsc"],
         "params": [],
         "raw": {
           "extension": {
@@ -7623,9 +7463,7 @@
       "long_name": "Whether or not the `marchid` CSR is implemented.",
       "description": "* false: `marchid` is not implemented, and must be read-only-0\n* true: `marchid` is implemented, and the value is determined by `ARCH_ID_VALUE`",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -7637,10 +7475,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -7656,9 +7491,7 @@
       "long_name": "TODO",
       "description": "Number of bits used for the Monitoring Counter ID field (MCID).\nDefault is 12.",
       "defined_by": {
-        "extensions": [
-          "Ssqosid"
-        ],
+        "extensions": ["Ssqosid"],
         "params": [],
         "raw": {
           "extension": {
@@ -7693,9 +7526,7 @@
       "long_name": "TODO",
       "description": "Specifies if MCONTEXT is available",
       "defined_by": {
-        "extensions": [
-          "Sdtrig"
-        ],
+        "extensions": ["Sdtrig"],
         "params": [],
         "raw": {
           "extension": {
@@ -7707,10 +7538,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -7737,9 +7565,7 @@
       "long_name": "TODO",
       "description": "Indicates which counters can be delegated via `mcounteren`.\n\nAn unimplemented counter cannot be specified, i.e., if\nHPM_COUNTER_EN[3] is false, it would be illegal to set\nMCOUNTENABLE_EN[3] to true.\n\nMCOUNTENABLE_EN[0:2] must all be false if `Zicntr` is not implemented.\nMCOUNTENABLE_EN[3:31] must all be false if `Zihpm` is not implemented.",
       "defined_by": {
-        "extensions": [
-          "U"
-        ],
+        "extensions": ["U"],
         "params": [],
         "raw": {
           "extension": {
@@ -8078,9 +7904,7 @@
       "long_name": "Whether or not the `mimpid` CSR is implemented.",
       "description": "* false: `mimpid` is not implemented, and must be read-only-0\n* true: `mimpid` is implemented, and the value is determined by `IMP_ID_VALUE`",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -8092,10 +7916,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -8111,9 +7932,7 @@
       "long_name": "TODO",
       "description": "whether or not the implementation supports misaligned atomics in main memory",
       "defined_by": {
-        "extensions": [
-          "Zaamo"
-        ],
+        "extensions": ["Zaamo"],
         "params": [],
         "raw": {
           "extension": {
@@ -8125,10 +7944,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -8144,9 +7960,7 @@
       "long_name": "Support for misaligned loads and stores to main memory.",
       "description": "Does the implementation perform non-atomic misaligned loads and stores to main memory\n(does *not* affect misaligned support to device memory)?\nIf not, the implementation always throws a misaligned exception.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -8158,10 +7972,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -8177,9 +7988,7 @@
       "long_name": "The relative priority of a load/store/AMO exception vs. load/store/AMO page-fault\nor access-fault exceptions.",
       "description": "The relative priority of a load/store/AMO exception vs. load/store/AMO page-fault\nor access-fault exceptions.\n\nMay be one of:\n\n[separator=\"!\"]\n!===\n! low  ! Misaligned load/store/AMO exceptions are always lower priority than load/store/AMO page-fault and access-fault exceptions.\n! high ! Misaligned load/store/AMO exceptions are always higher priority than load/store/AMO page-fault and access-fault exceptions.\n!===\n\nMISALIGNED_LDST_EXCEPTION_PRIORITY cannot be \"high\" when MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE\nis non-zero, since the atomicity of an access cannot be determined in that case until after\naddress translation.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -8191,10 +8000,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "low",
-            "high"
-          ]
+          "choices": ["low", "high"]
         }
       },
       "has_requirements": true,
@@ -8210,9 +8016,7 @@
       "long_name": "The maximum granule size, in bytes, that the hart can atomically perform a\nmisaligned load/store/AMO without raising a Misaligned exception",
       "description": "When MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE is 0, the hart\ncannot atomically perform a misaligned load/store/AMO. When a power of two, the hart can\natomically load/store/AMO a misaligned access that is fully contained in a\nMISALIGNED_MAX_ATOMICITY_GRANULE_SIZE-aligned region.\n\n[NOTE]\nEven if the hart is capable of performing a misaligned load/store/AMO atomically,\na misaligned exception may still occur if the access does not have the appropriate\nMisaligned Atomicity Granule PMA set.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [
           {
             "name": "MISALIGNED_LDST",
@@ -8242,21 +8046,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            0,
-            2,
-            4,
-            8,
-            16,
-            32,
-            64,
-            128,
-            256,
-            512,
-            1024,
-            2048,
-            4096
-          ]
+          "values": [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
         }
       },
       "has_requirements": true,
@@ -8272,9 +8062,7 @@
       "long_name": "The *order* the implementation appears\nto process a non-atomic misaligned load/store, which determines how/which\nexceptions will be reported.",
       "description": "Options:\n\n  * sequential_bytes: The load/store appears to be broken into byte-sized accesses that processed sequentially from smallest address to largest address\n  * custom: Something else. Will result in a call to unpredictable() in the execution",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [
           {
             "name": "MISALIGNED_LDST",
@@ -8304,10 +8092,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "sequential_bytes",
-            "custom"
-          ]
+          "choices": ["sequential_bytes", "custom"]
         }
       },
       "has_requirements": false,
@@ -8323,9 +8108,7 @@
       "long_name": "Whether or not the `misa` CSR is implemented",
       "description": "Options:\n\n  true::\n    The `misa` CSR returns a non-zero value.\n\n  false::\n    The `misa` CSR is read-only-0.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -8337,10 +8120,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -8372,10 +8152,7 @@
       "long_name": "TODO",
       "description": "Behavior of the mstateen0.AIA bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "Smstateen",
-          "Ssaia"
-        ],
+        "extensions": ["Smstateen", "Ssaia"],
         "params": [],
         "raw": {
           "extension": {
@@ -8395,11 +8172,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": false,
@@ -8415,10 +8188,7 @@
       "long_name": "TODO",
       "description": "Behavior of the mstateen0.CONTEXT bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "Sdtrig",
-          "Smstateen"
-        ],
+        "extensions": ["Sdtrig", "Smstateen"],
         "params": [],
         "raw": {
           "extension": {
@@ -8437,11 +8207,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": false,
@@ -8457,10 +8223,7 @@
       "long_name": "TODO",
       "description": "Behavior of the mstateen0.CSRIND bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "Smstateen",
-          "Sscsrind"
-        ],
+        "extensions": ["Smstateen", "Sscsrind"],
         "params": [],
         "raw": {
           "extension": {
@@ -8479,11 +8242,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": false,
@@ -8499,10 +8258,7 @@
       "long_name": "TODO",
       "description": "Behavior of the mstateen0.ENVCFG bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "S",
-          "Smstateen"
-        ],
+        "extensions": ["S", "Smstateen"],
         "params": [],
         "raw": {
           "extension": {
@@ -8521,11 +8277,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": false,
@@ -8541,10 +8293,7 @@
       "long_name": "TODO",
       "description": "Behavior of the mstateen0.IMSIC bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "Smstateen",
-          "Ssaia"
-        ],
+        "extensions": ["Smstateen", "Ssaia"],
         "params": [],
         "raw": {
           "extension": {
@@ -8564,11 +8313,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": false,
@@ -8584,10 +8329,7 @@
       "long_name": "TODO",
       "description": "Behavior of the mstateen0.JVT bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "Smstateen",
-          "Zcmt"
-        ],
+        "extensions": ["Smstateen", "Zcmt"],
         "params": [],
         "raw": {
           "extension": {
@@ -8607,11 +8349,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": false,
@@ -8627,10 +8365,7 @@
       "long_name": "TODO",
       "description": "The set of values that mstatus.FS supports.",
       "defined_by": {
-        "extensions": [
-          "F",
-          "S"
-        ],
+        "extensions": ["F", "S"],
         "params": [],
         "raw": {
           "extension": {
@@ -8649,12 +8384,7 @@
       "value_type": {
         "type": "set",
         "details": {
-          "universe": [
-            0,
-            1,
-            2,
-            3
-          ],
+          "universe": [0, 1, 2, 3],
           "min_items": 1,
           "max_items": 4
         }
@@ -8688,9 +8418,7 @@
       "long_name": "TODO",
       "description": "Whether or not mstatus.TVM is implemented.\n\nWhen not implemented mstatus.TVM will be read-only-zero.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -8702,10 +8430,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -8732,10 +8457,7 @@
       "long_name": "TODO",
       "description": "The set of values that mstatus.VS will accept from a software write.",
       "defined_by": {
-        "extensions": [
-          "S",
-          "V"
-        ],
+        "extensions": ["S", "V"],
         "params": [],
         "raw": {
           "extension": {
@@ -8754,12 +8476,7 @@
       "value_type": {
         "type": "set",
         "details": {
-          "universe": [
-            0,
-            1,
-            2,
-            3
-          ],
+          "universe": [0, 1, 2, 3],
           "min_items": 1,
           "max_items": 4
         }
@@ -8793,9 +8510,7 @@
       "long_name": "Width of the `mtval` CSR",
       "description": "The number of implemented bits in the `mtval` CSR.\nThis is the CSR that may be written when a trap is taken into M-mode with exception-specific information to\nassist software in handling the trap (e.g., address associated with exception).\n\nMust be greater than or equal to _max_(`PHYS_ADDR_WIDTH`, `VA_SIZE`)",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -8844,9 +8559,7 @@
       "long_name": "Acess type of the `mtvec` CSR (read-only or read-write).",
       "description": "Options:\n\n  ro::\n    `mtvec` is read-only.\n\n  rw::\n    `mtvec` is read-write, but may not accept all values.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -8858,10 +8571,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "ro",
-            "rw"
-          ]
+          "choices": ["ro", "rw"]
         }
       },
       "has_requirements": false,
@@ -8888,9 +8598,7 @@
       "long_name": "Minumum alignment of `mtvec.BASE` when `mtvec.MODE` is 0 (direct)",
       "description": "Minimum alignment of the base pointer. Because `mtvec` excludes the two least-significant bits of\nthe base, the minimum alignment cannot be less than 4.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [
           {
             "name": "MTVEC_MODES",
@@ -8942,36 +8650,10 @@
                 "type": "enum",
                 "details": {
                   "values": [
-                    4,
-                    8,
-                    16,
-                    32,
-                    64,
-                    128,
-                    256,
-                    512,
-                    1024,
-                    2048,
-                    4095,
-                    8192,
-                    16384,
-                    32768,
-                    65536,
-                    131072,
-                    262144,
-                    524288,
-                    1048576,
-                    2097152,
-                    4194304,
-                    8388608,
-                    16777216,
-                    33554432,
-                    67108864,
-                    134217728,
-                    268435456,
-                    536870912,
-                    1073741824,
-                    2147483648
+                    4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4095, 8192,
+                    16384, 32768, 65536, 131072, 262144, 524288, 1048576,
+                    2097152, 4194304, 8388608, 16777216, 33554432, 67108864,
+                    134217728, 268435456, 536870912, 1073741824, 2147483648
                   ]
                 }
               }
@@ -8982,67 +8664,20 @@
                 "type": "enum",
                 "details": {
                   "values": [
-                    4,
-                    8,
-                    16,
-                    32,
-                    64,
-                    128,
-                    256,
-                    512,
-                    1024,
-                    2048,
-                    4095,
-                    8192,
-                    16384,
-                    32768,
-                    65536,
-                    131072,
-                    262144,
-                    524288,
-                    1048576,
-                    2097152,
-                    4194304,
-                    8388608,
-                    16777216,
-                    33554432,
-                    67108864,
-                    134217728,
-                    268435456,
-                    536870912,
-                    1073741824,
-                    2147483648,
-                    4294967296,
-                    8589934592,
-                    17179869184,
-                    34359738368,
-                    68719476736,
-                    137438953472,
-                    274877906944,
-                    549755813888,
-                    1099511627776,
-                    2199023255552,
-                    4398046511104,
-                    8796093022208,
-                    17592186044416,
-                    35184372088832,
-                    70368744177664,
-                    140737488355328,
-                    281474976710656,
-                    562949953421312,
-                    1125899906842624,
-                    2251799813685248,
-                    4503599627370496,
-                    9007199254740992,
-                    18014398509481984,
-                    36028797018963968,
-                    72057594037927936,
-                    144115188075855872,
-                    288230376151711744,
-                    576460752303423488,
-                    1152921504606846976,
-                    2305843009213693952,
-                    4611686018427387904,
+                    4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4095, 8192,
+                    16384, 32768, 65536, 131072, 262144, 524288, 1048576,
+                    2097152, 4194304, 8388608, 16777216, 33554432, 67108864,
+                    134217728, 268435456, 536870912, 1073741824, 2147483648,
+                    4294967296, 8589934592, 17179869184, 34359738368,
+                    68719476736, 137438953472, 274877906944, 549755813888,
+                    1099511627776, 2199023255552, 4398046511104, 8796093022208,
+                    17592186044416, 35184372088832, 70368744177664,
+                    140737488355328, 281474976710656, 562949953421312,
+                    1125899906842624, 2251799813685248, 4503599627370496,
+                    9007199254740992, 18014398509481984, 36028797018963968,
+                    72057594037927936, 144115188075855872, 288230376151711744,
+                    576460752303423488, 1152921504606846976,
+                    2305843009213693952, 4611686018427387904,
                     9223372036854775808
                   ]
                 }
@@ -9064,9 +8699,7 @@
       "long_name": "Minumum alignment of `mtvec.BASE` when `mtvec.MODE` is 1 (vectored)",
       "description": "Because `mtvec` excludes the two least-significant bits of\nthe base, the minimum alignment cannot be less than 4.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [
           {
             "name": "MTVEC_MODES",
@@ -9118,36 +8751,10 @@
                 "type": "enum",
                 "details": {
                   "values": [
-                    4,
-                    8,
-                    16,
-                    32,
-                    64,
-                    128,
-                    256,
-                    512,
-                    1024,
-                    2048,
-                    4095,
-                    8192,
-                    16384,
-                    32768,
-                    65536,
-                    131072,
-                    262144,
-                    524288,
-                    1048576,
-                    2097152,
-                    4194304,
-                    8388608,
-                    16777216,
-                    33554432,
-                    67108864,
-                    134217728,
-                    268435456,
-                    536870912,
-                    1073741824,
-                    2147483648
+                    4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4095, 8192,
+                    16384, 32768, 65536, 131072, 262144, 524288, 1048576,
+                    2097152, 4194304, 8388608, 16777216, 33554432, 67108864,
+                    134217728, 268435456, 536870912, 1073741824, 2147483648
                   ]
                 }
               }
@@ -9158,67 +8765,20 @@
                 "type": "enum",
                 "details": {
                   "values": [
-                    4,
-                    8,
-                    16,
-                    32,
-                    64,
-                    128,
-                    256,
-                    512,
-                    1024,
-                    2048,
-                    4095,
-                    8192,
-                    16384,
-                    32768,
-                    65536,
-                    131072,
-                    262144,
-                    524288,
-                    1048576,
-                    2097152,
-                    4194304,
-                    8388608,
-                    16777216,
-                    33554432,
-                    67108864,
-                    134217728,
-                    268435456,
-                    536870912,
-                    1073741824,
-                    2147483648,
-                    4294967296,
-                    8589934592,
-                    17179869184,
-                    34359738368,
-                    68719476736,
-                    137438953472,
-                    274877906944,
-                    549755813888,
-                    1099511627776,
-                    2199023255552,
-                    4398046511104,
-                    8796093022208,
-                    17592186044416,
-                    35184372088832,
-                    70368744177664,
-                    140737488355328,
-                    281474976710656,
-                    562949953421312,
-                    1125899906842624,
-                    2251799813685248,
-                    4503599627370496,
-                    9007199254740992,
-                    18014398509481984,
-                    36028797018963968,
-                    72057594037927936,
-                    144115188075855872,
-                    288230376151711744,
-                    576460752303423488,
-                    1152921504606846976,
-                    2305843009213693952,
-                    4611686018427387904,
+                    4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4095, 8192,
+                    16384, 32768, 65536, 131072, 262144, 524288, 1048576,
+                    2097152, 4194304, 8388608, 16777216, 33554432, 67108864,
+                    134217728, 268435456, 536870912, 1073741824, 2147483648,
+                    4294967296, 8589934592, 17179869184, 34359738368,
+                    68719476736, 137438953472, 274877906944, 549755813888,
+                    1099511627776, 2199023255552, 4398046511104, 8796093022208,
+                    17592186044416, 35184372088832, 70368744177664,
+                    140737488355328, 281474976710656, 562949953421312,
+                    1125899906842624, 2251799813685248, 4503599627370496,
+                    9007199254740992, 18014398509481984, 36028797018963968,
+                    72057594037927936, 144115188075855872, 288230376151711744,
+                    576460752303423488, 1152921504606846976,
+                    2305843009213693952, 4611686018427387904,
                     9223372036854775808
                   ]
                 }
@@ -9240,9 +8800,7 @@
       "long_name": "What happens when `mtvec` is written with an illegal value",
       "description": "Options:\n\n  retain::\n    When either `mtvec.MODE` or `mtvec.BASE` is illegal, `mtvec` will retain its current value\n\n  custom::\n    When either `mtvec.MODE` or `mtvec.BASE` is illegal, `mtvec` will obtain an unpredictable value\n\nOther values may be added over time once other common behaviors are identified.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -9254,10 +8812,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "retain",
-            "custom"
-          ]
+          "choices": ["retain", "custom"]
         }
       },
       "has_requirements": false,
@@ -9284,9 +8839,7 @@
       "long_name": "Modes supported by `mtvec.MODE`",
       "description": "Options:\n\n  0::\n    Direct; All traps set `pc` to `mtvec.BASE`\n  1::\n    Vectored; Asynchronous interrupts set `pc` to `mtvec.BASE` + 4 x cause.\n\nIf only one mode is given, `mtvec.MODE` is assumed to be read-only with that value.\nOtherwise, `mtvec.MODE` is read-write.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -9298,10 +8851,7 @@
       "value_type": {
         "type": "set",
         "details": {
-          "universe": [
-            0,
-            1
-          ],
+          "universe": [0, 1],
           "min_items": 1,
           "max_items": 2
         }
@@ -9340,9 +8890,7 @@
       "long_name": "TODO",
       "description": "When the `A` extensions is supported, indicates whether or not\nthe extension can be disabled in the `misa.A` bit.",
       "defined_by": {
-        "extensions": [
-          "A"
-        ],
+        "extensions": ["A"],
         "params": [],
         "raw": {
           "extension": {
@@ -9354,10 +8902,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -9384,9 +8929,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `B` extension can be disabled with the `misa.B` bit.",
       "defined_by": {
-        "extensions": [
-          "B"
-        ],
+        "extensions": ["B"],
         "params": [],
         "raw": {
           "extension": {
@@ -9398,10 +8941,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -9423,9 +8963,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `C` extension can be disabled with the `misa.C` bit.",
       "defined_by": {
-        "extensions": [
-          "C"
-        ],
+        "extensions": ["C"],
         "params": [],
         "raw": {
           "extension": {
@@ -9437,10 +8975,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -9462,9 +8997,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `D` extension can be disabled with the `misa.D` bit.",
       "defined_by": {
-        "extensions": [
-          "D"
-        ],
+        "extensions": ["D"],
         "params": [],
         "raw": {
           "extension": {
@@ -9476,10 +9009,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -9506,9 +9036,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `F` extension can be disabled with the `misa.F` bit.",
       "defined_by": {
-        "extensions": [
-          "F"
-        ],
+        "extensions": ["F"],
         "params": [],
         "raw": {
           "extension": {
@@ -9520,10 +9048,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -9550,9 +9075,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `H` extension can be disabled with the `misa.H` bit.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -9564,10 +9087,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -9589,9 +9109,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `M` extension can be disabled with the `misa.M` bit.",
       "defined_by": {
-        "extensions": [
-          "M"
-        ],
+        "extensions": ["M"],
         "params": [],
         "raw": {
           "extension": {
@@ -9603,10 +9121,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -9633,9 +9148,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `Q` extension can be disabled with the `misa.Q` bit.",
       "defined_by": {
-        "extensions": [
-          "Q"
-        ],
+        "extensions": ["Q"],
         "params": [],
         "raw": {
           "extension": {
@@ -9647,10 +9160,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -9672,9 +9182,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `S` extension can be disabled with the `misa.S` bit.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -9686,10 +9194,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -9711,9 +9216,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `U` extension can be disabled with the `misa.U` bit.",
       "defined_by": {
-        "extensions": [
-          "U"
-        ],
+        "extensions": ["U"],
         "params": [],
         "raw": {
           "extension": {
@@ -9725,10 +9228,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -9750,9 +9250,7 @@
       "long_name": "TODO",
       "description": "Indicates whether or not the `V` extension can be disabled with the `misa.V` bit.",
       "defined_by": {
-        "extensions": [
-          "V"
-        ],
+        "extensions": ["V"],
         "params": [],
         "raw": {
           "extension": {
@@ -9764,10 +9262,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -9789,9 +9284,7 @@
       "long_name": "XLEN in machine mode",
       "description": "XLEN in machine mode, specified in bits",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -9803,10 +9296,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            32,
-            64
-          ]
+          "choices": [32, 64]
         }
       },
       "has_requirements": true,
@@ -10168,9 +9658,7 @@
       "long_name": "Endianness of data in M-mode",
       "description": "Options:\n\n[separator=\"!\"]\n!===\nh! little  ! M-mode data is always little endian\nh! big     ! M-mode data is always big endian\nh! dynamic ! M-mode data can be either little or big endian,\n             depending on the CSR field `mstatus.MBE`\n!===",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -10182,11 +9670,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "little",
-            "big",
-            "dynamic"
-          ]
+          "values": ["little", "big", "dynamic"]
         }
       },
       "has_requirements": false,
@@ -10223,9 +9707,7 @@
       "long_name": "TODO",
       "description": "Number of supported virtualized guest interrupts\n\nCorresponds to the `GEILEN` parameter in the RVI specs",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -10290,9 +9772,7 @@
       "long_name": "TODO",
       "description": "Number of implemented PMP entries. Can be any value between 0-64, inclusive.\n\nThe architecture mandates that the number of implemented PMP registers\nmust appear to be 0, 16, or 64.\n\nTherefore, pmp registers will behave as follows according to NUN_PMP_ENTRIES:\n\n[separator=\"!\"]\n!===\n! NUM_PMP_ENTRIES ! pmpaddr<0-15> / pmpcfg<0-3> ! pmpaddr<16-63> / pmpcfg<4-15>\n! 0               ! N                           ! N\n! 1-16            ! Y                           ! N\n! 17-64           ! Y                           ! Y\n!===\n\n** N = Not implemented; access will cause `IllegalInstruction`\n   if TRAP_ON_UNIMPLEMENTED_CSR is true\n** Y = Implemented; access will not cause an exception (from M-mode), but register\n   may be read-only-zero if NUM_PMP_ENTRIES is less than the corresponding register\n\n[NOTE]\n`pmpcfgN` for an odd N never exists when XLEN == 64\n\nWhen NUM_PMP_ENTRIES is not exactly 0, 16, or 64, some extant pmp registers,\nand associated pmpNcfg, will be read-only zero (but will never cause an exception).",
       "defined_by": {
-        "extensions": [
-          "Smpmp"
-        ],
+        "extensions": ["Smpmp"],
         "params": [],
         "raw": {
           "extension": {
@@ -11442,9 +10922,7 @@
       "long_name": "Number of bits in a physical address",
       "description": "Implementation-defined size of the physical address space.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -12134,9 +11612,7 @@
       "long_name": "log2 of the smallest supported PMA region",
       "description": "Generally, for systems with an MMU, should not be smaller than 12,\nas that would preclude caching PMA results in the TLB along with\nvirtual memory translations",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -12165,11 +11641,7 @@
       "long_name": "TODO",
       "description": "The number of high-order bits of an address that are masked by the\npointer masking facility.",
       "defined_by": {
-        "extensions": [
-          "Smmpm",
-          "Smnpm",
-          "Ssnpm"
-        ],
+        "extensions": ["Smmpm", "Smnpm", "Ssnpm"],
         "params": [],
         "raw": {
           "extension": {
@@ -12207,9 +11679,7 @@
       "long_name": "TODO",
       "description": "log2 of the smallest supported PMP region.\n\nGenerally, for systems with an MMU, should not be smaller than 12,\nas that would preclude caching PMP results in the TLB along with\nvirtual memory translations\n\nNote that PMP_GRANULARITY is equal to G+2 (not G) as described in\nthe privileged architecture.",
       "defined_by": {
-        "extensions": [
-          "Smpmp"
-        ],
+        "extensions": ["Smpmp"],
         "params": [],
         "raw": {
           "extension": {
@@ -13039,9 +12509,7 @@
       "long_name": "Whether or not all synchronous exceptions are precise.",
       "description": "If false, any exception not otherwise mandated to precise (e.g., PMP violation)\nwill cause execution to enter an unpredictable state.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -13053,10 +12521,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13072,9 +12537,7 @@
       "long_name": "TODO",
       "description": "Number of bits used for the Resource Control ID field (RCID).\nDefault is 12.",
       "defined_by": {
-        "extensions": [
-          "Ssqosid"
-        ],
+        "extensions": ["Ssqosid"],
         "params": [],
         "raw": {
           "extension": {
@@ -13109,9 +12572,7 @@
       "long_name": "TODO",
       "description": "When true, `mtval` is written with the shadow stack cause (code=18) when a SoftwareCheck exception is raised into M-mode due to a landing pad error.\n\nWhen false, `mtval` is written with 0.",
       "defined_by": {
-        "extensions": [
-          "Zicfilp"
-        ],
+        "extensions": ["Zicfilp"],
         "params": [],
         "raw": {
           "extension": {
@@ -13123,10 +12584,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13142,9 +12600,7 @@
       "long_name": "TODO",
       "description": "When true, `mtval` is written with the shadow stack cause (code=3) when a SoftwareCheck exception is raised into M-mode due to a shadow stack pop check instruction.\n\nWhen false, `mtval` is written with 0.",
       "defined_by": {
-        "extensions": [
-          "Zicfiss"
-        ],
+        "extensions": ["Zicfiss"],
         "params": [],
         "raw": {
           "extension": {
@@ -13156,10 +12612,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13175,9 +12628,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the shadow stack cause (code=18) when a SoftwareCheck exception is raised into S-mode due to a landing pad error.\n\nWhen false, `stval` is written with 0.",
       "defined_by": {
-        "extensions": [
-          "Zicfilp"
-        ],
+        "extensions": ["Zicfilp"],
         "params": [],
         "raw": {
           "extension": {
@@ -13189,10 +12640,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13208,9 +12656,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the shadow stack cause (code=3) when a SoftwareCheck exception is raised into S-mode due to a shadow stack pop check instruction.\n\nWhen false, `stval` is written with 0.",
       "defined_by": {
-        "extensions": [
-          "Zicfiss"
-        ],
+        "extensions": ["Zicfiss"],
         "params": [],
         "raw": {
           "extension": {
@@ -13222,10 +12668,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13241,9 +12684,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the shadow stack cause (code=18) when a SoftwareCheck exception is raised into VS-mode due to a landing pad error.\n\nWhen false, `vstval` is written with 0.",
       "defined_by": {
-        "extensions": [
-          "Zicfilp"
-        ],
+        "extensions": ["Zicfilp"],
         "params": [],
         "raw": {
           "extension": {
@@ -13255,10 +12696,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13274,9 +12712,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the shadow stack cause (code=3) when a SoftwareCheck exception is raised into VS-mode due to a shadow stack pop check instruction.\n\nWhen false, `vstval` is written with 0.",
       "defined_by": {
-        "extensions": [
-          "Zicfiss"
-        ],
+        "extensions": ["Zicfiss"],
         "params": [],
         "raw": {
           "extension": {
@@ -13288,10 +12724,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13307,9 +12740,7 @@
       "long_name": "Whether or not `mtval` is written with the encoding of an instruction causing an IllegalInstruction exception",
       "description": "Options:\n\n  * true:  `mtval` is written with the encoding of an instruction causing an IllegalInstruction exception\n  * false: `mtval` is written with 0 when an instruction causes an IllegalInstruction exception.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -13321,10 +12752,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13340,9 +12768,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the encoding of an instruction that causes an\n`IllegalInstruction` exception.\n\nWhen false `stval` is written with 0 when an `IllegalInstruction` exception occurs.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -13354,10 +12780,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13373,9 +12796,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the encoding of an instruction that causes an\n`IllegalInstruction` exception.\n\nWhen false `vstval` is written with 0 when an `IllegalInstruction` exception occurs.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -13387,10 +12808,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13406,9 +12824,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the encoding of an instruction that causes an\n`VirualInstruction` exception.\n\nWhen false `vstval` is written with 0 when an `VirtualInstruction` exception occurs.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -13420,10 +12836,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13439,9 +12852,7 @@
       "long_name": "TODO",
       "description": "When true, `htval` is written with the Guest Physical Address, shifted right by 2, that\ncaused a `GuestPageFault` exception.\n\nWhen false, `htval` is written with 0 when a `GuestPageFault` exception occurs.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -13453,10 +12864,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13472,9 +12880,7 @@
       "long_name": "TODO",
       "description": "Whether or not GPA >> 2 is written into htval/mtval2 when an instruction guest page fault occurs.\n\nIf false, 0 will be written into htval/mtval2 on an instruction guest page fault.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -13486,10 +12892,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13516,9 +12919,7 @@
       "long_name": "TODO",
       "description": "Whether or not GPA >> 2 is written into htval/mtval2 when a guest page fault occurs while\nwalking a VS-mode page table.\n\nIf false, 0 will be written into htval/mtval2 on an intermediate guest page fault.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -13530,10 +12931,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13560,9 +12958,7 @@
       "long_name": "TODO",
       "description": "Whether or not GPA >> 2 is written into htval/mtval2 when a load guest page fault occurs.\n\nIf false, 0 will be written into htval/mtval2 on a load guest page fault.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -13574,10 +12970,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13604,9 +12997,7 @@
       "long_name": "TODO",
       "description": "Whether or not GPA >> 2 is written into htval/mtval2 when a store/amo guest page fault occurs.\n\nIf false, 0 will be written into htval/mtval2 on a store/amo guest page fault.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -13618,10 +13009,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13648,9 +13036,7 @@
       "long_name": "Whether or not `mtval` is written with the virtual PC of an EBREAK instruction.",
       "description": "Options:\n\n  * true:  `mtval` is written with the virtual PC of an EBREAK instruction (same information as `mepc`).\n  * false: `mtval` is written with 0 on an EBREAK instruction.\n\nRegardless, `mtval` is always written with a virtual PC when an external breakpoint is generated",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -13662,10 +13048,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13681,9 +13064,7 @@
       "long_name": "Whether or not `mtval` is written with the virtual address of a fetch causing an access fault",
       "description": "Options:\n\n  * true:  `mtval` is written with the virtual address of a fetch causing the access fault\n  * false: `mtval` is written with 0 when a fetch causes an access fault",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -13695,10 +13076,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13714,9 +13092,7 @@
       "long_name": "Whether or not `mtval` is written with the virtual address of a misaligned fetch",
       "description": "Options:\n\n  * true:  `mtval` is written with the virtual address of a trapping misaligned fetch\n  * false: `mtval` is written with 0 when a misaligned fetch traps",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -13728,10 +13104,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13747,9 +13120,7 @@
       "long_name": "TODO",
       "description": "When true, `mtval` is written with the virtual PC of an instructino when fetch causes an\n`InstructionPageFault`.\n\nWHen false, `mtval` is written with 0 when an instruction fetch causes an\n`InstructionPageFault`.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -13761,10 +13132,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13780,9 +13148,7 @@
       "long_name": "Whether or not `mtval` is written with the virtual address of a load causing an access fault",
       "description": "Options:\n\n  * true:  `mtval` is written with the virtual address of a load causing the access fault\n  * false: `mtval` is written with 0 when a load causes an access fault",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -13794,10 +13160,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13813,9 +13176,7 @@
       "long_name": "Whether or not `mtval` is written with the virtual address of a misaligned load",
       "description": "Options:\n\n  * true:  `mtval` is written with the virtual address of a trapping misaligned load.\n  * false: `mtval` is written with 0 when a misaligned load traps.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -13827,10 +13188,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13846,9 +13204,7 @@
       "long_name": "TODO",
       "description": "When true, `mtval` is written with the virtual address of a load when it causes a\n`LoadPageFault`.\n\nWHen false, `mtval` is written with 0 when a load causes a `LoadPageFault`.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -13860,10 +13216,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13879,9 +13232,7 @@
       "long_name": "Whether or not `mtval` is written with the virtual address of a store or AMO causing an access fault",
       "description": "Options:\n\n  * true:  `mtval` is written with the virtual address of a store or AMO causing the access fault\n  * false: `mtval` is written with 0 when a store or AMO causes an access fault",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -13893,10 +13244,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13912,9 +13260,7 @@
       "long_name": "Whether or not `mtval` is written with the virtual address of a misaligned store or AMO",
       "description": "Options:\n\n  * true:  `mtval` is written with the virtual address of a trapping misaligned store or AMO.\n  * false: `mtval` is written with 0 when a misaligned store or AMO traps.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -13926,10 +13272,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13945,9 +13288,7 @@
       "long_name": "TODO",
       "description": "When true, `mtval` is written with the virtual address of a store when it causes a\n`StoreAmoPageFault`.\n\nWHen false, `mtval` is written with 0 when a store causes a `StoreAmoPageFault`.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -13959,10 +13300,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -13978,9 +13316,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual PC of the EBREAK instruction (same information as `mepc`).\n\nWhen false, `stval` is written with 0 on an EBREAK instruction.\n\nRegardless, `stval` is always written with a virtual PC when an external breakpoint is generated",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -13992,10 +13328,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14011,9 +13344,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual PC of an instructino when fetch causes an\n`InstructionAccessFault`.\n\nWHen false, `stval` is written with 0 when an instruction fetch causes an\n`InstructionAccessFault`.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14025,10 +13356,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14044,9 +13372,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual PC when an instruction fetch is misaligned.\n\nWhen false, `stval` is written with 0 when an instruction fetch is misaligned.\n\nNote that when IALIGN=16 (i.e., when the `C` or one of the `Zc*` extensions are implemented),\nit is impossible to generate a misaligned fetch, and so this parameter has no effect.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14058,10 +13384,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14077,9 +13400,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual PC of an instructino when fetch causes an\n`InstructionPageFault`.\n\nWHen false, `stval` is written with 0 when an instruction fetch causes an\n`InstructionPageFault`.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14091,10 +13412,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14110,9 +13428,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual address of a load when it causes a\n`LoadAccessFault`.\n\nWHen false, `stval` is written with 0 when a load causes a `LoadAccessFault`.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14124,10 +13440,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14143,9 +13456,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual address of a load instruction when the\naddress is misaligned and MISALIGNED_LDST is false.\n\nWhen false, `stval` is written with 0 when a load address is misaligned and\nMISALIGNED_LDST is false.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14157,10 +13468,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14176,9 +13484,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual address of a load when it causes a\n`LoadPageFault`.\n\nWHen false, `stval` is written with 0 when a load causes a `LoadPageFault`.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14190,10 +13496,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14209,9 +13512,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual address of a store when it causes a\n`StoreAmoAccessFault`.\n\nWHen false, `stval` is written with 0 when a store causes a `StoreAmoAccessFault`.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14223,10 +13524,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14242,9 +13540,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual address of a store instruction when the\naddress is misaligned and MISALIGNED_LDST is false.\n\nWhen false, `stval` is written with 0 when a store address is misaligned and\nMISALIGNED_LDST is false.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14256,10 +13552,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14275,9 +13568,7 @@
       "long_name": "TODO",
       "description": "When true, `stval` is written with the virtual address of a store when it causes a\n`StoreAmoPageFault`.\n\nWHen false, `stval` is written with 0 when a store causes a `StoreAmoPageFault`.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14289,10 +13580,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14308,9 +13596,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual PC of the EBREAK instruction (same information as `mepc`).\n\nWhen false, `vstval` is written with 0 on an EBREAK instruction.\n\nRegardless, `vstval` is always written with a virtual PC when an external breakpoint is generated.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14322,10 +13608,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14341,9 +13624,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual PC of an instructino when fetch causes an\n`InstructionAccessFault`.\n\nWHen false, `vstval` is written with 0 when an instruction fetch causes an\n`InstructionAccessFault`.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14355,10 +13636,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14374,9 +13652,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual PC when an instruction fetch is misaligned.\n\nWhen false, `vstval` is written with 0 when an instruction fetch is misaligned.\n\nNote that when IALIGN=16 (i.e., when the `C` or one of the `Zc*` extensions are implemented),\nit is impossible to generate a misaligned fetch, and so this parameter has no effect.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14388,10 +13664,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14407,9 +13680,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual PC of an instructino when fetch causes an\n`InstructionPageFault`.\n\nWHen false, `vstval` is written with 0 when an instruction fetch causes an\n`InstructionPageFault`.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14421,10 +13692,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14440,9 +13708,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual address of a load when it causes a\n`LoadAccessFault`.\n\nWHen false, `vstval` is written with 0 when a load causes a `LoadAccessFault`.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14454,10 +13720,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14473,9 +13736,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual address of a load instruction when the\naddress is misaligned and MISALIGNED_LDST is false.\n\nWhen false, `vstval` is written with 0 when a load address is misaligned and\nMISALIGNED_LDST is false.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14487,10 +13748,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14506,9 +13764,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual address of a load when it causes a\n`LoadPageFault`.\n\nWHen false, `vstval` is written with 0 when a load causes a `LoadPageFault`.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14520,10 +13776,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14539,9 +13792,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual address of a store when it causes a\n`StoreAmoAccessFault`.\n\nWHen false, `vstval` is written with 0 when a store causes a `StoreAmoAccessFault`.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14553,10 +13804,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14572,9 +13820,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual address of a store instruction when the\naddress is misaligned and MISALIGNED_LDST is false.\n\nWhen false, `vstval` is written with 0 when a store address is misaligned and\nMISALIGNED_LDST is false.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14586,10 +13832,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14605,9 +13848,7 @@
       "long_name": "TODO",
       "description": "When true, `vstval` is written with the virtual address of a store when it causes a\n`StoreAmoPageFault`.\n\nWHen false, `vstval` is written with 0 when a store causes a `StoreAmoPageFault`.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -14619,10 +13860,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14638,9 +13876,7 @@
       "long_name": "TODO",
       "description": "The value assigned to VL when AVL < 2*VLMAX.",
       "defined_by": {
-        "extensions": [
-          "V"
-        ],
+        "extensions": ["V"],
         "params": [],
         "raw": {
           "extension": {
@@ -14652,11 +13888,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "ceil(AVL/2)",
-            "VLMAX",
-            "custom"
-          ]
+          "values": ["ceil(AVL/2)", "VLMAX", "custom"]
         }
       },
       "has_requirements": false,
@@ -14672,9 +13904,7 @@
       "long_name": "TODO",
       "description": "Whether or not satp.MODE == Bare is supported.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -14686,10 +13916,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -14711,11 +13938,7 @@
       "long_name": "TODO",
       "description": "Indicates which counters can delegated via `scounteren`\n\nAn unimplemented counter cannot be specified, i.e., if\nHPM_COUNTER_EN[3] is false, it would be illegal to set\nSCOUNTENABLE_EN[3] to true.\n\nSCOUNTENABLE_EN[0:2] must all be false if `Zicntr` is not implemented.\nSCOUNTENABLE_EN[3:31] must all be false if `Zihpm` is not implemented.",
       "defined_by": {
-        "extensions": [
-          "S",
-          "Zicntr",
-          "Zihpm"
-        ],
+        "extensions": ["S", "Zicntr", "Zihpm"],
         "params": [],
         "raw": {
           "extension": {
@@ -15078,10 +14301,7 @@
       "long_name": "TODO",
       "description": "Behavior of the sstateen0.JVT bit:\n\n  * 'rw': read-write\n  * 'read-only-0': read-only, fixed to 0\n  * 'read-only-1': read-only, fixed to 1",
       "defined_by": {
-        "extensions": [
-          "Ssstateen",
-          "Zcmt"
-        ],
+        "extensions": ["Ssstateen", "Zcmt"],
         "params": [],
         "raw": {
           "extension": {
@@ -15100,11 +14320,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "rw",
-            "read-only-0",
-            "read-only-1"
-          ]
+          "values": ["rw", "read-only-0", "read-only-1"]
         }
       },
       "has_requirements": true,
@@ -15120,9 +14336,7 @@
       "long_name": "TODO",
       "description": "The number of implemented bits in `stval`.\n\nMust be greater than or equal to _max_(`PHYS_ADDR_WIDTH`, `VA_SIZE`)",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -15151,9 +14365,7 @@
       "long_name": "TODO",
       "description": "Whether or not `stvec.MODE` supports Direct (0).",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -15165,10 +14377,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15190,9 +14399,7 @@
       "long_name": "TODO",
       "description": "Whether or not `stvec.MODE` supports Vectored (1).",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -15204,10 +14411,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15229,9 +14433,7 @@
       "long_name": "TODO",
       "description": "Whether or not Sv32x4 translation mode is supported.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [
           {
             "name": "SXLEN",
@@ -15260,10 +14462,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15295,9 +14494,7 @@
       "long_name": "TODO",
       "description": "Whether or not Sv32 translation is supported in first-stage (VS-stage)\ntranslation.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [
           {
             "name": "VSXLEN",
@@ -15326,10 +14523,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15345,9 +14539,7 @@
       "long_name": "TODO",
       "description": "Whether or not Sv39x4 translation mode is supported.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [
           {
             "name": "SXLEN",
@@ -15376,10 +14568,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15411,9 +14600,7 @@
       "long_name": "TODO",
       "description": "Whether or not Sv39 translation is supported in first-stage (VS-stage)\ntranslation.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [
           {
             "name": "VSXLEN",
@@ -15442,10 +14629,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15461,9 +14645,7 @@
       "long_name": "TODO",
       "description": "Whether or not Sv48x4 translation mode is supported.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [
           {
             "name": "SXLEN",
@@ -15492,10 +14674,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15527,9 +14706,7 @@
       "long_name": "TODO",
       "description": "Whether or not Sv48 translation is supported in first-stage (VS-stage)\ntranslation.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [
           {
             "name": "VSXLEN",
@@ -15558,10 +14735,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15577,9 +14751,7 @@
       "long_name": "TODO",
       "description": "Whether or not Sv57x4 translation mode is supported.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [
           {
             "name": "SXLEN",
@@ -15608,10 +14780,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15643,9 +14812,7 @@
       "long_name": "TODO",
       "description": "Whether or not Sv57 translation is supported in first-stage (VS-stage)\ntranslation.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [
           {
             "name": "VSXLEN",
@@ -15674,10 +14841,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -15693,9 +14857,7 @@
       "long_name": "TODO",
       "description": "Set of XLENs supported in S-mode. Can be one of:\n\n  * 32:   SXLEN is always 32\n  * 64:   SXLEN is always 64\n  * [32, 64]: SXLEN can be changed (via mstatus.SXL) between 32 and 64",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -15707,10 +14869,7 @@
       "value_type": {
         "type": "set",
         "details": {
-          "universe": [
-            32,
-            64
-          ],
+          "universe": [32, 64],
           "min_items": 1,
           "max_items": 2
         }
@@ -15744,9 +14903,7 @@
       "long_name": "TODO",
       "description": "Endianness of data in S-mode. Can be one of:\n\n * little:  S-mode data is always little endian\n * big:     S-mode data is always big endian\n * dynamic: S-mode data can be either little or big endian,\n            depending on the CSR field `mstatus.SBE`",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -15758,11 +14915,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "little",
-            "big",
-            "dynamic"
-          ]
+          "values": ["little", "big", "dynamic"]
         }
       },
       "has_requirements": false,
@@ -15799,9 +14952,7 @@
       "long_name": "TODO",
       "description": "Whether or not a real hardware `time` CSR exists. Implementations can either provide a real\nCSR or emulate access at M-mode.\n\nPossible values:\n\ntrue::\n  `time`/`timeh` exists, and accessing it will not cause an IllegalInstruction trap\n\nfalse::\n  `time`/`timeh` does not exist.\n  Accessing the CSR will cause an IllegalInstruction trap or enter an unpredictable state,\n  depending on TRAP_ON_UNIMPLEMENTED_CSR.\n  Privileged software may emulate the `time` CSR, or may pass the exception to a lower level.",
       "defined_by": {
-        "extensions": [
-          "Zicntr"
-        ],
+        "extensions": ["Zicntr"],
         "params": [],
         "raw": {
           "extension": {
@@ -15813,10 +14964,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -15843,9 +14991,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a Breakpoint exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -15857,10 +15003,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "always zero",
-            "custom"
-          ]
+          "choices": ["always zero", "custom"]
         }
       },
       "has_requirements": false,
@@ -15887,9 +15030,7 @@
       "long_name": "TODO",
       "description": "Value to write into htval/mtval2 when there is a guest page fault on a final translation.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"always pseudoinstruction\": Always write the pseudoinstruction",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -15901,10 +15042,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "always zero",
-            "always pseudoinstruction"
-          ]
+          "choices": ["always zero", "always pseudoinstruction"]
         }
       },
       "has_requirements": false,
@@ -15931,9 +15069,7 @@
       "long_name": "TODO",
       "description": "Value to write into htval/mtval2 when there is a guest page fault on a final translation.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"always pseudoinstruction\": Always write the pseudoinstruction\n  * \"always transformed standard instruction\": Always write the transformation of the standard instruction encoding\n  * \"custom\": A custom value, which will cause an UNPREDICTABLE event.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -15977,9 +15113,7 @@
       "long_name": "TODO",
       "description": "Value to write into htval/mtval2 when there is a guest page fault on a final translation.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"always pseudoinstruction\": Always write the pseudoinstruction\n  * \"always transformed standard instruction\": Always write the transformation of the standard instruction encoding\n  * \"custom\": A custom value, which will cause an UNPREDICTABLE event.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16023,9 +15157,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst when there is an instruction address misaligned exception.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16037,10 +15169,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "always zero",
-            "custom"
-          ]
+          "choices": ["always zero", "custom"]
         }
       },
       "has_requirements": false,
@@ -16067,9 +15196,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on an AccessFault exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"always transformed standard instruction\": Always write a transformed standard instruction as defined by H\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16112,9 +15239,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a VirtualInstruction exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"always transformed standard instruction\": Always write a transformed standard instruction as defined by H\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16157,9 +15282,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a LoadPageFault exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"always transformed standard instruction\": Always write a transformed standard instruction as defined by H\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16202,9 +15325,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a MCall exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16216,10 +15337,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "always zero",
-            "custom"
-          ]
+          "choices": ["always zero", "custom"]
         }
       },
       "has_requirements": false,
@@ -16246,9 +15364,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a SCall exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16260,10 +15376,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "always zero",
-            "custom"
-          ]
+          "choices": ["always zero", "custom"]
         }
       },
       "has_requirements": false,
@@ -16290,9 +15403,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on an AccessFault exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"always transformed standard instruction\": Always write a transformed standard instruction as defined by H\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16335,9 +15446,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a VirtualInstruction exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"always transformed standard instruction\": Always write a transformed standard instruction as defined by H\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16380,9 +15489,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a StoreAmoPageFault exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"always transformed standard instruction\": Always write a transformed standard instruction as defined by H\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16425,9 +15532,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a UCall exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16439,10 +15544,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "always zero",
-            "custom"
-          ]
+          "choices": ["always zero", "custom"]
         }
       },
       "has_requirements": false,
@@ -16469,9 +15571,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a VirtualInstruction exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16483,10 +15583,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "always zero",
-            "custom"
-          ]
+          "choices": ["always zero", "custom"]
         }
       },
       "has_requirements": false,
@@ -16513,9 +15610,7 @@
       "long_name": "TODO",
       "description": "Value written into htinst/mtinst on a VSCall exception from VU/VS-mode.\n\nPossible values:\n  * \"always zero\": Always write the value zero\n  * \"custom\": Write a custom value, which results in UNPREDICTABLE",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16527,10 +15622,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            "always zero",
-            "custom"
-          ]
+          "choices": ["always zero", "custom"]
         }
       },
       "has_requirements": false,
@@ -16557,9 +15649,7 @@
       "long_name": "Whether or not an EBREAK causes a synchronous exception.",
       "description": "The spec states that implementations may handle EBREAKs transparently\nwithout raising a trap, in which case the EEI must provide a builtin.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -16571,10 +15661,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16590,9 +15677,7 @@
       "long_name": "Whether or not an ECALL-from-M-mode causes a synchronous exception.",
       "description": "The spec states that implementations may handle ECALLs transparently\nwithout raising a trap, in which case the EEI must provide a builtin.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -16604,10 +15689,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16623,9 +15705,7 @@
       "long_name": "TODO",
       "description": "Whether or not an ECALL-from-S-mode causes a synchronous exception.\n\nThe spec states that implementations may handle ECALLs transparently\nwithout raising a trap, in which case the EEI must provide a builtin.",
       "defined_by": {
-        "extensions": [
-          "S"
-        ],
+        "extensions": ["S"],
         "params": [],
         "raw": {
           "extension": {
@@ -16637,10 +15717,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16656,9 +15733,7 @@
       "long_name": "TODO",
       "description": "Whether or not an ECALL-from-U-mode causes a synchronous exception.\n\nThe spec states that implementations may handle ECALLs transparently\nwithout raising a trap, in which case the EEI must provide a builtin.",
       "defined_by": {
-        "extensions": [
-          "U"
-        ],
+        "extensions": ["U"],
         "params": [],
         "raw": {
           "extension": {
@@ -16670,10 +15745,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16689,9 +15761,7 @@
       "long_name": "TODO",
       "description": "Whether or not an ECALL-from-VS-mode causes a synchronous exception.\n\nThe spec states that implementations may handle ECALLs transparently\nwithout raising a trap, in which case the EEI must provide a builtin.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -16703,10 +15773,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16722,9 +15789,7 @@
       "long_name": "Whether or not writing an illegal value to a WLRL CSR field causes a trap.",
       "description": "Options:\n\n  * true: Writing an illegal value to a WLRL CSR field will cause an IllegalInstruction exception.\n  * false: Writing an illegal value to a WLRL CSR field causes unpredictable behavior.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -16736,10 +15801,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16755,9 +15817,7 @@
       "long_name": "Whether or not fetching an unimplemented standard instruction and/or an undefined standard\ninstruction from the standard/reserved opcode space causes a trap",
       "description": "Options:\n\n  * true: Fetching an unimplemented and/or undefined instruction from the standard/reserved opcode space will cause an IllegalInstruction exception.\n  * false: Fetching an unimplemented and/or undefined instruction from the standard/reserved opcose space causes unpredictable behavior.\n\nTRAP_ON_RESERVED_INSTRUCTION may be false while TRAP_ON_UNIMPLEMENTED_INSTRUCTION is true\nwhen a custom instruction is implemented in the standard/reserved opcode space.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -16769,10 +15829,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16788,13 +15845,7 @@
       "long_name": "TODO",
       "description": "For implementations that make `satp`.MODE read-only zero\n(always Bare, _i.e._, no virtual translation is implemented),\nattempts to execute an SFENCE.VMA instruction might raise an\nillegal-instruction exception.\n\nTRAP_ON_SFENCE_VMA_WHEN_SATP_MODE_IS_READ_ONLY indicates whether\nor not that exception occurs.\n\nTRAP_ON_SFENCE_VMA_WHEN_SATP_MODE_IS_READ_ONLY has no effect when\nsome virtual translation mode is supported.",
       "defined_by": {
-        "extensions": [
-          "S",
-          "Sv32",
-          "Sv39",
-          "Sv48",
-          "Sv57"
-        ],
+        "extensions": ["S", "Sv32", "Sv39", "Sv48", "Sv57"],
         "params": [],
         "raw": {
           "extension": {
@@ -16826,10 +15877,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16845,9 +15893,7 @@
       "long_name": "Whether or not fetching an unimplemented instruction causes a trap",
       "description": "Options:\n\n  * true: Accessing an unimplemented CSR (via a `Zicsr` instruction) will cause an IllegalInstruction exception.\n  * false: Accessing an unimplemented CSR (via a `Zicsr` instruction) will cause unpredictable behavior.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -16859,10 +15905,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16878,9 +15921,7 @@
       "long_name": "Whether or not fetching an unimplemented instruction causes a trap",
       "description": "Options:\n\n  * true: Fetching an unimplemented instruction will cause an IllegalInstruction exception.\n  * false: Fetching an unimplemented instruction causes unpredictable behavior.\n\nAn unimplemented instruction is any instruction encoding that is not defined by the implementation.\nCustom instructions are considered implemented.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -16892,10 +15933,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": false,
@@ -16911,9 +15949,7 @@
       "long_name": "TODO",
       "description": "Set of XLENs supported in U-mode. When both 32 and 64 are supported, SXLEN can be changed,\nvia mstatus.UXL, between 32 and 64.",
       "defined_by": {
-        "extensions": [
-          "U"
-        ],
+        "extensions": ["U"],
         "params": [],
         "raw": {
           "extension": {
@@ -16925,10 +15961,7 @@
       "value_type": {
         "type": "set",
         "details": {
-          "universe": [
-            32,
-            64
-          ],
+          "universe": [32, 64],
           "min_items": 1,
           "max_items": 2
         }
@@ -16957,9 +15990,7 @@
       "long_name": "TODO",
       "description": "Endianness of data in U-mode. Can be one of:\n\n * little:  U-mode data is always little endian\n * big:     U-mode data is always big endian\n * dynamic: U-mode data can be either little or big endian,\n            depending on the CSR field `mstatus.UBE`",
       "defined_by": {
-        "extensions": [
-          "U"
-        ],
+        "extensions": ["U"],
         "params": [],
         "raw": {
           "extension": {
@@ -16971,11 +16002,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "little",
-            "big",
-            "dynamic"
-          ]
+          "values": ["little", "big", "dynamic"]
         }
       },
       "has_requirements": false,
@@ -17002,9 +16029,7 @@
       "long_name": "JEDEC Vendor ID bank, for `mvendorid`.",
       "description": "Encodes the number of one-byte continuation codes in the Bank field of `mvendorid`.\n\niN JEDEC’s parlance, the bank number is one greater than the number of continuation codes; hence, the mvendorid Bank field encodes a value that is one less than the JEDEC bank number.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -17039,9 +16064,7 @@
       "long_name": "JEDEC Vendor ID offset, for `mvendorid`.",
       "description": "Encodes the final byte of a JEDEC manufactor ID, discarding the parity bit.",
       "defined_by": {
-        "extensions": [
-          "Sm"
-        ],
+        "extensions": ["Sm"],
         "params": [],
         "raw": {
           "extension": {
@@ -17076,9 +16099,7 @@
       "long_name": "TODO",
       "description": "The number of bits in a single vector register.",
       "defined_by": {
-        "extensions": [
-          "V"
-        ],
+        "extensions": ["V"],
         "params": [],
         "raw": {
           "extension": {
@@ -17117,9 +16138,7 @@
       "long_name": "TODO",
       "description": "Number of bits supported in `hgatp.VMID` (i.e., the supported width of a virtual machine ID).",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -17184,9 +16203,7 @@
       "long_name": "TODO",
       "description": "Whether or not writing mode=Bare is supported in the `vsatp` register.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -17198,10 +16215,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -17217,9 +16231,7 @@
       "long_name": "TODO",
       "description": "Whether or not `vstvec.MODE` supports Direct (0).",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -17231,10 +16243,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -17256,9 +16265,7 @@
       "long_name": "TODO",
       "description": "Whether or not `stvec.MODE` supports Vectored (1).",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -17270,10 +16277,7 @@
       "value_type": {
         "type": "binary",
         "details": {
-          "choices": [
-            true,
-            false
-          ]
+          "choices": [true, false]
         }
       },
       "has_requirements": true,
@@ -17295,9 +16299,7 @@
       "long_name": "TODO",
       "description": "Set of XLENs supported in VS-mode. Can be one of:\n\n  * [32]:     VSXLEN is always 32\n  * [64]:     VSXLEN is always 64\n  * [32, 64]: VSXLEN can be changed (via `hstatus.VSXL`) between 32 and 64",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -17309,10 +16311,7 @@
       "value_type": {
         "type": "set",
         "details": {
-          "universe": [
-            32,
-            64
-          ],
+          "universe": [32, 64],
           "min_items": 1,
           "max_items": 2
         }
@@ -17346,9 +16345,7 @@
       "long_name": "TODO",
       "description": "Endianness of data in VS-mode. Can be one of:\n\n * little:  VS-mode data is always little endian\n * big:     VS-mode data is always big endian\n * dynamic: VS-mode data can be either little or big endian,\n            depending on the CSR field `hstatus.VSBE`",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -17360,11 +16357,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "little",
-            "big",
-            "dynamic"
-          ]
+          "values": ["little", "big", "dynamic"]
         }
       },
       "has_requirements": false,
@@ -17391,9 +16384,7 @@
       "long_name": "TODO",
       "description": "Set of XLENs supported in VU-mode. When both 32 and 64 are supported, VUXLEN can be changed\nvia `vsstatus.UXL`.",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -17405,10 +16396,7 @@
       "value_type": {
         "type": "set",
         "details": {
-          "universe": [
-            32,
-            64
-          ],
+          "universe": [32, 64],
           "min_items": 1,
           "max_items": 2
         }
@@ -17437,9 +16425,7 @@
       "long_name": "TODO",
       "description": "Endianness of data in VU-mode. Can be one of:\n\n * little:  VU-mode data is always little endian\n * big:     VU-mode data is always big endian\n * dynamic: VU-mode data can be either little or big endian,\n            depending on the CSR field `vsstatus.UBE`",
       "defined_by": {
-        "extensions": [
-          "H"
-        ],
+        "extensions": ["H"],
         "params": [],
         "raw": {
           "extension": {
@@ -17451,11 +16437,7 @@
       "value_type": {
         "type": "enum",
         "details": {
-          "values": [
-            "little",
-            "big",
-            "dynamic"
-          ]
+          "values": ["little", "big", "dynamic"]
         }
       },
       "has_requirements": false,

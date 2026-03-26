@@ -92,10 +92,7 @@
       "candidates": [
         {
           "score": 5,
-          "reasons": [
-            "Description keyword 'ASID'",
-            "Name segment 'ASID'"
-          ],
+          "reasons": ["Description keyword 'ASID'", "Name segment 'ASID'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -105,10 +102,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'ASID'",
-            "Name segment 'ASID'"
-          ],
+          "reasons": ["Description keyword 'ASID'", "Name segment 'ASID'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -118,10 +112,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'ASID'",
-            "Name segment 'ASID'"
-          ],
+          "reasons": ["Description keyword 'ASID'", "Name segment 'ASID'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -131,10 +122,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'ASID'",
-            "Name segment 'ASID'"
-          ],
+          "reasons": ["Description keyword 'ASID'", "Name segment 'ASID'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -144,10 +132,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'ASID'",
-            "Name segment 'ASID'"
-          ],
+          "reasons": ["Description keyword 'ASID'", "Name segment 'ASID'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -180,10 +165,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'BLOCK'",
-            "Name segment 'CACHE'"
-          ],
+          "reasons": ["Name segment 'BLOCK'", "Name segment 'CACHE'"],
           "is_normative": true,
           "in_note": false,
           "file": "cmo.adoc",
@@ -193,10 +175,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'BLOCK'",
-            "Name segment 'CACHE'"
-          ],
+          "reasons": ["Name segment 'BLOCK'", "Name segment 'CACHE'"],
           "is_normative": true,
           "in_note": false,
           "file": "cmo.adoc",
@@ -206,10 +185,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'BLOCK'",
-            "Name segment 'CACHE'"
-          ],
+          "reasons": ["Name segment 'BLOCK'", "Name segment 'CACHE'"],
           "is_normative": true,
           "in_note": false,
           "file": "cmo.adoc",
@@ -219,10 +195,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'BLOCK'",
-            "Name segment 'CACHE'"
-          ],
+          "reasons": ["Name segment 'BLOCK'", "Name segment 'CACHE'"],
           "is_normative": true,
           "in_note": false,
           "file": "cmo.adoc",
@@ -409,9 +382,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "CSR name 'mcontext' in backticks"
-          ],
+          "reasons": ["CSR name 'mcontext' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-csrs.adoc",
@@ -472,9 +443,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "CSR field name 'DATA'"
-          ],
+          "reasons": ["CSR field name 'DATA'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -484,9 +453,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "CSR field name 'DATA'"
-          ],
+          "reasons": ["CSR field name 'DATA'"],
           "is_normative": true,
           "in_note": false,
           "file": "smctr.adoc",
@@ -505,10 +472,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -518,10 +482,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -531,10 +492,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-csrs.adoc",
@@ -544,9 +502,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'DCSR'"
-          ],
+          "reasons": ["Name segment 'DCSR'"],
           "is_normative": true,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -565,10 +521,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -578,10 +531,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -591,10 +541,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-csrs.adoc",
@@ -604,9 +551,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'DCSR'"
-          ],
+          "reasons": ["Name segment 'DCSR'"],
           "is_normative": true,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -625,10 +570,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -638,10 +580,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -651,10 +590,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-csrs.adoc",
@@ -664,9 +600,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'DCSR'"
-          ],
+          "reasons": ["Name segment 'DCSR'"],
           "is_normative": true,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -685,10 +619,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -698,10 +629,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -711,10 +639,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'DCSR'",
-            "CSR name 'dcsr' in backticks"
-          ],
+          "reasons": ["Name segment 'DCSR'", "CSR name 'dcsr' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-csrs.adoc",
@@ -724,9 +649,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'DCSR'"
-          ],
+          "reasons": ["Name segment 'DCSR'"],
           "is_normative": true,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -745,10 +668,7 @@
       "candidates": [
         {
           "score": 9,
-          "reasons": [
-            "Exact parameter name 'ELEN'",
-            "Name segment 'ELEN'"
-          ],
+          "reasons": ["Exact parameter name 'ELEN'", "Name segment 'ELEN'"],
           "is_normative": true,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -758,10 +678,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Exact parameter name 'ELEN'",
-            "Name segment 'ELEN'"
-          ],
+          "reasons": ["Exact parameter name 'ELEN'", "Name segment 'ELEN'"],
           "is_normative": true,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -771,9 +688,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "Parameter name in emphasis '_ELEN_'"
-          ],
+          "reasons": ["Parameter name in emphasis '_ELEN_'"],
           "is_normative": true,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -783,10 +698,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Exact parameter name 'ELEN'",
-            "Name segment 'ELEN'"
-          ],
+          "reasons": ["Exact parameter name 'ELEN'", "Name segment 'ELEN'"],
           "is_normative": false,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -796,10 +708,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Exact parameter name 'ELEN'",
-            "Name segment 'ELEN'"
-          ],
+          "reasons": ["Exact parameter name 'ELEN'", "Name segment 'ELEN'"],
           "is_normative": false,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -936,10 +845,7 @@
         },
         {
           "score": 12,
-          "reasons": [
-            "Description keyword 'CBIE'",
-            "CSR field name 'CBIE'"
-          ],
+          "reasons": ["Description keyword 'CBIE'", "CSR field name 'CBIE'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -964,10 +870,7 @@
         },
         {
           "score": 12,
-          "reasons": [
-            "Description keyword 'CBIE'",
-            "CSR field name 'CBIE'"
-          ],
+          "reasons": ["Description keyword 'CBIE'", "CSR field name 'CBIE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1079,9 +982,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -1091,9 +992,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1103,9 +1002,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1115,9 +1012,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1243,10 +1138,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'CY'",
-            "Description keyword 'IR'"
-          ],
+          "reasons": ["Description keyword 'CY'", "Description keyword 'IR'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1306,9 +1198,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "CSR field name 'EVENT'"
-          ],
+          "reasons": ["CSR field name 'EVENT'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1318,9 +1208,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "CSR field name 'EVENT'"
-          ],
+          "reasons": ["CSR field name 'EVENT'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1330,9 +1218,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "CSR field name 'EVENT'"
-          ],
+          "reasons": ["CSR field name 'EVENT'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1342,9 +1228,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "CSR field name 'EVENT'"
-          ],
+          "reasons": ["CSR field name 'EVENT'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1445,10 +1329,7 @@
       "candidates": [
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1458,10 +1339,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1471,10 +1349,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1484,10 +1359,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1497,10 +1369,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1519,10 +1388,7 @@
       "candidates": [
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -1532,10 +1398,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "riscv-unprivileged.adoc",
@@ -1545,10 +1408,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1558,10 +1418,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1571,10 +1428,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1593,10 +1447,7 @@
       "candidates": [
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1606,10 +1457,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1619,10 +1467,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1632,10 +1477,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1645,10 +1487,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -1667,9 +1506,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'JVT'"
-          ],
+          "reasons": ["Description keyword 'JVT'"],
           "is_normative": true,
           "in_note": false,
           "file": "zc.adoc",
@@ -1955,9 +1792,7 @@
         },
         {
           "score": 5,
-          "reasons": [
-            "CSR name 'mimpid' in backticks"
-          ],
+          "reasons": ["CSR name 'mimpid' in backticks"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -1980,9 +1815,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "CSR field name 'Implementation'"
-          ],
+          "reasons": ["CSR field name 'Implementation'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -1992,9 +1825,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "CSR field name 'Implementation'"
-          ],
+          "reasons": ["CSR field name 'Implementation'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2013,10 +1844,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "c-st-ext.adoc",
@@ -2026,10 +1854,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "cmo.adoc",
@@ -2039,10 +1864,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2052,10 +1874,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2065,10 +1884,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2087,10 +1903,7 @@
       "candidates": [
         {
           "score": 10,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "c-st-ext.adoc",
@@ -2100,10 +1913,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "cmo.adoc",
@@ -2113,10 +1923,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2126,10 +1933,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2139,10 +1943,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'BASE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'BASE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2161,10 +1962,7 @@
       "candidates": [
         {
           "score": 6,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "Description keyword 'JVT'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "Description keyword 'JVT'"],
           "is_normative": true,
           "in_note": false,
           "file": "zc.adoc",
@@ -2174,10 +1972,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "CSR field name 'BASE'",
-            "CSR field name 'MODE'"
-          ],
+          "reasons": ["CSR field name 'BASE'", "CSR field name 'MODE'"],
           "is_normative": true,
           "in_note": false,
           "file": "zc.adoc",
@@ -2235,10 +2030,7 @@
       "candidates": [
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'FAIL'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Name segment 'FAIL'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2248,10 +2040,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'FAIL'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Name segment 'FAIL'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2261,10 +2050,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'FAIL'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Name segment 'FAIL'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2274,10 +2060,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'FAIL'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Name segment 'FAIL'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2287,9 +2070,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -2322,10 +2103,7 @@
         },
         {
           "score": 5,
-          "reasons": [
-            "Description keyword 'sc.d'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Description keyword 'sc.d'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2386,10 +2164,7 @@
       "candidates": [
         {
           "score": 12,
-          "reasons": [
-            "Description keyword 'LR'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Description keyword 'LR'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2399,10 +2174,7 @@
         },
         {
           "score": 12,
-          "reasons": [
-            "Description keyword 'LR'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Description keyword 'LR'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2412,10 +2184,7 @@
         },
         {
           "score": 12,
-          "reasons": [
-            "Description keyword 'LR'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Description keyword 'LR'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2425,10 +2194,7 @@
         },
         {
           "score": 12,
-          "reasons": [
-            "Description keyword 'LR'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Description keyword 'LR'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2438,10 +2204,7 @@
         },
         {
           "score": 12,
-          "reasons": [
-            "Description keyword 'LR'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Description keyword 'LR'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2520,10 +2283,7 @@
         },
         {
           "score": 16,
-          "reasons": [
-            "Description keyword 'LR'",
-            "Description keyword 'SC'"
-          ],
+          "reasons": ["Description keyword 'LR'", "Description keyword 'SC'"],
           "is_normative": false,
           "in_note": false,
           "file": "a-st-ext.adoc",
@@ -2714,9 +2474,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -2726,9 +2484,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2738,9 +2494,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2750,9 +2504,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2848,10 +2600,7 @@
       "candidates": [
         {
           "score": 9,
-          "reasons": [
-            "Description keyword 'mimpid'",
-            "Name segment 'MIMPID'"
-          ],
+          "reasons": ["Description keyword 'mimpid'", "Name segment 'MIMPID'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -2861,10 +2610,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Description keyword 'mimpid'",
-            "Name segment 'MIMPID'"
-          ],
+          "reasons": ["Description keyword 'mimpid'", "Name segment 'MIMPID'"],
           "is_normative": false,
           "in_note": false,
           "file": "machine.adoc",
@@ -2874,10 +2620,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Description keyword 'mimpid'",
-            "Name segment 'MIMPID'"
-          ],
+          "reasons": ["Description keyword 'mimpid'", "Name segment 'MIMPID'"],
           "is_normative": false,
           "in_note": false,
           "file": "machine.adoc",
@@ -2887,10 +2630,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Description keyword 'mimpid'",
-            "Name segment 'MIMPID'"
-          ],
+          "reasons": ["Description keyword 'mimpid'", "Name segment 'MIMPID'"],
           "is_normative": false,
           "in_note": false,
           "file": "machine.adoc",
@@ -2900,10 +2640,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Description keyword 'mimpid'",
-            "Name segment 'MIMPID'"
-          ],
+          "reasons": ["Description keyword 'mimpid'", "Name segment 'MIMPID'"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-csrs.adoc",
@@ -3352,10 +3089,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'MISA'",
-            "Description keyword 'misa'"
-          ],
+          "reasons": ["Name segment 'MISA'", "Description keyword 'misa'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -3365,10 +3099,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'MISA'",
-            "Description keyword 'misa'"
-          ],
+          "reasons": ["Name segment 'MISA'", "Description keyword 'misa'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -3469,10 +3200,7 @@
       "candidates": [
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3482,10 +3210,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3495,10 +3220,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3508,10 +3230,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3521,10 +3240,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'CSRIND'",
-            "Name segment 'CSRIND'"
-          ],
+          "reasons": ["Description keyword 'CSRIND'", "Name segment 'CSRIND'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3543,10 +3259,7 @@
       "candidates": [
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -3556,10 +3269,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "riscv-unprivileged.adoc",
@@ -3569,10 +3279,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3582,10 +3289,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3595,10 +3299,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ENVCFG'",
-            "Description keyword 'ENVCFG'"
-          ],
+          "reasons": ["Name segment 'ENVCFG'", "Description keyword 'ENVCFG'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3617,10 +3318,7 @@
       "candidates": [
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3630,10 +3328,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3643,10 +3338,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3656,10 +3348,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3669,10 +3358,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Description keyword 'IMSIC'",
-            "Name segment 'IMSIC'"
-          ],
+          "reasons": ["Description keyword 'IMSIC'", "Name segment 'IMSIC'"],
           "is_normative": false,
           "in_note": false,
           "file": "smstateen.adoc",
@@ -3691,9 +3377,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'JVT'"
-          ],
+          "reasons": ["Description keyword 'JVT'"],
           "is_normative": true,
           "in_note": false,
           "file": "zc.adoc",
@@ -3955,10 +3639,7 @@
       "candidates": [
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -3968,10 +3649,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -3981,10 +3659,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -3994,10 +3669,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -4007,10 +3679,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -4110,10 +3779,7 @@
       "candidates": [
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'mtvec'",
-            "Name segment 'MTVEC'"
-          ],
+          "reasons": ["Description keyword 'mtvec'", "Name segment 'MTVEC'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -4123,10 +3789,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'mtvec'",
-            "Name segment 'MTVEC'"
-          ],
+          "reasons": ["Description keyword 'mtvec'", "Name segment 'MTVEC'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -4136,10 +3799,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'mtvec'",
-            "Name segment 'MTVEC'"
-          ],
+          "reasons": ["Description keyword 'mtvec'", "Name segment 'MTVEC'"],
           "is_normative": false,
           "in_note": false,
           "file": "machine.adoc",
@@ -4149,10 +3809,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'mtvec'",
-            "Name segment 'MTVEC'"
-          ],
+          "reasons": ["Description keyword 'mtvec'", "Name segment 'MTVEC'"],
           "is_normative": false,
           "in_note": false,
           "file": "machine.adoc",
@@ -4162,10 +3819,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'mtvec'",
-            "Name segment 'MTVEC'"
-          ],
+          "reasons": ["Description keyword 'mtvec'", "Name segment 'MTVEC'"],
           "is_normative": false,
           "in_note": false,
           "file": "machine.adoc",
@@ -4199,10 +3853,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'mtvec'",
-            "Name segment 'MTVEC'"
-          ],
+          "reasons": ["Description keyword 'mtvec'", "Name segment 'MTVEC'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -4212,10 +3863,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'mtvec'",
-            "Name segment 'MTVEC'"
-          ],
+          "reasons": ["Description keyword 'mtvec'", "Name segment 'MTVEC'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -4238,10 +3886,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'mtvec'",
-            "Name segment 'MTVEC'"
-          ],
+          "reasons": ["Description keyword 'mtvec'", "Name segment 'MTVEC'"],
           "is_normative": false,
           "in_note": false,
           "file": "machine.adoc",
@@ -4579,10 +4224,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Description keyword 'B'",
-            "CSR field name 'B'"
-          ],
+          "reasons": ["Description keyword 'B'", "CSR field name 'B'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -5564,9 +5206,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'NOTE'"
-          ],
+          "reasons": ["Description keyword 'NOTE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -5576,9 +5216,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'NOTE'"
-          ],
+          "reasons": ["Description keyword 'NOTE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -5588,9 +5226,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'NOTE'"
-          ],
+          "reasons": ["Description keyword 'NOTE'"],
           "is_normative": true,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -5600,9 +5236,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'NOTE'"
-          ],
+          "reasons": ["Description keyword 'NOTE'"],
           "is_normative": true,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -5612,9 +5246,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'NOTE'"
-          ],
+          "reasons": ["Description keyword 'NOTE'"],
           "is_normative": true,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -5633,10 +5265,7 @@
       "candidates": [
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ADDR'",
-            "CSR field name 'ADDR'"
-          ],
+          "reasons": ["Name segment 'ADDR'", "CSR field name 'ADDR'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5646,10 +5275,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ADDR'",
-            "CSR field name 'ADDR'"
-          ],
+          "reasons": ["Name segment 'ADDR'", "CSR field name 'ADDR'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5659,10 +5285,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ADDR'",
-            "CSR field name 'ADDR'"
-          ],
+          "reasons": ["Name segment 'ADDR'", "CSR field name 'ADDR'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5672,10 +5295,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ADDR'",
-            "CSR field name 'ADDR'"
-          ],
+          "reasons": ["Name segment 'ADDR'", "CSR field name 'ADDR'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5685,10 +5305,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'ADDR'",
-            "CSR field name 'ADDR'"
-          ],
+          "reasons": ["Name segment 'ADDR'", "CSR field name 'ADDR'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5781,10 +5398,7 @@
       "candidates": [
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'PMLEN'",
-            "Exact parameter name 'PMLEN'"
-          ],
+          "reasons": ["Name segment 'PMLEN'", "Exact parameter name 'PMLEN'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5794,10 +5408,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'PMLEN'",
-            "Exact parameter name 'PMLEN'"
-          ],
+          "reasons": ["Name segment 'PMLEN'", "Exact parameter name 'PMLEN'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5807,10 +5418,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'PMLEN'",
-            "Exact parameter name 'PMLEN'"
-          ],
+          "reasons": ["Name segment 'PMLEN'", "Exact parameter name 'PMLEN'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5820,10 +5428,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'PMLEN'",
-            "Exact parameter name 'PMLEN'"
-          ],
+          "reasons": ["Name segment 'PMLEN'", "Exact parameter name 'PMLEN'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5833,10 +5438,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'PMLEN'",
-            "Exact parameter name 'PMLEN'"
-          ],
+          "reasons": ["Name segment 'PMLEN'", "Exact parameter name 'PMLEN'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -5894,9 +5496,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "CSR name 'pmpcfg14' in backticks"
-          ],
+          "reasons": ["CSR name 'pmpcfg14' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "machine.adoc",
@@ -5980,9 +5580,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'EXCEPTIONS'"
-          ],
+          "reasons": ["Name segment 'EXCEPTIONS'"],
           "is_normative": true,
           "in_note": false,
           "file": "cmo.adoc",
@@ -6097,10 +5695,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -6176,10 +5771,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -6241,10 +5833,7 @@
       "candidates": [
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -6320,10 +5909,7 @@
       "candidates": [
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -6399,10 +5985,7 @@
       "candidates": [
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6412,10 +5995,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6425,10 +6005,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6438,10 +6015,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6451,10 +6025,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6473,10 +6044,7 @@
       "candidates": [
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6486,10 +6054,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6499,10 +6064,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6512,10 +6074,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6525,10 +6084,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6718,10 +6274,7 @@
       "candidates": [
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6731,10 +6284,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6744,10 +6294,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6757,10 +6304,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6770,10 +6314,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6820,10 +6361,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6833,10 +6371,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6846,10 +6381,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6911,10 +6443,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'HTVAL'",
-            "Description keyword 'htval'"
-          ],
+          "reasons": ["Name segment 'HTVAL'", "Description keyword 'htval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -6924,10 +6453,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'HTVAL'",
-            "Description keyword 'htval'"
-          ],
+          "reasons": ["Name segment 'HTVAL'", "Description keyword 'htval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -7610,10 +7136,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -7704,10 +7227,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -7783,10 +7303,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -7847,10 +7364,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -7940,10 +7454,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -8019,10 +7530,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Description keyword 'mtval'",
-            "Name segment 'MTVAL'"
-          ],
+          "reasons": ["Description keyword 'mtval'", "Name segment 'MTVAL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -8100,10 +7608,7 @@
         },
         {
           "score": 12,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -8127,10 +7632,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -8402,10 +7904,7 @@
       "candidates": [
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -8496,10 +7995,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -8537,10 +8033,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -8574,10 +8067,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -8638,10 +8128,7 @@
       "candidates": [
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -8731,10 +8218,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -8772,10 +8256,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -8809,10 +8290,7 @@
         },
         {
           "score": 9,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -8850,10 +8328,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -8872,10 +8347,7 @@
       "candidates": [
         {
           "score": 10,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -8885,10 +8357,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -8898,10 +8367,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -8911,10 +8377,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -8924,10 +8387,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9006,10 +8466,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9137,10 +8594,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9150,10 +8604,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9163,10 +8614,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9199,10 +8647,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9212,10 +8657,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9225,10 +8667,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9238,10 +8677,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9260,10 +8696,7 @@
       "candidates": [
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9273,10 +8706,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9286,10 +8716,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9299,10 +8726,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9312,10 +8736,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9334,10 +8755,7 @@
       "candidates": [
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9347,10 +8765,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9360,10 +8775,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9373,10 +8785,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9386,10 +8795,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9422,10 +8828,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9435,10 +8838,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9448,10 +8848,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9461,10 +8858,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9483,10 +8877,7 @@
       "candidates": [
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9496,10 +8887,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9509,10 +8897,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9522,10 +8907,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9535,10 +8917,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9557,10 +8936,7 @@
       "candidates": [
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9570,10 +8946,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9583,10 +8956,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9596,10 +8966,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9609,10 +8976,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'VSTVAL'",
-            "Description keyword 'vstval'"
-          ],
+          "reasons": ["Name segment 'VSTVAL'", "Description keyword 'vstval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9880,9 +9244,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'JVT'"
-          ],
+          "reasons": ["Description keyword 'JVT'"],
           "is_normative": true,
           "in_note": false,
           "file": "zc.adoc",
@@ -9901,10 +9263,7 @@
       "candidates": [
         {
           "score": 6,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -9914,10 +9273,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9927,10 +9283,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9940,10 +9293,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -9953,10 +9303,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'STVAL'",
-            "Description keyword 'stval'"
-          ],
+          "reasons": ["Name segment 'STVAL'", "Description keyword 'stval'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -10169,10 +9516,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'hgatp'",
-            "CSR name 'hgatp' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'hgatp'", "CSR name 'hgatp' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -10329,10 +9673,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'hgatp'",
-            "CSR name 'hgatp' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'hgatp'", "CSR name 'hgatp' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -10473,10 +9814,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'hgatp'",
-            "CSR name 'hgatp' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'hgatp'", "CSR name 'hgatp' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -10632,10 +9970,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'hgatp'",
-            "CSR name 'hgatp' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'hgatp'", "CSR name 'hgatp' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -10804,9 +10139,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "Parameter name in emphasis '_SXLEN_'"
-          ],
+          "reasons": ["Parameter name in emphasis '_SXLEN_'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -10816,10 +10149,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'SXLEN'",
-            "Exact parameter name 'SXLEN'"
-          ],
+          "reasons": ["Name segment 'SXLEN'", "Exact parameter name 'SXLEN'"],
           "is_normative": false,
           "in_note": false,
           "file": "indirect-csr.adoc",
@@ -10829,10 +10159,7 @@
         },
         {
           "score": 7,
-          "reasons": [
-            "Name segment 'SXLEN'",
-            "Exact parameter name 'SXLEN'"
-          ],
+          "reasons": ["Name segment 'SXLEN'", "Exact parameter name 'SXLEN'"],
           "is_normative": false,
           "in_note": false,
           "file": "indirect-csr.adoc",
@@ -11013,10 +10340,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11026,10 +10350,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11120,10 +10441,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11133,10 +10451,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11169,10 +10484,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11182,10 +10494,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11244,10 +10553,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11257,10 +10563,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11381,10 +10684,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11403,10 +10703,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11416,10 +10713,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11480,10 +10774,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11493,10 +10784,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11557,10 +10845,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11570,10 +10855,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11632,10 +10914,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11645,10 +10924,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11707,10 +10983,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11720,10 +10993,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11782,10 +11052,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11795,10 +11062,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11859,10 +11123,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11872,10 +11133,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11936,10 +11194,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -11949,10 +11204,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -12011,10 +11263,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -12024,10 +11273,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -12147,10 +11393,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -12169,10 +11412,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "WARL + CSR 'htinst'",
-            "CSR name 'htinst' in backticks"
-          ],
+          "reasons": ["WARL + CSR 'htinst'", "CSR name 'htinst' in backticks"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -12182,10 +11422,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "CSR name 'mtinst' in backticks",
-            "WARL + CSR 'mtinst'"
-          ],
+          "reasons": ["CSR name 'mtinst' in backticks", "WARL + CSR 'mtinst'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -12244,9 +11481,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12256,9 +11491,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12268,9 +11501,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12280,9 +11511,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'EBREAK'"
-          ],
+          "reasons": ["Name segment 'EBREAK'"],
           "is_normative": true,
           "in_note": false,
           "file": "c-st-ext.adoc",
@@ -12292,9 +11521,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -12313,9 +11540,7 @@
       "candidates": [
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12325,9 +11550,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12337,9 +11560,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12349,9 +11570,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'FROM'"
-          ],
+          "reasons": ["Name segment 'FROM'"],
           "is_normative": true,
           "in_note": false,
           "file": "c-st-ext.adoc",
@@ -12361,9 +11580,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'FROM'"
-          ],
+          "reasons": ["Name segment 'FROM'"],
           "is_normative": true,
           "in_note": false,
           "file": "c-st-ext.adoc",
@@ -12382,10 +11599,7 @@
       "candidates": [
         {
           "score": 5,
-          "reasons": [
-            "Name segment 'ECALL'",
-            "Description keyword 'ECALL'"
-          ],
+          "reasons": ["Name segment 'ECALL'", "Description keyword 'ECALL'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12395,9 +11609,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12407,9 +11619,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12419,9 +11629,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12431,9 +11639,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'FROM'"
-          ],
+          "reasons": ["Name segment 'FROM'"],
           "is_normative": true,
           "in_note": false,
           "file": "c-st-ext.adoc",
@@ -12452,10 +11658,7 @@
       "candidates": [
         {
           "score": 5,
-          "reasons": [
-            "Name segment 'ECALL'",
-            "Description keyword 'ECALL'"
-          ],
+          "reasons": ["Name segment 'ECALL'", "Description keyword 'ECALL'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12465,9 +11668,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12477,9 +11678,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12489,9 +11688,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Description keyword 'EEI'"
-          ],
+          "reasons": ["Description keyword 'EEI'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12501,9 +11698,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Name segment 'FROM'"
-          ],
+          "reasons": ["Name segment 'FROM'"],
           "is_normative": true,
           "in_note": false,
           "file": "c-st-ext.adoc",
@@ -12535,10 +11730,7 @@
         },
         {
           "score": 5,
-          "reasons": [
-            "Name segment 'ECALL'",
-            "Description keyword 'ECALL'"
-          ],
+          "reasons": ["Name segment 'ECALL'", "Description keyword 'ECALL'"],
           "is_normative": true,
           "in_note": false,
           "file": "rv32.adoc",
@@ -12548,10 +11740,7 @@
         },
         {
           "score": 5,
-          "reasons": [
-            "Name segment 'FROM'",
-            "Description keyword 'VS'"
-          ],
+          "reasons": ["Name segment 'FROM'", "Description keyword 'VS'"],
           "is_normative": true,
           "in_note": false,
           "file": "smctr.adoc",
@@ -12561,10 +11750,7 @@
         },
         {
           "score": 5,
-          "reasons": [
-            "Name segment 'FROM'",
-            "Description keyword 'VS'"
-          ],
+          "reasons": ["Name segment 'FROM'", "Description keyword 'VS'"],
           "is_normative": true,
           "in_note": false,
           "file": "smctr.adoc",
@@ -12574,10 +11760,7 @@
         },
         {
           "score": 5,
-          "reasons": [
-            "Name segment 'FROM'",
-            "Description keyword 'VS'"
-          ],
+          "reasons": ["Name segment 'FROM'", "Description keyword 'VS'"],
           "is_normative": true,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -12596,9 +11779,7 @@
       "candidates": [
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -12608,9 +11789,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -12620,9 +11799,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -12632,9 +11809,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -12644,9 +11819,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -12825,9 +11998,7 @@
       "candidates": [
         {
           "score": 8,
-          "reasons": [
-            "Description keyword 'Zicsr'"
-          ],
+          "reasons": ["Description keyword 'Zicsr'"],
           "is_normative": true,
           "in_note": false,
           "file": "v-st-ext.adoc",
@@ -12837,9 +12008,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'Zicsr'"
-          ],
+          "reasons": ["Description keyword 'Zicsr'"],
           "is_normative": false,
           "in_note": false,
           "file": "counters.adoc",
@@ -12849,9 +12018,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'Zicsr'"
-          ],
+          "reasons": ["Description keyword 'Zicsr'"],
           "is_normative": false,
           "in_note": false,
           "file": "counters.adoc",
@@ -12861,9 +12028,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'Zicsr'"
-          ],
+          "reasons": ["Description keyword 'Zicsr'"],
           "is_normative": false,
           "in_note": false,
           "file": "f-st-ext.adoc",
@@ -12873,9 +12038,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'Zicsr'"
-          ],
+          "reasons": ["Description keyword 'Zicsr'"],
           "is_normative": false,
           "in_note": false,
           "file": "naming.adoc",
@@ -13026,9 +12189,7 @@
         },
         {
           "score": 8,
-          "reasons": [
-            "Parameter name in emphasis '_UXLEN_'"
-          ],
+          "reasons": ["Parameter name in emphasis '_UXLEN_'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -13089,10 +12250,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "CSR field name 'UBE'",
-            "Description keyword 'UBE'"
-          ],
+          "reasons": ["CSR field name 'UBE'", "Description keyword 'UBE'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -13102,10 +12260,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "CSR field name 'UBE'",
-            "Description keyword 'UBE'"
-          ],
+          "reasons": ["CSR field name 'UBE'", "Description keyword 'UBE'"],
           "is_normative": true,
           "in_note": false,
           "file": "supervisor.adoc",
@@ -13180,9 +12335,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "Description keyword 'JEDEC'"
-          ],
+          "reasons": ["Description keyword 'JEDEC'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -13242,10 +12395,7 @@
         },
         {
           "score": 5,
-          "reasons": [
-            "CSR field name 'Offset'",
-            "Name segment 'OFFSET'"
-          ],
+          "reasons": ["CSR field name 'Offset'", "Name segment 'OFFSET'"],
           "is_normative": true,
           "in_note": false,
           "file": "c-st-ext.adoc",
@@ -13255,10 +12405,7 @@
         },
         {
           "score": 5,
-          "reasons": [
-            "CSR field name 'Offset'",
-            "Name segment 'OFFSET'"
-          ],
+          "reasons": ["CSR field name 'Offset'", "Name segment 'OFFSET'"],
           "is_normative": true,
           "in_note": false,
           "file": "c-st-ext.adoc",
@@ -13441,10 +12588,7 @@
       "candidates": [
         {
           "score": 6,
-          "reasons": [
-            "Name segment 'BARE'",
-            "Description keyword 'vsatp'"
-          ],
+          "reasons": ["Name segment 'BARE'", "Description keyword 'vsatp'"],
           "is_normative": true,
           "in_note": false,
           "file": "priv-cfi.adoc",
@@ -13454,9 +12598,7 @@
         },
         {
           "score": 5,
-          "reasons": [
-            "Description keyword 'vsatp'"
-          ],
+          "reasons": ["Description keyword 'vsatp'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -13466,10 +12608,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'BARE'",
-            "Description keyword 'vsatp'"
-          ],
+          "reasons": ["Name segment 'BARE'", "Description keyword 'vsatp'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -13479,10 +12618,7 @@
         },
         {
           "score": 4,
-          "reasons": [
-            "Name segment 'BARE'",
-            "Description keyword 'vsatp'"
-          ],
+          "reasons": ["Name segment 'BARE'", "Description keyword 'vsatp'"],
           "is_normative": false,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -13492,9 +12628,7 @@
         },
         {
           "score": 3,
-          "reasons": [
-            "Optional/read-only pattern for boolean param"
-          ],
+          "reasons": ["Optional/read-only pattern for boolean param"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -13876,10 +13010,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "CSR field name 'UXL'",
-            "Description keyword 'UXL'"
-          ],
+          "reasons": ["CSR field name 'UXL'", "Description keyword 'UXL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -13889,10 +13020,7 @@
         },
         {
           "score": 6,
-          "reasons": [
-            "CSR field name 'UXL'",
-            "Description keyword 'UXL'"
-          ],
+          "reasons": ["CSR field name 'UXL'", "Description keyword 'UXL'"],
           "is_normative": true,
           "in_note": false,
           "file": "machine.adoc",
@@ -13911,9 +13039,7 @@
       "candidates": [
         {
           "score": 10,
-          "reasons": [
-            "Description keyword 'VU'"
-          ],
+          "reasons": ["Description keyword 'VU'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -13923,9 +13049,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "Description keyword 'VU'"
-          ],
+          "reasons": ["Description keyword 'VU'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -13935,9 +13059,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "Description keyword 'VU'"
-          ],
+          "reasons": ["Description keyword 'VU'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -13947,9 +13069,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "Description keyword 'VU'"
-          ],
+          "reasons": ["Description keyword 'VU'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",
@@ -13959,9 +13079,7 @@
         },
         {
           "score": 10,
-          "reasons": [
-            "Description keyword 'VU'"
-          ],
+          "reasons": ["Description keyword 'VU'"],
           "is_normative": true,
           "in_note": false,
           "file": "hypervisor.adoc",

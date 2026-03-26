@@ -39,6 +39,7 @@ CONTEXT_LIMITS: dict[str, int] = {
 RESERVED_OUTPUT_TOKENS = 4_096
 SYSTEM_OVERHEAD_TOKENS = 200
 
+
 class ChunkMeta(TypedDict):
     file: str
     start_line: int
@@ -72,11 +73,7 @@ def load_udb_param_names() -> list[str]:
     path = DATA_DIR / "udb_param_names.txt"
     if not path.exists():
         raise FileNotFoundError(f"UDB param names not found: {path}")
-    names = [
-        line.strip()
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+    names = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
     return sorted(set(names))
 
 
@@ -126,9 +123,7 @@ def format_param_names_section(names: list[str]) -> str:
     return "\n".join(lines)
 
 
-def format_chunk_section(
-    chunk_text: str, meta: ChunkMeta
-) -> str:
+def format_chunk_section(chunk_text: str, meta: ChunkMeta) -> str:
     """Format the spec chunk with metadata for the LLM."""
     lines = [
         "## Specification Text to Analyze",
@@ -210,8 +205,12 @@ def detect_section_boundaries(lines: list[str]) -> list[int]:
     boundaries = []
     for i, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.startswith("== ") or stripped.startswith("=== ") or \
-           stripped.startswith("==== ") or stripped.startswith("===== "):
+        if (
+            stripped.startswith("== ")
+            or stripped.startswith("=== ")
+            or stripped.startswith("==== ")
+            or stripped.startswith("===== ")
+        ):
             boundaries.append(i)
     return boundaries
 
@@ -253,7 +252,7 @@ def chunk_spec_file(
             candidate_sections = [current_start]
 
         chunk_end = current_start
-        for i, sec_start in enumerate(candidate_sections):
+        for i, _sec_start in enumerate(candidate_sections):
             next_boundary = (
                 candidate_sections[i + 1] if i + 1 < len(candidate_sections) else total_lines
             )
@@ -263,7 +262,9 @@ def chunk_spec_file(
             chunk_end = next_boundary
 
         if chunk_end <= current_start:
-            chunk_end = min(current_start + int(max_chunk_tokens * CHARS_PER_TOKEN / 80), total_lines)
+            chunk_end = min(
+                current_start + int(max_chunk_tokens * CHARS_PER_TOKEN / 80), total_lines
+            )
 
         chunk_text = "".join(lines[current_start:chunk_end])
         chunk_index += 1
@@ -359,11 +360,13 @@ def cmd_chunk(args: argparse.Namespace) -> None:
     if args.output_json:
         output = []
         for chunk_text, meta in chunks:
-            output.append({
-                "meta": meta,
-                "text": chunk_text if args.include_text else None,
-                "estimated_tokens": estimate_tokens(chunk_text),
-            })
+            output.append(
+                {
+                    "meta": meta,
+                    "text": chunk_text if args.include_text else None,
+                    "estimated_tokens": estimate_tokens(chunk_text),
+                }
+            )
         json.dump(output, sys.stdout, indent=2)
         print()
     else:
@@ -409,7 +412,9 @@ def cmd_estimate(args: argparse.Namespace) -> None:
     print("Available for spec chunk per model:")
     for model, limit in sorted(CONTEXT_LIMITS.items()):
         available = limit - fixed_total - RESERVED_OUTPUT_TOKENS
-        print(f"  {model:<25s} {available:>8,} tokens (~{int(available * CHARS_PER_TOKEN):,} chars)")
+        print(
+            f"  {model:<25s} {available:>8,} tokens (~{int(available * CHARS_PER_TOKEN):,} chars)"
+        )
 
 
 def main() -> None:

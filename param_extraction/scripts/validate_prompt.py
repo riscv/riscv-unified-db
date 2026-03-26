@@ -23,15 +23,27 @@ DATA_DIR = PROJECT_DIR / "data"
 SPEC_DIR = PROJECT_DIR.parent / "ext" / "riscv-isa-manual" / "src"
 
 EXPECTED_CLASSES = {
-    "NORM_DIRECT", "NORM_CSR_WARL", "NORM_CSR_RW", "SW_RULE",
-    "NON_ISA", "NON_NORM", "DOC_RULE", "UNKNOWN",
+    "NORM_DIRECT",
+    "NORM_CSR_WARL",
+    "NORM_CSR_RW",
+    "SW_RULE",
+    "NON_ISA",
+    "NON_NORM",
+    "DOC_RULE",
+    "UNKNOWN",
 }
 
 EXPECTED_VALUE_TYPES = {"binary", "enum", "range", "set", "bitmask", "value"}
 
 REQUIRED_OUTPUT_FIELDS = {
-    "excerpt", "line_number", "parameter_name", "existing_udb_name",
-    "class", "value_type", "confidence", "reasoning",
+    "excerpt",
+    "line_number",
+    "parameter_name",
+    "existing_udb_name",
+    "class",
+    "value_type",
+    "confidence",
+    "reasoning",
 }
 
 errors: list[str] = []
@@ -96,9 +108,9 @@ def validate_examples() -> None:
 
     classes_covered = set()
     for ex in pos:
-        check("input_excerpt" in ex, f"Positive example has input_excerpt")
-        check("input_file" in ex, f"Positive example has input_file")
-        check("expected_output" in ex, f"Positive example has expected_output")
+        check("input_excerpt" in ex, "Positive example has input_excerpt")
+        check("input_file" in ex, "Positive example has input_file")
+        check("expected_output" in ex, "Positive example has expected_output")
 
         out = ex.get("expected_output", {})
         for field in REQUIRED_OUTPUT_FIELDS:
@@ -140,11 +152,7 @@ def validate_examples() -> None:
     udb_names = set()
     names_path = DATA_DIR / "udb_param_names.txt"
     if names_path.exists():
-        udb_names = {
-            line.strip()
-            for line in names_path.read_text().splitlines()
-            if line.strip()
-        }
+        udb_names = {line.strip() for line in names_path.read_text().splitlines() if line.strip()}
 
     for ex in pos:
         out = ex.get("expected_output", {})
@@ -187,7 +195,9 @@ def validate_system_prompt() -> None:
         )
 
     for vt in EXPECTED_VALUE_TYPES:
-        check(f"**{vt}**" in text or f"- **{vt}**" in text, f"System prompt mentions value type {vt}")
+        check(
+            f"**{vt}**" in text or f"- **{vt}**" in text, f"System prompt mentions value type {vt}"
+        )
 
     check('"parameters"' in text, "System prompt defines output schema with 'parameters' key")
     check('"excerpt"' in text, "System prompt output schema has 'excerpt' field")
@@ -200,6 +210,7 @@ def validate_system_prompt() -> None:
     check('"may"' in text or "'may'" in text, "System prompt discusses 'may' disambiguation")
 
     from run_prompt import estimate_tokens
+
     tokens = estimate_tokens(text)
     check(tokens <= 1200, f"System prompt is ≤1200 tokens ({tokens} estimated)", warn_only=True)
 
@@ -210,10 +221,8 @@ def validate_assembler() -> None:
 
     from run_prompt import (
         assemble_prompt,
-        chunk_spec_file,
-        estimate_tokens,
-        load_system_prompt,
         load_examples,
+        load_system_prompt,
         load_udb_param_names,
     )
 
@@ -271,7 +280,8 @@ def validate_assembler() -> None:
         check(True, "Context overflow correctly raises ValueError for small models")
 
     prompt_no_extras = assemble_prompt(
-        chunk_text, meta,
+        chunk_text,
+        meta,
         model="default",
         include_examples=False,
         include_param_names=False,
@@ -312,7 +322,7 @@ def validate_chunking() -> None:
         f"Last chunk ends at last line ({chunks[-1][1]['end_line']} == {total_lines})",
     )
 
-    for chunk_text, meta in chunks:
+    for _chunk_text, meta in chunks:
         check(
             meta["total_chunks"] == len(chunks),
             f"Chunk {meta['chunk_index']} total_chunks is correct",
@@ -324,7 +334,7 @@ def validate_chunking() -> None:
             curr_start = chunks[i][1]["start_line"]
             check(
                 curr_start <= prev_end,
-                f"Chunks {i} and {i+1} overlap (prev_end={prev_end}, curr_start={curr_start})",
+                f"Chunks {i} and {i + 1} overlap (prev_end={prev_end}, curr_start={curr_start})",
             )
 
     small_chunks = chunk_spec_file(test_file, max_chunk_tokens=5_000)
@@ -335,6 +345,7 @@ def validate_chunking() -> None:
 
     for _, meta in small_chunks:
         from run_prompt import estimate_tokens
+
         chunk_text = _
         tokens = estimate_tokens(chunk_text)
         check(

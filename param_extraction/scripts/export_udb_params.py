@@ -10,11 +10,12 @@ and heuristically classifies each parameter.
 Output: data/ground_truth.json
 """
 
-import yaml
 import json
 import re
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 PARAM_DIR = REPO_ROOT / "spec" / "std" / "isa" / "param"
@@ -31,6 +32,7 @@ def load_yaml(path):
 # ---------------------------------------------------------------------------
 # Schema analysis: derive the "value type" from JSON Schema structures
 # ---------------------------------------------------------------------------
+
 
 def derive_value_type(schema):
     """
@@ -52,10 +54,12 @@ def derive_value_type(schema):
             branch_types = []
             for branch in branches:
                 inner = branch.get("schema", {})
-                branch_types.append({
-                    "condition": _summarize_when(branch.get("when", {})),
-                    "inner_type": derive_value_type(inner),
-                })
+                branch_types.append(
+                    {
+                        "condition": _summarize_when(branch.get("when", {})),
+                        "inner_type": derive_value_type(inner),
+                    }
+                )
             return {"type": "conditional", "details": {"branches": branch_types}}
 
     # rv32/rv64 split at top level
@@ -172,9 +176,7 @@ def _is_boolean_array(schema):
     # Tuple-style: items is a list (positional) + additionalItems is boolean
     if isinstance(items, list):
         all_bool_or_const = all(
-            i.get("type") == "boolean" or "const" in i
-            for i in items
-            if isinstance(i, dict)
+            i.get("type") == "boolean" or "const" in i for i in items if isinstance(i, dict)
         )
         additional_bool = isinstance(additional, dict) and additional.get("type") == "boolean"
         if all_bool_or_const and (additional_bool or not additional):
@@ -194,6 +196,7 @@ def _summarize_when(when):
 # ---------------------------------------------------------------------------
 # definedBy extraction
 # ---------------------------------------------------------------------------
+
 
 def flatten_defined_by(defined_by):
     """
@@ -243,10 +246,12 @@ def _collect_conditions(node, extensions, params):
         p = node["param"]
         if isinstance(p, dict):
             if "name" in p:
-                params.append({
-                    "name": p["name"],
-                    "condition": {k: v for k, v in p.items() if k != "name" and k != "reason"},
-                })
+                params.append(
+                    {
+                        "name": p["name"],
+                        "condition": {k: v for k, v in p.items() if k != "name" and k != "reason"},
+                    }
+                )
             if "allOf" in p:
                 for item in p["allOf"]:
                     _collect_conditions({"param": item}, extensions, params)
@@ -295,6 +300,7 @@ def _summarize_defined_by(node):
 # CSR cross-reference: find params mentioned in CSR IDL code
 # ---------------------------------------------------------------------------
 
+
 def build_csr_param_xref(csr_dir, param_names):
     """
     Scan all CSR YAML files for references to known parameter names
@@ -308,8 +314,11 @@ def build_csr_param_xref(csr_dir, param_names):
     csr_to_params = defaultdict(set)
 
     idl_field_keys = [
-        "sw_write(csr_value)", "type()", "reset_value()",
-        "legal?(csr_value)", "sw_read()",
+        "sw_write(csr_value)",
+        "type()",
+        "reset_value()",
+        "legal?(csr_value)",
+        "sw_read()",
     ]
 
     # Build a regex that matches any param name as a whole word
@@ -318,7 +327,7 @@ def build_csr_param_xref(csr_dir, param_names):
     if not sorted_names:
         return dict(param_to_csrs), dict(csr_to_params)
 
-    param_pattern = re.compile(r'\b(' + '|'.join(re.escape(n) for n in sorted_names) + r')\b')
+    param_pattern = re.compile(r"\b(" + "|".join(re.escape(n) for n in sorted_names) + r")\b")
 
     csr_files = list(csr_dir.rglob("*.yaml"))
     for csr_path in csr_files:
@@ -339,11 +348,13 @@ def build_csr_param_xref(csr_dir, param_names):
             if isinstance(idl_code, str):
                 for match in param_pattern.finditer(idl_code):
                     pname = match.group(1)
-                    param_to_csrs[pname].append({
-                        "csr": csr_name,
-                        "field": "(csr-level)",
-                        "idl_key": key,
-                    })
+                    param_to_csrs[pname].append(
+                        {
+                            "csr": csr_name,
+                            "field": "(csr-level)",
+                            "idl_key": key,
+                        }
+                    )
                     csr_to_params[csr_name].add(pname)
 
         # Check field-level IDL
@@ -356,11 +367,13 @@ def build_csr_param_xref(csr_dir, param_names):
                     if isinstance(idl_code, str):
                         for match in param_pattern.finditer(idl_code):
                             pname = match.group(1)
-                            param_to_csrs[pname].append({
-                                "csr": csr_name,
-                                "field": field_name,
-                                "idl_key": key,
-                            })
+                            param_to_csrs[pname].append(
+                                {
+                                    "csr": csr_name,
+                                    "field": field_name,
+                                    "idl_key": key,
+                                }
+                            )
                             csr_to_params[csr_name].add(pname)
 
                 # Also check type() which returns CsrFieldType
@@ -368,11 +381,13 @@ def build_csr_param_xref(csr_dir, param_names):
                 if isinstance(type_func, str):
                     for match in param_pattern.finditer(type_func):
                         pname = match.group(1)
-                        param_to_csrs[pname].append({
-                            "csr": csr_name,
-                            "field": field_name,
-                            "idl_key": "type()",
-                        })
+                        param_to_csrs[pname].append(
+                            {
+                                "csr": csr_name,
+                                "field": field_name,
+                                "idl_key": "type()",
+                            }
+                        )
                         csr_to_params[csr_name].add(pname)
 
     # Deduplicate
@@ -395,41 +410,57 @@ def build_csr_param_xref(csr_dir, param_names):
 
 # Patterns in parameter names that indicate CSR-related parameters
 CSR_NAME_PATTERNS = [
-    (r'^MTVEC_', 'mtvec'),
-    (r'^STVEC_', 'stvec'),
-    (r'^VSTVEC_', 'vstvec'),
-    (r'^MSTATUS_', 'mstatus'),
-    (r'^MISA_', 'misa'),
-    (r'^MUTABLE_MISA_', 'misa'),
-    (r'^SATP_', 'satp'),
-    (r'^DCSR_', 'dcsr'),
-    (r'^JVT_', 'jvt'),
-    (r'^MSTATEEN_', 'mstateen'),
-    (r'^HSTATEEN_', 'hstateen'),
-    (r'^SSTATEEN_', 'sstateen'),
-    (r'^HPM_', 'hpmcounter/hpmevent'),
-    (r'^COUNTINHIBIT_', 'mcountinhibit'),
-    (r'^MCOUNTENABLE_', 'mcounteren'),
-    (r'^SCOUNTENABLE_', 'scounteren'),
-    (r'^HCOUNTENABLE_', 'hcounteren'),
+    (r"^MTVEC_", "mtvec"),
+    (r"^STVEC_", "stvec"),
+    (r"^VSTVEC_", "vstvec"),
+    (r"^MSTATUS_", "mstatus"),
+    (r"^MISA_", "misa"),
+    (r"^MUTABLE_MISA_", "misa"),
+    (r"^SATP_", "satp"),
+    (r"^DCSR_", "dcsr"),
+    (r"^JVT_", "jvt"),
+    (r"^MSTATEEN_", "mstateen"),
+    (r"^HSTATEEN_", "hstateen"),
+    (r"^SSTATEEN_", "sstateen"),
+    (r"^HPM_", "hpmcounter/hpmevent"),
+    (r"^COUNTINHIBIT_", "mcountinhibit"),
+    (r"^MCOUNTENABLE_", "mcounteren"),
+    (r"^SCOUNTENABLE_", "scounteren"),
+    (r"^HCOUNTENABLE_", "hcounteren"),
 ]
 
 # Parameters that are clearly about trap/reporting behavior (not CSR fields)
 TRAP_REPORT_PATTERNS = [
-    r'^TRAP_ON_',
-    r'^REPORT_',
-    r'^PRECISE_',
+    r"^TRAP_ON_",
+    r"^REPORT_",
+    r"^PRECISE_",
 ]
 
 # Parameters known to be direct architectural choices
 DIRECT_ARCH_NAMES = {
-    'MXLEN', 'SXLEN', 'UXLEN', 'VSXLEN', 'VUXLEN',
-    'PHYS_ADDR_WIDTH', 'NUM_PMP_ENTRIES', 'PMP_GRANULARITY',
-    'VLEN', 'ELEN', 'CACHE_BLOCK_SIZE', 'PMA_GRANULARITY',
-    'ASID_WIDTH', 'VMID_WIDTH', 'PMLEN',
-    'ARCH_ID_VALUE', 'IMP_ID_VALUE', 'VENDOR_ID_BANK', 'VENDOR_ID_OFFSET',
-    'CONFIG_PTR_ADDRESS', 'NUM_EXTERNAL_GUEST_INTERRUPTS',
-    'MARCHID_IMPLEMENTED', 'MIMPID_IMPLEMENTED',
+    "MXLEN",
+    "SXLEN",
+    "UXLEN",
+    "VSXLEN",
+    "VUXLEN",
+    "PHYS_ADDR_WIDTH",
+    "NUM_PMP_ENTRIES",
+    "PMP_GRANULARITY",
+    "VLEN",
+    "ELEN",
+    "CACHE_BLOCK_SIZE",
+    "PMA_GRANULARITY",
+    "ASID_WIDTH",
+    "VMID_WIDTH",
+    "PMLEN",
+    "ARCH_ID_VALUE",
+    "IMP_ID_VALUE",
+    "VENDOR_ID_BANK",
+    "VENDOR_ID_OFFSET",
+    "CONFIG_PTR_ADDRESS",
+    "NUM_EXTERNAL_GUEST_INTERRUPTS",
+    "MARCHID_IMPLEMENTED",
+    "MIMPID_IMPLEMENTED",
 }
 
 
@@ -448,8 +479,6 @@ def classify_parameter(param_data, csr_refs, value_type_info):
     """
     name = param_data.get("name", "")
     desc = param_data.get("description", "").lower()
-    long_name = param_data.get("long_name", "").lower()
-
     has_csr_refs = len(csr_refs) > 0
     has_sw_write_ref = any(r["idl_key"] == "sw_write(csr_value)" for r in csr_refs)
     has_type_ref = any(r["idl_key"] == "type()" for r in csr_refs)
@@ -464,7 +493,9 @@ def classify_parameter(param_data, csr_refs, value_type_info):
     if name.startswith("HW_"):
         classification = "SW_RULE"
         confidence = "medium"
-        reasoning = "Hardware update behavior (HW_ prefix) — software-deterministic with correct fencing"
+        reasoning = (
+            "Hardware update behavior (HW_ prefix) — software-deterministic with correct fencing"
+        )
         return classification, confidence, reasoning
 
     # --- Check for existence/availability parameters ---
@@ -497,7 +528,9 @@ def classify_parameter(param_data, csr_refs, value_type_info):
     # If the parameter is referenced in sw_write() of a CSR field,
     # it controls the legal write values — classic WARL parameter
     if has_sw_write_ref:
-        csr_fields = [(r["csr"], r["field"]) for r in csr_refs if r["idl_key"] == "sw_write(csr_value)"]
+        csr_fields = [
+            (r["csr"], r["field"]) for r in csr_refs if r["idl_key"] == "sw_write(csr_value)"
+        ]
         classification = "NORM_CSR_WARL"
         confidence = "high"
         reasoning = f"Referenced in sw_write() of {csr_fields[0][0]}.{csr_fields[0][1]}"
@@ -518,13 +551,17 @@ def classify_parameter(param_data, csr_refs, value_type_info):
             if name.endswith("_TYPE"):
                 classification = "NORM_CSR_RW"
                 confidence = "medium" if has_csr_refs else "low"
-                reasoning = f"CSR field type control parameter for '{csr}' (determines RO/RW behavior)"
+                reasoning = (
+                    f"CSR field type control parameter for '{csr}' (determines RO/RW behavior)"
+                )
                 return classification, confidence, reasoning
 
             if has_csr_refs:
                 classification = "NORM_CSR_WARL"
                 confidence = "medium"
-                reasoning = f"Name pattern suggests CSR '{csr}' association, confirmed by IDL references"
+                reasoning = (
+                    f"Name pattern suggests CSR '{csr}' association, confirmed by IDL references"
+                )
             else:
                 classification = "NORM_CSR_WARL"
                 confidence = "low"
@@ -610,8 +647,7 @@ def classify_parameter(param_data, csr_refs, value_type_info):
     if has_csr_refs:
         # Distinguish: sw_write/type refs → CSR-controlled; sw_read/reset refs → incidental
         has_write_or_type = any(
-            r["idl_key"] in ("sw_write(csr_value)", "type()", "legal?(csr_value)")
-            for r in csr_refs
+            r["idl_key"] in ("sw_write(csr_value)", "type()", "legal?(csr_value)") for r in csr_refs
         )
         if has_write_or_type:
             classification = "NORM_CSR_WARL"
@@ -620,7 +656,9 @@ def classify_parameter(param_data, csr_refs, value_type_info):
         else:
             classification = "NORM_DIRECT"
             confidence = "low"
-            reasoning = "Has CSR read/reset IDL references only (incidental, not controlling WARL behavior)"
+            reasoning = (
+                "Has CSR read/reset IDL references only (incidental, not controlling WARL behavior)"
+            )
         return classification, confidence, reasoning
 
     # --- Default ---
@@ -633,6 +671,7 @@ def classify_parameter(param_data, csr_refs, value_type_info):
 # ---------------------------------------------------------------------------
 # Main export logic
 # ---------------------------------------------------------------------------
+
 
 def export_single_param(yaml_path, param_csr_refs):
     """Read one param YAML and produce a structured dict."""
@@ -651,9 +690,7 @@ def export_single_param(yaml_path, param_csr_refs):
     defined_by_info = flatten_defined_by(defined_by)
     csr_refs = param_csr_refs.get(name, [])
 
-    classification, confidence, reasoning = classify_parameter(
-        data, csr_refs, value_type_info
-    )
+    classification, confidence, reasoning = classify_parameter(data, csr_refs, value_type_info)
 
     has_requirements = requirements is not None
     req_summary = None
@@ -687,13 +724,15 @@ def main():
     # Step 1: Collect all non-MOCK parameter names
     param_files = sorted(PARAM_DIR.glob("*.yaml"))
     real_params = [f for f in param_files if not f.stem.startswith("MOCK_")]
-    print(f"Found {len(real_params)} real parameter files (excluded {len(param_files) - len(real_params)} MOCK files)")
+    print(
+        f"Found {len(real_params)} real parameter files (excluded {len(param_files) - len(real_params)} MOCK files)"
+    )
 
     param_names = [f.stem for f in real_params]
 
     # Step 2: Build CSR cross-reference
     print("Building CSR cross-reference...")
-    param_to_csrs, csr_to_params = build_csr_param_xref(CSR_DIR, param_names)
+    param_to_csrs, _csr_to_params = build_csr_param_xref(CSR_DIR, param_names)
     params_with_csr_refs = sum(1 for v in param_to_csrs.values() if v)
     print(f"  {params_with_csr_refs} parameters referenced in CSR IDL code")
 
@@ -755,9 +794,7 @@ def compute_statistics(results):
         "by_confidence": dict(sorted(confidence_counts.items())),
         "params_with_csr_references": params_with_csr_refs,
         "params_with_requirements": params_with_requirements,
-        "top_defining_extensions": dict(
-            sorted(ext_counts.items(), key=lambda x: -x[1])[:15]
-        ),
+        "top_defining_extensions": dict(sorted(ext_counts.items(), key=lambda x: -x[1])[:15]),
     }
 
 
