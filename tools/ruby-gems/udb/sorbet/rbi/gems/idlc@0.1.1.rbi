@@ -769,7 +769,7 @@ class Idl::BitfieldDefinitionAst < ::Idl::AstNode
       interval: T.nilable(T::Range[::Integer]),
       name: T.any(::Idl::BuiltinTypeNameAst, ::Idl::UserTypeNameAst),
       size: ::Idl::IntLiteralAst,
-      fields: T::Array[::String]
+      fields: T::Array[::Idl::BitfieldFieldDefinitionAst]
     ).void
   end
   def initialize(input, interval, name, size, fields); end
@@ -804,7 +804,11 @@ class Idl::BitfieldDefinitionAst < ::Idl::AstNode
   sig { override.params(symtab: ::Idl::SymbolTable, strict: T::Boolean).void }
   def type_check(symtab, strict:); end
 
-  sig { params(_symtab: T.untyped).returns(T.untyped) }
+  sig do
+    params(
+      _symtab: ::Idl::SymbolTable
+    ).returns(T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean, T::Hash[::String, T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean)]))
+  end
   def value(_symtab); end
 
   class << self
