@@ -35,24 +35,3 @@ pseudoinstructions:
   - when: imm == 0
     to: mv xd,xs1
 operation(): X[xd] = X[xs1] + $signed(imm);
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let xs1_val = X(xs1);
-    let immext : xlenbits = sign_extend(imm);
-    let result : xlenbits = match op {
-      RISCV_ADDI  => xs1_val + immext,
-      RISCV_SLTI  => zero_extend(bool_to_bits(xs1_val <_s immext)),
-      RISCV_SLTIU => zero_extend(bool_to_bits(xs1_val <_u immext)),
-      RISCV_ANDI  => xs1_val & immext,
-      RISCV_ORI   => xs1_val | immext,
-      RISCV_XORI  => xs1_val ^ immext
-    };
-    X(xd) = result;
-    RETIRE_SUCCESS
-  }
-
-# SPDX-SnippetEnd

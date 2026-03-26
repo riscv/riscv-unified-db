@@ -64,9 +64,13 @@ description: |
   <%- end -%>
 definedBy:
   allOf:
-    - xlen: 32
     - extension:
-        name: Smhpm
+        name: Sm
+    - xlen: 32
+    - param:
+        name: HPM_COUNTER_EN
+        index: 10
+        equal: true
 fields:
   COUNT:
     location: 31-0

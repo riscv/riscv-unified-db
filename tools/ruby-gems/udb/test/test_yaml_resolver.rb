@@ -581,7 +581,7 @@ class TestYamlResolver < Minitest::Test
 
   # Walk +original_data+ and +resolved_data+ in parallel, collecting pairs of
   # (IDL string value, compiled AST hash) for every IDL key (a key whose name
-  # ends with `()`, excluding `sail()`) found in the original data.
+  # ends with `()`) found in the original data.
   #
   # Returns an array of hashes with keys:
   #   :idl_text   — the YAML-parsed IDL string
@@ -595,7 +595,7 @@ class TestYamlResolver < Minitest::Test
     original_data.each do |key, value|
       next unless key.is_a?(String)
 
-      if key.end_with?(")") && key != "sail()"
+      if key.end_with?(")")
         # IDL key like sw_write(csr_value) or operation()
         key_minus_args = key.split("(")[0]
         resolved_value = resolved_data[key_minus_args]
@@ -661,12 +661,12 @@ class TestYamlResolver < Minitest::Test
     end
   end
 
-  # Check if data contains non-empty IDL keys (keys ending with () except sail())
+  # Check if data contains non-empty IDL keys (keys ending with ())
   def data_contains_non_empty_idl_keys?(data)
     case data
     when Hash
       data.each do |key, value|
-        if key.is_a?(String) && key.end_with?(")") && key != "sail()"
+        if key.is_a?(String) && key.end_with?(")")
           # Check if the value is non-empty
           return true if value.is_a?(String) && !value.strip.empty?
           return true if !value.is_a?(String) && value.present?
@@ -681,12 +681,12 @@ class TestYamlResolver < Minitest::Test
     end
   end
 
-  # Check if data contains IDL keys (keys ending with () except sail())
+  # Check if data contains IDL keys (keys ending with ())
   def data_contains_idl_keys?(data)
     case data
     when Hash
       data.each do |key, value|
-        return true if key.is_a?(String) && key.end_with?(")") && key != "sail()"
+        return true if key.is_a?(String) && key.end_with?(")")
         return true if data_contains_idl_keys?(value)
       end
       false

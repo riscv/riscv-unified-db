@@ -71,8 +71,13 @@ fields:
   HPM<%= hpm_num %>:
     location: <%= hpm_num %>
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: <%= hpm_num %>
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[<%= hpm_num %>] == true"]
       When set, `hpmcounter<%= hpm_num %>.COUNT` stops counting in all privilege modes.
