@@ -362,7 +362,7 @@ tests:
     tags:
       - smoke
     checkout_with:
-      fetch-depth: 0  # Need full history for git diff ...HEAD to find merge-base
+      fetch-depth: 0 # Need full history for git diff ...HEAD to find merge-base
     test:
       - name: Check gem versions bumped when source changes
         run: ./bin/ruby tools/scripts/check_gem_version_bump.rb origin/main
