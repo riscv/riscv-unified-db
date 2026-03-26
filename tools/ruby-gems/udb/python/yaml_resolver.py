@@ -491,7 +491,7 @@ def _resolve(obj, obj_path, obj_file_path, doc_obj, arch_root, do_checks, compil
         if compile_idl:
             idl_keys = {key for key in obj.keys() if key.endswith("()")}
             for key in idl_keys:
-                if key != "sail()" and key.endswith("()") and obj[key]:
+                if key.endswith("()") and obj[key]:
                     r = (
                         "instruction_operation"
                         if key == "operation()"

@@ -20,7 +20,6 @@ implemented_extensions:
   - [Zicntr, "2.0"]
   - [Smrnmi, "1.0"]
   - [S, "1.11.0"]
-  - [Smpmp, "1.11.0"]
   - [U, "1.0.0"]
   - [Zifencei, "2.0.0"]
   - [Sv32, "1.11.0"]
@@ -244,3 +243,38 @@ params:
   VFREDUSUM_INACTIVE_NODE_ELEMENT_BEHAVIOR: "additive_identity"
   VFREDUSUM_FINAL_NODE_ELEMENT_BEHAVIOR: "additive_identity"
   IMPRECISE_VECTOR_TRAP_SETTABLE: false
+  HPM_COUNTER_EN:
+    [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]

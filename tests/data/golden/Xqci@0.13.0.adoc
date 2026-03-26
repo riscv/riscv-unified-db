@@ -25637,8 +25637,6 @@ Reset value::
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_addsat]
 = qc.addsat
 
@@ -25672,7 +25670,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -25690,9 +25687,6 @@ if pass:[(]X[rs1][xref:#udb-function-xlen[xlen]pass:[(]) - 1] == X[rs2][xref:#ud
 }
 X[rd] = sum[(xref:#udb-function-xlen[xlen]pass:[(]) - 1):0];
 ----
-  
-
-
 
 
 Included in::
@@ -25735,8 +25729,6 @@ xref:#udb-insn-qc_addsat[`qc.addsat`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_addusat]
 = qc.addusat
 
@@ -25770,7 +25762,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -25782,9 +25773,6 @@ if pass:[(]sum > largest_unsigned_value) {
   X[rd] = sum[(xref:#udb-function-xlen[xlen]pass:[(]) - 1):0];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -25827,8 +25815,6 @@ xref:#udb-insn-qc_addusat[`qc.addusat`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_beqi]
 = qc.beqi
 
@@ -25862,7 +25848,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -25870,9 +25855,6 @@ if pass:[(]$signed+++(+++X[rs1]) == $signed+++(+++imm)) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -25915,8 +25897,6 @@ xref:#udb-insn-qc_beqi[`qc.beqi`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_bgei]
 = qc.bgei
 
@@ -25950,7 +25930,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -25958,9 +25937,6 @@ if pass:[(]$signed+++(+++X[rs1]) >= $signed+++(+++imm)) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -26003,8 +25979,6 @@ xref:#udb-insn-qc_bgei[`qc.bgei`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_bgeui]
 = qc.bgeui
 
@@ -26038,7 +26012,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26046,9 +26019,6 @@ if pass:[(]X[rs1] >= imm) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -26091,8 +26061,6 @@ xref:#udb-insn-qc_bgeui[`qc.bgeui`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_blti]
 = qc.blti
 
@@ -26126,7 +26094,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26134,9 +26101,6 @@ if pass:[(]$signed+++(+++X[rs1]) < $signed+++(+++imm)) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -26179,8 +26143,6 @@ xref:#udb-insn-qc_blti[`qc.blti`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_bltui]
 = qc.bltui
 
@@ -26214,7 +26176,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26222,9 +26183,6 @@ if pass:[(]X[rs1] < imm) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -26267,8 +26225,6 @@ xref:#udb-insn-qc_bltui[`qc.bltui`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_bnei]
 = qc.bnei
 
@@ -26302,7 +26258,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26310,9 +26265,6 @@ if pass:[(]$signed+++(+++X[rs1]) != $signed+++(+++imm)) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -26355,8 +26307,6 @@ xref:#udb-insn-qc_bnei[`qc.bnei`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_brev32]
 = qc.brev32
 
@@ -26389,7 +26339,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26400,9 +26349,6 @@ for pass:[(]U32 i = 0; i < xref:#udb-function-xlen[xlen]pass:[(]); i++) {
 }
 X[rd] = tmp;
 ----
-  
-
-
 
 
 Included in::
@@ -26445,8 +26391,6 @@ xref:#udb-insn-qc_brev32[`qc.brev32`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_bexti]
 = qc.c.bexti
 
@@ -26480,7 +26424,6 @@ Bits<3> rd = $encoding[9:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26488,9 +26431,6 @@ XReg index = shamt & (xref:#udb-function-xlen[xlen]pass:[(]) - 1);
 XReg reg = xref:#udb-function-creg2reg[creg2reg]pass:[(]rd);
 X[reg] = (X[reg] >> index) & 1;
 ----
-  
-
-
 
 
 Included in::
@@ -26533,8 +26473,6 @@ xref:#udb-insn-qc_c_bexti[`qc.c.bexti`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_bseti]
 = qc.c.bseti
 
@@ -26568,7 +26506,6 @@ Bits<3> rd = $encoding[9:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26576,9 +26513,6 @@ XReg index = shamt & (xref:#udb-function-xlen[xlen]pass:[(]) - 1);
 XReg reg = xref:#udb-function-creg2reg[creg2reg]pass:[(]rd);
 X[reg] = X[reg] | (MXLEN'b1 << index);
 ----
-  
-
-
 
 
 Included in::
@@ -26621,8 +26555,6 @@ xref:#udb-insn-qc_c_bseti[`qc.c.bseti`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_clrint]
 = qc.c.clrint
 
@@ -26654,7 +26586,6 @@ Bits<5> rs1 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26664,9 +26595,6 @@ XReg bit = rs1 % 32;
 Csr pre_csr = xref:#udb-function-direct_csr_lookup[direct_csr_lookup]pass:[(]MCLICIP0_ADDR pass:[+] idx);
 xref:#udb-function-csr_sw_write[csr_sw_write]pass:[(]pre_csr, xref:#udb-function-csr_sw_read[csr_sw_read]pass:[(]pre_csr) & ~(32'b1 << bit));
 ----
-  
-
-
 
 
 Included in::
@@ -26709,8 +26637,6 @@ xref:#udb-insn-qc_c_clrint[`qc.c.clrint`] is unconditionally defined by the foll
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_delay]
 = qc.c.delay
 
@@ -26742,15 +26668,11 @@ Bits<5> imm = $encoding[6:2];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 xref:#udb-function-delay[delay]pass:[(]imm);
 ----
-  
-
-
 
 
 Included in::
@@ -26793,8 +26715,6 @@ xref:#udb-insn-qc_c_delay[`qc.c.delay`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_di]
 = qc.c.di
 
@@ -26826,7 +26746,6 @@ qc.c.di has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26834,9 +26753,6 @@ CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MIE[MIE] = 0;
 XReg pre_qc_mcause = CSR[xref:#udb-csr-qc_mcause[CSR[qc.mcause]]].sw_read();
 CSR[xref:#udb-csr-qc_mcause[CSR[qc.mcause]]].sw_write(pre_qc_mcause & ~(32'b1 << 26));
 ----
-  
-
-
 
 
 Included in::
@@ -26879,8 +26795,6 @@ xref:#udb-insn-qc_c_di[`qc.c.di`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_dir]
 = qc.c.dir
 
@@ -26913,7 +26827,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -26923,9 +26836,6 @@ XReg pre_qc_mcause = CSR[xref:#udb-csr-qc_mcause[CSR[qc.mcause]]].sw_read();
 CSR[xref:#udb-csr-qc_mcause[CSR[qc.mcause]]].sw_write(pre_qc_mcause & ~(32'b1 << 26));
 X[rd] = pre_mstatus;
 ----
-  
-
-
 
 
 Included in::
@@ -26968,8 +26878,6 @@ xref:#udb-insn-qc_c_dir[`qc.c.dir`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_ei]
 = qc.c.ei
 
@@ -27001,7 +26909,6 @@ qc.c.ei has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -27009,9 +26916,6 @@ CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MIE[MIE] = 1;
 XReg pre_qc_mcause = CSR[xref:#udb-csr-qc_mcause[CSR[qc.mcause]]].sw_read();
 CSR[xref:#udb-csr-qc_mcause[CSR[qc.mcause]]].sw_write(pre_qc_mcause | (32'b1 << 26));
 ----
-  
-
-
 
 
 Included in::
@@ -27054,8 +26958,6 @@ xref:#udb-insn-qc_c_ei[`qc.c.ei`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_eir]
 = qc.c.eir
 
@@ -27087,7 +26989,6 @@ Bits<5> rs1 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -27097,9 +26998,6 @@ XReg pre_qc_mcause = CSR[xref:#udb-csr-qc_mcause[CSR[qc.mcause]]].sw_read();
 XReg pre_qc_mcause_masked = pre_qc_mcause & ~(32'b1 << 26);
 CSR[xref:#udb-csr-qc_mcause[CSR[qc.mcause]]].sw_write(pre_qc_mcause | (mie_val pass:[`]<< 26));
 ----
-  
-
-
 
 
 Included in::
@@ -27142,8 +27040,6 @@ xref:#udb-insn-qc_c_eir[`qc.c.eir`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_extu]
 = qc.c.extu
 
@@ -27177,16 +27073,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg width = width_minus1 pass:[+] 1;
 X[rd] = (X[rd] >> 0) & ((32'b1 << width) - 1);
 ----
-  
-
-
 
 
 Included in::
@@ -27229,8 +27121,6 @@ xref:#udb-insn-qc_c_extu[`qc.c.extu`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_mienter]
 = qc.c.mienter
 
@@ -27263,7 +27153,6 @@ qc.c.mienter has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -27299,9 +27188,6 @@ xref:#udb-function-write_memory[write_memory]pass:[(]32, virtual_address - 80, X
 X[8] = X[2];
 X[2] = X[2] - 96;
 ----
-  
-
-
 
 
 Included in::
@@ -27344,8 +27230,6 @@ xref:#udb-insn-qc_c_mienter[`qc.c.mienter`] is unconditionally defined by the fo
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_mienter_nest]
 = qc.c.mienter.nest
 
@@ -27378,7 +27262,6 @@ qc.c.mienter.nest has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -27416,9 +27299,6 @@ X[2] = X[2] - 96;
 CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MIE[MIE] = 1'b1;
 CSR[xref:#udb-csr-qc_mcause[CSR[qc.mcause]]].sw_write(qc_mcause_val | (32'b1 << 26));
 ----
-  
-
-
 
 
 Included in::
@@ -27461,8 +27341,6 @@ xref:#udb-insn-qc_c_mienter_nest[`qc.c.mienter.nest`] is unconditionally defined
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_mileaveret]
 = qc.c.mileaveret
 
@@ -27494,7 +27372,6 @@ qc.c.mileaveret has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -27574,9 +27451,6 @@ if pass:[(]nmie_val == 1'b1) {
   $pc = CSR[xref:#udb-csr-mnepc[CSR[mnepc]]].sw_read();
 }
 ----
-  
-
-
 
 
 Included in::
@@ -27619,8 +27493,6 @@ xref:#udb-insn-qc_c_mileaveret[`qc.c.mileaveret`] is unconditionally defined by 
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_mnret]
 = qc.c.mnret
 
@@ -27651,7 +27523,6 @@ qc.c.mnret has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -27678,9 +27549,6 @@ if pass:[(]CSR[xref:#udb-csr-mnstatus[mnstatus]].xref:#udb-csrfield-mnstatus-MNP
 CSR[xref:#udb-csr-mnstatus[mnstatus]].xref:#udb-csrfield-mnstatus-MNPP[MNPP] = xref:#udb-function-implemented?[implemented?]pass:[(]ExtensionName::U) ? 2'b00 : 2'b11;
 $pc = CSR[xref:#udb-csr-mnepc[CSR[mnepc]]].sw_read();
 ----
-  
-
-
 
 
 Included in::
@@ -27723,8 +27591,6 @@ xref:#udb-insn-qc_c_mnret[`qc.c.mnret`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_mret]
 = qc.c.mret
 
@@ -27755,7 +27621,6 @@ qc.c.mret has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -27785,9 +27650,6 @@ if pass:[(]mpdt_val == 1'b0) {
 }
 $pc = CSR[xref:#udb-csr-mepc[CSR[mepc]]].sw_read();
 ----
-  
-
-
 
 
 Included in::
@@ -27830,8 +27692,6 @@ xref:#udb-insn-qc_c_mret[`qc.c.mret`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_muliadd]
 = qc.c.muliadd
 
@@ -27865,7 +27725,6 @@ Bits<3> rd = $encoding[4:2];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -27874,9 +27733,6 @@ XReg src = xref:#udb-function-creg2reg[creg2reg]pass:[(]rs1);
 XReg orig_val = X[reg];
 X[reg] = orig_val pass:[+] (X[src] * uimm);
 ----
-  
-
-
 
 
 Included in::
@@ -27919,8 +27775,6 @@ xref:#udb-insn-qc_c_muliadd[`qc.c.muliadd`] is unconditionally defined by the fo
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_mveqz]
 = qc.c.mveqz
 
@@ -27953,7 +27807,6 @@ Bits<3> rd = $encoding[4:2];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -27962,9 +27815,6 @@ XReg src = xref:#udb-function-creg2reg[creg2reg]pass:[(]rs1);
 XReg orig_val = X[reg];
 X[reg] = (orig_val == 0) ? X[src] : orig_val;
 ----
-  
-
-
 
 
 Included in::
@@ -28007,8 +27857,6 @@ xref:#udb-insn-qc_c_mveqz[`qc.c.mveqz`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_ptrace]
 = qc.c.ptrace
 
@@ -28041,7 +27889,6 @@ qc.c.ptrace has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28049,9 +27896,6 @@ XReg func = 9;
 XReg arg = 0;
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -28094,8 +27938,6 @@ xref:#udb-insn-qc_c_ptrace[`qc.c.ptrace`] is unconditionally defined by the foll
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_setint]
 = qc.c.setint
 
@@ -28127,7 +27969,6 @@ Bits<5> rs1 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28137,9 +27978,6 @@ XReg bit = rs1 % 32;
 Csr pre_csr = xref:#udb-function-direct_csr_lookup[direct_csr_lookup]pass:[(]MCLICIP0_ADDR pass:[+] idx);
 xref:#udb-function-csr_sw_write[csr_sw_write]pass:[(]pre_csr, xref:#udb-function-csr_sw_read[csr_sw_read]pass:[(]pre_csr) | (32'b1 << bit));
 ----
-  
-
-
 
 
 Included in::
@@ -28182,8 +28020,6 @@ xref:#udb-insn-qc_c_setint[`qc.c.setint`] is unconditionally defined by the foll
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_sync]
 = qc.c.sync
 
@@ -28220,7 +28056,6 @@ Bits<3> slist = $encoding[9:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28237,9 +28072,6 @@ if pass:[(]slist == 0) {
 xref:#udb-function-fence_tso[fence_tso]pass:[(]);
 xref:#udb-function-sync_read_after_write_device[sync_read_after_write_device]pass:[(]true, bitmask);
 ----
-  
-
-
 
 
 Included in::
@@ -28282,8 +28114,6 @@ xref:#udb-insn-qc_c_sync[`qc.c.sync`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_syncr]
 = qc.c.syncr
 
@@ -28320,7 +28150,6 @@ Bits<3> slist = $encoding[9:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28337,9 +28166,6 @@ if pass:[(]slist == 0) {
 xref:#udb-function-fence_tso[fence_tso]pass:[(]);
 xref:#udb-function-sync_read_after_write_device[sync_read_after_write_device]pass:[(]false, bitmask);
 ----
-  
-
-
 
 
 Included in::
@@ -28382,8 +28208,6 @@ xref:#udb-insn-qc_c_syncr[`qc.c.syncr`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_syncwf]
 = qc.c.syncwf
 
@@ -28420,7 +28244,6 @@ Bits<3> slist = $encoding[9:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28437,9 +28260,6 @@ if pass:[(]slist == 0) {
 xref:#udb-function-fence_tso[fence_tso]pass:[(]);
 xref:#udb-function-sync_write_after_read_device[sync_write_after_read_device]pass:[(]false, bitmask);
 ----
-  
-
-
 
 
 Included in::
@@ -28482,8 +28302,6 @@ xref:#udb-insn-qc_c_syncwf[`qc.c.syncwf`] is unconditionally defined by the foll
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_c_syncwl]
 = qc.c.syncwl
 
@@ -28520,7 +28338,6 @@ Bits<3> slist = $encoding[9:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28537,9 +28354,6 @@ if pass:[(]slist == 0) {
 xref:#udb-function-fence_tso[fence_tso]pass:[(]);
 xref:#udb-function-sync_write_after_read_device[sync_write_after_read_device]pass:[(]true, bitmask);
 ----
-  
-
-
 
 
 Included in::
@@ -28582,8 +28396,6 @@ xref:#udb-insn-qc_c_syncwl[`qc.c.syncwl`] is unconditionally defined by the foll
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_clo]
 = qc.clo
 
@@ -28620,15 +28432,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = (xref:#udb-function-xlen[xlen]pass:[(]) - 1) - $signed+++(+++xref:#udb-function-highest_set_bit[highest_set_bit]pass:[(]~X[rs1]));
 ----
-  
-
-
 
 
 Included in::
@@ -28671,8 +28479,6 @@ xref:#udb-insn-qc_clo[`qc.clo`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_clrinti]
 = qc.clrinti
 
@@ -28704,7 +28510,6 @@ Bits<10> imm = $encoding[24:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28714,9 +28519,6 @@ XReg bit = imm % 32;
 Csr pre_csr = xref:#udb-function-direct_csr_lookup[direct_csr_lookup]pass:[(]MCLICIP0_ADDR pass:[+] idx);
 xref:#udb-function-csr_sw_write[csr_sw_write]pass:[(]pre_csr, xref:#udb-function-csr_sw_read[csr_sw_read]pass:[(]pre_csr) & ~(32'b1 << bit));
 ----
-  
-
-
 
 
 Included in::
@@ -28759,8 +28561,6 @@ xref:#udb-insn-qc_clrinti[`qc.clrinti`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_compress2]
 = qc.compress2
 
@@ -28794,7 +28594,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28802,9 +28601,6 @@ XReg b0 = {X[rs1][14], X[rs1][12], X[rs1][10], X[rs1][8], X[rs1][6], X[rs1][4], 
 XReg b1 = {X[rs1][30], X[rs1][28], X[rs1][26], X[rs1][24], X[rs1][22], X[rs1][20], X[rs1][18], X[rs1][16]};
 X[rd] = {16'b0, b1[7:0], b0[7:0]};
 ----
-  
-
-
 
 
 Included in::
@@ -28847,8 +28643,6 @@ xref:#udb-insn-qc_compress2[`qc.compress2`] is unconditionally defined by the fo
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_compress3]
 = qc.compress3
 
@@ -28882,7 +28676,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28890,9 +28683,6 @@ XReg b0 = {X[rs1][21], X[rs1][18], X[rs1][15], X[rs1][12], X[rs1][9], X[rs1][6],
 XReg b1 = {5'b0, X[rs1][30], X[rs1][27], X[rs1][24]};
 X[rd] = {21'b0, b1[2:0], b0[7:0]};
 ----
-  
-
-
 
 
 Included in::
@@ -28933,8 +28723,6 @@ xref:#udb-insn-qc_compress3[`qc.compress3`] is unconditionally defined by the fo
 
 <<<
 :leveloffset: +2
-
-
 
 
 [#udb:doc:inst:qc_csrrwr]
@@ -28978,7 +28766,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -28991,9 +28778,6 @@ if pass:[(]rs1 != 0) {
   xref:#udb-function-csr_sw_write[csr_sw_write]pass:[(]csr, X[rs1]);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -29036,8 +28820,6 @@ xref:#udb-insn-qc_csrrwr[`qc.csrrwr`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_csrrwri]
 = qc.csrrwri
 
@@ -29077,7 +28859,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -29088,9 +28869,6 @@ if pass:[(]rd != 0) {
 }
 xref:#udb-function-csr_sw_write[csr_sw_write]pass:[(]csr, {{MXLEN - 5{1'b0}}, imm});
 ----
-  
-
-
 
 
 Included in::
@@ -29133,8 +28911,6 @@ xref:#udb-insn-qc_csrrwri[`qc.csrrwri`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_cto]
 = qc.cto
 
@@ -29171,15 +28947,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = xref:#udb-function-lowest_set_bit[lowest_set_bit]pass:[(]~X[rs1]);
 ----
-  
-
-
 
 
 Included in::
@@ -29222,8 +28994,6 @@ xref:#udb-insn-qc_cto[`qc.cto`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_addai]
 = qc.e.addai
 
@@ -29256,15 +29026,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = X[rd] pass:[+] imm;
 ----
-  
-
-
 
 
 Included in::
@@ -29307,8 +29073,6 @@ xref:#udb-insn-qc_e_addai[`qc.e.addai`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_addi]
 = qc.e.addi
 
@@ -29343,15 +29107,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = X[rs1] pass:[+] xref:#udb-function-sext[sext]pass:[(]imm, 26);
 ----
-  
-
-
 
 
 Included in::
@@ -29394,8 +29154,6 @@ xref:#udb-insn-qc_e_addi[`qc.e.addi`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_andai]
 = qc.e.andai
 
@@ -29428,15 +29186,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = X[rd] & imm;
 ----
-  
-
-
 
 
 Included in::
@@ -29479,8 +29233,6 @@ xref:#udb-insn-qc_e_andai[`qc.e.andai`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_andi]
 = qc.e.andi
 
@@ -29515,15 +29267,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = X[rs1] & xref:#udb-function-sext[sext]pass:[(]imm, 26);
 ----
-  
-
-
 
 
 Included in::
@@ -29566,8 +29314,6 @@ xref:#udb-insn-qc_e_andi[`qc.e.andi`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_beqi]
 = qc.e.beqi
 
@@ -29601,7 +29347,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -29609,9 +29354,6 @@ if pass:[(]$signed+++(+++X[rs1]) == $signed+++(+++imm)) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -29654,8 +29396,6 @@ xref:#udb-insn-qc_e_beqi[`qc.e.beqi`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_bgei]
 = qc.e.bgei
 
@@ -29689,7 +29429,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -29697,9 +29436,6 @@ if pass:[(]$signed+++(+++X[rs1]) >= $signed+++(+++imm)) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -29742,8 +29478,6 @@ xref:#udb-insn-qc_e_bgei[`qc.e.bgei`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_bgeui]
 = qc.e.bgeui
 
@@ -29777,7 +29511,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -29785,9 +29518,6 @@ if pass:[(]X[rs1] >= imm) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -29830,8 +29560,6 @@ xref:#udb-insn-qc_e_bgeui[`qc.e.bgeui`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_blti]
 = qc.e.blti
 
@@ -29865,7 +29593,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -29873,9 +29600,6 @@ if pass:[(]$signed+++(+++X[rs1]) < $signed+++(+++imm)) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -29918,8 +29642,6 @@ xref:#udb-insn-qc_e_blti[`qc.e.blti`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_bltui]
 = qc.e.bltui
 
@@ -29953,7 +29675,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -29961,9 +29682,6 @@ if pass:[(]X[rs1] < imm) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -30006,8 +29724,6 @@ xref:#udb-insn-qc_e_bltui[`qc.e.bltui`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_bnei]
 = qc.e.bnei
 
@@ -30041,7 +29757,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -30049,9 +29764,6 @@ if pass:[(]$signed+++(+++X[rs1]) != $signed+++(+++imm)) {
   xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] $signed+++(+++offset));
 }
 ----
-  
-
-
 
 
 Included in::
@@ -30094,8 +29806,6 @@ xref:#udb-insn-qc_e_bnei[`qc.e.bnei`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_j]
 = qc.e.j
 
@@ -30127,15 +29837,11 @@ signed Bits<32> imm = sext({$encoding[47:32], $encoding[19:17], $encoding[31], $
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] imm);
 ----
-  
-
-
 
 
 Included in::
@@ -30178,8 +29884,6 @@ xref:#udb-insn-qc_e_j[`qc.e.j`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_jal]
 = qc.e.jal
 
@@ -30212,7 +29916,6 @@ signed Bits<32> imm = sext({$encoding[47:32], $encoding[19:17], $encoding[31], $
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -30220,9 +29923,6 @@ XReg return_addr = $pc pass:[+] 6;
 X[1] = return_addr;
 xref:#udb-function-jump_halfword[jump_halfword]pass:[(]$pc pass:[+] imm);
 ----
-  
-
-
 
 
 Included in::
@@ -30265,8 +29965,6 @@ xref:#udb-insn-qc_e_jal[`qc.e.jal`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_lb]
 = qc.e.lb
 
@@ -30302,16 +30000,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] $signed+++(+++imm);
 X[rd] = xref:#udb-function-sext[sext]pass:[(]xref:#udb-function-read_memory[read_memory]pass:[(]8, virtual_address, $encoding), 8);
 ----
-  
-
-
 
 
 Included in::
@@ -30354,8 +30048,6 @@ xref:#udb-insn-qc_e_lb[`qc.e.lb`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_lbu]
 = qc.e.lbu
 
@@ -30391,16 +30083,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] $signed+++(+++imm);
 X[rd] = xref:#udb-function-read_memory[read_memory]pass:[(]8, virtual_address, $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -30443,8 +30131,6 @@ xref:#udb-insn-qc_e_lbu[`qc.e.lbu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_lh]
 = qc.e.lh
 
@@ -30480,16 +30166,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] $signed+++(+++imm);
 X[rd] = xref:#udb-function-sext[sext]pass:[(]xref:#udb-function-read_memory[read_memory]pass:[(]16, virtual_address, $encoding), 16);
 ----
-  
-
-
 
 
 Included in::
@@ -30532,8 +30214,6 @@ xref:#udb-insn-qc_e_lh[`qc.e.lh`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_lhu]
 = qc.e.lhu
 
@@ -30569,16 +30249,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] $signed+++(+++imm);
 X[rd] = xref:#udb-function-read_memory[read_memory]pass:[(]16, virtual_address, $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -30621,8 +30297,6 @@ xref:#udb-insn-qc_e_lhu[`qc.e.lhu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_li]
 = qc.e.li
 
@@ -30655,15 +30329,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = imm;
 ----
-  
-
-
 
 
 Included in::
@@ -30706,8 +30376,6 @@ xref:#udb-insn-qc_e_li[`qc.e.li`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_lw]
 = qc.e.lw
 
@@ -30743,16 +30411,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] $signed+++(+++imm);
 X[rd] = xref:#udb-function-read_memory[read_memory]pass:[(]32, virtual_address, $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -30795,8 +30459,6 @@ xref:#udb-insn-qc_e_lw[`qc.e.lw`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_orai]
 = qc.e.orai
 
@@ -30829,15 +30491,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = X[rd] | imm;
 ----
-  
-
-
 
 
 Included in::
@@ -30880,8 +30538,6 @@ xref:#udb-insn-qc_e_orai[`qc.e.orai`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_ori]
 = qc.e.ori
 
@@ -30916,15 +30572,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = X[rs1] | xref:#udb-function-sext[sext]pass:[(]imm, 26);
 ----
-  
-
-
 
 
 Included in::
@@ -30967,8 +30619,6 @@ xref:#udb-insn-qc_e_ori[`qc.e.ori`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_sb]
 = qc.e.sb
 
@@ -31003,16 +30653,12 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] $signed+++(+++imm);
 xref:#udb-function-write_memory[write_memory]pass:[(]8, virtual_address, X[rs2][7:0], $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -31055,8 +30701,6 @@ xref:#udb-insn-qc_e_sb[`qc.e.sb`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_sh]
 = qc.e.sh
 
@@ -31091,16 +30735,12 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] $signed+++(+++imm);
 xref:#udb-function-write_memory[write_memory]pass:[(]16, virtual_address, X[rs2][15:0], $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -31143,8 +30783,6 @@ xref:#udb-insn-qc_e_sh[`qc.e.sh`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_sw]
 = qc.e.sw
 
@@ -31179,16 +30817,12 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] $signed+++(+++imm);
 xref:#udb-function-write_memory[write_memory]pass:[(]32, virtual_address, X[rs2][31:0], $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -31231,8 +30865,6 @@ xref:#udb-insn-qc_e_sw[`qc.e.sw`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_xorai]
 = qc.e.xorai
 
@@ -31265,15 +30897,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = X[rd] ^ imm;
 ----
-  
-
-
 
 
 Included in::
@@ -31316,8 +30944,6 @@ xref:#udb-insn-qc_e_xorai[`qc.e.xorai`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_e_xori]
 = qc.e.xori
 
@@ -31352,15 +30978,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = X[rs1] ^ xref:#udb-function-sext[sext]pass:[(]imm, 26);
 ----
-  
-
-
 
 
 Included in::
@@ -31403,8 +31025,6 @@ xref:#udb-insn-qc_e_xori[`qc.e.xori`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_expand2]
 = qc.expand2
 
@@ -31438,7 +31058,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -31448,9 +31067,6 @@ XReg b2 = {X[rs1][11], X[rs1][11], X[rs1][10], X[rs1][10], X[rs1][9], X[rs1][9],
 XReg b3 = {X[rs1][15], X[rs1][15], X[rs1][14], X[rs1][14], X[rs1][13], X[rs1][13], X[rs1][12], X[rs1][12]};
 X[rd] = {b3[7:0], b2[7:0], b1[7:0], b0[7:0]};
 ----
-  
-
-
 
 
 Included in::
@@ -31493,8 +31109,6 @@ xref:#udb-insn-qc_expand2[`qc.expand2`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_expand3]
 = qc.expand3
 
@@ -31528,7 +31142,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -31538,9 +31151,6 @@ XReg b2 = {X[rs1][7], X[rs1][7], X[rs1][7], X[rs1][6], X[rs1][6], X[rs1][6], X[r
 XReg b3 = {X[rs1][10], X[rs1][10], X[rs1][9], X[rs1][9], X[rs1][9], X[rs1][8], X[rs1][8], X[rs1][8]};
 X[rd] = {b3[7:0], b2[7:0], b1[7:0], b0[7:0]};
 ----
-  
-
-
 
 
 Included in::
@@ -31583,8 +31193,6 @@ xref:#udb-insn-qc_expand3[`qc.expand3`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_ext]
 = qc.ext
 
@@ -31621,7 +31229,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -31629,9 +31236,6 @@ XReg width = width_minus1 pass:[+] 1;
 XReg unsigned_extraction = (X[rs1] >> shamt) & ((32'b1 << width) - 1);
 X[rd] = xref:#udb-function-sext[sext]pass:[(]unsigned_extraction, width);
 ----
-  
-
-
 
 
 Included in::
@@ -31674,8 +31278,6 @@ xref:#udb-insn-qc_ext[`qc.ext`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_extd]
 = qc.extd
 
@@ -31712,7 +31314,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -31720,9 +31321,6 @@ Bits<{1'b0, MXLEN} * 2> pair = {X[rs1 pass:[+] 1], X[rs1]};
 XReg width = width_minus1 pass:[+] 1;
 X[rd] = xref:#udb-function-sext[sext]pass:[(](pair >> shamt) & ((32'b1 << width) - 1), width);
 ----
-  
-
-
 
 
 Included in::
@@ -31765,8 +31363,6 @@ xref:#udb-insn-qc_extd[`qc.extd`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_extdpr]
 = qc.extdpr
 
@@ -31804,7 +31400,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -31818,9 +31413,6 @@ if pass:[(]width > 0) {
   X[rd] = 0;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -31863,8 +31455,6 @@ xref:#udb-insn-qc_extdpr[`qc.extdpr`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_extdprh]
 = qc.extdprh
 
@@ -31902,7 +31492,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -31916,9 +31505,6 @@ if pass:[(]width > 0) {
   X[rd] = 0;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -31961,8 +31547,6 @@ xref:#udb-insn-qc_extdprh[`qc.extdprh`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_extdr]
 = qc.extdr
 
@@ -32000,7 +31584,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32014,9 +31597,6 @@ if pass:[(]width > 0) {
   X[rd] = 0;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -32059,8 +31639,6 @@ xref:#udb-insn-qc_extdr[`qc.extdr`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_extdu]
 = qc.extdu
 
@@ -32097,7 +31675,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32105,9 +31682,6 @@ Bits<{1'b0, MXLEN} * 2> pair = {X[rs1 pass:[+] 1], X[rs1]};
 XReg width = width_minus1 pass:[+] 1;
 X[rd] = (pair >> shamt) & ((32'b1 << width) - 1);
 ----
-  
-
-
 
 
 Included in::
@@ -32150,8 +31724,6 @@ xref:#udb-insn-qc_extdu[`qc.extdu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_extdupr]
 = qc.extdupr
 
@@ -32189,7 +31761,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32203,9 +31774,6 @@ if pass:[(]width > 0) {
   X[rd] = 0;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -32248,8 +31816,6 @@ xref:#udb-insn-qc_extdupr[`qc.extdupr`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_extduprh]
 = qc.extduprh
 
@@ -32287,7 +31853,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32301,9 +31866,6 @@ if pass:[(]width > 0) {
   X[rd] = 0;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -32346,8 +31908,6 @@ xref:#udb-insn-qc_extduprh[`qc.extduprh`] is unconditionally defined by the foll
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_extdur]
 = qc.extdur
 
@@ -32385,7 +31945,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32399,9 +31958,6 @@ if pass:[(]width > 0) {
   X[rd] = 0;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -32444,8 +32000,6 @@ xref:#udb-insn-qc_extdur[`qc.extdur`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_extu]
 = qc.extu
 
@@ -32482,16 +32036,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg width = width_minus1 pass:[+] 1;
 X[rd] = (X[rs1] >> shamt) & ((32'b1 << width) - 1);
 ----
-  
-
-
 
 
 Included in::
@@ -32534,8 +32084,6 @@ xref:#udb-insn-qc_extu[`qc.extu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_insb]
 = qc.insb
 
@@ -32572,7 +32120,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32581,9 +32128,6 @@ XReg mask = ((32'b1 << width) - 1) << shamt;
 XReg orig_val = X[rd];
 X[rd] = (orig_val & ~mask) | ((X[rs1] << shamt) & mask);
 ----
-  
-
-
 
 
 Included in::
@@ -32624,8 +32168,6 @@ xref:#udb-insn-qc_insb[`qc.insb`] is unconditionally defined by the following:
 
 <<<
 :leveloffset: +2
-
-
 
 
 [#udb:doc:inst:qc_insbh]
@@ -32669,7 +32211,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32682,9 +32223,6 @@ if pass:[(]width pass:[+] shamt > 32) {
   X[rd] = (orig_val & ~mask) | (shifted_rs1 & mask);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -32725,8 +32263,6 @@ xref:#udb-insn-qc_insbh[`qc.insbh`] is unconditionally defined by the following:
 
 <<<
 :leveloffset: +2
-
-
 
 
 [#udb:doc:inst:qc_insbhr]
@@ -32770,7 +32306,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32785,9 +32320,6 @@ if pass:[(](width pass:[+] shamt > 32) && (width > 0)) {
   X[rd] = (orig_val & ~mask) | (shifted_rs1 & mask);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -32830,8 +32362,6 @@ xref:#udb-insn-qc_insbhr[`qc.insbhr`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_insbi]
 = qc.insbi
 
@@ -32868,7 +32398,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32878,9 +32407,6 @@ XReg orig_val = X[rd];
 XReg src = $signed+++(+++imm);
 X[rd] = (orig_val & ~mask) | ((src << shamt) & mask);
 ----
-  
-
-
 
 
 Included in::
@@ -32923,8 +32449,6 @@ xref:#udb-insn-qc_insbi[`qc.insbi`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_insbpr]
 = qc.insbpr
 
@@ -32962,7 +32486,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -32975,9 +32498,6 @@ if pass:[(]width > 0) {
   X[rd] = (orig_val & ~mask) | ((X[rs1] << shamt) & mask);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -33020,8 +32540,6 @@ xref:#udb-insn-qc_insbpr[`qc.insbpr`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_insbprh]
 = qc.insbprh
 
@@ -33059,7 +32577,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -33072,9 +32589,6 @@ if pass:[(]width > 0) {
   X[rd] = (orig_val & ~mask) | ((X[rs1] << shamt) & mask);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -33117,8 +32631,6 @@ xref:#udb-insn-qc_insbprh[`qc.insbprh`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_insbr]
 = qc.insbr
 
@@ -33156,7 +32668,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -33169,9 +32680,6 @@ if pass:[(]width > 0) {
   X[rd] = (orig_val & ~mask) | ((X[rs1] << shamt) & mask);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -33214,8 +32722,6 @@ xref:#udb-insn-qc_insbr[`qc.insbr`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_insbri]
 = qc.insbri
 
@@ -33253,7 +32759,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -33267,9 +32772,6 @@ if pass:[(]width > 0) {
   X[rd] = (orig_val & ~mask) | ((src << shamt) & mask);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -33312,8 +32814,6 @@ xref:#udb-insn-qc_insbri[`qc.insbri`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_inw]
 = qc.inw
 
@@ -33349,16 +32849,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg device_address = X[rs1] pass:[+] imm;
 X[rd] = xref:#udb-function-read_device_32[read_device_32]pass:[(]device_address);
 ----
-  
-
-
 
 
 Included in::
@@ -33401,8 +32897,6 @@ xref:#udb-insn-qc_inw[`qc.inw`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_li]
 = qc.li
 
@@ -33435,15 +32929,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = xref:#udb-function-sext[sext]pass:[(]imm, 20);
 ----
-  
-
-
 
 
 Included in::
@@ -33486,8 +32976,6 @@ xref:#udb-insn-qc_li[`qc.li`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lieq]
 = qc.lieq
 
@@ -33522,7 +33010,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -33530,9 +33017,6 @@ if pass:[(]X[rs1] == X[rs2]) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -33575,8 +33059,6 @@ xref:#udb-insn-qc_lieq[`qc.lieq`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lieqi]
 = qc.lieqi
 
@@ -33611,7 +33093,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -33619,9 +33100,6 @@ if pass:[(]$signed+++(+++X[rs1]) == $signed+++(+++imm)) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -33664,8 +33142,6 @@ xref:#udb-insn-qc_lieqi[`qc.lieqi`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lige]
 = qc.lige
 
@@ -33700,7 +33176,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -33708,9 +33183,6 @@ if pass:[(]$signed+++(+++X[rs1]) >= $signed+++(+++X[rs2])) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -33753,8 +33225,6 @@ xref:#udb-insn-qc_lige[`qc.lige`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_ligei]
 = qc.ligei
 
@@ -33789,7 +33259,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -33797,9 +33266,6 @@ if pass:[(]$signed+++(+++X[rs1]) >= $signed+++(+++imm)) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -33842,8 +33308,6 @@ xref:#udb-insn-qc_ligei[`qc.ligei`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_ligeu]
 = qc.ligeu
 
@@ -33878,7 +33342,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -33886,9 +33349,6 @@ if pass:[(]X[rs1] >= X[rs2]) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -33931,8 +33391,6 @@ xref:#udb-insn-qc_ligeu[`qc.ligeu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_ligeui]
 = qc.ligeui
 
@@ -33967,7 +33425,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -33975,9 +33432,6 @@ if pass:[(]X[rs1] >= imm) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -34020,8 +33474,6 @@ xref:#udb-insn-qc_ligeui[`qc.ligeui`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lilt]
 = qc.lilt
 
@@ -34056,7 +33508,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -34064,9 +33515,6 @@ if pass:[(]$signed+++(+++X[rs1]) < $signed+++(+++X[rs2])) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -34109,8 +33557,6 @@ xref:#udb-insn-qc_lilt[`qc.lilt`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lilti]
 = qc.lilti
 
@@ -34145,7 +33591,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -34153,9 +33598,6 @@ if pass:[(]$signed+++(+++X[rs1]) < $signed+++(+++imm)) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -34198,8 +33640,6 @@ xref:#udb-insn-qc_lilti[`qc.lilti`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_liltu]
 = qc.liltu
 
@@ -34234,7 +33674,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -34242,9 +33681,6 @@ if pass:[(]X[rs1] < X[rs2]) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -34287,8 +33723,6 @@ xref:#udb-insn-qc_liltu[`qc.liltu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_liltui]
 = qc.liltui
 
@@ -34323,7 +33757,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -34331,9 +33764,6 @@ if pass:[(]X[rs1] < imm) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -34376,8 +33806,6 @@ xref:#udb-insn-qc_liltui[`qc.liltui`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_line]
 = qc.line
 
@@ -34412,7 +33840,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -34420,9 +33847,6 @@ if pass:[(]$signed+++(+++X[rs1]) != $signed+++(+++X[rs2])) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -34465,8 +33889,6 @@ xref:#udb-insn-qc_line[`qc.line`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_linei]
 = qc.linei
 
@@ -34501,7 +33923,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -34509,9 +33930,6 @@ if pass:[(]$signed+++(+++X[rs1]) != $signed+++(+++imm)) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -34554,8 +33972,6 @@ xref:#udb-insn-qc_linei[`qc.linei`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lrb]
 = qc.lrb
 
@@ -34592,16 +34008,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] (X[rs2] << shamt);
 X[rd] = xref:#udb-function-sext[sext]pass:[(]xref:#udb-function-read_memory[read_memory]pass:[(]8, virtual_address, $encoding), 8);
 ----
-  
-
-
 
 
 Included in::
@@ -34644,8 +34056,6 @@ xref:#udb-insn-qc_lrb[`qc.lrb`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lrbu]
 = qc.lrbu
 
@@ -34681,16 +34091,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] (X[rs2] << shamt);
 X[rd] = xref:#udb-function-read_memory[read_memory]pass:[(]8, virtual_address, $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -34733,8 +34139,6 @@ xref:#udb-insn-qc_lrbu[`qc.lrbu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lrh]
 = qc.lrh
 
@@ -34771,16 +34175,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] (X[rs2] << shamt);
 X[rd] = xref:#udb-function-sext[sext]pass:[(]xref:#udb-function-read_memory[read_memory]pass:[(]16, virtual_address, $encoding), 16);
 ----
-  
-
-
 
 
 Included in::
@@ -34823,8 +34223,6 @@ xref:#udb-insn-qc_lrh[`qc.lrh`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lrhu]
 = qc.lrhu
 
@@ -34860,16 +34258,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] (X[rs2] << shamt);
 X[rd] = xref:#udb-function-read_memory[read_memory]pass:[(]16, virtual_address, $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -34912,8 +34306,6 @@ xref:#udb-insn-qc_lrhu[`qc.lrhu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lrw]
 = qc.lrw
 
@@ -34949,16 +34341,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] (X[rs2] << shamt);
 X[rd] = xref:#udb-function-read_memory[read_memory]pass:[(]32, virtual_address, $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -35001,8 +34389,6 @@ xref:#udb-insn-qc_lrw[`qc.lrw`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lwm]
 = qc.lwm
 
@@ -35038,7 +34424,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35050,9 +34435,6 @@ for pass:[(]U32 i = 0; i < num_words; i++) {
   vaddr = vaddr pass:[+] 4;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35095,8 +34477,6 @@ xref:#udb-insn-qc_lwm[`qc.lwm`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_lwmi]
 = qc.lwmi
 
@@ -35132,7 +34512,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35143,9 +34522,6 @@ for pass:[(]U32 i = 0; i < length; i++) {
   vaddr = vaddr pass:[+] 4;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35188,8 +34564,6 @@ xref:#udb-insn-qc_lwmi[`qc.lwmi`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_muliadd]
 = qc.muliadd
 
@@ -35223,16 +34597,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg orig_val = X[rd];
 X[rd] = orig_val pass:[+] (X[rs1] * xref:#udb-function-sext[sext]pass:[(]imm, 12));
 ----
-  
-
-
 
 
 Included in::
@@ -35275,8 +34645,6 @@ xref:#udb-insn-qc_muliadd[`qc.muliadd`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mveq]
 = qc.mveq
 
@@ -35311,7 +34679,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35319,9 +34686,6 @@ if pass:[(]X[rs1] == X[rs2]) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35364,8 +34728,6 @@ xref:#udb-insn-qc_mveq[`qc.mveq`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mveqi]
 = qc.mveqi
 
@@ -35400,7 +34762,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35408,9 +34769,6 @@ if pass:[(]$signed+++(+++X[rs1]) == $signed+++(+++imm)) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35453,8 +34811,6 @@ xref:#udb-insn-qc_mveqi[`qc.mveqi`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvge]
 = qc.mvge
 
@@ -35489,7 +34845,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35497,9 +34852,6 @@ if pass:[(]$signed+++(+++X[rs1]) >= $signed+++(+++X[rs2])) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35542,8 +34894,6 @@ xref:#udb-insn-qc_mvge[`qc.mvge`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvgei]
 = qc.mvgei
 
@@ -35578,7 +34928,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35586,9 +34935,6 @@ if pass:[(]$signed+++(+++X[rs1]) >= $signed+++(+++imm)) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35631,8 +34977,6 @@ xref:#udb-insn-qc_mvgei[`qc.mvgei`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvgeu]
 = qc.mvgeu
 
@@ -35667,7 +35011,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35675,9 +35018,6 @@ if pass:[(]X[rs1] >= X[rs2]) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35720,8 +35060,6 @@ xref:#udb-insn-qc_mvgeu[`qc.mvgeu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvgeui]
 = qc.mvgeui
 
@@ -35756,7 +35094,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35764,9 +35101,6 @@ if pass:[(]X[rs1] >= imm) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35809,8 +35143,6 @@ xref:#udb-insn-qc_mvgeui[`qc.mvgeui`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvlt]
 = qc.mvlt
 
@@ -35845,7 +35177,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35853,9 +35184,6 @@ if pass:[(]$signed+++(+++X[rs1]) < $signed+++(+++X[rs2])) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35898,8 +35226,6 @@ xref:#udb-insn-qc_mvlt[`qc.mvlt`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvlti]
 = qc.mvlti
 
@@ -35934,7 +35260,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -35942,9 +35267,6 @@ if pass:[(]$signed+++(+++X[rs1]) < $signed+++(+++imm)) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -35987,8 +35309,6 @@ xref:#udb-insn-qc_mvlti[`qc.mvlti`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvltu]
 = qc.mvltu
 
@@ -36023,7 +35343,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36031,9 +35350,6 @@ if pass:[(]X[rs1] < X[rs2]) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -36076,8 +35392,6 @@ xref:#udb-insn-qc_mvltu[`qc.mvltu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvltui]
 = qc.mvltui
 
@@ -36112,7 +35426,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36120,9 +35433,6 @@ if pass:[(]X[rs1] < imm) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -36165,8 +35475,6 @@ xref:#udb-insn-qc_mvltui[`qc.mvltui`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvne]
 = qc.mvne
 
@@ -36201,7 +35509,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36209,9 +35516,6 @@ if pass:[(]X[rs1] != X[rs2]) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -36254,8 +35558,6 @@ xref:#udb-insn-qc_mvne[`qc.mvne`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_mvnei]
 = qc.mvnei
 
@@ -36290,7 +35592,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36298,9 +35599,6 @@ if pass:[(]$signed+++(+++X[rs1]) != $signed+++(+++imm)) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -36343,8 +35641,6 @@ xref:#udb-insn-qc_mvnei[`qc.mvnei`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_norm]
 = qc.norm
 
@@ -36380,7 +35676,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36390,9 +35685,6 @@ XReg mnt = (X[rs1][31] == 1) ? (X[rs1] << (clo - 1)) : (X[rs1] << (clz - 1));
 XReg exp = (X[rs1][31] == 1) ? (-(clo - 1)) : (-(clz - 1));
 X[rd] = {mnt[31:8], exp[7:0]};
 ----
-  
-
-
 
 
 Included in::
@@ -36435,8 +35727,6 @@ xref:#udb-insn-qc_norm[`qc.norm`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_normeu]
 = qc.normeu
 
@@ -36472,7 +35762,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36481,9 +35770,6 @@ XReg mnt = (X[rs1] << (clz & ~1));
 XReg exp = (-(clz & ~1));
 X[rd] = {mnt[31:8], exp[7:0]};
 ----
-  
-
-
 
 
 Included in::
@@ -36526,8 +35812,6 @@ xref:#udb-insn-qc_normeu[`qc.normeu`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_normu]
 = qc.normu
 
@@ -36563,7 +35847,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36572,9 +35855,6 @@ XReg mnt = (X[rs1] << clz);
 XReg exp = (-clz);
 X[rd] = {mnt[31:8], exp[7:0]};
 ----
-  
-
-
 
 
 Included in::
@@ -36617,8 +35897,6 @@ xref:#udb-insn-qc_normu[`qc.normu`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_outw]
 = qc.outw
 
@@ -36654,16 +35932,12 @@ Bits<5> rs2 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg device_address = X[rs1] pass:[+] imm;
 xref:#udb-function-write_device_32[write_device_32]pass:[(]device_address, X[rs2]);
 ----
-  
-
-
 
 
 Included in::
@@ -36706,8 +35980,6 @@ xref:#udb-insn-qc_outw[`qc.outw`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_pcoredump]
 = qc.pcoredump
 
@@ -36741,7 +36013,6 @@ qc.pcoredump has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36749,9 +36020,6 @@ XReg func = 8;
 XReg arg = 0;
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -36794,8 +36062,6 @@ xref:#udb-insn-qc_pcoredump[`qc.pcoredump`] is unconditionally defined by the fo
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_pexit]
 = qc.pexit
 
@@ -36828,7 +36094,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36836,9 +36101,6 @@ XReg func = 12;
 XReg arg = X[rs1];
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -36881,8 +36143,6 @@ xref:#udb-insn-qc_pexit[`qc.pexit`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_ppreg]
 = qc.ppreg
 
@@ -36915,7 +36175,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -36923,9 +36182,6 @@ XReg func = 2;
 XReg arg = X[rs1];
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -36968,8 +36224,6 @@ xref:#udb-insn-qc_ppreg[`qc.ppreg`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_ppregs]
 = qc.ppregs
 
@@ -37002,7 +36256,6 @@ qc.ppregs has no decode variables.
 
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37010,9 +36263,6 @@ XReg func = 3;
 XReg arg = 0;
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -37055,8 +36305,6 @@ xref:#udb-insn-qc_ppregs[`qc.ppregs`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_pputc]
 = qc.pputc
 
@@ -37089,7 +36337,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37097,9 +36344,6 @@ XReg func = 4;
 XReg arg = X[rs1];
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -37142,8 +36386,6 @@ xref:#udb-insn-qc_pputc[`qc.pputc`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_pputci]
 = qc.pputci
 
@@ -37176,7 +36418,6 @@ Bits<8> imm = $encoding[27:20];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37184,9 +36425,6 @@ XReg func = 5;
 XReg arg = imm;
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -37229,8 +36467,6 @@ xref:#udb-insn-qc_pputci[`qc.pputci`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_pputs]
 = qc.pputs
 
@@ -37264,7 +36500,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37272,9 +36507,6 @@ XReg func = 6;
 XReg arg = X[rs1];
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -37317,8 +36549,6 @@ xref:#udb-insn-qc_pputs[`qc.pputs`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_psyscall]
 = qc.psyscall
 
@@ -37352,7 +36582,6 @@ Bits<5> rs1 = $encoding[19:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37360,9 +36589,6 @@ XReg func = 10;
 XReg arg = X[rs1];
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -37405,8 +36631,6 @@ xref:#udb-insn-qc_psyscall[`qc.psyscall`] is unconditionally defined by the foll
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_psyscalli]
 = qc.psyscalli
 
@@ -37440,7 +36664,6 @@ Bits<10> imm = $encoding[29:20];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37448,9 +36671,6 @@ XReg func = 11;
 XReg arg = imm;
 xref:#udb-function-iss_syscall[iss_syscall]pass:[(]func, arg);
 ----
-  
-
-
 
 
 Included in::
@@ -37493,8 +36713,6 @@ xref:#udb-insn-qc_psyscalli[`qc.psyscalli`] is unconditionally defined by the fo
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_selecteqi]
 = qc.selecteqi
 
@@ -37530,7 +36748,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37540,9 +36757,6 @@ if pass:[(]$signed+++(+++X[rd]) == $signed+++(+++imm)) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -37585,8 +36799,6 @@ xref:#udb-insn-qc_selecteqi[`qc.selecteqi`] is unconditionally defined by the fo
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_selectieq]
 = qc.selectieq
 
@@ -37622,7 +36834,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37632,9 +36843,6 @@ if pass:[(]X[rd] == X[rs1]) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm2, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -37677,8 +36885,6 @@ xref:#udb-insn-qc_selectieq[`qc.selectieq`] is unconditionally defined by the fo
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_selectieqi]
 = qc.selectieqi
 
@@ -37714,7 +36920,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37724,9 +36929,6 @@ if pass:[(]$signed+++(+++X[rd]) == $signed+++(+++imm)) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm2, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -37769,8 +36971,6 @@ xref:#udb-insn-qc_selectieqi[`qc.selectieqi`] is unconditionally defined by the 
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_selectiieq]
 = qc.selectiieq
 
@@ -37806,7 +37006,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37816,9 +37015,6 @@ if pass:[(]$signed+++(+++X[rd]) == $signed+++(+++X[rs1])) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm2, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -37861,8 +37057,6 @@ xref:#udb-insn-qc_selectiieq[`qc.selectiieq`] is unconditionally defined by the 
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_selectiine]
 = qc.selectiine
 
@@ -37898,7 +37092,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -37908,9 +37101,6 @@ if pass:[(]$signed+++(+++X[rd]) != $signed+++(+++X[rs1])) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm2, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -37953,8 +37143,6 @@ xref:#udb-insn-qc_selectiine[`qc.selectiine`] is unconditionally defined by the 
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_selectine]
 = qc.selectine
 
@@ -37990,7 +37178,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -38000,9 +37187,6 @@ if pass:[(]$signed+++(+++X[rd]) != $signed+++(+++X[rs1])) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm2, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -38045,8 +37229,6 @@ xref:#udb-insn-qc_selectine[`qc.selectine`] is unconditionally defined by the fo
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_selectinei]
 = qc.selectinei
 
@@ -38082,7 +37264,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -38092,9 +37273,6 @@ if pass:[(]$signed+++(+++X[rd]) != $signed+++(+++imm)) {
   X[rd] = xref:#udb-function-sext[sext]pass:[(]simm2, 5);
 }
 ----
-  
-
-
 
 
 Included in::
@@ -38137,8 +37315,6 @@ xref:#udb-insn-qc_selectinei[`qc.selectinei`] is unconditionally defined by the 
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_selectnei]
 = qc.selectnei
 
@@ -38174,7 +37350,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -38184,9 +37359,6 @@ if pass:[(]$signed+++(+++X[rd]) != $signed+++(+++imm)) {
   X[rd] = X[rs3];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -38229,8 +37401,6 @@ xref:#udb-insn-qc_selectnei[`qc.selectnei`] is unconditionally defined by the fo
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_setinti]
 = qc.setinti
 
@@ -38262,7 +37432,6 @@ Bits<10> imm = $encoding[24:15];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -38272,9 +37441,6 @@ XReg bit = imm % 32;
 Csr pre_csr = xref:#udb-function-direct_csr_lookup[direct_csr_lookup]pass:[(]MCLICIP0_ADDR pass:[+] idx);
 xref:#udb-function-csr_sw_write[csr_sw_write]pass:[(]pre_csr, xref:#udb-function-csr_sw_read[csr_sw_read]pass:[(]pre_csr) | (32'b1 << bit));
 ----
-  
-
-
 
 
 Included in::
@@ -38317,8 +37483,6 @@ xref:#udb-insn-qc_setinti[`qc.setinti`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_setwm]
 = qc.setwm
 
@@ -38354,7 +37518,6 @@ Bits<5> rs3 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -38366,9 +37529,6 @@ for pass:[(]U32 i = 0; i < num_words; i++) {
   vaddr = vaddr pass:[+] 4;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -38411,8 +37571,6 @@ xref:#udb-insn-qc_setwm[`qc.setwm`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_setwmi]
 = qc.setwmi
 
@@ -38448,7 +37606,6 @@ Bits<5> rs3 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -38459,9 +37616,6 @@ for pass:[(]U32 i = 0; i < length; i++) {
   vaddr = vaddr pass:[+] 4;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -38504,8 +37658,6 @@ xref:#udb-insn-qc_setwmi[`qc.setwmi`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_shladd]
 = qc.shladd
 
@@ -38540,15 +37692,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = (X[rs1] << shamt) pass:[+] X[rs2];
 ----
-  
-
-
 
 
 Included in::
@@ -38591,8 +37739,6 @@ xref:#udb-insn-qc_shladd[`qc.shladd`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_shlsat]
 = qc.shlsat
 
@@ -38626,7 +37772,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -38642,9 +37787,6 @@ if pass:[(]$signed+++(+++shifted_value) < $signed+++(+++most_negative_number)) {
   X[rd] = shifted_value[(xref:#udb-function-xlen[xlen]pass:[(]) - 1):0];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -38687,8 +37829,6 @@ xref:#udb-insn-qc_shlsat[`qc.shlsat`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_shlusat]
 = qc.shlusat
 
@@ -38722,7 +37862,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -38735,9 +37874,6 @@ if pass:[(]shifted_value > largest_unsigned_value) {
   X[rd] = shifted_value[(xref:#udb-function-xlen[xlen]pass:[(]) - 1):0];
 }
 ----
-  
-
-
 
 
 Included in::
@@ -38780,8 +37916,6 @@ xref:#udb-insn-qc_shlusat[`qc.shlusat`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_srb]
 = qc.srb
 
@@ -38817,16 +37951,12 @@ Bits<5> rs3 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] (X[rs2] << shamt);
 xref:#udb-function-write_memory[write_memory]pass:[(]8, virtual_address, X[rs3][7:0], $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -38869,8 +37999,6 @@ xref:#udb-insn-qc_srb[`qc.srb`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_srh]
 = qc.srh
 
@@ -38906,16 +38034,12 @@ Bits<5> rs3 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] (X[rs2] << shamt);
 xref:#udb-function-write_memory[write_memory]pass:[(]16, virtual_address, X[rs3][15:0], $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -38958,8 +38082,6 @@ xref:#udb-insn-qc_srh[`qc.srh`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_srw]
 = qc.srw
 
@@ -38995,16 +38117,12 @@ Bits<5> rs3 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg virtual_address = X[rs1] pass:[+] (X[rs2] << shamt);
 xref:#udb-function-write_memory[write_memory]pass:[(]32, virtual_address, X[rs3][31:0], $encoding);
 ----
-  
-
-
 
 
 Included in::
@@ -39047,8 +38165,6 @@ xref:#udb-insn-qc_srw[`qc.srw`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_subsat]
 = qc.subsat
 
@@ -39082,7 +38198,6 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -39100,9 +38215,6 @@ if pass:[(]X[rs1][xref:#udb-function-xlen[xlen]pass:[(]) - 1] != X[rs2][xref:#ud
 }
 X[rd] = result[(xref:#udb-function-xlen[xlen]pass:[(]) - 1):0];
 ----
-  
-
-
 
 
 Included in::
@@ -39145,8 +38257,6 @@ xref:#udb-insn-qc_subsat[`qc.subsat`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_subusat]
 = qc.subusat
 
@@ -39180,15 +38290,11 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 X[rd] = (X[rs1] < X[rs2]) ? 0 : X[rs1] - X[rs2];
 ----
-  
-
-
 
 
 Included in::
@@ -39231,8 +38337,6 @@ xref:#udb-insn-qc_subusat[`qc.subusat`] is unconditionally defined by the follow
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_swm]
 = qc.swm
 
@@ -39268,7 +38372,6 @@ Bits<5> rs3 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -39280,9 +38383,6 @@ for pass:[(]U32 i = 0; i < num_words; i++) {
   vaddr = vaddr pass:[+] 4;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -39325,8 +38425,6 @@ xref:#udb-insn-qc_swm[`qc.swm`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_swmi]
 = qc.swmi
 
@@ -39362,7 +38460,6 @@ Bits<5> rs3 = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
@@ -39373,9 +38470,6 @@ for pass:[(]U32 i = 0; i < length; i++) {
   vaddr = vaddr pass:[+] 4;
 }
 ----
-  
-
-
 
 
 Included in::
@@ -39418,8 +38512,6 @@ xref:#udb-insn-qc_swmi[`qc.swmi`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_sync]
 = qc.sync
 
@@ -39454,16 +38546,12 @@ Bits<5> imm = $encoding[24:20];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 xref:#udb-function-fence_tso[fence_tso]pass:[(]);
 xref:#udb-function-sync_read_after_write_device[sync_read_after_write_device]pass:[(]true, imm);
 ----
-  
-
-
 
 
 Included in::
@@ -39506,8 +38594,6 @@ xref:#udb-insn-qc_sync[`qc.sync`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_syncr]
 = qc.syncr
 
@@ -39542,16 +38628,12 @@ Bits<5> imm = $encoding[24:20];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 xref:#udb-function-fence_tso[fence_tso]pass:[(]);
 xref:#udb-function-sync_read_after_write_device[sync_read_after_write_device]pass:[(]false, imm);
 ----
-  
-
-
 
 
 Included in::
@@ -39594,8 +38676,6 @@ xref:#udb-insn-qc_syncr[`qc.syncr`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_syncwf]
 = qc.syncwf
 
@@ -39630,16 +38710,12 @@ Bits<5> imm = $encoding[24:20];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 xref:#udb-function-fence_tso[fence_tso]pass:[(]);
 xref:#udb-function-sync_write_after_read_device[sync_write_after_read_device]pass:[(]false, imm);
 ----
-  
-
-
 
 
 Included in::
@@ -39682,8 +38758,6 @@ xref:#udb-insn-qc_syncwf[`qc.syncwf`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_syncwl]
 = qc.syncwl
 
@@ -39718,16 +38792,12 @@ Bits<5> imm = $encoding[24:20];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 xref:#udb-function-fence_tso[fence_tso]pass:[(]);
 xref:#udb-function-sync_write_after_read_device[sync_write_after_read_device]pass:[(]true, imm);
 ----
-  
-
-
 
 
 Included in::
@@ -39770,8 +38840,6 @@ xref:#udb-insn-qc_syncwl[`qc.syncwl`] is unconditionally defined by the followin
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_wrap]
 = qc.wrap
 
@@ -39807,16 +38875,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg rs1_value = X[rs1];
 X[rd] = ($signed+++(+++rs1_value) >= $signed+++(+++X[rs2])) ? rs1_value - X[rs2] : (($signed+++(+++rs1_value) < 's0) ? (rs1_value pass:[+] X[rs2]) : rs1_value);
 ----
-  
-
-
 
 
 Included in::
@@ -39859,8 +38923,6 @@ xref:#udb-insn-qc_wrap[`qc.wrap`] is unconditionally defined by the following:
 :leveloffset: +2
 
 
-
-
 [#udb:doc:inst:qc_wrapi]
 = qc.wrapi
 
@@ -39897,16 +38959,12 @@ Bits<5> rd = $encoding[11:7];
 ----
 
 
-  
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg rs1_value = X[rs1];
 X[rd] = ($signed+++(+++rs1_value) >= $signed+++(+++{1'b0, imm})) ? rs1_value - imm : (($signed+++(+++rs1_value) < 's0) ? ($signed+++(+++rs1_value) pass:[+] imm) : rs1_value);
 ----
-  
-
-
 
 
 Included in::
@@ -40009,7 +39067,7 @@ h! `PrivilegeMode`
 if pass:[(]paddr > ((1 pass:[`]<< PHYS_ADDR_WIDTH) - access_size)) {
   xref:#udb-function-raise[raise]pass:[(]fault_type, from_mode, vaddr);
 }
-if pass:[(]xref:#udb-function-implemented?[implemented?]pass:[(]ExtensionName::Smpmp)) {
+if pass:[(]NUM_PMP_ENTRIES > 0) {
   if pass:[(]!xref:#udb-function-pmp_check[pmp_check]pass:[(]paddr[PHYS_ADDR_WIDTH - 1:0], access_size, type)) {
     xref:#udb-function-raise[raise]pass:[(]fault_type, from_mode, vaddr);
   }

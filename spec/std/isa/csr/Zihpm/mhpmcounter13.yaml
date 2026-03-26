@@ -15,8 +15,13 @@ writable: true
 priv_mode: M
 length: 64
 definedBy:
-  extension:
-    name: Smhpm
+  allOf:
+    - extension:
+        name: Sm
+    - param:
+        name: HPM_COUNTER_EN
+        index: 13
+        equal: true
 description: |
   Programmable hardware performance counter.
 
