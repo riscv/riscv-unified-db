@@ -1,0 +1,62 @@
+name: Autofix PR Comment Handler
+
+on:
+  workflow_run:
+    workflows: ["autofix.ci"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment-on-regress-failure:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: Download regress check result
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          name: autofix-regress-check
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Check if regress.yml was the issue
+        id: check
+        run: |
+          regress_changed=$(cat regress_changed.txt)
+          pr_number=$(cat pr_number.txt)
+          echo "regress_changed=$regress_changed" >> $GITHUB_OUTPUT
+          echo "pr_number=$pr_number" >> $GITHUB_OUTPUT
+
+      - name: Post PR comment about regress.yml
+        if: steps.check.outputs.regress_changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ steps.check.outputs.pr_number }} \
+            --repo ${{ github.repository }} \
+            --body "## ⚠️ Autofix Failed: Workflow File Update Required
+
+          The \`autofix.ci\` check failed because it cannot commit changes to \`.github/workflows/regress.yml\` due to security restrictions.
+
+          **To fix this:**
+
+          1. Run the following command locally:
+             \`\`\`bash
+             ./bin/chore gen regress
+             \`\`\`
+
+          2. Review the changes to \`.github/workflows/regress.yml\`
+
+          3. Commit the changes:
+             \`\`\`bash
+             git add .github/workflows/regress.yml
+             git commit -m \"Regenerate regress workflow\"
+             git push
+             \`\`\`
+
+          The autofix check should pass once the workflow file is updated.
+
+          ---
+          <sub>This is an automated message. The workflow file needs to be regenerated because you modified one of: \`tools/test/regress-tests.yaml\`, \`tools/test/regress-gh-template.yaml\`, or \`tools/test/gen_regress.rb\`.</sub>"

@@ -16,5 +16,53 @@ jobs:
           fetch-depth: 0
       - name: Set up mise environment
         uses: "./.github/actions/mise-setup"
+
+      # Record regress.yml state before generation
+      - name: Record regress.yml hash before generation
+        id: before
+        run: |
+          if [ -f .github/workflows/regress.yml ]; then
+            sha256sum .github/workflows/regress.yml | cut -d' ' -f1 > /tmp/regress_before.txt
+          else
+            echo "missing" > /tmp/regress_before.txt
+          fi
+
       - run: ./bin/chore gen all
+
+      # Check if regress.yml changed
+      - name: Check if regress.yml was regenerated
+        if: always()
+        id: check-regress
+        run: |
+          if [ -f .github/workflows/regress.yml ]; then
+            after_hash=$(sha256sum .github/workflows/regress.yml | cut -d' ' -f1)
+          else
+            after_hash="missing"
+          fi
+          before_hash=$(cat /tmp/regress_before.txt)
+
+          if [ "$before_hash" != "$after_hash" ]; then
+            echo "regress_changed=true" >> $GITHUB_OUTPUT
+            echo "::notice::Regress workflow was regenerated"
+          else
+            echo "regress_changed=false" >> $GITHUB_OUTPUT
+          fi
+
       - uses: autofix-ci/action@7a166d7532b277f34e16238930461bf77f9d7ed8 # v1.3.3
+
+      # Save result as artifact for workflow_run to consume
+      - name: Save regress check result
+        if: always()
+        run: |
+          echo "${{ steps.check-regress.outputs.regress_changed }}" > /tmp/regress_changed.txt
+          echo "${{ github.event.pull_request.number }}" > /tmp/pr_number.txt
+
+      - name: Upload regress check result
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: autofix-regress-check
+          path: |
+            /tmp/regress_changed.txt
+            /tmp/pr_number.txt
+          retention-days: 1
