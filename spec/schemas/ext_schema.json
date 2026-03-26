@@ -80,7 +80,14 @@
               }
             },
             "then": {
-              "required": ["release_date"]
+              "required": ["release_date"],
+              "properties": {
+                "release_date": {
+                  "not": {
+                    "type": "null"
+                  }
+                }
+              }
             }
           }
         ],
