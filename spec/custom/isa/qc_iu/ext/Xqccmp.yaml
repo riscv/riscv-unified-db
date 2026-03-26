@@ -11,7 +11,7 @@ type: unprivileged
 versions:
 - version: "0.1.0"
   state: development
-  ratification_date: null
+  ratification_date: unknown
   contributors:
   - name: Albert Yosher
     company: Qualcomm Technologies, Inc.
@@ -31,7 +31,7 @@ versions:
       version: ">= 1.0.0"
 - version: "0.2.0"
   state: development
-  ratification_date: null
+  ratification_date: unknown
   contributors:
   - name: Albert Yosher
     company: Qualcomm Technologies, Inc.
@@ -57,7 +57,7 @@ versions:
       version: ">= 1.0.0"
 - version: "0.3.0"
   state: frozen
-  ratification_date: null
+  ratification_date: unknown
   contributors:
   - name: Albert Yosher
     company: Qualcomm Technologies, Inc.
