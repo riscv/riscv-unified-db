@@ -6,7 +6,7 @@ allowed-tools: Read, Bash, Write
 ---
 
 Copyright (c) 2026 Qualcomm Technologies, Inc. and/or its subsidiaries.
-SPDX-License-Identifier: BSD-3-Clause
+SPDX-License-Identifier: BSD-3-Clause-Clear
 
 Extract all RISC-V instruction names mentioned in the specified subsection of the given AsciiDoc file, then write them to `/tmp/<subsection-title>.yaml`, where `<subsection-title>` is argument 1 lowercased with spaces replaced by hyphens (e.g., `"Multiplication Operations"` → `/tmp/multiplication-operations.yaml`).
 
