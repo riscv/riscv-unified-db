@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "v0.1",
+  "$id": "v0.2",
   "$defs": {
     "fully_resolved_opcodes": {
       "type": "object",
@@ -385,10 +385,6 @@
     },
     "operation_ast": {
       "type": "object"
-    },
-    "sail()": {
-      "type": "string",
-      "description": "Functional description of the instruction using Sail"
     },
     "cert_normative_rules": {
       "$ref": "schema_defs.json#/$defs/cert_normative_rules"

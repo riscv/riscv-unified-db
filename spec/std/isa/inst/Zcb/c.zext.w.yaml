@@ -40,22 +40,3 @@ operation(): |2
   }
 
   X[creg2reg(xd)] = X[creg2reg(xd)][31:0];
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let rs1_val = X(rsdc);
-    let result : xlenbits = match op {
-      RISCV_SEXTB => sign_extend(rs1_val[7..0]),
-      RISCV_SEXTH => sign_extend(rs1_val[15..0]),
-      RISCV_ZEXTB => zero_extend(rs1_val[7..0]),
-      RISCV_ZEXTH => zero_extend(rs1_val[15..0]),
-      RISCV_ZEXTW => zero_extend(rs1_val[31..0])
-    };
-    X(rsdc) = result;
-    RETIRE_SUCCESS
-  }
-
-# SPDX-SnippetEnd

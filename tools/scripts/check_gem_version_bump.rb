@@ -10,12 +10,14 @@
 require "pathname"
 
 # Gem configurations: name, source directory, and version file
+# additional_dirs: optional array of directories to monitor in addition to the gem directory
 GEMS = [
   {
     name: "udb",
     dir: "tools/ruby-gems/udb",
     version_file: "tools/ruby-gems/udb/lib/udb/version.rb",
-    version_method: "Udb.version"
+    version_method: "Udb.version",
+    additional_dirs: ["spec"]
   },
   {
     name: "idlc",
@@ -33,7 +35,8 @@ GEMS = [
     name: "udb-gen",
     dir: "tools/ruby-gems/udb-gen",
     version_file: "tools/ruby-gems/udb-gen/lib/udb-gen/version.rb",
-    version_method: "UdbGen.version"
+    version_method: "UdbGen.version",
+    additional_dirs: ["spec"]
   }
 ].freeze
 
@@ -72,11 +75,17 @@ def check_gem(gem_config, changed_files, base_ref)
   gem_name = gem_config[:name]
   gem_dir = gem_config[:dir]
   version_file = gem_config[:version_file]
+  additional_dirs = gem_config[:additional_dirs] || []
 
   # Check if any files in the gem directory have changed
   gem_files_changed = changed_files.any? { |f| f.start_with?(gem_dir) }
 
-  return :no_changes unless gem_files_changed
+  # Also check additional directories if specified
+  additional_files_changed = additional_dirs.any? do |dir|
+    changed_files.any? { |f| f.start_with?(dir) }
+  end
+
+  return :no_changes unless gem_files_changed || additional_files_changed
 
   # Check if the version file itself changed
   version_file_changed = changed_files.include?(version_file)
