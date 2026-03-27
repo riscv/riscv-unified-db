@@ -176,6 +176,15 @@
               "items": {
                 "type": "object"
               }
+            },
+            "checkout_with": {
+              "description": "Parameters to pass to the actions/checkout step in the 'with' field. Use this to customize the checkout behavior, e.g., fetch-depth: 0 for full history.",
+              "type": "object",
+              "examples": [
+                {
+                  "fetch-depth": 0
+                }
+              ]
             }
           }
         }

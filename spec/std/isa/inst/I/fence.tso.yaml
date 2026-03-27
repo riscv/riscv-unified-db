@@ -38,15 +38,3 @@ access:
   vu: always
 operation(): |
   fence_tso();
-
-sail(): |
-  {
-    match (pred, succ) {
-      (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_tso),
-      (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
-
-      _ => { print("FIXME: unsupported fence");
-             () }
-    };
-    RETIRE_SUCCESS
-  }
