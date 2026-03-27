@@ -209,6 +209,8 @@ module Udb
     sig { returns(::Pathname) }
     def gem_path; end
 
+    def global_options; end
+
     sig { returns(::Udb::LogLevel) }
     def log_level; end
 
@@ -2308,6 +2310,9 @@ class Udb::ExtensionVersion
   sig { returns(T.nilable(::String)) }
   def ratification_date; end
 
+  sig { returns(T.nilable(::String)) }
+  def release_date; end
+
   sig { returns(::Udb::AbstractCondition) }
   def requirements_condition; end
 
@@ -2452,6 +2457,10 @@ class Udb::FullConfig < ::Udb::AbstractConfig
 
   sig { override.returns(T::Boolean) }
   def unconfigured?; end
+end
+
+class Udb::GlobalOptions < ::T::Struct
+  prop :parallel_z3, T::Boolean, default: T.unsafe(nil)
 end
 
 module Udb::HasFields
@@ -4925,6 +4934,17 @@ class Udb::Z3Solver
 
   sig { returns(::Z3::IntExpr) }
   def xlen; end
+
+  class << self
+    sig { params(desired: T::Boolean).void }
+    def configure_parallelization(desired); end
+
+    sig { returns(T.nilable(T::Boolean)) }
+    def parallel_enabled; end
+
+    sig { params(value: T.nilable(T::Boolean)).void }
+    def parallel_enabled=(value); end
+  end
 end
 
 class Udb::Z3Sovler; end

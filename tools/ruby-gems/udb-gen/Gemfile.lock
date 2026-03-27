@@ -41,7 +41,7 @@ PATH
 PATH
   remote: .
   specs:
-    udb-gen (0.1.1)
+    udb-gen (0.1.2)
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf

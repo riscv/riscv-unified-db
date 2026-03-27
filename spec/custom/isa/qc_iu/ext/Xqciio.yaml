@@ -11,7 +11,7 @@ long_name: Qualcomm Input/Output device support
 versions:
 - version: "0.1.0"
   state: frozen
-  ratification_date: null
+  ratification_date: unknown
   contributors:
   - name: Albert Yosher
     company: Qualcomm Technologies, Inc.
