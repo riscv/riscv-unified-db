@@ -293,7 +293,7 @@ do_gen_schema_docs() {
     local sha_before
     sha_before=$(find "$UDB_ROOT"/doc/docs/schemas -type f -name "*.mdx" -exec sha256sum {} \; 2>/dev/null | sort | sha256sum)
   fi
-  $RUBY -I tools/ruby-gems/schema_doc_gen/lib tools/ruby-gems/schema_doc_gen/bin/schema-docs-all \
+  $RUBY -I tools/internal-gems/schema_doc_gen/lib tools/internal-gems/schema_doc_gen/bin/schema-docs-all \
     --schema-dir "$UDB_ROOT/spec/schemas" \
     --output-dir "$UDB_ROOT/doc/docs/schemas" \
     --generate-index

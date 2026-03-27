@@ -1,4 +1,11 @@
 PATH
+  remote: tools/internal-gems/schema_doc_gen
+  specs:
+    schema_doc_gen (0.1.0)
+      tty-exit
+      tty-option
+
+PATH
   remote: tools/ruby-gems/idl_highlighter
   specs:
     idl_highlighter (0.1.0)
@@ -353,6 +360,7 @@ DEPENDENCIES
   rubocop-sorbet
   ruby-lsp
   ruby-prof
+  schema_doc_gen!
   simplecov
   simplecov-cobertura
   sorbet

@@ -381,7 +381,7 @@ For each table, create a page with: description, schema summary (auto-generated 
 
 - [ ] **5.4.1** Write `overview.md`: what schemas are, where they live (`spec/schemas/`), how they are enforced.
 - [ ] **5.4.2** Convert `doc/schema/versioning.adoc` → `versioning.md`.
-- [x] **5.4.3** Set up auto-generation of per-schema documentation from the JSON Schema files in `spec/schemas/`. Implemented as a custom Ruby gem (`tools/ruby-gems/schema_doc_gen/`) invoked via `bin/chore gen schema-docs`. Generates MDX pages under `doc/docs/schemas/<version>/`. See D7 in `decisions.md`.
+- [x] **5.4.3** Set up auto-generation of per-schema documentation from the JSON Schema files in `spec/schemas/`. Implemented as a custom Ruby gem (`tools/internal-gems/schema_doc_gen/`) invoked via `bin/chore gen schema-docs`. Generates MDX pages under `doc/docs/schemas/<version>/`. See D7 in `decisions.md`.
 - [x] **5.4.4** Add a schema index page listing all documented schemas with links. *(Auto-generated at `doc/docs/schemas/index.mdx`.)*
 
 **Schema content review status** (improving `description` fields and `examples` in each schema file):
@@ -546,7 +546,7 @@ This phase sets up the tooling to keep docs in sync with source automatically.
 
 - [x] **10.1.1** Evaluated `@adobe/jsonschema2md` — not suitable (poor MDX output, limited control over formatting). Chose custom Ruby implementation instead.
 - [-] **10.1.2** N/A — `@adobe/jsonschema2md` not used.
-- [x] **10.1.3** Wrote custom Ruby gem `tools/ruby-gems/schema_doc_gen/` that reads each JSON Schema file and emits structured MDX. Invoked via `bin/chore gen schema-docs`. See D7 in `decisions.md` for design decisions.
+- [x] **10.1.3** Wrote custom Ruby gem `tools/internal-gems/schema_doc_gen/` that reads each JSON Schema file and emits structured MDX. Invoked via `bin/chore gen schema-docs`. See D7 in `decisions.md` for design decisions.
 - [x] **10.1.4** Generation step added: `bin/chore gen schema-docs` (run manually; not yet wired into the Docusaurus pre-build step — see note below).
 - [~] **10.1.5** Improving schema files with better `description` fields and `examples`: `config_schema.json` fully done; `schema_defs.json` partially done (`extension_name`, `requirement_string`, `version_requirements`, `extension_version`, `condition` updated); remaining schemas not yet reviewed. See schema content review status in Phase 5.4.
 
