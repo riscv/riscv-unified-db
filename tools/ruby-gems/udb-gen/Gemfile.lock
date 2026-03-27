@@ -1,7 +1,7 @@
 PATH
   remote: ../idlc
   specs:
-    idlc (0.1.1)
+    idlc (0.1.2)
       activesupport
       commander (~> 5)
       pp
@@ -12,12 +12,12 @@ PATH
 PATH
   remote: ../udb_helpers
   specs:
-    udb_helpers (0.1.1)
+    udb_helpers (0.1.2)
 
 PATH
   remote: ../udb
   specs:
-    udb (0.1.4)
+    udb (0.1.5)
       activesupport
       asciidoctor
       awesome_print
@@ -41,7 +41,7 @@ PATH
 PATH
   remote: .
   specs:
-    udb-gen (0.1.2)
+    udb-gen (0.1.3)
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf
