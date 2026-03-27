@@ -105,6 +105,8 @@ gen_subcmd_usage() {
   echo "Commands:"
   echo ""
   echo "  all:           Generate all development artifacts"
+  echo "  gem-versions:  Sync inter-gem version pins in gemspecs and Gemfile.lock files"
+  echo "                 for the locally-developed gems in tools/ruby-gems/"
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
@@ -282,11 +284,28 @@ do_gen_vscode_idl() {
 }
 
 #
+# Sync inter-gem version pins in gemspecs and Gemfile.lock files for the
+# locally-developed gems in tools/ruby-gems/. Also auto-increments versions
+# for any gem whose source changed without a bump (with cascade).
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
+#
+do_gen_gem_versions() {
+  source_setup
+  echo "Syncing inter-gem version pins for tools/ruby-gems/ gems"
+  if [ $fail_on_change -eq 1 ]; then
+    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change
+  else
+    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb
+  fi
+}
+
+#
 # Generate all development artifacts
 #
 do_gen_all() {
   do_gen_regress
   do_gen_vscode_idl
+  do_gen_gem_versions
   do_ruby_type_def all
   do_gen_xqci_golden
 }
@@ -558,6 +577,10 @@ case "$subcommand" in
     case "$target" in
       all )
         do_gen_all
+        exit 0
+        ;;
+      gem-versions )
+        do_gen_gem_versions
         exit 0
         ;;
       vscode-idl )
