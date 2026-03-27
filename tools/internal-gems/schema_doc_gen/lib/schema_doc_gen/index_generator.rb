@@ -26,7 +26,7 @@ module SchemaDocGen
       parts << generate_overview
       parts << generate_schemas_section(versions, schemas_by_version)
 
-      parts.join("\n\n")
+      parts.join("\n\n").rstrip + "\n"
     end
 
     private

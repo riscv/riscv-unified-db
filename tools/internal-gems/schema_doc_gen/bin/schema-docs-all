@@ -97,7 +97,7 @@ class SchemaDocsAllCLI
           "collapsed" => false
         }
 
-        File.write(category_path, JSON.pretty_generate(category_content))
+        File.write(category_path, JSON.pretty_generate(category_content) + "\n")
         puts "  Generated category: #{category_path}"
       end
 
