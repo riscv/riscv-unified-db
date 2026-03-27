@@ -194,7 +194,7 @@ function is_sp_neg_norm? {
     return
       (sp_value[31] == 1)                 # negative
       && (sp_value[30:23] != 0b11111111)  # not inf/NaN
-      && (sp_value[30:23] != 0b00000000); # not zero
+      && (sp_value[30:23] != 0b00000000); # not zero or subnormal
   }
 }
 
@@ -1022,7 +1022,6 @@ function i64_to_f32 {
       } else {
         return 0;
       }
-      sig = absA << shiftDist;
     } else {
       shiftDist = shiftDist + 7;
       if ($signed(shiftDist) < 0s) {
@@ -1924,7 +1923,7 @@ function softfloat_shortShiftRightJam64 {
     shifted-off bits into the least-significant bit of the result.
   }
   body {
-    return a >> dist | (((a & ((64'1 << dist) - 1)) != 0) ? 1 : 0);
+    return a >> dist | (((a & ((64'h1 << dist) - 1)) != 0) ? 1 : 0);
   }
 }
 
@@ -2027,7 +2026,7 @@ function softfloat_roundToUI64 {
         }
       }
       if ( (sigExtra == 64'h8000000000000000) && (roundingMode == RoundingMode::RNE)) {
-        sig = sig & ~64'1;
+        sig = sig & ~64'h1;
       }
     }
 

@@ -850,7 +850,7 @@ namespace udb {
               lhs.get() & rhs.get_ignore_unknown(), std::max(N, rhs.width()), result_unknown_mask.get()};
         } else {
           return _PossiblyUnknownBits<constmax_v<N, RhsN>, Signed && RhsSigned>{
-              lhs.get() & rhs.get(), result_unknown_mask.get()};
+              lhs.get() & rhs.get_ignore_unknown(), result_unknown_mask.get()};
         }
       } else {
         // both rhs and lhs are known
@@ -884,7 +884,7 @@ namespace udb {
               lhs.get() | rhs.get_ignore_unknown(), std::max(N, rhs.width()), result_unknown_mask.get());
         } else {
           return _PossiblyUnknownBits<constmax_v<N, RhsN>, Signed && RhsSigned>(
-              lhs.get() | rhs.get(), result_unknown_mask.get());
+              lhs.get() | rhs.get_ignore_unknown(), result_unknown_mask.get());
         }
       } else {
         // both rhs and lhs are known
@@ -2019,7 +2019,7 @@ namespace udb {
             rhs.unknown_mask().get() & lhs.get();
 
         return _PossiblyUnknownRuntimeBits<constmax_v<MaxN, RhsN>, Signed && RhsSigned>{
-            lhs.get() & rhs.get(), std::max(m_width, _rhs.width()), result_unknown_mask};
+            lhs.get() & rhs.get_ignore_unknown(), std::max(m_width, _rhs.width()), result_unknown_mask};
       } else {
         _RuntimeBits<constmax_v<MaxN, RhsN>, Signed> lhs{*this};
         RhsBitsType<constmax_v<MaxN, RhsN>, RhsSigned> rhs{_rhs};
@@ -2043,7 +2043,7 @@ namespace udb {
             rhs.unknown_mask() & ~(lhs);
 
         return _PossiblyUnknownRuntimeBits<constmax_v<MaxN, RhsN>, Signed && RhsSigned>(
-            lhs.get() | rhs.get(), std::max(m_width, _rhs.width()), result_unknown_mask.get());
+            lhs.get() | rhs.get_ignore_unknown(), std::max(m_width, _rhs.width()), result_unknown_mask.get());
       } else {
         _RuntimeBits<constmax_v<MaxN, RhsN>, Signed> lhs{*this};
         RhsBitsType<constmax_v<MaxN, RhsN>, RhsSigned> rhs{_rhs};
@@ -2062,7 +2062,7 @@ namespace udb {
         RhsBitsType<constmax_v<MaxN, RhsN>, RhsSigned> rhs{_rhs};
 
         return _PossiblyUnknownRuntimeBits<constmax_v<MaxN, RhsN>, Signed && RhsSigned>{
-            lhs.get() ^ rhs.get(), std::max(m_width, _rhs.width()), rhs.unknown_mask()};
+            lhs.get() ^ rhs.get_ignore_unknown(), std::max(m_width, _rhs.width()), rhs.unknown_mask().get()};
       } else {
         _RuntimeBits<constmax_v<MaxN, RhsN>, Signed> lhs{*this};
         RhsBitsType<constmax_v<MaxN, RhsN>, RhsSigned> rhs{_rhs};

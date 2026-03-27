@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-ruby ">= 3.2", "< 4.0"
+ruby "~> 3.2"
 
 source "https://rubygems.org"
 

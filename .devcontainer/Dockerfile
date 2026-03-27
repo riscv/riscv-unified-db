@@ -49,9 +49,9 @@ ENV MISE_TRUSTED_CONFIG_PATHS="/"
 ENV UV_CACHE_DIR="/tmp/uv-cache"
 ENV PATH="/mise/shims:$PATH"
 
-# force docker to start again from here if the mise version changes (even if the mise installation was previously cached)
-ADD "https://api.github.com/repos/jdx/mise/releases/latest" latest_mise_version
-RUN curl https://mise.run | sh
+# renovate: datasource=github-releases depName=jdx/mise
+ARG MISE_VERSION=2026.3.17
+RUN MISE_VERSION=${MISE_VERSION} curl https://mise.run | sh
 
 # Install tools managed by mise (.mise.toml)
 COPY .mise.toml /mise/config.toml

@@ -1693,16 +1693,6 @@ module Udb
 
     sig { params(eval_cb: EvalCallbackType).returns(T::Array[LogicNode]) }
     def failing_conjuncts(eval_cb)
-      replace_cb = LogicNode.make_replace_cb do |term_node|
-        r = eval_cb.call(T.cast(term_node.children.fetch(0), TermType))
-        case r
-        when SatisfiedResult::Yes   then LogicNode::True
-        when SatisfiedResult::No    then LogicNode::False
-        when SatisfiedResult::Maybe then term_node
-        else T.absurd(r)
-        end
-      end
-
       if @type == LogicNodeType::And
         # Evaluate each original child independently to find failing conjuncts
         child_replace_cb = LogicNode.make_replace_cb do |tn|
