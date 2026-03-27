@@ -2,6 +2,12 @@ image::doc/udb.svg[UDB banner]
 
 image::https://api.reuse.software/badge/github.com/riscv/riscv-unified-db[REUSE status, link="https://api.reuse.software/info/github.com/riscv/riscv-unified-db"]
 
+[NOTE]
+----
+A new from-scratch documentation site for this project is under construction.
+It is available at https://riscv.github.io/riscv-unified-db/docs-preview/[riscv.github.io/riscv-unified-db/docs-preview].
+Content is incomplete and actively being developed, but is likely still helpful.
+----
 
 [WARNING]
 ----
