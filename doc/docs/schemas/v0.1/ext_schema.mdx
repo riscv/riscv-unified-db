@@ -80,6 +80,7 @@ versions:
 | `state` | `development` \| `frozen` \| `public-review` \| `ratification-ready` \| `ratified` \| `nonstandard-released` | ✓ | Ratification state of this version. See `spec_state` in schema_defs for all possible values and their meanings. |
 | `repositories` | Array&lt;object&gt; |  | Source repositories where this version of the extension is developed |
 | `ratification_date` | One of: `string` \| `string` \| `null` |  | Month when this version was ratified, in `YYYY-MM` format. Use `unknown` if the date is not recorded. Required when `state` is `ratified`. |
+| `release_date` | One of: `string` \| `string` \| `null` |  |  |
 | `changes` | Array&lt;`string`&gt; |  | List of changes introduced in this version relative to the previous version |
 | `url` | `string` |  | URL to the ratified specification document (e.g., a PDF on the RISC-V website) |
 | `contributors` | Array&lt;object&gt; |  | People who contributed to this version of the extension |
