@@ -39,4 +39,4 @@ schema:
   maximum: 64
 definedBy:
   extension:
-    name: Smpmp
+    name: Sm

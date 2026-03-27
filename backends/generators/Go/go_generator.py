@@ -90,7 +90,7 @@ def parse_args():
     parser.add_argument("--output", default="inst.go", help="Output Go file name")
     parser.add_argument(
         "--extensions",
-        default="A,D,F,I,M,Q,Zba,Zbb,Zbs,S,System,V,Zicsr,Smpmp,Sm,H,U,Zicntr,Zihpm,Smhpm",
+        default="A,D,F,I,M,Q,Zba,Zbb,Zbs,S,System,V,Zicsr,Sm,H,U,Zicntr,Zihpm",
         help="Comma-separated list of enabled extensions. Default includes standard extensions.",
     )
     parser.add_argument(

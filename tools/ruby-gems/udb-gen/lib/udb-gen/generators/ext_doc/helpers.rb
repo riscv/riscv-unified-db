@@ -18,10 +18,17 @@ module UdbGen
       version.ratification_date.nil? ? Date.today.year.to_s : T.must(version.ratification_date).split("-")[0]
     end
 
-    # Returns the revdate for a version (ratification date or today).
+    # Returns the revdate for a version: release date (for nonstandard-released),
+    # ratification date (for ratified), or today otherwise.
     sig { params(version: Udb::ExtensionVersion).returns(T.any(String, Date)) }
     def revdate(version)
-      version.ratification_date.nil? ? Date.today : version.ratification_date
+      if version.state == "nonstandard-released"
+        version.release_date.nil? ? Date.today : version.release_date
+      elsif version.state == "ratified"
+        version.ratification_date.nil? ? Date.today : version.ratification_date
+      else
+        Date.today
+      end
     end
 
     # Returns the company name or "unknown".

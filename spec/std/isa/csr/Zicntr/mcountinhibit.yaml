@@ -73,8 +73,13 @@ fields:
   HPM3:
     location: 3
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 3
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[3] == true"]
       When set, `hpmcounter3.COUNT` stops counting in all privilege modes.
@@ -88,8 +93,13 @@ fields:
   HPM4:
     location: 4
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 4
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[4] == true"]
       When set, `hpmcounter4.COUNT` stops counting in all privilege modes.
@@ -103,8 +113,13 @@ fields:
   HPM5:
     location: 5
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 5
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[5] == true"]
       When set, `hpmcounter5.COUNT` stops counting in all privilege modes.
@@ -118,8 +133,13 @@ fields:
   HPM6:
     location: 6
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 6
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[6] == true"]
       When set, `hpmcounter6.COUNT` stops counting in all privilege modes.
@@ -133,8 +153,13 @@ fields:
   HPM7:
     location: 7
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 7
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[7] == true"]
       When set, `hpmcounter7.COUNT` stops counting in all privilege modes.
@@ -148,8 +173,13 @@ fields:
   HPM8:
     location: 8
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 8
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[8] == true"]
       When set, `hpmcounter8.COUNT` stops counting in all privilege modes.
@@ -163,8 +193,13 @@ fields:
   HPM9:
     location: 9
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 9
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[9] == true"]
       When set, `hpmcounter9.COUNT` stops counting in all privilege modes.
@@ -178,8 +213,13 @@ fields:
   HPM10:
     location: 10
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 10
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[10] == true"]
       When set, `hpmcounter10.COUNT` stops counting in all privilege modes.
@@ -193,8 +233,13 @@ fields:
   HPM11:
     location: 11
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 11
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[11] == true"]
       When set, `hpmcounter11.COUNT` stops counting in all privilege modes.
@@ -208,8 +253,13 @@ fields:
   HPM12:
     location: 12
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 12
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[12] == true"]
       When set, `hpmcounter12.COUNT` stops counting in all privilege modes.
@@ -223,8 +273,13 @@ fields:
   HPM13:
     location: 13
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 13
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[13] == true"]
       When set, `hpmcounter13.COUNT` stops counting in all privilege modes.
@@ -238,8 +293,13 @@ fields:
   HPM14:
     location: 14
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 14
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[14] == true"]
       When set, `hpmcounter14.COUNT` stops counting in all privilege modes.
@@ -253,8 +313,13 @@ fields:
   HPM15:
     location: 15
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 15
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[15] == true"]
       When set, `hpmcounter15.COUNT` stops counting in all privilege modes.
@@ -268,8 +333,13 @@ fields:
   HPM16:
     location: 16
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 16
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[16] == true"]
       When set, `hpmcounter16.COUNT` stops counting in all privilege modes.
@@ -283,8 +353,13 @@ fields:
   HPM17:
     location: 17
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 17
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[17] == true"]
       When set, `hpmcounter17.COUNT` stops counting in all privilege modes.
@@ -298,8 +373,13 @@ fields:
   HPM18:
     location: 18
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 18
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[18] == true"]
       When set, `hpmcounter18.COUNT` stops counting in all privilege modes.
@@ -313,8 +393,13 @@ fields:
   HPM19:
     location: 19
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 19
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[19] == true"]
       When set, `hpmcounter19.COUNT` stops counting in all privilege modes.
@@ -328,8 +413,13 @@ fields:
   HPM20:
     location: 20
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 20
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[20] == true"]
       When set, `hpmcounter20.COUNT` stops counting in all privilege modes.
@@ -343,8 +433,13 @@ fields:
   HPM21:
     location: 21
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 21
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[21] == true"]
       When set, `hpmcounter21.COUNT` stops counting in all privilege modes.
@@ -358,8 +453,13 @@ fields:
   HPM22:
     location: 22
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 22
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[22] == true"]
       When set, `hpmcounter22.COUNT` stops counting in all privilege modes.
@@ -373,8 +473,13 @@ fields:
   HPM23:
     location: 23
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 23
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[23] == true"]
       When set, `hpmcounter23.COUNT` stops counting in all privilege modes.
@@ -388,8 +493,13 @@ fields:
   HPM24:
     location: 24
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 24
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[24] == true"]
       When set, `hpmcounter24.COUNT` stops counting in all privilege modes.
@@ -403,8 +513,13 @@ fields:
   HPM25:
     location: 25
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 25
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[25] == true"]
       When set, `hpmcounter25.COUNT` stops counting in all privilege modes.
@@ -418,8 +533,13 @@ fields:
   HPM26:
     location: 26
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 26
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[26] == true"]
       When set, `hpmcounter26.COUNT` stops counting in all privilege modes.
@@ -433,8 +553,13 @@ fields:
   HPM27:
     location: 27
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 27
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[27] == true"]
       When set, `hpmcounter27.COUNT` stops counting in all privilege modes.
@@ -448,8 +573,13 @@ fields:
   HPM28:
     location: 28
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 28
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[28] == true"]
       When set, `hpmcounter28.COUNT` stops counting in all privilege modes.
@@ -463,8 +593,13 @@ fields:
   HPM29:
     location: 29
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 29
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[29] == true"]
       When set, `hpmcounter29.COUNT` stops counting in all privilege modes.
@@ -478,8 +613,13 @@ fields:
   HPM30:
     location: 30
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 30
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[30] == true"]
       When set, `hpmcounter30.COUNT` stops counting in all privilege modes.
@@ -493,8 +633,13 @@ fields:
   HPM31:
     location: 31
     definedBy:
-      extension:
-        name: Smhpm
+      allOf:
+        - extension:
+            name: Sm
+        - param:
+            name: HPM_COUNTER_EN
+            index: 31
+            equal: true
     description: |
       [when="COUNTINHIBIT_EN[31] == true"]
       When set, `hpmcounter31.COUNT` stops counting in all privilege modes.

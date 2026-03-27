@@ -31,8 +31,6 @@ mandatory_extensions:
   version: "~> 1.13"
 - name: Sm
   version: "~> 1.13"
-- name: Smpmp
-  version: "~> 1.13"
 - name: Ssccptr
   version: "~> 1.0"
 - name: Sscofpmf

@@ -14,6 +14,8 @@
 require "forwardable"
 require "sorbet-runtime"
 require "udb/version_spec"
+
+require_relative "global_opts"
 require_relative "z3_loader"
 
 # Ensure Z3 library is available before requiring the z3 gem
@@ -1057,9 +1059,48 @@ module Udb
     sig { returns(Z3::Solver) }
     attr_reader :solver
 
+    @parallel_enabled = T.let(nil, T.nilable(T::Boolean))
+
+    class << self
+      extend T::Sig
+
+      sig { returns(T.nilable(T::Boolean)) }
+      def parallel_enabled
+        @parallel_enabled
+      end
+
+      sig { params(value: T.nilable(T::Boolean)).void }
+      def parallel_enabled=(value)
+        @parallel_enabled = value
+      end
+
+      sig { params(desired: T::Boolean).void }
+      def configure_parallelization(desired)
+        previous = parallel_enabled
+
+        if !previous.nil? && previous != desired
+          if desired
+            Udb.logger.warn "Z3 parallelization was previously disabled, but is now being enabled"
+          else
+            Udb.logger.warn "Z3 parallelization was previously enabled, but is now being disabled"
+          end
+        end
+
+        Z3.set_param("parallel.enable", desired ? "true" : "false")
+        self.parallel_enabled = desired
+      end
+    end
+
     sig { void }
     def initialize
+      if Udb.global_options.parallel_z3
+        Z3Solver.configure_parallelization(true)
+      else
+        Z3Solver.configure_parallelization(false)
+      end
+
       @solver = T.let(Z3::Solver.new, Z3::Solver)
+
       # Stacks for incremental solving with push/pop
       @ext_vers = T.let([{}], T::Array[T::Hash[String, Z3ExtensionVersion]])
       @ext_reqs = T.let([{}], T::Array[T::Hash[String, Z3ExtensionRequirement]])
