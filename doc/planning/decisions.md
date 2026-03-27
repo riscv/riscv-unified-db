@@ -361,4 +361,3 @@ The Docusaurus navbar shows only the UDB logo SVG, with no `title` text next to 
 
 ### Reversal: restore the title text
 Add `title: 'UDB'` back to the `navbar` object in `doc/docusaurus.config.ts`.
-

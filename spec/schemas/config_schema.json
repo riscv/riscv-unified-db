@@ -250,9 +250,7 @@
       "type": "partially configured",
       "name": "MyProfile",
       "description": "A minimal profile requiring base integer instructions",
-      "mandatory_extensions": [
-        { "name": "I", "version": ">= 2.1" }
-      ]
+      "mandatory_extensions": [{ "name": "I", "version": ">= 2.1" }]
     },
     {
       "_title": "Minimal Unconfigured",

@@ -121,4 +121,3 @@ More detailed documentation on configurations is coming soon, including:
 - Unconfigured — The `_` config and when to use it
 - Config File Format — Complete YAML reference
 - Validating Configs — Checking compliance and catching errors
-
