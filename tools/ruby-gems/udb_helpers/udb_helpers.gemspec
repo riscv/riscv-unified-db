@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
     "mailing_list_uri"  => "https://lists.riscv.org/g/tech-unifieddb",
     "bug_tracker_uri"   => "https://github.com/riscv/riscv-unified-db/issues"
   }
-  s.required_ruby_version = [">= 3.2", "< 4.0"]
+  s.required_ruby_version = "~> 3.2"
 
   s.require_paths = ["lib"]
 
