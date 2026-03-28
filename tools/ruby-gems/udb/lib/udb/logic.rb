@@ -2719,6 +2719,9 @@ module Udb
           if xor_with_self
             # xor with self if always false
             False
+          elsif reduced.node_children.all? { |c| c.type == LogicNodeType::True || c.type == LogicNodeType::False }
+            # all children are literals: xor is true iff exactly one child is true
+            reduced.node_children.count { |c| c.type == LogicNodeType::True } == 1 ? True : False
           else
             reduced
           end

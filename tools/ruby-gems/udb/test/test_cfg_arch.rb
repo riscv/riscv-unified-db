@@ -473,8 +473,8 @@ class TestCfgArch < Minitest::Test
       result = cfg_arch.valid?
 
       refute result.valid
-      unmet = result.reasons.select { |r| r.include?("Extension requirement is unmet") && r.include?("Zcd") }
-      assert_equal 1, unmet.size, "Expected exactly one unmet-extension reason for Zcd"
+      unmet = result.reasons.select { |r| r.include?("Extension requirement is unmet: Zcd@") }
+      assert_equal 1, unmet.size, proc { "Expected exactly one unmet-extension reason for Zcd. Got: \n #{unmet}" }
       assert unmet.first.include?("Failing condition(s):"), "Expected failing conjuncts header in: #{unmet.first}"
       assert unmet.first.include?("  - "), "Expected at least one failing conjunct line in: #{unmet.first}"
     end
