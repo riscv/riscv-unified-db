@@ -754,6 +754,7 @@ module Idl
           else
             max = bits_expression.max_value(symtab)
             max = "BitsInfinitePrecision" if max == :unknown
+            raise "Not runtime? (#{text_value})" unless type(symtab).runtime?
             result = "#{' ' * indent}_PossiblyUnknownRuntimeBits<#{max}, false>"
           end
         end

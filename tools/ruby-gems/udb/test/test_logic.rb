@@ -1608,4 +1608,90 @@ class TestLogic < Minitest::Test
       end
     end
   end
+
+  def test_failing_conjuncts_single_false_term
+    n = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    cb = proc { |_term| SatisfiedResult::No }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal n, result.first
+  end
+
+  def test_failing_conjuncts_and_one_false
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    b = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::And, [a, b])
+    cb = proc { |term| term.name == "A" ? SatisfiedResult::Yes : SatisfiedResult::No }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal b, result.first
+  end
+
+  def test_failing_conjuncts_and_multiple_false
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    b = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])
+    c = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("C", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::And, [a, b, c])
+    cb = proc { |term| term.name == "A" ? SatisfiedResult::Yes : SatisfiedResult::No }
+    result = n.failing_conjuncts(cb)
+    assert_equal 2, result.size
+    assert_includes result, b
+    assert_includes result, c
+  end
+
+  def test_failing_conjuncts_or_clause_false
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    or_clause = LogicNode.new(LogicNodeType::Or, [
+      LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")]),
+      LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("C", "=", "1.0.0")])
+    ])
+    n = LogicNode.new(LogicNodeType::And, [a, or_clause])
+    # A is true, B and C are false — only the or_clause fails
+    cb = proc { |term| term.name == "A" ? SatisfiedResult::Yes : SatisfiedResult::No }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal or_clause, result.first
+  end
+
+  def test_failing_conjuncts_maybe_not_reported
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    b = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::And, [a, b])
+    cb = proc { |term| term.name == "A" ? SatisfiedResult::No : SatisfiedResult::Maybe }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal a, result.first
+  end
+
+  def test_failing_conjuncts_not_clause
+    inner = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::Not, [inner])
+    cb = proc { |_term| SatisfiedResult::Yes }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal n, result.first
+  end
+
+  def test_failing_conjuncts_and_all_maybe
+    # AND where every child is Maybe: the whole expression is unknown, not failing
+    # failing_conjuncts should return [] — nothing is definitively false
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    b = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::And, [a, b])
+    cb = proc { |_term| SatisfiedResult::Maybe }
+    result = n.failing_conjuncts(cb)
+    assert_empty result
+  end
+
+  def test_failing_conjuncts_single_maybe_term
+    # A single Maybe term: the expression is unknown, not failing
+    # failing_conjuncts should return [self] because the non-And else branch fires,
+    # but the caller (cfg_arch) only invokes failing_conjuncts when the condition is
+    # != Yes, so a Maybe top-level node returns [self] to surface the unknown clause
+    n = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    cb = proc { |_term| SatisfiedResult::Maybe }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal n, result.first
+  end
 end

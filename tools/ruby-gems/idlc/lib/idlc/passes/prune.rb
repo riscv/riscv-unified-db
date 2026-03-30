@@ -265,6 +265,9 @@ module Idl
         symtab.restore_values(snapshot)
         symtab.pop
       end
+      # Nullify any outer-scope variable assigned in the loop body, since we
+      # don't know how many iterations ran (or if any ran at all)
+      stmts.each { |stmt| stmt.nullify_assignments(symtab) }
       new_loop
     end
   end
@@ -357,7 +360,7 @@ module Idl
       pruned_action = action.prune(symtab)
 
       new_stmt = StatementAst.new(input, interval, pruned_action)
-      pruned_action.freeze_tree(symtab) unless pruned_action.frozen?
+      # pruned_action.freeze_tree(symtab) unless pruned_action.frozen?
 
       pruned_action.add_symbol(symtab) if pruned_action.is_a?(Declaration)
       # action#prune already handles symtab update (execute)
