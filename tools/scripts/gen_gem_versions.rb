@@ -237,7 +237,45 @@ def update_lockfiles
       pattern = /^(      #{Regexp.escape(dep_name)})(?:\s*\([^)]*\))?$/
       updated = updated.gsub(pattern, "\\1 (= #{version})")
     end
+    lines = content.lines
 
+    # Restrict rewrites to dependency lines inside PATH specs blocks.
+    pin_map.each do |dep_name, version|
+      pattern = /^(      #{Regexp.escape(dep_name)})(?:\s*\([^)]*\))?$/
+      in_path_section = false
+      in_specs_block = false
+
+      lines.map!.with_index do |line, idx|
+        # Detect start of a PATH section (top-level "PATH" line).
+        if line == "PATH\n" || line == "PATH"
+          in_path_section = true
+          in_specs_block = false
+          line
+        # Any new top-level section (non-indented line) other than PATH ends the PATH section.
+        elsif line.match?(/^\S/) && !line.start_with?("PATH")
+          in_path_section = false
+          in_specs_block = false
+          line
+        # Inside PATH, detect the specs: stanza.
+        elsif in_path_section && line.match?(/^  specs:/)
+          in_specs_block = true
+          line
+        else
+          if in_path_section && in_specs_block && line.match?(pattern)
+            # Preserve the original indentation and gem name (capture group 1),
+            # and overwrite any version constraint with the pinned version.
+            prefix = Regexp.last_match(1)
+            # Keep the original line ending (if any).
+            newline = line.end_with?("\n") ? "\n" : ""
+            "#{prefix} (= #{version})#{newline}"
+          else
+            line
+          end
+        end
+      end
+    end
+
+    updated = lines.join
     if updated != content
       File.write(lockfile_path, updated)
       puts "  Updated #{gemfile_rel}.lock"
