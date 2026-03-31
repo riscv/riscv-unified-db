@@ -18,7 +18,7 @@ PATH
 PATH
   remote: tools/ruby-gems/udb-gen
   specs:
-    udb-gen (0.1.3)
+    udb-gen (0.1.4)
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf
@@ -39,7 +39,7 @@ PATH
 PATH
   remote: tools/ruby-gems/udb
   specs:
-    udb (0.1.5)
+    udb (0.1.6)
       activesupport
       asciidoctor
       awesome_print
