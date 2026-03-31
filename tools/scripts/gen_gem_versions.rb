@@ -108,7 +108,13 @@ def get_changed_files(base_ref)
     if $?.exitstatus != 0
       warn "Retry git diff failed: #{output.strip}"
       warn "Skipping version auto-increment (git history unavailable)"
-      return nil
+      warn "git diff failed twice; falling back to git ls-files to determine files"
+      ls_output = `git ls-files 2>&1`
+      if $?.exitstatus != 0
+        warn "git ls-files also failed: #{ls_output.strip}"
+        abort "Unable to determine changed files from git; aborting version generation"
+      end
+      return ls_output.lines.map(&:strip)
     end
   end
   output.lines.map(&:strip)
