@@ -17,7 +17,7 @@ PATH
 PATH
   remote: .
   specs:
-    udb (0.1.6)
+    udb (0.1.7)
       activesupport
       asciidoctor
       awesome_print
