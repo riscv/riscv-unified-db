@@ -223,7 +223,8 @@ def update_lockfiles
 
     unless lockfile_path.exist?
       puts "  Skipping #{gemfile_rel}.lock (not found)"
-      next
+      raise "Expected lockfile #{lockfile_path} to exist. " \
+            "Generate it with `bundle lock --gemfile #{UDB_ROOT / gemfile_rel}`."
     end
 
     content = File.read(lockfile_path)
