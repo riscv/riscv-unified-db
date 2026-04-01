@@ -22,7 +22,7 @@ PATH
       asciidoctor
       awesome_print
       concurrent-ruby
-      idlc (= 0.1.1)
+      idlc (= 0.1.2)
       json_schemer
       numbers_and_words
       ostruct
@@ -35,7 +35,7 @@ PATH
       tty-command
       tty-logger
       tty-progressbar
-      udb_helpers (= 0.1.1)
+      udb_helpers (= 0.1.2)
       z3
 
 PATH
@@ -51,7 +51,7 @@ PATH
       tty-option
       tty-progressbar
       tty-table
-      udb (= 0.1.4)
+      udb (= 0.1.7)
       write_xlsx
 
 GEM
