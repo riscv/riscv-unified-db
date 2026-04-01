@@ -13,12 +13,6 @@ The RISC-V Unified Database (UnifiedDB/UDB) is a repository that holds all infor
 
 **Important:** This project is under rapid development. Schemas and APIs change frequently. Data in `spec/` is a work in progress.
 
-## Environment Setup
-
-All tools run inside a container (Docker or Podman). The `./bin/setup` script handles container detection and setup automatically. When inside a devcontainer, commands run natively.
-
-The `./do` script is the primary entry point — it wraps `bundle exec rake` with container context.
-
 ## Common Commands
 
 ```bash

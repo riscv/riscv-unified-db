@@ -49,7 +49,7 @@ Any instruction name that appears **only** inside NOTE blocks — and nowhere el
 Scan the non-NOTE text of the subsection for RISC-V instruction names. Instruction names appear as **uppercase tokens** in the prose. Use the following rules to identify them:
 
 **Patterns that indicate an instruction name:**
-- All-uppercase words of 2–10 characters that consist only of letters, digits, dots, and brackets (e.g., `ADD`, `ADDI`, `MULHSU`, `FENCE.TSO`, `LR.W`, `SC.D`, `C.ADD`)
+- All-uppercase words of at least 2 characters that consist only of letters, and optionally digits or dots (e.g., `ADD`, `ADDI`, `MULHSU`, `FENCE.TSO`, `LR.W`, `SC.D`, `C.ADD`)
 - Uppercase tokens inside backticks: `` `ADD` ``, `` `JALR` ``
 - Uppercase tokens in AsciiDoc index entries: `(((MUL, MULH)))` — extract each comma-separated token
 - Uppercase tokens in AsciiDoc comment lines like `//.Integer register-register` — skip these (they are labels, not instructions)
@@ -67,11 +67,9 @@ The prose explicitly signals pseudoinstructions with the phrase "assembler pseud
 Any token introduced by "pseudoinstruction" (with or without "assembler") must be excluded, even if it appears elsewhere in the subsection outside a pseudoinstruction context. Collect all pseudoinstruction names first, then exclude them from the final list.
 
 **Definitive exclusion list — never treat these as instructions:**
-`XLEN`, `RV32`, `RV64`, `RV32I`, `RV64I`, `RV128I`, `ISA`, `ABI`, `PC`, `CSR`, `IALIGN`, `BTB`, `RAS`, `FPGA`, `MIPS`, `RISC`, `RISCV`, `RISC-V`, `L`, `M`, `S`, `B`, `J`, `R`, `I`, `U`
+`XLEN`, `RV32`, `RV64`, `RV32I`, `RV64I`, `RV128I`, `ISA`, `ABI`, `PC`, `CSR`, `IALIGN`, `BTB`, `RAS`, `FPGA`, `MIPS`, `RISC`, `RISCV`, `RISC-V`
 
-Single-letter tokens (`R`, `I`, `S`, `B`, `U`, `J`) are format names, not instructions — exclude them.
-
-Two-letter tokens that are register names (`x0`–`x31`, `rd`, `rs1`, `rs2`) — exclude them.
+Tokens that are register names (`x0`–`x31`, `rd`, `rs1`, `rs2`) — exclude them.
 
 ### 5. Deduplicate and normalize
 
