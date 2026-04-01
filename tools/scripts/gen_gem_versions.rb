@@ -19,61 +19,103 @@
 require "digest"
 require "optparse"
 require "pathname"
+require "rubygems"
 require "set"
 
 UDB_ROOT = Pathname.new(__FILE__).dirname.parent.parent.realpath
 
-# Gem metadata: name, source dir, version file, additional watched dirs
-GEMS = [
+# Parse gem metadata by loading gemspecs via Gem::Specification.
+# Returns a hash with keys :gems, :dependents, :gemspec_pins, :gemfiles.
+#
+# Only gem directories that have BOTH a Gemfile AND a *.gemspec are included
+# (this naturally excludes idl_highlighter which has no Gemfile).
+def parse_gem_metadata(udb_root)
+  # Discover gem dirs that have both a Gemfile and a gemspec, and load each
+  # gemspec using the official Gem::Specification API.
+  spec_entries = Dir.glob("#{udb_root}/tools/ruby-gems/*/Gemfile").filter_map do |gf|
+    dir = Pathname.new(gf).dirname
+    gemspec_path = Dir.glob("#{dir}/*.gemspec").first
+    next unless gemspec_path
+
+    spec = Gem::Specification.load(gemspec_path)
+    next unless spec
+
+    [spec, Pathname.new(gemspec_path)]
+  end
+
+  local_names = spec_entries.map { |spec, _| spec.name }.to_set
+
+  gems = spec_entries.map do |spec, gemspec_path|
+    rel_dir = gemspec_path.dirname.relative_path_from(udb_root).to_s
+    gemspec_rel = gemspec_path.relative_path_from(udb_root).to_s
+    version_file = "#{rel_dir}/lib/#{spec.name}/version.rb"
+    additional_dirs = (gemspec_path.dirname / "spec").directory? ? ["spec"] : []
+    {
+      name: spec.name,
+      dir: rel_dir,
+      version_file:,
+      additional_dirs:,
+      gemspec_path: gemspec_rel
+    }
+  end
+
+  # Build forward dependency graph from runtime_dependencies reported by each
+  # gemspec: gem_name -> [local gem names it depends on].
+  deps = gems.each_with_object({}) { |g, h| h[g[:name]] = [] }
+  gemspec_pins = []
+
+  spec_entries.each do |spec, _|
+    gem_entry = gems.find { |g| g[:name] == spec.name }
+    spec.runtime_dependencies.each do |dep|
+      next unless local_names.include?(dep.name)
+
+      deps[spec.name] << dep.name
+      gemspec_pins << { gemspec: gem_entry[:gemspec_path], dep_name: dep.name, version_gem: dep.name }
+    end
+  end
+
+  # Invert deps to get DEPENDENTS (dep -> [gems that depend on it])
+  dependents = gems.each_with_object(Hash.new { |h, k| h[k] = [] }) { |g, h| h[g[:name]] }
+  deps.each do |gem_name, dep_list|
+    dep_list.each { |dep| dependents[dep] << gem_name }
+  end
+
+  # Topological sort (Kahn's algorithm) for GEMFILES order: leaves first.
+  in_degree = gems.each_with_object({}) { |g, h| h[g[:name]] = deps[g[:name]].size }
+  queue = gems.map { |g| g[:name] }.select { |n| in_degree[n] == 0 }.sort
+  ordered_names = []
+  until queue.empty?
+    n = queue.shift
+    ordered_names << n
+    dependents[n].sort.each do |dep|
+      in_degree[dep] -= 1
+      queue << dep if in_degree[dep] == 0
+    end
+  end
+  gemfiles = ordered_names.map { |n| gems.find { |g| g[:name] == n }[:dir] + "/Gemfile" }
+  gemfiles << "Gemfile" # root Gemfile always last
+
   {
-    name: "idlc",
-    dir: "tools/ruby-gems/idlc",
-    version_file: "tools/ruby-gems/idlc/lib/idlc/version.rb",
-    additional_dirs: []
-  },
-  {
-    name: "udb_helpers",
-    dir: "tools/ruby-gems/udb_helpers",
-    version_file: "tools/ruby-gems/udb_helpers/lib/udb_helpers/version.rb",
-    additional_dirs: []
-  },
-  {
-    name: "udb",
-    dir: "tools/ruby-gems/udb",
-    version_file: "tools/ruby-gems/udb/lib/udb/version.rb",
-    additional_dirs: ["spec"]
-  },
-  {
-    name: "udb-gen",
-    dir: "tools/ruby-gems/udb-gen",
-    version_file: "tools/ruby-gems/udb-gen/lib/udb-gen/version.rb",
-    additional_dirs: ["spec"]
+    gems: gems.map { |g| g.reject { |k, _| k == :gemspec_path } }.freeze,
+    dependents: dependents.transform_values(&:freeze).freeze,
+    gemspec_pins: gemspec_pins.freeze,
+    gemfiles: gemfiles.freeze
   }
-].freeze
+end
+
+_metadata = parse_gem_metadata(UDB_ROOT)
+
+# Gem metadata: name, source dir, version file, additional watched dirs
+GEMS = _metadata[:gems]
 
 # Dependency graph: gem name → list of gem names that depend on it (reverse deps)
-DEPENDENTS = {
-  "idlc"        => ["udb"],
-  "udb_helpers" => ["udb"],
-  "udb"         => ["udb-gen"],
-  "udb-gen"     => []
-}.freeze
+DEPENDENTS = _metadata[:dependents]
 
 # Gemspec files that have inter-gem dependencies to pin
-GEMSPEC_PINS = [
-  { gemspec: "tools/ruby-gems/udb/udb.gemspec",         dep_name: "idlc",        version_gem: "idlc" },
-  { gemspec: "tools/ruby-gems/udb/udb.gemspec",         dep_name: "udb_helpers", version_gem: "udb_helpers" },
-  { gemspec: "tools/ruby-gems/udb-gen/udb-gen.gemspec", dep_name: "udb",         version_gem: "udb" }
-].freeze
+GEMSPEC_PINS = _metadata[:gemspec_pins]
 
 # Gemfiles to re-lock, in dependency order
-GEMFILES = [
-  "tools/ruby-gems/idlc/Gemfile",
-  "tools/ruby-gems/udb_helpers/Gemfile",
-  "tools/ruby-gems/udb/Gemfile",
-  "tools/ruby-gems/udb-gen/Gemfile",
-  "Gemfile"
-].freeze
+GEMFILES = _metadata[:gemfiles]
 
 def read_version(version_file)
   content = File.read(UDB_ROOT / version_file)
@@ -362,61 +404,63 @@ end
 
 # --- Main ---
 
-options = { fail_on_change: false, check: false, base_ref: "origin/main" }
+if __FILE__ == $PROGRAM_NAME
+  options = { fail_on_change: false, check: false, base_ref: "origin/main" }
 
-OptionParser.new do |opts|
-  opts.on("--fail-on-change", "Exit 1 if any file changed") do
-    options[:fail_on_change] = true
+  OptionParser.new do |opts|
+    opts.on("--fail-on-change", "Exit 1 if any file changed") do
+      options[:fail_on_change] = true
+    end
+    opts.on("--check", "Only check for version-bump issues, no writes") do
+      options[:check] = true
+    end
+    opts.on("--base-ref REF", "Git ref to compare against (default: origin/main)") do |ref|
+      options[:base_ref] = ref
+    end
+  end.parse!
+
+  if options[:check]
+    run_check_mode(options[:base_ref])
+    # run_check_mode exits internally
   end
-  opts.on("--check", "Only check for version-bump issues, no writes") do
-    options[:check] = true
-  end
-  opts.on("--base-ref REF", "Git ref to compare against (default: origin/main)") do |ref|
-    options[:base_ref] = ref
-  end
-end.parse!
 
-if options[:check]
-  run_check_mode(options[:base_ref])
-  # run_check_mode exits internally
-end
+  # Normal / --fail-on-change mode
+  tracked = all_tracked_files
+  sha_before = options[:fail_on_change] ? sha256_files(tracked) : nil
 
-# Normal / --fail-on-change mode
-tracked = all_tracked_files
-sha_before = options[:fail_on_change] ? sha256_files(tracked) : nil
-
-# Step A: auto-increment versions for changed gems (with cascade)
-puts "Step A: Checking for gems that need version bumps..."
-changed_files = get_changed_files(options[:base_ref])
-if changed_files.nil?
-  puts "  Skipping (git history unavailable)"
-else
-  needs_bump = compute_needs_bump_set(changed_files, options[:base_ref])
-  if needs_bump.empty?
-    puts "  No version bumps needed"
+  # Step A: auto-increment versions for changed gems (with cascade)
+  puts "Step A: Checking for gems that need version bumps..."
+  changed_files = get_changed_files(options[:base_ref])
+  if changed_files.nil?
+    puts "  Skipping (git history unavailable)"
   else
-    do_version_bumps(needs_bump)
+    needs_bump = compute_needs_bump_set(changed_files, options[:base_ref])
+    if needs_bump.empty?
+      puts "  No version bumps needed"
+    else
+      do_version_bumps(needs_bump)
+    end
   end
-end
 
-# Step B: update inter-gem dependency pins in gemspecs
-puts "Step B: Updating inter-gem dependency pins in gemspecs..."
-update_gemspec_pins
+  # Step B: update inter-gem dependency pins in gemspecs
+  puts "Step B: Updating inter-gem dependency pins in gemspecs..."
+  update_gemspec_pins
 
-# Step C: update version pins in Gemfile.lock files
-puts "Step C: Updating inter-gem version pins in Gemfile.lock files..."
-update_lockfiles
+  # Step C: update version pins in Gemfile.lock files
+  puts "Step C: Updating inter-gem version pins in Gemfile.lock files..."
+  update_lockfiles
 
-if options[:fail_on_change]
-  sha_after = sha256_files(tracked)
-  changed = tracked.select { |f| sha_before[f] != sha_after[f] }
-  if changed.any?
-    puts
-    puts "ERROR: The following files changed; run './bin/chore gen gem-versions' to update:"
-    changed.each { |f| puts "  #{f}" }
-    exit 1
+  if options[:fail_on_change]
+    sha_after = sha256_files(tracked)
+    changed = tracked.select { |f| sha_before[f] != sha_after[f] }
+    if changed.any?
+      puts
+      puts "ERROR: The following files changed; run './bin/chore gen gem-versions' to update:"
+      changed.each { |f| puts "  #{f}" }
+      exit 1
+    end
   end
-end
 
-puts
-puts "Done."
+  puts
+  puts "Done."
+end

@@ -5,6 +5,15 @@
 
 ---
 tests:
+  regress-scripts-unit:
+    ci_stage: pr
+    tags:
+      - unit
+      - smoke
+    test:
+      - name: Run tools/scripts unit tests
+        run: ./do test:scripts:unit
+
   regress-idlc-unit:
     ci_stage: pr
     tags:
