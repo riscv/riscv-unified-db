@@ -333,6 +333,10 @@ module Udb
     sig { abstract.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(String) }
     def to_s_with_value(cfg_arch, expand:); end
 
+    # returns the failing conjuncts (clauses that are false) for the given cfg_arch
+    sig { abstract.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[String]) }
+    def failing_conjuncts(cfg_arch, expand:); end
+
     # string representation of condition in Asciidoc
     sig { abstract.returns(String) }
     def to_asciidoc; end
@@ -1151,7 +1155,7 @@ module Udb
         elsif cfg_arch.partially_configured?
           cb = make_cb_proc do |term|
             if term.is_a?(ExtensionTerm)
-              if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| cfg_ext_req.satisfied_by?(term.to_ext_req(cfg_arch)) }
+              if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_req) }
                 SatisfiedResult::Yes
               elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
                 SatisfiedResult::Maybe
@@ -1273,7 +1277,7 @@ module Udb
               SatisfiedResult::Yes
             end
           elsif cfg_arch.partially_configured?
-            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| cfg_ext_req.satisfied_by?(term.to_ext_req(cfg_arch)) }
+            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_req) }
               SatisfiedResult::Yes
             elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
               SatisfiedResult::Maybe
@@ -1310,6 +1314,60 @@ module Udb
         end
       end
       to_logic_tree(expand:).to_s_with_value(cb, format: LogicNode::LogicSymbolFormat::C)
+    end
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[String]) }
+    def failing_conjuncts(cfg_arch, expand: false)
+      cb = LogicNode.make_eval_cb do |term|
+        case term
+        when ExtensionTerm
+          if cfg_arch.fully_configured?
+            ext_ver = cfg_arch.implemented_extension_version(term.name)
+            if ext_ver.nil? || !term.to_ext_req(cfg_arch).satisfied_by?(ext_ver)
+              SatisfiedResult::No
+            else
+              SatisfiedResult::Yes
+            end
+          elsif cfg_arch.partially_configured?
+            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_req) }
+              SatisfiedResult::Yes
+            elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
+              SatisfiedResult::Maybe
+            else
+              SatisfiedResult::No
+            end
+          else
+            SatisfiedResult::Maybe
+          end
+        when ParameterTerm
+          if cfg_arch.fully_configured?
+            if cfg_arch.param_values.key?(term.name)
+              term.eval(cfg_arch)
+            else
+              SatisfiedResult::No
+            end
+          elsif cfg_arch.partially_configured?
+            term.eval(cfg_arch)
+          else
+            SatisfiedResult::Maybe
+          end
+        when XlenTerm
+          if cfg_arch.possible_xlens.include?(term.xlen)
+            if cfg_arch.possible_xlens.size == 1
+              SatisfiedResult::Yes
+            else
+              SatisfiedResult::Maybe
+            end
+          else
+            SatisfiedResult::No
+          end
+        else
+          raise "unexpected term type #{term.class.name}"
+        end
+      end
+      to_logic_tree(expand:).failing_conjuncts(cb).map do |node|
+        node.to_s_with_value(cb, format: LogicNode::LogicSymbolFormat::C)
+      end
     end
 
     sig { override.returns(String) }
@@ -1690,6 +1748,9 @@ module Udb
     sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(String) }
     def to_s_with_value(cfg_arch, expand: false) = "true"
 
+    sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[String]) }
+    def failing_conjuncts(cfg_arch, expand: false) = []
+
     sig { override.returns(String) }
     def to_asciidoc = "true"
 
@@ -1802,6 +1863,9 @@ module Udb
 
     sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(String) }
     def to_s_with_value(cfg_arch, expand: false) = "false"
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[String]) }
+    def failing_conjuncts(cfg_arch, expand: false) = ["false"]
 
     sig { override.returns(String) }
     def to_asciidoc = "false"

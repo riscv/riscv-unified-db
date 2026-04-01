@@ -465,6 +465,11 @@ namespace :test do
       "mul", "mulh", "mulhsu", "mulhu", "mulw",
       "rem", "remu", "remuw", "remw"]
 
+    rv32ufTests = [
+      "fadd", "fclass", "fcmp", "fcvt", "fcvt_w", "fdiv", "fmadd", "fmin", "ldst", "move", "recoding"
+    ]
+    rv64ufTests = rv32ufTests
+
     # compressed tests same for rv32 as rv64
     ucTests = ["rvc"]
 
@@ -475,10 +480,12 @@ namespace :test do
       uiTests = rv64uiTests
       umTests = rv64umTests
       siTests = rv64siTests
+      ufTests = rv64ufTests
     else
       uiTests = rv32uiTests
       umTests = rv32umTests
       siTests = rv32siTests
+      ufTests = rv32ufTests
     end
 
     uiTests.each do |t|
@@ -506,6 +513,13 @@ namespace :test do
       run_test(
         "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-riscv-tests.yaml ext/riscv-tests/isa/#{configs_name[0]}si-p-#{t}",
         "#{configs_name[0]}si-p-#{t}"
+      )
+    end
+
+    ufTests.each do |t|
+      run_test(
+        "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-riscv-tests.yaml ext/riscv-tests/isa/#{configs_name[0]}uf-p-#{t}",
+        "#{configs_name[0]}uf-p-#{t}"
       )
     end
   end

@@ -41205,6 +41205,8 @@ if pass:[(]MXLEN == 32) {
     } else {
       xref:#udb-function-unreachable[unreachable]pass:[(]);
     }
+  } else {
+    xref:#udb-function-unreachable[unreachable]pass:[(]);
   }
 }
 ----

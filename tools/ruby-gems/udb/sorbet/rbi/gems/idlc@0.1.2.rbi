@@ -565,9 +565,6 @@ class Idl::AstNode
   sig { abstract.returns(::String) }
   def to_idl; end
 
-  sig { overridable.returns(::String) }
-  def to_idl_verbose; end
-
   sig { params(reason: ::String).void }
   def truncation_warn(reason); end
 
@@ -766,17 +763,33 @@ end
 class Idl::BitfieldDefinitionAst < ::Idl::AstNode
   include ::Idl::Declaration
 
+  sig do
+    params(
+      input: T.nilable(::String),
+      interval: T.nilable(T::Range[::Integer]),
+      name: T.any(::Idl::BuiltinTypeNameAst, ::Idl::UserTypeNameAst),
+      size: ::Idl::IntLiteralAst,
+      fields: T::Array[::Idl::BitfieldFieldDefinitionAst]
+    ).void
+  end
   def initialize(input, interval, name, size, fields); end
 
+  sig { override.params(symtab: ::Idl::SymbolTable).void }
   def add_symbol(symtab); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
 
+  sig { returns(T::Array[::String]) }
   def element_names; end
+
+  sig { params(symtab: ::Idl::SymbolTable).returns(T::Array[T::Range[::Integer]]) }
   def element_ranges(symtab); end
-  def freeze_tree(global_symtab); end
+
+  sig { returns(::String) }
   def name; end
+
+  sig { params(symtab: ::Idl::SymbolTable).returns(::Integer) }
   def size(symtab); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -785,19 +798,35 @@ class Idl::BitfieldDefinitionAst < ::Idl::AstNode
   sig { override.returns(::String) }
   def to_idl; end
 
+  sig { params(symtab: ::Idl::SymbolTable).returns(::Idl::Type) }
   def type(symtab); end
+
+  sig { override.params(symtab: ::Idl::SymbolTable, strict: T::Boolean).void }
   def type_check(symtab, strict:); end
+
+  sig do
+    params(
+      _symtab: ::Idl::SymbolTable
+    ).returns(T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean, T::Hash[::String, T.any(::Integer, ::String, T::Array[::Integer], T::Array[::String], T::Array[T::Boolean], T::Boolean)]))
+  end
   def value(_symtab); end
 
   class << self
     sig do
-      params(
-        yaml: T::Hash[::String, T.untyped],
-        source_mapper: T::Hash[::String, ::String]
-      ).returns(::Idl::AstNode)
+      override
+        .params(
+          yaml: T::Hash[::String, T.untyped],
+          source_mapper: T::Hash[::String, ::String]
+        ).returns(::Idl::AstNode)
     end
     def from_h(yaml, source_mapper); end
   end
+end
+
+class Idl::BitfieldDefinitionAst::Memo < ::T::Struct
+  prop :type, T.nilable(::Idl::Type)
+  prop :element_names, T.nilable(T::Array[::String])
+  prop :element_ranges, T.nilable(T::Hash[::Idl::SymbolTable, T::Array[T::Range[::Integer]]]), default: T.unsafe(nil)
 end
 
 class Idl::BitfieldDefinitionSyntaxNode < ::Idl::SyntaxNode
@@ -993,10 +1022,12 @@ class Idl::BuiltinTypeNameAst < ::Idl::AstNode
 
   def bits_expression; end
 
+  sig { params(symtab: ::Idl::SymbolTable).returns(::Idl::Type) }
+  def bits_type(symtab); end
+
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
 
-  def freeze_tree(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
 
   sig { override.returns(T::Hash[::String, T.untyped]) }
@@ -1019,6 +1050,10 @@ class Idl::BuiltinTypeNameAst < ::Idl::AstNode
     end
     def from_h(yaml, source_mapper); end
   end
+end
+
+class Idl::BuiltinTypeNameAst::Memo < ::T::Struct
+  prop :bits_type, T::Hash[::Idl::SymbolTable, T.nilable(::Idl::Type)], default: T.unsafe(nil)
 end
 
 class Idl::BuiltinVariableAst < ::Idl::AstNode
@@ -1582,7 +1617,6 @@ class Idl::CsrReadExpressionAst < ::Idl::AstNode
   def csr_def(symtab); end
   def csr_known?(symtab); end
   def csr_name; end
-  def freeze_tree(symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def prune(symtab, forced_type: T.unsafe(nil)); end
 
@@ -3259,7 +3293,6 @@ class Idl::IntLiteralAst < ::Idl::AstNode
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
   def const_eval?(symtab); end
 
-  def freeze_tree(global_symtab); end
   def gen_adoc(indent = T.unsafe(nil), indent_spaces: T.unsafe(nil)); end
   def gen_option_adoc; end
   def prune(symtab, forced_type: T.unsafe(nil)); end
@@ -3278,9 +3311,6 @@ class Idl::IntLiteralAst < ::Idl::AstNode
   sig { override.returns(::String) }
   def to_idl; end
 
-  sig { override.returns(::String) }
-  def to_idl_verbose; end
-
   def type(symtab); end
   def type_check(symtab, strict:); end
   def unsigned_value; end
@@ -3298,6 +3328,13 @@ class Idl::IntLiteralAst < ::Idl::AstNode
 
     def radix_to_verilog(r); end
   end
+end
+
+class Idl::IntLiteralAst::Memo < ::T::Struct
+  prop :type, T.nilable(::Idl::Type)
+  prop :width, T.nilable(T.any(::Integer, ::Symbol))
+  prop :value, T.nilable(T.any(::Idl::UnknownLiteral, ::Integer))
+  prop :unsigned_value, T.nilable(T.any(::Idl::UnknownLiteral, ::Integer))
 end
 
 module Idl::IntLiteralSyntaxNode

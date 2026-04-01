@@ -99,7 +99,10 @@ class TestCfgArch < Minitest::Test
       result = cfg_arch.valid?
 
       refute result.valid
-      assert_includes result.reasons, "Parameter is not defined by this config: 'CACHE_BLOCK_SIZE'. Needs (Zicbom>=0 || Zicbop>=0 || Zicboz>=0)"
+      param_reasons = result.reasons.select { |r| r.include?("Parameter is not defined by this config: 'CACHE_BLOCK_SIZE'") }
+      assert_equal 1, param_reasons.size, "Expected exactly one reason about CACHE_BLOCK_SIZE"
+      assert param_reasons.first.include?("Failing condition(s):"), "Expected failing conjuncts header in: #{param_reasons.first}"
+      assert param_reasons.first.include?("  - "), "Expected at least one failing conjunct line in: #{param_reasons.first}"
       assert result.reasons.any? { |r| r =~ /Mandatory extension requirements conflict: This is not satisfiable: / }
     end
   end
@@ -433,5 +436,123 @@ class TestCfgArch < Minitest::Test
 
     assert_equal 11, cfg_arch.extension("Xqcia").max_version.directly_defined_instructions.size
     assert_equal 157, cfg_arch.extension("Xqci").max_version.implied_instructions.count { |i| exts.any? { |e| i.defined_by_condition.mentions?(e) } }
+  end
+
+  def test_full_config_extension_requirement_failure_reports_failing_conjuncts
+    # Zcd requires D, but D is not in the config — verify the error uses failing_conjuncts format
+    cfg = <<~CFG
+      $schema: config_schema.json#
+      kind: architecture configuration
+      type: fully configured
+      name: rv32-zcd-no-d
+      description: A config with Zcd but without D
+      params:
+        MXLEN: 32
+        TRAP_ON_EBREAK: true
+        TRAP_ON_ECALL_FROM_M: true
+        TRAP_ON_ILLEGAL_WLRL: true
+        TRAP_ON_RESERVED_INSTRUCTION: true
+        TRAP_ON_UNIMPLEMENTED_CSR: true
+        TRAP_ON_UNIMPLEMENTED_INSTRUCTION: true
+        M_MODE_ENDIANNESS: little
+        PHYS_ADDR_WIDTH: 32
+
+      implemented_extensions:
+        - [I, "2.1.0"]
+        - [Sm, "1.13.0"]
+        - [C, "2.0.0"]
+        - [Zca, "1.0.0"]
+        - [Zcd, "1.0.0"]
+    CFG
+
+    Tempfile.create(%w/cfg .yaml/) do |f|
+      f.write cfg
+      f.flush
+
+      cfg_arch = @resolver.cfg_arch_for(Pathname.new f.path)
+      result = cfg_arch.valid?
+
+      refute result.valid
+      unmet = result.reasons.select { |r| r.include?("Extension requirement is unmet: Zcd@") }
+      assert_equal 1, unmet.size, proc { "Expected exactly one unmet-extension reason for Zcd. Got: \n #{unmet}" }
+      assert unmet.first.include?("Failing condition(s):"), "Expected failing conjuncts header in: #{unmet.first}"
+      assert unmet.first.include?("  - "), "Expected at least one failing conjunct line in: #{unmet.first}"
+    end
+  end
+
+  def test_partial_config_parameter_defined_by_reports_failing_conjuncts
+    # rv32-bad2 config has CACHE_BLOCK_SIZE but no Zicbom/Zicbop/Zicboz — verify failing_conjuncts format
+    cfg = <<~CFG
+      $schema: config_schema.json#
+      kind: architecture configuration
+      type: partially configured
+      name: rv32-bad2
+      description: A generic RV32 system; only MXLEN is known
+      params:
+        MXLEN: 32
+        CACHE_BLOCK_SIZE: 64
+
+      mandatory_extensions:
+        - name: "I"
+          version: ">= 0"
+        - name: "Sm"
+          version: ">= 0"
+        - name: Zcd
+          version: ">= 0"
+        - name: Zcmp
+          version: ">= 0"
+    CFG
+
+    Tempfile.create(%w/cfg .yaml/) do |f|
+      f.write cfg
+      f.flush
+
+      cfg_arch = @resolver.cfg_arch_for(Pathname.new f.path)
+      result = cfg_arch.valid?
+
+      refute result.valid
+      param_reasons = result.reasons.select { |r| r.include?("Parameter is not defined by this config: 'CACHE_BLOCK_SIZE'") }
+      assert_equal 1, param_reasons.size, "Expected exactly one reason about CACHE_BLOCK_SIZE"
+      assert param_reasons.first.include?("Failing condition(s):"), "Expected failing conjuncts header in: #{param_reasons.first}"
+      assert param_reasons.first.include?("  - "), "Expected at least one failing conjunct line in: #{param_reasons.first}"
+    end
+  end
+
+  def test_partial_config_parameter_defined_by_unknown_terms
+    # When the defining extensions are possible but not mandatory, terms show as {unknown}.
+    # failing_conjuncts should still return the whole unsatisfied clause (not an empty list),
+    # so the error message remains actionable.
+    cfg = <<~CFG
+      $schema: config_schema.json#
+      kind: architecture configuration
+      type: partially configured
+      name: rv32-maybe-cache
+      description: I+Sm only; Zicbom/Zicbop/Zicboz are possible but not mandatory
+      params:
+        MXLEN: 32
+        CACHE_BLOCK_SIZE: 64
+
+      mandatory_extensions:
+        - name: "I"
+          version: ">= 0"
+        - name: "Sm"
+          version: ">= 0"
+    CFG
+
+    Tempfile.create(%w/cfg .yaml/) do |f|
+      f.write cfg
+      f.flush
+
+      cfg_arch = @resolver.cfg_arch_for(Pathname.new f.path)
+      result = cfg_arch.valid?
+
+      refute result.valid
+      param_reasons = result.reasons.select { |r| r.include?("Parameter is not defined by this config: 'CACHE_BLOCK_SIZE'") }
+      assert_equal 1, param_reasons.size, "Expected exactly one reason about CACHE_BLOCK_SIZE"
+      # The message must still have a bullet line — not an empty list — even though terms are unknown
+      assert param_reasons.first.include?("  - "), "Expected at least one failing conjunct line even with unknown terms"
+      # The bullet should contain {unknown} annotations, not {false}, since the extensions are possible
+      assert param_reasons.first.include?("{unknown}"), "Expected {unknown} annotations for possible-but-not-mandatory extensions"
+    end
   end
 end
