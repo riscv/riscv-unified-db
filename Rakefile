@@ -723,7 +723,7 @@ namespace :test do
     desc "Run unit tests for tools/scripts"
     task :unit do
       Dir.chdir($root) do
-        sh "ruby -Itools/scripts tools/scripts/test/run.rb"
+        sh "#{$root}/bin/ruby -Itools/scripts tools/scripts/test/run.rb"
       end
     end
   end
