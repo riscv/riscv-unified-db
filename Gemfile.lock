@@ -28,7 +28,7 @@ PATH
       tty-option
       tty-progressbar
       tty-table
-      udb (= 0.1.7)
+      udb (= 0.1.8)
       write_xlsx
 
 PATH
