@@ -2007,7 +2007,10 @@ module Udb
         elsif yaml.key?("anyOf")
           LogicNode.new(LogicNodeType::Or, yaml["anyOf"].map { |node| to_logic_tree_helper(node) })
         elsif yaml.key?("noneOf")
-          LogicNode.new(LogicNodeType::Or, yaml["noneOf"].map { |node| to_logic_tree_helper(node) })
+          LogicNode.new(
+            LogicNodeType::Not,
+            [LogicNode.new(LogicNodeType::Or, yaml["noneOf"].map { |node| to_logic_tree_helper(node) })]
+          )
         elsif yaml.key?("oneOf")
           LogicNode.new(LogicNodeType::Xor, yaml["oneOf"].map { |node| to_logic_tree_helper(node) })
         elsif yaml.key?("not")
