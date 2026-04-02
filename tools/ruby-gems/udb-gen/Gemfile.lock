@@ -17,7 +17,7 @@ PATH
 PATH
   remote: ../udb
   specs:
-    udb (0.1.8)
+    udb (0.1.9)
       activesupport
       asciidoctor
       awesome_print
@@ -41,7 +41,7 @@ PATH
 PATH
   remote: .
   specs:
-    udb-gen (0.1.6)
+    udb-gen (0.1.7)
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf
