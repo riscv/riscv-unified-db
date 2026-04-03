@@ -8,7 +8,6 @@
 
 #include "udb/GDBServer.hpp"
 
-
 #define GDB_CMD_PACKET_START '$'
 #define GDB_CMD_PACKET_END '#'
 #define GDB_CMD_BREAK '\3'
@@ -315,6 +314,10 @@ int GDBServer::HandlePacket(GDBPacket& packet)
       }
     }
     break;
+  case 'k':
+    result = OnKill();
+    // No response here,
+    break;
   case 'm':
   case 'M':
     {
@@ -505,6 +508,27 @@ int GDBServer::HandlePacket(GDBPacket& packet)
         default:
           result = -1;
           break;
+        }
+      }
+      else if(strCmd == "Kill")
+      {
+        if(packet.Seek(';'))
+        {
+          uint64_t uiProcId = packet.Read<uint64_t>();
+          result = OnKill(uiProcId);
+          if(result >= 0)
+          {
+            result = SendResponse("OK");
+          }
+          else
+          {
+            result = SendError(result);
+          }
+
+        }
+        else
+        {
+          result = SendResponse("");
         }
       }
       else
@@ -1016,6 +1040,11 @@ int GDBServer::OnClearBreakWatchPoint(unsigned char type, uint64_t uiAddress, ui
 }
 
 int GDBServer::OnExternalHalt()
+{
+  return -1;
+}
+
+int GDBServer::OnKill(uint64_t uiProcId)
 {
   return -1;
 }

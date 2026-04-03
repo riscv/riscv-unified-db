@@ -87,6 +87,7 @@ protected:
   int OnReceive(int socket);
   virtual int OnExternalHalt();
   virtual int OnContinue(uint64_t uiAddress = -1);
+  virtual int OnKill(uint64_t uiProcId = 0);
   virtual int OnReadGPR(REGISTERFILE& registerFile);
   virtual int OnWriteGPR(REGISTERFILE& registerFile);
   virtual int OnReadMemory(uint64_t uiAddress, uint64_t& uiLen, void* pBuffer);

@@ -135,6 +135,7 @@ add_executable(iss
   ${CMAKE_SOURCE_DIR}/src/elf_reader.cpp
   ${CMAKE_SOURCE_DIR}/src/GDBServer.cpp
   ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
+  ${CMAKE_SOURCE_DIR}/src/Tracer.cpp
 )
 if(IGNOREUNDEFINED STREQUAL "YES")
 target_compile_definitions(iss PUBLIC IGNOREUNDEFINED)

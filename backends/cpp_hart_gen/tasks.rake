@@ -393,12 +393,11 @@ task checkout_riscv_tests: "#{$root}/ext/riscv-tests/env/LICENSE"
 
 task build_riscv_tests: "checkout_riscv_tests" do
   configs_name, build_name = configs_build_name
-
   Dir.chdir "#{$root}/tests/isa" do
     if configs_name[0] == "rv32"
-      sh "make XLEN=32"
+      sh "make XLEN=32 BUILD_TYPE=#{cmake_build_type}"
     else
-      sh "make"
+      sh "make BUILD_TYPE=#{cmake_build_type}"
     end
   end
 end
