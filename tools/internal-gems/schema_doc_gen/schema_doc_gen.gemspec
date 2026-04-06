@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
     Generates Markdown documentation from JSON Schema files for the
     RISC-V Unified Database documentation site.
   DESC
-  s.date        = Time.now.strftime("%Y-%m-%d")
+  s.date        = "2024-01-01"
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
