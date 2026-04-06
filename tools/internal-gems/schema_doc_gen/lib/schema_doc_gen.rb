@@ -172,7 +172,7 @@ module SchemaDocGen
       if schema_version
         schema_filename = File.basename(@schema_path)
         github_schema_url = "https://github.com/riscv/riscv-unified-db/blob/main/spec/schemas/#{schema_filename}"
-        github_gen_url = "https://github.com/riscv/riscv-unified-db/blob/main/tools/ruby-gems/schema_doc_gen/lib/schema_doc_gen.rb"
+        github_gen_url = "https://github.com/riscv/riscv-unified-db/blob/main/tools/internal-gems/schema_doc_gen/lib/schema_doc_gen.rb"
         md += "\n<span class=\"badge badge--secondary\">#{schema_version}</span>\n"
         md += "\n<br />\n"
         md += "\n:::note Auto-generated\n"
