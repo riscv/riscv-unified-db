@@ -105,10 +105,23 @@ gen_subcmd_usage() {
   echo "Commands:"
   echo ""
   echo "  all:           Generate all development artifacts"
+  echo "  lockfiles:     Regenerate all Bundler lockfiles"
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
   echo "  schema-docs:   Generate schema documentation from JSON Schema files"
+  echo ""
+}
+
+gen_lockfiles_usage() {
+  echo "Usage: chore gen lockfiles [-h]"
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo ""
+  echo "Regenerates all Bundler lockfiles, ensuring both x86_64-linux and"
+  echo "aarch64-linux platforms are present in each lockfile."
   echo ""
 }
 
@@ -307,6 +320,32 @@ do_gen_schema_docs() {
 }
 
 #
+# Regenerate all Bundler lockfiles, ensuring both x86_64-linux and aarch64-linux
+# platforms are present. Lockfiles are deleted first to avoid stale platform entries
+# that --add-platform alone may not reliably clean up.
+# Each gem is locked from within its own directory so that relative `gemspec`
+# references in the Gemfile resolve correctly.
+#
+do_gen_lockfiles() {
+  source "$UDB_ROOT"/bin/setup
+
+  local gem_dirs=(
+    "${UDB_ROOT}/tools/ruby-gems/idlc"
+    "${UDB_ROOT}/tools/ruby-gems/udb"
+    "${UDB_ROOT}/tools/ruby-gems/udb-gen"
+    "${UDB_ROOT}/tools/ruby-gems/udb_helpers"
+    "${UDB_ROOT}"
+  )
+
+  for gem_dir in "${gem_dirs[@]}"; do
+    local rel_lockfile="${gem_dir#"${UDB_ROOT}"/}/Gemfile.lock"
+    echo "Regenerating ${rel_lockfile}..."
+    rm -f "${gem_dir}/Gemfile.lock"
+    $RUN /bin/bash -c "cd ${gem_dir} && bundle exec bundle lock --add-platform x86_64-linux aarch64-linux" || exit $?
+  done
+}
+
+#
 # Generate all development artifacts
 #
 do_gen_all() {
@@ -315,6 +354,7 @@ do_gen_all() {
   do_ruby_type_def all
   do_gen_xqci_golden
   do_gen_schema_docs
+  do_gen_lockfiles
 }
 
 #
@@ -584,6 +624,23 @@ case "$subcommand" in
     case "$target" in
       all )
         do_gen_all
+        exit 0
+        ;;
+      lockfiles )
+        while getopts ":h" opt; do
+          case $opt in
+            h )
+              gen_lockfiles_usage
+              exit 0
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              gen_lockfiles_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_gen_lockfiles
         exit 0
         ;;
       vscode-idl )

@@ -152,7 +152,7 @@ class TestAstType < Minitest::Test
     ast = m.to_ast
     refute_nil ast
     assert_raises Idl::AstNode::TypeError do
-      ast.freeze_tree(symtab)
+      ast.type_check(symtab, strict: false)
     end
 
   end

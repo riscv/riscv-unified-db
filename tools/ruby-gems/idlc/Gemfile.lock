@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    idlc (0.1.1)
+    idlc (0.1.2)
       activesupport
       commander (~> 5)
       pp
@@ -150,7 +150,6 @@ GEM
     sorbet (0.6.12949)
       sorbet-static (= 0.6.12949)
     sorbet-runtime (0.6.12949)
-    sorbet-static (0.6.12949-aarch64-linux)
     sorbet-static (0.6.12949-x86_64-linux)
     sorbet-static-and-runtime (0.6.12949)
       sorbet (= 0.6.12949)
@@ -199,7 +198,6 @@ GEM
 PLATFORMS
   aarch64-linux
   x86_64-linux
-  x86_64-linux-gnu
 
 DEPENDENCIES
   idlc!
@@ -222,4 +220,4 @@ DEPENDENCIES
   yard-sorbet
 
 BUNDLED WITH
-  4.0.8
+   2.6.9

@@ -53,6 +53,13 @@ operation(): |
 
   Bits<32> sp_value = f[fs1][31:0];
 
+  if (implemented?(ExtensionName::D)) {
+    # check for an incorrectly NaN-boxed value
+    if (f[fs1][63:32] != 32'hffffffff) {
+      sp_value = SP_CANONICAL_NAN;
+    }
+  }
+
   if (is_sp_neg_inf?(sp_value)) {
     X[xd] = 1 << 0;
   } else if (is_sp_neg_norm?(sp_value)) {

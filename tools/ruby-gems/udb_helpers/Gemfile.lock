@@ -1,0 +1,23 @@
+PATH
+  remote: .
+  specs:
+    udb_helpers (0.1.2)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rake (13.3.1)
+    yard (0.9.38)
+
+PLATFORMS
+  aarch64-linux
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  rake
+  udb_helpers!
+  yard
+
+BUNDLED WITH
+   2.6.9

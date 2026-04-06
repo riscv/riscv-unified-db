@@ -33,6 +33,7 @@ class OpenStruct
   def extend!(*_arg0); end
   def freeze; end
   def freeze!; end
+  def gem!(dep, *reqs); end
   def hash; end
   def hash!; end
   def init_with(coder); end

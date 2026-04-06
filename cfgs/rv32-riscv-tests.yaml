@@ -19,6 +19,8 @@ implemented_extensions:
   - [U, "1.0.0"]
   - [Zifencei, "2.0.0"]
   - [Sv32, "1.11.0"]
+  - [F, "2.2.0"]
+  - [Zcf, "1.0"]
 
 params:
   MXLEN: 32
@@ -189,9 +191,8 @@ params:
   STVEC_MODE_VECTORED: true
   SATP_MODE_BARE: true
   TRAP_ON_ECALL_FROM_S: true
-  TRAP_ON_SFENCE_VMA_WHEN_SATP_MODE_IS_READ_ONLY: false
   MSTATUS_VS_LEGAL_VALUES: [0]
-  MSTATUS_FS_LEGAL_VALUES: [0]
+  MSTATUS_FS_LEGAL_VALUES: [3, 2, 1, 0]
   MSTATUS_TVM_IMPLEMENTED: false
   NUM_PMP_ENTRIES: 16
   PMP_GRANULARITY: 12
@@ -240,3 +241,5 @@ params:
   # MSTATEEN_CSRIND_TYPE: rw
   # MSTATEEN_IMSIC_TYPE: rw
   # MSTATEEN_JVT_TYPE: rw
+  HW_MSTATUS_FS_DIRTY_UPDATE: precise
+  MUTABLE_MISA_F: false
