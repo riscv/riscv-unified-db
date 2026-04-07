@@ -27,7 +27,6 @@ Gem::Specification.new do |s|
     "bug_tracker_uri" => "https://github.com/riscv/riscv-unified-db/issues"
   }
   s.required_ruby_version = "~> 3.2"
-
   s.require_paths = ["lib"]
   s.bindir = "bin"
   s.executables << "udb"

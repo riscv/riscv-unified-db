@@ -48,7 +48,10 @@ ENV MISE_YES=1
 ENV MISE_TRUSTED_CONFIG_PATHS="/"
 ENV UV_CACHE_DIR="/tmp/uv-cache"
 ENV PATH="/mise/shims:$PATH"
-RUN curl https://mise.run | sh
+
+# renovate: datasource=github-releases depName=jdx/mise
+ARG MISE_VERSION=2026.3.17
+RUN MISE_VERSION=${MISE_VERSION} curl https://mise.run | sh
 
 # Install tools managed by mise (.mise.toml)
 COPY .mise.toml /mise/config.toml
