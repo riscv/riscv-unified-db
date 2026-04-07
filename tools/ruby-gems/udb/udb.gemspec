@@ -49,7 +49,7 @@ Gem::Specification.new do |s|
   s.add_dependency "tty-command"
   s.add_dependency "tty-logger"
   s.add_dependency "tty-progressbar"
-  s.add_dependency "udb_helpers", "= 0.1.2"
+  s.add_dependency "udb_helpers", "= 0.1.3"
   s.add_dependency "z3"
 
   s.add_development_dependency "rake"

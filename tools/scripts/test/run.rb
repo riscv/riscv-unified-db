@@ -187,7 +187,9 @@ class TestParseGemMetadata < Minitest::Test
     FakeGemTree.make_gem(@tmpdir, name: "beta", has_spec_dir: true)
     metadata = parse_gem_metadata(@tmpdir)
     gem = metadata[:gems].find { |g| g[:name] == "beta" }
-    assert_equal ["spec"], gem[:additional_dirs]
+    # additional_dirs must be repo-root-relative so they can be matched directly
+    # against paths from `git diff --name-only`
+    assert_equal ["tools/ruby-gems/beta/spec"], gem[:additional_dirs]
   end
 
   def test_no_spec_dir_gives_empty_additional_dirs

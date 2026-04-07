@@ -49,7 +49,7 @@ def parse_gem_metadata(udb_root)
     rel_dir = gemspec_path.dirname.relative_path_from(udb_root).to_s
     gemspec_rel = gemspec_path.relative_path_from(udb_root).to_s
     version_file = "#{rel_dir}/lib/#{spec.name}/version.rb"
-    additional_dirs = (gemspec_path.dirname / "spec").directory? ? ["spec"] : []
+    additional_dirs = (gemspec_path.dirname / "spec").directory? ? ["#{rel_dir}/spec"] : []
     {
       name: spec.name,
       dir: rel_dir,
@@ -150,13 +150,7 @@ def get_changed_files(base_ref)
     if $?.exitstatus != 0
       warn "Retry git diff failed: #{output.strip}"
       warn "Skipping version auto-increment (git history unavailable)"
-      warn "git diff failed twice; falling back to git ls-files to determine files"
-      ls_output = `git ls-files 2>&1`
-      if $?.exitstatus != 0
-        warn "git ls-files also failed: #{ls_output.strip}"
-        abort "Unable to determine changed files from git; aborting version generation"
-      end
-      return ls_output.lines.map(&:strip)
+      return nil
     end
   end
   output.lines.map(&:strip)
@@ -190,8 +184,8 @@ def needs_bump?(gem_config, changed_files, base_ref)
     base_version = $1
   end
 
-  # If version already differs (e.g., find-replace), no bump needed
-  current_version == base_version
+  # Only skip if branch version is already strictly ahead of base (manually bumped)
+  Gem::Version.new(current_version) <= Gem::Version.new(base_version)
 end
 
 def compute_needs_bump_set(changed_files, base_ref)
@@ -219,13 +213,29 @@ def compute_needs_bump_set(changed_files, base_ref)
   needs_bump
 end
 
-def do_version_bumps(needs_bump_set)
+def do_version_bumps(needs_bump_set, base_ref)
   GEMS.each do |gem_config|
     next unless needs_bump_set.include?(gem_config[:name])
     current = read_version(gem_config[:version_file])
-    new_version = bump_patch(current)
+    base_content = `git show #{base_ref}:#{gem_config[:version_file]} 2>&1`
+    base = ($?.exitstatus == 0 && base_content =~ /["'](\d+\.\d+\.\d+)["']/) ? $1 : current
+    start_from = Gem::Version.new(current) >= Gem::Version.new(base) ? current : base
+    new_version = bump_patch(start_from)
     write_version(gem_config[:version_file], new_version)
     puts "  Bumped #{gem_config[:name]}: #{current} → #{new_version}"
+  end
+end
+
+def bring_versions_forward(base_ref)
+  GEMS.each do |gem_config|
+    current = read_version(gem_config[:version_file])
+    base_content = `git show #{base_ref}:#{gem_config[:version_file]} 2>&1`
+    next unless $?.exitstatus == 0
+    next unless base_content =~ /["'](\d+\.\d+\.\d+)["']/
+    base = $1
+    next unless Gem::Version.new(current) < Gem::Version.new(base)
+    write_version(gem_config[:version_file], base)
+    puts "  Brought #{gem_config[:name]} forward: #{current} → #{base}"
   end
 end
 
@@ -250,16 +260,30 @@ def update_gemspec_pins
   end
 end
 
-# Update the version strings for local gem dependencies in the PATH sections
-# of a Gemfile.lock, without running `bundle lock` (which would drop platform
+# Update the version strings for local gems in the PATH sections of a
+# Gemfile.lock, without running `bundle lock` (which would drop platform
 # variants resolved on a different architecture).
 #
-# Only the dependency lines inside PATH specs blocks are rewritten, e.g.:
-#   idlc (= 0.1.1)   →   idlc (= 0.1.2)
-#   idlc              →   idlc (= 0.1.2)
-# The gem's own version line (the first line of the spec) is left alone.
+# Two classes of lines are rewritten inside each PATH specs: block:
+#
+# 1. The gem's own PATH spec header line (4-space indent), e.g.:
+#      udb_helpers (0.1.1)   →   udb_helpers (0.1.2)
+#    This is updated to match the current version from the gem's version.rb.
+#
+# 2. Inter-gem dependency lines (6-space indent), e.g.:
+#      idlc (= 0.1.1)   →   idlc (= 0.1.2)
+#      idlc              →   idlc (= 0.1.2)
+#    These are updated to the pinned version from GEMSPEC_PINS.
 def update_lockfiles
-  # Build a map of dep_name → pinned version from GEMSPEC_PINS
+  # Build a map of gem_name → current version for ALL local gems.
+  # Used to update the 4-space-indented PATH spec header lines.
+  gem_version_map = {}
+  GEMS.each do |gem_config|
+    gem_version_map[gem_config[:name]] = read_version(gem_config[:version_file])
+  end
+
+  # Build a map of dep_name → pinned version from GEMSPEC_PINS.
+  # Used to update the 6-space-indented inter-gem dependency lines.
   pin_map = {}
   GEMSPEC_PINS.each do |pin|
     version = read_version(GEMS.find { |g| g[:name] == pin[:version_gem] }[:version_file])
@@ -276,52 +300,66 @@ def update_lockfiles
     end
 
     content = File.read(lockfile_path)
-    updated = content.dup
-
-    pin_map.each do |dep_name, version|
-      # Match dependency lines inside PATH specs: lines like
-      #   "      dep_name" or "      dep_name (= X.Y.Z)" or "      dep_name (X.Y.Z)"
-      # but NOT the gem's own name line (which has exactly 4 spaces of indent).
-      # Dependency lines have 6 spaces of indent.
-      pattern = /^(      #{Regexp.escape(dep_name)})(?:\s*\([^)]*\))?$/
-      updated = updated.gsub(pattern, "\\1 (= #{version})")
-    end
     lines = content.lines
 
-    # Restrict rewrites to dependency lines inside PATH specs blocks.
-    pin_map.each do |dep_name, version|
-      pattern = /^(      #{Regexp.escape(dep_name)})(?:\s*\([^)]*\))?$/
-      in_path_section = false
-      in_specs_block = false
+    in_path_section = false
+    in_specs_block = false
+    path_spec_header_seen = false
 
-      lines.map!.with_index do |line, idx|
-        # Detect start of a PATH section (top-level "PATH" line).
-        if line == "PATH\n" || line == "PATH"
-          in_path_section = true
-          in_specs_block = false
-          line
-        # Any new top-level section (non-indented line) other than PATH ends the PATH section.
-        elsif line.match?(/^\S/) && !line.start_with?("PATH")
-          in_path_section = false
-          in_specs_block = false
-          line
-        # Inside PATH, detect the specs: stanza.
-        elsif in_path_section && line.match?(/^  specs:/)
-          in_specs_block = true
-          line
-        else
-          if in_path_section && in_specs_block && line.match?(pattern)
-            # Preserve the original indentation and gem name (capture group 1),
-            # and overwrite any version constraint with the pinned version.
-            prefix = Regexp.last_match(1)
-            # Keep the original line ending (if any).
-            newline = line.end_with?("\n") ? "\n" : ""
-            "#{prefix} (= #{version})#{newline}"
-          else
-            line
+    lines.map! do |line|
+      # Detect start of a PATH section (top-level "PATH" line).
+      if line == "PATH\n" || line == "PATH"
+        in_path_section = true
+        in_specs_block = false
+        path_spec_header_seen = false
+        next line
+      end
+
+      # Any new top-level section (non-indented, non-empty line) ends the PATH section.
+      if line.match?(/^\S/) && line.strip != ""
+        in_path_section = false
+        in_specs_block = false
+        path_spec_header_seen = false
+        next line
+      end
+
+      # Inside PATH, detect the "  specs:" stanza.
+      if in_path_section && line.match?(/^  specs:/)
+        in_specs_block = true
+        path_spec_header_seen = false
+        next line
+      end
+
+      if in_path_section && in_specs_block
+        # The first 4-space-indented gem line after "  specs:" is the PATH spec
+        # header — the gem's own name and version, e.g. "    udb_helpers (0.1.1)".
+        # Update it to the current version from version.rb.
+        if !path_spec_header_seen && line.match?(/^    \S/)
+          path_spec_header_seen = true
+          gem_version_map.each do |gem_name, version|
+            header_pattern = /^(    #{Regexp.escape(gem_name)})\s*\(\d+\.\d+\.\d+\)/
+            if line.match?(header_pattern)
+              newline_char = line.end_with?("\n") ? "\n" : ""
+              line = "    #{gem_name} (#{version})#{newline_char}"
+              break
+            end
+          end
+          next line
+        end
+
+        # 6-space-indented lines are inter-gem dependency lines.
+        # Update pinned local gem dependencies to their current versions.
+        pin_map.each do |dep_name, version|
+          dep_pattern = /^(      #{Regexp.escape(dep_name)})(?:\s*\([^)]*\))?$/
+          if line.match?(dep_pattern)
+            newline_char = line.end_with?("\n") ? "\n" : ""
+            line = "      #{dep_name} (= #{version})#{newline_char}"
+            break
           end
         end
       end
+
+      line
     end
 
     updated = lines.join
@@ -428,6 +466,10 @@ if __FILE__ == $PROGRAM_NAME
   tracked = all_tracked_files
   sha_before = options[:fail_on_change] ? sha256_files(tracked) : nil
 
+  # Step A0: bring any version files that are behind origin/main forward
+  puts "Step A0: Bringing stale version files forward to base..."
+  bring_versions_forward(options[:base_ref])
+
   # Step A: auto-increment versions for changed gems (with cascade)
   puts "Step A: Checking for gems that need version bumps..."
   changed_files = get_changed_files(options[:base_ref])
@@ -438,7 +480,7 @@ if __FILE__ == $PROGRAM_NAME
     if needs_bump.empty?
       puts "  No version bumps needed"
     else
-      do_version_bumps(needs_bump)
+      do_version_bumps(needs_bump, options[:base_ref])
     end
   end
 
