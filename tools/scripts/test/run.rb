@@ -11,7 +11,7 @@ require "fileutils"
 # Load parse_gem_metadata without running the main block.
 # gen_gem_versions.rb guards its main block with `if __FILE__ == $PROGRAM_NAME`,
 # so requiring it here is safe.
-require "gen_gem_versions"
+require_relative "../gen_gem_versions"
 
 UDB_ROOT_REAL = Pathname.new(__FILE__).dirname.parent.parent.parent.realpath
 
