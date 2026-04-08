@@ -184,7 +184,7 @@ def needs_bump?(gem_config, changed_files, base_ref)
     base_version = $1
   end
 
-  # Only skip if branch version is already strictly ahead of base (manually bumped)
+  # A bump is needed unless the branch version is already strictly ahead of base.
   Gem::Version.new(current_version) <= Gem::Version.new(base_version)
 end
 
