@@ -97,6 +97,8 @@ COPY tools/ruby-gems/udb/Gemfile /opt/tools/ruby-gems/udb/
 COPY tools/ruby-gems/udb/Gemfile.lock /opt/tools/ruby-gems/udb/
 COPY tools/ruby-gems/udb/udb.gemspec /opt/tools/ruby-gems/udb/
 COPY tools/ruby-gems/udb/lib/udb/version.rb /opt/tools/ruby-gems/udb/lib/udb/
+COPY tools/ruby-gems/udb/lib/udb/dep_versions.rb /opt/tools/ruby-gems/udb/lib/udb/
+COPY tools/ruby-gems/udb/ext/udb_download/extconf.rb /opt/tools/ruby-gems/udb/ext/udb_download/
 COPY tools/ruby-gems/udb-gen/Gemfile /opt/tools/ruby-gems/udb-gen/
 COPY tools/ruby-gems/udb-gen/Gemfile.lock /opt/tools/ruby-gems/udb-gen/
 COPY tools/ruby-gems/udb-gen/udb-gen.gemspec /opt/tools/ruby-gems/udb-gen/
