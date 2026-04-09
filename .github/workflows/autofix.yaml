@@ -12,8 +12,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-      - run: curl https://mise.run | sh
+      - uses: jdx/mise-action@v4
       - run: ~/.local/bin/mise install
       - run: ~/.local/bin/mise exec -- bundle install
-      - run: IN_UDB_CONTAINER=1 ~/.local/bin/mise exec -- ./bin/chore gen all
+      - run: IN_UDB_CONTAINER=1 BUNDLE_GEMFILE=$PWD/Gemfile ~/.local/bin/mise exec -- ./bin/chore gen all
       - uses: autofix-ci/action@7a166d7532b277f34e16238930461bf77f9d7ed8 # v1.3.3
