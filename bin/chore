@@ -346,7 +346,7 @@ do_gen_all() {
   do_gen_vscode_idl
   do_gen_gem_versions
   do_ruby_type_def all
-  # do_gen_xqci_golden
+  do_gen_xqci_golden
 }
 
 #
@@ -430,16 +430,33 @@ do_ruby_type_def() {
       exit 1 # Exit with error
       ;;
   esac
+  # Background jobs are not a TTY; strip -it from RUN to avoid docker complaints.
+  local RUN_NO_TTY="${RUN//-it /}"
+
+  # Run tapioca gems+dsl for each gem in parallel (writes are per-gem).
+  local pids=()
   for gem in "${gems[@]}"; do
     gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
     steps=$(cat << STEPS
       cd ${UDB_ROOT}/tools/ruby-gems/${gem} && \
       BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca gems --all && \
-      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca dsl && \
-      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca annotations
+      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca dsl
 STEPS
     )
-    $RUN /bin/bash -c "$steps" || exit $?
+    $RUN_NO_TTY /bin/bash -c "$steps" &
+    pids+=($!)
+  done
+
+  local rc=0
+  for pid in "${pids[@]}"; do
+    wait "$pid" || rc=$?
+  done
+  [ $rc -ne 0 ] && exit $rc
+
+  # Run tapioca annotations sequentially to avoid races on the shared gem cache.
+  for gem in "${gems[@]}"; do
+    gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
+    $RUN_NO_TTY /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca annotations" || exit $?
   done
 }
 

@@ -12,7 +12,7 @@ tests:
       - smoke
     test:
       - name: Run tools/scripts unit tests
-        run: ./do test:scripts:unit
+        run: ./bin/ruby -Itools/scripts tools/scripts/test/run.rb
 
   regress-idlc-unit:
     ci_stage: pr
