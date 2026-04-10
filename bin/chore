@@ -431,11 +431,12 @@ do_ruby_type_def() {
       ;;
   esac
   for gem in "${gems[@]}"; do
+    gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
     steps=$(cat << STEPS
       cd ${UDB_ROOT}/tools/ruby-gems/${gem} && \
-      bundle exec tapioca gems --all && \
-      bundle exec tapioca dsl && \
-      bundle exec tapioca annotations
+      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca gems --all && \
+      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca dsl && \
+      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca annotations
 STEPS
     )
     $RUN /bin/bash -c "$steps" || exit $?

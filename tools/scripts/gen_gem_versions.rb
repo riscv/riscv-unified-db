@@ -32,12 +32,14 @@ UDB_ROOT = Pathname.new(__FILE__).dirname.parent.parent.realpath
 def parse_gem_metadata(udb_root)
   # Discover gem dirs that have both a Gemfile and a gemspec, and load each
   # gemspec using the official Gem::Specification API.
+  # Load each spec from within its own directory so that Dir.glob patterns in
+  # the spec's `files` list (e.g. "lib/**/*.rb") resolve correctly.
   spec_entries = Dir.glob("#{udb_root}/tools/ruby-gems/*/Gemfile").filter_map do |gf|
     dir = Pathname.new(gf).dirname
     gemspec_path = Dir.glob("#{dir}/*.gemspec").first
     next unless gemspec_path
 
-    spec = Gem::Specification.load(gemspec_path)
+    spec = Dir.chdir(dir) { Gem::Specification.load(gemspec_path) }
     next unless spec
 
     [spec, Pathname.new(gemspec_path)]
@@ -50,11 +52,18 @@ def parse_gem_metadata(udb_root)
     gemspec_rel = gemspec_path.relative_path_from(udb_root).to_s
     version_file = "#{rel_dir}/lib/#{spec.name}/version.rb"
     additional_dirs = (gemspec_path.dirname / "spec").directory? ? ["#{rel_dir}/spec"] : []
+    # Build the set of repo-relative paths that count as gem source.
+    # spec.files was resolved in the gem dir (see spec_entries loading above).
+    source_files = spec.files
+                      .map { |f| "#{rel_dir}/#{f}" }
+                      .to_set
+    source_files << gemspec_rel
     {
       name: spec.name,
       dir: rel_dir,
       version_file:,
       additional_dirs:,
+      source_files: source_files.freeze,
       gemspec_path: gemspec_rel
     }
   end
@@ -156,11 +165,11 @@ def get_changed_files(base_ref)
 end
 
 def needs_bump?(gem_config, changed_files, base_ref)
-  gem_dir = gem_config[:dir]
   version_file = gem_config[:version_file]
+  source_files = gem_config[:source_files]
   additional_dirs = gem_config[:additional_dirs] || []
 
-  gem_files_changed = changed_files.any? { |f| f.start_with?(gem_dir) }
+  gem_files_changed = changed_files.any? { |f| source_files.include?(f) }
   additional_files_changed = additional_dirs.any? do |dir|
     changed_files.any? { |f| f.start_with?(dir) }
   end
@@ -411,9 +420,9 @@ def run_check_mode(base_ref)
       failures << gem_name
     else
       # Determine why it's OK
-      gem_dir = gem_config[:dir]
+      source_files = gem_config[:source_files]
       additional_dirs = gem_config[:additional_dirs] || []
-      gem_files_changed = changed_files.any? { |f| f.start_with?(gem_dir) }
+      gem_files_changed = changed_files.any? { |f| source_files.include?(f) }
       additional_files_changed = additional_dirs.any? { |dir| changed_files.any? { |f| f.start_with?(dir) } }
 
       if gem_files_changed || additional_files_changed
