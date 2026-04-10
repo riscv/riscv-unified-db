@@ -11,8 +11,8 @@ GEM
 
 PLATFORMS
   aarch64-linux-gnu
-  ruby
   x86_64-linux
+  x86_64-linux-gnu
 
 DEPENDENCIES
   rake
@@ -20,4 +20,4 @@ DEPENDENCIES
   yard
 
 BUNDLED WITH
-   2.6.9
+  4.0.8

@@ -14,7 +14,7 @@
 #
 #   --fail-on-change  Exit 1 if any file changed (for CI drift detection)
 #   --check           Only detect version-bump issues, no writes; exit 1 if any found
-#   --base-ref <ref>  Git ref to compare against (default: origin/main)
+#   --base-ref <ref>  Git ref to compare against (default: $GITHUB_BASE_REF or origin/main)
 
 require "digest"
 require "optparse"
@@ -140,18 +140,17 @@ def bump_patch(version)
 end
 
 def get_changed_files(base_ref)
+  # Always fetch so origin/main is fresh locally (CI always has a fresh checkout).
+  # Silent: if the network is unavailable the cached ref is used and the diff below
+  # will still succeed as long as origin/main was fetched at some point before.
+  system("git fetch --no-tags --prune --no-recurse-submodules origin main 2>/dev/null")
+
   cmd = "git diff --name-only #{base_ref}...HEAD 2>&1"
   output = `#{cmd}`
   if $?.exitstatus != 0
-    warn "Initial git diff failed: #{output.strip}"
-    # Try fetching the base branch and retry
-    system("git fetch --no-tags --prune --no-recurse-submodules origin main 2>/dev/null")
-    output = `#{cmd}`
-    if $?.exitstatus != 0
-      warn "Retry git diff failed: #{output.strip}"
-      warn "Skipping version auto-increment (git history unavailable)"
-      return nil
-    end
+    warn "git diff failed: #{output.strip}"
+    warn "Skipping version auto-increment (git history unavailable)"
+    return nil
   end
   output.lines.map(&:strip)
 end
@@ -442,8 +441,16 @@ end
 
 # --- Main ---
 
+def default_base_ref
+  if (base = ENV["GITHUB_BASE_REF"])&.match?(/\S/)
+    "origin/#{base}"
+  else
+    "origin/main"
+  end
+end
+
 if __FILE__ == $PROGRAM_NAME
-  options = { fail_on_change: false, check: false, base_ref: "origin/main" }
+  options = { fail_on_change: false, check: false, base_ref: default_base_ref }
 
   OptionParser.new do |opts|
     opts.on("--fail-on-change", "Exit 1 if any file changed") do
@@ -452,7 +459,7 @@ if __FILE__ == $PROGRAM_NAME
     opts.on("--check", "Only check for version-bump issues, no writes") do
       options[:check] = true
     end
-    opts.on("--base-ref REF", "Git ref to compare against (default: origin/main)") do |ref|
+    opts.on("--base-ref REF", "Git ref to compare against (default: $GITHUB_BASE_REF or origin/main)") do |ref|
       options[:base_ref] = ref
     end
   end.parse!

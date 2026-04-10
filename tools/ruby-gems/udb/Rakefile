@@ -97,8 +97,10 @@ namespace :chore do
   namespace :udb do
 
     task :lsp do
-      Dir.chdir(RUBY_UDB_ROOT) do
-        sh "bundle exec srb tc --lsp --disable-watchman"
+      Bundler.with_unbundled_env do
+        Dir.chdir(RUBY_UDB_ROOT) do
+          sh "BUNDLE_GEMFILE=#{RUBY_UDB_ROOT}/Gemfile BUNDLE_FROZEN=1 bundle exec srb tc --lsp --disable-watchman"
+        end
       end
     end
 
@@ -132,9 +134,11 @@ namespace :test do
   namespace :udb do
     desc "Type check the Ruby UDB source code"
     task sorbet: "#{RUBY_UDB_ROOT}/sorbet/config" do
-      Dir.chdir(RUBY_UDB_ROOT) do
-        Udb.logger.info "Type checking udb gem"
-        sh "bundle exec srb tc"
+      Bundler.with_unbundled_env do
+        Dir.chdir(RUBY_UDB_ROOT) do
+          Udb.logger.info "Type checking udb gem"
+          sh "BUNDLE_GEMFILE=#{RUBY_UDB_ROOT}/Gemfile BUNDLE_FROZEN=1 bundle exec srb tc"
+        end
       end
     end
 

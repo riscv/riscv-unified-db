@@ -94,11 +94,12 @@ container_remove_usage() {
 }
 
 gen_subcmd_usage() {
-  echo "Usage: chore gen [-h] TARGET"
+  echo "Usage: chore gen [-h] [-f] [-b BASE_REF] TARGET"
   echo ""
   echo ""
   echo "Options:"
   echo ""
+  echo "  -b REF:  Base git ref to compare against for gem-versions (default: origin/main)"
   echo "  -f:      Fail on change; exit with status 1 if the generated file changes"
   echo "  -h:      Print help"
   echo ""
@@ -301,22 +302,21 @@ do_lock_all_gemfiles() {
   # Always include both x86_64 and aarch64 Linux platforms so lock files are
   # valid on both architectures.
   local platforms="--add-platform x86_64-linux --add-platform x86_64-linux-gnu --add-platform aarch64-linux --add-platform aarch64-linux-gnu"
+  local conservative="--conservative"
   # Root first — per-gem locks must be derived from this resolved graph.
   #
-  # BUNDLE_GEMFILE must be set to match --gemfile for each call. `bundle exec`
-  # activates a bundle context based on BUNDLE_GEMFILE *before* `bundle lock
-  # --gemfile` gets to override it. If BUNDLE_GEMFILE is already set in the
-  # environment (e.g. by autofix.ci or ./do), `bundle exec` activates the
-  # wrong bundle, causing PATH remote: entries to be written relative to that
-  # bundle's directory instead of the --gemfile's directory (e.g. ../idlc
-  # instead of tools/ruby-gems/idlc in the root lockfile).
+  # BUNDLE_GEMFILE must be set to match --gemfile for each call so that
+  # Bundler writes PATH remote: entries relative to the correct directory.
   # `env` is used to set BUNDLE_GEMFILE inline so it is passed into the
   # container when $RUN is a docker/podman invocation.
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
+  # Note: `bundle lock` (not `bundle exec bundle lock`) is used deliberately —
+  # `bundle exec` requires an existing lockfile to activate the bundle first,
+  # which breaks when lockfiles are missing or being regenerated from scratch.
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile bundle lock $platforms $conservative "$@" --gemfile "${UDB_ROOT}"/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile bundle lock $platforms $conservative "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile bundle lock $platforms $conservative "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile bundle lock $platforms $conservative "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile bundle lock $platforms $conservative "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
 }
 
 #
@@ -326,22 +326,25 @@ do_lock_all_gemfiles() {
 # Returns: 0 on success, 1 if files changed (when fail_on_change=1)
 #
 do_gen_gem_versions() {
+  local extra_args=()
+  if [ -n "$1" ]; then
+    extra_args=(--base-ref "$1")
+  fi
   source_setup
   echo "Syncing inter-gem version pins for tools/ruby-gems/ gems"
   if [ $fail_on_change -eq 1 ]; then
-    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change
+    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change "${extra_args[@]}"
   else
-    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb
+    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb "${extra_args[@]}"
   fi
-  # Delete per-gem lockfiles before re-locking so Bundler resolves them fresh
-  # from the root context, picking up any transitive dep version changes (e.g.
-  # activesupport). The root lockfile is left intact so it acts as the
-  # authoritative resolution source for the per-gem locks.
-  rm -f \
-    "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock \
-    "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock \
-    "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock \
-    "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile.lock
+  # Seed each per-gem lockfile from the root lockfile before re-locking.
+  # This ensures transitive dependency versions stay in sync with the root
+  # (the authoritative resolution). --conservative then prevents Bundler from
+  # upgrading anything beyond what the root already resolved.
+  cp "${UDB_ROOT}"/Gemfile.lock "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
+  cp "${UDB_ROOT}"/Gemfile.lock "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
+  cp "${UDB_ROOT}"/Gemfile.lock "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
+  cp "${UDB_ROOT}"/Gemfile.lock "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile.lock
   do_lock_all_gemfiles
 }
 
@@ -595,7 +598,8 @@ case "$subcommand" in
     ;;
   gen )
     fail_on_change=0
-    while getopts ":hf" opt; do # Go through the options
+    base_ref=""
+    while getopts ":hfb:" opt; do # Go through the options
       case $opt in
         # help
         h )
@@ -604,6 +608,11 @@ case "$subcommand" in
         ;;
         f )
           fail_on_change=1
+          shift
+          ;;
+        b )
+          base_ref="$OPTARG"
+          shift
           shift
           ;;
         # Invalid option
@@ -621,7 +630,7 @@ case "$subcommand" in
         exit 0
         ;;
       gem-versions )
-        do_gen_gem_versions
+        do_gen_gem_versions "$base_ref"
         exit 0
         ;;
       vscode-idl )
