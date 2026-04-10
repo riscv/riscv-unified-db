@@ -10,9 +10,9 @@ GEM
     yard (0.9.38)
 
 PLATFORMS
-  aarch64-linux
+  aarch64-linux-gnu
+  ruby
   x86_64-linux
-  x86_64-linux-gnu
 
 DEPENDENCIES
   rake
@@ -20,4 +20,4 @@ DEPENDENCIES
   yard
 
 BUNDLED WITH
-  4.0.8
+   2.6.9

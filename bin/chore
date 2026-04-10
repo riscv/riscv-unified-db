@@ -284,6 +284,42 @@ do_gen_vscode_idl() {
 }
 
 #
+# Lock all Gemfiles with consistent platforms.
+#
+# The root Gemfile is a union of all per-gem gemspecs and is used as the
+# authoritative dependency resolution context. It must be locked first so that
+# when Bundler locks each per-gem Gemfile (which runs under `bundle exec` from
+# the root context), it resolves transitive dependencies (e.g. activesupport,
+# sorbet) to the same versions as the root. If the per-gem locks ran first,
+# they could resolve to different versions and diverge from the root, causing
+# failures in tools like sorbet that compare the installed gem version against
+# committed RBI files.
+#
+# Args: extra args to pass to each `bundle lock` call (e.g. --update --bundler)
+#
+do_lock_all_gemfiles() {
+  # Always include both x86_64 and aarch64 Linux platforms so lock files are
+  # valid on both architectures.
+  local platforms="--add-platform x86_64-linux --add-platform x86_64-linux-gnu --add-platform aarch64-linux --add-platform aarch64-linux-gnu"
+  # Root first — per-gem locks must be derived from this resolved graph.
+  #
+  # BUNDLE_GEMFILE must be set to match --gemfile for each call. `bundle exec`
+  # activates a bundle context based on BUNDLE_GEMFILE *before* `bundle lock
+  # --gemfile` gets to override it. If BUNDLE_GEMFILE is already set in the
+  # environment (e.g. by autofix.ci or ./do), `bundle exec` activates the
+  # wrong bundle, causing PATH remote: entries to be written relative to that
+  # bundle's directory instead of the --gemfile's directory (e.g. ../idlc
+  # instead of tools/ruby-gems/idlc in the root lockfile).
+  # `env` is used to set BUNDLE_GEMFILE inline so it is passed into the
+  # container when $RUN is a docker/podman invocation.
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile bundle exec bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
+}
+
+#
 # Sync inter-gem version pins in gemspecs and Gemfile.lock files for the
 # locally-developed gems in tools/ruby-gems/. Also auto-increments versions
 # for any gem whose source changed without a bump (with cascade).
@@ -297,6 +333,16 @@ do_gen_gem_versions() {
   else
     $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb
   fi
+  # Delete per-gem lockfiles before re-locking so Bundler resolves them fresh
+  # from the root context, picking up any transitive dep version changes (e.g.
+  # activesupport). The root lockfile is left intact so it acts as the
+  # authoritative resolution source for the per-gem locks.
+  rm -f \
+    "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock \
+    "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock \
+    "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock \
+    "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile.lock
+  do_lock_all_gemfiles
 }
 
 #
@@ -338,12 +384,7 @@ do_install_gems() {
   local update_tag=$1
   source "$UDB_ROOT"/bin/setup
 
-  # run "bundle exec bundle" to get the BUNDLED WITH version of bundler
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile
+  do_lock_all_gemfiles
 
   # increment container-tag
   if [ "$update_tag" == "yes" ]; then

@@ -514,6 +514,10 @@ class ActiveSupport::SafeBuffer < ::String
   def upcase(*args, &block); end
   def upcase!(*args); end
 
+  protected
+
+  def mark_unsafe!; end
+
   private
 
   def explicit_html_escape_interpolated_argument(arg); end
@@ -943,8 +947,6 @@ class Delegator < ::BasicObject
   include ::ActiveSupport::Tryable
 end
 
-module ERB::Escape; end
-
 module ERB::Util
   include ::ActiveSupport::CoreExt::ERBUtil
   include ::ActiveSupport::CoreExt::ERBUtilPrivate
@@ -1110,7 +1112,6 @@ IO::Buffer::PAGE_SIZE = T.let(T.unsafe(nil), Integer)
 IO::Buffer::PRIVATE = T.let(T.unsafe(nil), Integer)
 IO::Buffer::READONLY = T.let(T.unsafe(nil), Integer)
 IO::Buffer::SHARED = T.let(T.unsafe(nil), Integer)
-class IO::ConsoleMode; end
 
 class IO::EAGAINWaitReadable < ::Errno::EAGAIN
   include ::IO::WaitReadable

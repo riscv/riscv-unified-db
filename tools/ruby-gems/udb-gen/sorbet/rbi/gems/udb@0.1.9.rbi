@@ -69,8 +69,6 @@ class EqnParser < ::Treetop::Runtime::CompiledParser
 end
 
 module FFI; end
-class FFI::ArrayType < ::FFI::Type; end
-class FFI::Buffer < ::FFI::AbstractMemory; end
 
 class FFI::DynamicLibrary
   class << self
@@ -82,16 +80,6 @@ class FFI::DynamicLibrary
   end
 end
 
-class FFI::DynamicLibrary::Symbol < ::FFI::Pointer; end
-class FFI::FunctionType < ::FFI::Type; end
-module FFI::LastError; end
-class FFI::MemoryPointer < ::FFI::Pointer; end
-module FFI::NativeType; end
-class FFI::NullPointerError < ::RuntimeError; end
-class FFI::StructByValue < ::FFI::Type; end
-class FFI::Type; end
-class FFI::Type::Builtin < ::FFI::Type; end
-class FFI::Type::Mapped < ::FFI::Type; end
 module Idl; end
 
 class Idl::ArrayIncludesAst < ::Idl::AstNode

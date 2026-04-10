@@ -1057,6 +1057,14 @@ jobs:
       run: docker load --input ${{ runner.temp }}/docker_image.tar
     - name: Check gem versions, pins, and lock files are up to date
       run: "./bin/chore gen -f gem-versions"
+    - name: Check lockfiles have no drift after re-locking
+      run: |
+        git diff --exit-code -- \
+          Gemfile.lock \
+          tools/ruby-gems/idlc/Gemfile.lock \
+          tools/ruby-gems/udb/Gemfile.lock \
+          tools/ruby-gems/udb-gen/Gemfile.lock \
+          tools/ruby-gems/udb_helpers/Gemfile.lock
   build-docs-site:
     runs-on: ubuntu-latest
     needs: build-container
