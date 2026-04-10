@@ -18,3 +18,4 @@ RUBY_YJIT_ENABLE = "1"
 
 [settings]
 ruby.compile = false
+ruby.default_packages_file = ".default-gems"
