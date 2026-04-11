@@ -73552,7 +73552,7 @@ Decode Variables::
 |Variable Name |Location
 |vm |$encoding[25]
 |vs2 |$encoding[24:20]
-|imm |$encoding[19:15]
+|imm |sext($encoding[19:15], 5)
 |vd |$encoding[11:7]
 |===
 
