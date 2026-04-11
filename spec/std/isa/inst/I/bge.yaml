@@ -37,6 +37,8 @@ pseudoinstructions:
     to: blez xs2,imm
   - when: xs2 == 0
     to: bgez xs1,imm
+  - when: "true"
+    to: ble xs2, xs1, imm
 operation(): |
   XReg lhs = X[xs1];
   XReg rhs = X[xs2];
