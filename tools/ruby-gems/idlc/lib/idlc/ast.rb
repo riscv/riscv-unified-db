@@ -5736,7 +5736,7 @@ module Idl
         arg_asts = arg_nodes.first(expected_arg_count).map(&:to_ast)
 
         arg_type_validations.each do |arg_index, validation|
-          next if arg_asts[arg_index].is_a?(T.any(*validation[:classes]))
+          next if validation[:classes].any? { |klass| arg_asts[arg_index].is_a?(klass) }
 
           return ParseTimeDetectedTypeError.new(
             input,

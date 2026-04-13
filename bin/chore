@@ -111,6 +111,7 @@ gen_subcmd_usage() {
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
+  echo "  xqci           Generate Xqci spec used for Golden regressions"
   echo ""
 }
 
@@ -660,6 +661,10 @@ case "$subcommand" in
         ;;
       regress )
         do_gen_regress
+        exit 0
+        ;;
+      xqci )
+        do_gen_xqci_golden
         exit 0
         ;;
       ruby-type-def )
