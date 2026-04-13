@@ -5731,22 +5731,31 @@ module Idl
 
       case dollar_name
       when "$width"
+        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
         WidthRevealAst.new(input, interval, arg_nodes[0].to_ast)
       when "$signed"
+        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
         SignCastAst.new(input, interval, arg_nodes[0].to_ast)
       when "$bits"
+        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
         BitsCastAst.new(input, interval, arg_nodes[0].to_ast)
       when "$enum_size"
+        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
         EnumSizeAst.new(input, interval, to_type_name_ast(arg_nodes[0]))
       when "$enum_element_size"
+        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
         EnumElementSizeAst.new(input, interval, to_type_name_ast(arg_nodes[0]))
       when "$enum_to_a"
+        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
         EnumArrayCastAst.new(input, interval, to_type_name_ast(arg_nodes[0]))
       when "$enum"
+        check_dollar_function_arity!(dollar_name, arg_nodes, 2)
         EnumCastAst.new(input, interval, to_type_name_ast(arg_nodes[0]), arg_nodes[1].to_ast)
       when "$array_size"
+        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
         ArraySizeAst.new(input, interval, arg_nodes[0].to_ast)
       when "$array_includes?"
+        check_dollar_function_arity!(dollar_name, arg_nodes, 2)
         ArrayIncludesAst.new(input, interval, arg_nodes[0].to_ast, arg_nodes[1].to_ast)
       else
         UnknownDollarFunctionAst.new(input, interval, dollar_name)
@@ -5754,6 +5763,14 @@ module Idl
     end
 
     private
+
+    def check_dollar_function_arity!(dollar_name, arg_nodes, expected_count)
+      actual_count = arg_nodes.length
+      return if actual_count == expected_count
+
+      argument_word = expected_count == 1 ? "argument" : "arguments"
+      type_error("#{dollar_name} expects #{expected_count} #{argument_word}, got #{actual_count}")
+    end
 
     def dollar_arg_list_elements
       arg_list = send(:args)
