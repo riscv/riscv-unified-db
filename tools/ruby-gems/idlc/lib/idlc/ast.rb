@@ -5717,7 +5717,7 @@ module Idl
       when "$array_size"        then builtin_call_ast(dollar_name, arg_nodes, 1, ArraySizeAst)
       when "$array_includes?"   then builtin_call_ast(dollar_name, arg_nodes, 2, ArrayIncludesAst)
       else
-        ParseTimeDetectedTypeError.new(input, interval, "#{dollar_name} is a not a builtin function")
+        ParseTimeDetectedTypeError.new(input, interval, "#{dollar_name} is not a builtin function")
       end
     end
 
