@@ -1,7 +1,7 @@
 PATH
   remote: ../idlc
   specs:
-    idlc (0.1.3)
+    idlc (0.1.4)
       activesupport
       commander (~> 5)
       pp
@@ -17,12 +17,12 @@ PATH
 PATH
   remote: ../udb
   specs:
-    udb (0.1.10)
+    udb (0.1.11)
       activesupport
       asciidoctor
       awesome_print
       concurrent-ruby
-      idlc (= 0.1.3)
+      idlc (= 0.1.4)
       json_schemer
       numbers_and_words
       ostruct
@@ -41,7 +41,7 @@ PATH
 PATH
   remote: .
   specs:
-    udb-gen (0.1.8)
+    udb-gen (0.1.9)
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf
@@ -51,7 +51,7 @@ PATH
       tty-option
       tty-progressbar
       tty-table
-      udb (= 0.1.10)
+      udb (= 0.1.11)
       write_xlsx
 
 GEM

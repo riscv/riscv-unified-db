@@ -35,7 +35,7 @@ Gem::Specification.new do |s|
   s.add_dependency "asciidoctor"
   s.add_dependency "awesome_print"
   s.add_dependency "concurrent-ruby"
-  s.add_dependency "idlc", "= 0.1.3"
+  s.add_dependency "idlc", "= 0.1.4"
   s.add_dependency "json_schemer"
   s.add_dependency "numbers_and_words"
   s.add_dependency "ostruct"

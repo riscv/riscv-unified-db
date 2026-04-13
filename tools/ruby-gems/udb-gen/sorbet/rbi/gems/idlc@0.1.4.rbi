@@ -1787,7 +1787,8 @@ class Idl::DollarFunctionCallSyntaxNode < ::Idl::SyntaxNode
 
   private
 
-  def builtin_call_ast(dollar_name, arg_nodes, expected_arg_count, ast_class); end
+  def builtin_arg_type_name(arg_ast); end
+  def builtin_call_ast(dollar_name, arg_nodes, expected_arg_count, ast_class, arg_type_validations = T.unsafe(nil)); end
   def dollar_arg_list_elements; end
 end
 
