@@ -714,14 +714,14 @@ module Udb
     # @param io where to write progress bars
     # @return [void]
     sig { params(show_progress: T::Boolean, io: IO).void }
-    def type_check(show_progress: true, io: $stdout)
+    def type_check(show_progress: true, io: $stderr)
       io.puts "Type checking IDL code for #{@config.name}..." if show_progress
       insts = @config.unconfigured? ? instructions : possible_instructions(show_progress:)
       xlens = @config.unconfigured? ? [32, 64] : possible_xlens
 
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking possible instructions [:bar] :current/:total", total: insts.size, output: $stdout)
+          TTY::ProgressBar.new("type checking possible instructions [:bar] :current/:total", total: insts.size, output: io)
         end
 
       insts.each do |inst|
@@ -743,7 +743,7 @@ module Udb
       csr_list = @config.unconfigured? ? csrs : possible_csrs
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking CSRs [:bar]", total: csr_list.size, output: $stdout)
+          TTY::ProgressBar.new("type checking CSRs [:bar] :current/:total", total: csr_list.size, output: io)
         end
 
       csr_list.each do |csr|
@@ -791,7 +791,7 @@ module Udb
       func_list = @config.unconfigured? ? functions : reachable_functions(show_progress:)
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking functions [:bar]", total: func_list.size, output: $stdout)
+          TTY::ProgressBar.new("type checking functions [:bar] :current/:total", total: func_list.size, output: io)
         end
       func_list.each do |func|
         progressbar.advance if show_progress

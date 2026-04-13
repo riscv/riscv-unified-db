@@ -543,7 +543,7 @@ module Idl
       end
 
       {
-        "file" => input_file.to_s,
+        "file" => T.must(input_file).to_s,
         "begin" => file_begin,
         "end"   => file_end
       }
@@ -1439,7 +1439,9 @@ module Idl
         end
       end
 
-      IsaAst.new(input, interval, kids)
+      node = IsaAst.new(input, interval, kids)
+      node.set_input_file(yaml.fetch("source").fetch("file"))
+      node
     end
   end
 
@@ -1514,12 +1516,6 @@ module Idl
     end
   end
 
-  class ArraySizeSyntaxNode < SyntaxNode
-    def to_ast
-      ArraySizeAst.new(input, interval, send(:expression).to_ast)
-    end
-  end
-
   class ArraySizeAst < AstNode
     include Rvalue
 
@@ -1581,25 +1577,21 @@ module Idl
   end
 
 
-  class EnumSizeSyntaxNode < SyntaxNode
-    def to_ast
-      EnumSizeAst.new(input, interval, send(:type_name).to_ast)
-    end
-  end
-
   # represents the builtin that returns the nymber of elements in an enum class
   #
   #  $enum_size(XRegWidth) #=> 2
   class EnumSizeAst < AstNode
     include Rvalue
 
-    def enum_class = children[0]
+    def enum_class = children.fetch(0)
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: T.any(IdAst, UserTypeNameAst)).void }
     def initialize(input, interval, enum_class_name)
-      super(input, interval, [enum_class_name])
+      user_type_name = enum_class_name.is_a?(UserTypeNameAst) ? enum_class_name : UserTypeNameAst.new(enum_class_name.input, enum_class_name.interval, enum_class_name.name)
+      super(input, interval, [user_type_name])
     end
 
     def type_check(symtab, strict:)
@@ -1636,14 +1628,8 @@ module Idl
       interval = interval_from_source_yaml(yaml.fetch("source"))
       EnumSizeAst.new(
         input, interval,
-        T.cast(AstNode.from_h(yaml.fetch("enum_class_name"), source_mapper), T.all(Rvalue, AstNode))
+        T.cast(AstNode.from_h(yaml.fetch("enum_class_name"), source_mapper), UserTypeNameAst)
       )
-    end
-  end
-
-  class EnumElementSizeSyntaxNode < SyntaxNode
-    def to_ast
-      EnumElementSizeAst.new(input, interval, send(:type_name).to_ast)
     end
   end
 
@@ -1658,9 +1644,10 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: UserTypeNameAst).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: T.any(IdAst, UserTypeNameAst)).void }
     def initialize(input, interval, enum_class_name)
-      super(input, interval, [enum_class_name])
+      user_type_name = enum_class_name.is_a?(UserTypeNameAst) ? enum_class_name : UserTypeNameAst.new(enum_class_name.input, enum_class_name.interval, enum_class_name.name)
+      super(input, interval, [user_type_name])
     end
 
     def type_check(symtab, strict:)
@@ -1698,12 +1685,6 @@ module Idl
     end
   end
 
-  class EnumCastSyntaxNode < SyntaxNode
-    def to_ast
-      EnumCastAst.new(input, interval, send(:type_name).to_ast, send(:expression).to_ast)
-    end
-  end
-
   class EnumCastAst < AstNode
     include Rvalue
 
@@ -1711,22 +1692,23 @@ module Idl
     def const_eval?(symtab) = true
 
     # @return [UserTypeAst] Enum name
-    def enum_name = @children[0]
+    def enum_name = @children.fetch(0)
 
     # @return [Rvalue] Value expression
-    def expression = @children[1]
+    def expression = @children.fetch(1)
 
     sig {
       params(
         input: T.nilable(String),
         interval: T.nilable(T::Range[Integer]),
-        type_name: UserTypeNameAst,
+        type_name: T.any(IdAst, UserTypeNameAst),
         expression: RvalueAst
       )
       .void
     }
     def initialize(input, interval, type_name, expression)
-      super(input, interval, [type_name, expression])
+      user_type_name = type_name.is_a?(UserTypeNameAst) ? type_name : UserTypeNameAst.new(type_name.input, type_name.interval, type_name.name)
+      super(input, interval, [user_type_name, expression])
     end
 
     def type_check(symtab, strict:)
@@ -1779,26 +1761,21 @@ module Idl
     end
   end
 
-  class EnumArrayCastSyntaxNode < SyntaxNode
-    def to_ast
-      EnumArrayCastAst.new(input, interval, send(:type_name).to_ast)
-    end
-  end
-
   # represents the builtin that returns an array with all elements of an Enum type
   #
   #  $enum_to_a(PrivilegeMode) #=> [3, 1, 1, 0, 5, 4]
   class EnumArrayCastAst < AstNode
     include Rvalue
 
-    def enum_class = children[0]
+    def enum_class = children.fetch(0)
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: UserTypeNameAst).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: T.any(IdAst, UserTypeNameAst)).void }
     def initialize(input, interval, enum_class_name)
-      super(input, interval, [enum_class_name])
+      user_type_name = enum_class_name.is_a?(UserTypeNameAst) ? enum_class_name : UserTypeNameAst.new(enum_class_name.input, enum_class_name.interval, enum_class_name.name)
+      super(input, interval, [user_type_name])
     end
 
     def type_check(symtab, strict:)
@@ -5730,47 +5707,31 @@ module Idl
       arg_nodes = dollar_arg_list_elements
 
       case dollar_name
-      when "$width"
-        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
-        WidthRevealAst.new(input, interval, arg_nodes[0].to_ast)
-      when "$signed"
-        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
-        SignCastAst.new(input, interval, arg_nodes[0].to_ast)
-      when "$bits"
-        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
-        BitsCastAst.new(input, interval, arg_nodes[0].to_ast)
-      when "$enum_size"
-        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
-        EnumSizeAst.new(input, interval, to_type_name_ast(arg_nodes[0]))
-      when "$enum_element_size"
-        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
-        EnumElementSizeAst.new(input, interval, to_type_name_ast(arg_nodes[0]))
-      when "$enum_to_a"
-        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
-        EnumArrayCastAst.new(input, interval, to_type_name_ast(arg_nodes[0]))
-      when "$enum"
-        check_dollar_function_arity!(dollar_name, arg_nodes, 2)
-        EnumCastAst.new(input, interval, to_type_name_ast(arg_nodes[0]), arg_nodes[1].to_ast)
-      when "$array_size"
-        check_dollar_function_arity!(dollar_name, arg_nodes, 1)
-        ArraySizeAst.new(input, interval, arg_nodes[0].to_ast)
-      when "$array_includes?"
-        check_dollar_function_arity!(dollar_name, arg_nodes, 2)
-        ArrayIncludesAst.new(input, interval, arg_nodes[0].to_ast, arg_nodes[1].to_ast)
+      when "$width"             then builtin_call_ast(dollar_name, arg_nodes, 1, WidthRevealAst)
+      when "$signed"            then builtin_call_ast(dollar_name, arg_nodes, 1, SignCastAst)
+      when "$bits"              then builtin_call_ast(dollar_name, arg_nodes, 1, BitsCastAst)
+      when "$enum_size"         then builtin_call_ast(dollar_name, arg_nodes, 1, EnumSizeAst)
+      when "$enum_element_size" then builtin_call_ast(dollar_name, arg_nodes, 1, EnumElementSizeAst)
+      when "$enum_to_a"         then builtin_call_ast(dollar_name, arg_nodes, 1, EnumArrayCastAst)
+      when "$enum"              then builtin_call_ast(dollar_name, arg_nodes, 2, EnumCastAst)
+      when "$array_size"        then builtin_call_ast(dollar_name, arg_nodes, 1, ArraySizeAst)
+      when "$array_includes?"   then builtin_call_ast(dollar_name, arg_nodes, 2, ArrayIncludesAst)
       else
-        UnknownDollarFunctionAst.new(input, interval, dollar_name)
+        ParseTimeDetectedTypeError.new(input, interval, "#{dollar_name} is a not a builtin function")
       end
     end
 
     private
 
-    def check_dollar_function_arity!(dollar_name, arg_nodes, expected_count)
-      actual_count = arg_nodes.length
-      return if actual_count == expected_count
-
-      argument_word = expected_count == 1 ? "argument" : "arguments"
-      type_error("#{dollar_name} expects #{expected_count} #{argument_word}, got #{actual_count}")
+    def builtin_call_ast(dollar_name, arg_nodes, expected_arg_count, ast_class)
+      if arg_nodes.size != expected_arg_count
+        ParseTimeDetectedTypeError.new(input, interval, "#{dollar_name} expects #{expected_arg_count} argument#{expected_arg_count == 1 ? "" : "s"}; #{arg_nodes.size} given")
+      else
+        ast_class.new(input, interval, *arg_nodes.first(expected_arg_count).map(&:to_ast))
+      end
     end
+
+    private
 
     def dollar_arg_list_elements
       arg_list = send(:args)
@@ -5779,11 +5740,6 @@ module Idl
       first.empty? ? rest : [first] + rest
     end
 
-    # Converts a parsed expression node to a UserTypeNameAst.
-    # Used for builtins that take a type name argument (e.g. $enum_size(MyEnum)).
-    def to_type_name_ast(node)
-      UserTypeNameAst.new(node.input, node.interval, node.text_value)
-    end
   end
 
   # Generic syntax node for $name (no parens) — creates a BuiltinVariableAst.
@@ -5794,7 +5750,6 @@ module Idl
   end
 
   # Syntax node for $name = expr — dispatches to PcAssignmentAst for $pc,
-  # or UnknownDollarVariableAssignmentAst for unknown names.
   class DollarVariableAssignmentSyntaxNode < SyntaxNode
     def to_ast
       dollar_name = "$#{send(:dollar_variable).send(:name).text_value}"
@@ -5803,63 +5758,38 @@ module Idl
       when "$pc"
         PcAssignmentAst.new(input, interval, rhs)
       else
-        UnknownDollarVariableAssignmentAst.new(input, interval, dollar_name, rhs)
+        ParseTimeDetectedTypeError.new(input, interval, "#{dollar_name} is not assignable")
       end
     end
   end
 
-  # AstNode for an unknown $name(...) call — always raises a type error.
-  class UnknownDollarFunctionAst < AstNode
-    KNOWN_DOLLAR_FUNCTIONS = %w[$width $signed $bits $enum_size $enum_element_size $enum_to_a $enum $array_size $array_includes?].freeze
+  # AstNode for an error detected during to_ast. Always causes a type error
+  class ParseTimeDetectedTypeError < AstNode
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
-    def const_eval?(symtab) = false
+    def const_eval?(symtab) = true
 
-    def initialize(input, interval, name)
+    def initialize(input, interval, reason)
       super(input, interval, EMPTY_ARRAY)
-      @name = name
+      @reason = reason
     end
 
     sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
     def type_check(symtab, strict:)
-      type_error "Unknown builtin function '#{@name}'. Known builtins: #{KNOWN_DOLLAR_FUNCTIONS.join(", ")}"
+      type_error @reason
     end
 
     sig { params(symtab: SymbolTable).returns(Type) }
-    def type(symtab) = VoidType
+    def type(symtab) = type_error(@reason)
 
     sig { params(symtab: SymbolTable).returns(T.untyped) }
-    def value(symtab) = value_error "#{@name} is unknown"
+    def value(symtab) = value_error "Can't take value of a type error"
 
     sig { override.returns(String) }
-    def to_idl = @name
+    def to_idl = text_value
 
     sig { override.returns(T::Hash[String, T.untyped]) }
-    def to_h = { "kind" => "unknown_dollar_function", "name" => @name, "source" => source_yaml }
-  end
-
-  # AstNode for an unknown $name = expr assignment — always raises a type error.
-  class UnknownDollarVariableAssignmentAst < AstNode
-    KNOWN_DOLLAR_VARIABLE_ASSIGNMENTS = %w[$pc].freeze
-
-    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
-    def const_eval?(symtab) = false
-
-    def initialize(input, interval, name, rhs)
-      super(input, interval, [rhs])
-      @name = name
-    end
-
-    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
-    def type_check(symtab, strict:)
-      type_error "Unknown builtin variable assignment '#{@name}'. Known assignable builtins: #{KNOWN_DOLLAR_VARIABLE_ASSIGNMENTS.join(", ")}"
-    end
-
-    sig { override.returns(String) }
-    def to_idl = "#{@name} = #{children.fetch(0).to_idl}"
-
-    sig { override.returns(T::Hash[String, T.untyped]) }
-    def to_h = { "kind" => "unknown_dollar_var_assignment", "name" => @name, "source" => source_yaml }
+    def to_h = { "kind" => "ParseTimeDetectedTypeError", "reason" => @reason, "source" => source_yaml }
   end
 
   class PostIncrementExpressionSyntaxNode < SyntaxNode
