@@ -5705,15 +5705,21 @@ module Idl
     def to_ast
       dollar_name = "$#{send(:name).text_value}"
       arg_nodes = dollar_arg_list_elements
+      enum_type_name_validation = {
+        0 => {
+          classes: [IdAst, UserTypeNameAst],
+          description: "an identifier or user type name"
+        }
+      }
 
       case dollar_name
       when "$width"             then builtin_call_ast(dollar_name, arg_nodes, 1, WidthRevealAst)
       when "$signed"            then builtin_call_ast(dollar_name, arg_nodes, 1, SignCastAst)
       when "$bits"              then builtin_call_ast(dollar_name, arg_nodes, 1, BitsCastAst)
-      when "$enum_size"         then builtin_call_ast(dollar_name, arg_nodes, 1, EnumSizeAst)
-      when "$enum_element_size" then builtin_call_ast(dollar_name, arg_nodes, 1, EnumElementSizeAst)
-      when "$enum_to_a"         then builtin_call_ast(dollar_name, arg_nodes, 1, EnumArrayCastAst)
-      when "$enum"              then builtin_call_ast(dollar_name, arg_nodes, 2, EnumCastAst)
+      when "$enum_size"         then builtin_call_ast(dollar_name, arg_nodes, 1, EnumSizeAst, enum_type_name_validation)
+      when "$enum_element_size" then builtin_call_ast(dollar_name, arg_nodes, 1, EnumElementSizeAst, enum_type_name_validation)
+      when "$enum_to_a"         then builtin_call_ast(dollar_name, arg_nodes, 1, EnumArrayCastAst, enum_type_name_validation)
+      when "$enum"              then builtin_call_ast(dollar_name, arg_nodes, 2, EnumCastAst, enum_type_name_validation)
       when "$array_size"        then builtin_call_ast(dollar_name, arg_nodes, 1, ArraySizeAst)
       when "$array_includes?"   then builtin_call_ast(dollar_name, arg_nodes, 2, ArrayIncludesAst)
       else
@@ -5723,12 +5729,28 @@ module Idl
 
     private
 
-    def builtin_call_ast(dollar_name, arg_nodes, expected_arg_count, ast_class)
+    def builtin_call_ast(dollar_name, arg_nodes, expected_arg_count, ast_class, arg_type_validations = {})
       if arg_nodes.size != expected_arg_count
         ParseTimeDetectedTypeError.new(input, interval, "#{dollar_name} expects #{expected_arg_count} argument#{expected_arg_count == 1 ? "" : "s"}; #{arg_nodes.size} given")
       else
-        ast_class.new(input, interval, *arg_nodes.first(expected_arg_count).map(&:to_ast))
+        arg_asts = arg_nodes.first(expected_arg_count).map(&:to_ast)
+
+        arg_type_validations.each do |arg_index, validation|
+          next if arg_asts[arg_index].is_a?(T.any(*validation[:classes]))
+
+          return ParseTimeDetectedTypeError.new(
+            input,
+            interval,
+            "#{dollar_name} expects argument #{arg_index + 1} to be #{validation[:description]}; #{builtin_arg_type_name(arg_asts[arg_index])} given"
+          )
+        end
+
+        ast_class.new(input, interval, *arg_asts)
       end
+    end
+
+    def builtin_arg_type_name(arg_ast)
+      arg_ast.class.name.split("::").last
     end
 
     private
