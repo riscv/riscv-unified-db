@@ -1,4 +1,5 @@
 .bundle
+!.bundle/config
 .python
 .antora
 .home
@@ -42,3 +43,5 @@ tools/ruby-gems/udb/ext/z3/VERSION
 
 # emacs backup files
 *~
+
+.wip

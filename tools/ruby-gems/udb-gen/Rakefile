@@ -71,9 +71,11 @@ end
 namespace :test do
   namespace :udb_gen do
     task :sorbet do
-      Dir.chdir(UDB_GEN_ROOT) do
-        Udb.logger.info "Type checking udb-gen gem"
-        sh "bundle exec srb tc"
+      Bundler.with_unbundled_env do
+        Dir.chdir(UDB_GEN_ROOT) do
+          Udb.logger.info "Type checking udb-gen gem"
+          sh "BUNDLE_GEMFILE=#{UDB_GEN_ROOT}/Gemfile BUNDLE_FROZEN=1 bundle exec srb tc"
+        end
       end
     end
   end

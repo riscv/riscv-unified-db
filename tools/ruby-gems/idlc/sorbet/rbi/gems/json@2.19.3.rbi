@@ -5,28 +5,6 @@
 # Please instead update this file by running `bin/tapioca gem json`.
 
 
-class Array
-  include ::Enumerable
-  include ::JSON::Ext::Generator::GeneratorMethods::Array
-end
-
-class FalseClass
-  include ::JSON::Ext::Generator::GeneratorMethods::FalseClass
-end
-
-class Float < ::Numeric
-  include ::JSON::Ext::Generator::GeneratorMethods::Float
-end
-
-class Hash
-  include ::Enumerable
-  include ::JSON::Ext::Generator::GeneratorMethods::Hash
-end
-
-class Integer < ::Numeric
-  include ::JSON::Ext::Generator::GeneratorMethods::Integer
-end
-
 module JSON
   private
 
@@ -98,47 +76,12 @@ class JSON::Coder
   def parse(source); end
 end
 
-module JSON::Ext::Generator::GeneratorMethods::Array
-  def to_json(*_arg0); end
-end
-
-module JSON::Ext::Generator::GeneratorMethods::FalseClass
-  def to_json(*_arg0); end
-end
-
-module JSON::Ext::Generator::GeneratorMethods::Float
-  def to_json(*_arg0); end
-end
-
-module JSON::Ext::Generator::GeneratorMethods::Hash
-  def to_json(*_arg0); end
-end
-
-module JSON::Ext::Generator::GeneratorMethods::Integer
-  def to_json(*_arg0); end
-end
-
-module JSON::Ext::Generator::GeneratorMethods::NilClass
-  def to_json(*_arg0); end
-end
-
-module JSON::Ext::Generator::GeneratorMethods::Object
-  def to_json(*_arg0); end
-end
-
-module JSON::Ext::Generator::GeneratorMethods::String
-  def to_json(*_arg0); end
-end
-
-module JSON::Ext::Generator::GeneratorMethods::TrueClass
-  def to_json(*_arg0); end
-end
-
 class JSON::Ext::Generator::State
   def initialize(opts = T.unsafe(nil)); end
 
   def [](name); end
   def []=(name, value); end
+  def _generate_no_fallback(*_arg0); end
   def allow_nan=(_arg0); end
   def allow_nan?; end
   def array_nl; end
@@ -184,6 +127,7 @@ class JSON::Ext::Generator::State
   def initialize_copy(_arg0); end
 
   class << self
+    def _generate_no_fallback(_arg0, _arg1, _arg2); end
     def from_state(_arg0); end
     def generate(_arg0, _arg1, _arg2); end
   end
@@ -229,6 +173,10 @@ class JSON::GeneratorError < ::JSON::JSONError
 
   def detailed_message(*_arg0, **_arg1, &_arg2); end
   def invalid_object; end
+end
+
+module JSON::GeneratorMethods
+  def to_json(state = T.unsafe(nil), *_arg1); end
 end
 
 class JSON::GenericObject < ::OpenStruct
@@ -280,21 +228,8 @@ module Kernel
   def jj(*objs); end
 end
 
-class NilClass
-  include ::JSON::Ext::Generator::GeneratorMethods::NilClass
-end
-
 class Object < ::BasicObject
   include ::Kernel
   include ::PP::ObjectMixin
-  include ::JSON::Ext::Generator::GeneratorMethods::Object
-end
-
-class String
-  include ::Comparable
-  include ::JSON::Ext::Generator::GeneratorMethods::String
-end
-
-class TrueClass
-  include ::JSON::Ext::Generator::GeneratorMethods::TrueClass
+  include ::JSON::GeneratorMethods
 end

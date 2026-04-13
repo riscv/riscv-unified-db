@@ -71,7 +71,7 @@ class OpenStruct
   def to_enum!(*_arg0); end
   def to_h(&block); end
   def to_h!(&block); end
-  def to_json!(*_arg0); end
+  def to_json!(state = T.unsafe(nil), *_arg1); end
   def to_s; end
   def to_s!; end
   def to_yaml!(options = T.unsafe(nil)); end
