@@ -324,7 +324,7 @@ module Udb
     sig { params(yaml: T::Hash[String, T.untyped]).void }
     def initialize(yaml)
       @yaml = yaml
-      @yaml_no_reason = yaml.key?("reason") ? yaml.reject { |k, _| k == "reason" }.freeze : yaml
+      @yaml_no_reason = (yaml.key?("reason") ? yaml.reject { |k, _| k == "reason" } : yaml.dup).freeze
     end
 
     sig { returns(T::Hash[String, T.untyped]) }

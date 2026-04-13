@@ -1791,6 +1791,7 @@ class Idl::DollarFunctionCallSyntaxNode < ::Idl::SyntaxNode
 
   private
 
+  def check_dollar_function_arity!(dollar_name, arg_nodes, expected_count); end
   def dollar_arg_list_elements; end
   def to_type_name_ast(node); end
 end
