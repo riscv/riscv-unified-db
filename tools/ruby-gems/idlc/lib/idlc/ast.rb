@@ -65,11 +65,15 @@ module Idl
 
     # @return [String] Source input file
     sig { returns(T.nilable(Pathname)) }
-    attr_reader :input_file
+    def input_file
+      @input_file || @parent&.input_file
+    end
 
     # @return [Integer] Starting line in the source input file (i.e., position 0 of {#input} in the file)
     sig { returns(Integer) }
-    attr_reader :starting_line
+    def starting_line
+      @starting_line || @parent&.starting_line || 0
+    end
 
     # @return [String] Source string
     sig { returns(T.nilable(String)) }
@@ -212,6 +216,14 @@ module Idl
     sig { abstract.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab); end
 
+    # @return [Boolean] whether this node includes the Executable interface
+    sig { overridable.returns(T::Boolean).checked(:never) }
+    def executable? = false
+
+    # @return [Boolean] whether this node includes the Declaration interface
+    sig { overridable.returns(T::Boolean).checked(:never) }
+    def declaration? = false
+
     # @param input [String] The source being compiled
     # @param interval [Range] The range in the source corresponding to this AstNode
     # @param children [Array<AstNode>] Children of this node
@@ -247,7 +259,7 @@ module Idl
     # @param [Integer] starting_line The starting line number in the input file.
     # @param [Integer] starting_offset The byte offset in the file where the IDL content starts.
     # @param [Array<Integer>, nil] line_file_offsets Per-IDL-line file byte offsets (nil = use starting_offset).
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void.checked(:never) }
     def set_input_file_unless_already_set(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
       return unless @input_file.nil?
 
@@ -255,10 +267,6 @@ module Idl
       @starting_line = starting_line
       @starting_offset = starting_offset
       @line_file_offsets = line_file_offsets
-      children.each do |child|
-        child.set_input_file_unless_already_set(filename, starting_line, starting_offset, line_file_offsets)
-      end
-      raise "?" if @starting_line.nil?
     end
 
     # remember where the code comes from
@@ -267,22 +275,18 @@ module Idl
     # @param starting_line [Integer] Starting line in the file
     # @param starting_offset [Integer] Byte offset in the file where the IDL content starts
     # @param line_file_offsets [Array<Integer>, nil] Per-IDL-line file byte offsets (nil = use starting_offset).
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void.checked(:never) }
     def set_input_file(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
       @input_file = Pathname.new(filename)
       @starting_line = starting_line
       @starting_offset = starting_offset
       @line_file_offsets = line_file_offsets
-      children.each do |child|
-        child.set_input_file(filename, starting_line, starting_offset, line_file_offsets)
-      end
-      raise "?" if @starting_line.nil?
     end
 
     # @return [Integer] the current line number
     sig { returns(Integer) }
     def lineno
-      T.must(T.must(input)[0..T.must(interval).first]).count("\n") + 1 + (@starting_line.nil? ? 0 : @starting_line)
+      T.must(T.must(input)[0..T.must(interval).first]).count("\n") + 1 + starting_line
     end
 
     # @return [AstNode] the first ancestor that is_a?(+klass+)
@@ -378,7 +382,7 @@ module Idl
       starting_lineno = T.must(T.must(input)[0..lines_interval.min]).count("\n")
       lines = lines.lines.map do |line|
         starting_lineno += 1
-        "#{@starting_line + starting_lineno - 1}: #{line}"
+        "#{starting_line + starting_lineno - 1}: #{line}"
       end.join("")
 
       msg = <<~WHAT
@@ -512,11 +516,11 @@ module Idl
     #  end: <0-indexed position of the ending character in the input>
     sig { returns(T::Hash[String, T.untyped]) }
     def source_yaml
-      base_offset = @starting_offset || 0
+      base_offset = source_starting_offset
       interval_begin = T.must(interval).begin
       interval_end = T.must(interval).size == 0 ? T.must(interval).begin + 1 : T.must(interval).end
 
-      lfo = @line_file_offsets
+      lfo = source_line_file_offsets
       if lfo
         # Map an IDL-string position to a file byte offset using the per-line table.
         # Each entry lfo[i] is the file offset of the first character of IDL line i.
@@ -539,10 +543,21 @@ module Idl
       end
 
       {
-        "file" => @input_file.to_s,
+        "file" => input_file.to_s,
         "begin" => file_begin,
         "end"   => file_end
       }
+    end
+
+    sig { returns(Integer) }
+    def source_starting_offset
+      @starting_offset || @parent&.source_starting_offset || 0
+    end
+
+    sig { returns(T.nilable(T::Array[Integer])) }
+    def source_line_file_offsets
+      return @line_file_offsets unless @line_file_offsets.nil?
+      @parent&.source_line_file_offsets
     end
 
     private
@@ -673,7 +688,10 @@ module Idl
   module Executable
     extend T::Sig
     extend T::Helpers
-    interface!
+    abstract!
+
+    sig { returns(T::Boolean).checked(:never) }
+    def executable? = true
 
     # @!macro [new] execute
     #   "execute" the statement by updating the variables in the symbol table
@@ -860,7 +878,10 @@ module Idl
   module Declaration
     extend T::Sig
     extend T::Helpers
-    interface!
+    abstract!
+
+    sig { returns(T::Boolean).checked(:never) }
+    def declaration? = true
 
     # @!macro [new] add_symbol
     #  Add symbol(s) at the outermost scope of the symbol table
@@ -5702,6 +5723,128 @@ module Idl
     end
   end
 
+  # Generic syntax node for $name(arg, ...) — dispatches to the correct typed AstNode in to_ast.
+  class DollarFunctionCallSyntaxNode < SyntaxNode
+    def to_ast
+      dollar_name = "$#{send(:name).text_value}"
+      arg_nodes = dollar_arg_list_elements
+
+      case dollar_name
+      when "$width"
+        WidthRevealAst.new(input, interval, arg_nodes[0].to_ast)
+      when "$signed"
+        SignCastAst.new(input, interval, arg_nodes[0].to_ast)
+      when "$bits"
+        BitsCastAst.new(input, interval, arg_nodes[0].to_ast)
+      when "$enum_size"
+        EnumSizeAst.new(input, interval, to_type_name_ast(arg_nodes[0]))
+      when "$enum_element_size"
+        EnumElementSizeAst.new(input, interval, to_type_name_ast(arg_nodes[0]))
+      when "$enum_to_a"
+        EnumArrayCastAst.new(input, interval, to_type_name_ast(arg_nodes[0]))
+      when "$enum"
+        EnumCastAst.new(input, interval, to_type_name_ast(arg_nodes[0]), arg_nodes[1].to_ast)
+      when "$array_size"
+        ArraySizeAst.new(input, interval, arg_nodes[0].to_ast)
+      when "$array_includes?"
+        ArrayIncludesAst.new(input, interval, arg_nodes[0].to_ast, arg_nodes[1].to_ast)
+      else
+        UnknownDollarFunctionAst.new(input, interval, dollar_name)
+      end
+    end
+
+    private
+
+    def dollar_arg_list_elements
+      arg_list = send(:args)
+      first = arg_list.first
+      rest = arg_list.rest.elements.map { |e| e.expression }
+      first.empty? ? rest : [first] + rest
+    end
+
+    # Converts a parsed expression node to a UserTypeNameAst.
+    # Used for builtins that take a type name argument (e.g. $enum_size(MyEnum)).
+    def to_type_name_ast(node)
+      UserTypeNameAst.new(node.input, node.interval, node.text_value)
+    end
+  end
+
+  # Generic syntax node for $name (no parens) — creates a BuiltinVariableAst.
+  class DollarVariableSyntaxNode < SyntaxNode
+    def to_ast
+      BuiltinVariableAst.new(input, interval, "$#{send(:name).text_value}")
+    end
+  end
+
+  # Syntax node for $name = expr — dispatches to PcAssignmentAst for $pc,
+  # or UnknownDollarVariableAssignmentAst for unknown names.
+  class DollarVariableAssignmentSyntaxNode < SyntaxNode
+    def to_ast
+      dollar_name = "$#{send(:dollar_variable).send(:name).text_value}"
+      rhs = send(:rval).to_ast
+      case dollar_name
+      when "$pc"
+        PcAssignmentAst.new(input, interval, rhs)
+      else
+        UnknownDollarVariableAssignmentAst.new(input, interval, dollar_name, rhs)
+      end
+    end
+  end
+
+  # AstNode for an unknown $name(...) call — always raises a type error.
+  class UnknownDollarFunctionAst < AstNode
+    KNOWN_DOLLAR_FUNCTIONS = %w[$width $signed $bits $enum_size $enum_element_size $enum_to_a $enum $array_size $array_includes?].freeze
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab) = false
+
+    def initialize(input, interval, name)
+      super(input, interval, EMPTY_ARRAY)
+      @name = name
+    end
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      type_error "Unknown builtin function '#{@name}'. Known builtins: #{KNOWN_DOLLAR_FUNCTIONS.join(", ")}"
+    end
+
+    sig { params(symtab: SymbolTable).returns(Type) }
+    def type(symtab) = VoidType
+
+    sig { params(symtab: SymbolTable).returns(T.untyped) }
+    def value(symtab) = value_error "#{@name} is unknown"
+
+    sig { override.returns(String) }
+    def to_idl = @name
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = { "kind" => "unknown_dollar_function", "name" => @name, "source" => source_yaml }
+  end
+
+  # AstNode for an unknown $name = expr assignment — always raises a type error.
+  class UnknownDollarVariableAssignmentAst < AstNode
+    KNOWN_DOLLAR_VARIABLE_ASSIGNMENTS = %w[$pc].freeze
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab) = false
+
+    def initialize(input, interval, name, rhs)
+      super(input, interval, [rhs])
+      @name = name
+    end
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      type_error "Unknown builtin variable assignment '#{@name}'. Known assignable builtins: #{KNOWN_DOLLAR_VARIABLE_ASSIGNMENTS.join(", ")}"
+    end
+
+    sig { override.returns(String) }
+    def to_idl = "#{@name} = #{children.fetch(0).to_idl}"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = { "kind" => "unknown_dollar_var_assignment", "name" => @name, "source" => source_yaml }
+  end
+
   class PostIncrementExpressionSyntaxNode < SyntaxNode
     def to_ast
       PostIncrementExpressionAst.new(input, interval, send(:rval).to_ast)
@@ -6352,10 +6495,10 @@ module Idl
 
     # @!macro execute
     def execute(symtab)
-      if action.is_a?(Declaration)
+      if action.declaration?
         action.add_symbol(symtab)
       end
-      if action.is_a?(Executable)
+      if action.executable?
         action.execute(symtab)
       end
     end
@@ -6408,7 +6551,7 @@ module Idl
     # @!macro type_check
     def type_check(symtab, strict:)
       action.type_check(symtab, strict:)
-      type_error "Cannot declare from a conditional statement" if action.is_a?(Declaration)
+      type_error "Cannot declare from a conditional statement" if action.declaration?
 
       condition.type_check(symtab, strict:)
       type_error "condition is not boolean" unless condition.type(symtab).convertable_to?(:boolean)
@@ -7884,7 +8027,7 @@ module Idl
       stmts.each do |s|
         if s.is_a?(Returns)
           return s.return_type(symtab)
-        elsif s.action.is_a?(Declaration)
+        elsif s.action.declaration?
           s.action.add_symbol(symtab)
         end
       end

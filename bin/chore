@@ -292,6 +292,15 @@ do_gen_all() {
 }
 
 #
+# Generate the development artifacts that are quick to resolve; should be run frequently (e.g., before git push)
+#
+do_gen_smoke() {
+  do_gen_regress
+  do_gen_vscode_idl
+  do_ruby_type_def all
+}
+
+#
 # Generate Xqci golden adoc file
 #
 do_gen_xqci_golden() {
@@ -558,6 +567,10 @@ case "$subcommand" in
     case "$target" in
       all )
         do_gen_all
+        exit 0
+        ;;
+      smoke )
+        do_gen_smoke
         exit 0
         ;;
       vscode-idl )

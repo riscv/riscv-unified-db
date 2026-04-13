@@ -432,10 +432,6 @@ module Udb
       end
     end
 
-    class MemoizedState < T::Struct
-      prop :satisfied_by_cfg_arch, T::Hash[ConfiguredArchitecture, SatisfiedResult]
-    end
-
     sig {
       params(
         yaml: T.any(T::Hash[String, T.untyped], T::Boolean),
@@ -450,7 +446,7 @@ module Udb
       @cfg_arch = cfg_arch
       @input_file = input_file
       @input_line = input_line
-      @memo = MemoizedState.new(satisfied_by_cfg_arch: {})
+      @satisfied_by_cfg_arch_memo = T.let({}, T::Hash[ConfiguredArchitecture, SatisfiedResult])
     end
 
     sig { override.returns(T::Boolean) }
@@ -1103,7 +1099,7 @@ module Udb
 
     sig { override.params(cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
     def satisfied_by_cfg_arch?(cfg_arch)
-      @memo.satisfied_by_cfg_arch[cfg_arch] ||=
+      @satisfied_by_cfg_arch_memo[cfg_arch] ||=
         if cfg_arch.fully_configured?
           implemented_ext_cb = make_cb_proc do |term|
             if term.is_a?(ExtensionTerm)
@@ -1118,14 +1114,21 @@ module Udb
                 if result == SatisfiedResult::Maybe
                   # this might just mean we don't know the value.
                   # however, given the parameter schema and constraints, we could know that term is
-                  # always false
-                  if (Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
-                    result = SatisfiedResult::No
-
-                  # or always true
-                  elsif (-Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
-                    result = SatisfiedResult::Yes
+                  # always false or always true. Memoize per (term, cfg_arch) since the same
+                  # ParameterTerm YAML appears in many Condition objects.
+                  memo = cfg_arch.param_term_satisfied_memo
+                  unless memo.key?(term)
+                    param_cond = Condition.new({ "param" => term.to_h }, cfg_arch)
+                    memo[term] =
+                      if param_cond.unsatisfiable_by_cfg_arch?(cfg_arch)
+                        SatisfiedResult::No
+                      elsif (-param_cond).unsatisfiable_by_cfg_arch?(cfg_arch)
+                        SatisfiedResult::Yes
+                      else
+                        SatisfiedResult::Maybe
+                      end
                   end
+                  result = memo[term]
                 end
                 result
               else
@@ -1155,9 +1158,10 @@ module Udb
         elsif cfg_arch.partially_configured?
           cb = make_cb_proc do |term|
             if term.is_a?(ExtensionTerm)
-              if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_req) }
+              ext_req = term.to_ext_req(cfg_arch)
+              if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| ext_req.satisfied_by?(cfg_ext_req) }
                 SatisfiedResult::Yes
-              elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
+              elsif (cfg_arch.possible_extension_versions_by_name[term.name] || []).any? { |cfg_ext_ver| ext_req.satisfied_by?(cfg_ext_ver) }
                 SatisfiedResult::Maybe
               else
                 SatisfiedResult::No
@@ -1167,14 +1171,21 @@ module Udb
               if result == SatisfiedResult::Maybe
                 # this might just mean we don't know the value.
                 # however, given the parameter schema and constraints, we could know that term is
-                # always false
-                if (Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
-                  result = SatisfiedResult::No
-
-                # or always true
-                elsif (-Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
-                  result = SatisfiedResult::Yes
+                # always false or always true. Memoize per (term, cfg_arch) since the same
+                # ParameterTerm YAML appears in many Condition objects.
+                memo = cfg_arch.param_term_satisfied_memo
+                unless memo.key?(term)
+                  param_cond = Condition.new({ "param" => term.to_h }, cfg_arch)
+                  memo[term] =
+                    if param_cond.unsatisfiable_by_cfg_arch?(cfg_arch)
+                      SatisfiedResult::No
+                    elsif (-param_cond).unsatisfiable_by_cfg_arch?(cfg_arch)
+                      SatisfiedResult::Yes
+                    else
+                      SatisfiedResult::Maybe
+                    end
                 end
+                result = memo[term]
               end
               result
             elsif term.is_a?(FreeTerm)
@@ -1232,7 +1243,8 @@ module Udb
         if node.type == LogicNodeType::Term
           term = node.children.fetch(0)
           if term.is_a?(ExtensionTerm)
-            if ext_reqs.any? { |ext_req| term.to_ext_req(@cfg_arch).satisfied_by?(ext_req) }
+            term_ext_req = term.to_ext_req(@cfg_arch)
+            if ext_reqs.any? { |ext_req| term_ext_req.satisfied_by?(ext_req) }
               next LogicNode::True
             end
           end
@@ -1277,9 +1289,10 @@ module Udb
               SatisfiedResult::Yes
             end
           elsif cfg_arch.partially_configured?
-            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_req) }
+            ext_req = term.to_ext_req(cfg_arch)
+            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| ext_req.satisfied_by?(cfg_ext_req) }
               SatisfiedResult::Yes
-            elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
+            elsif (cfg_arch.possible_extension_versions_by_name[term.name] || []).any? { |cfg_ext_ver| ext_req.satisfied_by?(cfg_ext_ver) }
               SatisfiedResult::Maybe
             else
               SatisfiedResult::No
@@ -1329,9 +1342,10 @@ module Udb
               SatisfiedResult::Yes
             end
           elsif cfg_arch.partially_configured?
-            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_req) }
+            ext_req = term.to_ext_req(cfg_arch)
+            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| ext_req.satisfied_by?(cfg_ext_req) }
               SatisfiedResult::Yes
-            elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
+            elsif (cfg_arch.possible_extension_versions_by_name[term.name] || []).any? { |cfg_ext_ver| ext_req.satisfied_by?(cfg_ext_ver) }
               SatisfiedResult::Maybe
             else
               SatisfiedResult::No
@@ -1654,6 +1668,7 @@ module Udb
       @logic_node = logic_node
       @cfg_arch = cfg_arch
       @yaml = logic_node.to_h
+      @satisfied_by_cfg_arch_memo = T.let({}, T::Hash[ConfiguredArchitecture, SatisfiedResult])
     end
 
     sig { override.returns(T::Boolean) }
@@ -2040,6 +2055,7 @@ module Udb
     sig { params(xlen: Integer).void }
     def initialize(xlen)
       @xlen = xlen
+      @satisfied_by_cfg_arch_memo = T.let({}, T::Hash[ConfiguredArchitecture, SatisfiedResult])
     end
 
     sig { override.returns(LogicNode) }

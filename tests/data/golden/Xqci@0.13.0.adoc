@@ -3331,7 +3331,7 @@ h^ Privilege Mode ^ M
 .qc.mcause format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":12,"name":"EXCCODE","type":3},{"bits":4,"name":"MIL","type":3},{"bits":4,"name":"MPIL","type":3},{"bits":4,"name":"MNPIL","type":3},{"bits":1,"name":"NMIP","type":3},{"bits":1,"name":"EXCP","type":3},{"bits":1,"name":"MIE","type":3},{"bits":1,"name":"MPIE","type":3},{"bits":1,"name":"MNPIE","type":3},{"bits":1,"name":"MPDT","type":3},{"bits":1,"name":"NMIE","type":3},{"bits":1,"name":"INT","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -3670,7 +3670,7 @@ h^ Privilege Mode ^ M
 .qc.mclicie0 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ0","type":3},{"bits":1,"name":"IRQ1","type":3},{"bits":1,"name":"IRQ2","type":3},{"bits":1,"name":"IRQ3","type":3},{"bits":1,"name":"IRQ4","type":3},{"bits":1,"name":"IRQ5","type":3},{"bits":1,"name":"IRQ6","type":3},{"bits":1,"name":"IRQ7","type":3},{"bits":1,"name":"IRQ8","type":3},{"bits":1,"name":"IRQ9","type":3},{"bits":1,"name":"IRQ10","type":3},{"bits":1,"name":"IRQ11","type":3},{"bits":1,"name":"IRQ12","type":3},{"bits":1,"name":"IRQ13","type":3},{"bits":1,"name":"IRQ14","type":3},{"bits":1,"name":"IRQ15","type":3},{"bits":1,"name":"IRQ16","type":3},{"bits":1,"name":"IRQ17","type":3},{"bits":1,"name":"IRQ18","type":3},{"bits":1,"name":"IRQ19","type":3},{"bits":1,"name":"IRQ20","type":3},{"bits":1,"name":"IRQ21","type":3},{"bits":1,"name":"IRQ22","type":3},{"bits":1,"name":"IRQ23","type":3},{"bits":1,"name":"IRQ24","type":3},{"bits":1,"name":"IRQ25","type":3},{"bits":1,"name":"IRQ26","type":3},{"bits":1,"name":"IRQ27","type":3},{"bits":1,"name":"IRQ28","type":3},{"bits":1,"name":"IRQ29","type":3},{"bits":1,"name":"IRQ30","type":3},{"bits":1,"name":"IRQ31","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -4489,7 +4489,7 @@ h^ Privilege Mode ^ M
 .qc.mclicie1 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ32","type":3},{"bits":1,"name":"IRQ33","type":3},{"bits":1,"name":"IRQ34","type":3},{"bits":1,"name":"IRQ35","type":3},{"bits":1,"name":"IRQ36","type":3},{"bits":1,"name":"IRQ37","type":3},{"bits":1,"name":"IRQ38","type":3},{"bits":1,"name":"IRQ39","type":3},{"bits":1,"name":"IRQ40","type":3},{"bits":1,"name":"IRQ41","type":3},{"bits":1,"name":"IRQ42","type":3},{"bits":1,"name":"IRQ43","type":3},{"bits":1,"name":"IRQ44","type":3},{"bits":1,"name":"IRQ45","type":3},{"bits":1,"name":"IRQ46","type":3},{"bits":1,"name":"IRQ47","type":3},{"bits":1,"name":"IRQ48","type":3},{"bits":1,"name":"IRQ49","type":3},{"bits":1,"name":"IRQ50","type":3},{"bits":1,"name":"IRQ51","type":3},{"bits":1,"name":"IRQ52","type":3},{"bits":1,"name":"IRQ53","type":3},{"bits":1,"name":"IRQ54","type":3},{"bits":1,"name":"IRQ55","type":3},{"bits":1,"name":"IRQ56","type":3},{"bits":1,"name":"IRQ57","type":3},{"bits":1,"name":"IRQ58","type":3},{"bits":1,"name":"IRQ59","type":3},{"bits":1,"name":"IRQ60","type":3},{"bits":1,"name":"IRQ61","type":3},{"bits":1,"name":"IRQ62","type":3},{"bits":1,"name":"IRQ63","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -5308,7 +5308,7 @@ h^ Privilege Mode ^ M
 .qc.mclicie2 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ64","type":3},{"bits":1,"name":"IRQ65","type":3},{"bits":1,"name":"IRQ66","type":3},{"bits":1,"name":"IRQ67","type":3},{"bits":1,"name":"IRQ68","type":3},{"bits":1,"name":"IRQ69","type":3},{"bits":1,"name":"IRQ70","type":3},{"bits":1,"name":"IRQ71","type":3},{"bits":1,"name":"IRQ72","type":3},{"bits":1,"name":"IRQ73","type":3},{"bits":1,"name":"IRQ74","type":3},{"bits":1,"name":"IRQ75","type":3},{"bits":1,"name":"IRQ76","type":3},{"bits":1,"name":"IRQ77","type":3},{"bits":1,"name":"IRQ78","type":3},{"bits":1,"name":"IRQ79","type":3},{"bits":1,"name":"IRQ80","type":3},{"bits":1,"name":"IRQ81","type":3},{"bits":1,"name":"IRQ82","type":3},{"bits":1,"name":"IRQ83","type":3},{"bits":1,"name":"IRQ84","type":3},{"bits":1,"name":"IRQ85","type":3},{"bits":1,"name":"IRQ86","type":3},{"bits":1,"name":"IRQ87","type":3},{"bits":1,"name":"IRQ88","type":3},{"bits":1,"name":"IRQ89","type":3},{"bits":1,"name":"IRQ90","type":3},{"bits":1,"name":"IRQ91","type":3},{"bits":1,"name":"IRQ92","type":3},{"bits":1,"name":"IRQ93","type":3},{"bits":1,"name":"IRQ94","type":3},{"bits":1,"name":"IRQ95","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -6127,7 +6127,7 @@ h^ Privilege Mode ^ M
 .qc.mclicie3 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ96","type":3},{"bits":1,"name":"IRQ97","type":3},{"bits":1,"name":"IRQ98","type":3},{"bits":1,"name":"IRQ99","type":3},{"bits":1,"name":"IRQ100","type":3},{"bits":1,"name":"IRQ101","type":3},{"bits":1,"name":"IRQ102","type":3},{"bits":1,"name":"IRQ103","type":3},{"bits":1,"name":"IRQ104","type":3},{"bits":1,"name":"IRQ105","type":3},{"bits":1,"name":"IRQ106","type":3},{"bits":1,"name":"IRQ107","type":3},{"bits":1,"name":"IRQ108","type":3},{"bits":1,"name":"IRQ109","type":3},{"bits":1,"name":"IRQ110","type":3},{"bits":1,"name":"IRQ111","type":3},{"bits":1,"name":"IRQ112","type":3},{"bits":1,"name":"IRQ113","type":3},{"bits":1,"name":"IRQ114","type":3},{"bits":1,"name":"IRQ115","type":3},{"bits":1,"name":"IRQ116","type":3},{"bits":1,"name":"IRQ117","type":3},{"bits":1,"name":"IRQ118","type":3},{"bits":1,"name":"IRQ119","type":3},{"bits":1,"name":"IRQ120","type":3},{"bits":1,"name":"IRQ121","type":3},{"bits":1,"name":"IRQ122","type":3},{"bits":1,"name":"IRQ123","type":3},{"bits":1,"name":"IRQ124","type":3},{"bits":1,"name":"IRQ125","type":3},{"bits":1,"name":"IRQ126","type":3},{"bits":1,"name":"IRQ127","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -6946,7 +6946,7 @@ h^ Privilege Mode ^ M
 .qc.mclicie4 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ128","type":3},{"bits":1,"name":"IRQ129","type":3},{"bits":1,"name":"IRQ130","type":3},{"bits":1,"name":"IRQ131","type":3},{"bits":1,"name":"IRQ132","type":3},{"bits":1,"name":"IRQ133","type":3},{"bits":1,"name":"IRQ134","type":3},{"bits":1,"name":"IRQ135","type":3},{"bits":1,"name":"IRQ136","type":3},{"bits":1,"name":"IRQ137","type":3},{"bits":1,"name":"IRQ138","type":3},{"bits":1,"name":"IRQ139","type":3},{"bits":1,"name":"IRQ140","type":3},{"bits":1,"name":"IRQ141","type":3},{"bits":1,"name":"IRQ142","type":3},{"bits":1,"name":"IRQ143","type":3},{"bits":1,"name":"IRQ144","type":3},{"bits":1,"name":"IRQ145","type":3},{"bits":1,"name":"IRQ146","type":3},{"bits":1,"name":"IRQ147","type":3},{"bits":1,"name":"IRQ148","type":3},{"bits":1,"name":"IRQ149","type":3},{"bits":1,"name":"IRQ150","type":3},{"bits":1,"name":"IRQ151","type":3},{"bits":1,"name":"IRQ152","type":3},{"bits":1,"name":"IRQ153","type":3},{"bits":1,"name":"IRQ154","type":3},{"bits":1,"name":"IRQ155","type":3},{"bits":1,"name":"IRQ156","type":3},{"bits":1,"name":"IRQ157","type":3},{"bits":1,"name":"IRQ158","type":3},{"bits":1,"name":"IRQ159","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -7765,7 +7765,7 @@ h^ Privilege Mode ^ M
 .qc.mclicie5 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ160","type":3},{"bits":1,"name":"IRQ161","type":3},{"bits":1,"name":"IRQ162","type":3},{"bits":1,"name":"IRQ163","type":3},{"bits":1,"name":"IRQ164","type":3},{"bits":1,"name":"IRQ165","type":3},{"bits":1,"name":"IRQ166","type":3},{"bits":1,"name":"IRQ167","type":3},{"bits":1,"name":"IRQ168","type":3},{"bits":1,"name":"IRQ169","type":3},{"bits":1,"name":"IRQ170","type":3},{"bits":1,"name":"IRQ171","type":3},{"bits":1,"name":"IRQ172","type":3},{"bits":1,"name":"IRQ173","type":3},{"bits":1,"name":"IRQ174","type":3},{"bits":1,"name":"IRQ175","type":3},{"bits":1,"name":"IRQ176","type":3},{"bits":1,"name":"IRQ177","type":3},{"bits":1,"name":"IRQ178","type":3},{"bits":1,"name":"IRQ179","type":3},{"bits":1,"name":"IRQ180","type":3},{"bits":1,"name":"IRQ181","type":3},{"bits":1,"name":"IRQ182","type":3},{"bits":1,"name":"IRQ183","type":3},{"bits":1,"name":"IRQ184","type":3},{"bits":1,"name":"IRQ185","type":3},{"bits":1,"name":"IRQ186","type":3},{"bits":1,"name":"IRQ187","type":3},{"bits":1,"name":"IRQ188","type":3},{"bits":1,"name":"IRQ189","type":3},{"bits":1,"name":"IRQ190","type":3},{"bits":1,"name":"IRQ191","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -8584,7 +8584,7 @@ h^ Privilege Mode ^ M
 .qc.mclicie6 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ192","type":3},{"bits":1,"name":"IRQ193","type":3},{"bits":1,"name":"IRQ194","type":3},{"bits":1,"name":"IRQ195","type":3},{"bits":1,"name":"IRQ196","type":3},{"bits":1,"name":"IRQ197","type":3},{"bits":1,"name":"IRQ198","type":3},{"bits":1,"name":"IRQ199","type":3},{"bits":1,"name":"IRQ200","type":3},{"bits":1,"name":"IRQ201","type":3},{"bits":1,"name":"IRQ202","type":3},{"bits":1,"name":"IRQ203","type":3},{"bits":1,"name":"IRQ204","type":3},{"bits":1,"name":"IRQ205","type":3},{"bits":1,"name":"IRQ206","type":3},{"bits":1,"name":"IRQ207","type":3},{"bits":1,"name":"IRQ208","type":3},{"bits":1,"name":"IRQ209","type":3},{"bits":1,"name":"IRQ210","type":3},{"bits":1,"name":"IRQ211","type":3},{"bits":1,"name":"IRQ212","type":3},{"bits":1,"name":"IRQ213","type":3},{"bits":1,"name":"IRQ214","type":3},{"bits":1,"name":"IRQ215","type":3},{"bits":1,"name":"IRQ216","type":3},{"bits":1,"name":"IRQ217","type":3},{"bits":1,"name":"IRQ218","type":3},{"bits":1,"name":"IRQ219","type":3},{"bits":1,"name":"IRQ220","type":3},{"bits":1,"name":"IRQ221","type":3},{"bits":1,"name":"IRQ222","type":3},{"bits":1,"name":"IRQ223","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -9403,7 +9403,7 @@ h^ Privilege Mode ^ M
 .qc.mclicie7 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ224","type":3},{"bits":1,"name":"IRQ225","type":3},{"bits":1,"name":"IRQ226","type":3},{"bits":1,"name":"IRQ227","type":3},{"bits":1,"name":"IRQ228","type":3},{"bits":1,"name":"IRQ229","type":3},{"bits":1,"name":"IRQ230","type":3},{"bits":1,"name":"IRQ231","type":3},{"bits":1,"name":"IRQ232","type":3},{"bits":1,"name":"IRQ233","type":3},{"bits":1,"name":"IRQ234","type":3},{"bits":1,"name":"IRQ235","type":3},{"bits":1,"name":"IRQ236","type":3},{"bits":1,"name":"IRQ237","type":3},{"bits":1,"name":"IRQ238","type":3},{"bits":1,"name":"IRQ239","type":3},{"bits":1,"name":"IRQ240","type":3},{"bits":1,"name":"IRQ241","type":3},{"bits":1,"name":"IRQ242","type":3},{"bits":1,"name":"IRQ243","type":3},{"bits":1,"name":"IRQ244","type":3},{"bits":1,"name":"IRQ245","type":3},{"bits":1,"name":"IRQ246","type":3},{"bits":1,"name":"IRQ247","type":3},{"bits":1,"name":"IRQ248","type":3},{"bits":1,"name":"IRQ249","type":3},{"bits":1,"name":"IRQ250","type":3},{"bits":1,"name":"IRQ251","type":3},{"bits":1,"name":"IRQ252","type":3},{"bits":1,"name":"IRQ253","type":3},{"bits":1,"name":"IRQ254","type":3},{"bits":1,"name":"IRQ255","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -10222,7 +10222,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl00 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ0","type":3},{"bits":4,"name":"IRQ1","type":3},{"bits":4,"name":"IRQ2","type":3},{"bits":4,"name":"IRQ3","type":3},{"bits":4,"name":"IRQ4","type":3},{"bits":4,"name":"IRQ5","type":3},{"bits":4,"name":"IRQ6","type":3},{"bits":4,"name":"IRQ7","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -10465,7 +10465,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl01 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ8","type":3},{"bits":4,"name":"IRQ9","type":3},{"bits":4,"name":"IRQ10","type":3},{"bits":4,"name":"IRQ11","type":3},{"bits":4,"name":"IRQ12","type":3},{"bits":4,"name":"IRQ13","type":3},{"bits":4,"name":"IRQ14","type":3},{"bits":4,"name":"IRQ15","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -10708,7 +10708,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl02 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ16","type":3},{"bits":4,"name":"IRQ17","type":3},{"bits":4,"name":"IRQ18","type":3},{"bits":4,"name":"IRQ19","type":3},{"bits":4,"name":"IRQ20","type":3},{"bits":4,"name":"IRQ21","type":3},{"bits":4,"name":"IRQ22","type":3},{"bits":4,"name":"IRQ23","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -10951,7 +10951,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl03 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ24","type":3},{"bits":4,"name":"IRQ25","type":3},{"bits":4,"name":"IRQ26","type":3},{"bits":4,"name":"IRQ27","type":3},{"bits":4,"name":"IRQ28","type":3},{"bits":4,"name":"IRQ29","type":3},{"bits":4,"name":"IRQ30","type":3},{"bits":4,"name":"IRQ31","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -11194,7 +11194,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl04 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ32","type":3},{"bits":4,"name":"IRQ33","type":3},{"bits":4,"name":"IRQ34","type":3},{"bits":4,"name":"IRQ35","type":3},{"bits":4,"name":"IRQ36","type":3},{"bits":4,"name":"IRQ37","type":3},{"bits":4,"name":"IRQ38","type":3},{"bits":4,"name":"IRQ39","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -11437,7 +11437,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl05 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ40","type":3},{"bits":4,"name":"IRQ41","type":3},{"bits":4,"name":"IRQ42","type":3},{"bits":4,"name":"IRQ43","type":3},{"bits":4,"name":"IRQ44","type":3},{"bits":4,"name":"IRQ45","type":3},{"bits":4,"name":"IRQ46","type":3},{"bits":4,"name":"IRQ47","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -11680,7 +11680,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl06 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ48","type":3},{"bits":4,"name":"IRQ49","type":3},{"bits":4,"name":"IRQ50","type":3},{"bits":4,"name":"IRQ51","type":3},{"bits":4,"name":"IRQ52","type":3},{"bits":4,"name":"IRQ53","type":3},{"bits":4,"name":"IRQ54","type":3},{"bits":4,"name":"IRQ55","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -11923,7 +11923,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl07 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ56","type":3},{"bits":4,"name":"IRQ57","type":3},{"bits":4,"name":"IRQ58","type":3},{"bits":4,"name":"IRQ59","type":3},{"bits":4,"name":"IRQ60","type":3},{"bits":4,"name":"IRQ61","type":3},{"bits":4,"name":"IRQ62","type":3},{"bits":4,"name":"IRQ63","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -12166,7 +12166,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl08 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ64","type":3},{"bits":4,"name":"IRQ65","type":3},{"bits":4,"name":"IRQ66","type":3},{"bits":4,"name":"IRQ67","type":3},{"bits":4,"name":"IRQ68","type":3},{"bits":4,"name":"IRQ69","type":3},{"bits":4,"name":"IRQ70","type":3},{"bits":4,"name":"IRQ71","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -12409,7 +12409,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl09 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ72","type":3},{"bits":4,"name":"IRQ73","type":3},{"bits":4,"name":"IRQ74","type":3},{"bits":4,"name":"IRQ75","type":3},{"bits":4,"name":"IRQ76","type":3},{"bits":4,"name":"IRQ77","type":3},{"bits":4,"name":"IRQ78","type":3},{"bits":4,"name":"IRQ79","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -12652,7 +12652,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl10 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ80","type":3},{"bits":4,"name":"IRQ81","type":3},{"bits":4,"name":"IRQ82","type":3},{"bits":4,"name":"IRQ83","type":3},{"bits":4,"name":"IRQ84","type":3},{"bits":4,"name":"IRQ85","type":3},{"bits":4,"name":"IRQ86","type":3},{"bits":4,"name":"IRQ87","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -12895,7 +12895,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl11 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ88","type":3},{"bits":4,"name":"IRQ89","type":3},{"bits":4,"name":"IRQ90","type":3},{"bits":4,"name":"IRQ91","type":3},{"bits":4,"name":"IRQ92","type":3},{"bits":4,"name":"IRQ93","type":3},{"bits":4,"name":"IRQ94","type":3},{"bits":4,"name":"IRQ95","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -13138,7 +13138,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl12 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ96","type":3},{"bits":4,"name":"IRQ97","type":3},{"bits":4,"name":"IRQ98","type":3},{"bits":4,"name":"IRQ99","type":3},{"bits":4,"name":"IRQ100","type":3},{"bits":4,"name":"IRQ101","type":3},{"bits":4,"name":"IRQ102","type":3},{"bits":4,"name":"IRQ103","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -13381,7 +13381,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl13 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ104","type":3},{"bits":4,"name":"IRQ105","type":3},{"bits":4,"name":"IRQ106","type":3},{"bits":4,"name":"IRQ107","type":3},{"bits":4,"name":"IRQ108","type":3},{"bits":4,"name":"IRQ109","type":3},{"bits":4,"name":"IRQ110","type":3},{"bits":4,"name":"IRQ111","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -13624,7 +13624,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl14 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ112","type":3},{"bits":4,"name":"IRQ113","type":3},{"bits":4,"name":"IRQ114","type":3},{"bits":4,"name":"IRQ115","type":3},{"bits":4,"name":"IRQ116","type":3},{"bits":4,"name":"IRQ117","type":3},{"bits":4,"name":"IRQ118","type":3},{"bits":4,"name":"IRQ119","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -13867,7 +13867,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl15 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ120","type":3},{"bits":4,"name":"IRQ121","type":3},{"bits":4,"name":"IRQ122","type":3},{"bits":4,"name":"IRQ123","type":3},{"bits":4,"name":"IRQ124","type":3},{"bits":4,"name":"IRQ125","type":3},{"bits":4,"name":"IRQ126","type":3},{"bits":4,"name":"IRQ127","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -14110,7 +14110,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl16 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ128","type":3},{"bits":4,"name":"IRQ129","type":3},{"bits":4,"name":"IRQ130","type":3},{"bits":4,"name":"IRQ131","type":3},{"bits":4,"name":"IRQ132","type":3},{"bits":4,"name":"IRQ133","type":3},{"bits":4,"name":"IRQ134","type":3},{"bits":4,"name":"IRQ135","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -14353,7 +14353,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl17 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ136","type":3},{"bits":4,"name":"IRQ137","type":3},{"bits":4,"name":"IRQ138","type":3},{"bits":4,"name":"IRQ139","type":3},{"bits":4,"name":"IRQ140","type":3},{"bits":4,"name":"IRQ141","type":3},{"bits":4,"name":"IRQ142","type":3},{"bits":4,"name":"IRQ143","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -14596,7 +14596,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl18 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ144","type":3},{"bits":4,"name":"IRQ145","type":3},{"bits":4,"name":"IRQ146","type":3},{"bits":4,"name":"IRQ147","type":3},{"bits":4,"name":"IRQ148","type":3},{"bits":4,"name":"IRQ149","type":3},{"bits":4,"name":"IRQ150","type":3},{"bits":4,"name":"IRQ151","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -14839,7 +14839,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl19 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ152","type":3},{"bits":4,"name":"IRQ153","type":3},{"bits":4,"name":"IRQ154","type":3},{"bits":4,"name":"IRQ155","type":3},{"bits":4,"name":"IRQ156","type":3},{"bits":4,"name":"IRQ157","type":3},{"bits":4,"name":"IRQ158","type":3},{"bits":4,"name":"IRQ159","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -15082,7 +15082,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl20 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ160","type":3},{"bits":4,"name":"IRQ161","type":3},{"bits":4,"name":"IRQ162","type":3},{"bits":4,"name":"IRQ163","type":3},{"bits":4,"name":"IRQ164","type":3},{"bits":4,"name":"IRQ165","type":3},{"bits":4,"name":"IRQ166","type":3},{"bits":4,"name":"IRQ167","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -15325,7 +15325,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl21 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ168","type":3},{"bits":4,"name":"IRQ169","type":3},{"bits":4,"name":"IRQ170","type":3},{"bits":4,"name":"IRQ171","type":3},{"bits":4,"name":"IRQ172","type":3},{"bits":4,"name":"IRQ173","type":3},{"bits":4,"name":"IRQ174","type":3},{"bits":4,"name":"IRQ175","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -15568,7 +15568,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl22 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ176","type":3},{"bits":4,"name":"IRQ177","type":3},{"bits":4,"name":"IRQ178","type":3},{"bits":4,"name":"IRQ179","type":3},{"bits":4,"name":"IRQ180","type":3},{"bits":4,"name":"IRQ181","type":3},{"bits":4,"name":"IRQ182","type":3},{"bits":4,"name":"IRQ183","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -15811,7 +15811,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl23 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ184","type":3},{"bits":4,"name":"IRQ185","type":3},{"bits":4,"name":"IRQ186","type":3},{"bits":4,"name":"IRQ187","type":3},{"bits":4,"name":"IRQ188","type":3},{"bits":4,"name":"IRQ189","type":3},{"bits":4,"name":"IRQ190","type":3},{"bits":4,"name":"IRQ191","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -16054,7 +16054,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl24 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ192","type":3},{"bits":4,"name":"IRQ193","type":3},{"bits":4,"name":"IRQ194","type":3},{"bits":4,"name":"IRQ195","type":3},{"bits":4,"name":"IRQ196","type":3},{"bits":4,"name":"IRQ197","type":3},{"bits":4,"name":"IRQ198","type":3},{"bits":4,"name":"IRQ199","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -16297,7 +16297,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl25 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ200","type":3},{"bits":4,"name":"IRQ201","type":3},{"bits":4,"name":"IRQ202","type":3},{"bits":4,"name":"IRQ203","type":3},{"bits":4,"name":"IRQ204","type":3},{"bits":4,"name":"IRQ205","type":3},{"bits":4,"name":"IRQ206","type":3},{"bits":4,"name":"IRQ207","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -16540,7 +16540,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl26 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ208","type":3},{"bits":4,"name":"IRQ209","type":3},{"bits":4,"name":"IRQ210","type":3},{"bits":4,"name":"IRQ211","type":3},{"bits":4,"name":"IRQ212","type":3},{"bits":4,"name":"IRQ213","type":3},{"bits":4,"name":"IRQ214","type":3},{"bits":4,"name":"IRQ215","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -16783,7 +16783,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl27 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ216","type":3},{"bits":4,"name":"IRQ217","type":3},{"bits":4,"name":"IRQ218","type":3},{"bits":4,"name":"IRQ219","type":3},{"bits":4,"name":"IRQ220","type":3},{"bits":4,"name":"IRQ221","type":3},{"bits":4,"name":"IRQ222","type":3},{"bits":4,"name":"IRQ223","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -17026,7 +17026,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl28 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ224","type":3},{"bits":4,"name":"IRQ225","type":3},{"bits":4,"name":"IRQ226","type":3},{"bits":4,"name":"IRQ227","type":3},{"bits":4,"name":"IRQ228","type":3},{"bits":4,"name":"IRQ229","type":3},{"bits":4,"name":"IRQ230","type":3},{"bits":4,"name":"IRQ231","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -17269,7 +17269,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl29 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ232","type":3},{"bits":4,"name":"IRQ233","type":3},{"bits":4,"name":"IRQ234","type":3},{"bits":4,"name":"IRQ235","type":3},{"bits":4,"name":"IRQ236","type":3},{"bits":4,"name":"IRQ237","type":3},{"bits":4,"name":"IRQ238","type":3},{"bits":4,"name":"IRQ239","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -17512,7 +17512,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl30 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ240","type":3},{"bits":4,"name":"IRQ241","type":3},{"bits":4,"name":"IRQ242","type":3},{"bits":4,"name":"IRQ243","type":3},{"bits":4,"name":"IRQ244","type":3},{"bits":4,"name":"IRQ245","type":3},{"bits":4,"name":"IRQ246","type":3},{"bits":4,"name":"IRQ247","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -17755,7 +17755,7 @@ h^ Privilege Mode ^ M
 .qc.mclicilvl31 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"IRQ248","type":3},{"bits":4,"name":"IRQ249","type":3},{"bits":4,"name":"IRQ250","type":3},{"bits":4,"name":"IRQ251","type":3},{"bits":4,"name":"IRQ252","type":3},{"bits":4,"name":"IRQ253","type":3},{"bits":4,"name":"IRQ254","type":3},{"bits":4,"name":"IRQ255","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -17998,7 +17998,7 @@ h^ Privilege Mode ^ M
 .qc.mclicip0 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ0","type":3},{"bits":1,"name":"IRQ1","type":3},{"bits":1,"name":"IRQ2","type":3},{"bits":1,"name":"IRQ3","type":3},{"bits":1,"name":"IRQ4","type":3},{"bits":1,"name":"IRQ5","type":3},{"bits":1,"name":"IRQ6","type":3},{"bits":1,"name":"IRQ7","type":3},{"bits":1,"name":"IRQ8","type":3},{"bits":1,"name":"IRQ9","type":3},{"bits":1,"name":"IRQ10","type":3},{"bits":1,"name":"IRQ11","type":3},{"bits":1,"name":"IRQ12","type":3},{"bits":1,"name":"IRQ13","type":3},{"bits":1,"name":"IRQ14","type":3},{"bits":1,"name":"IRQ15","type":3},{"bits":1,"name":"IRQ16","type":3},{"bits":1,"name":"IRQ17","type":3},{"bits":1,"name":"IRQ18","type":3},{"bits":1,"name":"IRQ19","type":3},{"bits":1,"name":"IRQ20","type":3},{"bits":1,"name":"IRQ21","type":3},{"bits":1,"name":"IRQ22","type":3},{"bits":1,"name":"IRQ23","type":3},{"bits":1,"name":"IRQ24","type":3},{"bits":1,"name":"IRQ25","type":3},{"bits":1,"name":"IRQ26","type":3},{"bits":1,"name":"IRQ27","type":3},{"bits":1,"name":"IRQ28","type":3},{"bits":1,"name":"IRQ29","type":3},{"bits":1,"name":"IRQ30","type":3},{"bits":1,"name":"IRQ31","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -18817,7 +18817,7 @@ h^ Privilege Mode ^ M
 .qc.mclicip1 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ32","type":3},{"bits":1,"name":"IRQ33","type":3},{"bits":1,"name":"IRQ34","type":3},{"bits":1,"name":"IRQ35","type":3},{"bits":1,"name":"IRQ36","type":3},{"bits":1,"name":"IRQ37","type":3},{"bits":1,"name":"IRQ38","type":3},{"bits":1,"name":"IRQ39","type":3},{"bits":1,"name":"IRQ40","type":3},{"bits":1,"name":"IRQ41","type":3},{"bits":1,"name":"IRQ42","type":3},{"bits":1,"name":"IRQ43","type":3},{"bits":1,"name":"IRQ44","type":3},{"bits":1,"name":"IRQ45","type":3},{"bits":1,"name":"IRQ46","type":3},{"bits":1,"name":"IRQ47","type":3},{"bits":1,"name":"IRQ48","type":3},{"bits":1,"name":"IRQ49","type":3},{"bits":1,"name":"IRQ50","type":3},{"bits":1,"name":"IRQ51","type":3},{"bits":1,"name":"IRQ52","type":3},{"bits":1,"name":"IRQ53","type":3},{"bits":1,"name":"IRQ54","type":3},{"bits":1,"name":"IRQ55","type":3},{"bits":1,"name":"IRQ56","type":3},{"bits":1,"name":"IRQ57","type":3},{"bits":1,"name":"IRQ58","type":3},{"bits":1,"name":"IRQ59","type":3},{"bits":1,"name":"IRQ60","type":3},{"bits":1,"name":"IRQ61","type":3},{"bits":1,"name":"IRQ62","type":3},{"bits":1,"name":"IRQ63","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -19636,7 +19636,7 @@ h^ Privilege Mode ^ M
 .qc.mclicip2 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ64","type":3},{"bits":1,"name":"IRQ65","type":3},{"bits":1,"name":"IRQ66","type":3},{"bits":1,"name":"IRQ67","type":3},{"bits":1,"name":"IRQ68","type":3},{"bits":1,"name":"IRQ69","type":3},{"bits":1,"name":"IRQ70","type":3},{"bits":1,"name":"IRQ71","type":3},{"bits":1,"name":"IRQ72","type":3},{"bits":1,"name":"IRQ73","type":3},{"bits":1,"name":"IRQ74","type":3},{"bits":1,"name":"IRQ75","type":3},{"bits":1,"name":"IRQ76","type":3},{"bits":1,"name":"IRQ77","type":3},{"bits":1,"name":"IRQ78","type":3},{"bits":1,"name":"IRQ79","type":3},{"bits":1,"name":"IRQ80","type":3},{"bits":1,"name":"IRQ81","type":3},{"bits":1,"name":"IRQ82","type":3},{"bits":1,"name":"IRQ83","type":3},{"bits":1,"name":"IRQ84","type":3},{"bits":1,"name":"IRQ85","type":3},{"bits":1,"name":"IRQ86","type":3},{"bits":1,"name":"IRQ87","type":3},{"bits":1,"name":"IRQ88","type":3},{"bits":1,"name":"IRQ89","type":3},{"bits":1,"name":"IRQ90","type":3},{"bits":1,"name":"IRQ91","type":3},{"bits":1,"name":"IRQ92","type":3},{"bits":1,"name":"IRQ93","type":3},{"bits":1,"name":"IRQ94","type":3},{"bits":1,"name":"IRQ95","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -20455,7 +20455,7 @@ h^ Privilege Mode ^ M
 .qc.mclicip3 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ96","type":3},{"bits":1,"name":"IRQ97","type":3},{"bits":1,"name":"IRQ98","type":3},{"bits":1,"name":"IRQ99","type":3},{"bits":1,"name":"IRQ100","type":3},{"bits":1,"name":"IRQ101","type":3},{"bits":1,"name":"IRQ102","type":3},{"bits":1,"name":"IRQ103","type":3},{"bits":1,"name":"IRQ104","type":3},{"bits":1,"name":"IRQ105","type":3},{"bits":1,"name":"IRQ106","type":3},{"bits":1,"name":"IRQ107","type":3},{"bits":1,"name":"IRQ108","type":3},{"bits":1,"name":"IRQ109","type":3},{"bits":1,"name":"IRQ110","type":3},{"bits":1,"name":"IRQ111","type":3},{"bits":1,"name":"IRQ112","type":3},{"bits":1,"name":"IRQ113","type":3},{"bits":1,"name":"IRQ114","type":3},{"bits":1,"name":"IRQ115","type":3},{"bits":1,"name":"IRQ116","type":3},{"bits":1,"name":"IRQ117","type":3},{"bits":1,"name":"IRQ118","type":3},{"bits":1,"name":"IRQ119","type":3},{"bits":1,"name":"IRQ120","type":3},{"bits":1,"name":"IRQ121","type":3},{"bits":1,"name":"IRQ122","type":3},{"bits":1,"name":"IRQ123","type":3},{"bits":1,"name":"IRQ124","type":3},{"bits":1,"name":"IRQ125","type":3},{"bits":1,"name":"IRQ126","type":3},{"bits":1,"name":"IRQ127","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -21274,7 +21274,7 @@ h^ Privilege Mode ^ M
 .qc.mclicip4 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ128","type":3},{"bits":1,"name":"IRQ129","type":3},{"bits":1,"name":"IRQ130","type":3},{"bits":1,"name":"IRQ131","type":3},{"bits":1,"name":"IRQ132","type":3},{"bits":1,"name":"IRQ133","type":3},{"bits":1,"name":"IRQ134","type":3},{"bits":1,"name":"IRQ135","type":3},{"bits":1,"name":"IRQ136","type":3},{"bits":1,"name":"IRQ137","type":3},{"bits":1,"name":"IRQ138","type":3},{"bits":1,"name":"IRQ139","type":3},{"bits":1,"name":"IRQ140","type":3},{"bits":1,"name":"IRQ141","type":3},{"bits":1,"name":"IRQ142","type":3},{"bits":1,"name":"IRQ143","type":3},{"bits":1,"name":"IRQ144","type":3},{"bits":1,"name":"IRQ145","type":3},{"bits":1,"name":"IRQ146","type":3},{"bits":1,"name":"IRQ147","type":3},{"bits":1,"name":"IRQ148","type":3},{"bits":1,"name":"IRQ149","type":3},{"bits":1,"name":"IRQ150","type":3},{"bits":1,"name":"IRQ151","type":3},{"bits":1,"name":"IRQ152","type":3},{"bits":1,"name":"IRQ153","type":3},{"bits":1,"name":"IRQ154","type":3},{"bits":1,"name":"IRQ155","type":3},{"bits":1,"name":"IRQ156","type":3},{"bits":1,"name":"IRQ157","type":3},{"bits":1,"name":"IRQ158","type":3},{"bits":1,"name":"IRQ159","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -22093,7 +22093,7 @@ h^ Privilege Mode ^ M
 .qc.mclicip5 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ160","type":3},{"bits":1,"name":"IRQ161","type":3},{"bits":1,"name":"IRQ162","type":3},{"bits":1,"name":"IRQ163","type":3},{"bits":1,"name":"IRQ164","type":3},{"bits":1,"name":"IRQ165","type":3},{"bits":1,"name":"IRQ166","type":3},{"bits":1,"name":"IRQ167","type":3},{"bits":1,"name":"IRQ168","type":3},{"bits":1,"name":"IRQ169","type":3},{"bits":1,"name":"IRQ170","type":3},{"bits":1,"name":"IRQ171","type":3},{"bits":1,"name":"IRQ172","type":3},{"bits":1,"name":"IRQ173","type":3},{"bits":1,"name":"IRQ174","type":3},{"bits":1,"name":"IRQ175","type":3},{"bits":1,"name":"IRQ176","type":3},{"bits":1,"name":"IRQ177","type":3},{"bits":1,"name":"IRQ178","type":3},{"bits":1,"name":"IRQ179","type":3},{"bits":1,"name":"IRQ180","type":3},{"bits":1,"name":"IRQ181","type":3},{"bits":1,"name":"IRQ182","type":3},{"bits":1,"name":"IRQ183","type":3},{"bits":1,"name":"IRQ184","type":3},{"bits":1,"name":"IRQ185","type":3},{"bits":1,"name":"IRQ186","type":3},{"bits":1,"name":"IRQ187","type":3},{"bits":1,"name":"IRQ188","type":3},{"bits":1,"name":"IRQ189","type":3},{"bits":1,"name":"IRQ190","type":3},{"bits":1,"name":"IRQ191","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -22912,7 +22912,7 @@ h^ Privilege Mode ^ M
 .qc.mclicip6 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ192","type":3},{"bits":1,"name":"IRQ193","type":3},{"bits":1,"name":"IRQ194","type":3},{"bits":1,"name":"IRQ195","type":3},{"bits":1,"name":"IRQ196","type":3},{"bits":1,"name":"IRQ197","type":3},{"bits":1,"name":"IRQ198","type":3},{"bits":1,"name":"IRQ199","type":3},{"bits":1,"name":"IRQ200","type":3},{"bits":1,"name":"IRQ201","type":3},{"bits":1,"name":"IRQ202","type":3},{"bits":1,"name":"IRQ203","type":3},{"bits":1,"name":"IRQ204","type":3},{"bits":1,"name":"IRQ205","type":3},{"bits":1,"name":"IRQ206","type":3},{"bits":1,"name":"IRQ207","type":3},{"bits":1,"name":"IRQ208","type":3},{"bits":1,"name":"IRQ209","type":3},{"bits":1,"name":"IRQ210","type":3},{"bits":1,"name":"IRQ211","type":3},{"bits":1,"name":"IRQ212","type":3},{"bits":1,"name":"IRQ213","type":3},{"bits":1,"name":"IRQ214","type":3},{"bits":1,"name":"IRQ215","type":3},{"bits":1,"name":"IRQ216","type":3},{"bits":1,"name":"IRQ217","type":3},{"bits":1,"name":"IRQ218","type":3},{"bits":1,"name":"IRQ219","type":3},{"bits":1,"name":"IRQ220","type":3},{"bits":1,"name":"IRQ221","type":3},{"bits":1,"name":"IRQ222","type":3},{"bits":1,"name":"IRQ223","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -23731,7 +23731,7 @@ h^ Privilege Mode ^ M
 .qc.mclicip7 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":1,"name":"IRQ224","type":3},{"bits":1,"name":"IRQ225","type":3},{"bits":1,"name":"IRQ226","type":3},{"bits":1,"name":"IRQ227","type":3},{"bits":1,"name":"IRQ228","type":3},{"bits":1,"name":"IRQ229","type":3},{"bits":1,"name":"IRQ230","type":3},{"bits":1,"name":"IRQ231","type":3},{"bits":1,"name":"IRQ232","type":3},{"bits":1,"name":"IRQ233","type":3},{"bits":1,"name":"IRQ234","type":3},{"bits":1,"name":"IRQ235","type":3},{"bits":1,"name":"IRQ236","type":3},{"bits":1,"name":"IRQ237","type":3},{"bits":1,"name":"IRQ238","type":3},{"bits":1,"name":"IRQ239","type":3},{"bits":1,"name":"IRQ240","type":3},{"bits":1,"name":"IRQ241","type":3},{"bits":1,"name":"IRQ242","type":3},{"bits":1,"name":"IRQ243","type":3},{"bits":1,"name":"IRQ244","type":3},{"bits":1,"name":"IRQ245","type":3},{"bits":1,"name":"IRQ246","type":3},{"bits":1,"name":"IRQ247","type":3},{"bits":1,"name":"IRQ248","type":3},{"bits":1,"name":"IRQ249","type":3},{"bits":1,"name":"IRQ250","type":3},{"bits":1,"name":"IRQ251","type":3},{"bits":1,"name":"IRQ252","type":3},{"bits":1,"name":"IRQ253","type":3},{"bits":1,"name":"IRQ254","type":3},{"bits":1,"name":"IRQ255","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -24550,7 +24550,7 @@ h^ Privilege Mode ^ M
 .qc.mmcr format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"WP_EXEC","type":3},{"bits":4,"name":"WP_WRITE","type":3},{"bits":4,"name":"WP_READ","type":3},{"bits":9,"type":1},{"bits":1,"name":"IRQNE","type":3},{"bits":10,"type":1}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -24696,7 +24696,7 @@ h^ Privilege Mode ^ M
 .qc.mntvec format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":2,"type":1},{"bits":30,"name":"BASE","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -24784,7 +24784,7 @@ h^ Privilege Mode ^ M
 .qc.mstkbottomaddr format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"RESERVED","type":3},{"bits":28,"name":"STKADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -24884,7 +24884,7 @@ h^ Privilege Mode ^ M
 .qc.mstktopaddr format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":4,"name":"RESERVED","type":3},{"bits":28,"name":"STKADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -24984,7 +24984,7 @@ h^ Privilege Mode ^ M
 .qc.mthreadptr format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name":"THREADPTR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -25059,7 +25059,7 @@ h^ Privilege Mode ^ M
 .qc.mwpendaddr0 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name":"ADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -25134,7 +25134,7 @@ h^ Privilege Mode ^ M
 .qc.mwpendaddr1 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name":"ADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -25209,7 +25209,7 @@ h^ Privilege Mode ^ M
 .qc.mwpendaddr2 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name":"ADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -25284,7 +25284,7 @@ h^ Privilege Mode ^ M
 .qc.mwpendaddr3 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name":"ADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -25359,7 +25359,7 @@ h^ Privilege Mode ^ M
 .qc.mwpstartaddr0 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name":"ADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -25434,7 +25434,7 @@ h^ Privilege Mode ^ M
 .qc.mwpstartaddr1 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name":"ADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -25509,7 +25509,7 @@ h^ Privilege Mode ^ M
 .qc.mwpstartaddr2 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name":"ADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary
@@ -25584,7 +25584,7 @@ h^ Privilege Mode ^ M
 .qc.mwpstartaddr3 format
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name":"ADDR","type":3}],"config":{"bits":32,"lanes":2}}
+{"reg":[],"config":{"bits":32,"lanes":2}}
 ....
 
 == Field Summary

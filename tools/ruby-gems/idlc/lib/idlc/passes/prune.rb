@@ -103,17 +103,19 @@ module Idl
     def prune(symtab, forced_type: nil)
       new_children = children.map { |child| child.prune(symtab, forced_type:) }
 
-      new_node = dup
-      new_node.instance_variable_set(:@children, new_children)
-
-      if is_a?(Executable)
+      if executable?
         value_try do
           execute(symtab)
         end
         # value_else: execute raised ValueError; symtab state is already correct
       end
-      add_symbol(symtab) if is_a?(Declaration)
+      add_symbol(symtab) if declaration?
 
+      # avoid allocation when nothing changed
+      return self if !frozen? && new_children.each_with_index.all? { |c, i| c.equal?(children[i]) }
+
+      new_node = dup
+      new_node.instance_variable_set(:@children, new_children)
       new_node
     end
 
@@ -362,7 +364,7 @@ module Idl
       new_stmt = StatementAst.new(input, interval, pruned_action)
       # pruned_action.freeze_tree(symtab) unless pruned_action.frozen?
 
-      pruned_action.add_symbol(symtab) if pruned_action.is_a?(Declaration)
+      pruned_action.add_symbol(symtab) if pruned_action.declaration?
       # action#prune already handles symtab update (execute)
 
       new_stmt
@@ -581,9 +583,9 @@ module Idl
       value_result = value_try do
         if condition.value(symtab)
           pruned_action = action.prune(symtab)
-          pruned_action.add_symbol(symtab) if pruned_action.is_a?(Declaration)
+          pruned_action.add_symbol(symtab) if pruned_action.declaration?
           value_result = value_try do
-            pruned_action.execute(symtab) if pruned_action.is_a?(Executable)
+            pruned_action.execute(symtab) if pruned_action.executable?
           end
 
           return StatementAst.new(input, interval, pruned_action)
@@ -594,9 +596,9 @@ module Idl
       value_else(value_result) do
         # condition not known
         pruned_action = action.prune(symtab)
-        pruned_action.add_symbol(symtab) if pruned_action.is_a?(Declaration)
+        pruned_action.add_symbol(symtab) if pruned_action.declaration?
         value_result = value_try do
-          pruned_action.execute(symtab) if pruned_action.is_a?(Executable)
+          pruned_action.execute(symtab) if pruned_action.executable?
         end
         # Condition is unknown, so the assignment may not have run; nullify to prevent leakage
         pruned_action.nullify_assignments(symtab)

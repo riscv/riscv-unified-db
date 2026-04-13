@@ -45,17 +45,26 @@ tests:
       - name: Generate ISA Explorer browser artifacts
         run: ./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer --skip 6
 
-  regress-idl-typecheck:
+  regress-idl-typecheck-smoke:
     ci_stage: pr
     tags:
       - smoke
     strategy:
       matrix:
         cfg:
+          - rv64 # a simple standard config
+          - qc_iu # a config with overlay
+    test:
+      - name: Type check IDL for ${{ matrix.cfg }}
+        run: ./do test:idl CFG=${{ matrix.cfg }}
+
+  regress-idl-typecheck-other:
+    ci_stage: pr
+    strategy:
+      matrix:
+        cfg:
           - _
           - rv32
-          - rv64
-          - qc_iu
     test:
       - name: Type check IDL for ${{ matrix.cfg }}
         run: ./do test:idl CFG=${{ matrix.cfg }}
@@ -366,6 +375,13 @@ tests:
     test:
       - name: Check gem versions bumped when source changes
         run: ./bin/ruby tools/scripts/check_gem_version_bump.rb origin/main
+
+  regress-smoke-perf:
+    ci_stage: pr
+    timeout_minutes: 10
+    test:
+      - name: Run smoke regression suite (must complete within 10 minutes)
+        run: ./bin/regress -t smoke
 
   build-docs-site:
     ci_stage: merge_queue
