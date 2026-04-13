@@ -1,6 +1,6 @@
 
 #include <fcntl.h>
-#include <libelf.h>
+#include <gelf.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -26,30 +26,17 @@ udb::ElfReader::ElfReader(const std::string& path) {
     throw ElfException("Not an ELF file");
   }
 
-  auto hdr = elf32_getehdr(m_elf);
-  m_class = ELFCLASS32;
-  if (hdr == nullptr) {
-    m_class = ELFCLASS64;
+  GElf_Ehdr hdr;
+  if(gelf_getehdr(m_elf, &hdr) != &hdr) {
+    throw ElfException("could not get elf header");
   }
-  if (m_class == ELFCLASS32) {
-    m_entry = elf32_getehdr(m_elf)->e_entry;
-  } else {
-    m_entry = elf64_getehdr(m_elf)->e_entry;
-  }
+  m_entry = hdr.e_entry;
 }
 
 udb::ElfReader::~ElfReader() {
   if (m_elf != nullptr) {
     elf_end(m_elf);
     close(m_fd);
-  }
-}
-
-std::pair<uint64_t, uint64_t> udb::ElfReader::mem_range() {
-  if (m_class == ELFCLASS32) {
-    return _mem_range<ELFCLASS32>();
-  } else {
-    return _mem_range<ELFCLASS64>();
   }
 }
 
@@ -68,8 +55,13 @@ bool udb::ElfReader::getSym(const std::string& name, Elf64_Addr* result) {
   int strtab_index;
   for (size_t i = 0; i < num_sections; i++) {
     auto* strtab_section = elf_getscn(m_elf, i);
-    Elf64_Shdr* header = elf64_getshdr(strtab_section);
-    if (strcmp(elf_strptr(m_elf, shstrtab_index, header->sh_name), ".strtab") ==
+    GElf_Shdr shdr;
+
+    if (gelf_getshdr(strtab_section, &shdr) != &shdr) {
+      throw ElfException("Could not get Section Header");
+    }
+
+    if (strcmp(elf_strptr(m_elf, shstrtab_index, shdr.sh_name), ".strtab") ==
         0) {
       strtab_index = i;
       break;
@@ -79,26 +71,65 @@ bool udb::ElfReader::getSym(const std::string& name, Elf64_Addr* result) {
   for (size_t i = 0; i < num_sections; i++) {
     Elf_Scn* section;
     section = elf_getscn(m_elf, i);
-    Elf64_Shdr* section_header = elf64_getshdr(section);
-    if (strcmp(elf_strptr(m_elf, shstrtab_index, section_header->sh_name),
+    GElf_Shdr section_header;
+    if (gelf_getshdr(section, &section_header) != &section_header) {
+      throw ElfException("Could not get Section Header");
+    }
+
+    if (strcmp(elf_strptr(m_elf, shstrtab_index, section_header.sh_name),
                ".symtab") == 0) {
-      unsigned num_syms = section_header->sh_size / section_header->sh_entsize;
-      Elf64_Sym* symtab;
+      unsigned num_syms = section_header.sh_size / section_header.sh_entsize;
       Elf_Data* data;
       if ((data = elf_getdata(section, nullptr)) == nullptr) {
         throw ElfException(fmt::format("Could not get symtab data. {}",
                                        elf_errmsg(elf_errno()))
                                .c_str());
       }
-      symtab = (Elf64_Sym*)data->d_buf;
+
       for (unsigned j = 0; j < num_syms; j++) {
-        if (strcmp(elf_strptr(m_elf, strtab_index, symtab[j].st_name),
+        GElf_Sym sym;
+        if (gelf_getsym(data, (int)j, &sym) != &sym) {
+          throw ElfException("Could not get symbol");
+        }
+
+        if (strcmp(elf_strptr(m_elf, strtab_index, sym.st_name),
                    name.c_str()) == 0) {
-          *result = symtab[j].st_value;
+          *result = sym.st_value;
           return true;
         }
       }
     }
   }
   return false;
+}
+
+std::pair<uint64_t, uint64_t> udb::ElfReader::mem_range() {
+  size_t n;
+  uint64_t addr_lo = std::numeric_limits<uint64_t>::max();
+  uint64_t addr_hi = std::numeric_limits<uint64_t>::min();
+
+  //Make room for any section allocating memory
+  if(elf_getshdrnum(m_elf, &n) == 0 && n > 0) {
+    for (size_t i = 0; i < n; i++) {
+      Elf_Scn* pscn = elf_getscn(m_elf, i);
+      if(pscn != NULL) {
+        GElf_Shdr shdr;
+        if(gelf_getshdr(pscn, &shdr) != &shdr) {
+          throw ElfException("Cannot get section header");
+        }
+
+        if (shdr.sh_flags & SHF_ALLOC) {
+          addr_lo = std::min(addr_lo, shdr.sh_addr);
+          addr_hi = std::max(addr_hi, shdr.sh_addr + shdr.sh_size);
+        }
+      }
+    }
+  }
+
+  //No memory to be allocated
+  if(addr_lo > addr_hi) {
+    addr_lo = addr_hi = 0;
+  }
+
+  return std::make_pair(addr_lo, addr_hi);
 }
