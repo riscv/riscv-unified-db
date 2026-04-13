@@ -237,10 +237,6 @@ class Idl::ArraySizeAst < ::Idl::AstNode
   end
 end
 
-class Idl::ArraySizeSyntaxNode < ::Idl::SyntaxNode
-  def to_ast; end
-end
-
 module Idl::AryAccess0
   def expression; end
 end
@@ -1791,9 +1787,8 @@ class Idl::DollarFunctionCallSyntaxNode < ::Idl::SyntaxNode
 
   private
 
-  def check_dollar_function_arity!(dollar_name, arg_nodes, expected_count); end
+  def builtin_call_ast(dollar_name, arg_nodes, expected_arg_count, ast_class); end
   def dollar_arg_list_elements; end
-  def to_type_name_ast(node); end
 end
 
 module Idl::DollarVariable0; end
@@ -1938,7 +1933,7 @@ class Idl::EnumArrayCastAst < ::Idl::AstNode
     params(
       input: T.nilable(::String),
       interval: T.nilable(T::Range[::Integer]),
-      enum_class_name: ::Idl::UserTypeNameAst
+      enum_class_name: T.any(::Idl::IdAst, ::Idl::UserTypeNameAst)
     ).void
   end
   def initialize(input, interval, enum_class_name); end
@@ -1970,10 +1965,6 @@ class Idl::EnumArrayCastAst < ::Idl::AstNode
   end
 end
 
-class Idl::EnumArrayCastSyntaxNode < ::Idl::SyntaxNode
-  def to_ast; end
-end
-
 class Idl::EnumCastAst < ::Idl::AstNode
   include ::Idl::Rvalue
 
@@ -1981,7 +1972,7 @@ class Idl::EnumCastAst < ::Idl::AstNode
     params(
       input: T.nilable(::String),
       interval: T.nilable(T::Range[::Integer]),
-      type_name: ::Idl::UserTypeNameAst,
+      type_name: T.any(::Idl::IdAst, ::Idl::UserTypeNameAst),
       expression: T.all(::Idl::AstNode, ::Idl::Rvalue)
     ).void
   end
@@ -2013,10 +2004,6 @@ class Idl::EnumCastAst < ::Idl::AstNode
     end
     def from_h(yaml, source_mapper); end
   end
-end
-
-class Idl::EnumCastSyntaxNode < ::Idl::SyntaxNode
-  def to_ast; end
 end
 
 module Idl::EnumDefinition0
@@ -2096,7 +2083,7 @@ class Idl::EnumElementSizeAst < ::Idl::AstNode
     params(
       input: T.nilable(::String),
       interval: T.nilable(T::Range[::Integer]),
-      enum_class_name: ::Idl::UserTypeNameAst
+      enum_class_name: T.any(::Idl::IdAst, ::Idl::UserTypeNameAst)
     ).void
   end
   def initialize(input, interval, enum_class_name); end
@@ -2126,10 +2113,6 @@ class Idl::EnumElementSizeAst < ::Idl::AstNode
     end
     def from_h(yaml, source_mapper); end
   end
-end
-
-class Idl::EnumElementSizeSyntaxNode < ::Idl::SyntaxNode
-  def to_ast; end
 end
 
 module Idl::EnumRef0
@@ -2185,6 +2168,13 @@ end
 class Idl::EnumSizeAst < ::Idl::AstNode
   include ::Idl::Rvalue
 
+  sig do
+    params(
+      input: T.nilable(::String),
+      interval: T.nilable(T::Range[::Integer]),
+      enum_class_name: T.any(::Idl::IdAst, ::Idl::UserTypeNameAst)
+    ).void
+  end
   def initialize(input, interval, enum_class_name); end
 
   sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
@@ -2212,10 +2202,6 @@ class Idl::EnumSizeAst < ::Idl::AstNode
     end
     def from_h(yaml, source_mapper); end
   end
-end
-
-class Idl::EnumSizeSyntaxNode < ::Idl::SyntaxNode
-  def to_ast; end
 end
 
 class Idl::EnumerationType < ::Idl::Type
@@ -3710,6 +3696,28 @@ class Idl::ParenExpressionSyntaxNode < ::Idl::SyntaxNode
   def to_ast; end
 end
 
+class Idl::ParseTimeDetectedTypeError < ::Idl::AstNode
+  def initialize(input, interval, reason); end
+
+  sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
+  def const_eval?(symtab); end
+
+  sig { override.returns(T::Hash[::String, T.untyped]) }
+  def to_h; end
+
+  sig { override.returns(::String) }
+  def to_idl; end
+
+  sig { params(symtab: ::Idl::SymbolTable).returns(::Idl::Type) }
+  def type(symtab); end
+
+  sig { override.params(symtab: ::Idl::SymbolTable, strict: T::Boolean).void }
+  def type_check(symtab, strict:); end
+
+  sig { params(symtab: ::Idl::SymbolTable).returns(T.untyped) }
+  def value(symtab); end
+end
+
 class Idl::PcAssignmentAst < ::Idl::AstNode
   include ::Idl::Executable
 
@@ -4837,48 +4845,6 @@ end
 class Idl::UnaryOperatorExpressionSyntaxNode < ::Idl::SyntaxNode
   def to_ast; end
 end
-
-class Idl::UnknownDollarFunctionAst < ::Idl::AstNode
-  def initialize(input, interval, name); end
-
-  sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
-  def const_eval?(symtab); end
-
-  sig { override.returns(T::Hash[::String, T.untyped]) }
-  def to_h; end
-
-  sig { override.returns(::String) }
-  def to_idl; end
-
-  sig { params(symtab: ::Idl::SymbolTable).returns(::Idl::Type) }
-  def type(symtab); end
-
-  sig { override.params(symtab: ::Idl::SymbolTable, strict: T::Boolean).void }
-  def type_check(symtab, strict:); end
-
-  sig { params(symtab: ::Idl::SymbolTable).returns(T.untyped) }
-  def value(symtab); end
-end
-
-Idl::UnknownDollarFunctionAst::KNOWN_DOLLAR_FUNCTIONS = T.let(T.unsafe(nil), Array)
-
-class Idl::UnknownDollarVariableAssignmentAst < ::Idl::AstNode
-  def initialize(input, interval, name, rhs); end
-
-  sig { override.params(symtab: ::Idl::SymbolTable).returns(T::Boolean) }
-  def const_eval?(symtab); end
-
-  sig { override.returns(T::Hash[::String, T.untyped]) }
-  def to_h; end
-
-  sig { override.returns(::String) }
-  def to_idl; end
-
-  sig { override.params(symtab: ::Idl::SymbolTable, strict: T::Boolean).void }
-  def type_check(symtab, strict:); end
-end
-
-Idl::UnknownDollarVariableAssignmentAst::KNOWN_DOLLAR_VARIABLE_ASSIGNMENTS = T.let(T.unsafe(nil), Array)
 
 class Idl::UnknownLiteral
   def initialize(known_value, unknown_mask); end
