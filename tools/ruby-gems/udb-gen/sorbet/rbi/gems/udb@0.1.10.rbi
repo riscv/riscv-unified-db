@@ -3478,7 +3478,7 @@ class Udb::ParameterTerm
   sig { returns(::Udb::ParameterTerm::ParameterComparisonType) }
   def comparison_type; end
 
-  sig { returns(T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String)], T::Boolean)) }
+  sig { returns(T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String, T::Boolean)], T::Boolean)) }
   def comparison_value; end
 
   sig { override.params(other: T.untyped).returns(T::Boolean) }
@@ -3563,7 +3563,7 @@ class Udb::ParameterTerm::ParameterComparisonType < ::T::Enum
   end
 end
 
-Udb::ParameterTerm::ValueType = T.type_alias { T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String)], T::Boolean) }
+Udb::ParameterTerm::ValueType = T.type_alias { T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String, T::Boolean)], T::Boolean) }
 
 class Udb::ParameterWithValue
   include ::Idl::RuntimeParam

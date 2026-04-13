@@ -316,7 +316,7 @@ module Udb
       end
     end
 
-    ValueType = T.type_alias { T.any(Integer, String, T::Boolean, T::Array[T.any(Integer, String)]) }
+    ValueType = T.type_alias { T.any(Integer, String, T::Boolean, T::Array[T.any(Integer, String, T::Boolean)]) }
 
     sig { params(yaml: T::Hash[String, T.untyped]).void }
     def initialize(yaml)
@@ -1034,9 +1034,11 @@ module Udb
         elsif !@yaml.key?("includes") && other_param.to_h.key?("includes")
           -1
         end
-      elsif @yaml.key?("oneOf") || other_param.to_h.key?("oneOf")
-        if @yaml.key?("oneOf") && other_param.to_h.key?("oneOf")
-          @yaml.fetch("oneOf") <=> other_param.to_h.fetch("oneOf")
+      elsif @yaml.key?("oneOf") || other_param.comparison_type == ParameterComparisonType::OneOf
+        if @yaml.key?("oneOf") && other_param.comparison_type == ParameterComparisonType::OneOf
+          one_of = @yaml.fetch("oneOf")
+          other_one_of = T.cast(other_param.comparison_value, T::Array[T.untyped])
+          one_of.map { |e| [e.class.name, e.to_s] } <=> other_one_of.map { |e| [e.class.name, e.to_s] }
         elsif @yaml.key?("oneOf")
           1
         else
@@ -1054,14 +1056,20 @@ module Udb
         comparison_type <=> other_param.comparison_type
       elsif comparison_value != other_param.comparison_value
         cv = comparison_value
-        if cv.is_a?(String)
-          cv <=> T.cast(other_param.comparison_value, String)
+        ocv = other_param.comparison_value
+        if cv.class != ocv.class
+          cv.class.name <=> ocv.class.name
+        elsif cv.is_a?(String)
+          cv <=> T.cast(ocv, String)
         elsif cv.is_a?(Array)
-          cv <=> T.cast(other_param.comparison_value, T::Array[T.any(String, T::Boolean, Integer)])
-        elsif cv.is_a?(Integer)
-          T.cast(comparison_value, Integer) <=> T.cast(other_param.comparison_value, Integer)
+          ocv_arr = T.cast(ocv, T::Array[T.any(String, T::Boolean, Integer)])
+          cv.map { |e| [e.class.name, e.to_s] } <=> ocv_arr.map { |e| [e.class.name, e.to_s] }
         else
-          T.cast(comparison_value, T::Boolean) <=> T.cast(other_param.comparison_value, T::Boolean)
+          # cv and ocv have the same class (not String, not Array).
+          # Given the type constraints (String, Boolean, Integer), this is Integer.
+          # Two booleans with the same value are equal (cv != ocv is false), so
+          # TrueClass or FalseClass values never reach here.
+          T.cast(cv, Integer) <=> T.cast(ocv, Integer)
         end
       else
         # these are the same (ignoring reason)
