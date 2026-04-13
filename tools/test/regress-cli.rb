@@ -126,9 +126,11 @@ class Cli
       exit_with(:data_error)
     end
 
+    @logger.info "Running regression \"#{test_name}\" --------"
     test = test_data.fetch("tests").fetch(test_name)
     cmd = TTY::Command.new(uuid: false, pty: true)
     test.fetch("test").each do |step|
+      @logger.info "Running regression \"#{test_name}\" step \"#{step.fetch("name")}\" --------"
       env = test.key?("env") ? test.fetch("env") : {}
       if step.key?("env")
         env.merge!(step.fetch("env"))
@@ -145,15 +147,18 @@ class Cli
             @logger.warn "'#{v}' is not an option for matrix '#{k}'"
             exit_with(:data_error)
           end
+          @logger.info "Running regression \"#{test_name}\" step \"#{step.fetch("name")}\" \"#{gh_sub(step.fetch("run"), sub: { "matrix.#{k}" => v })}\" --------"
           cmd.run env, "bash -c \"#{gh_sub(step.fetch("run"), sub: { "matrix.#{k}" => v })}\""
         else
           matrix.keys.each do |k|
             matrix.fetch(k).each do |v|
+              @logger.info "Running regression \"#{test_name}\" step \"#{step.fetch("name")}\" \"#{gh_sub(step.fetch("run"), sub: { "matrix.#{k}" => v })}\" --------"
               cmd.run env, "bash -c \"#{gh_sub(step.fetch("run"), sub: { "matrix.#{k}" => v })}\""
             end
           end
         end
       else
+        @logger.info "Running regression \"#{test_name}\" step \"#{step.fetch("name")}\" \"#{gh_sub(step.fetch("run"))}\" --------"
         cmd.run env, "bash -c \"#{gh_sub(step.fetch("run"))}\""
       end
     end

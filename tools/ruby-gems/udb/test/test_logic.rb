@@ -410,6 +410,99 @@ class TestLogic < Minitest::Test
     assert_raises { term.eval_value(5) }
   end
 
+  def test_parameter_term_comparison
+    # Same comparison_type with different comparison_value types (bool scalar vs bool array).
+    # equal: [true, false] is schema-valid (array of booleans is permitted for equal).
+    # Should not raise a TypeError and must return a stable non-nil Integer result.
+    term_scalar = ParameterTerm.new("name" => "A", "equal" => true)
+    term_array  = ParameterTerm.new("name" => "A", "equal" => [true, false])
+    result = term_scalar <=> term_array
+    refute_nil result
+    assert_kind_of Integer, result
+
+    # Sorting a mix of the two must not raise and must produce a stable order.
+    terms = [term_array, term_scalar]
+    terms.sort!
+    assert_equal 2, terms.size
+
+    # Two ParameterTerms with the same comparison_type (equal) but differing
+    # comparison_value types (TrueClass vs FalseClass – different classes) must
+    # produce a non-nil, Integer result.
+    term_true  = ParameterTerm.new("name" => "A", "equal" => true)
+    term_false = ParameterTerm.new("name" => "A", "equal" => false)
+    result2 = term_true <=> term_false
+    refute_nil result2
+    assert_kind_of Integer, result2
+
+    # Two ParameterTerms with equal: [bool, ...] arrays of different lengths must compare
+    # without returning nil (true <=> false is nil in Ruby's default <=>).
+    # Using equal (which allows boolean arrays) rather than oneOf (which does not).
+    term_bool_arr1 = ParameterTerm.new("name" => "A", "equal" => [true])
+    term_bool_arr2 = ParameterTerm.new("name" => "A", "equal" => [true, false])
+    result3 = term_bool_arr1 <=> term_bool_arr2
+    refute_nil result3
+    assert_kind_of Integer, result3
+    [term_bool_arr2, term_bool_arr1].sort!
+
+    # Same-length equal bool arrays with different element order must also compare
+    # without returning nil.
+    term_bool_arr3 = ParameterTerm.new("name" => "A", "equal" => [true, false])
+    term_bool_arr4 = ParameterTerm.new("name" => "A", "equal" => [false, true])
+    result4 = term_bool_arr3 <=> term_bool_arr4
+    refute_nil result4
+    assert_kind_of Integer, result4
+    [term_bool_arr3, term_bool_arr4].sort!
+
+    # Two ParameterTerms with oneOf arrays of integers (schema-valid type) must compare.
+    term_int_arr1 = ParameterTerm.new("name" => "A", "oneOf" => [1, 2])
+    term_int_arr2 = ParameterTerm.new("name" => "A", "oneOf" => [1, 2, 3])
+    result_oa = term_int_arr1 <=> term_int_arr2
+    refute_nil result_oa
+    assert_kind_of Integer, result_oa
+    [term_int_arr1, term_int_arr2].sort!
+
+    # Same-length oneOf integer arrays with different elements must also compare.
+    term_int_arr3 = ParameterTerm.new("name" => "A", "oneOf" => [1, 2])
+    term_int_arr4 = ParameterTerm.new("name" => "A", "oneOf" => [3, 4])
+    result_ob = term_int_arr3 <=> term_int_arr4
+    refute_nil result_ob
+    assert_kind_of Integer, result_ob
+    [term_int_arr3, term_int_arr4].sort!
+
+    # When only one side has oneOf, comparison is ordered: oneOf > non-oneOf.
+    term_one_of = ParameterTerm.new("name" => "A", "oneOf" => [1, 2])
+    term_equal  = ParameterTerm.new("name" => "A", "equal" => 1)
+    assert_equal  1, (term_one_of <=> term_equal)
+    assert_equal(-1, (term_equal  <=> term_one_of))
+
+    # String comparison_value: two equal-typed String terms with different values
+    # must produce a stable non-nil Integer result.
+    term_str1 = ParameterTerm.new("name" => "A", "equal" => "foo")
+    term_str2 = ParameterTerm.new("name" => "A", "equal" => "bar")
+    result5 = term_str1 <=> term_str2
+    refute_nil result5
+    assert_kind_of Integer, result5
+    [term_str1, term_str2].sort!
+
+    # Integer (else) comparison_value: two equal-typed Integer terms with different values.
+    # Integers are the only reachable same-class, non-String, non-Array pair.
+    term_int1 = ParameterTerm.new("name" => "A", "equal" => 1)
+    term_int2 = ParameterTerm.new("name" => "A", "equal" => 2)
+    result6 = term_int1 <=> term_int2
+    refute_nil result6
+    assert_kind_of Integer, result6
+    [term_int1, term_int2].sort!
+
+    # Array comparison_value: two equal-typed Array terms with different values
+    # (same element class) must compare using the map-based ordering.
+    term_arr1 = ParameterTerm.new("name" => "A", "equal" => [1, 2])
+    term_arr2 = ParameterTerm.new("name" => "A", "equal" => [3, 4])
+    result7 = term_arr1 <=> term_arr2
+    refute_nil result7
+    assert_kind_of Integer, result7
+    [term_arr1, term_arr2].sort!
+  end
+
   def test_bad_logic_nodes
     assert_raises { LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "1.0.0"), ExtensionTerm.new("B", "1.0.0")]) }
     assert_raises { LogicNode.new(LogicNodeType::Term, [5]) }
@@ -1607,5 +1700,91 @@ class TestLogic < Minitest::Test
           "Unsatisfiable equation #{node} did not minimize to false. Got #{min}"
       end
     end
+  end
+
+  def test_failing_conjuncts_single_false_term
+    n = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    cb = proc { |_term| SatisfiedResult::No }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal n, result.first
+  end
+
+  def test_failing_conjuncts_and_one_false
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    b = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::And, [a, b])
+    cb = proc { |term| term.name == "A" ? SatisfiedResult::Yes : SatisfiedResult::No }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal b, result.first
+  end
+
+  def test_failing_conjuncts_and_multiple_false
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    b = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])
+    c = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("C", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::And, [a, b, c])
+    cb = proc { |term| term.name == "A" ? SatisfiedResult::Yes : SatisfiedResult::No }
+    result = n.failing_conjuncts(cb)
+    assert_equal 2, result.size
+    assert_includes result, b
+    assert_includes result, c
+  end
+
+  def test_failing_conjuncts_or_clause_false
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    or_clause = LogicNode.new(LogicNodeType::Or, [
+      LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")]),
+      LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("C", "=", "1.0.0")])
+    ])
+    n = LogicNode.new(LogicNodeType::And, [a, or_clause])
+    # A is true, B and C are false — only the or_clause fails
+    cb = proc { |term| term.name == "A" ? SatisfiedResult::Yes : SatisfiedResult::No }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal or_clause, result.first
+  end
+
+  def test_failing_conjuncts_maybe_not_reported
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    b = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::And, [a, b])
+    cb = proc { |term| term.name == "A" ? SatisfiedResult::No : SatisfiedResult::Maybe }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal a, result.first
+  end
+
+  def test_failing_conjuncts_not_clause
+    inner = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::Not, [inner])
+    cb = proc { |_term| SatisfiedResult::Yes }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal n, result.first
+  end
+
+  def test_failing_conjuncts_and_all_maybe
+    # AND where every child is Maybe: the whole expression is unknown, not failing
+    # failing_conjuncts should return [] — nothing is definitively false
+    a = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    b = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("B", "=", "1.0.0")])
+    n = LogicNode.new(LogicNodeType::And, [a, b])
+    cb = proc { |_term| SatisfiedResult::Maybe }
+    result = n.failing_conjuncts(cb)
+    assert_empty result
+  end
+
+  def test_failing_conjuncts_single_maybe_term
+    # A single Maybe term: the expression is unknown, not failing
+    # failing_conjuncts should return [self] because the non-And else branch fires,
+    # but the caller (cfg_arch) only invokes failing_conjuncts when the condition is
+    # != Yes, so a Maybe top-level node returns [self] to surface the unknown clause
+    n = LogicNode.new(LogicNodeType::Term, [ExtensionTerm.new("A", "=", "1.0.0")])
+    cb = proc { |_term| SatisfiedResult::Maybe }
+    result = n.failing_conjuncts(cb)
+    assert_equal 1, result.size
+    assert_equal n, result.first
   end
 end

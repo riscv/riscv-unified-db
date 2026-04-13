@@ -461,9 +461,6 @@ module Idl
     #   This is also an opportunity to pre-calculate anything that only needs global symbols
     #
     #   @param global_symtab [SymbolTable] Symbol table with global scope populated
-
-
-    # @!macro freeze_tree
     sig { params(global_symtab: SymbolTable).returns(AstNode) }
     def freeze_tree(global_symtab)
       return self if frozen?
@@ -507,9 +504,6 @@ module Idl
     # @abstract
     sig { abstract.returns(String) }
     def to_idl; end
-
-    sig { overridable.returns(String) }
-    def to_idl_verbose = to_idl
 
     # return yaml to indicate where the node comes from
     # the retrun value will be:
@@ -2184,49 +2178,50 @@ module Idl
   class BitfieldDefinitionAst < AstNode
     include Declaration
 
+    class Memo < T::Struct
+      prop :type, T.nilable(Type)
+      prop :element_names, T.nilable(T::Array[String])
+      prop :element_ranges, T.nilable(T::Hash[SymbolTable, T::Array[T::Range[Integer]]]), default: {}
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), name: T.any(BuiltinTypeNameAst, UserTypeNameAst), size: IntLiteralAst, fields: T::Array[BitfieldFieldDefinitionAst]).void }
     def initialize(input, interval, name, size, fields)
       super(input, interval, [name, size] + fields)
 
       @name = name
       @size = size
       @fields = fields
+      @memo = Memo.new
     end
 
-    # @!macro freeze_tree
-    def freeze_tree(global_symtab)
-      return if frozen?
-
-      type(global_symtab)
-
-      @children.each { |child| child.freeze_tree(global_symtab) }
-
-      freeze
-    end
-
-    # @return [Integer] The number of bits in the Bitfield
+    # @return The number of bits in the Bitfield
+    sig { params(symtab: SymbolTable).returns(Integer) }
     def size(symtab)
       @size.value(symtab)
     end
 
-    # @return [Array<String>] Array of all element names, in the same order as those from {#element_ranges}
+    # @return Array of all element names, in the same order as those from {#element_ranges}
+    sig { returns(T::Array[String]) }
     def element_names
-      return @element_names unless @element_names.nil?
+      return @memo.element_names unless @memo.element_names.nil?
 
-      @element_names = @fields.map(&:name)
+      @memo.element_names = @fields.map(&:name)
     end
 
     # @return [Array<Range>]
     #    Array of all element ranges, in the same order as those from {#element_names}.
+    sig { params(symtab: SymbolTable).returns(T::Array[T::Range[Integer]]) }
     def element_ranges(symtab)
-      return @element_ranges unless @element_ranges.nil?
+      return @memo.element_ranges[symtab] unless @memo.element_ranges[symtab].nil?
 
-      @element_ranges = @fields.map { |f| f.range(symtab) }
+      @memo.element_ranges[symtab] = @fields.map { |f| f.range(symtab) }
     end
 
     # @!macro type_check
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
     def type_check(symtab, strict:)
       type_error "Cannot use reserved word '#{name}' as user-defined type name" if ReservedWords::RESERVED.include?(name)
 
@@ -2242,20 +2237,21 @@ module Idl
     end
 
     # @!macro add_symbol
+    sig { override.params(symtab: SymbolTable).void }
     def add_symbol(symtab)
       internal_error "All Bitfields should be declared at global scope" unless symtab.levels == 1
 
       t = type(symtab)
-      internal_error "Type is nil" if t.nil?
 
       symtab.add!(name, t)
     end
 
     # @!macro type_no_args
+    sig { params(symtab: SymbolTable).returns(Type) }
     def type(symtab)
-      return @type unless @type.nil?
+      return @memo.type unless @memo.type.nil?
 
-      @type = BitfieldType.new(
+      @memo.type = BitfieldType.new(
         name,
         @size.value(symtab),
         element_names,
@@ -2264,9 +2260,11 @@ module Idl
     end
 
     # @return [String] bitfield name
+    sig { returns(String) }
     def name = @name.text_value
 
     # @!macro value_no_args
+    sig { params(_symtab: SymbolTable).returns(ValueRbType) }
     def value(_symtab) = raise AstNode::InternalError, "Bitfield definitions have no value"
 
     # @!macro to_idl
@@ -2289,7 +2287,7 @@ module Idl
       "source" => source_yaml
     }
 
-    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
+    sig { override.params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(AstNode) }
     def self.from_h(yaml, source_mapper)
       raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "bitfield_decl"
 
@@ -2297,8 +2295,8 @@ module Idl
       interval = interval_from_source_yaml(yaml.fetch("source"))
       BitfieldDefinitionAst.new(
         input, interval,
-        AstNode.from_h(yaml.fetch("name"), source_mapper),
-        AstNode.from_h(yaml.fetch("size"), source_mapper),
+        T.cast(AstNode.from_h(yaml.fetch("name"), source_mapper), T.any(BuiltinTypeNameAst, UserTypeNameAst)),
+        T.cast(AstNode.from_h(yaml.fetch("size"), source_mapper), IntLiteralAst),
         yaml.fetch("fields").map { |f| AstNode.from_h(f, source_mapper) }
       )
     end
@@ -6938,6 +6936,10 @@ module Idl
   #  * U64 (Bits<64>)
   class BuiltinTypeNameAst < AstNode
 
+    class Memo < T::Struct
+      prop :bits_type, T::Hash[SymbolTable, T.nilable(Type)], default: {}
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = (@type_name == "bits") ? bits_expression.const_eval?(symtab) : true
 
@@ -6950,6 +6952,7 @@ module Idl
         super(input, interval, [bits_expression])
       end
       @type_name = type_name
+      @memo = Memo.new
     end
 
     # @!macro type_check
@@ -6970,21 +6973,19 @@ module Idl
       end
     end
 
-    def freeze_tree(symtab)
-      return if frozen?
-
-      if @type_name == "Bits"
-        # precalculate size if possible
+    sig { params(symtab: SymbolTable).returns(Type) }
+    def bits_type(symtab)
+      @memo.bits_type[symtab] ||=
         begin
-          value_try do
-            @bits_type = Type.new(:bits, width: bits_expression.value(symtab))
+          t = T.let(nil, T.nilable(Type))
+          value_result = value_try do
+            t = Type.new(:bits, width: bits_expression.value(symtab))
           end
-        rescue TypeError
-          # ok, probably using a parameter
+          value_else(value_result) do
+            t = Type.new(:bits, width: :unknown, width_ast: bits_expression)
+          end
+          T.must(t)
         end
-        bits_expression&.freeze_tree(symtab)
-      end
-      freeze
     end
 
     # @!macro type
@@ -7008,14 +7009,7 @@ module Idl
       when "String"
         StringType
       when "Bits"
-        return @bits_type unless @bits_type.nil?
-
-        value_result = value_try do
-          return Type.new(:bits, width: bits_expression.value(symtab))
-        end
-        value_else(value_result) do
-          return Type.new(:bits, width: :unknown, width_ast: bits_expression)
-        end
+        bits_type(symtab)
       else
         internal_error "TODO: #{text_value}"
       end
@@ -7241,6 +7235,13 @@ module Idl
   class IntLiteralAst < AstNode
     include Rvalue
 
+    class Memo < T::Struct
+      prop :type, T.nilable(Type)
+      prop :width, T.nilable(T.any(Integer, Symbol))
+      prop :value, T.nilable(T.any(Integer, UnknownLiteral))
+      prop :unsigned_value, T.nilable(T.any(Integer, UnknownLiteral))
+    end
+
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
@@ -7248,18 +7249,10 @@ module Idl
     def initialize(input, interval, text)
       @text = text
       super(input, interval, EMPTY_ARRAY)
+      @memo = Memo.new
     end
 
     def text_value = @text
-
-    def freeze_tree(global_symtab)
-      return if frozen?
-
-      # initialize the cached objects
-      type(global_symtab)
-      value(global_symtab)
-      freeze
-    end
 
     # @!macro type_check
     def type_check(symtab, strict:)
@@ -7279,7 +7272,7 @@ module Idl
 
     # @!macro type
     def type(symtab)
-      return @type unless @type.nil?
+      return @memo.type unless @memo.type.nil?
 
       case text_value.delete("_")
       when /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
@@ -7295,7 +7288,7 @@ module Idl
 
         qualifiers = signed == "s" ? [:signed, :const] : [:const]
         qualifiers << :known unless T.must(value).include?("x")
-        @type =
+        @memo.type =
           if width == :unknown
             Type.new(:bits, width:, max_width: 64, qualifiers:)
           else
@@ -7306,20 +7299,20 @@ module Idl
         signed = ::Regexp.last_match(3)
 
         qualifiers = signed == "s" ? [:signed, :const, :known] : [:const, :known]
-        @type = Type.new(:bits, width: width(symtab), qualifiers:)
+        @memo.type = Type.new(:bits, width: width(symtab), qualifiers:)
       when /^([0-9]*)(s?)$/
         # basic decimal
         signed = ::Regexp.last_match(2)
 
         qualifiers = signed == "s" ? [:signed, :const, :known] : [:const, :known]
-        @type = Type.new(:bits, width: width(symtab), qualifiers:)
+        @memo.type = Type.new(:bits, width: width(symtab), qualifiers:)
       else
         internal_error "Unhandled int value '#{text_value}'"
       end
     end
 
     def width(symtab)
-      return @width unless @width.nil?
+      return @memo.width unless @memo.width.nil?
 
       text_value_no_underscores = text_value.delete("_")
 
@@ -7336,21 +7329,21 @@ module Idl
         else
           width = width.to_i
         end
-        @width = width
+        @memo.width = width
       when /^0([bdx]?)([0-9a-fA-F]*)(s?)$/
         signed = ::Regexp.last_match(3)
 
         width = signed == "s" ? value(symtab).bit_length + 1 : value(symtab).bit_length
         width = 1 if width.zero? # happens when the literal is '0'
 
-        @width = width
+        @memo.width = width
       when /^([0-9]*)(s?)$/
         signed = ::Regexp.last_match(3)
 
         width = signed == "s" ? value(symtab).bit_length + 1 : value(symtab).bit_length
         width = 1 if width.zero? # happens when the literal is '0'
 
-        @width = width
+        @memo.width = width
       else
         internal_error "No match on int literal"
       end
@@ -7358,7 +7351,7 @@ module Idl
 
     # @!macro value
     def value(symtab)
-      return @value unless @value.nil?
+      return @memo.value unless @memo.value.nil?
 
       if text_value.delete("_") =~ /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
         # verilog-style literal
@@ -7396,18 +7389,18 @@ module Idl
             end
           end
 
-        @value = v
+        @memo.value = v
       else
-        @value = unsigned_value
+        @memo.value = unsigned_value
       end
     end
 
 
     # @return [Integer] the unsigned value of this literal (i.e., treating it as unsigned even if the signed specifier is present)
     def unsigned_value
-      return @unsigned_value unless @unsigned_value.nil?
+      return @memo.unsigned_value unless @memo.unsigned_value.nil?
 
-      @unsigned_value =
+      @memo.unsigned_value =
         case text_value.delete("_")
         when /^((MXLEN)|([0-9]+))?'(s?)([bodh]?)(.*)$/
           # verilog-style literal
@@ -7486,15 +7479,6 @@ module Idl
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = text_value
-
-    sig { override.returns(String) }
-    def to_idl_verbose
-      if @width == :unknown
-        "MXLEN'#{@type.signed? ? 's' : ''}d#{unsigned_value}"
-      else
-        "#{@width}'#{@type.signed? ? 's' : ''}d#{unsigned_value}"
-      end
-    end
 
     sig { returns(T::Boolean) }
     def signed?
@@ -9282,15 +9266,6 @@ module Idl
 
       @csr_name = csr_name
       @memo = Memo.new
-    end
-
-    def freeze_tree(symtab)
-      return if frozen?
-
-      type_error "CSR '#{@csr_name}' is not defined" unless symtab.csr?(@csr_name)
-
-      @children.each { |child| child.freeze_tree(symtab) }
-      freeze
     end
 
     # @!macro type

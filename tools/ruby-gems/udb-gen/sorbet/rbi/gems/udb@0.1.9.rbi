@@ -268,6 +268,9 @@ class Udb::AbstractCondition
   sig { params(expand: T::Boolean).returns(T::Array[::Udb::ExtensionRequirement]) }
   def ext_req_terms(expand:); end
 
+  sig { abstract.params(cfg_arch: ::Udb::ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[::String]) }
+  def failing_conjuncts(cfg_arch, expand:); end
+
   sig { abstract.returns(T::Boolean) }
   def has_extension_requirement?; end
 
@@ -464,6 +467,9 @@ class Udb::AlwaysFalseCondition < ::Udb::AbstractCondition
   sig { override.returns(T::Boolean) }
   def empty?; end
 
+  sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[::String]) }
+  def failing_conjuncts(cfg_arch, expand: T.unsafe(nil)); end
+
   sig { override.returns(T::Boolean) }
   def has_extension_requirement?; end
 
@@ -567,6 +573,9 @@ class Udb::AlwaysTrueCondition < ::Udb::AbstractCondition
 
   sig { override.returns(T::Boolean) }
   def empty?; end
+
+  sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[::String]) }
+  def failing_conjuncts(cfg_arch, expand: T.unsafe(nil)); end
 
   sig { override.returns(T::Boolean) }
   def has_extension_requirement?; end
@@ -765,6 +774,9 @@ class Udb::Condition < ::Udb::AbstractCondition
 
   sig { params(tree: ::Udb::LogicNode, expansion_clauses: T::Array[::Udb::LogicNode]).void }
   def expand_to_enforce_single_ext_ver(tree, expansion_clauses); end
+
+  sig { override.params(cfg_arch: ::Udb::ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[::String]) }
+  def failing_conjuncts(cfg_arch, expand: T.unsafe(nil)); end
 
   sig { override.returns(T::Boolean) }
   def has_extension_requirement?; end
@@ -2912,6 +2924,13 @@ class Udb::LogicNode
   end
   def eval_cb(callback); end
 
+  sig do
+    params(
+      eval_cb: T.proc.params(arg0: T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)).returns(::Udb::SatisfiedResult)
+    ).returns(T::Array[::Udb::LogicNode])
+  end
+  def failing_conjuncts(eval_cb); end
+
   sig { params(dimacs: ::String).returns(::Udb::LogicNode) }
   def from_dimacs(dimacs); end
 
@@ -3471,7 +3490,7 @@ class Udb::ParameterTerm
   sig { returns(::Udb::ParameterTerm::ParameterComparisonType) }
   def comparison_type; end
 
-  sig { returns(T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String)], T::Boolean)) }
+  sig { returns(T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String, T::Boolean)], T::Boolean)) }
   def comparison_value; end
 
   sig { override.params(other: T.untyped).returns(T::Boolean) }
@@ -3556,7 +3575,7 @@ class Udb::ParameterTerm::ParameterComparisonType < ::T::Enum
   end
 end
 
-Udb::ParameterTerm::ValueType = T.type_alias { T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String)], T::Boolean) }
+Udb::ParameterTerm::ValueType = T.type_alias { T.any(::Integer, ::String, T::Array[T.any(::Integer, ::String, T::Boolean)], T::Boolean) }
 
 class Udb::ParameterWithValue
   include ::Idl::RuntimeParam

@@ -30,3 +30,33 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  check_f_ok($encoding);
+
+  Bits<32> sp_value_a = f[fs1][31:0];
+  Bits<32> sp_value_b = f[fs2][31:0];
+
+  if (is_sp_nan?(sp_value_a) || is_sp_nan?(sp_value_b)) {
+    # Quiet comparison: only set NV for signaling NaN
+    if (is_sp_signaling_nan?(sp_value_a) || is_sp_signaling_nan?(sp_value_b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    X[xd] = 0;
+  } else {
+    Boolean sign_a = sp_value_a[31] == 1;
+    Boolean sign_b = sp_value_b[31] == 1;
+
+    # Check equality first (including -0.0 == +0.0)
+    Boolean a_eq_b =
+      (sp_value_a == sp_value_b)
+      || ((sp_value_a | sp_value_b)[30:0] == 0);
+
+    # Check a < b
+    Boolean a_lt_b;
+    if (sign_a != sign_b) {
+      a_lt_b = sign_a && ((sp_value_a[30:0] | sp_value_b[30:0]) != 0);
+    } else {
+      a_lt_b = (sp_value_a != sp_value_b) && (sign_a != (sp_value_a < sp_value_b));
+    }
+
+    X[xd] = (a_lt_b || a_eq_b) ? 1 : 0;
+  }

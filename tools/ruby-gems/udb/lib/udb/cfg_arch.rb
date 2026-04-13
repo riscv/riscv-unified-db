@@ -287,7 +287,12 @@ module Udb
 
       explicitly_implemented_extension_versions.each do |ext_ver|
         unless ext_ver.requirements_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
-          reasons << "Extension requirement is unmet: #{ext_ver}. Needs: #{ext_ver.requirements_condition.minimize(expand: true).to_s_with_value(self, expand: false)}"
+          failing = ext_ver.requirements_condition.failing_conjuncts(self, expand: false)
+          reasons << "Extension requirement is unmet: #{ext_ver}. " + if failing.empty?
+            "Condition not yet determined: #{ext_ver.requirements_condition.to_s_with_value(self, expand: false)}"
+          else
+            "Failing condition(s):\n" + failing.map { |f| "  - #{f}" }.join("\n")
+          end
         end
       end
 
@@ -295,15 +300,25 @@ module Udb
       config.param_values.each do |param_name, param_value|
         p = T.must(param(param_name))
         unless p.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
+          failing = p.defined_by_condition.failing_conjuncts(self, expand: false)
           reasons << [
             "Parameter is not defined by this config: '#{param_name}'.",
-            "Needs: #{p.defined_by_condition.minimize(expand: true).to_s_with_value(self, expand: false)}"
+            if failing.empty?
+              "Condition not yet determined: #{p.defined_by_condition.to_s_with_value(self, expand: false)}"
+            else
+              "Failing condition(s):\n" + failing.map { |f| "  - #{f}" }.join("\n")
+            end
           ].join("\n")
         end
         unless p.requirements_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
+          failing = p.requirements_condition.failing_conjuncts(self, expand: false)
           reasons << [
             "Parameter requirements not met: '#{param_name}'.",
-            "Needs: #{p.requirements_condition.minimize(expand: true).to_s_with_value(self, expand: false)}"
+            if failing.empty?
+              "Condition not yet determined: #{p.requirements_condition.to_s_with_value(self, expand: false)}"
+            else
+              "Failing condition(s):\n" + failing.map { |f| "  - #{f}" }.join("\n")
+            end
           ].join("\n")
         end
       end
@@ -357,7 +372,12 @@ module Udb
       reasons = []
       mandatory_extension_reqs.each do |ext_req|
         if ext_req.requirements_condition.satisfied_by_cfg_arch?(self) != SatisfiedResult::Yes
-          reasons << "Requirement of #{ext_req} are not met: #{ext_req.requirements_condition.to_s_with_value(self, expand: false)}"
+          failing = ext_req.requirements_condition.failing_conjuncts(self, expand: false)
+          reasons << "Requirement of #{ext_req} are not met:\n" + if failing.empty?
+            "  Condition not yet determined: #{ext_req.requirements_condition.to_s_with_value(self, expand: false)}"
+          else
+            failing.map { |f| "  - #{f}" }.join("\n")
+          end
         end
       end
 
@@ -414,11 +434,27 @@ module Udb
         # check that parameter is defined by the partial config (e.g., is defined by a mandatory
         # extension and/or other param value).
         unless p.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
-          reasons << "Parameter is not defined by this config: '#{param_name}'. Needs #{p.defined_by_condition}"
+          failing = p.defined_by_condition.failing_conjuncts(self, expand: false)
+          reasons << [
+            "Parameter is not defined by this config: '#{param_name}'.",
+            if failing.empty?
+              "Condition not yet determined: #{p.defined_by_condition.to_s_with_value(self, expand: false)}"
+            else
+              "Failing condition(s):\n" + failing.map { |f| "  - #{f}" }.join("\n")
+            end
+          ].join("\n")
         end
 
         if p.requirements_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::No
-          reasons << "Parameter requirements cannot be met: '#{param_name}'. Needs: #{p.requirements_condition}"
+          failing = p.requirements_condition.failing_conjuncts(self, expand: false)
+          reasons << [
+            "Parameter requirements cannot be met: '#{param_name}'.",
+            if failing.empty?
+              "Condition not yet determined: #{p.requirements_condition.to_s_with_value(self, expand: false)}"
+            else
+              "Failing condition(s):\n" + failing.map { |f| "  - #{f}" }.join("\n")
+            end
+          ].join("\n")
         end
       end
 
