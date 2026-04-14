@@ -309,11 +309,11 @@ do_lock_all_gemfiles() {
   # Note: `bundle lock` (not `bundle exec bundle lock`) is used deliberately —
   # `bundle exec` requires an existing lockfile to activate the bundle first,
   # which breaks when lockfiles are missing or being regenerated from scratch.
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
 }
 
 #
@@ -362,8 +362,8 @@ do_gen_smoke() {
 do_gen_xqci_golden() {
   echo "Generating Xqci golden adoc"
   local xqci_version
-  xqci_version=$(bundle exec ruby -e "require 'yaml'; puts YAML.load_file('spec/custom/isa/qc_iu/ext/Xqci.yaml')['versions'].last['version']" | tr -d '\r\n')
-  bundle exec ruby tools/scripts/gen_xqci.rb
+  xqci_version=$("${UDB_ROOT}"/bin/bundle exec ruby -e "require 'yaml'; puts YAML.load_file('spec/custom/isa/qc_iu/ext/Xqci.yaml')['versions'].last['version']" | tr -d '\r\n')
+  "${UDB_ROOT}"/bin/bundle exec ruby tools/scripts/gen_xqci.rb
   mkdir -p tests/data/golden
   # Remove any stale golden files from previous versions
   rm -f tests/data/golden/Xqci@*.adoc
@@ -379,15 +379,15 @@ do_gen_xqci_golden() {
 # Returns: 0 on success, exits with 1 on error
 #
 do_install_gems() {
-  bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
-  bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
-  bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
-  bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
-  bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile
+  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
+  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
+  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
+  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
+  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile
 
   do_lock_all_gemfiles
 
-  bundle install
+  "${UDB_ROOT}"/bin/bundle install
   do_ruby_type_def idlc
   do_ruby_type_def udb
   do_ruby_type_def udb-gen
@@ -430,8 +430,8 @@ do_ruby_type_def() {
     gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
     steps=$(cat << STEPS
       cd ${UDB_ROOT}/tools/ruby-gems/${gem} && \
-      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca gems --all && \
-      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca dsl
+      BUNDLE_GEMFILE=${gem_gemfile} "${UDB_ROOT}"/bin/bundle exec tapioca gems --all && \
+      BUNDLE_GEMFILE=${gem_gemfile} "${UDB_ROOT}"/bin/bundle exec tapioca dsl
 STEPS
     )
     $RUN_NO_TTY /bin/bash -c "$steps" &
@@ -447,7 +447,7 @@ STEPS
   # Run tapioca annotations sequentially to avoid races on the shared gem cache.
   for gem in "${gems[@]}"; do
     gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
-    $RUN_NO_TTY /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca annotations" || exit $?
+    $RUN_NO_TTY /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && BUNDLE_GEMFILE=${gem_gemfile} ${UDB_ROOT}/bin/bundle exec tapioca annotations" || exit $?
   done
 }
 
