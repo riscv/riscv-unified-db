@@ -196,13 +196,12 @@ update_z3_usage() {
 }
 
 update_gems_usage() {
-  echo "Usage: chore update gems [-ht]"
+  echo "Usage: chore update gems [-h]"
   echo ""
   echo ""
   echo "Options:"
   echo ""
   echo "  -h:      Print help"
-  echo "  -t:      Do not increment the container tag"
   echo ""
 }
 
@@ -713,16 +712,12 @@ case "$subcommand" in
     target="$1"; shift
     case "$target" in
       gems )
-          update_tag=yes
-          while getopts ":ht" opt; do # Go through the options
+          while getopts ":h" opt; do # Go through the options
             case $opt in
               # help
               h )
                 update_gems_usage
                 exit 0 # Exit correctly
-              ;;
-              t )
-                update_tag=no
               ;;
               # Invalid option
               ? )
@@ -732,7 +727,7 @@ case "$subcommand" in
               ;;
             esac
           done
-        do_update_gems "$update_tag"
+        do_update_gems
         exit 0
       ;;
       eqntott )
