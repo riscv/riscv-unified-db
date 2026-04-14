@@ -36,6 +36,16 @@ message("* Current build type is : ${CMAKE_BUILD_TYPE}")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -no-pie)
 
+if(NOT DEFINED UDB_ROOT OR UDB_ROOT STREQUAL "")
+  get_filename_component(UDB_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+endif()
+
+set(UDB_CHECK_CXX_CMAKE "${UDB_ROOT}/.toolchain/check_cxx.cmake")
+if(NOT EXISTS "${UDB_CHECK_CXX_CMAKE}")
+  message(FATAL_ERROR
+    "Unable to locate '${UDB_CHECK_CXX_CMAKE}'. "
+    "Set UDB_ROOT to the repository root or configure from the expected source tree.")
+endif()
 # Check C++ compiler requirements (C++23 + concepts) — single source of truth in check_cxx.cmake
 include(${UDB_ROOT}/.toolchain/check_cxx.cmake)
 
