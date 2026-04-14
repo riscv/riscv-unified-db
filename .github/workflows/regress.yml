@@ -44,6 +44,8 @@ jobs:
     - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       with:
         submodules: 'true'
+    - name: Set up mise environment
+      uses: "./.github/actions/mise-setup"
     - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037
   regress-llvm:
     runs-on: ubuntu-latest
