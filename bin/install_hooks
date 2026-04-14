@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# bin/install_hooks — install git hooks for this repository.
+# Safe to run multiple times; skips hooks that are already installed.
+# Skipped automatically in CI (GITHUB_ACTIONS) and devcontainer (IN_UDB_CONTAINER).
+
+if [[ -v GITHUB_ACTIONS ]] || [[ -v IN_UDB_CONTAINER ]]; then
+  exit 0
+fi
+
+ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+GIT_HOOKS_DIR=$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir | tr -d '\n')/hooks
+mkdir -p "$GIT_HOOKS_DIR"
+
+# ---------------------------------------------------------------------------
+# pre-commit — runs prek (pre-commit framework) on staged files
+# ---------------------------------------------------------------------------
+if [[ ! -f "$GIT_HOOKS_DIR/pre-commit" ]]; then
+  "$ROOT/bin/prek" install
+  echo "Installed pre-commit hook"
+fi
+
+# ---------------------------------------------------------------------------
+# post-merge — runs mise install if .mise.toml changed in the merge
+# ---------------------------------------------------------------------------
+if [[ ! -f "$GIT_HOOKS_DIR/post-merge" ]]; then
+  cat << 'HOOK' > "$GIT_HOOKS_DIR/post-merge"
+#!/usr/bin/env bash
+# Run mise install if .mise.toml changed in this merge
+if git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD 2>/dev/null | grep -qF '.mise.toml'; then
+  echo "⚙  .mise.toml changed — running mise install..."
+  mise install
+fi
+HOOK
+  chmod +x "$GIT_HOOKS_DIR/post-merge"
+  echo "Installed post-merge hook"
+fi
+
+# ---------------------------------------------------------------------------
+# post-checkout — runs mise install if .mise.toml changed on branch switch
+# ---------------------------------------------------------------------------
+if [[ ! -f "$GIT_HOOKS_DIR/post-checkout" ]]; then
+  cat << 'HOOK' > "$GIT_HOOKS_DIR/post-checkout"
+#!/usr/bin/env bash
+# $1=prev HEAD, $2=new HEAD, $3=1 if branch checkout (0 if file checkout)
+if [[ "$3" == "1" ]] && git diff --name-only "$1" "$2" 2>/dev/null | grep -qF '.mise.toml'; then
+  echo "⚙  .mise.toml changed — running mise install..."
+  mise install
+fi
+HOOK
+  chmod +x "$GIT_HOOKS_DIR/post-checkout"
+  echo "Installed post-checkout hook"
+fi

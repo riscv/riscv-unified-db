@@ -1,77 +1,61 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # Helper functions for bin/chore
-# This file contains shared utility functions used across chore subcommands
 
 #
-# Setup container environment variables
-# Sets: CONTAINER_TAG, REGISTRY, OWNER, CONTAINER_TYPE
-# Returns: 0 on success, 1 on error
+# Get container runtime (docker or podman)
+# Prefers docker; falls back to podman; respects DOCKER/PODMAN env vars
+# Returns: "docker", "podman", or "" (if neither found)
 #
-setup_container_vars() {
-  # Get necessary variables without triggering automatic container build
-  CONTAINER_TAG=$(cat "${UDB_ROOT}/bin/.container-tag")
-  REGISTRY=${REGISTRY:="ghcr.io"}
-  if [ "$REGISTRY" == "ghcr.io" ]; then
-    OWNER=riscv
-  elif [ "$REGISTRY" == "docker.io" ]; then
-    OWNER=riscvintl
+get_container_runtime() {
+  if [ -v DOCKER ] || command -v docker &>/dev/null; then
+    echo "docker"
+  elif [ -v PODMAN ] || command -v podman &>/dev/null; then
+    echo "podman"
   else
-    echo "Bad registry: ${REGISTRY}" 1>&2
-    return 1
+    echo ""
   fi
-
-  # shellcheck source=.functions.sh
-  source "${UDB_ROOT}/bin/.functions.sh"
-
-  CONTAINER_TYPE=$(get_container_type)
-
-  if [ "${CONTAINER_TYPE}" != "docker" ] && [ "${CONTAINER_TYPE}" != "podman" ]; then
-    echo "Error: Container operations only work with docker or podman, not ${CONTAINER_TYPE}" 1>&2
-    return 1
-  fi
-
-  echo "Using ${CONTAINER_TYPE} environment"
-  return 0
 }
 
 #
-# Check if a container image exists locally
-# Args: None (uses CONTAINER_TYPE, REGISTRY, OWNER, CONTAINER_TAG from environment)
-# Returns: 0 if exists, 1 if not
+# Compute devcontainer image tag as first 16 chars of SHA256 of all devcontainer-affecting files
+# Returns: 16-char hex string
 #
-container_exists() {
-  ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" --format table | grep -q udb
+compute_devcontainer_hash() {
+  local files=()
+  files+=(
+    "${UDB_ROOT}/.devcontainer/Dockerfile"
+    "${UDB_ROOT}/.mise.toml"
+    "${UDB_ROOT}/pyproject.toml"
+    "${UDB_ROOT}/uv.lock"
+    "${UDB_ROOT}/package.json"
+    "${UDB_ROOT}/package-lock.json"
+    "${UDB_ROOT}/Gemfile"
+    "${UDB_ROOT}/Gemfile.lock"
+  )
+  # Add per-gem files
+  for gem_dir in "${UDB_ROOT}"/tools/ruby-gems/*/; do
+    local gem_name
+    gem_name=$(basename "$gem_dir")
+    [ -f "${gem_dir}/Gemfile" ]      && files+=("${gem_dir}/Gemfile")
+    [ -f "${gem_dir}/Gemfile.lock" ] && files+=("${gem_dir}/Gemfile.lock")
+    # gemspec: named after the gem directory
+    [ -f "${gem_dir}/${gem_name}.gemspec" ] && files+=("${gem_dir}/${gem_name}.gemspec")
+    # version.rb files
+    for vf in "${gem_dir}"/lib/*/version.rb; do
+      [ -f "$vf" ] && files+=("$vf")
+    done
+  done
+  sha256sum "${files[@]}" | sha256sum | cut -c1-16
 }
 
 #
-# Increment a semantic version's minor number
-# Args: $1 - version string (e.g., "1.2")
-# Returns: incremented version (e.g., "1.3")
+# Compute toolchain container image tag as first 16 chars of SHA256 of .toolchain/Dockerfile
+# Returns: 16-char hex string
 #
-increment_minor_version() {
-  local version=$1
-  # Set Internal Field Separator to '.'
-  IFS='.' read -r major minor <<<"$version"
-
-  # Increment the minor version number using arithmetic expansion
-  ((minor++))
-
-  # Re-assemble the version string
-  local new_version="${major}.${minor}"
-  echo "$new_version"
-}
-
-#
-# Source bin/setup if not already sourced
-# Sets: SETUP_SOURCED environment variable
-#
-source_setup() {
-  if [ -z "$SETUP_SOURCED" ]; then
-    export SETUP_SOURCED=1
-    source "$UDB_ROOT"/bin/setup
-  fi
+compute_toolchain_hash() {
+  sha256sum "${UDB_ROOT}/.toolchain/Dockerfile" | cut -c1-16
 }

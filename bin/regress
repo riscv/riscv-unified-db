@@ -1,6 +1,3 @@
 #!/bin/bash
-
-ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
-source "$ROOT"/setup
-
-$RUBY "${ROOT}/tools/test/regress-cli.rb" "$@"
+ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+exec bundle exec ruby "${ROOT}/tools/test/regress-cli.rb" "$@"

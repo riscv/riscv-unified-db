@@ -113,13 +113,6 @@ RUN bundle install --gemfile /opt/Gemfile --jobs $(nproc) \
     && chmod -R a+rwX /usr/local/bundle \
     && rm -f /usr/local/bundle/bin/bundle
 
-# the binaries for gems need to be copied in
-RUN mkdir -p /workspace/bin/container
-COPY tools/ruby-gems/idlc/bin/idlc /workspace/bin/container
-COPY tools/ruby-gems/udb/bin/udb /workspace/bin/container
-COPY tools/ruby-gems/udb-gen/bin/udb-gen /workspace/bin/container
-ENV PATH="/workspace/bin/container:$PATH"
-
 # Grant the default ubuntu user sudo access
 RUN echo ubuntu ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu

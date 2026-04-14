@@ -54,13 +54,48 @@ Additionally, developers will be interested in the following:
 
 * `backends`: Tools to generate artifacts (documents, simulators, etc.) from UDB data
 * `tools/ruby-gems`: Ruby gem libraries for interacting with UDB / IDL
-* `bin`: Wrapper scripts to run commands within the container environment
+* `bin`: Wrapper scripts to run commands in the development environment
 
 == Getting Started
 
 === Prerequisites
 
-UnifiedDB tools are set up to run in a container. Docker (any version) and Podman (any version) are supported.
+UnifiedDB tools can run natively on your machine using https://mise.jdx.dev[mise] (recommended),
+or inside a container using Docker or Podman.
+
+=== Native Setup (mise)
+
+https://mise.jdx.dev[mise] manages all tool versions (Ruby, Python, Node.js, CMake, etc.) needed
+to work on UnifiedDB.
+
+. Install mise: https://mise.jdx.dev/getting-started.html
+. It is *strongly* recommended to activate mise in your shell profile (`.bashrc`, `.zshrc`, etc.)
+  so that mise-managed tools are available in your `PATH`:
++
+[source,bash]
+----
+echo 'eval "$(mise activate bash)"' >> ~/.bashrc  # or ~/.zshrc for zsh
+----
++
+See the https://mise.jdx.dev/getting-started.html#activate-mise[mise activation docs] for other shells.
+. From the repo root, install all tools:
++
+[source,bash]
+----
+mise install
+----
+. Install git hooks (pre-commit linting via `prek`; auto-runs `mise install` on merge/checkout when `.mise.toml` changes):
++
+[source,bash]
+----
+bin/install_hooks
+----
+. Verify your environment:
++
+[source,bash]
+----
+bin/doctor
+----
 
 === Devcontainer
 

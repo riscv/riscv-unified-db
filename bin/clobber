@@ -1,11 +1,15 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 
 rm -rf                   \
   "${ROOT}"/.stamps      \
   "${ROOT}"/.home        \
+<<<<<<< HEAD
   "${ROOT}"/.docker-home \
+=======
+  "${ROOT}"/.bundle      \
+>>>>>>> 250944d5 (feat: execute plan plan-01)
   "${ROOT}"/.cache       \
   "${ROOT}"/gen          \
   "${ROOT}"/sorbet       \

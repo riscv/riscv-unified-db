@@ -46,7 +46,7 @@ tests:
       - smoke
     test:
       - name: Run sorbet checks
-        run: export XDG_CACHE_HOME=${{ github.workspace }}/.cache && ./do test:sorbet
+        run: ./do test:sorbet
 
   regress-ext-explorer:
     ci_stage: pr
@@ -155,8 +155,6 @@ tests:
       - name: Run udb gem ${{ matrix.test }} unit tests
         run: ./bin/ruby tools/ruby-gems/udb/test/test_${{ matrix.test }}.rb
     gh_post:
-      - name: Update ownership of coverage files # TODO: Remove when Docker image uses non-root user
-        run: sudo chown -R $USER:$USER tools/ruby-gems/udb/coverage
       - name: Rename coverage file
         run: mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
       - name: Save coverage report
@@ -185,6 +183,7 @@ tests:
 
   regress-cpp-unit:
     ci_stage: pr
+    toolchain_container: true
     tags:
       - unit
     test:
@@ -193,6 +192,7 @@ tests:
 
   regress-riscv-tests-32:
     ci_stage: pr
+    toolchain_container: true
     gh_pre:
       - name: check out riscv-tests
         run: git submodule update --init ext/riscv-tests
@@ -202,6 +202,7 @@ tests:
 
   regress-riscv-tests-64:
     ci_stage: pr
+    toolchain_container: true
     gh_pre:
       - name: check out riscv-tests
         run: git submodule update --init ext/riscv-tests
