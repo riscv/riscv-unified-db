@@ -11,6 +11,11 @@ runs:
   using: composite
   steps:
     - uses: jdx/mise-action@v2
+    - name: Cache udb native deps (z3, espresso, eqntott, must)
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/udb
+        key: udb-deps-${{ runner.os }}-${{ hashFiles('tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
     - name: Cache bundler gems
       uses: actions/cache@v4
       with:
