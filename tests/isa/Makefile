@@ -76,7 +76,7 @@ all: $(tests_dump) riscv_tests
 #------------------------------------------------------------
 # riscv-tests targets
 riscv_tests:
-	env PATH="$(dir $(RISCV_GCC)):$$PATH" $(MAKE) -C $(riscv_tests_dir)/isa XLEN=$(XLEN) RISCV_PREFIX=$(RISCV_PREFIX) RISCV_GCC=$(RISCV_GCC) RISCV_GCC_OPTS='$(RISCV_GCC_OPTS)'
+	$(MAKE) -C $(riscv_tests_dir)/isa XLEN=$(XLEN) RISCV_PREFIX=$(RISCV_PREFIX) RISCV_GCC=$(RISCV_GCC) RISCV_GCC_OPTS='$(RISCV_GCC_OPTS)'
 
 #------------------------------------------------------------
 # Clean up
