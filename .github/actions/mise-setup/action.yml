@@ -20,7 +20,7 @@ runs:
       uses: actions/cache@v4
       with:
         path: vendor/bundle
-        key: bundler-${{ runner.os }}-${{ hashFiles('Gemfile.lock', 'tools/ruby-gems/*/Gemfile.lock') }}
+        key: bundler-${{ runner.os }}-${{ hashFiles('Gemfile.lock', 'tools/ruby-gems/*/Gemfile.lock', 'tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
     - name: Set bundler PATH
       shell: bash
       run: bundle config set --local path 'vendor/bundle'
