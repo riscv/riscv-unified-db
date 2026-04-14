@@ -20,33 +20,68 @@ if [[ ! -f "$GIT_HOOKS_DIR/pre-commit" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# post-merge — runs mise install if .mise.toml changed in the merge
+# post-merge — runs install commands for any dependency files that changed
 # ---------------------------------------------------------------------------
-if [[ ! -f "$GIT_HOOKS_DIR/post-merge" ]]; then
-  cat << 'HOOK' > "$GIT_HOOKS_DIR/post-merge"
+cat << 'HOOK' > "$GIT_HOOKS_DIR/post-merge"
 #!/usr/bin/env bash
-# Run mise install if .mise.toml changed in this merge
-if git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD 2>/dev/null | grep -qF '.mise.toml'; then
+ROOT=$(git rev-parse --show-toplevel)
+_changed=$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD 2>/dev/null)
+
+if echo "$_changed" | grep -qF '.mise.toml'; then
   echo "⚙  .mise.toml changed — running mise install..."
   mise install
-fi
-HOOK
-  chmod +x "$GIT_HOOKS_DIR/post-merge"
-  echo "Installed post-merge hook"
 fi
 
+if echo "$_changed" | grep -qF 'Gemfile.lock'; then
+  echo "⚙  Gemfile.lock changed — running bundle install..."
+  "$ROOT/bin/bundle" install
+fi
+
+if echo "$_changed" | grep -qF 'uv.lock'; then
+  echo "⚙  uv.lock changed — running uv sync..."
+  "$ROOT/bin/uv" sync
+fi
+
+if echo "$_changed" | grep -qF 'package-lock.json'; then
+  echo "⚙  package-lock.json changed — running npm install..."
+  "$ROOT/bin/npm" install
+fi
+HOOK
+chmod +x "$GIT_HOOKS_DIR/post-merge"
+echo "Installed post-merge hook"
+
 # ---------------------------------------------------------------------------
-# post-checkout — runs mise install if .mise.toml changed on branch switch
+# post-checkout — runs install commands for any dependency files that changed
 # ---------------------------------------------------------------------------
-if [[ ! -f "$GIT_HOOKS_DIR/post-checkout" ]]; then
-  cat << 'HOOK' > "$GIT_HOOKS_DIR/post-checkout"
+cat << 'HOOK' > "$GIT_HOOKS_DIR/post-checkout"
 #!/usr/bin/env bash
 # $1=prev HEAD, $2=new HEAD, $3=1 if branch checkout (0 if file checkout)
-if [[ "$3" == "1" ]] && git diff --name-only "$1" "$2" 2>/dev/null | grep -qF '.mise.toml'; then
+# Skip file checkouts and new worktree creation (prev HEAD is null SHA)
+[[ "$3" == "1" ]] || exit 0
+[[ "$1" == "0000000000000000000000000000000000000000" ]] && exit 0
+
+ROOT=$(git rev-parse --show-toplevel)
+_changed=$(git diff --name-only "$1" "$2" 2>/dev/null)
+
+if echo "$_changed" | grep -qF '.mise.toml'; then
   echo "⚙  .mise.toml changed — running mise install..."
   mise install
 fi
-HOOK
-  chmod +x "$GIT_HOOKS_DIR/post-checkout"
-  echo "Installed post-checkout hook"
+
+if echo "$_changed" | grep -qF 'Gemfile.lock'; then
+  echo "⚙  Gemfile.lock changed — running bundle install..."
+  "$ROOT/bin/bundle" install
 fi
+
+if echo "$_changed" | grep -qF 'uv.lock'; then
+  echo "⚙  uv.lock changed — running uv sync..."
+  "$ROOT/bin/uv" sync
+fi
+
+if echo "$_changed" | grep -qF 'package-lock.json'; then
+  echo "⚙  package-lock.json changed — running npm install..."
+  "$ROOT/bin/npm" install
+fi
+HOOK
+chmod +x "$GIT_HOOKS_DIR/post-checkout"
+echo "Installed post-checkout hook"
