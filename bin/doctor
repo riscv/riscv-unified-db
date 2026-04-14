@@ -35,6 +35,19 @@ _section() {
   printf "\n"
 }
 
+_check_native_binary() {
+  local name="$1" bin_path="$2"
+  if [[ -f "$bin_path" ]]; then
+    _pass "$name binary available"
+    _record_pass
+  else
+    _fail "$name binary not downloaded"
+    _info "Expected: $bin_path"
+    _info "Fix: run \`bin/setup\` to download native dependencies"
+    _record_fail
+  fi
+}
+
 # ---------------------------------------------------------------------------
 # Counters
 # ---------------------------------------------------------------------------
@@ -229,15 +242,15 @@ _check_developer_setup() {
     fi
   fi
 
-  # Z3 library (skip if gems failed — would produce a confusing cascading error)
+  # Native dependencies (z3, espresso, eqntott, must) — downloaded by bin/setup via extconf.rb
   if [[ -n "${_GEMS_FAILED:-}" ]]; then
-    _warn "Z3 check skipped (Ruby gems not installed)"
+    _warn "Native deps check skipped (Ruby gems not installed)"
     _record_warn
     return
   fi
 
   if [[ -n "${_MISE_MISSING:-}" ]]; then
-    _warn "Z3 check skipped (mise not installed)"
+    _warn "Native deps check skipped (mise not installed)"
     _record_warn
     return
   fi
@@ -245,27 +258,64 @@ _check_developer_setup() {
   local ruby_bin
   ruby_bin=$(mise which ruby 2>/dev/null)
   if [[ -z "$ruby_bin" ]]; then
-    _warn "Z3 check skipped (ruby not installed via mise)"
+    _warn "Native deps check skipped (ruby not installed via mise)"
     _record_warn
     return
   fi
 
-  printf "     ${_C_DIM}Checking Z3 library (may download on first run)...${_C_RESET}\n"
-  local z3_output z3_exit
-  z3_output=$(
-    BUNDLE_GEMFILE="$ROOT/tools/ruby-gems/udb/Gemfile" \
-      "$ruby_bin" -r udb -e "Udb::Z3Loader.ensure_z3_loaded" 2>&1
-  )
-  z3_exit=$?
+  local cpu
+  case "$(uname -m)" in
+    x86_64|x64) cpu="x64" ;;
+    arm64|aarch64) cpu="arm64" ;;
+    *) cpu="$(uname -m)" ;;
+  esac
 
-  if [[ $z3_exit -eq 0 ]]; then
-    _pass "Z3 library available"
-    _record_pass
+  local xdg_cache="${XDG_CACHE_HOME:-$HOME/.cache}"
+
+  local espresso_version
+  espresso_version=$(tr -d '[:space:]' < "$ROOT/tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION")
+  _check_native_binary "espresso" "$xdg_cache/udb/espresso/$espresso_version/$cpu/espresso"
+
+  local eqntott_version
+  eqntott_version=$(tr -d '[:space:]' < "$ROOT/tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION")
+  _check_native_binary "eqntott" "$xdg_cache/udb/eqntott/$eqntott_version/$cpu/eqntott"
+
+  local must_version
+  must_version=$(tr -d '[:space:]' < "$ROOT/tools/ruby-gems/udb/lib/udb/MUST_VERSION")
+  _check_native_binary "must" "$xdg_cache/udb/must/$must_version/$cpu/must"
+
+  local z3_version
+  z3_version=$(tr -d '[:space:]' < "$ROOT/tools/ruby-gems/udb/lib/udb/Z3_VERSION")
+  local z3_dir="$xdg_cache/udb/z3/$z3_version/$cpu"
+
+  local z3_lib
+  case "$(uname -s)" in
+    Darwin) z3_lib="$z3_dir/libz3.dylib" ;;
+    *)      z3_lib="$z3_dir/libz3.so" ;;
+  esac
+
+  if [[ ! -f "$z3_lib" ]]; then
+    _fail "Z3 library not downloaded"
+    _info "Expected: $z3_lib"
+    _info "Fix: run \`bin/setup\` to download native dependencies"
+    _record_fail
   else
-    _warn "Z3 library check failed"
-    _info "Output: $z3_output"
-    _info "Fix: check network connectivity or run \`bin/udb --version\` manually"
-    _record_warn
+    local z3_output z3_exit
+    z3_output=$(
+      BUNDLE_GEMFILE="$ROOT/tools/ruby-gems/udb/Gemfile" \
+        "$ruby_bin" -r udb -e "Udb::Z3Loader.ensure_z3_loaded" 2>&1
+    )
+    z3_exit=$?
+
+    if [[ $z3_exit -eq 0 ]]; then
+      _pass "Z3 library available"
+      _record_pass
+    else
+      _warn "Z3 library present but failed to load"
+      _info "Output: $z3_output"
+      _info "Fix: run \`bin/setup\` to re-download native dependencies"
+      _record_warn
+    fi
   fi
 }
 
