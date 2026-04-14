@@ -718,6 +718,15 @@ namespace :test do
     Udb.logger.warn "Running regression through do/Rake has been deprecated"
     Udb.logger.warn "Try `./bin/regress --all` instead"
   end
+
+  namespace :scripts do
+    desc "Run unit tests for tools/scripts"
+    task :unit do
+      Dir.chdir($root) do
+        sh "#{$root}/bin/ruby -Itools/scripts tools/scripts/test/run.rb"
+      end
+    end
+  end
 end
 
 desc <<~DESC

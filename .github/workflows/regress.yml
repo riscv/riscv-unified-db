@@ -348,6 +348,21 @@ jobs:
         gem install udb.gem
     - name: try z3
       run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
+  regress-scripts-unit:
+    runs-on: ubuntu-latest
+    needs: build-container
+    steps:
+    - name: Clone Github Repo Action
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Download docker image
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      with:
+        name: docker_image
+        path: "${{ runner.temp }}"
+    - name: Load image
+      run: docker load --input ${{ runner.temp }}/docker_image.tar
+    - name: Run tools/scripts unit tests
+      run: "./bin/ruby -Itools/scripts tools/scripts/test/run.rb"
   regress-idlc-unit:
     runs-on: ubuntu-latest
     needs: build-container
@@ -415,7 +430,27 @@ jobs:
       run: docker load --input ${{ runner.temp }}/docker_image.tar
     - name: Generate ISA Explorer browser artifacts
       run: "./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer --skip 6"
-  regress-idl-typecheck:
+  regress-idl-typecheck-smoke:
+    runs-on: ubuntu-latest
+    needs: build-container
+    steps:
+    - name: Clone Github Repo Action
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Download docker image
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      with:
+        name: docker_image
+        path: "${{ runner.temp }}"
+    - name: Load image
+      run: docker load --input ${{ runner.temp }}/docker_image.tar
+    - name: Type check IDL for ${{ matrix.cfg }}
+      run: "./do test:idl CFG=${{ matrix.cfg }}"
+    strategy:
+      matrix:
+        cfg:
+        - rv64
+        - qc_iu
+  regress-idl-typecheck-other:
     runs-on: ubuntu-latest
     needs: build-container
     steps:
@@ -435,8 +470,6 @@ jobs:
         cfg:
         - _
         - rv32
-        - rv64
-        - qc_iu
   regress-test-inst-encodings:
     runs-on: ubuntu-latest
     needs: build-container
@@ -1025,7 +1058,7 @@ jobs:
       with:
         name: idl-doc
         path: idl.html
-  regress-gem-version-bump:
+  check-gem-versions:
     runs-on: ubuntu-latest
     needs: build-container
     steps:
@@ -1040,8 +1073,32 @@ jobs:
         path: "${{ runner.temp }}"
     - name: Load image
       run: docker load --input ${{ runner.temp }}/docker_image.tar
-    - name: Check gem versions bumped when source changes
-      run: "./bin/ruby tools/scripts/check_gem_version_bump.rb origin/main"
+    - name: Check gem versions, pins, and lock files are up to date
+      run: "./bin/chore gen -f gem-versions"
+    - name: Check lockfiles have no drift after re-locking
+      run: |
+        git diff --exit-code -- \
+          Gemfile.lock \
+          tools/ruby-gems/idlc/Gemfile.lock \
+          tools/ruby-gems/udb/Gemfile.lock \
+          tools/ruby-gems/udb-gen/Gemfile.lock \
+          tools/ruby-gems/udb_helpers/Gemfile.lock
+  regress-smoke-perf:
+    runs-on: ubuntu-latest
+    needs: build-container
+    timeout-minutes: 10
+    steps:
+    - name: Clone Github Repo Action
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Download docker image
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      with:
+        name: docker_image
+        path: "${{ runner.temp }}"
+    - name: Load image
+      run: docker load --input ${{ runner.temp }}/docker_image.tar
+    - name: Run smoke regression suite (must complete within 10 minutes)
+      run: "./bin/regress -t smoke"
   build-docs-site:
     runs-on: ubuntu-latest
     needs: build-container
@@ -1069,11 +1126,13 @@ jobs:
   regress-complete:
     runs-on: ubuntu-latest
     needs:
+    - regress-scripts-unit
     - regress-idlc-unit
     - regress-udb-helpers-unit
     - regress-sorbet
     - regress-ext-explorer
-    - regress-idl-typecheck
+    - regress-idl-typecheck-smoke
+    - regress-idl-typecheck-other
     - regress-test-inst-encodings
     - regress-gen-isa-manual
     - regress-gen-instruction-appendix
@@ -1104,7 +1163,8 @@ jobs:
     - build-profile
     - regress-schema-versions
     - build-idl-doc
-    - regress-gem-version-bump
+    - check-gem-versions
+    - regress-smoke-perf
     - build-docs-site
     - regress-pre-commit
     - regress-llvm

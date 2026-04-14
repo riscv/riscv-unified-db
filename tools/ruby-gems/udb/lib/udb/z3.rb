@@ -23,6 +23,29 @@ Udb::Z3Loader.ensure_z3_loaded
 
 require "z3"
 
+# Patch Z3::AST#ast_kind to use a constant hash instead of allocating a new one on every call
+module Z3
+  class AST
+    extend T::Sig
+
+    AST_KIND_LOOKUP = T.let({
+      0 => :numeral,
+      1 => :app,
+      2 => :var,
+      3 => :quantifier,
+      4 => :sort,
+      5 => :func_decl,
+      1000 => :unknown,
+    }.freeze, T::Hash[Integer, Symbol])
+
+    sig { returns(Symbol).checked(:never) }
+    def ast_kind
+      kind_id = LowLevel.get_ast_kind(self)
+      AST_KIND_LOOKUP[kind_id] or raise Z3::Exception, "Unknown AST kind #{kind_id}"
+    end
+  end
+end
+
 module Z3
   # Extension to the Z3::Solver class to add tracked assertions
   class Solver

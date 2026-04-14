@@ -60,6 +60,19 @@ module Udb
       @memo = MemoizedState.new(reachable_functions: {})
     end
 
+    # When a field has no definedBy of its own, it inherits the parent CSR's condition.
+    # Returning the parent's condition object directly lets us reuse its memoized
+    # satisfied_by_cfg_arch? result instead of re-evaluating an equivalent condition.
+    sig { override.returns(AbstractCondition) }
+    def defined_by_condition
+      @defined_by_condition ||=
+        if @data.key?("definedBy")
+          Condition.new(@data["definedBy"], @cfg_arch)
+        else
+          @parent.defined_by_condition
+        end
+    end
+
     # CSR fields are defined in their parent CSR YAML file
     def __source = @parent.__source
 
@@ -75,6 +88,11 @@ module Udb
     # @return [Boolean] True if this field might exist in a config
     sig { params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
     def exists_in_cfg?(cfg_arch)
+      # When the field has no definedBy of its own, its existence is identical to the parent's.
+      # base is also nil in this case (no xlen restriction from the condition), so we can
+      # skip the condition evaluation entirely and just delegate to the parent.
+      return parent.exists_in_cfg?(cfg_arch) unless @data.key?("definedBy")
+
       if cfg_arch.fully_configured?
         parent.exists_in_cfg?(cfg_arch) &&
           (base.nil? || cfg_arch.possible_xlens.include?(base)) &&
@@ -116,8 +134,8 @@ module Udb
     # @return [nil] if the type property is not a function
     sig { returns(T.nilable(Idl::FunctionBodyAst)) }
     def type_ast
-      return @type_ast unless @type_ast.nil?
-      return nil if @data["type()"].nil?
+      return @type_ast if instance_variable_defined?(:@type_ast)
+      return (@type_ast = nil) if @data["type()"].nil?
 
       idl_code = T.must(@data["type()"])
 
@@ -370,8 +388,8 @@ module Udb
     # @return [nil] If the reset_value is not a function
     sig { returns(T.nilable(Idl::FunctionBodyAst)) }
     def reset_value_ast
-      return @reset_value_ast unless @reset_value_ast.nil?
-      return nil unless @data.key?("reset_value()")
+      return @reset_value_ast if instance_variable_defined?(:@reset_value_ast)
+      return (@reset_value_ast = nil) unless @data.key?("reset_value()")
 
       @reset_value_ast = cfg_arch.idl_compiler.compile_func_body(
         @data["reset_value()"],
@@ -388,9 +406,9 @@ module Udb
     # @return [nil] If the reset_value is not a function
     sig { returns(T.nilable(Idl::FunctionBodyAst)) }
     def type_checked_reset_value_ast
-      return @type_checked_reset_value_ast unless @type_checked_reset_value_ast.nil?
+      return @type_checked_reset_value_ast if instance_variable_defined?(:@type_checked_reset_value_ast)
 
-      return nil unless @data.key?("reset_value()")
+      return (@type_checked_reset_value_ast = nil) unless @data.key?("reset_value()")
 
       ast = reset_value_ast
 
@@ -409,9 +427,9 @@ module Udb
     # @return [nil] If the reset_value is not a function
     sig { returns(T.nilable(Idl::FunctionBodyAst)) }
     def pruned_reset_value_ast
-      return @pruned_reset_value_ast unless @pruned_reset_value_ast.nil?
+      return @pruned_reset_value_ast if instance_variable_defined?(:@pruned_reset_value_ast)
 
-      return nil unless @data.key?("reset_value()")
+      return (@pruned_reset_value_ast = nil) unless @data.key?("reset_value()")
 
       ast = T.must(type_checked_reset_value_ast)
 
@@ -517,8 +535,8 @@ module Udb
     # @param symtab [Idl::SymbolTable] Symbols
     sig { params(symtab: Idl::SymbolTable).returns(T.nilable(Idl::FunctionBodyAst)) }
     def sw_write_ast(symtab)
-      return @sw_write_ast unless @sw_write_ast.nil?
-      return nil if @data["sw_write(csr_value)"].nil?
+      return @sw_write_ast if instance_variable_defined?(:@sw_write_ast)
+      return (@sw_write_ast = nil) if @data["sw_write(csr_value)"].nil?
 
       # now, parse the function
       @sw_write_ast = @cfg_arch.idl_compiler.compile_func_body(
@@ -610,13 +628,14 @@ module Udb
     # @param effective_xlen [Integer] effective xlen, needed because fields can change in different bases
     sig { params(effective_xlen: T.nilable(Integer)).returns(T.nilable(Idl::AstNode)) }
     def pruned_sw_write_ast(effective_xlen)
-      return @pruned_sw_write_ast unless @pruned_sw_write_ast.nil?
+      @pruned_sw_write_ast ||= {}
+      return @pruned_sw_write_ast[effective_xlen] if @pruned_sw_write_ast.key?(effective_xlen)
 
-      return nil unless @data.key?("sw_write(csr_value)")
+      return (@pruned_sw_write_ast[effective_xlen] = nil) unless @data.key?("sw_write(csr_value)")
 
       ast = T.must(type_checked_sw_write_ast(cfg_arch.symtab, effective_xlen))
 
-      return ast if cfg_arch.unconfigured?
+      return (@pruned_sw_write_ast[effective_xlen] = ast) if cfg_arch.unconfigured?
 
       symtab = fill_symtab_for_sw_write(effective_xlen, ast)
 
@@ -634,7 +653,7 @@ module Udb
       symtab.pop
       symtab.release
 
-      @pruned_sw_write_ast = ast
+      @pruned_sw_write_ast[effective_xlen] = ast
     end
 
     # @param cfg_arch [ConfiguredArchitecture] A config. May be nil if the location is not configturation-dependent

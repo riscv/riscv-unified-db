@@ -5,7 +5,6 @@
 # Please instead update this file by running `bin/tapioca gem ruby-prof`.
 
 
-module ERB::Escape; end
 module Rack; end
 
 class Rack::RubyProf
@@ -39,7 +38,7 @@ class RubyProf::AbstractPrinter
   def method_location(method); end
   def min_percent; end
   def open_asset(file); end
-  def print(output = T.unsafe(nil), min_percent: T.unsafe(nil), max_percent: T.unsafe(nil), filter_by: T.unsafe(nil), sort_method: T.unsafe(nil), **_arg5); end
+  def print(output = T.unsafe(nil), min_percent: T.unsafe(nil), max_percent: T.unsafe(nil), filter_by: T.unsafe(nil), sort_method: T.unsafe(nil), max_depth: T.unsafe(nil), **_arg6); end
   def print_column_headers; end
   def print_footer(thread); end
   def print_header(thread); end
@@ -91,8 +90,8 @@ class RubyProf::CallStackPrinter < ::RubyProf::AbstractPrinter
   def link(method, recursive); end
   def method_href(method); end
   def name(call_tree); end
-  def print(output = T.unsafe(nil), title: T.unsafe(nil), threshold: T.unsafe(nil), expansion: T.unsafe(nil), application: T.unsafe(nil), min_percent: T.unsafe(nil), max_percent: T.unsafe(nil), filter_by: T.unsafe(nil), sort_method: T.unsafe(nil), **_arg9); end
-  def print_stack(output, visited, call_tree, parent_time); end
+  def print(output = T.unsafe(nil), title: T.unsafe(nil), threshold: T.unsafe(nil), expansion: T.unsafe(nil), application: T.unsafe(nil), min_percent: T.unsafe(nil), max_percent: T.unsafe(nil), filter_by: T.unsafe(nil), sort_method: T.unsafe(nil), max_depth: T.unsafe(nil), **_arg10); end
+  def print_stack(output, visited, call_tree, parent_time, depth = T.unsafe(nil)); end
   def sum(a); end
   def template; end
   def threshold; end
@@ -144,13 +143,13 @@ class RubyProf::CallTreePrinter < ::RubyProf::AbstractPrinter
 end
 
 class RubyProf::CallTreeVisitor
-  def initialize(call_tree); end
+  def initialize(call_tree, max_depth: T.unsafe(nil)); end
 
   def visit(&block); end
 
   private
 
-  def visit_call_tree(call_tree, &block); end
+  def visit_call_tree(call_tree, depth, &block); end
 end
 
 class RubyProf::CallTrees
@@ -200,9 +199,9 @@ class RubyProf::FlameGraphPrinter < ::RubyProf::AbstractPrinter
   include ::ActiveSupport::CoreExt::ERBUtil
   include ::ActiveSupport::CoreExt::ERBUtilPrivate
 
-  def build_flame_data(call_tree, visited = T.unsafe(nil)); end
+  def build_flame_data(call_tree, depth = T.unsafe(nil)); end
   def flame_data_json; end
-  def print(output = T.unsafe(nil), title: T.unsafe(nil), min_percent: T.unsafe(nil), max_percent: T.unsafe(nil), filter_by: T.unsafe(nil), sort_method: T.unsafe(nil), **_arg6); end
+  def print(output = T.unsafe(nil), title: T.unsafe(nil), min_percent: T.unsafe(nil), max_percent: T.unsafe(nil), filter_by: T.unsafe(nil), sort_method: T.unsafe(nil), max_depth: T.unsafe(nil), **_arg7); end
   def template; end
   def title; end
 end

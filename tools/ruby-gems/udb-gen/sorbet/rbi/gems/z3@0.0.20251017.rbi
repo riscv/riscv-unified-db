@@ -68,7 +68,10 @@ class Z3::AST
 
   def _ast; end
   def arguments; end
+
+  sig { returns(::Symbol) }
   def ast_kind; end
+
   def eql?(other); end
   def func_decl; end
   def hash; end

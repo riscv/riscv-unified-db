@@ -17,16 +17,15 @@ do_update_gems() {
 
   # first, update Gemfile.lock files
   # and sorbet definitions
-  rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  # first, update Gemfile.lock files and sorbet definitions.
+  # Delete all lockfiles first so --update resolves fresh, then re-lock root
+  # before per-gem files so they are derived from the same resolved graph.
   rm "${UDB_ROOT}"/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile.lock
+  do_lock_all_gemfiles --update --bundler
 
   # increment container-tag
   if [ "$update_tag" == "yes" ]; then
