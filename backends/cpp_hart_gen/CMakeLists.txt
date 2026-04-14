@@ -96,6 +96,39 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(compile_time_regular_expressions)
 
+# -----------------------------------------------------------------------
+# libelf — built from elfutils source; no system package required
+# -----------------------------------------------------------------------
+ExternalProject_Add(elfutils_libelf
+  URL      https://sourceware.org/elfutils/ftp/0.192/elfutils-0.192.tar.bz2
+  URL_HASH SHA256=616099beae24aba11f9b63d86ca6cc8d566d968b802391334c91df54eab416b4
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND   ${UDB_ROOT}/bin/.build-elfutils.sh
+                    <SOURCE_DIR> <BINARY_DIR> <INSTALL_DIR>
+  INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property(elfutils_libelf INSTALL_DIR BINARY_DIR)
+
+# cmake validates INTERFACE_INCLUDE_DIRECTORIES at configure time, but ExternalProject
+# only creates them at build time — pre-create so the check passes.
+file(MAKE_DIRECTORY "${INSTALL_DIR}/include")
+
+# libeu is elfutils' internal utility library; not installed, but libelf.a needs it at link time.
+add_library(libeu_static STATIC IMPORTED)
+set_target_properties(libeu_static PROPERTIES
+  IMPORTED_LOCATION "${BINARY_DIR}/lib/libeu.a"
+)
+add_dependencies(libeu_static elfutils_libelf)
+
+add_library(libelf_static STATIC IMPORTED)
+set_target_properties(libelf_static PROPERTIES
+  IMPORTED_LOCATION             "${INSTALL_DIR}/lib/libelf.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include"
+  INTERFACE_LINK_LIBRARIES      "libeu_static;-lz"
+)
+add_dependencies(libelf_static elfutils_libelf)
+
 
 add_library(hart
   ${CMAKE_SOURCE_DIR}/src/db_data.cxx
@@ -133,7 +166,8 @@ add_executable(iss
 if(IGNOREUNDEFINED STREQUAL "YES")
 target_compile_definitions(iss PUBLIC IGNOREUNDEFINED)
 endif()
-target_link_libraries(iss PRIVATE hart elf CLI11::CLI11)
+target_link_libraries(iss PRIVATE hart libelf_static CLI11::CLI11)
+add_dependencies(iss elfutils_libelf)
 
 
 ## TESTS
