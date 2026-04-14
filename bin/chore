@@ -330,9 +330,9 @@ do_gen_gem_versions() {
   source_setup
   echo "Syncing inter-gem version pins for tools/ruby-gems/ gems"
   if [ $fail_on_change -eq 1 ]; then
-    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change "${extra_args[@]}"
+    "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change "${extra_args[@]}"
   else
-    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb "${extra_args[@]}"
+    "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb "${extra_args[@]}"
   fi
 }
 
