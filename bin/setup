@@ -12,55 +12,9 @@ if [ ! -f "$ROOT/ext/rbi-central/README.md" ]; then
   git submodule update --init ext/rbi-central
 fi
 
-# Download Z3 shared library from GitHub Releases into the XDG cache.
-# This mirrors what ext/udb_z3_download/extconf.rb does at gem-install time.
-setup_z3() {
-  local z3_version
-  z3_version=$(ruby -e "load '${ROOT}/tools/ruby-gems/udb/lib/udb/dep_versions.rb'; puts Udb::Z3_VERSION" | tr -d '[:space:]')
-
-  local cpu
-  case "$(uname -m)" in
-    x86_64)        cpu="x64"   ;;
-    aarch64|arm64) cpu="arm64" ;;
-    *)
-      echo "setup_z3: unsupported architecture $(uname -m), skipping Z3 download" >&2
-      return 0
-      ;;
-  esac
-
-  local xdg_cache="${XDG_CACHE_HOME:-${HOME}/.cache}"
-  local dest_dir="${xdg_cache}/udb/z3/${z3_version}/${cpu}"
-  local dest_file="${dest_dir}/libz3.so"
-  local checksum_file="${dest_dir}/libz3.checksum"
-
-  if [ -f "${dest_file}" ]; then
-    return 0
-  fi
-
-  echo "Downloading Z3 (${z3_version}, ${cpu}) from GitHub Releases..." 1>&2
-  mkdir -p "${dest_dir}"
-  curl -o "${dest_file}" -L "https://github.com/riscv/riscv-unified-db/releases/download/${z3_version}/libz3-${cpu}.so"
-  curl -o "${checksum_file}" -L "https://github.com/riscv/riscv-unified-db/releases/download/${z3_version}/libz3-${cpu}.checksum"
-
-  echo "  Verifying checksum..." 1>&2
-  ruby -e "
-    require 'digest'
-    checksum_content = File.read('${checksum_file}').strip
-    expected = checksum_content.split(':')[1]
-    actual = Digest::SHA256.file('${dest_file}').hexdigest
-    if expected != actual
-      puts 'ERROR: Checksum verification failed for libz3!'
-      puts \"  Expected: \#{expected}\"
-      puts \"  Got:      \#{actual}\"
-      exit 1
-    end
-    puts '  Checksum verified successfully.'
-  " || exit 1
-
-  echo "  Saved to ${dest_file}" 1>&2
-}
-
-setup_z3
+# Download udb native deps (z3, espresso, eqntott, must) from GitHub Releases.
+# Delegates to extconf.rb which handles all four and is the single source of truth.
+(cd "${ROOT}/tools/ruby-gems/udb/ext/udb_download" && ruby extconf.rb)
 
 # Install git hooks (skip in CI and inside devcontainer)
 "$ROOT/bin/install_hooks"

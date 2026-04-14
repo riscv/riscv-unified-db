@@ -16,6 +16,9 @@ runs:
       with:
         path: ~/.cache/udb
         key: udb-deps-${{ runner.os }}-${{ hashFiles('tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
+    - name: Download udb native deps (z3, espresso, eqntott, must)
+      shell: bash
+      run: ./bin/setup
     - name: Cache bundler gems
       uses: actions/cache@v4
       with:
