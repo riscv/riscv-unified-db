@@ -46,9 +46,26 @@ runs:
     - name: Install npm packages
       shell: bash
       run: npm ci
+    - name: Set up Docker Buildx
+      if: inputs.toolchain == 'true'
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
     - name: Pull or build RISC-V toolchain container
       if: inputs.toolchain == 'true'
       shell: bash
       run: |
-        ./bin/chore container pull || \
-        ./bin/chore container build
+        TAG=$(sha256sum .toolchain/Dockerfile | cut -c1-16)
+        IMAGE="ghcr.io/riscv/udb-toolchain:${TAG}"
+
+        if docker pull "${IMAGE}"; then
+          echo "Pulled ${IMAGE} from GHCR"
+        else
+          echo "Could not pull ${IMAGE}; building locally with GHA cache..."
+          docker buildx build \
+            --cache-from type=gha,scope=toolchain \
+            --cache-to   type=gha,scope=toolchain,mode=max \
+            --load \
+            -t "${IMAGE}" \
+            -f .toolchain/Dockerfile \
+            .toolchain/
+        fi
+        echo "UDB_TOOLCHAIN_CONTAINER=1" >> "$GITHUB_ENV"

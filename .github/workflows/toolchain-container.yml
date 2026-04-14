@@ -84,8 +84,8 @@ jobs:
           push: false
           tags: ghcr.io/riscv/udb-toolchain:${{ env.TAG }}
           outputs: type=docker,dest=${{ runner.temp }}/toolchain-image.tar
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=toolchain
+          cache-to: type=gha,scope=toolchain,mode=max
 
       - name: Upload image tarball
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
