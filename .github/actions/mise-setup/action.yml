@@ -16,9 +16,12 @@ runs:
       with:
         path: vendor/bundle
         key: bundler-${{ runner.os }}-${{ hashFiles('Gemfile.lock', 'tools/ruby-gems/*/Gemfile.lock') }}
+    - name: Set bundler PATH
+      shell: bash
+      run: bundle config set --local path 'vendor/bundle'
     - name: Install Ruby gems
       shell: bash
-      run: bundle install --jobs $(nproc) --path vendor/bundle
+      run: bundle install --jobs $(nproc)
     - name: Cache uv packages
       uses: actions/cache@v4
       with:
