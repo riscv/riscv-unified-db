@@ -8,11 +8,9 @@
 #
 # Build the container image
 # Args: $1 - force flag ("yes" to force rebuild, "no" otherwise)
-#       $2 - target ("devcontainer" or "toolchain"; default: "devcontainer")
 #
 do_container_build() {
   local force=$1
-  local target=${2:-devcontainer}
 
   local runtime
   runtime=$(get_container_runtime)
@@ -22,20 +20,10 @@ do_container_build() {
   fi
 
   local tag image dockerfile context
-  if [ "$target" = "devcontainer" ]; then
-    tag=$(compute_devcontainer_hash)
-    image="ghcr.io/riscv/udb:${tag}"
-    dockerfile="${UDB_ROOT}/.devcontainer/Dockerfile"
-    context="${UDB_ROOT}"
-  elif [ "$target" = "toolchain" ]; then
-    tag=$(compute_toolchain_hash)
-    image="ghcr.io/riscv/udb-toolchain:${tag}"
-    dockerfile="${UDB_ROOT}/.toolchain/Dockerfile"
-    context="${UDB_ROOT}/.toolchain"
-  else
-    echo "Error: Unknown target '${target}'. Must be 'devcontainer' or 'toolchain'." >&2
-    exit 1
-  fi
+  tag=$(compute_toolchain_hash)
+  image="ghcr.io/riscv/udb-toolchain:${tag}"
+  dockerfile="${UDB_ROOT}/.toolchain/Dockerfile"
+  context="${UDB_ROOT}/.toolchain"
 
   if [ "$force" != "yes" ]; then
     if $runtime images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -qF "${image}"; then
@@ -52,11 +40,9 @@ do_container_build() {
 #
 # Pull the container image from registry
 # Args: $1 - force flag ("yes" to force pull, "no" otherwise)
-#       $2 - target ("devcontainer" or "toolchain"; default: "devcontainer")
 #
 do_container_pull() {
   local force=$1
-  local target=${2:-devcontainer}
 
   local runtime
   runtime=$(get_container_runtime)
@@ -66,16 +52,8 @@ do_container_pull() {
   fi
 
   local tag image
-  if [ "$target" = "devcontainer" ]; then
-    tag=$(compute_devcontainer_hash)
-    image="ghcr.io/riscv/udb:${tag}"
-  elif [ "$target" = "toolchain" ]; then
-    tag=$(compute_toolchain_hash)
-    image="ghcr.io/riscv/udb-toolchain:${tag}"
-  else
-    echo "Error: Unknown target '${target}'. Must be 'devcontainer' or 'toolchain'." >&2
-    exit 1
-  fi
+  tag=$(compute_toolchain_hash)
+  image="ghcr.io/riscv/udb-toolchain:${tag}"
 
   if [ "$force" != "yes" ]; then
     if $runtime images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -qF "${image}"; then
@@ -91,11 +69,8 @@ do_container_pull() {
 
 #
 # Remove the container image
-# Args: $1 - target ("devcontainer" or "toolchain"; default: "devcontainer")
 #
 do_container_remove() {
-  local target=${1:-devcontainer}
-
   local runtime
   runtime=$(get_container_runtime)
   if [ -z "$runtime" ]; then
@@ -104,16 +79,8 @@ do_container_remove() {
   fi
 
   local tag image
-  if [ "$target" = "devcontainer" ]; then
-    tag=$(compute_devcontainer_hash)
-    image="ghcr.io/riscv/udb:${tag}"
-  elif [ "$target" = "toolchain" ]; then
-    tag=$(compute_toolchain_hash)
-    image="ghcr.io/riscv/udb-toolchain:${tag}"
-  else
-    echo "Error: Unknown target '${target}'. Must be 'devcontainer' or 'toolchain'." >&2
-    exit 1
-  fi
+  tag=$(compute_toolchain_hash)
+  image="ghcr.io/riscv/udb-toolchain:${tag}"
 
   if ! $runtime images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -qF "${image}"; then
     echo "Container image ${image} does not exist locally."

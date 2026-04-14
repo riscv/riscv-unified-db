@@ -97,24 +97,6 @@ bin/install_hooks
 bin/doctor
 ----
 
-=== Devcontainer
-
-You can also leverage https://containers.dev/[devcontainers] to run the RISC-V Unified Database.
-
-This is especially useful when using Visual Studio Code or GitHub codespaces, as it will setup up your IDE environment for you.
-
-==== VS Code
-
-To run the devcontainer locally, you will need to have https://docs.docker.com/engine/install[Docker installed].
-
-With Docker installed, install the https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers[Dev Containers] extension in VS Code.
-
-You can then run `Dev Containers: Open Folder in Container...` from the Command Palette (Ctrl+Shift+P) and select the folder with this repository.
-
-==== GitHub Codespaces
-
-You can start a GitHub Codespace for this repository by clicking the "Code" button and selecting "Open with Codespaces".
-
 === Tasks
 
 [source,bash]

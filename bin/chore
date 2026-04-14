@@ -46,54 +46,49 @@ build_udb_gem_usage() {
 }
 
 container_subcmd_usage() {
-  echo "Usage: chore container [-ht] COMMAND"
+  echo "Usage: chore container [-h] COMMAND"
   echo ""
   echo "Options:"
   echo ""
   echo "  -h:                  Print help"
-  echo "  -t devcontainer|toolchain:"
-  echo "                       Target container (default: devcontainer)"
   echo ""
   echo "Commands:"
   echo ""
-  echo "  build:      Build the container image ('chore container build -h' for more)"
-  echo "  pull:       Pull the container image from registry ('chore container pull -h' for more)"
-  echo "  remove|rm:  Remove the container image ('chore container remove -h' for more)"
+  echo "  build:      Build the toolchain container image ('chore container build -h' for more)"
+  echo "  pull:       Pull the toolchain container image from registry ('chore container pull -h' for more)"
+  echo "  remove|rm:  Remove the toolchain container image ('chore container remove -h' for more)"
   echo ""
 }
 
 container_build_usage() {
-  echo "Usage: chore container build [-hf] [-t TARGET]"
+  echo "Usage: chore container build [-hf]"
   echo ""
   echo ""
   echo "Options:"
   echo ""
   echo "  -h:           Print help"
   echo "  -f:           Force rebuild even if container already exists"
-  echo "  -t TARGET:    Target image to build ('devcontainer' or 'toolchain'; default: 'devcontainer')"
   echo ""
 }
 
 container_pull_usage() {
-  echo "Usage: chore container pull [-hf] [-t TARGET]"
+  echo "Usage: chore container pull [-hf]"
   echo ""
   echo ""
   echo "Options:"
   echo ""
   echo "  -h:           Print help"
   echo "  -f:           Force pull even if container already exists locally"
-  echo "  -t TARGET:    Target image to pull ('devcontainer' or 'toolchain'; default: 'devcontainer')"
   echo ""
 }
 
 container_remove_usage() {
-  echo "Usage: chore container remove|rm [-h] [-t TARGET]"
+  echo "Usage: chore container remove|rm [-h]"
   echo ""
   echo ""
   echo "Options:"
   echo ""
   echo "  -h:           Print help"
-  echo "  -t TARGET:    Target image to remove ('devcontainer' or 'toolchain'; default: 'devcontainer')"
   echo ""
 }
 
@@ -515,21 +510,12 @@ subcommand=$1; shift # Get subcommand and shift to next option
 
 case "$subcommand" in
   container )
-    container_target=devcontainer
-    while getopts ":ht:" opt; do
+    while getopts ":h" opt; do
       case $opt in
         h )
           container_subcmd_usage
           exit 0
         ;;
-        t )
-          container_target="$OPTARG"
-          if [ "$container_target" != "devcontainer" ] && [ "$container_target" != "toolchain" ]; then
-            echo "[ERROR]: Invalid target: ${container_target}. Must be 'devcontainer' or 'toolchain'."
-            container_subcmd_usage
-            exit 1
-          fi
-          ;;
         ? )
           echo "[ERROR]: Invalid option: -${OPTARG}"
           container_subcmd_usage
@@ -543,60 +529,36 @@ case "$subcommand" in
     case "$target" in
       build )
         force=no
-        while getopts ":hft:" opt; do
+        while getopts ":hf" opt; do
           case $opt in
             h ) container_build_usage; exit 0 ;;
             f ) force=yes ;;
-            t )
-              container_target="$OPTARG"
-              if [ "$container_target" != "devcontainer" ] && [ "$container_target" != "toolchain" ]; then
-                echo "[ERROR]: Invalid target: ${container_target}. Must be 'devcontainer' or 'toolchain'."
-                container_build_usage
-                exit 1
-              fi
-              ;;
             ? ) echo "[ERROR]: Invalid option: -${OPTARG}"; container_build_usage; exit 1 ;;
           esac
         done
-        do_container_build "$force" "$container_target"
+        do_container_build "$force"
         exit 0
       ;;
       pull )
         force=no
-        while getopts ":hft:" opt; do
+        while getopts ":hf" opt; do
           case $opt in
             h ) container_pull_usage; exit 0 ;;
             f ) force=yes ;;
-            t )
-              container_target="$OPTARG"
-              if [ "$container_target" != "devcontainer" ] && [ "$container_target" != "toolchain" ]; then
-                echo "[ERROR]: Invalid target: ${container_target}. Must be 'devcontainer' or 'toolchain'."
-                container_pull_usage
-                exit 1
-              fi
-              ;;
             ? ) echo "[ERROR]: Invalid option: -${OPTARG}"; container_pull_usage; exit 1 ;;
           esac
         done
-        do_container_pull "$force" "$container_target"
+        do_container_pull "$force"
         exit 0
       ;;
       remove|rm )
-        while getopts ":ht:" opt; do
+        while getopts ":h" opt; do
           case $opt in
             h ) container_remove_usage; exit 0 ;;
-            t )
-              container_target="$OPTARG"
-              if [ "$container_target" != "devcontainer" ] && [ "$container_target" != "toolchain" ]; then
-                echo "[ERROR]: Invalid target: ${container_target}. Must be 'devcontainer' or 'toolchain'."
-                container_remove_usage
-                exit 1
-              fi
-              ;;
             ? ) echo "[ERROR]: Invalid option: -${OPTARG}"; container_remove_usage; exit 1 ;;
           esac
         done
-        do_container_remove "$container_target"
+        do_container_remove
         exit 0
       ;;
       * )

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # bin/install_hooks — install git hooks for this repository.
 # Safe to run multiple times; skips hooks that are already installed.
-# Skipped automatically in CI (GITHUB_ACTIONS) and devcontainer (IN_UDB_CONTAINER).
+# Skipped automatically in CI (GITHUB_ACTIONS).
 
-if [[ -v GITHUB_ACTIONS ]] || [[ -v IN_UDB_CONTAINER ]]; then
+if [[ -v GITHUB_ACTIONS ]]; then
   exit 0
 fi
 

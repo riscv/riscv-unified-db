@@ -116,7 +116,7 @@ EOF
     echo "ERROR: Native g++ does not meet the project's C++ requirements." >&2
     echo "  See .toolchain/check_cxx.cmake for details." >&2
     echo "  Detected compiler: $(g++ --version | head -1)" >&2
-    echo "  Option 1: Install a newer C++ compiler (GCC 11+ or Clang 13+)" >&2
+    echo "  Option 1: Install a newer C++ compiler (GCC 14+)" >&2
     echo "  Option 2: Set UDB_TOOLCHAIN_CONTAINER=1 to use the toolchain container" >&2
     exit 1
   fi
