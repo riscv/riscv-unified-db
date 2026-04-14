@@ -47,5 +47,5 @@ runs:
       if: inputs.toolchain == 'true'
       shell: bash
       run: |
-        ./bin/chore container pull -t toolchain || \
-        ./bin/chore container build -t toolchain
+        ./bin/chore container pull || \
+        ./bin/chore container build
