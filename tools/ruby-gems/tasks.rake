@@ -212,3 +212,25 @@ namespace :release do
     end
   end
 end
+
+namespace :test do
+  namespace :udb_gen do
+    desc "Run tests for the udb_gen gem"
+    task :unit do
+      Dir.chdir($root / "tools/ruby-gems/udb-gen") do
+        sh "ruby -Ilib:test test/unit/run.rb"
+      end
+    end
+  end
+end
+
+namespace :chore do
+  namespace :udb_gen do
+    desc "Regenerate test cases for the udb_gen gem"
+    task :update_fixtures do
+      Dir.chdir($root / "tools/ruby-gems/udb-gen") do
+        sh "UPDATE_FIXTURES=1 ruby -Ilib:test test/unit/run.rb --include test_builder_generation"
+      end
+    end
+  end
+end
