@@ -73,7 +73,16 @@ _setup_toolchain_run() {
     extra_mounts="-v ${git_common_dir}:${git_common_dir}${selinux_label}"
   fi
 
-  TOOLCHAIN_RUN="$runtime run --rm $tty_flags -v ${ROOT}:${ROOT}${selinux_label} $extra_mounts -w ${PWD} $user_flags ${TOOLCHAIN_IMAGE}"
+  local host_pwd container_workdir
+  host_pwd=$(realpath "${PWD}" 2>/dev/null || printf '%s\n' "${PWD}")
+  container_workdir="${ROOT}"
+  case "${host_pwd}" in
+    "${ROOT}"|"${ROOT}"/*)
+      container_workdir="${host_pwd}"
+      ;;
+  esac
+
+  TOOLCHAIN_RUN="$runtime run --rm $tty_flags -v ${ROOT}:${ROOT}${selinux_label} $extra_mounts -w ${container_workdir} $user_flags ${TOOLCHAIN_IMAGE}"
 }
 
 # Check that the native g++ meets the project's C++ requirements by running the
