@@ -81,6 +81,8 @@ jobs:
           outputs: type=docker,dest=${{ runner.temp }}/image.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          secrets: |
+            MISE_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload image tarball
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

@@ -69,8 +69,6 @@ class EqnParser < ::Treetop::Runtime::CompiledParser
 end
 
 module FFI; end
-class FFI::ArrayType < ::FFI::Type; end
-class FFI::Buffer < ::FFI::AbstractMemory; end
 
 class FFI::DynamicLibrary
   class << self
@@ -82,16 +80,6 @@ class FFI::DynamicLibrary
   end
 end
 
-class FFI::DynamicLibrary::Symbol < ::FFI::Pointer; end
-class FFI::FunctionType < ::FFI::Type; end
-module FFI::LastError; end
-class FFI::MemoryPointer < ::FFI::Pointer; end
-module FFI::NativeType; end
-class FFI::NullPointerError < ::RuntimeError; end
-class FFI::StructByValue < ::FFI::Type; end
-class FFI::Type; end
-class FFI::Type::Builtin < ::FFI::Type; end
-class FFI::Type::Mapped < ::FFI::Type; end
 module Idl; end
 
 class Idl::ArrayIncludesAst < ::Idl::AstNode
@@ -979,11 +967,6 @@ class Udb::Condition < ::Udb::AbstractCondition
 end
 
 Udb::Condition::EvalCallbackType = T.type_alias { T.proc.params(term: T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)).returns(::Udb::SatisfiedResult) }
-
-class Udb::Condition::MemoizedState < ::T::Struct
-  prop :satisfied_by_cfg_arch, T::Hash[::Udb::ConfiguredArchitecture, ::Udb::SatisfiedResult]
-end
-
 Udb::Condition::Xlen32 = T.let(T.unsafe(nil), Udb::XlenCondition)
 Udb::Condition::Xlen64 = T.let(T.unsafe(nil), Udb::XlenCondition)
 
@@ -1174,6 +1157,7 @@ class Udb::ConfiguredArchitecture < ::Udb::Architecture
 
   def param(name); end
   def param_hash; end
+  def param_term_satisfied_memo; end
 
   sig { returns(T::Hash[::String, T.untyped]) }
   def param_values; end
@@ -1196,6 +1180,7 @@ class Udb::ConfiguredArchitecture < ::Udb::Architecture
   def possible_csrs(show_progress: T.unsafe(nil)); end
 
   def possible_extension_versions; end
+  def possible_extension_versions_by_name; end
 
   sig { returns(T::Array[::Udb::Extension]) }
   def possible_extensions; end
@@ -1417,6 +1402,7 @@ class Udb::Csr < ::Udb::TopLevelDatabaseObject
 
   def reset_value(*args, **_arg1, &blk); end
   def sw_read_ast(symtab); end
+  def type_checked_pruned_sw_read_ast(effective_xlen); end
 
   sig { params(effective_xlen: T.nilable(::Integer)).returns(::Idl::FunctionBodyAst) }
   def type_checked_sw_read_ast(effective_xlen); end
@@ -1467,6 +1453,9 @@ class Udb::CsrField < ::Udb::DatabaseObject
   def base64_only?; end
 
   def csr(*args, **_arg1, &blk); end
+
+  sig { override.returns(::Udb::AbstractCondition) }
+  def defined_by_condition; end
 
   sig { override.returns(T::Boolean) }
   def defined_in_all_bases?; end
@@ -3151,16 +3140,29 @@ class Udb::LogicNode::LogicSymbolFormat < ::T::Enum
   end
 end
 
-class Udb::LogicNode::MemoizedState < ::T::Struct
-  prop :is_cnf, T.nilable(T::Boolean)
-  prop :cnf_form, T.nilable(::Udb::LogicNode)
-  prop :is_nested_cnf, T.nilable(T::Boolean)
-  prop :is_reduced, T.nilable(T::Boolean)
-  prop :terms, T.nilable(T::Array[T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)])
-  prop :literals, T.nilable(T::Array[T.any(::Udb::ExtensionTerm, ::Udb::FreeTerm, ::Udb::ParameterTerm, ::Udb::XlenTerm)])
-  prop :is_satisfiable, T.nilable(T::Boolean)
-  prop :equisat_cnf, T.nilable(::Udb::LogicNode)
-  prop :equiv_cnf, T.nilable(::Udb::LogicNode)
+class Udb::LogicNode::MemoizedState
+  def initialize; end
+
+  def cnf_form; end
+  def cnf_form=(_arg0); end
+  def equisat_cnf; end
+  def equisat_cnf=(_arg0); end
+  def equiv_cnf; end
+  def equiv_cnf=(_arg0); end
+  def is_cnf; end
+  def is_cnf=(_arg0); end
+  def is_nested_cnf; end
+  def is_nested_cnf=(_arg0); end
+  def is_reduced; end
+  def is_reduced=(_arg0); end
+  def is_satisfiable; end
+  def is_satisfiable=(_arg0); end
+  def literals; end
+  def literals=(_arg0); end
+  def terms; end
+  def terms=(_arg0); end
+  def terms_no_antecendents; end
+  def terms_no_antecendents=(_arg0); end
 end
 
 class Udb::LogicNode::PairMintermsResult < ::T::Struct
@@ -3560,6 +3562,9 @@ class Udb::ParameterTerm
 
   sig { params(solver: ::Udb::Z3Solver, cfg_arch: ::Udb::ConfiguredArchitecture).returns(::Z3::BoolExpr) }
   def to_z3(solver, cfg_arch); end
+
+  sig { returns(T::Hash[::String, T.untyped]) }
+  def yaml_no_reason; end
 end
 
 class Udb::ParameterTerm::ParameterComparisonType < ::T::Enum
@@ -4065,6 +4070,11 @@ class Udb::RequirementSpec
 
   sig { returns(::Udb::VersionSpec) }
   def version_spec; end
+
+  class << self
+    sig { params(requirement: ::String).returns(::Udb::RequirementSpec) }
+    def new(requirement); end
+  end
 end
 
 Udb::RequirementSpec::REQUIREMENT_OP_REGEX = T.let(T.unsafe(nil), Regexp)
@@ -5035,6 +5045,13 @@ Udb::Z3_VERSION = T.let(T.unsafe(nil), String)
 module Z3
   extend ::Z3
 end
+
+class Z3::AST
+  sig { returns(::Symbol) }
+  def ast_kind; end
+end
+
+Z3::AST::AST_KIND_LOOKUP = T.let(T.unsafe(nil), Hash)
 
 class Z3::Solver
   sig { params(ast: ::Z3::Expr, name: ::String).void }

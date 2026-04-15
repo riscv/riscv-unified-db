@@ -5,5 +5,5 @@
 # frozen_string_literal: true
 
 module Udb
-  def self.version = "0.1.9"
+  def self.version = "0.1.11"
 end

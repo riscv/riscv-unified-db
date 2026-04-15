@@ -185,6 +185,11 @@
                   "fetch-depth": 0
                 }
               ]
+            },
+            "timeout_minutes": {
+              "description": "Maximum number of minutes the job is allowed to run before GitHub cancels it.",
+              "type": "integer",
+              "minimum": 1
             }
           }
         }

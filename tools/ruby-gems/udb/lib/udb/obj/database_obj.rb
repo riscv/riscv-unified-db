@@ -136,10 +136,9 @@ module Udb
     # defer the calculation of 'blk' until later, then memoize the result
     sig { params(fn_name: Symbol, _block: T.proc.void).returns(T.untyped) }
     def defer(fn_name, &_block)
-      cache_value = @cache[fn_name]
-      return cache_value unless cache_value.nil?
+      return @cache[fn_name] if @cache.key?(fn_name)
 
-      @cache[fn_name] ||= yield
+      @cache[fn_name] = yield
     end
 
     # @return Condition for when the object exists

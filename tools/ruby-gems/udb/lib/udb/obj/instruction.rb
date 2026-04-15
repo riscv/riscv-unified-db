@@ -1104,7 +1104,7 @@ module Udb
     # @return [FunctionBodyAst] A type-checked abstract syntax tree of the operation
     # @param effective_xlen [Integer] 32 or 64, the effective xlen to type check against
     def type_checked_operation_ast(effective_xlen)
-      defer :type_checked_operation_ast do
+      defer :"type_checked_operation_ast_#{effective_xlen}" do
         return nil unless @data.key?("operation()")
 
         ast = operation_ast

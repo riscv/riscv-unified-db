@@ -293,7 +293,10 @@ module Udb
       .checked(:never)
     }
     def eql?(other)
-      (self <=> other) == 0
+      return false unless other.is_a?(ExtensionTerm)
+      return false unless hash == other.hash
+
+      to_s == other.to_s
     end
 
   end
@@ -321,7 +324,11 @@ module Udb
     sig { params(yaml: T::Hash[String, T.untyped]).void }
     def initialize(yaml)
       @yaml = yaml
+      @yaml_no_reason = (yaml.key?("reason") ? yaml.reject { |k, _| k == "reason" } : yaml.dup).freeze
     end
+
+    sig { returns(T::Hash[String, T.untyped]) }
+    def yaml_no_reason = @yaml_no_reason
 
     sig { returns(String) }
     def name = @yaml.fetch("name")
@@ -1083,7 +1090,7 @@ module Udb
       .returns(Integer)
       .checked(:never)
     }
-    def hash = @hash ||= @yaml.reject { |k, _| k == "reason" }.hash
+    def hash = @hash ||= @yaml_no_reason.hash
 
     sig {
       override
@@ -1093,8 +1100,9 @@ module Udb
     }
     def eql?(other)
       return false unless other.is_a?(ParameterTerm)
+      return false unless hash == other.hash
 
-      (self <=> other) == 0
+      @yaml_no_reason == other.yaml_no_reason
     end
   end
 
@@ -1226,37 +1234,21 @@ module Udb
     # object to hold results of expensive calculations
     # LogicNode type and children are frozen at construction so
     # we can safely remember and return these values
-    class MemoizedState < T::Struct
-      # when true, the formula is known to be in CNF form
-      # when false, the formula is known to not be in CNF form
-      prop :is_cnf, T.nilable(T::Boolean)
+    class MemoizedState
+      attr_accessor :is_cnf, :cnf_form, :is_nested_cnf, :is_reduced, :terms, :literals, :is_satisfiable, :equisat_cnf, :equiv_cnf, :terms_no_antecendents
 
-      # when not nil, an equisatisfiable representation of self in CNF form
-      prop :cnf_form, T.nilable(LogicNode)
-
-      # when true, a flattened version of the formula would be CNF
-      # when false, a flattened version of the formula would not be CNF
-      prop :is_nested_cnf, T.nilable(T::Boolean)
-
-      # when true, the formula would be unaltered by calling reduce
-      # when false, the formula would be reduced further by calling reduce
-      prop :is_reduced, T.nilable(T::Boolean)
-
-      # list of terms in the formula
-      prop :terms, T.nilable(T::Array[TermType])
-
-      # list of literals in the formula
-      prop :literals, T.nilable(T::Array[TermType])
-
-      # when true, formula is known to be satisfiable
-      # when false, formula is known to be unsatisfiable
-      prop :is_satisfiable, T.nilable(T::Boolean)
-
-      # result of #equisat_cnf
-      prop :equisat_cnf, T.nilable(LogicNode)
-
-      # result of #equisat_cnf
-      prop :equiv_cnf, T.nilable(LogicNode)
+      def initialize
+        @is_cnf = nil
+        @cnf_form = nil
+        @is_nested_cnf = nil
+        @is_reduced = nil
+        @terms = nil
+        @literals = nil
+        @is_satisfiable = nil
+        @equisat_cnf = nil
+        @equiv_cnf = nil
+        @terms_no_antecendents = nil
+      end
     end
 
     attr_accessor :memo
@@ -1288,16 +1280,7 @@ module Udb
       @type.freeze
 
       # used for memoization in transformation routines
-      @memo = MemoizedState.new(
-        is_cnf: nil,
-        is_nested_cnf: nil,
-        is_reduced: nil,
-        terms: nil,
-        literals: nil,
-        is_satisfiable: nil,
-        equisat_cnf: nil,
-        equiv_cnf: nil
-      )
+      @memo = MemoizedState.new
     end
 
     # @api private
@@ -1360,21 +1343,24 @@ module Udb
     # @return The unique terms (leafs) of this tree, exculding antecendents of an IF
     sig { returns(T::Array[TermType]).checked(:never) }
     def terms_no_antecendents
-      if @type == LogicNodeType::If
-        node_children.fetch(1).terms_no_antecendents
-      elsif @type == LogicNodeType::Term
-        [T.cast(@children.fetch(0), TermType)]
-      else
-        seen = {}
-        node_children.each_with_object([]) do |child, result|
-          child.terms_no_antecendents.each do |t|
-            unless seen.key?(t)
-              seen[t] = true
-              result << t
+      return @memo.terms_no_antecendents unless @memo.terms_no_antecendents.nil?
+
+      @memo.terms_no_antecendents =
+        if @type == LogicNodeType::If
+          node_children.fetch(1).terms_no_antecendents
+        elsif @type == LogicNodeType::Term
+          [T.cast(@children.fetch(0), TermType)]
+        else
+          seen = {}
+          node_children.each_with_object([]) do |child, result|
+            child.terms_no_antecendents.each do |t|
+              unless seen.key?(t)
+                seen[t] = true
+                result << t
+              end
             end
           end
         end
-      end
     end
 
     # @return all unique literals (leafs) in the tree
