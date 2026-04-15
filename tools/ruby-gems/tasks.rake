@@ -221,6 +221,11 @@ namespace :test do
         sh "ruby -Ilib:test test/unit/run.rb"
       end
     end
+    task :integration do
+      Dir.chdir($root / "tools/ruby-gems/udb-gen") do
+        sh "ruby -Ilib:test test/integration/run.rb"
+      end
+    end
   end
 end
 
@@ -230,6 +235,7 @@ namespace :chore do
     task :update_fixtures do
       Dir.chdir($root / "tools/ruby-gems/udb-gen") do
         sh "UPDATE_FIXTURES=1 ruby -Ilib:test test/unit/run.rb --include test_builder_generation"
+        sh "UPDATE_FIXTURES=1 ruby -Ilib:test test/integration/run.rb --include test_builder_generation"
       end
     end
   end
