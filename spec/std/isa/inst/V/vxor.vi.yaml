@@ -32,6 +32,6 @@ access:
   vu: always
 pseudoinstructions:
   - when: imm == -1
-    to: vnot.v vd,vs2,vm
+    to: vnot.v vd, vs2, vm
 data_independent_timing: false
 operation(): |

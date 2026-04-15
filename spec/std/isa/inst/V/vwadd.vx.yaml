@@ -31,6 +31,6 @@ access:
   vu: always
 pseudoinstructions:
   - when: xs1 == 0
-    to: vwcvt.x.x.v vd,vs2,vm
+    to: vwcvt.x.x.v vd, vs2, vm
 data_independent_timing: true
 operation(): |

@@ -29,5 +29,5 @@ access:
 data_independent_timing: true
 pseudoinstructions:
   - when: imm == 255
-    to: zext.b xd,xs1
+    to: zext.b xd, xs1
 operation(): X[xd] = X[xs1] & $signed(imm);

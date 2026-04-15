@@ -27,6 +27,6 @@ access:
   vu: always
 pseudoinstructions:
   - when: "true"
-    to: vl8r.v vd,(xs1)
+    to: vl8r.v vd, (xs1)
 data_independent_timing: false
 operation(): |

@@ -31,6 +31,6 @@ access:
   vu: always
 pseudoinstructions:
   - when: "true"
-    to: vmsgtu.vv vd,vs1,vs2,vm
+    to: vmsgtu.vv vd, vs1, vs2, vm
 data_independent_timing: false
 operation(): |

@@ -31,6 +31,6 @@ access:
   vu: always
 pseudoinstructions:
   - when: imm < 5'b11111
-    to: vmsge.vi vd,vs2,imm+1,vm
+    to: vmsge.vi vd, vs2, imm+1, vm
 data_independent_timing: false
 operation(): |

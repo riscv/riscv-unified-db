@@ -34,9 +34,9 @@ access:
   vu: always
 pseudoinstructions:
   - when: xs2 == 0
-    to: bltz xs1,imm
+    to: bltz xs1, imm
   - when: xs1 == 0
-    to: bgtz xs2,imm
+    to: bgtz xs2, imm
   - when: "true"
     to: bgt xs2, xs1, imm
 operation(): |
