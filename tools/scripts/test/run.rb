@@ -11,7 +11,7 @@ require "fileutils"
 # Load parse_gem_metadata without running the main block.
 # gen_gem_versions.rb guards its main block with `if __FILE__ == $PROGRAM_NAME`,
 # so requiring it here is safe.
-require "gen_gem_versions"
+require_relative "../gen_gem_versions"
 
 UDB_ROOT_REAL = Pathname.new(__FILE__).dirname.parent.parent.parent.realpath
 
@@ -187,7 +187,9 @@ class TestParseGemMetadata < Minitest::Test
     FakeGemTree.make_gem(@tmpdir, name: "beta", has_spec_dir: true)
     metadata = parse_gem_metadata(@tmpdir)
     gem = metadata[:gems].find { |g| g[:name] == "beta" }
-    assert_equal ["spec"], gem[:additional_dirs]
+    # additional_dirs must be repo-root-relative so they can be matched directly
+    # against paths from `git diff --name-only`
+    assert_equal ["tools/ruby-gems/beta/spec"], gem[:additional_dirs]
   end
 
   def test_no_spec_dir_gives_empty_additional_dirs

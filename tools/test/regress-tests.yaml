@@ -12,7 +12,7 @@ tests:
       - smoke
     test:
       - name: Run tools/scripts unit tests
-        run: ./do test:scripts:unit
+        run: ./bin/ruby -Itools/scripts tools/scripts/test/run.rb
 
   regress-idlc-unit:
     ci_stage: pr
@@ -384,6 +384,21 @@ tests:
     test:
       - name: Check gem versions, pins, and lock files are up to date
         run: ./bin/chore gen -f gem-versions
+      - name: Check lockfiles have no drift after re-locking
+        run: |
+          git diff --exit-code -- \
+            Gemfile.lock \
+            tools/ruby-gems/idlc/Gemfile.lock \
+            tools/ruby-gems/udb/Gemfile.lock \
+            tools/ruby-gems/udb-gen/Gemfile.lock \
+            tools/ruby-gems/udb_helpers/Gemfile.lock
+
+  regress-smoke-perf:
+    ci_stage: pr
+    timeout_minutes: 10
+    test:
+      - name: Run smoke regression suite (must complete within 10 minutes)
+        run: ./bin/regress -t smoke
 
   build-docs-site:
     ci_stage: merge_queue
