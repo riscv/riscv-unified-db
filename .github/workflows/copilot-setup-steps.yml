@@ -5,7 +5,18 @@
 # It runs before Copilot begins work on any task.
 # See: https://docs.github.com/en/copilot/customizing-copilot/customizing-the-development-environment-for-copilot-coding-agent
 name: Copilot setup steps
-on: push
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - .github/actions/mise-setup/action.yaml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - .github/actions/mise-setup/action.yaml
 jobs:
   copilot-setup-steps:
     runs-on: ubuntu-24.04

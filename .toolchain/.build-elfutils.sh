@@ -41,7 +41,7 @@ if [ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]; then
     make -s -C lib
     make -s -C libelf
     make -s -C libelf install
-  ' -- "" "$BINARY_DIR" "$SOURCE_DIR" "$INSTALL_DIR"
+  ' -- "$BINARY_DIR" "$SOURCE_DIR" "$INSTALL_DIR"
 else
   cd "$BINARY_DIR"
   "$SOURCE_DIR/configure" \

@@ -103,7 +103,7 @@ ExternalProject_Add(elfutils_libelf
   URL      https://sourceware.org/elfutils/ftp/0.192/elfutils-0.192.tar.bz2
   URL_HASH SHA256=616099beae24aba11f9b63d86ca6cc8d566d968b802391334c91df54eab416b4
   CONFIGURE_COMMAND ""
-  BUILD_COMMAND   ${UDB_ROOT}/bin/.build-elfutils.sh
+  BUILD_COMMAND   ${UDB_ROOT}/.toolchain/.build-elfutils.sh
                     <SOURCE_DIR> <BINARY_DIR> <INSTALL_DIR>
   INSTALL_COMMAND ""
 )
