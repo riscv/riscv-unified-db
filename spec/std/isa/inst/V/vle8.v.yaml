@@ -22,6 +22,22 @@ encoding:
       location: 19-15
     - name: vd
       location: 11-7
+operands:
+  - name: vd
+    type: register
+    reg_file: vpr
+    source: false
+    destination: true
+  - name: xs1
+    type: register
+    reg_file: gpr
+    offset:
+      name: ""
+  - name: vm
+    type: register
+    reg_file: vpr
+    possible_values: [ 0 ]
+    optional: true
 access:
   s: always
   u: always
