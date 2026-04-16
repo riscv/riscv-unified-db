@@ -192,6 +192,14 @@ module Udb
     REQUIREMENT_OP_REGEX = /((?:>=)|(?:>)|(?:~>)|(?:<)|(?:<=)|(?:!=)|(?:=))/
     REQUIREMENT_REGEX = /#{REQUIREMENT_OP_REGEX}\s*(#{VersionSpec::VERSION_REGEX})/
 
+    # Intern cache: RequirementSpec.new with the same string returns the same object.
+    @intern_cache = T.let({}, T::Hash[String, RequirementSpec])
+
+    sig { params(requirement: String).returns(RequirementSpec) }
+    def self.new(requirement)
+      @intern_cache[requirement] ||= super
+    end
+
     sig { returns(String) }
     attr_reader :op
 

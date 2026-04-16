@@ -46,6 +46,10 @@ def create_job(job_name, job_data, workflow_yaml)
     "needs" => "build-container"
   }
 
+  if job_data.key?("timeout_minutes")
+    gh_job_yaml["timeout-minutes"] = job_data["timeout_minutes"]
+  end
+
   # Add 'if' condition before 'steps' to ensure correct YAML ordering
   if job_data["ci_stage"] == "merge_queue"
     gh_job_yaml["if"] = "(github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))"

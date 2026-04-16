@@ -65,11 +65,15 @@ module Idl
 
     # @return [String] Source input file
     sig { returns(T.nilable(Pathname)) }
-    attr_reader :input_file
+    def input_file
+      @input_file || @parent&.input_file
+    end
 
     # @return [Integer] Starting line in the source input file (i.e., position 0 of {#input} in the file)
     sig { returns(Integer) }
-    attr_reader :starting_line
+    def starting_line
+      @starting_line || @parent&.starting_line || 0
+    end
 
     # @return [String] Source string
     sig { returns(T.nilable(String)) }
@@ -212,6 +216,14 @@ module Idl
     sig { abstract.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab); end
 
+    # @return [Boolean] whether this node includes the Executable interface
+    sig { overridable.returns(T::Boolean).checked(:never) }
+    def executable? = false
+
+    # @return [Boolean] whether this node includes the Declaration interface
+    sig { overridable.returns(T::Boolean).checked(:never) }
+    def declaration? = false
+
     # @param input [String] The source being compiled
     # @param interval [Range] The range in the source corresponding to this AstNode
     # @param children [Array<AstNode>] Children of this node
@@ -247,7 +259,7 @@ module Idl
     # @param [Integer] starting_line The starting line number in the input file.
     # @param [Integer] starting_offset The byte offset in the file where the IDL content starts.
     # @param [Array<Integer>, nil] line_file_offsets Per-IDL-line file byte offsets (nil = use starting_offset).
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void.checked(:never) }
     def set_input_file_unless_already_set(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
       return unless @input_file.nil?
 
@@ -255,10 +267,6 @@ module Idl
       @starting_line = starting_line
       @starting_offset = starting_offset
       @line_file_offsets = line_file_offsets
-      children.each do |child|
-        child.set_input_file_unless_already_set(filename, starting_line, starting_offset, line_file_offsets)
-      end
-      raise "?" if @starting_line.nil?
     end
 
     # remember where the code comes from
@@ -267,22 +275,18 @@ module Idl
     # @param starting_line [Integer] Starting line in the file
     # @param starting_offset [Integer] Byte offset in the file where the IDL content starts
     # @param line_file_offsets [Array<Integer>, nil] Per-IDL-line file byte offsets (nil = use starting_offset).
-    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+    sig { params(filename: T.any(Pathname, String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void.checked(:never) }
     def set_input_file(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
       @input_file = Pathname.new(filename)
       @starting_line = starting_line
       @starting_offset = starting_offset
       @line_file_offsets = line_file_offsets
-      children.each do |child|
-        child.set_input_file(filename, starting_line, starting_offset, line_file_offsets)
-      end
-      raise "?" if @starting_line.nil?
     end
 
     # @return [Integer] the current line number
     sig { returns(Integer) }
     def lineno
-      T.must(T.must(input)[0..T.must(interval).first]).count("\n") + 1 + (@starting_line.nil? ? 0 : @starting_line)
+      T.must(T.must(input)[0..T.must(interval).first]).count("\n") + 1 + starting_line
     end
 
     # @return [AstNode] the first ancestor that is_a?(+klass+)
@@ -378,7 +382,7 @@ module Idl
       starting_lineno = T.must(T.must(input)[0..lines_interval.min]).count("\n")
       lines = lines.lines.map do |line|
         starting_lineno += 1
-        "#{@starting_line + starting_lineno - 1}: #{line}"
+        "#{starting_line + starting_lineno - 1}: #{line}"
       end.join("")
 
       msg = <<~WHAT
@@ -512,11 +516,11 @@ module Idl
     #  end: <0-indexed position of the ending character in the input>
     sig { returns(T::Hash[String, T.untyped]) }
     def source_yaml
-      base_offset = @starting_offset || 0
+      base_offset = source_starting_offset
       interval_begin = T.must(interval).begin
       interval_end = T.must(interval).size == 0 ? T.must(interval).begin + 1 : T.must(interval).end
 
-      lfo = @line_file_offsets
+      lfo = source_line_file_offsets
       if lfo
         # Map an IDL-string position to a file byte offset using the per-line table.
         # Each entry lfo[i] is the file offset of the first character of IDL line i.
@@ -539,10 +543,21 @@ module Idl
       end
 
       {
-        "file" => @input_file.to_s,
+        "file" => T.must(input_file).to_s,
         "begin" => file_begin,
         "end"   => file_end
       }
+    end
+
+    sig { returns(Integer) }
+    def source_starting_offset
+      @starting_offset || @parent&.source_starting_offset || 0
+    end
+
+    sig { returns(T.nilable(T::Array[Integer])) }
+    def source_line_file_offsets
+      return @line_file_offsets unless @line_file_offsets.nil?
+      @parent&.source_line_file_offsets
     end
 
     private
@@ -673,7 +688,10 @@ module Idl
   module Executable
     extend T::Sig
     extend T::Helpers
-    interface!
+    abstract!
+
+    sig { returns(T::Boolean).checked(:never) }
+    def executable? = true
 
     # @!macro [new] execute
     #   "execute" the statement by updating the variables in the symbol table
@@ -860,7 +878,10 @@ module Idl
   module Declaration
     extend T::Sig
     extend T::Helpers
-    interface!
+    abstract!
+
+    sig { returns(T::Boolean).checked(:never) }
+    def declaration? = true
 
     # @!macro [new] add_symbol
     #  Add symbol(s) at the outermost scope of the symbol table
@@ -1418,7 +1439,9 @@ module Idl
         end
       end
 
-      IsaAst.new(input, interval, kids)
+      node = IsaAst.new(input, interval, kids)
+      node.set_input_file(yaml.fetch("source").fetch("file"))
+      node
     end
   end
 
@@ -1493,12 +1516,6 @@ module Idl
     end
   end
 
-  class ArraySizeSyntaxNode < SyntaxNode
-    def to_ast
-      ArraySizeAst.new(input, interval, send(:expression).to_ast)
-    end
-  end
-
   class ArraySizeAst < AstNode
     include Rvalue
 
@@ -1560,25 +1577,21 @@ module Idl
   end
 
 
-  class EnumSizeSyntaxNode < SyntaxNode
-    def to_ast
-      EnumSizeAst.new(input, interval, send(:type_name).to_ast)
-    end
-  end
-
   # represents the builtin that returns the nymber of elements in an enum class
   #
   #  $enum_size(XRegWidth) #=> 2
   class EnumSizeAst < AstNode
     include Rvalue
 
-    def enum_class = children[0]
+    def enum_class = children.fetch(0)
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: T.any(IdAst, UserTypeNameAst)).void }
     def initialize(input, interval, enum_class_name)
-      super(input, interval, [enum_class_name])
+      user_type_name = enum_class_name.is_a?(UserTypeNameAst) ? enum_class_name : UserTypeNameAst.new(enum_class_name.input, enum_class_name.interval, enum_class_name.name)
+      super(input, interval, [user_type_name])
     end
 
     def type_check(symtab, strict:)
@@ -1615,14 +1628,8 @@ module Idl
       interval = interval_from_source_yaml(yaml.fetch("source"))
       EnumSizeAst.new(
         input, interval,
-        T.cast(AstNode.from_h(yaml.fetch("enum_class_name"), source_mapper), T.all(Rvalue, AstNode))
+        T.cast(AstNode.from_h(yaml.fetch("enum_class_name"), source_mapper), UserTypeNameAst)
       )
-    end
-  end
-
-  class EnumElementSizeSyntaxNode < SyntaxNode
-    def to_ast
-      EnumElementSizeAst.new(input, interval, send(:type_name).to_ast)
     end
   end
 
@@ -1637,9 +1644,10 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: UserTypeNameAst).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: T.any(IdAst, UserTypeNameAst)).void }
     def initialize(input, interval, enum_class_name)
-      super(input, interval, [enum_class_name])
+      user_type_name = enum_class_name.is_a?(UserTypeNameAst) ? enum_class_name : UserTypeNameAst.new(enum_class_name.input, enum_class_name.interval, enum_class_name.name)
+      super(input, interval, [user_type_name])
     end
 
     def type_check(symtab, strict:)
@@ -1677,12 +1685,6 @@ module Idl
     end
   end
 
-  class EnumCastSyntaxNode < SyntaxNode
-    def to_ast
-      EnumCastAst.new(input, interval, send(:type_name).to_ast, send(:expression).to_ast)
-    end
-  end
-
   class EnumCastAst < AstNode
     include Rvalue
 
@@ -1690,22 +1692,23 @@ module Idl
     def const_eval?(symtab) = true
 
     # @return [UserTypeAst] Enum name
-    def enum_name = @children[0]
+    def enum_name = @children.fetch(0)
 
     # @return [Rvalue] Value expression
-    def expression = @children[1]
+    def expression = @children.fetch(1)
 
     sig {
       params(
         input: T.nilable(String),
         interval: T.nilable(T::Range[Integer]),
-        type_name: UserTypeNameAst,
+        type_name: T.any(IdAst, UserTypeNameAst),
         expression: RvalueAst
       )
       .void
     }
     def initialize(input, interval, type_name, expression)
-      super(input, interval, [type_name, expression])
+      user_type_name = type_name.is_a?(UserTypeNameAst) ? type_name : UserTypeNameAst.new(type_name.input, type_name.interval, type_name.name)
+      super(input, interval, [user_type_name, expression])
     end
 
     def type_check(symtab, strict:)
@@ -1758,26 +1761,21 @@ module Idl
     end
   end
 
-  class EnumArrayCastSyntaxNode < SyntaxNode
-    def to_ast
-      EnumArrayCastAst.new(input, interval, send(:type_name).to_ast)
-    end
-  end
-
   # represents the builtin that returns an array with all elements of an Enum type
   #
   #  $enum_to_a(PrivilegeMode) #=> [3, 1, 1, 0, 5, 4]
   class EnumArrayCastAst < AstNode
     include Rvalue
 
-    def enum_class = children[0]
+    def enum_class = children.fetch(0)
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: UserTypeNameAst).void }
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), enum_class_name: T.any(IdAst, UserTypeNameAst)).void }
     def initialize(input, interval, enum_class_name)
-      super(input, interval, [enum_class_name])
+      user_type_name = enum_class_name.is_a?(UserTypeNameAst) ? enum_class_name : UserTypeNameAst.new(enum_class_name.input, enum_class_name.interval, enum_class_name.name)
+      super(input, interval, [user_type_name])
     end
 
     def type_check(symtab, strict:)
@@ -5702,6 +5700,120 @@ module Idl
     end
   end
 
+  # Generic syntax node for $name(arg, ...) — dispatches to the correct typed AstNode in to_ast.
+  class DollarFunctionCallSyntaxNode < SyntaxNode
+    def to_ast
+      dollar_name = "$#{send(:name).text_value}"
+      arg_nodes = dollar_arg_list_elements
+      enum_type_name_validation = {
+        0 => {
+          classes: [IdAst, UserTypeNameAst],
+          description: "an identifier or user type name"
+        }
+      }
+
+      case dollar_name
+      when "$width"             then builtin_call_ast(dollar_name, arg_nodes, 1, WidthRevealAst)
+      when "$signed"            then builtin_call_ast(dollar_name, arg_nodes, 1, SignCastAst)
+      when "$bits"              then builtin_call_ast(dollar_name, arg_nodes, 1, BitsCastAst)
+      when "$enum_size"         then builtin_call_ast(dollar_name, arg_nodes, 1, EnumSizeAst, enum_type_name_validation)
+      when "$enum_element_size" then builtin_call_ast(dollar_name, arg_nodes, 1, EnumElementSizeAst, enum_type_name_validation)
+      when "$enum_to_a"         then builtin_call_ast(dollar_name, arg_nodes, 1, EnumArrayCastAst, enum_type_name_validation)
+      when "$enum"              then builtin_call_ast(dollar_name, arg_nodes, 2, EnumCastAst, enum_type_name_validation)
+      when "$array_size"        then builtin_call_ast(dollar_name, arg_nodes, 1, ArraySizeAst)
+      when "$array_includes?"   then builtin_call_ast(dollar_name, arg_nodes, 2, ArrayIncludesAst)
+      else
+        ParseTimeDetectedTypeError.new(input, interval, "#{dollar_name} is not a builtin function")
+      end
+    end
+
+    private
+
+    def builtin_call_ast(dollar_name, arg_nodes, expected_arg_count, ast_class, arg_type_validations = {})
+      if arg_nodes.size != expected_arg_count
+        ParseTimeDetectedTypeError.new(input, interval, "#{dollar_name} expects #{expected_arg_count} argument#{expected_arg_count == 1 ? "" : "s"}; #{arg_nodes.size} given")
+      else
+        arg_asts = arg_nodes.first(expected_arg_count).map(&:to_ast)
+
+        arg_type_validations.each do |arg_index, validation|
+          next if validation[:classes].any? { |klass| arg_asts[arg_index].is_a?(klass) }
+
+          return ParseTimeDetectedTypeError.new(
+            input,
+            interval,
+            "#{dollar_name} expects argument #{arg_index + 1} to be #{validation[:description]}; #{builtin_arg_type_name(arg_asts[arg_index])} given"
+          )
+        end
+
+        ast_class.new(input, interval, *arg_asts)
+      end
+    end
+
+    def builtin_arg_type_name(arg_ast)
+      arg_ast.class.name.split("::").last
+    end
+
+    private
+
+    def dollar_arg_list_elements
+      arg_list = send(:args)
+      first = arg_list.first
+      rest = arg_list.rest.elements.map { |e| e.expression }
+      first.empty? ? rest : [first] + rest
+    end
+
+  end
+
+  # Generic syntax node for $name (no parens) — creates a BuiltinVariableAst.
+  class DollarVariableSyntaxNode < SyntaxNode
+    def to_ast
+      BuiltinVariableAst.new(input, interval, "$#{send(:name).text_value}")
+    end
+  end
+
+  # Syntax node for $name = expr — dispatches to PcAssignmentAst for $pc,
+  class DollarVariableAssignmentSyntaxNode < SyntaxNode
+    def to_ast
+      dollar_name = "$#{send(:dollar_variable).send(:name).text_value}"
+      rhs = send(:rval).to_ast
+      case dollar_name
+      when "$pc"
+        PcAssignmentAst.new(input, interval, rhs)
+      else
+        ParseTimeDetectedTypeError.new(input, interval, "#{dollar_name} is not assignable")
+      end
+    end
+  end
+
+  # AstNode for an error detected during to_ast. Always causes a type error
+  class ParseTimeDetectedTypeError < AstNode
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab) = true
+
+    def initialize(input, interval, reason)
+      super(input, interval, EMPTY_ARRAY)
+      @reason = reason
+    end
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      type_error @reason
+    end
+
+    sig { params(symtab: SymbolTable).returns(Type) }
+    def type(symtab) = type_error(@reason)
+
+    sig { params(symtab: SymbolTable).returns(T.untyped) }
+    def value(symtab) = value_error "Can't take value of a type error"
+
+    sig { override.returns(String) }
+    def to_idl = text_value
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = { "kind" => "ParseTimeDetectedTypeError", "reason" => @reason, "source" => source_yaml }
+  end
+
   class PostIncrementExpressionSyntaxNode < SyntaxNode
     def to_ast
       PostIncrementExpressionAst.new(input, interval, send(:rval).to_ast)
@@ -6352,10 +6464,10 @@ module Idl
 
     # @!macro execute
     def execute(symtab)
-      if action.is_a?(Declaration)
+      if action.declaration?
         action.add_symbol(symtab)
       end
-      if action.is_a?(Executable)
+      if action.executable?
         action.execute(symtab)
       end
     end
@@ -6408,7 +6520,7 @@ module Idl
     # @!macro type_check
     def type_check(symtab, strict:)
       action.type_check(symtab, strict:)
-      type_error "Cannot declare from a conditional statement" if action.is_a?(Declaration)
+      type_error "Cannot declare from a conditional statement" if action.declaration?
 
       condition.type_check(symtab, strict:)
       type_error "condition is not boolean" unless condition.type(symtab).convertable_to?(:boolean)
@@ -7884,7 +7996,7 @@ module Idl
       stmts.each do |s|
         if s.is_a?(Returns)
           return s.return_type(symtab)
-        elsif s.action.is_a?(Declaration)
+        elsif s.action.declaration?
           s.action.add_symbol(symtab)
         end
       end

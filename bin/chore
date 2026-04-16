@@ -94,20 +94,24 @@ container_remove_usage() {
 }
 
 gen_subcmd_usage() {
-  echo "Usage: chore gen [-h] TARGET"
+  echo "Usage: chore gen [-h] [-f] [-b BASE_REF] TARGET"
   echo ""
   echo ""
   echo "Options:"
   echo ""
+  echo "  -b REF:  Base git ref to compare against for gem-versions (default: origin/main)"
   echo "  -f:      Fail on change; exit with status 1 if the generated file changes"
   echo "  -h:      Print help"
   echo ""
   echo "Commands:"
   echo ""
   echo "  all:           Generate all development artifacts"
+  echo "  gem-versions:  Sync inter-gem version pins in gemspecs and Gemfile.lock files"
+  echo "                 for the locally-developed gems in tools/ruby-gems/"
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
+  echo "  xqci           Generate Xqci spec used for Golden regressions"
   echo ""
 }
 
@@ -282,13 +286,77 @@ do_gen_vscode_idl() {
 }
 
 #
+# Lock all Gemfiles with consistent platforms.
+#
+# The root Gemfile is a union of all per-gem gemspecs and is used as the
+# authoritative dependency resolution context. It must be locked first so that
+# when Bundler locks each per-gem Gemfile (which runs under `bundle exec` from
+# the root context), it resolves transitive dependencies (e.g. activesupport,
+# sorbet) to the same versions as the root. If the per-gem locks ran first,
+# they could resolve to different versions and diverge from the root, causing
+# failures in tools like sorbet that compare the installed gem version against
+# committed RBI files.
+#
+# Args: extra args to pass to each `bundle lock` call (e.g. --update --bundler)
+#
+do_lock_all_gemfiles() {
+  # Always include both x86_64 and aarch64 Linux platforms so lock files are
+  # valid on both architectures.
+  local platforms="--add-platform x86_64-linux --add-platform x86_64-linux-gnu --add-platform aarch64-linux --add-platform aarch64-linux-gnu"
+  # Root first — per-gem locks must be derived from this resolved graph.
+  #
+  # BUNDLE_GEMFILE must be set to match --gemfile for each call so that
+  # Bundler writes PATH remote: entries relative to the correct directory.
+  # `env` is used to set BUNDLE_GEMFILE inline so it is passed into the
+  # container when $RUN is a docker/podman invocation.
+  # Note: `bundle lock` (not `bundle exec bundle lock`) is used deliberately —
+  # `bundle exec` requires an existing lockfile to activate the bundle first,
+  # which breaks when lockfiles are missing or being regenerated from scratch.
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
+  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
+}
+
+#
+# Sync inter-gem version pins in gemspecs and Gemfile.lock files for the
+# locally-developed gems in tools/ruby-gems/. Also auto-increments versions
+# for any gem whose source changed without a bump (with cascade).
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
+#
+do_gen_gem_versions() {
+  local extra_args=()
+  if [ -n "$1" ]; then
+    extra_args=(--base-ref "$1")
+  fi
+  source_setup
+  echo "Syncing inter-gem version pins for tools/ruby-gems/ gems"
+  if [ $fail_on_change -eq 1 ]; then
+    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change "${extra_args[@]}"
+  else
+    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb "${extra_args[@]}"
+  fi
+}
+
+#
 # Generate all development artifacts
 #
 do_gen_all() {
   do_gen_regress
   do_gen_vscode_idl
+  do_gen_gem_versions
   do_ruby_type_def all
   do_gen_xqci_golden
+}
+
+#
+# Generate the development artifacts that are quick to resolve; should be run frequently (e.g., before git push)
+#
+do_gen_smoke() {
+  do_gen_regress
+  do_gen_vscode_idl
+  do_ruby_type_def all
 }
 
 #
@@ -319,12 +387,7 @@ do_install_gems() {
   local update_tag=$1
   source "$UDB_ROOT"/bin/setup
 
-  # run "bundle exec bundle" to get the BUNDLED WITH version of bundler
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile
+  do_lock_all_gemfiles
 
   # increment container-tag
   if [ "$update_tag" == "yes" ]; then
@@ -377,15 +440,33 @@ do_ruby_type_def() {
       exit 1 # Exit with error
       ;;
   esac
+  # Background jobs are not a TTY; strip -it from RUN to avoid docker complaints.
+  local RUN_NO_TTY="${RUN//-it /}"
+
+  # Run tapioca gems+dsl for each gem in parallel (writes are per-gem).
+  local pids=()
   for gem in "${gems[@]}"; do
+    gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
     steps=$(cat << STEPS
       cd ${UDB_ROOT}/tools/ruby-gems/${gem} && \
-      bundle exec tapioca gems --all && \
-      bundle exec tapioca dsl && \
-      bundle exec tapioca annotations
+      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca gems --all && \
+      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca dsl
 STEPS
     )
-    $RUN /bin/bash -c "$steps" || exit $?
+    $RUN_NO_TTY /bin/bash -c "$steps" &
+    pids+=($!)
+  done
+
+  local rc=0
+  for pid in "${pids[@]}"; do
+    wait "$pid" || rc=$?
+  done
+  [ $rc -ne 0 ] && exit $rc
+
+  # Run tapioca annotations sequentially to avoid races on the shared gem cache.
+  for gem in "${gems[@]}"; do
+    gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
+    $RUN_NO_TTY /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca annotations" || exit $?
   done
 }
 
@@ -535,7 +616,8 @@ case "$subcommand" in
     ;;
   gen )
     fail_on_change=0
-    while getopts ":hf" opt; do # Go through the options
+    base_ref=""
+    while getopts ":hfb:" opt; do # Go through the options
       case $opt in
         # help
         h )
@@ -544,6 +626,11 @@ case "$subcommand" in
         ;;
         f )
           fail_on_change=1
+          shift
+          ;;
+        b )
+          base_ref="$OPTARG"
+          shift
           shift
           ;;
         # Invalid option
@@ -560,12 +647,24 @@ case "$subcommand" in
         do_gen_all
         exit 0
         ;;
+      smoke )
+        do_gen_smoke
+        exit 0
+        ;;
+      gem-versions )
+        do_gen_gem_versions "$base_ref"
+        exit 0
+        ;;
       vscode-idl )
         do_gen_vscode_idl
         exit 0
         ;;
       regress )
         do_gen_regress
+        exit 0
+        ;;
+      xqci )
+        do_gen_xqci_golden
         exit 0
         ;;
       ruby-type-def )

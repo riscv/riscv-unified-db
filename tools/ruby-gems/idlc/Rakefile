@@ -74,15 +74,19 @@ namespace :test do
   namespace :idlc do
     desc "Type check the Ruby IDL source code"
     task :sorbet  do
-      Dir.chdir(IDLC_ROOT) do
-        Udb.logger.info "Type checking idlc gem"
-        sh "bundle exec srb tc"
+      Bundler.with_unbundled_env do
+        Dir.chdir(IDLC_ROOT) do
+          Udb.logger.info "Type checking idlc gem"
+          sh "BUNDLE_GEMFILE=#{IDLC_ROOT}/Gemfile BUNDLE_FROZEN=1 bundle exec srb tc"
+        end
       end
     end
 
     task :sorbet_coverage do
-      Dir.chdir(IDLC_ROOT) do
-        sh "bundle exec spoom srb coverage"
+      Bundler.with_unbundled_env do
+        Dir.chdir(IDLC_ROOT) do
+          sh "BUNDLE_GEMFILE=#{IDLC_ROOT}/Gemfile BUNDLE_FROZEN=1 bundle exec spoom srb coverage"
+        end
       end
     end
 

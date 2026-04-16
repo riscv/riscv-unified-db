@@ -131,8 +131,6 @@ module ERB::DefMethod
   end
 end
 
-module ERB::Escape; end
-
 module ERB::Util
   include ::ActiveSupport::CoreExt::ERBUtil
   include ::ERB::Escape

@@ -82,17 +82,22 @@ module BigDecimal::Internal
   class << self
     def coerce_to_bigdecimal(x, prec, method_name); end
     def coerce_validate_prec(prec, method_name, accept_zero: T.unsafe(nil)); end
+    def fast_to_f(x); end
+    def float_log(x); end
     def infinity_computation_result; end
     def nan_computation_result; end
+    def newton_loop(prec, initial_precision: T.unsafe(nil), safe_margin: T.unsafe(nil)); end
+    def taylor_sum_binary_splitting(x, ds, prec); end
   end
 end
 
+BigDecimal::Internal::EXTRA_PREC = T.let(T.unsafe(nil), Integer)
 BigDecimal::VERSION = T.let(T.unsafe(nil), String)
 
 module BigMath
   private
 
-  def _exp_taylor(x, prec); end
+  def _exp_binary_splitting(x, prec); end
   def exp(x, prec); end
   def log(x, prec); end
 
@@ -102,7 +107,7 @@ module BigMath
 
     private
 
-    def _exp_taylor(x, prec); end
+    def _exp_binary_splitting(x, prec); end
   end
 end
 
