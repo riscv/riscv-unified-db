@@ -28,6 +28,18 @@ encoding:
       location: 19-15
     - name: xd
       location: 11-7
+operands:
+  - name: xd
+    type: register
+    reg_file: gpr
+    source: false
+    destination: true
+  - name: csr
+    type: register
+    reg_file: csr
+  - name: xs1
+    type: register
+    reg_file: gpr
 access:
   s: always
   u: always

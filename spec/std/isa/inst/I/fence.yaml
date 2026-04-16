@@ -228,9 +228,8 @@ encoding:
           return 0b0111;  # O/R/W
         } else if operands[succ] == "IORW" {
           return 0b1111;  # I/O/R/W
-        } else {
-          raise(`Invalid successor operand: ${operands[succ]}`);
         }
+        raise(`Invalid successor operand: ${operands[succ]}`);
       decode(): |
         if succ == 0b1000 {
           return "I";

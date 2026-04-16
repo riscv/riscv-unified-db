@@ -23,30 +23,62 @@ definedBy:
     name: Zcmp
 assembly: "{reg_list}, -stack_adj"
 operands:
-  - type: reg_list
-    possible_values:
-      [
-        "ra",
-        "ra,s0",
-        "ra,s0-s1",
-        "ra,s0-s2",
-        "ra,s0-s3",
-        "ra,s0-s4",
-        "ra,s0-s5",
-        "ra,s0-s6",
-        "ra,s0-s7",
-        "ra,s0-s8",
-        "ra,s0-s9",
-        "ra,s0-s11",
-      ]
-  - type: immediate
-    name: stack_adj
+  RV32:
+    - name: reg_list
+      type: reg_list
+      possible_values:
+        [
+          "ra",
+          "ra,s0",
+          "ra,s0-s1"
+        ]
+    - name: stack_adj
+      type: immediate
+      possible_values: [ -16, -32, -48, -64, -80, -96, -112 ]
+  RV64:
+    - name: reg_list
+      type: reg_list
+      possible_values:
+        [
+          "ra",        "x1",
+          "ra,s0",     "x1, x8",
+          "ra,s0-s1",  "x1, x8-x9",
+          "ra,s0-s2",  "x1, x8-x9, x18",
+          "ra,s0-s3",  "x1, x8-x9, x18-x19",
+          "ra,s0-s4",  "x1, x8-x9, x18-x20",
+          "ra,s0-s5",  "x1, x8-x9, x18-x21",
+          "ra,s0-s6",  "x1, x8-x9, x18-x22",
+          "ra,s0-s7",  "x1, x8-x9, x18-x23",
+          "ra,s0-s8",  "x1, x8-x9, x18-x24",
+          "ra,s0-s9",  "x1, x8-x9, x18-x25",
+          "ra,s0-s11", "x1, x8-x9, x18-x27"
+        ]
+    - type: immediate
+      name: stack_adj
+      possible_values: [ -16, -32, -48, -64, -80, -96, -112, -128, -144, -160 ]
 encoding:
   match: 10111000------10
   variables:
     - name: rlist
       location: 7-4
       not: [0, 1, 2, 3]
+      encode(operands): |
+        if        (operands[reg_list] == "ra"      || operands[reg_list] == "x1"      ) {
+          return 4;
+        } else if (operands[reg_list] == "ra,s0"   || operands[reg_list] == "x1, x8") {
+          return 5;
+        } else if (operands[reg_list] == "ra,s0-s1") {
+          return 6;
+        } else if (operands[reg_list] == "ra,s0-s2" && xlen() > 32) {
+          return 7;
+        } else if (operands[reg_list] == "ra,s0-s3" && xlen() > 32) {
+          return 8;
+        } else if (operands[reg_list] == "ra,s0-s4" && xlen() > 32) {
+          return 9;
+        } else if (operands[reg_list] == "ra,s0-s5" && xlen() > 32) {
+          return 9;
+        }
+        raise(`Invalid reg_list: ${operands[reg_list]|`);
     - name: spimm
       location: 3-2
 access:
