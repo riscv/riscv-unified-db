@@ -30,8 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     if: false
     steps:
-    - name: Use mise-action
-      uses: jdx/mise-action@v2
     - name: Use download-artifact
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
     - name: Use upload-artifact
