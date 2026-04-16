@@ -60,7 +60,7 @@ Additionally, developers will be interested in the following:
 
 === Prerequisites
 
-UnifiedDB tools can run natively on your machine using https://mise.jdx.dev[mise] (recommended),
+UnifiedDB tools can run natively on your machine using https://mise.jdx.dev[mise].
 or inside a container using Docker or Podman.
 
 === Native Setup (mise)
