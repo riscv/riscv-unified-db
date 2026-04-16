@@ -23,13 +23,13 @@ encoding:
       location: 31|7|30-25|11-8
       left_shift: 1
       sign_extend: true
-      encode(operands): return operands[2].value;
+      encode(operands): return operands[imm].value;
     - name: xs2
       location: 24-20
-      encode(operands): return operands[1].value;
+      encode(operands): return operands[xs2].value;
     - name: xs1
       location: 19-15
-      encode(operands): return operands[0].value;
+      encode(operands): return operands[xs1].value;
 operands:
 - name: xs1
   type: register

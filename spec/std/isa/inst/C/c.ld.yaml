@@ -29,15 +29,15 @@ encoding:
       - name: imm
         location: 6-5|12-10
         left_shift: 3
-        encode(operands): return operands[1].offset;
+        encode(operands): return operands[xs1].offset;
       - name: xd
         location: 4-2
         not: [1, 3, 5, 7]
-        encode(operands): return reg2creg(operands[0]);
+        encode(operands): return reg2creg(operands[xd]);
         decode(): return creg2reg(xd);
       - name: xs1
         location: 9-7
-        encode(operands): return reg2creg(operands[1]);
+        encode(operands): return reg2creg(operands[xs1]);
         decode(): return creg2reg(xs1);
   RV64:
     match: 011-----------00
@@ -45,14 +45,14 @@ encoding:
       - name: imm
         location: 6-5|12-10
         left_shift: 3
-        encode(operands): return operands[1].offset;
+        encode(operands): return operands[xs1].offset;
       - name: xd
         location: 4-2
-        encode(operands): return reg2creg(operands[0]);
+        encode(operands): return reg2creg(operands[xd]);
         decode(): return creg2reg(xd);
       - name: xs1
         location: 9-7
-        encode(operands): return reg2creg(operands[1]);
+        encode(operands): return reg2creg(operands[xs1]);
         decode(): return creg2reg(xs1);
 operands:
   RV32:

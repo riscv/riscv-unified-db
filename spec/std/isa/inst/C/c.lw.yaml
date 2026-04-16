@@ -23,17 +23,17 @@ encoding:
       location: 5|12-10|6
       left_shift: 2
       encode(operands): |
-        return operands[1].offset;
+        return operands[xs1].offset;
     - name: xd
       location: 4-2
       encode(operands): |
-        return reg2creg(operands[0]);
+        return reg2creg(operands[xd]);
       decode(): |
         return creg2reg(xd);
     - name: xs1
       location: 9-7
       encode(operands): |
-        return reg2creg(operands[1]);
+        return reg2creg(operands[xs1]);
       decode(): |
         return creg2reg(xd);
 operands:

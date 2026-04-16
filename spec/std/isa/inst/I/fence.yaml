@@ -136,36 +136,36 @@ encoding:
     - name: pred
       location: 27-24
       encode(operands): |
-        if operands[0] == "I" {
+        if operands[pred] == "I" {
           return 0b1000;  # I/O
-        } else if operands[0] == "O" {
+        } else if operands[pred] == "O" {
           return 0b0100;  # O
-        } else if operands[0] == "R" {
+        } else if operands[pred] == "R" {
           return 0b0010;  # R
-        } else if operands[0] == "W" {
+        } else if operands[pred] == "W" {
           return 0b0001;  # W
-        } else if operands[0] == "IO" {
+        } else if operands[pred] == "IO" {
           return 0b1100;  # I/O
-        } else if operands[0] == "IR" {
+        } else if operands[pred] == "IR" {
           return 0b1010;  # I/R
-        } else if operands[0] == "IW" {
+        } else if operands[pred] == "IW" {
           return 0b1001;  # I/W
-        } else if operands[0] == "OR" {
+        } else if operands[pred] == "OR" {
           return 0b0110;  # O/R
-        } else if operands[0] == "OW" {
+        } else if operands[pred] == "OW" {
           return 0b0101;  # O/W
-        } else if operands[0] == "RW" {
+        } else if operands[pred] == "RW" {
           return 0b0011;  # R/W
-        } else if operands[0] == "IOR" {
+        } else if operands[pred] == "IOR" {
           return 0b1110;  # I/O/R
-        } else if operands[0] == "IOW" {
+        } else if operands[pred] == "IOW" {
           return 0b1101;  # I/O/W
-        } else if operands[0] == "ORW" {
+        } else if operands[pred] == "ORW" {
           return 0b0111;  # O/R/W
-        } else if operands[0] == "IORW" {
+        } else if operands[pred] == "IORW" {
           return 0b1111;  # I/O/R/W
         } else {
-          raise(`Invalid predecessor operand: ${operands[0]}`);
+          raise(`Invalid predecessor operand: ${operands[pred]}`);
         }
         decode(): |
           if pred == 0b1000 {
@@ -200,36 +200,36 @@ encoding:
     - name: succ
       location: 23-20
       encode(operands): |
-        if operands[1] == "I" {
+        if operands[succ] == "I" {
           return 0b1000;  # I/O
-        } else if operands[1] == "O" {
+        } else if operands[succ] == "O" {
           return 0b0100;  # O
-        } else if operands[1] == "R" {
+        } else if operands[succ] == "R" {
           return 0b0010;  # R
-        } else if operands[1] == "W" {
+        } else if operands[succ] == "W" {
           return 0b0001;  # W
-        } else if operands[1] == "IO" {
+        } else if operands[succ] == "IO" {
           return 0b1100;  # I/O
-        } else if operands[1] == "IR" {
+        } else if operands[succ] == "IR" {
           return 0b1010;  # I/R
-        } else if operands[1] == "IW" {
+        } else if operands[succ] == "IW" {
           return 0b1001;  # I/W
-        } else if operands[1] == "OR" {
+        } else if operands[succ] == "OR" {
           return 0b0110;  # O/R
-        } else if operands[1] == "OW" {
+        } else if operands[succ] == "OW" {
           return 0b0101;  # O/W
-        } else if operands[1] == "RW" {
+        } else if operands[succ] == "RW" {
           return 0b0011;  # R/W
-        } else if operands[1] == "IOR" {
+        } else if operands[succ] == "IOR" {
           return 0b1110;  # I/O/R
-        } else if operands[1] == "IOW" {
+        } else if operands[succ] == "IOW" {
           return 0b1101;  # I/O/W
-        } else if operands[1] == "ORW" {
+        } else if operands[succ] == "ORW" {
           return 0b0111;  # O/R/W
-        } else if operands[1] == "IORW" {
+        } else if operands[succ] == "IORW" {
           return 0b1111;  # I/O/R/W
         } else {
-          raise(`Invalid successor operand: ${operands[1]}`);
+          raise(`Invalid successor operand: ${operands[succ]}`);
         }
       decode(): |
         if succ == 0b1000 {

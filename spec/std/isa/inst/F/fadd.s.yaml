@@ -26,17 +26,17 @@ encoding:
     - name: rm
       location: 14-12
       encode(operands): |
-        if (operands[3] == "RNE") {
+        if (operands[rm] == "RNE") {
           return 3b'000;
-        } else if (operands[3] == "RTZ") {
+        } else if (operands[rm] == "RTZ") {
           return 3b'001;
-        } else if (operands[3] == "RDN") {
+        } else if (operands[rm] == "RDN") {
           return 3b'010;
-        } else if (operands[3] == "RUP") {
+        } else if (operands[rm] == "RUP") {
           return 3b'011;
-        } else if (operands[3] == "RMM") {
+        } else if (operands[rm] == "RMM") {
           return 3b'100;
-        } else if (operands[3] == "DYN") {
+        } else if (operands[rm] == "DYN") {
           return 3b'111;
         } # else reserved
 operands:
