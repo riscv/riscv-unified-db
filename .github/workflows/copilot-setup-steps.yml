@@ -12,11 +12,11 @@ on:
   push:
     paths:
       - .github/workflows/copilot-setup-steps.yml
-      - .github/actions/mise-setup/action.yaml
+      - .github/actions/mise-setup/action.yml
   pull_request:
     paths:
       - .github/workflows/copilot-setup-steps.yml
-      - .github/actions/mise-setup/action.yaml
+      - .github/actions/mise-setup/action.yml
 jobs:
   copilot-setup-steps:
     runs-on: ubuntu-24.04
