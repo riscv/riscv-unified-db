@@ -60,42 +60,26 @@ Additionally, developers will be interested in the following:
 
 === Prerequisites
 
-UnifiedDB tools can run natively on your machine using https://mise.jdx.dev[mise].
+UnifiedDB tools can run natively on your machine using https://mise.jdx.dev[mise],
 or inside a container using Docker or Podman.
 
 === Native Setup (mise)
 
-https://mise.jdx.dev[mise] manages all tool versions (Ruby, Python, Node.js, CMake, etc.) needed
-to work on UnifiedDB.
+From the repo root, run:
 
-. Install mise: https://mise.jdx.dev/getting-started.html
-. It is *strongly* recommended to activate mise in your shell profile (`.bashrc`, `.zshrc`, etc.)
-  so that mise-managed tools are available in your `PATH`:
-+
 [source,bash]
 ----
-echo 'eval "$(mise activate bash)"' >> ~/.bashrc  # or ~/.zshrc for zsh
+bin/setup
 ----
-+
-See the https://mise.jdx.dev/getting-started.html#activate-mise[mise activation docs] for other shells.
-. From the repo root, install all tools:
-+
-[source,bash]
-----
-mise install
-----
-. Install git hooks (pre-commit linting via `prek`; auto-runs `mise install` on merge/checkout when `.mise.toml` changes):
-+
-[source,bash]
-----
-bin/install_hooks
-----
-. Verify your environment:
-+
-[source,bash]
-----
-bin/doctor
-----
+
+That's it. `bin/setup` installs https://mise.jdx.dev[mise] if needed, uses it to install all
+tool versions (Ruby, Python, Node.js, CMake, etc.), installs all dependencies (Ruby gems,
+Python packages, npm packages, native binaries), sets up git hooks, and walks you through
+choosing a C++ toolchain. It is safe to re-run at any time.
+
+When it finishes, it will tell you how to activate mise in your shell profile so that
+mise-managed tools are available in future terminal sessions, and remind you to use the
+wrappers in `bin/` when invoking any tool.
 
 === Tasks
 

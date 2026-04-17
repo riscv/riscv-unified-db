@@ -13,6 +13,14 @@ The RISC-V Unified Database (UnifiedDB/UDB) is a repository that holds all infor
 
 **Important:** This project is under rapid development. Schemas and APIs change frequently. Data in `spec/` is a work in progress.
 
+## Setup
+
+```bash
+bin/setup    # one-command setup: installs mise, all tool versions, all dependencies,
+             # git hooks, and walks through C++ toolchain configuration
+bin/doctor   # verify the environment is correctly set up (run after bin/setup)
+```
+
 ## Common Commands
 
 ```bash
@@ -56,7 +64,7 @@ The RISC-V Unified Database (UnifiedDB/UDB) is a repository that holds all infor
 - `backends/` — Artifact generators (documents, simulators, etc.)
 - `tools/ruby-gems/` — Ruby gem libraries
 - `tools/test/` — Test infrastructure
-- `bin/` — Wrapper scripts for container-aware execution
+- `bin/` — Wrapper scripts; run natively with mise-managed tools (container is only used for the RISC-V cross-toolchain via `bin/chore container`)
 - `gen/` — Generated output (gitignored)
 - `ext/` — Git submodules (riscv-isa-manual, riscv-opcodes, riscv-tests, etc.)
 

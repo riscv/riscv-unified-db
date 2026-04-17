@@ -196,7 +196,7 @@ _check_node_ecosystem() {
     _record_pass
   else
     _fail "node_modules not found"
-    _info "Fix: run \`npm install\` in the repo root"
+    _info "Fix: run \`npm ci\` in the repo root"
     _record_fail
   fi
 }

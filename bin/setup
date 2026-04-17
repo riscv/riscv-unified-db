@@ -1,20 +1,253 @@
 #!/bin/bash
-
-if [ -v UDB_SETUP_COMPLETE ]; then
-  return
-fi
-UDB_SETUP_COMPLETE=true
+# bin/setup — one-command developer setup for UnifiedDB.
+#
+# Run this once after cloning the repository. Safe to re-run at any time;
+# every step checks whether work is needed before doing it.
 
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
-cd "$ROOT" || exit
+cd "$ROOT" || exit 1
 
-if [ ! -f "$ROOT/ext/rbi-central/README.md" ]; then
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
+
+if [[ -z "${NO_COLOR:-}" ]] && [[ -t 1 ]]; then
+  _BOLD=$'\033[1m'
+  _RESET=$'\033[0m'
+  _GREEN=$'\033[32m'
+  _CYAN=$'\033[36m'
+  _YELLOW=$'\033[33m'
+  _DIM=$'\033[2m'
+else
+  _BOLD='' _RESET='' _GREEN='' _CYAN='' _YELLOW='' _DIM=''
+fi
+
+_section() { printf "\n${_BOLD}${_CYAN}==> %s${_RESET}\n" "$1"; }
+_ok()      { printf "    ${_GREEN}✓${_RESET}  %s\n" "$1"; }
+_run()     { printf "    ${_CYAN}▶${_RESET}  %s\n" "$1"; }
+_note()    { printf "    ${_YELLOW}!${_RESET}  %s\n" "$1"; }
+_info()    { printf "    ${_DIM}%s${_RESET}\n" "$1"; }
+
+printf "${_BOLD}=== UnifiedDB Setup ===${_RESET}\n"
+
+# ---------------------------------------------------------------------------
+# 1. Install mise if needed
+# ---------------------------------------------------------------------------
+
+_section "mise (tool version manager)"
+
+MISE_BIN=$(command -v mise 2>/dev/null || true)
+if [[ -z "$MISE_BIN" && -x "${HOME}/.local/bin/mise" ]]; then
+  MISE_BIN="${HOME}/.local/bin/mise"
+fi
+
+if [[ -n "$MISE_BIN" ]]; then
+  _ok "mise already installed ($("$MISE_BIN" --version 2>/dev/null | head -1))"
+else
+  _run "Installing mise..."
+  if ! curl -fsSL https://mise.run | sh; then
+    printf "\nERROR: mise installation failed.\n" >&2
+    printf "Install manually: https://mise.jdx.dev/getting-started.html\n" >&2
+    exit 1
+  fi
+  MISE_BIN="${HOME}/.local/bin/mise"
+  if [[ ! -x "$MISE_BIN" ]]; then
+    printf "\nERROR: mise not found at %s after install.\n" "$MISE_BIN" >&2
+    exit 1
+  fi
+  _ok "mise installed"
+fi
+
+# Put mise on PATH for the rest of this script so bin/ wrappers (which call
+# `mise exec`) can find it even if the user's shell profile isn't activated.
+export PATH="$(dirname "$MISE_BIN"):$PATH"
+
+# ---------------------------------------------------------------------------
+# 2. Install tool versions via mise
+# ---------------------------------------------------------------------------
+
+_section "Tool versions (Ruby, Python, Node.js, CMake, …)"
+
+# mise install is idempotent and exits quickly when everything is current.
+_run "Running mise install..."
+if ! mise install; then
+  printf "\nERROR: mise install failed.\n" >&2
+  exit 1
+fi
+_ok "All tool versions installed"
+
+# ---------------------------------------------------------------------------
+# 3. Ruby gems
+# ---------------------------------------------------------------------------
+
+_section "Ruby gems"
+
+if BUNDLE_GEMFILE="$ROOT/Gemfile" mise exec -- bundle check > /dev/null 2>&1; then
+  _ok "Ruby gems already up to date"
+else
+  _run "Running bundle install..."
+  if ! "$ROOT/bin/bundle" install; then
+    printf "\nERROR: bundle install failed.\n" >&2
+    exit 1
+  fi
+  _ok "Ruby gems installed"
+fi
+
+# ---------------------------------------------------------------------------
+# 4. Native dependencies (z3, espresso, eqntott, must)
+# ---------------------------------------------------------------------------
+
+_section "Native dependencies (z3, espresso, eqntott, must)"
+
+if [[ ! -f "$ROOT/ext/rbi-central/README.md" ]]; then
+  _run "Initializing rbi-central submodule..."
   git submodule update --init ext/rbi-central
 fi
 
-# Download udb native deps (z3, espresso, eqntott, must) from GitHub Releases.
-# Delegates to extconf.rb which handles all four and is the single source of truth.
-(cd "${ROOT}/tools/ruby-gems/udb/ext/udb_download" && ruby extconf.rb)
+_run "Downloading native dependencies..."
+if ! (cd "${ROOT}/tools/ruby-gems/udb/ext/udb_download" && mise exec -- ruby extconf.rb); then
+  printf "\nERROR: native dependency download failed.\n" >&2
+  exit 1
+fi
+_ok "Native dependencies ready"
 
-# Install git hooks (skip in CI and inside devcontainer)
+# ---------------------------------------------------------------------------
+# 5. Python packages
+# ---------------------------------------------------------------------------
+
+_section "Python packages"
+
+_run "Running uv sync..."
+if ! "$ROOT/bin/uv" sync; then
+  printf "\nERROR: uv sync failed.\n" >&2
+  exit 1
+fi
+_ok "Python packages installed"
+
+# ---------------------------------------------------------------------------
+# 6. npm packages
+# ---------------------------------------------------------------------------
+
+_section "npm packages"
+
+if [[ -d "$ROOT/node_modules" ]]; then
+  _ok "npm packages already installed"
+else
+  _run "Running npm ci..."
+  if ! "$ROOT/bin/npm" ci; then
+    printf "\nERROR: npm ci failed.\n" >&2
+    exit 1
+  fi
+  _ok "npm packages installed"
+fi
+
+# ---------------------------------------------------------------------------
+# 7. C++ toolchain preference
+# ---------------------------------------------------------------------------
+
+_section "C++ toolchain"
+
+if [[ -f "$ROOT/.toolchain-local" ]]; then
+  # shellcheck source=/dev/null
+  source "$ROOT/.toolchain-local"
+  if [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
+    _ok "Toolchain: container (from .toolchain-local)"
+  else
+    _ok "Toolchain: native (from .toolchain-local)"
+  fi
+else
+  printf "\n"
+  printf "  The C++ backend requires a RISC-V toolchain. Choose how to provide it:\n\n"
+  printf "  ${_BOLD}[1] Container — recommended for most users${_RESET}\n"
+  printf "      Requires Docker or Podman.\n"
+  printf "      A pre-built image (~500 MB) is pulled from GHCR automatically.\n"
+  printf "      No compiler installation needed.\n\n"
+  printf "  ${_BOLD}[2] Native${_RESET}\n"
+  printf "      Requires GCC 14+ (or Clang 17+) with C++23 support,\n"
+  printf "      plus a riscv64-unknown-elf cross-toolchain.\n"
+  printf "      Faster to invoke; more setup required.\n\n"
+
+  TOOLCHAIN_CHOICE=""
+  while true; do
+    printf "  Enter 1 or 2 (default: 1): "
+    read -r TOOLCHAIN_CHOICE
+    TOOLCHAIN_CHOICE="${TOOLCHAIN_CHOICE:-1}"
+    case "$TOOLCHAIN_CHOICE" in
+      1) UDB_TOOLCHAIN_CONTAINER=1; break ;;
+      2) UDB_TOOLCHAIN_CONTAINER=0; break ;;
+      *) printf "  Please enter 1 or 2.\n" ;;
+    esac
+  done
+
+  printf "UDB_TOOLCHAIN_CONTAINER=%s\n" "$UDB_TOOLCHAIN_CONTAINER" > "$ROOT/.toolchain-local"
+  _ok "Saved preference to .toolchain-local"
+fi
+
+# ---------------------------------------------------------------------------
+# 8. Pull or build toolchain container if needed
+# ---------------------------------------------------------------------------
+
+if [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
+  _section "Toolchain container image"
+
+  # shellcheck source=bin/.toolchain.sh
+  source "${ROOT}/bin/.toolchain.sh"
+  RUNTIME=$(_get_toolchain_runtime)
+
+  if [[ -z "$RUNTIME" ]]; then
+    _note "No container runtime found — skipping image pull."
+    _info "Install Docker (https://docs.docker.com/engine/install) or Podman (https://podman.io/get-started)"
+    _info "Then re-run bin/setup, or manually run: bin/chore container pull -t toolchain"
+  elif $RUNTIME images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -qF "${TOOLCHAIN_IMAGE}"; then
+    _ok "Toolchain image already present"
+    _info "${TOOLCHAIN_IMAGE}"
+  else
+    _run "Pulling ${TOOLCHAIN_IMAGE}..."
+    if $RUNTIME pull "${TOOLCHAIN_IMAGE}"; then
+      _ok "Toolchain image pulled"
+    else
+      _note "Pull failed; building locally (this will take several minutes)..."
+      if $RUNTIME build -t "${TOOLCHAIN_IMAGE}" \
+          -f "${ROOT}/.toolchain/Dockerfile" "${ROOT}/.toolchain/"; then
+        _ok "Toolchain image built"
+      else
+        printf "\nERROR: toolchain image build failed.\n" >&2
+        _info "You can retry later with: bin/chore container build -t toolchain"
+      fi
+    fi
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# 9. Git hooks
+# ---------------------------------------------------------------------------
+
+_section "Git hooks"
+
 "$ROOT/bin/install_hooks"
+
+# ---------------------------------------------------------------------------
+# Done
+# ---------------------------------------------------------------------------
+
+printf "\n${_BOLD}${_GREEN}=== Setup complete! ===${_RESET}\n\n"
+
+printf "${_BOLD}Next: verify your environment${_RESET}\n"
+printf "  Run ${_CYAN}bin/doctor${_RESET} to confirm everything is working correctly.\n\n"
+
+if [[ -z "${MISE_SHELL:-}" ]]; then
+  printf "${_BOLD}Shell activation (recommended)${_RESET}\n"
+  printf "  mise-managed tools are available in this session, but to make them\n"
+  printf "  available in all future shells, add the activation line to your shell profile:\n\n"
+  printf "    ${_DIM}echo 'eval \"\$(mise activate bash)\"' >> ~/.bashrc${_RESET}   # bash\n"
+  printf "    ${_DIM}echo 'eval \"\$(mise activate zsh)\"'  >> ~/.zshrc${_RESET}    # zsh\n\n"
+  printf "  See ${_CYAN}https://mise.jdx.dev/getting-started.html#activate-mise${_RESET} for other shells.\n\n"
+fi
+
+printf "${_BOLD}Always use the bin/ wrappers${_RESET}\n"
+printf "  Prefer ${_CYAN}bin/ruby${_RESET}, ${_CYAN}bin/bundle${_RESET}, ${_CYAN}bin/python${_RESET}, ${_CYAN}bin/rake${_RESET}, etc. over invoking tools directly.\n"
+printf "  The wrappers guarantee the project's pinned tool versions are used regardless\n"
+printf "  of what your system shell has installed, and they transparently route C++\n"
+printf "  toolchain commands through the container when UDB_TOOLCHAIN_CONTAINER=1.\n"
+printf "  This keeps results consistent across machines without requiring any shell\n"
+printf "  configuration beyond running this setup script.\n\n"
