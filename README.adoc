@@ -60,8 +60,12 @@ Additionally, developers will be interested in the following:
 
 === Prerequisites
 
-UnifiedDB tools can run natively on your machine using https://mise.jdx.dev[mise],
-or inside a container using Docker or Podman.
+UnifiedDB tooling is designed to run natively on your host using https://mise.jdx.dev[mise].
+
+A container runtime (Docker or Podman) is optional. It is only required for building generated
+C++ ISS code when a suitable native C++ toolchain and/or RISC-V cross-compiler is unavailable natively.
+
+All core workflows—Ruby, Python, npm, and all other UDB generators—run natively (via mise) without a container.
 
 === Native Setup (mise)
 
