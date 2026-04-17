@@ -21,8 +21,8 @@ ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
 [ -f "${ROOT}/../.toolchain-local" ] && source "${ROOT}/../.toolchain-local"
 
 if [ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]; then
-  # shellcheck source=.toolchain.sh
-  source "${ROOT}/.toolchain.sh"
+  # shellcheck source=../bin/.toolchain.sh
+  source "${ROOT}/../bin/.toolchain.sh"
   cd "$BINARY_DIR"
   _setup_toolchain_run
   exec $TOOLCHAIN_RUN bash -c '
