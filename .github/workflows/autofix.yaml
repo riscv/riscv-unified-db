@@ -14,6 +14,6 @@ jobs:
           fetch-depth: 0
       - uses: jdx/mise-action@v4
       - run: bundle install
-      - run: bin/setup
+      - run: UDB_TOOLCHAIN_CONTAINER=1 bin/setup
       - run: IN_UDB_CONTAINER=1 BUNDLE_GEMFILE=$PWD/Gemfile ./bin/chore gen all
       - uses: autofix-ci/action@7a166d7532b277f34e16238930461bf77f9d7ed8 # v1.3.3
