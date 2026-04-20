@@ -28,10 +28,9 @@ def find_and_load_yamls(path, kind=None):
             else:
                 print(f"No 'kind' field in {file}")
 
-def read_opcodes_file(filepath):
+def read_opcodes(f):
     """Read file containing opcodes and return its contents as an array of strings"""
-    with open(filepath, 'r') as f:
-        return [line.strip() for line in f.readlines() if line.strip()]
+    return [line.strip() for line in f.readlines() if line.strip()]
 
 def parse_location(location):
     """Parse location string into a list of bit positions"""
@@ -232,10 +231,18 @@ def format_assembly(instruction, variable_values, xlen=64):
 
         elif 'offset' in operand:
             print(f"# Handling offset for operand '{operand_name}' with value {value}")
-            offset_value = variable_values[operand['offset']['name']]
-            if 'left_shift' in operand['offset']:
-                offset_value = offset_value << operand['offset']['left_shift']
+            if operand['offset']['name'] == '':
+                offset_value = ''
+            else:
+                offset_value = variable_values[operand['offset']['name']]
+                if 'left_shift' in operand['offset']:
+                    offset_value = offset_value << operand['offset']['left_shift']
             assembly_parts.append(f"{offset_value}({value})")
+
+        elif 'optional' in operand:
+            if value == 0: # vector mask
+                assembly_parts.append(f"v0.t")
+
         else:
             assembly_parts.append(str(value))
 
@@ -285,8 +292,10 @@ def main():
         instructions[instruction['name']] = instruction
 
     opcodes = []
+    f = sys.stdin
     if args.opcodes:
-        opcodes = read_opcodes_file(args.opcodes)
+        f = open(filepath, 'r')
+    opcodes = read_opcodes(f)
 
     # Process opcodes and print assembly instructions
     if opcodes:

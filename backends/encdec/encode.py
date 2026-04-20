@@ -172,6 +172,7 @@ def parse_assembly_operands(line, instruction_operands):
 
                     # Memory operand like "offset(rs1)"
                     offset_part = operands[i].split('(')[0].strip()
+                    if offset_part == '': offset_part = '0'
                     reg_index = int(operands[i].split('(')[1].split(')')[0].strip())
                     print(f"#    Extracted offset: {offset_part}, register: {reg_index}")
 
@@ -279,7 +280,7 @@ def builtin_encode_rounding_mode(rm):
         'rmm' : 0b100,
         'dyn' : 0b111
     }
-    if rm.to_upper() in rm_map:
+    if rm in rm_map:
         return rm_map[rm]
     print(f"# ERROR: invalid rounding mode \"{rm}\"")
     return None
@@ -344,7 +345,9 @@ def fill_in_variables(inst, assembly, xlen=64):
         # Try to find the operand value based on the variable name
         if var_name not in assembly_operands:
             if 'encode(operands)' in variable:
-                if 'return 0;' in variable['encode(operands)']:
+                if 'return 1;' in variable['encode(operands)']: # vector mask
+                    operand_value = 1
+                elif 'return 0;' in variable['encode(operands)']:
                     operand_value = 0
                 else:
                     print(f"#  ERROR: unsupported variable encoding")

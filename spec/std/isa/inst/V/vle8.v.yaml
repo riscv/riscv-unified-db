@@ -18,6 +18,18 @@ encoding:
   variables:
     - name: vm
       location: 25-25
+      encode(operands): |
+        if (operands[vm] == "v0.t") {
+          return 0;
+        }
+        if (operands[vm] != "") {
+          raise(`Invalid vector mask operand: ${operands[vm]}`);
+        }
+        return 1;
+      decode(): |
+        if (vm == 1) {
+          return "";
+        return "v0.t";
     - name: xs1
       location: 19-15
     - name: vd
@@ -36,7 +48,7 @@ operands:
   - name: vm
     type: register
     reg_file: vpr
-    possible_values: [ 0 ]
+    possible_values: [ 0 ] # needs to be "v0.t". hmm
     optional: true
 access:
   s: always
