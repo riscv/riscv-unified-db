@@ -182,7 +182,7 @@ include("${ROOT}/.toolchain/check_cxx.cmake")
 EOF
 
   local cmake_ok=0
-  if cmake -S "${check_dir}" -B "${check_dir}/build" \
+  if ${ROOT}/bin/cmake -S "${check_dir}" -B "${check_dir}/build" \
        --log-level=ERROR -Wno-dev > /dev/null 2>&1; then
     cmake_ok=1
   fi
