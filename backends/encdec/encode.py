@@ -249,21 +249,21 @@ def parse_assembly_operands(line, instruction_operands):
 
 def builtin_encode_fence_scope(scope):
     scope_map = {
-        'I'   : 0b1000,
-         'O'  : 0b0100,
-          'R' : 0b0010,
-           'W': 0b0001,
-        'IO'  : 0b1100,
-        'IR'  : 0b1010,
-        'IW'  : 0b1001,
-        'OR'  : 0b0110,
-        'OW'  : 0b0101,
-        'RW'  : 0b0011,
-        'IOR' : 0b1110,
-        'IOW' : 0b1101,
-        'IRW' : 0b1011,
-        'ORW' : 0b0111,
-        'IORW': 0b1111
+        'i'   : 0b1000,
+         'o'  : 0b0100,
+          'r' : 0b0010,
+           'w': 0b0001,
+        'io'  : 0b1100,
+        'ir'  : 0b1010,
+        'iw'  : 0b1001,
+        'or'  : 0b0110,
+        'ow'  : 0b0101,
+        'rw'  : 0b0011,
+        'ior' : 0b1110,
+        'iow' : 0b1101,
+        'irw' : 0b1011,
+        'orw' : 0b0111,
+        'iorw': 0b1111
     }
     if scope in scope_map:
         return scope_map[scope]
@@ -272,14 +272,14 @@ def builtin_encode_fence_scope(scope):
 
 def builtin_encode_rounding_mode(rm):
     rm_map = {
-        'RNE' : 0b000,
-        'RTZ' : 0b001,
-        'RDN' : 0b010,
-        'RUP' : 0b011,
-        'RMM' : 0b100,
-        'DYN' : 0b111
+        'rne' : 0b000,
+        'rtz' : 0b001,
+        'rdn' : 0b010,
+        'rup' : 0b011,
+        'rmm' : 0b100,
+        'dyn' : 0b111
     }
-    if rm in rm_map:
+    if rm.to_upper() in rm_map:
         return rm_map[rm]
     print(f"# ERROR: invalid rounding mode \"{rm}\"")
     return None
@@ -354,11 +354,11 @@ def fill_in_variables(inst, assembly, xlen=64):
                 return None
         else:
             print(f"#  Found direct match for variable '{var_name}' in assembly operands {assembly_operands[var_name]}")
-            if 'encode(operands)' in variable and 'IORW' in variable['encode(operands)']:
+            if 'encode(operands)' in variable and 'iorw' in variable['encode(operands)']:
                 operand_value = builtin_encode_fence_scope(assembly_operands[var_name])
                 if operand_value is None:
                     return None
-            elif 'encode(operands)' in variable and 'RTZ' in variable['encode(operands)']:
+            elif 'encode(operands)' in variable and 'rtz' in variable['encode(operands)']:
                 operand_value = builtin_encode_rounding_mode(assembly_operands[var_name])
                 if operand_value is None:
                     return None

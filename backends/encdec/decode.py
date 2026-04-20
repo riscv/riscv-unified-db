@@ -193,21 +193,21 @@ def format_assembly(instruction, variable_values, xlen=64):
         print(f"# Operand type: {operand['type']}")
         if operand['type'] == 'fence_scope':
             scope_map = {
-                0b1111: "IORW",
-                0b1110: "IOR",
-                0b1101: "IOW",
-                0b1011: "IRW",
-                0b0111: "ORW",
-                0b1100: "IO",
-                0b1010: "IR",
-                0b1001: "IW",
-                0b0110: "OR",
-                0b0101: "OW",
-                0b0011: "RW",
-                0b1000: "I",
-                0b0100: "O",
-                0b0010: "R",
-                0b0001: "W"
+                0b1111: "iorw",
+                0b1110: "ior",
+                0b1101: "iow",
+                0b1011: "irw",
+                0b0111: "orw",
+                0b1100: "io",
+                0b1010: "ir",
+                0b1001: "iw",
+                0b0110: "or",
+                0b0101: "ow",
+                0b0011: "rw",
+                0b1000: "i",
+                0b0100: "o",
+                0b0010: "r",
+                0b0001: "w"
             }
 
             if value not in scope_map:
@@ -217,12 +217,12 @@ def format_assembly(instruction, variable_values, xlen=64):
 
         elif operand['type'] == 'rounding_mode':
             rm_map = {
-                0b000: "RNE",
-                0b001: "RTZ",
-                0b010: "RDN",
-                0b011: "RUP",
-                0b100: "RMM",
-                0b111: "DYN"
+                0b000: "rne",
+                0b001: "rtz",
+                0b010: "rdn",
+                0b011: "rup",
+                0b100: "rmm",
+                0b111: "dyn"
             }
 
             if value not in rm_map:

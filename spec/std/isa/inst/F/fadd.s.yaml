@@ -26,17 +26,17 @@ encoding:
     - name: rm
       location: 14-12
       encode(operands): |
-        if (operands[rm] == "RNE") {
+        if (operands[rm] == "rne") {
           return 3b'000;
-        } else if (operands[rm] == "RTZ") {
+        } else if (operands[rm] == "rtz") {
           return 3b'001;
-        } else if (operands[rm] == "RDN") {
+        } else if (operands[rm] == "rdn") {
           return 3b'010;
-        } else if (operands[rm] == "RUP") {
+        } else if (operands[rm] == "rup") {
           return 3b'011;
-        } else if (operands[rm] == "RMM") {
+        } else if (operands[rm] == "rmm") {
           return 3b'100;
-        } else if (operands[rm] == "DYN") {
+        } else if (operands[rm] == "dyn") {
           return 3b'111;
         } # else reserved
 operands:
@@ -57,7 +57,7 @@ operands:
   destination: false
 - name: rm
   type: rounding_mode
-  possible_values: ["RNE", "RTZ", "RDN", "RUP", "RMM", "DYN"]
+  possible_values: ["rne", "rtz", "rdn", "rup", "rmm", "dyn"]
 access:
   s: always
   u: always

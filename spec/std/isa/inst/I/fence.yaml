@@ -136,129 +136,129 @@ encoding:
     - name: pred
       location: 27-24
       encode(operands): |
-        if operands[pred] == "I" {
+        if operands[pred] == "i" {
           return 0b1000;  # I/O
-        } else if operands[pred] == "O" {
+        } else if operands[pred] == "o" {
           return 0b0100;  # O
-        } else if operands[pred] == "R" {
+        } else if operands[pred] == "r" {
           return 0b0010;  # R
-        } else if operands[pred] == "W" {
+        } else if operands[pred] == "w" {
           return 0b0001;  # W
-        } else if operands[pred] == "IO" {
+        } else if operands[pred] == "io" {
           return 0b1100;  # I/O
-        } else if operands[pred] == "IR" {
+        } else if operands[pred] == "ir" {
           return 0b1010;  # I/R
-        } else if operands[pred] == "IW" {
+        } else if operands[pred] == "iw" {
           return 0b1001;  # I/W
-        } else if operands[pred] == "OR" {
+        } else if operands[pred] == "or" {
           return 0b0110;  # O/R
-        } else if operands[pred] == "OW" {
+        } else if operands[pred] == "ow" {
           return 0b0101;  # O/W
-        } else if operands[pred] == "RW" {
+        } else if operands[pred] == "rw" {
           return 0b0011;  # R/W
-        } else if operands[pred] == "IOR" {
+        } else if operands[pred] == "ior" {
           return 0b1110;  # I/O/R
-        } else if operands[pred] == "IOW" {
+        } else if operands[pred] == "iow" {
           return 0b1101;  # I/O/W
-        } else if operands[pred] == "ORW" {
+        } else if operands[pred] == "orw" {
           return 0b0111;  # O/R/W
-        } else if operands[pred] == "IORW" {
+        } else if operands[pred] == "iorw" {
           return 0b1111;  # I/O/R/W
         } else {
           raise(`Invalid predecessor operand: ${operands[pred]}`);
         }
         decode(): |
           if pred == 0b1000 {
-            return "I";
+            return "i";
           } else if pred == 0b0100 {
-            return "O";
+            return "o";
           } else if pred == 0b0010 {
-            return "R";
+            return "r";
           } else if pred == 0b0001 {
-            return "W";
+            return "w";
           } else if pred == 0b1100 {
-            return "IO";
+            return "io";
           } else if pred == 0b1010 {
-            return "IR";
+            return "ir";
           } else if pred == 0b1001 {
-            return "IW";
+            return "iw";
           } else if pred == 0b0110 {
-            return "OR";
+            return "or";
           } else if pred == 0b0101 {
-            return "OW";
+            return "ow";
           } else if pred == 0b0011 {
-            return "RW";
+            return "rw";
           } else if pred == 0b1110 {
-            return "IOR";
+            return "ior";
           } else if pred == 0b1101 {
-            return "IOW";
+            return "iow";
           } else if pred == 0b0111 {
-            return "ORW";
+            return "orw";
           } else {
-            return "IORW";
+            return "iorw";
           }
     - name: succ
       location: 23-20
       encode(operands): |
-        if operands[succ] == "I" {
-          return 0b1000;  # I/O
-        } else if operands[succ] == "O" {
+        if operands[succ] == "i" {
+          return 0b1000;  # I
+        } else if operands[succ] == "o" {
           return 0b0100;  # O
-        } else if operands[succ] == "R" {
+        } else if operands[succ] == "r" {
           return 0b0010;  # R
-        } else if operands[succ] == "W" {
+        } else if operands[succ] == "w" {
           return 0b0001;  # W
-        } else if operands[succ] == "IO" {
+        } else if operands[succ] == "io" {
           return 0b1100;  # I/O
-        } else if operands[succ] == "IR" {
+        } else if operands[succ] == "ir" {
           return 0b1010;  # I/R
-        } else if operands[succ] == "IW" {
+        } else if operands[succ] == "iw" {
           return 0b1001;  # I/W
-        } else if operands[succ] == "OR" {
+        } else if operands[succ] == "or" {
           return 0b0110;  # O/R
-        } else if operands[succ] == "OW" {
+        } else if operands[succ] == "ow" {
           return 0b0101;  # O/W
-        } else if operands[succ] == "RW" {
+        } else if operands[succ] == "rw" {
           return 0b0011;  # R/W
-        } else if operands[succ] == "IOR" {
+        } else if operands[succ] == "ior" {
           return 0b1110;  # I/O/R
-        } else if operands[succ] == "IOW" {
+        } else if operands[succ] == "iow" {
           return 0b1101;  # I/O/W
-        } else if operands[succ] == "ORW" {
+        } else if operands[succ] == "orw" {
           return 0b0111;  # O/R/W
-        } else if operands[succ] == "IORW" {
+        } else if operands[succ] == "iorw" {
           return 0b1111;  # I/O/R/W
         }
         raise(`Invalid successor operand: ${operands[succ]}`);
       decode(): |
         if succ == 0b1000 {
-          return "I";
+          return "i";
         } else if succ == 0b0100 {
-          return "O";
+          return "o";
         } else if succ == 0b0010 {
-          return "R";
+          return "r";
         } else if succ == 0b0001 {
-          return "W";
+          return "w";
         } else if succ == 0b1100 {
-          return "IO";
+          return "io";
         } else if succ == 0b1010 {
-          return "IR";
+          return "ir";
         } else if succ == 0b1001 {
-          return "IW";
+          return "iw";
         } else if succ == 0b0110 {
-          return "OR";
+          return "or";
         } else if succ == 0b0101 {
-          return "OW";
+          return "ow";
         } else if succ == 0b0011 {
-          return "RW";
+          return "rw";
         } else if succ == 0b1110 {
-          return "IOR";
+          return "ior";
         } else if succ == 0b1101 {
-          return "IOW";
+          return "iow";
         } else if succ == 0b0111 {
-          return "ORW";
+          return "orw";
         } else {
-          return "IORW";
+          return "iorw";
         }
     - name: xs1
       location: 19-15
@@ -269,10 +269,10 @@ encoding:
 operands:
 - name: pred
   type: fence_scope
-  possible_values: [ "I", "O", "R", "W", "IO", "IR", "IW", "OR", "OW", "RW", "IOR", "IOW", "ORW", "IORW" ]
+  possible_values: [ "i", "o", "r", "w", "io", "ir", "iw", "or", "ow", "rw", "ior", "iow", "orw", "iorw" ]
 - name: succ
   type: fence_scope
-  possible_values: [ "I", "O", "R", "W", "IO", "IR", "IW", "OR", "OW", "RW", "IOR", "IOW", "ORW", "IORW" ]
+  possible_values: [ "i", "o", "r", "w", "io", "ir", "iw", "or", "ow", "rw", "ior", "iow", "orw", "iorw" ]
 access:
   s: always
   u: always
