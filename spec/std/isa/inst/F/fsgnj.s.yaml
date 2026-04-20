@@ -34,7 +34,7 @@ access:
 data_independent_timing: true
 pseudoinstructions:
   - when: (fs2 == fs1)
-    to: fmv.s fd,fs1
+    to: fmv.s fd, fs1
 
 operation(): |
   check_f_ok($encoding);

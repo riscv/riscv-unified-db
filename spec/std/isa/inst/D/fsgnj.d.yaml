@@ -27,6 +27,9 @@ encoding:
       location: 19-15
     - name: fd
       location: 11-7
+pseudoinstructions:
+  - when: fs1 == fs2
+    to: fmv.d fd, fs1
 access:
   s: always
   u: always
