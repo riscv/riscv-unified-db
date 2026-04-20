@@ -3,6 +3,13 @@
 ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
 [ -f "${ROOT}/../.toolchain-local" ] && source "${ROOT}/../.toolchain-local"
 
+if [ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]; then
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _prompt_toolchain_selection
+  source "${ROOT}/.toolchain-local"
+fi
+
 if [ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]; then
   # shellcheck source=.toolchain.sh
   source "${ROOT}/.toolchain.sh"

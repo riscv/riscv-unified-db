@@ -150,10 +150,22 @@ _section "C++ toolchain"
 if [[ -f "$ROOT/.toolchain-local" ]]; then
   # shellcheck source=/dev/null
   source "$ROOT/.toolchain-local"
-  if [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
+  if [[ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]]; then
+    _ok "Toolchain: none/skipped (from .toolchain-local)"
+  elif [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
     _ok "Toolchain: container (from .toolchain-local)"
   else
     _ok "Toolchain: native (from .toolchain-local)"
+  fi
+elif [[ "${UDB_TOOLCHAIN_NONE:-0}" = "1" || "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
+  # Non-interactive path: env vars already set (e.g. from CI).  Write .toolchain-local
+  # so this choice is visible to all subsequent wrapper scripts in the same workspace.
+  if [[ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]]; then
+    printf "UDB_TOOLCHAIN_NONE=1\n" > "$ROOT/.toolchain-local"
+    _ok "Toolchain: none/skipped (from environment)"
+  else
+    printf "UDB_TOOLCHAIN_CONTAINER=%s\n" "$UDB_TOOLCHAIN_CONTAINER" > "$ROOT/.toolchain-local"
+    _ok "Toolchain: container (from environment)"
   fi
 else
   printf "\n"
@@ -166,21 +178,30 @@ else
   printf "      Requires GCC 14+ (or Clang 17+) with C++23 support,\n"
   printf "      plus a riscv64-unknown-elf cross-toolchain.\n"
   printf "      Faster to invoke; more setup required.\n\n"
+  printf "  ${_BOLD}[3] Neither — skip for now${_RESET}\n"
+  printf "      I don't plan to build the ISS.\n"
+  printf "      Toolchain commands will prompt for a choice if needed later.\n\n"
 
   TOOLCHAIN_CHOICE=""
   while true; do
-    printf "  Enter 1 or 2 (default: 1): "
+    printf "  Enter 1, 2, or 3 (default: 1): "
     read -r TOOLCHAIN_CHOICE
     TOOLCHAIN_CHOICE="${TOOLCHAIN_CHOICE:-1}"
     case "$TOOLCHAIN_CHOICE" in
-      1) UDB_TOOLCHAIN_CONTAINER=1; break ;;
-      2) UDB_TOOLCHAIN_CONTAINER=0; break ;;
-      *) printf "  Please enter 1 or 2.\n" ;;
+      1) UDB_TOOLCHAIN_CONTAINER=1; UDB_TOOLCHAIN_NONE=0; break ;;
+      2) UDB_TOOLCHAIN_CONTAINER=0; UDB_TOOLCHAIN_NONE=0; break ;;
+      3) UDB_TOOLCHAIN_NONE=1; break ;;
+      *) printf "  Please enter 1, 2, or 3.\n" ;;
     esac
   done
 
-  printf "UDB_TOOLCHAIN_CONTAINER=%s\n" "$UDB_TOOLCHAIN_CONTAINER" > "$ROOT/.toolchain-local"
-  _ok "Saved preference to .toolchain-local"
+  if [[ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]]; then
+    printf "UDB_TOOLCHAIN_NONE=1\n" > "$ROOT/.toolchain-local"
+    _ok "Saved preference to .toolchain-local (skipping toolchain)"
+  else
+    printf "UDB_TOOLCHAIN_CONTAINER=%s\n" "$UDB_TOOLCHAIN_CONTAINER" > "$ROOT/.toolchain-local"
+    _ok "Saved preference to .toolchain-local"
+  fi
 fi
 
 # ---------------------------------------------------------------------------

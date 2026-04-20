@@ -16,6 +16,15 @@ runs:
       with:
         path: ~/.cache/udb
         key: udb-deps-${{ runner.os }}-${{ hashFiles('tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
+    - name: Configure toolchain for bin/setup
+      shell: bash
+      run: |
+        if [[ "${{ inputs.toolchain }}" == "true" ]]; then
+          echo "UDB_TOOLCHAIN_CONTAINER=1" > .toolchain-local
+          echo "UDB_TOOLCHAIN_CONTAINER=1" >> "$GITHUB_ENV"
+        else
+          echo "UDB_TOOLCHAIN_NONE=1" >> "$GITHUB_ENV"
+        fi
     - name: Download udb native deps (z3, espresso, eqntott, must)
       shell: bash
       run: ./bin/setup

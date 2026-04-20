@@ -85,6 +85,38 @@ _setup_toolchain_run() {
   TOOLCHAIN_RUN="$runtime run --rm $tty_flags -v ${ROOT}:${ROOT}${selinux_label} $extra_mounts -w ${container_workdir} $user_flags ${TOOLCHAIN_IMAGE}"
 }
 
+# Prompt the user to pick a toolchain when they previously selected "neither".
+# Writes the new choice to .toolchain-local. Call this only when UDB_TOOLCHAIN_NONE=1.
+_prompt_toolchain_selection() {
+  if [ ! -t 0 ]; then
+    echo "ERROR: Toolchain is required but not configured (UDB_TOOLCHAIN_NONE=1)." >&2
+    echo "  Run bin/setup in an interactive terminal to choose a toolchain." >&2
+    exit 1
+  fi
+
+  printf "\n  This command requires the C++ toolchain.\n"
+  printf "  You previously opted out; please choose now:\n\n"
+  printf "  [1] Container (recommended)\n"
+  printf "      Docker/Podman pulls a pre-built image (~500 MB) from GHCR.\n\n"
+  printf "  [2] Native\n"
+  printf "      Requires GCC 14+ with C++23 support and a RISC-V cross-toolchain.\n\n"
+
+  local _choice
+  while true; do
+    printf "  Enter 1 or 2 (default: 1): "
+    read -r _choice
+    _choice="${_choice:-1}"
+    case "$_choice" in
+      1) UDB_TOOLCHAIN_CONTAINER=1; break ;;
+      2) UDB_TOOLCHAIN_CONTAINER=0; break ;;
+      *) printf "  Please enter 1 or 2.\n" ;;
+    esac
+  done
+
+  printf "UDB_TOOLCHAIN_CONTAINER=%s\n" "$UDB_TOOLCHAIN_CONTAINER" > "${ROOT}/.toolchain-local"
+  printf "  Saved to .toolchain-local. Run bin/setup to change this later.\n\n"
+}
+
 # Check that the native g++ meets the project's C++ requirements by running the
 # shared cmake check in .toolchain/check_cxx.cmake.
 # Results are cached by compiler version string to avoid re-running on every invocation.
