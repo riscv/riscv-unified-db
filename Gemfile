@@ -4,6 +4,8 @@ ruby "~> 3.2"
 
 source "https://rubygems.org"
 
+gem "tty-spinner"
+
 # local gems in UDB
 gemspec path: "tools/ruby-gems/idlc"
 gemspec path: "tools/ruby-gems/idl_highlighter"
