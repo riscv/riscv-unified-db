@@ -219,23 +219,12 @@ if [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
     _note "No container runtime found — skipping image pull."
     _info "Install Docker (https://docs.docker.com/engine/install) or Podman (https://podman.io/get-started)"
     _info "Then re-run bin/setup, or manually run: bin/chore container pull -t toolchain"
-  elif $RUNTIME images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -qF "${TOOLCHAIN_IMAGE}"; then
-    _ok "Toolchain image already present"
+  elif _pull_or_build_toolchain_image; then
+    _ok "Toolchain image ready"
     _info "${TOOLCHAIN_IMAGE}"
   else
-    _run "Pulling ${TOOLCHAIN_IMAGE}..."
-    if $RUNTIME pull "${TOOLCHAIN_IMAGE}"; then
-      _ok "Toolchain image pulled"
-    else
-      _note "Pull failed; building locally (this will take several minutes)..."
-      if $RUNTIME build -t "${TOOLCHAIN_IMAGE}" \
-          -f "${ROOT}/.toolchain/Dockerfile" "${ROOT}/.toolchain/"; then
-        _ok "Toolchain image built"
-      else
-        printf "\nERROR: toolchain image build failed.\n" >&2
-        _info "You can retry later with: bin/chore container build -t toolchain"
-      fi
-    fi
+    printf "\nERROR: toolchain image build failed.\n" >&2
+    _info "You can retry later with: bin/chore container build -t toolchain"
   fi
 fi
 

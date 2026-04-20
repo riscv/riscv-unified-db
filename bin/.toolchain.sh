@@ -117,6 +117,44 @@ _prompt_toolchain_selection() {
   printf "  Saved to .toolchain-local. Run bin/setup to change this later.\n\n"
 }
 
+# Pull or build the toolchain container image.
+# In a GitHub Actions environment (GITHUB_ACTIONS=true), uses docker buildx with
+# GHA layer caching.  Locally, falls back to a plain build.
+# Only called when UDB_TOOLCHAIN_CONTAINER=1.
+_pull_or_build_toolchain_image() {
+  local runtime
+  runtime=$(_get_toolchain_runtime)
+
+  if [ -z "$runtime" ]; then
+    return 1  # caller handles the "no runtime" message
+  fi
+
+  if $runtime images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -qF "${TOOLCHAIN_IMAGE}"; then
+    return 0  # already present
+  fi
+
+  if $runtime pull "${TOOLCHAIN_IMAGE}" 2>/dev/null; then
+    return 0
+  fi
+
+  # Pull failed — build locally.
+  if [ "${GITHUB_ACTIONS:-false}" = "true" ]; then
+    # Use buildx with GHA layer cache when running in CI.
+    $runtime buildx build \
+      --cache-from type=gha,scope=toolchain \
+      --cache-to   type=gha,scope=toolchain,mode=max \
+      --load \
+      -t "${TOOLCHAIN_IMAGE}" \
+      -f "${ROOT}/.toolchain/Dockerfile" \
+      "${ROOT}/.toolchain/"
+  else
+    $runtime build \
+      -t "${TOOLCHAIN_IMAGE}" \
+      -f "${ROOT}/.toolchain/Dockerfile" \
+      "${ROOT}/.toolchain/"
+  fi
+}
+
 # Check that the native g++ meets the project's C++ requirements by running the
 # shared cmake check in .toolchain/check_cxx.cmake.
 # Results are cached by compiler version string to avoid re-running on every invocation.
