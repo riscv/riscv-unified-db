@@ -356,6 +356,9 @@ def builtin_encode_stack_adj(ops, xlen):
     extra_space = (-ops['stack_adj']) - registers_space_aligned
     return extra_space >> 4
 
+def builtin_encode_sreg(reg):
+    return (reg - 8) - 8 * ((reg - 8) // 10)
+
 def fill_in_variables(inst, assembly, xlen=64):
     """Fill in variables in the match pattern based on the instruction's operands"""
     # Initialize variables
@@ -442,6 +445,8 @@ def fill_in_variables(inst, assembly, xlen=64):
                 operand_value = builtin_encode_rounding_mode(assembly_operands[var_name])
                 if operand_value is None:
                     return None
+            elif 'encode(operands)' in variable and ('r1s' in variable['encode(operands)'] or 'r2s' in variable['encode(operands)']):
+                operand_value = builtin_encode_sreg(assembly_operands[var_name])
             else:
                 operand_value = assembly_operands[var_name]
 

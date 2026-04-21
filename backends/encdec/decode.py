@@ -162,7 +162,6 @@ def extract_variable_values(opcode, instruction, xlen=64):
 def format_assembly(instruction, variable_values, xlen=64):
     """Format assembly instruction based on instruction definition and variable values"""
     mnemonic = instruction['name']
-    assembly_format = instruction.get('assembly', '')
 
     if 'operands' not in instruction:
         print(f"# INFO: No operands defined for instruction '{mnemonic}'")
@@ -174,6 +173,13 @@ def format_assembly(instruction, variable_values, xlen=64):
         operands = instruction['operands']['RV64']
     else:
         operands = instruction['operands']
+
+    if 'RV32' in instruction['encoding']['variables'] and xlen == 32:
+        variables = instruction['encoding']['variables']['RV32']
+    elif 'RV64' in instruction['encoding']['variables'] and xlen == 64:
+        variables = instruction['encoding']['variables']['RV64']
+    else:
+        variables = instruction['encoding']['variables']
 
     assembly_parts = []
 
@@ -288,6 +294,13 @@ def format_assembly(instruction, variable_values, xlen=64):
 
         else:
             value = variable_values[operand_name]
+            for variable in variables:
+                if variable['name'] == operand_name:
+                    if 'decode()' in variable:
+                        if 'r1s' in variable['decode()'] or 'r2s' in variable['decode()']:
+                            value = value + 8 + 8 * ((value + 6) // 8)
+                    break
+            print(f"# map {operand_name} {value}")
             assembly_parts.append(str(value))
 
     if assembly_parts:
