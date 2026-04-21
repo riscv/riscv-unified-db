@@ -47,9 +47,6 @@ module FakeGemTree
       end
     RUBY
 
-    # Gemfile is kept for compatibility but no longer drives gem discovery
-    File.write(dir / "Gemfile", "source \"https://rubygems.org\"\ngemspec\n")
-
     FileUtils.mkdir_p(dir / "spec") if has_spec_dir
 
     dir
@@ -146,22 +143,6 @@ class TestParseGemMetadata < Minitest::Test
 
   def teardown
     FileUtils.remove_entry(@tmpdir)
-  end
-
-  def test_gem_without_gemfile_is_discovered
-    # Create a gem with a gemspec but no Gemfile — discovery is gemspec-driven,
-    # so it must be included regardless of Gemfile presence.
-    dir = @tmpdir / "tools" / "ruby-gems" / "orphan"
-    FileUtils.mkdir_p(dir / "lib" / "orphan")
-    File.write(dir / "lib" / "orphan" / "version.rb", "module Orphan; VERSION = '1.0.0'; def self.version = VERSION; end")
-    File.write(dir / "orphan.gemspec", <<~RUBY)
-      require_relative "lib/orphan/version"
-      Gem::Specification.new { |s| s.name = "orphan"; s.version = Orphan.version; s.summary = "x" }
-    RUBY
-
-    metadata = parse_gem_metadata(@tmpdir)
-    names = metadata[:gems].map { |g| g[:name] }
-    assert_includes names, "orphan"
   end
 
   def test_single_gem_no_deps

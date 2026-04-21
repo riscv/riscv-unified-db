@@ -152,10 +152,8 @@ namespace :test do
 
   desc "Type-check the Ruby library"
   task :sorbet do
-    Bundler.with_unbundled_env do
-      Dir.chdir($root) do
-        sh "BUNDLE_GEMFILE=#{$root}/Gemfile BUNDLE_FROZEN=1 bundle exec srb tc"
-      end
+    Dir.chdir($root) do
+      sh "./bin/bundle exec srb tc"
     end
   end
 end

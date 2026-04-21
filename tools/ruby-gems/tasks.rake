@@ -115,7 +115,9 @@ namespace :gen do
   namespace :udb do
     desc "Generate the UDB Ruby API documentation"
     task "ruby-doc" do
-      sh "yard doc"
+      Dir.chdir($root / "tools/ruby-gems/udb") do
+        sh "bundle exec yard doc"
+      end
     end
 
     task :api_doc do
@@ -140,6 +142,11 @@ namespace :chore do
     task :collate_cov, [:cov_dir] do |_t, args|
       require "simplecov"
       require "simplecov-cobertura"
+
+      if args[:cov_dir].nil?
+        Udb.logger.error "Missing required argument: cov_dir"
+        exit 1
+      end
 
       SimpleCov.collate Dir["#{args[:cov_dir]}/*.resultset.json"] do
         coverage_dir(($root / "tools/ruby-gems/udb/coverage").to_s)

@@ -115,13 +115,11 @@ gen_subcmd_usage() {
 }
 
 gen_ruby_type_def_usage() {
-  echo "Usage: chore gen ruby-type-def [-g GEM]"
+  echo "Usage: chore gen ruby-type-def"
   echo ""
   echo "Options:"
   echo ""
-  echo "  -g GEM:   Generate type signatures for GEM"
-  echo "            If not provided, generates for all gems"
-  echo "            Valid gems are: [udb, idlc, udb-gen]"
+  echo "  -h:      Print help"
   echo ""
 }
 
@@ -372,39 +370,24 @@ do_install_gems() {
   do_lock_all_gemfiles
 
   "${UDB_ROOT}"/bin/bundle install
-  do_ruby_type_def idlc
-  do_ruby_type_def udb
-  do_ruby_type_def udb-gen
+  do_ruby_type_def
 }
 
 #
 # Generate Ruby type definitions (Sorbet RBI files)
-# Args: $1 - gem name ("all", "udb", "idlc", or "udb-gen")
 # Returns: 0 on success, exits with 1 on error
 #
 do_ruby_type_def() {
-  # With a single root Gemfile, run tapioca once from the project root.
-  # The argument (all|udb|idlc|udb-gen) is accepted for backward compatibility but ignored.
-  case "${1:-all}" in
-    all | udb | idlc | udb-gen ) : ;;
-    * )
-      echo "Invalid gem '$1'" >&2
-      echo "Options are: [all, udb, idlc, udb-gen]" >&2
-      exit 1
-      ;;
-  esac
-
-  local RUN_NO_TTY="${RUN//-it /}"
-  cd "${UDB_ROOT}"
-  BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle exec tapioca gems --all
-  BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle exec tapioca dsl
+  cd "${UDB_ROOT}" || exit 1
+  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca gems --all
+  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca dsl
 
   # tapioca annotations requires the ext/rbi-central submodule to be initialized.
   if [ ! -f "${UDB_ROOT}/ext/rbi-central/index.json" ]; then
     echo "Initializing ext/rbi-central submodule..."
     git -C "${UDB_ROOT}" submodule update --init ext/rbi-central
   fi
-  BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle exec tapioca annotations
+  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca annotations
 }
 
 #
@@ -577,18 +560,13 @@ case "$subcommand" in
         exit 0
         ;;
       ruby-type-def )
-        gem=all
-        while getopts ":hg:" opt; do # Go through the options
+        while getopts ":h" opt; do # Go through the options
           case $opt in
             # help
             h )
               gen_ruby_type_def_usage
               exit 0 # Exit correctly
             ;;
-            g )
-              gem=$OPTARG
-              shift
-              ;;
             # Invalid option
             ? )
                 echo "[ERROR]: Invalid option: -${OPTARG}"
@@ -603,7 +581,7 @@ case "$subcommand" in
             gen_ruby_type_def_usage
             exit 1
         fi
-        do_ruby_type_def "$gem"
+        do_ruby_type_def
         exit 0
         ;;
       * )
