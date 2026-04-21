@@ -164,7 +164,6 @@ def format_assembly(instruction, variable_values, xlen=64):
     mnemonic = instruction['name']
     assembly_format = instruction.get('assembly', '')
 
-    # Handle special cases for different instruction types
     if 'operands' not in instruction:
         print(f"# INFO: No operands defined for instruction '{mnemonic}'")
         return None
@@ -182,14 +181,8 @@ def format_assembly(instruction, variable_values, xlen=64):
     for i, operand in enumerate(operands):
         operand_name = operand['name']
 
-        if operand_name not in variable_values:
-            print(f"# ERROR: Variable '{operand_name}' not found in extracted variable values for instruction '{mnemonic}'")
-            return None
+        print(f"# Processing operand '{operand_name}' ({operand['type']})")
 
-        value = variable_values[operand_name]
-        print(f"# Processing operand '{operand_name}' with value {value} {variable_values}'")
-
-        print(f"# Operand type: {operand['type']}")
         if operand['type'] == 'fence_scope':
             scope_map = {
                 0b1111: "iorw",
@@ -209,6 +202,7 @@ def format_assembly(instruction, variable_values, xlen=64):
                 0b0001: "w"
             }
 
+            value = variable_values[operand_name]
             if value not in scope_map:
                 print(f"# ERROR: unknown fence scope {value}")
                 continue
@@ -224,12 +218,14 @@ def format_assembly(instruction, variable_values, xlen=64):
                 0b111: "dyn"
             }
 
+            value = variable_values[operand_name]
             if value not in rm_map:
                 print(f"# ERROR: unknown rounding mode {value}")
                 continue
             assembly_parts.append(rm_map[value])
 
         elif 'offset' in operand:
+            value = variable_values[operand_name]
             print(f"# Handling offset for operand '{operand_name}' with value {value}")
             if operand['offset']['name'] == '':
                 offset_value = ''
@@ -239,11 +235,59 @@ def format_assembly(instruction, variable_values, xlen=64):
                     offset_value = offset_value << operand['offset']['left_shift']
             assembly_parts.append(f"{offset_value}({value})")
 
+        elif operand['type'] == 'reg_range':
+            print(f"# Handling reg_range \"{operand}\" {variable_values}")
+            which_reg_range = 0;
+            opi = i-1
+            while opi >= 0:
+                if operands[opi]['type'] != 'reg_range':
+                    break
+                opi -= 1
+                which_reg_range += 1
+            if which_reg_range == 0:
+                if variable_values['rlist'] >= 4:
+                    assembly_parts.append('x1') # use ABI names?
+            elif which_reg_range == 1:
+                if variable_values['rlist'] == 5:
+                    assembly_parts.append('x8')
+                elif variable_values['rlist'] >= 6:
+                    assembly_parts.append('x8-x9')
+            elif which_reg_range == 2:
+                if variable_values['rlist'] == 7:
+                    assembly_parts.append('x18')
+                elif variable_values['rlist'] == 8:
+                    assembly_parts.append('x18-x19')
+                elif variable_values['rlist'] == 9:
+                    assembly_parts.append('x18-x20')
+                elif variable_values['rlist'] == 10:
+                    assembly_parts.append('x18-x21')
+                elif variable_values['rlist'] == 11:
+                    assembly_parts.append('x18-x22')
+                elif variable_values['rlist'] == 12:
+                    assembly_parts.append('x18-x23')
+                elif variable_values['rlist'] == 13:
+                    assembly_parts.append('x18-x24')
+                elif variable_values['rlist'] == 14:
+                    assembly_parts.append('x18-x25')
+                elif variable_values['rlist'] == 15:
+                    assembly_parts.append('x18-x27')
+
         elif 'optional' in operand:
+            value = variable_values[operand_name]
             if value == 0: # vector mask
                 assembly_parts.append(f"v0.t")
 
+        elif operand_name == "stack_adj":
+            print("# Handling stack_adj")
+            registers = variable_values['rlist'] - 3
+            register_space = registers * int(xlen/8)
+            register_space_aligned = int((register_space + 15) / 16) * 16
+            extra_space = variable_values['spimm'] * 16
+            total_space = register_space_aligned + extra_space
+            assembly_parts.append(str(-total_space))
+
         else:
+            value = variable_values[operand_name]
             assembly_parts.append(str(value))
 
     if assembly_parts:

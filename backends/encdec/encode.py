@@ -149,101 +149,132 @@ def set_bits(binary_str, positions, value):
 
     return ''.join(binary_list)
 
-def parse_assembly_operands(line, instruction_operands):
-    """Parse assembly line to extract operands based on instruction definition"""
+def parse_assembly_arguments(line, instruction_operands):
+    """Parse assembly line arguments to extract operands based on instruction definition"""
     # Remove comments and leading/trailing whitespace
     line = line.split('#')[0].strip()
     if ' ' not in line:
         return {}
 
-    # Extract operands part (after mnemonic)
-    operands_str = ''.join(line.split()[1:])  # Skip the mnemonic
-    operands = [op.strip() for op in operands_str.split(',')]
+    # Extract arguments (everything after mnemonic, comma separated)
+    arguments_str = ''.join(line.split()[1:])  # Skip the mnemonic
+    arguments = [argument.strip() for argument in arguments_str.split(',')]
 
-    # Map assembly operands to instruction operands definition
+    optional_operands = 0
+    for operand_def in instruction_operands:
+        if 'optional' in operand_def and operand_def['optional']:
+            optional_operands += 1
+    #print(f"possible operands = {len(instruction_operands)}; Optional operands = {optional_operands}; provided arguments = {len(arguments)}")
+
+    optional_operands_to_keep = optional_operands - (len(instruction_operands) - len(arguments))
+    #print(f"optional_operands_to_keep = {optional_operands_to_keep}")
+    if optional_operands < optional_operands_to_keep:
+        print(f"#    ERROR: insufficient arguments for instruction; got {len(arguments)} ({arguments}) needed at least {len(instruction_operands) - optional_operands}")
+        return {}
+
+    # Map assembly arguments to instruction operands definition
     operand_values = {}
+    argi = 0
     for i, operand_def in enumerate(instruction_operands):
-        if i < len(operands):
-            operand_name = operand_def.get('name', f'op{i}')
-            print(f"#    Mapping assembly operand '{operands[i]}' to variable '{operand_name}'")
-            if operand_def['type'] in ['register', 'register_pair']:
-                if 'offset' in operand_def:
-                    print(f"#    Detected memory operand with offset: {operands[i]}")
+        print(f"# operand {i}: \"{operand_def}\"; {len(arguments)}")
+        operand_name = operand_def.get('name', f'op{i}')
+        #print(operand_def)
+        #print(optional_operands_to_keep)
+        if 'optional' in operand_def and operand_def['optional']:
+            if optional_operands_to_keep > 0:
+                optional_operands_to_keep -= 1
+            else:
+                print(f"# Skipping optional operand \"{operand_name}\"")
+                continue
 
-                    # Memory operand like "offset(rs1)"
-                    offset_part = operands[i].split('(')[0].strip()
-                    if offset_part == '': offset_part = '0'
-                    reg_index = int(operands[i].split('(')[1].split(')')[0].strip())
-                    print(f"#    Extracted offset: {offset_part}, register: {reg_index}")
+        print(f"#    Creating operand '{operand_name}' ({operand_def['type']})")
+        if operand_def['type'] in ['register', 'register_pair']:
+            if 'offset' in operand_def:
+                print(f"#    memory argument with offset \"{arguments[argi]}\"")
 
-                    print(f"#{instruction_operands[i]}")
-                    operand_values[instruction_operands[i]['offset']['name']] = int(offset_part)
+                # Memory operand like "offset(rs1)"
+                offset_part = arguments[argi].split('(')[0].strip()
+                if offset_part == '': offset_part = '0'
+                reg_index = int(arguments[argi].split('(')[1].split(')')[0].strip())
+                print(f"#    Extracted offset: {offset_part}, register: {reg_index}")
 
-                    if 'length' in instruction_operands[i]['offset']:
-                        encoded_value = int(offset_part)
-                        if 'left_shifted' in instruction_operands[i]['offset']:
-                            encoded_value = encoded_value >> instruction_operands[i]['offset']['left_shifted']
-                            if encoded_value << instruction_operands[i]['offset']['left_shifted'] != int(offset_part):
-                                print(f"#    ERROR: Offset value {offset_part} cannot be fully represented given the required shift")
-                                return None
-                        if encoded_value >> instruction_operands[i]['offset']['length'] != 0:
-                            print(f"#    ERROR: Offset value {offset_part} exceeds the maximum representable value for {instruction_operands[i]['offset']['length']} bits")
+                #print(f"#{instruction_operands[i]}")
+                operand_values[instruction_operands[i]['offset']['name']] = int(offset_part)
+
+                if 'length' in instruction_operands[i]['offset']:
+                    encoded_value = int(offset_part)
+                    if 'left_shifted' in instruction_operands[i]['offset']:
+                        encoded_value = encoded_value >> instruction_operands[i]['offset']['left_shifted']
+                        if encoded_value << instruction_operands[i]['offset']['left_shifted'] != int(offset_part):
+                            print(f"#    ERROR: Offset value {offset_part} cannot be fully represented given the required shift")
                             return None
-
-                else:
-                    print(f"#    Detected register operand: {operands[i]}")
-                    reg_index = int(operands[i])
-
-                # Validate register range against possible_values
-                if 'possible_values' in operand_def:
-                    if isinstance(operand_def['possible_values'], list) and reg_index not in operand_def.get('possible_values', []):
-                        print(f"#    ERROR: Register index {reg_index} is not valid, must be {operand_def.get('possible_values', [])}")
+                    if encoded_value >> instruction_operands[i]['offset']['length'] != 0:
+                        print(f"#    ERROR: Offset value {offset_part} exceeds the maximum representable value for {instruction_operands[i]['offset']['length']} bits")
                         return None
-                    elif isinstance(operand_def['possible_values'], str):
-                        try:
-                            min_val, max_val = parse_value_range(operand_def['possible_values'])
-                        except ValueError:
-                            print(f"#    ERROR: Invalid possible_values range for '{operand_name}': {operand_def['possible_values']}")
-                            return None
-                        if reg_index < min_val or reg_index > max_val:
-                            print(f"#    ERROR: Register index {reg_index} is out of range, must be between {min_val} and {max_val}")
-                            return None
 
-                operand_values[instruction_operands[i]['name']] = reg_index
-                print(f"#    Final value for '{operand_name}': {reg_index}")
-                operand_values[instruction_operands[i]['name']] = int(reg_index)
+            else:
+                print(f"#    Detected register argument: {arguments[i]}")
+                reg_index = int(arguments[argi])
 
-            elif operand_def['type'] == 'immediate':
-                print(f"#    Detected immediate operand: {operands[i]}")
-                imm_value = int(operands[i])
-                if 'possible_values' in operand_def:
-                    if isinstance(operand_def['possible_values'], list) and imm_value not in operand_def.get('possible_values', []):
-                        print(f"#    ERROR: Immediate value {imm_value} is not valid, must be {operand_def.get('possible_values', [])}")
+            # Validate register range against possible_values
+            if 'possible_values' in operand_def:
+                if isinstance(operand_def['possible_values'], list) and reg_index not in operand_def.get('possible_values', []):
+                    print(f"#    ERROR: Register index {reg_index} is not valid, must be {operand_def.get('possible_values', [])}")
+                    return None
+                elif isinstance(operand_def['possible_values'], str):
+                    try:
+                        min_val, max_val = parse_value_range(operand_def['possible_values'])
+                    except ValueError:
+                        print(f"#    ERROR: Invalid possible_values range for '{operand_name}': {operand_def['possible_values']}")
                         return None
-                    elif isinstance(operand_def['possible_values'], str):
-                        try:
-                            min_val, max_val = parse_value_range(operand_def['possible_values'])
-                        except ValueError:
-                            print(f"#    ERROR: Invalid possible_values range for '{operand_name}': {operand_def['possible_values']}")
-                            return None
-                        if imm_value < min_val or imm_value > max_val:
-                            print(f"#    ERROR: Immediate value {imm_value} is out of range, must be between {min_val} and {max_val}")
-                            return None
+                    if reg_index < min_val or reg_index > max_val:
+                        print(f"#    ERROR: Register index {reg_index} is out of range, must be between {min_val} and {max_val}")
+                        return None
 
-                operand_values[instruction_operands[i]['name']] = imm_value
-                print(f"#    Final value for '{operand_name}': {imm_value}")
+            operand_values[instruction_operands[i]['name']] = reg_index
+            print(f"#    Final value for '{operand_name}': {reg_index}")
+            operand_values[instruction_operands[i]['name']] = int(reg_index)
 
-            elif operand_def['type'] == 'fence_scope':
-                print(f"#    Detected fence_scope operand: {operands[i]}")
+        elif operand_def['type'] == 'immediate':
+            print(f"#    immediate argument: \"{arguments[argi]}\"")
+            imm_value = int(arguments[argi])
+            if 'possible_values' in operand_def:
+                if isinstance(operand_def['possible_values'], list) and imm_value not in operand_def.get('possible_values', []):
+                    print(f"#    ERROR: Immediate value {imm_value} is not valid, must be {operand_def.get('possible_values', [])}")
+                    return None
+                elif isinstance(operand_def['possible_values'], str):
+                    try:
+                        min_val, max_val = parse_value_range(operand_def['possible_values'])
+                    except ValueError:
+                        print(f"#    ERROR: Invalid possible_values range for '{operand_name}': {operand_def['possible_values']}")
+                        return None
+                    if imm_value < min_val or imm_value > max_val:
+                        print(f"#    ERROR: Immediate value {imm_value} is out of range, must be between {min_val} and {max_val}")
+                        return None
 
-                operand_values[instruction_operands[i]['name']] = operands[i]
-                print(f"#    Final value for '{operand_name}': {operands[i]}")
+            operand_values[instruction_operands[i]['name']] = imm_value
+            print(f"#    Final value for '{operand_name}': {imm_value}")
 
-            elif operand_def['type'] == 'rounding_mode':
-                print(f"#    Detected rounding_mode operand: {operands[i]}")
+        elif operand_def['type'] == 'fence_scope':
+            print(f"#    Detected fence_scope argument: {arguments[argi]}")
 
-                operand_values[instruction_operands[i]['name']] = operands[i]
-                print(f"#    Final value for '{operand_name}': {operands[i]}")
+            operand_values[instruction_operands[i]['name']] = arguments[i]
+            print(f"#    Final value for '{operand_name}': {arguments[argi]}")
+
+        elif operand_def['type'] == 'rounding_mode':
+            print(f"#    Detected rounding_mode argument: {arguments[argi]}")
+
+            operand_values[instruction_operands[i]['name']] = arguments[i]
+            print(f"#    Final value for '{operand_name}': {arguments[argi]}")
+
+        elif operand_def['type'] == 'reg_range':
+            print(f"#    Detected reg_range argument: {arguments[argi]}")
+
+            operand_values[instruction_operands[i]['name']] = arguments[i]
+            print(f"#    Final value for '{operand_name}': {arguments[argi]}")
+
+        # consume argument
+        argi += 1
 
     print(f"#    Parsed operand values: {operand_values}")
     return operand_values
@@ -285,6 +316,46 @@ def builtin_encode_rounding_mode(rm):
     print(f"# ERROR: invalid rounding mode \"{rm}\"")
     return None
 
+def builtin_encode_reg_list(ops):
+    args = ""
+    if 'reg_range0' in ops:
+        args += ops['reg_range0']
+        if 'reg_range1' in ops:
+            args += ',' + ops['reg_range1']
+            if 'reg_range2' in ops:
+                args += ',' + ops['reg_range2']
+    if args in [ "ra", "x1" ]:
+        return 4
+    if args in [ "ra,s0", "x1,x8" ]:
+        return 5
+    if args in [ "ra,s0-s1", "x1,x8-x9" ]:
+        return 6
+    if args in [ "ra,s0-s2", "x1,x8-x9,x18" ]:
+        return 7
+    if args in [ "ra,s0-s3", "x1,x8-x9,x18-x19" ]:
+        return 8
+    if args in [ "ra,s0-s4", "x1,x8-x9,x18-x20" ]:
+        return 9
+    if args in [ "ra,s0-s5", "x1,x8-x9,x18-x21" ]:
+        return 10
+    if args in [ "ra,s0-s6", "x1,x8-x9,x18-x22" ]:
+        return 11
+    if args in [ "ra,s0-s7", "x1,x8-x9,x18-x23" ]:
+        return 12
+    if args in [ "ra,s0-s8", "x1,x8-x9,x18-x24" ]:
+        return 13
+    if args in [ "ra,s0-s9", "x1,x8-x9,x18-x25" ]:
+        return 14
+    if args in [ "ra,s0-s11", "x1,x8-x9,x18-x27" ]:
+        return 15
+
+def builtin_encode_stack_adj(ops, xlen):
+    registers = builtin_encode_reg_list(ops) - 3
+    registers_space = registers * int(xlen/8)
+    registers_space_aligned = int((registers_space + 15) / 16) * 16
+    extra_space = (-ops['stack_adj']) - registers_space_aligned
+    return extra_space >> 4
+
 def fill_in_variables(inst, assembly, xlen=64):
     """Fill in variables in the match pattern based on the instruction's operands"""
     # Initialize variables
@@ -311,7 +382,7 @@ def fill_in_variables(inst, assembly, xlen=64):
         match_pattern = encoding['RV64']['match']
         variables = encoding['RV64'].get('variables', [])
     else:
-        print("No match pattern found in encoding")
+        print("# ERROR: No match pattern found in encoding")
         return None
 
     # Get operands based on xlen
@@ -325,7 +396,7 @@ def fill_in_variables(inst, assembly, xlen=64):
         instruction_operands = inst['operands']
 
     # Parse assembly line to extract operands
-    assembly_operands = parse_assembly_operands(assembly, instruction_operands)
+    assembly_operands = parse_assembly_arguments(assembly, instruction_operands)
     if assembly_operands is None:
         print(f"#  ERROR: Failed to parse assembly operands for '{assembly}'")
         return None
@@ -339,6 +410,8 @@ def fill_in_variables(inst, assembly, xlen=64):
         var_name = variable['name']
         location = variable['location']
 
+        print(f"# Fill in \"{var_name}\"")
+
         # Find the operand value from assembly operands
         operand_value = 0  # Default value
 
@@ -349,6 +422,10 @@ def fill_in_variables(inst, assembly, xlen=64):
                     operand_value = 1
                 elif 'return 0;' in variable['encode(operands)']:
                     operand_value = 0
+                elif 'reg_list' in variable['encode(operands)']:
+                    operand_value = builtin_encode_reg_list(assembly_operands)
+                elif 'stack_adj' in variable['encode(operands)']: # stack_adj
+                    operand_value = builtin_encode_stack_adj(assembly_operands, xlen)
                 else:
                     print(f"#  ERROR: unsupported variable encoding")
                     return None
@@ -400,7 +477,7 @@ def encode(assembly, xlen=64):
 
     print(f"#mnemonic: {mnemonic}")
     if mnemonic not in instructions:
-        print(f"  Instruction '{mnemonic}' not found in YAML definitions")
+        print(f"# ERROR: Instruction '{mnemonic}' not found in YAML definitions")
         return None
 
     inst = instructions[mnemonic]
@@ -416,7 +493,7 @@ def main():
     # Validate xlen parameter
     xlen = args.xlen
     if xlen not in [32, 64]:
-        print(f"Error: xlen must be either 32 or 64, got {xlen}")
+        print(f"# ERROR: xlen must be either 32 or 64, got {xlen}")
         sys.exit(1)
     print(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
 
@@ -441,7 +518,7 @@ def main():
             if encoded:
                 print(f"{encoded}")
             else:
-                print(f"# Failed to encode '{line.strip()}'")
+                print(f"# ERROR: Failed to encode '{line.strip()}'")
 
 if __name__ == "__main__":
     main()
