@@ -27,7 +27,7 @@ module UdbGen
       erb.result(context.instance_eval { binding })
     end
 
-    LinkableObj = T.type_alias { T.any(Udb::Instruction, Udb::Csr, Udb::CsrField, Udb::Extension, Idl::FunctionDefAst) }
+    LinkableObj = T.type_alias { T.any(Udb::Instruction, Udb::Csr, Udb::CsrField, Udb::Extension, Udb::Parameter, Idl::FunctionDefAst) }
 
     # return an asciidoc link to obj, with text "text"
     sig { params(obj: LinkableObj, text: String).returns(String) }
@@ -56,6 +56,8 @@ module UdbGen
         "udb-extension-#{obj.name.gsub(".", "_")}"
       when Udb::Instruction
         "udb-insn-#{obj.name.gsub(".", "_")}"
+      when Udb::Parameter
+        "udb-param-#{obj.name.gsub(".", "_")}"
       else
         T.absurd(obj)
       end
@@ -100,7 +102,7 @@ module UdbGen
         when "ext_param"
           param = cfg_arch.param(name)
           if param
-            link_to(T.unsafe(param), link_text)
+            link_to(param, link_text)
           else
             Udb.logger.warn "Attempted link to undefined parameter: #{name}"
             match
