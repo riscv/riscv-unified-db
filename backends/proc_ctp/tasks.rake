@@ -7,6 +7,8 @@ require "pathname"
 PROC_CTP_DOC_DIR = Pathname.new "#{$root}/backends/proc_ctp"
 PROC_CTP_GEN_DIR = $resolver.gen_path / "proc_ctp"
 
+UDB_GEM_SRC ||= $root / "tools/ruby-gems/udb"
+
 Dir.glob("#{$resolver.std_path}/proc_cert_model/*.yaml") do |f|
   model_name = File.basename(f, ".yaml")
   model_obj = YAML.load_file(f, permitted_classes: [Date])
@@ -17,9 +19,9 @@ Dir.glob("#{$resolver.std_path}/proc_cert_model/*.yaml") do |f|
     __FILE__,
     "#{$resolver.std_path}/proc_cert_class/#{class_name}.yaml",
     "#{$resolver.std_path}/proc_cert_model/#{model_name}.yaml",
-    "#{Udb.gem_path}/lib/udb/obj/certificate.rb",
-    "#{Udb.gem_path}/lib/udb/obj/portfolio.rb",
-    "#{Udb.gem_path}/lib/udb/portfolio_design.rb",
+    "#{UDB_GEM_SRC}/lib/udb/obj/certificate.rb",
+    "#{UDB_GEM_SRC}/lib/udb/obj/portfolio.rb",
+    "#{UDB_GEM_SRC}/lib/udb/portfolio_design.rb",
     "#{$root}/backends/portfolio/templates/ext_appendix.adoc.erb",
     "#{$root}/backends/portfolio/templates/inst_appendix.adoc.erb",
     "#{$root}/backends/portfolio/templates/csr_appendix.adoc.erb",

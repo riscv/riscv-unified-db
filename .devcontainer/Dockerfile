@@ -93,6 +93,8 @@ COPY tools/ruby-gems/idlc/idlc.gemspec /opt/tools/ruby-gems/idlc/
 COPY tools/ruby-gems/idlc/lib/idlc/version.rb /opt/tools/ruby-gems/idlc/lib/idlc/
 COPY tools/ruby-gems/idl_highlighter/idl_highlighter.gemspec /opt/tools/ruby-gems/idl_highlighter/
 COPY tools/ruby-gems/idl_highlighter/lib/idl_highlighter/version.rb /opt/tools/ruby-gems/idl_highlighter/lib/idl_highlighter/
+COPY tools/internal-gems/schema_doc_gen/schema_doc_gen.gemspec /opt/tools/internal-gems/schema_doc_gen/
+COPY tools/internal-gems/schema_doc_gen/lib/schema_doc_gen/version.rb /opt/tools/internal-gems/schema_doc_gen/lib/schema_doc_gen/
 COPY tools/ruby-gems/udb/Gemfile /opt/tools/ruby-gems/udb/
 COPY tools/ruby-gems/udb/Gemfile.lock /opt/tools/ruby-gems/udb/
 COPY tools/ruby-gems/udb/udb.gemspec /opt/tools/ruby-gems/udb/
