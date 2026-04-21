@@ -1,3 +1,3 @@
 #!/bin/bash
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
-BUNDLE_GEMFILE="${ROOT}/tools/ruby-gems/idlc/Gemfile" exec mise exec -- bundle exec idlc "$@"
+BUNDLE_GEMFILE="${ROOT}/Gemfile" exec mise exec -- bundle exec idlc "$@"

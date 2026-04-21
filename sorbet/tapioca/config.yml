@@ -1,0 +1,40 @@
+gem:
+  # Add your `gem` command parameters here:
+  #
+  exclude:
+    - asciidoctor-pdf
+    - minitest
+    - parser
+    - prism
+    - rdbg
+    - rbi
+    - rbs
+    - rdoc
+    - rouge
+    - ruby-prof
+    - rubocop
+    - rubocop-github
+    - rubocop-minitest
+    - rubocop-performance
+    - rubocop-sorbet
+    - ruby-lsp
+    - simplecov
+    - simplecov-cobertura
+    - sorbet
+    - spoom
+    - tapioca
+    - uri
+    - yard
+    - yard-sorbet
+  doc: false
+  loc: false
+  # workers: 5
+dsl:
+  # Add your `dsl` command parameters here:
+  #
+  # exclude:
+  # - SomeGeneratorName
+  # workers: 5
+annotations:
+  sources:
+    - ext/rbi-central

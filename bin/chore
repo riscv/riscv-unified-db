@@ -299,18 +299,12 @@ do_lock_all_gemfiles() {
   # Always include both x86_64 and aarch64 Linux platforms so lock files are
   # valid on both architectures.
   local platforms="--add-platform x86_64-linux --add-platform x86_64-linux-gnu --add-platform aarch64-linux --add-platform aarch64-linux-gnu"
-  # Root first — per-gem locks must be derived from this resolved graph.
-  #
-  # BUNDLE_GEMFILE must be set to match --gemfile for each call so that
-  # Bundler writes PATH remote: entries relative to the correct directory.
+  # BUNDLE_GEMFILE must be set to match --gemfile so that Bundler writes PATH
+  # remote: entries relative to the correct directory.
   # Note: `bundle lock` (not `bundle exec bundle lock`) is used deliberately —
   # `bundle exec` requires an existing lockfile to activate the bundle first,
   # which breaks when lockfiles are missing or being regenerated from scratch.
   env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/Gemfile
-  env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
-  env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
-  env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
-  env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
 }
 
 #
@@ -375,12 +369,6 @@ do_gen_xqci_golden() {
 # Returns: 0 on success, exits with 1 on error
 #
 do_install_gems() {
-  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
-  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
-  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
-  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
-  "${UDB_ROOT}"/bin/bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile
-
   do_lock_all_gemfiles
 
   "${UDB_ROOT}"/bin/bundle install
@@ -395,56 +383,28 @@ do_install_gems() {
 # Returns: 0 on success, exits with 1 on error
 #
 do_ruby_type_def() {
-  gem=$1
-
-  gems=()
-  case "$gem" in
-    all )
-      gems=("udb" "idlc" "udb-gen")
-      ;;
-    udb )
-      gems=("udb")
-      ;;
-    idlc )
-      gems=("idlc")
-      ;;
-    udb-gen )
-      gems=("udb-gen")
-      ;;
+  # With a single root Gemfile, run tapioca once from the project root.
+  # The argument (all|udb|idlc|udb-gen) is accepted for backward compatibility but ignored.
+  case "${1:-all}" in
+    all | udb | idlc | udb-gen ) : ;;
     * )
-      echo "Invalid gem '$gem'" >&2
+      echo "Invalid gem '$1'" >&2
       echo "Options are: [all, udb, idlc, udb-gen]" >&2
-      exit 1 # Exit with error
+      exit 1
       ;;
   esac
-  # Background jobs are not a TTY; strip -it from RUN to avoid docker complaints.
+
   local RUN_NO_TTY="${RUN//-it /}"
+  cd "${UDB_ROOT}"
+  BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle exec tapioca gems --all
+  BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle exec tapioca dsl
 
-  # Run tapioca gems+dsl for each gem in parallel (writes are per-gem).
-  local pids=()
-  for gem in "${gems[@]}"; do
-    gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
-    steps=$(cat << STEPS
-      cd ${UDB_ROOT}/tools/ruby-gems/${gem} && \
-      BUNDLE_GEMFILE=${gem_gemfile} "${UDB_ROOT}"/bin/bundle exec tapioca gems --all && \
-      BUNDLE_GEMFILE=${gem_gemfile} "${UDB_ROOT}"/bin/bundle exec tapioca dsl
-STEPS
-    )
-    /bin/bash -c "$steps" &
-    pids+=($!)
-  done
-
-  local rc=0
-  for pid in "${pids[@]}"; do
-    wait "$pid" || rc=$?
-  done
-  [ $rc -ne 0 ] && exit $rc
-
-  # Run tapioca annotations sequentially to avoid races on the shared gem cache.
-  for gem in "${gems[@]}"; do
-    gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
-    /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && BUNDLE_GEMFILE=${gem_gemfile} ${UDB_ROOT}/bin/bundle exec tapioca annotations" || exit $?
-  done
+  # tapioca annotations requires the ext/rbi-central submodule to be initialized.
+  if [ ! -f "${UDB_ROOT}/ext/rbi-central/index.json" ]; then
+    echo "Initializing ext/rbi-central submodule..."
+    git -C "${UDB_ROOT}" submodule update --init ext/rbi-central
+  fi
+  BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle exec tapioca annotations
 }
 
 #

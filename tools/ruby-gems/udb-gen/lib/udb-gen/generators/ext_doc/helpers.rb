@@ -15,7 +15,7 @@ module UdbGen
     # Uses ratification_date year if available, otherwise current year.
     sig { params(version: Udb::ExtensionVersion).returns(String) }
     def copyright_year(version)
-      version.ratification_date.nil? ? Date.today.year.to_s : T.must(version.ratification_date).split("-")[0]
+      version.ratification_date.nil? ? Date.today.year.to_s : T.must(T.must(version.ratification_date).split("-")[0])
     end
 
     # Returns the revdate for a version: release date (for nonstandard-released),
@@ -23,9 +23,9 @@ module UdbGen
     sig { params(version: Udb::ExtensionVersion).returns(T.any(String, Date)) }
     def revdate(version)
       if version.state == "nonstandard-released"
-        version.release_date.nil? ? Date.today : version.release_date
+        version.release_date.nil? ? Date.today : T.must(version.release_date)
       elsif version.state == "ratified"
-        version.ratification_date.nil? ? Date.today : version.ratification_date
+        version.ratification_date.nil? ? Date.today : T.must(version.ratification_date)
       else
         Date.today
       end

@@ -302,7 +302,7 @@ _check_developer_setup() {
   else
     local z3_output z3_exit
     z3_output=$(
-      BUNDLE_GEMFILE="$ROOT/tools/ruby-gems/udb/Gemfile" \
+      BUNDLE_GEMFILE="$ROOT/Gemfile" \
         "$ruby_bin" -r udb -e "Udb::Z3Loader.ensure_z3_loaded" 2>&1
     )
     z3_exit=$?

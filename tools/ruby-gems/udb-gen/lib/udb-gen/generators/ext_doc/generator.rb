@@ -142,7 +142,7 @@ module UdbGen
           when nil
             ">=0"
           when "latest"
-            "=#{ext.versions.max}"
+            "=#{T.must(ext).versions.max}"
           else
             "=#{req}"
           end
