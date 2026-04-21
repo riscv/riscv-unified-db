@@ -1,20 +1,7 @@
 PATH
-  remote: tools/internal-gems/schema_doc_gen
+  remote: ../idlc
   specs:
-    schema_doc_gen (0.1.0)
-      tty-exit
-      tty-option
-
-PATH
-  remote: tools/ruby-gems/idl_highlighter
-  specs:
-    idl_highlighter (0.1.0)
-      rouge
-
-PATH
-  remote: tools/ruby-gems/idlc
-  specs:
-    idlc (0.1.5)
+    idlc (0.1.4)
       activesupport
       commander (~> 5)
       pp
@@ -23,35 +10,19 @@ PATH
       tty-progressbar
 
 PATH
-  remote: tools/ruby-gems/udb-gen
-  specs:
-    udb-gen (0.1.12)
-      asciidoctor
-      asciidoctor-diagram
-      asciidoctor-pdf
-      rake
-      sorbet-runtime
-      tty-exit
-      tty-option
-      tty-progressbar
-      tty-table
-      udb (= 0.1.13)
-      write_xlsx
-
-PATH
-  remote: tools/ruby-gems/udb_helpers
+  remote: ../udb_helpers
   specs:
     udb_helpers (0.1.3)
 
 PATH
-  remote: tools/ruby-gems/udb
+  remote: ../udb
   specs:
-    udb (0.1.13)
+    udb (0.1.12)
       activesupport
       asciidoctor
       awesome_print
       concurrent-ruby
-      idlc (= 0.1.5)
+      idlc (= 0.1.4)
       json_schemer
       numbers_and_words
       ostruct
@@ -66,6 +37,22 @@ PATH
       tty-progressbar
       udb_helpers (= 0.1.3)
       z3
+
+PATH
+  remote: .
+  specs:
+    udb-gen (0.1.11)
+      asciidoctor
+      asciidoctor-diagram
+      asciidoctor-pdf
+      rake
+      sorbet-runtime
+      tty-exit
+      tty-option
+      tty-progressbar
+      tty-table
+      udb (= 0.1.12)
+      write_xlsx
 
 GEM
   remote: https://rubygems.org/
@@ -327,8 +314,6 @@ GEM
       tty-screen (~> 0.8)
       unicode-display_width (>= 1.6, < 3.0)
     tty-screen (0.8.2)
-    tty-spinner (0.9.3)
-      tty-cursor (~> 0.7)
     tty-table (0.12.0)
       pastel (~> 0.8)
       strings (~> 0.2.0)
@@ -354,7 +339,6 @@ PLATFORMS
   x86_64-linux-gnu
 
 DEPENDENCIES
-  idl_highlighter!
   idlc!
   minitest
   mocha
@@ -367,21 +351,16 @@ DEPENDENCIES
   rubocop-sorbet
   ruby-lsp
   ruby-prof
-  schema_doc_gen!
   simplecov
   simplecov-cobertura
   sorbet
   spoom
   tapioca (>= 0.17.10)
-  tty-spinner
   udb!
   udb-gen!
   udb_helpers!
   yard
   yard-sorbet
-
-RUBY VERSION
-  ruby 3.4.8
 
 BUNDLED WITH
   4.0.8
