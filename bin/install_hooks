@@ -29,7 +29,7 @@ _changed=$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD 2>/dev/nul
 
 if echo "$_changed" | grep -qF '.mise.toml'; then
   echo "⚙  .mise.toml changed — running mise install..."
-  mise install
+  "${ROOT}/bin/mise" install
 fi
 
 if echo "$_changed" | grep -qF 'Gemfile.lock'; then
@@ -65,7 +65,7 @@ _changed=$(git diff --name-only "$1" "$2" 2>/dev/null)
 
 if echo "$_changed" | grep -qF '.mise.toml'; then
   echo "⚙  .mise.toml changed — running mise install..."
-  mise install
+  "${ROOT}/bin/mise" install
 fi
 
 if echo "$_changed" | grep -qF 'Gemfile.lock'; then

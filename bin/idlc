@@ -1,4 +1,5 @@
 #!/bin/bash
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
-source "${ROOT}/bin/.mise.sh"
-BUNDLE_GEMFILE="${ROOT}/Gemfile" exec mise exec -- bundle exec idlc "$@"
+EXEC_DIR=${PWD}
+cd "$ROOT" || exit 1
+exec "${ROOT}/bin/mise" exec --cd "${EXEC_DIR}" -- bundle exec --gemfile "${ROOT}/Gemfile" idlc "$@"
