@@ -250,7 +250,12 @@ class Cli
 
     threads = n_workers.times.map do
       Thread.new do
-        while (job = (queue.pop(true) rescue nil))
+        loop do
+          begin
+            job = queue.pop(true)
+          rescue ThreadError
+            break
+          end
           spinner = spinner_map.fetch(job)
           spinner.auto_spin
           start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
