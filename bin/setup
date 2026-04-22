@@ -189,7 +189,7 @@ else
   printf "      A pre-built image (~500 MB) is pulled from GHCR automatically.\n"
   printf "      No compiler installation needed.\n\n"
   printf "  ${_BOLD}[2] Native${_RESET}\n"
-  printf "      Requires GCC 14+ (or Clang 17+) with C++23 support,\n"
+  printf "      Requires GCC 13.3+ (or Clang 17+) with C++23 support,\n"
   printf "      plus a riscv64-unknown-elf cross-toolchain.\n"
   printf "      Faster to invoke; more setup required.\n\n"
   printf "  ${_BOLD}[3] Neither — skip for now${_RESET}\n"

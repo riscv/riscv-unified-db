@@ -483,7 +483,7 @@ EOF
         _record_pass
       else
         _cxx_bad "Native g++ does not meet C++ requirements (C++23 + constexpr from_chars)"
-        _info "Fix option 1: install a newer compiler (GCC 14+ or Clang 17+)"
+        _info "Fix option 1: install a newer compiler (GCC 13.3+ or Clang 17+)"
         _info "Fix option 2: echo 'UDB_TOOLCHAIN_CONTAINER=1' > .toolchain-local"
         _info "              then run ./bin/setup"
         _cxx_record_bad
