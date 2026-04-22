@@ -43,6 +43,7 @@ struct Options
   bool halt;
   bool gdbMode;
   uint16_t gdbPort;
+  std::vector<std::string> trace;
 
   Options()
   {
@@ -81,7 +82,7 @@ private:
   int CreateMemoryMap(std::filesystem::path memMapPath,
                       std::filesystem::path elfPath = "");
   void SetInitState(Options& opts);
-  udb::Tracer* CreateTracer();
+  udb::Tracer* CreateTracer(std::string& tracer);
   HostTargetInterface* CreateHostTargetInterface(udb::IssSocModel* pSoC, std::filesystem::path elfPath);
   int OnHartNotification(uint64_t uiEvent, void* pData);
   int OnSoCNotification(uint64_t uiEvent, void* pData);
@@ -112,7 +113,7 @@ private:
   udb::IssSocModel* m_pSoC;
   udb::HartBase<udb::IssSocModel>* m_pHart;
   HostTargetInterface* m_pHTIF;
-  udb::Tracer* m_pTracer;
+  std::vector<udb::Tracer*> m_tracers;
   ISS_STATE m_state;
   std::list<uint64_t> m_breakpointList;
   std::list<udb::MemAccessRange> m_readWatchpointList;
@@ -127,6 +128,7 @@ int ParseCommandLine(int argc, char *argv[], Options &options)
   app.add_option("-c,--cfg", options.configPath, "Hart configuration file");
   app.add_option("--mm, --memory-map", options.memoryMapPath, "Memory map file");
   app.add_option("-p, --gdbport", options.gdbPort, "GDB port");
+  app.add_option<std::vector<std::string>>("-t, --trace", options.trace, "tracers to enable");
   app.add_flag("-l,--list-configs", options.showConfigs,
                "List available configurations");
   app.add_flag("-g,--gdb", options.gdbMode, "GDB Debugger mode");
@@ -194,7 +196,15 @@ InstructionSetSimulator::InstructionSetSimulator(Options& opts) :
 
       m_pHTIF = CreateHostTargetInterface(m_pSoC, opts.elfFilePath);
 
-      m_pTracer = CreateTracer();
+      for(std::string t : opts.trace)
+      {
+        udb::Tracer* pTracer = CreateTracer(t);
+        if(pTracer != nullptr)
+          m_tracers.push_back(pTracer);
+        else
+          fmt::print("Unknown tracer: {}\n", t);
+      }
+
 
       //Attach notification handler to hart
       m_pHart->AttachHandler(this, ISS_HART_MODULE);
@@ -209,7 +219,9 @@ InstructionSetSimulator::InstructionSetSimulator(Options& opts) :
 
 InstructionSetSimulator::~InstructionSetSimulator()
 {
-  delete m_pTracer;
+  for(udb::Tracer* pT : m_tracers)
+    delete pT;
+
   delete m_pHTIF;
   delete m_pHart;
   delete m_pSoC;
@@ -691,10 +703,14 @@ int InstructionSetSimulator::OnKill(uint64_t uiProcId)
   return 0;
 }
 
-udb::Tracer* InstructionSetSimulator::CreateTracer()
+udb::Tracer* InstructionSetSimulator::CreateTracer(std::string& tracer)
 {
-  //generic tracer with instruction trace output for now
-  return new udb::Tracer(m_pHart, m_pSoC);
+  if(tracer == "inst")
+    return new udb::InstructionTracer(m_pHart);
+  else if(tracer == "mem")
+    return new udb::MemoryTracer(m_pSoC);
+
+  return nullptr;
 }
 
 
@@ -703,18 +719,18 @@ HostTargetInterface* InstructionSetSimulator::CreateHostTargetInterface(
 {
   HostTargetInterface* pHTIF = nullptr;
   uint64_t toHostAddress = 0;
-  uint64_t fromHostAddress = 0;
-  uint64_t sigBeginAddress = 0;
-  uint64_t sigEndAddress = 0;
 
   udb::ElfReader elfReader(elfPath.c_str());
-  elfReader.getSym("tohost", &toHostAddress);
-  elfReader.getSym("fromhost", &fromHostAddress);
-  elfReader.getSym("signature_begin", &sigBeginAddress);
-  elfReader.getSym("signature_end", &sigEndAddress);
-
-  if(toHostAddress != 0)
+  if(elfReader.getSym("tohost", &toHostAddress))
   {
+    uint64_t fromHostAddress = 0;
+    uint64_t sigBeginAddress = 0;
+    uint64_t sigEndAddress = 0;
+
+    elfReader.getSym("fromhost", &fromHostAddress);
+    elfReader.getSym("signature_begin", &sigBeginAddress);
+    elfReader.getSym("signature_end", &sigEndAddress);
+
     pHTIF = new HostTargetInterface(pSoC, toHostAddress, fromHostAddress,
         sigBeginAddress, sigEndAddress - sigBeginAddress);
     if(pHTIF == nullptr)

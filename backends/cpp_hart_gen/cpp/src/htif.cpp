@@ -17,9 +17,11 @@ HostTargetInterface::HostTargetInterface(udb::IssSocModel* pSoC, uint64_t toHost
   //register notification callback
   m_pSoC->AttachHandler(NotificationCallback, 0, static_cast<void*>(this));
 
-  //register syscall device
-  m_devices[0] = &m_sysCall;
+  //create devices if needed, count up and register
+  //currently onuy syscall is implemented
   m_nDevices = 1;
+  m_devices.resize(m_nDevices);
+  m_devices[0] = &m_sysCall;
 }
 
 HostTargetInterface::~HostTargetInterface()
