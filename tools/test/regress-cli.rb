@@ -156,17 +156,20 @@ class Cli
       test = test_data.fetch("tests").fetch(tname)
       if test.key?("strategy")
         matrix = test.fetch("strategy").fetch("matrix")
-        matrix.each do |k, values|
-          values.each do |v|
-            next if matrix_filter && matrix_filter[:key] == k && matrix_filter[:value] != v
-            label = "#{tname} (#{k}=#{v})"
-            steps = test.fetch("test").map do |step|
-              env = test.key?("env") ? test.fetch("env").dup : {}
-              env.merge!(step.fetch("env")) if step.key?("env")
-              { env: env, command: gh_sub(step.fetch("run"), sub: { "matrix.#{k}" => v }) }
-            end
-            jobs << Job.new(tname, label, steps)
+        keys = matrix.keys
+        # Cartesian product across all matrix dimensions (matches GitHub Actions semantics)
+        combinations = keys.map { |k| matrix[k] }.reduce([[]], :product).map(&:flatten)
+        combinations.each do |combo|
+          sub = keys.zip(combo).to_h
+          next if matrix_filter && sub[matrix_filter[:key]] != matrix_filter[:value]
+          label = "#{tname} (#{sub.map { |k, v| "#{k}=#{v}" }.join(", ")})"
+          steps = test.fetch("test").map do |step|
+            env = test.key?("env") ? test.fetch("env").dup : {}
+            env.merge!(step.fetch("env")) if step.key?("env")
+            gh_subs = sub.transform_keys { |k| "matrix.#{k}" }
+            { env: env, command: gh_sub(step.fetch("run"), sub: gh_subs) }
           end
+          jobs << Job.new(tname, label, steps)
         end
       else
         steps = test.fetch("test").map do |step|
@@ -219,7 +222,7 @@ class Cli
     cmd = TTY::Command.new(uuid: false, pty: true, printer: RawStreamPrinter)
     expand_jobs([test_name], matrix_filter: matrix_filter).each do |job|
       job.steps.each do |step|
-        cmd.run step[:env], "bash -c \"#{step[:command]}\""
+        cmd.run step[:env], "bash", "-c", step[:command]
       end
     end
   end
@@ -264,7 +267,7 @@ class Cli
           job_passed = true
           job.steps.each do |step|
             parallel_env = step[:env].merge("COVERAGE" => "0")
-            result = cmd.run!(parallel_env, "bash -c \"#{step[:command]}\"", err: :out)
+            result = cmd.run!(parallel_env, "bash", "-c", step[:command], err: :out)
             output += result.out
             unless result.success?
               job_passed = false

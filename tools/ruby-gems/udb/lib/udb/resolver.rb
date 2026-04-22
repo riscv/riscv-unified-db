@@ -187,7 +187,8 @@ module Udb
         raise "custom directory '#{overlay_path}' does not exist" if !overlay_path.nil? && !overlay_path.directory?
 
         FileUtils.mkdir_p(@gen_path / "spec")
-        File.open(@gen_path / "spec" / ".#{config_name}.lock", File::CREAT | File::RDWR) do |f|
+        merge_lock_name = merged_spec_path(config_name).basename
+        File.open(@gen_path / "spec" / ".#{merge_lock_name}.lock", File::CREAT | File::RDWR) do |f|
           f.flock(File::LOCK_EX)
           if any_newer?(merged_spec_path(config_name) / ".stamp", deps)
             # Use Ruby YAML resolver instead of Python
@@ -210,7 +211,8 @@ module Udb
         config_name = config_yaml["name"]
 
         FileUtils.mkdir_p(@gen_path / "resolved_spec")
-        File.open(@gen_path / "resolved_spec" / ".#{config_name}.lock", File::CREAT | File::RDWR) do |f|
+        resolve_lock_name = resolved_spec_path(config_name).basename
+        File.open(@gen_path / "resolved_spec" / ".#{resolve_lock_name}.lock", File::CREAT | File::RDWR) do |f|
           f.flock(File::LOCK_EX)
           deps = Dir[merged_spec_path(config_name) / "**" / "*.yaml"].map { |p| Pathname.new(p) }
           if any_newer?(resolved_spec_path(config_name) / ".stamp", deps)
