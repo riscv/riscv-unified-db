@@ -1,5 +1,6 @@
 #!/bin/bash
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+source "${ROOT}/bin/.mise.sh"
 
 cd "$ROOT" || exit 1
 

@@ -1,5 +1,6 @@
 #!/bin/bash
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+source "${ROOT}/bin/.mise.sh"
 EXEC_DIR=${PWD}
 cd "$ROOT"
 # Strip bin/ from PATH to avoid wrapper recursion (same pattern as bin/doctor)
