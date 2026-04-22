@@ -111,6 +111,7 @@ gen_subcmd_usage() {
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
   echo "  schema-docs:   Generate schema documentation from JSON Schema files"
+  echo "  xqci           Generate Xqci spec used for Golden regressions"
   echo ""
 }
 
