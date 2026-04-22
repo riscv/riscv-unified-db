@@ -3,7 +3,7 @@
 
 name: Weekly gem version bump
 
-# Creates a chore PR once a week bumping gem versions for all gems whose
+# Creates a chore PR twice a month bumping gem versions for all gems whose
 # source changed since the last release. The workflow is a no-op when no
 # gem source has changed.
 #
@@ -81,7 +81,7 @@ jobs:
           git push origin "$BRANCH"
 
           # Build PR body listing bumped gems and their new versions
-          BODY="Automated weekly gem version bump."$'\n\n'
+          BODY="Automated gem version bump."$'\n\n'
           BODY+="**Bumped gems:**"$'\n'
           while IFS= read -r version_file; do
             GEM_DIR=$(dirname "$(dirname "$version_file")")

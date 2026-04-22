@@ -15,9 +15,9 @@ This document describes how to prepare and publish a release of the `udb` gem to
 > GitHub Actions workflow whenever a version bump is merged to `main`.
 >
 > **Version bumps** are normally created automatically by the
-> [Weekly gem version bump](../../.github/workflows/gem_bump.yml) workflow,
-> which opens a chore PR once a week for any gems with source changes since
-> the last release. To trigger a release outside the weekly cadence, manually
+> [Bi-monthly gem version bump](../../.github/workflows/gem_bump.yml) workflow,
+> which opens a chore PR twice a month for any gems with source changes since
+> the last release. To trigger a release outside the bi-monthly cadence, manually
 > bump the version in `version.rb`, commit, and merge to `main`.
 > Manual publishing (Steps 2–4) is only needed if the CI workflow is unavailable.
 
@@ -50,8 +50,8 @@ The high-level steps are:
 
 ## Step 1 – Bump the version
 
-Version bumps are normally handled automatically by the weekly chore job.
-To trigger a release outside the weekly cadence, run the update command from
+Version bumps are normally handled automatically by the bi-monthly chore job.
+To trigger a release outside the bi-monthly cadence, run the update command from
 the repository root, using the last release tag as the base ref:
 
 ```sh
