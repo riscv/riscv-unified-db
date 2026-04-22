@@ -79,16 +79,15 @@ _check_core_prerequisites() {
     _record_fail
   fi
 
-  # mise
-  if command -v mise > /dev/null 2>&1; then
+  # mise (via bin/mise bootstrap wrapper)
+  if "$ROOT/bin/mise" --version > /dev/null 2>&1; then
     local mise_ver
-    mise_ver=$(mise --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
+    mise_ver=$("$ROOT/bin/mise" --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
     _pass "mise  ${_C_DIM}${mise_ver}${_C_RESET}"
     _record_pass
   else
-    _fail "mise not found"
-    _info "Fix: curl https://mise.run | sh"
-    _info "     or see https://mise.jdx.dev for other install methods"
+    _fail "mise not available (bin/mise bootstrap failed)"
+    _info "Fix: ensure bin/mise is executable and can reach the internet on first run"
     _record_fail
     # mise is required for everything else — bail early on the mise-tool checks
     _MISE_MISSING=1
@@ -109,7 +108,7 @@ _check_mise_tool() {
   local binary="${_MISE_BINARY_OVERRIDE[$tool]:-$tool}"
 
   local bin_path
-  bin_path=$(mise which "$binary" 2>/dev/null)
+  bin_path=$("$ROOT/bin/mise" which "$binary" 2>/dev/null)
   if [[ -z "$bin_path" ]]; then
     _fail "$tool not installed"
     _info "Fix: run \`mise install\` in the repo root"
@@ -164,7 +163,7 @@ _check_ruby_ecosystem() {
   fi
 
   local bundle_bin
-  bundle_bin=$(mise which bundle 2>/dev/null)
+  bundle_bin=$("$ROOT/bin/mise" which bundle 2>/dev/null)
   if [[ -z "$bundle_bin" ]]; then
     _fail "bundle not found (is ruby installed via mise?)"
     _info "Fix: run \`mise install\`"
@@ -321,7 +320,7 @@ _check_developer_setup() {
   fi
 
   local ruby_bin
-  ruby_bin=$(mise which ruby 2>/dev/null)
+  ruby_bin=$("$ROOT/bin/mise" which ruby 2>/dev/null)
   if [[ -z "$ruby_bin" ]]; then
     _warn "Native deps check skipped (ruby not installed via mise)"
     _record_warn
@@ -471,7 +470,7 @@ include("${ROOT}/.toolchain/check_cxx.cmake")
 EOF
 
       local cmake_bin
-      cmake_bin=$(mise which cmake 2>/dev/null)
+      cmake_bin=$("$ROOT/bin/mise" which cmake 2>/dev/null)
       cmake_bin="${cmake_bin:-cmake}"
 
       local cmake_exit=0
