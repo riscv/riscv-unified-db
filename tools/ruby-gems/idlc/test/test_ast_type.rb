@@ -58,7 +58,7 @@ class TestAstType < Minitest::Test
       possible_xlens_cb: proc { [32, 64] }
     )
     idl = "$bits(1'b0)"
-    m = @compiler.parser.parse(idl, root: :bits_cast)
+    m = @compiler.parser.parse(idl, root: :dollar_function_call)
     refute_nil m
     ast = m.to_ast
     refute_nil ast
@@ -82,7 +82,7 @@ class TestAstType < Minitest::Test
     )
 
     idl = "$bits(CSR[mockcsr_dyn])"
-    m = @compiler.parser.parse(idl, root: :bits_cast)
+    m = @compiler.parser.parse(idl, root: :dollar_function_call)
     refute_nil m
     ast = m.to_ast
     refute_nil ast

@@ -40449,7 +40449,7 @@ h! `Bits<INSTR_ENC_SIZE>`
 Boolean aligned = xref:#udb-function-is_naturally_aligned[is_naturally_aligned]pass:[(]LEN, virtual_address);
 XReg physical_address;
 if pass:[(]aligned) {
-  return xref:#udb-function-read_memory_aligned[read_memory_aligned]pass:[(]LEN, virtual_address, encoding);
+  return xref:#udb-function-read_memory_aligned[read_memory_aligned]pass:[(]LEN, virtual_address, encoding, 1'b0, 1'b0);
 }
 if pass:[(]MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE > 0) {
   xref:#udb-function-assert[assert]pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low", "Invalid config: can't mix low-priority misaligned exceptions with large atomicity granule");
@@ -40469,7 +40469,7 @@ if pass:[(]!MISALIGNED_LDST) {
   if pass:[(]MISALIGNED_SPLIT_STRATEGY == "sequential_bytes") {
     XReg result = 0;
     for pass:[(]U32 I = 0; I < (LEN / 8); I++) {
-      result = result | (xref:#udb-function-read_memory_aligned[read_memory_aligned]pass:[(]8, virtual_address pass:[+] I, encoding) pass:[`]<< (8 * I));
+      result = result | (xref:#udb-function-read_memory_aligned[read_memory_aligned]pass:[(]8, virtual_address pass:[+] I, encoding, 1'b0, 1'b0) pass:[`]<< (8 * I));
     }
     return result;
   } else if pass:[(]MISALIGNED_SPLIT_STRATEGY == "custom") {
@@ -40481,6 +40481,10 @@ if pass:[(]!MISALIGNED_LDST) {
 [#udb-function-read_memory_aligned]
 === read_memory_aligned
 Read from virtual memory using a known aligned address.
+
+If +rl+ is 1, then the load also acts as a memory model release (applied after all
+checks pass but before the physical read).
+If +aq+ is 1, then the load also acts as a memory model acquire (applied after the read).
   
 
 [cols="1,4"]
@@ -40502,6 +40506,12 @@ h! `XReg`
 ! 2
 h! `Bits<INSTR_ENC_SIZE>`
 ! encoding
+! 3
+h! `Bits<1>`
+! aq
+! 4
+h! `Bits<1>`
+! rl
 !===
 
 |===
@@ -40515,7 +40525,14 @@ if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1) {
   result.paddr = virtual_address;
 }
 xref:#udb-function-access_check[access_check]pass:[(]result.paddr, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]));
-return xref:#udb-function-read_physical_memory[read_physical_memory]pass:[(]LEN, result.paddr);
+if pass:[(]rl == 1'b1) {
+  xref:#udb-function-memory_model_release[memory_model_release]pass:[(]);
+}
+XReg value = xref:#udb-function-read_physical_memory[read_physical_memory]pass:[(]LEN, result.paddr);
+if pass:[(]aq == 1'b1) {
+  xref:#udb-function-memory_model_acquire[memory_model_acquire]pass:[(]);
+}
+return value;
 ----
 
 [#udb-function-read_physical_memory]
@@ -40956,7 +40973,7 @@ h! `Bits<INSTR_ENC_SIZE>`
 Boolean aligned = xref:#udb-function-is_naturally_aligned[is_naturally_aligned]pass:[(]LEN, virtual_address);
 XReg physical_address;
 if pass:[(]aligned) {
-  xref:#udb-function-write_memory_aligned[write_memory_aligned]pass:[(]LEN, virtual_address, value, encoding);
+  xref:#udb-function-write_memory_aligned[write_memory_aligned]pass:[(]LEN, virtual_address, value, encoding, 1'b0, 1'b0);
   return ;
 }
 if pass:[(]MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE > 0) {
@@ -40977,7 +40994,7 @@ if pass:[(]!MISALIGNED_LDST) {
 } else {
   if pass:[(]MISALIGNED_SPLIT_STRATEGY == "sequential_bytes") {
     for pass:[(]U32 I = 0; I < (LEN / 8); I++) {
-      xref:#udb-function-write_memory_aligned[write_memory_aligned]pass:[(]8, virtual_address pass:[+] I, (value >> (8 * I))[7:0], encoding);
+      xref:#udb-function-write_memory_aligned[write_memory_aligned]pass:[(]8, virtual_address pass:[+] I, (value >> (8 * I))[7:0], encoding, 1'b0, 1'b0);
     }
   } else if pass:[(]MISALIGNED_SPLIT_STRATEGY == "custom") {
     xref:#udb-function-unpredictable[unpredictable]pass:[(]"An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
@@ -40988,6 +41005,10 @@ if pass:[(]!MISALIGNED_LDST) {
 [#udb-function-write_memory_aligned]
 === write_memory_aligned
 Write to virtual memory using a known aligned address.
+
+If +rl+ is 1, then the store also acts as a memory model release (applied after all
+checks pass but before the physical write).
+If +aq+ is 1, then the store also acts as a memory model acquire.
   
 
 [cols="1,4"]
@@ -41012,6 +41033,12 @@ h! `XReg`
 ! 3
 h! `Bits<INSTR_ENC_SIZE>`
 ! encoding
+! 4
+h! `Bits<1>`
+! aq
+! 5
+h! `Bits<1>`
+! rl
 !===
 
 |===
@@ -41021,7 +41048,13 @@ h! `Bits<INSTR_ENC_SIZE>`
 XReg physical_address;
 physical_address = (CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1) ? xref:#udb-function-translate[translate]pass:[(]virtual_address, MemoryOperation::Write, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]), encoding).paddr : virtual_address;
 xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]));
+if pass:[(]rl == 1'b1) {
+  xref:#udb-function-memory_model_release[memory_model_release]pass:[(]);
+}
 xref:#udb-function-write_physical_memory[write_physical_memory]pass:[(]LEN, physical_address, value);
+if pass:[(]aq == 1'b1) {
+  xref:#udb-function-memory_model_acquire[memory_model_acquire]pass:[(]);
+}
 ----
 
 [#udb-function-write_physical_memory]

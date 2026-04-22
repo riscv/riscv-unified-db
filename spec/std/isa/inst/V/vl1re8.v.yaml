@@ -25,5 +25,8 @@ access:
   u: always
   vs: always
   vu: always
+pseudoinstructions:
+  - when: "true"
+    to: vl1r.v vd, (xs1)
 data_independent_timing: false
 operation(): |

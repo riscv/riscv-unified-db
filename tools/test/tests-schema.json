@@ -185,6 +185,16 @@
                   "fetch-depth": 0
                 }
               ]
+            },
+            "timeout_minutes": {
+              "description": "Maximum number of minutes the job is allowed to run before GitHub cancels it.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "toolchain_container": {
+              "description": "When true, the test runs inside the toolchain container rather than the standard CI runner.",
+              "type": "boolean",
+              "default": false
             }
           }
         }

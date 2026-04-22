@@ -35,7 +35,7 @@ access:
 data_independent_timing: false
 pseudoinstructions:
   - when: xd == 0
-    to: csrci csr,imm
+    to: csrci csr, imm
 operation(): |
   Boolean will_write = imm != 0;
 

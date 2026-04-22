@@ -251,7 +251,6 @@ jobs:
               mkdir -p "_site/schemas/${schema_name}/${version}"
               gh release download "${tag}" --dir "_site/schemas/${schema_name}/${version}" --pattern "*.json" 2>/dev/null || true
             done
-          fi
           # Write a JSON index of all available schema versions and files
           ruby tools/scripts/gen_schema_index.rb _site/schemas _site/schemas/index.json
 

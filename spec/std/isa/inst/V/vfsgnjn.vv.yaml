@@ -29,5 +29,8 @@ access:
   u: always
   vs: always
   vu: always
+pseudoinstructions:
+  - when: vs2 == vs1
+    to: vfneg.v vd, vs2
 data_independent_timing: false
 operation(): |

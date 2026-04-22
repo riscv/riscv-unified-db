@@ -157,7 +157,7 @@ end
 rule %r{#{CPP_HART_GEN_DST}/.*\.[ch](xx)?$} => proc { |tname|
   ["#{tname}.unformatted"]
 } do |t|
-  sh "clang-format #{t.name}.unformatted > #{t.name}"
+  sh "#{$root}/bin/clang-format #{t.name}.unformatted > #{t.name}"
 end
 
 rule %r{#{CPP_HART_GEN_DST}/.*/src/cfgs/[^/]+/[^/]+\.cxx\.unformatted$} => proc { |tname|
@@ -203,9 +203,11 @@ rule %r{#{CPP_HART_GEN_DST}/[^/]+/build/Makefile} => [
     "cmake",
     "-S#{CPP_HART_GEN_DST}/#{build_name}",
     "-B#{CPP_HART_GEN_DST}/#{build_name}/build",
+    "-DCMAKE_CXX_COMPILER=#{$root}/bin/g++",
     "-DCONFIG_LIST=\"#{ENV['CONFIG'].gsub(',', ';')}\"",
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-    "-DCMAKE_BUILD_TYPE=#{cmake_build_type}"
+    "-DCMAKE_BUILD_TYPE=#{cmake_build_type}",
+    "-DUDB_ROOT=#{$root}"
   ]
   if ENV["IGNOREUNDEFINED"].nil?
     cmd.push("-DIGNOREUNDEFINED=NO")
@@ -394,11 +396,14 @@ task checkout_riscv_tests: "#{$root}/ext/riscv-tests/env/LICENSE"
 task build_riscv_tests: "checkout_riscv_tests" do
   configs_name, build_name = configs_build_name
 
+  xlen = configs_name[0] == "rv32" ? "32" : "64"
+  riscv_prefix = "#{$root}/bin/riscv#{xlen}-unknown-elf-"
+
   Dir.chdir "#{$root}/tests/isa" do
     if configs_name[0] == "rv32"
-      sh "make XLEN=32"
+      sh "make XLEN=32 RISCV_PREFIX=#{riscv_prefix}"
     else
-      sh "make"
+      sh "make RISCV_PREFIX=#{riscv_prefix}"
     end
   end
 end

@@ -1,263 +1,263 @@
-#!/usr/bin/env bash
-
-if [ -v UDB_SETUP_COMPLETE ]; then
-  return
-fi
-UDB_SETUP_COMPLETE=true
+#!/bin/bash
+# bin/setup — one-command developer setup for UnifiedDB.
+#
+# Run this once after cloning the repository. Safe to re-run at any time;
+# every step checks whether work is needed before doing it.
 
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
-cd "$ROOT" || exit
+cd "$ROOT" || exit 1
 
-CONTAINER_TAG=$(cat "${ROOT}/bin/.container-tag")
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
 
-REGISTRY=${REGISTRY:="ghcr.io"}
-if [ "$REGISTRY" == "ghcr.io" ]; then
-  OWNER=riscv
-elif [ "$REGISTRY" == "docker.io" ]; then
-  OWNER=riscvintl
+if [[ -z "${NO_COLOR:-}" ]] && [[ -t 1 ]]; then
+  _BOLD=$'\033[1m'
+  _RESET=$'\033[0m'
+  _GREEN=$'\033[32m'
+  _CYAN=$'\033[36m'
+  _YELLOW=$'\033[33m'
+  _DIM=$'\033[2m'
 else
-  echo "Bad registry: ${REGISTRY}" 1>&2
+  _BOLD='' _RESET='' _GREEN='' _CYAN='' _YELLOW='' _DIM=''
+fi
+
+_section() { printf "\n${_BOLD}${_CYAN}==> %s${_RESET}\n" "$1"; }
+_ok()      { printf "    ${_GREEN}✓${_RESET}  %s\n" "$1"; }
+_run()     { printf "    ${_CYAN}▶${_RESET}  %s\n" "$1"; }
+_note()    { printf "    ${_YELLOW}!${_RESET}  %s\n" "$1"; }
+_info()    { printf "    ${_DIM}%s${_RESET}\n" "$1"; }
+
+printf "${_BOLD}=== UnifiedDB Setup ===${_RESET}\n"
+
+# ---------------------------------------------------------------------------
+# 1. Install mise if needed
+# ---------------------------------------------------------------------------
+
+_section "mise (tool version manager)"
+
+MISE_BIN=$(command -v mise 2>/dev/null || true)
+if [[ -z "$MISE_BIN" && -x "${HOME}/.local/bin/mise" ]]; then
+  MISE_BIN="${HOME}/.local/bin/mise"
+fi
+
+if [[ -n "$MISE_BIN" ]]; then
+  _ok "mise already installed ($("$MISE_BIN" --version 2>/dev/null | head -1))"
+else
+  _run "Installing mise..."
+  if ! curl -fsSL https://mise.run | sh; then
+    printf "\nERROR: mise installation failed.\n" >&2
+    printf "Install manually: https://mise.jdx.dev/getting-started.html\n" >&2
+    exit 1
+  fi
+  MISE_BIN="${HOME}/.local/bin/mise"
+  if [[ ! -x "$MISE_BIN" ]]; then
+    printf "\nERROR: mise not found at %s after install.\n" "$MISE_BIN" >&2
+    exit 1
+  fi
+  _ok "mise installed"
+fi
+
+# Put mise on PATH for the rest of this script so bin/ wrappers (which call
+# `mise exec`) can find it even if the user's shell profile isn't activated.
+export PATH="$(dirname "$MISE_BIN"):$PATH"
+
+# ---------------------------------------------------------------------------
+# 2. Install tool versions via mise
+# ---------------------------------------------------------------------------
+
+_section "Tool versions (Ruby, Python, Node.js, CMake, …)"
+
+# mise install is idempotent and exits quickly when everything is current.
+_run "Running mise install..."
+if ! mise install; then
+  printf "\nERROR: mise install failed.\n" >&2
   exit 1
 fi
+_ok "All tool versions installed"
 
-# shellcheck source=.functions.sh
-source "${ROOT}/bin/.functions.sh"
+# ---------------------------------------------------------------------------
+# 3. Ruby gems
+# ---------------------------------------------------------------------------
 
-# Supported container types:
-#
-# = devcontainer
-#
-# When devcontainer is used, all commands run "natively" (no container prefix), because it's assumed
-# that the command itself is already in the container context
-#
-# = docker
-#
-# A docker container. All commands on the host (using ./do or ./bin/*) are run in the context of a Docker image.
-#
-# = podman
-#
-# A docker container run using Podman. All commands on the host (using ./do or ./bin/*) are run in the context of a Docker image.
-# Podman provides a Docker-compatible CLI.
-#
-#
-# BOTH CONTAINERS ARE (in theory) IDENTICAL. Which one you use is a preference of your setup and installed
-# software.
+_section "Ruby gems"
 
-CONTAINER_TYPE=$(get_container_type)
-
-if [ "${CONTAINER_TYPE}" != "docker" ] && [ "${CONTAINER_TYPE}" != "podman" ] && [ "${CONTAINER_TYPE}" != "native" ]; then
-  echo "BAD CONTAINER TYPE: ${CONTAINER_TYPE}" 1>&2
-fi
-
-if [ ! -f "${ROOT}/.container-type" ]; then
-  echo "${CONTAINER_TYPE}" > "${ROOT}/.container-type"
-fi
-
-# Check if container type or tag has changed
-NEEDS_CLOBBER=false
-
-if [ ! -v IN_UDB_CONTAINER ] && [ -f "${ROOT}/.cache/previous-container-type" ]; then
-  PREVIOUS_CONTAINER_TYPE=$(cat "${ROOT}/.cache/previous-container-type")
-  if [ "${PREVIOUS_CONTAINER_TYPE}" != "${CONTAINER_TYPE}" ]; then
-    echo "Container type changed from ${PREVIOUS_CONTAINER_TYPE} to ${CONTAINER_TYPE}" 1>&2
-    NEEDS_CLOBBER=true
-  fi
-fi
-
-if [ ! -v IN_UDB_CONTAINER ] && [ -f "${ROOT}/.cache/previous-container-tag" ]; then
-  PREVIOUS_CONTAINER_TAG=$(cat "${ROOT}/.cache/previous-container-tag")
-  if [ "${PREVIOUS_CONTAINER_TAG}" != "${CONTAINER_TAG}" ]; then
-    echo "Container tag changed from ${PREVIOUS_CONTAINER_TAG} to ${CONTAINER_TAG}" 1>&2
-    NEEDS_CLOBBER=true
-  fi
-fi
-
-if [ "${NEEDS_CLOBBER}" = true ]; then
-  echo "Running clobber due to container changes..." 1>&2
-  ./do clobber
-fi
-
-# Update the cached values
-mkdir -p "${ROOT}/.cache"
-if [ ! -v IN_UDB_CONTAINER ]; then
-  echo "${CONTAINER_TYPE}" > "${ROOT}/.cache/previous-container-type"
-  echo "${CONTAINER_TAG}" > "${ROOT}/.cache/previous-container-tag"
-fi
-
-echo "Using ${CONTAINER_TYPE} environment" 1>&2
-
-if [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
-    if ! ${CONTAINER_TYPE} images "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" --format table | grep -q udb ; then
-        echo "Image not found locally. Attempting to pull from registry..." 1>&2
-        if ${CONTAINER_TYPE} pull "$REGISTRY/$OWNER/udb:${CONTAINER_TAG}" 2>/dev/null; then
-            echo "Successfully pulled image from registry." 1>&2
-        else
-            echo "Could not pull image from registry. Building locally..." 1>&2
-            build_container "${ROOT}"
-        fi
-    fi
-    if [ "${CONTAINER_TYPE}" == "podman" ]; then
-      # Podman requires extra flags to handle SELinux
-      SELINUX_LABEL=":z"
-    else
-      SELINUX_LABEL=""
-    fi
-
-    CONTAINER_RUN_FLAGS="-v ${ROOT}:${ROOT}${SELINUX_LABEL}"
-    if [ -v UDB_CONTAINER_BIND ]; then
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${UDB_CONTAINER_BIND}:${UDB_CONTAINER_BIND}${SELINUX_LABEL}"
-    fi
-    if [ -f "$ROOT/.git" ]; then
-        # if this is a worktree, need to add the parent git repo in, too
-        GIT_PATH=$(git rev-parse --git-common-dir | tr -d '\n' | xargs dirname)
-        CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${GIT_PATH}:${GIT_PATH}${SELINUX_LABEL}"
-    fi
-    # create empty home directory (used as location to cache files by several tools)
-    if ! [ -d "${ROOT}"/.docker-home ]; then
-      mkdir "${ROOT}"/.docker-home
-    fi
-    CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e HOME"
-    CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -v ${ROOT}/.docker-home:${HOME}"
-
-    mkdir -p "${ROOT}/.cache"
-
-    # run as the host user
-    if [ "${CONTAINER_TYPE}" == "podman" ]; then
-      # Use --userns=keep-id for rootless podman to properly map user IDs with SELinux
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} --userns=keep-id"
-    else
-      # Copy in /etc/{passwd,group} to get the user mappings
-      getent passwd > "${ROOT}/.cache/passwd"
-      getent group >> "${ROOT}/.cache/group"
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} --user $(id -u):$(id -g) -v ${ROOT}/.cache/passwd:/etc/passwd:ro -v ${ROOT}/.cache/group:/etc/group:ro"
-    fi
-
-    if [ -v PRE_COMMIT_HOME ]; then
-      CONTAINER_RUN_FLAGS="${CONTAINER_RUN_FLAGS} -e PRE_COMMIT_HOME"
-    fi
-
-    CONTAINER_NAME="$REGISTRY/$OWNER/udb:${CONTAINER_TAG}"
-    if [ -t 1 ] && [ -t 0 ]; then
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm -it ${CONTAINER_RUN_FLAGS} -w ${ROOT} $CONTAINER_NAME"
-    else
-      CONTAINER_BASE="${CONTAINER_TYPE} run --rm ${CONTAINER_RUN_FLAGS} -w ${ROOT} $CONTAINER_NAME"
-    fi
-elif [ "${CONTAINER_TYPE}" != "native" ]; then
-    echo "Bad container type: ${CONTAINER_TYPE}" 1>&2
-    exit 1
-fi
-
-if [ "${CONTAINER_TYPE}" == "native" ]; then
-    RUN=""
-elif [ "${CONTAINER_TYPE}" == "docker" ] || [ "${CONTAINER_TYPE}" == "podman" ]; then
-    RUN="${CONTAINER_BASE}"
+if BUNDLE_GEMFILE="$ROOT/Gemfile" mise exec -- bundle check > /dev/null 2>&1; then
+  _ok "Ruby gems already up to date"
 else
-    echo "Bad container type: ${CONTAINER_TYPE}" 1>&2
+  _run "Running bundle install..."
+  if ! "$ROOT/bin/bundle" install; then
+    printf "\nERROR: bundle install failed.\n" >&2
     exit 1
+  fi
+  _ok "Ruby gems installed"
 fi
 
-if [ ! -f "$ROOT/ext/rbi-central/README.md" ]; then
-    git submodule update --init ext/rbi-central
+# ---------------------------------------------------------------------------
+# 4. Native dependencies (z3, espresso, eqntott, must)
+# ---------------------------------------------------------------------------
+
+_section "Native dependencies (z3, espresso, eqntott, must)"
+
+if [[ ! -f "$ROOT/ext/rbi-central/README.md" ]]; then
+  _run "Initializing rbi-central submodule..."
+  git submodule update --init ext/rbi-central
 fi
 
-# Set executables
-BUNDLE="${RUN} bundle"
-RUBY="${RUN} bundle exec ruby"
-RAKE="${RUN} bundle exec rake"
-NPM="${RUN} npm"
-NPX="${RUN} npx"
-NODE="${RUN} node"
-PYTHON="${RUN} uv run python"
-BASH="${RUN} bash"
-GPP="${RUN} g++"
-GDB="${RUN} gdb"
-CLANG_FORMAT="${RUN} clang-format"
-CLANG_TIDY="${RUN} clang-tidy"
-MAKE="${RUN} make"
+_run "Downloading native dependencies..."
+if ! (cd "${ROOT}/tools/ruby-gems/udb/ext/udb_download" && mise exec -- ruby extconf.rb); then
+  printf "\nERROR: native dependency download failed.\n" >&2
+  exit 1
+fi
+_ok "Native dependencies ready"
 
-# Download Z3 shared library from GitHub Releases into the XDG cache.
-# This mirrors what ext/udb_z3_download/extconf.rb does at gem-install time
-setup_z3() {
-  local z3_version
-  z3_version=$($RUN ruby -e "load '${ROOT}/tools/ruby-gems/udb/lib/udb/dep_versions.rb'; puts Udb::Z3_VERSION" | tr -d '[:space:]')
+# ---------------------------------------------------------------------------
+# 5. Python packages
+# ---------------------------------------------------------------------------
 
-  local cpu
-  case "$(uname -m)" in
-    x86_64)  cpu="x64"   ;;
-    aarch64) cpu="arm64" ;;
-    arm64)   cpu="arm64" ;;
-    *)
-      echo "setup_z3: unsupported architecture $(uname -m), skipping Z3 download" >&2
-      return 0
-      ;;
-  esac
+_section "Python packages"
 
-  local xdg_cache
-  if [ "$CONTAINER_TYPE" == "native" ]; then
-    xdg_cache="${XDG_CACHE_HOME:-${HOME}/.cache}"
+_run "Running uv sync..."
+if ! "$ROOT/bin/uv" sync; then
+  printf "\nERROR: uv sync failed.\n" >&2
+  exit 1
+fi
+_ok "Python packages installed"
+
+# ---------------------------------------------------------------------------
+# 6. npm packages
+# ---------------------------------------------------------------------------
+
+_section "npm packages"
+
+if [[ -d "$ROOT/node_modules" ]]; then
+  _ok "npm packages already installed"
+else
+  _run "Running npm ci..."
+  if ! "$ROOT/bin/npm" ci; then
+    printf "\nERROR: npm ci failed.\n" >&2
+    exit 1
+  fi
+  _ok "npm packages installed"
+fi
+
+# ---------------------------------------------------------------------------
+# 7. C++ toolchain preference
+# ---------------------------------------------------------------------------
+
+_section "C++ toolchain"
+
+if [[ -f "$ROOT/.toolchain-local" ]]; then
+  # shellcheck source=/dev/null
+  source "$ROOT/.toolchain-local"
+  if [[ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]]; then
+    _ok "Toolchain: none/skipped (from .toolchain-local)"
+  elif [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
+    _ok "Toolchain: container (from .toolchain-local)"
   else
-    xdg_cache="${ROOT}/.docker-home/.cache"
+    _ok "Toolchain: native (from .toolchain-local)"
   fi
-  local dest_dir="${xdg_cache}/udb/z3/${z3_version}/${cpu}"
-  local dest_file="${dest_dir}/libz3.so"
-  local checksum_file="${dest_dir}/libz3.checksum"
-
-  if [ -f "${dest_file}" ]; then
-    return 0
+elif [[ "${UDB_TOOLCHAIN_NONE:-0}" = "1" || "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
+  # Non-interactive path: env vars already set (e.g. from CI).  Write .toolchain-local
+  # so this choice is visible to all subsequent wrapper scripts in the same workspace.
+  if [[ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]]; then
+    printf "UDB_TOOLCHAIN_NONE=1\n" > "$ROOT/.toolchain-local"
+    _ok "Toolchain: none/skipped (from environment)"
+  else
+    printf "UDB_TOOLCHAIN_CONTAINER=%s\n" "$UDB_TOOLCHAIN_CONTAINER" > "$ROOT/.toolchain-local"
+    _ok "Toolchain: container (from environment)"
   fi
-
-
-  echo "Downloading Z3 (${z3_version}, ${cpu}) from GitHub Releases..." 1>&2
-  mkdir -p "${dest_dir}"
-  curl -o "${dest_file}" -L https://github.com/riscv/riscv-unified-db/releases/download/"${z3_version}"/libz3-${cpu}.so
-  curl -o "${checksum_file}" -L https://github.com/riscv/riscv-unified-db/releases/download/"${z3_version}"/libz3-${cpu}.checksum
-
-  echo "  Verifying checksum..." 1>&2
-  $RUN ruby -e "
-    require 'digest'
-    checksum_content = File.read('${checksum_file}').strip
-    expected = checksum_content.split(':')[1]
-    actual = Digest::SHA256.file('${dest_file}').hexdigest
-    if expected != actual
-      puts 'ERROR: Checksum verification failed for libz3!'
-      puts \"  Expected: #{expected}\"
-      puts \"  Got:      #{actual}\"
-      puts '  The downloaded file may be corrupted or tampered with.'
-      exit 1
-    end
-    puts '  Checksum verified successfully.'
-  " || exit 1
-
-  echo "  Saved to ${dest_file}" 1>&2
-}
-
-setup_z3
-
-if [ ! -v GITHUB_ACTIONS ]; then
-
-  GIT_REPO_ROOT=$(git rev-parse --path-format=absolute --git-common-dir | tr -d '\n')
-  if [ ! -f "$GIT_REPO_ROOT/hooks/pre-commit" ]; then
-    cat << HOOK > "$GIT_REPO_ROOT/hooks/pre-commit"
-#!/usr/bin/env bash
-
-# start templated
-INSTALL_PREK=\$(realpath ./bin/prek)
-ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=pre-commit)
-# end templated
-
-GIT_REPO_ROOT=$(git rev-parse --show-toplevel | tr -d '\n')
-HERE="$(cd "$(dirname "\$0")" && pwd)"
-ARGS+=(--hook-dir "\$HERE" -- "\$@")
-
-if [ -x "\$INSTALL_PREK" ]; then
-    exec "\$INSTALL_PREK" "\${ARGS[@]}"
-elif command -v prek > /dev/null; then
-    exec prek "\${ARGS[@]}"
 else
-    echo '\`prek\` not found.  Did you forget to activate your virtualenv?' 1>&2
-    exit 1
-fi
-HOOK
-    chmod +x "$GIT_REPO_ROOT/hooks/pre-commit"
+  printf "\n"
+  printf "  The C++ backend requires a RISC-V toolchain. Choose how to provide it:\n\n"
+  printf "  ${_BOLD}[1] Container — recommended for most users${_RESET}\n"
+  printf "      Requires Docker or Podman.\n"
+  printf "      A pre-built image (~500 MB) is pulled from GHCR automatically.\n"
+  printf "      No compiler installation needed.\n\n"
+  printf "  ${_BOLD}[2] Native${_RESET}\n"
+  printf "      Requires GCC 14+ (or Clang 17+) with C++23 support,\n"
+  printf "      plus a riscv64-unknown-elf cross-toolchain.\n"
+  printf "      Faster to invoke; more setup required.\n\n"
+  printf "  ${_BOLD}[3] Neither — skip for now${_RESET}\n"
+  printf "      I don't plan to build the ISS.\n"
+  printf "      Toolchain commands will prompt for a choice if needed later.\n\n"
+
+  TOOLCHAIN_CHOICE=""
+  while true; do
+    printf "  Enter 1, 2, or 3 (default: 1): "
+    read -r TOOLCHAIN_CHOICE
+    TOOLCHAIN_CHOICE="${TOOLCHAIN_CHOICE:-1}"
+    case "$TOOLCHAIN_CHOICE" in
+      1) UDB_TOOLCHAIN_CONTAINER=1; UDB_TOOLCHAIN_NONE=0; break ;;
+      2) UDB_TOOLCHAIN_CONTAINER=0; UDB_TOOLCHAIN_NONE=0; break ;;
+      3) UDB_TOOLCHAIN_NONE=1; break ;;
+      *) printf "  Please enter 1, 2, or 3.\n" ;;
+    esac
+  done
+
+  if [[ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]]; then
+    printf "UDB_TOOLCHAIN_NONE=1\n" > "$ROOT/.toolchain-local"
+    _ok "Saved preference to .toolchain-local (skipping toolchain)"
+  else
+    printf "UDB_TOOLCHAIN_CONTAINER=%s\n" "$UDB_TOOLCHAIN_CONTAINER" > "$ROOT/.toolchain-local"
+    _ok "Saved preference to .toolchain-local"
   fi
 fi
+
+# ---------------------------------------------------------------------------
+# 8. Pull or build toolchain container if needed
+# ---------------------------------------------------------------------------
+
+if [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
+  _section "Toolchain container image"
+
+  # shellcheck source=bin/.toolchain.sh
+  source "${ROOT}/bin/.toolchain.sh"
+  RUNTIME=$(_get_toolchain_runtime)
+
+  if [[ -z "$RUNTIME" ]]; then
+    _note "No container runtime found — skipping image pull."
+    _info "Install Docker (https://docs.docker.com/engine/install) or Podman (https://podman.io/get-started)"
+    _info "Then re-run bin/setup, or manually run: bin/chore container pull -t toolchain"
+  elif _pull_or_build_toolchain_image; then
+    _ok "Toolchain image ready"
+    _info "${TOOLCHAIN_IMAGE}"
+  else
+    printf "\nERROR: toolchain image build failed.\n" >&2
+    _info "You can retry later with: bin/chore container build -t toolchain"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# 9. Git hooks
+# ---------------------------------------------------------------------------
+
+_section "Git hooks"
+
+"$ROOT/bin/install_hooks"
+
+# ---------------------------------------------------------------------------
+# Done
+# ---------------------------------------------------------------------------
+
+printf "\n${_BOLD}${_GREEN}=== Setup complete! ===${_RESET}\n\n"
+
+printf "${_BOLD}Next: verify your environment${_RESET}\n"
+printf "  Run ${_CYAN}bin/doctor${_RESET} to confirm everything is working correctly.\n\n"
+
+if [[ -z "${MISE_SHELL:-}" ]]; then
+  printf "${_BOLD}Shell activation (recommended)${_RESET}\n"
+  printf "  mise-managed tools are available in this session, but to make them\n"
+  printf "  available in all future shells, add the activation line to your shell profile:\n\n"
+  printf "    ${_DIM}echo 'eval \"\$(mise activate bash)\"' >> ~/.bashrc${_RESET}   # bash\n"
+  printf "    ${_DIM}echo 'eval \"\$(mise activate zsh)\"'  >> ~/.zshrc${_RESET}    # zsh\n\n"
+  printf "  See ${_CYAN}https://mise.jdx.dev/getting-started.html#activate-mise${_RESET} for other shells.\n\n"
+fi
+
+printf "${_BOLD}Always use the bin/ wrappers${_RESET}\n"
+printf "  Prefer ${_CYAN}bin/ruby${_RESET}, ${_CYAN}bin/bundle${_RESET}, ${_CYAN}bin/python${_RESET}, ${_CYAN}bin/rake${_RESET}, etc. over invoking tools directly.\n"
+printf "  The wrappers guarantee the project's pinned tool versions are used regardless\n"
+printf "  of what your system shell has installed, and they transparently route C++\n"
+printf "  toolchain commands through the container when UDB_TOOLCHAIN_CONTAINER=1.\n"
+printf "  This keeps results consistent across machines without requiring any shell\n"
+printf "  configuration beyond running this setup script.\n\n"

@@ -82,9 +82,9 @@ module Idl
     def reachable_functions(symtab, cache = T.let({}, ReachableFunctionCacheType))
       fns = action.reachable_functions(symtab, cache)
 
-      action.add_symbol(symtab) if action.is_a?(Declaration)
+      action.add_symbol(symtab) if action.declaration?
       value_try do
-        action.execute(symtab) if action.is_a?(Executable)
+        action.execute(symtab) if action.executable?
       rescue SystemStackError
         type_error "Detected unbounded recursion during compile-time constant evaluation at #{input_file}:#{input_line}.. This recursion cannot be represented or validated."
       end

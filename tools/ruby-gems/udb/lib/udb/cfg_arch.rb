@@ -714,43 +714,28 @@ module Udb
     # @param io where to write progress bars
     # @return [void]
     sig { params(show_progress: T::Boolean, io: IO).void }
-    def type_check(show_progress: true, io: $stdout)
+    def type_check(show_progress: true, io: $stderr)
       io.puts "Type checking IDL code for #{@config.name}..." if show_progress
       insts = @config.unconfigured? ? instructions : possible_instructions(show_progress:)
       xlens = @config.unconfigured? ? [32, 64] : possible_xlens
 
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking possible instructions [:bar] :current/:total", total: insts.size, output: $stdout)
+          TTY::ProgressBar.new("type checking possible instructions [:bar] :current/:total", total: insts.size, output: io)
         end
 
       insts.each do |inst|
         progressbar.advance if show_progress
         if @mxlen == 32
           if inst.rv32?
-            op_ast = inst.operation_ast
-            unless op_ast.nil?
-              s = inst.fill_symtab(32, op_ast)
-              op_ast.prune(s).type_check(s, strict: true)
-              s.release
-            end
+            inst.pruned_operation_ast(32)
           end
         else
           if inst.rv64?
-            op_ast = inst.operation_ast
-            unless op_ast.nil?
-              s = inst.fill_symtab(64, op_ast)
-              op_ast.prune(s).type_check(s, strict: true)
-              s.release
-            end
+            inst.pruned_operation_ast(64)
           end
           if xlens.include?(32) && inst.rv32?
-            op_ast = inst.operation_ast
-            unless op_ast.nil?
-              s = inst.fill_symtab(32, op_ast)
-              op_ast.prune(s).type_check(s, strict: true)
-              s.release
-            end
+            inst.pruned_operation_ast(32)
           end
         end
       end
@@ -758,7 +743,7 @@ module Udb
       csr_list = @config.unconfigured? ? csrs : possible_csrs
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking CSRs [:bar]", total: csr_list.size, output: $stdout)
+          TTY::ProgressBar.new("type checking CSRs [:bar] :current/:total", total: csr_list.size, output: io)
         end
 
       csr_list.each do |csr|
@@ -769,53 +754,35 @@ module Udb
 
         if csr.has_custom_sw_read?
           if (xlens.include?(32) && csr_in_base32)
-            s = csr.fill_symtab(nil, 32)
-            csr.sw_read_ast(s).prune(s).type_check(s, strict: true)
-            s.release
+            csr.type_checked_pruned_sw_read_ast(32)
           end
           if (xlens.include?(64) && csr_in_base64)
-            s = csr.fill_symtab(nil, 64)
-            csr.sw_read_ast(s).prune(s).type_check(s, strict: true)
-            s.release
+            csr.type_checked_pruned_sw_read_ast(64)
           end
         end
         csr.possible_fields.each do |field|
-          reset_ast = field.reset_value_ast
-          unless reset_ast.nil?
+          if field.reset_value_ast
             if xlens.include?(32) && csr_in_base32 && field.defined_in_base32?
-              s = field.fill_symtab_for_reset(nil)
-              reset_ast.prune(s).type_check(s, strict: true)
-              s.release
+              field.pruned_reset_value_ast
             end
             if xlens.include?(64) && csr_in_base64 && field.defined_in_base64?
-              s = field.fill_symtab_for_reset(nil)
-              reset_ast.prune(s).type_check(s, strict: true)
-              s.release
+              field.pruned_reset_value_ast
             end
           end
           if field.has_custom_sw_write?
             if xlens.include?(32) && csr_in_base32 && field.defined_in_base32?
-              s = field.fill_symtab_for_sw_write(32, nil)
-              field.sw_write_ast(s).prune(s).type_check(s, strict: true)
-              s.release
+              field.pruned_sw_write_ast(32)
             end
             if xlens.include?(64) && csr_in_base64 && field.defined_in_base64?
-              s = field.fill_symtab_for_sw_write(64, nil)
-              field.sw_write_ast(s).prune(s).type_check(s, strict: true)
-              s.release
+              field.pruned_sw_write_ast(64)
             end
           end
-          type_ast = field.type_ast
-          unless type_ast.nil?
+          if field.type_ast
             if xlens.include?(32) && csr_in_base32 && field.defined_in_base32?
-              s = field.fill_symtab_for_type(32, nil)
-              type_ast.prune(s).type_check(s, strict: true)
-              s.release
+              field.pruned_type_ast(32)
             end
             if xlens.include?(64) && csr_in_base64 && field.defined_in_base64?
-              s = field.fill_symtab_for_type(64, nil)
-              type_ast.prune(s).type_check(s, strict: true)
-              s.release
+              field.pruned_type_ast(64)
             end
           end
         end
@@ -824,7 +791,7 @@ module Udb
       func_list = @config.unconfigured? ? functions : reachable_functions(show_progress:)
       progressbar =
         if show_progress
-          TTY::ProgressBar.new("type checking functions [:bar]", total: func_list.size, output: $stdout)
+          TTY::ProgressBar.new("type checking functions [:bar] :current/:total", total: func_list.size, output: io)
         end
       func_list.each do |func|
         progressbar.advance if show_progress
@@ -1078,6 +1045,21 @@ module Udb
             extensions.map(&:versions).flatten
           end
         end
+    end
+
+    # @return [Hash<String, Array<ExtensionVersion>>] possible_extension_versions grouped by name
+    def possible_extension_versions_by_name
+      @possible_extension_versions_by_name ||=
+        possible_extension_versions.group_by(&:name)
+    end
+
+    # Memoized Z3 satisfiability result for a ParameterTerm against this cfg_arch.
+    # Keyed by ParameterTerm (uses hash/eql? based on yaml_no_reason), so identical
+    # terms across different Condition objects share the same Z3 result.
+    #
+    # @return [Hash<ParameterTerm, SatisfiedResult>]
+    def param_term_satisfied_memo
+      @param_term_satisfied_memo ||= {}
     end
 
     # @overload prohibited_ext?(ext)

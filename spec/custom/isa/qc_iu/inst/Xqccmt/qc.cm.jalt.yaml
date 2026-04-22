@@ -1,0 +1,84 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: qc.cm.jalt
+long_name: Jump Via Table with Link to ra or t0
+description: |
+  Read an address from the Jump Vector Table and jump to it, linking to either
+  `ra` (x1) or `t0` (x5) depending on bit 0 of the table entry.
+
+  Bit 0 of the jump table entry is used as metadata:
+
+  * Bit 0 = 0: save return address in `ra` (x1)
+  * Bit 0 = 1: save return address in `t0` (x5)
+
+  The actual jump target always has bit 0 cleared:
+  `target = {entry[XLEN-1:1], 1'b0}`
+
+  Instruction encoded in the same encoding space as cm.jalt (Zcmt).
+  Xqccmt and Zcmt are mutually exclusive extensions.
+definedBy:
+  extension:
+    name: Xqccmt
+assembly: index_7_5, index_4_0
+encoding:
+  match: 101000--------10
+  variables:
+    - name: index_7_5
+      location: 9-7
+      not: 0
+    - name: index_4_0
+      location: 6-2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+operation(): |
+  # Ensure JVT readable
+  check_zcmt_enabled($encoding);
+
+  if (CSR[jvt].MODE != 0) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  # Skip over _this_ 16-bit instruction
+  XReg return_addr = $pc + 2;
+
+  XReg jump_table_base = { CSR[jvt].BASE, 6'b000000 };
+  XReg index = { index_7_5, index_4_0 };
+  XReg virtual_address = jump_table_base + index `* (xlen() / 8);
+  XReg entry;
+  TranslationResult result;
+
+  # TODO: Correct this check when we figure out what MISA can do
+  if (CSR[misa].S == 1) {
+    result = translate(virtual_address, MemoryOperation::Fetch, mode(), $encoding);
+  } else {
+    result.paddr = virtual_address;
+  }
+
+  # may raise an exception
+  access_check(result.paddr, xlen(), $pc, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
+
+  if (xlen() == 32) {
+    entry = read_physical_memory(32, result.paddr);
+  } else {
+    entry = read_physical_memory(64, result.paddr);
+  }
+
+  # Bit 0 of entry is metadata: 0 = link to ra (x1), 1 = link to t0 (x5)
+  if (entry[0] == 1'b1) {
+    X[5] = return_addr;  # t0
+  } else {
+    X[1] = return_addr;  # ra
+  }
+
+  # Jump target always has bit 0 cleared
+  XReg addr = entry & $signed(2'b10);
+
+  jump(addr);

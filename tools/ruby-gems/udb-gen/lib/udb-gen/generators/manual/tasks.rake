@@ -457,7 +457,7 @@ namespace :gen do
     end
 
     sh [
-      "/opt/node/node_modules/.bin/antora",
+      "#{Udb.repo_root}/node_modules/.bin/antora",
       "--stacktrace",
       "generate",
       "--cache-dir=#{Udb.repo_root}/.home/.antora",

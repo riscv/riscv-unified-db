@@ -119,9 +119,9 @@ rule %r{#{$root}/gen/cfg_html_doc/.*/antora/playbook.yaml} => proc { |tname|
         snapshot: true
       supplemental_files:
       - path: css/vendor/tabs.css
-        contents: /opt/node/node_modules/@asciidoctor/tabs/dist/css/tabs.css
+        contents: #{$root}/node_modules/@asciidoctor/tabs/dist/css/tabs.css
       - path: js/vendor/tabs.js
-        contents: /opt/node/node_modules/@asciidoctor/tabs/dist/js/tabs.js
+        contents: #{$root}/node_modules/@asciidoctor/tabs/dist/js/tabs.js
       - path: partials/footer-scripts.hbs
         contents: |
           <script id="site-script" src="{{{uiRootPath}}}/js/site.js" data-ui-root-path="{{{uiRootPath}}}"></script>
@@ -236,7 +236,7 @@ rule %r{#{$root}/\.stamps/html-gen-.*\.stamp} => proc { |tname|
 
   $logger.info "Running Antora to create #{config_name}"
   sh [
-    "/opt/node/node_modules/.bin/antora",
+    "#{$root}/node_modules/.bin/antora",
     "--stacktrace",
     "generate",
     "--cache-dir=#{$root}/.home/.antora",

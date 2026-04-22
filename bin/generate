@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Script to coordinate all generators in the UDB repo
 # This exists because generators are written in different languages (Ruby, Python, etc.).

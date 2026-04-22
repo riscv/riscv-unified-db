@@ -11,7 +11,16 @@ kind: instruction
 name: lw.aq
 long_name: Load Word Acquire
 description: |
-  No description available.
+  Load 32 bits of data from the address in `xs1` into register `xd`, sign-extending
+  the result to XLEN bits.
+
+  This instruction has acquire semantics, which means that no subsequent memory
+  operations (in program order) from this hart can be observed to occur before
+  this load completes. Acquire semantics provide ordering guarantees useful for
+  synchronization, such as reading a lock variable.
+
+  The address must be naturally aligned (4-byte aligned); if not, an
+  address-misaligned or access-fault exception will be raised.
 definedBy:
   extension:
     name: Zalasr
@@ -30,3 +39,10 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  XReg virtual_address = X[xs1];
+
+  if (!is_naturally_aligned(32, virtual_address)) {
+    raise(ExceptionCode::LoadAddressMisaligned, mode(), virtual_address);
+  }
+
+  X[xd] = sext(read_memory_aligned(32, virtual_address, $encoding, 1'b1, 1'b0), 32);

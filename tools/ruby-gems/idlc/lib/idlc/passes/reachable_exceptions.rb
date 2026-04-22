@@ -79,8 +79,8 @@ module Idl
         # else
           # 0
         # end
-      action.add_symbol(symtab) if action.is_a?(Declaration)
-      if action.is_a?(Executable)
+      action.add_symbol(symtab) if action.declaration?
+      if action.executable?
         value_try do
           action.execute(symtab)
         end
@@ -162,8 +162,8 @@ module Idl
         mask |= condition.reachable_exceptions(symtab, cache)
         if condition.value(symtab)
           mask |= action.reachable_exceptions(symtab, cache)
-          action.add_symbol(symtab) if action.is_a?(Declaration)
-          if action.is_a?(Executable)
+          action.add_symbol(symtab) if action.declaration?
+          if action.executable?
             value_result = value_try do
               action.execute(symtab)
             end
@@ -175,8 +175,8 @@ module Idl
         # condition not known
         mask |= condition.reachable_exceptions(symtab, cache)
         mask |= action.reachable_exceptions(symtab, cache)
-        action.add_symbol(symtab) if action.is_a?(Declaration)
-        if action.is_a?(Executable)
+        action.add_symbol(symtab) if action.declaration?
+        if action.executable?
           value_result = value_try do
             action.execute(symtab)
           end
