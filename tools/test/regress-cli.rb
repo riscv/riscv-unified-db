@@ -117,6 +117,7 @@ class Cli
     long "--jobs=N"
     desc "Number of parallel workers for --tag and --all (default: CPU count)"
     convert :integer
+    validate ->(val) { val >= 1 }
   end
 
   attr_reader :name
