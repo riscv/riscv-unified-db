@@ -18,7 +18,7 @@ if [[ ! -d "$_NPM_SHARED/node_modules" ]]; then
   # Run npm ci from the repo root so it sees package.json, package-lock.json,
   # and workspaces correctly, then relocate the result to the shared path.
   rm -rf "$ROOT/node_modules"
-  if ! "$ROOT/bin/npm" ci; then
+  if ! (cd "$ROOT" && "$ROOT/bin/npm" ci); then
     echo "ERROR: npm ci failed." >&2
     exit 1
   fi
