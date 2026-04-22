@@ -76,42 +76,4 @@ namespace udb
     }
     return 0;
   }
-
-  RiscvTestsTracer::RiscvTestsTracer(HartBase<IssSocModel>* pHart, IssSocModel* pSoC, std::string& elfFilePath) :
-    Tracer(pHart, pSoC)
-  {
-    udb::ElfReader elfReader(elfFilePath.c_str());
-    //Is there a "tohost" and "fromhost" port (symbol)
-    if(elfReader.getSym("tohost", &m_toHostAddress))
-    {
-      EnableEvent(TRACE_SOC_MODULE, udb::MEMWRITE_EVENT);
-      if(elfReader.getSym("fromhost", &m_fromHostAddress))
-        EnableEvent(TRACE_SOC_MODULE, udb::MEMREAD_EVENT);
-
-      m_pSoC->AttachHandler(this, TRACE_SOC_MODULE);
-    }
-  }
-
-  void RiscvTestsTracer::OnPhysicalMemoryWrite(uint64_t addr, unsigned len, uint64_t data)
-  {
-    //Capture writes to the "host port"
-    if((len == sizeof(uint64_t) && addr == m_toHostAddress) ||
-        (len == sizeof(uint32_t) && addr == (m_toHostAddress + sizeof(uint32_t))))
-      {
-        uint64_t toHostValue = m_pSoC->read_physical_memory_64(m_toHostAddress);
-
-        if((toHostValue & ~(0xffUL)) == 0x0101000000000000UL) //putchar
-        {
-          DisableNotifications();
-          m_pSoC->write_physical_memory_64(m_toHostAddress, 0);
-          EnableNotifications();
-
-          putchar((char)(toHostValue & 0xff));
-        }
-        else if(data < 2)
-          throw Pass();
-        else
-          throw Fail(data >> 1);
-      }
-  }
 }

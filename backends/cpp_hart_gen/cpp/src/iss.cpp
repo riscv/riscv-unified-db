@@ -3,6 +3,7 @@
 
 #include <CLI/CLI.hpp>
 #include <string>
+#include <list>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <sys/param.h>
@@ -17,6 +18,8 @@
 #include "udb/NotificationHandler.hpp"
 #include "udb/Tracer.hpp"
 #include "udb/config_validator.hpp"
+#include "udb/htif.hpp"
+
 
 #define RISCV_REG_GPR_FIRST 0
 #define RISCV_REG_GPR_LAST  0x1f
@@ -28,6 +31,7 @@
 #define RISCV_REG_CSR_LAST  0x1040
 
 using json = nlohmann::json;
+
 
 struct Options
 {
@@ -77,7 +81,8 @@ private:
   int CreateMemoryMap(std::filesystem::path memMapPath,
                       std::filesystem::path elfPath = "");
   void SetInitState(Options& opts);
-  udb::Tracer* CreateTracer(json config);
+  udb::Tracer* CreateTracer();
+  HostTargetInterface* CreateHostTargetInterface(udb::IssSocModel* pSoC, std::filesystem::path elfPath);
   int OnHartNotification(uint64_t uiEvent, void* pData);
   int OnSoCNotification(uint64_t uiEvent, void* pData);
   virtual int OnExternalHalt();
@@ -106,6 +111,7 @@ private:
   MEMORYMAP m_memMap;
   udb::IssSocModel* m_pSoC;
   udb::HartBase<udb::IssSocModel>* m_pHart;
+  HostTargetInterface* m_pHTIF;
   udb::Tracer* m_pTracer;
   ISS_STATE m_state;
   std::list<uint64_t> m_breakpointList;
@@ -185,7 +191,10 @@ InstructionSetSimulator::InstructionSetSimulator(Options& opts) :
 
     if(m_pHart)
     {
-      m_pTracer = CreateTracer(config);
+
+      m_pHTIF = CreateHostTargetInterface(m_pSoC, opts.elfFilePath);
+
+      m_pTracer = CreateTracer();
 
       //Attach notification handler to hart
       m_pHart->AttachHandler(this, ISS_HART_MODULE);
@@ -193,7 +202,6 @@ InstructionSetSimulator::InstructionSetSimulator(Options& opts) :
     }
     //Attach notifier to SoC
     m_pSoC->AttachHandler(this, ISS_SOC_MODULE);
-    //EnableEvent(ISS_SOC_MODULE, udb::EBREAK_EVENT);
   }
 
   SetInitState(opts);
@@ -202,6 +210,7 @@ InstructionSetSimulator::InstructionSetSimulator(Options& opts) :
 InstructionSetSimulator::~InstructionSetSimulator()
 {
   delete m_pTracer;
+  delete m_pHTIF;
   delete m_pHart;
   delete m_pSoC;
 }
@@ -682,21 +691,39 @@ int InstructionSetSimulator::OnKill(uint64_t uiProcId)
   return 0;
 }
 
-udb::Tracer* InstructionSetSimulator::CreateTracer(json config)
+udb::Tracer* InstructionSetSimulator::CreateTracer()
 {
-  //Create tracer for the run time configuration
+  //generic tracer with instruction trace output for now
+  return new udb::Tracer(m_pHart, m_pSoC);
+}
 
-  udb::Tracer* pTracer;
-  if(static_cast<std::string>(config["name"]) == "rv32-riscv-tests" ||
-    static_cast<std::string>(config["name"]) == "rv64-riscv-tests")
+
+HostTargetInterface* InstructionSetSimulator::CreateHostTargetInterface(
+    udb::IssSocModel* pSoC, std::filesystem::path elfPath)
+{
+  HostTargetInterface* pHTIF = nullptr;
+  uint64_t toHostAddress = 0;
+  uint64_t fromHostAddress = 0;
+  uint64_t sigBeginAddress = 0;
+  uint64_t sigEndAddress = 0;
+
+  udb::ElfReader elfReader(elfPath.c_str());
+  elfReader.getSym("tohost", &toHostAddress);
+  elfReader.getSym("fromhost", &fromHostAddress);
+  elfReader.getSym("signature_begin", &sigBeginAddress);
+  elfReader.getSym("signature_end", &sigEndAddress);
+
+  if(toHostAddress != 0)
   {
-    pTracer = new udb::RiscvTestsTracer(m_pHart, m_pSoC, m_opts.elfFilePath);
+    pHTIF = new HostTargetInterface(pSoC, toHostAddress, fromHostAddress,
+        sigBeginAddress, sigEndAddress - sigBeginAddress);
+    if(pHTIF == nullptr)
+      fmt::print("Error: cannot create host-target interface");
   }
   else
   {
-    //generic tracer with instruction trace output
-    pTracer = new udb::Tracer(m_pHart, m_pSoC);
+    fmt::print("Note: elf application does not support host-target interface");
   }
 
-  return pTracer;
+  return pHTIF;
 }

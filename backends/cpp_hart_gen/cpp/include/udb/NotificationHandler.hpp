@@ -4,12 +4,12 @@
 #include <list>
 
 class NotificationHandler;
-typedef int (*NOTIFYCALLBACK)(NotificationHandler& handler, uint8_t uiModuleId, uint64_t uiEvent, void* pData);
+typedef int (*NOTIFYCALLBACK)(void* pUserParam, uint64_t uiModuleId, uint64_t uiEvent, void* pData);
 
 class NotificationHandler
 {
 public:
-  NotificationHandler(NOTIFYCALLBACK notifyCallback = nullptr);
+  NotificationHandler();
   ~NotificationHandler();
 
   virtual int Notify(uint8_t uiModuleId, uint64_t uiEvent, void* pData);
@@ -20,7 +20,6 @@ public:
 protected:
   virtual int OnNotification(uint8_t uiModuleId, uint64_t uiEvent, void* pData) {return 0;}
 
-  NOTIFYCALLBACK m_notifyCallback;
   bool m_bEnable;
 
 };
@@ -29,7 +28,7 @@ template<size_t N>
 class NotificationHandlerEx : public NotificationHandler
 {
 public:
-  NotificationHandlerEx() : NotificationHandler(nullptr)
+  NotificationHandlerEx() : NotificationHandler()
   {
     for(int i = 0 ; i < N ; i++)
       m_uiEventMask[i] = 0;
@@ -53,12 +52,9 @@ public:
   virtual int Notify(uint8_t uiModuleId, uint64_t uiEvent, void* pData) override
   {
     if(!m_bEnable || ((1 << uiEvent) & m_uiEventMask[uiModuleId]) == 0)
-    return 0;
+      return 0;
 
-    if(m_notifyCallback)
-      return m_notifyCallback(*this, uiModuleId, uiEvent, pData);
-    else
-      return OnNotification(uiModuleId, uiEvent, pData);
+    return OnNotification(uiModuleId, uiEvent, pData);
   }
 
 protected:
@@ -70,12 +66,21 @@ class HandlerId
 public:
   HandlerId(NotificationHandler* pHandler, uint8_t id)
   {
-    m_pHandler = pHandler;
+    m_pParam = static_cast<void*>(pHandler);
     m_id = id;
+    m_pCallback = nullptr;
+  }
+
+  HandlerId(NOTIFYCALLBACK pNotificationCallback, uint8_t id, void* pUserParam )
+  {
+    m_pCallback = pNotificationCallback;
+    m_id = id;
+    m_pParam = pUserParam;
   }
   ~HandlerId() {};
 
-  NotificationHandler* m_pHandler;
+  void* m_pParam;
+  NOTIFYCALLBACK m_pCallback;
   uint8_t m_id;
 };
 
@@ -86,6 +91,7 @@ public:
   ~NotificationSource();
 
   int AttachHandler(NotificationHandler* pHandler, uint8_t id);
+  int AttachHandler(NOTIFYCALLBACK pNotificationCallback, uint8_t id, void* pUserParam);
   int Notify(uint64_t uiEvent, void* pData);
 
 protected:

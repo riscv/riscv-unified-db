@@ -150,7 +150,7 @@ namespace udb {
     void eei_ecall_from_s() {}
     void eei_ecall_from_u() {}
     void eei_ecall_from_vs() {}
-    void eei_ebreak() { Notify(EBREAK_EVENT, nullptr);}
+    void eei_ebreak() {}
     void memory_model_acquire() {}
     void memory_model_release() {}
     void assert(uint8_t test, const char *message) {}
