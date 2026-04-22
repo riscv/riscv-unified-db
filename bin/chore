@@ -106,7 +106,7 @@ gen_subcmd_usage() {
   echo ""
   echo "  all:           Generate all development artifacts"
   echo "  gem-versions:  Sync inter-gem version pins in gemspecs and Gemfile.lock files"
-  echo "                 for the locally-developed gems in tools/ruby-gems/"
+  echo "                 (no version bumping; use 'chore update gem-versions' to also bump)"
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
@@ -133,6 +133,8 @@ update_subcmd_usage() {
   echo ""
   echo "Commands:"
   echo ""
+  echo "  gem-versions:  Bump versions of changed gems and sync inter-gem pins"
+  echo "                 ('chore update gem-versions -h' for more)"
   echo "  gems:          Update Ruby Gems and regenerate type definitions"
   echo "  eqntott:       Update the eqntott binary used by the udb gem"
   echo "                 ('chore update eqntott -h' for more)"
@@ -190,6 +192,21 @@ update_z3_usage() {
   echo "  -h:      Print help"
   echo "  -n:      Build only for native/host platform (for use in CI matrix builds)"
   echo "  -f:      Force rebuild and release even if release already exists"
+  echo ""
+}
+
+update_gem_versions_usage() {
+  echo "Usage: chore update gem-versions [-h] [-b BASE_REF]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -b REF:  Base git ref to compare against (default: origin/main)"
+  echo "           Use the last release tag to detect changes since the last release."
+  echo ""
+  echo "Auto-increments versions for gems whose source changed since BASE_REF (with"
+  echo "cascade), then syncs inter-gem dependency pins in gemspecs and Gemfile.lock."
   echo ""
 }
 
@@ -307,8 +324,7 @@ do_lock_all_gemfiles() {
 
 #
 # Sync inter-gem version pins in gemspecs and Gemfile.lock files for the
-# locally-developed gems in tools/ruby-gems/. Also auto-increments versions
-# for any gem whose source changed without a bump (with cascade).
+# locally-developed gems in tools/ruby-gems/.
 # Returns: 0 on success, 1 if files changed (when fail_on_change=1)
 #
 do_gen_gem_versions() {
@@ -322,6 +338,21 @@ do_gen_gem_versions() {
   else
     "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb "${extra_args[@]}"
   fi
+}
+
+#
+# Auto-increment versions for gems with source changes (with cascade),
+# then sync inter-gem version pins in gemspecs and Gemfile.lock.
+# Args: $1 - base ref (optional; defaults to origin/main)
+# Returns: 0 on success
+#
+do_update_gem_versions() {
+  local extra_args=()
+  if [ -n "$1" ]; then
+    extra_args=(--base-ref "$1")
+  fi
+  echo "Bumping versions and syncing inter-gem pins for tools/ruby-gems/ gems"
+  "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --auto-bump "${extra_args[@]}"
 }
 
 #
@@ -649,6 +680,27 @@ case "$subcommand" in
     done
     target="$1"; shift
     case "$target" in
+      gem-versions )
+        base_ref=""
+        while getopts ":hb:" opt; do
+          case $opt in
+            h )
+              update_gem_versions_usage
+              exit 0
+              ;;
+            b )
+              base_ref="$OPTARG"
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              update_gem_versions_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_update_gem_versions "$base_ref"
+        exit 0
+        ;;
       gems )
           while getopts ":h" opt; do # Go through the options
             case $opt in
