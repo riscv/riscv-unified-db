@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
+MISE_INSTALL_MUSL=1
+
 __mise_bootstrap() {
     local cache_home="${XDG_CACHE_HOME:-$HOME/.cache}/mise"
     export MISE_INSTALL_PATH="$cache_home/mise-2026.4.18"
