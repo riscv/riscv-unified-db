@@ -29,7 +29,7 @@ _changed=$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD 2>/dev/nul
 
 if echo "$_changed" | grep -qF '.mise.toml'; then
   echo "⚙  .mise.toml changed — running mise install..."
-  mise install
+  "${ROOT}/bin/mise" install
 fi
 
 if echo "$_changed" | grep -qF 'Gemfile.lock'; then
@@ -38,13 +38,13 @@ if echo "$_changed" | grep -qF 'Gemfile.lock'; then
 fi
 
 if echo "$_changed" | grep -qF 'uv.lock'; then
-  echo "⚙  uv.lock changed — running uv sync..."
-  "$ROOT/bin/uv" sync
+  echo "⚙  uv.lock changed — syncing Python packages..."
+  "$ROOT/bin/.venv-deps"
 fi
 
 if echo "$_changed" | grep -qF 'package-lock.json'; then
-  echo "⚙  package-lock.json changed — running npm install..."
-  "$ROOT/bin/npm" install
+  echo "⚙  package-lock.json changed — syncing npm packages..."
+  "$ROOT/bin/.npm-deps"
 fi
 HOOK
 chmod +x "$GIT_HOOKS_DIR/post-merge"
@@ -65,7 +65,7 @@ _changed=$(git diff --name-only "$1" "$2" 2>/dev/null)
 
 if echo "$_changed" | grep -qF '.mise.toml'; then
   echo "⚙  .mise.toml changed — running mise install..."
-  mise install
+  "${ROOT}/bin/mise" install
 fi
 
 if echo "$_changed" | grep -qF 'Gemfile.lock'; then
@@ -74,13 +74,13 @@ if echo "$_changed" | grep -qF 'Gemfile.lock'; then
 fi
 
 if echo "$_changed" | grep -qF 'uv.lock'; then
-  echo "⚙  uv.lock changed — running uv sync..."
-  "$ROOT/bin/uv" sync
+  echo "⚙  uv.lock changed — syncing Python packages..."
+  "$ROOT/bin/.venv-deps"
 fi
 
 if echo "$_changed" | grep -qF 'package-lock.json'; then
-  echo "⚙  package-lock.json changed — running npm install..."
-  "$ROOT/bin/npm" install
+  echo "⚙  package-lock.json changed — syncing npm packages..."
+  "$ROOT/bin/.npm-deps"
 fi
 HOOK
 chmod +x "$GIT_HOOKS_DIR/post-checkout"

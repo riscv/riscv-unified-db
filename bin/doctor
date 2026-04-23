@@ -79,16 +79,15 @@ _check_core_prerequisites() {
     _record_fail
   fi
 
-  # mise
-  if command -v mise > /dev/null 2>&1; then
+  # mise (via bin/mise bootstrap wrapper)
+  if "$ROOT/bin/mise" --version > /dev/null 2>&1; then
     local mise_ver
-    mise_ver=$(mise --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
+    mise_ver=$("$ROOT/bin/mise" --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
     _pass "mise  ${_C_DIM}${mise_ver}${_C_RESET}"
     _record_pass
   else
-    _fail "mise not found"
-    _info "Fix: curl https://mise.run | sh"
-    _info "     or see https://mise.jdx.dev for other install methods"
+    _fail "mise not available (bin/mise bootstrap failed)"
+    _info "Fix: ensure bin/mise is executable and can reach the internet on first run"
     _record_fail
     # mise is required for everything else — bail early on the mise-tool checks
     _MISE_MISSING=1
@@ -109,7 +108,7 @@ _check_mise_tool() {
   local binary="${_MISE_BINARY_OVERRIDE[$tool]:-$tool}"
 
   local bin_path
-  bin_path=$(mise which "$binary" 2>/dev/null)
+  bin_path=$("$ROOT/bin/mise" which "$binary" 2>/dev/null)
   if [[ -z "$bin_path" ]]; then
     _fail "$tool not installed"
     _info "Fix: run \`mise install\` in the repo root"
@@ -164,7 +163,7 @@ _check_ruby_ecosystem() {
   fi
 
   local bundle_bin
-  bundle_bin=$(mise which bundle 2>/dev/null)
+  bundle_bin=$("$ROOT/bin/mise" which bundle 2>/dev/null)
   if [[ -z "$bundle_bin" ]]; then
     _fail "bundle not found (is ruby installed via mise?)"
     _info "Fix: run \`mise install\`"
@@ -173,30 +172,83 @@ _check_ruby_ecosystem() {
     return
   fi
 
-  if BUNDLE_GEMFILE="$ROOT/Gemfile" "$bundle_bin" check > /dev/null 2>&1; then
+  if "$ROOT/bin/bundle" check > /dev/null 2>&1; then
     _pass "Gemfile gems installed"
     _record_pass
   else
     _fail "Gemfile gems not installed"
-    _info "Fix: run \`bundle install\` in the repo root"
+    _info "Fix: run \`./bin/bundle install\` in the repo root"
     _record_fail
     _GEMS_FAILED=1
   fi
 }
 
 # ---------------------------------------------------------------------------
-# Section 4: Node.js Ecosystem
+# Section 4: Python Ecosystem
+# ---------------------------------------------------------------------------
+
+_check_python_ecosystem() {
+  _section "Python Ecosystem"
+
+  if [[ -n "${_MISE_MISSING:-}" ]]; then
+    _warn "Skipping (mise not installed)"
+    _record_warn
+    return
+  fi
+
+  local expected_hash expected_target link_target
+  expected_hash=$(sha256sum "$ROOT/uv.lock" | cut -c1-16)
+  expected_target="${XDG_DATA_HOME:-$HOME/.local/share}/udb/venv-$expected_hash"
+  link_target=$(readlink "$ROOT/.venv" 2>/dev/null)
+
+  if [[ "$link_target" == "$expected_target" ]]; then
+    _pass ".venv linked to shared install  ${_C_DIM}venv-${expected_hash}${_C_RESET}"
+    _record_pass
+  elif [[ -z "$link_target" && -d "$ROOT/.venv" ]]; then
+    _warn ".venv is a plain directory, not a shared symlink"
+    _info "Fix: run \`bin/setup\` to migrate to the shared install"
+    _record_warn
+  elif [[ -n "$link_target" ]]; then
+    _warn ".venv symlink does not match current uv.lock"
+    _info "Expected: $expected_target"
+    _info "Actual:   $link_target"
+    _info "Fix: run \`bin/setup\` to update the symlink"
+    _record_warn
+  else
+    _fail ".venv not found"
+    _info "Fix: run \`bin/setup\`"
+    _record_fail
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Section 5: Node.js Ecosystem
 # ---------------------------------------------------------------------------
 
 _check_node_ecosystem() {
   _section "Node.js Ecosystem"
 
-  if [[ -d "$ROOT/node_modules" ]]; then
-    _pass "node_modules present"
+  local expected_hash expected_target link_target
+  expected_hash=$(sha256sum "$ROOT/package-lock.json" | cut -c1-16)
+  expected_target="${XDG_DATA_HOME:-$HOME/.local/share}/udb/npm-$expected_hash/node_modules"
+  link_target=$(readlink "$ROOT/node_modules" 2>/dev/null)
+
+  if [[ "$link_target" == "$expected_target" ]]; then
+    _pass "node_modules linked to shared install  ${_C_DIM}npm-${expected_hash}${_C_RESET}"
     _record_pass
+  elif [[ -z "$link_target" && -d "$ROOT/node_modules" ]]; then
+    _warn "node_modules is a plain directory, not a shared symlink"
+    _info "Fix: run \`bin/setup\` to migrate to the shared install"
+    _record_warn
+  elif [[ -n "$link_target" ]]; then
+    _warn "node_modules symlink does not match current package-lock.json"
+    _info "Expected: $expected_target"
+    _info "Actual:   $link_target"
+    _info "Fix: run \`bin/setup\` to update the symlink"
+    _record_warn
   else
     _fail "node_modules not found"
-    _info "Fix: run \`npm ci\` in the repo root"
+    _info "Fix: run \`bin/setup\`"
     _record_fail
   fi
 }
@@ -224,8 +276,14 @@ _check_developer_setup() {
     fi
 
     if [[ -f "${git_hooks_dir}/hooks/post-merge" ]]; then
-      _pass "Post-merge hook installed"
-      _record_pass
+      if grep -qE 'bin/uv" sync|bin/npm" install' "${git_hooks_dir}/hooks/post-merge" 2>/dev/null; then
+        _warn "Post-merge hook is stale"
+        _info "Fix: run \`bin/install_hooks\`"
+        _record_warn
+      else
+        _pass "Post-merge hook installed"
+        _record_pass
+      fi
     else
       _warn "Post-merge hook not installed"
       _info "Fix: run \`bin/install_hooks\` in the repo root"
@@ -233,8 +291,14 @@ _check_developer_setup() {
     fi
 
     if [[ -f "${git_hooks_dir}/hooks/post-checkout" ]]; then
-      _pass "Post-checkout hook installed"
-      _record_pass
+      if grep -qE 'bin/uv" sync|bin/npm" install' "${git_hooks_dir}/hooks/post-checkout" 2>/dev/null; then
+        _warn "Post-checkout hook is stale"
+        _info "Fix: run \`bin/install_hooks\`"
+        _record_warn
+      else
+        _pass "Post-checkout hook installed"
+        _record_pass
+      fi
     else
       _warn "Post-checkout hook not installed"
       _info "Fix: run \`bin/install_hooks\` in the repo root"
@@ -256,7 +320,7 @@ _check_developer_setup() {
   fi
 
   local ruby_bin
-  ruby_bin=$(mise which ruby 2>/dev/null)
+  ruby_bin=$("$ROOT/bin/mise" which ruby 2>/dev/null)
   if [[ -z "$ruby_bin" ]]; then
     _warn "Native deps check skipped (ruby not installed via mise)"
     _record_warn
@@ -303,7 +367,7 @@ _check_developer_setup() {
     local z3_output z3_exit
     z3_output=$(
       BUNDLE_GEMFILE="$ROOT/Gemfile" \
-        "$ruby_bin" -r udb -e "Udb::Z3Loader.ensure_z3_loaded" 2>&1
+        "$ROOT/bin/ruby" -r udb -e "Udb::Z3Loader.ensure_z3_loaded" 2>&1
     )
     z3_exit=$?
 
@@ -369,14 +433,25 @@ _check_cxx_toolchain() {
 
   else
     # --- Native mode ---
+    # When UDB_TOOLCHAIN_NONE=1 the user has opted out of the C++ toolchain;
+    # downgrade any failures to warnings so they don't block a green summary.
+    local _cxx_record_bad
+    if [[ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]]; then
+      _cxx_record_bad() { _record_warn; }
+      _cxx_bad() { _warn "$@"; }
+    else
+      _cxx_record_bad() { _record_fail; }
+      _cxx_bad() { _fail "$@"; }
+    fi
+
     local gpp_path
     gpp_path=$(PATH="$native_path" command -v g++ 2>/dev/null)
 
     if [[ -z "$gpp_path" ]]; then
-      _fail "Native g++ not found"
+      _cxx_bad "Native g++ not found"
       _info "Fix option 1: install a C++ toolchain (e.g. \`apt install build-essential\`)"
       _info "Fix option 2: echo 'UDB_TOOLCHAIN_CONTAINER=1' > .toolchain-local"
-      _record_fail
+      _cxx_record_bad
     else
       local gpp_ver_line gpp_ver
       gpp_ver_line=$(PATH="$native_path" g++ --version 2>/dev/null | head -1)
@@ -395,7 +470,7 @@ include("${ROOT}/.toolchain/check_cxx.cmake")
 EOF
 
       local cmake_bin
-      cmake_bin=$(mise which cmake 2>/dev/null)
+      cmake_bin=$("$ROOT/bin/mise" which cmake 2>/dev/null)
       cmake_bin="${cmake_bin:-cmake}"
 
       local cmake_exit=0
@@ -407,14 +482,13 @@ EOF
         _pass "C++ requirements met (C++23, concepts, constexpr from_chars)"
         _record_pass
       else
-        _fail "Native g++ does not meet C++ requirements (C++23 + constexpr from_chars)"
-        _info "Fix option 1: install a newer compiler (GCC 14+ or Clang 17+)"
+        _cxx_bad "Native g++ does not meet C++ requirements (C++23 + constexpr from_chars)"
+        _info "Fix option 1: install a newer compiler (GCC 13.3+ or Clang 17+)"
         _info "Fix option 2: echo 'UDB_TOOLCHAIN_CONTAINER=1' > .toolchain-local"
-        _record_fail
+        _info "              then run ./bin/setup"
+        _cxx_record_bad
       fi
     fi
-
-    _info "To switch to container: echo 'UDB_TOOLCHAIN_CONTAINER=1' > .toolchain-local"
   fi
 }
 
@@ -422,11 +496,18 @@ EOF
 # Main
 # ---------------------------------------------------------------------------
 
-printf "${_C_BOLD}=== UDB Environment Doctor ===${_C_RESET}\n"
+printf "${_C_BOLD}${_C_CYAN}"
+printf " _   _ ____  ___      ${_C_RED}███${_C_CYAN}\n"
+printf "| | | |  _ \\| _ )   ${_C_RED}███████${_C_CYAN}\n"
+printf "| |_| | |_) | _ \\   ${_C_RED}███████${_C_CYAN}\n"
+printf " \\___/|____/|___/     ${_C_RED}███${_C_CYAN}\n"
+printf "${_C_RESET}"
+printf "${_C_DIM}  environment doctor${_C_RESET}\n"
 
 _check_core_prerequisites
 _check_mise_tools
 _check_ruby_ecosystem
+_check_python_ecosystem
 _check_node_ecosystem
 _check_developer_setup
 _check_cxx_toolchain
@@ -434,11 +515,11 @@ _check_cxx_toolchain
 # Summary
 printf "\n"
 if [[ $_FAIL_COUNT -eq 0 && $_WARN_COUNT -eq 0 ]]; then
-  printf "${_C_BOLD}${_C_GREEN}=== Summary: $_PASS_COUNT passed, $_FAIL_COUNT failed, $_WARN_COUNT warnings ===${_C_RESET}\n"
+  printf "  ${_C_BOLD}${_C_GREEN}✓  Summary: $_PASS_COUNT passed, $_FAIL_COUNT failed, $_WARN_COUNT warnings${_C_RESET}\n"
 elif [[ $_FAIL_COUNT -eq 0 ]]; then
-  printf "${_C_BOLD}${_C_YELLOW}=== Summary: $_PASS_COUNT passed, $_FAIL_COUNT failed, $_WARN_COUNT warnings ===${_C_RESET}\n"
+  printf "  ${_C_BOLD}${_C_YELLOW}!  Summary: $_PASS_COUNT passed, $_FAIL_COUNT failed, $_WARN_COUNT warnings${_C_RESET}\n"
 else
-  printf "${_C_BOLD}${_C_RED}=== Summary: $_PASS_COUNT passed, $_FAIL_COUNT failed, $_WARN_COUNT warnings ===${_C_RESET}\n"
+  printf "  ${_C_BOLD}${_C_RED}✗  Summary: $_PASS_COUNT passed, $_FAIL_COUNT failed, $_WARN_COUNT warnings${_C_RESET}\n"
 fi
 
 [[ $_FAIL_COUNT -eq 0 ]]
