@@ -2,10 +2,9 @@
 #include "udb/htif.hpp"
 #include "udb/iss_soc_model.hpp"
 
-
 HostTargetInterface::HostTargetInterface(udb::IssSocModel* pSoC, uint64_t toHostAddress,
                                          uint64_t fromHostAddress, uint64_t sigAddress,
-                                         uint64_t sigLength) : m_sysCall(pSoC)
+                                         uint64_t sigLength) : m_sysCall(pSoC), m_bcd(pSoC)
 {
   m_toHost = toHostAddress;
   m_fromHost = fromHostAddress;
@@ -19,9 +18,10 @@ HostTargetInterface::HostTargetInterface(udb::IssSocModel* pSoC, uint64_t toHost
 
   //create devices if needed, count up and register
   //currently onuy syscall is implemented
-  m_nDevices = 1;
+  m_nDevices = 2;
   m_devices.resize(m_nDevices);
   m_devices[0] = &m_sysCall;
+  m_devices[1] = &m_bcd;
 }
 
 HostTargetInterface::~HostTargetInterface()
@@ -85,6 +85,16 @@ HTIFDevice::~HTIFDevice()
 
 }
 
+SysCallDevice::SysCallDevice(udb::IssSocModel* pSoC)
+  : HTIFDevice(pSoC), m_cmdHandlers(94)
+{
+  m_cmdHandlers[93] = &SysCallDevice::exit;
+}
+
+SysCallDevice::~SysCallDevice()
+{
+
+}
 
 int SysCallDevice::HandleCommand(HTIFCOMMAND cmd)
 {
@@ -119,19 +129,36 @@ int SysCallDevice::HandleCommand(HTIFCOMMAND cmd)
   return result;;
 }
 
-int SysCallDevice::exit(uint64_t id, uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
+int SysCallDevice::exit(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
                         uint64_t a4, uint64_t a5, uint64_t a6) {
-  return 0;
+  ::exit(a0);
+  return a0;
 }
 
-
-SysCallDevice::SysCallDevice(udb::IssSocModel* pSoC)
+BCDDevice::BCDDevice(udb::IssSocModel* pSoC) 
   : HTIFDevice(pSoC)
 {
 
 }
 
-SysCallDevice::~SysCallDevice()
+BCDDevice::~BCDDevice() 
 {
 
+}
+
+int BCDDevice::HandleCommand(HTIFCOMMAND cmd) 
+{ 
+  switch(cmd.command)
+  {
+  case READ:
+    //TODO: 
+    break;
+  case WRITE:
+    //TODO: use deicated console, stdout for now
+    std::putchar(static_cast<int>(cmd.payload));
+    break;
+  default:
+    break;
+  }
+  return 0;
 }

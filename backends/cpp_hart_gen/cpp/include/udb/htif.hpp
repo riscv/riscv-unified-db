@@ -70,9 +70,24 @@ public:
   virtual int HandleCommand(HTIFCOMMAND cmd) override;
 
 protected:
-  int exit(uint64_t id, uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3, uint64_t a4, uint64_t a5, uint64_t a6);
+  int exit(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3, uint64_t a4, uint64_t a5, uint64_t a6);
 
   std::vector<SYSCALLHANDLER> m_cmdHandlers;
+};
+
+class BCDDevice : public HTIFDevice
+{
+public:
+  BCDDevice(udb::IssSocModel* pSoC);
+  ~BCDDevice();
+
+  enum BCDCMD
+  {
+    READ = 0,
+    WRITE
+  };
+
+  virtual int HandleCommand(HTIFCOMMAND cmd) override;
 };
 
 
@@ -94,4 +109,5 @@ private:
   std::vector<HTIFDevice*> m_devices;
   size_t m_nDevices;
   SysCallDevice m_sysCall;
+  BCDDevice m_bcd;
 };
