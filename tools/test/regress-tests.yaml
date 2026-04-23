@@ -118,12 +118,6 @@ tests:
       - name: Generate Xqci extension PDF
         run: ./bin/ruby tools/scripts/gen_xqci.rb
 
-  regress-gen-certificate:
-    ci_stage: pr
-    test:
-      - name: Generate extension PDF
-        run: ./do gen:proc_crd_pdf[RVI20-32]
-
   regress-gen-profile:
     ci_stage: pr
     test:

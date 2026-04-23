@@ -417,15 +417,6 @@ jobs:
       uses: "./.github/actions/mise-setup"
     - name: Generate Xqci extension PDF
       run: "./bin/ruby tools/scripts/gen_xqci.rb"
-  regress-gen-certificate:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate extension PDF
-      run: "./do gen:proc_crd_pdf[RVI20-32]"
   regress-gen-profile:
     runs-on: ubuntu-latest
     steps:
@@ -840,7 +831,6 @@ jobs:
     - regress-gen-instruction-appendix
     - regress-cfg-manual
     - regress-gen-ext-pdf
-    - regress-gen-certificate
     - regress-gen-profile
     - regress-udb-unit-test
     - regress-gen-go

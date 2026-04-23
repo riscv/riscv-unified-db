@@ -33,8 +33,6 @@ module Udb
         InterruptCode = new("interrupt_code")
         Manual = new("manual")
         ManualVersion = new("manual version")
-        ProcessorCertificateClass = new("processor certificate class")
-        ProcessorCertificateModel = new("processor certificate model")
         Profile = new("profile")
         ProfileFamily = new("profile family")
         ProfileRelease = new("profile release")

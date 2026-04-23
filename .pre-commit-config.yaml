@@ -94,30 +94,6 @@ repos:
             "file://spec/schemas/",
           ]
       - id: check-jsonschema
-        name: Validate cert model files with jsonschema
-        stages: [pre-commit]
-        alias: check-jsonschema-cert-model
-        files: ^spec/std/isa/proc_cert_model/.*\.(yaml|yml)$
-        args:
-          [
-            "--schemafile",
-            "spec/schemas/proc_cert_model_schema.json",
-            "--base-uri",
-            "file://spec/schemas/",
-          ]
-      - id: check-jsonschema
-        name: Validate cert class files with jsonschema
-        stages: [pre-commit]
-        alias: check-jsonschema-cert-class
-        files: ^spec/std/isa/proc_cert_class/.*\.(yaml|yml)$
-        args:
-          [
-            "--schemafile",
-            "spec/schemas/proc_cert_class_schema.json",
-            "--base-uri",
-            "file://spec/schemas/",
-          ]
-      - id: check-jsonschema
         name: Validate profile family files with jsonschema
         stages: [pre-commit]
         alias: check-jsonschema-profile-family

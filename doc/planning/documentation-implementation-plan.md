@@ -302,7 +302,7 @@ Build the custom landing page (`src/pages/index.tsx`).
 ### 5.1 — Overview (`docs/database/overview.md`)
 
 - [ ] **5.1.1** Write the "relational database" framing: tables, rows, columns.
-- [ ] **5.1.2** Include the full table listing from the plan doc. The complete list of tables in `spec/std/isa/` is: `csr`, `exception_code`, `ext`, `inst`, `inst_opcode`, `inst_subtype`, `inst_type`, `inst_var`, `inst_var_type`, `interrupt_code`, `isa`, `manual`, `manual_version`, `param`, `proc_cert_class`, `proc_cert_model`, `profile`, `profile_family`, `profile_release`, `prose`, `register_file`. Also note `spec/std/non_isa/` (currently contains only `Semihosting.yaml`).
+- [ ] **5.1.2** Include the full table listing from the plan doc. The complete list of tables in `spec/std/isa/` is: `csr`, `exception_code`, `ext`, `inst`, `inst_opcode`, `inst_subtype`, `inst_type`, `inst_var`, `inst_var_type`, `interrupt_code`, `isa`, `manual`, `manual_version`, `param`, `profile`, `profile_family`, `profile_release`, `prose`, `register_file`. Also note `spec/std/non_isa/` (currently contains only `Semihosting.yaml`).
 - [ ] **5.1.3** Explain that subdirectories within a table directory are organizational only.
 
 ### 5.2 — Table reference pages (`docs/database/tables/`)

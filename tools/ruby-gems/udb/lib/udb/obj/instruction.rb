@@ -7,7 +7,6 @@
 # require 'ruby-prof-flamegraph'
 
 require_relative "database_obj"
-require_relative "certifiable_obj"
 require_relative "../presence"
 require "udb_helpers/backend_helpers"
 require "awesome_print"
@@ -110,8 +109,6 @@ module Udb
 
 # model of a specific instruction in a specific base (RV32/RV64)
   class Instruction < TopLevelDatabaseObject
-    # Add all methods in this module to this type of database object.
-    include CertifiableObject
     include Helpers::WavedromUtil
 
     class MemoizedState < T::Struct

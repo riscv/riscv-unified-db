@@ -209,9 +209,6 @@
     "$source": {
       "type": "string",
       "description": "Source file where this extension was defined"
-    },
-    "cert_normative_rules": {
-      "$ref": "schema_defs.json#/$defs/cert_normative_rules"
     }
   },
   "additionalProperties": false

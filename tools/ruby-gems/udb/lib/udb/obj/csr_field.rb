@@ -8,16 +8,12 @@ require "sorbet-runtime"
 require "idlc/passes/gen_option_adoc"
 
 require_relative "database_obj"
-require_relative "certifiable_obj"
 
 module Udb
 
 # A CSR field object
   class CsrField < DatabaseObject
     extend T::Sig
-
-    # Add all methods in this module to this type of database object.
-    include CertifiableObject
 
     include Idl::CsrField
 
