@@ -147,7 +147,7 @@ BCDDevice::~BCDDevice()
 }
 
 int BCDDevice::HandleCommand(HTIFCOMMAND cmd)
-{ 
+{
   switch(cmd.command)
   {
   case READ:
