@@ -5,7 +5,7 @@ kind: architecture configuration
 type: fully configured
 name: qc_iu
 arch_overlay: qc_iu
-description: Configuration with the Xqci and Xqccmp custom extensions.
+description: Configuration with the Xqci, Xqccmp, and Xqccmt custom extensions.
 implemented_extensions:
   - { name: Sm, version: "= 1.13" }
   - { name: Smrnmi, version: "= 1.0" }
@@ -22,6 +22,7 @@ implemented_extensions:
   - { name: Zicsr, version: "= 2.0" }
   - { name: Zihpm, version: "= 2.0" }
   - { name: Xqccmp, version: "= 0.3" }
+  - { name: Xqccmt, version: "= 0.1.0" }
   - { name: Xqci, version: "= 0.13" }
   - { name: Xqcia, version: "= 0.7.0" }
   - { name: Xqciac, version: "= 0.3.0" }

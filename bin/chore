@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 UDB_ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 
@@ -48,16 +48,15 @@ build_udb_gem_usage() {
 container_subcmd_usage() {
   echo "Usage: chore container [-h] COMMAND"
   echo ""
-  echo ""
   echo "Options:"
   echo ""
-  echo "  -h:      Print help"
+  echo "  -h:                  Print help"
   echo ""
   echo "Commands:"
   echo ""
-  echo "  build:      Build the container image ('chore container build -h' for more)"
-  echo "  pull:       Pull the container image from registry ('chore container pull -h' for more)"
-  echo "  remove|rm:  Remove the container image ('chore container remove -h' for more)"
+  echo "  build:      Build the toolchain container image ('chore container build -h' for more)"
+  echo "  pull:       Pull the toolchain container image from registry ('chore container pull -h' for more)"
+  echo "  remove|rm:  Remove the toolchain container image ('chore container remove -h' for more)"
   echo ""
 }
 
@@ -67,8 +66,8 @@ container_build_usage() {
   echo ""
   echo "Options:"
   echo ""
-  echo "  -h:      Print help"
-  echo "  -f:      Force rebuild even if container already exists"
+  echo "  -h:           Print help"
+  echo "  -f:           Force rebuild even if container already exists"
   echo ""
 }
 
@@ -78,8 +77,8 @@ container_pull_usage() {
   echo ""
   echo "Options:"
   echo ""
-  echo "  -h:      Print help"
-  echo "  -f:      Force pull even if container already exists locally"
+  echo "  -h:           Print help"
+  echo "  -f:           Force pull even if container already exists locally"
   echo ""
 }
 
@@ -89,7 +88,7 @@ container_remove_usage() {
   echo ""
   echo "Options:"
   echo ""
-  echo "  -h:      Print help"
+  echo "  -h:           Print help"
   echo ""
 }
 
@@ -107,7 +106,7 @@ gen_subcmd_usage() {
   echo ""
   echo "  all:           Generate all development artifacts"
   echo "  gem-versions:  Sync inter-gem version pins in gemspecs and Gemfile.lock files"
-  echo "                 for the locally-developed gems in tools/ruby-gems/"
+  echo "                 (no version bumping; use 'chore update gem-versions' to also bump)"
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
@@ -116,13 +115,11 @@ gen_subcmd_usage() {
 }
 
 gen_ruby_type_def_usage() {
-  echo "Usage: chore gen ruby-type-def [-g GEM]"
+  echo "Usage: chore gen ruby-type-def"
   echo ""
   echo "Options:"
   echo ""
-  echo "  -g GEM:   Generate type signatures for GEM"
-  echo "            If not provided, generates for all gems"
-  echo "            Valid gems are: [udb, idlc, udb-gen]"
+  echo "  -h:      Print help"
   echo ""
 }
 
@@ -136,6 +133,8 @@ update_subcmd_usage() {
   echo ""
   echo "Commands:"
   echo ""
+  echo "  gem-versions:  Bump versions of changed gems and sync inter-gem pins"
+  echo "                 ('chore update gem-versions -h' for more)"
   echo "  gems:          Update Ruby Gems and regenerate type definitions"
   echo "  eqntott:       Update the eqntott binary used by the udb gem"
   echo "                 ('chore update eqntott -h' for more)"
@@ -196,14 +195,28 @@ update_z3_usage() {
   echo ""
 }
 
-update_gems_usage() {
-  echo "Usage: chore update gems [-ht]"
+update_gem_versions_usage() {
+  echo "Usage: chore update gem-versions [-h] [-b BASE_REF]"
   echo ""
   echo ""
   echo "Options:"
   echo ""
   echo "  -h:      Print help"
-  echo "  -t:      Do not increment the container tag"
+  echo "  -b REF:  Base git ref to compare against (default: origin/main)"
+  echo "           Use the last release tag to detect changes since the last release."
+  echo ""
+  echo "Auto-increments versions for gems whose source changed since BASE_REF (with"
+  echo "cascade), then syncs inter-gem dependency pins in gemspecs and Gemfile.lock."
+  echo ""
+}
+
+update_gems_usage() {
+  echo "Usage: chore update gems [-h]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
   echo ""
 }
 
@@ -223,13 +236,12 @@ install_subcmd_usage() {
 }
 
 install_gems_usage() {
-  echo "Usage: chore install gems [-th]"
+  echo "Usage: chore install gems [-h]"
   echo ""
   echo ""
   echo "Options:"
   echo ""
   echo "  -h:      Print help"
-  echo "  -t:      Do not update the container tag"
   echo ""
 }
 
@@ -246,14 +258,13 @@ source "${UDB_ROOT}/bin/.chore/update.sh"
 # Returns: 0 on success, 1 if file changed (when fail_on_change=1)
 #
 do_gen_regress() {
-  source_setup
   echo "Generating .github/workflows/regress.yml"
   if [ $fail_on_change -eq 1 ]; then
     local sha_before
     sha_before=$(sha256sum "$UDB_ROOT"/.github/workflows/regress.yml)
   fi
   rm -f .github/workflows/regress.yml
-  $RUBY tools/test/gen_regress.rb
+  "$UDB_ROOT/bin/bundle" exec ruby tools/test/gen_regress.rb
   chmod -wx .github/workflows/regress.yml
   if [ $fail_on_change -eq 1 ]; then
     local sha_after
@@ -303,26 +314,17 @@ do_lock_all_gemfiles() {
   # Always include both x86_64 and aarch64 Linux platforms so lock files are
   # valid on both architectures.
   local platforms="--add-platform x86_64-linux --add-platform x86_64-linux-gnu --add-platform aarch64-linux --add-platform aarch64-linux-gnu"
-  # Root first — per-gem locks must be derived from this resolved graph.
-  #
-  # BUNDLE_GEMFILE must be set to match --gemfile for each call so that
-  # Bundler writes PATH remote: entries relative to the correct directory.
-  # `env` is used to set BUNDLE_GEMFILE inline so it is passed into the
-  # container when $RUN is a docker/podman invocation.
+  # BUNDLE_GEMFILE must be set to match --gemfile so that Bundler writes PATH
+  # remote: entries relative to the correct directory.
   # Note: `bundle lock` (not `bundle exec bundle lock`) is used deliberately —
   # `bundle exec` requires an existing lockfile to activate the bundle first,
   # which breaks when lockfiles are missing or being regenerated from scratch.
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile
-  $RUN env BUNDLE_GEMFILE="${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile
+  env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/Gemfile
 }
 
 #
 # Sync inter-gem version pins in gemspecs and Gemfile.lock files for the
-# locally-developed gems in tools/ruby-gems/. Also auto-increments versions
-# for any gem whose source changed without a bump (with cascade).
+# locally-developed gems in tools/ruby-gems/.
 # Returns: 0 on success, 1 if files changed (when fail_on_change=1)
 #
 do_gen_gem_versions() {
@@ -330,13 +332,27 @@ do_gen_gem_versions() {
   if [ -n "$1" ]; then
     extra_args=(--base-ref "$1")
   fi
-  source_setup
   echo "Syncing inter-gem version pins for tools/ruby-gems/ gems"
   if [ $fail_on_change -eq 1 ]; then
-    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change "${extra_args[@]}"
+    "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change "${extra_args[@]}"
   else
-    $RUBY "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb "${extra_args[@]}"
+    "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb "${extra_args[@]}"
   fi
+}
+
+#
+# Auto-increment versions for gems with source changes (with cascade),
+# then sync inter-gem version pins in gemspecs and Gemfile.lock.
+# Args: $1 - base ref (optional; defaults to origin/main)
+# Returns: 0 on success
+#
+do_update_gem_versions() {
+  local extra_args=()
+  if [ -n "$1" ]; then
+    extra_args=(--base-ref "$1")
+  fi
+  echo "Bumping versions and syncing inter-gem pins for tools/ruby-gems/ gems"
+  "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --auto-bump "${extra_args[@]}"
 }
 
 #
@@ -363,11 +379,10 @@ do_gen_smoke() {
 # Generate Xqci golden adoc file
 #
 do_gen_xqci_golden() {
-  source_setup
   echo "Generating Xqci golden adoc"
   local xqci_version
-  xqci_version=$($RUBY -e "require 'yaml'; puts YAML.load_file('spec/custom/isa/qc_iu/ext/Xqci.yaml')['versions'].last['version']" | tr -d '\r\n')
-  $RUBY tools/scripts/gen_xqci.rb
+  xqci_version=$("${UDB_ROOT}"/bin/bundle exec ruby -e "require 'yaml'; puts YAML.load_file('spec/custom/isa/qc_iu/ext/Xqci.yaml')['versions'].last['version']" | tr -d '\r\n')
+  "${UDB_ROOT}"/bin/bundle exec ruby tools/scripts/gen_xqci.rb
   mkdir -p tests/data/golden
   # Remove any stale golden files from previous versions
   rm -f tests/data/golden/Xqci@*.adoc
@@ -379,95 +394,31 @@ do_gen_xqci_golden() {
 }
 
 #
-# Install new Ruby gems and optionally update container tag
-# Args: $1 - update_tag ("yes" to increment container tag, "no" otherwise)
+# Install new Ruby gems
 # Returns: 0 on success, exits with 1 on error
 #
 do_install_gems() {
-  local update_tag=$1
-  source "$UDB_ROOT"/bin/setup
-
   do_lock_all_gemfiles
 
-  # increment container-tag
-  if [ "$update_tag" == "yes" ]; then
-    new_version=$(increment_minor_version "$(cat bin/.container-tag)")
-    echo "$new_version" > bin/.container-tag
-  fi
-
-  if [ "$CONTAINER_TYPE" == "native" ]; then
-    bundle install
-    do_ruby_type_def idlc
-    do_ruby_type_def udb
-    do_ruby_type_def udb-gen
-  else
-    build_container "${UDB_ROOT}"
-
-    # need to run as a seperate process to pick up the new container
-    # since we bumped the container tag, this will also cause the container to rebuild
-    ./bin/chore gen ruby-type-def
-  fi
+  "${UDB_ROOT}"/bin/bundle install
+  do_ruby_type_def
 }
 
 #
 # Generate Ruby type definitions (Sorbet RBI files)
-# Args: $1 - gem name ("all", "udb", "idlc", or "udb-gen")
 # Returns: 0 on success, exits with 1 on error
 #
 do_ruby_type_def() {
-  gem=$1
+  cd "${UDB_ROOT}" || exit 1
+  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca gems --all
+  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca dsl
 
-  source "$UDB_ROOT"/bin/setup
-
-
-  gems=()
-  case "$gem" in
-    all )
-      gems=("udb" "idlc" "udb-gen")
-      ;;
-    udb )
-      gems=("udb")
-      ;;
-    idlc )
-      gems=("idlc")
-      ;;
-    udb-gen )
-      gems=("udb-gen")
-      ;;
-    * )
-      echo "Invalid gem '$gem'" >&2
-      echo "Options are: [all, udb, idlc, udb-gen]" >&2
-      exit 1 # Exit with error
-      ;;
-  esac
-  # Background jobs are not a TTY; strip -it from RUN to avoid docker complaints.
-  local RUN_NO_TTY="${RUN//-it /}"
-
-  # Run tapioca gems+dsl for each gem in parallel (writes are per-gem).
-  local pids=()
-  for gem in "${gems[@]}"; do
-    gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
-    steps=$(cat << STEPS
-      cd ${UDB_ROOT}/tools/ruby-gems/${gem} && \
-      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca gems --all && \
-      BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca dsl
-STEPS
-    )
-    $RUN_NO_TTY /bin/bash -c "$steps" &
-    pids+=($!)
-  done
-
-  local rc=0
-  for pid in "${pids[@]}"; do
-    wait "$pid" || rc=$?
-  done
-  [ $rc -ne 0 ] && exit $rc
-
-  # Run tapioca annotations sequentially to avoid races on the shared gem cache.
-  for gem in "${gems[@]}"; do
-    gem_gemfile="${UDB_ROOT}/tools/ruby-gems/${gem}/Gemfile"
-    $RUN_NO_TTY /bin/bash -c "cd ${UDB_ROOT}/tools/ruby-gems/${gem} && BUNDLE_GEMFILE=${gem_gemfile} bundle exec tapioca annotations" || exit $?
-  done
+  # tapioca annotations requires the ext/rbi-central submodule to be initialized.
+  if [ ! -f "${UDB_ROOT}/ext/rbi-central/index.json" ]; then
+    echo "Initializing ext/rbi-central submodule..."
+    git -C "${UDB_ROOT}" submodule update --init ext/rbi-central
+  fi
+  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca annotations
 }
 
 #
@@ -477,7 +428,6 @@ STEPS
 #
 do_build_udb_gem() {
   local gen_dir=$1
-  source_setup
 
   local staging_dir="${gen_dir:-${UDB_ROOT}/gen/udb_gem}"
 
@@ -486,18 +436,18 @@ do_build_udb_gem() {
   if [ -n "$gen_dir" ]; then
     rake_env="UDB_GEM_GEN_DIR=${gen_dir} "
   fi
-  # Run prepare and gem build in a single container invocation so that the
+  # Run prepare and gem build in a single invocation so that the
   # staging directory (which may be outside the repo-root mount) is accessible
   # to both steps.
   local build_cmd
   build_cmd=$(cat << CMD
 cd ${UDB_ROOT}/tools/ruby-gems/udb && \
-${rake_env}bundle exec rake release:udb:prepare && \
+${rake_env}${UDB_ROOT}/bin/bundle exec --gemfile ${UDB_ROOT}/Gemfile rake release:udb:prepare && \
 cd ${staging_dir} && \
-BUNDLE_GEMFILE= gem build udb.gemspec
+BUNDLE_GEMFILE= ${UDB_ROOT}/bin/gem build udb.gemspec
 CMD
   )
-  $RUN /bin/bash -c "$build_cmd" || exit $?
+  bash -c "$build_cmd" || exit $?
 
   # Announce the location of the built gem (path is the same on host when
   # staging_dir is inside the repo root; otherwise just print the directory).
@@ -532,7 +482,6 @@ case "$subcommand" in
   container )
     while getopts ":h" opt; do
       case $opt in
-        # help
         h )
           container_subcmd_usage
           exit 0
@@ -540,29 +489,21 @@ case "$subcommand" in
         ? )
           echo "[ERROR]: Invalid option: -${OPTARG}"
           container_subcmd_usage
-          exit 1 # Exit with error
+          exit 1
         ;;
       esac
     done
+    shift $((OPTIND-1))
+    OPTIND=1  # Reset OPTIND for inner getopts loops
     target="$1"; shift
     case "$target" in
       build )
         force=no
         while getopts ":hf" opt; do
           case $opt in
-            # help
-            h )
-              container_build_usage
-              exit 0
-            ;;
-            f )
-              force=yes
-              ;;
-            ? )
-              echo "[ERROR]: Invalid option: -${OPTARG}"
-              container_build_usage
-              exit 1 # Exit with error
-            ;;
+            h ) container_build_usage; exit 0 ;;
+            f ) force=yes ;;
+            ? ) echo "[ERROR]: Invalid option: -${OPTARG}"; container_build_usage; exit 1 ;;
           esac
         done
         do_container_build "$force"
@@ -572,19 +513,9 @@ case "$subcommand" in
         force=no
         while getopts ":hf" opt; do
           case $opt in
-            # help
-            h )
-              container_pull_usage
-              exit 0
-            ;;
-            f )
-              force=yes
-              ;;
-            ? )
-              echo "[ERROR]: Invalid option: -${OPTARG}"
-              container_pull_usage
-              exit 1 # Exit with error
-            ;;
+            h ) container_pull_usage; exit 0 ;;
+            f ) force=yes ;;
+            ? ) echo "[ERROR]: Invalid option: -${OPTARG}"; container_pull_usage; exit 1 ;;
           esac
         done
         do_container_pull "$force"
@@ -593,16 +524,8 @@ case "$subcommand" in
       remove|rm )
         while getopts ":h" opt; do
           case $opt in
-            # help
-            h )
-              container_remove_usage
-              exit 0
-            ;;
-            ? )
-              echo "[ERROR]: Invalid option: -${OPTARG}"
-              container_remove_usage
-              exit 1 # Exit with error
-            ;;
+            h ) container_remove_usage; exit 0 ;;
+            ? ) echo "[ERROR]: Invalid option: -${OPTARG}"; container_remove_usage; exit 1 ;;
           esac
         done
         do_container_remove
@@ -668,18 +591,13 @@ case "$subcommand" in
         exit 0
         ;;
       ruby-type-def )
-        gem=all
-        while getopts ":hg:" opt; do # Go through the options
+        while getopts ":h" opt; do # Go through the options
           case $opt in
             # help
             h )
               gen_ruby_type_def_usage
               exit 0 # Exit correctly
             ;;
-            g )
-              gem=$OPTARG
-              shift
-              ;;
             # Invalid option
             ? )
                 echo "[ERROR]: Invalid option: -${OPTARG}"
@@ -694,7 +612,7 @@ case "$subcommand" in
             gen_ruby_type_def_usage
             exit 1
         fi
-        do_ruby_type_def "$gem"
+        do_ruby_type_def
         exit 0
         ;;
       * )
@@ -711,9 +629,6 @@ case "$subcommand" in
           install_subcmd_usage
           exit 0
         ;;
-        t )
-          update_tag=no
-          ;;
         ? )
           echo "[ERROR]: Invalid option: -${OPTARG}"
           install_subcmd_usage
@@ -724,17 +639,13 @@ case "$subcommand" in
     target="$1"; shift
     case "$target" in
       gems )
-        update_tag=yes
-        while getopts ":ht" opt; do
+        while getopts ":h" opt; do
           case $opt in
             # help
             h )
               install_gems_usage
               exit 0
             ;;
-            t )
-              update_tag=no
-              ;;
             ? )
               echo "[ERROR]: Invalid option: -${OPTARG}"
               install_gems_usage
@@ -742,7 +653,7 @@ case "$subcommand" in
             ;;
           esac
         done
-        do_install_gems "$update_tag"
+        do_install_gems
         exit 0
       ;;
       * )
@@ -769,17 +680,34 @@ case "$subcommand" in
     done
     target="$1"; shift
     case "$target" in
+      gem-versions )
+        base_ref=""
+        while getopts ":hb:" opt; do
+          case $opt in
+            h )
+              update_gem_versions_usage
+              exit 0
+              ;;
+            b )
+              base_ref="$OPTARG"
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              update_gem_versions_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_update_gem_versions "$base_ref"
+        exit 0
+        ;;
       gems )
-          update_tag=yes
-          while getopts ":ht" opt; do # Go through the options
+          while getopts ":h" opt; do # Go through the options
             case $opt in
               # help
               h )
                 update_gems_usage
                 exit 0 # Exit correctly
-              ;;
-              t )
-                update_tag=no
               ;;
               # Invalid option
               ? )
@@ -789,7 +717,7 @@ case "$subcommand" in
               ;;
             esac
           done
-        do_update_gems "$update_tag"
+        do_update_gems
         exit 0
       ;;
       eqntott )

@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
-
-ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
-source "$ROOT/setup"
-
-$MAKE "$@"
+#!/bin/bash
+ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+EXEC_DIR=${PWD}
+cd "$ROOT"
+# Strip bin/ from PATH to avoid wrapper recursion (same pattern as bin/doctor)
+PATH="${PATH//"${ROOT}/bin:"/}"
+exec mise exec --cd "${EXEC_DIR}" -- make "$@"

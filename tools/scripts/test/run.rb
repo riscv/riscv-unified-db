@@ -19,7 +19,7 @@ UDB_ROOT_REAL = Pathname.new(__FILE__).dirname.parent.parent.parent.realpath
 # Helpers to build a minimal fake gem tree inside a tmpdir
 # ---------------------------------------------------------------------------
 module FakeGemTree
-  # Build a fake gem directory with a Gemfile and a .gemspec.
+  # Build a fake gem directory with a .gemspec (Gemfile is no longer required for discovery).
   # deps is a hash of { gem_name => version_constraint_string }
   def self.make_gem(root, name:, version: "1.0.0", deps: {}, has_spec_dir: false)
     dir = root / "tools" / "ruby-gems" / name
@@ -47,9 +47,6 @@ module FakeGemTree
       end
     RUBY
 
-    # Gemfile (required for inclusion)
-    File.write(dir / "Gemfile", "source \"https://rubygems.org\"\ngemspec\n")
-
     FileUtils.mkdir_p(dir / "spec") if has_spec_dir
 
     dir
@@ -67,20 +64,22 @@ class TestParseGemMetadata < Minitest::Test
   def test_real_repo_gem_names
     metadata = parse_gem_metadata(UDB_ROOT_REAL)
     names = metadata[:gems].map { |g| g[:name] }.sort
-    assert_equal %w[idlc udb udb-gen udb_helpers], names
+    assert_equal %w[idl_highlighter idlc udb udb-gen udb_helpers], names
   end
 
-  def test_real_repo_excludes_idl_highlighter
-    # idl_highlighter has a gemspec but no Gemfile, so it must be excluded
+  def test_real_repo_includes_idl_highlighter
+    # idl_highlighter has a gemspec but no Gemfile; it must now be included
+    # since gem discovery is driven by gemspecs, not Gemfiles.
     metadata = parse_gem_metadata(UDB_ROOT_REAL)
     names = metadata[:gems].map { |g| g[:name] }
-    refute_includes names, "idl_highlighter"
+    assert_includes names, "idl_highlighter"
   end
 
   def test_real_repo_gem_dirs
     metadata = parse_gem_metadata(UDB_ROOT_REAL)
     dirs = metadata[:gems].map { |g| g[:dir] }.sort
     assert_equal [
+      "tools/ruby-gems/idl_highlighter",
       "tools/ruby-gems/idlc",
       "tools/ruby-gems/udb",
       "tools/ruby-gems/udb-gen",
@@ -118,19 +117,11 @@ class TestParseGemMetadata < Minitest::Test
     assert_includes pin_pairs, ["tools/ruby-gems/udb-gen/udb-gen.gemspec", "udb"]
   end
 
-  def test_real_repo_gemfiles_order
+  def test_real_repo_gemfiles_single_root
     metadata = parse_gem_metadata(UDB_ROOT_REAL)
     gemfiles = metadata[:gemfiles]
-    # Root Gemfile must be last
-    assert_equal "Gemfile", gemfiles.last
-    # Leaves (no local deps) must come before gems that depend on them
-    idlc_idx       = gemfiles.index("tools/ruby-gems/idlc/Gemfile")
-    udb_helpers_idx = gemfiles.index("tools/ruby-gems/udb_helpers/Gemfile")
-    udb_idx        = gemfiles.index("tools/ruby-gems/udb/Gemfile")
-    udb_gen_idx    = gemfiles.index("tools/ruby-gems/udb-gen/Gemfile")
-    assert idlc_idx        < udb_idx,     "idlc Gemfile must precede udb Gemfile"
-    assert udb_helpers_idx < udb_idx,     "udb_helpers Gemfile must precede udb Gemfile"
-    assert udb_idx         < udb_gen_idx, "udb Gemfile must precede udb-gen Gemfile"
+    # With a single root Gemfile, there is exactly one entry: the root Gemfile
+    assert_equal ["Gemfile"], gemfiles
   end
 
   def test_real_repo_gems_have_no_gemspec_path_key
@@ -154,20 +145,6 @@ class TestParseGemMetadata < Minitest::Test
     FileUtils.remove_entry(@tmpdir)
   end
 
-  def test_gem_without_gemfile_is_excluded
-    # Create a gem with a gemspec but no Gemfile — it must be excluded
-    dir = @tmpdir / "tools" / "ruby-gems" / "orphan"
-    FileUtils.mkdir_p(dir / "lib" / "orphan")
-    File.write(dir / "lib" / "orphan" / "version.rb", "module Orphan; VERSION = '1.0.0'; def self.version = VERSION; end")
-    File.write(dir / "orphan.gemspec", <<~RUBY)
-      require_relative "lib/orphan/version"
-      Gem::Specification.new { |s| s.name = "orphan"; s.version = Orphan.version; s.summary = "x" }
-    RUBY
-
-    metadata = parse_gem_metadata(@tmpdir)
-    assert_empty metadata[:gems]
-  end
-
   def test_single_gem_no_deps
     FakeGemTree.make_gem(@tmpdir, name: "alpha")
     metadata = parse_gem_metadata(@tmpdir)
@@ -180,7 +157,7 @@ class TestParseGemMetadata < Minitest::Test
     assert_equal [],                                         gem[:additional_dirs]
     assert_empty metadata[:dependents]["alpha"]
     assert_empty metadata[:gemspec_pins]
-    assert_equal ["tools/ruby-gems/alpha/Gemfile", "Gemfile"], metadata[:gemfiles]
+    assert_equal ["Gemfile"], metadata[:gemfiles]
   end
 
   def test_spec_dir_sets_additional_dirs
@@ -231,15 +208,8 @@ class TestParseGemMetadata < Minitest::Test
     FakeGemTree.make_gem(@tmpdir, name: "top",    deps: { "middle" => "= 1.0.0" })
 
     metadata = parse_gem_metadata(@tmpdir)
-    gemfiles = metadata[:gemfiles]
-
-    leaf_idx   = gemfiles.index("tools/ruby-gems/leaf/Gemfile")
-    middle_idx = gemfiles.index("tools/ruby-gems/middle/Gemfile")
-    top_idx    = gemfiles.index("tools/ruby-gems/top/Gemfile")
-
-    assert leaf_idx   < middle_idx, "leaf must precede middle"
-    assert middle_idx < top_idx,    "middle must precede top"
-    assert_equal "Gemfile", gemfiles.last
+    # With a single root Gemfile, gemfiles is always just ["Gemfile"]
+    assert_equal ["Gemfile"], metadata[:gemfiles]
   end
 
   def test_gemfiles_root_always_last
@@ -257,18 +227,9 @@ class TestParseGemMetadata < Minitest::Test
     FakeGemTree.make_gem(@tmpdir, name: "top", deps: { "a" => "= 1.0.0", "b" => "= 1.0.0" })
 
     metadata = parse_gem_metadata(@tmpdir)
-    gemfiles = metadata[:gemfiles]
 
-    base_idx = gemfiles.index("tools/ruby-gems/base/Gemfile")
-    a_idx    = gemfiles.index("tools/ruby-gems/a/Gemfile")
-    b_idx    = gemfiles.index("tools/ruby-gems/b/Gemfile")
-    top_idx  = gemfiles.index("tools/ruby-gems/top/Gemfile")
-
-    assert base_idx < a_idx,   "base must precede a"
-    assert base_idx < b_idx,   "base must precede b"
-    assert a_idx    < top_idx, "a must precede top"
-    assert b_idx    < top_idx, "b must precede top"
-    assert_equal "Gemfile", gemfiles.last
+    # With a single root Gemfile, gemfiles is always just ["Gemfile"]
+    assert_equal ["Gemfile"], metadata[:gemfiles]
 
     # dependents of base includes both a and b
     assert_includes metadata[:dependents]["base"], "a"

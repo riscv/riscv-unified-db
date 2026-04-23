@@ -1,6 +1,3 @@
-#!/usr/bin/env bash
-
-ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
-source "$ROOT/setup"
-
-$RUN "${ROOT}/bin/container/idlc" "$@"
+#!/bin/bash
+ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+BUNDLE_GEMFILE="${ROOT}/Gemfile" exec mise exec -- bundle exec idlc "$@"

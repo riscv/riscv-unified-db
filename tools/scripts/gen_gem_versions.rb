@@ -5,15 +5,18 @@
 # frozen_string_literal: true
 
 # Script to:
-#   Step A: Auto-increment versions for gems whose source changed without a bump (with cascade)
 #   Step B: Update inter-gem dependency pins in gemspecs to exact current versions
 #   Step C: Regenerate Gemfile.lock files (sync only, no --update)
 #
-# Usage:
-#   gen_gem_versions.rb [--fail-on-change] [--check] [--base-ref <ref>]
+#   With --auto-bump:
+#   Step A0: Bring any version files that lag behind the base ref forward
+#   Step A:  Auto-increment versions for gems whose source changed without a bump (with cascade)
 #
+# Usage:
+#   gen_gem_versions.rb [--auto-bump] [--fail-on-change] [--base-ref <ref>]
+#
+#   --auto-bump       Detect source changes and auto-increment gem versions (Steps A0+A)
 #   --fail-on-change  Exit 1 if any file changed (for CI drift detection)
-#   --check           Only detect version-bump issues, no writes; exit 1 if any found
 #   --base-ref <ref>  Git ref to compare against (default: $GITHUB_BASE_REF or origin/main)
 
 require "digest"
@@ -27,17 +30,14 @@ UDB_ROOT = Pathname.new(__FILE__).dirname.parent.parent.realpath
 # Parse gem metadata by loading gemspecs via Gem::Specification.
 # Returns a hash with keys :gems, :dependents, :gemspec_pins, :gemfiles.
 #
-# Only gem directories that have BOTH a Gemfile AND a *.gemspec are included
-# (this naturally excludes idl_highlighter which has no Gemfile).
+# Discovers gem directories by looking for *.gemspec files under tools/ruby-gems/.
 def parse_gem_metadata(udb_root)
-  # Discover gem dirs that have both a Gemfile and a gemspec, and load each
-  # gemspec using the official Gem::Specification API.
+  # Discover gem dirs via gemspec files and load each gemspec using the
+  # official Gem::Specification API.
   # Load each spec from within its own directory so that Dir.glob patterns in
   # the spec's `files` list (e.g. "lib/**/*.rb") resolve correctly.
-  spec_entries = Dir.glob("#{udb_root}/tools/ruby-gems/*/Gemfile").filter_map do |gf|
-    dir = Pathname.new(gf).dirname
-    gemspec_path = Dir.glob("#{dir}/*.gemspec").first
-    next unless gemspec_path
+  spec_entries = Dir.glob("#{udb_root}/tools/ruby-gems/*/*.gemspec").filter_map do |gemspec_path|
+    dir = Pathname.new(gemspec_path).dirname
 
     spec = Dir.chdir(dir) { Gem::Specification.load(gemspec_path) }
     next unless spec
@@ -89,7 +89,7 @@ def parse_gem_metadata(udb_root)
     dep_list.each { |dep| dependents[dep] << gem_name }
   end
 
-  # Topological sort (Kahn's algorithm) for GEMFILES order: leaves first.
+  # Topological sort (Kahn's algorithm) for dependency ordering.
   in_degree = gems.each_with_object({}) { |g, h| h[g[:name]] = deps[g[:name]].size }
   queue = gems.map { |g| g[:name] }.select { |n| in_degree[n] == 0 }.sort
   ordered_names = []
@@ -101,8 +101,7 @@ def parse_gem_metadata(udb_root)
       queue << dep if in_degree[dep] == 0
     end
   end
-  gemfiles = ordered_names.map { |n| gems.find { |g| g[:name] == n }[:dir] + "/Gemfile" }
-  gemfiles << "Gemfile" # root Gemfile always last
+  gemfiles = ["Gemfile"] # single root Gemfile
 
   {
     gems: gems.map { |g| g.reject { |k, _| k == :gemspec_path } }.freeze,
@@ -394,60 +393,6 @@ def all_tracked_files
   version_files + gemspec_files + lockfiles
 end
 
-def run_check_mode(base_ref)
-  puts "Checking gem version bumps..."
-  puts "Base ref: #{base_ref}"
-  puts
-
-  changed_files = get_changed_files(base_ref)
-  if changed_files.nil?
-    puts "No git history available; skipping check."
-    exit 0
-  end
-
-  if changed_files.empty?
-    puts "No files changed."
-    exit 0
-  end
-
-  failures = []
-
-  GEMS.each do |gem_config|
-    gem_name = gem_config[:name]
-    if needs_bump?(gem_config, changed_files, base_ref)
-      current_version = read_version(gem_config[:version_file])
-      puts "✗ #{gem_name}: Files changed but version not bumped (current: #{current_version})"
-      failures << gem_name
-    else
-      # Determine why it's OK
-      source_files = gem_config[:source_files]
-      additional_dirs = gem_config[:additional_dirs] || []
-      gem_files_changed = changed_files.any? { |f| source_files.include?(f) }
-      additional_files_changed = additional_dirs.any? { |dir| changed_files.any? { |f| f.start_with?(dir) } }
-
-      if gem_files_changed || additional_files_changed
-        current_version = read_version(gem_config[:version_file])
-        puts "✓ #{gem_name}: Version bumped to #{current_version}"
-      else
-        puts "✓ #{gem_name}: No changes"
-      end
-    end
-  end
-
-  if failures.any?
-    puts
-    puts "ERROR: The following gems have source changes without version bumps:"
-    failures.each { |name| puts "  - #{name}" }
-    puts
-    puts "Please bump the version in the version.rb file for each modified gem."
-    exit 1
-  end
-
-  puts
-  puts "All gem version checks passed!"
-  exit 0
-end
-
 # --- Main ---
 
 def default_base_ref
@@ -459,44 +404,41 @@ def default_base_ref
 end
 
 if __FILE__ == $PROGRAM_NAME
-  options = { fail_on_change: false, check: false, base_ref: default_base_ref }
+  options = { fail_on_change: false, auto_bump: false, base_ref: default_base_ref }
 
   OptionParser.new do |opts|
+    opts.on("--auto-bump", "Auto-increment versions for gems with source changes (Steps A0+A)") do
+      options[:auto_bump] = true
+    end
     opts.on("--fail-on-change", "Exit 1 if any file changed") do
       options[:fail_on_change] = true
-    end
-    opts.on("--check", "Only check for version-bump issues, no writes") do
-      options[:check] = true
     end
     opts.on("--base-ref REF", "Git ref to compare against (default: $GITHUB_BASE_REF or origin/main)") do |ref|
       options[:base_ref] = ref
     end
   end.parse!
 
-  if options[:check]
-    run_check_mode(options[:base_ref])
-    # run_check_mode exits internally
-  end
-
   # Normal / --fail-on-change mode
   tracked = all_tracked_files
   sha_before = options[:fail_on_change] ? sha256_files(tracked) : nil
 
-  # Step A0: bring any version files that are behind origin/main forward
-  puts "Step A0: Bringing stale version files forward to base..."
-  bring_versions_forward(options[:base_ref])
+  if options[:auto_bump]
+    # Step A0: bring any version files that are behind the base ref forward
+    puts "Step A0: Bringing stale version files forward to base..."
+    bring_versions_forward(options[:base_ref])
 
-  # Step A: auto-increment versions for changed gems (with cascade)
-  puts "Step A: Checking for gems that need version bumps..."
-  changed_files = get_changed_files(options[:base_ref])
-  if changed_files.nil?
-    puts "  Skipping (git history unavailable)"
-  else
-    needs_bump = compute_needs_bump_set(changed_files, options[:base_ref])
-    if needs_bump.empty?
-      puts "  No version bumps needed"
+    # Step A: auto-increment versions for changed gems (with cascade)
+    puts "Step A: Checking for gems that need version bumps..."
+    changed_files = get_changed_files(options[:base_ref])
+    if changed_files.nil?
+      puts "  Skipping (git history unavailable)"
     else
-      do_version_bumps(needs_bump, options[:base_ref])
+      needs_bump = compute_needs_bump_set(changed_files, options[:base_ref])
+      if needs_bump.empty?
+        puts "  No version bumps needed"
+      else
+        do_version_bumps(needs_bump, options[:base_ref])
+      end
     end
   end
 

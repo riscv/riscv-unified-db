@@ -1,0 +1,11 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+---
+# Overlay: extend jvt definedBy to include Xqccmt (custom variant of Zcmt)
+definedBy:
+  extension:
+    name: null
+    anyOf:
+      - name: Zcmt
+      - name: Xqccmt

@@ -10,6 +10,7 @@ python = "3.14.3"
 node = "24.13.1"
 uv = "0.10.2"
 cmake = "3.28.3"
+make = "4.4.1"
 shellcheck = "0.11.0"
 "github-cli" = "2.86.0"
 

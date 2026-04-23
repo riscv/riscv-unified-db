@@ -12,6 +12,7 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 .container-type
+.toolchain-local
 diag-ditaa-*
 arch/manual/isa/**/riscv-isa-manual
 gen
@@ -27,6 +28,7 @@ __pycache__/
 *.bak
 *.log
 sorbet
+!/sorbet
 !tools/ruby-gems/idlc/sorbet
 !tools/ruby-gems/udb/sorbet
 !tools/ruby-gems/udb/lib/sorbet
@@ -40,6 +42,7 @@ coverage
 # Z3 binaries — downloaded at gem install time, not stored in git
 tools/ruby-gems/udb/ext/z3/**/*.so
 tools/ruby-gems/udb/ext/z3/VERSION
+tools/ruby-gems/udb/ext/udb_download/Makefile
 
 # emacs backup files
 *~

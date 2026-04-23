@@ -22,6 +22,7 @@ path = [
     "Rakefile",
     "README.adoc",
     "spec/schemas/**",
+    "sorbet/config"
 ]
 SPDX-FileCopyrightText = [
     "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.",
@@ -117,3 +118,11 @@ path = [
 ]
 SPDX-FileCopyrightText = "Copyright (c) Jordan Carlin"
 SPDX-License-Identifier = "BSD-3-Clause-Clear"
+
+# Computer-generated files that are checked in
+[[annotations]]
+path = [
+    "sorbet/rbi/**"
+]
+SPDX-FileCopyrightText = "NONE"
+SPDX-License-Identifier = "CC0-1.0"

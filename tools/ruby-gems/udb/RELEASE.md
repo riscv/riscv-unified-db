@@ -11,9 +11,14 @@ This document describes how to prepare and publish a release of the `udb` gem to
 
 > **Automated releases:** The publish step (Steps 2–4 below) is handled
 > automatically by the
-> [Release udb gem to RubyGems.org](../../.github/workflows/release_udb_gem.yml)
-> GitHub Actions workflow.  Simply bump the version in `version.rb`, commit,
-> and merge to `main` — the workflow will build, publish, and tag the release.
+> [Release gems to RubyGems.org](../../.github/workflows/release_gems.yml)
+> GitHub Actions workflow whenever a version bump is merged to `main`.
+>
+> **Version bumps** are normally created automatically by the
+> [Bi-monthly gem version bump](../../.github/workflows/gem_bump.yml) workflow,
+> which opens a chore PR twice a month for any gems with source changes since
+> the last release. To trigger a release outside the bi-monthly cadence, manually
+> bump the version in `version.rb`, commit, and merge to `main`.
 > Manual publishing (Steps 2–4) is only needed if the CI workflow is unavailable.
 
 ---
@@ -45,7 +50,16 @@ The high-level steps are:
 
 ## Step 1 – Bump the version
 
-Edit `tools/ruby-gems/udb/lib/udb/version.rb` and update the version string:
+Version bumps are normally handled automatically by the bi-monthly chore job.
+To trigger a release outside the bi-monthly cadence, run the update command from
+the repository root, using the last release tag as the base ref:
+
+```sh
+LAST_TAG=$(git tag -l 'udb-gem-*' --sort=-creatordate | head -1)
+bin/chore update gem-versions -b "${LAST_TAG:-origin/main}"
+```
+
+Or edit `tools/ruby-gems/udb/lib/udb/version.rb` directly:
 
 ```ruby
 module Udb
@@ -53,13 +67,16 @@ module Udb
 end
 ```
 
-Commit the change and tag the commit:
+After bumping, run `bin/chore gen gem-versions` to sync the inter-gem dependency
+pins and `Gemfile.lock`, then commit all changed files and open a PR:
 
 ```sh
-git add tools/ruby-gems/udb/lib/udb/version.rb
-git commit -m "chore(udb): bump gem version to X.Y.Z"
-git tag udb-vX.Y.Z
+bin/chore gen gem-versions
+git add tools/ruby-gems/*/lib/*/version.rb tools/ruby-gems/*/*.gemspec Gemfile.lock
+git commit -m "chore: bump gem versions to X.Y.Z"
 ```
+
+Merging the PR to `main` triggers the automated publish workflow.
 
 ---
 
