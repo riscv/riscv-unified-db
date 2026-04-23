@@ -399,7 +399,7 @@ task build_riscv_tests: "checkout_riscv_tests" do
   riscv_prefix = "#{$root}/bin/riscv#{xlen}-unknown-elf-"
 
   Dir.chdir "#{$root}/tests/isa" do
-    sh "make XLEN=#{xlen} BUILD_TYPE=#{cmake_build_type} RISCV_PREFIX=#{riscv_prefix}"    
+    sh "make XLEN=#{xlen} BUILD_TYPE=#{cmake_build_type} RISCV_PREFIX=#{riscv_prefix}"
   end
 end
 
