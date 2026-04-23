@@ -151,7 +151,7 @@ int BCDDevice::HandleCommand(HTIFCOMMAND cmd)
   switch(cmd.command)
   {
   case READ:
-    //TODO: 
+    //TODO:
     break;
   case WRITE:
     //TODO: use deicated console, stdout for now
