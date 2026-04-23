@@ -135,18 +135,18 @@ int SysCallDevice::exit(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
   return a0;
 }
 
-BCDDevice::BCDDevice(udb::IssSocModel* pSoC) 
+BCDDevice::BCDDevice(udb::IssSocModel* pSoC)
   : HTIFDevice(pSoC)
 {
 
 }
 
-BCDDevice::~BCDDevice() 
+BCDDevice::~BCDDevice()
 {
 
 }
 
-int BCDDevice::HandleCommand(HTIFCOMMAND cmd) 
+int BCDDevice::HandleCommand(HTIFCOMMAND cmd)
 { 
   switch(cmd.command)
   {
