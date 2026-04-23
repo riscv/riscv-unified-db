@@ -1,0 +1,160 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+name: Publish toolchain container
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .toolchain/Dockerfile
+  workflow_dispatch:
+
+jobs:
+  check-tag:
+    runs-on: ubuntu-24.04
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Clone Github Repo Action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Compute toolchain container tag
+        id: tag
+        run: |
+          TAG=$(sha256sum .toolchain/Dockerfile | cut -c1-16)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Check if tag already exists in GHCR
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ env.TAG }}"
+          GHCR_TOKEN=$(curl -s \
+            -H "Authorization: Bearer $(echo -n "$GITHUB_TOKEN" | base64 -w0)" \
+            "https://ghcr.io/token?scope=repository:riscv/udb-toolchain:pull" \
+            | jq -r .token)
+          GHCR_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${GHCR_TOKEN}" \
+            "https://ghcr.io/v2/riscv/udb-toolchain/manifests/${TAG}")
+          if [ "$GHCR_STATUS" = "200" ]; then
+            echo "Toolchain container tag ${TAG} already exists in GHCR - skipping build."
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Toolchain container tag ${TAG} not found in GHCR - proceeding with build."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-toolchain-container:
+    needs: check-tag
+    if: needs.check-tag.outputs.exists != 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            platform: linux/amd64
+            artifact: toolchain-image-amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            artifact: toolchain-image-arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Clone Github Repo Action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Compute toolchain container tag
+        run: |
+          TAG=$(sha256sum .toolchain/Dockerfile | cut -c1-16)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Build and export to tarball
+        uses: docker/build-push-action@601a80b39c9405e50806ae38af30926f9d957c47 # v6.19.1
+        with:
+          file: ./.toolchain/Dockerfile
+          context: ./.toolchain
+          platforms: ${{ matrix.platform }}
+          push: false
+          tags: ghcr.io/riscv/udb-toolchain:${{ env.TAG }}
+          outputs: type=docker,dest=${{ runner.temp }}/toolchain-image.tar
+          cache-from: type=gha,scope=toolchain
+          cache-to: type=gha,scope=toolchain,mode=max
+
+      - name: Upload image tarball
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ runner.temp }}/toolchain-image.tar
+          if-no-files-found: error
+          retention-days: 1
+
+  merge-toolchain-container:
+    runs-on: ubuntu-24.04
+    needs:
+      - check-tag
+      - build-toolchain-container
+    if: needs.check-tag.outputs.exists != 'true'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Clone Github Repo Action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Compute toolchain container tag
+        run: |
+          TAG=$(sha256sum .toolchain/Dockerfile | cut -c1-16)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Download amd64 image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: toolchain-image-amd64
+          path: ${{ runner.temp }}/amd64
+
+      - name: Download arm64 image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: toolchain-image-arm64
+          path: ${{ runner.temp }}/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Login to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load, retag, and push platform images
+        run: |
+          TAG="${{ env.TAG }}"
+
+          docker load --input ${{ runner.temp }}/amd64/toolchain-image.tar
+          docker tag ghcr.io/riscv/udb-toolchain:${TAG} ghcr.io/riscv/udb-toolchain:${TAG}-amd64
+
+          docker load --input ${{ runner.temp }}/arm64/toolchain-image.tar
+          docker tag ghcr.io/riscv/udb-toolchain:${TAG} ghcr.io/riscv/udb-toolchain:${TAG}-arm64
+
+          docker push ghcr.io/riscv/udb-toolchain:${TAG}-amd64
+          docker push ghcr.io/riscv/udb-toolchain:${TAG}-arm64
+
+      - name: Create and push multi-platform manifest to GHCR
+        run: |
+          TAG="${{ env.TAG }}"
+          docker buildx imagetools create \
+            --tag ghcr.io/riscv/udb-toolchain:${TAG} \
+            ghcr.io/riscv/udb-toolchain:${TAG}-amd64 \
+            ghcr.io/riscv/udb-toolchain:${TAG}-arm64
+
+      - name: Inspect GHCR image
+        run: docker buildx imagetools inspect ghcr.io/riscv/udb-toolchain:${{ env.TAG }}

@@ -1,0 +1,70 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+name: mise setup
+description: Set up mise environment and install Ruby gems, Python packages, and npm packages
+inputs:
+  toolchain:
+    description: Whether to pull/build the RISC-V toolchain container (for C++ jobs)
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - uses: jdx/mise-action@v2
+    # Set bundler gem path before restoring the cache and before bin/setup,
+    # so bundle install (inside bin/setup) writes to the cacheable path.
+    - name: Set bundler PATH
+      shell: bash
+      run: bundle config set --local path 'vendor/bundle'
+    # Write toolchain preference to .toolchain-local so bin/setup (section 7)
+    # finds it and section 8 behaves correctly without prompting.
+    - name: Configure toolchain
+      shell: bash
+      run: |
+        if [[ "${{ inputs.toolchain }}" == "true" ]]; then
+          echo "UDB_TOOLCHAIN_CONTAINER=1" > .toolchain-local
+          echo "UDB_TOOLCHAIN_CONTAINER=1" >> "$GITHUB_ENV"
+        else
+          echo "UDB_TOOLCHAIN_NONE=1" > .toolchain-local
+          echo "UDB_TOOLCHAIN_NONE=1" >> "$GITHUB_ENV"
+        fi
+    # Docker Buildx must be available before bin/setup runs, because bin/setup
+    # section 8 may call _pull_or_build_toolchain_image which uses buildx in CI.
+    - name: Set up Docker Buildx
+      if: inputs.toolchain == 'true'
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+    - name: Login to GHCR
+      if: inputs.toolchain == 'true'
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+    # Restore all four caches BEFORE bin/setup runs.  bin/setup has idempotency
+    # guards in each section (bundle check, extconf.rb file checks, node_modules
+    # directory check, uv sync lockfile check) that skip work when the cache hit
+    # already populated the relevant paths.  This means bin/setup completes in
+    # seconds on a cache hit without any separate install steps.
+    - name: Cache bundler gems
+      uses: actions/cache@v4
+      with:
+        path: vendor/bundle
+        key: bundler-${{ runner.os }}-${{ hashFiles('.mise.toml', 'Gemfile.lock', 'tools/ruby-gems/*/Gemfile.lock', 'tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
+    - name: Cache udb native deps (z3, espresso, eqntott, must)
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/udb
+        key: udb-deps-${{ runner.os }}-${{ hashFiles('tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
+    - name: Cache uv packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+    - name: Cache npm packages
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+    - name: Set up environment and install dependencies
+      shell: bash
+      run: ./bin/setup

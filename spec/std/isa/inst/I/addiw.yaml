@@ -33,6 +33,6 @@ access:
 data_independent_timing: true
 pseudoinstructions:
   - when: imm == 0
-    to: sext.w xd,xs1
+    to: sext.w xd, xs1
 operation(): |
   X[xd] = $signed((X[xs1] + $signed(imm))[31:0]);

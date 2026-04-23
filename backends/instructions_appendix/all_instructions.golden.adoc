@@ -27451,7 +27451,16 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 8 bits of data from the address in `xs1` into register `xd`, sign-extending
+the result to XLEN bits.
+
+This instruction has acquire semantics, which means that no subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this load completes. Acquire semantics provide ordering guarantees useful for
+synchronization, such as reading a lock variable.
+
+The address must be naturally aligned; if not, an address-misaligned or
+access-fault exception will be raised.
 
 
 Decode Variables::
@@ -27502,7 +27511,16 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 8 bits of data from the address in `xs1` into register `xd`, sign-extending
+the result to XLEN bits.
+
+This instruction has both acquire and release semantics. No subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this load completes, and no previous memory operations can be observed to occur
+after this load completes.
+
+The address must be naturally aligned; if not, an address-misaligned or
+access-fault exception will be raised.
 
 
 Decode Variables::
@@ -27683,7 +27701,16 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 64 bits of data from the address in `xs1` into register `xd`, sign-extending
+the result to XLEN bits.
+
+This instruction has acquire semantics, which means that no subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this load completes. Acquire semantics provide ordering guarantees useful for
+synchronization, such as reading a lock variable.
+
+The address must be naturally aligned (8-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -27734,7 +27761,16 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 64 bits of data from the address in `xs1` into register `xd`, sign-extending
+the result to XLEN bits.
+
+This instruction has both acquire and release semantics. No subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this load completes, and no previous memory operations can be observed to occur
+after this load completes.
+
+The address must be naturally aligned (8-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -27839,7 +27875,16 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 16 bits of data from the address in `xs1` into register `xd`, sign-extending
+the result to XLEN bits.
+
+This instruction has acquire semantics, which means that no subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this load completes. Acquire semantics provide ordering guarantees useful for
+synchronization, such as reading a lock variable.
+
+The address must be naturally aligned (2-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -27890,7 +27935,16 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 16 bits of data from the address in `xs1` into register `xd`, sign-extending
+the result to XLEN bits.
+
+This instruction has both acquire and release semantics. No subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this load completes, and no previous memory operations can be observed to occur
+after this load completes.
+
+The address must be naturally aligned (2-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -28893,7 +28947,16 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 32 bits of data from the address in `xs1` into register `xd`, sign-extending
+the result to XLEN bits.
+
+This instruction has acquire semantics, which means that no subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this load completes. Acquire semantics provide ordering guarantees useful for
+synchronization, such as reading a lock variable.
+
+The address must be naturally aligned (4-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -28944,7 +29007,16 @@ Encoding::
 ....
 
 Description::
-No description available.
+Load 32 bits of data from the address in `xs1` into register `xd`, sign-extending
+the result to XLEN bits.
+
+This instruction has both acquire and release semantics. No subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this load completes, and no previous memory operations can be observed to occur
+after this load completes.
+
+The address must be naturally aligned (4-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -33299,7 +33371,15 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store the lowest 8 bits of register `xs2` to the address in `xs1`.
+
+This instruction has both acquire and release semantics. No subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this store completes, and no previous memory operations can be observed to occur
+after this store completes.
+
+The address must be naturally aligned; if not, an address-misaligned or
+access-fault exception will be raised.
 
 
 Decode Variables::
@@ -33350,7 +33430,15 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store the lowest 8 bits of register `xs2` to the address in `xs1`.
+
+This instruction has release semantics, which means that no previous memory
+operations (in program order) from this hart can be observed to occur after
+this store completes. Release semantics provide ordering guarantees useful for
+synchronization, such as writing a lock variable to release it.
+
+The address must be naturally aligned; if not, an address-misaligned or
+access-fault exception will be raised.
 
 
 Decode Variables::
@@ -34744,7 +34832,15 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store the lowest 64 bits of register `xs2` to the address in `xs1`.
+
+This instruction has both acquire and release semantics. No subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this store completes, and no previous memory operations can be observed to occur
+after this store completes.
+
+The address must be naturally aligned (8-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -34795,7 +34891,15 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store the lowest 64 bits of register `xs2` to the address in `xs1`.
+
+This instruction has release semantics, which means that no previous memory
+operations (in program order) from this hart can be observed to occur after
+this store completes. Release semantics provide ordering guarantees useful for
+synchronization, such as writing a lock variable to release it.
+
+The address must be naturally aligned (8-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -35350,7 +35454,15 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store the lowest 16 bits of register `xs2` to the address in `xs1`.
+
+This instruction has both acquire and release semantics. No subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this store completes, and no previous memory operations can be observed to occur
+after this store completes.
+
+The address must be naturally aligned (2-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -35401,7 +35513,15 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store the lowest 16 bits of register `xs2` to the address in `xs1`.
+
+This instruction has release semantics, which means that no previous memory
+operations (in program order) from this hart can be observed to occur after
+this store completes. Release semantics provide ordering guarantees useful for
+synchronization, such as writing a lock variable to release it.
+
+The address must be naturally aligned (2-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -38351,7 +38471,15 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store the lowest 32 bits of register `xs2` to the address in `xs1`.
+
+This instruction has both acquire and release semantics. No subsequent memory
+operations (in program order) from this hart can be observed to occur before
+this store completes, and no previous memory operations can be observed to occur
+after this store completes.
+
+The address must be naturally aligned (4-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -38402,7 +38530,15 @@ Encoding::
 ....
 
 Description::
-No description available.
+Store the lowest 32 bits of register `xs2` to the address in `xs1`.
+
+This instruction has release semantics, which means that no previous memory
+operations (in program order) from this hart can be observed to occur after
+this store completes. Release semantics provide ordering guarantees useful for
+synchronization, such as writing a lock variable to release it.
+
+The address must be naturally aligned (4-byte aligned); if not, an
+address-misaligned or access-fault exception will be raised.
 
 
 Decode Variables::
@@ -73552,7 +73688,7 @@ Decode Variables::
 |Variable Name |Location
 |vm |$encoding[25]
 |vs2 |$encoding[24:20]
-|imm |$encoding[19:15]
+|imm |sext($encoding[19:15], 5)
 |vd |$encoding[11:7]
 |===
 

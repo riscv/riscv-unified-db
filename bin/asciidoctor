@@ -1,6 +1,5 @@
-#!/usr/bin/env bash
-
-ROOT=$(dirname $(realpath ${BASH_SOURCE[0]}))
-source $ROOT/setup
-
-$BUNDLE exec --gemfile $ROOT/Gemfile asciidoctor "$@"
+#!/bin/bash
+ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+EXEC_DIR=${PWD}
+cd "$ROOT"
+exec mise exec --cd "$EXEC_DIR" -- bundle exec --gemfile "${ROOT}/Gemfile" asciidoctor "$@"

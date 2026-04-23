@@ -34,7 +34,7 @@ repos:
         exclude: \.adoc$ # sections titles Level 6 "=======" get flagged otherwise
       - id: check-json
         stages: [pre-commit]
-        exclude: ^\.devcontainer|tools/vscode/\.vscode/launch\.json|doc/tsconfig\.json # Uses JSONC (comments)
+        exclude: tools/vscode/\.vscode/launch\.json|doc/tsconfig\.json # Uses JSONC (comments)
       - id: check-yaml
         stages: [pre-commit]
 

@@ -46,11 +46,6 @@ Dir.glob("#{$root}/backends/*/tasks.rake") do |rakefile|
   load rakefile
 end
 
-# load and execute Rakefile for each gem
-Dir.glob("#{$root}/tools/ruby-gems/*/Rakefile") do |rakefile|
-  load rakefile
-end
-
 # Load and execute tools Rakefiles
 Dir.glob("#{$root}/tools/*/tasks.rake") do |rakefile|
   load rakefile
@@ -157,10 +152,9 @@ namespace :test do
 
   desc "Type-check the Ruby library"
   task :sorbet do
-    Rake::Task["test:idlc:sorbet"].invoke
-    Rake::Task["test:udb:sorbet"].invoke
-    Rake::Task["test:udb_gen:sorbet"].invoke
-    # sh "srb tc @.sorbet-config"
+    Dir.chdir($root) do
+      sh "./bin/bundle exec srb tc"
+    end
   end
 end
 
