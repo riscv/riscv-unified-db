@@ -128,7 +128,7 @@ int ParseCommandLine(int argc, char *argv[], Options &options)
   app.add_option("-c,--cfg", options.configPath, "Hart configuration file");
   app.add_option("--mm, --memory-map", options.memoryMapPath, "Memory map file");
   app.add_option("-p, --gdbport", options.gdbPort, "GDB port");
-  app.add_option<std::vector<std::string>>("-t, --trace", options.trace, "tracers to enable");
+  app.add_option<std::vector<std::string>>("-t, --trace", options.trace, "Tracers to enable");
   app.add_flag("-l,--list-configs", options.showConfigs,
                "List available configurations");
   app.add_flag("-g,--gdb", options.gdbMode, "GDB Debugger mode");
