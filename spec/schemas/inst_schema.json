@@ -338,7 +338,7 @@
                         "default": 0
                       }
                     },
-                    "required": [ "length" ]
+                    "required": ["length"]
                   }
                 ],
                 "default": false
@@ -362,10 +362,7 @@
                 "default": false
               }
             },
-            "required": [
-              "type",
-              "reg_file"
-            ]
+            "required": ["type", "reg_file"]
           },
           {
             "description": "Register pair (implicit)",
@@ -396,10 +393,7 @@
                 }
               }
             },
-            "required": [
-              "type",
-              "reg_file"
-            ]
+            "required": ["type", "reg_file"]
           },
           {
             "description": "Immediate",

@@ -48,7 +48,7 @@ operands:
   - name: vm
     type: register
     reg_file: vr
-    possible_values: [ 0 ] # needs to be "v0.t". hmm
+    possible_values: [0] # needs to be "v0.t". hmm
     optional: true
 access:
   s: always

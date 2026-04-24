@@ -17424,8 +17424,8 @@ Decode Variables::
 |Variable Name |Location
 |fs2 |$encoding[24:20]
 |fs1 |$encoding[19:15]
-|rm |$encoding[14:12]
 |fd |$encoding[11:7]
+|rm |$encoding[14:12]
 |===
 
 Included in::

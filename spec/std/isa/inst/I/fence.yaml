@@ -132,7 +132,7 @@ encoding:
   variables:
     - name: fm
       location: 31-28
-      encode(operands): return 0;  # fm is reserved for future use, so it must be encoded as 0
+      encode(operands): return 0; # fm is reserved for future use, so it must be encoded as 0
     - name: pred
       location: 27-24
       encode(operands): |
@@ -262,17 +262,49 @@ encoding:
         }
     - name: xs1
       location: 19-15
-      encode(operands): return 0;  # xs1 is unused, so it must be encoded as 0
+      encode(operands): return 0; # xs1 is unused, so it must be encoded as 0
     - name: xd
       location: 11-7
-      encode(operands): return 0;  # xd is unused, so it must be encoded as 0
+      encode(operands): return 0; # xd is unused, so it must be encoded as 0
 operands:
-- name: pred
-  type: fence_scope
-  possible_values: [ "i", "o", "r", "w", "io", "ir", "iw", "or", "ow", "rw", "ior", "iow", "orw", "iorw" ]
-- name: succ
-  type: fence_scope
-  possible_values: [ "i", "o", "r", "w", "io", "ir", "iw", "or", "ow", "rw", "ior", "iow", "orw", "iorw" ]
+  - name: pred
+    type: fence_scope
+    possible_values:
+      [
+        "i",
+        "o",
+        "r",
+        "w",
+        "io",
+        "ir",
+        "iw",
+        "or",
+        "ow",
+        "rw",
+        "ior",
+        "iow",
+        "orw",
+        "iorw",
+      ]
+  - name: succ
+    type: fence_scope
+    possible_values:
+      [
+        "i",
+        "o",
+        "r",
+        "w",
+        "io",
+        "ir",
+        "iw",
+        "or",
+        "ow",
+        "rw",
+        "ior",
+        "iow",
+        "orw",
+        "iorw",
+      ]
 access:
   s: always
   u: always

@@ -29,28 +29,28 @@ encoding:
       location: 11-7
       encode(operands): return operands[xd].value;
 operands:
-- name: xd
-  type: register
-  reg_file: gpr
-  source: false
-  destination: true
-  decode(): return xd;
-- name: xs1
-  type: register
-  reg_file: gpr
-  source: true
-  destination: false
-  decode(): return xs1;
-- name: xs2
-  type: register
-  reg_file: gpr
-  source: true
-  destination: false
-  decode(): return xs2;
-- name: bs
-  type: immediate
-  possible_values: 0-3
-  decode(): return bs;
+  - name: xd
+    type: register
+    reg_file: gpr
+    source: false
+    destination: true
+    decode(): return xd;
+  - name: xs1
+    type: register
+    reg_file: gpr
+    source: true
+    destination: false
+    decode(): return xs1;
+  - name: xs2
+    type: register
+    reg_file: gpr
+    source: true
+    destination: false
+    decode(): return xs2;
+  - name: bs
+    type: immediate
+    possible_values: 0-3
+    decode(): return bs;
 access:
   s: always
   u: always

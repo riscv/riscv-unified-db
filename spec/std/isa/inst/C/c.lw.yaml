@@ -42,11 +42,11 @@ operands:
     reg_file: gpr
     source: false
     destination: true
-    possible_values: [ 8, 9, 10, 11, 12, 13, 14, 15 ]
+    possible_values: [8, 9, 10, 11, 12, 13, 14, 15]
   - name: xs1
     type: register
     reg_file: gpr
-    possible_values: [ 8, 9, 10, 11, 12, 13, 14, 15 ]
+    possible_values: [8, 9, 10, 11, 12, 13, 14, 15]
     offset:
       name: imm
       type: unsigned
