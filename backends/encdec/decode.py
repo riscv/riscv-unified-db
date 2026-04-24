@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 import sys
-import json
-import yaml
 from pathlib import Path
+
+import yaml
 
 yamls = []
 instructions = {}
@@ -73,7 +73,6 @@ def parse_location(location):
 
 def extract_bits(binary_str, positions):
     """Extract bits from specified positions in the binary string"""
-    width = len(positions)
     result = 0
 
     # Convert binary string to list for easier manipulation
@@ -96,18 +95,14 @@ def matches_pattern(opcode, pattern):
     if len(opcode) != len(pattern):
         return False
 
-    for i in range(len(opcode)):
-        if pattern[i] != "-" and opcode[i] != pattern[i]:
-            return False
-
-    return True
+    return all((pattern[i] == "-" or opcode[i] == pattern[i]) for i in range(len(opcode)))
 
 
 def find_matching_instruction(opcode, xlen=64):
     """Find instruction that matches the given opcode"""
-    for name, instruction in instructions.items():
-        if "encoding" in instruction:
-            encoding = instruction["encoding"]
+    for instruction in instructions:
+        if "encoding" in instructions[instruction]:
+            encoding = instructions[instruction]["encoding"]
             match_pattern = None
 
             # Extract match pattern based on encoding format and xlen
@@ -121,7 +116,7 @@ def find_matching_instruction(opcode, xlen=64):
                 match_pattern = encoding["RV64"]["match"]
 
             if match_pattern and matches_pattern(opcode, match_pattern):
-                return instruction
+                return instructions[instruction]
 
     return None
 
@@ -298,7 +293,7 @@ def format_assembly(instruction, variable_values, xlen=64):
         elif "optional" in operand:
             value = variable_values[operand_name]
             if value == 0:  # vector mask
-                assembly_parts.append(f"v0.t")
+                assembly_parts.append("v0.t")
 
         elif operand_name == "stack_adj":
             print("# Handling stack_adj")
@@ -367,23 +362,22 @@ def main():
     for instruction in yamls:
         instructions[instruction["name"]] = instruction
 
-    opcodes = []
-    f = sys.stdin
     if args.opcodes:
-        f = open(filepath, "r")
-    opcodes = read_opcodes(f)
+        with open(args.opcodes) as f:
+            opcodes = read_opcodes(f)
+    else:
+        opcodes = read_opcodes(sys.stdin)
 
     # Process opcodes and print assembly instructions
-    if opcodes:
-        for opcode in opcodes:
-            opcode = opcode.split("#")[0].strip()  # Remove comments and whitespace
-            if not opcode:
-                continue  # Skip empty lines
-            assembly = decode(opcode, xlen)
-            if assembly:
-                print(f"{assembly}")
-            else:
-                print(f"Failed to decode '{opcode}'")
+    for opcode in opcodes:
+        opcode = opcode.split("#")[0].strip()  # Remove comments and whitespace
+        if not opcode:
+            continue  # Skip empty lines
+        assembly = decode(opcode, xlen)
+        if assembly:
+            print(f"{assembly}")
+        else:
+            print(f"Failed to decode '{opcode}'")
 
 
 if __name__ == "__main__":

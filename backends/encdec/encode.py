@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 import sys
-import json
-import yaml
 from pathlib import Path
+
+import yaml
 
 yamls = []
 instructions = {}
@@ -100,7 +100,7 @@ def extract_mnemonic(line):
 
 def read_assembly_file(filepath):
     """Read assembly file and return its contents as an array of strings"""
-    with open(filepath, "r") as f:
+    with open(filepath) as f:
         return f.readlines()
 
 
@@ -183,7 +183,7 @@ def parse_assembly_arguments(line, instruction_operands):
 
     optional_operands = 0
     for operand_def in instruction_operands:
-        if "optional" in operand_def and operand_def["optional"]:
+        if operand_def.get("optional"):
             optional_operands += 1
     # print(f"possible operands = {len(instruction_operands)}; Optional operands = {optional_operands}; provided arguments = {len(arguments)}")
 
@@ -203,7 +203,7 @@ def parse_assembly_arguments(line, instruction_operands):
         operand_name = operand_def.get("name", f"op{i}")
         # print(operand_def)
         # print(optional_operands_to_keep)
-        if "optional" in operand_def and operand_def["optional"]:
+        if operand_def.get("optional"):
             if optional_operands_to_keep > 0:
                 optional_operands_to_keep -= 1
             else:
@@ -477,10 +477,10 @@ def fill_in_variables(inst, assembly, xlen=64):
                 elif "stack_adj" in variable["encode(operands)"]:  # stack_adj
                     operand_value = builtin_encode_stack_adj(assembly_operands, xlen)
                 else:
-                    print(f"#  ERROR: unsupported variable encoding")
+                    print("#  ERROR: unsupported variable encoding")
                     return None
             else:
-                print(f"#  ERROR: unknown variable encoding")
+                print("#  ERROR: unknown variable encoding")
                 return None
         else:
             print(
