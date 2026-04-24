@@ -17,14 +17,14 @@ assembly: xs2, imm(xs1)
 operands:
   - type: register
     reg_file: gpr
-    offset: ""
     source: true
     destination: false
   - type: register
     reg_file: gpr
-    offset: imm
-    source: true
-    destination: false
+    offset:
+      name: imm
+      length: 12
+      signed: true
 encoding:
   match: "-----------------010-----0100011"
   variables:

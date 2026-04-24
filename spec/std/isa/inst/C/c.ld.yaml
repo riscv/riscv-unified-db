@@ -57,7 +57,8 @@ encoding:
 operands:
   RV32:
     - name: xd
-      type: register_pair
+      #type: register_pair
+      type: register
       reg_file: gpr
       source: false
       destination: true

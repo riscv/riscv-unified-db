@@ -15,14 +15,10 @@ assembly: xd, xs1, imm
 operands:
   - type: register
     reg_file: gpr
-    offset: ""
     source: false
     destination: true
   - type: register
     reg_file: gpr
-    offset: ""
-    source: true
-    destination: false
   - type: immediate
     name: imm
 encoding:

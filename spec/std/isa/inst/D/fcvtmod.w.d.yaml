@@ -75,12 +75,12 @@ encoding:
 operands:
   - name: xd
     type: register
-    regfile: gpr
+    reg_file: gpr
     source: false
     destination: true
   - name: fs1
     type: register
-    regfile: fpr
+    reg_file: fpr
   - name: rm
     type: rounding_mode
 access:

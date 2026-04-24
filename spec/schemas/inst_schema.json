@@ -284,12 +284,204 @@
                 }
               ],
               "description": "Specific value(s) that are not permitted for this field."
+            },
+            "encode(operands)": {
+              "type": "string"
+            },
+            "decode()": {
+              "type": "string"
             }
           },
           "required": ["name", "location"],
           "additionalProperties": false
         }
       ]
+    },
+    "operands_def": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "description": "Register with optional dereference and immediate offset",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "register"
+              },
+              "name": {
+                "type": "string"
+              },
+              "reg_file": {
+                "enum": ["gpr", "fpr", "vr", "sp", "csr"],
+                "default": "gpr"
+              },
+              "offset": {
+                "oneOf": [
+                  {
+                    "const": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "signed": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "length": {
+                        "type": "integer"
+                      },
+                      "left_shifted": {
+                        "type": "integer",
+                        "default": 0
+                      }
+                    },
+                    "required": [ "length" ]
+                  }
+                ],
+                "default": false
+              },
+              "source": {
+                "type": "boolean",
+                "default": true
+              },
+              "destination": {
+                "type": "boolean",
+                "default": false
+              },
+              "possible_values": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "optional": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "required": [
+              "type",
+              "reg_file"
+            ]
+          },
+          {
+            "description": "Register pair (implicit)",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "register_pair"
+              },
+              "name": {
+                "type": "string"
+              },
+              "reg_file": {
+                "enum": ["gpr", "fpr", "vr"],
+                "default": "gpr"
+              },
+              "source": {
+                "type": "boolean",
+                "default": true
+              },
+              "destination": {
+                "type": "boolean",
+                "default": false
+              },
+              "possible_values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "type",
+              "reg_file"
+            ]
+          },
+          {
+            "description": "Immediate",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "immediate"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": ["type", "name"]
+          },
+          {
+            "description": "Floating-point Rounding Mode",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "rounding_mode"
+              },
+              "possible_values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": ["rne", "rtz", "rdn", "rup", "rmm", "dyn"]
+              }
+            },
+            "required": ["type"]
+          },
+          {
+            "description": "FENCE scope",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "fence_scope"
+              },
+              "possible_values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": [
+                  "i",
+                  "o",
+                  "r",
+                  "w",
+                  "io",
+                  "ir",
+                  "iw",
+                  "or",
+                  "ow",
+                  "rw",
+                  "ior",
+                  "iow",
+                  "irw",
+                  "orw",
+                  "iorw"
+                ]
+              }
+            },
+            "required": ["type", "possible_values"]
+          },
+          {
+            "description": "Register range (for PUSH/POP reg_list)",
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "reg_range"
+              },
+              "possible_values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["type", "possible_values"]
+          }
+        ]
+      }
     }
   },
   "type": "object",
@@ -391,149 +583,24 @@
       "description": "Assembly format of the instruction. Can use decode variables"
     },
     "operands": {
-      "type": "array",
-      "items": {
-        "oneOf": [
-          {
-            "description": "Register with optional dereference and immediate offset",
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "register"
-              },
-              "reg_file": {
-                "enum": ["gpr", "fpr", "vr", "sp", "csr"],
-                "default": "gpr"
-              },
-              "offset": {
-                "oneOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "default": false
-              },
-              "source": {
-                "type": "boolean",
-                "default": true
-              },
-              "destination": {
-                "type": "boolean",
-                "default": false
-              },
-              "possible_values": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
+      "oneOf": [
+        {
+          "$ref": "#/$defs/operands_def"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "RV32": {
+              "$ref": "#/$defs/operands_def"
             },
-            "required": [
-              "type",
-              "reg_file",
-              "offset",
-              "source",
-              "destination"
-            ]
+            "RV64": {
+              "$ref": "#/$defs/operands_def"
+            }
           },
-          {
-            "description": "Immediate",
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "immediate"
-              },
-              "name": {
-                "type": "string"
-              }
-            },
-            "required": ["type", "name"]
-          },
-          {
-            "description": "Floating-point Rounding Mode",
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "frm"
-              },
-              "possible_values": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "default": ["RNE", "RTZ", "RDN", "RUP", "RMM", "DYN"]
-              }
-            },
-            "required": ["type", "possible_values"]
-          },
-          {
-            "description": "FENCE scope",
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "fence_scope"
-              },
-              "possible_values": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "default": [
-                  "I",
-                  "O",
-                  "R",
-                  "W",
-                  "IO",
-                  "IR",
-                  "IW",
-                  "OR",
-                  "OW",
-                  "RW",
-                  "IOR",
-                  "IOW",
-                  "IRW",
-                  "ORW",
-                  "IORW"
-                ]
-              }
-            },
-            "required": ["type", "possible_values"]
-          },
-          {
-            "description": "Register list (for PUSH/POP)",
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "reg_list"
-              },
-              "possible_values": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "default": [
-                  "ra",
-                  "ra,s0",
-                  "ra,s0-s1",
-                  "ra,s0-s2",
-                  "ra,s0-s3",
-                  "ra,s0-s4",
-                  "ra,s0-s5",
-                  "ra,s0-s6",
-                  "ra,s0-s7",
-                  "ra,s0-s8",
-                  "ra,s0-s9",
-                  "ra,s0-s11"
-                ]
-              }
-            },
-            "required": ["type", "possible_values"]
-          }
-        ]
-      }
+          "required": ["RV32", "RV64"],
+          "additionalProperties": false
+        }
+      ]
     },
     "data_independent_timing": {
       "type": "boolean",

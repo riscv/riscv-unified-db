@@ -26,17 +26,15 @@ operands:
   RV32:
     - name: reg_range0
       type: reg_range
-      possible_values:
-        [
-          "ra",     "x1"
-        ]
+      possible_values: [
+        "ra",     "x1"
+      ]
     - name: reg_range1
       type: reg_range
-      possible_values:
-        [
-          "s0",     "x8",
-          "s0-s1",  "x8-x9",
-        ]
+      possible_values: [
+        "s0",     "x8",
+        "s0-s1",  "x8-x9",
+      ]
       optional: true
     - name: stack_adj
       type: immediate
@@ -44,41 +42,38 @@ operands:
   RV64:
     - name: reg_range0
       type: reg_range
-      possible_values:
-        [
-          "ra",     "x1"
-        ]
+      possible_values: [
+        "ra",     "x1"
+      ]
     - name: reg_range1
       type: reg_range
-      possible_values:
-        [
-          "s0",     "x8",
-          "s0-s1",  "x8-x9",
-          "s0-s2",
-          "s0-s3",
-          "s0-s4",
-          "s0-s5",
-          "s0-s6",
-          "s0-s7",
-          "s0-s8",
-          "s0-s9",
-          "s0-s11",
-        ]
+      possible_values: [
+        "s0",     "x8",
+        "s0-s1",  "x8-x9",
+        "s0-s2",
+        "s0-s3",
+        "s0-s4",
+        "s0-s5",
+        "s0-s6",
+        "s0-s7",
+        "s0-s8",
+        "s0-s9",
+        "s0-s11",
+      ]
       optional: true
     - name: reg_range2
       type: reg_range
-      possible_values:
-        [
-          "x18",
-          "x18-x19",
-          "x18-x20",
-          "x18-x21",
-          "x18-x22",
-          "x18-x23",
-          "x18-x24",
-          "x18-x25",
-          "x18-x27"
-        ]
+      possible_values: [
+        "x18",
+        "x18-x19",
+        "x18-x20",
+        "x18-x21",
+        "x18-x22",
+        "x18-x23",
+        "x18-x24",
+        "x18-x25",
+        "x18-x27"
+      ]
       optional: true
     - type: immediate
       name: stack_adj
@@ -196,7 +191,7 @@ encoding:
     - name: spimm
       location: 3-2
       #left_shift: 4
-      encode(operands): (-operands[stack_adj]) >> 4
+      encode(operands): |
         Xreg registers = 0;
         if (operands[reg_range0] == "ra" || operands[reg_range0] == "x1") {
           registers = registers + 1;

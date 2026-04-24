@@ -37,17 +37,17 @@ encoding:
 operands:
   - name: vd
     type: register
-    reg_file: vpr
+    reg_file: vr
     source: false
     destination: true
   - name: xs1
     type: register
     reg_file: gpr
     offset:
-      name: ""
+      length: 0
   - name: vm
     type: register
-    reg_file: vpr
+    reg_file: vr
     possible_values: [ 0 ] # needs to be "v0.t". hmm
     optional: true
 access:

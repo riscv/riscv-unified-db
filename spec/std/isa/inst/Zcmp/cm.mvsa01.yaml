@@ -35,11 +35,11 @@ access:
 operands:
   - name: r1s
     type: register
-    regfile: gpr
+    reg_file: gpr
     possible_values: [ 8, 9, 18, 19, 20, 21, 22, 23 ]
   - name: r2s
     type: register
-    regfile: register
+    reg_file: gpr
     possible_values: [ 8, 9, 18, 19, 20, 21, 22, 23 ]
 operation(): |
   if (implemented?(ExtensionName::Zcmp) && (CSR[misa].C == 1'b0)) {

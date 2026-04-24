@@ -23,21 +23,19 @@ definedBy:
     name: Zabha
 assembly: xd, xs2, (xs1)
 operands:
-  - type: register
+  - name: xd
+    type: register
     reg_file: gpr
-    offset: ""
     source: false
     destination: true
-  - type: register
+  - name: xs2
+    type: register
     reg_file: gpr
-    offset: ""
-    source: true
-    destination: false
-  - type: register
+  - name: xs1
+    type: register
     reg_file: gpr
-    offset: ""
-    source: true
-    destination: false
+    offset:
+      length: 0
 encoding:
   match: 0000000----------000-----0101111
   variables:
