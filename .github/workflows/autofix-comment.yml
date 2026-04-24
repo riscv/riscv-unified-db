@@ -90,10 +90,9 @@ jobs:
           <sub>This is an automated message. The workflow file needs to be regenerated because you modified one of: `tools/test/regress-tests.yaml`, `tools/test/regress-gh-template.yaml`, or `tools/test/gen_regress.rb`.</sub>
           EOF
 
-          existing_id="$(gh api --paginate \
+          existing_id="$(gh api --paginate --slurp \
             repos/${{ github.repository }}/issues/${{ steps.pr.outputs.number }}/comments \
-            --jq '.[] | select(.body | contains("<!-- autofix-regress-comment -->")) | .id' \
-            | head -1)"
+            --jq 'first(map(.[])[] | select(.body | contains("<!-- autofix-regress-comment -->")) | .id) // empty')"
 
           if [ -n "$existing_id" ]; then
             gh api repos/${{ github.repository }}/issues/comments/"$existing_id" \
