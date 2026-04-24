@@ -51,7 +51,7 @@ jobs:
             repos/${{ github.repository }}/pulls/${pr_number}/files \
             --jq '.[].filename')"
 
-          if echo "$changed_files" | grep -E -q '^(\.github/workflows/regress\.yml|tools/test/regress-tests\.yaml|tools/test/regress-gh-template\.yaml|tools/test/gen_regress\.rb)$'; then
+          if grep -E -q '^(\.github/workflows/regress\.yml|tools/test/regress-tests\.yaml|tools/test/regress-gh-template\.yaml|tools/test/gen_regress\.rb)$' <(echo "$changed_files"); then
             echo "needs_comment=true" >> "$GITHUB_OUTPUT"
           else
             echo "needs_comment=false" >> "$GITHUB_OUTPUT"
