@@ -57,6 +57,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cat << 'EOF' > pr-comment.md
+          <!-- autofix-regress-comment -->
           ## ⚠️ Autofix Failed: Workflow File Update Required
 
           The `autofix.ci` check failed because it cannot commit changes to `.github/workflows/regress.yml` due to security restrictions.
@@ -83,6 +84,16 @@ jobs:
           <sub>This is an automated message. The workflow file needs to be regenerated because you modified one of: `tools/test/regress-tests.yaml`, `tools/test/regress-gh-template.yaml`, or `tools/test/gen_regress.rb`.</sub>
           EOF
 
-          gh pr comment "${{ steps.pr.outputs.number }}" \
-            --repo "${{ github.repository }}" \
-            --body-file pr-comment.md
+          existing_id="$(gh api --paginate \
+            repos/${{ github.repository }}/issues/${{ steps.pr.outputs.number }}/comments \
+            --jq '.[] | select(.body | contains("<!-- autofix-regress-comment -->")) | .id' \
+            | head -1)"
+
+          if [ -n "$existing_id" ]; then
+            gh api repos/${{ github.repository }}/issues/comments/"$existing_id" \
+              -X PATCH -f body="$(cat pr-comment.md)"
+          else
+            gh pr comment "${{ steps.pr.outputs.number }}" \
+              --repo "${{ github.repository }}" \
+              --body-file pr-comment.md
+          fi
