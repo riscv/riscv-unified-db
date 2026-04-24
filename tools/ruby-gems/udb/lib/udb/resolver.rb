@@ -186,15 +186,20 @@ module Udb
           end
         raise "custom directory '#{overlay_path}' does not exist" if !overlay_path.nil? && !overlay_path.directory?
 
-        if any_newer?(merged_spec_path(config_name) / ".stamp", deps)
-          # Use Ruby YAML resolver instead of Python
-          yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
-          yaml_resolver.merge_files(
-            std_path.to_s,
-            overlay_path&.to_s,
-            merged_spec_path(config_name).to_s
-          )
-          FileUtils.touch(merged_spec_path(config_name) / ".stamp")
+        FileUtils.mkdir_p(@gen_path / "spec")
+        merge_lock_name = merged_spec_path(config_name).basename
+        File.open(@gen_path / "spec" / ".#{merge_lock_name}.lock", File::CREAT | File::RDWR) do |f|
+          f.flock(File::LOCK_EX)
+          if any_newer?(merged_spec_path(config_name) / ".stamp", deps)
+            # Use Ruby YAML resolver instead of Python
+            yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
+            yaml_resolver.merge_files(
+              std_path.to_s,
+              overlay_path&.to_s,
+              merged_spec_path(config_name).to_s
+            )
+            FileUtils.touch(merged_spec_path(config_name) / ".stamp")
+          end
         end
       end
     end
@@ -205,19 +210,24 @@ module Udb
       @mutex.synchronize do
         config_name = config_yaml["name"]
 
-        deps = Dir[merged_spec_path(config_name) / "**" / "*.yaml"].map { |p| Pathname.new(p) }
-        if any_newer?(resolved_spec_path(config_name) / ".stamp", deps)
-          # Use Ruby YAML resolver instead of Python
-          yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
-          yaml_resolver.resolve_files(
-            merged_spec_path(config_name).to_s,
-            resolved_spec_path(config_name).to_s,
-            no_checks: false
-          )
-          FileUtils.touch(resolved_spec_path(config_name) / ".stamp")
-        end
+        FileUtils.mkdir_p(@gen_path / "resolved_spec")
+        resolve_lock_name = resolved_spec_path(config_name).basename
+        File.open(@gen_path / "resolved_spec" / ".#{resolve_lock_name}.lock", File::CREAT | File::RDWR) do |f|
+          f.flock(File::LOCK_EX)
+          deps = Dir[merged_spec_path(config_name) / "**" / "*.yaml"].map { |p| Pathname.new(p) }
+          if any_newer?(resolved_spec_path(config_name) / ".stamp", deps)
+            # Use Ruby YAML resolver instead of Python
+            yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
+            yaml_resolver.resolve_files(
+              merged_spec_path(config_name).to_s,
+              resolved_spec_path(config_name).to_s,
+              no_checks: false
+            )
+            FileUtils.touch(resolved_spec_path(config_name) / ".stamp")
+          end
 
-        FileUtils.cp_r(std_path / "isa", resolved_spec_path(config_name))
+          FileUtils.cp_r(std_path / "isa", resolved_spec_path(config_name))
+        end
       end
     end
 
