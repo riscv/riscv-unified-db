@@ -107,6 +107,7 @@ gen_subcmd_usage() {
   echo "  all:           Generate all development artifacts"
   echo "  gem-versions:  Sync inter-gem version pins in gemspecs and Gemfile.lock files"
   echo "                 (no version bumping; use 'chore update gem-versions' to also bump)"
+  echo "  profile-cfgs:  Generate strict config files for profiles (cfgs/profile/)"
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
@@ -363,6 +364,7 @@ do_gen_all() {
   do_gen_vscode_idl
   do_gen_gem_versions
   do_ruby_type_def all
+  do_gen_profile_cfgs
   do_gen_xqci_golden
 }
 
@@ -373,6 +375,14 @@ do_gen_smoke() {
   do_gen_regress
   do_gen_vscode_idl
   do_ruby_type_def all
+}
+
+#
+# Generate strict config files for profiles (cfgs/profile/)
+#
+do_gen_profile_cfgs() {
+  echo "Generating profile config files in cfgs/profile/"
+  "${UDB_ROOT}"/bin/bundle exec rake gen:cfg
 }
 
 #
@@ -584,6 +594,10 @@ case "$subcommand" in
         ;;
       regress )
         do_gen_regress
+        exit 0
+        ;;
+      profile-cfgs )
+        do_gen_profile_cfgs
         exit 0
         ;;
       xqci )

@@ -322,6 +322,28 @@ module Udb
       end
     end
 
+    # Create a ConfiguredArchitecture directly from an in-memory config data hash,
+    # bypassing resolve_config and resolve_arch entirely. Only valid when the config
+    # has no arch_overlay (i.e., it uses the standard spec at gen/resolved_spec/_).
+    # Callers must ensure this precondition holds before calling this method.
+    sig { params(config_data: T::Hash[String, T.untyped]).returns(Udb::ConfiguredArchitecture) }
+    def cfg_arch_for_data(config_data)
+      info = ConfigInfo.new(
+        name: config_data["name"],
+        path: Pathname.new("portfolio/#{config_data["name"]}"),
+        overlay_path: nil,
+        unresolved_yaml: config_data,
+        spec_path: std_path,
+        merged_spec_path: @gen_path / "spec" / "_",
+        resolved_spec_path: @gen_path / "resolved_spec" / "_",
+        resolver: self
+      )
+      Udb::ConfiguredArchitecture.new(
+        config_data["name"],
+        Udb::AbstractConfig.create_from_data(config_data, info)
+      )
+    end
+
     SCHEMAS_BASE_URL = "https://riscv.github.io/riscv-unified-db/schemas"
 
     # Resolve schema files by rewriting their $id to the full published URL and

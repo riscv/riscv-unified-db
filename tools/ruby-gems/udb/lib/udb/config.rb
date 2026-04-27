@@ -163,6 +163,23 @@ module Udb
         T.absurd(cfg_file_path_or_portfolio_grp)
       end
     end
+
+    # Create an AbstractConfig directly from a config data hash, bypassing file I/O.
+    # Used when the config is already in memory (e.g., portfolio-derived temp configs).
+    sig { params(data: T::Hash[String, T.untyped], info: Resolver::ConfigInfo).returns(AbstractConfig) }
+    def self.create_from_data(data, info)
+      freeze_data(data)
+      case data["type"]
+      when "fully configured"
+        FullConfig.send(:new, data, info)
+      when "partially configured"
+        PartialConfig.send(:new, data, info)
+      when "unconfigured"
+        UnConfig.send(:new, data, info)
+      else
+        raise "Unexpected type (#{data['type']}) in config"
+      end
+    end
   end
 
   #################################################################

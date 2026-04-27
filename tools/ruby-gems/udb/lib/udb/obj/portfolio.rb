@@ -498,20 +498,21 @@ module Udb
     sig { returns(T::Hash[String, T.untyped]) }
     def to_strict_config
       strict_mandatory_ext_reqs = mandatory_ext_reqs
+      cfg_arch_obj = to_cfg_arch
 
-      to_cfg_arch.extensions.each do |ext|
+      cfg_arch_obj.extensions.each do |ext|
         next if mandatory_ext_reqs.any? { |e| e.name == ext.name }
 
-        if (-ext.to_ext_req.to_condition & to_cfg_arch.to_condition).unsatisfiable?
+        if (-ext.to_ext_req.to_condition & cfg_arch_obj.to_condition).unsatisfiable_by_cfg_arch?(cfg_arch_obj)
           # what's the minimum?
           min_ext_ver = ext.versions.find do |ext_ver|
-            compat_with_ext_ver = Condition.new({ "extension" => { "name" => ext.name, "version" => "= #{ext_ver.version_str}" } }, to_cfg_arch)
-            c = (compat_with_ext_ver & to_cfg_arch.to_condition)
-            c.satisfiable?
+            compat_with_ext_ver = Condition.new({ "extension" => { "name" => ext.name, "version" => "= #{ext_ver.version_str}" } }, cfg_arch_obj)
+            c = (compat_with_ext_ver & cfg_arch_obj.to_condition)
+            c.satisfiable_by_cfg_arch?(cfg_arch_obj)
           end
           raise "condition problem: ext is required but none of the versions are" if min_ext_ver.nil?
 
-          strict_mandatory_ext_reqs << PortfolioExtensionRequirement.new(ext.name, "~> #{min_ext_ver.version_str}", arch: to_cfg_arch)
+          strict_mandatory_ext_reqs << PortfolioExtensionRequirement.new(ext.name, "~> #{min_ext_ver.version_str}", arch: cfg_arch_obj)
         end
       end
 
@@ -521,14 +522,7 @@ module Udb
     # returns a config arch that treats the Portfolio like a partial config
     sig { returns(ConfiguredArchitecture) }
     def to_cfg_arch
-      @cfg_arch_for_mandatory ||= begin
-        Tempfile.create do |f|
-          f.write YAML.dump(to_config)
-          f.fsync
-
-          @cfg_arch.config.info.resolver.cfg_arch_for(Pathname.new f.path)
-        end
-      end
+      @cfg_arch_for_mandatory ||= cfg_arch_for_config_data(to_config)
     end
 
     # returns a config arch that treats the *optional* extensions in Portfolio like a partial config
@@ -563,11 +557,25 @@ module Udb
             "additional_extensions" => true
           }
         contents["requirements"] = requirements_condition.to_h unless requirements_condition.empty?
-        Tempfile.create do |f|
-          f.write YAML.dump(contents)
-          f.fsync
+        cfg_arch_for_config_data(contents)
+      end
+    end
 
-          @cfg_arch.config.info.resolver.cfg_arch_for(Pathname.new f.path)
+    private
+
+    # Build a ConfiguredArchitecture from an in-memory config data hash.
+    # Uses the fast path (no disk round-trip) when the parent has no overlay;
+    # falls back to the full pipeline when the parent's resolved spec differs.
+    sig { params(config_data: T::Hash[String, T.untyped]).returns(ConfiguredArchitecture) }
+    def cfg_arch_for_config_data(config_data)
+      resolver = @cfg_arch.config.info.resolver
+      if @cfg_arch.config.info.overlay_path.nil?
+        resolver.cfg_arch_for_data(config_data)
+      else
+        Tempfile.create do |f|
+          f.write YAML.dump(config_data)
+          f.fsync
+          resolver.cfg_arch_for(Pathname.new f.path)
         end
       end
     end
