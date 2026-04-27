@@ -4,13 +4,12 @@
 
 # frozen_string_literal: true
 
-# Combines knowledge of the architecture database with one or more portfolios (profile or certificate).
+# Combines knowledge of the architecture database with one or more portfolios (profile).
 #
 # Used in portfolio-based ERB templates to gather information about the "portfolio_design".
 # The "portfolio_design" corresponds to the file being created by the ERB template and facilitates
 # sharing ERB template fragments between different kinds of portfolios (mostly in the appendices).
-# For example, a processor certificate model has one portfolio but a profile release has multiple portfolios
-# but they both have just one PortfolioDesign object.
+# For example, a profile release has multiple portfolios but just one PortfolioDesign object.
 
 require "forwardable"
 
@@ -66,9 +65,7 @@ module Udb
 
     # Class methods
     def self.profile_release_type = "Profile Release"
-    def self.proc_crd_type = "Certification Requirements Document"
-    def self.proc_ctp_type = "Certification Test Plan"
-    def self.portfolio_design_types = [profile_release_type, proc_crd_type, proc_ctp_type]
+    def self.portfolio_design_types = [profile_release_type]
 
     # @param name [#to_s] The name of the portfolio design (i.e., backend filename without a suffix)
     # @param cfg_arch [ConfiguredArchitecture] The database of RISC-V standards for a particular configuration

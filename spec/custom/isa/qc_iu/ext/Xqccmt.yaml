@@ -1,0 +1,127 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Xqccmt
+long_name: Qualcomm Custom Compressed Jump Table with Alternate Link Register
+description: |
+  Xqccmt is a Qualcomm custom extension that provides compressed (16-bit) jump table
+  instructions for code-size reduction. It introduces two instructions, `qc.cm.jt` and
+  `qc.cm.jalt`, which perform indirect jumps through a jump vector table (JVT) whose
+  base address is held in the `jvt` CSR.
+
+  === Jump Vector Table
+
+  The jump vector table is an array of XLEN-wide entries stored in memory. Its base
+  address is configured by writing to the `jvt` CSR. The base address must be aligned
+  to a 64-byte boundary (the lower 6 bits of the base are always zero). The memory
+  region pointed to by `jvt.BASE` is treated as instruction memory for the purpose of
+  execute-permission checks.
+
+  Each instruction encodes an 8-bit `index` field. The index selects which entry in the
+  table to use:
+
+  * Indices 0–31 (bits [7:5] of index == 0b000): used by `qc.cm.jt` (jump only, no link)
+  * Indices 32–255 (bits [7:5] of index != 0b000): used by `qc.cm.jalt` (jump with link)
+
+  The entry address is computed as: `entry_addr = {jvt.BASE, 6'b000000} + index × (XLEN/8)`
+
+  === Alternate Link Register
+
+  In standard table-jump behavior, a call instruction always saves the return address in
+  `ra` (x1). Xqccmt extends this by repurposing bit 0 of each call table entry (index ≥ 32)
+  as metadata to select the return address register:
+
+  * Entry bit 0 = 0: save return address in `ra` (x1)
+  * Entry bit 0 = 1: save return address in `t0` (x5), the alternate link register
+
+  Because XLEN-wide addresses are naturally aligned, bit 0 of a valid target address is
+  always zero. Xqccmt repurposes this always-zero bit as a one-bit selector without
+  affecting the jump target. The actual jump target is always computed with bit 0 forced
+  to zero: `target = {entry[XLEN-1:1], 1'b0}`.
+
+  For `qc.cm.jt` (index < 32), bit 0 of the table entry is not used as metadata; the
+  jump target is computed identically: `target = {entry[XLEN-1:1], 1'b0}`, and no link
+  register is written.
+
+  === Encoding
+
+  Both instructions use the 16-bit compressed encoding space (quadrant 2, funct3=0b101),
+  the same space used by `cm.jt` and `cm.jalt` in the standard Zcmt extension. Because
+  of this encoding overlap, Xqccmt and Zcmt are mutually exclusive and cannot both be
+  present in the same configuration.
+
+  The 16-bit encoding is:
+
+  [%header,cols="^1,^1,^1,^1,^1"]
+  |===
+  |[15:13]
+  |[12:10]
+  |[9:5]
+  |[4:2]
+  |[1:0]
+
+  |101
+  |index[7:5]
+  |index[4:0]
+  |000
+  |10
+  |===
+
+  When index[7:5] == 0b000, the instruction is `qc.cm.jt` (indices 0–31).
+  When index[7:5] != 0b000, the instruction is `qc.cm.jalt` (indices 32–255).
+
+  === JVT CSR Access Control
+
+  The `jvt` CSR is accessible at address 0x017. If the Smstateen extension is
+  implemented, access to `jvt` from non-M modes is gated by the JVT bit in the
+  `mstateen0` / `sstateen0` / `hstateen0` CSRs. Attempting to execute `qc.cm.jt` or
+  `qc.cm.jalt` when `jvt` is inaccessible raises an Illegal Instruction exception.
+
+  === Instruction Summary
+
+  [%header,cols="^1,^1,4,8"]
+  |===
+  |RV32
+  |RV64
+  |Mnemonic
+  |Instruction
+
+  |yes
+  |yes
+  |qc.cm.jt _index_
+  |<<#insns-qc_cm_jt>>
+
+  |yes
+  |yes
+  |qc.cm.jalt _index_
+  |<<#insns-qc_cm_jalt>>
+
+  |===
+type: unprivileged
+versions:
+- version: "0.1.0"
+  state: development
+  ratification_date: unknown
+  contributors:
+  - name: Albert Yosher
+    company: Qualcomm Technologies, Inc.
+    email: ayosher@qti.qualcomm.com
+  - name: Derek Hower
+    company: Qualcomm Technologies, Inc.
+    email: dhower@qti.qualcomm.com
+  changes:
+    - Initial version. Custom variant of Zcmt with alternate link register support.
+      Uses bit 0 of call table entries as metadata to select ra (x1) or t0 (x5)
+      as the return address register for qc.cm.jalt.
+  requirements:
+    allOf:
+      - extension:
+          name: Zca
+          version: ">= 1.0.0"
+      - extension:
+          name: Zicsr
+          version: ">= 2.0.0"

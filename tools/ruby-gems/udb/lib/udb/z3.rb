@@ -14,12 +14,37 @@
 require "forwardable"
 require "sorbet-runtime"
 require "udb/version_spec"
+
+require_relative "global_opts"
 require_relative "z3_loader"
 
 # Ensure Z3 library is available before requiring the z3 gem
 Udb::Z3Loader.ensure_z3_loaded
 
 require "z3"
+
+# Patch Z3::AST#ast_kind to use a constant hash instead of allocating a new one on every call
+module Z3
+  class AST
+    extend T::Sig
+
+    AST_KIND_LOOKUP = T.let({
+      0 => :numeral,
+      1 => :app,
+      2 => :var,
+      3 => :quantifier,
+      4 => :sort,
+      5 => :func_decl,
+      1000 => :unknown,
+    }.freeze, T::Hash[Integer, Symbol])
+
+    sig { returns(Symbol).checked(:never) }
+    def ast_kind
+      kind_id = LowLevel.get_ast_kind(self)
+      AST_KIND_LOOKUP[kind_id] or raise Z3::Exception, "Unknown AST kind #{kind_id}"
+    end
+  end
+end
 
 module Z3
   # Extension to the Z3::Solver class to add tracked assertions
@@ -1057,9 +1082,48 @@ module Udb
     sig { returns(Z3::Solver) }
     attr_reader :solver
 
+    @parallel_enabled = T.let(nil, T.nilable(T::Boolean))
+
+    class << self
+      extend T::Sig
+
+      sig { returns(T.nilable(T::Boolean)) }
+      def parallel_enabled
+        @parallel_enabled
+      end
+
+      sig { params(value: T.nilable(T::Boolean)).void }
+      def parallel_enabled=(value)
+        @parallel_enabled = value
+      end
+
+      sig { params(desired: T::Boolean).void }
+      def configure_parallelization(desired)
+        previous = parallel_enabled
+
+        if !previous.nil? && previous != desired
+          if desired
+            Udb.logger.warn "Z3 parallelization was previously disabled, but is now being enabled"
+          else
+            Udb.logger.warn "Z3 parallelization was previously enabled, but is now being disabled"
+          end
+        end
+
+        Z3.set_param("parallel.enable", desired ? "true" : "false")
+        self.parallel_enabled = desired
+      end
+    end
+
     sig { void }
     def initialize
+      if Udb.global_options.parallel_z3
+        Z3Solver.configure_parallelization(true)
+      else
+        Z3Solver.configure_parallelization(false)
+      end
+
       @solver = T.let(Z3::Solver.new, Z3::Solver)
+
       # Stacks for incremental solving with push/pop
       @ext_vers = T.let([{}], T::Array[T::Hash[String, Z3ExtensionVersion]])
       @ext_reqs = T.let([{}], T::Array[T::Hash[String, Z3ExtensionRequirement]])

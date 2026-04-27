@@ -1,0 +1,153 @@
+---
+sidebar_position: 14
+title: IDL for Programmers
+---
+
+IDL's syntax is in the lineage of C, C++, Java, JavaScript, and the many languages that inherited their style: curly-brace blocks, familiar operators, explicit types, and function calls with parentheses. If you write in any of these languages day-to-day, IDL will feel immediately readable.
+
+The differences reflect IDL's purpose — it describes hardware-visible ISA behavior, not general computation. There is no heap, no dynamic dispatch, no I/O. What replaces those things is a set of hardware-specific constructs (bit-width types, CSR access, architectural registers) that have no equivalent in software languages. The guide below covers what carries over directly and what you will need to adjust to.
+
+## What carries over
+
+- **Curly-brace blocks** — `if`, `for`, and function bodies all use `{ }`.
+- **Familiar operators** — `+`, `-`, `*`, `/`, `%`, `&`, `|`, `^`, `~`, `<<`, `>>`, `!`, `&&`, `||`, `==`, `!=`, `<`, `<=`, `>`, `>=` all work as expected on integer values.
+- **Ternary operator** — `condition ? a : b` is supported.
+- **`for` loops** — same three-part syntax: `for (init; condition; update) { }`.
+- **`if` / `else if` / `else`** — same as C.
+- **Structs** — `struct Name { ... }` with member access via `.`.
+- **Enumerations** — similar to C enums, but with important differences (see below).
+- **Function calls** — positional arguments, `return` statement.
+
+## What is different
+
+### Integer types carry explicit bit widths
+
+There is no `int`, `uint32_t`, or `long`. Every integer is `Bits<N>` where `N` is the exact bit width:
+
+```idl
+Bits<32> word;        # 32-bit unsigned
+Bits<64> addr;        # 64-bit unsigned
+Bits<MXLEN> reg;      # width determined by configuration constant
+```
+
+`N` must be a compile-time constant (a literal, a named constant, or a constant expression). You cannot use a variable as the width.
+
+### All `Bits<N>` are unsigned by default
+
+There are no signed integer types. When signed arithmetic is needed, use `$signed()` to explicitly interpret a value as signed for that operation:
+
+```idl
+XReg a = -1;
+XReg b = 0;
+
+# unsigned comparison: -1 is a large positive number
+(a < b) ? 1 : 0    # => 0
+
+# signed comparison
+($signed(a) < $signed(b)) ? 1 : 0  # => 1
+```
+
+`$signed` affects widening and comparison for one expression — it does not change the stored representation.
+
+### Comments use `#`, not `//`
+
+```idl
+# This is a comment
+x = x + 1;  # end-of-line comment
+```
+
+### Non-zero integers are not implicitly boolean
+
+An `if` condition must be a `Boolean` type. Using an integer where a boolean is expected is a compilation error:
+
+```idl
+XReg src1 = X[rs1];
+
+if (src1 != 0) { ... }  # correct
+# if (src1) { ... }     # compilation error: not Boolean
+```
+
+### No compound assignment operators
+
+`+=`, `-=`, `&=`, etc. do not exist. Write the full expression:
+
+```idl
+count = count + 1;
+mask  = mask & 0xFF;
+```
+
+### Assignment is a statement, not an expression
+
+You cannot use assignment inside a condition or as a subexpression:
+
+```idl
+# Not valid in IDL:
+# while ((x = read()) != 0) { }
+
+# IDL form:
+x = read();
+if (x != 0) { ... }
+```
+
+### Case determines the kind of identifier
+
+The **first letter's case** determines what kind of identifier it is — not just a naming convention:
+
+| First character | Kind |
+|---|---|
+| Lowercase | Mutable variable or function |
+| Uppercase | Constant or type name |
+
+You cannot declare a mutable variable called `Count` or a constant called `mxlen`.
+
+### Enumeration members require scope qualification
+
+Unlike C enums, enumeration members are not promoted to the enclosing scope. You must always qualify them:
+
+```idl
+SatpMode mode = SatpMode::Sv39;   # correct
+# SatpMode mode = Sv39;           # compilation error
+```
+
+### No pointers, references, or heap allocation
+
+All architectural state — registers, CSRs, memory — is accessed through built-in syntax (`X[rs1]`, `CSR[mstatus]`, `read_memory`). There is no general-purpose addressable memory for local variables, so references and pointers have no meaning.
+
+### No recursion
+
+Recursive functions are a compilation error. IDL targets hardware backends (ISS generators, formal tools) that require statically-bounded call graphs. Use a `for` loop instead.
+
+### Struct declarations do not end with a semicolon
+
+```idl
+struct TranslationResult {
+  Bits<PHYS_ADDR_WIDTH> paddr;
+  Pbmt pbmt;
+}                    # no semicolon — unlike C
+```
+
+## Verilog-style literals are supported
+
+In addition to C-style hex (`0xDEAD`) and decimal, IDL supports Verilog-style literals with explicit width and radix:
+
+```idl
+32'hDEAD_BEEF   # 32-bit hex
+8'd255          # 8-bit decimal
+1'b1            # 1-bit binary
+```
+
+Verilog-style literals are the preferred form when the bit width matters.
+
+## Quick reference
+
+| C | IDL |
+|---|-----|
+| `uint32_t x = 0;` | `Bits<32> x = 0;` |
+| `// comment` | `# comment` |
+| `if (x) { }` | `if (x != 0) { }` |
+| `x += 1;` | `x = x + 1;` |
+| `(int) x` | `$signed(x)` |
+| `A` (enum member) | `MyEnum::A` |
+| `struct Foo { ... };` | `struct Foo { ... }` (no `;`) |
+| Recursion OK | **Compilation error** |
+| Pointers, `malloc` | Not available |

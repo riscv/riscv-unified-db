@@ -32,5 +32,8 @@ access:
   u: always
   vs: always
   vu: always
+pseudoinstructions:
+  - when: fs1 == fs2
+    to: fabs.d fd, fs1
 data_independent_timing: false
 operation(): |

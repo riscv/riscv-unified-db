@@ -32,5 +32,5 @@ access:
 data_independent_timing: true
 pseudoinstructions:
   - when: (xs2 == 0x0)
-    to: zext.h xd,xs1
+    to: zext.h xd, xs1
 operation(): |

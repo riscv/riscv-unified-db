@@ -29,7 +29,7 @@ requirements:
     }
     for (U32 i = 3; i < 32; i++) {
       !implemented?(ExtensionName::Zihpm) -> !SCOUNTENABLE_EN[i];
-      (implemented?(ExtensionName::Smhpm) && !HPM_COUNTER_EN[i]) -> !SCOUNTENABLE_EN[i];
+      (!HPM_COUNTER_EN[i]) -> !SCOUNTENABLE_EN[i];
     }
   reason: |
     Counters 0-2 are defined by Zicntr
@@ -39,8 +39,4 @@ requirements:
     When mhpmcounter[i] does not exist, it cannot be enabled.
 definedBy:
   extension:
-    allOf:
-      - name: S
-      - anyOf:
-          - name: Zicntr
-          - name: Zihpm
+    name: S

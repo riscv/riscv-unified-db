@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
+  "$id": "v0.1",
   "type": "object",
   "required": [
     "$schema",
@@ -15,15 +15,17 @@
     "$schema": {
       "type": "string",
       "format": "uri-reference",
-      "const": "ext_schema.json#",
-      "description": "Path to schema, relative to <UDB ROOT>/schemas"
+      "description": "Path to schema, relative to <UDB ROOT>/schemas",
+      "const": "ext_schema.json#"
     },
     "kind": {
       "type": "string",
       "const": "extension",
       "description": "Object type"
     },
-    "name": { "$ref": "schema_defs.json#/$defs/extension_name" },
+    "name": {
+      "$ref": "schema_defs.json#/$defs/extension_name"
+    },
     "long_name": {
       "type": "string",
       "description": "One line description for the extension"
@@ -56,16 +58,46 @@
       "items": {
         "type": "object",
         "required": ["version", "state"],
-        "if": {
-          "properties": {
-            "state": {
-              "const": "ratified"
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "state": {
+                  "const": "ratified"
+                }
+              }
+            },
+            "then": {
+              "required": ["ratification_date"],
+              "properties": {
+                "ratification_date": {
+                  "not": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "state": {
+                  "const": "nonstandard-released"
+                }
+              }
+            },
+            "then": {
+              "required": ["release_date"],
+              "properties": {
+                "release_date": {
+                  "not": {
+                    "type": "null"
+                  }
+                }
+              }
             }
           }
-        },
-        "then": {
-          "required": ["ratification_date"]
-        },
+        ],
         "properties": {
           "version": {
             "$ref": "schema_defs.json#/$defs/extension_version"
@@ -106,7 +138,30 @@
                 "pattern": "^unknown$",
                 "$comment": "When ratification date is unknown"
               },
-              { "type": "null", "$comment": "When version isn't ratified" }
+              {
+                "type": "null",
+                "$comment": "When version isn't ratified"
+              }
+            ]
+          },
+          "release_date": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^20[0-9][0-9]-(0[1-9]|1[0-2])$",
+                "$comment": "When the release date is known",
+                "description": "A specific year and month in YYYY-MM format",
+                "examples": ["2019-01", "2024-12"]
+              },
+              {
+                "type": "string",
+                "pattern": "^unknown$",
+                "$comment": "When release date is unknown"
+              },
+              {
+                "type": "null",
+                "$comment": "When version isn't released"
+              }
             ]
           },
           "changes": {
@@ -154,9 +209,6 @@
     "$source": {
       "type": "string",
       "description": "Source file where this extension was defined"
-    },
-    "cert_normative_rules": {
-      "$ref": "schema_defs.json#/$defs/cert_normative_rules"
     }
   },
   "additionalProperties": false

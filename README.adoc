@@ -54,31 +54,36 @@ Additionally, developers will be interested in the following:
 
 * `backends`: Tools to generate artifacts (documents, simulators, etc.) from UDB data
 * `tools/ruby-gems`: Ruby gem libraries for interacting with UDB / IDL
-* `bin`: Wrapper scripts to run commands within the container environment
+* `bin`: Wrapper scripts to run commands in the development environment
 
 == Getting Started
 
 === Prerequisites
 
-UnifiedDB tools are set up to run in a container. Docker (any version) and Podman (any version) are supported.
+UnifiedDB tooling is designed to run natively on your host using https://mise.jdx.dev[mise].
 
-=== Devcontainer
+A container runtime (Docker or Podman) is optional. It is only required for building generated
+C++ ISS code when a suitable native C++ toolchain and/or RISC-V cross-compiler is unavailable natively.
 
-You can also leverage https://containers.dev/[devcontainers] to run the RISC-V Unified Database.
+All core workflows—Ruby, Python, npm, and all other UDB generators—run natively (via mise) without a container.
 
-This is especially useful when using Visual Studio Code or GitHub codespaces, as it will setup up your IDE environment for you.
+=== Native Setup (mise)
 
-==== VS Code
+From the repo root, run:
 
-To run the devcontainer locally, you will need to have https://docs.docker.com/engine/install[Docker installed].
+[source,bash]
+----
+bin/setup
+----
 
-With Docker installed, install the https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers[Dev Containers] extension in VS Code.
+That's it. `bin/setup` installs https://mise.jdx.dev[mise] if needed, uses it to install all
+tool versions (Ruby, Python, Node.js, CMake, etc.), installs all dependencies (Ruby gems,
+Python packages, npm packages, native binaries), sets up git hooks, and walks you through
+choosing a C++ toolchain. It is safe to re-run at any time.
 
-You can then run `Dev Containers: Open Folder in Container...` from the Command Palette (Ctrl+Shift+P) and select the folder with this repository.
-
-==== GitHub Codespaces
-
-You can start a GitHub Codespace for this repository by clicking the "Code" button and selecting "Open with Codespaces".
+When it finishes, it will tell you how to activate mise in your shell profile so that
+mise-managed tools are available in future terminal sessions, and remind you to use the
+wrappers in `bin/` when invoking any tool.
 
 === Tasks
 

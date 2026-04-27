@@ -6,17 +6,13 @@
 
 require_relative "test_helper"
 
-require "English"
 require "fileutils"
-require "open3"
 require "tmpdir"
 require "yaml"
 
 require_relative "../lib/udb/resolver"
 
 class TestYamlLoader < Minitest::Test
-  UDB_GEM_PATH = Bundler.definition.specs.find { |s| s.name == "udb" }.full_gem_path
-
   def resolve_yaml(yaml)
     Dir.mktmpdir do |dir|
       arch_dir = Pathname.new(dir) / "arch"
@@ -26,16 +22,12 @@ class TestYamlLoader < Minitest::Test
 
       File.write(test_dir / "test.yaml", yaml)
 
-      stdout, stderr, status =
-        Dir.chdir(Udb.repo_root) do
-          Open3.capture3("uv run #{UDB_GEM_PATH}/python/yaml_resolver.py resolve --no-progress --no-checks #{arch_dir} #{resolved_dir}")
-        end
-      # puts stdout
-      # puts stderr
-      # puts status
-
-      if status.to_i.zero?
+      begin
+        yaml_resolver = Udb::Yaml::Resolver.new(quiet: true)
+        yaml_resolver.resolve_files(arch_dir.to_s, resolved_dir.to_s, no_checks: true)
         YAML.load_file(resolved_dir / "test" / "test.yaml")
+      rescue StandardError
+        nil
       end
     end
   end
@@ -55,10 +47,12 @@ class TestYamlLoader < Minitest::Test
         File.write(test_dir / "test#{i + 1}.yaml", yaml)
       end
 
-      system "uv run #{UDB_GEM_PATH}/python/yaml_resolver.py resolve --no-checks #{arch_dir} #{resolved_dir}"
-
-      if $CHILD_STATUS == 0
+      begin
+        yaml_resolver = Udb::Yaml::Resolver.new(quiet: true)
+        yaml_resolver.resolve_files(arch_dir.to_s, resolved_dir.to_s, no_checks: false)
         YAML.load_file(resolved_dir / "test" / "test1.yaml")
+      rescue StandardError
+        nil
       end
     end
   end

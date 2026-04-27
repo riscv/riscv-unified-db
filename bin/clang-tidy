@@ -1,6 +1,27 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
-source "$ROOT/setup"
+[ -f "${ROOT}/../.toolchain-local" ] && source "${ROOT}/../.toolchain-local"
 
-$CLANG_TIDY "$@"
+if [ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]; then
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _prompt_toolchain_selection
+  source "${ROOT}/.toolchain-local"
+fi
+
+if [ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]; then
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _setup_toolchain_run
+  exec $TOOLCHAIN_RUN clang-tidy "$@"
+elif PATH="${PATH//"${ROOT}:"/}" command -v clang-tidy > /dev/null 2>&1; then
+  PATH="${PATH//"${ROOT}:"/}"
+  export PATH
+  exec clang-tidy "$@"
+else
+  echo "ERROR: clang-tidy not found." >&2
+  echo "  Option 1: Install a native C++ toolchain (e.g., apt install clang-tidy)" >&2
+  echo "  Option 2: Set UDB_TOOLCHAIN_CONTAINER=1 to use the toolchain container" >&2
+  exit 1
+fi

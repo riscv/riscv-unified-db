@@ -41,7 +41,7 @@ fields:
     location_rv32: 31-0
     location_rv64: 63-0
     type: RW
-    description:
+    description: |
       The data read from or written to the register selected by the current
       value of the `vsiselect` CSR.
     reset_value: UNDEFINED_LEGAL

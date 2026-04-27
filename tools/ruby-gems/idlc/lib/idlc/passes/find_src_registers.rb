@@ -9,7 +9,7 @@ module Idl
 
   class AstNode
     def find_src_registers(symtab)
-      # if is_a?(Executable)
+      # if executable?
       #   value_result = value_try do
       #     execute(symtab)
       #   end
@@ -17,7 +17,7 @@ module Idl
       #     execute_unknown(symtab)
       #   end
       # end
-      add_symbol(symtab) if is_a?(Declaration)
+      add_symbol(symtab) if declaration?
 
       srcs = []
       @children.each do |child|
@@ -27,7 +27,7 @@ module Idl
     end
 
     def find_dst_registers(symtab)
-      # if is_a?(Executable)
+      # if executable?
       #   value_result = value_try do
       #     execute(symtab)
       #   end
@@ -35,7 +35,7 @@ module Idl
       #     execute_unknown(symtab)
       #   end
       # end
-      add_symbol(symtab) if is_a?(Declaration)
+      add_symbol(symtab) if declaration?
 
       srcs = []
       @children.each do |child|

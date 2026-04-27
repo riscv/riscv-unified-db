@@ -45,6 +45,10 @@ namespace udb {
 
   // object that is thrown when an instruction (or fetch) encounters an
   // exception
+  class AbortPreExecute : public std::exception {
+   public:
+    const char* what() const noexcept override { return "Instruction Abort with maintained pc"; }
+  };
   class AbortInstruction : public std::exception {
    public:
     const char* what() const noexcept override { return "Instruction Abort"; }

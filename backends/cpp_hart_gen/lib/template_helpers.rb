@@ -75,6 +75,17 @@ module Udb
     end
   end
 
+  class ParameterTerm
+    sig { returns(String) }
+    def comparison_value_cxx
+      if comparison_value.is_a?(Integer)
+        "#{comparison_value}_b"
+      else
+        comparison_value.to_s
+      end
+    end
+  end
+
   class Condition
 
     sig { params(expand: T::Boolean, block: T.proc.params(arg0: T.any(Udb::ExtensionTerm, Udb::ParameterTerm, Udb::XlenTerm)).returns(String)).returns(String) }

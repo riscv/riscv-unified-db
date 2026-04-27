@@ -1,12 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
+  "$id": "v0.1",
   "type": "object",
   "additionalProperties": false,
   "required": ["$schema", "kind", "num", "name", "display_name", "definedBy"],
   "properties": {
-    "$schema": { "const": "interrupt_code_schema.json#" },
-    "kind": { "const": "interrupt_code" },
+    "$schema": {
+      "const": "interrupt_code_schema.json#"
+    },
+    "kind": {
+      "const": "interrupt_code"
+    },
     "name": {
       "type": "string",
       "description": "Name of the interrupt, as a legal IDL variable name"
@@ -19,7 +23,9 @@
       "type": "integer",
       "description": "Interrupt number, as reported in the `*cause` CSRs (not including the leading INT bit)"
     },
-    "definedBy": { "$ref": "schema_defs.json#/$defs/condition" },
+    "definedBy": {
+      "$ref": "schema_defs.json#/$defs/condition"
+    },
     "$source": {
       "$ref": "schema_defs.json#/$defs/$source"
     }

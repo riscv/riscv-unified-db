@@ -4,40 +4,79 @@
 # typed: false
 # frozen_string_literal: true
 
+require "pathname"
 require "yaml"
+require "psych"
 
 regress_template_yaml = YAML.load_file(Pathname.new(__dir__) / "regress-gh-template.yaml")
 # make a deep copy
 regress_yaml = YAML.load(YAML.dump(regress_template_yaml))
 tests = YAML.load_file(Pathname.new(__dir__) / "regress-tests.yaml")
 
+# Walk the Psych YAML AST and force all 'if:' scalar values to use plain (unquoted) style.
+# GitHub Actions evaluates 'if:' conditions as expressions only for plain scalars;
+# quoted strings are treated as literal truthy values, bypassing the condition check.
+def force_plain_if_values(node)
+  case node
+  when Psych::Nodes::Mapping
+    node.children.each_slice(2) do |key, value|
+      if key.is_a?(Psych::Nodes::Scalar) && key.value == "if" &&
+         value.is_a?(Psych::Nodes::Scalar)
+        value.style = Psych::Nodes::Scalar::PLAIN
+      end
+      force_plain_if_values(key)
+      force_plain_if_values(value)
+    end
+  when Psych::Nodes::Sequence, Psych::Nodes::Document, Psych::Nodes::Stream
+    node.children.each { |child| force_plain_if_values(child) }
+  end
+end
+
+def dump_workflow(data, line_width: -1)
+  visitor = Psych::Visitors::YAMLTree.create({ line_width: line_width })
+  visitor << data
+  tree = visitor.tree
+  force_plain_if_values(tree)
+  tree.yaml(nil, line_width:)
+end
+
 def create_job(job_name, job_data, workflow_yaml)
   gh_job_yaml = {
-    "runs-on" => "ubuntu-latest",
-    "needs" => "build-container",
-    "steps" => [
-      {
-        "name" => "Clone Github Repo Action",
-        "uses" => workflow_yaml["jobs"]["build-container"]["steps"][0]["uses"]
-      },
-      {
-        "name" => "Download docker image",
-        "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][0]["uses"],
-        "with" => {
-          "name" => "docker_image",
-          "path" => "${{ runner.temp }}"
-        }
-      },
-      {
-        "name" => "Load image",
-        "run" => "docker load --input ${{ runner.temp }}/docker_image.tar"
-      }
-    ]
+    "runs-on" => "ubuntu-latest"
   }
 
-  if job_data["ci_stage"] == "merge_queue"
-    gh_job_yaml["if"] = "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+  if job_data.key?("timeout_minutes")
+    gh_job_yaml["timeout-minutes"] = job_data["timeout_minutes"]
   end
+
+  # Add 'if' condition before 'steps' to ensure correct YAML ordering
+  if job_data["ci_stage"] == "merge_queue"
+    gh_job_yaml["if"] = "(github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    # Note: plain (unquoted) style is enforced by force_plain_if_values / dump_workflow
+  end
+
+  # Create checkout step with optional custom parameters
+  checkout_step = {
+    "name" => "Clone Github Repo Action",
+    "uses" => workflow_yaml["jobs"]["regress-llvm"]["steps"][0]["uses"]
+  }
+  if job_data.key?("checkout_with")
+    checkout_step["with"] = job_data["checkout_with"]
+  end
+
+  # Build mise-setup step, passing toolchain: true for jobs that need the RISC-V toolchain container
+  mise_setup_step = {
+    "name" => "Set up mise environment",
+    "uses" => "./.github/actions/mise-setup"
+  }
+  if job_data.fetch("toolchain_container", false)
+    mise_setup_step["with"] = { "toolchain" => "true" }
+  end
+
+  gh_job_yaml["steps"] = [
+    checkout_step,
+    mise_setup_step
+  ]
 
   if job_data.key?("env")
     gh_job_yaml["env"] = job_data["env"]
@@ -63,6 +102,7 @@ def create_job(job_name, job_data, workflow_yaml)
         "name" => "Upload artifact",
         "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][1]["uses"],
         "if" => "((github.event_name == 'push') && (github.ref_name == 'main'))",
+        # Note: plain (unquoted) style is enforced by force_plain_if_values / dump_workflow
         "with" => {
           "name" => artifact["artifact_name"],
           "path" => artifact["path"]
@@ -88,17 +128,17 @@ end
 
 regress_yaml["jobs"]["regress-complete"] = {
   "runs-on" => "ubuntu-latest",
-  "needs" => tests["tests"].keys + (regress_template_yaml["jobs"].keys - ["build-container", "never-runs"]),
-  "if" => "${{ always() }}",
+  "needs" => tests["tests"].keys + (regress_template_yaml["jobs"].keys - ["never-runs"]),
+  "if" => "always()",
   "steps" => [
     {
       "name" => "exit failure",
-      "if" => "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}",
+      "if" => "contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')",
       "run" => "exit 1"
     },
     {
       "name" => "exit success",
-      "if" => "${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}",
+      "if" => "!contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')",
       "run" => "exit 0"
     }
   ]
@@ -109,6 +149,6 @@ f = <<~FILE.strip
 # DO NOT EDIT
 # Instead, edit `tools/test/regress-tests.yaml` (preferred) or `tools/test/regress-gh-template.yaml`
 
-#{YAML.dump(regress_yaml, line_width: 300)}
+#{dump_workflow(regress_yaml)}
 FILE
 File.write (Pathname.new(__dir__) / ".." / ".." / ".github" / "workflows" / "regress.yml"), "#{f}\n"

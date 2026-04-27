@@ -28,7 +28,7 @@ access:
   u: always
   vs: always
   vu: always
-operation(): |2
+operation(): |
 
   if (implemented?(ExtensionName::M) && (CSR[misa].M == 1'b0)) {
     raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
@@ -39,15 +39,3 @@ operation(): |2
   }
 
   X[creg2reg(xd)] = X[creg2reg(xd)] * X[creg2reg(xs2)];
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let result_wide = to_bits(2 * sizeof(xlen), signed(X(rsdc)) * signed(X(rs2c)));
-    X(rsdc) = result_wide[(sizeof(xlen) - 1) .. 0];
-    RETIRE_SUCCESS
-  }
-
-# SPDX-SnippetEnd

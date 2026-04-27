@@ -7,7 +7,6 @@
 # require 'ruby-prof-flamegraph'
 
 require_relative "database_obj"
-require_relative "certifiable_obj"
 require_relative "../presence"
 require "udb_helpers/backend_helpers"
 require "awesome_print"
@@ -110,8 +109,6 @@ module Udb
 
 # model of a specific instruction in a specific base (RV32/RV64)
   class Instruction < TopLevelDatabaseObject
-    # Add all methods in this module to this type of database object.
-    include CertifiableObject
     include Helpers::WavedromUtil
 
     class MemoizedState < T::Struct
@@ -494,8 +491,8 @@ module Udb
     # @param symtab [Idl::SymbolTable] Symbol table with global scope populated
     # @param effective_xlen [Integer] The effective XLEN to evaluate against
     # @return [Array<Idl::FunctionBodyAst>] List of all functions that can be reached from operation()
-    sig { params(effective_xlen: Integer).returns(T::Array[Idl::FunctionDefAst]) }
-    def reachable_functions(effective_xlen)
+    sig { params(effective_xlen: Integer, cache: T::Hash[T.untyped, T.untyped]).returns(T::Array[Idl::FunctionDefAst]) }
+    def reachable_functions(effective_xlen, cache = {})
       if @data["operation()"].nil?
         []
       else
@@ -504,7 +501,7 @@ module Udb
           begin
             ast = operation_ast
             symtab = fill_symtab(effective_xlen, ast)
-            fns = ast.reachable_functions(symtab)
+            fns = ast.reachable_functions(symtab, cache)
             symtab.release
             fns
           end
@@ -1104,7 +1101,7 @@ module Udb
     # @return [FunctionBodyAst] A type-checked abstract syntax tree of the operation
     # @param effective_xlen [Integer] 32 or 64, the effective xlen to type check against
     def type_checked_operation_ast(effective_xlen)
-      defer :type_checked_operation_ast do
+      defer :"type_checked_operation_ast_#{effective_xlen}" do
         return nil unless @data.key?("operation()")
 
         ast = operation_ast

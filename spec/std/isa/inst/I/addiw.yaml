@@ -33,18 +33,6 @@ access:
 data_independent_timing: true
 pseudoinstructions:
   - when: imm == 0
-    to: sext.w xd,xs1
+    to: sext.w xd, xs1
 operation(): |
   X[xd] = $signed((X[xs1] + $signed(imm))[31:0]);
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let result : xlenbits = sign_extend(imm) + X(xs1);
-    X(xd) = sign_extend(result[31..0]);
-    RETIRE_SUCCESS
-  }
-
-# SPDX-SnippetEnd

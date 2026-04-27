@@ -36,20 +36,3 @@ operation(): |
   XReg operand = X[xs1][31:0];
 
   X[xd] = sext(operand >> shamt, 32);
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let xs1_val = (X(xs1))[31..0];
-    let result : bits(32) = match op {
-      RISCV_SLLIW => xs1_val << shamt,
-      RISCV_SRLIW => xs1_val >> shamt,
-      RISCV_SRAIW => shift_right_arith32(xs1_val, shamt)
-    };
-    X(xd) = sign_extend(result);
-    RETIRE_SUCCESS
-  }
-
-# SPDX-SnippetEnd

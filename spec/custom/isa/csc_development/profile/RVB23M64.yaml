@@ -28,9 +28,6 @@ extensions:
   Sm:
     version: "~> 1.13"
     presence: mandatory
-  Smpmp:
-    version: "~> 1.13"
-    presence: mandatory
 
   #########################################################################
   # OPTIONAL LOCALIZED extensions in RVB23M64

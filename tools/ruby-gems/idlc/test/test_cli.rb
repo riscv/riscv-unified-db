@@ -88,6 +88,7 @@ class TestCli < CliTest
       refute_nil m
       ast = m.to_ast
       refute_nil ast
+      ast.set_input_file(__FILE__)
 
       run_cmd("idlc compile -f yaml -r instruction_operation #{f.path}")
       assert_equal 0, result.status

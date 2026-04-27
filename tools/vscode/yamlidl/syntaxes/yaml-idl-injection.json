@@ -106,6 +106,29 @@
       ]
     },
     {
+      "comment": "Match unquoted single-line scalar values after keys ending with ()",
+      "begin": "^(\\s*)([\\w-]+)(\\([^)]*\\))\\s*:\\s*(?=[^\\s#])(?![\\|>\\[\\{'\"])",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.name.function.yaml"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "source.idl"
+            }
+          ]
+        }
+      },
+      "end": "(?=\\s+#|$)",
+      "contentName": "meta.embedded.block.idl",
+      "patterns": [
+        {
+          "include": "source.idl"
+        }
+      ]
+    },
+    {
       "comment": "Match block scalar (literal |) values after keys ending with ()",
       "begin": "^(\\s*)([\\w-]+)(\\([^)]*\\))\\s*:\\s*\\|[-+]?\\s*$",
       "beginCaptures": {

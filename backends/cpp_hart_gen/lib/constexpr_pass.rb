@@ -27,8 +27,6 @@ module Idl
       if sym.param?
         p = symtab.param(text_value)
         T.must(p).value_known?
-      elsif sym.template_value?
-        true
       else
         !sym.type.global?
       end

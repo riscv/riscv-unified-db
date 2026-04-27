@@ -1,0 +1,65 @@
+---
+sidebar_position: 9
+title: Scope
+---
+
+Variables and constants are defined in the scope of their declaration.
+
+## Scope Types
+
+### Global Scope
+
+Variables and constants in global scope can be accessed anywhere. Many are automatically populated:
+
+- Configuration parameters (e.g., `MXLEN`)
+- CSRs
+- Builtin variables (`$pc`, `$encoding`)
+
+User-defined globals are declared in the outermost scope of any `.idl` file under the `isa` folder. The file `globals.isa` is implicitly treated as the top-level source file; other files may be included from there. Global variable and constant names must be unique — duplicate names are a compilation error.
+
+### Function Scope
+
+Function scope is created by declaring a function in an `.idl` file. It includes the function's arguments and body. Variables and constants declared in function scope can only be accessed within that function body.
+
+### Instruction Scope
+
+Instruction execution — specified in an instruction's `operation()` — occurs in Instruction scope. Decode variables are automatically populated from the encoding before the `operation()` body begins. The `$encoding` builtin variable is available in Instruction scope.
+
+### CSR Scope
+
+When a CSR defines custom behavior via `sw_read()` or `sw_write(csr_value)`, execution occurs in CSR scope. Variables and constants declared in CSR scope can only be accessed in those bodies. The `$encoding` builtin variable is available in CSR scope.
+
+## Nested Scopes
+
+`if` and `for` create a nested scope within their containing scope:
+
+- Variables and constants declared in nested scope are accessible within that scope and any more deeply nested scope.
+- Variables and constants in nested scope are **not** available once the nested scope ends.
+- Variables in nested scope may **shadow** a variable from an outer scope.
+
+```idl title="Nested scope example"
+Bits<64> x[32]; # global constant (when in an .idl file)
+
+function example {
+  returns Bits<MXLEN>
+  arguments Bits<MXLEN> a, Bits<MXLEN> b  # a and b are in function scope
+  description {
+    If a > b, return a+b. If a <= b, return a - b.
+  }
+  body {
+    Bits<MXLEN> result;  # result is in function scope
+
+    if (a > b) {
+      Bits<MXLEN> result = a + b; # shadows the result above
+      Bits<MXLEN> sum = a + b;    # sum is only in this nested scope
+      result = sum;
+    } else {
+      Bits<MXLEN> difference = a - b; # difference is only in this nested scope
+      result = difference;
+    }
+
+    # result = sum; # compilation error: sum is not in scope here
+    return result;
+  }
+}
+```

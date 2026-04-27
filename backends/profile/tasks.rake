@@ -99,7 +99,7 @@ namespace :gen do
     Generate profile documentation for a profile release as a PDF.
 
     Required options:
-      release_name - The name of the profile release under arch/profile_release
+      release_name - The name of the profile release under #{$resolver.std_path}/profile_release/
   DESC
   task :profile_release_pdf, [:release_name] do |_t, args|
     release_name = args[:release_name]
@@ -109,7 +109,7 @@ namespace :gen do
     end
 
     unless File.exist?("#{$resolver.std_path}/profile_release/#{release_name}.yaml")
-      warn "No profile release named '#{release_name}' found in arch/profile_release"
+      warn "No profile release named '#{release_name}' found in #{$resolver.std_path}/profile_release/"
       exit 1
     end
 

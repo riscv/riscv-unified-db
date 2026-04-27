@@ -7,8 +7,8 @@
 $schema: csr_schema.json#
 kind: csr
 name: hpmcounter<%= hpm_num %>
-long_name: Unprivileged Hardware Performance Counter <%= hpm_num - 3 %>
-address: 0x<%= (0xC03 + (hpm_num - 3)).to_s(16).upcase %>
+long_name: Unprivileged Hardware Performance Counter <%= hpm_num %>
+address: 0x<%= (0xC00 + (hpm_num)).to_s(16).upcase %>
 writable: false
 description: |
   Alias for M-mode CSR `mhpmcounter<%= hpm_num %>`.

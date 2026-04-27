@@ -47,14 +47,12 @@ operation(): |
   access_check(result.paddr, xlen(), $pc, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
 
   if (xlen() == 32) {
-    addr = read_physical_memory<32>(result.paddr);
+    addr = read_physical_memory(32, result.paddr);
   } else {
-    addr = read_physical_memory<64>(result.paddr);
+    addr = read_physical_memory(64, result.paddr);
   }
 
   # Ensure low-order bit is clear
   addr = addr & $signed(2'b10);
 
   jump(addr);
-
-sail(): |

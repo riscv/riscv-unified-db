@@ -36,7 +36,7 @@ namespace udb {
 // <%= func.description.gsub("\n", "\n// ") %>
 template <SocModel SocType>
 <%= func.gen_cpp_prototype(symtab, 0, include_semi: false, qualifiers: func.constexpr?(cfg_arch.symtab) ? "constexpr" : "", cpp_class: "#{name_of(:hart, cfg_arch)}<SocType>") %> {
-  <%- func.apply_template_and_arg_syms(symtab) -%>
+  <%- func.apply_arg_syms(symtab) -%>
   <%- func.argument_nodes.each_with_index do |arg, idx| -%>
     <%- if arg.type(symtab).kind == :bits -%>
       <%- if arg.type(symtab).width == :unknown -%>

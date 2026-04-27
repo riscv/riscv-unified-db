@@ -21,6 +21,11 @@ module Idl
       "#{' ' * indent}#{variable.gen_adoc(indent, indent_spaces:)}[#{msb.gen_adoc(0, indent_spaces:)}:#{lsb.gen_adoc(0, indent_spaces:)}] = #{write_value.gen_adoc(0, indent_spaces:)}"
     end
   end
+  class ArrayLiteralAst < AstNode
+    def gen_adoc(indent = 0, indent_spaces: 2)
+      "#{' ' * indent}[#{entries.map{ |e| e.gen_adoc(0) }.join(", ")}]"
+    end
+  end
   class ConditionalReturnStatementAst < AstNode
     def gen_adoc(indent = 0, indent_spaces: 2)
       "#{' ' * indent}#{return_expression.gen_adoc(indent, indent_spaces:)} if (#{condition.gen_adoc(0, indent_spaces:)});"
@@ -287,11 +292,8 @@ module Idl
 
   class FunctionCallExpressionAst < AstNode
     def gen_adoc(indent = 0, indent_spaces: 2)
-      after_name = []
-      after_name << "<#{template_arg_nodes.map { |t| t.gen_adoc(0, indent_spaces:) }.join(', ')}>" unless template_arg_nodes.empty?
-      after_name << "pass:[(]#{arg_nodes.map { |a| a.gen_adoc(0, indent_spaces:) }.join(', ')})"
       func_link = "%%UDB_DOC_LINK%func;#{name};#{name}%%"
-      "#{' ' * indent}" + func_link + "#{after_name.join ''}"
+      "#{' ' * indent}" + func_link + "pass:[(]#{arg_nodes.map { |a| a.gen_adoc(0, indent_spaces:) }.join(', ')})"
     end
   end
 

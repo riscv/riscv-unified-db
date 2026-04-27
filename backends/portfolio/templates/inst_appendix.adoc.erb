@@ -148,15 +148,6 @@ RV64::
 ----
 <% end -%>
 
-<% if inst.key?("sail()") -%>
-==== Sail Operation
-
-[source,sail]
-----
-<%= inst.data["sail()"] %>
-----
-<% end -%>
-
 ==== Exceptions
 
 <% exception_list = inst.reachable_exceptions_str() -%>
@@ -170,9 +161,5 @@ This instruction may result in the following synchronous exceptions:
   <% end -%>
 
 <% end -%>
-
-<% if defined?(gen_ctp_content) && gen_ctp_content -%>
-<%= portfolio_design.include_erb("normative_rules.adoc.erb", { "db_obj" => inst, "org" => "appendix" }) %>
-<% end # if gen_ctp_content -%>
 
 <% end # each in_scope instruction -%>

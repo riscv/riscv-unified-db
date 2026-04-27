@@ -30,21 +30,24 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  check_f_ok($encoding);
 
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let rs1_val_S = F_S(rs1);
-    let rs2_val_S = F_S(rs2);
+  Bits<32> sp_value_a = f[fs1][31:0];
+  Bits<32> sp_value_b = f[fs2][31:0];
 
-    let (fflags, rd_val) : (bits_fflags, bool) =
-        riscv_f32Lt_quiet   (rs1_val_S, rs2_val_S);
+  if (is_sp_nan?(sp_value_a) || is_sp_nan?(sp_value_b)) {
+    # Quiet comparison: only set NV for signaling NaN
+    if (is_sp_signaling_nan?(sp_value_a) || is_sp_signaling_nan?(sp_value_b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    X[xd] = 0;
+  } else {
+    Boolean sign_a = sp_value_a[31] == 1;
+    Boolean sign_b = sp_value_b[31] == 1;
 
-    accrue_fflags(fflags);
-    X(rd) = zero_extend(bool_to_bits(rd_val));
-    RETIRE_SUCCESS
+    Boolean a_lt_b =
+      (sign_a != sign_b)
+        ? (sign_a && ((sp_value_a[30:0] | sp_value_b[30:0]) != 0))
+        : ((sp_value_a != sp_value_b) && (sign_a != (sp_value_a < sp_value_b)));
+    X[xd] = a_lt_b ? 1 : 0;
   }
-
-# SPDX-SnippetEnd

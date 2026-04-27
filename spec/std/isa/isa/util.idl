@@ -6,9 +6,8 @@
 # generic utility functions
 
 function power_of_2? {
-  template U32 N
   returns Boolean
-  arguments Bits<N> value
+  arguments XReg value
   description {
     Returns true if value is a power of two, false otherwise
   }
@@ -127,11 +126,33 @@ function bit_length {
 }
 
 function count_leading_zeros {
-  template U32 N
   returns
-    Bits<bit_length(N)>  # Number of leading zeros in +value+
+    XReg  # Number of leading zeros in +value+
   arguments
-    Bits<N> value        # value to count zero in
+    U32 N,               # bit width
+    XReg value           # value to count zero in
+  description {
+    Returns the number of leading 0 bits before the most-significant 1 bit of +value+,
+    or N if value is zero.
+  }
+  body {
+    for (U32 i=0; i < N; i++) {
+      if (value[N - 1 - i] == 1) {
+        return i;
+      }
+    }
+
+    # fall-through; value must be zero
+    return N;
+  }
+}
+
+function count_leading_zeros_64 {
+  returns
+    XReg  # Number of leading zeros in +value+
+  arguments
+    U32 N,               # bit width
+    Bits<64> value           # value to count zero in
   description {
     Returns the number of leading 0 bits before the most-significant 1 bit of +value+,
     or N if value is zero.
@@ -174,9 +195,8 @@ function sext {
 }
 
 function is_naturally_aligned {
-  template U32 N
   returns Boolean
-  arguments XReg value
+  arguments U32 N, XReg value
   description {
     Checks if value is naturally aligned to N bits.
   }
@@ -189,9 +209,9 @@ function is_naturally_aligned {
 }
 
 function in_naturally_aligned_region? {
-  template U32 N
   returns Boolean
   arguments
+    U32  N,         # alignment size in bits
     XReg address,   # starting address
     U32  length     # length of the access
   description {

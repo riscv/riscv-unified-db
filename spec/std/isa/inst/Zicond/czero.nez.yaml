@@ -33,18 +33,3 @@ access:
 data_independent_timing: false
 operation(): |
   X[xd] = (X[xs2] != 0) ? 0 : X[xs1];
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let value = X(rs1);
-    let condition = X(rs2);
-    let result : xlenbits = if (condition != zeros()) then zeros()
-  						    else value;
-    X(rd) = result;
-    RETIRE_SUCCESS
-  }
-
-# SPDX-SnippetEnd

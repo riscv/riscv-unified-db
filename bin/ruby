@@ -1,6 +1,5 @@
-#!/usr/bin/env bash
-
-ROOT=$(dirname $(realpath ${BASH_SOURCE[0]}))
-source $ROOT/setup
-
-$RUBY "$@"
+#!/bin/bash
+ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+EXEC_DIR=${PWD}
+cd "$ROOT" || exit 1
+exec "${ROOT}/bin/mise" exec --cd "$EXEC_DIR" -- bundle exec --gemfile "$ROOT"/Gemfile ruby "$@"

@@ -1,0 +1,92 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* Logo color variables */
+:root {
+  /* UDB logo colors */
+  --udb-logo-primary: #283272;  /* Dark blue body fill */
+  --udb-logo-accent: #F5B21B;   /* Gold accent/highlight */
+
+  /* IDL logo colors */
+  --idl-logo-bg: transparent;   /* IDL logo background (light mode) */
+  --idl-logo-fg: #2E3192;       /* IDL logo foreground (RISC-V blue) */
+
+  /* Primary brand color (RISC-V blue) */
+  --ifm-color-primary: #2E3192;
+  --ifm-color-primary-dark: #292d83;
+  --ifm-color-primary-darker: #272b7a;
+  --ifm-color-primary-darkest: #202365;
+  --ifm-color-primary-light: #3335a1;
+  --ifm-color-primary-lighter: #3537aa;
+  --ifm-color-primary-lightest: #3e40bf;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* IDL landing page */
+.idl-landing-hero {
+  text-align: center;
+  padding: 3rem 0 2.5rem;
+  background: linear-gradient(180deg, rgba(46, 49, 146, 0.06) 0%, transparent 100%);
+  margin-bottom: 2.5rem;
+  border-radius: 12px;
+}
+
+[data-theme='dark'] .idl-landing-hero {
+  background: linear-gradient(180deg, rgba(51, 241, 255, 0.06) 0%, transparent 100%);
+}
+
+.idl-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ifm-color-emphasis-500);
+  margin-bottom: 0.75rem;
+}
+
+.idl-card {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  padding: 1rem;
+  height: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  background: var(--ifm-background-color);
+}
+
+.idl-card:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+[data-theme='dark'] .idl-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] {
+  /* UDB logo colors for dark mode - white on dark for maximum readability */
+  --udb-logo-primary: #FFFFFF;  /* White/near-white for main logo body */
+  --udb-logo-accent: #FFB800;   /* Vibrant gold for accent */
+
+  /* IDL logo colors for dark mode */
+  --idl-logo-bg: #161b22;       /* IDL logo background (dark mode) */
+  --idl-logo-fg: #33f1ff;       /* IDL logo foreground (cyan) */
+
+  /* Primary brand color adjusted for dark mode */
+  --ifm-color-primary: #7B8CDE;
+  --ifm-color-primary-dark: #6377d8;
+  --ifm-color-primary-darker: #566cd5;
+  --ifm-color-primary-darkest: #3852c7;
+  --ifm-color-primary-light: #93a1e4;
+  --ifm-color-primary-lighter: #a1ace7;
+  --ifm-color-primary-lightest: #c1c9f0;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}

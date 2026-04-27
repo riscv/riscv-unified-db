@@ -1,3 +1,4 @@
+# typed: false
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
@@ -29,21 +30,23 @@
 #                   where <id> is the ID of the normative rule
 #   IDL code      idl:code:inst:<inst-name>:<location>
 #                 TODO for CSR and CSR Fields
-class Udb::DocLink
-  # @param dst_link [String] The documentation link provided in the YAML
-  # @param db_obj [String] Database object
-  def initialize(dst_link, db_obj)
-    raise ArgumentError, "Need String but was passed a #{data.class}" unless dst_link.is_a?(String)
-    @dst_link = dst_link
+module Udb
+  class DocLink
+    # @param dst_link [String] The documentation link provided in the YAML
+    # @param db_obj [String] Database object
+    def initialize(dst_link, db_obj)
+      raise ArgumentError, "Need String but was passed a #{data.class}" unless dst_link.is_a?(String)
+      @dst_link = dst_link
 
-    raise ArgumentError, "Missing documentation link for #{db_obj.name} of kind #{db_obj.kind}" if @dst_link.nil?
-  end
+      raise ArgumentError, "Missing documentation link for #{db_obj.name} of kind #{db_obj.kind}" if @dst_link.nil?
+    end
 
-  # @return [String] Unique ID of the linked to normative rule
-  def dst_link = @dst_link
+    # @return [String] Unique ID of the linked to normative rule
+    def dst_link = @dst_link
 
-  # @return [String] Asciidoc to create desired link.
-  def to_adoc
-    "<<#{@dst_link},#{@dst_link}>>"
+    # @return [String] Asciidoc to create desired link.
+    def to_adoc
+      "<<#{@dst_link},#{@dst_link}>>"
+    end
   end
 end

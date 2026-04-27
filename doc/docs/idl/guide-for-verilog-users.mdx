@@ -1,0 +1,131 @@
+---
+sidebar_position: 15
+title: IDL for Verilog Users
+---
+
+IDL borrows heavily from Verilog and SystemVerilog: the bit-vector type model, Verilog-style numeric literals, bit-select and slice syntax, concatenation, and replication all work exactly as you would expect. If you have written RTL or verification code in Verilog or SV, the low-level data manipulation in IDL will feel immediately natural.
+
+The key shift is one of abstraction level. Verilog describes how logic is connected and how signals propagate through gates over time. IDL describes what an instruction *does* at the ISA level — the architectural state before and after execution. There are no modules, no ports, no clocks, no `always` blocks. What replaces them is a sequential, behavioral model where functions read and write architectural state (registers, CSRs, memory) directly.
+
+## What carries over
+
+- **Verilog-style literals** — `32'hDEAD`, `8'd255`, `1'b0` work identically.
+- **Bit-select and slice** — `x[3]`, `x[7:0]` use the same syntax.
+- **Concatenation** — `{a, b}` packs values together just as in Verilog.
+- **Replication** — `{N{x}}` replicates `x` N times.
+- **Bit-vector operators** — `&`, `|`, `^`, `~`, `<<`, `>>` work as expected.
+- **Comparison operators** — `==`, `!=`, `<`, `<=`, `>`, `>=`.
+- **Ternary** — `condition ? a : b`.
+- **`for` loops** — same three-part syntax.
+
+## What is different
+
+### IDL is behavioral, not structural
+
+Verilog describes hardware connectivity and timing. IDL describes the *behavior* of instructions — the ISA semantics. There are no modules, ports, wires, `always` blocks, `assign` statements, or clocks. IDL code inside an instruction's `operation()` block reads like a sequential program.
+
+### `Bits<N>` instead of `logic [N-1:0]`
+
+```idl
+Bits<32> word;       # instead of: logic [31:0] word;
+Bits<MXLEN> reg;     # width from a configuration constant
+```
+
+The width is always `N` (number of bits), not `[N-1:0]`. Indices are zero-based at the low bit, same as Verilog.
+
+### Variables, constants, and types are distinguished by case
+
+| First character | Kind |
+|---|---|
+| Lowercase | Mutable variable or function |
+| Uppercase | Constant, type, or enum/bitfield member |
+
+This is enforced by the compiler, not just convention.
+
+### Named bit ranges use `bitfield`, not `struct packed`
+
+```idl
+bitfield (64) Sv39PageTableEntry {
+  N    63
+  PBMT 62-61
+  PPN  53-10
+  D    7
+  A    6
+  V    0
+}
+```
+
+Members can overlap (aliasing), and gaps are read-only zero bits. Member access uses `.`:
+
+```idl
+Sv39PageTableEntry pte = pte_data;
+Bits<2> pbmt = pte.PBMT;
+```
+
+### Enumeration members require scope qualification
+
+```idl
+SatpMode mode = SatpMode::Sv39;   # correct — :: required
+# SatpMode mode = Sv39;           # compilation error
+```
+
+### No `parameter` / `` `define `` — use compile-time constants
+
+Configuration parameters like `MXLEN` and `PHYS_ADDR_WIDTH` are injected as constants before compilation. They are referenced like any other constant (uppercase name). There are no `` `ifdef `` guards or parameterized modules.
+
+### No templates or module parameters
+
+IDL has no equivalent to Verilog parameterized modules or SystemVerilog classes with type parameters. Compile-time constants serve the same purpose for bit widths and configuration.
+
+### Comments use `#`
+
+```idl
+# This is a comment
+x = x + 1;  # end-of-line comment
+```
+
+### Non-zero is not implicitly true
+
+```idl
+if (src1 != 0) { ... }  # correct: explicit comparison
+# if (src1) { ... }     # compilation error: not Boolean
+```
+
+### No recursion
+
+Recursive functions are a compilation error. Use `for` loops for iteration.
+
+### Widening operators for carry-free results
+
+Standard arithmetic `+`, `-`, `*` truncate to the result width (like Verilog). IDL provides widening operators that produce a wider result to preserve carries and prevent overflow:
+
+| Operator | Result width |
+|----------|-------------|
+| `` `+ `` | max(N, M) + 1 |
+| `` `- `` | max(N, M) + 1 |
+| `` `* `` | N + M |
+| `` `<< `` | N + shift amount |
+
+```idl
+Bits<8> a = 200;
+Bits<8> b = 100;
+Bits<9> sum = a `+ b;  # 9-bit result; no overflow
+```
+
+## Quick reference
+
+| Verilog/SV | IDL |
+|------------|-----|
+| `logic [31:0] x;` | `Bits<32> x;` |
+| `// comment` | `# comment` |
+| `32'hDEAD` literal | Same: `32'hDEAD` |
+| `x[3:0]` slice | Same: `x[3:0]` |
+| `{a, b}` concatenation | Same: `{a, b}` |
+| `struct packed { ... }` | `bitfield (N) Name { ... }` |
+| `typedef enum { A=0 } T;` | `enum T { A 0 }` (members uppercase) |
+| `typedef struct { ... } T;` | `struct T { ... }` |
+| `parameter WIDTH = 32;` | Compile-time constant (`MXLEN`, etc.) |
+| Parameterized modules | No templates — use constants |
+| `always_comb` blocks | `operation()` body in instruction defs |
+| `function automatic` | `function Name { ... }` (global scope only) |
+| No recursion restriction | **Recursion is a compilation error** |

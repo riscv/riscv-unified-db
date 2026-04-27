@@ -5,6 +5,15 @@
 
 ---
 tests:
+  regress-scripts-unit:
+    ci_stage: pr
+    tags:
+      - unit
+      - smoke
+    test:
+      - name: Run tools/scripts unit tests
+        run: ./bin/ruby -Itools/scripts tools/scripts/test/run.rb
+
   regress-idlc-unit:
     ci_stage: pr
     tags:
@@ -37,7 +46,7 @@ tests:
       - smoke
     test:
       - name: Run sorbet checks
-        run: export XDG_CACHE_HOME=${{ github.workspace }}/.cache && ./do test:sorbet
+        run: ./do test:sorbet
 
   regress-ext-explorer:
     ci_stage: pr
@@ -45,17 +54,26 @@ tests:
       - name: Generate ISA Explorer browser artifacts
         run: ./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer --skip 6
 
-  regress-idl-typecheck:
+  regress-idl-typecheck-smoke:
     ci_stage: pr
     tags:
       - smoke
     strategy:
       matrix:
         cfg:
+          - rv64 # a simple standard config
+          - qc_iu # a config with overlay
+    test:
+      - name: Type check IDL for ${{ matrix.cfg }}
+        run: ./do test:idl CFG=${{ matrix.cfg }}
+
+  regress-idl-typecheck-other:
+    ci_stage: pr
+    strategy:
+      matrix:
+        cfg:
           - _
           - rv32
-          - rv64
-          - qc_iu
     test:
       - name: Type check IDL for ${{ matrix.cfg }}
         run: ./do test:idl CFG=${{ matrix.cfg }}
@@ -100,12 +118,6 @@ tests:
       - name: Generate Xqci extension PDF
         run: ./bin/ruby tools/scripts/gen_xqci.rb
 
-  regress-gen-certificate:
-    ci_stage: pr
-    test:
-      - name: Generate extension PDF
-        run: ./do gen:proc_crd_pdf[RVI20-32]
-
   regress-gen-profile:
     ci_stage: pr
     test:
@@ -143,6 +155,7 @@ tests:
           - cfg
           - mmr
           - mmr_schema
+          - schema_versioning
           - instruction
           - z3
           - z3_extensions
@@ -152,8 +165,6 @@ tests:
       - name: Run udb gem ${{ matrix.test }} unit tests
         run: ./bin/ruby tools/ruby-gems/udb/test/test_${{ matrix.test }}.rb
     gh_post:
-      - name: Update ownership of coverage files # TODO: Remove when Docker image uses non-root user
-        run: sudo chown -R $USER:$USER tools/ruby-gems/udb/coverage
       - name: Rename coverage file
         run: mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
       - name: Save coverage report
@@ -182,6 +193,7 @@ tests:
 
   regress-cpp-unit:
     ci_stage: pr
+    toolchain_container: true
     tags:
       - unit
     test:
@@ -190,6 +202,7 @@ tests:
 
   regress-riscv-tests-32:
     ci_stage: pr
+    toolchain_container: true
     gh_pre:
       - name: check out riscv-tests
         run: git submodule update --init ext/riscv-tests
@@ -199,6 +212,7 @@ tests:
 
   regress-riscv-tests-64:
     ci_stage: pr
+    toolchain_container: true
     gh_pre:
       - name: check out riscv-tests
         run: git submodule update --init ext/riscv-tests
@@ -206,17 +220,21 @@ tests:
       - name: Run RV64 riscv-tests
         run: ./do test:riscv_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
 
-  regress-xqci-doc:
-    ci_stage: pr
-    test:
-      - name: Generate Xqci pdf documentation
-        run: ./bin/ruby tools/scripts/gen_xqci.rb
-
   regress-profile-extensions:
     ci_stage: pr
     test:
       - name: Check profile_extensions
         run: ./do test:profile_extensions
+
+  regress-build-udb-gem:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Build udb gem via chore
+        run: ./bin/chore build udb-gem
+      - name: Verify udb gem was built
+        run: ls gen/udb_gem/udb-*.gem
 
   regress-regress:
     ci_stage: pr
@@ -334,22 +352,29 @@ tests:
     ci_stage: merge_queue
     gh_save_artifact:
       - artifact_name: ${{ matrix.profile }}
-        path: gen/profile/pdf/RVA20ProfileRelease.pdf
+        path: gen/profile/pdf/${{ matrix.profile }}ProfileRelease.pdf
     strategy:
       matrix:
         profile:
-          - rvi20
-          - rva20
-          - rva22
-          - rva23
-          - rvb23
+          - RVI20
+          - RVA20
+          - RVA22
+          - RVA23
+          - RVB23
     tags: [artifacts]
     test:
       - name: Generate ${{ matrix.profile }}
         run: |
           PROFILE_NAME="${{ matrix.profile }}"
-          UPPER_PROFILE="${PROFILE_NAME^^}"
           ./do gen:profile_release_pdf[${PROFILE_NAME}]
+
+  regress-schema-versions:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Check schema versions against published URLs
+        run: ./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb
 
   build-idl-doc:
     ci_stage: merge_queue
@@ -360,3 +385,42 @@ tests:
     test:
       - name: Build IDL doc
         run: ./bin/bundle exec asciidoctor -r idl_highlighter -a toc=left -a source-highlighter=rouge -o idl.html doc/idl.adoc
+
+  check-gem-versions:
+    ci_stage: pr
+    tags:
+      - smoke
+    checkout_with:
+      fetch-depth: 0
+    test:
+      - name: Check gem versions, pins, and lock files are up to date
+        run: ./bin/chore gen -f gem-versions
+      - name: Check lockfiles have no drift after re-locking
+        run: |
+          git diff --exit-code -- \
+            Gemfile.lock \
+            tools/ruby-gems/idlc/Gemfile.lock \
+            tools/ruby-gems/udb/Gemfile.lock \
+            tools/ruby-gems/udb-gen/Gemfile.lock \
+            tools/ruby-gems/udb_helpers/Gemfile.lock
+
+  regress-smoke-perf:
+    ci_stage: pr
+    timeout_minutes: 10
+    test:
+      - name: Run smoke regression suite (must complete within 10 minutes)
+        run: ./bin/regress -t smoke
+
+  build-docs-site:
+    ci_stage: merge_queue
+    gh_save_artifact:
+      - artifact_name: docs-site
+        path: doc/build
+    tags:
+      - smoke
+      - artifacts
+    test:
+      - name: Install Node dependencies
+        run: ./bin/npm ci
+      - name: Build Docusaurus site
+        run: ./bin/npm run build --workspace=doc

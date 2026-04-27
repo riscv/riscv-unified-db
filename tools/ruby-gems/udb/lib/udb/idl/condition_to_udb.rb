@@ -163,24 +163,24 @@ module Idl
     def to_udb_h(symtab)
       case name
       when "implemented?"
-        type_error "Bad argument to implemented?" unless args.fetch(0).text_value =~ /^ExtensionName::[A-Z][a-z0-9]*$/
+        type_error "Bad argument to implemented?" unless arg_nodes.fetch(0).text_value =~ /^ExtensionName::[A-Z][a-z0-9]*$/
         {
           "extension" => {
-            "name" => args.fetch(0).text_value.gsub("ExtensionName::", "")
+            "name" => arg_nodes.fetch(0).text_value.gsub("ExtensionName::", "")
           }
         }
       when "implemented_version?"
-        type_error "Bad first argument to implemented_version?" unless args.fetch(0).text_value =~ /^ExtensionName::[A-Z][a-z0-9]*$/
-        type_error "Bad second argument to implemented_version?" unless args.fetch(1).text_value =~ /((?:>=)|(?:>)|(?:~>)|(?:<)|(?:<=)|(?:!=)|(?:=))\s*([0-9]+)(?:\.([0-9]+)(?:\.([0-9]+)(?:-(pre))?)?)?/
+        type_error "Bad first argument to implemented_version?" unless arg_nodes.fetch(0).text_value =~ /^ExtensionName::[A-Z][a-z0-9]*$/
+        type_error "Bad second argument to implemented_version?" unless arg_nodes.fetch(1).text_value =~ /((?:>=)|(?:>)|(?:~>)|(?:<)|(?:<=)|(?:!=)|(?:=))\s*([0-9]+)(?:\.([0-9]+)(?:\.([0-9]+)(?:-(pre))?)?)?/
         {
           "extension" => {
-            "name" => args.fetch(0).text_value.gsub("ExtensionName::", ""),
-            "version" => args.fetch(1).text_value.gsub('"', "")
+            "name" => arg_nodes.fetch(0).text_value.gsub("ExtensionName::", ""),
+            "version" => arg_nodes.fetch(1).text_value.gsub('"', "")
           }
         }
       when "xlen"
         {
-          "xlen" => args.fetch(0).value(symtab)
+          "xlen" => arg_nodes.fetch(0).value(symtab)
         }
       else
         type_error "unsupported function in an IDL condition: #{name}"

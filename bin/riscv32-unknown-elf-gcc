@@ -1,0 +1,30 @@
+#!/bin/bash
+
+ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+[ -f "${ROOT}/../.toolchain-local" ] && source "${ROOT}/../.toolchain-local"
+
+if [ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]; then
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _prompt_toolchain_selection
+  source "${ROOT}/.toolchain-local"
+fi
+
+if [ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]; then
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _setup_toolchain_run
+  # The container's riscv64-unknown-elf-gcc supports rv32 targets via -march/-mabi flags
+  exec $TOOLCHAIN_RUN riscv64-unknown-elf-gcc "$@"
+elif _native=$(PATH="${PATH//"${ROOT}:"/}" command -v riscv32-unknown-elf-gcc 2>/dev/null) && [ -n "$_native" ]; then
+  exec "$_native" "$@"
+elif _native=$(PATH="${PATH//"${ROOT}:"/}" command -v riscv64-unknown-elf-gcc 2>/dev/null) && [ -n "$_native" ]; then
+  exec "$_native" "$@"
+else
+  echo "ERROR: No RISC-V cross-compiler found (tried riscv32-unknown-elf-gcc, riscv64-unknown-elf-gcc)." >&2
+  echo "  Option 1: Install a native RISC-V cross-compiler:" >&2
+  echo "    apt install gcc-riscv64-unknown-elf   (Debian/Ubuntu)" >&2
+  echo "    brew install riscv-gnu-toolchain       (macOS)" >&2
+  echo "  Option 2: Set UDB_TOOLCHAIN_CONTAINER=1 to use the toolchain container" >&2
+  exit 1
+fi

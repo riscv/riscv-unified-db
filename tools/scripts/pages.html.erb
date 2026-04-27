@@ -1,6 +1,6 @@
 <!-- Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. -->
 <!-- SPDX-License-Identifier: BSD-3-Clause-Clear -->
-
+<%- require "json" -%>
 <!doctype html>
 <html lang="en-us">
   <head>
@@ -96,39 +96,18 @@
 
       <div class="row">
         <div class="col">
-          <h3>CSC CRDs (Certification Requirements Documents)</h3>
-          <ul>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/RVI20-32-CRD.pdf">RVI20-32 CRD</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/RVI20-64-CRD.pdf">RVI20-64 CRD</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/MC100-32-CRD.pdf">MC100-32 CRD</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/MC100-64-CRD.pdf">MC100-64 CRD</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/MC200-32-CRD.pdf">MC200-32 CRD</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/MC200-64-CRD.pdf">MC200-64 CRD</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/MC300-32-CRD.pdf">MC300-32 CRD</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/MC300-64-CRD.pdf">MC300-64 CRD</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/AC100-CRD.pdf">AC100 CRD (based on RVB23)</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/AC200-CRD.pdf">AC200 CRD (based on RVA23)</a></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col">
-          <h3>CSC CTPs (Certification Test Plans)</h3>
-          <ul>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/RVI20-32-CTP.pdf">RVI20-32 CTP</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/RVI20-64-CTP.pdf">RVI20-64 CTP</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/MC100-32-CTP.pdf">MC100-32 CTP</a></li>
-            <li><a href="<%= ENV["PAGES_URL"] %>/pdfs/MockProcessor-CTP.pdf">MockProcessor CTP (for UDB testing)</a></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col">
           <h3>Configuration-specific documentation</h3>
           <ul>
             <li><a href="<%= ENV["PAGES_URL"] %>/example_cfg/html/index.html">Architecture documentation for example RV64 config</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <h3>UDB Documentation Site (Preview)</h3>
+          <ul>
+            <li><a href="<%= ENV["PAGES_URL"] %>/docs-preview/">Documentation site built with Docusaurus</a></li>
           </ul>
         </div>
       </div>
@@ -158,6 +137,30 @@
             <li><a href="<%= ENV["PAGES_URL"] %>/reuse_bom.txt">Reuse Bill of Materials (LICENSE information)</a></li>
             <li><a href="https://dhower-qc.github.io/udb-stats/riscv/riscv-unified-db/latest-report/report.html">GitHub usage statistics (updated daily)</a></li>
           </ul>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <h3>JSON Schemas</h3>
+          <p>
+            JSON Schema files for validating riscv-unified-db data files.
+            Each version is immutable once published.
+          </p>
+          <%- schema_index_path = File.join(ENV["DEPLOY_DIR"] || "_site", "schemas", "index.json") -%>
+          <%- if File.exist?(schema_index_path) -%>
+            <%- schema_index = JSON.parse(File.read(schema_index_path)) -%>
+            <%- schema_index["schemas"].sort.each do |schema_name, versions| -%>
+          <h4><%= schema_name %></h4>
+          <ul>
+              <%- versions.sort.reverse.each do |version| -%>
+            <li><a href="<%= ENV["PAGES_URL"] %>/schemas/<%= schema_name %>/<%= version %>/<%= schema_name %>"><%= version %></a></li>
+              <%- end -%>
+          </ul>
+            <%- end -%>
+          <%- else -%>
+          <p><em>No schema versions published yet.</em></p>
+          <%- end -%>
         </div>
       </div>
     </div>

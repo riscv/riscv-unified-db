@@ -11,7 +11,16 @@ kind: instruction
 name: lb.aq
 long_name: Load Byte Acquire
 description: |
-  No description available.
+  Load 8 bits of data from the address in `xs1` into register `xd`, sign-extending
+  the result to XLEN bits.
+
+  This instruction has acquire semantics, which means that no subsequent memory
+  operations (in program order) from this hart can be observed to occur before
+  this load completes. Acquire semantics provide ordering guarantees useful for
+  synchronization, such as reading a lock variable.
+
+  The address must be naturally aligned; if not, an address-misaligned or
+  access-fault exception will be raised.
 definedBy:
   extension:
     name: Zalasr
@@ -30,36 +39,10 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  XReg virtual_address = X[xs1];
 
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let offset : xlenbits = sign_extend(imm);
-    /* Get the address, X(rs1) + offset.
-       Some extensions perform additional checks on address validity. */
-    match ext_data_get_addr(rs1, offset, Read(Data), width) {
-      Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
-      Ext_DataAddr_OK(vaddr) =>
-        if   check_misaligned(vaddr, width)
-        then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-        else match translateAddr(vaddr, Read(Data)) {
-          TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-          TR_Address(paddr, _) =>
-            match (width) {
-              BYTE =>
-                process_load(rd, vaddr, mem_read(Read(Data), paddr, 1, aq, rl, false), is_unsigned),
-              HALF =>
-                process_load(rd, vaddr, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
-              WORD =>
-                process_load(rd, vaddr, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
-              DOUBLE if sizeof(xlen) >= 64 =>
-                process_load(rd, vaddr, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned),
-              _ => report_invalid_width(__FILE__, __LINE__, width, "load")
-            }
-        }
-    }
+  if (!is_naturally_aligned(8, virtual_address)) {
+    raise(ExceptionCode::LoadAddressMisaligned, mode(), virtual_address);
   }
 
-# SPDX-SnippetEnd
+  X[xd] = sext(read_memory_aligned(8, virtual_address, $encoding, 1'b1, 1'b0), 8);

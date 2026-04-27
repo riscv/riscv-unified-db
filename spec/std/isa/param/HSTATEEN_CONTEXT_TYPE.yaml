@@ -20,7 +20,7 @@ schema:
     - read-only-0
     - read-only-1
 requirements:
-  idl():
+  idl(): |
     MSTATEEN_CONTEXT_TYPE == "read-only-0" -> HSTATEEN_CONTEXT_TYPE == "read-only-0";
     MSTATEEN_CONTEXT_TYPE == "read-only-1" -> HSTATEEN_CONTEXT_TYPE == "read-only-1";
   reason: |

@@ -48,10 +48,6 @@ data_independent_timing: true | false
 operation(): |
   # Optional IDL operation
   leave empty if not provided
-
-sail(): |
-  # Optional Sail operation
-  leave empty if not provided
 ```
 
 ### Explanation of Fields
@@ -67,7 +63,7 @@ sail(): |
   - **`location`**: Bit positions of the field in the instruction encoding.
 - **`access`**: Specifies the privilege mode access for the instruction (`always`, `sometimes`, or `never`).
 - **`data_independent_timing`**: Indicates whether the execution timing is data-independent.
-- **`operation()` & `sail()`**: Optional fields for IDL or Sail descriptions. Leave empty if unused.
+- **`operation()`**: Optional field for IDL description. Leave empty if unused.
 
 ## JSON Schema
 

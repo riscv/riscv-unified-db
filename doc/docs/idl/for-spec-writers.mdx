@@ -1,0 +1,170 @@
+---
+sidebar_position: 18
+title: IDL for Spec Writers
+---
+
+This guide is for contributors who are **writing** IDL — adding new instructions, extensions, or CSR definitions to the RISC-V Unified Database. It assumes you can already read IDL. If not, start with [IDL for Programmers](./guide-for-c-users) or [IDL for Verilog Users](./guide-for-verilog-users).
+
+## Where IDL lives in the database
+
+Each instruction definition in the database contains an `operation()` block written in IDL. That block is the authoritative behavioral description of what the instruction does. Similarly, CSR definitions contain `sw_read()` and `sw_write()` callbacks for fields whose behavior is non-trivial.
+
+IDL source files use the `.idl` extension and live alongside the YAML/ADOC definition files. The `idlc` compiler processes them to type-check, validate, and generate backend artifacts.
+
+## Anatomy of an `operation()` body
+
+Every instruction has an `operation()` block. Decode fields (`rd`, `rs1`, `rs2`, `imm`, etc.) are injected automatically from the instruction encoding before the body runs — you do not declare them:
+
+```idl
+# From: arch/inst/I/add.yaml
+# operation():
+
+Bits<MXLEN> src1 = X[rs1];      # rs1 is a decode field — already available
+Bits<MXLEN> src2 = X[rs2];      # rs2 likewise
+X[rd] = src1 + src2;            # write result to destination register
+```
+
+The `operation()` body runs sequentially. When it returns, the instruction is complete and the PC advances to the next instruction (unless `jump()` or `raise()` was called).
+
+## Common patterns
+
+### Reading and writing x registers
+
+```idl
+Bits<MXLEN> src = X[rs1];       # read
+X[rd] = result;                  # write (writes to x0 are silently discarded)
+```
+
+When `MXLEN != XLEN`, writes are automatically sign-extended to `MXLEN` and reads ignore the upper bits. You do not need to handle this manually.
+
+### Accessing CSRs
+
+```idl
+Bits<MXLEN> status = $bits(CSR[mstatus]);  # read entire CSR as Bits
+Bits<1> mie = CSR[mstatus].MIE;            # read a single field
+CSR[mstatus].MIE = 1'b0;                   # write a field
+```
+
+Use `$bits()` to convert a CSR to a `Bits<N>` value when you need to do arithmetic on it.
+
+### Checking whether an extension is implemented
+
+Guard behavior that only applies when an extension is present:
+
+```idl
+if (implemented?(ExtensionName::C) && CSR[misa].C == 1'b1) {
+  # C extension is implemented and dynamically enabled
+}
+```
+
+Use `implemented?()` for static (compile-time) presence checks and `CSR[misa]` for dynamic enable/disable via software.
+
+### Raising exceptions
+
+```idl
+raise(ExceptionCode::IllegalInstruction);
+raise(ExceptionCode::LoadAddressMisaligned, vaddr);  # with tval
+```
+
+`raise()` terminates the instruction immediately — execution does not continue past it. No `return` is needed after a `raise()`.
+
+### Memory access
+
+```idl
+Bits<32> word = read_memory<32>(vaddr, $encoding);    # load 32-bit word
+write_memory<64>(vaddr, value, $encoding);            # store 64-bit value
+```
+
+The template parameter is the access width in bits. `$encoding` passes the raw instruction word for trapping purposes.
+
+### Jumping
+
+```idl
+jump(PC + $signed(imm));    # PC-relative jump
+jump(target);               # absolute jump
+```
+
+`jump()` is a standard IDL function defined in the global scope. It validates alignment and raises `InstructionAddressMisaligned` if needed.
+
+### Sign-extending immediates
+
+Immediates decoded from instruction fields are `Bits<N>` — unsigned by default. Use `$signed()` when you need them treated as signed in arithmetic:
+
+```idl
+X[rd] = X[rs1] + $signed(imm);   # sign-extend imm before adding
+```
+
+## Writing CSR callbacks
+
+### `sw_read()`
+
+Called when software reads the CSR. Return the value software should see. Useful for CSRs whose read value differs from stored state:
+
+```idl
+# sw_read() for a read-as-zero field:
+function sw_read {
+  returns Bits<MXLEN>
+  description { Return the CSR value with reserved fields masked to zero. }
+  body {
+    return $bits(CSR[mcause]) & MCAUSE_MASK;
+  }
+}
+```
+
+### `sw_write()`
+
+Called when software writes the CSR. The argument is the value software wrote. Apply WARL (Write Any Read Legal) filtering here:
+
+```idl
+# In a field definition, sw_write() for a WARL field:
+function sw_write {
+  arguments Bits<2> value
+  description { Only legal values 0 and 1 are accepted; others are ignored. }
+  body {
+    if (value <= 1) {
+      CSR[myregister].field = value;
+    }
+    # if value is illegal, field is left unchanged
+  }
+}
+```
+
+## Using configuration constants
+
+All configuration parameters (`MXLEN`, `PHYS_ADDR_WIDTH`, `ASID_WIDTH`, etc.) are available as global constants. Use them instead of hardcoding widths:
+
+```idl
+Bits<PHYS_ADDR_WIDTH> paddr;   # correct: portable across configurations
+Bits<56>              paddr;   # wrong: hardcoded to a specific configuration
+```
+
+## Guarding compile-time-only code
+
+Some behavior only applies for a specific configuration. Use `if` with constants — the compiler will evaluate constant conditions at compile time and eliminate dead branches:
+
+```idl
+if (MXLEN == 64) {
+  # 64-bit-only behavior — compiled out for RV32 targets
+}
+```
+
+## Checklist for a new instruction
+
+Before submitting, verify:
+
+- [ ] Decode fields used in the body match the instruction encoding definition.
+- [ ] All exception conditions are handled with `raise()`.
+- [ ] CSR accesses use field names, not raw bit positions.
+- [ ] Immediates are sign-extended with `$signed()` where appropriate.
+- [ ] Behavior guarded behind `implemented?()` where the extension may be absent.
+- [ ] No hardcoded widths — use configuration constants.
+- [ ] The description in any called function is present and accurate.
+
+## Useful references
+
+- [Standard Library](./standard-library) — full list of `raise()` exception codes, `read_memory`, `write_memory`, `implemented?()`
+- [Data Types](./data-types) — enumerations, bitfields, structs
+- [Type Conversions](./type-conversions) — `$signed`, `$bits`, `$enum`
+- [IDL in Instructions](./in-instructions) — full detail on `operation()` structure
+- [IDL in CSRs](./in-csrs) — full detail on `sw_read()`, `sw_write()`, field types
+- [Quick Reference](./quick-reference) — syntax cheat sheet

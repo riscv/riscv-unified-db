@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
+  "$id": "v0.1",
   "$defs": {
     "volume": {
       "type": "object",
@@ -48,7 +48,6 @@
       "description": "Relative (to the contents.yaml file) path to the chapter source"
     }
   },
-
   "type": "object",
   "required": [
     "$schema",

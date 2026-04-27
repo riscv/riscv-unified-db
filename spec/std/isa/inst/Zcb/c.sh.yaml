@@ -37,4 +37,4 @@ operation(): |
 
   XReg virtual_address = X[creg2reg(xs1)] + imm;
 
-  write_memory<16>(virtual_address, X[creg2reg(xs2)][15:0], $encoding);
+  write_memory(16, virtual_address, X[creg2reg(xs2)][15:0], $encoding);

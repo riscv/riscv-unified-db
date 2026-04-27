@@ -53,6 +53,13 @@ operation(): |
 
   Bits<32> sp_value = f[fs1][31:0];
 
+  if (implemented?(ExtensionName::D)) {
+    # check for an incorrectly NaN-boxed value
+    if (f[fs1][63:32] != 32'hffffffff) {
+      sp_value = SP_CANONICAL_NAN;
+    }
+  }
+
   if (is_sp_neg_inf?(sp_value)) {
     X[xd] = 1 << 0;
   } else if (is_sp_neg_norm?(sp_value)) {
@@ -75,16 +82,3 @@ operation(): |
     assert(is_sp_quiet_nan?(sp_value), "Unexpected SP value");
     X[xd] = 1 `<< 9;
   }
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let rs1_val_X            = X(rs1);
-    let rd_val_S             = rs1_val_X [31..0];
-    F(rd) = nan_box (rd_val_S);
-    RETIRE_SUCCESS
-  }
-
-# SPDX-SnippetEnd

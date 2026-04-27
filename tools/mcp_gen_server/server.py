@@ -1102,22 +1102,21 @@ async def find_function_usages(args: dict[str, Any]):
         except Exception:
             continue
 
-        for key in ("operation()", "sail()"):
-            val = data.get(key)
-            if isinstance(val, str) and (name in val):
-                # Extract snippet around first occurrence
-                idx = val.find(name)
-                snippet = val[max(0, idx - 60) : idx + 120]
-                hits.append(
-                    {
-                        "path": str(p.relative_to(REPO_ROOT)),
-                        "key": key,
-                        "snippet": snippet,
-                    }
-                )
-                count += 1
-                if count >= limit:
-                    return {"count": count, "results": hits}
+        val = data.get("operation()")
+        if isinstance(val, str) and (name in val):
+            # Extract snippet around first occurrence
+            idx = val.find(name)
+            snippet = val[max(0, idx - 60) : idx + 120]
+            hits.append(
+                {
+                    "path": str(p.relative_to(REPO_ROOT)),
+                    "key": "operation()",
+                    "snippet": snippet,
+                }
+            )
+            count += 1
+            if count >= limit:
+                return {"count": count, "results": hits}
 
     return {"count": count, "results": hits}
 
@@ -1393,7 +1392,7 @@ async def main() -> None:
             ),
             Tool(
                 name="find_function_usages",
-                description="Find instruction YAMLs whose operation()/sail() code reference the function",
+                description="Find instruction YAMLs whose operation() code references the function",
                 inputSchema={
                     "type": "object",
                     "properties": {

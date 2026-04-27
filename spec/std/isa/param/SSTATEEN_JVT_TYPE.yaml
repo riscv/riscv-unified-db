@@ -20,7 +20,7 @@ schema:
     - read-only-0
     - read-only-1
 requirements:
-  idl():
+  idl(): |
     MSTATEEN_JVT_TYPE == "read-only-0" -> SSTATEEN_JVT_TYPE == "read-only-0";
     MSTATEEN_JVT_TYPE == "read-only-1" -> SSTATEEN_JVT_TYPE == "read-only-1";
 

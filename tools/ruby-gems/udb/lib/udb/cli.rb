@@ -10,6 +10,7 @@ require "pastel"
 require "thor"
 require "terminal-table"
 
+require_relative "global_opts"
 require_relative "resolver"
 
 class SubCommandBase < Thor
@@ -82,8 +83,13 @@ module Udb
       method_option :config_dir, type: :string, desc: "Path to directory with config files", default: Udb.default_cfgs_path.to_s
       method_option :gen, type: :string, desc: "Path to folder used for generation", default: Udb.default_gen_path.to_s
       method_option :strict_partial, type: :boolean, desc: "Whether or not to check if a partial config is fully specified -- that is, all requirements of a mandatory extension are also listed in mandatory extensions and/or parameters", default: false
+      method_option :z3parallel, type: :boolean, desc: "Use parallel.enable for Z3", default: true
       def cfg(name_or_path)
         raise ArgumentError, "Spec directory does not exist: #{options[:std]}" unless File.directory?(options[:std])
+
+        Udb.global_options.parallel_z3 = options[:z3parallel]
+
+
         cfg_file =
           if File.file?(name_or_path)
             Pathname.new(name_or_path)

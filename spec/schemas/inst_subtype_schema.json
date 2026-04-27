@@ -1,12 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "v0.1",
   "title": "Instruction Subtype Schema",
   "description": "Schema for instruction subtype definitions",
-
   "type": "object",
   "required": ["$schema", "kind", "name", "data"],
   "additionalProperties": false,
-
   "$defs": {
     "fully_resolved_data": {
       "type": "object",
@@ -159,11 +158,10 @@
       }
     }
   },
-
   "properties": {
     "$schema": {
-      "const": "inst_subtype_schema.json#",
-      "description": "Pointer to schema"
+      "description": "Pointer to schema",
+      "const": "inst_subtype_schema.json#"
     },
     "kind": {
       "const": "instruction_subtype",

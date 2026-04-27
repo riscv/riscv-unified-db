@@ -21,5 +21,6 @@ schema:
   minimum: 2
   maximum: 66
 definedBy:
-  extension:
-    name: Smpmp
+  param:
+    name: NUM_PMP_ENTRIES
+    greaterThan: 0

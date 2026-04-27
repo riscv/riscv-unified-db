@@ -38,4 +38,4 @@ operation(): |
 
   XReg virtual_address = X[2] + imm;
 
-  X[xd] = sext(read_memory<32>(virtual_address, $encoding), 32);
+  X[xd] = sext(read_memory(32, virtual_address, $encoding), 32);

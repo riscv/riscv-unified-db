@@ -1,0 +1,128 @@
+---
+sidebar_position: 8
+title: Functions
+---
+
+## Calling Functions
+
+Functions are called using standard call syntax. Arguments are passed positionally.
+
+```idl
+jump(PC + $signed(imm));          # void function call
+Bits<32> val = read_memory<32>(vaddr, $encoding); # call with return value
+```
+
+All arguments are passed **by value**. There are no references.
+
+## The `return` Statement
+
+A function returns a value using `return`:
+
+```idl
+function clamp_to_byte {
+  returns Bits<8>
+  arguments Bits<32> value
+  description { Clamp a 32-bit value to [0, 255]. }
+  body {
+    if (value > 255) {
+      return 8'd255;  # early return
+    }
+    return value[7:0];
+  }
+}
+```
+
+For void functions (no `returns` declaration), use `return` with no value to exit early:
+
+```idl
+function maybe_set_flag {
+  arguments Boolean condition
+  description { Set a flag if condition is true. }
+  body {
+    if (!condition) {
+      return;  # early exit, no value
+    }
+    CSR[mstatus].MIE = 1'b1;
+  }
+}
+```
+
+For functions that return multiple values, list the values after `return`:
+
+```idl
+function divmod {
+  returns Bits<32>, Bits<32>
+  arguments Bits<32> a, Bits<32> b
+  description { Returns quotient and remainder of a / b. }
+  body {
+    return a / b, a % b;
+  }
+}
+
+# at the call site, decompose with a tuple:
+(quot, rem) = divmod(x, y);
+```
+
+## Function Declarations
+
+The basic form of a function declaration:
+
+```idl
+function NAME {
+  returns [TYPE_1, [TYPE_2[, ...]]]        # (1) optional return type(s)
+  arguments [TYPE_A a[, TYPE_B B[, ...]]]  # (2) optional arguments
+  description {
+    A text description.                    # (3) mandatory description
+  }
+  body {
+                                           # (4) executable statements
+  }
+}
+```
+
+1. Optionally declare return type(s). May be omitted for void functions. May be a list for multiple return values.
+2. Optionally declare argument(s). May be omitted for zero-argument functions. May be a list for multiple arguments.
+3. A description of the function. Required — IDL is intended as executable documentation. May contain any character except `}`, including newlines.
+4. The executable statements of the function.
+
+### Rules and rationale
+
+**Pass by value — no references or pointers**
+
+All arguments and return values are passed by value. There are no references, pointers, or heap allocation in IDL. This follows directly from what IDL describes: all architectural state — registers, CSRs, memory — is accessed via built-in syntax (`X[rs1]`, `CSR[mstatus]`, `read_memory`), not through addresses. Since there is no general-purpose addressable memory for local variables, references have no meaning in IDL's execution model.
+
+**Functions live in global scope and cannot be nested**
+
+All functions are declared at the top level of `.idl` files. Nesting functions would require a closure or stack-frame mechanism, neither of which maps to how hardware is described.
+
+**No function pointers**
+
+Functions have no address and cannot be assigned to a variable. Dynamic dispatch requires runtime indirection, which is incompatible with static hardware description and the backends IDL targets.
+
+**No recursion**
+
+Recursive functions are a compilation error. IDL targets hardware backends — ISS generators that produce C++ simulators, formal tools, and similar. These backends require statically-bounded call graphs; recursion implies an unbounded call stack that cannot be synthesized or bounded at compile time. If you need repeated behavior, use a `for` loop.
+
+## Builtin Functions
+
+Functions may be declared as `builtin`. Builtin functions do not have a body defined in IDL — it is up to the backend to provide the implementation.
+
+Builtin functions are used for:
+
+1. Functionality that is not architecturally visible (e.g., prefetch an address).
+2. Functionality that is highly implementation-dependent (e.g., fence).
+
+Builtin functions look like a normal function but with the `builtin` keyword before `function` and no `body`:
+
+```idl title="Builtin function definition"
+builtin function sfence_asid {
+  arguments Bits<ASID_WIDTH> asid
+  description {
+    Ensure all reads and writes using address space 'asid' see any previous
+    address space invalidations.
+
+    Does not have to (but may, if conservative) order any global mappings.
+  }
+  # note: no body
+}
+```

@@ -433,17 +433,6 @@ fields:
       } else {
         return csr_value.MPP;
       }
-    legal?(csr_value): |
-      if (csr_value.MPP == 2'b01 && !implemented?(ExtensionName::S)) {
-        return false;
-      } else if (csr_value.MPP == 2'b00 && !implemented?(ExtensionName::U)) {
-        return false;
-      } else if (csr_value.MPP == 2'b10) {
-        # never a valid value
-        return false;
-      } else {
-        return true;
-      }
   VS:
     location: 10-9
     long_name: Vector context Status
@@ -524,8 +513,6 @@ fields:
       } else {
         return csr_value.SPP;
       }
-    legal?(csr_value): |
-      return csr_value.SPP != 2'b10;
   MPIE:
     location: 7
     long_name: M-mode Previous Interrupt Enable

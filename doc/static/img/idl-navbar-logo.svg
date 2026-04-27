@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 60">
+  <style>
+    .bg   { fill: var(--idl-logo-bg, #161b22); }
+    .mark { stroke: var(--idl-logo-fg, #33f1ff); }
+    .text { fill: var(--idl-logo-fg, #33f1ff); font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 15px; font-weight: 500; dominant-baseline: middle; }
+  </style>
+  <rect width="420" height="60" rx="4" class="bg"/>
+  <!--
+    Mark: app icon content (80w x 61h) scaled to fit 44h inside 60px box.
+    s = 44/61 = 0.7213, dy = (60-44)/2 = 8, dx = 10.
+    x' = 10 + (x-15)*0.7213,  y' = 8 + (y-19)*0.7213
+    stroke-width = 5 * 0.7213 = 3.6
+  -->
+  <g class="mark" stroke-width="3.6" stroke-linecap="butt" stroke-linejoin="miter" fill="none">
+    <!-- I: top serif -->
+    <line x1="10.0" y1="13.1" x2="20.1" y2="13.1" />
+    <!-- I: top stem -->
+    <line x1="15.1" y1="8.0"  x2="15.1" y2="18.1" />
+    <!-- I: entry stroke + lower stem -->
+    <path d="M 10.0 26.6 L 15.1 22.9 L 15.1 52.0" />
+    <!-- I: bottom serif -->
+    <line x1="10.0" y1="52.0" x2="20.1" y2="52.0" />
+    <!-- D: stem -->
+    <line x1="32.4" y1="8.0"  x2="32.4" y2="52.0" />
+    <!-- D: curve -->
+    <path d="M 36.0 8.0 C 50.5 8.0, 50.5 52.0, 36.0 52.0" />
+    <!-- L: stem -->
+    <line x1="57.7" y1="8.0"  x2="57.7" y2="44.8" />
+    <!-- L: foot -->
+    <line x1="57.7" y1="52.0" x2="72.2" y2="52.0" />
+  </g>
+  <!-- "ISA Description Language" -->
+  <text x="90" y="30" class="text">ISA Description Language</text>
+</svg>

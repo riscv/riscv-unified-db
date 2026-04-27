@@ -46,20 +46,3 @@ operation(): |
   XReg unextended_result = (xs1_word << shamt) | (xs1_word >> (32 - shamt));
 
   X[xd] = {{32{unextended_result[31]}}, unextended_result};
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    let rs1_val = (X(rs1))[31..0];
-    let shamt = (X(rs2))[4..0];
-    let result : bits(32) = match op {
-      RISCV_ROLW => rs1_val <<< shamt,
-      RISCV_RORW => rs1_val >>> shamt
-    };
-    X(rd) = sign_extend(result);
-    RETIRE_SUCCESS
-  }
-
-# SPDX-SnippetEnd

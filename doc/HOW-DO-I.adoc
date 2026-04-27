@@ -71,7 +71,7 @@ To add a complex regression, you must:
 See xref:regress-test-infrastructure.adoc[Regression test infrastructure] for more details.
 
 
-=== Update Ruby gems
+=== Update Ruby gem dependencies to latest versions
 
 To update Ruby gems to the latest available versions, run:
 
@@ -82,7 +82,7 @@ To update Ruby gems to the latest available versions, run:
 
 Then `git add` all updated/new files and make a PR.
 
-=== Add a new Ruby gem
+=== Add a new Ruby gem dependence
 
 Add the gem in the appropriate gemspace or Gemfile (top, or one of the sub-project gems under tools/ruby-gems).
 

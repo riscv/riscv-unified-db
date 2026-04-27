@@ -17,7 +17,6 @@ implemented_extensions:
   - [Zicntr, "2.0"]
   - [Smrnmi, "1.0"]
   - [S, "1.11.0"]
-  - [Smpmp, "1.11.0"]
   - [U, "1.0.0"]
   - [Zifencei, "2.0.0"]
   - [Sv39, "1.0"]
@@ -203,7 +202,6 @@ params:
   SATP_MODE_BARE: true
   TRAP_ON_ECALL_FROM_S: true
   TRAP_ON_ECALL_FROM_U: true
-  TRAP_ON_SFENCE_VMA_WHEN_SATP_MODE_IS_READ_ONLY: false
   MSTATUS_VS_LEGAL_VALUES: [0, 1, 2, 3]
   MSTATUS_FS_LEGAL_VALUES: [0, 1, 2, 3]
   MSTATUS_TVM_IMPLEMENTED: false
@@ -243,3 +241,38 @@ params:
   IMPRECISE_VECTOR_TRAP_SETTABLE: false
   HW_MSTATUS_FS_DIRTY_UPDATE: never
   MUTABLE_MISA_F: false
+  HPM_COUNTER_EN:
+    [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]

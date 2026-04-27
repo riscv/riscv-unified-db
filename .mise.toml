@@ -10,11 +10,18 @@ python = "3.14.3"
 node = "24.13.1"
 uv = "0.10.2"
 cmake = "3.28.3"
+make = "4.4.1"
 shellcheck = "0.11.0"
 "github-cli" = "2.86.0"
 
 [env]
 RUBY_YJIT_ENABLE = "1"
+# Disable the CHECKSUMS section in lockfiles — checksums can't be fully populated
+# across all platforms (e.g. aarch64 variants on an x86 machine) so we opt out entirely.
+BUNDLE_LOCKFILE_CHECKSUMS = "false"
+# install at XDG_DATA_HOME:-~/.local/share/gem
+BUNDLE_PATH = "{{xdg_data_home}}/gem"
 
 [settings]
 ruby.compile = false
+ruby.default_packages_file = ".default-gems"

@@ -5,9 +5,8 @@ and the structure of those files is checked using https://json-schema.org/[JSON 
 
 Many UDB data objects share common field types, including:
 
-* xref:prose-schema.adoc[Schema for Prose]
-
-TODO
+* xref:schema/conditions.adoc[Expressing Conditions in UDB Data]
+* xref:schema/yaml-style-constraints.adoc[YAML Style Constraints for IDL Values]
 
 == Conditions
 

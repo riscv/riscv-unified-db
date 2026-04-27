@@ -6,10 +6,13 @@
 
 require "sorbet-runtime"
 
+require_relative "adoc_helpers"
+
 module UdbGen
   module TemplateHelpers
     extend T::Sig
     include Kernel
+    include AdocHelpers
 
     sig { params(template_pname: String, inputs: T::Hash[Symbol, T.untyped]).returns(String) }
     def partial(template_pname, inputs = {})
@@ -24,7 +27,7 @@ module UdbGen
       erb.result(context.instance_eval { binding })
     end
 
-    LinkableObj = T.type_alias { T.any(Udb::Instruction, Udb::Csr, Udb::CsrField, Idl::FunctionDefAst) }
+    LinkableObj = T.type_alias { T.any(Udb::Instruction, Udb::Csr, Udb::CsrField, Udb::Extension, Udb::Parameter, Idl::FunctionDefAst) }
 
     # return an asciidoc link to obj, with text "text"
     sig { params(obj: LinkableObj, text: String).returns(String) }
@@ -43,14 +46,18 @@ module UdbGen
     sig { params(obj: LinkableObj).returns(String) }
     def link_name(obj)
       case obj
-      when Udb::Instruction
-        "udb-insn-#{obj.name.gsub(".", "_")}"
+      when Idl::FunctionDefAst
+        "udb-function-#{obj.name.gsub(".", "_")}"
       when Udb::Csr
         "udb-csr-#{obj.name.gsub(".", "_")}"
       when Udb::CsrField
         "udb-csrfield-#{obj.parent.name.gsub(".", "_")}-#{obj.name.gsub(".", "_")}"
-      when Idl::FunctionDefAst
-        "udb-function-#{obj.name.gsub(".", "_")}"
+      when Udb::Extension
+        "udb-extension-#{obj.name.gsub(".", "_")}"
+      when Udb::Instruction
+        "udb-insn-#{obj.name.gsub(".", "_")}"
+      when Udb::Parameter
+        "udb-param-#{obj.name.gsub(".", "_")}"
       else
         T.absurd(obj)
       end
@@ -58,18 +65,18 @@ module UdbGen
 
     sig { params(cfg_arch: Udb::ConfiguredArchitecture, adoc: String).returns(String) }
     def convert_monospace_to_links(cfg_arch, adoc)
-      adoc.gsub(/`([\\w.]+)`/) do |match|
-        name = Regexp.last_match(1)
-        csr_name, field_name = T.must(name).split(".")
+      adoc.gsub(/`([\w.]+)`/) do |match|
+        name = T.must(Regexp.last_match(1))
+        csr_name, field_name = name.split(".")
         csr = cfg_arch.not_prohibited_csrs.find { |c| c.name == csr_name }
         if !field_name.nil? && !csr.nil? && csr.field?(field_name)
           link_to(csr.field(field_name), match)
         elsif !csr.nil?
           link_to(csr, match)
         elsif cfg_arch.not_prohibited_instructions.any? { |inst| inst.name == name }
-          link_to(cfg_arch.instruction(name), match)
+          link_to(T.must(cfg_arch.instruction(name)), match)
         elsif cfg_arch.not_prohibited_extensions.any? { |ext| ext.name == name }
-          link_to(cfg_arch.extension(name), match)
+          link_to(T.must(cfg_arch.extension(name)), match)
         else
           match
         end
@@ -87,7 +94,7 @@ module UdbGen
         when "ext"
           ext = cfg_arch.extension(name)
           if ext
-            link_to(cfg_arch.extension(name), link_text)
+            link_to(ext, link_text)
           else
             Udb.logger.warn "Attempted link to undefined extension: #{name}"
             match
@@ -111,14 +118,14 @@ module UdbGen
         when "csr"
           csr = cfg_arch.csr(name)
           if csr
-            link_to(cfg_arch.csr(name), link_text)
+            link_to(csr, link_text)
           else
             Udb.logger.warn "Attempted link to undefined CSR: #{name}"
             match
           end
         when "csr_field"
           csr_name, field_name = name.split("*")
-          csr = cfg_arch.csr(csr_name)
+          csr = cfg_arch.csr(T.must(csr_name))
           if csr
             csr_field = csr.field(field_name)
             if csr_field

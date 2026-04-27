@@ -24,8 +24,6 @@ implemented_extensions:
   - [M, "2.0.0"]
   - [S, "1.12.0"]
   - [Sm, "1.12.0"]
-  - [Smhpm, "1.12.0"]
-  - [Smpmp, "1.12.0"]
   - [U, "1.0.0"]
   - [V, "1.0.0"]
   - [Zve64f, "1.0.0"]
@@ -608,7 +606,6 @@ params:
   TRAP_ON_ECALL_FROM_M: true
   TRAP_ON_ECALL_FROM_U: true
   TRAP_ON_EBREAK: true
-  TRAP_ON_SFENCE_VMA_WHEN_SATP_MODE_IS_READ_ONLY: false
   MSTATEEN_ENVCFG_TYPE: rw
   HSTATEEN_ENVCFG_TYPE: rw
   PRECISE_SYNCHRONOUS_EXCEPTIONS: true

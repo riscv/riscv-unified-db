@@ -22,6 +22,7 @@ path = [
     "Rakefile",
     "README.adoc",
     "spec/schemas/**",
+    "sorbet/config"
 ]
 SPDX-FileCopyrightText = [
     "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.",
@@ -61,10 +62,36 @@ SPDX-License-Identifier = [
 
 [[annotations]]
 path = [
-  "doc/udb*.svg"
+  "doc/udb*.svg",
+  "doc/static/img/udb*.svg"
 ]
 SPDX-FileCopyrightText = "Copyright (c) Derek Hower, Paul Clarke"
 SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+  "doc/idl*.svg",
+  "doc/static/img/idl*.svg"
+]
+SPDX-FileCopyrightText = "Copyright (c) Derek Hower"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+  "doc/package.json",
+  "doc/tsconfig.json",
+  "doc/**/*.mdx"
+]
+SPDX-FileCopyrightText = "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries."
+SPDX-License-Identifier = "BSD-3-Clause-Clear"
+
+[[annotations]]
+path = [
+  "doc/static/img/docusaurus-social-card.jpg",
+  "doc/static/img/docusaurus.png"
+]
+SPDX-FileCopyrightText = "Copyright (c) Facebook, Inc. and its affiliates."
+SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [
@@ -91,3 +118,11 @@ path = [
 ]
 SPDX-FileCopyrightText = "Copyright (c) Jordan Carlin"
 SPDX-License-Identifier = "BSD-3-Clause-Clear"
+
+# Computer-generated files that are checked in
+[[annotations]]
+path = [
+    "sorbet/rbi/**"
+]
+SPDX-FileCopyrightText = "NONE"
+SPDX-License-Identifier = "CC0-1.0"

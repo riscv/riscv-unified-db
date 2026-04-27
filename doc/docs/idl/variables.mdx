@@ -1,0 +1,137 @@
+---
+sidebar_position: 3
+title: Variables and Constants
+---
+
+## Assignment
+
+Variables are assigned using `=`. Assignment is a statement, not an expression — it cannot appear inside a condition or as a subexpression.
+
+```idl
+XReg result;
+result = X[rs1] + X[rs2]; # assign after declaration
+
+Bits<8> flags = 0xFF;     # assign at declaration
+flags = flags & mask;     # re-assign
+
+CSR[mstatus].MIE = 1'b0;  # assign to a CSR field
+```
+
+There are no compound assignment operators (`+=`, `-=`, `&=`, etc.). Write the full expression explicitly:
+
+```idl
+# There is no +=. Write it out:
+count = count + 1;
+mask  = mask & 0xFF;
+```
+
+:::note
+The x register file is assigned through `X[rd] = value`. The x0 register is hardwired to zero — writes to it are silently discarded.
+:::
+
+## Mutable Variables
+
+Variables must be declared with a type. Variable names must begin with a **lowercase letter** and can be followed by any number of letters (any case), numbers, or underscores.
+
+Variables may be optionally initialized when declared. Variables that are not explicitly initialized are implicitly initialized to zero (for `Bits<N>`) or `false` (for `Boolean`).
+
+```idl title="Example variable declarations"
+Boolean condition;              # declare condition, initialized to false
+XReg    address = 0x8000_0000;  # declare address, initialized to 0x80000000
+Bits<8> pmpCfg0;                # declare pmpCfg0, initialized to 8'd0
+Bits<8> pmp_cfg_0;              # declare pmp_cfg_0, initialized to 8'd0
+Bits<8> ary[2];                 # declare ary, initialized to [8'd0, 8'd0]
+
+# Bits<8> PmpCfg;   # mutable variable names must start lowercase; PmpCfg would be a constant
+# Bits<8> d$_line;  # compilation error: '$' is not a valid character
+```
+
+The general-purpose RISC-V x registers are builtin state for IDL (rather than being declared state). This avoids needing special language support (e.g., operator overloading) or verbose function calls on every x register access. Three special cases apply:
+
+1. The x0 register is hardwired to 0.
+2. All writes to an x register when `MXLEN != XLEN` are sign-extended to `MXLEN`.
+3. All reads from an x register when `MXLEN != XLEN` ignore the upper bits of the register.
+
+:::note
+To help identify that the x registers are special, they use the variable name `X` (uppercase), which would be an invalid mutable variable name if declared in IDL.
+:::
+
+For the builtin variables `$pc` and `$encoding` that provide access to the current instruction's context, see [Builtins](./builtins.mdx).
+
+## Constants
+
+Constants are declared like mutable variables, except that their name starts with an **uppercase letter**.
+
+Constant names must start with an uppercase letter and can be followed by any number of letters (any case), numbers, or underscores. Constants must be initialized when declared and cannot be assigned after declaration. Constants must be initialized with a value known at compile time (i.e., initialization cannot reference variables).
+
+Many global constants — such as configuration parameters — are implicitly added before parsing (e.g., `MXLEN`).
+
+```idl title="Example constant declarations"
+Boolean I_LIKE_CHEESE = true;   # declare I_LIKE_CHEESE, initialized to true
+XReg    Address = 0x8000_0000;  # declare Address, initialized to 0x80000000
+XReg    AddressAlias = Address; # declare AddressAlias, initialized to 0x80000000
+
+# Bits<8> pmpCfg;  # constant names must start uppercase; pmpCfg would be a variable
+
+# compilation error: '$' is not a valid character
+# Bits<8> d$_line;
+
+# compilation error: constant initialization cannot reference variables
+# Bits<8> PmpCfg = my_cfg;
+
+# compilation error: constants must be initialized at declaration
+# Bits<8> PmpCfg0;
+```
+
+### Builtin Constants
+
+All configuration parameters are added to global scope for compilation and are accessible as constants anywhere in IDL.
+
+## Naming Rules
+
+All user-defined identifiers follow the same character set: start with a letter, then any mix of letters, digits, and underscores. The **first letter's case** determines the kind of identifier:
+
+| Identifier kind | First character | Remaining | Example |
+|---|---|---|---|
+| Variable (mutable) | `[a-z]` | `[a-zA-Z0-9_]*` | `virtual_address` |
+| Constant | `[A-Z]` | `[a-zA-Z0-9_]*` | `MXLEN`, `PhysAddrWidth` |
+| Type name (enum, bitfield, struct) | `[A-Z]` | `[a-zA-Z0-9_]*` | `SatpMode`, `Sv39PageTableEntry` |
+| Enum / bitfield member | `[A-Z]` | `[a-zA-Z0-9_]*` | `Bare`, `PBMT` |
+| Struct member (mutable) | `[a-z]` | `[a-zA-Z0-9_]*` | `paddr` |
+| Struct member (const) | `[A-Z]` | `[a-zA-Z0-9_]*` | `Width` |
+| Function | `[a-z]` | `[a-zA-Z0-9_?]*` | `read_memory`, `implemented?` |
+| Builtin (reserved) | `$` | `[a-z][a-zA-Z0-9_]*` | `$pc`, `$encoding` |
+
+The `$` prefix is reserved for compiler builtins — user-defined names may not start with `$`.
+
+## Compile-time and Runtime
+
+IDL evaluation happens in two phases:
+
+**Compile time** — when `idlc` processes the source. At this phase:
+- Configuration parameters (e.g., `MXLEN`, `PHYS_ADDR_WIDTH`) are substituted with their values
+- All constant expressions are evaluated
+- Types are fully resolved, including the `N` in every `Bits<N>`
+- Array sizes are determined
+- Any expression that must be "known at compile time" is evaluated here
+
+**Runtime** — when the generated ISS (or interpreter) executes an instruction. At this phase:
+- Variable values change as instructions execute
+- CSR reads and writes occur
+- Memory is accessed
+- Control flow branches based on register contents
+
+The distinction matters most for `Bits<N>` widths and array sizes — these are structural properties of the hardware being described, not computed values. They must be fully resolved at compile time so the compiler can type-check all operations.
+
+```idl
+# Compile-time: N is a literal or constant — always OK
+Bits<32>    word;
+Bits<MXLEN> reg;          # MXLEN is a configuration constant
+
+# Compile-time expression: valid because both operands are constants
+Bits<{MXLEN, 1'b0}> wide; # width = MXLEN*2, resolved at compile time
+
+# Runtime: sign_bit is a variable — its value isn't known until execution
+Bits<1> sign_bit = word[31];
+# Bits<sign_bit> invalid;  # compilation error: N must be known at compile time
+```

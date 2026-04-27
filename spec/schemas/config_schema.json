@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
+  "$id": "v0.1",
   "$defs": {
     "full_configuration": {
       "type": "object",
@@ -184,10 +184,15 @@
       "additionalProperties": false
     }
   },
-
   "oneOf": [
-    { "$ref": "#/$defs/full_configuration" },
-    { "$ref": "#/$defs/partial_configuration" },
-    { "$ref": "#/$defs/unconfiguration" }
+    {
+      "$ref": "#/$defs/full_configuration"
+    },
+    {
+      "$ref": "#/$defs/partial_configuration"
+    },
+    {
+      "$ref": "#/$defs/unconfiguration"
+    }
   ]
 }

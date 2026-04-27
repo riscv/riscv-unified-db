@@ -38,25 +38,25 @@ grammar Idl
   end
 
   rule enum_definition
-    'generated' space+ 'enum' space+ user_type_name space* ';' <Idl::BuiltinEnumDefinitionSyntaxNode>
+    'generated' space+ 'enum' space+ type_name space* ';' <Idl::BuiltinEnumDefinitionSyntaxNode>
     /
-    'enum' space+ user_type_name space+ '{' space*
-      e:(user_type_name space+ i:(int space+)?)+ space*
+    'enum' space+ type_name space+ '{' space*
+      e:(type_name space+ i:(int space+)?)+ space*
     '}' <Idl::EnumDefinitionSyntaxNode>
   end
 
   rule enum_ref
-    enum_class:user_type_name space* '::' space* member:user_type_name <EnumRefSyntaxNode>
+    enum_class:type_name space* '::' space* member:type_name <EnumRefSyntaxNode>
   end
 
   rule bitfield_definition
-    'bitfield' space* '(' space* int space* ')' space* user_type_name space* '{' space*
+    'bitfield' space* '(' space* int space* ')' space* type_name space* '{' space*
       e:(field_name space+ range:(int lsb:(space* '-' space* int)?) space+)+ space*
     '}' <Idl::BitfieldDefinitionSyntaxNode>
   end
 
   rule struct_definition
-    'struct' space* user_type_name space* '{' space*
+    'struct' space* type_name space* '{' space*
       member:(type_name space+ id space* ';' space*)+
     '}' <Idl::StructDefinitionSyntaxNode>
   end
@@ -66,6 +66,25 @@ grammar Idl
   end
 
   rule int
+    # plain decimal (most common) — tried first; disjoint from all other alternatives
+    # (other alternatives start with '0', "'", or require a trailing 's' suffix)
+    # Negative lookahead !"'" ensures we don't consume the width prefix of a Verilog literal (e.g. 32'b...)
+    [1-9] [0-9]* !"'" 's' <Idl::IntLiteralSyntaxNode> /
+    [1-9] [0-9]* !"'" <Idl::IntLiteralSyntaxNode> /
+
+    # c++ style: signed (must come before unsigned to avoid consuming the trailing 's')
+    '0b' [0-1] [0-1_]* 's' <Idl::IntLiteralSyntaxNode> /
+    '0' [0-7] [0-7_]* 's' <Idl::IntLiteralSyntaxNode> /
+    '0x' [0-9a-fA-F] [0-9a-fA-F_]* 's' <Idl::IntLiteralSyntaxNode> /
+
+    # c++ style: unsigned
+    '0b' [0-1] [0-1_]* <Idl::IntLiteralSyntaxNode> /
+    '0' [0-7] [0-7_]* <Idl::IntLiteralSyntaxNode> /
+    '0x' [0-9a-fA-F] [0-9a-fA-F_]* <Idl::IntLiteralSyntaxNode> /
+
+    # special case: just a single 0 (not followed by a verilog-style quote)
+    '0' !"'" 's'? <Idl::IntLiteralSyntaxNode> /
+
     # verilog style: explicit bit width
     (([0-9]+)/'MXLEN')? "'" 'b' [0-1xX] [0-1_xX]* <Idl::IntLiteralSyntaxNode> /
     (([0-9]+)/'MXLEN')? "'" 'o' [0-7xX] [0-7_xX]* <Idl::IntLiteralSyntaxNode> /
@@ -76,22 +95,7 @@ grammar Idl
     (([0-9]+)/'MXLEN')? "'" 'sb' [0-1xX] [0-1_xX]* <Idl::IntLiteralSyntaxNode> /
     (([0-9]+)/'MXLEN')? "'" 'so' [0-7xX] [0-7_xX]* <Idl::IntLiteralSyntaxNode> /
     (([0-9]+)/'MXLEN')? "'" 's' 'd'? [0-9] [0-9_]* <Idl::IntLiteralSyntaxNode> /
-    (([0-9]+)/'MXLEN')? "'" 'sh' [0-9a-fA-FxX] [0-9a-fA-F_xX]* <Idl::IntLiteralSyntaxNode> /
-
-    # c++ style: signed
-    '0b' [0-1] [0-1_]* 's' <Idl::IntLiteralSyntaxNode> /
-    '0' [0-7] [0-7_]* 's' <Idl::IntLiteralSyntaxNode> /
-    [1-9] [0-9]* 's' <Idl::IntLiteralSyntaxNode> /
-    '0x' [0-9a-fA-F] [0-9a-fA-F_]* 's' <Idl::IntLiteralSyntaxNode> /
-
-    # c++ style: unsigned
-    '0b' [0-1] [0-1_]* <Idl::IntLiteralSyntaxNode> /
-    '0' [0-7] [0-7_]* <Idl::IntLiteralSyntaxNode> /
-    [1-9] [0-9]* <Idl::IntLiteralSyntaxNode> /
-    '0x' [0-9a-fA-F] [0-9a-fA-F_]* <Idl::IntLiteralSyntaxNode> /
-
-    # special case: just a single 0
-    '0' 's'? <Idl::IntLiteralSyntaxNode>
+    (([0-9]+)/'MXLEN')? "'" 'sh' [0-9a-fA-FxX] [0-9a-fA-F_xX]* <Idl::IntLiteralSyntaxNode>
   end
 
   rule p0_binary_operator
@@ -123,7 +127,7 @@ grammar Idl
     '>'
   end
 
-  # when parsing inside a template argument list (<...>), we disallow the '>' character
+  # when parsing inside a Bits<N> type expression, we disallow the '>' character
   # if you need it for an expression, enclose the expression in ()
   rule p3_template_binary_operator
     '<=' /
@@ -299,7 +303,7 @@ grammar Idl
 
   # expression that can accept an array index operator (expr[])
   rule ary_eligible_expression
-    enum_to_a
+    dollar_function_call
     /
     paren_expression
     /
@@ -313,7 +317,7 @@ grammar Idl
     /
     csr_field_access_expression
     /
-    bits_cast
+    csr_register_access_expression
     /
     rval # must come last!
   end
@@ -330,20 +334,16 @@ grammar Idl
     rval space* '++' <Idl::PostIncrementExpressionSyntaxNode>
   end
 
-  rule bits_cast
-    '$bits' space* '(' space*
-      expr:(
-        csr_register_access_expression
-        /
-        enum_ref
-        /
-        expression
-      )
-    space* ')' <Idl::BitsCastSyntaxNode>
+  rule dollar_function_call
+    '$' name:([a-zA-Z_] [a-zA-Z0-9_?]*) space* '(' space* args:dollar_arg_list space* ')' <Idl::DollarFunctionCallSyntaxNode>
   end
 
-  rule enum_to_a
-    '$enum_to_a' space* '(' space* user_type_name ')' <Idl::EnumArrayCastSyntaxNode>
+  rule dollar_variable
+    '$' name:([a-zA-Z_] [a-zA-Z0-9_]*) <Idl::DollarVariableSyntaxNode>
+  end
+
+  rule dollar_arg_list
+    first:expression? rest:(space* ',' space* expression)*
   end
 
   rule unary_expression
@@ -355,24 +355,7 @@ grammar Idl
     /
     ary_access
     /
-    # get the width (N) of a Bits type. Mostly just useful for writing tests and checking types
-    '$width' space* '(' space* expression space* ')' <Idl::WidthRevealSyntaxNode>
-    /
-    '$signed' space* '(' space* expression space* ')' <Idl::SignCastSyntaxNode>
-    /
-    bits_cast
-    /
-    '$enum_size' space* '(' space* user_type_name ')' <Idl::EnumSizeSyntaxNode>
-    /
-    '$enum_element_size' space* '(' space* user_type_name ')' <Idl::EnumElementSizeSyntaxNode>
-    /
-    enum_to_a
-    /
-    '$enum' space* '(' space* user_type_name space* ',' space* expression space* ')' <Idl::EnumCastSyntaxNode>
-    /
-    '$array_size' space* '(' space* expression ')' <Idl::ArraySizeSyntaxNode>
-    /
-    '$array_includes?' space* '(' space* ary:ary_eligible_expression space* ',' space* value:expression space* ')' <Idl::ArrayIncludesSyntaxNode>
+    dollar_function_call
     /
     paren_expression
     /
@@ -391,6 +374,8 @@ grammar Idl
     function_call # Ast is assigned in function_call rule
     /
     csr_field_access_expression
+    /
+    csr_register_access_expression
     /
     enum_ref
     /
@@ -442,20 +427,17 @@ grammar Idl
     )
   end
 
-  rule function_call_template_arguments
-    first:(template_safe_expression) rest:(space* ',' space* arg:(template_safe_expression))*
-  end
-
   rule function_call
+    # plain function call is most common; CSR calls require literal "CSR[" prefix so these are disjoint
+    function_name space* '(' space* function_arg_list space* ')' <Idl::FunctionCallExpressionSyntaxNode>
+    /
     csr:csr_register_access_expression space* '.' space* 'sw_write' space* '(' space* expression space* ')' <Idl::CsrSoftwareWriteSyntaxNode>
     /
     csr:csr_register_access_expression space* '.' space* function_name space* '(' space* function_arg_list space* ')' <Idl::CsrFunctionCallSyntaxNode>
-    /
-    function_name t:(space* '<' space* targs:function_call_template_arguments space* '>')? space* '(' space* function_arg_list space* ')' <Idl::FunctionCallExpressionSyntaxNode>
   end
 
   rule function_name
-    !reserved [a-zA-Z] [a-zA-Z0-9_]* '?'?
+    [a-zA-Z] [a-zA-Z0-9_]* '?'?
   end
 
   rule function_arg_list
@@ -464,7 +446,6 @@ grammar Idl
 
   rule body_function_definition
     type:('external' space+)? 'function' space+ function_name space* '{' space*
-      targs:('template' space+ first:single_declaration rest:(space* ',' space* single_declaration)* space+)?
       ret:('returns' space+ first:type_name rest:(space* ',' space* type_name)* space+)?
       args:(
         'arguments' space+
@@ -510,13 +491,13 @@ grammar Idl
   end
 
   rule rval
-    (int / builtin_read_only_var / builtin_read_write_var / string / id)
+    (int / dollar_variable / string / id)
   end
 
   rule assignment
     '(' first:(id / dontcare_lvalue) space* rest:(',' space* var:(id / dontcare_lvalue) space*)+ ')' space* '=' space* function_call <Idl::MultiVariableAssignmentSyntaxNode> /
     single_declaration_with_initialization /
-    '$pc' space* '=' space* rval:expression <Idl::PcAssignmentSyntaxNode> /
+    dollar_variable space* '=' space* rval:expression <Idl::DollarVariableAssignmentSyntaxNode> /
     var:id space* '=' space* rval:expression <Idl::VariableAssignmentSyntaxNode> /
     # note: there is no full CSR assignment (must assign fields)
     csr_field_access_expression space* '=' space* rval:expression <Idl::CsrFieldAssignmentSyntaxNode> /
@@ -574,16 +555,16 @@ grammar Idl
 
   rule function_if_block
     'if' space* '(' space* if_cond:expression space* ')' space* '{' space*
-      if_body:(e:(statement / return_statement / function_if_block / for_loop) space*)+
+      if_body:(e:(return_statement / statement / function_if_block / for_loop) space*)+
     '}'
     elseifs:(
       space* 'else' space+ 'if' space* '(' space* expression space* ')' space* '{' space*
-        body:(e:(statement / return_statement / function_if_block / for_loop) space*)+
+        body:(e:(return_statement / statement / function_if_block / for_loop) space*)+
       '}'
     )*
     final_else:(
       space* 'else' space* '{' space*
-        body:(e:(statement / return_statement / function_if_block / for_loop) space*)+
+        body:(e:(return_statement / statement / function_if_block / for_loop) space*)+
       '}'
     )? <Idl::IfSyntaxNode>
   end
@@ -606,48 +587,8 @@ grammar Idl
 
   rule for_loop
     'for' space* '(' space* for_loop_iteration_variable_declaration space* ';' space* condition:expression space* ';' space* action:(assignment / post_inc / post_dec) space*  ')' space* '{' space*
-      stmts:(s:(statement / return_statement / function_if_block / for_loop) space*)+
+      stmts:(s:(return_statement / statement / function_if_block / for_loop) space*)+
     '}' space* <Idl::ForLoopSyntaxNode>
-  end
-
-  rule builtin_type_name
-    # alias for Bits<MXLEN>
-    'XReg' ![A-Za-z0-9] <Idl::BuiltinTypeNameSyntaxNode> /
-
-    'Bits' space* '<' space* i:template_safe_expression space* '>' ![A-Za-z0-9] <Idl::BuiltinTypeNameSyntaxNode> /
-
-    'Boolean' ![A-Za-z0-9] <Idl::BuiltinTypeNameSyntaxNode> /
-
-    'String' ![A-Za-z0-9] <Idl::BuiltinTypeNameSyntaxNode> /
-
-    # alias for Bits<64>
-    'U64' ![A-Za-z0-9] <Idl::BuiltinTypeNameSyntaxNode> /
-
-    # alias for Bits<32>
-    'U32' ![A-Za-z0-9] <Idl::BuiltinTypeNameSyntaxNode>
-  end
-
-  rule keyword
-    'if' ![A-Za-z0-9_] /
-    'else' ![A-Za-z0-9_] /
-    'for' ![A-Za-z0-9_] /
-    'return' ![A-Za-z0-9_] /
-    'returns' ![A-Za-z0-9_] /
-    'arguments' ![A-Za-z0-9_] /
-    'description' ![A-Za-z0-9_] /
-    'body' ![A-Za-z0-9_] /
-    'function' ![A-Za-z0-9_] /
-    'builtin' ![A-Za-z0-9_] /
-    'generated' ![A-Za-z0-9_] /
-    'enum' ![A-Za-z0-9_]  /
-    'bitfield' ![A-Za-z0-9_] /
-    'CSR' ![A-Za-z0-9_] /
-    'true' ![A-Za-z0-9_] /
-    'false' ![A-Za-z0-9_]
-  end
-
-  rule user_type_name
-    !reserved [A-Z] [A-Za-z0-9_]* <Idl::UserTypeNameSyntaxNode>
   end
 
   rule field_name
@@ -655,11 +596,11 @@ grammar Idl
   end
 
   rule type_name
-    (builtin_type_name / user_type_name)
-  end
-
-  rule reserved
-    builtin_type_name / keyword
+    (
+      'Bits' space* '<' space* i:template_safe_expression space* '>' ![A-Za-z0-9]
+      /
+      [A-Z] [A-Za-z0-9_]*
+    ) <Idl::TypeNameSyntaxNode>
   end
 
   rule comment
@@ -681,15 +622,7 @@ grammar Idl
   rule id
     # we purposely omit _ from the starting character so that tools can safely use such names
     # without worrying about name collisions
-    !reserved [A-Za-z] [A-Za-z_0-9]* <Idl::IdSyntaxNode>
-  end
-
-  rule builtin_read_only_var
-    "$encoding" <Idl::BuiltinVariableSyntaxNode>
-  end
-
-  rule builtin_read_write_var
-    "$pc" <Idl::BuiltinVariableSyntaxNode>
+    [A-Za-z] [A-Za-z_0-9]* <Idl::IdSyntaxNode>
   end
 
   rule csr_name

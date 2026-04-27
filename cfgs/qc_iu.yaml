@@ -5,13 +5,11 @@ kind: architecture configuration
 type: fully configured
 name: qc_iu
 arch_overlay: qc_iu
-description: Configuration with the Xqci and Xqccmp custom extensions.
+description: Configuration with the Xqci, Xqccmp, and Xqccmt custom extensions.
 implemented_extensions:
   - { name: Sm, version: "= 1.13" }
-  - { name: Smhpm, version: "= 1.13" }
   - { name: Smrnmi, version: "= 1.0" }
   - { name: Smdbltrp, version: "= 1.0" }
-  - { name: Smpmp, version: "= 1.13" }
   - { name: I, version: "= 2.1" }
   - { name: M, version: "= 2.0" }
   - { name: B, version: "= 1.0" }
@@ -24,6 +22,7 @@ implemented_extensions:
   - { name: Zicsr, version: "= 2.0" }
   - { name: Zihpm, version: "= 2.0" }
   - { name: Xqccmp, version: "= 0.3" }
+  - { name: Xqccmt, version: "= 0.1.0" }
   - { name: Xqci, version: "= 0.13" }
   - { name: Xqcia, version: "= 0.7.0" }
   - { name: Xqciac, version: "= 0.3.0" }
@@ -63,6 +62,39 @@ params:
     - true # HPM8
     - true # HPM9
     - true # HPM10
+    - false # HPM11
+    - false # HPM12
+    - false # HPM13
+    - false # HPM14
+    - false # HPM15
+    - false # HPM16
+    - false # HPM17
+    - false # HPM18
+    - false # HPM19
+    - false # HPM20
+    - false # HPM21
+    - false # HPM22
+    - false # HPM23
+    - false # HPM24
+    - false # HPM25
+    - false # HPM26
+    - false # HPM27
+    - false # HPM28
+    - false # HPM29
+    - false # HPM30
+    - false # HPM31
+  MCOUNTENABLE_EN:
+    - false # CY
+    - false # empty
+    - false # IR
+    - false # HPM3
+    - false # HPM4
+    - false # HPM5
+    - false # HPM6
+    - false # HPM7
+    - false # HPM8
+    - false # HPM9
+    - false # HPM10
     - false # HPM11
     - false # HPM12
     - false # HPM13

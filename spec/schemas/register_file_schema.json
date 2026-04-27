@@ -1,9 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
+  "$id": "v0.1",
   "title": "Register File Schema",
   "description": "Schema for describing a register file",
-
   "$defs": {
     "register_entry": {
       "type": "object",
@@ -82,8 +81,8 @@
       "properties": {
         "$schema": {
           "format": "uri-reference",
-          "const": "register_file_schema.json#",
-          "description": "Path to schema, relative to <UDB ROOT>/schemas"
+          "description": "Path to schema, relative to <UDB ROOT>/schemas",
+          "const": "register_file_schema.json#"
         },
         "kind": {
           "const": "register_file"

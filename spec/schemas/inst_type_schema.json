@@ -1,14 +1,22 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "v0.1",
   "title": "Instruction Type Schema",
   "description": "Schema for instruction type definitions",
-
   "type": "object",
   "properties": {
-    "$schema": { "const": "inst_type_schema.json#" },
-    "kind": { "const": "instruction_type" },
-    "name": { "$ref": "schema_defs.json#/$defs/inst_type_name" },
-    "description": { "type": "string" },
+    "$schema": {
+      "const": "inst_type_schema.json#"
+    },
+    "kind": {
+      "const": "instruction_type"
+    },
+    "name": {
+      "$ref": "schema_defs.json#/$defs/inst_type_name"
+    },
+    "description": {
+      "type": "string"
+    },
     "length": {
       "description": "Length, in bits, of the encoding",
       "enum": [16, 32]
@@ -25,7 +33,9 @@
           "required": ["location"],
           "additionalProperties": false,
           "properties": {
-            "location": { "$ref": "schema_defs.json#/$defs/field_location" }
+            "location": {
+              "$ref": "schema_defs.json#/$defs/field_location"
+            }
           }
         }
       }

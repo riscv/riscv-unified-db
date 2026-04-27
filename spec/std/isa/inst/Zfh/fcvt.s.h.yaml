@@ -47,9 +47,9 @@ operation(): |
       if ((sp_value & 0x00400000) != 0) {
         set_fp_flag(FpFlag::NV);
       }
-      f[fd] = nan_box<16, FLEN>(HP_CANONICAL_NAN);
+      f[fd] = nan_box(16, FLEN, HP_CANONICAL_NAN);
     } else {
-      f[fd] = nan_box<16, FLEN>(packToF16UI( sign, 0x1F, 0 ));
+      f[fd] = nan_box(16, FLEN, packToF16UI( sign, 0x1F, 0 ));
     }
   } else {
 
@@ -58,7 +58,7 @@ operation(): |
     # is OR-red with the sticky
     Bits<16> frac16 = (frac >> 9) | ((frac & 0x1ff) != 0 ? 1 : 0);
     if ((exp | frac16) == 0) {
-      f[fd] = nan_box<16, FLEN>(packToF16UI( sign, 0, 0 ));
+      f[fd] = nan_box(16, FLEN, packToF16UI( sign, 0, 0 ));
     } else {
       assert(false, "TODO: implement roundPackToF16");
       # f[fd] = soffloat_roundPackToF16(sign, exp - 0x71, frac16 | 0x4000);
@@ -67,25 +67,3 @@ operation(): |
   }
 
   mark_f_state_dirty();
-
-# SPDX-SnippetBegin
-# SPDX-FileCopyrightText: 2017-2025 Contributors to the RISCV Sail Model <https://github.com/riscv/sail-riscv/blob/master/LICENCE>
-# SPDX-License-Identifier: BSD-2-Clause
-sail(): |
-  {
-    assert(sizeof(xlen) >= 64);
-    let rs1_val_LU = X(rs1)[63..0];
-    match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_H) = riscv_ui64ToF16 (rm_3b, rs1_val_LU);
-
-        accrue_fflags(fflags);
-        F_or_X_H(rd) = rd_val_H;
-        RETIRE_SUCCESS
-      }
-    }
-  }
-
-# SPDX-SnippetEnd

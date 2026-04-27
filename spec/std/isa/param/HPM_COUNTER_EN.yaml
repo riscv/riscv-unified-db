@@ -11,8 +11,8 @@ description: |
   There is one entry for each hpmcounter.
 
   The first three entries *must* be false (as they correspond to CY, IR, TM in, _e.g._ `mhmpcountinhibit`)
-  Index 3 in HPM_COUNTER_EN corresponds to hpmcounter3.
-  Index 31 in HPM_COUNTER_EN corresponds to hpmcounter31.
+  Index 3 in HPM_COUNTER_EN corresponds to mhpmcounter3.
+  Index 31 in HPM_COUNTER_EN corresponds to mhpmcounter31.
 long_name: TODO
 schema:
   type: array
@@ -26,4 +26,4 @@ schema:
   minItems: 32
 definedBy:
   extension:
-    name: Smhpm
+    name: Sm

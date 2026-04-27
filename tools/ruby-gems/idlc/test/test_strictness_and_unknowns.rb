@@ -24,10 +24,10 @@ class TestStrictnessAndUnknowns < Minitest::Test
   end
 
   def test_enum_ref_memoizes_per_symtab
-    symtab1 = Idl::SymbolTable.new
+    symtab1 = Idl::SymbolTable.new(name: "table1")
     symtab1.add!("E", Idl::EnumerationType.new("E", ["A"], [0]))
 
-    symtab2 = Idl::SymbolTable.new
+    symtab2 = Idl::SymbolTable.new(name: "table2")
     symtab2.add!("E", Idl::EnumerationType.new("E", ["A"], [1]))
 
     ast = Idl::EnumRefAst.new(nil, nil, "E", "A")

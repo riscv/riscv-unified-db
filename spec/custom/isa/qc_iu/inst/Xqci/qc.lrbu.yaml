@@ -36,4 +36,4 @@ access:
   vu: always
 operation(): |
   XReg virtual_address = X[rs1] + (X[rs2] << shamt);
-  X[rd] = read_memory<8>(virtual_address, $encoding);
+  X[rd] = read_memory(8, virtual_address, $encoding);
