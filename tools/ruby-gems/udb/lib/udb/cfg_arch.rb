@@ -690,11 +690,12 @@ module Udb
         if cached_files.nil?
           entries = []
           Dir.glob(@arch_dir / arch_dir / "**" / "*.yaml") do |obj_path|
-            f = File.open(obj_path)
-            f.flock(File::LOCK_EX)
-            content = f.read
-            f.flock(File::LOCK_UN)
-            entries << [content, obj_path, Pathname.new(obj_path).realpath]
+            File.open(obj_path) do |f|
+              f.flock(File::LOCK_EX)
+              content = f.read
+              f.flock(File::LOCK_UN)
+              entries << [content, obj_path, Pathname.new(obj_path).realpath]
+            end
           end
           cached_files = @@yaml_data_cache[yaml_cache_key] = entries
         end

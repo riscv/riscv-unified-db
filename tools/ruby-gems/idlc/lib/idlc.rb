@@ -79,7 +79,7 @@ module Idl
     end
 
     def compile_file(path, source_mapper = nil)
-      path_key = path.to_s
+      path_key = path.realpath.to_s
 
       m = T.let(@@parse_cache[path_key], T.nilable(IsaSyntaxNode))
 
