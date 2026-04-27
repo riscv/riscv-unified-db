@@ -498,10 +498,11 @@ module Udb
     sig { returns(T::Hash[String, T.untyped]) }
     def to_strict_config
       strict_mandatory_ext_reqs = mandatory_ext_reqs
+      mandatory_ext_req_names = strict_mandatory_ext_reqs.map(&:name).to_set
       cfg_arch_obj = to_cfg_arch
 
       cfg_arch_obj.extensions.each do |ext|
-        next if mandatory_ext_reqs.any? { |e| e.name == ext.name }
+        next if mandatory_ext_req_names.include?(ext.name)
 
         if (-ext.to_ext_req.to_condition & cfg_arch_obj.to_condition).unsatisfiable_by_cfg_arch?(cfg_arch_obj)
           # what's the minimum?
@@ -513,6 +514,7 @@ module Udb
           raise "condition problem: ext is required but none of the versions are" if min_ext_ver.nil?
 
           strict_mandatory_ext_reqs << PortfolioExtensionRequirement.new(ext.name, "~> #{min_ext_ver.version_str}", arch: cfg_arch_obj)
+          mandatory_ext_req_names.add(ext.name)
         end
       end
 
