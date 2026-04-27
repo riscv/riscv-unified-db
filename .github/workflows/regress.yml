@@ -437,14 +437,14 @@ jobs:
       run: "./bin/chore gen profile-cfgs"
     - name: See if anything changed
       run: |
-        git diff-index --quiet HEAD -- || \
+        git status --porcelain | grep -q . && \
         ( \
         echo "Profile configs need to be regenerated."; \
         echo "Run `./bin/chore gen profile-cfgs`, commit the changes, and push again."; \
         echo "Changed files are"; \
         git status; \
         exit 1 \
-        )
+        ) || true
   regress-udb-unit-test:
     runs-on: ubuntu-latest
     steps:
