@@ -24,7 +24,7 @@ repos:
       - id: trailing-whitespace
         stages: [pre-commit]
         args: [--markdown-linebreak-ext=md]
-        exclude: \.svg$|cfgs/profile.*|tests/data/golden/.*
+        exclude: \.svg$|cfgs/profile/.*\.yaml$|tests/data/golden/.*
       - id: mixed-line-ending
         args: ["--fix=lf"]
         exclude: ^.*\.bat$

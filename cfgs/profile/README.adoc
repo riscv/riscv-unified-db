@@ -1,6 +1,6 @@
 = Profile Configurations
 
-Configs in `cfg/profile` are generated from the specifications in `spec/std/isa/profile`.
+Configs in `cfgs/profile` are generated from the specifications in `spec/std/isa/profile`.
 They are partial configurations that represent a profile-compliant implementation.
 
 The profile configurations are _strict_.

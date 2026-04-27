@@ -787,7 +787,7 @@ module Udb
 
       return @in_scope_csrs unless @in_scope_csrs.nil?
 
-      @in_scope_csrs = to_cfg_arch.in_scope_csrs(show_progress: true)
+      @in_scope_csrs = to_cfg_arch.in_scope_csrs()
     end
 
     # @param design [Design] The design

@@ -45,4 +45,4 @@ requirements:
     - name: U_MODE_ENDIANNESS
       equal: little
     - name: UXLEN
-      includes: 32
+      includes: 64
