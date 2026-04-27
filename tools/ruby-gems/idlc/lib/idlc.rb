@@ -81,7 +81,7 @@ module Idl
     def compile_file(path, source_mapper = nil)
       path_key = path.to_s
 
-      m = @@parse_cache[path_key]
+      m = T.let(@@parse_cache[path_key], T.nilable(IsaSyntaxNode))
 
       if m.nil?
         @@parse_cache_mutex.synchronize do
@@ -128,7 +128,7 @@ module Idl
         source_mapper[path_key] = path.read unless source_mapper.nil?
       end
 
-      ast = m.to_ast
+      ast = T.must(m).to_ast
 
       ast.children.each do |child|
         next unless child.is_a?(IncludeStatementAst)

@@ -561,8 +561,6 @@ module Udb
       end
     end
 
-    private
-
     # Build a ConfiguredArchitecture from an in-memory config data hash.
     # Uses the fast path (no disk round-trip) when the parent has no overlay;
     # falls back to the full pipeline when the parent's resolved spec differs.
