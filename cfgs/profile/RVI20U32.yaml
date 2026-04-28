@@ -10,8 +10,7 @@ kind: architecture configuration
 type: partially configured
 name: RVI20U32
 description:
-params:
-  MXLEN: 32
+params: {}
 mandatory_extensions:
 - name: I
   version: "~> 2.1"

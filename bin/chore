@@ -379,10 +379,32 @@ do_gen_smoke() {
 
 #
 # Generate strict config files for profiles (cfgs/profile/)
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
 #
 do_gen_profile_cfgs() {
   echo "Generating profile config files in cfgs/profile/"
+  local cfgs_dir="${UDB_ROOT}/cfgs/profile"
+
+  # Capture the state before generation
+  local before_hash=""
+  if [ -d "$cfgs_dir" ]; then
+    before_hash=$(find "$cfgs_dir" -type f -name "*.yaml" -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+  fi
+
   "${UDB_ROOT}"/bin/bundle exec rake gen:cfg
+
+  if [ $fail_on_change -eq 1 ]; then
+    local after_hash=""
+    if [ -d "$cfgs_dir" ]; then
+      after_hash=$(find "$cfgs_dir" -type f -name "*.yaml" -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+    fi
+
+    if [ "$before_hash" != "$after_hash" ]; then
+      echo "[ERROR]: Profile config files changed during generation"
+      return 1
+    fi
+  fi
+  return 0
 }
 
 #
@@ -598,7 +620,8 @@ case "$subcommand" in
         ;;
       profile-cfgs )
         do_gen_profile_cfgs
-        exit 0
+        exit_code=$?
+        exit $exit_code
         ;;
       xqci )
         do_gen_xqci_golden

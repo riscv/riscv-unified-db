@@ -126,19 +126,11 @@ tests:
 
   regress-profile-strict-cfg:
     ci_stage: pr
+    tags:
+      - smoke
     test:
-      - name: Generate strict profile configs
-        run: ./bin/chore gen profile-cfgs
-      - name: See if anything changed
-        run: |
-          git status --porcelain | grep -q . && \
-          ( \
-          echo "Profile configs need to be regenerated."; \
-          echo "Run `./bin/chore gen profile-cfgs`, commit the changes, and push again."; \
-          echo "Changed files are"; \
-          git status; \
-          exit 1 \
-          ) || true
+      - name: Check that profile configs are up to date
+        run: ./bin/chore gen -f profile-cfgs
 
   regress-udb-unit-test:
     ci_stage: pr

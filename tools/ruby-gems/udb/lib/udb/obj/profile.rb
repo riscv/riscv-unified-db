@@ -197,7 +197,8 @@ module Udb
     end
 
     def all_in_scope_params
-      [Portfolio::InScopeParameter.new(@cfg_arch.param("MXLEN"), { "const" => @data["base"] }, "")]
+      []
+      # [Portfolio::InScopeParameter.new(@cfg_arch.param("MXLEN"), { "const" => @data["base"] }, "")]
     end
 
     # Too complicated to put in profile ERB template.

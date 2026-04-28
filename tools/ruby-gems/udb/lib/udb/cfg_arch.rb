@@ -277,7 +277,7 @@ module Udb
           reasons << "#{h.fetch("name")} is not a known extension"
         end
         if extensions.any? { |e| e.name == h.fetch("name") } && !T.must(extension(h.fetch("name"))).versions.any? { |v| v.version_spec == h.fetch("version") }
-          reasons << "#{h.fetch("version")} is not a known extension"
+          reasons << "#{h.fetch("version")} is not a known version of extension #{h.fetch("name")}"
         end
       end
 
