@@ -3,6 +3,7 @@
 
 #include <CLI/CLI.hpp>
 #include <string>
+#include <list>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <sys/param.h>
@@ -15,6 +16,10 @@
 #include "udb/iss_soc_model.hpp"
 #include "udb/GDBServer.hpp"
 #include "udb/NotificationHandler.hpp"
+#include "udb/Tracer.hpp"
+#include "udb/config_validator.hpp"
+#include "udb/htif.hpp"
+
 
 #define RISCV_REG_GPR_FIRST 0
 #define RISCV_REG_GPR_LAST  0x1f
@@ -27,6 +32,7 @@
 
 using json = nlohmann::json;
 
+
 struct Options
 {
   std::string configName;
@@ -37,6 +43,7 @@ struct Options
   bool halt;
   bool gdbMode;
   uint16_t gdbPort;
+  std::vector<std::string> trace;
 
   Options()
   {
@@ -54,7 +61,14 @@ typedef struct _MEMORYMAP
   uint64_t size;
 } MEMORYMAP, *PMEMORYMAP;
 
-class InstructionSetSimulator : public GDBServer, public NotificationHandler
+enum ISS_NOTIFY_SOURCE
+{
+  ISS_HART_MODULE = 0,
+  ISS_SOC_MODULE,
+  ISS_MODULE_COUNT
+};
+
+class InstructionSetSimulator : public GDBServer, public NotificationHandlerEx<ISS_MODULE_COUNT>
 {
 public:
   InstructionSetSimulator();
@@ -67,6 +81,11 @@ public:
 private:
   int CreateMemoryMap(std::filesystem::path memMapPath,
                       std::filesystem::path elfPath = "");
+  void SetInitState(Options& opts);
+  udb::Tracer* CreateTracer(std::string& tracer);
+  HostTargetInterface* CreateHostTargetInterface(udb::IssSocModel* pSoC, std::filesystem::path elfPath);
+  int OnHartNotification(uint64_t uiEvent, void* pData);
+  int OnSoCNotification(uint64_t uiEvent, void* pData);
   virtual int OnExternalHalt();
   virtual int OnReadGPR(REGISTERFILE& registerFile) override;
   virtual int OnWriteGPR(REGISTERFILE& registerFile) override;
@@ -76,11 +95,12 @@ private:
   virtual int OnWriteSingleRegister(int reg, uint64_t& value) override;
   virtual int OnSingleStep(uint64_t uiRangeBegin, uint64_t uiRangeEnd) override;
   virtual int OnContinue(uint64_t uiAddress = -1) override;
+  virtual int OnKill(uint64_t uiProcId = 0) override;
   virtual int OnClearBreakWatchPoint(unsigned char type, uint64_t uiAddress, uint64_t uiKind) override;
   virtual int OnSetBreakWatchPoint(unsigned char type, uint64_t uiAddress, uint64_t uiKind) override;
-  virtual int OnNotification(uint64_t uiEvent, void* pData) override;
+  virtual int OnNotification(uint8_t uiModuleId, uint64_t uiEvent, void* pData) override;
 
-  enum ISSSTATE
+  enum ISS_STATE
   {
     STATE_HALT,
     STATE_SINGLE_STEP,
@@ -92,8 +112,9 @@ private:
   MEMORYMAP m_memMap;
   udb::IssSocModel* m_pSoC;
   udb::HartBase<udb::IssSocModel>* m_pHart;
-  udb::AbstractTracer* m_pTracer;
-  ISSSTATE m_state;
+  HostTargetInterface* m_pHTIF;
+  std::vector<udb::Tracer*> m_tracers;
+  ISS_STATE m_state;
   std::list<uint64_t> m_breakpointList;
   std::list<udb::MemAccessRange> m_readWatchpointList;
   std::list<udb::MemAccessRange> m_writeWatchpointList;
@@ -107,6 +128,7 @@ int ParseCommandLine(int argc, char *argv[], Options &options)
   app.add_option("-c,--cfg", options.configPath, "Hart configuration file");
   app.add_option("--mm, --memory-map", options.memoryMapPath, "Memory map file");
   app.add_option("-p, --gdbport", options.gdbPort, "GDB port");
+  app.add_option<std::vector<std::string>>("-t, --trace", options.trace, "Tracers to enable");
   app.add_flag("-l,--list-configs", options.showConfigs,
                "List available configurations");
   app.add_flag("-g,--gdb", options.gdbMode, "GDB Debugger mode");
@@ -116,34 +138,6 @@ int ParseCommandLine(int argc, char *argv[], Options &options)
 
   CLI11_PARSE(app, argc, argv);
   return 0;
-}
-
-static const std::pair<uint64_t, uint64_t> get_memory_range(std::filesystem::path memmap, std::filesystem::path elf_file_path) {
-  json regions;
-  uint64_t memsz;
-
-  if(!memmap.empty()) {
-    std::ifstream f(memmap);
-    json data = json::parse(f);
-    regions = data["regions"];
-
-    for (const auto& region : regions) {
-      auto type = region["type"];
-      if (type == "ram") {
-        std::string base = region["base"]["value"];
-        std::string size = region["size"]["value"];
-        return std::make_pair(std::stoul(base, nullptr, 0), std::stoul(size, nullptr, 0));
-      }
-    }
-  }
-
-  udb::ElfReader elf_reader(elf_file_path.c_str());
-  auto range = elf_reader.mem_range();
-  memsz = range.second - range.first;
-  // round up to a page for good measure
-  memsz = (memsz + 0xfff) & ~0xfffull;
-
-  return std::make_pair(range.first, memsz);
 }
 
 int main(int argc, char *argv[])
@@ -183,6 +177,10 @@ InstructionSetSimulator::InstructionSetSimulator()
 InstructionSetSimulator::InstructionSetSimulator(Options& opts) :
   GDBServer(GDB_SUPPORT_BASE, opts.gdbPort, opts.halt), m_opts(opts)
 {
+  //Load and validate the config
+  auto yaml = YAML::LoadFile(m_opts.configPath.string());
+  json config = udb::ConfigValidator::validate(yaml);
+
   CreateMemoryMap(opts.memoryMapPath, opts.elfFilePath);
   m_pSoC = new udb::IssSocModel(m_memMap.size, m_memMap.base);
   if(m_pSoC)
@@ -190,32 +188,50 @@ InstructionSetSimulator::InstructionSetSimulator(Options& opts) :
     //Create Hart with reference to SoC model
     m_pHart = udb::HartFactory::create<udb::IssSocModel>(opts.configName,
       0,
-      opts.configPath,
+      config,
       *m_pSoC);
 
     if(m_pHart)
     {
-      //Create and attach a tracer
-      m_pTracer = udb::HartFactory::create_tracer<udb::IssSocModel>("riscv-tests",
-        opts.configName,
-        m_pHart);
-      if(m_pTracer)
+
+      m_pHTIF = CreateHostTargetInterface(m_pSoC, opts.elfFilePath);
+
+      for(std::string t : opts.trace)
       {
-        m_pHart->attach_tracer(m_pTracer);
+        udb::Tracer* pTracer = CreateTracer(t);
+        if(pTracer != nullptr)
+          m_tracers.push_back(pTracer);
+        else
+          fmt::print("Unknown tracer: {}\n", t);
       }
-      //Attach notifier to hart and enable hart events we want to be notified for
-      m_pHart->attach_notifier(this);
-      //Eanble these events to trace instruction execution
-      EnableEvent(udb::PREEXECUTE_EVENT);
-      EnableEvent(udb::EXECUTE_EVENT);
+
+
+      //Attach notification handler to hart
+      m_pHart->AttachHandler(this, ISS_HART_MODULE);
+
     }
     //Attach notifier to SoC
-    m_pSoC->attach_notifier(this);
+    m_pSoC->AttachHandler(this, ISS_SOC_MODULE);
   }
 
-  if(m_opts.gdbMode)
+  SetInitState(opts);
+}
+
+InstructionSetSimulator::~InstructionSetSimulator()
+{
+  for(udb::Tracer* pT : m_tracers)
+    delete pT;
+
+  delete m_pHTIF;
+  delete m_pHart;
+  delete m_pSoC;
+}
+
+void InstructionSetSimulator::SetInitState(Options& opts)
+{
+  if(opts.gdbMode)
   {
-    if(m_opts.halt)
+    if(opts.halt)
     {
       m_state = STATE_HALT;
     }
@@ -228,13 +244,6 @@ InstructionSetSimulator::InstructionSetSimulator(Options& opts) :
   {
     m_state = STATE_RUN_N;
   }
-}
-
-InstructionSetSimulator::~InstructionSetSimulator()
-{
-  delete m_pTracer;
-  delete m_pHart;
-  delete m_pSoC;
 }
 
 int InstructionSetSimulator::CreateMemoryMap(std::filesystem::path memMapPath,
@@ -294,8 +303,7 @@ int InstructionSetSimulator::Run()
     int stopReason;
     if(m_opts.gdbMode)
     {
-
-      //Prevent the debugger commands from
+       //Prevent the debugger commands from
       //generating notifications
       DisableNotifications();
       result = Poll();
@@ -303,7 +311,6 @@ int InstructionSetSimulator::Run()
       if(result < 0)
         break;
     }
-
 
     switch(m_state)
     {
@@ -342,6 +349,7 @@ int InstructionSetSimulator::Run()
   {
     result = m_pHart->exit_code();
   }
+
   return result;
 }
 
@@ -503,20 +511,20 @@ int InstructionSetSimulator::OnClearBreakWatchPoint(unsigned char type, uint64_t
     // All breakpoints are HW breakpoints
     m_breakpointList.remove(uiAddress);
     if(m_breakpointList.size() == 0)
-        DisableEvent(udb::PREFETCH_EVENT);
+        DisableEvent(ISS_HART_MODULE, udb::PREFETCH_EVENT);
     break;
   case 2:
     // read watch point
     m_readWatchpointList.remove(udb::MemAccessRange(uiAddress, (size_t)uiKind));
     if(m_readWatchpointList.size() == 0)
-        DisableEvent(udb::MEMREAD_EVENT);
+        DisableEvent(ISS_SOC_MODULE, udb::MEMREAD_EVENT);
     break;
 
   case 3:
     // write watch point
     m_writeWatchpointList.remove(udb::MemAccessRange(uiAddress, (size_t)uiKind));
     if(m_writeWatchpointList.size() == 0)
-        DisableEvent(udb::MEMWRITE_EVENT);
+        DisableEvent(ISS_SOC_MODULE, udb::MEMWRITE_EVENT);
     break;
   default:
     result = -1;
@@ -535,7 +543,7 @@ int InstructionSetSimulator::OnSetBreakWatchPoint(unsigned char type, uint64_t u
   case 1:
     {
       if(m_breakpointList.size() == 0)
-        EnableEvent(udb::PREFETCH_EVENT);
+        EnableEvent(ISS_HART_MODULE, udb::PREFETCH_EVENT);
 
       // All breakpoints are HW breakpoints
       auto it = std::find(m_breakpointList.begin(), m_breakpointList.end(), uiAddress);
@@ -548,14 +556,14 @@ int InstructionSetSimulator::OnSetBreakWatchPoint(unsigned char type, uint64_t u
   case 2:
     // set read watch point
     if(m_readWatchpointList.size() == 0)
-      EnableEvent(udb::MEMREAD_EVENT);
+      EnableEvent(ISS_SOC_MODULE, udb::MEMREAD_EVENT);
 
     m_readWatchpointList.push_back(udb::MemAccessRange(uiAddress, (size_t)uiKind));
     break;
   case 3:
     // set write watch point
     if(m_readWatchpointList.size() == 0)
-      EnableEvent(udb::MEMREAD_EVENT);
+      EnableEvent(ISS_SOC_MODULE, udb::MEMREAD_EVENT);
 
     m_writeWatchpointList.push_back(udb::MemAccessRange(uiAddress, (size_t)uiKind));
   default:
@@ -565,7 +573,25 @@ int InstructionSetSimulator::OnSetBreakWatchPoint(unsigned char type, uint64_t u
   return result;
 }
 
-int InstructionSetSimulator::OnNotification(uint64_t uiEvent, void* pData)
+int InstructionSetSimulator::OnNotification(uint8_t uiModuleId, uint64_t uiEvent, void* pData)
+{
+  int result;
+  switch(uiModuleId)
+  {
+  case ISS_HART_MODULE:
+    result = OnHartNotification(uiEvent, pData);
+    break;
+  case ISS_SOC_MODULE:
+    result = OnSoCNotification(uiEvent, pData);
+    break;
+  default:
+    result = 0;
+    break;
+  }
+  return result;
+}
+
+int InstructionSetSimulator::OnHartNotification(uint64_t uiEvent, void* pData)
 {
   int result = 0;
   switch(uiEvent)
@@ -583,30 +609,41 @@ int InstructionSetSimulator::OnNotification(uint64_t uiEvent, void* pData)
       }
     }
     break;
+  case udb::EBREAK_EVENT:
+    if(m_opts.gdbMode)
+    {
+      m_state = STATE_HALT;
+      //Send break state to debug host
+      result = Halt(HALT_BREAKPOINT, m_pHart->hartid().get(), m_pHart->pc());
+    }
+    else
+    {
+      result = 0;
+    }
+    break;
+  //events not handled, should not be enabled
   case udb::FETCH_EVENT:
-    break;
   case udb::DECODE_EVENT:
-    break;
   case udb::PREEXECUTE_EVENT:
-    {
-      //TODO: Trace optionally
-      udb::InstBase* pInst = (udb::InstBase*)pData;
-      fmt::print("PC {:x} {}\n", m_pHart->pc(), pInst->disassemble());
-      for(auto r : pInst->srcRegs())
-        fmt::print("R {} {:x}\n", r.to_string(), m_pHart->xreg(r.get_num()));
-    }
-    break;
   case udb::EXECUTE_EVENT:
-    {
-      //TODO: Trace optionally
-      udb::InstBase* pInst = (udb::InstBase*)pData;
-      for (auto r : pInst->dstRegs())
-        fmt::print("R= {} {:x}\n", r.to_string(), m_pHart->xreg(r.get_num()));
-    }
+  default:
     break;
+  }
+
+  return result;
+}
+
+int InstructionSetSimulator::OnSoCNotification(uint64_t uiEvent, void* pData)
+{
+  int result;
+  switch(uiEvent)
+  {
   case udb::MEMREAD_EVENT:
     {
+
       udb::MemAccessRange* pMemRange = (udb::MemAccessRange*)pData;
+
+      //Watch points
       for(udb::MemAccessRange m : m_readWatchpointList)
       {
         if((pMemRange->GetAddress() >= m.GetAddress() && (pMemRange->GetAddress() < (m.GetAddress() + m.GetSize()))) ||
@@ -618,15 +655,20 @@ int InstructionSetSimulator::OnNotification(uint64_t uiEvent, void* pData)
           throw udb::AbortPreExecute();
         }
       }
+
+      //Tracer
+
     }
     break;
   case udb::MEMWRITE_EVENT:
     {
-      udb::MemAccessRange* pMemRange =  (udb::MemAccessRange*)pData;
+      udb::MemAccess* pMemAccess =  (udb::MemAccess*)pData;
+
+      //Watch points
       for(udb::MemAccessRange m : m_writeWatchpointList)
       {
-        if((pMemRange->GetAddress() >= m.GetAddress() && (pMemRange->GetAddress() < (m.GetAddress() + m.GetSize()))) ||
-          ((pMemRange->GetAddress() + pMemRange->GetSize()) > m.GetAddress()))
+        if((pMemAccess->GetAddress() >= m.GetAddress() && (pMemAccess->GetAddress() < (m.GetAddress() + m.GetSize()))) ||
+          ((pMemAccess->GetAddress() + pMemAccess->GetSize()) > m.GetAddress()))
         {
           m_state = STATE_HALT;
           //Send break state to debug host
@@ -637,6 +679,7 @@ int InstructionSetSimulator::OnNotification(uint64_t uiEvent, void* pData)
     }
     break;
   default:
+    result = 0;
     break;
   }
   return result;
@@ -646,4 +689,57 @@ int InstructionSetSimulator::OnExternalHalt()
 {
   m_state = STATE_HALT;
   return Halt(HALT_EXTERNAL, m_pHart->hartid().get(), m_pHart->pc());
+}
+
+int InstructionSetSimulator::OnKill(uint64_t uiProcId)
+{
+  // reload the elf
+  udb::ElfReader elfReader(m_opts.elfFilePath.c_str());
+  auto entryPC = elfReader.loadLoadableSegments(*m_pSoC);
+  // reset the hart
+  m_pHart->reset(entryPC);
+  // set the ISS state
+  SetInitState(m_opts);
+  return 0;
+}
+
+udb::Tracer* InstructionSetSimulator::CreateTracer(std::string& tracer)
+{
+  if(tracer == "inst")
+    return new udb::InstructionTracer(m_pHart);
+  else if(tracer == "mem")
+    return new udb::MemoryTracer(m_pSoC);
+
+  return nullptr;
+}
+
+
+HostTargetInterface* InstructionSetSimulator::CreateHostTargetInterface(
+    udb::IssSocModel* pSoC, std::filesystem::path elfPath)
+{
+  HostTargetInterface* pHTIF = nullptr;
+  uint64_t toHostAddress = 0;
+
+  udb::ElfReader elfReader(elfPath.c_str());
+  if(elfReader.getSym("tohost", &toHostAddress))
+  {
+    uint64_t fromHostAddress = 0;
+    uint64_t sigBeginAddress = 0;
+    uint64_t sigEndAddress = 0;
+
+    elfReader.getSym("fromhost", &fromHostAddress);
+    elfReader.getSym("signature_begin", &sigBeginAddress);
+    elfReader.getSym("signature_end", &sigEndAddress);
+
+    pHTIF = new HostTargetInterface(pSoC, toHostAddress, fromHostAddress,
+        sigBeginAddress, sigEndAddress - sigBeginAddress);
+    if(pHTIF == nullptr)
+      fmt::print("Error: cannot create host-target interface");
+  }
+  else
+  {
+    fmt::print("Note: elf application does not support host-target interface");
+  }
+
+  return pHTIF;
 }

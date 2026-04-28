@@ -395,16 +395,11 @@ task checkout_riscv_tests: "#{$root}/ext/riscv-tests/env/LICENSE"
 
 task build_riscv_tests: "checkout_riscv_tests" do
   configs_name, build_name = configs_build_name
-
   xlen = configs_name[0] == "rv32" ? "32" : "64"
   riscv_prefix = "#{$root}/bin/riscv#{xlen}-unknown-elf-"
 
   Dir.chdir "#{$root}/tests/isa" do
-    if configs_name[0] == "rv32"
-      sh "make XLEN=32 RISCV_PREFIX=#{riscv_prefix}"
-    else
-      sh "make RISCV_PREFIX=#{riscv_prefix}"
-    end
+    sh "make XLEN=#{xlen} BUILD_TYPE=#{cmake_build_type} RISCV_PREFIX=#{riscv_prefix}"
   end
 end
 
