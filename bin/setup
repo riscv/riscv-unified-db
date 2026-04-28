@@ -86,7 +86,7 @@ _ok "mise ready ($("$MISE_BIN" --version 2>/dev/null | head -1))"
 # 2. Install tool versions via mise
 # ---------------------------------------------------------------------------
 
-_section "Tool versions (Ruby, Python, Node.js, CMake, …)"
+_section "Tool versions (Ruby, Node.js, uv, CMake, …)"
 
 # Pre-initialize ~/.gnupg before mise install so parallel gpg invocations
 # (e.g. for node, make, ruby) don't race to create the directory.
@@ -136,10 +136,10 @@ fi
 _ok "Native dependencies ready"
 
 # ---------------------------------------------------------------------------
-# 5. Python packages
+# 5. Python packages (uv installs Python itself if needed)
 # ---------------------------------------------------------------------------
 
-_section "Python packages"
+_section "Python packages (uv-managed Python)"
 
 if ! "$ROOT/bin/.venv-deps"; then
   exit 1
