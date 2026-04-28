@@ -23,6 +23,3 @@ versions:
   - version: "1.0.0"
     state: ratified
     ratification_date: 2022-11
-  - version: "1.0.1"
-    state: ratified
-    ratification_date: 2023-03

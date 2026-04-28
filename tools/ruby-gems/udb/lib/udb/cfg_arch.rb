@@ -668,7 +668,6 @@ module Udb
     # Class-level cache of raw YAML file contents keyed by "#{resolved_spec_path}/#{obj_type_dir}".
     # Maps each directory to an array of [content, original_path, realpath] triples so that a
     # second ConfiguredArchitecture sharing the same spec path skips disk I/O and file locking.
-    # Each caller still gets a fresh YAML.load result (independent, mutable hash).
     # Benign race: two threads both missing the cache produce identical entries.
     @@yaml_data_cache = Concurrent::Hash.new
 
@@ -683,8 +682,6 @@ module Udb
         @objects[arch_dir] = Concurrent::Array.new
         @object_hashes[arch_dir] = Concurrent::Hash.new
 
-        # Cache raw file contents so that subsequent ConfiguredArchitecture instances
-        # sharing the same @arch_dir skip disk I/O and exclusive file locking.
         yaml_cache_key = "#{@arch_dir}/#{arch_dir}"
         cached_files = @@yaml_data_cache[yaml_cache_key]
         if cached_files.nil?
