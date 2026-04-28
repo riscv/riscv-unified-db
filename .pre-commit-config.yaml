@@ -20,7 +20,7 @@ repos:
       - id: end-of-file-fixer
         stages: [pre-commit]
         # Exclude reference and generated files
-        exclude: (cfgs/profile.*|.*\.golden\.adoc$|.*\.svg|amo.*\.yaml|\.github/workflows/regress\.yml|tests/data/golden/.*)
+        exclude: (cfgs/profile.*|.*\.golden\.adoc$|.*\.svg|amo.*\.yaml|mcountinhibit\.yaml|\.github/workflows/regress\.yml|tests/data/golden/.*)
       - id: trailing-whitespace
         stages: [pre-commit]
         args: [--markdown-linebreak-ext=md]

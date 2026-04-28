@@ -47,8 +47,12 @@ description: |
   ====
 
 definedBy:
-  extension:
-    name: Sm
+  allOf:
+    - extension:
+        name: Sm
+    - param:
+        name: MCOUNTINHIBIT_IMPLEMENTED
+        equal: true
 fields:
   CY:
     location: 0
