@@ -23,19 +23,11 @@ definedBy:
     name: Zabha
 assembly: xd, xs2, (xs1)
 operands:
-  - name: xd
-    type: register
-    reg_file: gpr
-    source: false
-    destination: true
-  - name: xs2
-    type: register
-    reg_file: gpr
-  - name: xs1
-    type: register
-    reg_file: gpr
-    offset:
-      length: 0
+  - $inherits: operand/xd.yaml#/data
+  - $inherits: operand/xs.yaml#/data
+    name: xs2
+  - $inherits: operand/xs-nooffset.yaml#/data
+    name: xs1
 encoding:
   match: 0000000----------000-----0101111
   variables:

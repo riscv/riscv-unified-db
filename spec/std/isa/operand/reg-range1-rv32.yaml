@@ -1,0 +1,13 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: reg-range1-rv32
+data:
+  type: reg_range
+  name: reg_range1
+  possible_values: ["s0", "x8", "s0-s1", "x8-x9"]
+  optional: true

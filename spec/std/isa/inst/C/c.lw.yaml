@@ -37,21 +37,10 @@ encoding:
       decode(): |
         return creg2reg(xd);
 operands:
-  - name: xd
-    type: register
-    reg_file: gpr
-    source: false
-    destination: true
-    possible_values: [8, 9, 10, 11, 12, 13, 14, 15]
-  - name: xs1
-    type: register
-    reg_file: gpr
-    possible_values: [8, 9, 10, 11, 12, 13, 14, 15]
-    offset:
-      name: imm
-      type: unsigned
-      length: 5
-      left_shifted: 2
+  - $inherits: operand/xdc.yaml#/data
+    name: xd
+  - $inherits: operand/xsc-offset7-ls2.yaml#/data
+    name: xs1
 access:
   s: always
   u: always

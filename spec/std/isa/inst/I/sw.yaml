@@ -15,16 +15,10 @@ definedBy:
     name: I
 assembly: xs2, imm(xs1)
 operands:
-  - type: register
-    reg_file: gpr
-    source: true
-    destination: false
-  - type: register
-    reg_file: gpr
-    offset:
-      name: imm
-      length: 12
-      signed: true
+  - $inherits: operand/xs.yaml#/data
+    name: xs2
+  - $inherits: operand/xs-offset12.yaml#/data
+    name: xs1
 encoding:
   match: "-----------------010-----0100011"
   variables:

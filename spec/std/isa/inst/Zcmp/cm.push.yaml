@@ -24,57 +24,14 @@ definedBy:
 assembly: "{reg_list}, -stack_adj"
 operands:
   RV32:
-    - name: reg_range0
-      type: reg_range
-      possible_values: ["ra", "x1"]
-    - name: reg_range1
-      type: reg_range
-      possible_values: ["s0", "x8", "s0-s1", "x8-x9"]
-      optional: true
-    - name: stack_adj
-      type: immediate
-      possible_values: [-16, -32, -48, -64, -80, -96, -112]
+    - $inherits: operand/reg-range0.yaml#/data
+    - $inherits: operand/reg-range1-rv32.yaml#/data
+    - $inherits: operand/stack-adj-rv32.yaml#/data
   RV64:
-    - name: reg_range0
-      type: reg_range
-      possible_values: ["ra", "x1"]
-    - name: reg_range1
-      type: reg_range
-      possible_values:
-        [
-          "s0",
-          "x8",
-          "s0-s1",
-          "x8-x9",
-          "s0-s2",
-          "s0-s3",
-          "s0-s4",
-          "s0-s5",
-          "s0-s6",
-          "s0-s7",
-          "s0-s8",
-          "s0-s9",
-          "s0-s11",
-        ]
-      optional: true
-    - name: reg_range2
-      type: reg_range
-      possible_values:
-        [
-          "x18",
-          "x18-x19",
-          "x18-x20",
-          "x18-x21",
-          "x18-x22",
-          "x18-x23",
-          "x18-x24",
-          "x18-x25",
-          "x18-x27",
-        ]
-      optional: true
-    - type: immediate
-      name: stack_adj
-      possible_values: [-16, -32, -48, -64, -80, -96, -112, -128, -144, -160]
+    - $inherits: operand/reg-range0.yaml#/data
+    - $inherits: operand/reg-range1-rv64.yaml#/data
+    - $inherits: operand/reg-range2-rv64.yaml#/data
+    - $inherits: operand/stack-adj-rv64.yaml#/data
 encoding:
   match: 10111000------10
   variables:

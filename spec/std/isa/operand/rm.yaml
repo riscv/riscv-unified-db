@@ -1,0 +1,12 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: rm
+data:
+  name: rm
+  type: rounding_mode
+  possible_values: ["rne", "rtz", "rdn", "rup", "rmm", "dyn"]

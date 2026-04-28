@@ -1,0 +1,28 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: fence-scope
+data:
+  name: scope
+  type: fence_scope
+  possible_values:
+    [
+      "i",
+      "o",
+      "r",
+      "w",
+      "io",
+      "ir",
+      "iw",
+      "or",
+      "ow",
+      "rw",
+      "ior",
+      "iow",
+      "orw",
+      "iorw",
+    ]

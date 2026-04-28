@@ -27,14 +27,10 @@ encoding:
       location: 11-7
       not: 0
 operands:
-  - name: xd
-    type: register
-    reg_file: gpr
-    source: false
-    destination: true
-  - name: imm
-    type: immediate
-    possible_values: [-32--1, 1-31]
+  - $inherits: operand/xd-not0.yaml#/data
+    name: xd
+  - $inherits: operand/imm5-not0.yaml#/data
+    name: imm
 access:
   s: always
   u: always

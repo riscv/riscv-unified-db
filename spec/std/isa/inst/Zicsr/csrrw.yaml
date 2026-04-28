@@ -29,17 +29,10 @@ encoding:
     - name: xd
       location: 11-7
 operands:
-  - name: xd
-    type: register
-    reg_file: gpr
-    source: false
-    destination: true
-  - name: csr
-    type: register
-    reg_file: csr
-  - name: xs1
-    type: register
-    reg_file: gpr
+  - $inherits: operand/xd.yaml#/data
+  - $inherits: operand/csr.yaml#/data
+  - $inherits: operand/xs.yaml#/data
+    name: xs1
 access:
   s: always
   u: always

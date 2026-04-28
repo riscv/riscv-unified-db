@@ -17,19 +17,12 @@ description: |
   `fs1` and `fs2` and writes the final result to `fd`.
 assembly: fd, fs1, fs2, rm
 operands:
-  - name: fd
-    type: register
-    reg_file: fpr
-    source: false
-    destination: true
-  - name: fs1
-    type: register
-    reg_file: fpr
-  - name: fs2
-    type: register
-    reg_file: fpr
-  - name: rm
-    type: rounding_mode
+  - $inherits: operand/fd.yaml#/data
+  - $inherits: operand/fs.yaml#/data
+    name: fs1
+  - $inherits: operand/fs.yaml#/data
+    name: fs2
+  - $inherits: operand/rm.yaml#/data
 encoding:
   match: 0000001------------------1010011
   variables:

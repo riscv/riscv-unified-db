@@ -73,16 +73,10 @@ encoding:
     - name: xd
       location: 11-7
 operands:
-  - name: xd
-    type: register
-    reg_file: gpr
-    source: false
-    destination: true
-  - name: fs1
-    type: register
-    reg_file: fpr
-  - name: rm
-    type: rounding_mode
+  - $inherits: operand/xd.yaml#/data
+  - $inherits: operand/fs.yaml#/data
+    name: fs1
+  - $inherits: operand/rm.yaml#/data
 access:
   s: always
   u: always

@@ -1,0 +1,11 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: imm5-not0
+data:
+  $inherits: operand/imm.yaml#/data
+  possible_values: [-32--1, 1-31]

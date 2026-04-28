@@ -35,21 +35,10 @@ encoding:
     - name: vd
       location: 11-7
 operands:
-  - name: vd
-    type: register
-    reg_file: vr
-    source: false
-    destination: true
-  - name: xs1
-    type: register
-    reg_file: gpr
-    offset:
-      length: 0
-  - name: vm
-    type: register
-    reg_file: vr
-    possible_values: [0] # needs to be "v0.t". hmm
-    optional: true
+  - $inherits: operand/vd.yaml#/data
+  - $inherits: operand/xs-nooffset.yaml#/data
+    name: xs1
+  - $inherits: operand/vm.yaml#/data # needs to be "v0.t". hmm
 access:
   s: always
   u: always

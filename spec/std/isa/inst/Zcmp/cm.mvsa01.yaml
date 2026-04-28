@@ -33,14 +33,10 @@ access:
   vs: always
   vu: always
 operands:
-  - name: r1s
-    type: register
-    reg_file: gpr
-    possible_values: [8, 9, 18, 19, 20, 21, 22, 23]
-  - name: r2s
-    type: register
-    reg_file: gpr
-    possible_values: [8, 9, 18, 19, 20, 21, 22, 23]
+  - $inherits: operand/xdm.yaml#/data
+    name: r1s
+  - $inherits: operand/xdm.yaml#/data
+    name: r2s
 operation(): |
   if (implemented?(ExtensionName::Zcmp) && (CSR[misa].C == 1'b0)) {
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);

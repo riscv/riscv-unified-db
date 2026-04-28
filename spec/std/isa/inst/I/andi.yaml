@@ -13,14 +13,10 @@ definedBy:
     name: I
 assembly: xd, xs1, imm
 operands:
-  - type: register
-    reg_file: gpr
-    source: false
-    destination: true
-  - type: register
-    reg_file: gpr
-  - type: immediate
-    name: imm
+  - $inherits: operand/xd.yaml#/data
+  - $inherits: operand/xs.yaml#/data
+    name: xs1
+  - $inherits: operand/imm12.yaml#/data
 encoding:
   match: "-----------------111-----0010011"
   variables:

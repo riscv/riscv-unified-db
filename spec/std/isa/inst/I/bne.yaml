@@ -24,29 +24,21 @@ encoding:
       left_shift: 1
       sign_extend: true
       encode(operands): return operands[imm].value;
+      decode(): return imm;
     - name: xs2
       location: 24-20
       encode(operands): return operands[xs2].value;
+      decode(): return xs2;
     - name: xs1
       location: 19-15
       encode(operands): return operands[xs1].value;
+      decode(): return xs1;
 operands:
-  - name: xs1
-    type: register
-    reg_file: gpr
-    source: true
-    destination: false
-    decode(): return xs1;
-  - name: xs2
-    type: register
-    reg_file: gpr
-    source: true
-    destination: false
-    decode(): return xs2;
-  - name: imm
-    type: immediate
-    possible_values: -4096-4095
-    decode(): return imm;
+  - $inherits: operand/xs.yaml#/data
+    name: xs1
+  - $inherits: operand/xs.yaml#/data
+    name: xs2
+  - $inherits: operand/imm13-ls1.yaml#/data
 access:
   s: always
   u: always

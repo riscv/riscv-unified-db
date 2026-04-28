@@ -1,0 +1,239 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "v0.1",
+  "title": "Instruction Operand Schema",
+  "description": "Schema definitions for instruction operands",
+  "$defs": {
+    "operand": {
+      "oneOf": [
+        {
+          "description": "Register with optional dereference and immediate offset",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "register"
+            },
+            "name": {
+              "type": "string"
+            },
+            "reg_file": {
+              "enum": ["gpr", "fpr", "vr", "sp", "csr"],
+              "default": "gpr"
+            },
+            "offset": {
+              "oneOf": [
+                {
+                  "const": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "possible_values": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^-?[0-9]+-(-?[0-9]+)$"
+                          }
+                        ]
+                      }
+                    },
+                    "left_shifted": {
+                      "type": "integer",
+                      "default": 0
+                    }
+                  },
+                  "required": ["possible_values"]
+                }
+              ],
+              "default": false
+            },
+            "source": {
+              "type": "boolean",
+              "default": true
+            },
+            "destination": {
+              "type": "boolean",
+              "default": false
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "optional": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": ["type", "reg_file"]
+        },
+        {
+          "description": "Register pair (implicit)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "register_pair"
+            },
+            "name": {
+              "type": "string"
+            },
+            "reg_file": {
+              "enum": ["gpr", "fpr", "vr"],
+              "default": "gpr"
+            },
+            "source": {
+              "type": "boolean",
+              "default": true
+            },
+            "destination": {
+              "type": "boolean",
+              "default": false
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": ["type", "reg_file"]
+        },
+        {
+          "description": "Immediate",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "immediate"
+            },
+            "name": {
+              "type": "string"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^-?[0-9]+-(-?[0-9]+)$"
+                  }
+                ]
+              }
+            }
+          },
+          "required": ["type", "name", "possible_values"]
+        },
+        {
+          "description": "Floating-point Rounding Mode",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "rounding_mode"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": ["rne", "rtz", "rdn", "rup", "rmm", "dyn"]
+            }
+          },
+          "required": ["type"]
+        },
+        {
+          "description": "FENCE scope",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "fence_scope"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "i",
+                "o",
+                "r",
+                "w",
+                "io",
+                "ir",
+                "iw",
+                "or",
+                "ow",
+                "rw",
+                "ior",
+                "iow",
+                "irw",
+                "orw",
+                "iorw"
+              ]
+            }
+          },
+          "required": ["type", "possible_values"]
+        },
+        {
+          "description": "Register range (for PUSH/POP reg_list)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "reg_range"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["type", "possible_values"]
+        },
+        {
+          "description": "inherits",
+          "type": "object",
+          "properties": {
+            "$inherits": {
+              "type": "string",
+              "pattern": "^operand/.+\\.yaml#/data",
+              "description": "Reference to variable metadata"
+            }
+          },
+          "required": ["$inherits"]
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "required": ["$schema", "kind", "name", "data"],
+  "properties": {
+    "$schema": {
+      "const": "operand_schema.json#"
+    },
+    "kind": {
+      "const": "operand"
+    },
+    "name": {
+      "type": "string"
+    },
+    "data": {
+      "$ref": "#/$defs/operand"
+    },
+    "$source": {
+      "description": "Path to the source file. Used by downstream tooling; not expected to be found in handwritten files",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

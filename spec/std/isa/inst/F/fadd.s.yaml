@@ -40,24 +40,12 @@ encoding:
           return 3b'111;
         } # else reserved
 operands:
-  - name: fd
-    type: register
-    reg_file: fpr
-    source: false
-    destination: true
-  - name: fs1
-    type: register
-    reg_file: fpr
-    source: true
-    destination: false
-  - name: fs2
-    type: register
-    reg_file: fpr
-    source: true
-    destination: false
-  - name: rm
-    type: rounding_mode
-    possible_values: ["rne", "rtz", "rdn", "rup", "rmm", "dyn"]
+  - $inherits: operand/fd.yaml#/data
+  - $inherits: operand/fs.yaml#/data
+    name: fs1
+  - $inherits: operand/fs.yaml#/data
+    name: fs2
+  - $inherits: operand/rm.yaml#/data
 access:
   s: always
   u: always

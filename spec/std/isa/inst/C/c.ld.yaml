@@ -56,38 +56,15 @@ encoding:
         decode(): return creg2reg(xs1);
 operands:
   RV32:
-    - name: xd
-      #type: register_pair
-      type: register
-      reg_file: gpr
-      source: false
-      destination: true
-      possible_values: [8, 10, 12, 14]
-    - name: xs1
-      type: register
-      reg_file: gpr
-      possible_values: [8, 9, 10, 11, 12, 13, 14, 15]
-      offset:
-        name: imm
-        type: unsigned
-        length: 5
-        left_shifted: 3
+    - $inherits: operand/xdc-pair.yaml#/data
+      name: xd
+    - $inherits: operand/xsc-offset8-ls3.yaml#/data
+      name: xs1
   RV64:
-    - name: xd
-      type: register
-      reg_file: gpr
-      source: false
-      destination: true
-      possible_values: [8, 9, 10, 11, 12, 13, 14, 15]
-    - name: xs1
-      type: register
-      reg_file: gpr
-      possible_values: [8, 9, 10, 11, 12, 13, 14, 15]
-      offset:
-        name: imm
-        type: unsigned
-        length: 5
-        left_shifted: 3
+    - $inherits: operand/xdc.yaml#/data
+      name: xd
+    - $inherits: operand/xsc-offset8-ls3.yaml#/data
+      name: xs1
 access:
   s: always
   u: always
