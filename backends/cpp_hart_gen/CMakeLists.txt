@@ -36,6 +36,11 @@ message("* Current build type is : ${CMAKE_BUILD_TYPE}")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -no-pie)
 
+# Only track dependencies within the project tree. Filters out compiler-internal
+# headers (e.g. /opt/rh/gcc-toolset-14/...) that exist only inside the build
+# container and would otherwise cause spurious full rebuilds on every invocation.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY ON)
+
 if(NOT DEFINED UDB_ROOT OR UDB_ROOT STREQUAL "")
   get_filename_component(UDB_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 endif()
@@ -50,6 +55,11 @@ endif()
 include(${UDB_ROOT}/.toolchain/check_cxx.cmake)
 
 include(FetchContent)
+
+# Skip network update checks for already-fetched dependencies. Without this,
+# CMake re-contacts each upstream repo on every configure, which fails in
+# network-restricted build environments and adds unnecessary latency elsewhere.
+set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
 
 FetchContent_Declare(fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
