@@ -85,7 +85,7 @@ volumes:
       - { name: Zicond, version: "1.0.0" }
       - { name: M, version: "2.0.0" }
       - { name: A, version: "2.1.0" }
-      - { name: Zawrs, version: "1.0.1" }
+      - { name: Zawrs, version: "1.0" }
       - { name: Zacas, version: "1.0.0" }
       - { name: Zabha, version: "1.0.0" }
       # - { name: RVWMO, version: "2.0" }
