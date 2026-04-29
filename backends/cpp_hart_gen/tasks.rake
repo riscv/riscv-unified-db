@@ -371,6 +371,17 @@ namespace :build do
     end
   end
 
+  task :softfloat_tests do
+    ENV["CONFIG"] = "rv64"
+    ENV["BUILD_TYPE"] = "debug"
+    _, build_name = configs_build_name
+    Rake::Task["gen:cpp_hart"].invoke
+    Rake::Task["#{CPP_HART_GEN_DST}/#{build_name}/build/Makefile"].invoke
+    Dir.chdir("#{CPP_HART_GEN_DST}/#{build_name}/build") do
+      sh "make -j #{$jobs} test_softfloat_fp"
+    end
+  end
+
   task renode_hart: ["gen:cpp_hart"] do
     _, build_name = configs_build_name
 
@@ -534,5 +545,12 @@ namespace :test do
     uvTests.each do |t|
       sh "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-vector.yaml tests/isa/#{configs_name[0]}uv-p-#{t}"
     end
+  end
+
+  task softfloat: ["build:softfloat_tests"] do
+    ENV["CONFIG"] = "rv64"
+    ENV["BUILD_TYPE"] = "debug"
+    _, build_name = configs_build_name
+    sh "#{CPP_HART_GEN_DST}/#{build_name}/build/test_softfloat_fp"
   end
 end
