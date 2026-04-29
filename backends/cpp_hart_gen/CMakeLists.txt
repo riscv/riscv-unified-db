@@ -61,10 +61,15 @@ include(${UDB_ROOT}/.toolchain/check_cxx.cmake)
 
 include(FetchContent)
 
-# Skip network update checks for already-fetched dependencies. Without this,
-# CMake re-contacts each upstream repo on every configure, which fails in
-# network-restricted build environments and adds unnecessary latency elsewhere.
-set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
+# Skip network update checks for already-fetched dependencies by default.
+# Without this, CMake re-contacts each upstream repo on every configure,
+# which fails in network-restricted build environments and adds unnecessary
+# latency elsewhere. Allow callers/CI to override this with
+# -DFETCHCONTENT_UPDATES_DISCONNECTED=OFF when update checks are desired.
+if(NOT DEFINED FETCHCONTENT_UPDATES_DISCONNECTED)
+  set(FETCHCONTENT_UPDATES_DISCONNECTED ON
+      CACHE BOOL "Skip FetchContent update checks for already-fetched dependencies.")
+endif()
 
 FetchContent_Declare(fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
