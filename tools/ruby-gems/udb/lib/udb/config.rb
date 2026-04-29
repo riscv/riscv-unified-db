@@ -63,6 +63,9 @@ module Udb
     sig { returns(String) }
     def description = @data["description"]
 
+    sig { returns(T.nilable(T.any(String, T::Array[String]))) }
+    def compatible = @data["compatible"]
+
     sig { abstract.returns(T.nilable(Integer)) }
     def mxlen; end
 
@@ -359,5 +362,6 @@ module Udb
           end
         end
     end
+
   end
 end

@@ -336,6 +336,8 @@ module Udb
         reasons += missing_params.map { |p| "Parameter is required but missing: '#{p.name}'" }
       end
 
+      validate_compatible(reasons)
+
       if reasons.empty?
         raise "bad validity check" unless to_condition.satisfiable?
         ValidationResult.new(valid: true, reasons:)
@@ -465,6 +467,8 @@ module Udb
           end
         end
       end
+
+      validate_compatible(reasons)
 
       if reasons.empty?
         raise "Bad validation" unless to_condition.satisfiable?
@@ -1721,6 +1725,59 @@ module Udb
         end
       end
     end
+
+    sig { params(pointer: String).returns(ConfiguredArchitecture) }
+    def resolve_compatible_pointer(pointer)
+      @config.info.resolver.cfg_arch_for_pointer(
+        pointer,
+        relative_dir: Pathname.new(@config.info.path).dirname
+      )
+    end
+    private :resolve_compatible_pointer
+
+    sig { params(other: ConfiguredArchitecture, reasons: T::Array[String], visited: T::Set[String]).void }
+    def check_compatible_with(other, reasons, visited)
+      return if visited.include?(other.name)
+      visited.add(other.name)
+
+      combined = to_condition & other.to_condition
+      unless combined.satisfiable_by_cfg_arch?(self)
+        combined.to_logic_tree(expand: true).minimal_unsat_subsets.each do |min|
+          reasons << "Config '#{name}' is not compatible with '#{other.name}': not satisfiable: #{min.to_s(format: LogicNode::LogicSymbolFormat::C)}"
+        end
+      end
+
+      # Resolve transitive pointers relative to `other`'s directory, not self's.
+      Array(other.config.compatible).each do |pointer|
+        begin
+          trans = other.send(:resolve_compatible_pointer, pointer)
+          check_compatible_with(trans, reasons, visited)
+        rescue => e
+          reasons << "Cannot resolve transitive compatible pointer '#{pointer}': #{e.message}"
+        end
+      end
+    end
+    private :check_compatible_with
+
+    sig { params(reasons: T::Array[String]).void }
+    def validate_compatible(reasons)
+      return if @config.compatible.nil?
+
+      # Use dup per top-level pointer so sibling pointers each get a fresh visited set —
+      # each branch independently validates against any shared transitive targets. Cycle
+      # detection within a single chain is still enforced because visited mutates in-place
+      # during the recursive descent.
+      visited = T.let(Set.new([name]), T::Set[String])
+      Array(@config.compatible).each do |pointer|
+        begin
+          other = resolve_compatible_pointer(pointer)
+          check_compatible_with(other, reasons, visited.dup)
+        rescue => e
+          reasons << "Cannot resolve compatible pointer '#{pointer}': #{e.message}"
+        end
+      end
+    end
+    private :validate_compatible
 
   end
 end

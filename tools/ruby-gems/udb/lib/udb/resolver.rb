@@ -301,6 +301,20 @@ module Udb
       end
     end
 
+    # Resolve a config pointer (name or file path) to a ConfiguredArchitecture.
+    # If +pointer+ contains '/' or is absolute it is treated as a file path;
+    # relative paths are resolved relative to +relative_dir+.
+    # Otherwise +pointer+ is treated as a config name and looked up in cfgs/.
+    sig { params(pointer: String, relative_dir: Pathname).returns(Udb::ConfiguredArchitecture) }
+    def cfg_arch_for_pointer(pointer, relative_dir:)
+      path = Pathname.new(pointer)
+      if path.absolute? || pointer.include?("/")
+        cfg_arch_for(path.absolute? ? path : (relative_dir / path).cleanpath)
+      else
+        cfg_arch_for(pointer)
+      end
+    end
+
     # resolve the specification for a config, and return a ConfiguredArchitecture
     sig { params(config_path_or_name: T.any(Pathname, String)).returns(Udb::ConfiguredArchitecture) }
     def cfg_arch_for(config_path_or_name)

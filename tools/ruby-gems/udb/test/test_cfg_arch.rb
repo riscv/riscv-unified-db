@@ -555,4 +555,170 @@ class TestCfgArch < Minitest::Test
       assert param_reasons.first.include?("{unknown}"), "Expected {unknown} annotations for possible-but-not-mandatory extensions"
     end
   end
+
+  def test_compatible
+    base_64_yaml = <<~YAML
+      $schema: config_schema.json#
+      kind: architecture configuration
+      type: partially configured
+      name: compat_test_base_64
+      description: Base 64-bit config for compatibility tests
+      params:
+        MXLEN: 64
+      mandatory_extensions:
+        - name: "I"
+          version: ">= 0"
+    YAML
+
+    compat_64_yaml = <<~YAML
+      $schema: config_schema.json#
+      kind: architecture configuration
+      type: partially configured
+      name: compat_test_compat_64
+      description: Compatible 64-bit config
+      params:
+        MXLEN: 64
+      mandatory_extensions:
+        - name: "I"
+          version: ">= 0"
+        - name: "M"
+          version: ">= 0"
+    YAML
+
+    incompat_32_yaml = <<~YAML
+      $schema: config_schema.json#
+      kind: architecture configuration
+      type: partially configured
+      name: compat_test_incompat_32
+      description: Incompatible 32-bit config (MXLEN conflict)
+      params:
+        MXLEN: 32
+      mandatory_extensions:
+        - name: "I"
+          version: ">= 0"
+    YAML
+
+    also_compat_64_yaml = <<~YAML
+      $schema: config_schema.json#
+      kind: architecture configuration
+      type: partially configured
+      name: compat_test_also_compat_64
+      description: Another compatible 64-bit config
+      params:
+        MXLEN: 64
+      mandatory_extensions:
+        - name: "I"
+          version: ">= 0"
+    YAML
+
+    Tempfile.create(%w/compat_64 .yaml/) do |compat_64_file|
+      compat_64_file.write(compat_64_yaml)
+      compat_64_file.flush
+
+      Tempfile.create(%w/incompat_32 .yaml/) do |incompat_32_file|
+        incompat_32_file.write(incompat_32_yaml)
+        incompat_32_file.flush
+
+        Tempfile.create(%w/also_compat_64 .yaml/) do |also_compat_64_file|
+          also_compat_64_file.write(also_compat_64_yaml)
+          also_compat_64_file.flush
+
+          # 1. Valid single compatible pointer
+          Tempfile.create(%w/cfg .yaml/) do |f|
+            f.write(base_64_yaml.sub("mandatory_extensions:", "compatible: #{compat_64_file.path}\nmandatory_extensions:"))
+            f.flush
+            result = @resolver.cfg_arch_for(Pathname.new(f.path)).valid?
+            assert result.valid, "Expected valid for compatible with matching MXLEN, got: #{result.reasons}"
+          end
+
+          # 2. Invalid single compatible pointer
+          Tempfile.create(%w/cfg .yaml/) do |f|
+            f.write(base_64_yaml.sub("mandatory_extensions:", "compatible: #{incompat_32_file.path}\nmandatory_extensions:"))
+            f.flush
+            result = @resolver.cfg_arch_for(Pathname.new(f.path)).valid?
+            refute result.valid, "Expected invalid for compatible with conflicting MXLEN"
+            assert result.reasons.any? { |r| r.include?("not compatible with") },
+              "Expected 'not compatible with' in reasons, got: #{result.reasons}"
+          end
+
+          # 3. Valid multiple compatible pointers (non-overlapping)
+          Tempfile.create(%w/cfg .yaml/) do |f|
+            f.write(base_64_yaml.sub("mandatory_extensions:", "compatible:\n  - #{compat_64_file.path}\n  - #{also_compat_64_file.path}\nmandatory_extensions:"))
+            f.flush
+            result = @resolver.cfg_arch_for(Pathname.new(f.path)).valid?
+            assert result.valid, "Expected valid for compatible with multiple matching configs, got: #{result.reasons}"
+          end
+
+          # 4. Invalid multiple compatible pointers (one incompatible)
+          Tempfile.create(%w/cfg .yaml/) do |f|
+            f.write(base_64_yaml.sub("mandatory_extensions:", "compatible:\n  - #{compat_64_file.path}\n  - #{incompat_32_file.path}\nmandatory_extensions:"))
+            f.flush
+            result = @resolver.cfg_arch_for(Pathname.new(f.path)).valid?
+            refute result.valid, "Expected invalid when one of multiple compatible configs conflicts"
+            assert result.reasons.any? { |r| r.include?("not compatible with") },
+              "Expected 'not compatible with' in reasons, got: #{result.reasons}"
+          end
+
+          # 5. Valid transitive compatible (base_64 -> transitive_b -> compat_64, all satisfiable)
+          transitive_compat_b_yaml = <<~YAML
+            $schema: config_schema.json#
+            kind: architecture configuration
+            type: partially configured
+            name: compat_test_transitive_compat_b
+            description: Transitive-compatible 64-bit config
+            compatible: #{compat_64_file.path}
+            params:
+              MXLEN: 64
+            mandatory_extensions:
+              - name: "I"
+                version: ">= 0"
+              - name: "M"
+                version: ">= 0"
+          YAML
+          Tempfile.create(%w/transitive_compat_b .yaml/) do |trans_compat_file|
+            trans_compat_file.write(transitive_compat_b_yaml)
+            trans_compat_file.flush
+
+            Tempfile.create(%w/cfg .yaml/) do |f|
+              f.write(base_64_yaml.sub("mandatory_extensions:", "compatible: #{trans_compat_file.path}\nmandatory_extensions:"))
+              f.flush
+              result = @resolver.cfg_arch_for(Pathname.new(f.path)).valid?
+              assert result.valid, "Expected valid for transitive compatible chain where all are satisfiable, got: #{result.reasons}"
+            end
+          end
+
+          # 6. Invalid transitive compatible (base_64 -> transitive_b -> incompat_32, unsatisfiable transitively)
+          transitive_incompat_b_yaml = <<~YAML
+            $schema: config_schema.json#
+            kind: architecture configuration
+            type: partially configured
+            name: compat_test_transitive_incompat_b
+            description: Config that is directly compatible with base_64 but transitively points to an incompatible config
+            compatible: #{incompat_32_file.path}
+            params:
+              MXLEN: 64
+            mandatory_extensions:
+              - name: "I"
+                version: ">= 0"
+              - name: "M"
+                version: ">= 0"
+          YAML
+          Tempfile.create(%w/transitive_incompat_b .yaml/) do |trans_incompat_file|
+            trans_incompat_file.write(transitive_incompat_b_yaml)
+            trans_incompat_file.flush
+
+            Tempfile.create(%w/cfg .yaml/) do |f|
+              f.write(base_64_yaml.sub("mandatory_extensions:", "compatible: #{trans_incompat_file.path}\nmandatory_extensions:"))
+              f.flush
+              result = @resolver.cfg_arch_for(Pathname.new(f.path)).valid?
+              refute result.valid, "Expected invalid for transitive chain that leads to an incompatible config"
+              assert result.reasons.any? { |r| r.include?("not compatible with") },
+                "Expected 'not compatible with' in reasons, got: #{result.reasons}"
+            end
+          end
+
+        end
+      end
+    end
+  end
 end
