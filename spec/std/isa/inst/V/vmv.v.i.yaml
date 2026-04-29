@@ -58,14 +58,14 @@ operation(): |
     # guarding against invalid bit-slice ranges at vector register boundaries
     if (start_bit_pos == 0) {
       if (end_bit_pos == VLEN - 1) {
-        v[vd] = sext_imm[state.sew-1:0];
+        V[vd] = sext_imm[state.sew-1:0];
       } else {
-        v[vd] = {v[vd][VLEN-1:end_bit_pos + 1], sext_imm[state.sew-1:0]};
+        V[vd] = {V[vd][VLEN-1:end_bit_pos + 1], sext_imm[state.sew-1:0]};
       }
     } else if (end_bit_pos == VLEN - 1) {
-      v[vd] = {sext_imm[state.sew-1:0], v[vd][start_bit_pos-1:0]};
+      V[vd] = {sext_imm[state.sew-1:0], V[vd][start_bit_pos-1:0]};
     } else {
-      v[vd] = {v[vd][VLEN-1:end_bit_pos + 1], sext_imm[state.sew-1:0], v[vd][start_bit_pos-1:0]};
+      V[vd] = {V[vd][VLEN-1:end_bit_pos + 1], sext_imm[state.sew-1:0], V[vd][start_bit_pos-1:0]};
     }
   }
 

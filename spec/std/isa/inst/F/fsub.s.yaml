@@ -33,4 +33,4 @@ data_independent_timing: true
 operation(): |
   check_f_ok($encoding);
   RoundingMode mode = rm_to_mode(rm, $encoding);
-  f[fd] = f32_sub(f[fs1], f[fs2], mode);
+  F[fd] = f32_sub(F[fs1], F[fs2], mode);

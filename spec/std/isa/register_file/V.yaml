@@ -14,7 +14,7 @@ description: |
   participate in argument passing or return values.
 definedBy: V
 register_class: vector
-register_length: VLEN
+register_length(): return VLEN;
 registers:
   - name: v0
     caller_saved: true

@@ -329,6 +329,19 @@ namespace udb {
     virtual uint64_t xreg(unsigned num) const = 0;
     virtual void set_xreg(unsigned num, uint64_t value) = 0;
 
+    virtual uint64_t freg(unsigned num) const {
+      throw std::runtime_error("No F register file in this configuration");
+    }
+    virtual void set_freg(unsigned num, uint64_t value) {
+      throw std::runtime_error("No F register file in this configuration");
+    }
+    virtual uint64_t vreg(unsigned num) const {
+      throw std::runtime_error("No V register file in this configuration");
+    }
+    virtual void set_vreg(unsigned num, uint64_t value) {
+      throw std::runtime_error("No V register file in this configuration");
+    }
+
     virtual CsrBase* csr(unsigned address) = 0;
     virtual const CsrBase* csr(unsigned address) const = 0;
 

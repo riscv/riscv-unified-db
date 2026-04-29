@@ -215,6 +215,13 @@ add_executable(test_version
 target_include_directories(test_version PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_version PRIVATE hart Catch2::Catch2WithMain)
 
+add_executable(test_regfile
+  ${CMAKE_SOURCE_DIR}/test/test_regfile.cpp
+  ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
+)
+target_include_directories(test_regfile PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_regfile PRIVATE hart Catch2::Catch2WithMain)
+
 # add_executable(test_decode
 #   ${CMAKE_SOURCE_DIR}/test/test_decode.cpp
 # )
@@ -224,6 +231,7 @@ target_link_libraries(test_version PRIVATE hart Catch2::Catch2WithMain)
 include(CTest)
 include(Catch)
 catch_discover_tests(test_bits_directed)
+catch_discover_tests(test_regfile)
 
 foreach (random_test IN LISTS RANDOM_TESTS)
   catch_discover_tests(${random_test})

@@ -1360,9 +1360,13 @@ module Idl
 
       enums.each { |g| g.add_symbol(symtab); }
       bitfields.each { |g| g.add_symbol(symtab) }
+      # Functions must be registered before globals so that global variable
+      # initializers can call functions (e.g. FLEN = implemented?(...) ? 64 : 32).
+      # FunctionDefAst#add_symbol only stores the FunctionType; it does not
+      # evaluate the body, so adding functions before globals is safe.
+      functions.each { |g| g.add_symbol(symtab) }
       globals.each { |g| g.add_symbol(symtab) }
       structs.each { |g| g.add_symbol(symtab) }
-      functions.each { |g| g.add_symbol(symtab) }
     end
 
     # replaces an include statement with the ast in that file, making
@@ -2477,7 +2481,12 @@ module Idl
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab)
-      if var.name == "X"
+      var_type = begin
+        var.type(symtab)
+      rescue AstNode::TypeError, AstNode::InternalError
+        nil
+      end
+      if var_type.is_a?(Type) && var_type.kind == :array && var_type.sub_type.is_a?(RegFileElementType) && var_type.qualifiers.include?(:global)
         false
       else
         var.const_eval?(symtab) && index.const_eval?(symtab)
@@ -2542,7 +2551,12 @@ module Idl
       if var.type(symtab).integral?
         (var_val >> index.value(symtab)) & 1
       else
-        value_error "X registers are not compile-time-known" if var.text_value == "X"
+        var_type = begin
+          var.type(symtab)
+        rescue AstNode::TypeError, AstNode::InternalError
+          nil
+        end
+        value_error "Register file registers are not compile-time-known" if var_type.is_a?(Type) && var_type.kind == :array && var_type.sub_type.is_a?(RegFileElementType) && var_type.qualifiers.include?(:global)
 
         # internal_error "Not an array" unless ary.type.kind == :array
 
@@ -2587,7 +2601,12 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab)
       v = var
-      if v.is_a?(IdAst) && v.name == "X"
+      var_type = begin
+        v.type(symtab)
+      rescue AstNode::TypeError, AstNode::InternalError
+        nil
+      end
+      if var_type.is_a?(Type) && var_type.kind == :array && var_type.sub_type.is_a?(RegFileElementType) && var_type.qualifiers.include?(:global)
         false
       else
         v.const_eval?(symtab) && msb.const_eval?(symtab).const_eval? && lsb.const_eval?(symtab)
@@ -6370,6 +6389,34 @@ module Idl
       end
       value_else(value_result) do
         (true_expression.values(symtab) + false_expression.values(symtab)).uniq
+      end
+    end
+
+    # @!macro max_value
+    def max_value(symtab)
+      value_result = value_try do
+        cond = condition.value(symtab)
+        return cond ? true_expression.max_value(symtab) : false_expression.max_value(symtab)
+      end
+      value_else(value_result) do
+        t = true_expression.max_value(symtab)
+        f = false_expression.max_value(symtab)
+        return :unknown if t == :unknown || f == :unknown
+        [t, f].max
+      end
+    end
+
+    # @!macro min_value
+    def min_value(symtab)
+      value_result = value_try do
+        cond = condition.value(symtab)
+        return cond ? true_expression.min_value(symtab) : false_expression.min_value(symtab)
+      end
+      value_else(value_result) do
+        t = true_expression.min_value(symtab)
+        f = false_expression.min_value(symtab)
+        return :unknown if t == :unknown || f == :unknown
+        [t, f].min
       end
     end
 

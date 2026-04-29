@@ -843,9 +843,12 @@ module Idl
           "#{' ' * indent}#{var.gen_cpp(symtab, 0, indent_spaces:)}.at(#{index.gen_cpp(symtab, 0)})"
         end
       else
-        if var.text_value.start_with?("X")
-          #"#{' '*indent}#{var.gen_cpp(symtab, 0, indent_spaces:)}[#{index.gen_cpp(symtab, 0, indent_spaces:)}]"
-          "#{' ' * indent} __UDB_HART->_xreg(#{index.gen_cpp(symtab, 0, indent_spaces:)})"
+        var_type = var.type(symtab)
+        if var_type.kind == :array &&
+           var_type.sub_type.is_a?(Idl::RegFileElementType) &&
+           var_type.qualifiers.include?(:global)
+          rf_name = var_type.sub_type.name.downcase
+          "#{' ' * indent}__UDB_HART->_#{rf_name}reg(#{index.gen_cpp(symtab, 0, indent_spaces:)})"
         else
           "#{' ' * indent}#{var.gen_cpp(symtab, 0, indent_spaces:)}.at(#{index.gen_cpp(symtab, 0, indent_spaces:)}.get())"
         end
@@ -895,9 +898,12 @@ module Idl
   class AryElementAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      if lhs.text_value.start_with?("X")
-        #"#{' '*indent}  #{lhs.gen_cpp(symtab, 0, indent_spaces:)}[#{idx.gen_cpp(symtab, 0, indent_spaces:)}] = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
-        "#{' ' * indent}__UDB_HART->_set_xreg( #{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
+      lhs_type = lhs.type(symtab)
+      if lhs_type.kind == :array &&
+         lhs_type.sub_type.is_a?(Idl::RegFileElementType) &&
+         lhs_type.qualifiers.include?(:global)
+        rf_name = lhs_type.sub_type.name.downcase
+        "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
       elsif lhs.type(symtab).kind == :bits
         "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)}.setBit(#{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
       else

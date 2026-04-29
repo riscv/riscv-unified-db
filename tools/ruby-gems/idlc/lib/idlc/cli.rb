@@ -12,6 +12,15 @@ require "optparse"
 require "yaml"
 
 module Idl
+  # Minimal register-file descriptor used by the CLI when no architecture is configured.
+  # Provides the interface that SymbolTable.new(register_files:) expects.
+  DefaultXRegisterFile = Struct.new(:name, :register_length, :registers) do
+    def self.build(xlen = 64)
+      registers = Array.new(32) { |i| Struct.new(:name).new("x#{i}") }
+      new("X", "return #{xlen};", registers)
+    end
+  end
+
   class Cli
     extend Forwardable
     def_delegators :@runner,
@@ -48,7 +57,7 @@ module Idl
       end
 
       compiler = Compiler.new
-      symtab = SymbolTable.new
+      symtab = SymbolTable.new(register_files: [DefaultXRegisterFile.build])
 
       add_defines(compiler, symtab)
       expr_ast = compiler.compile_expression(args[0], symtab)
@@ -104,7 +113,7 @@ module Idl
 
     def do_tc_inst(args, options, vars)
       compiler = Compiler.new
-      symtab = SymbolTable.new
+      symtab = SymbolTable.new(register_files: [DefaultXRegisterFile.build])
 
       add_defines(compiler, symtab)
       symtab.push(nil)

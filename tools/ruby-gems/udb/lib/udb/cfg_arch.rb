@@ -204,7 +204,19 @@ module Udb
         begin
           @symtab = create_symtab
 
-          global_ast.add_global_symbols(@symtab)
+          # Guard against re-entrant solver calls from within add_global_symbols.
+          # Global initializers (e.g. FLEN) may call implemented?(), which triggers
+          # prohibited_ext?() and the Z3 solver chain. If those calls see @symtab is
+          # already set (partial), they'd use an incomplete symtab and fail.
+          # A depth counter (rather than a boolean) is used so that if this block
+          # ever nests (e.g. create_symtab is called recursively in the future),
+          # the inner ensure does not prematurely clear the guard for the outer block.
+          @constructing_symtab_depth = (@constructing_symtab_depth || 0) + 1
+          begin
+            global_ast.add_global_symbols(@symtab)
+          ensure
+            @constructing_symtab_depth -= 1
+          end
 
           @symtab.deep_freeze
           raise if @symtab.name.nil?
@@ -212,6 +224,11 @@ module Udb
           @symtab
         end
     end
+
+    # @return [Boolean] true while add_global_symbols is running inside symtab construction
+    # Used by implemented? callback to avoid triggering the Z3 solver on a partial symtab.
+    sig { returns(T::Boolean) }
+    def constructing_symtab? = (@constructing_symtab_depth || 0) > 0
 
     sig { returns(Idl::IsaAst) }
     def global_ast
@@ -488,6 +505,11 @@ module Udb
               # we can know if it is implemented, but not if it's not implemented for a partially configured
               if ext?(ext_name)
                 true
+              elsif constructing_symtab?
+                # During symtab construction (add_global_symbols), the Z3 solver is not
+                # available because the symtab is partial. Return nil (unknown) so that
+                # value_try falls back to storing the global with nil (no compile-time value).
+                nil
               elsif prohibited_ext?(ext_name)
                 false
               else
@@ -504,6 +526,9 @@ module Udb
               # we can know if it is implemented, but not if it's not implemented for a partially configured
               if ext?(ext_name, [version])
                 true
+              elsif constructing_symtab?
+                # Same guard as for implemented? above.
+                nil
               elsif prohibited_ext?(ext_name)
                 false
               else
@@ -583,6 +608,33 @@ module Udb
       end
       pb.finish
 
+      # Build a bootstrap symtab and compute RF max widths before constructing the real
+      # symtab. The bootstrap needs add_global_symbols so that implemented?() is a known
+      # function (required for type_check to pass). Running it under @constructing_symtab=true
+      # ensures implemented?() returns nil → value_error during value evaluation, which
+      # causes TernaryOperatorExpressionAst#max_value to explore both branches.
+      bootstrap_st = Idl::SymbolTable.new(
+        mxlen:,
+        builtin_global_vars: final_param_vars,
+        builtin_enums: symtab_enums,
+        builtin_funcs: symtab_callbacks,
+        params: all_params,
+        name: "#{@name}/bootstrap",
+        register_files: []
+      )
+      rf_max_widths = begin
+        @constructing_symtab_depth = (@constructing_symtab_depth || 0) + 1
+        global_ast.add_global_symbols(bootstrap_st)
+        register_files.each_with_object({}) do |rf, h|
+          node = @idl_compiler.compile_expression(rf.register_length_expr, bootstrap_st, pass_error: true)
+          max = node.max_value(bootstrap_st)
+          raise "Cannot determine max width for register file '#{rf.name}'" if max == :unknown
+          h[rf.name] = Integer(max)
+        end
+      ensure
+        @constructing_symtab_depth -= 1
+      end
+
       Idl::SymbolTable.new(
         mxlen:,
         possible_xlens_cb: proc { possible_xlens },
@@ -591,7 +643,9 @@ module Udb
         builtin_enums: symtab_enums,
         name: @name,
         csrs:,
-        params: all_params
+        params: all_params,
+        register_files: register_files,
+        register_file_max_widths: rf_max_widths
       )
     end
     private :create_symtab

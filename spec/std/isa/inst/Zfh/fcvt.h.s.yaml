@@ -39,7 +39,7 @@ access:
 operation(): |
   check_f_ok($encoding);
 
-  Bits<16> hp_value = f[fs1][15:0];
+  Bits<16> hp_value = F[fs1][15:0];
 
   Bits<1> sign = hp_value[15];
   Bits<5> exp = hp_value[14:10];
@@ -50,22 +50,22 @@ operation(): |
       if ((hp_value & 0x0200) != 0) {
         set_fp_flag(FpFlag::NV);
       }
-      f[fd] = HP_CANONICAL_NAN;
+      F[fd] = HP_CANONICAL_NAN;
     } else {
-      f[fd] = packToF32UI(sign, 0xFF, 0);
+      F[fd] = packToF32UI(sign, 0xFF, 0);
     }
   } else {
     if (exp != 0) {
       if (frac != 0) {
-        f[fd] = packToF32UI(sign, 0, 0);
+        F[fd] = packToF32UI(sign, 0, 0);
       } else {
         Bits<6> norm_exp;
         (norm_exp, frac) = softfloat_normSubnormalF16Sig( frac );
         exp = norm_exp - 1;
-        f[fd] = packToF32UI(sign, exp + 0x70, frac << 13);
+        F[fd] = packToF32UI(sign, exp + 0x70, frac << 13);
       }
     } else {
-      f[fd] = packToF32UI(sign, exp + 0x70, frac << 13);
+      F[fd] = packToF32UI(sign, exp + 0x70, frac << 13);
     }
   }
 

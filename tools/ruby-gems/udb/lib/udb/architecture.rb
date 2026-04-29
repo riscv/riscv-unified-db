@@ -125,7 +125,7 @@ module Udb
       },
       {
         fn_name: "register_file",
-        arch_dir: "register",
+        arch_dir: "register_file",
         klass: RegisterFile,
         kind: DatabaseObject::Kind::RegisterFile
       },

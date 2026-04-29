@@ -38,9 +38,9 @@ operation(): |
   Bits<32> sp_value = read_memory(32, virtual_address, $encoding);
 
   if (implemented?(ExtensionName::D)) {
-    f[fd] = nan_box(32, 64, sp_value);
+    F[fd] = nan_box(32, 64, sp_value);
   } else {
-    f[fd] = sp_value;
+    F[fd] = sp_value;
   }
 
   mark_f_state_dirty();

@@ -34,8 +34,8 @@ data_independent_timing: true
 operation(): |
   check_f_ok($encoding);
 
-  Bits<32> sp_value_a = f[fs1][31:0];
-  Bits<32> sp_value_b = f[fs2][31:0];
+  Bits<32> sp_value_a = F[fs1][31:0];
+  Bits<32> sp_value_b = F[fs2][31:0];
   Bits<1> sign_a = sp_value_a[31];
   Bits<1> sign_b = sp_value_b[31];
 

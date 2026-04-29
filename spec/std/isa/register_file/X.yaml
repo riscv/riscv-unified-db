@@ -14,11 +14,12 @@ description: |
   visible integer state used by the calling convention and execution environment.
 definedBy: I
 register_class: general_purpose
-register_length: MXLEN
+register_length(): return MXLEN;
 registers:
   - name: x0
     abi_mnemonics: [zero]
     roles: [zero]
+    reset_value: "0"
     description: |
       Register x0 is hardwired with all bits equal to 0.
     arch_read(): |

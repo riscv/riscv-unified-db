@@ -34,10 +34,10 @@ operation(): |
   for (U32 i = 0; i < CSR[vl].VALUE; i++) {
     U32 start_bit_pos = (CSR[vstart].VALUE + i) * 8;
     U32 end_bit_pos = start_bit_pos + 7;
-    v[vd] = {
-      v[vd][VLEN-1:end_bit_pos + 1],
+    V[vd] = {
+      V[vd][VLEN-1:end_bit_pos + 1],
       sext(read_memory(8, virtual_address, $encoding), 8),
-      v[vd][start_bit_pos-1:0]
+      V[vd][start_bit_pos-1:0]
     };
     virtual_address = virtual_address + 1;
   }

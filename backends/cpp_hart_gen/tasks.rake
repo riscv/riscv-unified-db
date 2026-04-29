@@ -420,6 +420,7 @@ namespace :test do
     Dir.chdir "#{CPP_HART_GEN_DST}/#{build_name}/build" do
       sh "make -j #{$jobs} test_bits_directed"
       sh "make -j #{$jobs} test_bits_random"
+      sh "make -j #{$jobs} test_regfile"
       sh "ctest -T coverage -T test"
     end
   end
