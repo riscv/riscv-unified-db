@@ -111,6 +111,7 @@ params:
   HW_MSTATUS_FS_DIRTY_UPDATE: precise
   MUTABLE_MISA_F: false
   HPM_COUNTER_EN: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+  MCOUNTINHIBIT_IMPLEMENTED: true
 )";
 
 // ---------------------------------------------------------------------------

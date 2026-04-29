@@ -132,7 +132,7 @@ class RegisterFile < TopLevelDatabaseObject
 
     # Check for a fixed parameter
     fixed = cfg_arch.params_with_value.find { |p| p.name == expr }
-    return fixed.value.to_i if fixed
+    return T.cast(fixed.value, Integer).to_i if fixed
 
     # Check if it's a free parameter name
     free = cfg_arch.params_without_value.find { |p| p.name == expr }
