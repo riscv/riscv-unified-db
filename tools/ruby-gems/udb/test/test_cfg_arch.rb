@@ -568,6 +568,8 @@ class TestCfgArch < Minitest::Test
       mandatory_extensions:
         - name: "I"
           version: ">= 0"
+        - name: "Sm"
+          version: ">= 0"
     YAML
 
     compat_64_yaml = <<~YAML
@@ -580,6 +582,8 @@ class TestCfgArch < Minitest::Test
         MXLEN: 64
       mandatory_extensions:
         - name: "I"
+          version: ">= 0"
+        - name: "Sm"
           version: ">= 0"
         - name: "M"
           version: ">= 0"
@@ -596,6 +600,8 @@ class TestCfgArch < Minitest::Test
       mandatory_extensions:
         - name: "I"
           version: ">= 0"
+        - name: "Sm"
+          version: ">= 0"
     YAML
 
     also_compat_64_yaml = <<~YAML
@@ -608,6 +614,8 @@ class TestCfgArch < Minitest::Test
         MXLEN: 64
       mandatory_extensions:
         - name: "I"
+          version: ">= 0"
+        - name: "Sm"
           version: ">= 0"
     YAML
 
@@ -672,6 +680,8 @@ class TestCfgArch < Minitest::Test
             mandatory_extensions:
               - name: "I"
                 version: ">= 0"
+              - name: "Sm"
+                version: ">= 0"
               - name: "M"
                 version: ">= 0"
           YAML
@@ -699,6 +709,8 @@ class TestCfgArch < Minitest::Test
               MXLEN: 64
             mandatory_extensions:
               - name: "I"
+                version: ">= 0"
+              - name: "Sm"
                 version: ">= 0"
               - name: "M"
                 version: ">= 0"
