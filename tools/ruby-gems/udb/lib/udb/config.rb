@@ -103,6 +103,8 @@ module Udb
 
     sig { params(obj: T.untyped).returns(T.untyped) }
     def self.freeze_data(obj)
+      return obj if obj.frozen?
+
       if obj.is_a?(Hash)
         obj.each do |k, v|
           obj[k] = freeze_data(v)
