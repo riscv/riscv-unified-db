@@ -23,6 +23,8 @@ encoding:
       location: 12|8|10-9|6|7|2|11|5-3
       left_shift: 1
       sign_extend: true
+    - name: xd
+      implicit: 1
 access:
   s: always
   u: always

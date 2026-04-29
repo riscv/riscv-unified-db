@@ -24,6 +24,8 @@ encoding:
       left_shift: 2
     - name: fs2
       location: 6-2
+    - name: xs1
+      implicit: 2
 access:
   s: always
   u: always

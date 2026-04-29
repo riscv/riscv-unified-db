@@ -24,8 +24,10 @@ encoding:
       left_shift: 3
     - name: fs2
       location: 4-2
+      add: 8
     - name: xs1
       location: 9-7
+      add: 8
 access:
   s: always
   u: always

@@ -422,6 +422,8 @@ module Udb
       if effective_xlen.nil?
         if defined_in_base?(32)
           encoding(32).decode_variables.each do |d|
+            next if d.size.zero?
+
             qualifiers = [:const]
             qualifiers << :signed if d.sext?
             width = d.size
@@ -432,6 +434,8 @@ module Udb
         end
         if defined_in_base?(64)
           encoding(64).decode_variables.each do |d|
+            next if d.size.zero?
+
             qualifiers = [:const]
             qualifiers << :signed if d.sext?
             width = d.size
@@ -457,6 +461,8 @@ module Udb
           Idl::Var.new("__effective_xlen", Idl::Type.new(:bits, width: 7), effective_xlen)
         )
         encoding(effective_xlen).decode_variables.each do |d|
+          next if d.size.zero?
+
           qualifiers = [:const]
           qualifiers << :signed if d.sext?
           width = d.size
@@ -661,8 +667,13 @@ module Udb
 
       attr_reader :encoding_fields
 
-      sig { returns(String) }
+      sig { returns(T.nilable(String)) }
       attr_reader :location
+
+      # implicitly use an operand with the value
+      attr_reader :implicit
+
+      def implicit? = @implicit != 0
 
       # @return [Array<Integer>] Any array containing every encoding index covered by this variable
       sig { returns(T::Array[Integer]) }
@@ -674,9 +685,21 @@ module Udb
       # @example
       #   pretty_name #=> "rd != 0"
       #   pretty_name #=> "rd != {0,2}"
+      #   pretty_name #=> "rs1 = 2"
       def pretty_name
-        if excludes.empty?
-          name
+        return name if excludes.empty?
+
+        excludes_set = excludes.to_set
+        bit_width = size
+        all_values = (0...(1 << bit_width)).to_set
+
+        if all_values.size - excludes_set.size < excludes_set.size
+          includes = (all_values - excludes_set).to_a.sort
+          if includes.size == 1
+            "#{name} = #{includes[0]}"
+          else
+            "#{name} = {#{includes.join(',')}}"
+          end
         elsif excludes.size == 1
           "#{name} != #{excludes[0]}"
         else
@@ -763,6 +786,8 @@ module Udb
 
       # array of constituent encoding fields
       def grouped_encoding_fields
+        return [] if @encoding_fields.empty?
+
         sorted_encoding_fields = @encoding_fields.sort { |a, b| b.range.last <=> a.range.last }
         # need to group encoding_fields if they are consecutive
         grouped_fields = [sorted_encoding_fields[0].range]
@@ -789,10 +814,15 @@ module Udb
       def initialize(name, field_data)
         @name = name
         @left_shift = field_data["left_shift"].nil? ? 0 : field_data["left_shift"]
+        @add = field_data["add"].nil? ? 0 : field_data["add"]
         @sext = field_data["sign_extend"].nil? ? false : field_data["sign_extend"]
         @alias = field_data["alias"].nil? ? nil : field_data["alias"]
+        @implicit = field_data["implicit"].nil? ? 0 : field_data["implicit"]
         @location = field_data["location"]
-        extract_location(field_data["location"])
+        @encoding_fields = []
+        if !field_data["location"].nil?
+          extract_location(field_data["location"])
+        end
         @excludes =
           if field_data.key?("not")
             if field_data["not"].is_a?(Array)
@@ -882,6 +912,7 @@ module Udb
           else
             ops[0]
           end
+        ops = "(#{ops} + #{@add})" unless @add.zero?
         ops = "sext(#{ops}, #{size})" if sext?
         ops
       end

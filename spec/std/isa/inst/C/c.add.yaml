@@ -23,6 +23,7 @@ encoding:
     - name: xd
       location: 11-7
       not: 0
+      alias: xs1
 access:
   s: always
   u: always

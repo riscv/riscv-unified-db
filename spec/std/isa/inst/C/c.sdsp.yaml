@@ -27,10 +27,12 @@ encoding:
     variables:
       - name: xs2
         location: 6-2
-        not: [1, 3, 5, 7]
+        not: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31]
       - name: imm
         location: 9-7|12-10
         left_shift: 3
+      - name: xs1
+        implicit: 2
   RV64:
     match: 111-----------10
     variables:
@@ -39,6 +41,8 @@ encoding:
       - name: imm
         location: 9-7|12-10
         left_shift: 3
+      - name: xs1
+        implicit: 2
 access:
   s: always
   u: always

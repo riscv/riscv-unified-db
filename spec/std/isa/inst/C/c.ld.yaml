@@ -32,8 +32,10 @@ encoding:
       - name: xd
         location: 4-2
         not: [1, 3, 5, 7]
+        add: 8
       - name: xs1
         location: 9-7
+        add: 8
   RV64:
     match: 011-----------00
     variables:
@@ -42,8 +44,10 @@ encoding:
         left_shift: 3
       - name: xd
         location: 4-2
+        add: 8
       - name: xs1
         location: 9-7
+        add: 8
 access:
   s: always
   u: always

@@ -21,8 +21,11 @@ encoding:
   variables:
     - name: xd
       location: 9-7
+      add: 8
     - name: xs2
       location: 4-2
+      add: 8
+      alias: xs1
 access:
   s: always
   u: always

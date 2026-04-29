@@ -24,6 +24,8 @@ encoding:
         not: 0
       - name: xd
         location: 9-7
+        add: 8
+        alias: xs1
   RV64:
     match: 100-01--------01
     variables:
@@ -32,6 +34,8 @@ encoding:
         not: 0
       - name: xd
         location: 9-7
+        add: 8
+        alias: xs1
 access:
   s: always
   u: always

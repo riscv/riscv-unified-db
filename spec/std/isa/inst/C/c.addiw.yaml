@@ -23,9 +23,11 @@ encoding:
   variables:
     - name: imm
       location: 12|6-2
+      sign_extend: true
     - name: xd
       location: 11-7
       not: 0
+      alias: xs1
 access:
   s: always
   u: always

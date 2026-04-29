@@ -23,6 +23,9 @@ encoding:
       sign_extend: true
     - name: xs1
       location: 9-7
+      add: 8
+    - name: xs2
+      implicit: 0
 access:
   s: always
   u: always

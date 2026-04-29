@@ -23,6 +23,7 @@ encoding:
         not: 0
       - name: xd
         location: 11-7
+        alias: xs1
   RV64:
     match: 000-----------10
     variables:
@@ -31,6 +32,7 @@ encoding:
         not: 0
       - name: xd
         location: 11-7
+        alias: xs1
 access:
   s: always
   u: always

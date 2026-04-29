@@ -20,6 +20,8 @@ encoding:
     - name: xs1
       location: 11-7
       not: 0
+    - name: xd
+      implicit: 1
 access:
   s: always
   u: always
