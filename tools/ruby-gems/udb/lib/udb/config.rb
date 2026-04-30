@@ -103,6 +103,8 @@ module Udb
 
     sig { params(obj: T.untyped).returns(T.untyped) }
     def self.freeze_data(obj)
+      return obj if obj.frozen?
+
       if obj.is_a?(Hash)
         obj.each do |k, v|
           obj[k] = freeze_data(v)
@@ -156,11 +158,27 @@ module Udb
             }
           end
         }
-        data.fetch("params")["MXLEN"] = portfolio_grp.max_base
         freeze_data(data)
         PartialConfig.send(:new, data, info)
       else
         T.absurd(cfg_file_path_or_portfolio_grp)
+      end
+    end
+
+    # Create an AbstractConfig directly from a config data hash, bypassing file I/O.
+    # Used when the config is already in memory (e.g., portfolio-derived temp configs).
+    sig { params(data: T::Hash[String, T.untyped], info: Resolver::ConfigInfo).returns(AbstractConfig) }
+    def self.create_from_data(data, info)
+      freeze_data(data)
+      case data["type"]
+      when "fully configured"
+        FullConfig.send(:new, data, info)
+      when "partially configured"
+        PartialConfig.send(:new, data, info)
+      when "unconfigured"
+        UnConfig.send(:new, data, info)
+      else
+        raise "Unexpected type (#{data['type']}) in config"
       end
     end
   end
@@ -220,12 +238,25 @@ module Udb
       @param_values = @data.key?("params") ? @data["params"] : [].freeze
 
       @mxlen = @data.dig("params", "MXLEN")
+
       if @mxlen.nil?
-        Udb.logger.error "Must set MXLEN for a configured config"
-        raise InvalidConfigError
+        # Infer MXLEN from subordinate mode XLENs: if any of UXLEN/SXLEN/VSXLEN/VUXLEN
+        # can be 64, then MXLEN must be 64 (lower modes cannot exceed machine-mode width).
+        MODE_XLEN_PARAMS.each do |param|
+          val = @data.dig("params", param)
+          if val == 64 || (val.is_a?(Array) && val.include?(64))
+            @mxlen = 64
+            break
+          end
+        end
+
+        if @mxlen.nil?
+          param_req = @data.dig("requirements", "param")
+          @mxlen = 64 if !param_req.nil? && param_req_implies_64?(param_req)
+        end
       end
 
-      @mxlen.freeze
+      @mxlen.freeze unless @mxlen.nil?
     end
 
     ###############################
@@ -235,7 +266,7 @@ module Udb
     sig { override.returns(T::Hash[String, ParamValueType]) }
     def param_values = @param_values
 
-    sig { override.returns(Integer) }
+    sig { override.returns(T.nilable(Integer)) }
     def mxlen = @mxlen
 
     sig { override.returns(T::Boolean) }
@@ -301,6 +332,37 @@ module Udb
 
     sig { returns(T.nilable(T::Hash[String, T.untyped])) }
     def requirements = @data["requirements"]
+
+    private
+
+    MODE_XLEN_PARAMS = %w[UXLEN SXLEN VSXLEN VUXLEN].freeze
+
+    # Returns true if the param requirements condition guarantees that at least one
+    # subordinate-mode XLEN param must be 64, which implies MXLEN = 64.
+    #
+    # Entailment rules:
+    #   allOf: any child entailing 64 is sufficient (all must hold)
+    #   anyOf: all children must entail 64 (only one needs to hold, so we can't
+    #          conclude 64 unless every branch requires it)
+    #   noneOf/not/if/oneOf: too complex to reason about without a solver → false
+    #   leaf with a MODE_XLEN_PARAMS name and equal/includes 64 → true
+    #   anything else (extension, xlen, idl, other params) → false
+    sig { params(yaml: T.untyped).returns(T::Boolean) }
+    def param_req_implies_64?(yaml)
+      return false unless yaml.is_a?(Hash)
+
+      if yaml.key?("allOf")
+        yaml["allOf"].any? { |child| param_req_implies_64?(child) }
+      elsif yaml.key?("anyOf")
+        yaml["anyOf"].all? { |child| param_req_implies_64?(child) }
+      elsif yaml.key?("param")
+        param_req_implies_64?(yaml["param"])
+      elsif yaml.key?("name") && MODE_XLEN_PARAMS.include?(yaml["name"])
+        yaml["equal"] == 64 || yaml["includes"] == 64
+      else
+        false
+      end
+    end
   end
 
   ################################################################################################################
@@ -320,7 +382,7 @@ module Udb
 
       @mxlen = @data.dig("params", "MXLEN").freeze
       if @mxlen.nil?
-        Udb.logger.error "Must set MXLEN for a configured config"
+        Udb.logger.error "Must set MXLEN for a full config"
         raise InvalidConfigError
       end
     end

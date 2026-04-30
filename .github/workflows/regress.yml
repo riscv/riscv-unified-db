@@ -426,6 +426,15 @@ jobs:
       uses: "./.github/actions/mise-setup"
     - name: Generate extension PDF
       run: "./do gen:profile_release_pdf[RVI20]"
+  regress-profile-strict-cfg:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone Github Repo Action
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Set up mise environment
+      uses: "./.github/actions/mise-setup"
+    - name: Check that profile configs are up to date
+      run: "./bin/chore gen -f profile-cfgs"
   regress-udb-unit-test:
     runs-on: ubuntu-latest
     steps:
@@ -832,6 +841,7 @@ jobs:
     - regress-cfg-manual
     - regress-gen-ext-pdf
     - regress-gen-profile
+    - regress-profile-strict-cfg
     - regress-udb-unit-test
     - regress-gen-go
     - regress-gen-c-header

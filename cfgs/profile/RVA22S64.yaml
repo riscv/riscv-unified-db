@@ -10,8 +10,7 @@ kind: architecture configuration
 type: partially configured
 name: RVA22S64
 description:
-params:
-  MXLEN: 64
+params: {}
 mandatory_extensions:
 - name: A
   version: "~> 2.1"
@@ -20,15 +19,17 @@ mandatory_extensions:
 - name: C
   version: "~> 2.0"
 - name: D
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: F
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: I
   version: "~> 2.1"
 - name: M
   version: "~> 2.0"
 - name: S
   version: "~> 1.12"
+- name: Sm
+  version: "~> 1.12.0"
 - name: Ssccptr
   version: "~> 1.0"
 - name: Sscounterenw
@@ -38,7 +39,7 @@ mandatory_extensions:
 - name: Sstvecd
   version: "~> 1.0"
 - name: Sv39
-  version: "~> 1.12"
+  version: "~> 1.0"
 - name: Svade
   version: "~> 1.0"
 - name: Svbare
@@ -53,12 +54,20 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za64rs
   version: "~> 1.0"
+- name: Zaamo
+  version: "~> 1.0.0"
+- name: Zalrsc
+  version: "~> 1.0.0"
 - name: Zba
   version: "~> 1.0"
 - name: Zbb
   version: "~> 1.0"
 - name: Zbs
   version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0.0"
+- name: Zcd
+  version: "~> 1.0.0"
 - name: Zfhmin
   version: "~> 1.0"
 - name: Zic64b
@@ -99,9 +108,9 @@ non_mandatory_extensions:
 - name: Ssu64xl
   version: "~> 1.0"
 - name: Sv48
-  version: "~> 1.12"
+  version: "~> 1.0"
 - name: Sv57
-  version: "~> 1.12"
+  version: "~> 1.0"
 - name: Svnapot
   version: "~> 1.0"
 - name: V
@@ -121,3 +130,14 @@ non_mandatory_extensions:
 - name: Zks
   version: "~> 1.0"
 additional_extensions: true
+requirements:
+  param:
+    allOf:
+    - name: U_MODE_ENDIANNESS
+      equal: little
+    - name: S_MODE_ENDIANNESS
+      equal: little
+    - name: SXLEN
+      includes: 64
+    - name: UXLEN
+      includes: 64

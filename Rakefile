@@ -62,7 +62,7 @@ namespace :chore do
   desc "Update golden instruction appendix"
   task :update_golden_appendix do
     Rake::Task["gen:instruction_appendix_adoc"].invoke
-    sh "mv #{$root}/gen/instructions_appendix/all_instructions.adoc #{$root}/backends/instructions_appendix/all_instructions.golden.adoc"
+    sh "mv #{$root}/gen/instructions_appendix/all_instructions.adoc #{$root}/tests/golden/all_instructions.golden.adoc"
   end
 end
 
@@ -672,7 +672,7 @@ namespace :gen do
     exit(1)
   end
 
-  desc "Generate config files for profiles"
+  desc "Generate strict config files for profiles"
   task :cfg do
     cfg_arch = $resolver.cfg_arch_for("_")
     FileUtils.mkdir_p $resolver.cfgs_path / "profile"
@@ -688,7 +688,7 @@ namespace :gen do
           # To regenerate, run `./do gen:cfg` in the UDB root directory
           # The data comes from the UDB profile definitions in spec/std/isa/profile/
 
-          #{YAML.dump(profile.to_config)}
+          #{YAML.dump(profile.to_strict_config)}
         YAML
       )
       File.chmod(0444, path)

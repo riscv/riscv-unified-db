@@ -277,7 +277,7 @@ module Udb
           reasons << "#{h.fetch("name")} is not a known extension"
         end
         if extensions.any? { |e| e.name == h.fetch("name") } && !T.must(extension(h.fetch("name"))).versions.any? { |v| v.version_spec == h.fetch("version") }
-          reasons << "#{h.fetch("version")} is not a known extension"
+          reasons << "#{h.fetch("version")} is not a known version of extension #{h.fetch("name")}"
         end
       end
 
@@ -665,6 +665,12 @@ module Udb
     #   @param name [String] The $1 name
     #   @return [$3] The $1
     #   @return [nil] if there is no $1 named +name+
+    # Class-level cache of raw YAML file contents keyed by "#{resolved_spec_path}/#{obj_type_dir}".
+    # Maps each directory to an array of [content, original_path, realpath] triples so that a
+    # second ConfiguredArchitecture sharing the same spec path skips disk I/O and file locking.
+    # Benign race: two threads both missing the cache produce identical entries.
+    @@yaml_data_cache = Concurrent::Hash.new
+
     sig { params(fn_name: String, arch_dir: String, obj_class: T.class_of(TopLevelDatabaseObject)).void }
     def self.generate_obj_methods(fn_name, arch_dir, obj_class)
 
@@ -675,12 +681,25 @@ module Udb
 
         @objects[arch_dir] = Concurrent::Array.new
         @object_hashes[arch_dir] = Concurrent::Hash.new
-        Dir.glob(@arch_dir / arch_dir / "**" / "*.yaml") do |obj_path|
-          f = File.open(obj_path)
-          f.flock(File::LOCK_EX)
-          obj_yaml = YAML.load(f.read, filename: obj_path, permitted_classes: [Date])
-          f.flock(File::LOCK_UN)
-          @objects[arch_dir] << obj_class.new(obj_yaml, Pathname.new(obj_path).realpath, T.cast(self, ConfiguredArchitecture))
+
+        yaml_cache_key = "#{@arch_dir}/#{arch_dir}"
+        cached_files = @@yaml_data_cache[yaml_cache_key]
+        if cached_files.nil?
+          entries = []
+          Dir.glob(@arch_dir / arch_dir / "**" / "*.yaml") do |obj_path|
+            File.open(obj_path) do |f|
+              f.flock(File::LOCK_EX)
+              content = f.read
+              f.flock(File::LOCK_UN)
+              entries << [content, obj_path, Pathname.new(obj_path).realpath]
+            end
+          end
+          cached_files = @@yaml_data_cache[yaml_cache_key] = entries
+        end
+
+        cached_files.each do |content, obj_path, realpath|
+          obj_yaml = YAML.load(content, filename: obj_path, permitted_classes: [Date])
+          @objects[arch_dir] << obj_class.new(obj_yaml, realpath, T.cast(self, ConfiguredArchitecture))
           @object_hashes[arch_dir][@objects[arch_dir].last.name] = @objects[arch_dir].last
         end
         @objects[arch_dir]
