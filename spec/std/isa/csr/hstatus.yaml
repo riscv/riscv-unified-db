@@ -1,5 +1,5 @@
-# Copyright (c) RISC-V International
-# SPDX-License-Identifier: CC-BY-4.0
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # yaml-language-server: $schema=../../../schemas/csr_schema.json
 
