@@ -406,6 +406,36 @@ def builtin_encode_sreg(reg):
     return (reg - 8) - 8 * ((reg - 8) // 10)
 
 
+def UDB_invoke_IDL(idl, operands, xlen):
+    if "return 1;" in idl:  # vector mask
+        return 1
+    if "return 0;" in idl:
+        return 0
+    if "reg_list" in idl:
+        return builtin_encode_reg_list(operands)
+    if "stack_adj" in idl:
+        return builtin_encode_stack_adj(operands, xlen)
+    if "iorw" in idl:
+        if "pred" in idl:
+            return builtin_encode_fence_scope(operands["pred"])
+        elif "succ" in idl:
+            return builtin_encode_fence_scope(operands["succ"])
+    if "rtz" in idl:
+        return builtin_encode_rounding_mode(operands["rm"])
+    if "r1s" in idl:
+        return builtin_encode_sreg(operands["r1s"])
+    if "r2s" in idl:
+        return builtin_encode_sreg(operands["r1s"])
+    if ".offset" in idl:
+        return operands["imm"]
+    if "reg2creg" in idl:
+        if "xd" in idl:
+            return operands["xd"] - 8
+        if "xs1" in idl:
+            return operands["xs1"] - 8
+    return None
+
+
 def fill_in_variables(inst, assembly, xlen=64):
     """Fill in variables in the match pattern based on the instruction's operands"""
     # Initialize variables
@@ -465,41 +495,19 @@ def fill_in_variables(inst, assembly, xlen=64):
         # Find the operand value from assembly operands
         operand_value = 0  # Default value
 
-        # Try to find the operand value based on the variable name
-        if var_name not in assembly_operands:
-            if "encode(operands)" in variable:
-                if "return 1;" in variable["encode(operands)"]:  # vector mask
-                    operand_value = 1
-                elif "return 0;" in variable["encode(operands)"]:
-                    operand_value = 0
-                elif "reg_list" in variable["encode(operands)"]:
-                    operand_value = builtin_encode_reg_list(assembly_operands)
-                elif "stack_adj" in variable["encode(operands)"]:  # stack_adj
-                    operand_value = builtin_encode_stack_adj(assembly_operands, xlen)
-                else:
-                    print("#  ERROR: unsupported variable encoding")
-                    return None
-            else:
-                print("#  ERROR: unknown variable encoding")
+        if "encode(operands)" in variable:
+            operand_value = UDB_invoke_IDL(variable["encode(operands)"], assembly_operands, xlen)
+            if operand_value is None:
+                print("#  ERROR: unsupported variable encoding")
                 return None
-        else:
+        elif var_name in assembly_operands:
             print(
                 f"#  Found direct match for variable '{var_name}' in assembly operands {assembly_operands[var_name]}"
             )
-            if "encode(operands)" in variable and "iorw" in variable["encode(operands)"]:
-                operand_value = builtin_encode_fence_scope(assembly_operands[var_name])
-                if operand_value is None:
-                    return None
-            elif "encode(operands)" in variable and "rtz" in variable["encode(operands)"]:
-                operand_value = builtin_encode_rounding_mode(assembly_operands[var_name])
-                if operand_value is None:
-                    return None
-            elif "encode(operands)" in variable and (
-                "r1s" in variable["encode(operands)"] or "r2s" in variable["encode(operands)"]
-            ):
-                operand_value = builtin_encode_sreg(assembly_operands[var_name])
-            else:
-                operand_value = assembly_operands[var_name]
+            operand_value = assembly_operands[var_name]
+        else:
+            print("#  ERROR: unknown variable encoding")
+            return None
 
         print(f"#  Variable '{var_name}' value: {operand_value}")
 
@@ -565,18 +573,19 @@ def main():
     assembly_lines = []
     if args.assembly:
         assembly_lines = read_assembly_file(args.assembly)
+    else:
+        assembly_lines = sys.stdin.read().splitlines()
 
     # Process assembly lines and print mnemonics
-    if assembly_lines:
-        for line in assembly_lines:
-            line = line.split("#")[0].strip()  # Remove comments and whitespace
-            if not line:
-                continue  # Skip empty lines
-            encoded = encode(line.strip(), xlen)
-            if encoded:
-                print(f"{encoded}")
-            else:
-                print(f"# ERROR: Failed to encode '{line.strip()}'")
+    for line in assembly_lines:
+        line = line.split("#")[0].strip()  # Remove comments and whitespace
+        if not line:
+            continue  # Skip empty lines
+        encoded = encode(line.strip(), xlen)
+        if encoded:
+            print(f"{encoded}")
+        else:
+            print(f"# ERROR: Failed to encode '{line.strip()}'")
 
 
 if __name__ == "__main__":
