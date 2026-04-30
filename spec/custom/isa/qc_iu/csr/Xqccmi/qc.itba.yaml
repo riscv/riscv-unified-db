@@ -29,7 +29,8 @@ definedBy:
     name: Xqccmi
 fields:
   base:
-    location: 31-6
+    location_rv32: 31-6
+    location_rv64: 63-6
     type: RW
     reset_value: UNDEFINED_LEGAL
     description: |

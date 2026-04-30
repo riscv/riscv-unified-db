@@ -1,0 +1,17 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+---
+# Overlay: allow bit 0 of mnepc.PC to be written and read back unchanged.
+#
+# When Xqccmi is present, qc.cm.ilut sets bit 0 of mepc/mnepc to indicate
+# whether an exception originated from the first (bit 0 = 0) or second
+# (bit 0 = 1) packed instruction in an ILUT entry. The standard mnepc
+# definition forces bit 0 to 0 on write and masks it on read; both
+# behaviours are removed here so that bit 0 is preserved faithfully.
+fields:
+  PC:
+    sw_write(csr_value): |
+      return csr_value.PC;
+sw_read(): |
+  return CSR[mnepc].PC;
