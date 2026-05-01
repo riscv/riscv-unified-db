@@ -1,0 +1,5 @@
+#!/bin/bash
+ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+EXEC_DIR=${PWD}
+cd "$ROOT" || exit 1
+exec "${ROOT}/bin/mise" exec --cd "$EXEC_DIR" -- uv "$@"

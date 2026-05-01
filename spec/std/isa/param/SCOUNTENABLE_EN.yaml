@@ -39,4 +39,4 @@ requirements:
     When mhpmcounter[i] does not exist, it cannot be enabled.
 definedBy:
   extension:
-    name: Sm
+    name: S

@@ -5,7 +5,7 @@ kind: architecture configuration
 type: fully configured
 name: qc_iu
 arch_overlay: qc_iu
-description: Configuration with the Xqci and Xqccmp custom extensions.
+description: Configuration with the Xqci, Xqccmp, and Xqccmt custom extensions.
 implemented_extensions:
   - { name: Sm, version: "= 1.13" }
   - { name: Smrnmi, version: "= 1.0" }
@@ -22,6 +22,7 @@ implemented_extensions:
   - { name: Zicsr, version: "= 2.0" }
   - { name: Zihpm, version: "= 2.0" }
   - { name: Xqccmp, version: "= 0.3" }
+  - { name: Xqccmt, version: "= 0.1.0" }
   - { name: Xqci, version: "= 0.13" }
   - { name: Xqcia, version: "= 0.7.0" }
   - { name: Xqciac, version: "= 0.3.0" }
@@ -83,39 +84,6 @@ params:
     - false # HPM30
     - false # HPM31
   MCOUNTENABLE_EN:
-    - false # CY
-    - false # empty
-    - false # IR
-    - false # HPM3
-    - false # HPM4
-    - false # HPM5
-    - false # HPM6
-    - false # HPM7
-    - false # HPM8
-    - false # HPM9
-    - false # HPM10
-    - false # HPM11
-    - false # HPM12
-    - false # HPM13
-    - false # HPM14
-    - false # HPM15
-    - false # HPM16
-    - false # HPM17
-    - false # HPM18
-    - false # HPM19
-    - false # HPM20
-    - false # HPM21
-    - false # HPM22
-    - false # HPM23
-    - false # HPM24
-    - false # HPM25
-    - false # HPM26
-    - false # HPM27
-    - false # HPM28
-    - false # HPM29
-    - false # HPM30
-    - false # HPM31
-  SCOUNTENABLE_EN:
     - false # CY
     - false # empty
     - false # IR
@@ -210,6 +178,7 @@ params:
   PMA_GRANULARITY: 12
   M_MODE_ENDIANNESS: little
   MISA_CSR_IMPLEMENTED: true
+  MCOUNTINHIBIT_IMPLEMENTED: true
   MTVEC_ACCESS: rw
   MTVEC_ILLEGAL_WRITE_BEHAVIOR: retain
   MTVEC_BASE_ALIGNMENT_DIRECT: 4

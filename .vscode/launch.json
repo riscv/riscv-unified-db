@@ -6,13 +6,13 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/gen/cpp_hart_gen/rv64_Debug/build/iss",
-      "args": ["-m", "rv64", "-c", "${workspaceFolder}/cfgs/rv64-riscv-tests.yaml", "--mm", "${workspaceFolder}/cfgs/memmap.json", "-g", "--halt", "${workspaceFolder}/ext/riscv-tests/isa/rv64ui-p-ld_st"],
-      "stopAtEntry": false,
+      "args": ["-m", "rv64", "-c", "${workspaceFolder}/cfgs/rv64-riscv-tests.yaml", "--mm", "${workspaceFolder}/cfgs/memmap.json", "-g", "${workspaceFolder}/ext/riscv-tests/isa/rv64ui-p-add"],
+      "stopAtEntry": true,
       "cwd": "${workspaceFolder}",
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",
-      "miDebuggerPath": "${workspaceFolder}/bin/gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
       "logging": { "engineLogging": true },
       "setupCommands": [
           {
@@ -31,14 +31,14 @@
       "name": "RISC-V Application debug Launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/ext/riscv-tests/isa/rv64ui-p-ld_st",
+      "program": "${workspaceFolder}/ext/riscv-tests/isa/rv64ui-p-add",
       "miDebuggerServerAddress": "localhost:2159",
       "stopAtEntry": true,
       "cwd": "${workspaceFolder}",
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",
-      "miDebuggerPath": "/bin/gdb-multiarch",
+      "miDebuggerPath": "/usr/bin/gdb-multiarch",
       "logging": { "engineLogging": true },
       "setupCommands": [
           {
@@ -48,7 +48,7 @@
           },
           {
               "description": "Set debug remote logging",
-              "text": "-gdb-set debug remote 1",
+              "text": "-gdb-set debug remote 0",
               "ignoreFailures": false
           }
       ]
@@ -96,69 +96,6 @@
       "request": "launch",
       "command": "bundle exec rake",
       "script": "test:regress",
-      "args": [],
-      "askParameters": false
-    },
-    {
-      "type": "rdbg",
-      "name": "MC100-32-CRD",
-      "request": "launch",
-      "command": "bundle exec rake",
-      "script": "gen:proc_crd_pdf[MC100-32]",
-      "args": [],
-      "askParameters": false
-    },
-    {
-      "type": "rdbg",
-      "name": "MC100-32-CTP",
-      "request": "launch",
-      "command": "bundle exec rake",
-      "script": "gen:proc_ctp_pdf[MC100-32]",
-      "args": [],
-      "askParameters": false
-    },
-    {
-      "type": "rdbg",
-      "name": "MC200-32-CRD",
-      "request": "launch",
-      "command": "bundle exec rake",
-      "script": "gen:proc_crd_pdf[MC200-32]",
-      "args": [],
-      "askParameters": false
-    },
-    {
-      "type": "rdbg",
-      "name": "AC100-CRD",
-      "request": "launch",
-      "command": "bundle exec rake",
-      "script": "gen:proc_crd_pdf[AC100]",
-      "args": [],
-      "askParameters": false
-    },
-    {
-      "type": "rdbg",
-      "name": "AC200-CRD",
-      "request": "launch",
-      "command": "bundle exec rake",
-      "script": "gen:proc_crd_pdf[AC200]",
-      "args": [],
-      "askParameters": false
-    },
-    {
-      "type": "rdbg",
-      "name": "MockCRD",
-      "request": "launch",
-      "command": "bundle exec rake",
-      "script": "gen:proc_crd_pdf[MockProcessor]",
-      "args": [],
-      "askParameters": false
-    },
-    {
-      "type": "rdbg",
-      "name": "MockCTP",
-      "request": "launch",
-      "command": "bundle exec rake",
-      "script": "gen:proc_ctp_pdf[MockProcessor]",
       "args": [],
       "askParameters": false
     },

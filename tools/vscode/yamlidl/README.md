@@ -15,6 +15,7 @@ This extension provides syntax highlighting for YAML files with intelligent lang
 - Automatically detects YAML keys ending with `()` or `(args)` patterns
 - Applies IDL syntax highlighting to both the arguments and the associated string values
 - Supports all YAML string value types:
+  - Unquoted single-line scalars: `key(): X[rd] = X[rs1] + X[rs2];`
   - Quoted strings: `key(): "IDL code"`
   - Single-quoted strings: `key(): 'IDL code'`
   - Block scalars (literal): `key(): |`

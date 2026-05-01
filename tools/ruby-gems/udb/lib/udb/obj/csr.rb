@@ -9,7 +9,6 @@ require "idlc/interfaces"
 require "idlc/passes/reachable_functions"
 
 require_relative "database_obj"
-require_relative "certifiable_obj"
 require_relative "has_fields"
 
 module Udb
@@ -22,7 +21,6 @@ module Udb
     BITS128_TYPE = Idl::Type.new(:bits, width: 128).freeze
     ENCODING_SIZE_VAR = Idl::Var.new("__instruction_encoding_size", BITS6_TYPE, 32).freeze
     # Add all methods in this module to this type of database object.
-    include CertifiableObject
     include HasFields
 
     include Idl::Csr
@@ -520,8 +518,8 @@ module Udb
     def sw_read_ast(symtab)
       raise ArgumentError, "Argument should be a symtab" unless symtab.is_a?(Idl::SymbolTable)
 
-      return @sw_read_ast unless @sw_read_ast.nil?
-      return nil if @data["sw_read()"].nil?
+      return @sw_read_ast if instance_variable_defined?(:@sw_read_ast)
+      return (@sw_read_ast = nil) if @data["sw_read()"].nil?
 
       # now, parse the function
       @sw_read_ast = @cfg_arch.idl_compiler.compile_func_body(
@@ -568,6 +566,7 @@ module Udb
     end
 
     # @param effective_xlen [Integer or nil] 32 or 64 for fixed xlen, nil for dynamic
+    # @return [FunctionBodyAst] Pruned (but not re-type-checked) AST for sw_read()
     def pruned_sw_read_ast(effective_xlen)
       raise ArgumentError, "effective_xlen is non-nil and is a #{effective_xlen.class} but must be an Integer" unless effective_xlen.nil? || effective_xlen.is_a?(Integer)
       @pruned_sw_read_ast ||= {}
@@ -580,6 +579,25 @@ module Udb
       ast = ast.prune(symtab)
       ast.freeze_tree(@cfg_arch.symtab)
 
+      symtab.pop
+      symtab.release
+
+      @pruned_sw_read_ast[effective_xlen] = ast
+    end
+
+    # @param effective_xlen [Integer or nil] 32 or 64 for fixed xlen, nil for dynamic
+    # @return [FunctionBodyAst] Pruned and re-type-checked AST for sw_read()
+    #   Use this when you need the AST to be fully type-checked (e.g., for the type_check pass).
+    #   For reachable_functions, use pruned_sw_read_ast directly.
+    def type_checked_pruned_sw_read_ast(effective_xlen)
+      raise ArgumentError, "effective_xlen is non-nil and is a #{effective_xlen.class} but must be an Integer" unless effective_xlen.nil? || effective_xlen.is_a?(Integer)
+      @type_checked_pruned_sw_read_ast ||= {}
+      return @type_checked_pruned_sw_read_ast[effective_xlen] if @type_checked_pruned_sw_read_ast.key?(effective_xlen)
+
+      ast = pruned_sw_read_ast(effective_xlen)
+
+      symtab = fill_symtab(type_checked_sw_read_ast(effective_xlen), effective_xlen)
+
       @cfg_arch.idl_compiler.type_check(
         ast,
         symtab,
@@ -589,7 +607,7 @@ module Udb
       symtab.pop
       symtab.release
 
-      @pruned_sw_read_ast[effective_xlen] = ast
+      @type_checked_pruned_sw_read_ast[effective_xlen] = ast
     end
 
     # @param cfg_arch [ConfiguredArchitecture] Architecture def

@@ -3,7 +3,7 @@
 module Idl
   class AstNode
     def written?(symtab, varname, in_assignment: false)
-      add_symbol(symtab) if is_a?(Declaration)
+      add_symbol(symtab) if declaration?
 
       if children.empty?
         false

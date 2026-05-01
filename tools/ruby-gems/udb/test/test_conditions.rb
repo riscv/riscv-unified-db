@@ -506,6 +506,67 @@ class TestConditions < Minitest::Test
     assert a_or_b.compatible?(a_and_b)
   end
 
+  def test_extension_noneOf
+    cond_str = <<~COND
+      extension:
+        noneOf:
+          - name: A
+          - name: B
+    COND
+
+    cond_yaml = YAML.load(cond_str)
+
+    none_of = Condition.new(cond_yaml, $mock_cfg_arch)
+
+    assert none_of.satisfiable?
+
+    # noneOf should be NOT(A OR B), which is incompatible with requiring A
+    cond_str = <<~COND
+      extension:
+        name: A
+    COND
+
+    cond_yaml = YAML.load(cond_str)
+
+    ext_a = Condition.new(cond_yaml, $mock_cfg_arch)
+
+    refute none_of.compatible?(ext_a)
+
+    # noneOf should also be incompatible with requiring B
+    cond_str = <<~COND
+      extension:
+        name: B
+    COND
+
+    cond_yaml = YAML.load(cond_str)
+
+    ext_b = Condition.new(cond_yaml, $mock_cfg_arch)
+
+    refute none_of.compatible?(ext_b)
+
+    # allOf with noneOf: S AND NOT(any Sv*) pattern from issue #1775
+    cond_str = <<~COND
+      extension:
+        allOf:
+          - name: A
+          - noneOf:
+              - name: B
+              - name: C
+    COND
+
+    cond_yaml = YAML.load(cond_str)
+
+    a_and_not_b_nor_c = Condition.new(cond_yaml, $mock_cfg_arch)
+
+    assert a_and_not_b_nor_c.satisfiable?
+
+    # Should be compatible with A alone
+    assert a_and_not_b_nor_c.compatible?(ext_a)
+
+    # Should be incompatible with B (since noneOf includes B)
+    refute a_and_not_b_nor_c.compatible?(ext_b)
+  end
+
   def test_idl_funcs
     cond_str = <<~COND
       idl(): implemented?(ExtensionName::A) && implemented?(ExtensionName::C) -> implemented?(ExtensionName::B)

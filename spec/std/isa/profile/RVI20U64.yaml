@@ -10,3 +10,10 @@ long_name: U-mode extensions for version 20 of a 64-bit processor
 $inherits: "profile/RVI20U32.yaml#"
 base: 64
 marketing_name: RVI20U64
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: UXLEN
+        includes: 64

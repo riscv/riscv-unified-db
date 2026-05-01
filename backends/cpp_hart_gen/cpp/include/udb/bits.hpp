@@ -846,11 +846,11 @@ namespace udb {
             rhs.unknown_mask().get() & lhs.get()};
 
         if constexpr (RhsBitsType<RhsN, RhsSigned>::RuntimeWidth) {
+          return _PossiblyUnknownRuntimeBits<constmax_v<N, RhsN>, Signed && RhsSigned>{
+              lhs.get() & rhs.get_ignore_unknown(), std::max(N, rhs.width()), result_unknown_mask.get()};
+        } else {
           return _PossiblyUnknownBits<constmax_v<N, RhsN>, Signed && RhsSigned>{
               lhs.get() & rhs.get_ignore_unknown(), result_unknown_mask.get()};
-        } else {
-          return _PossiblyUnknownRuntimeBits<constmax_v<N, RhsN>, Signed && RhsSigned>{
-              lhs.get() & rhs.get(), std::max(N, rhs.width()), result_unknown_mask};
         }
       } else {
         // both rhs and lhs are known
@@ -880,11 +880,11 @@ namespace udb {
             rhs.unknown_mask() & ~(lhs);
 
         if constexpr (RhsBitsType<RhsN, RhsSigned>::RuntimeWidth) {
-          return _PossiblyUnknownBits<constmax_v<N, RhsN>, Signed && RhsSigned>{
-              lhs.get() | rhs.get_ignore_unknown(), result_unknown_mask.get()};
+          return _PossiblyUnknownRuntimeBits<constmax_v<N, RhsN>, Signed && RhsSigned>(
+              lhs.get() | rhs.get_ignore_unknown(), std::max(N, rhs.width()), result_unknown_mask.get());
         } else {
-          return _PossiblyUnknownRuntimeBits<constmax_v<N, RhsN>, Signed && RhsSigned>{
-              lhs.get() | rhs.get(), std::max(N, rhs.width()), result_unknown_mask};
+          return _PossiblyUnknownBits<constmax_v<N, RhsN>, Signed && RhsSigned>(
+              lhs.get() | rhs.get_ignore_unknown(), result_unknown_mask.get());
         }
       } else {
         // both rhs and lhs are known
@@ -909,11 +909,11 @@ namespace udb {
         RhsBitsType<constmax_v<N, RhsN>, RhsSigned> rhs{_rhs};
 
         if constexpr (RhsBitsType<RhsN, RhsSigned>::RuntimeWidth) {
-          return BitwiseReturnType<RhsBitsType, RhsN, RhsSigned>{
-              lhs.get() ^ rhs.get_ignore_unknown(), rhs.unknown_mask()};
+          return BitwiseReturnType<RhsBitsType, RhsN, RhsSigned>(
+              lhs.get() ^ rhs.get_ignore_unknown(), std::max(N, rhs.width()), rhs.unknown_mask().get());
         } else {
-          return BitwiseReturnType<RhsBitsType, RhsN, RhsSigned>{
-              lhs.get() ^ rhs.get(), std::max(N, rhs.width()), rhs.unknown_mask()};
+          return BitwiseReturnType<RhsBitsType, RhsN, RhsSigned>(
+              lhs.get() ^ rhs.get_ignore_unknown(), rhs.unknown_mask().get());
         }
       } else {
         // both rhs and lhs are known
@@ -2019,7 +2019,7 @@ namespace udb {
             rhs.unknown_mask().get() & lhs.get();
 
         return _PossiblyUnknownRuntimeBits<constmax_v<MaxN, RhsN>, Signed && RhsSigned>{
-            lhs.get() & rhs.get(), std::max(m_width, _rhs.width()), result_unknown_mask};
+            lhs.get() & rhs.get_ignore_unknown(), std::max(m_width, _rhs.width()), result_unknown_mask};
       } else {
         _RuntimeBits<constmax_v<MaxN, RhsN>, Signed> lhs{*this};
         RhsBitsType<constmax_v<MaxN, RhsN>, RhsSigned> rhs{_rhs};
@@ -2042,8 +2042,8 @@ namespace udb {
         _Bits<constmax_v<MaxN, RhsN>, false> result_unknown_mask =
             rhs.unknown_mask() & ~(lhs);
 
-        return _PossiblyUnknownRuntimeBits<constmax_v<MaxN, RhsN>, Signed && RhsSigned>{
-            lhs.get() | rhs.get(), std::max(m_width, _rhs.width()), result_unknown_mask};
+        return _PossiblyUnknownRuntimeBits<constmax_v<MaxN, RhsN>, Signed && RhsSigned>(
+            lhs.get() | rhs.get_ignore_unknown(), std::max(m_width, _rhs.width()), result_unknown_mask.get());
       } else {
         _RuntimeBits<constmax_v<MaxN, RhsN>, Signed> lhs{*this};
         RhsBitsType<constmax_v<MaxN, RhsN>, RhsSigned> rhs{_rhs};
@@ -2057,12 +2057,12 @@ namespace udb {
       requires(BitsType<RhsBitsType<RhsN, RhsSigned>>)
     BitwiseReturnType<RhsBitsType, RhsN, RhsSigned> operator^(
         const RhsBitsType<RhsN, RhsSigned> &_rhs) const {
-      if constexpr (RhsBitsType<RhsN, RhsSigned>::PossiblyUknown) {
+      if constexpr (RhsBitsType<RhsN, RhsSigned>::PossiblyUnknown) {
         _RuntimeBits<constmax_v<MaxN, RhsN>, Signed> lhs{*this};
         RhsBitsType<constmax_v<MaxN, RhsN>, RhsSigned> rhs{_rhs};
 
         return _PossiblyUnknownRuntimeBits<constmax_v<MaxN, RhsN>, Signed && RhsSigned>{
-            lhs.get() ^ rhs.get(), std::max(m_width, _rhs.width()), rhs.unknown_mask()};
+            lhs.get() ^ rhs.get_ignore_unknown(), std::max(m_width, _rhs.width()), rhs.unknown_mask().get()};
       } else {
         _RuntimeBits<constmax_v<MaxN, RhsN>, Signed> lhs{*this};
         RhsBitsType<constmax_v<MaxN, RhsN>, RhsSigned> rhs{_rhs};
@@ -2705,7 +2705,7 @@ namespace udb {
       return ReturnType{
         (BigBitsType{m_val} << shamt).get(),
         addsat_unsigned(N, shamt.get()),
-        BigBitsType{m_unknown_mask} << shamt
+        (BigBitsType{m_unknown_mask} << shamt).get()
       };
     }
 
@@ -3061,8 +3061,8 @@ namespace udb {
 
    private:
     _PossiblyUnknownRuntimeBits(const StorageType &value, unsigned width,
-                                const _Bits<MaxN, false> &unknown_mask)
-        : m_val(value, unknown_mask.get()), m_width(width) {}
+                                const StorageType &unknown_mask)
+        : m_val(value, unknown_mask), m_width(width) {}
 
     template <
       template <unsigned, bool> class ValueBitsType, unsigned ValueN, bool ValueSigned,
@@ -3257,13 +3257,13 @@ namespace udb {
       if (shamt.get() >= m_width) {
         if ((m_val.unknown_mask().get() >> (m_width-1)) & 1) {
           // entire result is unknown
-          return _PossiblyUnknownRuntimeBits{0, m_width, ~_Bits<MaxN, false>{0}};
+          return _PossiblyUnknownRuntimeBits(0, m_width, (~_Bits<MaxN, false>{0}).get());
         } else {
           // entire result is known
           if ((m_val.value().get() >> (m_width - 1)) & 1) {
-            return _PossiblyUnknownRuntimeBits{(~_Bits<MaxN, false>{0}).get(), m_width, 0_b};
+            return _PossiblyUnknownRuntimeBits((~_Bits<MaxN, false>{0}).get(), m_width, 0);
           } else {
-            return _PossiblyUnknownRuntimeBits{0, m_width, 0_b};
+            return _PossiblyUnknownRuntimeBits(0, m_width, 0);
           }
         }
       } else {
@@ -3272,21 +3272,21 @@ namespace udb {
           return _PossiblyUnknownRuntimeBits(
             m_val.sra(shamt).get_ignore_unknown(),
             m_width,
-            (unknown_mask() >> shamt) | (~_Bits<MaxN, false>{0} << _Bits<32, false>(m_width))
+            (unknown_mask() >> shamt).get() | (~_Bits<MaxN, false>{0} << _Bits<32, false>(m_width)).get()
           );
         } else if ((m_val.value().get() >> (m_width - 1)) & 1) {
           // shift in 1
           return _PossiblyUnknownRuntimeBits(
-            (m_val.sra(shamt) | (~_Bits<MaxN, false>{0} << _Bits<32, false>(m_width))).get_ignore_unknown(),
+            m_val.sra(shamt).get_ignore_unknown() | (~_Bits<MaxN, false>{0} << _Bits<32, false>(m_width)).get_ignore_unknown(),
             m_width,
-            unknown_mask() >> shamt
+            (unknown_mask() >> shamt).get()
           );
         } else {
           // shift in 0
           return _PossiblyUnknownRuntimeBits(
             m_val.sra(shamt).get_ignore_unknown(),
             m_width,
-            unknown_mask() >> shamt
+            (unknown_mask()>> shamt).get()
           );
         }
       }

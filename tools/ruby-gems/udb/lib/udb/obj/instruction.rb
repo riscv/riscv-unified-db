@@ -7,7 +7,6 @@
 # require 'ruby-prof-flamegraph'
 
 require_relative "database_obj"
-require_relative "certifiable_obj"
 require_relative "../presence"
 require "udb_helpers/backend_helpers"
 require "awesome_print"
@@ -110,8 +109,6 @@ module Udb
 
 # model of a specific instruction in a specific base (RV32/RV64)
   class Instruction < TopLevelDatabaseObject
-    # Add all methods in this module to this type of database object.
-    include CertifiableObject
     include Helpers::WavedromUtil
 
     class MemoizedState < T::Struct
@@ -1104,7 +1101,7 @@ module Udb
     # @return [FunctionBodyAst] A type-checked abstract syntax tree of the operation
     # @param effective_xlen [Integer] 32 or 64, the effective xlen to type check against
     def type_checked_operation_ast(effective_xlen)
-      defer :type_checked_operation_ast do
+      defer :"type_checked_operation_ast_#{effective_xlen}" do
         return nil unless @data.key?("operation()")
 
         ast = operation_ast

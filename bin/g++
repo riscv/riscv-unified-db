@@ -1,6 +1,32 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
-source "$ROOT/setup"
+[ -f "${ROOT}/../.toolchain-local" ] && source "${ROOT}/../.toolchain-local"
 
-$GPP "$@"
+if [ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]; then
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _prompt_toolchain_selection
+  source "${ROOT}/.toolchain-local"
+fi
+
+if [ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]; then
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _setup_toolchain_run
+  exec $TOOLCHAIN_RUN g++ "$@"
+elif PATH="${PATH//"${ROOT}:"/}" command -v g++ > /dev/null 2>&1; then
+  # Strip bin/ from PATH to avoid infinite recursion (same pattern as bin/rake),
+  # then check C++ requirements before delegating to the real g++.
+  PATH="${PATH//"${ROOT}:"/}"
+  export PATH
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _check_native_cxx
+  exec g++ "$@"
+else
+  echo "ERROR: g++ not found." >&2
+  echo "  Option 1: Install a native C++ toolchain (e.g., apt install build-essential)" >&2
+  echo "  Option 2: Set UDB_TOOLCHAIN_CONTAINER=1 to use the toolchain container" >&2
+  exit 1
+fi

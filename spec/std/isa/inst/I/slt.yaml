@@ -31,9 +31,9 @@ access:
 data_independent_timing: true
 pseudoinstructions:
   - when: xs2 == 0
-    to: sltz xd,xs1
+    to: sltz xd, xs1
   - when: xs1 == 0
-    to: sgtz xd,xs2
+    to: sgtz xd, xs2
 operation(): |
   XReg src1 = X[xs1];
   XReg src2 = X[xs2];

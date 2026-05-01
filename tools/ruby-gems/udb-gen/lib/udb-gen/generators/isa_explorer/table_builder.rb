@@ -82,10 +82,11 @@ module UdbGen
             ext.conflicting_extensions.map(&:name),
             ext.ratified,
             if ext.ratified
-              if ext.min_ratified_version.ratification_date.nil? || ext.min_ratified_version.ratification_date.empty?
+              rat_date = T.must(ext.min_ratified_version).ratification_date
+              if rat_date.nil? || rat_date.empty?
                 "UDB MISSING"
               else
-                ext.min_ratified_version.ratification_date
+                rat_date
               end
             else
               ""

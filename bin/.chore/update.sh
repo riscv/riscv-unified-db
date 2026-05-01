@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
@@ -7,46 +7,24 @@
 # This file contains all update-related subcommands
 
 #
-# Update Ruby gems and optionally update container tag
-# Args: $1 - update_tag ("yes" to increment container tag, "no" otherwise)
+# Update Ruby gems
 # Returns: 0 on success, exits with 1 on error
 #
 do_update_gems() {
-  local update_tag=$1
-  source "$UDB_ROOT"/bin/setup
-
-  # first, update Gemfile.lock files
-  # and sorbet definitions
-  rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
-  rm "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile --lockfile "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  # first, update Gemfile.lock files and sorbet definitions.
+  # Delete all lockfiles first so --update resolves fresh, then re-lock root
+  # before per-gem files so they are derived from the same resolved graph.
   rm "${UDB_ROOT}"/Gemfile.lock
-  $RUN bundle exec bundle lock --gemfile "${UDB_ROOT}"/Gemfile --lockfile "${UDB_ROOT}"/Gemfile.lock --update --bundler --add-platform x86_64-linux aarch64-linux
+  rm "${UDB_ROOT}"/tools/ruby-gems/idlc/Gemfile.lock
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb/Gemfile.lock
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb-gen/Gemfile.lock
+  rm "${UDB_ROOT}"/tools/ruby-gems/udb_helpers/Gemfile.lock
+  do_lock_all_gemfiles --update --bundler
 
-  # increment container-tag
-  if [ "$update_tag" == "yes" ]; then
-    new_version=$(increment_minor_version "$(cat bin/.container-tag)")
-    echo "$new_version" > bin/.container-tag
-  fi
-
-  if [ "$CONTAINER_TYPE" == "native" ]; then
-    bundle exec bundle install
-    do_ruby_type_def idlc
-    do_ruby_type_def udb
-    do_ruby_type_def udb-gen
-  else
-    # rebuild the container
-    build_container "${UDB_ROOT}"
-
-    # need to run as a seperate process to pick up the new container
-    # since we bumped the container tag, this will also cause the container to rebuild
-    ./bin/chore gen ruby-type-def
-  fi
+  "${UDB_ROOT}"/bin/bundle exec bundle install
+  do_ruby_type_def idlc
+  do_ruby_type_def udb
+  do_ruby_type_def udb-gen
 }
 
 #

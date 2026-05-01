@@ -42,32 +42,41 @@ end
 
 def create_job(job_name, job_data, workflow_yaml)
   gh_job_yaml = {
-    "runs-on" => "ubuntu-latest",
-    "needs" => "build-container",
-    "steps" => [
-      {
-        "name" => "Clone Github Repo Action",
-        "uses" => workflow_yaml["jobs"]["build-container"]["steps"][0]["uses"]
-      },
-      {
-        "name" => "Download docker image",
-        "uses" => workflow_yaml["jobs"]["never-runs"]["steps"][0]["uses"],
-        "with" => {
-          "name" => "docker_image",
-          "path" => "${{ runner.temp }}"
-        }
-      },
-      {
-        "name" => "Load image",
-        "run" => "docker load --input ${{ runner.temp }}/docker_image.tar"
-      }
-    ]
+    "runs-on" => "ubuntu-latest"
   }
 
+  if job_data.key?("timeout_minutes")
+    gh_job_yaml["timeout-minutes"] = job_data["timeout_minutes"]
+  end
+
+  # Add 'if' condition before 'steps' to ensure correct YAML ordering
   if job_data["ci_stage"] == "merge_queue"
-    gh_job_yaml["if"] = "(github.event_name == 'merge_queue') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
+    gh_job_yaml["if"] = "(github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))"
     # Note: plain (unquoted) style is enforced by force_plain_if_values / dump_workflow
   end
+
+  # Create checkout step with optional custom parameters
+  checkout_step = {
+    "name" => "Clone Github Repo Action",
+    "uses" => workflow_yaml["jobs"]["regress-llvm"]["steps"][0]["uses"]
+  }
+  if job_data.key?("checkout_with")
+    checkout_step["with"] = job_data["checkout_with"]
+  end
+
+  # Build mise-setup step, passing toolchain: true for jobs that need the RISC-V toolchain container
+  mise_setup_step = {
+    "name" => "Set up mise environment",
+    "uses" => "./.github/actions/mise-setup"
+  }
+  if job_data.fetch("toolchain_container", false)
+    mise_setup_step["with"] = { "toolchain" => "true" }
+  end
+
+  gh_job_yaml["steps"] = [
+    checkout_step,
+    mise_setup_step
+  ]
 
   if job_data.key?("env")
     gh_job_yaml["env"] = job_data["env"]
@@ -119,7 +128,7 @@ end
 
 regress_yaml["jobs"]["regress-complete"] = {
   "runs-on" => "ubuntu-latest",
-  "needs" => tests["tests"].keys + (regress_template_yaml["jobs"].keys - ["build-container", "never-runs"]),
+  "needs" => tests["tests"].keys + (regress_template_yaml["jobs"].keys - ["never-runs"]),
   "if" => "always()",
   "steps" => [
     {

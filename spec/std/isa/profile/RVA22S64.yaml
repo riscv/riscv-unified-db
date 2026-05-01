@@ -36,13 +36,13 @@ extensions:
     version: "~> 1.0"
   Sv39:
     presence: mandatory
-    version: "~> 1.12"
+    version: "~> 1.0"
   Sv48:
     presence: optional
-    version: "~> 1.12"
+    version: "~> 1.0"
   Sv57:
     presence: optional
-    version: "~> 1.12"
+    version: "~> 1.0"
   Svnapot:
     presence: optional
     version: "~> 1.0"
@@ -78,3 +78,14 @@ extensions:
       The Sha extension name was introduced in RVA23/RVB23 and wasn't
       in the ratified RVA22 profile but has since been added retroactively
       as a documentation-only change (doesn't affect requirements or functionality).
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: S_MODE_ENDIANNESS
+        equal: little
+      - name: SXLEN
+        includes: 64
+      - name: UXLEN
+        includes: 64

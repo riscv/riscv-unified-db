@@ -186,15 +186,20 @@ module Udb
           end
         raise "custom directory '#{overlay_path}' does not exist" if !overlay_path.nil? && !overlay_path.directory?
 
-        if any_newer?(merged_spec_path(config_name) / ".stamp", deps)
-          # Use Ruby YAML resolver instead of Python
-          yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
-          yaml_resolver.merge_files(
-            std_path.to_s,
-            overlay_path&.to_s,
-            merged_spec_path(config_name).to_s
-          )
-          FileUtils.touch(merged_spec_path(config_name) / ".stamp")
+        FileUtils.mkdir_p(@gen_path / "spec")
+        merge_lock_name = merged_spec_path(config_name).basename
+        File.open(@gen_path / "spec" / ".#{merge_lock_name}.lock", File::CREAT | File::RDWR) do |f|
+          f.flock(File::LOCK_EX)
+          if any_newer?(merged_spec_path(config_name) / ".stamp", deps)
+            # Use Ruby YAML resolver instead of Python
+            yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
+            yaml_resolver.merge_files(
+              std_path.to_s,
+              overlay_path&.to_s,
+              merged_spec_path(config_name).to_s
+            )
+            FileUtils.touch(merged_spec_path(config_name) / ".stamp")
+          end
         end
       end
     end
@@ -205,19 +210,24 @@ module Udb
       @mutex.synchronize do
         config_name = config_yaml["name"]
 
-        deps = Dir[merged_spec_path(config_name) / "**" / "*.yaml"].map { |p| Pathname.new(p) }
-        if any_newer?(resolved_spec_path(config_name) / ".stamp", deps)
-          # Use Ruby YAML resolver instead of Python
-          yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
-          yaml_resolver.resolve_files(
-            merged_spec_path(config_name).to_s,
-            resolved_spec_path(config_name).to_s,
-            no_checks: false
-          )
-          FileUtils.touch(resolved_spec_path(config_name) / ".stamp")
-        end
+        FileUtils.mkdir_p(@gen_path / "resolved_spec")
+        resolve_lock_name = resolved_spec_path(config_name).basename
+        File.open(@gen_path / "resolved_spec" / ".#{resolve_lock_name}.lock", File::CREAT | File::RDWR) do |f|
+          f.flock(File::LOCK_EX)
+          deps = Dir[merged_spec_path(config_name) / "**" / "*.yaml"].map { |p| Pathname.new(p) }
+          if any_newer?(resolved_spec_path(config_name) / ".stamp", deps)
+            # Use Ruby YAML resolver instead of Python
+            yaml_resolver = Udb::Yaml::Resolver.new(quiet: @quiet, compile_idl: @compile_idl)
+            yaml_resolver.resolve_files(
+              merged_spec_path(config_name).to_s,
+              resolved_spec_path(config_name).to_s,
+              no_checks: false
+            )
+            FileUtils.touch(resolved_spec_path(config_name) / ".stamp")
+          end
 
-        FileUtils.cp_r(std_path / "isa", resolved_spec_path(config_name))
+          FileUtils.cp_r(std_path / "isa", resolved_spec_path(config_name))
+        end
       end
     end
 
@@ -310,6 +320,28 @@ module Udb
           Udb::AbstractConfig.create(gen_path / "cfgs" / "#{config_info.name}.yaml", config_info)
         )
       end
+    end
+
+    # Create a ConfiguredArchitecture directly from an in-memory config data hash,
+    # bypassing resolve_config and resolve_arch entirely. Only valid when the config
+    # has no arch_overlay (i.e., it uses the standard spec at gen/resolved_spec/_).
+    # Callers must ensure this precondition holds before calling this method.
+    sig { params(config_data: T::Hash[String, T.untyped]).returns(Udb::ConfiguredArchitecture) }
+    def cfg_arch_for_data(config_data)
+      info = ConfigInfo.new(
+        name: config_data["name"],
+        path: Pathname.new("portfolio/#{config_data["name"]}"),
+        overlay_path: nil,
+        unresolved_yaml: config_data,
+        spec_path: std_path,
+        merged_spec_path: @gen_path / "spec" / "_",
+        resolved_spec_path: @gen_path / "resolved_spec" / "_",
+        resolver: self
+      )
+      Udb::ConfiguredArchitecture.new(
+        config_data["name"],
+        Udb::AbstractConfig.create_from_data(config_data, info)
+      )
     end
 
     SCHEMAS_BASE_URL = "https://riscv.github.io/riscv-unified-db/schemas"

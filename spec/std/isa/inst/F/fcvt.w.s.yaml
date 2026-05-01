@@ -60,4 +60,4 @@ data_independent_timing: true
 operation(): |
   check_f_ok($encoding);
   RoundingMode rounding_mode = rm_to_mode(rm, $encoding);
-  X[xd] = f32_to_i32(f[fs1], rounding_mode);
+  X[xd] = $signed(f32_to_i32(f[fs1], rounding_mode));

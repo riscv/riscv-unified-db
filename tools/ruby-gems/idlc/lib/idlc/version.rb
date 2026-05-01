@@ -5,6 +5,6 @@
 
 module Idl
   class Compiler
-    def self.version = "0.1.1"
+    def self.version = "0.1.4"
   end
 end

@@ -36,15 +36,22 @@ operation(): |
 
   Bits<32> sp_value_a = f[fs1][31:0];
   Bits<32> sp_value_b = f[fs2][31:0];
+  Bits<1> sign_a = sp_value_a[31];
+  Bits<1> sign_b = sp_value_b[31];
 
   if (is_sp_nan?(sp_value_a) || is_sp_nan?(sp_value_b)) {
-    if (is_sp_signaling_nan?(sp_value_a) || is_sp_signaling_nan?(sp_value_b)) {
-      set_fp_flag(FpFlag::NV);
-    }
+    set_fp_flag(FpFlag::NV);
     X[xd] = 0;
   } else {
-    X[xd] = (
-      (sp_value_a == sp_value_b)
-      || ((sp_value_a | sp_value_b)[30:0] == 0) # pos 0 is equal to neg zero
-    ) ? 1 : 0;
+    if (sign_a != sign_b) {
+      X[xd] = (
+        (sign_a == 1) ||  # b is pos and a neg
+        ((sp_value_a[30:0] | sp_value_b[30:0]) == 0) # both are zero (one pos, one neg)
+      ) ? 1 : 0;
+    } else {
+      X[xd] = (
+        (sp_value_a == sp_value_b) || # a and b are equal
+        (sign_a ^ ((sp_value_a < sp_value_b) ? 1 : 0)) == 1 # a < b
+      ) ? 1 : 0;
+    }
   }

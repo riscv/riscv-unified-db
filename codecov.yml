@@ -7,6 +7,9 @@ coverage:
       default:
         target: auto
         threshold: 1%
+    patch:
+      default:
+        target: 50%
 
 flag_management:
   default_rules: # the rules that will be followed for any flag added, generally

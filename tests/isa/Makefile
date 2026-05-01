@@ -26,6 +26,9 @@ RISCV_GCC ?= $(RISCV_PREFIX)gcc
 RISCV_GCC_OPTS ?= -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I/usr/include/newlib
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.text.init --section=.data
 
+ifeq ($(BUILD_TYPE),Debug)
+	RISCV_GCC_OPTS += -g
+endif
 
 vpath %.S $(src_dir)
 
@@ -76,7 +79,7 @@ all: $(tests_dump) riscv_tests
 #------------------------------------------------------------
 # riscv-tests targets
 riscv_tests:
-	$(MAKE) -C $(riscv_tests_dir)/isa XLEN=$(XLEN) RISCV_GCC_OPTS='$(RISCV_GCC_OPTS)'
+	$(MAKE) -C $(riscv_tests_dir)/isa XLEN=$(XLEN) RISCV_PREFIX=$(RISCV_PREFIX) RISCV_GCC=$(RISCV_GCC) RISCV_GCC_OPTS='$(RISCV_GCC_OPTS)'
 
 #------------------------------------------------------------
 # Clean up

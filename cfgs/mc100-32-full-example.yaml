@@ -46,6 +46,7 @@ params:
   PMA_GRANULARITY: 12
   PHYS_ADDR_WIDTH: 32
   MISA_CSR_IMPLEMENTED: true
+  MCOUNTINHIBIT_IMPLEMENTED: true
   MTVEC_ACCESS: rw
   MTVEC_ILLEGAL_WRITE_BEHAVIOR: retain
   MTVEC_MODES: [0, 1]
@@ -55,7 +56,6 @@ params:
   MUTABLE_MISA_M: false
   TIME_CSR_IMPLEMENTED: false
   NUM_PMP_ENTRIES: 0
-  PMP_GRANULARITY: 2
   COUNTINHIBIT_EN:
     [
       false,
@@ -127,41 +127,6 @@ params:
       false,
     ]
   MCOUNTENABLE_EN:
-    [
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-    ]
-  SCOUNTENABLE_EN:
     [
       false,
       false,

@@ -333,6 +333,10 @@ module Udb
     sig { abstract.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(String) }
     def to_s_with_value(cfg_arch, expand:); end
 
+    # returns the failing conjuncts (clauses that are false) for the given cfg_arch
+    sig { abstract.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[String]) }
+    def failing_conjuncts(cfg_arch, expand:); end
+
     # string representation of condition in Asciidoc
     sig { abstract.returns(String) }
     def to_asciidoc; end
@@ -428,10 +432,6 @@ module Udb
       end
     end
 
-    class MemoizedState < T::Struct
-      prop :satisfied_by_cfg_arch, T::Hash[ConfiguredArchitecture, SatisfiedResult]
-    end
-
     sig {
       params(
         yaml: T.any(T::Hash[String, T.untyped], T::Boolean),
@@ -446,7 +446,7 @@ module Udb
       @cfg_arch = cfg_arch
       @input_file = input_file
       @input_line = input_line
-      @memo = MemoizedState.new(satisfied_by_cfg_arch: {})
+      @satisfied_by_cfg_arch_memo = T.let({}, T::Hash[ConfiguredArchitecture, SatisfiedResult])
     end
 
     sig { override.returns(T::Boolean) }
@@ -1099,7 +1099,7 @@ module Udb
 
     sig { override.params(cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
     def satisfied_by_cfg_arch?(cfg_arch)
-      @memo.satisfied_by_cfg_arch[cfg_arch] ||=
+      @satisfied_by_cfg_arch_memo[cfg_arch] ||=
         if cfg_arch.fully_configured?
           implemented_ext_cb = make_cb_proc do |term|
             if term.is_a?(ExtensionTerm)
@@ -1111,18 +1111,7 @@ module Udb
             elsif term.is_a?(ParameterTerm)
               if cfg_arch.param_values.key?(term.name)
                 result = term.eval(cfg_arch)
-                if result == SatisfiedResult::Maybe
-                  # this might just mean we don't know the value.
-                  # however, given the parameter schema and constraints, we could know that term is
-                  # always false
-                  if (Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
-                    result = SatisfiedResult::No
-
-                  # or always true
-                  elsif (-Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
-                    result = SatisfiedResult::Yes
-                  end
-                end
+                result = resolve_param_term_from_maybe(term, cfg_arch) if result == SatisfiedResult::Maybe
                 result
               else
                 SatisfiedResult::No
@@ -1151,27 +1140,17 @@ module Udb
         elsif cfg_arch.partially_configured?
           cb = make_cb_proc do |term|
             if term.is_a?(ExtensionTerm)
-              if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| cfg_ext_req.satisfied_by?(term.to_ext_req(cfg_arch)) }
+              ext_req = term.to_ext_req(cfg_arch)
+              if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| ext_req.satisfied_by?(cfg_ext_req) }
                 SatisfiedResult::Yes
-              elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
+              elsif (cfg_arch.possible_extension_versions_by_name[term.name] || []).any? { |cfg_ext_ver| ext_req.satisfied_by?(cfg_ext_ver) }
                 SatisfiedResult::Maybe
               else
                 SatisfiedResult::No
               end
             elsif term.is_a?(ParameterTerm)
               result = term.eval(cfg_arch)
-              if result == SatisfiedResult::Maybe
-                # this might just mean we don't know the value.
-                # however, given the parameter schema and constraints, we could know that term is
-                # always false
-                if (Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
-                  result = SatisfiedResult::No
-
-                # or always true
-                elsif (-Condition.new({ "param" => term.to_h }, cfg_arch) & cfg_arch.to_condition).unsatisfiable?
-                  result = SatisfiedResult::Yes
-                end
-              end
+              result = resolve_param_term_from_maybe(term, cfg_arch) if result == SatisfiedResult::Maybe
               result
             elsif term.is_a?(FreeTerm)
               raise "unreachable"
@@ -1228,7 +1207,8 @@ module Udb
         if node.type == LogicNodeType::Term
           term = node.children.fetch(0)
           if term.is_a?(ExtensionTerm)
-            if ext_reqs.any? { |ext_req| term.to_ext_req(@cfg_arch).satisfied_by?(ext_req) }
+            term_ext_req = term.to_ext_req(@cfg_arch)
+            if ext_reqs.any? { |ext_req| term_ext_req.satisfied_by?(ext_req) }
               next LogicNode::True
             end
           end
@@ -1273,9 +1253,10 @@ module Udb
               SatisfiedResult::Yes
             end
           elsif cfg_arch.partially_configured?
-            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| cfg_ext_req.satisfied_by?(term.to_ext_req(cfg_arch)) }
+            ext_req = term.to_ext_req(cfg_arch)
+            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| ext_req.satisfied_by?(cfg_ext_req) }
               SatisfiedResult::Yes
-            elsif cfg_arch.possible_extension_versions.any? { |cfg_ext_ver| term.to_ext_req(cfg_arch).satisfied_by?(cfg_ext_ver) }
+            elsif (cfg_arch.possible_extension_versions_by_name[term.name] || []).any? { |cfg_ext_ver| ext_req.satisfied_by?(cfg_ext_ver) }
               SatisfiedResult::Maybe
             else
               SatisfiedResult::No
@@ -1310,6 +1291,61 @@ module Udb
         end
       end
       to_logic_tree(expand:).to_s_with_value(cb, format: LogicNode::LogicSymbolFormat::C)
+    end
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[String]) }
+    def failing_conjuncts(cfg_arch, expand: false)
+      cb = LogicNode.make_eval_cb do |term|
+        case term
+        when ExtensionTerm
+          if cfg_arch.fully_configured?
+            ext_ver = cfg_arch.implemented_extension_version(term.name)
+            if ext_ver.nil? || !term.to_ext_req(cfg_arch).satisfied_by?(ext_ver)
+              SatisfiedResult::No
+            else
+              SatisfiedResult::Yes
+            end
+          elsif cfg_arch.partially_configured?
+            ext_req = term.to_ext_req(cfg_arch)
+            if cfg_arch.mandatory_extension_reqs.any? { |cfg_ext_req| ext_req.satisfied_by?(cfg_ext_req) }
+              SatisfiedResult::Yes
+            elsif (cfg_arch.possible_extension_versions_by_name[term.name] || []).any? { |cfg_ext_ver| ext_req.satisfied_by?(cfg_ext_ver) }
+              SatisfiedResult::Maybe
+            else
+              SatisfiedResult::No
+            end
+          else
+            SatisfiedResult::Maybe
+          end
+        when ParameterTerm
+          if cfg_arch.fully_configured?
+            if cfg_arch.param_values.key?(term.name)
+              term.eval(cfg_arch)
+            else
+              SatisfiedResult::No
+            end
+          elsif cfg_arch.partially_configured?
+            term.eval(cfg_arch)
+          else
+            SatisfiedResult::Maybe
+          end
+        when XlenTerm
+          if cfg_arch.possible_xlens.include?(term.xlen)
+            if cfg_arch.possible_xlens.size == 1
+              SatisfiedResult::Yes
+            else
+              SatisfiedResult::Maybe
+            end
+          else
+            SatisfiedResult::No
+          end
+        else
+          raise "unexpected term type #{term.class.name}"
+        end
+      end
+      to_logic_tree(expand:).failing_conjuncts(cb).map do |node|
+        node.to_s_with_value(cb, format: LogicNode::LogicSymbolFormat::C)
+      end
     end
 
     sig { override.returns(String) }
@@ -1587,6 +1623,27 @@ module Udb
     def -@
       Condition.not(self, @cfg_arch)
     end
+
+    private
+
+    # When term.eval returns Maybe, check whether the parameter schema and constraints
+    # imply the term is always false or always true, and cache the result per (term, cfg_arch).
+    sig { params(term: ParameterTerm, cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
+    def resolve_param_term_from_maybe(term, cfg_arch)
+      memo = cfg_arch.param_term_satisfied_memo
+      unless memo.key?(term)
+        param_cond = Condition.new({ "param" => term.to_h }, cfg_arch)
+        memo[term] =
+          if param_cond.unsatisfiable_by_cfg_arch?(cfg_arch)
+            SatisfiedResult::No
+          elsif (-param_cond).unsatisfiable_by_cfg_arch?(cfg_arch)
+            SatisfiedResult::Yes
+          else
+            SatisfiedResult::Maybe
+          end
+      end
+      memo[term]
+    end
   end
 
   class LogicCondition < Condition
@@ -1596,6 +1653,7 @@ module Udb
       @logic_node = logic_node
       @cfg_arch = cfg_arch
       @yaml = logic_node.to_h
+      @satisfied_by_cfg_arch_memo = T.let({}, T::Hash[ConfiguredArchitecture, SatisfiedResult])
     end
 
     sig { override.returns(T::Boolean) }
@@ -1689,6 +1747,9 @@ module Udb
 
     sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(String) }
     def to_s_with_value(cfg_arch, expand: false) = "true"
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[String]) }
+    def failing_conjuncts(cfg_arch, expand: false) = []
 
     sig { override.returns(String) }
     def to_asciidoc = "true"
@@ -1802,6 +1863,9 @@ module Udb
 
     sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(String) }
     def to_s_with_value(cfg_arch, expand: false) = "false"
+
+    sig { override.params(cfg_arch: ConfiguredArchitecture, expand: T::Boolean).returns(T::Array[String]) }
+    def failing_conjuncts(cfg_arch, expand: false) = ["false"]
 
     sig { override.returns(String) }
     def to_asciidoc = "false"
@@ -1943,7 +2007,10 @@ module Udb
         elsif yaml.key?("anyOf")
           LogicNode.new(LogicNodeType::Or, yaml["anyOf"].map { |node| to_logic_tree_helper(node) })
         elsif yaml.key?("noneOf")
-          LogicNode.new(LogicNodeType::Or, yaml["noneOf"].map { |node| to_logic_tree_helper(node) })
+          LogicNode.new(
+            LogicNodeType::Not,
+            [LogicNode.new(LogicNodeType::Or, yaml["noneOf"].map { |node| to_logic_tree_helper(node) })]
+          )
         elsif yaml.key?("oneOf")
           LogicNode.new(LogicNodeType::Xor, yaml["oneOf"].map { |node| to_logic_tree_helper(node) })
         elsif yaml.key?("not")
@@ -1973,6 +2040,7 @@ module Udb
     sig { params(xlen: Integer).void }
     def initialize(xlen)
       @xlen = xlen
+      @satisfied_by_cfg_arch_memo = T.let({}, T::Hash[ConfiguredArchitecture, SatisfiedResult])
     end
 
     sig { override.returns(LogicNode) }

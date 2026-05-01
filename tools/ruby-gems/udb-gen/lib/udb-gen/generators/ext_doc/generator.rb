@@ -142,7 +142,7 @@ module UdbGen
           when nil
             ">=0"
           when "latest"
-            "=#{ext.versions.max}"
+            "=#{T.must(ext).versions.max}"
           else
             "=#{req}"
           end
@@ -181,7 +181,7 @@ module UdbGen
         "-a imagesdir=#{params[:images]}",
         "-r asciidoctor-diagram",
         "-r idl_highlighter",
-        "-a wavedrom=/opt/node/node_modules/.bin/wavedrom-cli",
+        "-a wavedrom=#{Udb.repo_root}/node_modules/.bin/wavedrom-cli",
         "-o #{pdf_filename}",
         adoc_filename
       ].join(" ")

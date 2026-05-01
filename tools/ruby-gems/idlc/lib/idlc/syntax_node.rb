@@ -18,18 +18,12 @@ module Treetop
       # @param starting_line [Integer] Starting line in the file
       # @param starting_offset [Integer] Starting byte offset in the file
       # @param line_file_offsets [Array<Integer>, nil] Per-IDL-line file byte offsets
-      sig { params(filename: T.nilable(String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+      sig { params(filename: T.nilable(String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void.checked(:never) }
       def set_input_file(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
         @input_file = filename
         @starting_line = starting_line
         @starting_offset = starting_offset
         @line_file_offsets = line_file_offsets
-        elements&.each do |child|
-          # Adjust the starting offset for each child based on its position in the input
-          child_offset = starting_offset + child.interval.first
-          child.set_input_file(filename, starting_line, child_offset, line_file_offsets)
-        end
-        raise "?" if @starting_line.nil?
       end
 
       sig { returns(T::Boolean) }
@@ -43,7 +37,7 @@ module Treetop
       # @param [Integer] starting_line The starting line number in the input file.
       # @param [Integer] starting_offset The starting byte offset in the input file.
       # @param [Array<Integer>, nil] line_file_offsets Per-IDL-line file byte offsets
-      sig { params(filename: T.nilable(String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void }
+      sig { params(filename: T.nilable(String), starting_line: Integer, starting_offset: Integer, line_file_offsets: T.nilable(T::Array[Integer])).void.checked(:never) }
       def set_input_file_unless_already_set(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
         if @input_file.nil?
           set_input_file(filename, starting_line, starting_offset, line_file_offsets)

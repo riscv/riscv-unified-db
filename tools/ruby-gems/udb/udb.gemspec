@@ -27,7 +27,6 @@ Gem::Specification.new do |s|
     "bug_tracker_uri" => "https://github.com/riscv/riscv-unified-db/issues"
   }
   s.required_ruby_version = "~> 3.2"
-
   s.require_paths = ["lib"]
   s.bindir = "bin"
   s.executables << "udb"
@@ -36,7 +35,7 @@ Gem::Specification.new do |s|
   s.add_dependency "asciidoctor"
   s.add_dependency "awesome_print"
   s.add_dependency "concurrent-ruby"
-  s.add_dependency "idlc"
+  s.add_dependency "idlc", "= 0.1.4"
   s.add_dependency "json_schemer"
   s.add_dependency "numbers_and_words"
   s.add_dependency "ostruct"
@@ -49,7 +48,7 @@ Gem::Specification.new do |s|
   s.add_dependency "tty-command"
   s.add_dependency "tty-logger"
   s.add_dependency "tty-progressbar"
-  s.add_dependency "udb_helpers"
+  s.add_dependency "udb_helpers", "= 0.1.3"
   s.add_dependency "z3"
 
   s.add_development_dependency "rake"

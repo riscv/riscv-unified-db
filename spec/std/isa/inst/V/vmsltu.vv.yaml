@@ -29,5 +29,8 @@ access:
   u: always
   vs: always
   vu: always
+pseudoinstructions:
+  - when: "true"
+    to: vmsgtu.vv vd, vs1, vs2, vm
 data_independent_timing: false
 operation(): |

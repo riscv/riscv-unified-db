@@ -35,7 +35,7 @@ operation(): |
   check_f_ok($encoding);
 
   Bits<32> sp_value_a = f[fs1][31:0];
-  Bits<32> sp_value_b = f[fs1][31:0];
+  Bits<32> sp_value_b = f[fs2][31:0];
 
   if (is_sp_nan?(sp_value_a) || is_sp_nan?(sp_value_b)) {
     if (is_sp_signaling_nan?(sp_value_a) || is_sp_signaling_nan?(sp_value_b)) {

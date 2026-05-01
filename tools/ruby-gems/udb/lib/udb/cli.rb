@@ -82,17 +82,21 @@ module Udb
       method_option :custom, type: :string, desc: "Path to custom specification directory, if needed", default: Udb.default_custom_isa_path.to_s
       method_option :config_dir, type: :string, desc: "Path to directory with config files", default: Udb.default_cfgs_path.to_s
       method_option :gen, type: :string, desc: "Path to folder used for generation", default: Udb.default_gen_path.to_s
+      method_option :strict_partial, type: :boolean, desc: "Whether or not to check if a partial config is fully specified -- that is, all requirements of a mandatory extension are also listed in mandatory extensions and/or parameters", default: false
       method_option :z3parallel, type: :boolean, desc: "Use parallel.enable for Z3", default: true
       def cfg(name_or_path)
         raise ArgumentError, "Spec directory does not exist: #{options[:std]}" unless File.directory?(options[:std])
 
         Udb.global_options.parallel_z3 = options[:z3parallel]
 
+
         cfg_file =
           if File.file?(name_or_path)
             Pathname.new(name_or_path)
           elsif File.file?("#{options[:config_dir]}/#{name_or_path}.yaml")
             Pathname.new("#{options[:config_dir]}/#{name_or_path}.yaml")
+          elsif File.file?("#{options[:config_dir]}/profile/#{name_or_path}.yaml")
+            Pathname.new("#{options[:config_dir]}/profile/#{name_or_path}.yaml")
           else
             raise ArgumentError, "Cannot find config: #{name_or_path}"
           end
@@ -108,7 +112,12 @@ module Udb
           say "Config is #{pastel.red.bold("invalid")}"
           exit 1
         end
-        result = cfg_arch.valid?
+        result =
+          if options[:strict_partial]
+            cfg_arch.partial_config_strictly_specified?
+          else
+            cfg_arch.valid?
+          end
 
         if result.valid
           say "Config #{pastel.bold(cfg_arch.name)} is #{pastel.green.bold("valid")}"

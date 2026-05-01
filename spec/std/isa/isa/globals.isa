@@ -936,6 +936,8 @@ function xlen {
         } else {
           unreachable();
         }
+      } else {
+        unreachable();
       }
     }
   }
@@ -2560,9 +2562,15 @@ function read_memory_aligned {
   arguments
     U32 LEN,
     XReg virtual_address,
-    Bits<INSTR_ENC_SIZE> encoding   # the encoding of an instruction causing this access
+    Bits<INSTR_ENC_SIZE> encoding,  # the encoding of an instruction causing this access
+    Bits<1> aq,                     # acquire semantics? 0=no, 1=yes
+    Bits<1> rl                      # release semantics? 0=no, 1=yes
   description {
     Read from virtual memory using a known aligned address.
+
+    If +rl+ is 1, then the load also acts as a memory model release (applied after all
+    checks pass but before the physical read).
+    If +aq+ is 1, then the load also acts as a memory model acquire (applied after the read).
   }
   body {
     TranslationResult result;
@@ -2576,7 +2584,17 @@ function read_memory_aligned {
     # may raise an exception
     access_check(result.paddr, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
 
-    return read_physical_memory(LEN, result.paddr);
+    if (rl == 1'b1) {
+      memory_model_release();
+    }
+
+    XReg value = read_physical_memory(LEN, result.paddr);
+
+    if (aq == 1'b1) {
+      memory_model_acquire();
+    }
+
+    return value;
   }
 }
 
@@ -2595,7 +2613,7 @@ function read_memory {
     XReg physical_address;
 
     if (aligned) {
-      return read_memory_aligned(LEN, virtual_address, encoding);
+      return read_memory_aligned(LEN, virtual_address, encoding, 1'b0, 1'b0);
     }
 
     # access isn't naturally aligned, but it still might be atomic if this hart supports
@@ -2634,7 +2652,7 @@ function read_memory {
       if (MISALIGNED_SPLIT_STRATEGY == "sequential_bytes") {
         XReg result = 0;
         for (U32 I = 0; I < (LEN/8); I++) {
-          result = result | (read_memory_aligned(8, virtual_address + I, encoding) `<< (8*I));
+          result = result | (read_memory_aligned(8, virtual_address + I, encoding, 1'b0, 1'b0) `<< (8*I));
         }
         return result;
       } else if (MISALIGNED_SPLIT_STRATEGY == "custom") {
@@ -2803,7 +2821,7 @@ function load_reserved {
       reservation_virtual_address = virtual_address;
     }
 
-    return read_memory_aligned(N, physical_address, encoding);
+    return read_memory_aligned(N, physical_address, encoding, 1'b0, 1'b0);
   }
 }
 
@@ -2949,9 +2967,15 @@ function write_memory_aligned {
     U32 LEN,
     XReg virtual_address,
     XReg value,
-    Bits<INSTR_ENC_SIZE> encoding # encoding of the instruction causing this access
+    Bits<INSTR_ENC_SIZE> encoding, # encoding of the instruction causing this access
+    Bits<1> aq,                    # acquire semantics? 0=no, 1=yes
+    Bits<1> rl                     # release semantics? 0=no, 1=yes
   description {
     Write to virtual memory using a known aligned address.
+
+    If +rl+ is 1, then the store also acts as a memory model release (applied after all
+    checks pass but before the physical write).
+    If +aq+ is 1, then the store also acts as a memory model acquire.
   }
   body {
     XReg physical_address;
@@ -2963,7 +2987,15 @@ function write_memory_aligned {
     # may raise an exception
     access_check(physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
 
+    if (rl == 1'b1) {
+      memory_model_release();
+    }
+
     write_physical_memory(LEN, physical_address, value);
+
+    if (aq == 1'b1) {
+      memory_model_acquire();
+    }
   }
 }
 
@@ -2981,7 +3013,7 @@ function write_memory {
     XReg physical_address;
 
     if (aligned) {
-      write_memory_aligned(LEN, virtual_address, value, encoding);
+      write_memory_aligned(LEN, virtual_address, value, encoding, 1'b0, 1'b0);
       return;
     }
 
@@ -3020,7 +3052,7 @@ function write_memory {
       # misaligned, must break into multiple reads
       if (MISALIGNED_SPLIT_STRATEGY == "sequential_bytes") {
         for (U32 I = 0; I < (LEN/8); I++) {
-          write_memory_aligned(8, virtual_address + I, (value >> (8*I))[7:0], encoding);
+          write_memory_aligned(8, virtual_address + I, (value >> (8*I))[7:0], encoding, 1'b0, 1'b0);
         }
       } else if (MISALIGNED_SPLIT_STRATEGY == "custom") {
         unpredictable("An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");

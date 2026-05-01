@@ -147,6 +147,28 @@ function count_leading_zeros {
   }
 }
 
+function count_leading_zeros_64 {
+  returns
+    XReg  # Number of leading zeros in +value+
+  arguments
+    U32 N,               # bit width
+    Bits<64> value           # value to count zero in
+  description {
+    Returns the number of leading 0 bits before the most-significant 1 bit of +value+,
+    or N if value is zero.
+  }
+  body {
+    for (U32 i=0; i < N; i++) {
+      if (value[N - 1 - i] == 1) {
+        return i;
+      }
+    }
+
+    # fall-through; value must be zero
+    return N;
+  }
+}
+
 function sext {
   returns XReg
   arguments XReg value, XReg first_extended_bit

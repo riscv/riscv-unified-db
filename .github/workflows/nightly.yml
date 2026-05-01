@@ -26,10 +26,10 @@ jobs:
     needs: check_date
     if: ${{ needs.check_date.outputs.should_run != 'false' }}
     runs-on: ubuntu-latest
-    env:
-      DOCKER: 1
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
       - name: Run regression
         run: ./do test:nightly

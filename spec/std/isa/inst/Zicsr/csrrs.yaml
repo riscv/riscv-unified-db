@@ -54,9 +54,9 @@ pseudoinstructions:
   - when: xs1 == 0 && csr == 0xC82
     to: rdinstreth xd
   - when: xs1 == 0
-    to: csrr xd,csr
+    to: csrr xd, csr
   - when: xd == 0
-    to: csrs csr,xs1
+    to: csrs csr, xs1
 operation(): |
   Boolean will_write = xs1 != 0;
 
