@@ -441,7 +441,9 @@ module Idl
       case target
       when IdAst
         # Base case: simple variable
-        symtab.add(target.name, Var.new(target.name, target.type(symtab), new_value))
+        existing_var = symtab.get(target.name)
+        raise InternalError, "write_back_nested: '#{target.name}' not found in symbol table" if existing_var.nil?
+        existing_var.value = new_value
       when AryElementAccessAst
         # Recursive case: v[idx] = val
         # Read parent, modify element, write back parent
@@ -3123,9 +3125,6 @@ module Idl
     # @!macro execute
     def execute(symtab)
       return if variable.type(symtab).global?
-
-      var = symtab.get(variable.name)
-      internal_error "Variable #{variable.name} not found" if var.nil?
 
       value_result = value_try do
         msb_val = msb.value(symtab)
