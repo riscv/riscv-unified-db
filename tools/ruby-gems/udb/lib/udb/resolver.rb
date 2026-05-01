@@ -15,6 +15,9 @@ require_relative "yaml/yaml_resolver"
 module Udb
   # resolves the specification in the context of a config, and writes to a generation folder
   #
+  # Raised by Resolver#cfg_info when a config name or path cannot be found.
+  class ConfigNotFoundError < StandardError; end
+
   # The primary interface for users will be #cfg_arch_for
   class Resolver
     extend T::Sig
@@ -302,16 +305,29 @@ module Udb
     end
 
     # Resolve a config pointer (name or file path) to a ConfiguredArchitecture.
-    # If +pointer+ contains '/' or is absolute it is treated as a file path;
-    # relative paths are resolved relative to +relative_dir+.
-    # Otherwise +pointer+ is treated as a config name and looked up in cfgs/.
+    # Resolution order:
+    #   1. If <cfgs_path>/<pointer>.yaml exists on disk, treat as a repo config name
+    #      (handles names that contain '/', e.g. "profile/RVA23U64").
+    #   2. If the pointer ends in .yaml/.yml, is absolute, or starts with ./ or ../,
+    #      treat as a file path resolved relative to +relative_dir+.
+    #   3. Otherwise raise ArgumentError — the pointer is neither a known config name
+    #      nor a recognisable file path.
     sig { params(pointer: String, relative_dir: Pathname).returns(Udb::ConfiguredArchitecture) }
     def cfg_arch_for_pointer(pointer, relative_dir:)
-      path = Pathname.new(pointer)
-      if path.absolute? || pointer.include?("/")
+      if (@cfgs_path / "#{pointer}.yaml").file?
+        # Repo config name — may contain '/' for nested configs (e.g. "profile/RVA23U64").
+        cfg_arch_for(pointer)
+      elsif pointer.end_with?(".yaml", ".yml") ||
+            Pathname.new(pointer).absolute? ||
+            pointer.start_with?("./", "../")
+        # Explicit file path — resolve relative to the caller's directory.
+        path = Pathname.new(pointer)
         cfg_arch_for(path.absolute? ? path : (relative_dir / path).cleanpath)
       else
-        cfg_arch_for(pointer)
+        raise ArgumentError,
+          "Cannot resolve config pointer '#{pointer}': not a known config name " \
+          "under '#{@cfgs_path}' and not a recognisable file path " \
+          "(.yaml/.yml extension, absolute, or starting with ./ or ../)"
       end
     end
 

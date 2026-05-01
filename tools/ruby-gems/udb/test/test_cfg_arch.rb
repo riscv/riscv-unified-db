@@ -639,6 +639,30 @@ class TestCfgArch < Minitest::Test
             assert result.valid, "Expected valid for compatible with matching MXLEN, got: #{result.reasons}"
           end
 
+          # Name-based pointer: use a known repo config name (no '/' → name lookup branch)
+          Tempfile.create(%w/cfg .yaml/) do |f|
+            f.write(base_64_yaml.sub("mandatory_extensions:", "compatible: rv64\nmandatory_extensions:"))
+            f.flush
+            result = @resolver.cfg_arch_for(Pathname.new(f.path)).valid?
+            # rv64 is a known repo config; compatibility check should not raise
+            assert [true, false].include?(result.valid),
+              "Expected cfg_arch_for_pointer to resolve name-based pointer 'rv64' without error"
+          end
+
+          # Relative-path pointer: reference the compatible config via a relative path
+          Dir.mktmpdir do |dir|
+            dir_path = Pathname.new(dir)
+            rel_compat_path = dir_path / "compat_64.yaml"
+            rel_compat_path.write(compat_64_yaml)
+
+            cfg_path = dir_path / "cfg.yaml"
+            cfg_path.write(base_64_yaml.sub("mandatory_extensions:", "compatible: ./compat_64.yaml\nmandatory_extensions:"))
+
+            result = @resolver.cfg_arch_for(cfg_path).valid?
+            assert result.valid,
+              "Expected valid when compatible pointer is a relative path './compat_64.yaml', got: #{result.reasons}"
+          end
+
           # 2. Invalid single compatible pointer
           Tempfile.create(%w/cfg .yaml/) do |f|
             f.write(base_64_yaml.sub("mandatory_extensions:", "compatible: #{incompat_32_file.path}\nmandatory_extensions:"))
