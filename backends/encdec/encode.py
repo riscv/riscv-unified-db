@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -36,7 +37,7 @@ def find_and_load_yamls(path, kind=None):
                     y["file"] = file
                     yamls.append(y)
             else:
-                print(f"No 'kind' field in {file}")
+                print(f"# WARNING: No 'kind' field in {file}")
 
 
 def field_width(s):
@@ -57,24 +58,24 @@ def field_width(s):
     return 1
 
 
-def parse_value_range(range_str):
-    """Parse a numeric range string like '0-31', '-4096-4095', or '5' into (min_val, max_val)."""
-    s = str(range_str).strip()
-    try:
-        if "-" in s:
-            # Split at the last '-' to preserve a leading minus on the start
-            # Note: this does not well handle a -X..-Y range
-            idx = s.rfind("-")
-            start_str = s[:idx]
-            end_str = s[idx + 1 :]
-            start = int(start_str)
-            end = int(end_str)
-            return (start, end)
-        else:
-            val = int(s)
-            return (val, val)
-    except ValueError as e:
-        raise ValueError(f"Invalid range string: {range_str}") from e
+pattern = re.compile(r"^(-?\d+)(?:-(-?\d+))?$")
+
+
+def parse_range(s: str) -> tuple[int, int]:
+    """
+    Parse strings like:
+      '5-10', '-5--10', '0', '800', '-42'
+    Return values (single element ranges like "x" return "x, x"):
+      (start, end)
+    """
+    match = pattern.fullmatch(s)
+    if not match:
+        raise ValueError(f"Invalid input: {s}")
+
+    start = int(match.group(1))
+    end = int(match.group(2)) if match.group(2) is not None else start
+
+    return start, end
 
 
 def extract_mnemonic(line):
@@ -225,22 +226,25 @@ def parse_assembly_arguments(line, instruction_operands):
                 # print(f"#{instruction_operands[i]}")
                 operand_values[instruction_operands[i]["offset"]["name"]] = int(offset_part)
 
-                if "length" in instruction_operands[i]["offset"]:
+                if "possible_values" in instruction_operands[i]["offset"]:
+                    if not instruction_operands[i]["offset"]["possible_values"]:
+                        if arguments[argi].split("(")[0].strip() != "":
+                            print("#    ERROR: Register offset not permitted.")
+                    else:
+                        is_possible = False
+                        for possible in instruction_operands[i]["offset"]["possible_values"]:
+                            min_val, max_val = parse_range(str(possible))
+                            if int(offset_part) >= min_val and int(offset_part) <= max_val:
+                                is_possible = True
+                        if not is_possible:
+                            print("#    ERROR: Register offset is invalid.")
+
+                if "left_shifted" in instruction_operands[i]["offset"]:
                     encoded_value = int(offset_part)
-                    if "left_shifted" in instruction_operands[i]["offset"]:
-                        encoded_value = (
-                            encoded_value >> instruction_operands[i]["offset"]["left_shifted"]
-                        )
-                        if encoded_value << instruction_operands[i]["offset"][
-                            "left_shifted"
-                        ] != int(offset_part):
-                            print(
-                                f"#    ERROR: Offset value {offset_part} cannot be fully represented given the required shift"
-                            )
-                            return None
-                    if encoded_value >> instruction_operands[i]["offset"]["length"] != 0:
+                    shift = instruction_operands[i]["offset"]["left_shifted"]
+                    if ((encoded_value >> shift) << shift) != encoded_value:
                         print(
-                            f"#    ERROR: Offset value {offset_part} exceeds the maximum representable value for {instruction_operands[i]['offset']['length']} bits"
+                            f"#    ERROR: Offset value {offset_part} cannot be fully represented given the required shift"
                         )
                         return None
 
@@ -259,7 +263,7 @@ def parse_assembly_arguments(line, instruction_operands):
                     return None
                 elif isinstance(operand_def["possible_values"], str):
                     try:
-                        min_val, max_val = parse_value_range(operand_def["possible_values"])
+                        min_val, max_val = parse_range(operand_def["possible_values"])
                     except ValueError:
                         print(
                             f"#    ERROR: Invalid possible_values range for '{operand_name}': {operand_def['possible_values']}"
@@ -279,26 +283,13 @@ def parse_assembly_arguments(line, instruction_operands):
             print(f'#    immediate argument: "{arguments[argi]}"')
             imm_value = int(arguments[argi])
             if "possible_values" in operand_def:
-                if isinstance(
-                    operand_def["possible_values"], list
-                ) and imm_value not in operand_def.get("possible_values", []):
-                    print(
-                        f"#    ERROR: Immediate value {imm_value} is not valid, must be {operand_def.get('possible_values', [])}"
-                    )
-                    return None
-                elif isinstance(operand_def["possible_values"], str):
-                    try:
-                        min_val, max_val = parse_value_range(operand_def["possible_values"])
-                    except ValueError:
-                        print(
-                            f"#    ERROR: Invalid possible_values range for '{operand_name}': {operand_def['possible_values']}"
-                        )
-                        return None
-                    if imm_value < min_val or imm_value > max_val:
-                        print(
-                            f"#    ERROR: Immediate value {imm_value} is out of range, must be between {min_val} and {max_val}"
-                        )
-                        return None
+                is_possible = False
+                for possible in operand_def["possible_values"]:
+                    min_val, max_val = parse_range(str(possible))
+                    if int(imm_value) >= min_val and int(imm_value) <= max_val:
+                        is_possible = True
+                if not is_possible:
+                    print("#    ERROR: Register offset is invalid.")
 
             operand_values[instruction_operands[i]["name"]] = imm_value
             print(f"#    Final value for '{operand_name}': {imm_value}")

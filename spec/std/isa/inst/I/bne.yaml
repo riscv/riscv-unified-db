@@ -23,16 +23,10 @@ encoding:
       location: 31|7|30-25|11-8
       left_shift: 1
       sign_extend: true
-      encode(operands): return operands[imm].value;
-      decode(): return imm;
     - name: xs2
       location: 24-20
-      encode(operands): return operands[xs2].value;
-      decode(): return xs2;
     - name: xs1
       location: 19-15
-      encode(operands): return operands[xs1].value;
-      decode(): return xs1;
 operands:
   - $inherits: operand/xs.yaml#/data
     name: xs1
