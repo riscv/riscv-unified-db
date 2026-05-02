@@ -9,6 +9,7 @@ import yaml
 yamls = []
 instructions = {}
 operand_list = []
+debug = False
 
 
 def parse_args():
@@ -21,10 +22,16 @@ def parse_args():
         default=64,
         help="RISC-V architecture width (32 or 64 bits, default: 64)",
     )
+    parser.add_argument("--debug", action="store_true", help="Enable debug output")
     parser.add_argument(
         "dirs", nargs="*", default=["."], help="Directories to search for YAML files"
     )
     return parser.parse_args()
+
+
+def dprint(s):
+    if debug:
+        print(s)
 
 
 def find_and_load_yamls(path, kind=None):
@@ -139,12 +146,12 @@ def set_bits(binary_str, positions, value):
     instruction_width = len(binary_str)
     field_w = len(positions)
 
-    print(
+    dprint(
         f"#    Setting bits at positions {positions} to value {value} (field width {field_w}) in binary string: {binary_str}"
     )
     # Convert binary string to list for easier manipulation
     binary_list = list(binary_str)
-    print(f"#    Initial binary list: {binary_list}")
+    dprint(f"#    Initial binary list: {binary_list}")
 
     # Ensure value fits within the specified field width
     value = (value & ((1 << field_w) - 1)) if field_w > 0 else 0
@@ -156,7 +163,7 @@ def set_bits(binary_str, positions, value):
         if i >= field_w:
             break
         bit_value = (value >> i) & 1
-        print(f"#    Setting bit at position {pos} to {bit_value} (bit {i} of value)")
+        dprint(f"#    Setting bit at position {pos} to {bit_value} (bit {i} of value)")
 
         # Convert bit position to string index (MSB at index 0)
         idx = instruction_width - pos - 1
@@ -166,7 +173,7 @@ def set_bits(binary_str, positions, value):
             )
             continue
         binary_list[idx] = "1" if bit_value else "0"
-        print(f"#    binary list after setting bits: {binary_list}")
+        dprint(f"#    binary list after setting bits: {binary_list}")
 
     return "".join(binary_list)
 
@@ -186,10 +193,8 @@ def parse_assembly_arguments(line, instruction_operands):
     for operand_def in instruction_operands:
         if operand_def.get("optional"):
             optional_operands += 1
-    # print(f"possible operands = {len(instruction_operands)}; Optional operands = {optional_operands}; provided arguments = {len(arguments)}")
 
     optional_operands_to_keep = optional_operands - (len(instruction_operands) - len(arguments))
-    # print(f"optional_operands_to_keep = {optional_operands_to_keep}")
     if optional_operands < optional_operands_to_keep:
         print(
             f"#    ERROR: insufficient arguments for instruction; got {len(arguments)} ({arguments}) needed at least {len(instruction_operands) - optional_operands}"
@@ -200,28 +205,26 @@ def parse_assembly_arguments(line, instruction_operands):
     operand_values = {}
     argi = 0
     for i, operand_def in enumerate(instruction_operands):
-        print(f'# operand {i}: "{operand_def}"; {len(arguments)}')
+        dprint(f'# operand {i}: "{operand_def}"; {len(arguments)}')
         operand_name = operand_def.get("name", f"op{i}")
-        # print(operand_def)
-        # print(optional_operands_to_keep)
         if operand_def.get("optional"):
             if optional_operands_to_keep > 0:
                 optional_operands_to_keep -= 1
             else:
-                print(f'# Skipping optional operand "{operand_name}"')
+                dprint(f'# Skipping optional operand "{operand_name}"')
                 continue
 
-        print(f"#    Creating operand '{operand_name}' ({operand_def['type']})")
+        dprint(f"#    Creating operand '{operand_name}' ({operand_def['type']})")
         if operand_def["type"] in ["register", "register_pair"]:
             if "offset" in operand_def:
-                print(f'#    memory argument with offset "{arguments[argi]}"')
+                dprint(f'#    memory argument with offset "{arguments[argi]}"')
 
                 # Memory operand like "offset(rs1)"
                 offset_part = arguments[argi].split("(")[0].strip()
                 if offset_part == "":
                     offset_part = "0"
                 reg_index = int(arguments[argi].split("(")[1].split(")")[0].strip())
-                print(f"#    Extracted offset: {offset_part}, register: {reg_index}")
+                dprint(f"#    Extracted offset: {offset_part}, register: {reg_index}")
 
                 # print(f"#{instruction_operands[i]}")
                 operand_values[instruction_operands[i]["offset"]["name"]] = int(offset_part)
@@ -249,7 +252,7 @@ def parse_assembly_arguments(line, instruction_operands):
                         return None
 
             else:
-                print(f"#    Detected register argument: {arguments[i]}")
+                dprint(f"#    Detected register argument: {arguments[i]}")
                 reg_index = int(arguments[argi])
 
             # Validate register range against possible_values
@@ -276,11 +279,11 @@ def parse_assembly_arguments(line, instruction_operands):
                         return None
 
             operand_values[instruction_operands[i]["name"]] = reg_index
-            print(f"#    Final value for '{operand_name}': {reg_index}")
+            dprint(f"#    Final value for '{operand_name}': {reg_index}")
             operand_values[instruction_operands[i]["name"]] = int(reg_index)
 
         elif operand_def["type"] == "immediate":
-            print(f'#    immediate argument: "{arguments[argi]}"')
+            dprint(f'#    immediate argument: "{arguments[argi]}"')
             imm_value = int(arguments[argi])
             if "possible_values" in operand_def:
                 is_possible = False
@@ -292,30 +295,30 @@ def parse_assembly_arguments(line, instruction_operands):
                     print("#    ERROR: Register offset is invalid.")
 
             operand_values[instruction_operands[i]["name"]] = imm_value
-            print(f"#    Final value for '{operand_name}': {imm_value}")
+            dprint(f"#    Final value for '{operand_name}': {imm_value}")
 
         elif operand_def["type"] == "fence_scope":
-            print(f"#    Detected fence_scope argument: {arguments[argi]}")
+            dprint(f"#    Detected fence_scope argument: {arguments[argi]}")
 
             operand_values[instruction_operands[i]["name"]] = arguments[i]
-            print(f"#    Final value for '{operand_name}': {arguments[argi]}")
+            dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
 
         elif operand_def["type"] == "rounding_mode":
-            print(f"#    Detected rounding_mode argument: {arguments[argi]}")
+            dprint(f"#    Detected rounding_mode argument: {arguments[argi]}")
 
             operand_values[instruction_operands[i]["name"]] = arguments[i]
-            print(f"#    Final value for '{operand_name}': {arguments[argi]}")
+            dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
 
         elif operand_def["type"] == "reg_range":
-            print(f"#    Detected reg_range argument: {arguments[argi]}")
+            dprint(f"#    Detected reg_range argument: {arguments[argi]}")
 
             operand_values[instruction_operands[i]["name"]] = arguments[i]
-            print(f"#    Final value for '{operand_name}': {arguments[argi]}")
+            dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
 
         # consume argument
         argi += 1
 
-    print(f"#    Parsed operand values: {operand_values}")
+    dprint(f"#    Parsed operand values: {operand_values}")
     return operand_values
 
 
@@ -472,7 +475,7 @@ def fill_in_variables(inst, assembly, xlen=64):
         print(f"#  ERROR: Failed to parse assembly operands for '{assembly}'")
         return None
 
-    print(f"#  Parsed assembly operands: {assembly_operands}")
+    dprint(f"#  Parsed assembly operands: {assembly_operands}")
 
     encoded = match_pattern
 
@@ -481,7 +484,7 @@ def fill_in_variables(inst, assembly, xlen=64):
         var_name = variable["name"]
         location = variable["location"]
 
-        print(f'# Fill in "{var_name}"')
+        dprint(f'# Fill in "{var_name}"')
 
         # Find the operand value from assembly operands
         operand_value = 0  # Default value
@@ -492,7 +495,7 @@ def fill_in_variables(inst, assembly, xlen=64):
                 print("#  ERROR: unsupported variable encoding")
                 return None
         elif var_name in assembly_operands:
-            print(
+            dprint(
                 f"#  Found direct match for variable '{var_name}' in assembly operands {assembly_operands[var_name]}"
             )
             operand_value = assembly_operands[var_name]
@@ -500,7 +503,7 @@ def fill_in_variables(inst, assembly, xlen=64):
             print("#  ERROR: unknown variable encoding")
             return None
 
-        print(f"#  Variable '{var_name}' value: {operand_value}")
+        dprint(f"#  Variable '{var_name}' value: {operand_value}")
 
         # Parse the location string to get bit positions
         bit_positions = parse_location(location)
@@ -508,13 +511,13 @@ def fill_in_variables(inst, assembly, xlen=64):
         # Apply any shifts specified in the variable
         if "left_shift" in variable:
             operand_value = operand_value >> variable["left_shift"]
-            print(f"#  Unapplied left shift {variable['left_shift']}, new value: {operand_value}")
+            dprint(f"#  Unapplied left shift {variable['left_shift']}, new value: {operand_value}")
 
-        print(f"#  Variable '{var_name}': {variable}")
+        dprint(f"#  Variable '{var_name}': {variable}")
         enc_ops = variable.get("encode(operands)")
         if enc_ops and "reg2creg" in enc_ops:
             operand_value = operand_value - 8
-            print(f"#        Applied reg2creg transformation, new value: {operand_value}")
+            dprint(f"#        Applied reg2creg transformation, new value: {operand_value}")
 
         # Set the bits in the binary match string
         encoded = set_bits(encoded, bit_positions, operand_value)
@@ -525,13 +528,13 @@ def fill_in_variables(inst, assembly, xlen=64):
 def encode(assembly, xlen=64):
     # This function will take an assembly instruction and encode it into binary
     # For now, it's a placeholder that just prints the assembly instruction
-    print(f"#Encoding assembly instruction: {assembly} with xlen={xlen}")
+    dprint(f"#Encoding assembly instruction: {assembly} with xlen={xlen}")
 
     mnemonic = extract_mnemonic(assembly)
     if not mnemonic:
         return None
 
-    print(f"#mnemonic: {mnemonic}")
+    dprint(f"#mnemonic: {mnemonic}")
     if mnemonic not in instructions:
         print(f"# ERROR: Instruction '{mnemonic}' not found in YAML definitions")
         return None
@@ -540,19 +543,18 @@ def encode(assembly, xlen=64):
 
     filled_match = fill_in_variables(inst, assembly, xlen)
 
-    print(f"#  Filled match pattern:  {filled_match}")
+    dprint(f"#  Filled match pattern:  {filled_match}")
     return filled_match
 
 
 def main():
-    args = parse_args()
+    global debug
 
-    # Validate xlen parameter
+    args = parse_args()
+    debug = args.debug
     xlen = args.xlen
-    if xlen not in [32, 64]:
-        print(f"# ERROR: xlen must be either 32 or 64, got {xlen}")
-        sys.exit(1)
-    print(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
+
+    print(f"# Using RISC-V {xlen}-bit architecture")
 
     for path in args.dirs:
         find_and_load_yamls(path, kind="instruction")
