@@ -48,7 +48,7 @@ fields:
       ! Name ! Location ! Description
 
       h! L ! <%= ((i+1)*8)-1 %>   ! Locks the entry from further modification. Additionally, when set, PMP checks also apply to M-mode for the entry.
-      h! - ! <%= ((i+1)*8)-2 %>:<%= ((i+1)*8)-3 %> ! _Reserved_ Writes shall be ignored.
+      h! MT ! <%= ((i+1)*8)-2 %>:<%= ((i+1)*8)-3 %> ! When the `Smpmpmt` extension is implemented, MT (Memory Type) is a WARL field that overrides the memory type for accesses that match this PMP entry.  See the `Smpmpmt` extension definition for encodings.  When the `Smpmpmt` extension is not implemented, MT is _Reserved_ Writes shall be ignored.
       h! A ! <%= ((i+1)*8)-4 %>:<%= ((i+1)*8)-5 %>
       a! Address matching mode. One of:
 

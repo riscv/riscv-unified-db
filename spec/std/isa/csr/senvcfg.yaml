@@ -124,6 +124,24 @@ fields:
         return UNDEFINED_LEGAL_DETERMINISTIC;
       }
     reset_value: UNDEFINED_LEGAL
+  UKTE:
+    location: 8
+    description: |
+      If the Svukte extension is implemented, the UKTE field affects the behavior of
+      instruction fetches and explicit memory accesses.
+      When UKTE=0, instruction fetches and explicit memory accesses proceed as
+      though the Svukte extension were not implemented.
+      When UKTE=1, instruction fetches and explicit memory accesses with effective
+      privilege mode U or VU are Svukte-qualified, as described in <<sec:svukte>>.
+      If Svukte is not implemented, UKTE is read-only zero.
+
+    definedBy:
+      extension:
+        name: Svukte
+    type(): |
+      return (implemented?(ExtensionName::Svukte)) ? CsrFieldType::RW : CsrFieldType::RO;
+    reset_value(): |
+      return (implemented?(ExtensionName::Svukte)) ? UNDEFINED_LEGAL : 0;
   SSE:
     location: 3
     description: |
