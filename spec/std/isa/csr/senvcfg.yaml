@@ -138,10 +138,8 @@ fields:
     definedBy:
       extension:
         name: Svukte
-    type(): |
-      return (implemented?(ExtensionName::Svukte)) ? CsrFieldType::RW : CsrFieldType::RO;
-    reset_value(): |
-      return (implemented?(ExtensionName::Svukte)) ? UNDEFINED_LEGAL : 0;
+    type: RW
+    reset_value: UNDEFINED_LEGAL
   SSE:
     location: 3
     description: |
