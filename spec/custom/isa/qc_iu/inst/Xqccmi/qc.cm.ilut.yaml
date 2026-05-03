@@ -80,24 +80,22 @@ operation(): |
   # For a 32-bit entry, read 32 bits. For a 64-bit double entry, read two
   # consecutive 32-bit words (entry_lo = bits[31:0], entry_hi = bits[63:32]).
   XReg entry_lo = read_physical_memory(32, result.paddr);
-  XReg entry_hi;
+  XReg entry_hi = 32'b0;
   if (is_double) {
     entry_hi = read_physical_memory(32, result.paddr + 4);
-  } else {
-    entry_hi = 32'b0;
   }
 
   # Determine the size of the first instruction using RISC-V length encoding:
   #   bits[1:0] != 2'b11 -> 16-bit instruction
   #   bits[1:0] == 2'b11 and bits[4:2] != 3'b111 -> 32-bit instruction
   #   bits[1:0] == 2'b11 and bits[4:2] == 3'b111 -> 48-bit instruction
-  Boolean has_second = false;
+  Boolean has_second_inst = false; # true if this entry contains a second packed instruction
 
   if (entry_lo[1:0] != 2'b11) {
     # 16-bit first instruction; second instruction is in entry_lo[31:16]
     Bits<16> second_lo = entry_lo[31:16];
     if (second_lo != 16'h0001) {
-      has_second = true;
+      has_second_inst = true;
     }
   } else if (entry_lo[4:2] != 3'b111) {
     # 32-bit first instruction
@@ -105,7 +103,7 @@ operation(): |
       # Second instruction starts at entry_hi[15:0]
       Bits<16> second_lo = entry_hi[15:0];
       if (second_lo != 16'h0001) {
-        has_second = true;
+        has_second_inst = true;
       }
     }
     # No room for a second instruction in a 32-bit entry after a 32-bit first
@@ -113,7 +111,7 @@ operation(): |
     # 48-bit first instruction
     if (!is_double) {
       # 48-bit instruction does not fit in a 32-bit entry
-      ilut_second_inst = false;
+      executing_second_inst = false;
       raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
     }
     # No room for a second instruction after a 48-bit first in a 64-bit entry
@@ -124,10 +122,10 @@ operation(): |
   # and raises an IllegalInstruction exception before any instruction executes.
   # mepc bit 0 reflects which slot contained the forbidden instruction.
   if (is_pc_relative_inst?(entry_lo)) {
-    ilut_second_inst = false;
+    executing_second_inst = false;
     raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
   }
-  if (has_second) {
+  if (has_second_inst) {
     Bits<32> second_inst;
     if (entry_lo[1:0] != 2'b11) {
       second_inst = {16'b0, entry_lo[31:16]};
@@ -135,28 +133,21 @@ operation(): |
       second_inst = {16'b0, entry_hi[15:0]};
     }
     if (is_pc_relative_inst?(second_inst)) {
-      ilut_second_inst = true;
+      executing_second_inst = true;
       raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
     }
   }
 
-  # Execute the first instruction.
-  # execute_ilut_instruction() executes the fetched instruction in the current
-  # hart context. mepc bit 0 = 0 for the first instruction.
-  # Execute the first instruction fetched from the ILUT entry.
-  # The fetched instruction executes with PC semantics of qc.cm.ilut.
-  # Any exception raised by the fetched instruction calls raise_ilut(exception_code, tval)
-  # with ilut_second_inst = false, so mepc.PC = $pc | 0 (bit 0 = 0).
-  ilut_second_inst = false;
+  # Execute the first instruction from the ILUT entry.
+  # IDL cannot express dynamic instruction dispatch; actual execution is implementation-defined.
+  # Any exception raised must call raise_ilut() with executing_second_inst = false (mepc bit 0 = 0).
+  executing_second_inst = false;
   unpredictable("execute first ILUT instruction");
 
-  # Execute the second instruction if present.
-  # mepc bit 0 = 1 to indicate the fault came from the second instruction.
-  if (has_second) {
-    # Execute the second instruction fetched from the ILUT entry.
-    # Any exception raised by the fetched instruction calls raise_ilut(exception_code, tval)
-    # with ilut_second_inst = true, so mepc.PC = $pc | 1 (bit 0 = 1).
-    ilut_second_inst = true;
+  # Execute the second instruction from the ILUT entry, if present.
+  # Any exception raised must call raise_ilut() with executing_second_inst = true (mepc bit 0 = 1).
+  if (has_second_inst) {
+    executing_second_inst = true;
     unpredictable("execute second ILUT instruction");
-    ilut_second_inst = false;
+    executing_second_inst = false;
   }

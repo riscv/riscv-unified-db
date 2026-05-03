@@ -58,28 +58,29 @@ builtin function sync_write_after_read_device {
   }
 }
 
-# Global flag: true when an ILUT exception originates from the second packed instruction.
-# Set by qc.cm.ilut before executing each slot; cleared after.
-Boolean ilut_second_inst = false;
+# Global flag: true while the second packed instruction in an ILUT entry is executing.
+# Set by qc.cm.ilut before executing the second slot; cleared after. Used by raise_ilut()
+# to encode the faulting slot into mepc bit 0.
+Boolean executing_second_inst = false;
 
 # Simplified precise-exception raise for qc_iu (M-mode only).
 # Identical to raise_precise except mepc.PC (or mnepc.PC for a double-trap)
-# captures bit 0 from ilut_second_inst, allowing the trap handler to
+# captures bit 0 from executing_second_inst, allowing the trap handler to
 # distinguish first- vs second-instruction faults within an ILUT entry.
 # This function must be called for any exception raised by an ILUT-executed
-# instruction (first or second slot). The ilut_second_inst flag must be set
+# instruction (first or second slot). The executing_second_inst flag must be set
 # before calling: false for the first instruction, true for the second.
 function raise_ilut {
   arguments ExceptionCode exception_code, XReg tval
   description {
     Raise a precise exception for an ILUT-executed instruction.
-    Sets mepc.PC = $pc | (ilut_second_inst ? 1 : 0) so that the trap handler
+    Sets mepc.PC = $pc | (executing_second_inst ? 1 : 0) so that the trap handler
     can determine whether the fault came from the first or second packed
     instruction in the ILUT entry. For a double-trap, sets mnepc.PC instead.
     Only the M-mode handling path is included because qc_iu is M-mode only.
   }
   body {
-    Bits<1> slot_bit = ilut_second_inst ? 1'b1 : 1'b0;
+    Bits<1> slot_bit = executing_second_inst ? 1'b1 : 1'b0;
 
     # qc_iu is M-mode only; no S/H/VS/VU delegation logic needed.
     if (implemented?(ExtensionName::Smrnmi) && CSR[mnstatus].NMIE == 1'b0) {
