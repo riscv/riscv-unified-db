@@ -9,6 +9,6 @@ name: vd
 data:
   name: vd
   type: register
-  reg_file: vr
+  reg_file: V
   source: false
   destination: true

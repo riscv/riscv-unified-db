@@ -17,8 +17,8 @@
               "type": "string"
             },
             "reg_file": {
-              "enum": ["gpr", "fpr", "vr", "sp", "csr"],
-              "default": "gpr"
+              "enum": ["X", "F", "V", "sp", "csr"],
+              "default": "X"
             },
             "offset": {
               "oneOf": [
@@ -87,8 +87,8 @@
               "type": "string"
             },
             "reg_file": {
-              "enum": ["gpr", "fpr", "vr"],
-              "default": "gpr"
+              "enum": ["X", "F", "V"],
+              "default": "X"
             },
             "source": {
               "type": "boolean",

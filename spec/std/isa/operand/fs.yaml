@@ -9,4 +9,4 @@ name: fs
 data:
   name: fs
   type: register
-  reg_file: fpr
+  reg_file: F

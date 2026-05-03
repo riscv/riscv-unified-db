@@ -5,10 +5,8 @@
 
 $schema: "operand_schema.json#"
 kind: operand
-name: fd
+name: vs
 data:
-  name: fd
-  type: register
-  reg_file: F
-  source: false
-  destination: true
+  $inherits: operand/xs.yaml#/data
+  name: vs
+  reg_file: V
