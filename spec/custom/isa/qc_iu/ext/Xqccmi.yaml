@@ -214,8 +214,6 @@ versions:
       - extension:
           name: Zicsr
           version: ">= 2.0.0"
-# cannot be implemented with Zcd
-requirements:
-  not:
-    extension:
-      name: Zcd
+      - not:
+          extension:
+            name: Zcd
