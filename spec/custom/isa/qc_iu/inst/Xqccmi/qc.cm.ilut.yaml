@@ -142,7 +142,7 @@ operation(): |
   # IDL cannot express dynamic instruction dispatch; actual execution is implementation-defined.
   # Any exception raised must call raise_ilut() with executing_second_inst = false (mepc bit 0 = 0).
   executing_second_inst = false;
-  unpredictable("execute first ILUT instruction");
+  unpredictable("TO-DO: execute first ILUT instruction");
 
   # Execute the second instruction from the ILUT entry, if present.
   # Any exception raised must call raise_ilut() with executing_second_inst = true (mepc bit 0 = 1).
