@@ -148,6 +148,6 @@ operation(): |
   # Any exception raised must call raise_ilut() with executing_second_inst = true (mepc bit 0 = 1).
   if (has_second_inst) {
     executing_second_inst = true;
-    unpredictable("execute second ILUT instruction");
+    unpredictable("TO-DO: execute second ILUT instruction");
     executing_second_inst = false;
   }

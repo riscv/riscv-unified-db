@@ -108,7 +108,9 @@ function is_pc_relative_inst? {
   arguments Bits<32> inst
   description {
     Returns true if +inst+ is a PC-relative instruction (auipc, branch, jump, or
-    compressed equivalent) that is forbidden inside an ILUT entry.
+    compressed PC-relative jump (jal/c.j/c.jal), or compressed branch) that is
+    forbidden inside an ILUT entry. Register-indirect jumps (jalr, c.jr, c.jalr)
+    are NOT PC-relative and are permitted inside ILUT entries.
     For 16-bit compressed instructions, only the lower 16 bits of +inst+ are examined.
     For 48-bit Xqci instructions, only the lower 32 bits are passed here (the upper
     16 bits are in a separate word and are not needed for this check).
@@ -123,14 +125,6 @@ function is_pc_relative_inst? {
       }
       # c.jal:  funct3=001, op=01
       if (cinst[15:13] == 3'b001 && cinst[1:0] == 2'b01) {
-        return true;
-      }
-      # c.jr:   funct4=1000, rs1!=0, op=10
-      if (cinst[15:12] == 4'b1000 && cinst[6:2] != 5'b00000 && cinst[1:0] == 2'b10) {
-        return true;
-      }
-      # c.jalr: funct4=1001, rs1!=0, op=10
-      if (cinst[15:12] == 4'b1001 && cinst[6:2] != 5'b00000 && cinst[1:0] == 2'b10) {
         return true;
       }
       # c.beqz: funct3=110, op=01
@@ -151,10 +145,6 @@ function is_pc_relative_inst? {
       }
       # jal
       if (opcode == 7'b1101111) {
-        return true;
-      }
-      # jalr
-      if (opcode == 7'b1100111) {
         return true;
       }
       # branches
