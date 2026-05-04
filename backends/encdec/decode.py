@@ -8,6 +8,7 @@ import yaml
 yamls = []
 instructions = {}
 instruction_by_match = {}
+debug = False
 
 
 def parse_args():
@@ -20,10 +21,16 @@ def parse_args():
         default=64,
         help="RISC-V architecture width (32 or 64 bits)",
     )
+    parser.add_argument("--debug", action="store_true", help="Enable debug output")
     parser.add_argument(
         "dirs", nargs="*", default=["."], help="Directories to search for YAML files"
     )
     return parser.parse_args()
+
+
+def dprint(s):
+    if debug:
+        print(s)
 
 
 def find_and_load_yamls(path, kind=None):
@@ -36,7 +43,7 @@ def find_and_load_yamls(path, kind=None):
                     y["file"] = file
                     yamls.append(y)
             else:
-                print(f"No 'kind' field in {file}")
+                print(f"# WARNING: No 'kind' field in {file}")
 
 
 def read_opcodes(f):
@@ -46,7 +53,7 @@ def read_opcodes(f):
 
 def parse_location(location):
     """Parse location string into a list of bit positions"""
-    print(f"# Parsing location: {location}")
+    dprint(f"# Parsing location: {location}")
     bit_positions = []
 
     # Handle concatenated locations (separated by '|')
@@ -54,7 +61,7 @@ def parse_location(location):
         segments = location.split("|")
         for segment in segments:
             bit_positions.extend(parse_location(segment))
-        print(f"# Parsed concatenated location '{location}' into bit positions: {bit_positions}")
+        dprint(f"# Parsed concatenated location '{location}' into bit positions: {bit_positions}")
         return bit_positions
 
     # Handle range locations (e.g., '31-25')
@@ -67,7 +74,7 @@ def parse_location(location):
         # Single bit location
         bit_positions.append(int(location))
 
-    print(f"# Parsed location '{location}' into bit positions: {bit_positions}")
+    dprint(f"# Parsed location '{location}' into bit positions: {bit_positions}")
     return bit_positions
 
 
@@ -79,13 +86,13 @@ def extract_bits(binary_str, positions):
     binary_list = list(binary_str)
 
     # Extract bits from specified positions
-    print(f"# Extracting bits from binary string '{binary_str}' at positions {positions}")
+    dprint(f"# Extracting bits from binary string '{binary_str}' at positions {positions}")
     for pos in positions:
-        print(f"# Processing bit position {pos}")
+        dprint(f"# Processing bit position {pos}")
         idx = len(binary_list) - 1 - pos  # Calculate index from the right
         bit_value = 1 if binary_str[idx] == "1" else 0
         result = (result << 1) | bit_value
-        print(f"# Bit at position {pos} is '{binary_str[idx]}' result {result}")
+        dprint(f"# Bit at position {pos} is '{binary_str[idx]}' result {result}")
 
     return result
 
@@ -145,11 +152,13 @@ def extract_variable_values(opcode, instruction, xlen=64):
 
         # Parse the location string to get bit positions
         bit_positions = parse_location(location)
-        print(f"# Variable '{var_name}' is located at bits {bit_positions} in the opcode")
+        dprint(f"# Variable '{var_name}' is located at bits {bit_positions} in the opcode")
 
         # Extract the value from the opcode
         value = extract_bits(opcode, bit_positions)
-        print(f"# Extracted raw value for variable '{var_name}': {value} from bits {bit_positions}")
+        dprint(
+            f"# Extracted raw value for variable '{var_name}': {value} from bits {bit_positions}"
+        )
 
         # Apply any transformations
 
@@ -157,14 +166,14 @@ def extract_variable_values(opcode, instruction, xlen=64):
             sign_bit = 1 << (len(bit_positions) - 1)
             if value & sign_bit:
                 value -= 1 << len(bit_positions)
-            print(f"# Value after sign extension for variable '{var_name}': {value}")
+            dprint(f"# Value after sign extension for variable '{var_name}': {value}")
         if "left_shift" in variable:
             value = value << variable["left_shift"]
-            print(f"# Value after left shift for variable '{var_name}': {value}")
+            dprint(f"# Value after left shift for variable '{var_name}': {value}")
 
         if "decode()" in variable and "creg2reg" in variable["decode()"]:
             value += 8
-            print(f"# Value after creg2reg transformation for variable '{var_name}': {value}")
+            dprint(f"# Value after creg2reg transformation for variable '{var_name}': {value}")
 
         variable_values[var_name] = value
 
@@ -176,7 +185,7 @@ def format_assembly(instruction, variable_values, xlen=64):
     mnemonic = instruction["name"]
 
     if "operands" not in instruction:
-        print(f"# INFO: No operands defined for instruction '{mnemonic}'")
+        dprint(f"# INFO: No operands defined for instruction '{mnemonic}'")
         return None
 
     if "RV32" in instruction["operands"] and xlen == 32:
@@ -199,7 +208,7 @@ def format_assembly(instruction, variable_values, xlen=64):
     for i, operand in enumerate(operands):
         operand_name = operand["name"]
 
-        print(f"# Processing operand '{operand_name}' ({operand['type']})")
+        dprint(f"# Processing operand '{operand_name}' ({operand['type']})")
 
         if operand["type"] == "fence_scope":
             scope_map = {
@@ -244,7 +253,7 @@ def format_assembly(instruction, variable_values, xlen=64):
 
         elif "offset" in operand:
             value = variable_values[operand_name]
-            print(f"# Handling offset for operand '{operand_name}' with value {value}")
+            dprint(f"# Handling offset for operand '{operand_name}' with value {value}")
             if operand["offset"]["name"] == "":
                 offset_value = ""
             else:
@@ -254,7 +263,7 @@ def format_assembly(instruction, variable_values, xlen=64):
             assembly_parts.append(f"{offset_value}({value})")
 
         elif operand["type"] == "reg_range":
-            print(f'# Handling reg_range "{operand}" {variable_values}')
+            dprint(f'# Handling reg_range "{operand}" {variable_values}')
             which_reg_range = 0
             opi = i - 1
             while opi >= 0:
@@ -296,7 +305,7 @@ def format_assembly(instruction, variable_values, xlen=64):
                 assembly_parts.append("v0.t")
 
         elif operand_name == "stack_adj":
-            print("# Handling stack_adj")
+            dprint("# Handling stack_adj")
             registers = variable_values["rlist"] - 3
             register_space = registers * int(xlen / 8)
             register_space_aligned = int((register_space + 15) / 16) * 16
@@ -312,7 +321,7 @@ def format_assembly(instruction, variable_values, xlen=64):
                         if "r1s" in variable["decode()"] or "r2s" in variable["decode()"]:
                             value = value + 8 + 8 * ((value + 6) // 8)
                     break
-            print(f"# map {operand_name} {value}")
+            dprint(f"# map {operand_name} {value}")
             assembly_parts.append(str(value))
 
     if assembly_parts:
@@ -324,23 +333,23 @@ def format_assembly(instruction, variable_values, xlen=64):
 
 def decode(opcode, xlen=64):
     """Decode an opcode into an assembly instruction"""
-    print(f"# Decoding opcode: {opcode} with xlen={xlen}")
+    dprint(f"# Decoding opcode: {opcode} with xlen={xlen}")
 
     # Find matching instruction
     instruction = find_matching_instruction(opcode, xlen)
     if not instruction:
-        print(f"# No matching instruction found for opcode: {opcode}")
+        print(f"# WARNING: No matching instruction found for opcode: {opcode}")
         return None
 
-    print(f"# Found matching instruction: {instruction['name']}")
+    dprint(f"# Found matching instruction: {instruction['name']}")
 
     # Extract variable values from opcode
     variable_values = extract_variable_values(opcode, instruction, xlen)
-    print(f"# Extracted variable values: {variable_values}")
+    dprint(f"# Extracted variable values: {variable_values}")
 
     # Format assembly instruction
     assembly = format_assembly(instruction, variable_values, xlen)
-    print(f"# Formatted assembly: {assembly}")
+    dprint(f"# Formatted assembly: {assembly}")
 
     return assembly
 
@@ -351,7 +360,7 @@ def main():
     # Validate xlen parameter
     xlen = args.xlen
     if xlen not in [32, 64]:
-        print(f"Error: xlen must be either 32 or 64, got {xlen}")
+        print(f"ERROR: xlen must be either 32 or 64, got {xlen}")
         sys.exit(1)
     print(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
 
@@ -377,7 +386,7 @@ def main():
         if assembly:
             print(f"{assembly}")
         else:
-            print(f"Failed to decode '{opcode}'")
+            print(f"ERROR: Failed to decode '{opcode}'")
 
 
 if __name__ == "__main__":
