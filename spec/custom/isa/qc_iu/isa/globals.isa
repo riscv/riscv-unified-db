@@ -58,6 +58,118 @@ builtin function sync_write_after_read_device {
   }
 }
 
+# Global flag: true while the second packed instruction in an ILUT entry is executing.
+# Set by qc.cm.ilut before executing the second slot; cleared after. Used by raise_ilut()
+# to encode the faulting slot into mepc bit 0.
+Boolean executing_second_inst = false;
+
+# Simplified precise-exception raise for qc_iu (M-mode only).
+# Identical to raise_precise except mepc.PC (or mnepc.PC for a double-trap)
+# captures bit 0 from executing_second_inst, allowing the trap handler to
+# distinguish first- vs second-instruction faults within an ILUT entry.
+# This function must be called for any exception raised by an ILUT-executed
+# instruction (first or second slot). The executing_second_inst flag must be set
+# before calling: false for the first instruction, true for the second.
+function raise_ilut {
+  arguments ExceptionCode exception_code, XReg tval
+  description {
+    Raise a precise exception for an ILUT-executed instruction.
+    Sets mepc.PC = $pc | (executing_second_inst ? 1 : 0) so that the trap handler
+    can determine whether the fault came from the first or second packed
+    instruction in the ILUT entry. For a double-trap, sets mnepc.PC instead.
+    Only the M-mode handling path is included because qc_iu is M-mode only.
+  }
+  body {
+    Bits<1> slot_bit = executing_second_inst ? 1'b1 : 1'b0;
+
+    # qc_iu is M-mode only; no S/H/VS/VU delegation logic needed.
+    if (implemented?(ExtensionName::Smrnmi) && CSR[mnstatus].NMIE == 1'b0) {
+      # Double-trap: use mnepc
+      CSR[mnepc].PC = $pc | slot_bit;
+    } else {
+      CSR[mepc].PC = $pc | slot_bit;
+    }
+
+    if (!mtval_readonly?()) {
+      CSR[mtval].VALUE = mtval_for(exception_code, tval);
+    }
+
+    $pc = {CSR[mtvec].BASE, 2'b00};
+    CSR[mcause].INT  = 1'b0;
+    CSR[mcause].CODE = $bits(exception_code);
+
+    set_mode(PrivilegeMode::M);
+    abort_current_instruction();
+  }
+}
+
+function is_pc_relative_inst? {
+  returns Boolean
+  arguments Bits<32> inst
+  description {
+    Returns true if +inst+ is a PC-relative instruction (auipc, branch, jump, or
+    compressed PC-relative jump (jal/c.j/c.jal), or compressed branch) that is
+    forbidden inside an ILUT entry. Register-indirect jumps (jalr, c.jr, c.jalr)
+    are NOT PC-relative and are permitted inside ILUT entries.
+    For 16-bit compressed instructions, only the lower 16 bits of +inst+ are examined.
+    For 48-bit Xqci instructions, only the lower 32 bits are passed here (the upper
+    16 bits are in a separate word and are not needed for this check).
+  }
+  body {
+    if (inst[1:0] != 2'b11) {
+      # 16-bit compressed instruction: examine only the lower 16 bits
+      Bits<16> cinst = inst[15:0];
+      # c.j:    funct3=101, op=01
+      if (cinst[15:13] == 3'b101 && cinst[1:0] == 2'b01) {
+        return true;
+      }
+      # c.jal:  funct3=001, op=01
+      if (cinst[15:13] == 3'b001 && cinst[1:0] == 2'b01) {
+        return true;
+      }
+      # c.beqz: funct3=110, op=01
+      if (cinst[15:13] == 3'b110 && cinst[1:0] == 2'b01) {
+        return true;
+      }
+      # c.bnez: funct3=111, op=01
+      if (cinst[15:13] == 3'b111 && cinst[1:0] == 2'b01) {
+        return true;
+      }
+      return false;
+    } else {
+      # 32-bit (or 48-bit) instruction: check opcode field bits[6:0]
+      Bits<7> opcode = inst[6:0];
+      # auipc
+      if (opcode == 7'b0010111) {
+        return true;
+      }
+      # jal
+      if (opcode == 7'b1101111) {
+        return true;
+      }
+      # branches
+      if (opcode == 7'b1100011) {
+        return true;
+      }
+      # 48-bit Xqci PC-relative instructions (inst[4:2]==3'b111 indicates 48-bit length)
+      if (inst[4:2] == 3'b111) {
+        # All Xqci 48-bit PC-relative instructions use opcode 7'b0011111
+        if (opcode == 7'b0011111) {
+          # qc.e.j / qc.e.jal: funct3=000, inst[24:20]==5'b00000
+          if (inst[14:12] == 3'b000 && inst[24:20] == 5'b00000) {
+            return true;
+          }
+          # qc.e.beqi/bnei/blti/bgei/bltui/bgeui: funct3=100, inst[24:23]==2'b11
+          if (inst[14:12] == 3'b100 && inst[24:23] == 2'b11) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+  }
+}
+
 function get_and_validate_stack_pointer {
   returns XReg
   arguments XReg sp, Bits<INSTR_ENC_SIZE> encoding

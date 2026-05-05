@@ -1,0 +1,39 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: qc.itdec
+long_name: Instruction Table Double Entry Count Register
+address: 0x801
+priv_mode: U
+length: MXLEN
+writable: true
+description: |
+  The `qc.itdec` register specifies the number of leading 64-bit double entries
+  in the Instruction Lookup Table (ILUT) used by the `qc.cm.ilut` instruction.
+
+  The DEC field holds an 11-bit count. The first DEC logical ILUT entries
+  (indices 0 through DEC−1) are 64-bit double entries. The remaining entries
+  (indices DEC through 2047) are 32-bit single entries.
+
+  The byte offset from the ILUT base address for logical index i is:
+  - If i < DEC: offset = i × 8
+  - If i ≥ DEC: offset = DEC × 8 + (i − DEC) × 4
+
+  The reset value of 0 selects backward-compatible mode in which all entries
+  are 32-bit single entries.
+definedBy:
+  extension:
+    name: Xqccmi
+fields:
+  dec:
+    location: 13-3
+    type: RW
+    reset_value: 0
+    description: |
+      11-bit double entry count. Specifies the number of leading 64-bit entries
+      in the ILUT. Legal range: 0..2047. A value of 0 means all entries are
+      32-bit (backward-compatible mode).

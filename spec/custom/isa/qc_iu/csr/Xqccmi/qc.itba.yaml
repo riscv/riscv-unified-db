@@ -1,0 +1,45 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: qc.itba
+long_name: Instruction Table Base Address Register
+address: 0x800
+priv_mode: U
+length: MXLEN
+writable: true
+description: |
+  The `qc.itba` register holds the base address of the Instruction Lookup Table (ILUT)
+  used by the `qc.cm.ilut` instruction.
+
+  The BASE field specifies bits[XLEN-1:6] of the ILUT base address. The lower 6 bits
+  are implicitly zero, so the ILUT base address is always 64-byte aligned.
+
+  The memory region pointed to by `qc.itba.base` is treated as instruction memory for
+  the purpose of executing ILUT instructions, requiring execute (X) access permission.
+  Read (R) permission is not required.
+
+  `qc.itba` adds architectural state to the system software context and must be
+  saved and restored on context switches.
+definedBy:
+  extension:
+    name: Xqccmi
+fields:
+  base:
+    location_rv32: 31-6
+    location_rv64: 63-6
+    type: RW
+    reset_value: UNDEFINED_LEGAL
+    description: |
+      Bits[XLEN-1:6] of the ILUT base address. The full base address is formed by
+      appending 6 implicit zero bits: `base_addr = {base, 6'b000000}`.
+      The base address must be 64-byte aligned.
+  mode:
+    location: 5-0
+    type: RO
+    reset_value: 0
+    description: |
+      Reserved for future use. Always reads as zero. Writes are ignored.
