@@ -1,0 +1,153 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: qc.cm.ilut
+long_name: Instruction Lookup Table Execute
+description: |
+  Fetch and execute the instruction(s) packed in the ILUT entry at index `ilut_index`.
+
+  The ILUT base address is held in `qc.itba.base` (shifted left by 6 to form a
+  64-byte-aligned byte address). The first `qc.itdec.dec` entries are 64-bit
+  double entries; all remaining entries are 32-bit single entries.
+
+  Entry address calculation:
+  - If `ilut_index` < `qc.itdec.dec`: `entry_addr = (qc.itba.BASE << 6) + ilut_index * 8`
+  - Otherwise: `entry_addr = (qc.itba.BASE << 6) + qc.itdec.DEC * 8 + (ilut_index - qc.itdec.DEC) * 4`
+
+  Each entry may contain one or two packed RISC-V instructions. The first
+  instruction begins at bit 0 of the entry. Its size is determined by the
+  standard RISC-V instruction-length encoding (16-bit, 32-bit, or 48-bit).
+  If bits remain after the first instruction and the next 16 bits are not
+  `c.nop` (16'h0001), a second instruction is present and is also executed.
+
+  PC-relative instructions (`auipc`, branches, and jumps) are not permitted
+  inside ILUT entries. Hardware detects such instructions during decode and
+  raises an IllegalInstruction exception.
+
+  On an exception caused by the second instruction, hardware sets bit 0 of
+  `mepc` to indicate that the fault originated from the second instruction
+  within the entry.
+
+  See the Xqccmi extension description for full details on entry layout,
+  dual-instruction packing, exception handling, and restrictions.
+definedBy:
+  extension:
+    name: Xqccmi
+assembly: ilut_index
+encoding:
+  match: 001-----------00
+  variables:
+    - name: ilut_index
+      location: 12-2
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+operation(): |
+  # Read the double-entry count (N = number of 64-bit double entries)
+  XReg N = {21'b0, CSR[qc.itdec].dec};
+
+  # Compute the byte address of the ILUT entry
+  XReg base_addr = CSR[qc.itba].base << 6;
+  XReg entry_addr;
+  Boolean is_double;
+
+  if (ilut_index < N) {
+    entry_addr = base_addr + (ilut_index * 8);
+    is_double = true;
+  } else {
+    entry_addr = base_addr + (N * 8) + ((ilut_index - N) * 4);
+    is_double = false;
+  }
+
+  # Translate the entry address (instruction fetch)
+  TranslationResult result;
+  if (CSR[misa].S == 1) {
+    result = translate(entry_addr, MemoryOperation::Fetch, mode(), $encoding);
+  } else {
+    result.paddr = entry_addr;
+  }
+
+  # Access check for instruction fetch
+  access_check(result.paddr, is_double ? 8 : 4, $pc, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
+
+  # Read the entry from physical memory.
+  # For a 32-bit entry, read 32 bits. For a 64-bit double entry, read two
+  # consecutive 32-bit words (entry_lo = bits[31:0], entry_hi = bits[63:32]).
+  XReg entry_lo = read_physical_memory(32, result.paddr);
+  XReg entry_hi = 32'b0;
+  if (is_double) {
+    entry_hi = read_physical_memory(32, result.paddr + 4);
+  }
+
+  # Determine the size of the first instruction using RISC-V length encoding:
+  #   bits[1:0] != 2'b11 -> 16-bit instruction
+  #   bits[1:0] == 2'b11 and bits[4:2] != 3'b111 -> 32-bit instruction
+  #   bits[1:0] == 2'b11 and bits[4:2] == 3'b111 -> 48-bit instruction
+  Boolean has_second_inst = false; # true if this entry contains a second packed instruction
+
+  if (entry_lo[1:0] != 2'b11) {
+    # 16-bit first instruction; second instruction is in entry_lo[31:16]
+    Bits<16> second_lo = entry_lo[31:16];
+    if (second_lo != 16'h0001) {
+      has_second_inst = true;
+    }
+  } else if (entry_lo[4:2] != 3'b111) {
+    # 32-bit first instruction
+    if (is_double) {
+      # Second instruction starts at entry_hi[15:0]
+      Bits<16> second_lo = entry_hi[15:0];
+      if (second_lo != 16'h0001) {
+        has_second_inst = true;
+      }
+    }
+    # No room for a second instruction in a 32-bit entry after a 32-bit first
+  } else {
+    # 48-bit first instruction
+    if (!is_double) {
+      # 48-bit instruction does not fit in a 32-bit entry
+      executing_second_inst = false;
+      raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
+    }
+    # No room for a second instruction after a 48-bit first in a 64-bit entry
+  }
+
+  # PC-relative instruction check:
+  # Hardware detects auipc, branches, and jump instructions during decode
+  # and raises an IllegalInstruction exception before any instruction executes.
+  # mepc bit 0 reflects which slot contained the forbidden instruction.
+  if (is_pc_relative_inst?(entry_lo)) {
+    executing_second_inst = false;
+    raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
+  }
+  if (has_second_inst) {
+    Bits<32> second_inst;
+    if (entry_lo[1:0] != 2'b11) {
+      second_inst = {16'b0, entry_lo[31:16]};
+    } else {
+      second_inst = {16'b0, entry_hi[15:0]};
+    }
+    if (is_pc_relative_inst?(second_inst)) {
+      executing_second_inst = true;
+      raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
+    }
+  }
+
+  # Execute the first instruction from the ILUT entry.
+  # IDL cannot express dynamic instruction dispatch; actual execution is implementation-defined.
+  # Any exception raised must call raise_ilut() with executing_second_inst = false (mepc bit 0 = 0).
+  executing_second_inst = false;
+  unpredictable("TO-DO: execute first ILUT instruction");
+
+  # Execute the second instruction from the ILUT entry, if present.
+  # Any exception raised must call raise_ilut() with executing_second_inst = true (mepc bit 0 = 1).
+  if (has_second_inst) {
+    executing_second_inst = true;
+    unpredictable("TO-DO: execute second ILUT instruction");
+    executing_second_inst = false;
+  }
