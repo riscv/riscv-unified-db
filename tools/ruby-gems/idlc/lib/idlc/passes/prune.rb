@@ -168,7 +168,7 @@ module Idl
     def nullify_assignments(symtab)
       return if variable.type(symtab).global?
       root = variable
-      root = root.var while root.is_a?(AryElementAccessAst)
+      root = root.var while root.is_a?(AryElementAccessAst) || root.is_a?(AryRangeAccessAst)
       var = symtab.get(root.name)
       var.value = nil unless var.nil?
     end
@@ -583,7 +583,7 @@ module Idl
         )
         # Nullify any variable assigned in any branch, since we don't know which ran
         if_body.nullify_assignments(symtab)
-        unknown_elsifs.each { |eif| eif.body.nullify_assignments(symtab) }
+        pruned_elsifs.each { |eif| eif.body.nullify_assignments(symtab) }
         final_else_body.nullify_assignments(symtab)
         result
       end

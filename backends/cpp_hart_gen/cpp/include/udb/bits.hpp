@@ -3128,9 +3128,10 @@ namespace udb {
       // Sign-extend the stored value from m_width bits to MaxN bits so that
       // subsequent conversions to narrower fixed-width types work correctly.
       auto sign_extended_val = sign_extend(m_val.value().get());
+      auto sign_extended_mask = sign_extend(m_val.unknown_mask().get());
       return _PossiblyUnknownRuntimeBits<MaxN, true>{
         WidthArg(m_width),
-        ValueArg(_PossiblyUnknownBits<MaxN, true>{_Bits<MaxN, false>{sign_extended_val}, m_val.unknown_mask()})
+        ValueArg(_PossiblyUnknownBits<MaxN, true>{_Bits<MaxN, false>{sign_extended_val}, _Bits<MaxN, false>{sign_extended_mask}})
       };
     }
 

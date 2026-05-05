@@ -102,25 +102,27 @@ module Idl
 
   class AryElementAssignmentAst
     def find_dst_registers(symtab)
+      base_name = Idl::AstNode.extract_base_var_name(lhs)
+      return [] unless base_name == "X"
+
+      if lhs.is_a?(Idl::IdAst) && lhs.name == "X"
+        # Direct X register assignment: X[idx] = val
+        reg_idx = idx
+      elsif lhs.is_a?(Idl::AryElementAccessAst) && lhs.var.is_a?(Idl::IdAst) && lhs.var.name == "X"
+        # Nested X register access: X[rs1][bit] = val — register is lhs.index
+        reg_idx = lhs.index
+      else
+        raise ComplexRegDetermination
+      end
+
       value_result = value_try do
-        # Extract base variable name from potentially nested access
-        base_name = Idl::AstNode.extract_base_var_name(lhs)
-        if base_name == "X"
-          return [idx.value(symtab)]
-        else
-          return []
-        end
+        return [reg_idx.value(symtab)]
       end
       value_else(value_result) do
-        base_name = Idl::AstNode.extract_base_var_name(lhs)
-        if base_name == "X"
-          if idx.type(symtab).const?
-            return [idx.gen_cpp(symtab, 0)]
-          else
-            raise ComplexRegDetermination
-          end
+        if reg_idx.type(symtab).const?
+          return [reg_idx.gen_cpp(symtab, 0)]
         else
-          return []
+          raise ComplexRegDetermination
         end
       end
     end

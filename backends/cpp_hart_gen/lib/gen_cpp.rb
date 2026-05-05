@@ -928,8 +928,7 @@ module Idl
   class AryElementAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      base_name = Idl::AstNode.extract_base_var_name(lhs)
-      if base_name == "X"
+      if lhs.is_a?(Idl::IdAst) && lhs.name == "X"
         #"#{' '*indent}  #{lhs.gen_cpp(symtab, 0, indent_spaces:)}[#{idx.gen_cpp(symtab, 0, indent_spaces:)}] = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
         "#{' ' * indent}__UDB_HART->_set_xreg( #{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
       elsif lhs.type(symtab).kind == :bits

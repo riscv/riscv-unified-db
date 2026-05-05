@@ -457,8 +457,14 @@ module Idl
         # Recursively write back the parent (which may itself be nested)
         write_back_nested(target.var, parent_value, symtab)
       when AryRangeAccessAst
-        # Range access can't be on LHS of assignment
-        raise InternalError, "Cannot write back through range access"
+        # Recursive case: v[msb:lsb] = new_value
+        # Read parent, splice new_value into [msb:lsb], write parent back
+        parent_value = target.var.value(symtab)
+        msb_val = target.msb.value(symtab)
+        lsb_val = target.lsb.value(symtab)
+        mask = ((1 << (msb_val - lsb_val + 1)) - 1) << lsb_val
+        updated_parent = (parent_value & ~mask) | ((new_value << lsb_val) & mask)
+        write_back_nested(target.var, updated_parent, symtab)
       else
         raise InternalError, "Unknown target type for write-back: #{target.class.name}"
       end
@@ -2522,7 +2528,7 @@ module Idl
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab)
-      if var.name == "X"
+      if var.is_a?(IdAst) && var.name == "X"
         false
       else
         var.const_eval?(symtab) && index.const_eval?(symtab)
