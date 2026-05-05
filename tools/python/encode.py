@@ -373,6 +373,12 @@ def parse_assembly_arguments(line, instruction_operands):
             operand_values[instruction_operands[i]["name"]] = arguments[i]
             dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
 
+        elif operand_def["type"] == "float_immediate":
+            dprint(f"#    Detected float_immediate argument: {arguments[argi]}")
+
+            operand_values[instruction_operands[i]["name"]] = arguments[i]
+            dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
+
         # consume argument
         argi += 1
 
@@ -458,6 +464,75 @@ def builtin_encode_sreg(reg):
     return (reg - 8) - 8 * ((reg - 8) // 10)
 
 
+def builtin_encode_float_immediate(value):
+    if value == "-1.0":
+        return 0b00000
+    if value == "min":
+        return 0b00001
+    if value == "0.0000152587890625":
+        return 0b00010
+    if value == "0.000030517578125":
+        return 0b00011
+    if value == "0.00390625":
+        return 0b00100
+    if value == "0.0078125":
+        return 0b00101
+    if value == "0.0625":
+        return 0b00110
+    if value == "0.125":
+        return 0b00111
+    if value == "0.25":
+        return 0b01000
+    if value == "0.3125":
+        return 0b01001
+    if value == "0.375":
+        return 0b01010
+    if value == "0.4375":
+        return 0b01011
+    if value == "0.5":
+        return 0b01100
+    if value == "0.625":
+        return 0b01101
+    if value == "0.75":
+        return 0b01110
+    if value == "0.875":
+        return 0b01111
+    if value == "1.0":
+        return 0b10000
+    if value == "1.25":
+        return 0b10001
+    if value == "1.5":
+        return 0b10010
+    if value == "1.75":
+        return 0b10011
+    if value == "2.0":
+        return 0b10100
+    if value == "2.5":
+        return 0b10101
+    if value == "3":
+        return 0b10110
+    if value == "4":
+        return 0b10111
+    if value == "8":
+        return 0b11000
+    if value == "16":
+        return 0b11001
+    if value == "128":
+        return 0b11010
+    if value == "256":
+        return 0b11011
+    if value == "32768":
+        return 0b11100
+    if value == "65536":
+        return 0b11101
+    if value == "inf":
+        return 0b11110
+    if value == "nan":
+        return 0b11111
+    print(f'# ERROR: Unrecognized floating point immediate: "{value}"')
+    return None
+
+
 def UDB_invoke_IDL(idl, operands, xlen):
     if "return 1;" in idl:  # vector mask
         return 1
@@ -485,6 +560,8 @@ def UDB_invoke_IDL(idl, operands, xlen):
             return operands["xd"] - 8
         if "xs1" in idl:
             return operands["xs1"] - 8
+    if "nan" in idl and "min" in idl and "inf" in idl:
+        return builtin_encode_float_immediate(operands["xs1"])
     return None
 
 

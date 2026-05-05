@@ -370,6 +370,73 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
             total_space = register_space_aligned + extra_space
             assembly_parts.append(str(-total_space))
 
+        elif operand["type"] == "float_immediate":
+            if variable_values["xs1"] == 0:
+                value = "-1.0"
+            elif variable_values["xs1"] == 1:
+                value = "min"
+            elif variable_values["xs1"] == 2:
+                value = "0.0000152587890625"
+            elif variable_values["xs1"] == 3:
+                value = "0.000030517578125"
+            elif variable_values["xs1"] == 4:
+                value = "0.00390625"
+            elif variable_values["xs1"] == 5:
+                value = "0.0078125"
+            elif variable_values["xs1"] == 6:
+                value = "0.0625"
+            elif variable_values["xs1"] == 7:
+                value = "0.125"
+            elif variable_values["xs1"] == 8:
+                value = "0.25"
+            elif variable_values["xs1"] == 9:
+                value = "0.3125"
+            elif variable_values["xs1"] == 10:
+                value = "0.375"
+            elif variable_values["xs1"] == 11:
+                value = "0.4375"
+            elif variable_values["xs1"] == 12:
+                value = "0.5"
+            elif variable_values["xs1"] == 13:
+                value = "0.625"
+            elif variable_values["xs1"] == 14:
+                value = "0.75"
+            elif variable_values["xs1"] == 15:
+                value = "0.875"
+            elif variable_values["xs1"] == 16:
+                value = "1.0"
+            elif variable_values["xs1"] == 17:
+                value = "1.25"
+            elif variable_values["xs1"] == 18:
+                value = "1.5"
+            elif variable_values["xs1"] == 19:
+                value = "1.75"
+            elif variable_values["xs1"] == 20:
+                value = "2.0"
+            elif variable_values["xs1"] == 21:
+                value = "2.5"
+            elif variable_values["xs1"] == 22:
+                value = "3"
+            elif variable_values["xs1"] == 23:
+                value = "4"
+            elif variable_values["xs1"] == 24:
+                value = "8"
+            elif variable_values["xs1"] == 25:
+                value = "16"
+            elif variable_values["xs1"] == 26:
+                value = "128"
+            elif variable_values["xs1"] == 27:
+                value = "256"
+            elif variable_values["xs1"] == 28:
+                value = "32768"
+            elif variable_values["xs1"] == 29:
+                value = "65536"
+            elif variable_values["xs1"] == 30:
+                value = "inf"
+            elif variable_values["xs1"] == 31:
+                value = "nan"
+            assembly_parts.append(value)
+
         else:
             value = variable_values[operand_name]
             for variable in variables:
