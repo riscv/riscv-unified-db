@@ -11,8 +11,6 @@ require "minitest/autorun"
 
 $root ||= (Pathname.new(__FILE__) / ".." / ".." / ".." / "..").realpath
 
-require_relative "helpers"
-
 # test IDL arrays
 class TestArrays < Minitest::Test
   include TestMixin

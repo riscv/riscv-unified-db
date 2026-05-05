@@ -3142,7 +3142,9 @@ module Idl
       end
       value_else(value_result) do
         base_name = T.must(AstNode.extract_base_var_name(variable))
-        symtab.add(base_name, Var.new(base_name, variable.type(symtab)))
+        v = symtab.get(base_name)
+        internal_error "did not find array base" if v.nil?
+        v.value = nil
         value_error "Either the range or right-hand side of an array range assignment is unknown"
       end
     end
