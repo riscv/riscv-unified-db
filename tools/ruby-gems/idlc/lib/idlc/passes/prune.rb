@@ -159,7 +159,9 @@ module Idl
           # array var itself is unknown; nothing more to do
         end
       when :bits
-        var = symtab.get(lhs.text_value)
+        root = lhs
+        root = root.var while root.is_a?(AryElementAccessAst) || root.is_a?(AryRangeAccessAst)
+        var = symtab.get(root.name)
         var.value = nil unless var.nil?
       end
     end

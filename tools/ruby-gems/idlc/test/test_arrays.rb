@@ -6,6 +6,7 @@
 
 require "idlc"
 require "idlc/ast"
+require "idlc/passes/prune"
 require_relative "helpers"
 require "minitest/autorun"
 
@@ -191,5 +192,37 @@ class TestArrays < Minitest::Test
     assert_instance_of Idl::AryElementAccessAst, ast.variable
     assert_instance_of Idl::IdAst, ast.variable.var
     assert_equal "X", ast.variable.var.name
+  end
+
+  def test_execute_nested_bits_element_assignment
+    # v is an array of 4 x Bits<32>, initially all zeros
+    v_type = Idl::Type.new(:array, width: 4, sub_type: Idl::Type.new(:bits, width: 32))
+    @symtab.add("v", Idl::Var.new("v", v_type, [0, 0, 0, 0]))
+
+    idl = "v[1][0] = 1"
+    @compiler.parser.set_input_file(idl, 0)
+    ast = @compiler.parser.parse(idl, root: :assignment).to_ast
+
+    ast.execute(@symtab)
+
+    v_val = @symtab.get("v").value
+    assert_kind_of Array, v_val, "v should remain an array after nested bits element assignment"
+    assert_equal 1, v_val[1], "bit 0 of v[1] should be set"
+    assert_equal 0, v_val[0], "v[0] should be unchanged"
+    assert_equal 0, v_val[2], "v[2] should be unchanged"
+  end
+
+  def test_nullify_nested_bits_element_assignment
+    # v is an array of 4 x Bits<32> with known values
+    v_type = Idl::Type.new(:array, width: 4, sub_type: Idl::Type.new(:bits, width: 32))
+    @symtab.add("v", Idl::Var.new("v", v_type, [10, 20, 30, 40]))
+
+    idl = "v[1][0] = 1"
+    @compiler.parser.set_input_file(idl, 0)
+    ast = @compiler.parser.parse(idl, root: :assignment).to_ast
+
+    ast.nullify_assignments(@symtab)
+
+    assert_nil @symtab.get("v").value, "v should be invalidated after nullify_assignments on nested bits element assignment"
   end
 end

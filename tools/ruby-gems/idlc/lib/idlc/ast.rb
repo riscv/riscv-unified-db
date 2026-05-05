@@ -2985,14 +2985,15 @@ module Idl
           value_error "right-hand side of array element assignment is unknown"
         end
       when :bits
-        base_name = T.must(AstNode.extract_base_var_name(lhs))
-        var = symtab.get(base_name)
         value_result = value_try do
-          v = rhs.value(symtab)
-          var.value = (lhs.value(symtab) & ~0) | ((v & 1) << idx.value(symtab))
+          new_element = (lhs.value(symtab) & ~0) | ((rhs.value(symtab) & 1) << idx.value(symtab))
+          AstNode.write_back_nested(lhs, new_element, symtab)
         end
         value_else(value_result) do
-          var.value = nil
+          base_name = T.must(AstNode.extract_base_var_name(lhs))
+          v = symtab.get(base_name)
+          internal_error "did not find array base '#{base_name}'" if v.nil?
+          v.value = nil
         end
       else
         internal_error "unexpected type for array element assignment"
