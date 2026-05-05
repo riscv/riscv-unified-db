@@ -18,8 +18,205 @@ encoding:
   variables:
     - name: xs1
       location: 19-15
+      encode(operands): |
+        if (operands[xs1] == "-1.0") {
+          return 5'b00000;
+        }
+        if (operands[xs1] == "min") {
+          return 5'b00001;
+        }
+        if (operands[xs1] == "0.0000152587890625") {
+          return 5'b00010;
+        }
+        if (operands[xs1] == "0.000030517578125") {
+          return 5'b00011;
+        }
+        if (operands[xs1] == "0.00390625") {
+          return 5'b00100;
+        }
+        if (operands[xs1] == "0.0078125") {
+          return 5'b00101;
+        }
+        if (operands[xs1] == "0.0625") {
+          return 5'b00110;
+        }
+        if (operands[xs1] == "0.125") {
+          return 5'b00111;
+        }
+        if (operands[xs1] == "0.25") {
+          return 5'b01000;
+        }
+        if (operands[xs1] == "0.3125") {
+          return 5'b01001;
+        }
+        if (operands[xs1] == "0.375") {
+          return 5'b01010;
+        }
+        if (operands[xs1] == "0.4375") {
+          return 5'b01011;
+        }
+        if (operands[xs1] == "0.5") {
+          return 5'b01100;
+        }
+        if (operands[xs1] == "0.625") {
+          return 5'b01101;
+        }
+        if (operands[xs1] == "0.75") {
+          return 5'b01110;
+        }
+        if (operands[xs1] == "0.875") {
+          return 5'b01111;
+        }
+        if (operands[xs1] == "1.0") {
+          return 5'b10000;
+        }
+        if (operands[xs1] == "1.25") {
+          return 5'b10001;
+        }
+        if (operands[xs1] == "1.5") {
+          return 5'b10010;
+        }
+        if (operands[xs1] == "1.75") {
+          return 5'b10011;
+        }
+        if (operands[xs1] == "2.0") {
+          return 5'b10100;
+        }
+        if (operands[xs1] == "2.5") {
+          return 5'b10101;
+        }
+        if (operands[xs1] == "3") {
+          return 5'b10110;
+        }
+        if (operands[xs1] == "4") {
+          return 5'b10111;
+        }
+        if (operands[xs1] == "8") {
+          return 5'b11000;
+        }
+        if (operands[xs1] == "16") {
+          return 5'b11001;
+        }
+        if (operands[xs1] == "128") {
+          return 5'b11010;
+        }
+        if (operands[xs1] == "256") {
+          return 5'b11011;
+        }
+        if (operands[xs1] == "32768") {
+          return 5'b11100;
+        }
+        if (operands[xs1] == "65536") {
+          return 5'b11101;
+        }
+        if (operands[xs1] == "inf") {
+          return 5'b11110;
+        }
+        if (operands[xs1] == "nan") {
+          return 5'b11111;
+        }
+        raise(`Unrecognized floating point immediate: ${operands[xs1]}`);
+      decode(): |
+        if (xs1 == 5'b00000) {
+            return "-1.0";
+        }
+        if (xs1 == 5'b00001) {
+            return "min";
+        }
+        if (xs1 == 5'b00010) {
+            return "0.0000152587890625";
+        }
+        if (xs1 == 5'b00011) {
+            return "0.000030517578125";
+        }
+        if (xs1 == 5'b00100) {
+            return "0.00390625";
+        }
+        if (xs1 == 5'b00101) {
+            return "0.0078125";
+        }
+        if (xs1 == 5'b00110) {
+            return "0.0625";
+        }
+        if (xs1 == 5'b00111) {
+            return "0.125";
+        }
+        if (xs1 == 5'b01000) {
+            return "0.25";
+        }
+        if (xs1 == 5'b01001) {
+            return "0.3125";
+        }
+        if (xs1 == 5'b01010) {
+            return "0.375";
+        }
+        if (xs1 == 5'b01011) {
+            return "0.4375";
+        }
+        if (xs1 == 5'b01100) {
+            return "0.5";
+        }
+        if (xs1 == 5'b01101) {
+            return "0.625";
+        }
+        if (xs1 == 5'b01110) {
+            return "0.75";
+        }
+        if (xs1 == 5'b01111) {
+            return "0.875";
+        }
+        if (xs1 == 5'b10000) {
+            return "1.0";
+        }
+        if (xs1 == 5'b10001) {
+            return "1.25";
+        }
+        if (xs1 == 5'b10010) {
+            return "1.5";
+        }
+        if (xs1 == 5'b10011) {
+            return "1.75";
+        }
+        if (xs1 == 5'b10100) {
+            return "2.0";
+        }
+        if (xs1 == 5'b10101) {
+            return "2.5";
+        }
+        if (xs1 == 5'b10110) {
+            return "3";
+        }
+        if (xs1 == 5'b10111) {
+            return "4";
+        }
+        if (xs1 == 5'b11000) {
+            return "8";
+        }
+        if (xs1 == 5'b11001) {
+            return "16";
+        }
+        if (xs1 == 5'b11010) {
+            return "128";
+        }
+        if (xs1 == 5'b11011) {
+            return "256";
+        }
+        if (xs1 == 5'b11100) {
+            return "32768";
+        }
+        if (xs1 == 5'b11101) {
+            return "65536";
+        }
+        if (xs1 == 5'b11110) {
+            return "inf";
+        }
+        return "nan";
     - name: fd
       location: 11-7
+operands:
+  - $inherits: operand/fd.yaml#/data
+  - $inherits: operand/fimm.yaml#/data
+    name: xs1
 access:
   s: always
   u: always

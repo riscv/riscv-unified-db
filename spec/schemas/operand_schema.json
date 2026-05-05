@@ -201,6 +201,22 @@
           "required": ["type", "possible_values"]
         },
         {
+          "description": "Floating point immediate",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "float_immediate"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["type", "possible_values"]
+        },
+        {
           "description": "inherits",
           "type": "object",
           "properties": {
