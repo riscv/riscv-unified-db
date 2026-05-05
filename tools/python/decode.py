@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 import argparse
 import sys
 from pathlib import Path
@@ -7,6 +9,9 @@ import yaml
 
 yamls = []
 instructions = {}
+register_files = {}
+register_name_by_index = {}
+register_abi_name_by_index = {}
 instruction_by_match = {}
 debug = False
 
@@ -23,6 +28,11 @@ def parse_args():
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
     parser.add_argument(
+        "--abi-names",
+        action="store_true",
+        help="Emit ABI register names when available (e.g. ra/sp/a0)",
+    )
+    parser.add_argument(
         "dirs", nargs="*", default=["."], help="Directories to search for YAML files"
     )
     return parser.parse_args()
@@ -33,17 +43,63 @@ def dprint(s):
         print(s)
 
 
-def find_and_load_yamls(path, kind=None):
+def find_and_load_yamls(path, kinds):
     p = Path(path)
     for file in p.rglob("*.yaml"):
         with open(file) as f:
             y = yaml.safe_load(f)
             if "kind" in y:
-                if y["kind"] == kind:
+                if y["kind"] in kinds:
                     y["file"] = file
                     yamls.append(y)
             else:
                 print(f"# WARNING: No 'kind' field in {file}")
+
+
+def _register_abi_name(register_entry):
+    abi_mnemonics = register_entry.get("abi_mnemonics", [])
+    for value in abi_mnemonics:
+        if isinstance(value, str):
+            return value
+
+    return None
+
+
+def build_register_index_maps():
+    register_name_by_index.clear()
+    register_abi_name_by_index.clear()
+
+    for rf_name, rf in register_files.items():
+        registers = rf.get("registers", [])
+        if not isinstance(registers, list):
+            continue
+
+        canonical_map = {}
+        abi_map = {}
+        for reg_index, register_entry in enumerate(registers):
+            reg_name = register_entry.get("name")
+            if isinstance(reg_name, str):
+                canonical_map[reg_index] = reg_name
+
+            abi_name = _register_abi_name(register_entry)
+            if isinstance(abi_name, str):
+                abi_map[reg_index] = abi_name
+
+        register_name_by_index[rf_name] = canonical_map
+        register_abi_name_by_index[rf_name] = abi_map
+
+
+def register_name_for_index(reg_file_name, reg_index, abi_names=False):
+    if abi_names:
+        abi_map = register_abi_name_by_index.get(reg_file_name, {})
+        if reg_index in abi_map:
+            return abi_map[reg_index]
+
+    canonical_map = register_name_by_index.get(reg_file_name, {})
+    if reg_index in canonical_map:
+        return canonical_map[reg_index]
+
+    return str(reg_index)
 
 
 def read_opcodes(f):
@@ -180,7 +236,7 @@ def extract_variable_values(opcode, instruction, xlen=64):
     return variable_values
 
 
-def format_assembly(instruction, variable_values, xlen=64):
+def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
     """Format assembly instruction based on instruction definition and variable values"""
     mnemonic = instruction["name"]
 
@@ -260,7 +316,8 @@ def format_assembly(instruction, variable_values, xlen=64):
                 offset_value = variable_values[operand["offset"]["name"]]
                 if "left_shift" in operand["offset"]:
                     offset_value = offset_value << operand["offset"]["left_shift"]
-            assembly_parts.append(f"{offset_value}({value})")
+            reg_name = register_name_for_index(operand.get("reg_file"), value, abi_names)
+            assembly_parts.append(f"{offset_value}({reg_name})")
 
         elif operand["type"] == "reg_range":
             dprint(f'# Handling reg_range "{operand}" {variable_values}')
@@ -322,7 +379,12 @@ def format_assembly(instruction, variable_values, xlen=64):
                             value = value + 8 + 8 * ((value + 6) // 8)
                     break
             dprint(f"# map {operand_name} {value}")
-            assembly_parts.append(str(value))
+            if operand["type"] in ["register", "register_pair"]:
+                assembly_parts.append(
+                    register_name_for_index(operand.get("reg_file"), value, abi_names)
+                )
+            else:
+                assembly_parts.append(str(value))
 
     if assembly_parts:
         return f"{mnemonic} {', '.join(assembly_parts)}"
@@ -331,7 +393,7 @@ def format_assembly(instruction, variable_values, xlen=64):
     return mnemonic
 
 
-def decode(opcode, xlen=64):
+def decode(opcode, xlen=64, abi_names=False):
     """Decode an opcode into an assembly instruction"""
     dprint(f"# Decoding opcode: {opcode} with xlen={xlen}")
 
@@ -348,14 +410,17 @@ def decode(opcode, xlen=64):
     dprint(f"# Extracted variable values: {variable_values}")
 
     # Format assembly instruction
-    assembly = format_assembly(instruction, variable_values, xlen)
+    assembly = format_assembly(instruction, variable_values, xlen, abi_names=abi_names)
     dprint(f"# Formatted assembly: {assembly}")
 
     return assembly
 
 
 def main():
+    global debug
+
     args = parse_args()
+    debug = args.debug
 
     # Validate xlen parameter
     xlen = args.xlen
@@ -365,11 +430,17 @@ def main():
     print(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
 
     for path in args.dirs:
-        find_and_load_yamls(path, kind="instruction")
+        find_and_load_yamls(path, ["instruction", "register_file"])
 
-    # Create a dictionary mapping instruction mnemonics to their definitions
-    for instruction in yamls:
-        instructions[instruction["name"]] = instruction
+    # Create dictionaries for instruction and register-file definitions.
+    for y in yamls:
+        kind = y.get("kind")
+        if kind == "instruction":
+            instructions[y["name"]] = y
+        elif kind == "register_file":
+            register_files[y["name"]] = y
+
+    build_register_index_maps()
 
     if args.opcodes:
         with open(args.opcodes) as f:
@@ -382,7 +453,7 @@ def main():
         opcode = opcode.split("#")[0].strip()  # Remove comments and whitespace
         if not opcode:
             continue  # Skip empty lines
-        assembly = decode(opcode, xlen)
+        assembly = decode(opcode, xlen, abi_names=args.abi_names)
         if assembly:
             print(f"{assembly}")
         else:

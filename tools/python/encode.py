@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 import argparse
 import re
 import sys
@@ -8,6 +10,8 @@ import yaml
 
 yamls = []
 instructions = {}
+register_files = {}
+register_name_to_index = {}
 operand_list = []
 debug = False
 
@@ -34,17 +38,64 @@ def dprint(s):
         print(s)
 
 
-def find_and_load_yamls(path, kind=None):
+def find_and_load_yamls(path, kinds):
     p = Path(path)
     for file in p.rglob("*.yaml"):
         with open(file) as f:
             y = yaml.safe_load(f)
             if "kind" in y:
-                if y["kind"] == kind:
+                if y["kind"] in kinds:
                     y["file"] = file
                     yamls.append(y)
             else:
                 print(f"# WARNING: No 'kind' field in {file}")
+
+
+def build_register_name_index():
+    register_name_to_index.clear()
+
+    for rf_name, rf in register_files.items():
+        registers = rf.get("registers", [])
+
+        name_map = {}
+        for reg_index, register_entry in enumerate(registers):
+            if isinstance(register_entry.get("name"), str):
+                name_map[register_entry["name"]] = reg_index
+
+            abi_names = register_entry.get("abi_mnemonics", [])
+            for abi_name in abi_names:
+                name_map[abi_name] = reg_index
+
+        register_name_to_index[rf_name] = name_map
+
+
+def parse_register_value(reg_operand, operand_def):
+    reg_text = str(reg_operand).strip()
+
+    try:
+        return int(reg_text, 0)
+    except ValueError:
+        pass
+
+    reg_file = operand_def.get("reg_file")
+    if not isinstance(reg_file, str):
+        print(
+            f"#    ERROR: Invalid register '{reg_text}' for operand without register-file metadata"
+        )
+        return None
+    reg_file = reg_file.strip()
+
+    reg_names = register_name_to_index.get(reg_file)
+    if reg_names is None:
+        print(f"#    ERROR: Unknown register file '{reg_file}' while parsing register '{reg_text}'")
+        return None
+
+    reg_idx = reg_names.get(reg_text.lower())
+    if reg_idx is None:
+        print(f"#    ERROR: Unknown register name '{reg_text}' for register file '{reg_file}'")
+        return None
+
+    return reg_idx
 
 
 def field_width(s):
@@ -223,7 +274,11 @@ def parse_assembly_arguments(line, instruction_operands):
                 offset_part = arguments[argi].split("(")[0].strip()
                 if offset_part == "":
                     offset_part = "0"
-                reg_index = int(arguments[argi].split("(")[1].split(")")[0].strip())
+                reg_text = arguments[argi].split("(")[1].split(")")[0].strip()
+                reg_index = parse_register_value(reg_text, operand_def)
+                if reg_index is None:
+                    print(f"# ERROR: Unknown register name {reg_text}")
+                    return None
                 dprint(f"#    Extracted offset: {offset_part}, register: {reg_index}")
 
                 # print(f"#{instruction_operands[i]}")
@@ -252,8 +307,11 @@ def parse_assembly_arguments(line, instruction_operands):
                         return None
 
             else:
-                dprint(f"#    Detected register argument: {arguments[i]}")
-                reg_index = int(arguments[argi])
+                dprint(f"#    Detected register argument: {arguments[argi]}")
+                reg_index = parse_register_value(arguments[argi], operand_def)
+                if reg_index is None:
+                    print(f"# ERROR: Unknown register name {arguments[argi]}")
+                    return None
 
             # Validate register range against possible_values
             if "possible_values" in operand_def:
@@ -419,7 +477,7 @@ def UDB_invoke_IDL(idl, operands, xlen):
     if "r1s" in idl:
         return builtin_encode_sreg(operands["r1s"])
     if "r2s" in idl:
-        return builtin_encode_sreg(operands["r1s"])
+        return builtin_encode_sreg(operands["r2s"])
     if ".offset" in idl:
         return operands["imm"]
     if "reg2creg" in idl:
@@ -557,11 +615,17 @@ def main():
     print(f"# Using RISC-V {xlen}-bit architecture")
 
     for path in args.dirs:
-        find_and_load_yamls(path, kind="instruction")
+        find_and_load_yamls(path, ["instruction", "register_file"])
 
-    # Create a dictionary mapping instruction mnemonics to their definitions
-    for instruction in yamls:
-        instructions[instruction["name"]] = instruction
+    # Create dictionaries for instruction and register-file definitions.
+    for y in yamls:
+        kind = y.get("kind")
+        if kind == "instruction":
+            instructions[y["name"]] = y
+        elif kind == "register_file":
+            register_files[y["name"]] = y
+
+    build_register_name_index()
 
     assembly_lines = []
     if args.assembly:
