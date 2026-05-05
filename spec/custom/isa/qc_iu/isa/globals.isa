@@ -103,14 +103,15 @@ function raise_ilut {
   }
 }
 
-function is_pc_relative_inst? {
+function is_pc_referencing_inst? {
   returns Boolean
   arguments Bits<32> inst
   description {
-    Returns true if +inst+ is a PC-relative instruction (auipc, branch, jump, or
-    compressed PC-relative jump (jal/c.j/c.jal), or compressed branch) that is
-    forbidden inside an ILUT entry. Register-indirect jumps (jalr, c.jr, c.jalr)
-    are NOT PC-relative and are permitted inside ILUT entries.
+    Returns true if +inst+ references PC as an input or output, making it
+    forbidden inside an ILUT entry. This covers three categories:
+    (1) PC-relative instructions: auipc, branches, jal, c.j, c.jal, c.beqz, c.bnez;
+    (2) register-indirect jumps that write PC: jalr, c.jr, c.jalr;
+    (3) return instructions that write PC: cm.popret, cm.popretz, qc.cm.popret, qc.cm.popretz.
     For 16-bit compressed instructions, only the lower 16 bits of +inst+ are examined.
     For 48-bit Xqci instructions, only the lower 32 bits are passed here (the upper
     16 bits are in a separate word and are not needed for this check).
@@ -135,6 +136,22 @@ function is_pc_relative_inst? {
       if (cinst[15:13] == 3'b111 && cinst[1:0] == 2'b01) {
         return true;
       }
+      # c.jr:   bits[15:12]=1000, bits[6:2]!=00000, bits[1:0]=10 (register jump, writes PC)
+      if (cinst[15:12] == 4'b1000 && cinst[6:2] != 5'b00000 && cinst[1:0] == 2'b10) {
+        return true;
+      }
+      # c.jalr: bits[15:12]=1001, bits[6:2]!=00000, bits[1:0]=10 (register jump-and-link, writes PC)
+      if (cinst[15:12] == 4'b1001 && cinst[6:2] != 5'b00000 && cinst[1:0] == 2'b10) {
+        return true;
+      }
+      # cm.popret / qc.cm.popret: bits[15:8]=10111110, bits[1:0]=10 (pops stack and returns, writes PC)
+      if (cinst[15:8] == 8'b10111110 && cinst[1:0] == 2'b10) {
+        return true;
+      }
+      # cm.popretz / qc.cm.popretz: bits[15:8]=10111100, bits[1:0]=10 (pops stack, zeroes a0, returns, writes PC)
+      if (cinst[15:8] == 8'b10111100 && cinst[1:0] == 2'b10) {
+        return true;
+      }
       return false;
     } else {
       # 32-bit (or 48-bit) instruction: check opcode field bits[6:0]
@@ -145,6 +162,11 @@ function is_pc_relative_inst? {
       }
       # jal
       if (opcode == 7'b1101111) {
+        return true;
+      }
+      # jalr: register-indirect jump, writes PC
+      # (grouped with PC-referencing instructions, not PC-relative)
+      if (opcode == 7'b1100111) {
         return true;
       }
       # branches

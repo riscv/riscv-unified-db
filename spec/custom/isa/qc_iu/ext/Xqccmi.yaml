@@ -115,15 +115,35 @@ description: |
 
   === Instruction Restrictions
 
-  PC-relative instructions are NOT permitted in the ILUT. This includes:
+  Any instruction that references PC as an input or output is NOT permitted
+  in the ILUT. Hardware detects such instructions during decode and raises an
+  illegal instruction exception before any instruction in the entry executes.
 
-  * `auipc`
-  * All branch instructions (beq, bne, blt, bge, bltu, bgeu, c.beqz, c.bnez, etc.)
-  * All jump instructions (jal, jalr, c.j, c.jal, c.jr, c.jalr, etc.)
+  Forbidden instructions fall into three categories:
 
-  If a PC-relative instruction is fetched from the ILUT, an illegal instruction
-  exception is raised. 16-bit compressed instructions (bits[1:0] != 2'b11) are
-  otherwise valid in ILUT entries.
+  * *PC-relative instructions* (read PC as input):
+  ** `auipc`
+  ** All branch instructions (`beq`, `bne`, `blt`, `bge`, `bltu`, `bgeu`,
+     `c.beqz`, `c.bnez`, etc.)
+  ** PC-relative jump instructions (`jal`, `c.j`, `c.jal`)
+
+  * *Register-indirect jumps* (write PC as output):
+  ** `jalr`
+  ** `c.jr`
+  ** `c.jalr`
+
+  * *Return instructions* (write PC as output):
+  ** `cm.popret`
+  ** `cm.popretz`
+  ** `qc.cm.popret`
+  ** `qc.cm.popretz`
+
+  The following push/pop instructions are explicitly *allowed* in ILUT entries
+  because they do not reference PC:
+  `cm.push`, `cm.pop`, `qc.cm.push`, `qc.cm.pushfp`, `qc.cm.pop`.
+
+  16-bit compressed instructions (bits[1:0] != 2'b11) are otherwise valid
+  in ILUT entries.
 
   === Execution Model
 

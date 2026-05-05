@@ -24,9 +24,13 @@ description: |
   If bits remain after the first instruction and the next 16 bits are not
   `c.nop` (16'h0001), a second instruction is present and is also executed.
 
-  PC-relative instructions (`auipc`, branches, and jumps) are not permitted
-  inside ILUT entries. Hardware detects such instructions during decode and
-  raises an IllegalInstruction exception.
+  Any instruction that references PC as an input or output is not permitted
+  inside ILUT entries. This includes: PC-relative instructions (`auipc`,
+  branches, `jal`, `c.j`, `c.jal`, `c.beqz`, `c.bnez`); register-indirect
+  jumps that write PC (`jalr`, `c.jr`, `c.jalr`); and return instructions
+  that write PC (`cm.popret`, `cm.popretz`, `qc.cm.popret`, `qc.cm.popretz`).
+  Hardware detects such instructions during decode and raises an
+  IllegalInstruction exception before any instruction in the entry executes.
 
   On an exception caused by the second instruction, hardware sets bit 0 of
   `mepc` to indicate that the fault originated from the second instruction
@@ -117,11 +121,13 @@ operation(): |
     # No room for a second instruction after a 48-bit first in a 64-bit entry
   }
 
-  # PC-relative instruction check:
-  # Hardware detects auipc, branches, and jump instructions during decode
-  # and raises an IllegalInstruction exception before any instruction executes.
+  # PC-referencing instruction check:
+  # Hardware detects any instruction that references PC as input or output
+  # (auipc, branches, jal/c.j/c.jal, jalr/c.jr/c.jalr, cm.popret,
+  # cm.popretz, qc.cm.popret, qc.cm.popretz) during decode and raises an
+  # IllegalInstruction exception before any instruction executes.
   # mepc bit 0 reflects which slot contained the forbidden instruction.
-  if (is_pc_relative_inst?(entry_lo)) {
+  if (is_pc_referencing_inst?(entry_lo)) {
     executing_second_inst = false;
     raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
   }
@@ -132,7 +138,7 @@ operation(): |
     } else {
       second_inst = {16'b0, entry_hi[15:0]};
     }
-    if (is_pc_relative_inst?(second_inst)) {
+    if (is_pc_referencing_inst?(second_inst)) {
       executing_second_inst = true;
       raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
     }
