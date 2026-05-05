@@ -544,7 +544,7 @@ jobs:
     - name: check out riscv-tests
       run: git submodule update --init ext/riscv-tests
     - name: Run vector riscv-tests
-      run: "./do test:riscv_vector_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug"
+      run: "./do test:riscv_vector_tests CONFIG=rv64-vector IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug"
   regress-profile-extensions:
     runs-on: ubuntu-latest
     steps:
