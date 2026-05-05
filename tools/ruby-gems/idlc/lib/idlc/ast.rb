@@ -3280,7 +3280,13 @@ module Idl
         var.value = bitfield_val
       elsif var.type.kind == :struct
         struct_val = id.value(symtab)
-        struct_val[@field_name] = rhs.value(symtab)
+        value_result = value_try do
+          struct_val[@field_name] = rhs.value(symtab)
+        end
+        value_else(value_result) do
+          struct_val[@field_name] = nil
+          value_error ""
+        end
       else
         value_error "TODO: Field assignment execution"
       end
@@ -6023,7 +6029,9 @@ module Idl
         range = T.cast(obj.type(symtab), BitfieldType).range(@field_name)
         (T.cast(obj.value(symtab), Integer) >> range.first) & ((1 << range.size) - 1)
       elsif kind(symtab) == :struct
-        T.cast(obj.value(symtab), T::Hash[String, BasicValueRbType])[@field_name]
+        field_val = T.cast(obj.value(symtab), T::Hash[String, BasicValueRbType])[@field_name]
+        value_error "#{@field_name} is not known at compile-time" if field_val.nil?
+        field_val
       else
         type_error "#{obj.text_value} is Not a bitfield."
       end

@@ -48,7 +48,7 @@ namespace udb {
   >
   void bit_insert(BitsClass<T, Signed> &target, const MsbType &msb, const LsbType &lsb,
                   const ValueType &value) {
-    BitsClass<T, Signed> mask = ((BitsClass<T + 1, Signed>{1_b} << msb) - 1_b) << lsb;
+    BitsClass<T, Signed> mask = ((BitsClass<T + 1, Signed>{1_b} << (msb - lsb + _Bits<1, false>{1_b})) - 1_b) << lsb;
     target = (target & ~mask) | ((BitsClass<T, Signed>{value} << lsb) & mask);
   }
 

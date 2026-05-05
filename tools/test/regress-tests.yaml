@@ -212,6 +212,16 @@ tests:
       - name: Run RV64 riscv-tests
         run: ./do test:riscv_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
 
+  regress-riscv-tests-vector:
+    ci_stage: pr
+    toolchain_container: true
+    gh_pre:
+      - name: check out riscv-tests
+        run: git submodule update --init ext/riscv-tests
+    test:
+      - name: Run vector riscv-tests
+        run: ./do test:riscv_vector_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
+
   regress-profile-extensions:
     ci_stage: pr
     test:

@@ -532,6 +532,19 @@ jobs:
       run: git submodule update --init ext/riscv-tests
     - name: Run RV64 riscv-tests
       run: "./do test:riscv_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug"
+  regress-riscv-tests-vector:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone Github Repo Action
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Set up mise environment
+      uses: "./.github/actions/mise-setup"
+      with:
+        toolchain: 'true'
+    - name: check out riscv-tests
+      run: git submodule update --init ext/riscv-tests
+    - name: Run vector riscv-tests
+      run: "./do test:riscv_vector_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug"
   regress-profile-extensions:
     runs-on: ubuntu-latest
     steps:
@@ -849,6 +862,7 @@ jobs:
     - regress-cpp-unit
     - regress-riscv-tests-32
     - regress-riscv-tests-64
+    - regress-riscv-tests-vector
     - regress-profile-extensions
     - regress-build-udb-gem
     - regress-regress
