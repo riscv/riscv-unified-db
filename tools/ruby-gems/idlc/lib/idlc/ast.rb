@@ -459,11 +459,11 @@ module Idl
       when AryRangeAccessAst
         # Recursive case: v[msb:lsb] = new_value
         # Read parent, splice new_value into [msb:lsb], write parent back
-        parent_value = target.var.value(symtab)
-        msb_val = target.msb.value(symtab)
-        lsb_val = target.lsb.value(symtab)
+        parent_value = T.cast(target.var.value(symtab), Integer)
+        msb_val = T.cast(target.msb.value(symtab), Integer)
+        lsb_val = T.cast(target.lsb.value(symtab), Integer)
         mask = ((1 << (msb_val - lsb_val + 1)) - 1) << lsb_val
-        updated_parent = (parent_value & ~mask) | ((new_value << lsb_val) & mask)
+        updated_parent = (parent_value & ~mask) | ((T.cast(new_value, Integer) << lsb_val) & mask)
         write_back_nested(target.var, updated_parent, symtab)
       else
         raise InternalError, "Unknown target type for write-back: #{target.class.name}"
