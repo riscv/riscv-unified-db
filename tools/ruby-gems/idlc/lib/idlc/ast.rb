@@ -5370,6 +5370,10 @@ module Idl
     # @!macro value
     def value(symtab) = expression.value(symtab)
 
+    def max_value(symtab) = expression.max_value(symtab)
+
+    def min_value(symtab) = expression.min_value(symtab)
+
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "(#{expression.to_idl})"
