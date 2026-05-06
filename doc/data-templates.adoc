@@ -97,7 +97,7 @@ access:
   vs: always   # VS-mode access
   vu: always   # VU-mode access
 data_independent_timing: true  # For cryptographic extensions
-pc:
+pc: # program counter
   references: true # Optional: instruction semantics reference the current PC
   changes: false   # Optional: instruction semantics update the PC
 operation(): |

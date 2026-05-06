@@ -397,7 +397,7 @@
     },
     "pc": {
       "type": "object",
-      "description": "Explicit metadata describing whether the instruction reads and/or writes the program counter",
+      "description": "Whether the instruction reads and/or writes the program counter",
       "properties": {
         "references": {
           "type": "boolean",
