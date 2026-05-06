@@ -18,7 +18,7 @@ repos:
       - id: trailing-whitespace
         priority: 11
         args: [--markdown-linebreak-ext=md]
-        exclude: \.svg$|tests/data/golden/.*
+        exclude: \.svg$|cfgs/profile/.*\.yaml$|tests/data/golden/.*
       - id: mixed-line-ending
         priority: 12
         args: ["--fix=lf"]

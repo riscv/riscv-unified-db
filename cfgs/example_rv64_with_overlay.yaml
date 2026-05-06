@@ -46,8 +46,8 @@ implemented_extensions:
   - [Ssaia, "1.0.0"]
   - [Ssccfg, "1.0.0"]
   - [Sstc, "1.0.0"]
-  - [Sv39, "1.12.0"]
-  - [Sv48, "1.12.0"]
+  - [Sv39, "1.0"]
+  - [Sv48, "1.0"]
   - [Zicboz, "1.0.0"]
   - [Zicbom, "1.0.0"]
 

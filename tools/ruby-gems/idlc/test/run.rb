@@ -26,6 +26,7 @@ puts "[SimpleCov] Coverage started."
 
 require "minitest/autorun"
 
+require_relative "test_arrays"
 require_relative "test_ast_type"
 require_relative "test_cli"
 require_relative "test_const_function_arguments"

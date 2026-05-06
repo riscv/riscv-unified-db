@@ -6,7 +6,7 @@ namespace :chore do
   desc "Update golden profile_extensions output"
   task :update_golden_profile_extensions do
     Rake::Task["gen:resolved_arch"].invoke
-    sh "uv run #{$root}/tools/python/profile_extensions.py #{$root}/gen/resolved_spec/_ > #{$root}/tools/python/profile_extensions.golden"
+    sh "uv run #{$root}/tools/python/profile_extensions.py #{$root}/gen/resolved_spec/_ > #{$root}/tests/golden/profile_extensions.golden"
   end
 
 end
@@ -19,7 +19,7 @@ namespace :test do
 
     $logger.info "Testing profile_extensions"
     sh "uv run #{$root}/tools/python/profile_extensions.py #{$root}/gen/resolved_spec/_ > test-profile_extensions.txt"
-    sh "diff -u #{$root}/tools/python/profile_extensions.golden test-profile_extensions.txt" do |ok, res|
+    sh "diff -u #{$root}/tests/golden/profile_extensions.golden test-profile_extensions.txt" do |ok, res|
 
       rm "test-profile_extensions.txt", :force => true, :verbose => false
       if ok
@@ -31,7 +31,7 @@ namespace :test do
 
           If this is expected, run:
           ./do chore:update_golden_profile_extensions
-          git add tools/python/profile_extensions.golden
+          git add tests/golden/profile_extensions.golden
 
           And commit.
         MSG

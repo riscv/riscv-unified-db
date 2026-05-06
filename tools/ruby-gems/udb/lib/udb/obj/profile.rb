@@ -196,10 +196,6 @@ module Udb
       @data["base"]
     end
 
-    def all_in_scope_params
-      [Portfolio::InScopeParameter.new(@cfg_arch.param("MXLEN"), { "const" => @data["base"] }, "")]
-    end
-
     # Too complicated to put in profile ERB template.
     # @param presence_type [String]
     # @param heading_level [Integer]

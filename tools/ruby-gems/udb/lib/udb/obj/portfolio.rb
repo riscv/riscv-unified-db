@@ -23,6 +23,7 @@ module Udb
   class PortfolioExtensionRequirement
     extend T::Sig
     extend Forwardable
+    include Comparable
 
     def_delegators :@ext_req,
       :name,
@@ -41,11 +42,21 @@ module Udb
         presence: T.nilable(Presence)
       ).void
     }
-    def initialize(name, requirements, arch:, note:, req_id:, presence:)
+    def initialize(name, requirements, arch:, note: nil, req_id: nil, presence: nil)
       @ext_req = arch.extension_requirement(name, requirements)
       @note = note
       @req_id = req_id
       @presence = presence
+    end
+
+    sig { params(other: T.any(PortfolioExtensionRequirement, ExtensionRequirement)).returns(T.nilable(Integer)) }
+    def <=>(other)
+      case other
+      when PortfolioExtensionRequirement
+        @ext_req <=> other.ext_req
+      when ExtensionRequirement
+        @ext_req <=> other
+      end
     end
   end
 
@@ -440,22 +451,22 @@ module Udb
         end
     end
 
-    sig { returns(T::Hash[String, T.untyped]) }
-    def to_config
-      {
+    sig { params(mandatory: T::Array[PortfolioExtensionRequirement]).returns(T::Hash[String, T.untyped]) }
+    def to_config(mandatory: mandatory_ext_reqs)
+      c = {
         "$schema" => "config_schema.json#",
         "kind" => "architecture configuration",
         "type" => "partially configured",
         "name" => name,
         "description" => description,
-        "params" => all_in_scope_params.map do |p|
+        "params" => all_in_scope_params.sort.map do |p|
           if p.single_value?
             [p.name, p.value]
           else
             nil
           end
         end.compact.to_h,
-        "mandatory_extensions" => mandatory_ext_reqs.map do |ext_req|
+        "mandatory_extensions" => mandatory.sort.map do |ext_req|
           {
             "name" => ext_req.name,
             "version" => \
@@ -466,7 +477,7 @@ module Udb
               end
           }
         end,
-        "non_mandatory_extensions" => optional_ext_reqs.map do |ext_req|
+        "non_mandatory_extensions" => optional_ext_reqs.sort.map do |ext_req|
           {
             "name" => ext_req.name,
             "version" => \
@@ -479,19 +490,41 @@ module Udb
         end,
         "additional_extensions" => true
       }
+      c["requirements"] = requirements_condition.to_h unless requirements_condition.empty?
+      c
+    end
+
+    # @return portfolio in config form, with requirements of mandatory extensions expanded
+    sig { returns(T::Hash[String, T.untyped]) }
+    def to_strict_config
+      strict_mandatory_ext_reqs = mandatory_ext_reqs
+      mandatory_ext_req_names = strict_mandatory_ext_reqs.map(&:name).to_set
+      cfg_arch_obj = to_cfg_arch
+
+      cfg_arch_obj.extensions.each do |ext|
+        next if mandatory_ext_req_names.include?(ext.name)
+
+        if (-ext.to_ext_req.to_condition & cfg_arch_obj.to_condition).unsatisfiable_by_cfg_arch?(cfg_arch_obj)
+          # what's the minimum?
+          min_ext_ver = ext.versions.find do |ext_ver|
+            compat_with_ext_ver = Condition.new({ "extension" => { "name" => ext.name, "version" => "= #{ext_ver.version_str}" } }, cfg_arch_obj)
+            c = (compat_with_ext_ver & cfg_arch_obj.to_condition)
+            c.satisfiable_by_cfg_arch?(cfg_arch_obj)
+          end
+          raise "condition problem: ext is required but none of the versions are" if min_ext_ver.nil?
+
+          strict_mandatory_ext_reqs << PortfolioExtensionRequirement.new(ext.name, "~> #{min_ext_ver.version_str}", arch: cfg_arch_obj)
+          mandatory_ext_req_names.add(ext.name)
+        end
+      end
+
+      to_config(mandatory: strict_mandatory_ext_reqs)
     end
 
     # returns a config arch that treats the Portfolio like a partial config
     sig { returns(ConfiguredArchitecture) }
     def to_cfg_arch
-      @cfg_arch_for_mandatory ||= begin
-        Tempfile.create do |f|
-          f.write YAML.dump(to_config)
-          f.fsync
-
-          @cfg_arch.config.info.resolver.cfg_arch_for(Pathname.new f.path)
-        end
-      end
+      @cfg_arch_for_mandatory ||= cfg_arch_for_config_data(to_config)
     end
 
     # returns a config arch that treats the *optional* extensions in Portfolio like a partial config
@@ -525,13 +558,36 @@ module Udb
             end,
             "additional_extensions" => true
           }
-        Tempfile.create do |f|
-          f.write YAML.dump(contents)
-          f.fsync
+        contents["requirements"] = requirements_condition.to_h unless requirements_condition.empty?
+        cfg_arch_for_config_data(contents)
+      end
+    end
 
-          @cfg_arch.config.info.resolver.cfg_arch_for(Pathname.new f.path)
+    # Build a ConfiguredArchitecture from an in-memory config data hash.
+    # Uses the fast path (no disk round-trip) when the parent has no overlay;
+    # falls back to the full pipeline when the parent's resolved spec differs.
+    sig { params(config_data: T::Hash[String, T.untyped]).returns(ConfiguredArchitecture) }
+    def cfg_arch_for_config_data(config_data)
+      resolver = @cfg_arch.config.info.resolver
+      if @cfg_arch.config.info.overlay_path.nil?
+        resolver.cfg_arch_for_data(config_data)
+      else
+        Tempfile.create do |f|
+          f.write YAML.dump(config_data)
+          f.fsync
+          resolver.cfg_arch_for(Pathname.new f.path)
         end
       end
+    end
+
+    sig { returns(AbstractCondition) }
+    def requirements_condition
+      @requirements_condition ||=
+        if @data.key?("requirements")
+          Condition.new(@data.fetch("requirements"), cfg_arch)
+        else
+          AlwaysTrueCondition.new(cfg_arch)
+        end
     end
 
     # @return [String] Given an instruction +inst_name+, return the presence as a string.
@@ -739,8 +795,7 @@ module Udb
 
       return @in_scope_csrs unless @in_scope_csrs.nil?
 
-      @in_scope_csrs =
-        in_scope_min_satisfying_extension_versions.map { |ext_ver| ext_ver.in_scope_csrs(design.possible_xlens) }.flatten.uniq
+      @in_scope_csrs = to_cfg_arch.in_scope_csrs()
     end
 
     # @param design [Design] The design

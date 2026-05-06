@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "udb/cfgs/<%= cfg_arch.name %>/structs.hxx"
 #include "udb/cfgs/<%= cfg_arch.name %>/params.hxx"
 
@@ -21,7 +23,7 @@ namespace udb {
 #define __UDB_CSR_BY_NAME(csr_name) m_hart->m_csrs.csr_name
 #define __UDB_CONST_GLOBAL(global_name) <%= name_of(:hart, cfg_arch) %><SocType>::global_name
 #define __UDB_MUTABLE_GLOBAL(global_name) m_hart->global_name
-#define __UDB_STRUCT(struct_name) <%= cfg_arch.name.camelize %>_ ## struct_name ## _Struct
+#define __UDB_STRUCT(struct_name) <%= name_of(:cfg, cfg_arch) %>_ ## struct_name ## _Struct
 #define __UDB_HART m_hart
 
 
@@ -95,7 +97,7 @@ void <%= name_of(:csr_field, cfg_arch, csr.name, field.name) %><SocType>::reset(
 #define __UDB_ENCODING Bits<<%= name_of(:hart, cfg_arch) %><SocType>::__MAX_INST_ENCODING_SIZE>{m_parent->m_cur_inst ? m_parent->m_cur_inst->encoding() : NOP_INST_ENC }
 #define __UDB_CONST_GLOBAL(global_name) <%= name_of(:hart, cfg_arch) %><SocType>::global_name
 #define __UDB_MUTABLE_GLOBAL(global_name) m_parent->global_name
-#define __UDB_STRUCT(struct_name) <%= cfg_arch.name.camelize %>_ ## struct_name ## _Struct
+#define __UDB_STRUCT(struct_name) <%= name_of(:cfg, cfg_arch) %>_ ## struct_name ## _Struct
 #define __UDB_HART m_parent
 
 // constructor
