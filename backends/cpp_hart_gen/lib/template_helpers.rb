@@ -183,6 +183,13 @@ module CppHartGen
       cfg_arch.register_files.find { |rf| rf.name == rf_name }&.register_class == "floating_point"
     end
 
+    # Returns the base offset into udb::Reg::Enum for the named register file.
+    # Must match the enum layout in backends/cpp_hart_gen/cpp/include/udb/inst.hpp.
+    RF_ENUM_BASES = { "X" => 0, "F" => 32, "V" => 64 }.freeze
+    def rf_enum_base(rf_name)
+      RF_ENUM_BASES.fetch(rf_name) { raise "No Reg::Enum base defined for register file '#{rf_name}'" }
+    end
+
     # All register files defined for this architecture.
     # The ISS generates storage and accessors for all register files since
     # for a partially-configured arch, any extension may be present.

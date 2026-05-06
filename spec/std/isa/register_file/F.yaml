@@ -14,7 +14,7 @@ description: |
 definedBy: F
 register_class: floating_point
 register_length(): |
-  return implemented?(ExtensionName::D) ? 64 : 32;
+  return implemented?(ExtensionName::Q) ? 128 : (implemented?(ExtensionName::D) ? 64 : 32);
 registers:
   - name: f0
     abi_mnemonics: [ft0]

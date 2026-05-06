@@ -418,7 +418,14 @@ int InstructionSetSimulator::OnReadSingleRegister(int reg, uint64_t& value)
     value = m_pHart->pc();
   else if (reg >= RISCV_REG_FPR_FIRST && reg <= RISCV_REG_FPR_LAST)
   {
-    value = m_pHart->freg(reg - RISCV_REG_FPR_FIRST);
+    try
+    {
+      value = m_pHart->freg(reg - RISCV_REG_FPR_FIRST);
+    }
+    catch(...)
+    {
+      return -1;
+    }
   }
   else if (reg >= RISCV_REG_CSR_FIRST && reg <= RISCV_REG_CSR_LAST)
   {
@@ -454,7 +461,14 @@ int InstructionSetSimulator::OnWriteSingleRegister(int reg, uint64_t& value)
     m_pHart->set_next_pc(value);
   else if (reg >= RISCV_REG_FPR_FIRST && reg <= RISCV_REG_FPR_LAST)
   {
-    m_pHart->set_freg(reg - RISCV_REG_FPR_FIRST, value);
+    try
+    {
+      m_pHart->set_freg(reg - RISCV_REG_FPR_FIRST, value);
+    }
+    catch(...)
+    {
+      return -1;
+    }
   }
   else if (reg >= RISCV_REG_CSR_FIRST && reg <= RISCV_REG_CSR_LAST)
   {
