@@ -306,7 +306,7 @@ class Cli
       @logger.info summary
     else
       @logger.error summary
-      exit_with(:general_error)
+      exit_with(:error)
     end
   end
   private :cmd_run_tests_parallel

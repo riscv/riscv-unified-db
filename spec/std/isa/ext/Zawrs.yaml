@@ -20,6 +20,6 @@ description: |
     accelerator device indicating completion of a job previously submitted to the device.
 type: unprivileged
 versions:
-  - version: "1.0.1"
+  - version: "1.0.0"
     state: ratified
     ratification_date: 2022-11

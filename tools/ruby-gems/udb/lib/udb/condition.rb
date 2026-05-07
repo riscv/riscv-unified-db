@@ -1111,25 +1111,7 @@ module Udb
             elsif term.is_a?(ParameterTerm)
               if cfg_arch.param_values.key?(term.name)
                 result = term.eval(cfg_arch)
-                if result == SatisfiedResult::Maybe
-                  # this might just mean we don't know the value.
-                  # however, given the parameter schema and constraints, we could know that term is
-                  # always false or always true. Memoize per (term, cfg_arch) since the same
-                  # ParameterTerm YAML appears in many Condition objects.
-                  memo = cfg_arch.param_term_satisfied_memo
-                  unless memo.key?(term)
-                    param_cond = Condition.new({ "param" => term.to_h }, cfg_arch)
-                    memo[term] =
-                      if param_cond.unsatisfiable_by_cfg_arch?(cfg_arch)
-                        SatisfiedResult::No
-                      elsif (-param_cond).unsatisfiable_by_cfg_arch?(cfg_arch)
-                        SatisfiedResult::Yes
-                      else
-                        SatisfiedResult::Maybe
-                      end
-                  end
-                  result = memo[term]
-                end
+                result = resolve_param_term_from_maybe(term, cfg_arch) if result == SatisfiedResult::Maybe
                 result
               else
                 SatisfiedResult::No
@@ -1168,25 +1150,7 @@ module Udb
               end
             elsif term.is_a?(ParameterTerm)
               result = term.eval(cfg_arch)
-              if result == SatisfiedResult::Maybe
-                # this might just mean we don't know the value.
-                # however, given the parameter schema and constraints, we could know that term is
-                # always false or always true. Memoize per (term, cfg_arch) since the same
-                # ParameterTerm YAML appears in many Condition objects.
-                memo = cfg_arch.param_term_satisfied_memo
-                unless memo.key?(term)
-                  param_cond = Condition.new({ "param" => term.to_h }, cfg_arch)
-                  memo[term] =
-                    if param_cond.unsatisfiable_by_cfg_arch?(cfg_arch)
-                      SatisfiedResult::No
-                    elsif (-param_cond).unsatisfiable_by_cfg_arch?(cfg_arch)
-                      SatisfiedResult::Yes
-                    else
-                      SatisfiedResult::Maybe
-                    end
-                end
-                result = memo[term]
-              end
+              result = resolve_param_term_from_maybe(term, cfg_arch) if result == SatisfiedResult::Maybe
               result
             elsif term.is_a?(FreeTerm)
               raise "unreachable"
@@ -1658,6 +1622,27 @@ module Udb
     sig { override.returns(AbstractCondition) }
     def -@
       Condition.not(self, @cfg_arch)
+    end
+
+    private
+
+    # When term.eval returns Maybe, check whether the parameter schema and constraints
+    # imply the term is always false or always true, and cache the result per (term, cfg_arch).
+    sig { params(term: ParameterTerm, cfg_arch: ConfiguredArchitecture).returns(SatisfiedResult) }
+    def resolve_param_term_from_maybe(term, cfg_arch)
+      memo = cfg_arch.param_term_satisfied_memo
+      unless memo.key?(term)
+        param_cond = Condition.new({ "param" => term.to_h }, cfg_arch)
+        memo[term] =
+          if param_cond.unsatisfiable_by_cfg_arch?(cfg_arch)
+            SatisfiedResult::No
+          elsif (-param_cond).unsatisfiable_by_cfg_arch?(cfg_arch)
+            SatisfiedResult::Yes
+          else
+            SatisfiedResult::Maybe
+          end
+      end
+      memo[term]
     end
   end
 

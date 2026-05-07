@@ -324,7 +324,7 @@ module Udb
     sig { params(yaml: T::Hash[String, T.untyped]).void }
     def initialize(yaml)
       @yaml = yaml
-      @yaml_no_reason = (yaml.key?("reason") ? yaml.reject { |k, _| k == "reason" } : yaml.dup).freeze
+      @yaml_no_reason = yaml.key?("reason") ? yaml.reject { |k, _| k == "reason" }.freeze : yaml
     end
 
     sig { returns(T::Hash[String, T.untyped]) }
@@ -1236,19 +1236,6 @@ module Udb
     # we can safely remember and return these values
     class MemoizedState
       attr_accessor :is_cnf, :cnf_form, :is_nested_cnf, :is_reduced, :terms, :literals, :is_satisfiable, :equisat_cnf, :equiv_cnf, :terms_no_antecendents
-
-      def initialize
-        @is_cnf = nil
-        @cnf_form = nil
-        @is_nested_cnf = nil
-        @is_reduced = nil
-        @terms = nil
-        @literals = nil
-        @is_satisfiable = nil
-        @equisat_cnf = nil
-        @equiv_cnf = nil
-        @terms_no_antecendents = nil
-      end
     end
 
     attr_accessor :memo

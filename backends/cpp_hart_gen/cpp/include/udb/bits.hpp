@@ -4,12 +4,15 @@
 #include <fmt/format.h>
 #include <gmpxx.h>
 
+#include <array>
+#include <algorithm>
 #include <bit>
 #include <concepts>
 #include <cstdint>
 #include <iostream>
 #include <limits>
 #include <type_traits>
+#include <vector>
 
 #include "udb/cpp_exceptions.hpp"
 #include "udb/defines.hpp"
@@ -2811,13 +2814,13 @@ namespace udb {
       template <unsigned, bool> class MsbType, unsigned MsbN,
       template <unsigned, bool> class LsbType, unsigned LsbN
     >
-    constexpr _PossiblyUnknownRuntimeBits<constmax_v<MsbN, LsbN>, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
+    constexpr _PossiblyUnknownRuntimeBits<N, false> extract(const MsbType<MsbN, false>& msb, const LsbType<LsbN, false>& lsb) const {
       udb_assert(msb >= lsb, "Negative range is not allowed");
       udb_assert(lsb.get() <= width(), "Extract out of range");
 
-      return _PossiblyUnknownRuntimeBits<constmax_v<MsbN, LsbN>, false>(
+      return _PossiblyUnknownRuntimeBits<N, false>(
         WidthArg(msb.get() - lsb.get() + 1),
-        ValueArg(_PossiblyUnknownBits<constmax_v<MsbN, LsbN>, false>(m_val.extract(msb, lsb), m_unknown_mask.extract(msb, lsb)))
+        ValueArg(_PossiblyUnknownBits<N, false>(m_val.extract(msb, lsb), m_unknown_mask.extract(msb, lsb)))
       );
     }
 
@@ -3121,7 +3124,16 @@ namespace udb {
 
     template <bool _Signed = Signed>
       requires(_Signed == false)
-    constexpr _PossiblyUnknownRuntimeBits<MaxN, true> make_signed() const { return _PossiblyUnknownRuntimeBits<MaxN, true>{*this}; }
+    constexpr _PossiblyUnknownRuntimeBits<MaxN, true> make_signed() const {
+      // Sign-extend the stored value from m_width bits to MaxN bits so that
+      // subsequent conversions to narrower fixed-width types work correctly.
+      auto sign_extended_val = sign_extend(m_val.value().get());
+      auto sign_extended_mask = sign_extend(m_val.unknown_mask().get());
+      return _PossiblyUnknownRuntimeBits<MaxN, true>{
+        WidthArg(m_width),
+        ValueArg(_PossiblyUnknownBits<MaxN, true>{_Bits<MaxN, false>{sign_extended_val}, _Bits<MaxN, false>{sign_extended_mask}})
+      };
+    }
 
     template <bool _Signed = Signed>
       requires(_Signed == true)
@@ -3465,6 +3477,24 @@ namespace udb {
 
   static_assert(KnownBitsType<_RuntimeBits<64, true>>);
   static_assert(KnownBitsType<_RuntimeBits<64, false>>);
+
+  template <typename T, typename U, std::size_t N>
+  std::array<T, N> array_cast(const std::array<U, N>& src) {
+    std::array<T, N> result;
+    for (std::size_t i = 0; i < N; ++i) result[i] = src[i];
+    return result;
+  }
+
+  template <typename T, std::size_t N>
+  bool udb_param_val_eq(const std::vector<T>& runtime_val, const std::array<T, N>& compile_val) {
+    return runtime_val.size() == N &&
+           std::equal(runtime_val.begin(), runtime_val.end(), compile_val.begin());
+  }
+
+  template <typename A, typename B>
+  bool udb_param_val_eq(const A& a, const B& b) {
+    return a == b;
+  }
 
 }  // namespace udb
 

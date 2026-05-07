@@ -39472,13 +39472,13 @@ None
 if pass:[(]xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::M) {
   if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-U[U] == 1 && CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MPRV[MPRV] == 1) {
     if pass:[(]CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MPP[MPP] == 0b00) {
-      if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1 && xref:#udb-function-mpv[mpv]pass:[(]) == 0b1) {
+      if pass:[(]xref:#udb-function-implemented?[implemented?]pass:[(]ExtensionName::H) && CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1 && xref:#udb-function-mpv[mpv]pass:[(]) == 0b1) {
         return PrivilegeMode::VU;
       } else {
         return PrivilegeMode::U;
       }
     } else if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1 && CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MPP[MPP] == 0b01) {
-      if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1 && xref:#udb-function-mpv[mpv]pass:[(]) == 0b1) {
+      if pass:[(]xref:#udb-function-implemented?[implemented?]pass:[(]ExtensionName::H) && CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1 && xref:#udb-function-mpv[mpv]pass:[(]) == 0b1) {
         return PrivilegeMode::VS;
       } else {
         return PrivilegeMode::S;
@@ -39521,8 +39521,7 @@ if pass:[(]xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::M) {
   } else {
     return PrivilegeMode::M;
   }
-} else {
-  xref:#udb-function-assert[assert]pass:[(]xref:#udb-function-implemented?[implemented?]pass:[(]ExtensionName::H) && ((xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::VS) || (xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::VU)), "Unexpected mode");
+} else if pass:[(]xref:#udb-function-implemented?[implemented?]pass:[(]ExtensionName::H) && ((xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::VS) || (xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::VU))) {
   if pass:[(]($bits(CSR[xref:#udb-csr-medeleg[CSR[medeleg]]]) & (MXLEN'1 << $bits(exception_code))) != 0) {
     if pass:[(]($bits(CSR[xref:#udb-csr-hedeleg[CSR[hedeleg]]]) & (MXLEN'1 << $bits(exception_code))) != 0) {
       return PrivilegeMode::VS;
@@ -39532,6 +39531,8 @@ if pass:[(]xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::M) {
   } else {
     return PrivilegeMode::M;
   }
+} else {
+  xref:#udb-function-unreachable[unreachable]pass:[(]);
 }
 ----
 
@@ -40333,7 +40334,7 @@ if pass:[(]handling_mode == PrivilegeMode::M) {
   $pc = {CSR[xref:#udb-csr-mtvec[mtvec]].xref:#udb-csrfield-mtvec-BASE[BASE], 2'b00};
   CSR[xref:#udb-csr-mcause[mcause]].xref:#udb-csrfield-mcause-INT[INT] = 1'b0;
   CSR[xref:#udb-csr-mcause[mcause]].xref:#udb-csrfield-mcause-CODE[CODE] = $bits(exception_code);
-  if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1) {
+  if pass:[(]xref:#udb-function-implemented?[implemented?]pass:[(]ExtensionName::H) && CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1) {
     CSR[xref:#udb-csr-mtval2[mtval2]].xref:#udb-csrfield-mtval2-VALUE[VALUE] = 0;
     CSR[xref:#udb-csr-mtinst[mtinst]].xref:#udb-csrfield-mtinst-VALUE[VALUE] = 0;
     if pass:[(]from_mode == PrivilegeMode::VU || from_mode == PrivilegeMode::VS) {

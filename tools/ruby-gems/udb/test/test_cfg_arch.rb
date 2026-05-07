@@ -159,7 +159,7 @@ class TestCfgArch < Minitest::Test
       assert_includes result.reasons, "Parameter value violates the schema: 'MXLEN' = '31'"
       assert_includes result.reasons, "Parameter has no definition: 'NOT_A'"
       assert_includes result.reasons, "Znotanextension is not a known extension"
-      assert result.reasons.any? { |r| r.include?("0.1") && r.include?("not a known extension") }, "Unknown version should be rejected"
+      assert result.reasons.any? { |r| r.include?("0.1") && r.include?("is not a known version of extension") }, "Unknown version should be rejected"
       # ... and more, which are not being explictly checked because the above need resolved before they will print
       # assert_includes result.reasons, "Parameter is not defined by this config: 'CACHE_BLOCK_SIZE'. Needs: (Zicbom>=0 || Zicbop>=0 || Zicboz>=0)"
       # assert_includes result.reasons, "Extension requirement is unmet: Zcmp@1.0.0. Needs: (Zca>=0 && !Zcd>=0)"
@@ -190,7 +190,7 @@ class TestCfgArch < Minitest::Test
       result = cfg_arch.valid?
 
       refute result.valid
-      assert result.reasons.any? { |r| r.include?("9.9.9") && r.include?("not a known extension") }, "Unknown version should be rejected"
+      assert result.reasons.any? { |r| r.include?("9.9.9") && r.include?("is not a known version of extension") }, "Unknown version should be rejected"
     end
 
 

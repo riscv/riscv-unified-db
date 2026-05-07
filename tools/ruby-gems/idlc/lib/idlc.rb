@@ -55,6 +55,14 @@ module Idl
 
     attr_reader :parser
 
+    # Class-level parse cache: absolute file path (String) → IsaSyntaxNode.
+    # Shared across all Compiler instances so each file is parsed only once per
+    # process.  Safe to share because IsaSyntaxNode#to_ast is non-destructive
+    # and returns a fresh, independent IsaAst on every call.
+    # Mutex guards writes; under MRI, reads without the lock are safe.
+    @@parse_cache = {}
+    @@parse_cache_mutex = Mutex.new
+
     def initialize
       @parser = ::IdlParser.new
     end
@@ -71,40 +79,56 @@ module Idl
     end
 
     def compile_file(path, source_mapper = nil)
-      @parser.set_input_file(path.to_s)
+      path_key = path.realpath.to_s
 
-      unless source_mapper.nil?
-        source_mapper[path.to_s] = path.read
-      end
-
-      old_format = @pb.format unless @pb.nil?
-      @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
-      pid = unless @pb.nil?
-              fork {
-                loop do
-                  sleep 1
-                  @pb.advance unless @pb.nil?
-                end
-              }
-      end
-      m = @parser.parse path.read
-      unless @pb.nil?
-        Process.kill("TERM", T.must(pid))
-        Process.wait(T.must(pid))
-        @pb.format = old_format
-      end
+      m = T.let(@@parse_cache[path_key], T.nilable(IsaSyntaxNode))
 
       if m.nil?
-        raise SyntaxError, <<~MSG
-          While parsing #{@parser.input_file}:#{@parser.failure_line}:#{@parser.failure_column}
+        @@parse_cache_mutex.synchronize do
+          # Re-check inside the lock in case another thread just populated the entry.
+          unless @@parse_cache.key?(path_key)
+            @parser.set_input_file(path_key)
 
-          #{@parser.failure_reason}
-        MSG
+            content = path.read
+            source_mapper[path_key] = content unless source_mapper.nil?
+
+            old_format = @pb.format unless @pb.nil?
+            @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
+            pid = unless @pb.nil?
+                    fork {
+                      loop do
+                        sleep 1
+                        @pb.advance unless @pb.nil?
+                      end
+                    }
+                  end
+            m = @parser.parse(content)
+            unless @pb.nil?
+              Process.kill("TERM", T.must(pid))
+              Process.wait(T.must(pid))
+              @pb.format = old_format
+            end
+
+            if m.nil?
+              raise SyntaxError, <<~MSG
+                While parsing #{@parser.input_file}:#{@parser.failure_line}:#{@parser.failure_column}
+
+                #{@parser.failure_reason}
+              MSG
+            end
+
+            raise "unexpected type #{m.class.name}" unless m.is_a?(IsaSyntaxNode)
+
+            @@parse_cache[path_key] = m
+          end
+          m = @@parse_cache[path_key]
+        end
+      else
+        # Cache hit: still populate source_mapper if provided (test-only path).
+        source_mapper[path_key] = path.read unless source_mapper.nil?
       end
 
-      raise "unexpected type #{m.class.name}" unless m.is_a?(IsaSyntaxNode)
-
-      ast = m.to_ast
+      ast = T.must(m).to_ast
 
       ast.children.each do |child|
         next unless child.is_a?(IncludeStatementAst)

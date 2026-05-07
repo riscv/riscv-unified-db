@@ -47,11 +47,7 @@ operation(): |
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     U32 start_bit_pos = i * state.sew;
     U32 end_bit_pos = start_bit_pos + state.sew - 1;
-    v[vd] = {
-      v[vd][VLEN-1:end_bit_pos + 1],
-      (v[vs2])[end_bit_pos:start_bit_pos] + (v[vs1])[end_bit_pos:start_bit_pos],
-      v[vd][start_bit_pos-1:0]
-      };
+    v[vd][end_bit_pos:start_bit_pos] = v[vs2][end_bit_pos:start_bit_pos] + v[vs1][end_bit_pos:start_bit_pos];
   }
 
   CSR[vstart].VALUE = 0;
