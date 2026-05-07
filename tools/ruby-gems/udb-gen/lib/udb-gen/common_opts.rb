@@ -4,6 +4,7 @@
 # typed: true
 # frozen_string_literal: true
 
+require "pathname"
 require "sorbet-runtime"
 
 require_relative "subcommand"
@@ -40,7 +41,20 @@ module UdbGen
     sig { returns(Udb::ConfiguredArchitecture) }
     def cfg_arch
       @cfg_arch ||=
-        resolver.cfg_arch_for(params[:cfg])
+        resolver.cfg_arch_for(resolve_cfg_arg(params[:cfg]))
+    end
+
+    # Accept either a known config name (looked up under @cfgs_path) or a
+    # filesystem path to a config YAML. Path-like arguments (containing a
+    # path separator or ending in .yaml/.yml, or actually existing on disk)
+    # are converted to Pathname so the resolver treats them as paths.
+    sig { params(arg: String).returns(T.any(String, Pathname)) }
+    def resolve_cfg_arg(arg)
+      return Pathname.new(arg) if arg.include?(File::SEPARATOR) ||
+                                  arg.end_with?(".yaml", ".yml") ||
+                                  File.file?(arg)
+
+      arg
     end
 
     sig { override.params(argv: T::Array[String]).returns(T.noreturn) }
