@@ -253,8 +253,7 @@ module Udb
             if (@cfgs_path / "#{config_path_or_name}.yaml").file?
               (@cfgs_path / "#{config_path_or_name}.yaml").realpath
             else
-              Udb.logger.error "Could not find config: #{config_path_or_name}"
-              exit 1
+              raise ConfigNotFoundError, "Could not find config: #{config_path_or_name}"
             end
           else
             T.absurd(config_path_or_name)

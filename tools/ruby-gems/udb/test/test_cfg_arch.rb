@@ -644,9 +644,8 @@ class TestCfgArch < Minitest::Test
             f.write(base_64_yaml.sub("mandatory_extensions:", "compatible: rv64\nmandatory_extensions:"))
             f.flush
             result = @resolver.cfg_arch_for(Pathname.new(f.path)).valid?
-            # rv64 is a known repo config; compatibility check should not raise
-            assert [true, false].include?(result.valid),
-              "Expected cfg_arch_for_pointer to resolve name-based pointer 'rv64' without error"
+            assert result.valid,
+              "Expected valid when compatible pointer is the known config name 'rv64', got: #{result.reasons}"
           end
 
           # Relative-path pointer: reference the compatible config via a relative path
