@@ -106,37 +106,32 @@ module Idl
 
   class AryElementAssignmentAst
     def find_dst_registers(symtab)
-      base_name = Idl::AstNode.extract_base_var_name(lhs)
-      return [] unless base_name == "X"
-
-      if lhs.is_a?(Idl::IdAst) && lhs.name == "X"
-        # Direct X register assignment: X[idx] = val
-        reg_idx = idx
-      elsif lhs.is_a?(Idl::AryElementAccessAst) && lhs.var.is_a?(Idl::IdAst) && lhs.var.name == "X"
-        # Nested X register access: X[rs1][bit] = val — register is lhs.index
-        reg_idx = lhs.index
-      else
-        raise ComplexRegDetermination
-      end
-
-      value_result = value_try do
-        var_type = lhs.type(symtab) rescue nil
-        if var_type&.kind == :array && var_type.sub_type.is_a?(RegFileElementType) && var_type.qualifiers.include?(:global)
-          rf_name = var_type.sub_type.name
-          return [[rf_name, reg_idx.value(symtab)]]
+      # Identify the base variable and the register index based on assignment shape.
+      # F[rd] = v    → lhs is IdAst(F),              reg_idx = idx
+      # F[rd][b] = v → lhs is AryElementAccessAst(F[rd]), reg_idx = lhs.index
+      lhs_base, reg_idx =
+        if lhs.is_a?(Idl::IdAst)
+          [lhs, idx]
+        elsif lhs.is_a?(Idl::AryElementAccessAst) && lhs.var.is_a?(Idl::IdAst)
+          [lhs.var, lhs.index]
         else
           return []
         end
+
+      # Only proceed if the base variable is a global array of RegFileElementType.
+      var_type = lhs_base.type(symtab) rescue nil
+      return [] unless var_type&.kind == :array &&
+                       var_type.sub_type.is_a?(RegFileElementType) &&
+                       var_type.qualifiers.include?(:global)
+
+      rf_name = var_type.sub_type.name
+
+      value_result = value_try do
+        return [[rf_name, reg_idx.value(symtab)]]
       end
       value_else(value_result) do
-        var_type = lhs.type(symtab) rescue nil
-        if var_type&.kind == :array && var_type.sub_type.is_a?(RegFileElementType) && var_type.qualifiers.include?(:global)
-          rf_name = var_type.sub_type.name
-          if reg_idx.type(symtab).const?
-            return [[rf_name, reg_idx.gen_cpp(symtab, 0)]]
-          else
-            raise ComplexRegDetermination
-          end
+        if reg_idx.type(symtab).const?
+          return [[rf_name, reg_idx.gen_cpp(symtab, 0)]]
         else
           raise ComplexRegDetermination
         end
@@ -146,28 +141,24 @@ module Idl
 
   class AryRangeAssignmentAst
     def find_dst_registers(symtab)
-      # Check if this is an X register assignment
-      base_name = Idl::AstNode.extract_base_var_name(variable)
-      if base_name == "X"
-        # For X[idx][msb:lsb] = val, we need the idx
-        if variable.is_a?(Idl::AryElementAccessAst) && variable.var.is_a?(Idl::IdAst) && variable.var.name == "X"
-          # Direct X register access: X[idx][msb:lsb] = val
-          value_result = value_try do
-            return [variable.index.value(symtab)]
-          end
-          value_else(value_result) do
-            if variable.index.type(symtab).const?
-              return [variable.index.gen_cpp(symtab, 0)]
-            else
-              raise ComplexRegDetermination
-            end
-          end
+      return [] unless variable.is_a?(Idl::AryElementAccessAst)
+
+      var_type = variable.var.type(symtab) rescue nil
+      return [] unless var_type&.kind == :array &&
+                       var_type.sub_type.is_a?(RegFileElementType) &&
+                       var_type.qualifiers.include?(:global)
+
+      rf_name = var_type.sub_type.name
+
+      value_result = value_try do
+        return [[rf_name, variable.index.value(symtab)]]
+      end
+      value_else(value_result) do
+        if variable.index.type(symtab).const?
+          return [[rf_name, variable.index.gen_cpp(symtab, 0)]]
         else
-          # More complex X register nesting
           raise ComplexRegDetermination
         end
-      else
-        return []
       end
     end
   end

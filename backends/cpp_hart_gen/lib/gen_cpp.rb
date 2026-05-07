@@ -177,27 +177,26 @@ module Idl
   class AryRangeAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      base_name = Idl::AstNode.extract_base_var_name(variable)
-
-      # Special handling for X register range assignment: X[idx][msb:lsb] = val
-      if base_name == "X" && variable.is_a?(Idl::AryElementAccessAst) &&
-         variable.var.is_a?(Idl::IdAst) && variable.var.name == "X"
-        # X[idx][msb:lsb] = val
-        # Read X[idx], modify bits, write back
-        value_result = value_try do
-          msb_val = msb.value(symtab)
-          lsb_val = lsb.value(symtab)
-          # bit_insert mutates by reference, so update a temporary and then write back.
-          return "#{' ' * indent}__UDB_HART->_set_xreg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_xreg_tmp = #{variable.gen_cpp(symtab)}; bit_insert<#{msb_val}, #{lsb_val}, #{variable.type(symtab).width}>(__udb_xreg_tmp, #{write_value.gen_cpp(symtab)}); return __udb_xreg_tmp; }()))"
-        end
-
-        value_else(value_result) do
-          # Runtime msb/lsb
-          return "#{' ' * indent}__UDB_HART->_set_xreg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_xreg_tmp = #{variable.gen_cpp(symtab)}; bit_insert(__udb_xreg_tmp, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}); return __udb_xreg_tmp; }()))"
+      # For register file range assignments (RF[idx][msb:lsb] = val), the getter
+      # returns by value, so we must read into a temporary, modify, then write back.
+      if variable.is_a?(Idl::AryElementAccessAst)
+        var_type = variable.var.type(symtab) rescue nil
+        if var_type&.kind == :array &&
+           var_type.sub_type.is_a?(Idl::RegFileElementType) &&
+           var_type.qualifiers.include?(:global)
+          rf_name = var_type.sub_type.name.downcase
+          value_result = value_try do
+            msb_val = msb.value(symtab)
+            lsb_val = lsb.value(symtab)
+            return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert<#{msb_val}, #{lsb_val}, #{variable.type(symtab).width}>(__udb_reg_tmp, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
+          end
+          value_else(value_result) do
+            return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert(__udb_reg_tmp, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
+          end
         end
       end
 
-      # Standard range assignment (non-X register)
+      # Standard range assignment (non-register-file)
       expression = nil
       value_result = value_try do
         # see if msb and lsb are compile-time-known
