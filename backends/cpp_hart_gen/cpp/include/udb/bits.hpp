@@ -3370,9 +3370,9 @@ namespace udb {
 
 #undef RUNTIME_BITS_BINARY_OP
 
-    _PossiblyUnknownRuntimeBits operator~() { return _PossiblyUnknownRuntimeBits{~m_val, _Bits<MaxN, false>{m_width}}; }
+    _PossiblyUnknownRuntimeBits operator~() { return _PossiblyUnknownRuntimeBits{~m_val, m_width}; }
 
-    _PossiblyUnknownRuntimeBits operator-() { return _PossiblyUnknownRuntimeBits{-m_val, _Bits<MaxN, false>{m_width}}; }
+    _PossiblyUnknownRuntimeBits operator-() { return _PossiblyUnknownRuntimeBits{-m_val, m_width}; }
 
     template <unsigned msb, unsigned lsb>
       requires ((lsb >= 0) && (msb >= lsb) && (msb <= MaxN))
