@@ -111,6 +111,7 @@ gen_subcmd_usage() {
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
+  echo "  cfg-headers:   Generate golden cfg header files for regression testing"
   echo "  xqci           Generate Xqci spec used for Golden regressions"
   echo ""
 }
@@ -366,6 +367,7 @@ do_gen_all() {
   do_ruby_type_def all
   do_gen_profile_cfgs
   do_gen_xqci_golden
+  do_gen_cfg_headers_golden
 }
 
 #
@@ -423,6 +425,42 @@ do_gen_xqci_golden() {
   # Remove the commit info line from the golden file
   sed -i '/^This document was created using the http:\/\/github\.org\/riscv\/riscv-unified-db\[RISC-V Unified Database\] at commit/d' \
     "tests/data/golden/Xqci@${xqci_version}.adoc"
+}
+
+#
+# Generate golden cfg header files (C and SystemVerilog) for regression testing
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
+#
+do_gen_cfg_headers_golden() {
+  echo "Generating golden cfg header files"
+  local cfg="mc100-32-full-example"
+  local gen_dir="${UDB_ROOT}/gen/cfg_headers"
+  local golden_dir="${UDB_ROOT}/tests/golden"
+
+  # Capture the state before generation
+  local before_hash=""
+  if [ -d "$golden_dir" ]; then
+    before_hash=$(find "$golden_dir" -type f \( -name "${cfg}.golden.h" -o -name "${cfg}.golden.svh" \) -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+  fi
+
+  mkdir -p "$gen_dir" "$golden_dir"
+  "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-c-header -c "$cfg" -o "${gen_dir}/${cfg}.h"
+  "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-svh-header -c "$cfg" -o "${gen_dir}/${cfg}.svh"
+  cp "${gen_dir}/${cfg}.h" "${golden_dir}/${cfg}.golden.h"
+  cp "${gen_dir}/${cfg}.svh" "${golden_dir}/${cfg}.golden.svh"
+
+  if [ $fail_on_change -eq 1 ]; then
+    local after_hash=""
+    if [ -d "$golden_dir" ]; then
+      after_hash=$(find "$golden_dir" -type f \( -name "${cfg}.golden.h" -o -name "${cfg}.golden.svh" \) -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+    fi
+
+    if [ "$before_hash" != "$after_hash" ]; then
+      echo "[ERROR]: Golden cfg header files changed during generation"
+      return 1
+    fi
+  fi
+  return 0
 }
 
 #
@@ -626,6 +664,11 @@ case "$subcommand" in
       xqci )
         do_gen_xqci_golden
         exit 0
+        ;;
+      cfg-headers )
+        do_gen_cfg_headers_golden
+        exit_code=$?
+        exit $exit_code
         ;;
       ruby-type-def )
         while getopts ":h" opt; do # Go through the options

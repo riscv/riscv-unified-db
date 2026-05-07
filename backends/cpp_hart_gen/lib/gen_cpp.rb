@@ -177,6 +177,27 @@ module Idl
   class AryRangeAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
+      base_name = Idl::AstNode.extract_base_var_name(variable)
+
+      # Special handling for X register range assignment: X[idx][msb:lsb] = val
+      if base_name == "X" && variable.is_a?(Idl::AryElementAccessAst) &&
+         variable.var.is_a?(Idl::IdAst) && variable.var.name == "X"
+        # X[idx][msb:lsb] = val
+        # Read X[idx], modify bits, write back
+        value_result = value_try do
+          msb_val = msb.value(symtab)
+          lsb_val = lsb.value(symtab)
+          # bit_insert mutates by reference, so update a temporary and then write back.
+          return "#{' ' * indent}__UDB_HART->_set_xreg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_xreg_tmp = #{variable.gen_cpp(symtab)}; bit_insert<#{msb_val}, #{lsb_val}, #{variable.type(symtab).width}>(__udb_xreg_tmp, #{write_value.gen_cpp(symtab)}); return __udb_xreg_tmp; }()))"
+        end
+
+        value_else(value_result) do
+          # Runtime msb/lsb
+          return "#{' ' * indent}__UDB_HART->_set_xreg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_xreg_tmp = #{variable.gen_cpp(symtab)}; bit_insert(__udb_xreg_tmp, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}); return __udb_xreg_tmp; }()))"
+        end
+      end
+
+      # Standard range assignment (non-X register)
       expression = nil
       value_result = value_try do
         # see if msb and lsb are compile-time-known
@@ -811,6 +832,12 @@ module Idl
     end
   end
 
+  def self.maybe_array_cast(lt, rt, rhs_cpp)
+    return rhs_cpp unless lt.kind == :array && rt.kind == :array
+    lt_sub = lt.sub_type.to_cxx_no_qualifiers
+    lt_sub == rt.sub_type.to_cxx_no_qualifiers ? rhs_cpp : "array_cast<#{lt_sub}>(#{rhs_cpp})"
+  end
+
   class VariableDeclarationWithInitializationAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
@@ -823,7 +850,10 @@ module Idl
           "#{' ' * indent}#{type_name.gen_cpp(symtab, 0, indent_spaces:)} #{lhs.gen_cpp(symtab, 0, indent_spaces:)}(#{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
         end
       else
-        "#{' ' * indent}std::array<#{type_name.gen_cpp(symtab, 0, indent_spaces:)}, #{ary_size.gen_cpp(symtab, 0, indent_spaces:)}> #{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
+        lt = lhs_type(symtab)
+        rt = rhs.type(symtab)
+        rhs_cpp = Idl.maybe_array_cast(lt, rt, rhs.gen_cpp(symtab, 0, indent_spaces:))
+        "#{' ' * indent}std::array<#{type_name.gen_cpp(symtab, 0, indent_spaces:)}, #{ary_size.gen_cpp(symtab, 0, indent_spaces:)}> #{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs_cpp}"
       end
     end
   end
@@ -881,7 +911,10 @@ module Idl
   class VariableAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
+      lt = lhs.type(symtab)
+      rt = rhs.type(symtab)
+      rhs_cpp = Idl.maybe_array_cast(lt, rt, rhs.gen_cpp(symtab, 0, indent_spaces:))
+      "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs_cpp}"
     end
   end
 
@@ -895,7 +928,7 @@ module Idl
   class AryElementAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      if lhs.text_value.start_with?("X")
+      if lhs.is_a?(Idl::IdAst) && lhs.name == "X"
         #"#{' '*indent}  #{lhs.gen_cpp(symtab, 0, indent_spaces:)}[#{idx.gen_cpp(symtab, 0, indent_spaces:)}] = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
         "#{' ' * indent}__UDB_HART->_set_xreg( #{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
       elsif lhs.type(symtab).kind == :bits
@@ -968,7 +1001,7 @@ module Idl
   class ArrayLiteralAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      "{#{element_nodes.map { |e| e.gen_cpp(symtab, 0) }.join(', ')}}"
+      "std::array<#{element_nodes.fetch(0).type(symtab).to_cxx_no_qualifiers}, #{element_nodes.size}>{#{element_nodes.map { |e| e.gen_cpp(symtab, 0) }.join(', ')}}"
     end
   end
 

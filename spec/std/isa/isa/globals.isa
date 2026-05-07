@@ -327,8 +327,7 @@ function exception_handling_mode {
       } else {
         return PrivilegeMode::M;
       }
-    } else {
-      assert(implemented?(ExtensionName::H) && ((mode() == PrivilegeMode::VS) || (mode() == PrivilegeMode::VU)), "Unexpected mode");
+    } else if (implemented?(ExtensionName::H) && ((mode() == PrivilegeMode::VS) || (mode() == PrivilegeMode::VU)) ) {
       if (($bits(CSR[medeleg]) &  (MXLEN'1 << $bits(exception_code))) != 0) {
         if (($bits(CSR[hedeleg]) & (MXLEN'1 << $bits(exception_code))) != 0) {
           return PrivilegeMode::VS;
@@ -339,6 +338,8 @@ function exception_handling_mode {
         # if an exception is not delegated to HS-mode, it can't be delegated to VS-mode
         return PrivilegeMode::M;
       }
+    } else {
+      unreachable();
     }
   }
 }
@@ -717,7 +718,7 @@ function raise_precise {
       $pc = {CSR[mtvec].BASE, 2'b00};
       CSR[mcause].INT = 1'b0;
       CSR[mcause].CODE = $bits(exception_code);
-      if (CSR[misa].H == 1) {
+      if (implemented?(ExtensionName::H) && CSR[misa].H == 1) {
         # write zero into mtval2 and minst
         # (when these are non-zero values, raise_guest_page_fault should be callecd)
         CSR[mtval2].VALUE = 0;
@@ -1196,13 +1197,13 @@ function effective_ldst_mode {
     if (mode() == PrivilegeMode::M) {
       if (CSR[misa].U == 1 && CSR[mstatus].MPRV == 1) {
         if (CSR[mstatus].MPP == 0b00) {
-          if (CSR[misa].H == 1 && mpv() == 0b1) {
+          if (implemented?(ExtensionName::H) && CSR[misa].H == 1 && mpv() == 0b1) {
             return PrivilegeMode::VU;
           } else {
             return PrivilegeMode::U;
           }
         } else if (CSR[misa].S == 1 && CSR[mstatus].MPP == 0b01) {
-          if (CSR[misa].H == 1 && mpv() == 0b1) {
+          if (implemented?(ExtensionName::H) && CSR[misa].H == 1 && mpv() == 0b1) {
             return PrivilegeMode::VS;
           } else {
             return PrivilegeMode::S;
@@ -1532,7 +1533,7 @@ function translate_gstage {
   body {
     TranslationResult result;
 
-    if (effective_mode == PrivilegeMode::S || effective_mode == PrivilegeMode::U) {
+    if (!implemented?(ExtensionName::H) || effective_mode == PrivilegeMode::S || effective_mode == PrivilegeMode::U) {
       # there is no gstage page walk
       result.paddr = gpaddr;
       return result;

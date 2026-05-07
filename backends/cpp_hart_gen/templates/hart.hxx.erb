@@ -138,7 +138,15 @@ namespace udb {
         <%- cfg_arch.globals.each do |global| -%>
         <%- if global.is_a?(Idl::GlobalWithInitializationAst) -%>
         <%- next if global.type(cfg_arch.symtab).const? -%>
-        <%= global.id %> = <%= global.rhs.gen_cpp(cfg_arch.symtab, 0) %>;
+        <%- lhs_t = global.type(cfg_arch.symtab) -%>
+        <%- rhs_t = global.rhs.type(cfg_arch.symtab) -%>
+        <%- rhs_cpp = global.rhs.gen_cpp(cfg_arch.symtab, 0) -%>
+        <%- lhs_sub = lhs_t.sub_type.to_cxx_no_qualifiers if lhs_t.kind == :array -%>
+        <%- if lhs_t.kind == :array && rhs_t.kind == :array && lhs_sub != rhs_t.sub_type.to_cxx_no_qualifiers -%>
+        <%= global.id %> = array_cast<<%= lhs_sub %>>(<%= rhs_cpp %>);
+        <%- else -%>
+        <%= global.id %> = <%= rhs_cpp %>;
+        <%- end -%>
         <%- else -%>
         // <%= global.id %> = unknown;
         <%- end -%>
