@@ -1,6 +1,6 @@
 = Instruction Appendix
 :doctype: book
-:wavedrom: /opt/node/node_modules/.bin/wavedrom-cli
+:wavedrom: /home/henry/projects/riscv-unified-db/node_modules/.bin/wavedrom-cli
 // Now the document header is complete and the wavedrom attribute is active.
 
 
@@ -11517,7 +11517,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[12], $encoding[6:2]}
+|imm |sext({$encoding[12], $encoding[6:2]}, 6)
 |xd |$encoding[11:7]
 |===
 
@@ -11571,7 +11571,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[12], $encoding[4:3], $encoding[5], $encoding[2], $encoding[6], 4'd0}
+|imm |sext({$encoding[12], $encoding[4:3], $encoding[5], $encoding[2], $encoding[6], 4'd0}, 10)
 |===
 
 Included in::
@@ -11678,7 +11678,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[12], $encoding[6:2]}
+|imm |sext({$encoding[12], $encoding[6:2]}, 6)
 |xd |$encoding[11:7]
 |===
 
@@ -11843,7 +11843,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[12], $encoding[6:2]}
+|imm |sext({$encoding[12], $encoding[6:2]}, 6)
 |xd |$encoding[9:7]
 |===
 
@@ -12827,7 +12827,7 @@ This instruction has different encodings in RV32 and RV64
 RV32::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":2,"name": 0x2,"type":2},{"bits":5,"name": "imm[4:3|8:6]","type":4},{"bits":5,"name": "xd != {0,1,3,5,7}","type":4},{"bits":1,"name": "imm[5]","type":4},{"bits":3,"name": 0x3,"type":2}]}
+{"reg":[{"bits":2,"name": 0x2,"type":2},{"bits":5,"name": "imm[4:3|8:6]","type":4},{"bits":5,"name": "xd != {0,1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31}","type":4},{"bits":1,"name": "imm[5]","type":4},{"bits":3,"name": 0x3,"type":2}]}
 ....
 
 RV64::
@@ -13025,7 +13025,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[12], $encoding[6:2]}
+|imm |sext({$encoding[12], $encoding[6:2]}, 6)
 |xd |$encoding[11:7]
 |===
 
@@ -13079,7 +13079,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[12], $encoding[6:2], 12'd0}
+|imm |sext({$encoding[12], $encoding[6:2], 12'd0}, 18)
 |xd |$encoding[11:7]
 |===
 
@@ -13687,7 +13687,7 @@ Encoding::
 
 Description::
 C.MV (move register) performs copy of the data in register xs2 to register xd
-C.MV expands to addi xd, x0, xs2.
+C.MV expands to add xd, x0, xs2.
 
 
 Decode Variables::
@@ -14223,7 +14223,7 @@ This instruction has different encodings in RV32 and RV64
 RV32::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":2,"name": 0x2,"type":2},{"bits":5,"name": "xs2 != {1,3,5,7}","type":4},{"bits":6,"name": "imm[5:3|8:6]","type":4},{"bits":3,"name": 0x7,"type":2}]}
+{"reg":[{"bits":2,"name": 0x2,"type":2},{"bits":5,"name": "xs2 != {1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31}","type":4},{"bits":6,"name": "imm[5:3|8:6]","type":4},{"bits":3,"name": 0x7,"type":2}]}
 ....
 
 RV64::
