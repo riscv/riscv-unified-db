@@ -60,6 +60,30 @@ fields:
       return ($array_size(VUXLEN) > 1) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       return ($array_size(VUXLEN) > 1) ? UNDEFINED_LEGAL : VUXLEN[0];
+  SPELP:
+    location: 23
+    long_name: VS-mode Previous Expected Landing Pad state
+    description: |
+      Holds the previous Expected Landing Pad (`ELP`) state when entering
+      VS-mode from a trap, and is restored to `ELP` on `SRET` from VS-mode.
+
+      Defined by the Zicfilp extension.
+
+      Per the privileged architecture, accesses to `sstatus.SPELP` resolve to
+      `mstatus.SPELP` when V=0, and to `vsstatus.SPELP` when V=1; the V=1
+      routing is handled by the H-extension CSR address remap (`virtual_address`
+      on this CSR), so this field is independent state — not an alias of
+      `mstatus.SPELP`.
+
+      Encoded as:
+
+      * 0 - `NO_LP_EXPECTED` - no landing pad instruction expected.
+      * 1 - `LP_EXPECTED` - a landing pad instruction is expected.
+    type: RW-H
+    reset_value: UNDEFINED_LEGAL
+    definedBy:
+      extension:
+        name: Zicfilp
   MXR:
     alias: mstatus.MXR
     location: 19
