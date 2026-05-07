@@ -17,7 +17,7 @@
               "type": "string"
             },
             "reg_file": {
-              "enum": ["X", "F", "V", "sp", "csr"],
+              "enum": ["X", "F", "V"],
               "default": "X"
             },
             "offset": {
@@ -75,6 +75,34 @@
             }
           },
           "required": ["type", "reg_file"]
+        },
+        {
+          "description": "Condition and Status Register (CSR)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "csr"
+            },
+            "name": {
+              "type": "string"
+            },
+            "source": {
+              "type": "boolean",
+              "default": true
+            },
+            "destination": {
+              "type": "boolean",
+              "default": false
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^-?[0-9]+-(-?[0-9]+)$"
+              }
+            }
+          },
+          "required": ["type", "name"]
         },
         {
           "description": "Register pair (implicit)",

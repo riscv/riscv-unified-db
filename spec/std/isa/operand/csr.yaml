@@ -8,6 +8,5 @@ kind: operand
 name: csr
 data:
   name: csr
-  type: register
-  reg_file: csr
-  #possible_values: [0-4095]
+  type: csr
+  possible_values: [0-4095]
