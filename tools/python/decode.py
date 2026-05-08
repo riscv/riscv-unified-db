@@ -18,7 +18,11 @@ debug = False
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Decode RISC-V opcodes to assembly instructions")
-    parser.add_argument("--opcodes", type=str, help="File containing opcodes to decode")
+    parser.add_argument(
+        "--spec",
+        required=True,
+        help="Root directory to recursively scan for YAML files",
+    )
     parser.add_argument(
         "--xlen",
         type=int,
@@ -33,7 +37,9 @@ def parse_args():
         help="Emit ABI register names when available (e.g. ra/sp/a0)",
     )
     parser.add_argument(
-        "dirs", nargs="*", default=["."], help="Directories to search for YAML files"
+        "opcode_files",
+        nargs="*",
+        help="Opcode input files to process (reads stdin if omitted)",
     )
     return parser.parse_args()
 
@@ -496,8 +502,7 @@ def main():
         sys.exit(1)
     print(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
 
-    for path in args.dirs:
-        find_and_load_yamls(path, ["instruction", "register_file"])
+    find_and_load_yamls(args.spec, ["instruction", "register_file"])
 
     # Create dictionaries for instruction and register-file definitions.
     for y in yamls:
@@ -509,9 +514,11 @@ def main():
 
     build_register_index_maps()
 
-    if args.opcodes:
-        with open(args.opcodes) as f:
-            opcodes = read_opcodes(f)
+    if args.opcode_files:
+        opcodes = []
+        for opcode_file in args.opcode_files:
+            with open(opcode_file) as f:
+                opcodes.extend(read_opcodes(f))
     else:
         opcodes = read_opcodes(sys.stdin)
 

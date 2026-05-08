@@ -18,7 +18,11 @@ debug = False
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Process RISC-V instruction definitions")
-    parser.add_argument("--assembly", type=str, help="Assembly language file to process")
+    parser.add_argument(
+        "--spec",
+        required=True,
+        help="Root directory to recursively scan for YAML files",
+    )
     parser.add_argument(
         "--xlen",
         type=int,
@@ -28,7 +32,9 @@ def parse_args():
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
     parser.add_argument(
-        "dirs", nargs="*", default=["."], help="Directories to search for YAML files"
+        "assembly_files",
+        nargs="*",
+        help="Assembly input files to process (reads stdin if omitted)",
     )
     return parser.parse_args()
 
@@ -691,8 +697,7 @@ def main():
 
     print(f"# Using RISC-V {xlen}-bit architecture")
 
-    for path in args.dirs:
-        find_and_load_yamls(path, ["instruction", "register_file"])
+    find_and_load_yamls(args.spec, ["instruction", "register_file"])
 
     # Create dictionaries for instruction and register-file definitions.
     for y in yamls:
@@ -704,9 +709,10 @@ def main():
 
     build_register_name_index()
 
-    assembly_lines = []
-    if args.assembly:
-        assembly_lines = read_assembly_file(args.assembly)
+    if args.assembly_files:
+        assembly_lines = []
+        for assembly_file in args.assembly_files:
+            assembly_lines.extend(read_assembly_file(assembly_file))
     else:
         assembly_lines = sys.stdin.read().splitlines()
 
