@@ -10,5 +10,5 @@ data:
   $inherits: operand/xsc.yaml#/data
   offset:
     name: imm
-    possible_values: [-256-255]
+    possible_values: [0-248]
     left_shifted: 3
