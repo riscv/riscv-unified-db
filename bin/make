@@ -4,4 +4,4 @@ EXEC_DIR=${PWD}
 cd "$ROOT" || exit 1
 # Strip bin/ from PATH to avoid wrapper recursion (same pattern as bin/doctor)
 PATH="${PATH//"${ROOT}/bin:"/}"
-exec "${ROOT}/bin/mise" exec --cd "${EXEC_DIR}" -- make "$@"
+exec "${ROOT}/bin/mise" exec -- bash -c 'cd "$1" && shift && exec "$@"' _ "$EXEC_DIR" make "$@"
