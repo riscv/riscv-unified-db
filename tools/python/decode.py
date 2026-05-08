@@ -167,8 +167,10 @@ def matches_pattern(opcode, pattern):
     return all((pattern[i] == "-" or opcode[i] == pattern[i]) for i in range(len(opcode)))
 
 
-def find_matching_instruction(opcode, xlen=64):
-    """Find instruction that matches the given opcode"""
+def find_matching_instructions(opcode, xlen=64):
+    """Find all instructions that match the given opcode."""
+    matches = []
+
     for instruction in instructions:
         if "encoding" in instructions[instruction]:
             encoding = instructions[instruction]["encoding"]
@@ -185,9 +187,9 @@ def find_matching_instruction(opcode, xlen=64):
                 match_pattern = encoding["RV64"]["match"]
 
             if match_pattern and matches_pattern(opcode, match_pattern):
-                return instructions[instruction]
+                matches.append(instructions[instruction])
 
-    return None
+    return matches
 
 
 def extract_variable_values(opcode, instruction, xlen=64):
@@ -257,10 +259,10 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
     else:
         operands = instruction["operands"]
 
-    if "RV32" in instruction["encoding"]["variables"] and xlen == 32:
-        variables = instruction["encoding"]["variables"]["RV32"]
-    elif "RV64" in instruction["encoding"]["variables"] and xlen == 64:
-        variables = instruction["encoding"]["variables"]["RV64"]
+    if "RV32" in instruction["encoding"] and xlen == 32:
+        variables = instruction["encoding"]["RV32"]["variables"]
+    elif "RV64" in instruction["encoding"] and xlen == 64:
+        variables = instruction["encoding"]["RV64"]["variables"]
     else:
         variables = instruction["encoding"]["variables"]
 
@@ -470,23 +472,27 @@ def decode(opcode, xlen=64, abi_names=False):
     """Decode an opcode into an assembly instruction"""
     dprint(f"# Decoding opcode: {opcode} with xlen={xlen}")
 
-    # Find matching instruction
-    instruction = find_matching_instruction(opcode, xlen)
-    if not instruction:
-        print(f"# WARNING: No matching instruction found for opcode: {opcode}")
+    # Find matching instructions and try each one until formatting succeeds.
+    matching_instructions = find_matching_instructions(opcode, xlen)
+    if not matching_instructions:
+        print(f"# ERROR: No matching instruction found for opcode: {opcode}")
         return None
 
-    dprint(f"# Found matching instruction: {instruction['name']}")
+    for instruction in matching_instructions:
+        dprint(f"# Found matching instruction candidate: {instruction['name']}")
 
-    # Extract variable values from opcode
-    variable_values = extract_variable_values(opcode, instruction, xlen)
-    dprint(f"# Extracted variable values: {variable_values}")
+        # Extract variable values from opcode
+        variable_values = extract_variable_values(opcode, instruction, xlen)
+        dprint(f"# Extracted variable values: {variable_values}")
 
-    # Format assembly instruction
-    assembly = format_assembly(instruction, variable_values, xlen, abi_names=abi_names)
-    dprint(f"# Formatted assembly: {assembly}")
+        # Format assembly instruction
+        assembly = format_assembly(instruction, variable_values, xlen, abi_names=abi_names)
+        dprint(f"# Formatted assembly: {assembly}")
+        if assembly is not None:
+            return assembly
 
-    return assembly
+    print("# ERROR: No matching instruction candidate produced a decodable assembly string")
+    return None
 
 
 def main():

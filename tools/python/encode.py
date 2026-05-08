@@ -342,7 +342,26 @@ def parse_assembly_arguments(line, instruction_operands):
                         )
                         return None
 
-            operand_values[instruction_operands[i]["name"]] = reg_index
+            dprint(f"#    Final value for '{operand_name}': {reg_index}")
+            operand_values[instruction_operands[i]["name"]] = int(reg_index)
+
+        elif operand_def["type"] == "csr":
+            dprint(f"#    Detected register argument: {arguments[argi]}")
+            reg_index = parse_register_value(arguments[argi], operand_def)
+            if reg_index is None:
+                print(f"# ERROR: Unknown register name {arguments[argi]}")
+                return None
+
+            # Validate register range against possible_values
+            if "possible_values" in operand_def:
+                for possible in operand_def["possible_values"]:
+                    min_val, max_val = parse_range(str(possible))
+                    if reg_index < min_val or reg_index > max_val:
+                        print(
+                            f"#    ERROR: Register index {reg_index} is out of range, must be between {min_val} and {max_val}"
+                        )
+                        return None
+
             dprint(f"#    Final value for '{operand_name}': {reg_index}")
             operand_values[instruction_operands[i]["name"]] = int(reg_index)
 
@@ -540,6 +559,10 @@ def builtin_encode_float_immediate(value):
 
 
 def UDB_invoke_IDL(idl, operands, xlen):
+    if "operands[vm]" in idl:
+        if "vm" in operands:
+            return 0
+        return 1
     if "return 1;" in idl:  # vector mask
         return 1
     if "return 0;" in idl:
