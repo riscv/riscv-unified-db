@@ -132,6 +132,12 @@ tests:
       - name: Check instruction appendix result
         run: ./do test:instruction_appendix
 
+  regress-encode-decode:
+    ci_stage: pr
+    test:
+      - name: Check instruction encode() and decode() methods
+        run: ./do test:encode_decode
+
   regress-cfg-manual:
     ci_stage: pr
     test:

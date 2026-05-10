@@ -81,6 +81,11 @@ def parse_args():
         nargs="*",
         help="Instruction names to process (all loaded instructions if omitted)",
     )
+    parser.add_argument(
+        "--only-ko",
+        action="store_true",
+        help="Only print KO lines; suppress OK lines",
+    )
     return parser.parse_args()
 
 
@@ -90,7 +95,8 @@ def main() -> int:
     had_error = False
     try:
         for line, is_ok in iter_roundtrip_results(args.spec, args.instructions, args.xlen):
-            print(line)
+            if not (args.only_ko and is_ok):
+                print(line)
             if not is_ok:
                 had_error = True
     except BrokenPipeError:
