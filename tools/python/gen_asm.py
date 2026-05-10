@@ -7,17 +7,8 @@ from __future__ import annotations
 import argparse
 import itertools
 import re
-from pathlib import Path
 
-import yaml
-
-# Global dictionary populated by `load_yaml_objects`.
-GLOBAL_DB: dict[str, dict[str, dict]] = {
-    "instructions": {},
-    "register_files": {},
-}
-REGISTER_INDEX_NAME_MAPS: dict[str, dict[int, str]] = {}
-
+import spec
 
 RANGE_PATTERN = re.compile(r"^(-?\d+)(?:-(-?\d+))?$")
 
@@ -42,60 +33,10 @@ def _range_endpoints(raw_value: str) -> list[int] | None:
     return [start, end]
 
 
-def load_yaml_objects(spec_dir: str | Path) -> dict[str, dict[str, dict]]:
-    """Load supported YAML objects from spec_dir into GLOBAL_DB."""
-    root_path = Path(spec_dir)
-
-    GLOBAL_DB["instructions"].clear()
-    GLOBAL_DB["register_files"].clear()
-
-    for yaml_path in root_path.rglob("*.yaml"):
-        try:
-            with yaml_path.open(encoding="utf-8") as handle:
-                data = yaml.safe_load(handle)
-        except (OSError, yaml.YAMLError):
-            continue
-
-        if not isinstance(data, dict):
-            continue
-
-        kind = data.get("kind")
-        name = data.get("name")
-        if not isinstance(name, str) or not name:
-            continue
-
-        if kind == "instruction" and "operands" in data:
-            GLOBAL_DB["instructions"][name] = data
-        elif kind == "register_file":
-            GLOBAL_DB["register_files"][name] = data
-
-    return GLOBAL_DB
-
-
-def _register_index_name_map(reg_file: dict) -> dict[int, str]:
-    registers = reg_file.get("registers", [])
-    reg_map: dict[int, str] = {}
-
-    if not isinstance(registers, list):
-        return reg_map
-
-    for index, register in enumerate(registers):
-        if not isinstance(register, dict):
-            continue
-        register_name = register.get("name")
-        if isinstance(register_name, str):
-            reg_map[index] = register_name
-
-    return reg_map
-
-
-def build_register_index_name_maps() -> dict[str, dict[int, str]]:
-    """Precompute index->name maps for each loaded register file."""
-    REGISTER_INDEX_NAME_MAPS.clear()
-    for reg_file_name, reg_file in GLOBAL_DB["register_files"].items():
-        if isinstance(reg_file_name, str) and isinstance(reg_file, dict):
-            REGISTER_INDEX_NAME_MAPS[reg_file_name] = _register_index_name_map(reg_file)
-    return REGISTER_INDEX_NAME_MAPS
+def load_yaml_objects(spec_dir: str) -> dict[str, dict[str, dict]]:
+    """Load supported YAML objects from spec_dir and return instruction/register-file maps."""
+    spec.initialize_spec(spec_dir)
+    return {"instructions": spec.instructions, "register_files": spec.register_files}
 
 
 def _register_names_for_operand(operand: dict, operand_name: str) -> list[object]:
@@ -103,7 +44,7 @@ def _register_names_for_operand(operand: dict, operand_name: str) -> list[object
     if not isinstance(reg_file_name, str):
         raise ValueError(f"Register operand is missing 'reg_file': {operand}")
 
-    index_to_name = REGISTER_INDEX_NAME_MAPS.get(reg_file_name)
+    index_to_name = spec.register_name_by_index.get(reg_file_name)
     if not index_to_name:
         return [f"<{operand_name}>"]
 
@@ -181,9 +122,9 @@ def _extract_operand_list(instruction: dict) -> list[dict]:
 
 def list_instruction_operand_combinations(instruction_name: str) -> list[dict[str, object]]:
     """Return all instruction+operand combinations for one instruction."""
-    instruction = GLOBAL_DB["instructions"].get(instruction_name)
+    instruction = spec.instructions.get(instruction_name)
     if not isinstance(instruction, dict):
-        raise KeyError(f"Instruction '{instruction_name}' not found in GLOBAL_DB")
+        raise KeyError(f"Instruction '{instruction_name}' not found")
 
     operands = _extract_operand_list(instruction)
 
@@ -223,9 +164,9 @@ def list_instruction_operand_combinations(instruction_name: str) -> list[dict[st
 def render_instruction_combination(combo: dict[str, object]) -> str:
     """Render one instruction+operands combination using assembly-like operand formatting."""
     instruction_name = combo["instruction"]
-    instruction = GLOBAL_DB["instructions"].get(instruction_name)
+    instruction = spec.instructions.get(instruction_name)
     if not isinstance(instruction, dict):
-        raise KeyError(f"Instruction '{instruction_name}' not found in GLOBAL_DB")
+        raise KeyError(f"Instruction '{instruction_name}' not found")
 
     operand_map = combo["operands"]
     if not isinstance(operand_map, dict):
@@ -288,9 +229,8 @@ def main() -> int:
     parser.add_argument("instructions", nargs="*", help="Instruction names to generate")
     args = parser.parse_args()
 
-    load_yaml_objects(args.spec)
-    build_register_index_name_maps()
-    instruction_names = args.instructions or sorted(GLOBAL_DB["instructions"])
+    spec.initialize_spec(args.spec)
+    instruction_names = args.instructions or sorted(spec.instructions)
 
     had_error = False
     try:

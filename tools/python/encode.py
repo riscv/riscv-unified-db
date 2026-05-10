@@ -4,16 +4,12 @@
 import argparse
 import re
 import sys
-from pathlib import Path
 
-import yaml
+import spec
 
-yamls = []
-instructions = {}
-register_files = {}
-register_name_to_index = {}
 operand_list = []
 debug = False
+quiet = False
 
 
 def parse_args():
@@ -32,6 +28,9 @@ def parse_args():
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
     parser.add_argument(
+        "--quiet", action="store_true", help="Suppress warnings and informational-only output"
+    )
+    parser.add_argument(
         "assembly_files",
         nargs="*",
         help="Assembly input files to process (reads stdin if omitted)",
@@ -44,35 +43,9 @@ def dprint(s):
         print(s)
 
 
-def find_and_load_yamls(path, kinds):
-    p = Path(path)
-    for file in p.rglob("*.yaml"):
-        with open(file) as f:
-            y = yaml.safe_load(f)
-            if "kind" in y:
-                if y["kind"] in kinds:
-                    y["file"] = file
-                    yamls.append(y)
-            else:
-                print(f"# WARNING: No 'kind' field in {file}")
-
-
-def build_register_name_index():
-    register_name_to_index.clear()
-
-    for rf_name, rf in register_files.items():
-        registers = rf.get("registers", [])
-
-        name_map = {}
-        for reg_index, register_entry in enumerate(registers):
-            if isinstance(register_entry.get("name"), str):
-                name_map[register_entry["name"]] = reg_index
-
-            abi_names = register_entry.get("abi_mnemonics", [])
-            for abi_name in abi_names:
-                name_map[abi_name] = reg_index
-
-        register_name_to_index[rf_name] = name_map
+def qprint(s):
+    if not quiet:
+        print(s)
 
 
 def parse_register_value(reg_operand, operand_def):
@@ -91,7 +64,7 @@ def parse_register_value(reg_operand, operand_def):
         return None
     reg_file = reg_file.strip()
 
-    reg_names = register_name_to_index.get(reg_file)
+    reg_names = spec.register_name_to_index.get(reg_file)
     if reg_names is None:
         print(f"#    ERROR: Unknown register file '{reg_file}' while parsing register '{reg_text}'")
         return None
@@ -699,11 +672,11 @@ def encode(assembly, xlen=64):
         return None
 
     dprint(f"#mnemonic: {mnemonic}")
-    if mnemonic not in instructions:
+    if mnemonic not in spec.instructions:
         print(f"# ERROR: Instruction '{mnemonic}' not found in YAML definitions")
         return None
 
-    inst = instructions[mnemonic]
+    inst = spec.instructions[mnemonic]
 
     filled_match = fill_in_variables(inst, assembly, xlen)
 
@@ -713,24 +686,16 @@ def encode(assembly, xlen=64):
 
 def main():
     global debug
+    global quiet
 
     args = parse_args()
     debug = args.debug
+    quiet = args.quiet
     xlen = args.xlen
 
-    print(f"# Using RISC-V {xlen}-bit architecture")
+    qprint(f"# Using RISC-V {xlen}-bit architecture")
 
-    find_and_load_yamls(args.spec, ["instruction", "register_file"])
-
-    # Create dictionaries for instruction and register-file definitions.
-    for y in yamls:
-        kind = y.get("kind")
-        if kind == "instruction":
-            instructions[y["name"]] = y
-        elif kind == "register_file":
-            register_files[y["name"]] = y
-
-    build_register_name_index()
+    spec.initialize_spec(args.spec, quiet=quiet)
 
     if args.assembly_files:
         assembly_lines = []

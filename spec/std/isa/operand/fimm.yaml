@@ -1,0 +1,46 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: fimm
+data:
+  name: fimm
+  type: float_immediate
+  possible_values:
+    [
+      "-1.0",
+      "min",
+      "0.0000152587890625",
+      "0.000030517578125",
+      "0.00390625",
+      "0.0078125",
+      "0.0625",
+      "0.125",
+      "0.25",
+      "0.3125",
+      "0.375",
+      "0.4375",
+      "0.5",
+      "0.625",
+      "0.75",
+      "0.875",
+      "1.0",
+      "1.25",
+      "1.5",
+      "1.75",
+      "2.0",
+      "2.5",
+      "3",
+      "4",
+      "8",
+      "16",
+      "128",
+      "256",
+      "32768",
+      "65536",
+      "inf",
+      "nan",
+    ]

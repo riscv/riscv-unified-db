@@ -3,17 +3,12 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 import argparse
 import sys
-from pathlib import Path
 
-import yaml
+import spec
 
-yamls = []
-instructions = {}
-register_files = {}
-register_name_by_index = {}
-register_abi_name_by_index = {}
 instruction_by_match = {}
 debug = False
+quiet = False
 
 
 def parse_args():
@@ -32,6 +27,9 @@ def parse_args():
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
     parser.add_argument(
+        "--quiet", action="store_true", help="Suppress warning and information-only messages"
+    )
+    parser.add_argument(
         "--abi-names",
         action="store_true",
         help="Emit ABI register names when available (e.g. ra/sp/a0)",
@@ -49,59 +47,18 @@ def dprint(s):
         print(s)
 
 
-def find_and_load_yamls(path, kinds):
-    p = Path(path)
-    for file in p.rglob("*.yaml"):
-        with open(file) as f:
-            y = yaml.safe_load(f)
-            if "kind" in y:
-                if y["kind"] in kinds:
-                    y["file"] = file
-                    yamls.append(y)
-            else:
-                print(f"# WARNING: No 'kind' field in {file}")
-
-
-def _register_abi_name(register_entry):
-    abi_mnemonics = register_entry.get("abi_mnemonics", [])
-    for value in abi_mnemonics:
-        if isinstance(value, str):
-            return value
-
-    return None
-
-
-def build_register_index_maps():
-    register_name_by_index.clear()
-    register_abi_name_by_index.clear()
-
-    for rf_name, rf in register_files.items():
-        registers = rf.get("registers", [])
-        if not isinstance(registers, list):
-            continue
-
-        canonical_map = {}
-        abi_map = {}
-        for reg_index, register_entry in enumerate(registers):
-            reg_name = register_entry.get("name")
-            if isinstance(reg_name, str):
-                canonical_map[reg_index] = reg_name
-
-            abi_name = _register_abi_name(register_entry)
-            if isinstance(abi_name, str):
-                abi_map[reg_index] = abi_name
-
-        register_name_by_index[rf_name] = canonical_map
-        register_abi_name_by_index[rf_name] = abi_map
+def qprint(s):
+    if not quiet:
+        print(s)
 
 
 def register_name_for_index(reg_file_name, reg_index, abi_names=False):
     if abi_names:
-        abi_map = register_abi_name_by_index.get(reg_file_name, {})
+        abi_map = spec.register_abi_name_by_index.get(reg_file_name, {})
         if reg_index in abi_map:
             return abi_map[reg_index]
 
-    canonical_map = register_name_by_index.get(reg_file_name, {})
+    canonical_map = spec.register_name_by_index.get(reg_file_name, {})
     if reg_index in canonical_map:
         return canonical_map[reg_index]
 
@@ -171,9 +128,9 @@ def find_matching_instructions(opcode, xlen=64):
     """Find all instructions that match the given opcode."""
     matches = []
 
-    for instruction in instructions:
-        if "encoding" in instructions[instruction]:
-            encoding = instructions[instruction]["encoding"]
+    for instruction in spec.instructions:
+        if "encoding" in spec.instructions[instruction]:
+            encoding = spec.instructions[instruction]["encoding"]
             match_pattern = None
 
             # Extract match pattern based on encoding format and xlen
@@ -187,7 +144,7 @@ def find_matching_instructions(opcode, xlen=64):
                 match_pattern = encoding["RV64"]["match"]
 
             if match_pattern and matches_pattern(opcode, match_pattern):
-                matches.append(instructions[instruction])
+                matches.append(spec.instructions[instruction])
 
     return matches
 
@@ -497,28 +454,20 @@ def decode(opcode, xlen=64, abi_names=False):
 
 def main():
     global debug
+    global quiet
 
     args = parse_args()
     debug = args.debug
+    quiet = args.quiet
 
     # Validate xlen parameter
     xlen = args.xlen
     if xlen not in [32, 64]:
         print(f"ERROR: xlen must be either 32 or 64, got {xlen}")
         sys.exit(1)
-    print(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
+    qprint(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
 
-    find_and_load_yamls(args.spec, ["instruction", "register_file"])
-
-    # Create dictionaries for instruction and register-file definitions.
-    for y in yamls:
-        kind = y.get("kind")
-        if kind == "instruction":
-            instructions[y["name"]] = y
-        elif kind == "register_file":
-            register_files[y["name"]] = y
-
-    build_register_index_maps()
+    spec.initialize_spec(args.spec, quiet=quiet)
 
     if args.opcode_files:
         opcodes = []
