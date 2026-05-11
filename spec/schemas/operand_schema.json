@@ -72,6 +72,10 @@
             "optional": {
               "type": "boolean",
               "default": false
+            },
+            "implicit": {
+              "type": "boolean",
+              "default": false
             }
           },
           "required": ["type", "reg_file"]
@@ -243,6 +247,31 @@
             }
           },
           "required": ["type", "possible_values"]
+        },
+        {
+          "description": "Program Counter (PC)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "program_counter"
+            },
+            "name": {
+              "const": "pc"
+            },
+            "source": {
+              "type": "boolean",
+              "default": true
+            },
+            "destination": {
+              "type": "boolean",
+              "default": false
+            },
+            "implicit": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": ["type"]
         },
         {
           "description": "inherits",

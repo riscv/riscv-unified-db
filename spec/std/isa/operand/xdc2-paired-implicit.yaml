@@ -1,0 +1,12 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: xdc2-paired-implicit
+data:
+  $inherits: operand/xdc.yaml#/data
+  implicit: true
+  possible_values: [9, 11, 13, 15]

@@ -101,32 +101,29 @@ def _operand_values(operand: dict, operand_name: str) -> list[object]:
     return values
 
 
-def _extract_operand_list(instruction: dict) -> list[dict]:
+def _extract_operand_list(instruction: dict, xlen: int) -> list[dict]:
     """Extract a concrete operand list from instruction['operands']."""
     operands = instruction.get("operands")
-    if isinstance(operands, list):
-        return operands
-
-    # Some instructions carry xlen-specific operand variants.
     if isinstance(operands, dict):
-        for preferred_key in ("RV64", "RV32"):
-            preferred = operands.get(preferred_key)
-            if isinstance(preferred, list):
-                return preferred
-        for value in operands.values():
-            if isinstance(value, list):
-                return value
+        operands = operands.get(f"RV{xlen}")
 
-    raise ValueError(f"Instruction '{instruction.get('name', '<unknown>')}' has no operand list")
+    # remove implicit operand definitions
+    for i in range(len(operands), 0, -1):
+        if operands[i - 1].get("implicit"):
+            del operands[i - 1]
+
+    return operands
 
 
-def list_instruction_operand_combinations(instruction_name: str) -> list[dict[str, object]]:
+def list_instruction_operand_combinations(
+    instruction_name: str, xlen: int
+) -> list[dict[str, object]]:
     """Return all instruction+operand combinations for one instruction."""
     instruction = spec.instructions.get(instruction_name)
     if not isinstance(instruction, dict):
         raise KeyError(f"Instruction '{instruction_name}' not found")
 
-    operands = _extract_operand_list(instruction)
+    operands = _extract_operand_list(instruction, xlen)
 
     operand_names: list[str] = []
     operand_values: list[list[object]] = []
@@ -161,7 +158,7 @@ def list_instruction_operand_combinations(instruction_name: str) -> list[dict[st
     return combinations
 
 
-def render_instruction_combination(combo: dict[str, object]) -> str:
+def render_instruction_combination(combo: dict[str, object], xlen: int) -> str:
     """Render one instruction+operands combination using assembly-like operand formatting."""
     instruction_name = combo["instruction"]
     instruction = spec.instructions.get(instruction_name)
@@ -172,7 +169,7 @@ def render_instruction_combination(combo: dict[str, object]) -> str:
     if not isinstance(operand_map, dict):
         raise ValueError("Combination is missing operand mapping")
 
-    operands = _extract_operand_list(instruction)
+    operands = _extract_operand_list(instruction, xlen)
     rendered_operands: list[str] = []
     consumed_offset_names: set[str] = set()
 
@@ -226,6 +223,13 @@ def main() -> int:
         required=True,
         help="Root directory to recursively scan for YAML files",
     )
+    parser.add_argument(
+        "--xlen",
+        type=int,
+        choices=[32, 64],
+        default=64,
+        help="RISC-V architecture width (32 or 64 bits, default: 64)",
+    )
     parser.add_argument("instructions", nargs="*", help="Instruction names to generate")
     args = parser.parse_args()
 
@@ -236,14 +240,14 @@ def main() -> int:
     try:
         for instruction_name in instruction_names:
             try:
-                combos = list_instruction_operand_combinations(instruction_name)
+                combos = list_instruction_operand_combinations(instruction_name, args.xlen)
             except KeyError:
                 print(f"# ERROR: Instruction '{instruction_name}' not found")
                 had_error = True
                 continue
 
             for combo in combos:
-                print(render_instruction_combination(combo))
+                print(render_instruction_combination(combo, args.xlen))
     except BrokenPipeError:
         return 0
 

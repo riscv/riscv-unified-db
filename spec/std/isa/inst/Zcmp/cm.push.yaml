@@ -27,11 +27,13 @@ operands:
     - $inherits: operand/reg-range0.yaml#/data
     - $inherits: operand/reg-range1-rv32.yaml#/data
     - $inherits: operand/stack-adj-rv32.yaml#/data
+    - $inherits: operand/sp.yaml#/data
   RV64:
     - $inherits: operand/reg-range0.yaml#/data
     - $inherits: operand/reg-range1-rv64.yaml#/data
     - $inherits: operand/reg-range2-rv64.yaml#/data
     - $inherits: operand/stack-adj-rv64.yaml#/data
+    - $inherits: operand/sp.yaml#/data
 encoding:
   match: 10111000------10
   variables:

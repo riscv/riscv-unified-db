@@ -40,9 +40,9 @@ def iter_roundtrip_results(spec_dir: str, instructions: list[str], xlen: int = 6
         if instruction_name not in spec.instructions:
             raise KeyError(f"Instruction '{instruction_name}' not found")
 
-        combos = gen_asm.list_instruction_operand_combinations(instruction_name)
+        combos = gen_asm.list_instruction_operand_combinations(instruction_name, xlen)
         for combo in combos:
-            example = gen_asm.render_instruction_combination(combo)
+            example = gen_asm.render_instruction_combination(combo, xlen)
 
             opcode = _silent_invoke(encode.encode, example, xlen)
             if opcode is None:

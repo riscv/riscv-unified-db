@@ -58,6 +58,8 @@ operands:
   RV32:
     - $inherits: operand/xdc-pair.yaml#/data
       name: xd
+    - $inherits: operand/xdc2-paired-implicit.yaml#/data
+      name: xd2
     - $inherits: operand/xsc-offset8-ls3.yaml#/data
       name: xs1
   RV64:

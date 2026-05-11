@@ -33,6 +33,8 @@ operands:
   - $inherits: operand/xs.yaml#/data
     name: xs2
   - $inherits: operand/imm13-ls1.yaml#/data
+  - $inherits: operand/pc.yaml#/data
+    destination: true
 access:
   s: always
   u: always
