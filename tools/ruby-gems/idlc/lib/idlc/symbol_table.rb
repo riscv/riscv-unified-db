@@ -208,10 +208,12 @@ module Idl
         builtin_funcs: T.nilable(BuiltinFunctionCallbacks),
         csrs: T::Array[Csr],
         params: T::Array[RuntimeParam],
-        name: String
+        name: String,
+        register_files: T::Array[T.untyped],
+        register_file_max_widths: T::Hash[String, Integer]
       ).void
     }
-    def initialize(mxlen: nil, possible_xlens_cb: nil, builtin_global_vars: [], builtin_enums: [], builtin_funcs: nil, csrs: [], params: [], name: "")
+    def initialize(mxlen: nil, possible_xlens_cb: nil, builtin_global_vars: [], builtin_enums: [], builtin_funcs: nil, csrs: [], params: [], name: "", register_files: [], register_file_max_widths: {})
       @mutex = Thread::Mutex.new
       @mxlen = mxlen
       @possible_xlens_cb = possible_xlens_cb
@@ -221,11 +223,6 @@ module Idl
 
       # builtin types
       @scopes = [{
-        "X" => Var.new(
-          "X",
-          Type.new(:array, sub_type: XregType.new(@mxlen.nil? ? 64 : @mxlen), width: 32, qualifiers: [:global])
-        ),
-        "XReg" => XregType.new(@mxlen.nil? ? 64 : @mxlen),
         "Boolean" => Type.new(:boolean),
         "true" => Var.new(
           "true",
@@ -237,8 +234,29 @@ module Idl
           Type.new(:boolean),
           false
         )
-
       }]
+      # @params must be set before the register_files loop so that param schema
+      # max lookups (used to compute int_width for dynamic-width register files)
+      # can access @params without triggering a cfg_arch.symtab circular dependency.
+      @params = params
+
+      # Register file globals (X, F, V, etc.) from YAML-derived register file objects.
+      # Each RF provides: .name (String), .register_length (IDL body String), .registers.count (Integer).
+      register_files.each do |rf|
+        int_width = if register_file_max_widths.key?(rf.name)
+          register_file_max_widths[rf.name]
+        else
+          # Fallback for callers without pre-computed widths (CLI, tests with literal-width RFs).
+          # eval_register_length_idl handles literals ("return 64;") and simple MXLEN references.
+          w = eval_register_length_idl(rf.register_length)
+          w.is_a?(Integer) ? w : raise("Cannot determine max register width for '#{rf.name}'. " \
+                                        "Pass register_file_max_widths: to SymbolTable.new.")
+        end
+        elem_type = RegFileElementType.new(rf.name, int_width, max_width: int_width)
+        array_type = Type.new(:array, sub_type: elem_type, width: rf.registers.count, qualifiers: [:global])
+        @scopes[0][rf.name] = Var.new(rf.name, array_type)
+        @scopes[0]["#{rf.name}Reg"] = elem_type
+      end
       builtin_global_vars.each do |v|
         add!(v.name, v)
       end
@@ -248,11 +266,34 @@ module Idl
       @builtin_funcs = builtin_funcs
       @csrs = csrs
       @csr_hash = @csrs.map { |csr| [csr.name.freeze, csr].freeze }.to_h.freeze
-      @params = params
 
       # set up the global clone that be used as a mutable table
       @global_clone_pool = T.let([], T::Array[SymbolTable])
     end
+
+    # Compile and evaluate the IDL function body string that defines register width.
+    # Returns an Integer if statically known, or the expression string if dynamic.
+    # @param idl_body [String] e.g. "return 64;" or "return MXLEN;"
+    #
+    # NOTE: The body-stripping logic here (strip 'return', strip ';', match literal/MXLEN)
+    # is intentionally duplicated in Udb::RegisterFile#register_length_expr and
+    # Udb::RegisterFile#eval_register_length (udb gem). Changes here must be mirrored there.
+    # idlc cannot depend on udb (udb depends on idlc), so a shared utility is not possible
+    # without an additional gem layer.
+    def eval_register_length_idl(idl_body)
+      # Strip 'return' and ';'
+      expr = idl_body.strip.sub(/\Areturn\s+/, "").sub(/;\z/, "").strip
+      case expr
+      when /\A\d+\z/
+        expr.to_i
+      when /\AMXLEN\z/
+        @mxlen || 64
+      else
+        # Dynamic parameter — return the parameter name as a String
+        expr
+      end
+    end
+    private :eval_register_length_idl
 
     # @return [String] inspection string
     sig { returns(String) }

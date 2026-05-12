@@ -268,9 +268,6 @@
     "$source": {
       "type": "string",
       "description": "Source file path when this extension was generated or copied from another file"
-    },
-    "cert_normative_rules": {
-      "$ref": "schema_defs.json#/$defs/cert_normative_rules"
     }
   },
   "additionalProperties": false

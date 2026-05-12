@@ -49,6 +49,18 @@
           "format": "uri",
           "description": "Source file path when this configuration was generated or copied from another file"
         },
+        "compatible": {
+          "description": "Declares that this configuration is compatible with one or more other configurations — meaning there exists at least one concrete hardware implementation that satisfies both this config and each listed config simultaneously. Each pointer is either the name of a config in the repository cfgs/ directory or a path to a config YAML file (absolute, or relative to this file). Compatibility is checked transitively: if config B lists config C as compatible, then this config must also be compatible with C.",
+          "examples": [
+            "profile/RVA23U64",
+            ["profile/RVA23U64", "profile/RVB23U64"],
+            "../other/my_config.yaml"
+          ],
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
         "params": {
           "type": "object",
           "description": "Architecture parameters that define implementation choices (e.g., `MXLEN: 64`, privilege modes, physical address width, etc.). Parameter names and valid values are defined by the parameter data files in `spec/std/isa/param/`."
@@ -136,6 +148,18 @@
           "type": "string",
           "format": "uri",
           "description": "Source file path when this configuration was generated or copied from another file"
+        },
+        "compatible": {
+          "description": "Declares that this configuration is compatible with one or more other configurations — meaning there exists at least one concrete hardware implementation that satisfies both this config and each listed config simultaneously. Each pointer is either the name of a config in the repository cfgs/ directory or a path to a config YAML file (absolute, or relative to this file). Compatibility is checked transitively: if config B lists config C as compatible, then this config must also be compatible with C.",
+          "examples": [
+            "profile/RVA23U64",
+            ["profile/RVA23U64", "profile/RVB23U64"],
+            "../other/my_config.yaml"
+          ],
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
         },
         "mandatory_extensions": {
           "description": "Extensions mandatory in this architecture",

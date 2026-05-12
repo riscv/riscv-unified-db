@@ -114,24 +114,6 @@ class Udb::Architecture
   sig { returns(T::Array[Udb::Prm]) }
   def prms; end
 
-  sig { params(name: String).returns(T.nilable(Udb::ProcCertClass)) }
-  def proc_cert_class(name); end
-
-  sig { returns(T::Hash[String, Udb::ProcCertClass]) }
-  def proc_cert_class_hash; end
-
-  sig { returns(T::Array[Udb::ProcCertClass]) }
-  def proc_cert_classes; end
-
-  sig { params(name: String).returns(T.nilable(Udb::ProcCertModel)) }
-  def proc_cert_model(name); end
-
-  sig { returns(T::Hash[String, Udb::ProcCertModel]) }
-  def proc_cert_model_hash; end
-
-  sig { returns(T::Array[Udb::ProcCertModel]) }
-  def proc_cert_models; end
-
   sig { params(name: String).returns(T.nilable(Udb::Profile)) }
   def profile(name); end
 

@@ -1,59 +1,92 @@
 ---
+# Priority groups (lower runs earlier; equal priority runs in parallel):
+minimum_prek_version: "0.3.4"
 exclude: ^docs/ruby/ # All generated code
 default_language_version:
   python: python3.12
+default_stages: [pre-commit]
 
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+  # Rust-native builtin hooks (no clone, no Python venv).
+  - repo: builtin
     hooks:
-      - id: check-ast
-        stages: [pre-commit]
-      - id: check-builtin-literals
-        stages: [pre-commit]
-      - id: check-case-conflict
-        stages: [pre-commit]
-      - id: check-docstring-first
-        stages: [pre-commit]
-      - id: check-symlinks
-        stages: [pre-commit]
+      # Whitespace/EOL fixers (sequential to avoid races on the same files).
       - id: end-of-file-fixer
-        stages: [pre-commit]
+        priority: 10
         # Exclude reference and generated files
-        exclude: (cfgs/profile.*|.*\.golden\.adoc$|.*\.svg|amo.*\.yaml|\.github/workflows/regress\.yml|tests/data/golden/.*)
+        exclude: (cfgs/profile.*|.*\.golden\.adoc$|.*\.svg|amo.*\.yaml|hpmcounter.*\.yaml|mhpmevent.*\.yaml|pmp.*\.yaml|mop.*\.yaml|mcountinhibit\.yaml|[smh]counteren\.yaml|scountovf\.yaml|spec/std/isa/inst/Zalrsc/.*\.yaml|spec/std/isa/inst/Zalasr/.*\.yaml|\.github/workflows/regress\.yml|tests/data/golden/.*)
       - id: trailing-whitespace
-        stages: [pre-commit]
+        priority: 11
         args: [--markdown-linebreak-ext=md]
-        exclude: \.svg$|tests/data/golden/.*
+        exclude: \.svg$|cfgs/profile/.*\.yaml$|tests/data/golden/.*
       - id: mixed-line-ending
+        priority: 12
         args: ["--fix=lf"]
         exclude: ^.*\.bat$
+      # Validators (parallel).
+      - id: check-case-conflict
+        priority: 30
+      - id: check-symlinks
+        priority: 30
       - id: check-merge-conflict
-        stages: [pre-commit]
+        priority: 30
         args: ["--assume-in-merge"]
         exclude: \.adoc$ # sections titles Level 6 "=======" get flagged otherwise
       - id: check-json
-        stages: [pre-commit]
+        priority: 30
         exclude: tools/vscode/\.vscode/launch\.json|doc/tsconfig\.json # Uses JSONC (comments)
       - id: check-yaml
-        stages: [pre-commit]
+        priority: 30
 
+  # Formatters touching distinct file extensions (parallel).
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.8.1
     hooks:
       - id: prettier
-        stages: [pre-commit]
+        priority: 20
         files: \.(json|toml|yml|yaml)$
         exclude: schemas/json-schema-draft-07.json|cfgs/profile/.*
 
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: "v20.1.8"
+    hooks:
+      - id: clang-format
+        priority: 20
+        types_or: [c++, c]
+        files: \.(hpp|cpp)$
+        # TEMPORARILY DISABLE CLANG-FORMAT IN LIBHART
+        # WIll RE-ENABLE WHEN NEXT PATCH COMES THROUGH
+        exclude: backends/cpp_hart_gen
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.1
+    hooks:
+      - id: ruff-format
+        priority: 20
+      - id: ruff-check
+        priority: 30
+
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.11.0-1
+    hooks:
+      - id: shfmt
+        priority: 20
+        args:
+          - --indent
+          - "2"
+          - --case-indent
+
+  # JSON-schema validation: each variant filters a different subtree, so they
+  # are independent and benefit greatly from running in parallel.
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.36.1
     hooks:
       - id: check-metaschema
+        priority: 30
         files: ^spec/schemas/.*\.json$
       - id: check-jsonschema
         name: Validate instruction files with jsonschema
-        stages: [pre-commit]
+        priority: 30
         alias: check-jsonschema-inst
         files: ^spec/std/isa/inst/.*\.(yaml|yml)$
         args:
@@ -65,7 +98,7 @@ repos:
           ]
       - id: check-jsonschema
         name: Validate CSR files with jsonschema
-        stages: [pre-commit]
+        priority: 30
         alias: check-jsonschema-csr
         files: ^spec/std/isa/csr/.*\.(yaml|yml)$
         args:
@@ -77,13 +110,13 @@ repos:
           ]
       - id: check-jsonschema
         name: Validate MMR files with jsonschema
-        stages: [pre-commit]
+        priority: 30
         alias: check-jsonschema-mmr
         files: ^spec/.*/isa/.*/mmr/.*\.(yaml|yml)$
         args: ["--schemafile", "spec/schemas/mmr_schema.json"]
       - id: check-jsonschema
         name: Validate extension files with jsonschema
-        stages: [pre-commit]
+        priority: 30
         alias: check-jsonschema-ext
         files: ^spec/std/isa/ext/.*\.(yaml|yml)$
         args:
@@ -94,32 +127,8 @@ repos:
             "file://spec/schemas/",
           ]
       - id: check-jsonschema
-        name: Validate cert model files with jsonschema
-        stages: [pre-commit]
-        alias: check-jsonschema-cert-model
-        files: ^spec/std/isa/proc_cert_model/.*\.(yaml|yml)$
-        args:
-          [
-            "--schemafile",
-            "spec/schemas/proc_cert_model_schema.json",
-            "--base-uri",
-            "file://spec/schemas/",
-          ]
-      - id: check-jsonschema
-        name: Validate cert class files with jsonschema
-        stages: [pre-commit]
-        alias: check-jsonschema-cert-class
-        files: ^spec/std/isa/proc_cert_class/.*\.(yaml|yml)$
-        args:
-          [
-            "--schemafile",
-            "spec/schemas/proc_cert_class_schema.json",
-            "--base-uri",
-            "file://spec/schemas/",
-          ]
-      - id: check-jsonschema
         name: Validate profile family files with jsonschema
-        stages: [pre-commit]
+        priority: 30
         alias: check-jsonschema-profile-family
         files: ^spec/std/isa/profile_family/.*\.(yaml|yml)$
         args:
@@ -131,7 +140,7 @@ repos:
           ]
       - id: check-jsonschema
         name: Validate profile release files with jsonschema
-        stages: [pre-commit]
+        priority: 30
         alias: check-jsonschema-profile-release
         files: ^spec/std/isa/profile_release/.*\.(yaml|yml)$
         args:
@@ -154,53 +163,34 @@ repos:
       #       "file://spec/schemas/",
       #     ]
 
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: "v20.1.8"
-    hooks:
-      - id: clang-format
-        stages: [pre-commit]
-        types_or: [c++, c]
-        files: \.(hpp|cpp)$
-        # TEMPORARILY DISABLE CLANG-FORMAT IN LIBHART
-        # WIll RE-ENABLE WHEN NEXT PATCH COMES THROUGH
-        exclude: backends/cpp_hart_gen
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.1
-    hooks:
-      - id: ruff-check
-        stages: [pre-commit]
-      - id: ruff-format
-        stages: [pre-commit]
-
   - repo: local
     hooks:
       - id: shellcheck
         name: shellcheck
+        priority: 30
         types: [shell]
         language: system
         entry: shellcheck
         args: ["--severity=error"]
 
-  - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.11.0-1
-    hooks:
-      - id: shfmt
-        stages: [pre-commit]
-        args:
-          - --indent
-          - "2"
-          - --case-indent
-
   - repo: https://github.com/fsfe/reuse-tool
     rev: v6.2.0
     hooks:
       - id: reuse-lint-file
+        priority: 30
         exclude: COMMIT_EDITMSG|MERGE_MSG
+
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: 43.15.1
+    hooks:
+      - id: renovate-config-validator
+        priority: 30
 
   - repo: local
     hooks:
       - id: regress
         name: generate regress.yml
+        priority: 90
         files: (tools/test/gen_regress\.rb|tools/test/regress-tests.yaml|tools/test/regress-gh-template.yaml)
         pass_filenames: false
         language: system
@@ -218,8 +208,3 @@ repos:
           false
           )
           '
-
-  - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 43.15.1
-    hooks:
-      - id: renovate-config-validator

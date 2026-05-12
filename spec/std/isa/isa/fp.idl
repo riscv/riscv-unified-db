@@ -9,11 +9,7 @@
 # Files in berkely-softfloat-3 repository are licensed under BSD-3-clause.
 
 # floating point register file
-U32 FLEN = 64; # implemented?(ExtensionName::D) ? 7'd64 : 7'd32;
-Bits<FLEN> f[32] = [0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0];
+U32 FLEN = implemented?(ExtensionName::Q) ? 8'd128 : (implemented?(ExtensionName::D) ? 7'd64 : 7'd32);
 
 # FP constants
 Bits<32> SP_POS_INF       = 32'b0_11111111_00000000000000000000000;

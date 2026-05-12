@@ -963,19 +963,24 @@ module Idl
     def body = @func_def_ast.body
   end
 
-  # XReg is really a Bits<> type, so we override it just to get
-  # prettier prints
-  class XregType < Type
+  # General-purpose register file element type.
+  # Represents the type of one element in a named register file (e.g. F, V, X).
+  class RegFileElementType < Type
+    attr_reader :name
+
+    def initialize(name, width, max_width: nil)
+      super(:bits, width:, max_width: max_width || width)
+      @name = name
+    end
+
+    def to_s = "#{name}Reg"
+    def to_cxx = "#{name}Reg"
+  end
+
+  # XReg is really a Bits<> type -- keep as a named alias for backwards compatibility
+  class XregType < RegFileElementType
     def initialize(xlen)
-      super(:bits, width: xlen, max_width: 64)
-    end
-
-    def to_s
-      "XReg"
-    end
-
-    def to_cxx
-      "XReg"
+      super("X", xlen, max_width: 64)
     end
   end
 

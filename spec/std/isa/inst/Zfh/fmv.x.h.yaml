@@ -35,4 +35,4 @@ access:
 operation(): |
   check_f_ok($encoding);
 
-  X[xd] = sext(f[fs1][15:0], 16);
+  X[xd] = sext(F[fs1][15:0], 16);

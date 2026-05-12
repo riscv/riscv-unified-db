@@ -85,7 +85,7 @@ volumes:
       - { name: Zicond, version: "1.0.0" }
       - { name: M, version: "2.0.0" }
       - { name: A, version: "2.1.0" }
-      - { name: Zawrs, version: "1.0.1" }
+      - { name: Zawrs, version: "1.0" }
       - { name: Zacas, version: "1.0.0" }
       - { name: Zabha, version: "1.0.0" }
       # - { name: RVWMO, version: "2.0" }
@@ -207,10 +207,10 @@ volumes:
       - { name: Smcdeleg, version: "1.0.0" }
       - { name: S, version: "1.12.0" }
       - { name: Sm, version: "1.12.0" }
-      - { name: Sv32, version: "1.12.0" }
-      - { name: Sv39, version: "1.12.0" }
-      - { name: Sv48, version: "1.12.0" }
-      - { name: Sv57, version: "1.12.0" }
+      - { name: Sv32, version: "1.0" }
+      - { name: Sv39, version: "1.0" }
+      - { name: Sv48, version: "1.0" }
+      - { name: Sv57, version: "1.0" }
       - { name: Svnapot, version: "1.0.0" }
       - { name: Svpbmt, version: "1.0.0" }
       - { name: Svinval, version: "1.0.0" }

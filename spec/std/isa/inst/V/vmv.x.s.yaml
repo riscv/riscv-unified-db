@@ -34,6 +34,6 @@ operation(): |
   VectorState state = vector_state();
 
   # vmv.x.s copies element 0 of vs2 to xd, sign-extending to XLEN
-  X[xd] = $signed(v[vs2][state.sew-1:0]);
+  X[xd] = $signed(V[vs2][state.sew-1:0]);
 
   CSR[vstart].VALUE = 0;

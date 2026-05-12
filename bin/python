@@ -1,5 +1,3 @@
 #!/bin/bash
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
-EXEC_DIR=${PWD}
-cd "$ROOT"
-exec mise exec --cd "$EXEC_DIR" -- uv run python "$@"
+exec "${ROOT}/bin/uv" run --project "$ROOT" python "$@"

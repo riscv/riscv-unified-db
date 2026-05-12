@@ -8,16 +8,12 @@ require "sorbet-runtime"
 require "idlc/passes/gen_option_adoc"
 
 require_relative "database_obj"
-require_relative "certifiable_obj"
 
 module Udb
 
 # A CSR field object
   class CsrField < DatabaseObject
     extend T::Sig
-
-    # Add all methods in this module to this type of database object.
-    include CertifiableObject
 
     include Idl::CsrField
 
@@ -770,7 +766,7 @@ module Udb
     sig { returns(String) }
     def location_cond32
       case csr.priv_mode
-      when "M"
+      when "M", "D"
         "CSR[misa].MXL == 0"
       when "S"
         "CSR[mstatus].SXL == 0"
@@ -786,7 +782,7 @@ module Udb
     sig { returns(String) }
     def location_cond64
       case csr.priv_mode
-      when "M"
+      when "M", "D"
         "CSR[misa].MXL == 1"
       when "S"
         "CSR[mstatus].SXL == 1"
@@ -812,7 +808,7 @@ module Udb
       if dynamic_location?
         condition =
           case csr.priv_mode
-          when "M"
+          when "M", "D"
             "CSR[misa].MXL == %%"
           when "S"
             "CSR[mstatus].SXL == %%"

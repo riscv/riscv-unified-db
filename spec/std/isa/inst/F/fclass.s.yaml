@@ -51,11 +51,11 @@ data_independent_timing: false
 operation(): |
   check_f_ok($encoding);
 
-  Bits<32> sp_value = f[fs1][31:0];
+  Bits<32> sp_value = F[fs1][31:0];
 
   if (implemented?(ExtensionName::D)) {
     # check for an incorrectly NaN-boxed value
-    if (f[fs1][63:32] != 32'hffffffff) {
+    if (F[fs1][63:32] != 32'hffffffff) {
       sp_value = SP_CANONICAL_NAN;
     }
   }

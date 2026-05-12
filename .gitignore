@@ -1,5 +1,6 @@
 .bundle
 !.bundle/config
+vendor/bundle
 .python
 .antora
 .home

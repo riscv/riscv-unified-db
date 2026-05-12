@@ -68,3 +68,48 @@ class TestUnknownLiteral < Minitest::Test
     assert_equal "31'b1111111111111111111x11111111111", tmp.to_s
   end
 end
+
+# Tests for TernaryOperatorExpressionAst#max_value and #min_value.
+# These support the max-register-width derivation used when removing
+# the max_register_length: field from register file YAML.
+class TestTernaryMaxMinValue < Minitest::Test
+  def setup
+    @compiler = Idl::Compiler.new
+    # Symtab with a boolean variable that has no compile-time value, so ternary
+    # conditions referencing it will be unknown at compile time.
+    @symtab = Idl::SymbolTable.new(
+      register_files: [DEFAULT_X_REGISTER_FILE],
+      builtin_global_vars: [
+        Idl::Var.new("flag", Idl::Type.new(:boolean))
+      ]
+    )
+  end
+
+  def compile(expr)
+    @compiler.compile_expression(expr, @symtab, pass_error: true)
+  end
+
+  # Unknown condition → max_value returns the larger of the two literal branches
+  def test_max_value_unknown_condition
+    ast = compile("flag ? 64 : 32")
+    assert_equal 64, ast.max_value(@symtab)
+  end
+
+  # Unknown condition → min_value returns the smaller branch
+  def test_min_value_unknown_condition
+    ast = compile("flag ? 64 : 32")
+    assert_equal 32, ast.min_value(@symtab)
+  end
+
+  # Known-true condition → max_value follows the true branch only
+  def test_max_value_known_true_condition
+    ast = compile("true ? 32 : 64")
+    assert_equal 32, ast.max_value(@symtab)
+  end
+
+  # Known-false condition → max_value follows the false branch only
+  def test_max_value_known_false_condition
+    ast = compile("false ? 32 : 64")
+    assert_equal 64, ast.max_value(@symtab)
+  end
+end

@@ -19,7 +19,7 @@ implemented_extensions:
   - [S, "1.11.0"]
   - [U, "1.0.0"]
   - [Zifencei, "2.0.0"]
-  - [Sv39, "1.11.0"]
+  - [Sv39, "1.0"]
   - [V, "1.0.0"]
   - [F, "2.2"]
   - [D, "2.2"]
@@ -64,6 +64,7 @@ params:
   PMA_GRANULARITY: 12
   PHYS_ADDR_WIDTH: 57
   MISA_CSR_IMPLEMENTED: true
+  MCOUNTINHIBIT_IMPLEMENTED: true
   MTVEC_ACCESS: rw
   MTVEC_MODES: [0, 1]
   MTVEC_BASE_ALIGNMENT_DIRECT: 4

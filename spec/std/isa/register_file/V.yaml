@@ -1,7 +1,7 @@
 # Copyright (c) Animesh Agarwal
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-# yaml-language-server: $schema=../../../../schemas/register_file_schema.json
+# yaml-language-server: $schema=../../../schemas/register_file_schema.json
 
 $schema: register_file_schema.json#
 kind: register_file
@@ -14,7 +14,7 @@ description: |
   participate in argument passing or return values.
 definedBy: V
 register_class: vector
-register_length: VLEN
+register_length(): return VLEN;
 registers:
   - name: v0
     caller_saved: true

@@ -177,6 +177,26 @@ module Idl
   class AryRangeAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
+      # For register file range assignments (RF[idx][msb:lsb] = val), the getter
+      # returns by value, so we must read into a temporary, modify, then write back.
+      if variable.is_a?(Idl::AryElementAccessAst)
+        var_type = variable.var.type(symtab) rescue nil
+        if var_type&.kind == :array &&
+           var_type.sub_type.is_a?(Idl::RegFileElementType) &&
+           var_type.qualifiers.include?(:global)
+          rf_name = var_type.sub_type.name.downcase
+          value_result = value_try do
+            msb_val = msb.value(symtab)
+            lsb_val = lsb.value(symtab)
+            return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert<#{msb_val}, #{lsb_val}, #{variable.type(symtab).width}>(__udb_reg_tmp, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
+          end
+          value_else(value_result) do
+            return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert(__udb_reg_tmp, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
+          end
+        end
+      end
+
+      # Standard range assignment (non-register-file)
       expression = nil
       value_result = value_try do
         # see if msb and lsb are compile-time-known
@@ -811,6 +831,12 @@ module Idl
     end
   end
 
+  def self.maybe_array_cast(lt, rt, rhs_cpp)
+    return rhs_cpp unless lt.kind == :array && rt.kind == :array
+    lt_sub = lt.sub_type.to_cxx_no_qualifiers
+    lt_sub == rt.sub_type.to_cxx_no_qualifiers ? rhs_cpp : "array_cast<#{lt_sub}>(#{rhs_cpp})"
+  end
+
   class VariableDeclarationWithInitializationAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
@@ -823,7 +849,10 @@ module Idl
           "#{' ' * indent}#{type_name.gen_cpp(symtab, 0, indent_spaces:)} #{lhs.gen_cpp(symtab, 0, indent_spaces:)}(#{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
         end
       else
-        "#{' ' * indent}std::array<#{type_name.gen_cpp(symtab, 0, indent_spaces:)}, #{ary_size.gen_cpp(symtab, 0, indent_spaces:)}> #{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
+        lt = lhs_type(symtab)
+        rt = rhs.type(symtab)
+        rhs_cpp = Idl.maybe_array_cast(lt, rt, rhs.gen_cpp(symtab, 0, indent_spaces:))
+        "#{' ' * indent}std::array<#{type_name.gen_cpp(symtab, 0, indent_spaces:)}, #{ary_size.gen_cpp(symtab, 0, indent_spaces:)}> #{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs_cpp}"
       end
     end
   end
@@ -843,9 +872,12 @@ module Idl
           "#{' ' * indent}#{var.gen_cpp(symtab, 0, indent_spaces:)}.at(#{index.gen_cpp(symtab, 0)})"
         end
       else
-        if var.text_value.start_with?("X")
-          #"#{' '*indent}#{var.gen_cpp(symtab, 0, indent_spaces:)}[#{index.gen_cpp(symtab, 0, indent_spaces:)}]"
-          "#{' ' * indent} __UDB_HART->_xreg(#{index.gen_cpp(symtab, 0, indent_spaces:)})"
+        var_type = var.type(symtab)
+        if var_type.kind == :array &&
+           var_type.sub_type.is_a?(Idl::RegFileElementType) &&
+           var_type.qualifiers.include?(:global)
+          rf_name = var_type.sub_type.name.downcase
+          "#{' ' * indent}__UDB_HART->_#{rf_name}reg(#{index.gen_cpp(symtab, 0, indent_spaces:)})"
         else
           "#{' ' * indent}#{var.gen_cpp(symtab, 0, indent_spaces:)}.at(#{index.gen_cpp(symtab, 0, indent_spaces:)}.get())"
         end
@@ -881,7 +913,10 @@ module Idl
   class VariableAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
+      lt = lhs.type(symtab)
+      rt = rhs.type(symtab)
+      rhs_cpp = Idl.maybe_array_cast(lt, rt, rhs.gen_cpp(symtab, 0, indent_spaces:))
+      "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs_cpp}"
     end
   end
 
@@ -895,9 +930,12 @@ module Idl
   class AryElementAssignmentAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      if lhs.text_value.start_with?("X")
-        #"#{' '*indent}  #{lhs.gen_cpp(symtab, 0, indent_spaces:)}[#{idx.gen_cpp(symtab, 0, indent_spaces:)}] = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
-        "#{' ' * indent}__UDB_HART->_set_xreg( #{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
+      lhs_type = lhs.type(symtab)
+      if lhs_type.kind == :array &&
+         lhs_type.sub_type.is_a?(Idl::RegFileElementType) &&
+         lhs_type.qualifiers.include?(:global)
+        rf_name = lhs_type.sub_type.name.downcase
+        "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
       elsif lhs.type(symtab).kind == :bits
         "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)}.setBit(#{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
       else
@@ -968,7 +1006,7 @@ module Idl
   class ArrayLiteralAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      "{#{element_nodes.map { |e| e.gen_cpp(symtab, 0) }.join(', ')}}"
+      "std::array<#{element_nodes.fetch(0).type(symtab).to_cxx_no_qualifiers}, #{element_nodes.size}>{#{element_nodes.map { |e| e.gen_cpp(symtab, 0) }.join(', ')}}"
     end
   end
 

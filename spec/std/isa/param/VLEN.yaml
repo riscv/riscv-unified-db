@@ -11,6 +11,8 @@ description: |
 long_name: TODO
 schema:
   type: integer
+  minimum: 32
+  maximum: 65536
 #    requirements:
 #      idl(): |
 #        -> (VLEN >= ELEN) && (VLEN <='h10000) && (popcount(VLEN) == 1);

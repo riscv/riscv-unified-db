@@ -36,7 +36,7 @@ fields:
       ! Name ! Location ! Description
 
       h! L ! 7   ! Locks the entry from further modification. Additionally, when set, PMP checks also apply to M-mode for the entry.
-      h! - ! 6:5 ! _Reserved_ Writes shall be ignored.
+      h! MT ! 6:5 ! When the `Smpmpmt` extension is implemented, MT (Memory Type) is a WARL field that overrides the memory type for accesses that match this PMP entry.  See the `Smpmpmt` extension definition for encodings.  When the `Smpmpmt` extension is not implemented, MT is _Reserved_ Writes shall be ignored.
       h! A ! 4:3
       a! Address matching mode. One of:
 
@@ -94,7 +94,7 @@ fields:
       ! Name ! Location ! Description
 
       h! L ! 15   ! Locks the entry from further modification. Additionally, when set, PMP checks also apply to M-mode for the entry.
-      h! - ! 14:13 ! _Reserved_ Writes shall be ignored.
+      h! MT ! 14:13 ! When the `Smpmpmt` extension is implemented, MT (Memory Type) is a WARL field that overrides the memory type for accesses that match this PMP entry.  See the `Smpmpmt` extension definition for encodings.  When the `Smpmpmt` extension is not implemented, MT is _Reserved_ Writes shall be ignored.
       h! A ! 12:11
       a! Address matching mode. One of:
 
@@ -152,7 +152,7 @@ fields:
       ! Name ! Location ! Description
 
       h! L ! 23   ! Locks the entry from further modification. Additionally, when set, PMP checks also apply to M-mode for the entry.
-      h! - ! 22:21 ! _Reserved_ Writes shall be ignored.
+      h! MT ! 22:21 ! When the `Smpmpmt` extension is implemented, MT (Memory Type) is a WARL field that overrides the memory type for accesses that match this PMP entry.  See the `Smpmpmt` extension definition for encodings.  When the `Smpmpmt` extension is not implemented, MT is _Reserved_ Writes shall be ignored.
       h! A ! 20:19
       a! Address matching mode. One of:
 
@@ -210,7 +210,7 @@ fields:
       ! Name ! Location ! Description
 
       h! L ! 31   ! Locks the entry from further modification. Additionally, when set, PMP checks also apply to M-mode for the entry.
-      h! - ! 30:29 ! _Reserved_ Writes shall be ignored.
+      h! MT ! 30:29 ! When the `Smpmpmt` extension is implemented, MT (Memory Type) is a WARL field that overrides the memory type for accesses that match this PMP entry.  See the `Smpmpmt` extension definition for encodings.  When the `Smpmpmt` extension is not implemented, MT is _Reserved_ Writes shall be ignored.
       h! A ! 28:27
       a! Address matching mode. One of:
 

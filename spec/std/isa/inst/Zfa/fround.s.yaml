@@ -37,5 +37,5 @@ data_independent_timing: true
 operation(): |
   check_f_ok($encoding);
   RoundingMode rounding_mode = rm_to_mode(rm, $encoding);
-  f[fd] = round_f32_to_integral(f[fs1], rounding_mode);
+  F[fd] = round_f32_to_integral(F[fs1], rounding_mode);
   mark_f_state_dirty();

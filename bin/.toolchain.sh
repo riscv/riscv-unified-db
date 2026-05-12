@@ -99,7 +99,7 @@ _prompt_toolchain_selection() {
   printf "  [1] Container (recommended)\n"
   printf "      Docker/Podman pulls a pre-built image (~500 MB) from GHCR.\n\n"
   printf "  [2] Native\n"
-  printf "      Requires GCC 14+ with C++23 support and a RISC-V cross-toolchain.\n\n"
+  printf "      Requires GCC 13.3+ with C++23 support and a RISC-V cross-toolchain.\n\n"
 
   local _choice
   while true; do

@@ -419,6 +419,57 @@ module Idl
       attr_accessor :value_error_reason, :value_error_ast
     end
 
+    # Extract the base variable name from a potentially nested access chain
+    # @param node [RvalueAst] The node to extract from
+    # @return [String, nil] The base variable name, or nil if not extractable
+    sig { params(node: RvalueAst).returns(T.nilable(String)) }
+    def self.extract_base_var_name(node)
+      case node
+      when IdAst
+        node.name
+      when AryElementAccessAst, AryRangeAccessAst
+        extract_base_var_name(node.var)
+      else
+        nil
+      end
+    end
+
+    # Perform write-back for nested array access assignments
+    # Handles arbitrary nesting depth: v[a][b][c] = val recursively writes back through the chain
+    # @param target [RvalueAst] The target expression (possibly nested)
+    # @param new_value [Integer] The new value to write
+    # @param symtab [SymbolTable] The symbol table
+    # @return [void]
+    sig { params(target: RvalueAst, new_value: ValueRbType, symtab: SymbolTable).void }
+    def self.write_back_nested(target, new_value, symtab)
+      case target
+      when IdAst
+        # Base case: simple variable
+        existing_var = symtab.get(target.name)
+        raise InternalError, "write_back_nested: '#{target.name}' not found in symbol table" if existing_var.nil?
+        existing_var.value = new_value
+      when AryElementAccessAst
+        # Recursive case: v[idx] = val
+        # Read parent, modify element, write back parent
+        parent_value = target.var.value(symtab)
+        idx_val = target.index.value(symtab)
+        parent_value[idx_val] = new_value
+        # Recursively write back the parent (which may itself be nested)
+        write_back_nested(target.var, parent_value, symtab)
+      when AryRangeAccessAst
+        # Recursive case: v[msb:lsb] = new_value
+        # Read parent, splice new_value into [msb:lsb], write parent back
+        parent_value = T.cast(target.var.value(symtab), Integer)
+        msb_val = T.cast(target.msb.value(symtab), Integer)
+        lsb_val = T.cast(target.lsb.value(symtab), Integer)
+        mask = ((1 << (msb_val - lsb_val + 1)) - 1) << lsb_val
+        updated_parent = (parent_value & ~mask) | ((T.cast(new_value, Integer) << lsb_val) & mask)
+        write_back_nested(target.var, updated_parent, symtab)
+      else
+        raise InternalError, "Unknown target type for write-back: #{target.class.name}"
+      end
+    end
+
     # raise a value error, indicating that the value is not known at compile time
     #
     # @param reason [String] Error message
@@ -1360,9 +1411,13 @@ module Idl
 
       enums.each { |g| g.add_symbol(symtab); }
       bitfields.each { |g| g.add_symbol(symtab) }
+      # Functions must be registered before globals so that global variable
+      # initializers can call functions (e.g. FLEN = implemented?(...) ? 64 : 32).
+      # FunctionDefAst#add_symbol only stores the FunctionType; it does not
+      # evaluate the body, so adding functions before globals is safe.
+      functions.each { |g| g.add_symbol(symtab) }
       globals.each { |g| g.add_symbol(symtab) }
       structs.each { |g| g.add_symbol(symtab) }
-      functions.each { |g| g.add_symbol(symtab) }
     end
 
     # replaces an include statement with the ast in that file, making
@@ -2477,7 +2532,12 @@ module Idl
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab)
-      if var.name == "X"
+      var_type = begin
+        var.type(symtab)
+      rescue AstNode::TypeError, AstNode::InternalError
+        nil
+      end
+      if var_type.is_a?(Type) && var_type.kind == :array && var_type.sub_type.is_a?(RegFileElementType) && var_type.qualifiers.include?(:global)
         false
       else
         var.const_eval?(symtab) && index.const_eval?(symtab)
@@ -2542,7 +2602,12 @@ module Idl
       if var.type(symtab).integral?
         (var_val >> index.value(symtab)) & 1
       else
-        value_error "X registers are not compile-time-known" if var.text_value == "X"
+        var_type = begin
+          var.type(symtab)
+        rescue AstNode::TypeError, AstNode::InternalError
+          nil
+        end
+        value_error "Register file registers are not compile-time-known" if var_type.is_a?(Type) && var_type.kind == :array && var_type.sub_type.is_a?(RegFileElementType) && var_type.qualifiers.include?(:global)
 
         # internal_error "Not an array" unless ary.type.kind == :array
 
@@ -2587,7 +2652,12 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab)
       v = var
-      if v.is_a?(IdAst) && v.name == "X"
+      var_type = begin
+        v.type(symtab)
+      rescue AstNode::TypeError, AstNode::InternalError
+        nil
+      end
+      if var_type.is_a?(Type) && var_type.kind == :array && var_type.sub_type.is_a?(RegFileElementType) && var_type.qualifiers.include?(:global)
         false
       else
         v.const_eval?(symtab) && msb.const_eval?(symtab).const_eval? && lsb.const_eval?(symtab)
@@ -2851,12 +2921,6 @@ module Idl
     end
   end
 
-  class AryElementAssignmentSyntaxNode < SyntaxNode
-    def to_ast
-      AryElementAssignmentAst.new(input, interval, send(:var).to_ast, send(:idx).to_ast, send(:rval).to_ast)
-    end
-  end
-
   # represents an array element assignment
   #
   # for example:
@@ -2871,8 +2935,10 @@ module Idl
       if idx.const_eval?(symtab) && rhs.const_eval?(symtab)
         true
       else
-        lhs_var = symtab.get(lhs.name)
-        type_error "array #{lhs.name} has not been declared" if lhs_var.nil?
+        base_name = AstNode.extract_base_var_name(lhs)
+        type_error "Cannot determine base variable for #{lhs.text_value}" if base_name.nil?
+        lhs_var = symtab.get(base_name)
+        type_error "array #{base_name} has not been declared" if lhs_var.nil?
 
         lhs_var.const_incompatible!
         false
@@ -2938,13 +3004,15 @@ module Idl
           value_error "right-hand side of array element assignment is unknown"
         end
       when :bits
-        var = symtab.get(lhs.text_value)
         value_result = value_try do
-          v = rhs.value(symtab)
-          var.value = (lhs.value(symtab) & ~0) | ((v & 1) << idx.value(symtab))
+          new_element = (lhs.value(symtab) & ~0) | ((rhs.value(symtab) & 1) << idx.value(symtab))
+          AstNode.write_back_nested(lhs, new_element, symtab)
         end
         value_else(value_result) do
-          var.value = nil
+          base_name = T.must(AstNode.extract_base_var_name(lhs))
+          v = symtab.get(base_name)
+          internal_error "did not find array base '#{base_name}'" if v.nil?
+          v.value = nil
         end
       else
         internal_error "unexpected type for array element assignment"
@@ -2981,7 +3049,27 @@ module Idl
 
   class AryRangeAssignmentSyntaxNode < SyntaxNode
     def to_ast
-      AryRangeAssignmentAst.new(input, interval, send(:var).to_ast, send(:msb).to_ast, send(:lsb).to_ast, send(:rval).to_ast)
+      var = send(:var).to_ast
+      brackets = send(:brackets).elements
+
+      # Build access chain for all but the last bracket
+      brackets[0..-2].each do |bracket|
+        var =
+          if bracket.msb.empty?
+            AryElementAccessAst.new(input, interval, var, bracket.lsb.to_ast)
+          else
+            AryRangeAccessAst.new(input, interval, var,
+                                  bracket.msb.expression.to_ast, bracket.lsb.to_ast)
+          end
+      end
+
+      # Use accumulated `var` for the assignment target
+      last_bracket = brackets[-1]
+      if last_bracket.msb.empty?
+        AryElementAssignmentAst.new(input, interval, var, last_bracket.lsb.to_ast, send(:rval).to_ast)
+      else
+        AryRangeAssignmentAst.new(input, interval, var, last_bracket.msb.expression.to_ast, last_bracket.lsb.to_ast, send(:rval).to_ast)
+      end
     end
   end
 
@@ -2999,8 +3087,10 @@ module Idl
       if lsb.const_eval?(symtab) && msb.const_eval?(symtab) && write_value.const_eval?(symtab)
         true
       else
-        lhs_var = symtab.get(variable.name)
-        type_error "array #{variable.name} has not be declared" if lhs_var.nil?
+        base_name = AstNode.extract_base_var_name(variable)
+        type_error "Cannot determine base variable for #{variable.text_value}" if base_name.nil?
+        lhs_var = symtab.get(base_name)
+        type_error "array #{base_name} has not be declared" if lhs_var.nil?
 
         lhs_var.const_incompatible!
         false
@@ -3058,26 +3148,29 @@ module Idl
     def execute(symtab)
       return if variable.type(symtab).global?
 
-      var = symtab.get(variable.name)
-      internal_error "Variable #{variable.name} not found" if var.nil?
-
       value_result = value_try do
-        var_val = variable.value(symtab)
-
         msb_val = msb.value(symtab)
         lsb_val = lsb.value(symtab)
 
         type_error "MSB (#{msb_val}) is <= LSB (#{lsb_val})" if msb_val <= lsb_val
 
         rval_val = write_value.value(symtab)
-
         mask = ((1 << (msb_val - lsb_val + 1)) - 1) << lsb_val
 
-        var.value = (var_val & ~mask) | ((rval_val << lsb_val) & mask)
+        # Read current value, modify bits
+        var_val = variable.value(symtab)
+        var_val &= ~mask
+        new_val = var_val | ((rval_val << lsb_val) & mask)
+
+        # Write back through the access chain
+        AstNode.write_back_nested(variable, new_val, symtab)
         :ok
       end
       value_else(value_result) do
-        var.value = nil
+        base_name = T.must(AstNode.extract_base_var_name(variable))
+        v = symtab.get(base_name)
+        internal_error "did not find array base" if v.nil?
+        v.value = nil
         value_error "Either the range or right-hand side of an array range assignment is unknown"
       end
     end
@@ -3215,7 +3308,13 @@ module Idl
         var.value = bitfield_val
       elsif var.type.kind == :struct
         struct_val = id.value(symtab)
-        struct_val[@field_name] = rhs.value(symtab)
+        value_result = value_try do
+          struct_val[@field_name] = rhs.value(symtab)
+        end
+        value_else(value_result) do
+          struct_val[@field_name] = nil
+          value_error ""
+        end
       else
         value_error "TODO: Field assignment execution"
       end
@@ -5271,6 +5370,10 @@ module Idl
     # @!macro value
     def value(symtab) = expression.value(symtab)
 
+    def max_value(symtab) = expression.max_value(symtab)
+
+    def min_value(symtab) = expression.min_value(symtab)
+
     # @!macro to_idl
     sig { override.returns(String) }
     def to_idl = "(#{expression.to_idl})"
@@ -5958,7 +6061,9 @@ module Idl
         range = T.cast(obj.type(symtab), BitfieldType).range(@field_name)
         (T.cast(obj.value(symtab), Integer) >> range.first) & ((1 << range.size) - 1)
       elsif kind(symtab) == :struct
-        T.cast(obj.value(symtab), T::Hash[String, BasicValueRbType])[@field_name]
+        field_val = T.cast(obj.value(symtab), T::Hash[String, BasicValueRbType])[@field_name]
+        value_error "#{@field_name} is not known at compile-time" if field_val.nil?
+        field_val
       else
         type_error "#{obj.text_value} is Not a bitfield."
       end
@@ -6370,6 +6475,34 @@ module Idl
       end
       value_else(value_result) do
         (true_expression.values(symtab) + false_expression.values(symtab)).uniq
+      end
+    end
+
+    # @!macro max_value
+    def max_value(symtab)
+      value_result = value_try do
+        cond = condition.value(symtab)
+        return cond ? true_expression.max_value(symtab) : false_expression.max_value(symtab)
+      end
+      value_else(value_result) do
+        t = true_expression.max_value(symtab)
+        f = false_expression.max_value(symtab)
+        return :unknown if t == :unknown || f == :unknown
+        [t, f].max
+      end
+    end
+
+    # @!macro min_value
+    def min_value(symtab)
+      value_result = value_try do
+        cond = condition.value(symtab)
+        return cond ? true_expression.min_value(symtab) : false_expression.min_value(symtab)
+      end
+      value_else(value_result) do
+        t = true_expression.min_value(symtab)
+        f = false_expression.min_value(symtab)
+        return :unknown if t == :unknown || f == :unknown
+        [t, f].min
       end
     end
 

@@ -5,7 +5,6 @@
 # frozen_string_literal: true
 
 require_relative "database_obj"
-require_relative "certifiable_obj"
 require_relative "parameter"
 require_relative "../schema"
 require_relative "../condition"
@@ -16,8 +15,6 @@ module Udb
 
 # Extension definition
   class Extension < TopLevelDatabaseObject
-    # Add all methods in this module to this type of database object.
-    include CertifiableObject
     include Comparable
 
     # @return Long name of the extension

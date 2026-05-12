@@ -22,7 +22,7 @@ require "simplecov-cobertura"
 
 UDB_ROOT = (Pathname.new(__dir__) / "..").realpath
 
-unless SimpleCov.running
+unless SimpleCov.running || ENV["COVERAGE"] == "0"
   SimpleCov.start do
     enable_coverage :branch
     add_filter "/test/"

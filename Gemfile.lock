@@ -35,7 +35,7 @@ PATH
       tty-option
       tty-progressbar
       tty-table
-      udb (= 0.1.11)
+      udb (= 0.1.12)
       write_xlsx
 
 PATH
@@ -46,7 +46,7 @@ PATH
 PATH
   remote: tools/ruby-gems/udb
   specs:
-    udb (0.1.11)
+    udb (0.1.12)
       activesupport
       asciidoctor
       awesome_print
@@ -324,6 +324,8 @@ GEM
       tty-screen (~> 0.8)
       unicode-display_width (>= 1.6, < 3.0)
     tty-screen (0.8.2)
+    tty-spinner (0.9.3)
+      tty-cursor (~> 0.7)
     tty-table (0.12.0)
       pastel (~> 0.8)
       strings (~> 0.2.0)
@@ -367,6 +369,7 @@ DEPENDENCIES
   sorbet
   spoom
   tapioca (>= 0.17.10)
+  tty-spinner
   udb!
   udb-gen!
   udb_helpers!

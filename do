@@ -20,4 +20,4 @@ fi
 [ -f "${ROOT}/.toolchain-local" ] && source "${ROOT}/.toolchain-local"
 
 # really long way of invoking rake, but renamed to 'do'
-exec mise exec --cd "${ROOT}" -- bundle exec --gemfile "${ROOT}/Gemfile" ruby -r rake -e "Rake.application.init('do');Rake.application.load_rakefile;Rake.application.top_level" -- "$@"
+exec "${ROOT}/bin/mise" exec --cd "${ROOT}" -- bundle exec --gemfile "${ROOT}/Gemfile" ruby -r rake -e "Rake.application.init('do');Rake.application.load_rakefile;Rake.application.top_level" -- "$@"
