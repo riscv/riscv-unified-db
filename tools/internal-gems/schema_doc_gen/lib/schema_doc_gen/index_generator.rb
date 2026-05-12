@@ -38,7 +38,7 @@ module SchemaDocGen
         .select(&:directory?)
         .map { |d| d.basename.to_s }
         .select { |d| d.start_with?("v") }
-        .sort
+        .sort_by { |d| Gem::Version.new(d.delete_prefix("v")) }
         .reverse # Highest version first
     end
 

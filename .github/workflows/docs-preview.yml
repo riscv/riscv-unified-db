@@ -1,4 +1,8 @@
 name: Docs Preview
+# TODO: This workflow deploys to a fork preview (dhower-qc.github.io) on every push to
+# doc_next. It is temporary — once the new docs site goes live on the upstream riscv org,
+# this workflow should be updated to trigger on the main branch and deploy to the riscv
+# org GitHub Pages instead.
 on:
   push:
     branches: [doc_next]

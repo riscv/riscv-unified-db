@@ -68,13 +68,13 @@ Enable software development before hardware availability:
 
 ## Worked Example
 
-The following example shows how the Branch if Less Than or Equal Unsigned (`BLTU`) instruction is specified in IDL. `xs1`, `xs2`, and `imm` are decode fields extracted automatically from the instruction encoding before execution.
+The following example shows how the Branch if Less Than Unsigned (`BLTU`) instruction is specified in IDL. `xs1`, `xs2`, and `imm` are decode fields extracted automatically from the instruction encoding before execution.
 
 ```idl title="BLTU instruction"
 Bits<MXLEN> src1 = X[xs1]; # (1) Read X[xs1]
 Bits<MXLEN> src2 = X[xs2]; # (2) Read X[xs2]
 
-if (src1 <= src2) {        # (3) Unsigned comparison
+if (src1 < src2) {         # (3) Unsigned comparison
   jump($pc + $signed(imm)); # (4) Jump to target
 }
 # fall through: advance to next instruction
@@ -82,7 +82,7 @@ if (src1 <= src2) {        # (3) Unsigned comparison
 
 1. Read general-purpose register `xs1` into an MXLEN-bit variable `src1`. `MXLEN` is a configuration parameter available as a global constant.
 2. Read general-purpose register `xs2` into `src2`.
-3. Check if unsigned `src1` is less than or equal to unsigned `src2`.
+3. Check if unsigned `src1` is less than unsigned `src2`.
 4. Call `jump` with a target address formed by adding a signed immediate to the PC.
 
 The `jump` function called above is itself defined in IDL:

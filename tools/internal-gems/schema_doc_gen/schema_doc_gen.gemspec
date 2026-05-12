@@ -13,7 +13,6 @@ Gem::Specification.new do |s|
     Generates Markdown documentation from JSON Schema files for the
     RISC-V Unified Database documentation site.
   DESC
-  s.date        = "2024-01-01"
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
@@ -28,6 +27,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.bindir = "bin"
   s.executables << "schema-doc-gen"
+  s.executables << "schema-docs-all"
 
   s.add_dependency "tty-option"
   s.add_dependency "tty-exit"

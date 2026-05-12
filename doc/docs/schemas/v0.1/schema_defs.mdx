@@ -222,9 +222,9 @@ Exact version in `MAJOR[.MINOR[.PATCH]]` format (e.g., `2.1.0`, `2.1`, `2`)
 </details>
 
 <details>
-<summary><a id="requirement-string"></a><strong><code>requirement_string</code></strong> — Version requirement string (e.g., `&gt;= 2.0`, `~&gt; 1.5`, `= 2.1`)</summary>
+<summary><a id="requirement-string"></a><strong><code>requirement_string</code></strong> — Version requirement string (e.g., `&gt;= 2.0`, `~&gt; 1.5`, `= 2.1`). The `~&gt;` operator is a pessimistic version constraint: `~&gt; X.Y` means `&gt;= X.Y` and `&lt; (X+1).0`; `~&gt; X.Y.Z` means `&gt;= X.Y.Z` and `&lt; X.(Y+1).0`.</summary>
 
-Version requirement string (e.g., `&gt;= 2.0`, `~&gt; 1.5`, `= 2.1`)
+Version requirement string (e.g., `&gt;= 2.0`, `~&gt; 1.5`, `= 2.1`). The `~&gt;` operator is a pessimistic version constraint: `~&gt; X.Y` means `&gt;= X.Y` and `&lt; (X+1).0`; `~&gt; X.Y.Z` means `&gt;= X.Y.Z` and `&lt; X.(Y+1).0`.
 
 **Type:** `string`
 

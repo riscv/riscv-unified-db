@@ -46,7 +46,7 @@ Every implementation-defined choice is pinned to a value. This is what you use t
 - Validating that a design conforms to a RISC-V profile
 - Submitting a design for certification
 
-**Key property**: All IDL code can be fully evaluated and optimized; no unknowns remain. Generated artifacts are tailored to this exact configuration.
+**Key property**: All semantic ([IDL](../../idl/overview.mdx)) code can be fully evaluated and optimized; no unknowns remain. Generated artifacts are tailored to this exact configuration.
 
 ### 2. Partially Configured (`type: partially configured`)
 
@@ -98,7 +98,7 @@ mandatory_extensions:  # Omit for full/unconfigured
   - name: "ExtName"
     version: ">= min_version"
 
-# All configs: parameter values
+# Full and partial configs only: parameter values
 params:  # Omit for unconfigured
   PARAM_NAME: value
 
@@ -110,7 +110,7 @@ arch_overlay: path/to/overlay  # See Config File Format and Data Pipeline
 `arch_overlay` is the current name for the spec overlay feature. This will be renamed to `spec_overlay` in a future version for clarity.
 :::
 
-See [Config File Format](./config-file-format.md) for the complete reference.
+See Config File Format for the complete reference.
 
 ## What's Next
 

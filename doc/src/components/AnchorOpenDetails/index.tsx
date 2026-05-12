@@ -65,6 +65,7 @@ function AnchorOpenDetailsInner(): null {
       if (!href?.startsWith('#')) return;
       e.preventDefault();
       openDetailsForId(href.slice(1));
+      history.pushState(null, '', href);
     }
 
     document.addEventListener('click', onClick);

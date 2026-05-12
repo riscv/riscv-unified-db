@@ -181,11 +181,11 @@ If the configuration is not fully specified (e.g., building an "unconfig" that s
 The compiler uses a value-error mechanism (similar to exceptions, but lighter-weight) to handle unknowns gracefully:
 
 ```ruby
-value_result = value_try do
+result = value_try do
   v = some_expression.value(symtab)
   # Use v here
 end
-value_else(value_result) do
+value_else(result) do
   # Expression has unknown value; handle the fallback
 end
 ```
@@ -501,7 +501,7 @@ ast = compiler.compile_func_body(
 
 #### `compile_inst_scope(idl, symtab:, input_file:, input_line:)`
 
-Compiles an instruction `operation()` body, which includes decode variable declarations in addition to statements.
+Compiles an instruction `operation()` body. Unlike `compile_func_body`, this method automatically extracts the decode variable declarations from the IDL source and adds them to the symbol table before compiling the operation statements — so decode fields (e.g., `xs1`, `xs2`, `imm`) are already in scope when the body is analyzed.
 
 **Arguments**:
 - `idl` (String): IDL source code
@@ -546,6 +546,10 @@ compiler.type_check(ast, symtab, "instruction ADD operation()")
 ```
 
 ### Complete Example: Compiling an Instruction
+
+:::note Symbol table in practice
+In most use cases you won't construct `global_symtab` by hand. The UDB framework builds and populates it from the database YAML files (instruction definitions, CSR fields, type declarations, global functions) before handing it to your code. The example below shows the compiler API in isolation; in a real generator the symbol table arrives pre-populated.
+:::
 
 ```ruby
 require 'idlc'
