@@ -85,13 +85,7 @@ riscv_tests:
 # Clean up
 
 clean:
-	@if [ -d "$(riscv_tests_dir)/isa" ] && [ -f "$(riscv_tests_dir)/isa/Makefile" ]; then \
-		if command -v "$(RISCV_GCC)" > /dev/null 2>&1; then \
-			$(MAKE) -C $(riscv_tests_dir)/isa XLEN=$(XLEN) clean; \
-		else \
-			:; \
-		fi; \
-	else \
-		:; \
+	@if [ -f "$(riscv_tests_dir)/isa/Makefile" ] && command -v "$(RISCV_GCC)" > /dev/null 2>&1; then \
+		$(MAKE) -C $(riscv_tests_dir)/isa XLEN=$(XLEN) clean; \
 	fi
 	rm -rf $(junk)
