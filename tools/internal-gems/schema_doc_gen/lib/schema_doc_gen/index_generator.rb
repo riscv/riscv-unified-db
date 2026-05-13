@@ -37,7 +37,7 @@ module SchemaDocGen
       @output_dir.children
         .select(&:directory?)
         .map { |d| d.basename.to_s }
-        .select { |d| d.start_with?("v") }
+        .select { |d| d.match?(/^v\d/) }
         .sort_by { |d| Gem::Version.new(d.delete_prefix("v")) }
         .reverse # Highest version first
     end
@@ -101,7 +101,7 @@ module SchemaDocGen
         md += <<~CARD
           <div style={{padding: '1rem', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}}>
             <strong><a href="#{schema[:version]}/#{schema[:name]}">#{schema_title}</a></strong><br />
-            <span class="badge badge--secondary" style={{marginTop: '0.4rem', display: 'inline-block'}}>#{schema[:version]}</span>
+            <span className="badge badge--secondary" style={{marginTop: '0.4rem', display: 'inline-block'}}>#{schema[:version]}</span>
           </div>
 
         CARD
