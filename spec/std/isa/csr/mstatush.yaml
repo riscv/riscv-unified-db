@@ -24,39 +24,40 @@ fields:
   MDT:
     location: 10
     description: |
-      *Machine Disable Trap*
-
-      Written to 1 when entering M-mode from an exception/interrupt.
-      When returning via an MRET instruction, the bit is written to 0.
-      On reset in set to 1, and software should write it to 0 when boot sequence is done.
-      When mstatush.MDT=1, direct write by CSR instruction cannot set mstatus.MIE to 1.
+      see `mstatus.MDT`
+    type: RW-H
+    reset_value: UNDEFINED_LEGAL
+    alias: mstatus.MDT
     definedBy:
       extension:
         name: Smdbltrp
+  MPELP:
+    location: 9
+    description: |
+      see `mstatus.MPELP`
     type: RW-H
     reset_value: UNDEFINED_LEGAL
+    alias: mstatus.MPELP
+    definedBy:
+      extension:
+        name: Zicfilp
   MPV:
     location: 7
     description: |
-      *Machine Previous Virtualization mode*
-
-      Written with the prior virtualization mode when entering M-mode from an exception/interrupt.
-      When returning via an MRET instruction, the virtualization mode becomes the value of MPV unless MPP=3, in which case the virtualization mode is always 0.
-      Can also be written by software.
+      see `mstatus.MPV`
     type: RW-H
     reset_value: UNDEFINED_LEGAL
+    alias: mstatus.MPV
     definedBy:
       extension:
         name: H
   GVA:
     location: 6
     description: |
-      *Guest Virtual Address*
-
-      When a trap is taken and a guest virtual address is written into mtval, GVA is set.
-      When a trap is taken and a guest virtual address is written into mtval, GVA is cleared.
+      see `mstatus.GVA`
     type: RW-H
     reset_value: 0
+    alias: mstatus.GVA
     definedBy:
       extension:
         name: H
@@ -86,3 +87,4 @@ fields:
       } else {
         return UNDEFINED_LEGAL;
       }
+    alias: mstatus.SBE
