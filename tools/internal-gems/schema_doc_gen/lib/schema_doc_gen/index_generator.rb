@@ -37,7 +37,7 @@ module SchemaDocGen
       @output_dir.children
         .select(&:directory?)
         .map { |d| d.basename.to_s }
-        .select { |d| d.match?(/^v\d/) }
+        .select { |d| d.match?(/^v\d+(\.\d+)*$/) }
         .sort_by { |d| Gem::Version.new(d.delete_prefix("v")) }
         .reverse # Highest version first
     end
@@ -91,7 +91,7 @@ module SchemaDocGen
           all_schemas << {name: schema, version: version}
         end
       end
-      all_schemas.sort_by! { |s| s[:name] }
+      all_schemas.sort_by! { |s| [s[:name], s[:version]] }
 
       md = "## Schemas\n\n"
       md += "<div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2rem'}}>\n\n"
@@ -100,7 +100,7 @@ module SchemaDocGen
         schema_title = schema[:name].split("_").map(&:capitalize).join(" ")
         md += <<~CARD
           <div style={{padding: '1rem', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px'}}>
-            <strong><a href="#{schema[:version]}/#{schema[:name]}">#{schema_title}</a></strong><br />
+            <strong><a href="./#{schema[:version]}/#{schema[:name]}">#{schema_title}</a></strong><br />
             <span className="badge badge--secondary" style={{marginTop: '0.4rem', display: 'inline-block'}}>#{schema[:version]}</span>
           </div>
 
