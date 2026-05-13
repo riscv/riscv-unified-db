@@ -76,7 +76,7 @@ The special configuration **`_`** (underscore) is the canonical unconfigured arc
 - Studying the full scope of the ISA without implementation assumptions
 - Generating schemas and abstract models
 
-**Key property**: No IDL expressions can be evaluated at compile time; all parameter-dependent behavior must be preserved in generated artifacts. Generated code must be maximally generic.
+**Key property**: No configuration-dependent IDL expressions can be evaluated at compile time; all parameter-dependent behavior must be preserved in generated artifacts. Generated code must be maximally generic.
 
 ## Configuration File Structure
 
