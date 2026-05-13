@@ -35,6 +35,7 @@ Schema for describing a register file
 | `abi_mnemonics` | Array&lt;Register alias or ABI mnemonic&gt; |  | ABI mnemonic names for the register |
 | `description` | `string` \| Array&lt;[`conditional_text`](#conditional-text)&gt; |  |  |
 | `when` | A requirement on an extension. Can either specify just an extension name, in which case version '>= 0' is implied, or both a name and a requirement \| `object` |  |  |
+| `reset_value` | `string` |  | IDL literal expression for the reset value (e.g., '0'). Omit if reset state is unknown. |
 | `arch_read()` | `string` |  | Function describing the architecturally defined read behavior. Use this for architecturally mandated effects (e.g., x0 always reads as zero). |
 | `arch_write(value)` | `string` |  | Function describing the architecturally defined write behavior. Given a 'value', return the architecturally required result (e.g., x0 ignores writes and always yields zero). |
 | `caller_saved` | `boolean` |  | Whether the register is caller-saved |
@@ -53,7 +54,7 @@ Schema for describing a register file
 | `name` | Register file name | ✓ |  |
 | `long_name` | `string` | ✓ |  |
 | `description` | `string` \| Array&lt;[`conditional_text`](#conditional-text)&gt; | ✓ |  |
-| `register_length` | Bit width value for a register or field | ✓ |  |
+| `register_length()` | `string` | ✓ | IDL function body returning the register width in bits. May reference params (MXLEN, VLEN) or implemented?(). Example: 'return MXLEN;' |
 | `registers` | Array&lt;[`register_entry`](#register-entry)&gt; | ✓ |  |
 | `definedBy` | A requirement on an extension. Can either specify just an extension name, in which case version '>= 0' is implied, or both a name and a requirement \| `object` |  |  |
 | `register_class` | `general_purpose` \| `floating_point` \| `vector` |  |  |

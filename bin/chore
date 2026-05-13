@@ -303,14 +303,13 @@ do_gen_vscode_idl() {
 # Generate schema documentation from JSON Schema files
 #
 do_gen_schema_docs() {
-  source_setup
   echo "Generating schema documentation"
   if [ $fail_on_change -eq 1 ]; then
     # Calculate checksum before generation
     local sha_before
     sha_before=$(find "$UDB_ROOT"/doc/docs/schemas -type f -name "*.mdx" -exec sha256sum {} \; 2>/dev/null | sort | sha256sum)
   fi
-  $RUBY -I tools/internal-gems/schema_doc_gen/lib tools/internal-gems/schema_doc_gen/bin/schema-docs-all \
+  "$UDB_ROOT/bin/ruby" "$UDB_ROOT/tools/internal-gems/schema_doc_gen/bin/schema-docs-all" \
     --schema-dir "$UDB_ROOT/spec/schemas" \
     --output-dir "$UDB_ROOT/doc/docs/schemas" \
     --generate-index

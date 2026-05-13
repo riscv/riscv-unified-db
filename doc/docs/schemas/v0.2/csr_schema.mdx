@@ -42,7 +42,6 @@ Field in a CSR register
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `description` | `string` \| Array&lt;[`conditional_text`](#conditional-text)&gt; | ✓ | Function of the field |
-| `cert_normative_rules` | Architecturally visible behaviors requiring validation by certification tests |  |  |
 | `affectedBy` | One of: `string` \| Array&lt;`string`&gt; |  | Extension(s) that affect the definition of the field beyond the extension (or base) the field is originally defined in |
 | `definedBy` | A condition (YAML structure or IDL function). See the conditions reference for details. |  | Where this field is defined: indicates that the field is only present if the extension(s) are implemented. If definedBy is not given, defaults to the definedBy field of the parent CSR |
 | `alias` | One of: CSR field \| CSR field \| Array&lt;One of: CSR field \| CSR field&gt; |  | When specified, indicates that this field aliases (a portion of) another CSR field |
