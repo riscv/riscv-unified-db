@@ -94,7 +94,7 @@ This schema accepts **one of** the following variants, distinguished by the `typ
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `$schema` | `string` (const: `config_schema.json#`) | ✓ | Schema reference - must be `config_schema.json#` |
+| `$schema` | `any` | ✓ | Schema reference - must be `config_schema.json#` |
 | `kind` | `string` (const: `architecture configuration`) | ✓ | Document type identifier - must be `architecture configuration` |
 | `type` | `string` (const: `fully configured`) | ✓ | Configuration specificity level - `fully configured` means all extensions and parameters are explicitly specified |
 | `name` | `string` | ✓ | Name of the configuration |
