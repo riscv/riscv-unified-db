@@ -215,7 +215,7 @@
         "type": {
           "type": "string",
           "const": "unconfigured",
-          "description": "Configuration specificity level - `unconfigured` represents the entire RISC-V specification with no implementation choices"
+          "description": "Configuration specificity level - `unconfigured` represents the entire RISC-V specification with all implementation choices left unresolved"
         },
         "name": {
           "type": "string",
