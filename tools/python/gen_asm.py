@@ -104,19 +104,18 @@ def _operand_values(operand: dict, operand_name: str) -> list[object]:
 def _extract_operand_list(instruction: dict, xlen: int) -> list[dict]:
     """Extract a concrete operand list from instruction['operands']."""
     operands = instruction.get("operands")
+    if not operands:
+        return []
+
     if isinstance(operands, dict):
         operands = operands.get(f"RV{xlen}")
 
-    # remove implicit operand definitions
-    for i in range(len(operands), 0, -1):
-        if operands[i - 1].get("implicit"):
-            del operands[i - 1]
-
-    return operands
+    # Remove implicit operands without mutating the loaded spec objects.
+    return [operand for operand in operands if not operand.get("implicit")]
 
 
 def list_instruction_operand_combinations(
-    instruction_name: str, xlen: int
+    instruction_name: str, xlen: int = 64
 ) -> list[dict[str, object]]:
     """Return all instruction+operand combinations for one instruction."""
     instruction = spec.instructions.get(instruction_name)
@@ -127,7 +126,6 @@ def list_instruction_operand_combinations(
 
     operand_names: list[str] = []
     operand_values: list[list[object]] = []
-
     for operand in operands:
         if not isinstance(operand, dict):
             continue
@@ -148,17 +146,18 @@ def list_instruction_operand_combinations(
 
     combinations: list[dict[str, object]] = []
     for value_tuple in itertools.product(*operand_values):
+        all_operands = dict(zip(operand_names, value_tuple, strict=True))
         combinations.append(
             {
                 "instruction": instruction_name,
-                "operands": dict(zip(operand_names, value_tuple, strict=True)),
+                "operands": all_operands,
             }
         )
 
     return combinations
 
 
-def render_instruction_combination(combo: dict[str, object], xlen: int) -> str:
+def render_instruction_combination(combo: dict[str, object], xlen: int = 64) -> str:
     """Render one instruction+operands combination using assembly-like operand formatting."""
     instruction_name = combo["instruction"]
     instruction = spec.instructions.get(instruction_name)
@@ -184,6 +183,10 @@ def render_instruction_combination(combo: dict[str, object], xlen: int) -> str:
         value = operand_map.get(operand_name, "")
         if value == "":
             # Optional operands are omitted when empty.
+            continue
+
+        if operand.get("type") == "reg_list":
+            rendered_operands.append(value)
             continue
 
         offset = operand.get("offset")

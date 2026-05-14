@@ -5,8 +5,10 @@
 
 $schema: "operand_schema.json#"
 kind: operand
-name: csr
+name: csrs
 data:
   name: csr
   type: csr
   possible_values: [0-4095]
+  source: true
+  destination: false

@@ -17,8 +17,7 @@
               "type": "string"
             },
             "reg_file": {
-              "enum": ["X", "F", "V"],
-              "default": "X"
+              "enum": ["X", "F", "V"]
             },
             "offset": {
               "oneOf": [
@@ -30,6 +29,9 @@
                   "properties": {
                     "name": {
                       "type": "string"
+                    },
+                    "type": {
+                      "const": "immediate"
                     },
                     "possible_values": {
                       "type": "array",
@@ -46,22 +48,35 @@
                       }
                     },
                     "left_shifted": {
-                      "type": "integer",
-                      "default": 0
+                      "type": "integer"
+                    },
+                    "$child_of": {
+                      "type": "string"
+                    },
+                    "$parent_of": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
                     }
                   },
-                  "required": ["possible_values"]
+                  "required": ["possible_values"],
+                  "additionalProperties": false
                 }
-              ],
-              "default": false
+              ]
             },
             "source": {
-              "type": "boolean",
-              "default": true
+              "type": "boolean"
             },
             "destination": {
-              "type": "boolean",
-              "default": false
+              "type": "boolean"
             },
             "possible_values": {
               "type": "array",
@@ -70,15 +85,30 @@
               }
             },
             "optional": {
-              "type": "boolean",
-              "default": false
+              "type": "boolean"
             },
             "implicit": {
-              "type": "boolean",
-              "default": false
+              "type": "boolean"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
             }
           },
-          "required": ["type", "reg_file"]
+          "required": ["type", "reg_file"],
+          "additionalProperties": false
         },
         {
           "description": "Condition and Status Register (CSR)",
@@ -91,12 +121,10 @@
               "type": "string"
             },
             "source": {
-              "type": "boolean",
-              "default": true
+              "type": "boolean"
             },
             "destination": {
-              "type": "boolean",
-              "default": false
+              "type": "boolean"
             },
             "possible_values": {
               "type": "array",
@@ -104,9 +132,26 @@
                 "type": "string",
                 "pattern": "^-?[0-9]+-(-?[0-9]+)$"
               }
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
             }
           },
-          "required": ["type", "name"]
+          "required": ["type", "name"],
+          "additionalProperties": false
         },
         {
           "description": "Register pair (implicit)",
@@ -119,25 +164,39 @@
               "type": "string"
             },
             "reg_file": {
-              "enum": ["X", "F", "V"],
-              "default": "X"
+              "enum": ["X", "F", "V"]
             },
             "source": {
-              "type": "boolean",
-              "default": true
+              "type": "boolean"
             },
             "destination": {
-              "type": "boolean",
-              "default": false
+              "type": "boolean"
             },
             "possible_values": {
               "type": "array",
               "items": {
                 "type": "integer"
               }
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
             }
           },
-          "required": ["type", "reg_file"]
+          "required": ["type", "reg_file"],
+          "additionalProperties": false
         },
         {
           "description": "Immediate",
@@ -162,9 +221,29 @@
                   }
                 ]
               }
+            },
+            "left_shifted": {
+              "type": "integer"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
             }
           },
-          "required": ["type", "name", "possible_values"]
+          "required": ["type", "name", "possible_values"],
+          "additionalProperties": false
         },
         {
           "description": "Floating-point Rounding Mode",
@@ -173,15 +252,34 @@
             "type": {
               "const": "rounding_mode"
             },
+            "name": {
+              "type": "string"
+            },
             "possible_values": {
               "type": "array",
               "items": {
                 "type": "string"
-              },
-              "default": ["rne", "rtz", "rdn", "rup", "rmm", "dyn"]
+              }
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
             }
           },
-          "required": ["type"]
+          "required": ["type"],
+          "additionalProperties": false
         },
         {
           "description": "FENCE scope",
@@ -190,47 +288,73 @@
             "type": {
               "const": "fence_scope"
             },
-            "possible_values": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": [
-                "i",
-                "o",
-                "r",
-                "w",
-                "io",
-                "ir",
-                "iw",
-                "or",
-                "ow",
-                "rw",
-                "ior",
-                "iow",
-                "irw",
-                "orw",
-                "iorw"
-              ]
-            }
-          },
-          "required": ["type", "possible_values"]
-        },
-        {
-          "description": "Register range (for PUSH/POP reg_list)",
-          "type": "object",
-          "properties": {
-            "type": {
-              "const": "reg_range"
+            "name": {
+              "type": "string"
             },
             "possible_values": {
               "type": "array",
               "items": {
                 "type": "string"
               }
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
             }
           },
-          "required": ["type", "possible_values"]
+          "required": ["type", "possible_values"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Register list (for PUSH/POP reg_list)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "reg_list"
+            },
+            "name": {
+              "type": "string"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "optional": {
+              "type": "boolean"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type", "possible_values"],
+          "additionalProperties": false
         },
         {
           "description": "Floating point immediate",
@@ -239,14 +363,34 @@
             "type": {
               "const": "float_immediate"
             },
+            "name": {
+              "type": "string"
+            },
             "possible_values": {
               "type": "array",
               "items": {
                 "type": "string"
               }
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
             }
           },
-          "required": ["type", "possible_values"]
+          "required": ["type", "possible_values"],
+          "additionalProperties": false
         },
         {
           "description": "Program Counter (PC)",
@@ -259,19 +403,33 @@
               "const": "pc"
             },
             "source": {
-              "type": "boolean",
-              "default": true
+              "type": "boolean"
             },
             "destination": {
-              "type": "boolean",
-              "default": false
+              "type": "boolean"
             },
             "implicit": {
-              "type": "boolean",
-              "default": true
+              "type": "boolean"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
             }
           },
-          "required": ["type"]
+          "required": ["type"],
+          "additionalProperties": false
         },
         {
           "description": "inherits",
@@ -281,6 +439,9 @@
               "type": "string",
               "pattern": "^operand/.+\\.yaml#/data",
               "description": "Reference to variable metadata"
+            },
+            "$child_of": {
+              "type": "string"
             }
           },
           "required": ["$inherits"]
@@ -289,7 +450,6 @@
     }
   },
   "type": "object",
-  "required": ["$schema", "kind", "name", "data"],
   "properties": {
     "$schema": {
       "const": "operand_schema.json#"
@@ -308,5 +468,6 @@
       "type": "string"
     }
   },
+  "required": ["$schema", "kind", "name", "data"],
   "additionalProperties": false
 }

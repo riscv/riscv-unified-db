@@ -5,9 +5,8 @@
 
 $schema: "operand_schema.json#"
 kind: operand
-name: reg-range1-rv32
+name: csrd
 data:
-  type: reg_range
-  name: reg_range1
-  possible_values: ["s0", "x8", "s0-s1", "x8-x9"]
-  optional: true
+  $inherits: operand/csrs.yaml#/data
+  source: false
+  destination: true

@@ -201,6 +201,42 @@ def extract_variable_values(opcode, instruction, xlen=64):
     return variable_values
 
 
+def decoded_reg_list_value(rlist, abi_names=False):
+    """Return decoded reg_list text for PUSH/POP style instructions."""
+    reg_list_map = {
+        4: "{x1}",
+        5: "{x1,x8}",
+        6: "{x1,x8-x9}",
+        7: "{x1,x8-x9,x18}",
+        8: "{x1,x8-x9,x18-x19}",
+        9: "{x1,x8-x9,x18-x20}",
+        10: "{x1,x8-x9,x18-x21}",
+        11: "{x1,x8-x9,x18-x22}",
+        12: "{x1,x8-x9,x18-x23}",
+        13: "{x1,x8-x9,x18-x24}",
+        14: "{x1,x8-x9,x18-x25}",
+        15: "{x1,x8-x9,x18-x27}",
+    }
+    reg_list_map_abi = {
+        4: "{ra}",
+        5: "{ra,s0}",
+        6: "{ra,s0-s1}",
+        7: "{ra,s0-s2}",
+        8: "{ra,s0-s3}",
+        9: "{ra,s0-s4}",
+        10: "{ra,s0-s5}",
+        11: "{ra,s0-s6}",
+        12: "{ra,s0-s7}",
+        13: "{ra,s0-s8}",
+        14: "{ra,s0-s9}",
+        15: "{ra,s0-s11}",
+    }
+    if abi_names:
+        return reg_list_map_abi.get(rlist)
+    else:
+        return reg_list_map.get(rlist)
+
+
 def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
     """Format assembly instruction based on instruction definition and variable values"""
     mnemonic = instruction["name"]
@@ -226,7 +262,10 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
     assembly_parts = []
 
     # For regular instructions with operands
-    for i, operand in enumerate(operands):
+    for operand in operands:
+        if operand.get("implicit"):
+            continue
+
         operand_name = operand["name"]
 
         dprint(f"# Processing operand '{operand_name}' ({operand['type']})")
@@ -272,7 +311,7 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
                 continue
             assembly_parts.append(rm_map[value])
 
-        elif "offset" in operand:
+        elif operand.get("offset"):
             value = variable_values[operand_name]
             dprint(f"# Handling offset for operand '{operand_name}' with value {value}")
             if operand["offset"]["name"] == "":
@@ -284,51 +323,27 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
             reg_name = register_name_for_index(operand.get("reg_file"), value, abi_names)
             assembly_parts.append(f"{offset_value}({reg_name})")
 
-        elif operand["type"] == "reg_range":
-            dprint(f'# Handling reg_range "{operand}" {variable_values}')
-            which_reg_range = 0
-            opi = i - 1
-            while opi >= 0:
-                if operands[opi]["type"] != "reg_range":
-                    break
-                opi -= 1
-                which_reg_range += 1
-            if which_reg_range == 0:
-                if variable_values["rlist"] >= 4:
-                    assembly_parts.append("x1")  # use ABI names?
-            elif which_reg_range == 1:
-                if variable_values["rlist"] == 5:
-                    assembly_parts.append("x8")
-                elif variable_values["rlist"] >= 6:
-                    assembly_parts.append("x8-x9")
-            elif which_reg_range == 2:
-                if variable_values["rlist"] == 7:
-                    assembly_parts.append("x18")
-                elif variable_values["rlist"] == 8:
-                    assembly_parts.append("x18-x19")
-                elif variable_values["rlist"] == 9:
-                    assembly_parts.append("x18-x20")
-                elif variable_values["rlist"] == 10:
-                    assembly_parts.append("x18-x21")
-                elif variable_values["rlist"] == 11:
-                    assembly_parts.append("x18-x22")
-                elif variable_values["rlist"] == 12:
-                    assembly_parts.append("x18-x23")
-                elif variable_values["rlist"] == 13:
-                    assembly_parts.append("x18-x24")
-                elif variable_values["rlist"] == 14:
-                    assembly_parts.append("x18-x25")
-                elif variable_values["rlist"] == 15:
-                    assembly_parts.append("x18-x27")
+        elif operand["type"] == "reg_list":
+            reg_list = decoded_reg_list_value(variable_values["rlist"], abi_names)
+            if reg_list is None:
+                print(f"# ERROR: unknown reg_list encoding {variable_values['rlist']}")
+                continue
+            possible_values = operand.get("possible_values")
+            if isinstance(possible_values, list) and reg_list not in possible_values:
+                dprint(
+                    f"# reg_list '{reg_list}' not valid for this xlen/instruction variant: {possible_values}"
+                )
+                return None
+            assembly_parts.append(reg_list)
 
-        elif "optional" in operand:
+        elif operand.get("optional"):
             value = variable_values[operand_name]
             if value == 0:  # vector mask
                 assembly_parts.append("v0.t")
 
         elif operand_name == "stack_adj":
             dprint("# Handling stack_adj")
-            registers = variable_values["rlist"] - 3
+            registers = 13 if variable_values["rlist"] == 15 else (variable_values["rlist"] - 3)
             register_space = registers * int(xlen / 8)
             register_space_aligned = int((register_space + 15) / 16) * 16
             extra_space = variable_values["spimm"] * 16

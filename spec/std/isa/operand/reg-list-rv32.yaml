@@ -5,20 +5,9 @@
 
 $schema: "operand_schema.json#"
 kind: operand
-name: reg-range2-rv64
+name: reg-list-rv32
 data:
-  type: reg_range
-  name: reg_range2
+  type: reg_list
+  name: reg_list
   possible_values:
-    [
-      "x18",
-      "x18-x19",
-      "x18-x20",
-      "x18-x21",
-      "x18-x22",
-      "x18-x23",
-      "x18-x24",
-      "x18-x25",
-      "x18-x27",
-    ]
-  optional: true
+    ["{ra}", "{x1}", "{ra,s0}", "{x1,x8}", "{ra,s0-s1}", "{x1,x8-x9}"]

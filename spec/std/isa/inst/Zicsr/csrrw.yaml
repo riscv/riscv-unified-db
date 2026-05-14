@@ -30,7 +30,7 @@ encoding:
       location: 11-7
 operands:
   - $inherits: operand/xd.yaml#/data
-  - $inherits: operand/csr.yaml#/data
+  - $inherits: operand/csrsd.yaml#/data
   - $inherits: operand/xs.yaml#/data
     name: xs1
 access:

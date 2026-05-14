@@ -208,6 +208,31 @@ def set_bits(binary_str, positions, value):
     return "".join(binary_list)
 
 
+def split_assembly_arguments(arguments_str):
+    """Split operand text on commas, ignoring commas inside {} groups."""
+    arguments = []
+    current = []
+    brace_depth = 0
+
+    for char in arguments_str:
+        if char == "," and brace_depth == 0:
+            arguments.append("".join(current).strip())
+            current = []
+            continue
+
+        if char == "{":
+            brace_depth += 1
+        elif char == "}" and brace_depth > 0:
+            brace_depth -= 1
+
+        current.append(char)
+
+    if current:
+        arguments.append("".join(current).strip())
+
+    return arguments
+
+
 def parse_assembly_arguments(line, instruction_operands):
     """Parse assembly line arguments to extract operands based on instruction definition"""
     # Remove comments and leading/trailing whitespace
@@ -217,24 +242,27 @@ def parse_assembly_arguments(line, instruction_operands):
 
     # Extract arguments (everything after mnemonic, comma separated)
     arguments_str = "".join(line.split()[1:])  # Skip the mnemonic
-    arguments = [argument.strip() for argument in arguments_str.split(",")]
+    arguments = split_assembly_arguments(arguments_str)
+    explicit_operands = [
+        operand_def for operand_def in instruction_operands if not operand_def.get("implicit")
+    ]
 
     optional_operands = 0
-    for operand_def in instruction_operands:
+    for operand_def in explicit_operands:
         if operand_def.get("optional"):
             optional_operands += 1
 
-    optional_operands_to_keep = optional_operands - (len(instruction_operands) - len(arguments))
+    optional_operands_to_keep = optional_operands - (len(explicit_operands) - len(arguments))
     if optional_operands < optional_operands_to_keep:
         print(
-            f"#    ERROR: insufficient arguments for instruction; got {len(arguments)} ({arguments}) needed at least {len(instruction_operands) - optional_operands}"
+            f"#    ERROR: insufficient arguments for instruction; got {len(arguments)} ({arguments}) needed at least {len(explicit_operands) - optional_operands}"
         )
         return {}
 
     # Map assembly arguments to instruction operands definition
     operand_values = {}
     argi = 0
-    for i, operand_def in enumerate(instruction_operands):
+    for i, operand_def in enumerate(explicit_operands):
         dprint(f'# operand {i}: "{operand_def}"; {len(arguments)}')
         operand_name = operand_def.get("name", f"op{i}")
         if operand_def.get("optional"):
@@ -246,7 +274,7 @@ def parse_assembly_arguments(line, instruction_operands):
 
         dprint(f"#    Creating operand '{operand_name}' ({operand_def['type']})")
         if operand_def["type"] in ["register", "register_pair"]:
-            if "offset" in operand_def:
+            if operand_def.get("offset"):
                 dprint(f'#    memory argument with offset "{arguments[argi]}"')
 
                 # Memory operand like "offset(rs1)"
@@ -260,25 +288,24 @@ def parse_assembly_arguments(line, instruction_operands):
                     return None
                 dprint(f"#    Extracted offset: {offset_part}, register: {reg_index}")
 
-                # print(f"#{instruction_operands[i]}")
-                operand_values[instruction_operands[i]["offset"]["name"]] = int(offset_part)
+                operand_values[operand_def["offset"]["name"]] = int(offset_part)
 
-                if "possible_values" in instruction_operands[i]["offset"]:
-                    if not instruction_operands[i]["offset"]["possible_values"]:
+                if "possible_values" in operand_def["offset"]:
+                    if not operand_def["offset"]["possible_values"]:
                         if arguments[argi].split("(")[0].strip() != "":
                             print("#    ERROR: Register offset not permitted.")
                     else:
                         is_possible = False
-                        for possible in instruction_operands[i]["offset"]["possible_values"]:
+                        for possible in operand_def["offset"]["possible_values"]:
                             min_val, max_val = parse_range(str(possible))
                             if int(offset_part) >= min_val and int(offset_part) <= max_val:
                                 is_possible = True
                         if not is_possible:
                             print("#    ERROR: Register offset is invalid.")
 
-                if "left_shifted" in instruction_operands[i]["offset"]:
+                if "left_shifted" in operand_def["offset"]:
                     encoded_value = int(offset_part)
-                    shift = instruction_operands[i]["offset"]["left_shifted"]
+                    shift = operand_def["offset"]["left_shifted"]
                     if ((encoded_value >> shift) << shift) != encoded_value:
                         print(
                             f"#    ERROR: Offset value {offset_part} cannot be fully represented given the required shift"
@@ -316,7 +343,7 @@ def parse_assembly_arguments(line, instruction_operands):
                         return None
 
             dprint(f"#    Final value for '{operand_name}': {reg_index}")
-            operand_values[instruction_operands[i]["name"]] = int(reg_index)
+            operand_values[operand_def["name"]] = int(reg_index)
 
         elif operand_def["type"] == "csr":
             dprint(f"#    Detected register argument: {arguments[argi]}")
@@ -336,7 +363,7 @@ def parse_assembly_arguments(line, instruction_operands):
                         return None
 
             dprint(f"#    Final value for '{operand_name}': {reg_index}")
-            operand_values[instruction_operands[i]["name"]] = int(reg_index)
+            operand_values[operand_def["name"]] = int(reg_index)
 
         elif operand_def["type"] == "immediate":
             dprint(f'#    immediate argument: "{arguments[argi]}"')
@@ -350,31 +377,40 @@ def parse_assembly_arguments(line, instruction_operands):
                 if not is_possible:
                     print("#    ERROR: Register offset is invalid.")
 
-            operand_values[instruction_operands[i]["name"]] = imm_value
+            operand_values[operand_def["name"]] = imm_value
             dprint(f"#    Final value for '{operand_name}': {imm_value}")
 
         elif operand_def["type"] == "fence_scope":
             dprint(f"#    Detected fence_scope argument: {arguments[argi]}")
 
-            operand_values[instruction_operands[i]["name"]] = arguments[i]
+            operand_values[operand_def["name"]] = arguments[argi]
             dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
 
         elif operand_def["type"] == "rounding_mode":
             dprint(f"#    Detected rounding_mode argument: {arguments[argi]}")
 
-            operand_values[instruction_operands[i]["name"]] = arguments[i]
+            operand_values[operand_def["name"]] = arguments[argi]
             dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
 
-        elif operand_def["type"] == "reg_range":
-            dprint(f"#    Detected reg_range argument: {arguments[argi]}")
+        elif operand_def["type"] == "reg_list":
+            dprint(f"#    Detected reg_list argument: {arguments[argi]}")
+            reg_list = arguments[argi].strip().replace(" ", "")
 
-            operand_values[instruction_operands[i]["name"]] = arguments[i]
-            dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
+            if "possible_values" in operand_def:
+                possible_values = operand_def.get("possible_values", [])
+                if reg_list not in possible_values:
+                    print(
+                        f"#    ERROR: reg_list '{reg_list}' is not valid, must be one of {possible_values}"
+                    )
+                    return None
+
+            operand_values[operand_def["name"]] = reg_list
+            dprint(f"#    Final value for '{operand_name}': {reg_list}")
 
         elif operand_def["type"] == "float_immediate":
             dprint(f"#    Detected float_immediate argument: {arguments[argi]}")
 
-            operand_values[instruction_operands[i]["name"]] = arguments[i]
+            operand_values[operand_def["name"]] = arguments[argi]
             dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
 
         # consume argument
@@ -417,41 +453,42 @@ def builtin_encode_rounding_mode(rm):
 
 
 def builtin_encode_reg_list(ops):
-    args = ""
-    if "reg_range0" in ops:
-        args += ops["reg_range0"]
-        if "reg_range1" in ops:
-            args += "," + ops["reg_range1"]
-            if "reg_range2" in ops:
-                args += "," + ops["reg_range2"]
-    if args in ["ra", "x1"]:
+    if "reg_list" not in ops:
+        return None
+
+    args = ops["reg_list"].strip().replace(" ", "")
+
+    if args in ["{ra}", "{x1}"]:
         return 4
-    if args in ["ra,s0", "x1,x8"]:
+    if args in ["{ra,s0}", "{x1,x8}"]:
         return 5
-    if args in ["ra,s0-s1", "x1,x8-x9"]:
+    if args in ["{ra,s0-s1}", "{x1,x8-x9}"]:
         return 6
-    if args in ["ra,s0-s2", "x1,x8-x9,x18"]:
+    if args in ["{ra,s0-s2}", "{x1,x8-x9,x18}"]:
         return 7
-    if args in ["ra,s0-s3", "x1,x8-x9,x18-x19"]:
+    if args in ["{ra,s0-s3}", "{x1,x8-x9,x18-x19}"]:
         return 8
-    if args in ["ra,s0-s4", "x1,x8-x9,x18-x20"]:
+    if args in ["{ra,s0-s4}", "{x1,x8-x9,x18-x20}"]:
         return 9
-    if args in ["ra,s0-s5", "x1,x8-x9,x18-x21"]:
+    if args in ["{ra,s0-s5}", "{x1,x8-x9,x18-x21}"]:
         return 10
-    if args in ["ra,s0-s6", "x1,x8-x9,x18-x22"]:
+    if args in ["{ra,s0-s6}", "{x1,x8-x9,x18-x22}"]:
         return 11
-    if args in ["ra,s0-s7", "x1,x8-x9,x18-x23"]:
+    if args in ["{ra,s0-s7}", "{x1,x8-x9,x18-x23}"]:
         return 12
-    if args in ["ra,s0-s8", "x1,x8-x9,x18-x24"]:
+    if args in ["{ra,s0-s8}", "{x1,x8-x9,x18-x24}"]:
         return 13
-    if args in ["ra,s0-s9", "x1,x8-x9,x18-x25"]:
+    if args in ["{ra,s0-s9}", "{x1,x8-x9,x18-x25}"]:
         return 14
-    if args in ["ra,s0-s11", "x1,x8-x9,x18-x27"]:
+    if args in ["{ra,s0-s11}", "{x1,x8-x9,x18-x27}"]:
         return 15
 
 
 def builtin_encode_stack_adj(ops, xlen):
-    registers = builtin_encode_reg_list(ops) - 3
+    reg_list = builtin_encode_reg_list(ops)
+    if reg_list is None:
+        return None
+    registers = 13 if reg_list == 15 else (reg_list - 3)
     registers_space = registers * int(xlen / 8)
     registers_space_aligned = int((registers_space + 15) / 16) * 16
     extra_space = (-ops["stack_adj"]) - registers_space_aligned
@@ -540,10 +577,10 @@ def UDB_invoke_IDL(idl, operands, xlen):
         return 1
     if "return 0;" in idl:
         return 0
-    if "reg_list" in idl:
-        return builtin_encode_reg_list(operands)
     if "stack_adj" in idl:
         return builtin_encode_stack_adj(operands, xlen)
+    if "reg_list" in idl:
+        return builtin_encode_reg_list(operands)
     if "iorw" in idl:
         if "pred" in idl:
             return builtin_encode_fence_scope(operands["pred"])

@@ -7,6 +7,5 @@ $schema: "operand_schema.json#"
 kind: operand
 name: stack-adj-rv64
 data:
-  type: immediate
-  name: stack_adj
+  $inherits: operand/stack-adj-rv32.yaml#/data
   possible_values: [-16, -32, -48, -64, -80, -96, -112, -128, -144, -160]
