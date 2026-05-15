@@ -1,3 +1,8 @@
+KO add x0, x0, x2; ntl.p1
+KO add x0, x0, x3; ntl.pall
+KO add x0, x0, x4; ntl.s1
+KO add x0, x0, x5; ntl.all
+KO c.nop; c.addi x0, 0
 KO cm.push {ra}, -16; cm.push {x1}, -16
 KO cm.push {ra}, -32; cm.push {x1}, -32
 KO cm.push {ra}, -48; cm.push {x1}, -48

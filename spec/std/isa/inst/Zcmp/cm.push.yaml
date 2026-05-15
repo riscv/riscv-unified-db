@@ -21,7 +21,7 @@ description: |
 definedBy:
   extension:
     name: Zcmp
-assembly: "{reg_list}, -stack_adj"
+assembly: "reg_list, -stack_adj" # should be "{reg_list, -stack_adj}"
 operands:
   RV32:
     - $inherits: operand/reg-list-rv32.yaml#/data

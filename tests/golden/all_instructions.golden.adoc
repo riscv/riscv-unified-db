@@ -15915,7 +15915,7 @@ Base::
 |===
 
 Assembly::
-cm.pop {reg_list}, stack_adj
+cm.pop reg_list, stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -15974,7 +15974,7 @@ Base::
 |===
 
 Assembly::
-cm.popret {reg_list}, stack_adj
+cm.popret reg_list, stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -16033,7 +16033,7 @@ Base::
 |===
 
 Assembly::
-cm.popretz {reg_list}, stack_adj
+cm.popretz reg_list, stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -16092,7 +16092,7 @@ Base::
 |===
 
 Assembly::
-cm.push {reg_list}, -stack_adj
+cm.push reg_list, -stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
