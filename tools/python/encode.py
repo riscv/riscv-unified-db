@@ -633,6 +633,9 @@ def fill_in_variables(inst, assembly, xlen=64):
         print("# ERROR: No match pattern found in encoding")
         return None
 
+    if "operands" not in inst:
+        return match_pattern
+
     # Get operands based on xlen
     if f"RV{xlen}" in inst["operands"]:
         instruction_operands = inst["operands"][f"RV{xlen}"]

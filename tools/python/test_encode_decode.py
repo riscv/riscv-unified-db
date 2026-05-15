@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import argparse
 import io
-import sys
 from contextlib import redirect_stdout
 
 import decode
@@ -93,17 +92,11 @@ def main() -> int:
     args = parse_args()
 
     had_error = False
-    try:
-        for line, is_ok in iter_roundtrip_results(args.spec, args.instructions, args.xlen):
-            if not (args.only_ko and is_ok):
-                print(line)
-            if not is_ok:
-                had_error = True
-    except BrokenPipeError:
-        return 0
-    except KeyError as err:
-        print(f"# ERROR: {err}", file=sys.stderr)
-        return 1
+    for line, is_ok in iter_roundtrip_results(args.spec, args.instructions, args.xlen):
+        if not (args.only_ko and is_ok):
+            print(line)
+        if not is_ok:
+            had_error = True
 
     return 1 if had_error else 0
 

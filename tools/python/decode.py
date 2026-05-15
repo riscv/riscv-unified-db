@@ -241,23 +241,21 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
     """Format assembly instruction based on instruction definition and variable values"""
     mnemonic = instruction["name"]
 
-    if "operands" not in instruction:
-        dprint(f"# INFO: No operands defined for instruction '{mnemonic}'")
-        return None
-
-    if "RV32" in instruction["operands"] and xlen == 32:
-        operands = instruction["operands"]["RV32"]
-    elif "RV64" in instruction["operands"] and xlen == 64:
-        operands = instruction["operands"]["RV64"]
-    else:
-        operands = instruction["operands"]
+    operands = []
+    if "operands" in instruction:
+        if "RV32" in instruction["operands"] and xlen == 32:
+            operands = instruction["operands"]["RV32"]
+        elif "RV64" in instruction["operands"] and xlen == 64:
+            operands = instruction["operands"]["RV64"]
+        else:
+            operands = instruction["operands"]
 
     if "RV32" in instruction["encoding"] and xlen == 32:
-        variables = instruction["encoding"]["RV32"]["variables"]
+        variables = instruction["encoding"]["RV32"].get("variables")
     elif "RV64" in instruction["encoding"] and xlen == 64:
-        variables = instruction["encoding"]["RV64"]["variables"]
+        variables = instruction["encoding"]["RV64"].get("variables")
     else:
-        variables = instruction["encoding"]["variables"]
+        variables = instruction["encoding"].get("variables")
 
     assembly_parts = []
 

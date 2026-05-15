@@ -72,9 +72,22 @@ def initialize_spec(spec_dir: str, quiet: bool = False) -> None:
         yamls.append(data)
 
         if kind == "instruction":
-            # Keep only instructions with "operand" data.
+            # Keep only instructions with "operand" data, or no variables
             if "operands" in data:
                 instructions[name] = data
+                continue
+            encoding = data.get("encoding")
+            if encoding is None:
+                # no "operands" or "encoding", must be "format": skip for now
+                continue
+            if "RV64" in encoding:
+                # XLEN-specific encoding: just pick one for now
+                encoding = encoding.get("RV64")
+            match = encoding.get("match")
+            if "-" in match:
+                # variables, but no operands: skip for now
+                continue
+            instructions[name] = data
         elif kind == "register_file":
             register_files[name] = data
 
