@@ -8,5 +8,6 @@ kind: operand
 name: xdc2-paired-implicit
 data:
   $inherits: operand/xdc.yaml#/data
+  name: xd2
   implicit: true
   possible_values: [9, 11, 13, 15]

@@ -38,7 +38,6 @@ encoding:
         return creg2reg(xd);
 operands:
   - $inherits: operand/xdc.yaml#/data
-    name: xd
   - $inherits: operand/xsc-offset7-ls2.yaml#/data
     name: xs1
 access:

@@ -28,9 +28,7 @@ encoding:
       not: 0
 operands:
   - $inherits: operand/xd-not0.yaml#/data
-    name: xd
   - $inherits: operand/imm5-not0.yaml#/data
-    name: imm
 access:
   s: always
   u: always
