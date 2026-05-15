@@ -687,12 +687,6 @@ def fill_in_variables(inst, assembly, xlen=64):
             operand_value = operand_value >> variable["left_shift"]
             dprint(f"#  Unapplied left shift {variable['left_shift']}, new value: {operand_value}")
 
-        dprint(f"#  Variable '{var_name}': {variable}")
-        enc_ops = variable.get("encode(operands)")
-        if enc_ops and "reg2creg" in enc_ops:
-            operand_value = operand_value - 8
-            dprint(f"#        Applied reg2creg transformation, new value: {operand_value}")
-
         # Set the bits in the binary match string
         encoded = set_bits(encoded, bit_positions, operand_value)
 

@@ -35,7 +35,7 @@ encoding:
       encode(operands): |
         return reg2creg(operands[xs1]);
       decode(): |
-        return creg2reg(xd);
+        return creg2reg(xs1);
 operands:
   - $inherits: operand/xdc.yaml#/data
   - $inherits: operand/xsc-offset7-ls2.yaml#/data
