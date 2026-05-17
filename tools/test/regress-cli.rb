@@ -148,6 +148,17 @@ class Cli
   end
   private :gh_sub
 
+  # Returns true when the C++ toolchain has been opted out via UDB_TOOLCHAIN_NONE=1.
+  # Reads .toolchain-local (same file the bin/ wrappers source) so the check works
+  # even when the env var was not exported in the calling shell.
+  def toolchain_none?
+    return true if ENV["UDB_TOOLCHAIN_NONE"] == "1"
+    local_file = Pathname.new(__dir__) / ".." / ".." / ".toolchain-local"
+    return false unless local_file.exist?
+    local_file.readlines.any? { |line| line.strip == "UDB_TOOLCHAIN_NONE=1" }
+  end
+  private :toolchain_none?
+
   # Expand +test_names+ into Job structs. For matrix tests, produces one Job per
   # matrix variant. +matrix_filter+ ({ key:, value: }) restricts to one variant.
   def expand_jobs(test_names, matrix_filter: nil)
@@ -204,6 +215,11 @@ class Cli
 
     @logger.info "Running regression \"#{test_name}\" --------"
     test = test_data.fetch("tests").fetch(test_name)
+    if test["toolchain_container"] && toolchain_none?
+      @logger.error "Test \"#{test_name}\" requires the C++ toolchain, but UDB_TOOLCHAIN_NONE=1."
+      @logger.error "  Run bin/setup to configure a toolchain (container or native)."
+      exit_with(:error)
+    end
     matrix_filter = nil
     if test.key?("strategy") && params[:matrix]
       k, v = params[:matrix].split("=").map(&:strip)
