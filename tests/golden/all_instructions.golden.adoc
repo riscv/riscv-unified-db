@@ -10415,7 +10415,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |sext($encoding[31:20], 12)
+|imm |$encoding[31:20]
 |xs1 |$encoding[19:15]
 |xd |$encoding[11:7]
 |===
@@ -15908,7 +15908,7 @@ Base::
 |===
 
 Assembly::
-cm.pop reg_list, stack_adj
+cm.pop {reg_list}, stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -15967,7 +15967,7 @@ Base::
 |===
 
 Assembly::
-cm.popret reg_list, stack_adj
+cm.popret {reg_list}, stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -16026,7 +16026,7 @@ Base::
 |===
 
 Assembly::
-cm.popretz reg_list, stack_adj
+cm.popretz {reg_list}, stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -17417,8 +17417,8 @@ Decode Variables::
 |Variable Name |Location
 |fs2 |$encoding[24:20]
 |fs1 |$encoding[19:15]
-|fd |$encoding[11:7]
 |rm |$encoding[14:12]
+|fd |$encoding[11:7]
 |===
 
 Included in::
@@ -38426,7 +38426,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |sext({$encoding[31:25], $encoding[11:7]}, 12)
+|imm |{$encoding[31:25], $encoding[11:7]}
 |xs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
