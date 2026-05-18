@@ -1,38 +1,34 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# typed: true
 # frozen_string_literal: true
-#
+
 # Contains common methods called from portfolio-based tasks.rake files.
 
+require "sorbet-runtime"
+
 require "pathname"
-require "asciidoctor-pdf"
-require "asciidoctor-diagram"
-require_relative "#{$lib}/idl/passes/gen_adoc"
+require "idlc/passes/gen_adoc"
 
-# @return [Architecture]
+require "udb/config"
+
+sig { returns(Udb::ConfiguredArchitecture) }
 def pf_create_arch
-  # Ensure that unconfigured resolved architecture called "_" exists.
-  Rake::Task["#{$root}/.stamps/resolve-_.stamp"].invoke
-
-  # Create architecture object using the unconfigured resolved architecture called "_".
-  Architecture.new($root / "gen" / "resolved_arch" / "_")
+  $resolver.cfg_arch_for("_")
 end
 
-# @param portfolio_grp_with_arch [PortfolioGroup] Contains one or more Portfolio objects that have an arch (not a cfg_arch).
-# @return [ConfiguredArchitecture]
+# @param portfolio_grp_with_arch Contains one or more Portfolio objects that have an arch (not a cfg_arch).
+sig { params(portfolio_grp_with_arch: Udb::PortfolioGroup).returns(Udb::ConfiguredArchitecture) }
 def pf_create_cfg_arch(portfolio_grp_with_arch)
-  raise ArgumentError, "portfolio_grp_with_arch is a #{portfolio_grp_with_arch.class} but must be a PortfolioGroup" unless portfolio_grp_with_arch.is_a?(PortfolioGroup)
-
-  # Ensure that unconfigured resolved architecture called "_" exists.
-  Rake::Task["#{$root}/.stamps/resolve-_.stamp"].invoke
-
   # Create a ConfiguredArchitecture object and provide it a PortfolioGroupConfig object to implement the AbstractConfig API.
   # The DatabaseObjects in PortfolioGroup only have an Architecture object and not a ConfiguredArchitecture object
   # otherwise there would be a circular dependency. To avoid this circular dependency, none of the routines
   # called in the PortfolioGroup object to satisfy the requests from the AbstractConfig API for the ConfiguredArchitecture
   # object can require that the PortfolioGroup DatabaseObjects contain a ConfiguredArchitecture.
-  cfg_arch_with_portfolio_grp_with_arch = ConfiguredArchitecture.new(
+  Udb::ConfiguredArchitecture.new(
     portfolio_grp_with_arch.name,
-    PortfolioGroupConfig.new(portfolio_grp_with_arch),
-    $root / "gen" / "resolved_arch" / "_"
+    Udb::AbstractConfig.create(portfolio_grp_with_arch, $resolver.cfg_info("_"))
   )
 end
 
@@ -68,6 +64,7 @@ end
 # @param target_pname [String] Full pathname of adoc file being generated
 # @param portfolio_design [PortfolioDesign] PortfolioDesign being generated
 def pf_create_adoc(erb_template_pname, erb_binding, target_pname, portfolio_design)
+  $logger.info "Reading ERB adoc template for #{portfolio_design.name}"
   template_path = Pathname.new(erb_template_pname)
   erb = ERB.new(File.read(template_path), trim_mode: "-")
   erb.filename = template_path.to_s
@@ -77,13 +74,14 @@ def pf_create_adoc(erb_template_pname, erb_binding, target_pname, portfolio_desi
 
   # Convert ERB to final ASCIIDOC. Note that this code is broken up into separate function calls
   # each with a variable name to aid in running a command-line debugger on this code.
-  puts "UPDATE: Converting ERB template to adoc for #{portfolio_design.name}"
+  $logger.info "Starting ERB adoc template evaluation for #{portfolio_design.name}"
   erb_result = erb.result(erb_binding)
+  $logger.info "Converting monospace formatting to internal link format"
   erb_result_monospace_converted_to_links = portfolio_design.convert_monospace_to_links(erb_result)
-  erb_result_with_links_resolved = AsciidocUtils.resolve_links(erb_result_monospace_converted_to_links)
-
+  $logger.info "Converting internal link format to adoc links"
+  erb_result_with_links_resolved = Udb::Helpers::AsciidocUtils.resolve_links(erb_result_monospace_converted_to_links)
+  $logger.info "Writing adoc to #{target_pname}"
   File.write(target_pname, erb_result_with_links_resolved)
-  puts "UPDATE: Generated adoc in #{target_pname}"
 end
 
 # @param adoc_file [String] Full name of source adoc file
@@ -91,7 +89,7 @@ end
 def pf_adoc2pdf(adoc_file, target_pname)
   FileUtils.mkdir_p File.dirname(target_pname)
 
-  puts "UPDATE: Generating PDF in #{target_pname}"
+  $logger.info "Generating PDF in #{target_pname}"
   cmd = [
     "asciidoctor-pdf",
     "-w",
@@ -101,13 +99,14 @@ def pf_adoc2pdf(adoc_file, target_pname)
     "-a pdf-theme=#{$root}/ext/docs-resources/themes/riscv-pdf.yml",
     "-a pdf-fontsdir=#{$root}/ext/docs-resources/fonts",
     "-a imagesdir=#{$root}/ext/docs-resources/images",
+    "-a bytefield-svg=#{$root}/node_modules/.bin/bytefield-svg",
     "-r asciidoctor-diagram",
-    "-r #{$root}/backends/ext_pdf_doc/idl_lexer",
+    "-r idl_highlighter",
     "-o #{target_pname}",
     adoc_file
   ].join(" ")
 
-  puts "UPDATE: bundle exec #{cmd}"
+  $logger.info "bundle exec #{cmd}"
 
   # Write out command used to convert adoc to PDF to allow running this
   # manually during development.
@@ -121,7 +120,7 @@ def pf_adoc2pdf(adoc_file, target_pname)
   # Now run the actual command.
   sh cmd
 
-  puts "UPDATE: Generated PDF in #{target_pname}"
+  $logger.info "Generated PDF in #{target_pname}"
 end
 
 # @param adoc_file [String] Full name of source adoc file
@@ -129,20 +128,21 @@ end
 def pf_adoc2html(adoc_file, target_pname)
   FileUtils.mkdir_p File.dirname(target_pname)
 
-  puts "UPDATE: Generating HTML in #{target_pname}"
+  $logger.info "Generating HTML in #{target_pname}"
   cmd = [
     "asciidoctor",
     "-w",
     "-v",
     "-a toc",
     "-a imagesdir=#{$root}/ext/docs-resources/images",
+    "-a bytefield-svg=#{$root}/node_modules/.bin/bytefield-svg",
     "-r asciidoctor-diagram",
-    "-r #{$root}/backends/ext_pdf_doc/idl_lexer",
+    "-r idl_highlighter",
     "-o #{target_pname}",
     adoc_file
   ].join(" ")
 
-  puts "UPDATE: bundle exec #{cmd}"
+  $logger.info "bundle exec #{cmd}"
 
    # Write out command used to convert adoc to HTML to allow running this
   # manually during development.
@@ -156,5 +156,5 @@ def pf_adoc2html(adoc_file, target_pname)
   # Now run the actual command.
   sh cmd
 
-  puts "UPDATE: Generated HTML in #{target_pname}"
+  $logger.info "Generated HTML in #{target_pname}"
 end

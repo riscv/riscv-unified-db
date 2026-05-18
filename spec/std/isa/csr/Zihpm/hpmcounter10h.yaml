@@ -1,0 +1,69 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+
+# WARNING: This file is auto-generated from spec/std/isa/csr/Zihpm/hpmcounterNh.layout
+
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: hpmcounter10h
+long_name: Unprivileged Hardware Performance Counter 10, high half
+address: 0xC8A
+writable: false
+description: |
+  Alias for M-mode CSR `mhpmcounter10h`.
+
+  See `mhpmcounter10h` for information on privilege mode access control.
+priv_mode: U
+length: 32
+definedBy:
+  allOf:
+    - xlen: 32
+    - extension:
+        name: Zihpm
+fields:
+  COUNT:
+    location: 31-0
+    alias: mhpmcounter10h.COUNT[63:32]
+    description: Alias of `mhpmcounter10h.COUNT`.
+    type: RO-H
+    reset_value: UNDEFINED_LEGAL
+sw_read(): |
+  # access is determined by *counteren CSRs
+  if (mode() == PrivilegeMode::S) {
+    # S-mode is present ->
+    #   mcounteren determines access in S-mode
+    if (CSR[mcounteren].HPM10 == 1'b0) {
+      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    }
+  } else if (mode() == PrivilegeMode::U) {
+    if (CSR[misa].S == 1'b1) {
+      # S-mode is present ->
+      #   mcounteren and scounteren together determine access in U-mode
+      if ((CSR[mcounteren].HPM10 & CSR[scounteren].HPM10) == 1'b0) {
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+      }
+    } else if (CSR[mcounteren].HPM10 == 1'b0) {
+      # S-mode is not present ->
+      #   mcounteren determines access in U-mode
+      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    }
+  } else if (mode() == PrivilegeMode::VS) {
+    # access in VS mode
+    if (CSR[hcounteren].HPM10 == 1'b0 && CSR[mcounteren].HPM10 == 1'b1) {
+      raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+    } else if (CSR[mcounteren].HPM10 == 1'b0) {
+      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    }
+  } else if (mode() == PrivilegeMode::VU) {
+    # access in VU mode
+    if (((CSR[hcounteren].HPM10 & CSR[scounteren].HPM10) == 1'b0) && (CSR[mcounteren].HPM10 == 1'b1)) {
+      raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+    } else if (CSR[mcounteren].HPM10 == 1'b0) {
+      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    }
+  }
+
+  return read_hpm_counter(10)[63:32];

@@ -1,0 +1,38 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: fsw
+long_name: Floating-Point Store Single-Precision
+description: |
+  The `fsw` instruction stores a single-precision floating-point value in `fs2` to memory at address `xs1` + `imm`.
+  It does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
+
+definedBy:
+  extension:
+    name: F
+assembly: fs2, imm(xs1)
+encoding:
+  match: "-----------------010-----0100111"
+  variables:
+    - name: imm
+      location: 31-25|11-7
+    - name: fs2
+      location: 24-20
+    - name: xs1
+      location: 19-15
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |
+  check_f_ok($encoding);
+
+  XReg virtual_address = X[xs1] + $signed(imm);
+
+  write_memory(32, virtual_address, F[fs2][31:0], $encoding);

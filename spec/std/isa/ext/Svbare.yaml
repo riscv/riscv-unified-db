@@ -1,0 +1,28 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Svbare
+long_name: Bare virtual addressing
+type: privileged
+description: |
+  This extension mandates that the `satp` mode Bare must
+  be supported.
+
+  [NOTE]
+  This extension was ratified as part of the RVA22 profile.
+versions:
+  - version: "1.0.0"
+    state: ratified
+    ratification_date: 2023-03
+requirements:
+  allOf:
+  - extension:
+      name: S
+  - param:
+      name: SATP_MODE_BARE
+      equal: true
+      reason: Svbare mandates that the `satp` mode Bare must be supported.

@@ -1,0 +1,38 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: fdiv.s
+long_name: Floating-Point Divide Single-Precision
+description: |
+  The `fdiv.s` instruction performs the single-precision floating-point division of `fs1` by `fs2`, and
+  writes the final result to `fd`.
+definedBy:
+  extension:
+    name: F
+assembly: fd, fs1, fs2, rm
+encoding:
+  match: 0001100------------------1010011
+  variables:
+    - name: fs2
+      location: 24-20
+    - name: fs1
+      location: 19-15
+    - name: rm
+      location: 14-12
+    - name: fd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |
+  check_f_ok($encoding);
+  RoundingMode mode = rm_to_mode(rm, $encoding);
+  F[fd] = f32_div(F[fs1], F[fs2], mode);
+  mark_f_state_dirty();

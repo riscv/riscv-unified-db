@@ -1,0 +1,36 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: fsub.s
+long_name: Floating-Point Subtract Single-Precision
+description: |
+  The `fsub.s` instruction performs the single-precision floating-point subtraction of `fs2` from `fs1` and writes the result in `fd`.
+definedBy:
+  extension:
+    name: F
+assembly: fd, fs1, fs2, rm
+encoding:
+  match: 0000100------------------1010011
+  variables:
+    - name: fs2
+      location: 24-20
+    - name: fs1
+      location: 19-15
+    - name: rm
+      location: 14-12
+    - name: fd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |
+  check_f_ok($encoding);
+  RoundingMode mode = rm_to_mode(rm, $encoding);
+  F[fd] = f32_sub(F[fs1], F[fs2], mode);

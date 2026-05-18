@@ -1,0 +1,35 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: lbu
+long_name: Load byte unsigned
+description: |
+  Load 8 bits of data into register `xd` from an
+  address formed by adding `xs1` to a signed offset.
+  Zero extend the result.
+definedBy:
+  extension:
+    name: I
+assembly: xd, imm(xs1)
+encoding:
+  match: "-----------------100-----0000011"
+  variables:
+    - name: imm
+      location: 31-20
+    - name: xs1
+      location: 19-15
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+operation(): |
+  XReg virtual_address = X[xs1] + $signed(imm);
+
+  X[xd] = read_memory(8, virtual_address, $encoding);

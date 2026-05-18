@@ -1,0 +1,29 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Shtvala
+long_name: Hypervisor Trap Value provides all needed values
+description: |
+  htval must be written with the faulting guest physical address in all circumstances permitted by
+  the ISA.
+
+  [NOTE]
+  This extension was ratified with the RVA22 profiles.
+type: privileged
+versions:
+  - version: "1.0.0"
+    state: ratified
+    ratification_date: 2023-03
+requirements:
+  # When Shtvala is implemented, htval must be written with the faulting guest physical address in all circumstances permitted by
+  # the ISA.
+  allOf:
+    - extension:
+        name: H
+    - param:
+        name: REPORT_GPA_IN_HTVAL_ON_GUEST_PAGE_FAULT
+        equal: true

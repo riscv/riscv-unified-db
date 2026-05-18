@@ -1,0 +1,8 @@
+{
+  "label": "Configurations",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Understanding configuration files in UDB."
+  }
+}

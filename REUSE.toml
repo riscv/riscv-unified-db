@@ -9,8 +9,9 @@ path = [
     "bin/**",
     "cert_flow.txt",
     "cfgs/**",
-    "container.def",
     "do",
+    "doc/data-templates.adoc",
+    "doc/riscv-opcodes-migration.adoc",
     "docs/**",
     "Gemfile.lock",
     "Gemfile",
@@ -20,12 +21,12 @@ path = [
     "package.json",
     "Rakefile",
     "README.adoc",
-    "requirements.txt",
-    "schemas/**",
+    "spec/schemas/**",
+    "sorbet/config"
 ]
 SPDX-FileCopyrightText = [
     "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.",
-    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv-software-src/riscv-unified-db>",
+    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv/riscv-unified-db>",
 ]
 SPDX-License-Identifier = "BSD-3-Clause-Clear"
 
@@ -37,20 +38,19 @@ path = [
     "doc/idl.adoc",
     "doc/ruby.adoc",
     "doc/schemas.adoc",
-    "doc/prose_schema.adoc"
+    "doc/prose-schema.adoc"
 ]
 SPDX-FileCopyrightText = "2017-2025 Contributors to the RISCV ISA Manual <https://github.com/riscv/riscv-isa-manual>"
 SPDX-License-Identifier = "BSD-3-Clause-Clear"
 
 [[annotations]]
 path = [
-    "arch/**",
-    "arch_overlay/**",
+    "data/arch_overlay/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = [
     "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.  ",
-    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv-software-src/riscv-unified-db>",
+    "2024-2025 Contributors to the RISCV UnifiedDB <https://github.com/riscv/riscv-unified-db>",
     # For import isa-manual docs: https://github.com/riscv/riscv-isa-manual
     "2017-2025 Contributors to the RISCV ISA Manual <https://github.com/riscv/riscv-isa-manual>",
 ]
@@ -59,3 +59,71 @@ SPDX-License-Identifier = [
     # For import isa-manual docs: https://github.com/riscv/riscv-isa-manual
     "CC-BY-4.0",
 ]
+
+[[annotations]]
+path = [
+  "doc/udb*.svg",
+  "doc/static/img/udb*.svg"
+]
+SPDX-FileCopyrightText = "Copyright (c) Derek Hower, Paul Clarke"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+  "doc/idl*.svg",
+  "doc/static/img/idl*.svg"
+]
+SPDX-FileCopyrightText = "Copyright (c) Derek Hower"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+  "doc/**/*.json",
+  "doc/**/*.mdx",
+  "doc/**/*.md",
+  "tools/internal-gems/README.md"
+]
+SPDX-FileCopyrightText = "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries."
+SPDX-License-Identifier = "BSD-3-Clause-Clear"
+
+[[annotations]]
+path = [
+  "doc/static/img/docusaurus-social-card.jpg",
+  "doc/static/img/docusaurus.png"
+]
+SPDX-FileCopyrightText = "Copyright (c) Facebook, Inc. and its affiliates."
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+    "backends/prm_pdf/*.rb",
+    "backends/prm_pdf/*.rake",
+    "backends/prm_pdf/tasks.rake",
+    "backends/prm_pdf/lib/**",
+    "backends/prm_pdf/templates/**",
+    "backends/prm_pdf/pdf-theme/*.yml",
+    "backends/prm_pdf/pdf-theme/*.svg",
+    "cfgs/prm_demo_rv32.yaml",
+    "spec/schemas/prm_schema.json",
+    "spec/custom/non_isa/prm_example/prm_demo_rv32_with_external.yaml",
+    "tools/ruby-gems/udb/lib/udb/prm_generator.rb",
+    "tools/ruby-gems/udb/lib/udb/obj/prm.rb"
+]
+SPDX-FileCopyrightText = "Copyright (c) 2025 Synopsys, Inc."
+SPDX-License-Identifier = "BSD-3-Clause-Clear"
+
+[[annotations]]
+path = [
+    "renovate.json5",
+    "uv.lock",
+]
+SPDX-FileCopyrightText = "Copyright (c) Jordan Carlin"
+SPDX-License-Identifier = "BSD-3-Clause-Clear"
+
+# Computer-generated files that are checked in
+[[annotations]]
+path = [
+    "sorbet/rbi/**"
+]
+SPDX-FileCopyrightText = "NONE"
+SPDX-License-Identifier = "CC0-1.0"

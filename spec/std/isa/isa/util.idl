@@ -1,0 +1,244 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+%version: 1.0
+
+# generic utility functions
+
+function power_of_2? {
+  returns Boolean
+  arguments XReg value
+  description {
+    Returns true if value is a power of two, false otherwise
+  }
+  body {
+    return (value != 0) && ((value & (value - 1)) == 0);
+  }
+}
+
+function has_virt_mem? {
+  returns Boolean
+  description {
+    Returns true if some virtual memory translation (Sv*) is supported in the config.
+  }
+  body {
+    return implemented?(ExtensionName::Sv32) ||
+           implemented?(ExtensionName::Sv39) ||
+           implemented?(ExtensionName::Sv48) ||
+           implemented?(ExtensionName::Sv57);
+  }
+}
+
+function max_va_size {
+  returns Bits<8>
+  description {
+    Returns the largest possible Virtual Address width in any supported translation mode.
+
+    The max VA is determined by physical address size when in M mode or S-mode with Bare translation.
+    Otherwise, max VA is the size of a virtual address in the largest supported Sv* mode.
+
+    Return the largest that applies.
+  }
+  body {
+    Bits<8> translated_va_size = 0;
+    if (implemented?(ExtensionName::Sv57)) {
+      translated_va_size = 57;
+    } else if (implemented?(ExtensionName::Sv48)) {
+      translated_va_size = 48;
+    } else if (implemented?(ExtensionName::Sv39)) {
+      translated_va_size = 39;
+    } else if (implemented?(ExtensionName::Sv32)) {
+      translated_va_size = 32;
+    }
+
+    if (PHYS_ADDR_WIDTH > translated_va_size) {
+      # max va is determined by physical address
+      if (PHYS_ADDR_WIDTH > MXLEN) {
+        return MXLEN;
+      } else {
+        return PHYS_ADDR_WIDTH;
+      }
+    } else {
+      # max va is determined by translated virtual address
+      return translated_va_size;
+    }
+  }
+}
+
+function highest_set_bit {
+  returns Bits<8>
+  arguments XReg value
+  description {
+    Returns the position of the highest (nearest MSB) bit that is '1',
+    or -1 if value is zero.
+  }
+  body {
+    for (Bits<8> i=xlen()-1; i >= 0; i--) {
+      if (value[i] == 1) {
+        return i;
+      }
+    }
+
+    # fall-through; value must be zero
+    return -'sd1;
+  }
+}
+
+function lowest_set_bit {
+  returns Bits<8>
+  arguments XReg value
+  description {
+    Returns the position of the lowest (nearest LSB) bit that is '1',
+    or XLEN if value is zero.
+  }
+  body {
+    for (Bits<8> i=0; i < xlen(); i++) {
+      if (value[i] == 1) {
+        return i;
+      }
+    }
+
+    # fall-through; value must be zero
+    return xlen();
+  }
+}
+
+function bit_length {
+  returns XReg
+  arguments XReg value
+  description {
+    Returns the minimum number of bits needed to represent value.
+
+    Only works on unsigned values.
+
+    The value 0 returns 1.
+  }
+  body {
+    for (XReg i = 63; i > 0; i--) {
+      if (value[i] == 1) {
+        return i;
+      }
+    }
+
+    # if we get here, the value is 0 or 1. either way, say we need one bit
+    return 1;
+  }
+}
+
+function count_leading_zeros {
+  returns
+    XReg  # Number of leading zeros in +value+
+  arguments
+    U32 N,               # bit width
+    XReg value           # value to count zero in
+  description {
+    Returns the number of leading 0 bits before the most-significant 1 bit of +value+,
+    or N if value is zero.
+  }
+  body {
+    for (U32 i=0; i < N; i++) {
+      if (value[N - 1 - i] == 1) {
+        return i;
+      }
+    }
+
+    # fall-through; value must be zero
+    return N;
+  }
+}
+
+function count_leading_zeros_64 {
+  returns
+    XReg  # Number of leading zeros in +value+
+  arguments
+    U32 N,               # bit width
+    Bits<64> value           # value to count zero in
+  description {
+    Returns the number of leading 0 bits before the most-significant 1 bit of +value+,
+    or N if value is zero.
+  }
+  body {
+    for (U32 i=0; i < N; i++) {
+      if (value[N - 1 - i] == 1) {
+        return i;
+      }
+    }
+
+    # fall-through; value must be zero
+    return N;
+  }
+}
+
+function sext {
+  returns XReg
+  arguments XReg value, XReg first_extended_bit
+  description {
+    Sign extend `value` starting at `first_extended_bit`.
+
+    Bits [`XLEN-1`:`first_extended_bit`] of the return value
+    should get the value of bit (`first_extended bit - 1`).
+  }
+  body {
+    # in a common case, first_extended_bit is xlen(), which is compile-time-known unless
+    # the effective xlen is different than XLEN in some mode
+    # In that common case, this function will be eliminated by the compiler
+    if (first_extended_bit == MXLEN) {
+      return value;
+    } else {
+      Bits<1> sign = value[first_extended_bit-1];
+      for (U32 i = MXLEN-1; i >= first_extended_bit; i--) {
+        value[i] = sign;
+      }
+      return value;
+    }
+  }
+}
+
+function is_naturally_aligned {
+  returns Boolean
+  arguments U32 N, XReg value
+  description {
+    Checks if value is naturally aligned to N bits.
+  }
+  body {
+    return true if N == 8; # everything is byte aligned
+
+    XReg Mask = (N/8) - 1;
+    return (value & ~Mask) == value;
+  }
+}
+
+function in_naturally_aligned_region? {
+  returns Boolean
+  arguments
+    U32  N,         # alignment size in bits
+    XReg address,   # starting address
+    U32  length     # length of the access
+  description {
+    Checks if a length-bit access starting at +address+ lies entirely within an N-bit naturally-aligned region.
+  }
+  body {
+    XReg Mask = (N/8) - 1;
+
+    return (address & ~Mask) == ((address + length - 1) & ~Mask);
+  }
+}
+
+function contains? {
+  returns Boolean
+  arguments
+    XReg region_start,
+    U32  region_size,
+    XReg target_start,
+    U32  target_size
+  description {
+    Given a _region_ defined by region_start, region_size,
+    determine if a _target_ defined by target_start, target_size
+    is completely contained with the region.
+  }
+  body {
+    return
+      target_start >= region_start &&
+      (target_start + target_size) <= (region_start + region_size);
+  }
+}

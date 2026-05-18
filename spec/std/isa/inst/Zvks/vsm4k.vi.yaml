@@ -1,0 +1,31 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: vsm4k.vi
+long_name: Vector SM4 key schedule with immediate
+description: |
+  Performs SM4 key schedule operation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This is used in SM4 block cipher key expansion.
+definedBy:
+  extension:
+    name: Zvksed
+assembly: vd, vs2, imm
+encoding:
+  match: 1000011----------010-----1110111
+  variables:
+    - name: vs2
+      location: 24-20
+    - name: imm
+      location: 19-15
+    - name: vd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |

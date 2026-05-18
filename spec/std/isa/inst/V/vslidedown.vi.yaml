@@ -1,0 +1,33 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: vslidedown.vi
+long_name: "Vector slide down with immediate"
+description: |
+  Slides elements in vector register vs2 down by 1 position, inserting immediate value at the top, and stores results in vector register vd, using vector mask vm.
+definedBy:
+  extension:
+    name: Zvl32b
+assembly: vd, vs2, imm, vm
+encoding:
+  match: 001111-----------011-----1010111
+  variables:
+    - name: vm
+      location: 25-25
+    - name: vs2
+      location: 24-20
+    - name: imm
+      location: 19-15
+    - name: vd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: false
+operation(): |

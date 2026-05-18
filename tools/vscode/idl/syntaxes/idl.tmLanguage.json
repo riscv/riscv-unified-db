@@ -1,0 +1,254 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "IDL",
+  "scopeName": "source.idl",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#description"
+    },
+    {
+      "include": "#string"
+    },
+    {
+      "include": "#verilog-literal"
+    },
+    {
+      "include": "#hex-literal"
+    },
+    {
+      "include": "#binary-literal"
+    },
+    {
+      "include": "#number"
+    },
+    {
+      "include": "#keyword"
+    },
+    {
+      "include": "#builtin"
+    },
+    {
+      "include": "#boolean"
+    },
+    {
+      "include": "#type-alias"
+    },
+    {
+      "include": "#csr"
+    },
+    {
+      "include": "#scope-resolution"
+    },
+    {
+      "include": "#function-declaration"
+    },
+    {
+      "include": "#function-call"
+    },
+    {
+      "include": "#constant"
+    },
+    {
+      "include": "#widening-operator"
+    },
+    {
+      "include": "#operator"
+    },
+    {
+      "include": "#punctuation"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.idl",
+          "match": "#.*"
+        }
+      ]
+    },
+    "description": {
+      "patterns": [
+        {
+          "name": "meta.description.idl",
+          "begin": "\\b(description)\\s*(\\{)",
+          "end": "\\}",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.control.idl"
+            },
+            "2": {
+              "name": "punctuation.idl"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.idl"
+            }
+          },
+          "contentName": "string.other.description.idl"
+        }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.idl",
+          "match": "\"[^\"]*\""
+        }
+      ]
+    },
+    "verilog-literal": {
+      "patterns": [
+        {
+          "name": "constant.numeric.idl",
+          "match": "\\b(?:\\d+|MXLEN)'s?[bBoOdDhH][0-9a-fA-F_]+\\b"
+        }
+      ]
+    },
+    "hex-literal": {
+      "patterns": [
+        {
+          "name": "constant.numeric.idl",
+          "match": "\\b0x[0-9a-fA-F_]+\\b"
+        }
+      ]
+    },
+    "binary-literal": {
+      "patterns": [
+        {
+          "name": "constant.numeric.idl",
+          "match": "\\b0b[01_]+\\b"
+        }
+      ]
+    },
+    "number": {
+      "patterns": [
+        {
+          "name": "constant.numeric.idl",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "keyword": {
+      "patterns": [
+        {
+          "name": "keyword.control.idl",
+          "match": "\\b(?:if|else|for|returns|return|arguments|description|body|builtin|function|enum|bitfield|struct)\\b"
+        }
+      ]
+    },
+    "builtin": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.idl",
+          "match": "\\$(?:pc|encoding|signed|bits|enum_to_a|enum|array_size|enum_size|enum_element_size)\\b"
+        }
+      ]
+    },
+    "boolean": {
+      "patterns": [
+        {
+          "name": "constant.language.idl",
+          "match": "\\b(?:true|false)\\b"
+        }
+      ]
+    },
+    "type-alias": {
+      "patterns": [
+        {
+          "name": "entity.name.type.idl",
+          "match": "\\b(?:Bits|XReg|U64|U32|Boolean|String)\\b"
+        }
+      ]
+    },
+    "csr": {
+      "patterns": [
+        {
+          "name": "keyword.control.idl",
+          "match": "\\bCSR\\b"
+        }
+      ]
+    },
+    "scope-resolution": {
+      "patterns": [
+        {
+          "match": "\\b([A-Z][a-zA-Z0-9_]*)(::)([A-Za-z][A-Za-z0-9_]*)\\b",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.idl"
+            },
+            "2": {
+              "name": "punctuation.idl"
+            },
+            "3": {
+              "name": "variable.other.member.idl"
+            }
+          }
+        }
+      ]
+    },
+    "function-declaration": {
+      "patterns": [
+        {
+          "match": "(\\bfunction\\s+)[a-z][a-zA-Z0-9_]*\\??",
+          "captures": {
+            "1": {
+              "name": "keyword.control.idl"
+            },
+            "2": {
+              "name": "entity.name.function.idl"
+            }
+          }
+        }
+      ]
+    },
+    "function-call": {
+      "patterns": [
+        {
+          "match": "\\b([a-z][a-zA-Z0-9_]*\\??)\\s*(?:<[^>]*>\\s*)?\\(",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.idl"
+            }
+          }
+        }
+      ]
+    },
+    "constant": {
+      "patterns": [
+        {
+          "name": "constant.language.idl",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "widening-operator": {
+      "patterns": [
+        {
+          "name": "keyword.operator.idl",
+          "match": "`[+\\-*]|`<<"
+        }
+      ]
+    },
+    "operator": {
+      "patterns": [
+        {
+          "name": "keyword.operator.idl",
+          "match": "->|[+\\-*/%&|^~]|<<=?|>>=?|<=?|>=?|[!=]=|&&|\\|\\||[!~]"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.idl",
+          "match": "[{}[\\]();,.:]"
+        }
+      ]
+    }
+  }
+}

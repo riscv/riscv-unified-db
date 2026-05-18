@@ -1,0 +1,57 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Sstvala
+long_name: "Supervisor Trap Value provides all needed values"
+description: |
+  `stval` must be written with the faulting virtual address for load, store,
+  and instruction page-fault, access-fault, and misaligned exceptions,
+  and for breakpoint exceptions other than those caused by execution of the
+  `ebreak` or `c.ebreak instructions.
+
+  For virtual-instruction and illegal-instruction exceptions,
+  `stval` must be written with the faulting instruction.
+
+  [NOTE]
+  This extension was ratified with the RVA20 profiles.
+type: privileged
+versions:
+  - version: "1.0.0"
+    state: ratified
+    ratification_date: 2023-03
+    url: https://github.com/riscv/riscv-profiles/releases/tag/v1.0
+    repositories:
+      - url: https://github.com/riscv/riscv-profiles
+        branch: main
+    contributors:
+      - name: Krste Asanovic
+        company: SiFive, Inc.
+requirements:
+  param:
+    allOf:
+    - name: REPORT_VA_IN_STVAL_ON_BREAKPOINT
+      equal: true
+    - name: REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT
+      equal: true
+    - name: REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT
+      equal: true
+    - name: REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT
+      equal: true
+    - name: REPORT_VA_IN_STVAL_ON_INSTRUCTION_PAGE_FAULT
+      equal: true
+    - name: REPORT_VA_IN_STVAL_ON_LOAD_PAGE_FAULT
+      equal: true
+    - name: REPORT_VA_IN_STVAL_ON_STORE_AMO_PAGE_FAULT
+      equal: true
+    - name: REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED
+      equal: true
+    - name: REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED
+      equal: true
+    - name: REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED
+      equal: true
+    - name: REPORT_ENCODING_IN_STVAL_ON_ILLEGAL_INSTRUCTION
+      equal: true

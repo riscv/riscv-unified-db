@@ -1,0 +1,27 @@
+#!/bin/bash
+
+ROOT=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+[ -f "${ROOT}/../.toolchain-local" ] && source "${ROOT}/../.toolchain-local"
+
+if [ "${UDB_TOOLCHAIN_NONE:-0}" = "1" ]; then
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _prompt_toolchain_selection
+  source "${ROOT}/.toolchain-local"
+fi
+
+if [ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]; then
+  # shellcheck source=.toolchain.sh
+  source "${ROOT}/.toolchain.sh"
+  _setup_toolchain_run
+  exec $TOOLCHAIN_RUN riscv64-unknown-elf-objdump "$@"
+elif _native=$(PATH="${PATH//"${ROOT}:"/}" command -v riscv64-unknown-elf-objdump 2>/dev/null) && [ -n "$_native" ]; then
+  exec "$_native" "$@"
+else
+  echo "ERROR: riscv64-unknown-elf-objdump not found." >&2
+  echo "  Option 1: Install a native RISC-V cross-compiler:" >&2
+  echo "    apt install binutils-riscv64-unknown-elf   (Debian/Ubuntu)" >&2
+  echo "    brew install riscv-gnu-toolchain            (macOS)" >&2
+  echo "  Option 2: Set UDB_TOOLCHAIN_CONTAINER=1 to use the toolchain container" >&2
+  exit 1
+fi

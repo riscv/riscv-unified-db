@@ -1,0 +1,44 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: bgeu
+long_name: Branch if greater than or equal unsigned
+description: |
+  Branch to PC + imm if
+  the unsigned value in register xs1 is greater than or equal to the unsigned value in register xs2.
+
+  Raise a `MisalignedAddress` exception if PC + imm is misaligned.
+definedBy:
+  extension:
+    name: I
+assembly: xs1, xs2, imm
+encoding:
+  match: "-----------------111-----1100011"
+  variables:
+    - name: imm
+      location: 31|7|30-25|11-8
+      left_shift: 1
+      sign_extend: true
+    - name: xs2
+      location: 24-20
+    - name: xs1
+      location: 19-15
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+pseudoinstructions:
+  - when: "true"
+    to: bleu xs2, xs1, imm
+operation(): |
+  XReg lhs = X[xs1];
+  XReg rhs = X[xs2];
+
+  if (lhs >= rhs) {
+    jump_halfword($pc + $signed(imm));
+  }

@@ -1,0 +1,39 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: vmv.x.s
+long_name: Vector move scalar to integer register
+description: |
+  Copies the first element of the source vector register vs2 to the
+  destination integer register xd, sign-extending to XLEN bits if SEW < XLEN.
+
+  This is a scalar read instruction that always reads element 0 of vs2,
+  regardless of vstart. The vstart CSR is reset to 0 after execution.
+definedBy:
+  extension:
+    name: Zvl32b
+assembly: xd, vs2
+encoding:
+  match: 0100001-----00000010-----1010111
+  variables:
+    - name: vs2
+      location: 24-20
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: false
+operation(): |
+  VectorState state = vector_state();
+
+  # vmv.x.s copies element 0 of vs2 to xd, sign-extending to XLEN
+  X[xd] = $signed(V[vs2][state.sew-1:0]);
+
+  CSR[vstart].VALUE = 0;

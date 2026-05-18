@@ -1,0 +1,50 @@
+name: Docs Preview
+# TODO: This workflow deploys to a fork preview (dhower-qc.github.io) on every push to
+# doc_next. It is temporary — once the new docs site goes live on the upstream riscv org,
+# this workflow should be updated to trigger on the main branch and deploy to the riscv
+# org GitHub Pages instead.
+on:
+  push:
+    branches: [doc_next]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "docs-preview"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          submodules: recursive
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build Docusaurus site
+        env:
+          DOCUSAURUS_URL: https://dhower-qc.github.io
+          DOCUSAURUS_BASE_URL: /riscv-unified-db/
+        run: npm run build --workspace=doc
+
+      - name: Setup Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        with:
+          path: doc/build
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

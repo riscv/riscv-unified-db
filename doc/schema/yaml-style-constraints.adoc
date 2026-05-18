@@ -1,0 +1,58 @@
+// Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: CC-BY-4.0
+
+= YAML Style Constraints for IDL Values
+
+When YAML values contain IDL code (such as in the `operation()` field or IDL conditions), they must use one of two YAML scalar styles:
+
+* **Plain style** (single-line): For simple, single-line IDL expressions
+* **Literal block style** (multi-line): For complex or multi-line IDL code
+
+== Valid Examples
+
+[source,yaml]
+----
+# Plain style - single-line IDL
+sw_read(): return 5;
+
+# Literal block style - multi-line IDL
+sw_read(): |
+  if (x > 0) {
+    return 3;
+  }
+  return 4;
+
+# Conditions with IDL
+requirements:
+  idl(): return MXLEN == 32;
+
+# Multi-line condition
+requirements:
+  idl(): |
+    for (U32 i = 3; i < 32; i++) {
+      HPM_COUNTER_EN[i] -> HCOUNTENABLE_EN[i];
+    }
+----
+
+== Invalid Examples
+
+[source,yaml]
+----
+# ❌ Folded style - not allowed
+when(): >
+  return x == 5;
+
+# ❌ Quoted style - not allowed
+when(): "return x == 5;"
+
+# ❌ Double-quoted with escapes - not allowed
+when(): "return x == 5;\n"
+----
+
+== Rationale
+
+This constraint provides two key benefits:
+
+1. **Accurate source location tracking**: Tools can reliably determine line, column, and byte offset information for IDL code within YAML files. Folded and quoted styles introduce ambiguity in source mapping, making it difficult to report precise error locations to users.
+
+2. **Improved uniformity**: Restricting to plain and literal block styles creates a more consistent and predictable YAML style across the database, making files easier to review and maintain.

@@ -1,0 +1,45 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: fsh
+long_name: Half-precision floating-point store
+description: |
+  The `fsh` instruction stores a half-precision floating-point value
+  from register _xd_ to memory at address _xs1_ + _imm_.
+
+  `fsh` does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
+
+  `fsh` ignores all but the lower 16 bits in _fs2_.
+
+  `fsh` is only guaranteed to execute atomically if the effective address is naturally aligned.
+
+definedBy:
+  extension:
+    name: Zfhmin
+assembly: fs2, imm(xs1)
+encoding:
+  match: "-----------------001-----0100111"
+  variables:
+    - name: imm
+      location: 31-25|11-7
+    - name: xs1
+      location: 19-15
+    - name: fs2
+      location: 24-20
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+operation(): |
+  check_f_ok($encoding);
+
+  XReg virtual_address = X[xs1] + $signed(imm);
+
+  Bits<16> hp_value = F[fs2][15:0];
+
+  write_memory(16, virtual_address, hp_value, $encoding);

@@ -7,19 +7,62 @@
 #include <vector>
 
 #include "udb/soc_model.hpp"
+#include "udb/NotificationHandler.hpp"
+
 
 namespace udb {
-  class IssSocModel {
+  enum MEM_NOTIFICATION_EVENT
+  {
+    MEMREAD_EVENT = 0,
+    MEMWRITE_EVENT
+  };
+
+
+  class MemAccessRange
+  {
+  public:
+    MemAccessRange(uint64_t addr, size_t size) {m_addr = addr; m_size = size;}
+    uint64_t GetAddress() {return  m_addr;}
+    size_t GetSize() {return m_size;}
+
+    bool operator==(const MemAccessRange& mr) const {
+        return (this->m_addr == mr.m_addr && this->m_size == mr.m_size);
+    }
+
+  protected:
+    uint64_t m_addr;
+    size_t m_size;
+  };
+
+  class MemAccess : public MemAccessRange
+  {
+  public:
+    MemAccess(uint64_t addr, size_t size, uint64_t data)
+      : MemAccessRange(addr, size)
+    {m_data = data;}
+
+    uint64_t GetData() {return m_data;}
+  private:
+    uint64_t m_data;
+  };
+
+
+
+  class IssSocModel : public NotificationSource {
     class DenseMemory {
      public:
-      DenseMemory(uint64_t size, uint64_t base_addr) : m_offset(base_addr) {
+      DenseMemory(uint64_t size, uint64_t base_addr, NotificationSource* pNotifier) : m_offset(base_addr) {
         m_data.resize(size);
         m_addend = &m_data[0] - base_addr;
+        m_pNotifier = pNotifier;
       }
       ~DenseMemory() = default;
 
       // subclasses only need to override these functions:
       virtual uint64_t read(uint64_t addr, size_t bytes) {
+        MemAccessRange memAccessData(addr, bytes);
+        this->Notify(MEMREAD_EVENT, &memAccessData);
+
         switch (bytes) {
           case 1:
             return m_data[addr - m_offset];
@@ -35,6 +78,7 @@ namespace udb {
       }
 
       void write(uint64_t addr, uint64_t data, size_t bytes) {
+        MemAccess memAccess(addr, bytes, data);
         switch (bytes) {
           case 1:
             m_data[addr - m_offset] = data;
@@ -51,39 +95,29 @@ namespace udb {
           default:
             __builtin_unreachable();
         }
+        this->Notify(MEMWRITE_EVENT, &memAccess);
       }
 
       int memcpy_from_host(uint64_t guest_paddr, const uint8_t *host_ptr,
                            std::size_t size) {
-        const size_t SZ_64 = sizeof(uint64_t);
-        auto host_ptr64 = (const uint64_t *)host_ptr;  // NOLINT
-        while (size >= SZ_64) {
-          write((guest_paddr += SZ_64) - SZ_64, *host_ptr64++, 8);
-          size -= SZ_64;
+        if(guest_paddr < m_offset || guest_paddr >= m_offset + m_data.size() ||
+            guest_paddr + size < m_offset || guest_paddr + size >= m_offset + m_data.size()) {
+          //out of bounds
+          return -1;
         }
-
-        auto host_ptr8 = (const uint8_t *)host_ptr64;  // NOLINT
-        while (size > 0) {
-          write(guest_paddr++, *host_ptr8++, 1);
-          size--;
-        }
+        memcpy(&m_data[guest_paddr - m_offset], host_ptr, size);
         return size;
       }
 
       int memcpy_to_host(uint8_t *host_ptr, uint64_t guest_paddr,
                          std::size_t size) {
-        const size_t SZ_64 = sizeof(uint64_t);
-        auto host_ptr64 = (uint64_t *)host_ptr;  // NOLINT
-        while (size >= SZ_64) {
-          *(host_ptr64++) = read(guest_paddr += SZ_64, 8);
-          size -= SZ_64;
+        if(guest_paddr < m_offset || guest_paddr >= m_offset + m_data.size() ||
+            guest_paddr + size < m_offset || guest_paddr + size >= m_offset + m_data.size()) {
+          //out of bounds
+          return -1;
         }
 
-        auto host_ptr8 = (uint8_t *)host_ptr64;  // NOLINT
-        while (size > 0) {
-          *(host_ptr8++) = read(guest_paddr += SZ_64, 1);
-          size--;
-        }
+        memcpy(host_ptr, &m_data[guest_paddr - m_offset], size);
         return size;
       }
 
@@ -91,11 +125,19 @@ namespace udb {
       std::vector<uint8_t> m_data;
       uint64_t m_offset;
       uint8_t *m_addend = nullptr;
+      NotificationSource* m_pNotifier;
+
+      inline int Notify(uint64_t uiEvent, void* pData) {
+        if(m_pNotifier) {
+          return m_pNotifier->Notify(uiEvent, pData);
+        }
+        return 0;
+      }
     };
 
    public:
     IssSocModel(uint64_t size, uint64_t base_addr)
-        : m_memory(size, base_addr) {}
+        : m_memory(size, base_addr, this) {}
     IssSocModel() = delete;
     ~IssSocModel() = default;
 
@@ -299,8 +341,24 @@ namespace udb {
       return true;
     }
 
+
+    // builtins for qc_iu
+
+    void delay(uint64_t) { }
+
+    void iss_syscall(uint64_t, uint64_t) { }
+
+    uint32_t read_device_32(uint64_t) { return 0; }
+
+    void write_device_32(uint64_t, uint32_t) { }
+
+    void sync_read_after_write_device(bool, uint32_t) {}
+
+    void sync_write_after_read_device(bool, uint32_t) {}
+
    private:
     DenseMemory m_memory;
+
   };
 
   static_assert(SocModel<IssSocModel>,

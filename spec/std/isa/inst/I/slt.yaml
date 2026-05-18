@@ -1,0 +1,41 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: slt
+long_name: Set on less than
+description: |
+  Places the value 1 in register `xd` if register `xs1` is less than the value in register `xs2`, where
+  both sources are treated as signed numbers, else 0 is written to `xd`.
+definedBy:
+  extension:
+    name: I
+assembly: xd, xs1, xs2
+encoding:
+  match: 0000000----------010-----0110011
+  variables:
+    - name: xs2
+      location: 24-20
+    - name: xs1
+      location: 19-15
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+pseudoinstructions:
+  - when: xs2 == 0
+    to: sltz xd, xs1
+  - when: xs1 == 0
+    to: sgtz xd, xs2
+operation(): |
+  XReg src1 = X[xs1];
+  XReg src2 = X[xs2];
+
+  X[xd] = ($signed(src1) < $signed(src2)) ? '1 : '0;

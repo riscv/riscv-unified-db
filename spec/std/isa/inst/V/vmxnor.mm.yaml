@@ -1,0 +1,34 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: vmxnor.mm
+long_name: No synopsis available
+description: |
+  No description available.
+definedBy:
+  extension:
+    name: Zvl32b
+assembly: vd, vs2, vs1
+encoding:
+  match: 0111111----------010-----1010111
+  variables:
+    - name: vs2
+      location: 24-20
+    - name: vs1
+      location: 19-15
+    - name: vd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+pseudoinstructions:
+  - when: (vs2 == vs1) && (vd == vs2)
+    to: vmset.m vd
+data_independent_timing: false
+operation(): |

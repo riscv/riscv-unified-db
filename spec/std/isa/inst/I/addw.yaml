@@ -1,0 +1,37 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: addw
+long_name: Add word
+description: |
+  Add the 32-bit values in xs1 to xs2, and store the sign-extended result in xd.
+  Any overflow is thrown away.
+definedBy:
+  allOf:
+    - xlen: 64
+    - extension:
+        name: I
+assembly: xd, xs1, xs2
+encoding:
+  match: 0000000----------000-----0111011
+  variables:
+    - name: xs2
+      location: 24-20
+    - name: xs1
+      location: 19-15
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |
+  XReg operand1 = sext(X[xs1], 32);
+  XReg operand2 = sext(X[xs2], 32);
+  X[xd] = sext(operand1 + operand2, 32);

@@ -1,0 +1,44 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: srai
+long_name: Shift right arithmetic immediate
+description: |
+  Arithmetic shift (the original sign bit is copied into the vacated upper bits) the
+  value in xs1 right by shamt, and store the result in xd.
+definedBy:
+  extension:
+    name: I
+assembly: xd, xs1, shamt
+encoding:
+  RV32:
+    match: 0100000----------101-----0010011
+    variables:
+      - name: shamt
+        location: 24-20
+      - name: xs1
+        location: 19-15
+      - name: xd
+        location: 11-7
+  RV64:
+    match: 010000-----------101-----0010011
+    variables:
+      - name: shamt
+        location: 25-20
+      - name: xs1
+        location: 19-15
+      - name: xd
+        location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |
+  # shamt is between 0-63
+  X[xd] = X[xs1] >>> shamt;

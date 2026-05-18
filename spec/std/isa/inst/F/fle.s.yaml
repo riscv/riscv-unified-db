@@ -1,0 +1,57 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: fle.s
+long_name: Floating-Point Less Than or Equal Single-Precision
+description: |
+  The `fle.s` instruction writes 1 to `xd` if `fs1` is less than or equal to `fs2`, and 0 otherwise.
+  If either operand is NaN, the result is 0 (not equal). If either operand is a NaN (signaling or quiet),
+  the invalid flag is set. Positive zero and negative zero are considered equal.
+
+definedBy:
+  extension:
+    name: F
+assembly: xd, fs1, fs2
+encoding:
+  match: 1010000----------000-----1010011
+  variables:
+    - name: fs2
+      location: 24-20
+    - name: fs1
+      location: 19-15
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |
+  check_f_ok($encoding);
+
+  Bits<32> sp_value_a = F[fs1][31:0];
+  Bits<32> sp_value_b = F[fs2][31:0];
+  Bits<1> sign_a = sp_value_a[31];
+  Bits<1> sign_b = sp_value_b[31];
+
+  if (is_sp_nan?(sp_value_a) || is_sp_nan?(sp_value_b)) {
+    set_fp_flag(FpFlag::NV);
+    X[xd] = 0;
+  } else {
+    if (sign_a != sign_b) {
+      X[xd] = (
+        (sign_a == 1) ||  # b is pos and a neg
+        ((sp_value_a[30:0] | sp_value_b[30:0]) == 0) # both are zero (one pos, one neg)
+      ) ? 1 : 0;
+    } else {
+      X[xd] = (
+        (sp_value_a == sp_value_b) || # a and b are equal
+        (sign_a ^ ((sp_value_a < sp_value_b) ? 1 : 0)) == 1 # a < b
+      ) ? 1 : 0;
+    }
+  }

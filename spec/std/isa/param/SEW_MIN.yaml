@@ -1,0 +1,27 @@
+# Copyright (C) 2025-26 Harvey Mudd College
+# Author: James Kaden Cassidy (kacassidy@hmc.edu)
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: SEW_MIN
+description: |
+  Implementations must provide fractional LMUL settings that allow the
+  narrowest supported element width (SEW) to occupy a fractional
+  portion of a vector register relative to the widest supported SEW.
+  In general, implementations must support LMUL >= SEW_MIN/ELEN, where
+  SEW_MIN is the narrowest supported SEW and ELEN is the widest SEW.
+long_name: TODO
+schema:
+  type: integer
+  enum: [8, 16, 32, 64]
+  default: 8
+#    requirements:
+#      idl(): |
+#        -> SEW_MIN <= ELEN;
+#      reason: SEW_MIN <= ELEN
+definedBy:
+  extension:
+    name: Zvl32b

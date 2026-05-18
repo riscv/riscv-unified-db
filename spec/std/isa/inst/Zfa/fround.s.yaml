@@ -1,0 +1,41 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: fround.s
+long_name: Floating-point round single-precision float to integer
+description: |
+  Rounds the single-precision floating-point number in floating-point register _fs1_ to an integer, according to the rounding mode specified in the instruction’s _rm_ field.
+
+  It then writes that integer, represented as a single-precision floating-point number, to floating-point register _fd_.
+
+  Zero and infinite inputs are copied to _fd_ unmodified.
+
+  Signaling NaN inputs cause the invalid operation exception flag to be set; no other exception flags are set. FROUND.S is encoded like FCVT.S.D, but with rs2=4.
+definedBy:
+  extension:
+    name: Zfa
+assembly: fd, fs1, rm
+encoding:
+  match: 010000000100-------------1010011
+  variables:
+    - name: fs1
+      location: 19-15
+    - name: rm
+      location: 14-12
+    - name: fd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |
+  check_f_ok($encoding);
+  RoundingMode rounding_mode = rm_to_mode(rm, $encoding);
+  F[fd] = round_f32_to_integral(F[fs1], rounding_mode);
+  mark_f_state_dirty();

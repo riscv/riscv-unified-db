@@ -1,0 +1,651 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/csr_schema.json
+
+$schema: "csr_schema.json#"
+kind: csr
+name: mstatus
+long_name: Machine Status
+address: 0x300
+writable: true
+priv_mode: M
+
+# length is MXLEN-bit
+#
+# MXLEN cannot change dynamically, so this will be converted to an integer
+# in the generated, configuration-dependent spec
+length: MXLEN
+description:
+  The mstatus register tracks and controls the hart's current operating
+  state.
+definedBy:
+  extension:
+    name: Sm
+fields:
+  SD:
+    location_rv32: 31
+    location_rv64: 63
+    long_name: State Dirty
+    description: |
+      Read-only bit that summarizes whether either the FS, XS, or VS
+      fields signal the presence of some dirty state.
+    definedBy:
+      extension:
+        anyOf:
+          - name: F
+          - name: Zvl32b
+          # NOTE: if you implement a custom extension overlay that writes to XS, then you need to add your extension here in the overlay as well
+    type(): |
+      # this is read-only if FS and VS are both read-only
+      # otherwise, it is read-only with hardware update
+
+      if (implemented?(ExtensionName::F) && (HW_MSTATUS_FS_DIRTY_UPDATE != "never")) {
+        return CsrFieldType::ROH;
+      } else if (implemented?(ExtensionName::V) && (HW_MSTATUS_VS_DIRTY_UPDATE != "never")) {
+        return CsrFieldType::ROH;
+      } else {
+        return CsrFieldType::RO;
+      }
+    reset_value(): |
+      # the reset value is known if both FS and VS are legal
+      # make this a function call so that it can be displayed succinctly in docs
+
+      if (mstatus_sd_has_known_reset()) {
+        return mstatus_sd_reset_value();
+      } else {
+        return UNDEFINED_LEGAL;
+      }
+
+  MDT:
+    location: 42
+    long_name: Machine Disable Trap
+    description: |
+      Written to 1 when entering M-mode from an exception/interrupt.
+      When returning via an MRET instruction, the bit is written to 0.
+      On reset in set to 1, and software should write it to 0 when boot sequence is done.
+      When mstatus.MDT=1, direct write by CSR instruction cannot set mstatus.MIE to 1, if not written together.
+    definedBy:
+      allOf:
+        - xlen: 64
+        - extension:
+            name: Smdbltrp
+    type: RW-H
+    reset_value: UNDEFINED_LEGAL
+  MPELP:
+    location: 41
+    long_name: M-mode Previous Expected Landing Pad state
+    description: |
+      Holds the previous Expected Landing Pad (`ELP`) state when entering
+      M-mode from a trap, and is restored to `ELP` on `MRET`.
+
+      Defined by the Zicfilp extension.
+
+      Encoded as:
+
+      * 0 - `NO_LP_EXPECTED` - no landing pad instruction expected.
+      * 1 - `LP_EXPECTED` - a landing pad instruction is expected.
+    type: RW-H
+    reset_value: UNDEFINED_LEGAL
+    definedBy:
+      allOf:
+        - xlen: 64
+        - extension:
+            name: Zicfilp
+  MPV:
+    location: 39
+    long_name: Machine Previous Virtualization mode
+    description: |
+      Written with the prior virtualization mode when entering M-mode from an exception/interrupt.
+      When returning via an MRET instruction, the virtualization mode becomes the value of MPV unless MPP=3, in which case the virtualization mode is always 0.
+      Can also be written by software.
+    type: RW-H
+    reset_value: UNDEFINED_LEGAL
+    definedBy:
+      allOf:
+        - xlen: 64
+        - extension:
+            name: H
+  GVA:
+    location: 38
+    long_name: Guest Virtual Address
+    description: |
+      When a trap is taken and a guest virtual address is written into mtval, GVA is set.
+      When a trap is taken and a guest virtual address is written into mtval, GVA is cleared.
+    type: RW-H
+    reset_value: 0
+    definedBy:
+      allOf:
+        - xlen: 64
+        - extension:
+            name: H
+  MBE:
+    location: 37
+    definedBy:
+      xlen: 64
+    long_name: M-mode Big Endian
+    description: |
+      Controls the endianness of data M-mode (0 = little, 1 = big).
+      Instructions are always little endian, regardless of the data setting.
+
+      [when,"M_MODE_ENDIANNESS == little"]
+      Since the CPU does not support big endian, this is hardwired to 0.
+
+      [when,"M_MODE_ENDIANNESS == big"]
+      Since the CPU does not support little endian, this is hardwired to 1.
+    type(): |
+      return (M_MODE_ENDIANNESS == "dynamic") ? CsrFieldType::RW : CsrFieldType::RO;
+
+    # if endianness is mutable, MBE comes out of reset in little-endian mode
+    reset_value(): |
+      return (M_MODE_ENDIANNESS == "big") ? 1 : 0;
+
+  SBE:
+    location: 36
+    definedBy:
+      allOf:
+        - xlen: 64
+        - extension:
+            name: S
+    long_name: S-mode Big Endian
+    description: |
+      Controls the endianness of S-mode (0 = little, 1 = big).
+      Instructions are always little endian, regardless of the data setting.
+
+      [when,"S_MODE_ENDIANNESS == little"]
+      Since the CPU does not support big endian, this is hardwired to 0.
+
+      [when,"S_MODE_ENDIANNESS == big"]
+      Since the CPU does not support little endian, this is hardwired to 1.
+    type(): |
+      return (S_MODE_ENDIANNESS == "dynamic") ? CsrFieldType::RW : CsrFieldType::RO;
+
+    reset_value(): |
+      if (S_MODE_ENDIANNESS == "little") {
+        return 0;
+      } else if (S_MODE_ENDIANNESS == "big") {
+        return 1;
+      } else {
+        return 0; # little endian
+      }
+  SXL:
+    location: 35-34
+    definedBy:
+      allOf:
+        - xlen: 64
+        - extension:
+            name: S
+    long_name: S-mode XLEN
+    description: |
+      Sets the effective XLEN for S-mode (0 = 32-bit, 1 = 64-bit, 2 = 128-bit [reserved]).
+
+      [when,"SXLEN==32"]
+      Since the CPU only supports SXLEN==32, this is hardwired to 1.
+
+      [when,"SXLEN==64"]
+      Since the CPU only supports SXLEN==64, this is hardwired to 2.
+
+      [when,"SXLEN=3264"]
+      --
+      It is not valid to have SXLEN less than UXLEN.
+
+      It is UNDEFINED_LEGAL what will happen if a software sets `mstatus.SXL` to be greater than `mstatus.UXL`.
+
+      It is UNDEFINED_LEGAL to set the MSB of SXL.
+      --
+    type(): |
+      return (implemented?(ExtensionName::S) && $array_size(SXLEN) > 1) ? CsrFieldType::RW : CsrFieldType::RO;
+
+    sw_write(csr_value): |
+      if (csr_value.SXL < csr_value.UXL) {
+        return CSR[mstatus].SXL;
+      } else if (csr_value.SXL < 1 || csr_value.SXL > 2) {
+        # SXL != [1, 2] is not defined (3 reserved for RV128, but that isn't ratified)
+        return CSR[mstatus].SXL;
+      } else {
+        return csr_value.SXL;
+      }
+
+    reset_value(): |
+      if ($array_size(SXLEN) == 1 && $array_includes?(SXLEN, 32)) {
+        return 1;
+      } else if ($array_size(SXLEN) == 1 && $array_includes?(SXLEN, 64)) {
+        return 2;
+      } else {
+        return 2;
+      }
+
+  UXL:
+    location: 33-32
+    definedBy:
+      allOf:
+        - xlen: 64
+        - extension:
+            name: U
+    long_name: U-mode XLEN
+    description: |
+      U-mode XLEN.
+
+      Sets the effective XLEN for U-mode (1 = 32-bit, 2 = 64-bit, 3 = 128-bit [reserved]).
+
+      [when,"UXLEN == 32"]
+      Since the CPU only supports UXLEN==32, this is hardwired to 1.
+
+      [when,"UXLEN == 64"]
+      Since the CPU only supports UXLEN==64, this is hardwired to 2.
+
+
+      [when,"UXLEN == 3264"]
+      --
+      It is not valid to have SXLEN less than UXLEN.
+
+      It is UNDEFINED_LEGAL what will happen if a software sets `mstatus.SXL` to be greater than `mstatus.UXL`.
+
+      It is UNDEFINED_LEGAL to set the MSB of UXL.
+      --
+    type(): |
+      return ($array_size(UXLEN) > 1) ? CsrFieldType::RW : CsrFieldType::RO;
+
+    sw_write(csr_value): |
+      if (csr_value.SXL < csr_value.UXL) {
+        return CSR[mstatus].UXL;
+      } else if (csr_value.UXL < 1 || csr_value.UXL > 2) {
+        # UXL != [1, 2] is not defined (3 reserved for RV128, but that isn't ratified)
+        return CSR[mstatus].UXL;
+      } else {
+        return csr_value.UXL;
+      }
+
+    reset_value(): |
+      if ($array_size(UXLEN) == 1 && UXLEN[0] == 32) {
+        return 1;
+      } else if ($array_size(UXLEN) == 1 && UXLEN[0] == 64) {
+        return 2;
+      } else {
+        return 2;
+      }
+
+  SPELP:
+    location: 23
+    long_name: S-mode Previous Expected Landing Pad state
+    description: |
+      Holds the previous Expected Landing Pad (`ELP`) state when entering
+      (H)S-mode from a trap, and is restored to `ELP` on `SRET`.
+
+      Defined by the Zicfilp extension.
+
+      Encoded as:
+
+      * 0 - `NO_LP_EXPECTED` - no landing pad instruction expected.
+      * 1 - `LP_EXPECTED` - a landing pad instruction is expected.
+    type: RW-H
+    reset_value: UNDEFINED_LEGAL
+    definedBy:
+      extension:
+        name: Zicfilp
+  TSR:
+    location: 22
+    long_name: Trap SRET
+    description: |
+      When 1, attempts to execute the `sret` instruction while executing in HS/S-mode
+      will raise an Illegal Instruction exception.
+
+      [when,"ext?(:H)"]
+      Does not affect the behavior of `sret` in VS_mode (see `hstatus.VTSR`).
+    type: RW
+    definedBy:
+      extension:
+        name: S
+    reset_value: UNDEFINED_LEGAL
+  TW:
+    location: 21
+    long_name: Timeout Wait
+    description: |
+      When 1, the WFI instruction will raise an Illegal Instruction trap after an
+      implementaion-defined wait period when executed in a mode other than M-mode.
+
+      When 0, the `wfi` instruction is permitted to wait forever in (H)S-mode but must
+      trap after an implementation-defined wait period in U-mode.
+    type: RW
+    definedBy:
+      extension:
+        name: S
+    reset_value: UNDEFINED_LEGAL
+  TVM:
+    location: 20
+    long_name: Trap Virtual Memory
+    description: |
+      When 1, an `Illegal Instruction` trap occurs when
+
+      * writing the `satp` CSR, executing an `sfence.vma`, or executing an `sinval.vma` while in (H)S-mode (but not VS-mode)
+      * writing the `hgtap` CSR, executing an `hfence.gvma`, or executing an `hinval.gvma` while in HS-mode
+
+      Notably, `mstatus.TVM` does *not* cause
+
+      *`hfence.vvma`, `sfence.w.inval`, or `sfence.inval.ir` to trap.
+      * Any additional traps in VS-mode (controlled via `hstatus.VTVM` instead).
+
+    type(): |
+      if (CSR[misa].S == 1'b0) {
+        return CsrFieldType::RO;
+      } else {
+        return CsrFieldType::RW;
+      }
+    definedBy:
+      extension:
+        name: S
+    reset_value(): |
+      if (CSR[misa].S == 1'b0) {
+        return 0;
+      } else if (MSTATUS_TVM_IMPLEMENTED) {
+        return UNDEFINED_LEGAL;
+      } else {
+        return 0;
+      }
+    sw_write(csr_value): |
+      if (CSR[misa].S == 1'b0) {
+        return 0;
+      } else if (MSTATUS_TVM_IMPLEMENTED) {
+        return csr_value.TVM;
+      } else {
+        return 0;
+      }
+  MXR:
+    location: 19
+    long_name: Make eXecutable Readable
+    description: |
+      When 1, loads from pages marked readable *or executable* are allowed.
+      When 0, loads from pages marked executable raise a Page Fault exception.
+    definedBy:
+      extension:
+        name: S
+    type: RW
+    reset_value: UNDEFINED_LEGAL
+  SUM:
+    location: 18
+    long_name: permit Supervisor Memory Access
+    description: |
+      When 0, an S-mode read or an M-mode read with mstatus.MPRV=1 and mstatus.MPP=01
+      to a 'U' (user) page will cause an ILLEGAL INSTRUCTION exception.
+    definedBy:
+      extension:
+        name: S
+    type(): |
+      # only writable if there is some translation supported
+      if (has_virt_mem?()) {
+        return CsrFieldType::RW;
+      } else {
+        return CsrFieldType::RO;
+      }
+    reset_value(): |
+      if (has_virt_mem?()) {
+        return UNDEFINED_LEGAL;
+      } else {
+        # read-only zero when there is no virtual memory
+        return 0;
+      }
+  MPRV:
+    location: 17
+    long_name: Modify PRiVilege
+    description: |
+      When 1, loads and stores behave as if the current virtualization mode:privilege level was
+      `mstatus.MPV`:`mstatus.MPP`.
+
+      `mstatus.MPRV` is cleared on any exception return (`mret` or `sret` instruction, regardless of the trap handler privilege mode).
+    definedBy:
+      extension:
+        name: U
+    type(): |
+      return (CSR[misa].U == 1'b1) ? CsrFieldType::RWH : CsrFieldType::RO;
+    reset_value: 0
+  XS:
+    location: 16-15
+    long_name: custom (X) extension context Status
+    description: |
+      Summarizes the current state of any custom extension state.
+      Either 0 - Off, 1 - Initial, 2 - Clean, 3 - Dirty.
+      Since there are no custom extensions in the base spec, this field is read-only 0.
+    type: RO
+    reset_value: 0
+  FS:
+    location: 14-13
+    long_name: Floating point context Status
+    description: |
+      When 0, floating point instructions (from F and D extensions) are disabled,
+      and cause `ILLEGAL INSTRUCTION` exceptions.
+      When a floating point register, or the fCSR register is written, FS obtains the value 3.
+      Values 1 and 2 are valid write values for software, but are not interpreted by hardware
+      other than to possibly enable a previously-disabled floating point unit.
+    type(): |
+      if (implemented?(ExtensionName::F) && (!MISA_CSR_IMPLEMENTED || CSR[misa].F == 1'b1)) {
+        # "If the F extension is implemented, the FS field shall not be read-only zero."
+        return CsrFieldType::RWH;
+      } else if (MISA_CSR_IMPLEMENTED && (CSR[misa].S == 1'b0) && (CSR[misa].F == 1'b0)) {
+        # "If neither the F extension nor S-mode is implemented, then FS is read-only zero"
+        return CsrFieldType::RO;
+      } else {
+        # " If S-mode is implemented but the F extension is not, FS may optionally be read-only zero."
+        # there will be no hardware update in this case because we know the F extension isn't implemented
+        return $array_size(MSTATUS_FS_LEGAL_VALUES) == 1 ? CsrFieldType::RO : CsrFieldType::RW;
+      }
+    definedBy:
+      extension:
+        anyOf:
+          - name: F
+          - name: S
+    reset_value(): |
+      return $array_size(MSTATUS_FS_LEGAL_VALUES) == 1 ? MSTATUS_FS_LEGAL_VALUES[0] : UNDEFINED_LEGAL;
+    sw_write(csr_value): |
+      if (MISA_CSR_IMPLEMENTED && (CSR[misa].S == 1'b0) && (CSR[misa].F == 1'b0)) {
+        # must be read-only-0
+        return 0;
+      }
+      return $array_includes?(MSTATUS_FS_LEGAL_VALUES, csr_value.FS) ? csr_value.FS : UNDEFINED_LEGAL_DETERMINISTIC;
+  MPP:
+    location: 12-11
+    long_name: M-mode Previous Privilege
+    description: |
+      Written by hardware in two cases:
+
+      * Written with the prior nominal privilege level when entering M-mode from an exception/interrupt.
+      * Written with 0 when executing an `mret` instruction to return from an exception in M-mode.
+
+      Can also be written by software without immediate side-effect.
+
+      Affects execution in two cases:
+
+      * On a return from an exception from M-mode, the machine will
+      enter the privilege level stored in MPP before clearing the field.
+      * When `mstatus.MPRV` is set, loads and stores behave as if the current privilege level were MPP.
+    type: RW-H
+    reset_value(): |
+      return 2'b11;
+    sw_write(csr_value): |
+      if (csr_value.MPP == 2'b01 && !implemented?(ExtensionName::S)) {
+        return UNDEFINED_LEGAL_DETERMINISTIC;
+      } else if (csr_value.MPP == 2'b00 && !implemented?(ExtensionName::U)) {
+        return UNDEFINED_LEGAL_DETERMINISTIC;
+      } else if (csr_value.MPP == 2'b10) {
+        # never a valid value
+        return UNDEFINED_LEGAL_DETERMINISTIC;
+      } else {
+        return csr_value.MPP;
+      }
+  VS:
+    location: 10-9
+    long_name: Vector context Status
+    description: |
+      When 0, vector instructions (from the V extension) are disabled, and cause ILLEGAL INSTRUCTION exceptions.
+      When a vector register or vector CSR is written, VS obtains the value 3.
+      Values 1 and 2 are valid write values for software, but are not interpreted by hardware
+      other than to possibly enable a previously-disabled vector unit.
+    definedBy:
+      extension:
+        anyOf:
+          - name: Zvl32b
+          - name: S
+    type(): |
+      if (implemented?(ExtensionName::V) && (!MISA_CSR_IMPLEMENTED || CSR[misa].V == 1'b1)) {
+        # "If the V extension is implemented, the VS field shall not be read-only zero."
+        return CsrFieldType::RWH;
+      } else if (MISA_CSR_IMPLEMENTED && (CSR[misa].S == 1'b0) && (CSR[misa].V == 1'b0)) {
+        # "If neither the V extension nor S-mode is implemented, then VS is read-only zero"
+        return CsrFieldType::RO;
+      } else {
+        # " If S-mode is implemented but the V extension is not, VS may optionally be read-only zero."
+        # there will be no hardware update in this case because we know the V extension isn't implemented
+        return $array_size(MSTATUS_VS_LEGAL_VALUES) == 1 ? CsrFieldType::RO : CsrFieldType::RW;
+      }
+    reset_value(): |
+      if (CSR[misa].V == 1'b1){
+        return UNDEFINED_LEGAL;
+      } else if ((CSR[misa].S == 1'b0) && (CSR[misa].V == 1'b0)) {
+        # must be read-only-0
+        return 0;
+      } else {
+        # there will be no hardware update in this case because we know the V extension isn't implemented
+        if ($array_size(MSTATUS_VS_LEGAL_VALUES) == 0) {
+          return 0;
+        } else if ($array_size(MSTATUS_VS_LEGAL_VALUES) == 1) {
+          return MSTATUS_VS_LEGAL_VALUES[0];
+        } else {
+          return UNDEFINED_LEGAL;
+        }
+      }
+    sw_write(csr_value): |
+      if (implemented?(ExtensionName::V) && CSR[misa].V == 1'b1){
+        return $array_includes?(MSTATUS_VS_LEGAL_VALUES, csr_value.VS) ? csr_value.VS : UNDEFINED_LEGAL_DETERMINISTIC;
+      } else if (!implemented?(ExtensionName::S) && !implemented?(ExtensionName::V)) {
+        # must be read-only-0
+        return 0;
+      } else {
+        # there will be no hardware update in this case because we know the V extension isn't implemented
+        return $array_includes?(MSTATUS_VS_LEGAL_VALUES, csr_value.VS) ? csr_value.VS : UNDEFINED_LEGAL_DETERMINISTIC;
+      }
+  SPP:
+    location: 8
+    long_name: S-mode Previous Privilege
+    description: |
+      Written by hardware in two cases:
+
+      * Written with the prior nominal privilege level when entering (H)S-mode from an exception/interrupt.
+      * Written with 0 when executing an `sret` instruction to return from an exception in (H)S-mode or (unlikely) M-mode.
+
+      Can also be written by software without immediate side-effect.
+
+      Affects execution in one case:
+
+      * On a return from an exception using the `sret` instruction in (H)S-mode or (unlikely) M-mode,
+        the machine will enter the privilege level stored in SPP before clearing the field.
+
+      Notably, `mstatus.SPP` does not affect exception return in VS-mode (see `vsstatus.SPP`).
+
+    type: RW-H
+    definedBy:
+      extension:
+        name: S
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      if (csr_value.SPP == 2'b10) {
+        return UNDEFINED_LEGAL_DETERMINISTIC;
+      } else {
+        return csr_value.SPP;
+      }
+  MPIE:
+    location: 7
+    long_name: M-mode Previous Interrupt Enable
+    description: |
+      Written by hardware in two cases:
+
+      * Written with prior value of `mstatus.MIE` when entering M-mode from an exception/interrupt.
+      * Written with the value 1 when returning from an exception in M-mode (via the `mret` instruction).
+
+      Can also be written by software without immediate side effect.
+
+      Other than serving as a record of nested traps as described above, `mstatus.MPIE` does not affect execution.
+
+    type: RW-H
+    reset_value: UNDEFINED_LEGAL
+  UBE:
+    location: 6
+    definedBy:
+      extension:
+        name: U
+    long_name: U-mode Big Endian
+    description: |
+      Controls the endianness of U-mode (0 = little, 1 = big).
+      Instructions are always little endian, regardless of the data setting.
+
+      [when,"U_MODE_ENDIANNESS == 'little'"]
+      Since the CPU does not support big endian in U-mode, this is hardwired to 0.
+
+      [when,"U_MODE_ENDIANNESS == 'big'"]
+      Since the CPU does not support little endian in U-mode, this is hardwired to 1.
+    type(): |
+      return (U_MODE_ENDIANNESS == "dynamic") ? CsrFieldType::RW : CsrFieldType::RO;
+
+    reset_value(): |
+      if (U_MODE_ENDIANNESS == "little") {
+        return 0;
+      } else if (U_MODE_ENDIANNESS == "big") {
+        return 1;
+      } else {
+        return UNDEFINED_LEGAL;
+      }
+
+  SPIE:
+    location: 5
+    long_name: S-mode Previous Interrupt Enable
+    description: |
+      Written by hardware in two cases:
+
+      * Written with prior value of `mstatus.SIE` when entering (H)S-mode from an exception/interrupt.
+      * Written with the value 1 when returning from an exception via the `sret` instruction in (H)S-mode or (unlikely) M-mode.
+
+      Can also be written by software without immediate side effect.
+
+      Other than serving as a record of nested traps as described above, `mstatus.SPIE` does not affect execution.
+    type(): |
+      return (CSR[misa].S == 1'b1) ? CsrFieldType::RWH : CsrFieldType::RO;
+    definedBy:
+      extension:
+        name: S
+    reset_value(): |
+      return (CSR[misa].S == 1'b1) ? UNDEFINED_LEGAL : 0;
+  MIE:
+    location: 3
+    long_name: M-mode Interrupt Enable
+    description: |
+      Written by hardware in two cases:
+
+      * Written with the value 0 when entering M-mode from an exception/interrupt.
+      * Written with the prior value of `mstatus.MPIE` when returning from an exception in M-mode (via `mret`).
+
+      Affects execution by:
+
+      * When 0, all interrupts are disabled when the current privilege level is M.
+      * When 1, interrupts that are not otherwise disabled with a field in `mie` are enabled.
+
+    type: RW-H
+    reset_value: 0
+  SIE:
+    location: 1
+    long_name: S-mode Interrupt Enable
+    description: |
+      Written by hardware in two cases:
+
+      * Written with the value 0 when entering (H)S-mode from an exception/interrupt.
+      * Written with the prior value of `mstatus.SPIE` when returning from an exception via `sret` in (H)S-mode or (unlikely) M-mode.
+
+      Affects execution by:
+
+      * When 0, all (H)S-mode interrupts are disabled when the current privilege level is (H)S (M-mode interrupts are still enabled).
+      * When 1, (H)S-mode interrupts that are not otherwise disabled with a field in `sie` are enabled.
+
+    type(): |
+      return (CSR[misa].S == 1'b1) ? CsrFieldType::RWH : CsrFieldType::RO;
+    definedBy:
+      extension:
+        name: S
+    reset_value(): |
+      return (CSR[misa].S == 1'b1) ? UNDEFINED_LEGAL : 0;

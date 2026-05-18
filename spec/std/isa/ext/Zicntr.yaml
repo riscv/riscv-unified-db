@@ -1,0 +1,20 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Zicntr
+long_name: Base Counters and Timers
+description: |
+  The CYCLE, TIME, and INSTRET counters, which have dedicated functions
+  (cycle count, real-time clock, and instructions retired, respectively).
+type: unprivileged
+versions:
+  - version: "2.0.0"
+    state: ratified
+    ratification_date: 2019-12
+requirements:
+  extension:
+    name: Zicsr

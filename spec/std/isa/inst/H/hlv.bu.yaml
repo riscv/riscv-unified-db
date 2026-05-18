@@ -1,0 +1,30 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: inst_schema.json#
+kind: instruction
+name: hlv.bu
+long_name: Hypervisor load byte unsigned
+description: |
+  Load 8 bits of data into register `xd` from guest physical memory at the
+  address in `xs1`, as though V=1. Zero-extend the result to XLEN bits.
+definedBy:
+  extension:
+    name: H
+assembly: xd, xs1
+encoding:
+  match: 011000000001-----100-----1110011
+  variables:
+    - name: xs1
+      location: 19-15
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: false
+operation(): |

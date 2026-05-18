@@ -1,0 +1,111 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+
+# WARNING: This file is auto-generated from spec/std/isa/csr/Zihpm/mhpmcounterN.layout
+
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: mhpmcounter8
+long_name: Machine Hardware Performance Counter 8
+address: 0xB08
+writable: true
+priv_mode: M
+length: 64
+definedBy:
+  allOf:
+    - extension:
+        name: Sm
+    - param:
+        name: HPM_COUNTER_EN
+        index: 8
+        equal: true
+description: |
+  Programmable hardware performance counter.
+
+  The `hpmcounter8` CSR is a read-only shadow of this CSR. Access to `hpmcounter8`
+  is controlled with `mcounteren.HPM8`
+  <%- if ext?(:S) -%>
+  , `scounteren.HPM8`
+  <%- if ext?(:H) -%>
+  , and `hcounteren.HPM8`
+  <%- end -%>
+  <%- end -%>
+  as follows:
+
+  <%- if ext?(:H) -%>
+  [%autowidth,cols="1,1,1,1,1,1,1",separator="!"]
+  !===
+  .2+h![.rotate]#`mcounteren.HPM8`# .2+h! [.rotate]#`scounteren.HPM8`# .2+h! [.rotate]#`hcounteren.HPM8`#
+  4+^.>h! `hpmcounter8` behavior
+  .^h! S-mode .^h! U-mode .^h! VS-mode .^h! VU-mode
+
+  ! 0 ! - ! - ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction` ! `IllegalInstruction`
+  ! 1 ! 0 ! 0 ! read-only ! `IllegalInstruction` ! `VirtualInstruction` ! `VirtualInstruction`
+  ! 1 ! 1 ! 0 ! read-only ! read-only ! `VirtualInstruction` ! `VirtualInstruction`
+  ! 1 ! 0 ! 1 ! read-only ! `IllegalInstruction` ! read-only ! `VirtualInstruction`
+  ! 1 ! 1 ! 1 ! read-only ! read-only ! read-only ! read-only
+  !===
+  <%- elsif ext?(:S) -%>
+  [%autowidth,cols="1,1,1,1",separator="!"]
+  !===
+  .2+h![.rotate]#`mcounteren.HPM8`# .2+h! [.rotate]#`scounteren.HPM8`#
+  2+^.>h! `hpmcounter8` behavior
+  .^h! S-mode .^h! U-mode
+
+  ! 0 ! - ! `IllegalInstruction` ! `IllegalInstruction`
+  ! 1 ! 0 ! read-only ! `IllegalInstruction`
+  ! 1 ! 1 ! read-only ! read-only
+  !===
+  <%- else -%>
+  [%autowidth,cols="1,1",separator="!"]
+  !===
+  .2+h![.rotate]#`mcounteren.HPM8`#
+  ^.>h! `hpmcounter8` behavior
+  .^h! U-mode
+
+  ! 0 ! `IllegalInstruction`
+  ! 1 ! read-only
+  !===
+  <%- end -%>
+fields:
+  COUNT:
+    location: 63-0
+    description: |
+      [when="HPM_COUNTER_EN[8] == true"]
+      --
+      Performance counter for event selected in `mhpmevent8.EVENT`.
+
+      Increments every time event occurs unless:
+
+        * `mcountinhibit.HPM8` <%- if ext?(:Smcdeleg) -%>or its alias `scountinhibit.HPM8`<%- end -%> is set
+        <%- if ext?(:Sscofpmf) -%>
+        * `mhpmevent8.MINH` is set and the current privilege level is M
+        <%- if ext?(:S) -%>
+        * `mhpmevent8.SINH` <%- if ext?(:Ssccfg) -%>or its alias `hpmevent8..SINH`<%- end -%> is set and the current privilege level is (H)S
+        <%- end -%>
+        <%- if ext?(:U) -%>
+        * `mhpmevent8.UINH` <%- if ext?(:Ssccfg) -%>or its alias `hpmevent8.SINH`<%- end -%> is set and the current privilege level is U
+        <%- end -%>
+        <%- if ext?(:H) -%>
+        * `mhpmevent8.VSINH` <%- if ext?(:Ssccfg) -%>or its alias `hpmevent8.SINH`<%- end -%> is set and the current privilege level is VS
+        * `mhpmevent8.VUINH` <%- if ext?(:Ssccfg) -%>or its alias `hpmevent8.SINH`<%- end -%> is set and the current privilege level is VU
+        <%- end -%>
+        <%- end -%>
+      --
+
+      [when="HPM_COUNTER_EN[8] == false"]
+      Unimplemented performance counter. Must be read-only 0 (access does not cause trap).
+
+    type(): |
+      return (HPM_COUNTER_EN[8]) ? CsrFieldType::RWH : CsrFieldType::RO;
+    reset_value(): |
+      return (HPM_COUNTER_EN[8]) ? UNDEFINED_LEGAL : 0;
+sw_read(): |
+  if (HPM_COUNTER_EN[8]) {
+    return read_hpm_counter(8);
+  } else {
+    return 0;
+  }

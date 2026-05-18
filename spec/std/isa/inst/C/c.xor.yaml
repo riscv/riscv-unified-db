@@ -1,0 +1,33 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: c.xor
+long_name: Exclusive Or
+description: |
+  Exclusive or xd with xs2, and store the result in xd
+  The xd and xs2 register indexes should be used as xd+8 and xs2+8 (registers x8-x15).
+  C.XOR expands into `xor xd, xd, xs2`.
+definedBy:
+  extension:
+    name: Zca
+assembly: xd, xs2
+encoding:
+  match: 100011---01---01
+  variables:
+    - name: xs2
+      location: 4-2
+    - name: xd
+      location: 9-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+operation(): |
+  XReg t0 = X[creg2reg(xd)];
+  XReg t1 = X[creg2reg(xs2)];
+  X[creg2reg(xd)] = t0 ^ t1;

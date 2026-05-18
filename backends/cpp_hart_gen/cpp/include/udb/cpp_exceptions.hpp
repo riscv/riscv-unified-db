@@ -16,6 +16,12 @@ namespace udb {
     UndefinedValueError(const std::string& why) : std::runtime_error(why) {}
   };
 
+  // thrown when there is an attempt to get the indirect address of a direct CSR, or vice versa
+  class CsrAddressTypeError : public std::runtime_error {
+   public:
+    CsrAddressTypeError(const std::string& why) : std::runtime_error(why) {}
+  };
+
   // thrown when the source or destination registers of an instruction
   // is dependent on the value of a register and cannot be determined statically
   class ComplexRegDetermination : public std::runtime_error {
@@ -39,6 +45,10 @@ namespace udb {
 
   // object that is thrown when an instruction (or fetch) encounters an
   // exception
+  class AbortPreExecute : public std::exception {
+   public:
+    const char* what() const noexcept override { return "Instruction Abort with maintained pc"; }
+  };
   class AbortInstruction : public std::exception {
    public:
     const char* what() const noexcept override { return "Instruction Abort"; }

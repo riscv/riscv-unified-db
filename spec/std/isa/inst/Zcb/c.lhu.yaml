@@ -1,0 +1,40 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: c.lhu
+long_name: Load unsigned halfword, 16-bit encoding
+description: |
+  Loads a 16-bit value from memory into register xd.
+  It computes an effective address by adding the zero-extended offset, to the base address in register xs1.
+  It expands to `lhu` `xd, offset(xs1)`.
+definedBy:
+  extension:
+    name: Zcb
+assembly: xd, imm(xs1)
+encoding:
+  match: 100001---0----00
+  variables:
+    - name: imm
+      location: 5
+      left_shift: 1
+    - name: xd
+      location: 4-2
+    - name: xs1
+      location: 9-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+operation(): |
+  if (implemented?(ExtensionName::C) && (CSR[misa].C == 1'b0)) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  XReg virtual_address = X[creg2reg(xs1)] + imm;
+
+  X[creg2reg(xd)] = read_memory(16, virtual_address, $encoding);

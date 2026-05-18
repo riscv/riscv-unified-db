@@ -1,0 +1,105 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/csr_schema.json
+
+$schema: "csr_schema.json#"
+kind: csr
+name: mie
+long_name: Machine Interrupt Enable
+address: 0x304
+writable: true
+priv_mode: M
+length: MXLEN
+definedBy:
+  extension:
+    name: Sm
+description: "mip.yaml#/description"
+fields:
+  SSIE:
+    location: 1
+    description: |
+      Enables Supervisor Software Interrupts.
+    type: RW
+    definedBy:
+      extension:
+        name: S
+    reset_value: 0
+  VSSIE:
+    location: 2
+    description: |
+      Enables Virtual Supervisor Software Interrupts.
+    type: RW
+    definedBy:
+      extension:
+        name: H
+    reset_value: 0
+  MSIE:
+    location: 3
+    description: Enables Machine Software Interrupts.
+    type: RW
+    reset_value: 0
+  STIE:
+    location: 5
+    description: |
+      Enables Supervisor Timer Interrupts.
+    type: RW
+    definedBy:
+      extension:
+        name: S
+    reset_value: 0
+  VSTIE:
+    location: 6
+    description: |
+      Enables Virtual Supervisor Timer Interrupts.
+    type: RW
+    definedBy:
+      extension:
+        name: H
+    reset_value: 0
+  MTIE:
+    location: 7
+    description: Enables Machine Timer Interrupts.
+    type: RW
+    reset_value: 0
+  SEIE:
+    location: 9
+    description: |
+      Enables Supervisor External Interrupts.
+    type: RW
+    definedBy:
+      extension:
+        name: S
+    reset_value: 0
+  VSEIE:
+    location: 10
+    description: |
+      Enables Virtual Supervisor External Interrupts.
+    type: RW
+    definedBy:
+      extension:
+        name: H
+    reset_value: 0
+  MEIE:
+    location: 11
+    description: Enables Machine External Interrupts.
+    type: RW
+    reset_value: 0
+  SGEIE:
+    location: 12
+    description: |
+      Enables Supervisor Guest External Interrupts
+    type: RW
+    definedBy:
+      extension:
+        name: H
+    reset_value: 0
+  LCOFIE:
+    location: 13
+    description: |
+      Enables Local Counter Overflow Interrupts.
+    type: RW
+    definedBy:
+      extension:
+        name: Sscofpmf
+    reset_value: 0

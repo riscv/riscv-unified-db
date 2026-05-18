@@ -1,0 +1,29 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Svpbmt
+long_name: Page-based memory types
+description: |
+  This extension mandates that the `satp` mode Bare must
+  be supported.
+type: privileged
+versions:
+  - version: "1.0.0"
+    state: ratified
+    ratification_date: 2021-12
+requirements:
+  extension:
+    allOf:
+      # Svpbmt was defined with Sm 1.12
+      # it needs at least Sm 1.12 for menvcfg defintion
+      - name: S
+        version: ">= 1.12"
+      # Svpbmt is not defined for Sv32
+      - anyOf:
+          - name: Sv39
+          - name: Sv48
+          - name: Sv57

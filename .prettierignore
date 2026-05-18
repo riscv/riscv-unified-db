@@ -1,6 +1,5 @@
 gen
 .home
-.singularity
 node_modules
 .asciidoctor
 .bundle

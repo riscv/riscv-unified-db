@@ -1,0 +1,28 @@
+{
+  "name": "udb-extension-pack-vscode",
+  "displayName": "RISC-V UnifiedDB Extension Pack",
+  "description": "Extensions for RISC-V UnifiedDB in Visual Studio Code.",
+  "publisher": "HowerLimited",
+  "readme": "README.md",
+  "author": {
+    "name": "Derek Hower"
+  },
+  "version": "0.2.0",
+  "engines": {
+    "vscode": "^1.48.0"
+  },
+  "categories": [
+    "Extension Packs"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/riscv/riscv-unified-db",
+    "directory": "pack"
+  },
+  "extensionPack": [
+    "HowerLimited.cpperb-vscode",
+    "HowerLimited.adocerb-vscode",
+    "HowerLimited.idl-vscode",
+    "HowerLimited.yamlidl-vscode"
+  ]
+}

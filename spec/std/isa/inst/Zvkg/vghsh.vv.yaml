@@ -1,0 +1,31 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: vghsh.vv
+long_name: Vector Galois field hash
+description: |
+  Performs a Galois field hash operation on vector register vs2 using vector register vs1 as the hash polynomial, storing results in vector register vd according to mask vm. This instruction is used in cryptographic hash functions and error detection algorithms.
+definedBy:
+  extension:
+    name: Zvkg
+assembly: vd, vs2, vs1
+encoding:
+  match: 1011001----------010-----1110111
+  variables:
+    - name: vs2
+      location: 24-20
+    - name: vs1
+      location: 19-15
+    - name: vd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |

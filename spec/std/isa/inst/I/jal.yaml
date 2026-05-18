@@ -1,0 +1,40 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: jal
+long_name: Jump and link
+description: |
+  Jump to a PC-relative offset and store the return
+  address in xd.
+definedBy:
+  extension:
+    name: I
+assembly: xd, imm
+encoding:
+  match: "-------------------------1101111"
+  variables:
+    - name: imm
+      location: 31|19-12|20|30-21
+      left_shift: 1
+      sign_extend: true
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+pseudoinstructions:
+  - when: imm == 0
+    to: j xd
+  - when: xd == x1
+    to: jal imm
+operation(): |
+  XReg return_addr = $pc + 4;
+
+  X[xd] = return_addr;
+  jump_halfword($pc + $signed(imm));

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":automergeAll",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "schedule:nonOfficeHours",
+    ":noUnscheduledUpdates" // Only rebase existing PRs during scheduled runs
+  ],
+  "timezone": "America/Los_Angeles",
+  // Don't update generated files
+  "ignorePaths": [".github/workflows/regress.yml"],
+  "labels": ["dependencies"],
+  // Refresh lockfiles to keep transitive dependencies up to date
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "packageRules": [
+    // Bump container version when updating packages that are installed in the container
+    {
+      "matchFileNames": [
+        ".mise.toml",
+        "Dockerfile",
+        "Gemfile.lock",
+        "Gemfile",
+        "package-lock.json",
+        "package.json",
+        "pyproject.toml",
+        "uv.lock"
+      ],
+      "bumpVersions": [
+        {
+          "name": "Update container version",
+          "filePatterns": ["bin/.container-tag"],
+          "bumpType": "minor",
+          "matchStrings": ["(?<version>[^\\s]+)"]
+        }
+      ]
+    },
+    // Update ruff and pre-commit ruff hook together
+    {
+      "matchPackageNames": ["ruff", "astral-sh/ruff-pre-commit"],
+      "groupName": "ruff"
+    },
+    // Only update LLVM weekly
+    {
+      "matchManagers": ["git-submodules"],
+      "matchDepNames": ["ext/llvm-project"],
+      "schedule": ["on saturday"]
+    }
+  ],
+  // Extend default github-actions updates to include CI template files
+  "github-actions": {
+      "managerFilePatterns": [
+        "tools/test/*-tests.yaml",
+        "tools/test/regress-gh-template.yaml"
+      ]
+  },
+  // Enable relevant experimental managers
+  "git-submodules": {
+    "enabled": true
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "enabled": false
+}

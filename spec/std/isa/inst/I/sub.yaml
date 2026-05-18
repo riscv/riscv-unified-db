@@ -1,0 +1,36 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: sub
+long_name: Subtract
+description: Subtract the value in xs2 from xs1, and store the result in xd
+definedBy:
+  extension:
+    name: I
+assembly: xd, xs1, xs2
+encoding:
+  match: 0100000----------000-----0110011
+  variables:
+    - name: xs2
+      location: 24-20
+    - name: xs1
+      location: 19-15
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+pseudoinstructions:
+  - when: xs1 == 0
+    to: neg xd, xs2
+operation(): |
+  XReg t0 = X[xs1];
+  XReg t1 = X[xs2];
+  X[xd] = t0 - t1;

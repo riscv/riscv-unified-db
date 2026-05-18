@@ -1,0 +1,82 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# Test file for YAML with IDL injection
+# This file demonstrates the syntax highlighting feature
+
+# Regular YAML keys - no special highlighting
+name: "Test Instruction"
+version: 1.0
+
+# Description key - AsciiDoc highlighting
+description: "This is a *bold* description with AsciiDoc markup like `code` and _italic_"
+
+# Description with block scalar - AsciiDoc highlighting
+long_description: |
+  = Instruction Description
+
+  This is a *bold* statement with AsciiDoc formatting.
+
+  * List item 1
+  * List item 2
+
+  You can use `inline code` and other AsciiDoc features.
+
+# Keys ending with () - IDL highlighting should be applied
+operation(): "X[rd] = X[rs1] + X[rs2]"
+encoding(): "0000000 rs2 rs1 000 rd 0110011"
+
+# Keys with arguments - IDL highlighting should be applied
+execute(Bits<5> rd, Bits<5> rs1, Bits<5> rs2): "X[rd] = X[rs1] & X[rs2]"
+
+# Block scalar with literal style (|)
+behavior(): |
+  if (rd != 0) {
+    X[rd] = X[rs1] + X[rs2]
+  }
+  return true
+
+# Block scalar with folded style (>)
+description_long(): >
+  function add(Bits<5> rd, Bits<5> rs1) {
+    return X[rs1] + 1
+  }
+
+# Nested structure
+instruction:
+  name: "ADD"
+  opcode(): "0110011"
+
+  # Nested key with () - should get IDL highlighting
+  implementation(): |
+    if (rd != 0) {
+      Bits<XLEN> result = X[rs1] + X[rs2]
+      X[rd] = result
+    }
+
+  # Another nested example
+  decode(Bits<32> inst): |
+    Bits<5> rd = inst[11:7]
+    Bits<5> rs1 = inst[19:15]
+    Bits<5> rs2 = inst[24:20]
+    return {rd, rs1, rs2}
+
+# Multiple levels of nesting
+processor:
+  core:
+    alu:
+      add_operation(): "X[rd] = X[rs1] + X[rs2]"
+      sub_operation(): "X[rd] = X[rs1] - X[rs2]"
+
+      complex_op(Bits<XLEN> a, Bits<XLEN> b): |
+        Bits<XLEN> temp = a + b
+        if (temp > XLEN'hFFFFFFFF) {
+          return temp & XLEN'hFFFFFFFF
+        }
+        return temp
+
+# Single-quoted strings should also work
+single_quoted(): "X[rd] = X[rs1] << 1"
+
+# Double-quoted strings
+double_quoted(): "X[rd] = X[rs1] >> 1"

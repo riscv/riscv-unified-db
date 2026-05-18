@@ -1,0 +1,71 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: fmax.s
+long_name: Floating-Point Maximum-Number Single-Precision
+description: |
+  The `fmax.s` instruction writes larger of `fs1` and `fs2` to `fd`. For the purposes of this instruction,
+  the value `-0.0` is considered to be less than the value `+0.0`. If both inputs are NaNs, the result is
+  the canonical NaN. If only one operand is a NaN, the result is the non-NaN operand. Signaling NaN inputs
+  set the invalid operation exception flag, even when the result is not NaN.
+
+  [NOTE]
+  ====
+  Note that in version 2.2 of the F extension, the `fmin.s` and `fmax.s` instructions were amended to implement
+  the proposed _IEEE 754-201x_ `minimumNumber` and `maximumNumber` operations, rather than the _IEEE 754-2008_
+  _minNum_ and _maxNum_ operations. These operations differ in their handling of signaling NaNs.
+  ====
+definedBy:
+  extension:
+    name: F
+assembly: fd, fs1, fs2
+encoding:
+  match: 0010100----------001-----1010011
+  variables:
+    - name: fs2
+      location: 24-20
+    - name: fs1
+      location: 19-15
+    - name: fd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |
+  check_f_ok($encoding);
+
+  Bits<32> sp_value_a = F[fs1][31:0];
+  Bits<32> sp_value_b = F[fs2][31:0];
+
+  if (is_sp_nan?(sp_value_a) || is_sp_nan?(sp_value_b)) {
+    if (is_sp_signaling_nan?(sp_value_a) || is_sp_signaling_nan?(sp_value_b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    # If both are NaN, return canonical NaN; otherwise return the non-NaN operand
+    if (is_sp_nan?(sp_value_a) && is_sp_nan?(sp_value_b)) {
+      F[fd] = SP_CANONICAL_NAN;
+    } else if (is_sp_nan?(sp_value_a)) {
+      F[fd] = sp_value_b;
+    } else {
+      F[fd] = sp_value_a;
+    }
+  } else {
+    Boolean sign_a = sp_value_a[31] == 1;
+    Boolean sign_b = sp_value_b[31] == 1;
+    Boolean a_lt_b;
+    if (sign_a != sign_b) {
+      # -0.0 is considered less than +0.0, so it's not a special case
+      a_lt_b = sign_a;
+    } else {
+      a_lt_b = (sp_value_a != sp_value_b) && (sign_a != (sp_value_a < sp_value_b));
+    }
+    F[fd] = a_lt_b ? sp_value_b : sp_value_a;
+  }
+  mark_f_state_dirty();

@@ -149,7 +149,8 @@ namespace udb {
     VersionRequirement() : m_op(OpKind::GTE), m_version(0, 0, 0, false) {}
 
     constexpr VersionRequirement(const std::string_view& req)
-        : m_op(op_from_str(req)) {
+      : m_op(op_from_str(req))
+    {
       set(req);
     }
     constexpr VersionRequirement(const OpKind& op_kind, unsigned major,
@@ -192,6 +193,7 @@ namespace udb {
 
     constexpr bool satisfied_by(const Version& version) const {
       switch (m_op.kind()) {
+        case OpKind::COMPAT:
         case OpKind::GTE:
           return version >= m_version;
         case OpKind::LTE:
@@ -204,6 +206,8 @@ namespace udb {
           return version == m_version;
         case OpKind::NE:
           return version != m_version;
+        default:
+         return false;
       }
       udb_unreachable();
     }

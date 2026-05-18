@@ -1,0 +1,42 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: ror
+long_name: Rotate right (Register)
+description: |
+  Performs a rotate right of xs1 by the amount in least-significant `log2(XLEN)` bits of xs2.
+definedBy:
+  extension:
+    anyOf:
+      - name: Zbb
+      - name: Zbkb
+assembly: xd, xs1, xs2
+format:
+  $inherits:
+    - inst_subtype/R/R-x.yaml#/data
+  opcodes:
+    funct7:
+      display_name: ROR
+      value: 0b0110000
+    funct3:
+      display_name: ROR
+      value: 0b101
+    opcode: { $inherits: inst_opcode/OP.yaml#/data }
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: true
+operation(): |
+  if (implemented?(ExtensionName::B) && (CSR[misa].B == 1'b0)) {
+    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  XReg shamt = (xlen() == 32) ? X[xs2][4:0] : X[xs2][5:0];
+
+  X[xd] = (X[xs1] >> shamt) | (X[xs1] << (xlen() - shamt));

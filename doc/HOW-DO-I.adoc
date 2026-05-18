@@ -1,0 +1,164 @@
+// Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: CC-BY-4.0
+
+= FAQ
+:toc: left
+:toclevels: 3
+:sectnums:
+
+== Development
+
+=== Run regression tests
+
+To run all locally (takes a long time):
+
+[source,bash]
+--
+./bin/regress
+--
+
+To list regression tests:
+
+[source,bash]
+--
+./bin/regress --list
+--
+
+To run a specific regression test:
+
+[source,bash]
+--
+# run the 'regress-sorbet' test
+./bin/regress --name regress-sorbet
+--
+
+To run all regression tests matching a tag:
+
+[source,bash]
+--
+# run all regressions tagged as 'smoke'
+./bin/regress --tag smoke
+--
+
+=== Add a new regression
+
+Basic Regressions::
+--
+Basic (most) regressions that can be run via the command-line within the UDB container are
+stored in `tools/test/regress-tests.yaml`.
+
+To add a basic regression, you must:
+
+1. Add the regression in `tools/test/regress-tests.yaml`
+    * The main steps of the test should go under the `test` key.
+    * If there are any steps needed to set up the test in GitHub CI, add those under the `gh_pre` key.
+    * If there are any steps needed after the test in GitHub CI, add those under the `gh_post` key.
+2. run `./bin/chore gen regress`
+--
+
+See xref:regress-test-infrastructure.adoc[Regression test infrastructure] for more details.
+
+Complex Regressions::
+--
+Complex regressions are not runnable on the command line. They only run in CI via GitHub Actions.
+
+To add a complex regression, you must:
+
+1. add the steps as a job in `tools/test/regress-gh-template.yaml`
+2. run `./bin/chore gen regress`
+--
+
+See xref:regress-test-infrastructure.adoc[Regression test infrastructure] for more details.
+
+
+=== Update Ruby gem dependencies to latest versions
+
+To update Ruby gems to the latest available versions, run:
+
+[source,bash]
+----
+./bin/chore update gems
+----
+
+Then `git add` all updated/new files and make a PR.
+
+=== Add a new Ruby gem dependence
+
+Add the gem in the appropriate gemspace or Gemfile (top, or one of the sub-project gems under tools/ruby-gems).
+
+Install it:
+
+[source,bash]
+----
+./bin/chore install gems # add '-t' option to avoid incrementing the container tag
+----
+
+=== Update the version of z3 used by udb
+
+This requires docker/podman to run since it builds a portable binary using an old distro in a container.
+
+[source,bash]
+----
+./bin/chore update z3
+----
+
+Check in the updates, and make sure to bump the version of the udb gem.
+
+=== Build the container image
+
+To build the development container image:
+
+[source,bash]
+----
+./bin/chore container build
+----
+
+To force rebuild even if the container already exists:
+
+[source,bash]
+----
+./bin/chore container build -f
+----
+
+=== Pull the container image
+
+To pull the container image from the registry:
+
+[source,bash]
+----
+./bin/chore container pull
+----
+
+To force pull even if the container already exists locally:
+
+[source,bash]
+----
+./bin/chore container pull -f
+----
+
+=== Remove the container image
+
+To remove the local container image:
+
+[source,bash]
+----
+./bin/chore container remove
+# or use the short form:
+./bin/chore container rm
+----
+
+=== Generate Ruby type definitions
+
+To generate Sorbet type definitions for all Ruby gems:
+
+[source,bash]
+----
+./bin/chore gen ruby-type-def
+----
+
+To generate type definitions for a specific gem:
+
+[source,bash]
+----
+./bin/chore gen ruby-type-def -g udb    # or idlc, or udb-gen
+----

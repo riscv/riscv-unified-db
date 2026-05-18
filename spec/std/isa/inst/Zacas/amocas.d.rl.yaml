@@ -1,0 +1,48 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+
+# WARNING: This file is auto-generated from spec/std/isa/inst/Zacas/amocas.SIZE.AQRL.layout
+
+# Copyright (c) Abhijit Das(Sukuna0007Abhi)
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: amocas.d.rl
+long_name: Atomic compare-and-swap doubleword (release)
+description: |
+  Atomically with release ordering:
+
+    * Load the doubleword at address _xs1_
+    * Write the loaded value into _xd_
+    * Compare the loaded value with the value of register _xs2_
+    * If equal, write the value of register _xs2+1_ to the address in _xs1_
+definedBy:
+  extension:
+    name: Zacas
+assembly: xd, xs2, (xs1)
+encoding:
+  match: 0010101----------011-----0101111
+  variables:
+    - name: xs2
+      location: 24-20
+    - name: xs1
+      location: 19-15
+    - name: xd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+operation(): |
+  if (!implemented?(ExtensionName::Zacas)) {
+    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  XReg virtual_address = X[xs1];
+  # TODO
+  # X[xd] = amocas64(virtual_address, X[xs2], X[xd], 1'b0, 1'b1, $encoding);
+
+  memory_model_release();

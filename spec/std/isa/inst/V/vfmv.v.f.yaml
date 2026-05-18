@@ -1,0 +1,29 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: vfmv.v.f
+long_name: "Vector floating-point to vector move"
+description: |
+  Moves floating-point element from scalar register fs1 to vector register vd, using vector mask vm. This operation creates a vector with a single floating-point value.
+definedBy:
+  extension:
+    name: Zvl32b
+assembly: vd, fs1
+encoding:
+  match: 010111100000-----101-----1010111
+  variables:
+    - name: fs1
+      location: 19-15
+    - name: vd
+      location: 11-7
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+data_independent_timing: false
+operation(): |

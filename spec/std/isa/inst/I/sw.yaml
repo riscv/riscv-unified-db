@@ -1,0 +1,34 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/inst_schema.json
+
+$schema: "inst_schema.json#"
+kind: instruction
+name: sw
+long_name: Store word
+description: |
+  Store 32 bits of data from register `xs2` to an
+  address formed by adding `xs1` to a signed offset.
+definedBy:
+  extension:
+    name: I
+assembly: xs2, imm(xs1)
+encoding:
+  match: "-----------------010-----0100011"
+  variables:
+    - name: imm
+      location: 31-25|11-7
+    - name: xs2
+      location: 24-20
+    - name: xs1
+      location: 19-15
+access:
+  s: always
+  u: always
+  vs: always
+  vu: always
+operation(): |
+  XReg virtual_address = X[xs1] + $signed(imm);
+
+  write_memory(32, virtual_address, X[xs2][31:0], $encoding);
