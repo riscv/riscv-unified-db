@@ -23,12 +23,13 @@ encoding:
           return 0;
         }
         if (operands[vm] != "") {
-          raise(`Invalid vector mask operand: ${operands[vm]}`);
+          raise("Invalid vector mask operand: ${operands[vm]}");
         }
         return 1;
       decode(): |
         if (vm == 1) {
           return "";
+        }
         return "v0.t";
     - name: xs1
       location: 19-15

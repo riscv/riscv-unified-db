@@ -76,7 +76,7 @@ encoding:
             return 15;
           }
         }
-        raise(`Invalid reg_list: ${operands[reg_list]}`);
+        raise("Invalid reg_list: ${operands[reg_list]}");
       decode(): |
         if (rlist == 4) {
           return "{x1}";
@@ -114,7 +114,7 @@ encoding:
         if (rlist == 15) {
           return "{x1,x8-x9,x18-x27}";
         }
-        raise(`Invalid rlist: ${rlist}`);
+        raise("Invalid rlist: ${rlist}");
     - name: spimm
       location: 3-2
       #left_shift: 4
@@ -147,7 +147,7 @@ encoding:
         }
 
         if (rlist == 0) {
-          raise(`Invalid reg_list: ${operands[reg_list]}`);
+          raise("Invalid reg_list: ${operands[reg_list]}");
         }
 
         XReg registers = (rlist == 15) ? 13 : (rlist - 3);

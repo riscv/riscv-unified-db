@@ -136,130 +136,139 @@ encoding:
     - name: pred
       location: 27-24
       encode(operands): |
-        if operands[pred] == "i" {
+        if (operands[pred] == "i") {
           return 0b1000;  # I/O
-        } else if operands[pred] == "o" {
+        } else if (operands[pred] == "o") {
           return 0b0100;  # O
-        } else if operands[pred] == "r" {
+        } else if (operands[pred] == "r") {
           return 0b0010;  # R
-        } else if operands[pred] == "w" {
+        } else if (operands[pred] == "w") {
           return 0b0001;  # W
-        } else if operands[pred] == "io" {
+        } else if (operands[pred] == "io") {
           return 0b1100;  # I/O
-        } else if operands[pred] == "ir" {
+        } else if (operands[pred] == "ir") {
           return 0b1010;  # I/R
-        } else if operands[pred] == "iw" {
+        } else if (operands[pred] == "iw") {
           return 0b1001;  # I/W
-        } else if operands[pred] == "or" {
+        } else if (operands[pred] == "or") {
           return 0b0110;  # O/R
-        } else if operands[pred] == "ow" {
+        } else if (operands[pred] == "ow") {
           return 0b0101;  # O/W
-        } else if operands[pred] == "rw" {
+        } else if (operands[pred] == "rw") {
           return 0b0011;  # R/W
-        } else if operands[pred] == "ior" {
+        } else if (operands[pred] == "ior") {
           return 0b1110;  # I/O/R
-        } else if operands[pred] == "iow" {
+        } else if (operands[pred] == "iow") {
           return 0b1101;  # I/O/W
-        } else if operands[pred] == "orw" {
+        } else if (operands[pred] == "irw") {
+          return 0b1011;  # I/R/W
+        } else if (operands[pred] == "orw") {
           return 0b0111;  # O/R/W
-        } else if operands[pred] == "iorw" {
+        } else if (operands[pred] == "iorw") {
           return 0b1111;  # I/O/R/W
-        } else {
-          raise(`Invalid predecessor operand: ${operands[pred]}`);
         }
-        decode(): |
-          if pred == 0b1000 {
-            return "i";
-          } else if pred == 0b0100 {
-            return "o";
-          } else if pred == 0b0010 {
-            return "r";
-          } else if pred == 0b0001 {
-            return "w";
-          } else if pred == 0b1100 {
-            return "io";
-          } else if pred == 0b1010 {
-            return "ir";
-          } else if pred == 0b1001 {
-            return "iw";
-          } else if pred == 0b0110 {
-            return "or";
-          } else if pred == 0b0101 {
-            return "ow";
-          } else if pred == 0b0011 {
-            return "rw";
-          } else if pred == 0b1110 {
-            return "ior";
-          } else if pred == 0b1101 {
-            return "iow";
-          } else if pred == 0b0111 {
-            return "orw";
-          } else {
-            return "iorw";
-          }
+        raise("Invalid predecessor operand: ${operands[pred]}");
+      decode(): |
+        if (pred == 0b1000) {
+          return "i";
+        } else if (pred == 0b0100) {
+          return "o";
+        } else if (pred == 0b0010) {
+          return "r";
+        } else if (pred == 0b0001) {
+          return "w";
+        } else if (pred == 0b1100) {
+          return "io";
+        } else if (pred == 0b1010) {
+          return "ir";
+        } else if (pred == 0b1001) {
+          return "iw";
+        } else if (pred == 0b0110) {
+          return "or";
+        } else if (pred == 0b0101) {
+          return "ow";
+        } else if (pred == 0b0011) {
+          return "rw";
+        } else if (pred == 0b1110) {
+          return "ior";
+        } else if (pred == 0b1101) {
+          return "iow";
+        } else if (pred == 0b1011) {
+          return "irw";
+        } else if (pred == 0b0111) {
+          return "orw";
+        } else if (pred == 0b1111) {
+          return "iorw";
+        }
+        raise("Invalid fence scope encoding ${pred}");
     - name: succ
       location: 23-20
       encode(operands): |
-        if operands[succ] == "i" {
+        if (operands[succ] == "i") {
           return 0b1000;  # I
-        } else if operands[succ] == "o" {
+        } else if (operands[succ] == "o") {
           return 0b0100;  # O
-        } else if operands[succ] == "r" {
+        } else if (operands[succ] == "r") {
           return 0b0010;  # R
-        } else if operands[succ] == "w" {
+        } else if (operands[succ] == "w") {
           return 0b0001;  # W
-        } else if operands[succ] == "io" {
+        } else if (operands[succ] == "io") {
           return 0b1100;  # I/O
-        } else if operands[succ] == "ir" {
+        } else if (operands[succ] == "ir") {
           return 0b1010;  # I/R
-        } else if operands[succ] == "iw" {
+        } else if (operands[succ] == "iw") {
           return 0b1001;  # I/W
-        } else if operands[succ] == "or" {
+        } else if (operands[succ] == "or") {
           return 0b0110;  # O/R
-        } else if operands[succ] == "ow" {
+        } else if (operands[succ] == "ow") {
           return 0b0101;  # O/W
-        } else if operands[succ] == "rw" {
+        } else if (operands[succ] == "rw") {
           return 0b0011;  # R/W
-        } else if operands[succ] == "ior" {
+        } else if (operands[succ] == "ior") {
           return 0b1110;  # I/O/R
-        } else if operands[succ] == "iow" {
+        } else if (operands[succ] == "iow") {
           return 0b1101;  # I/O/W
-        } else if operands[succ] == "orw" {
+        } else if (operands[succ] == "irw") {
+          return 0b1011;  # I/O/W
+        } else if (operands[succ] == "orw") {
           return 0b0111;  # O/R/W
-        } else if operands[succ] == "iorw" {
+        } else if (operands[succ] == "iorw") {
           return 0b1111;  # I/O/R/W
         }
-        raise(`Invalid successor operand: ${operands[succ]}`);
+        raise("Invalid successor operand: ${operands[succ]}");
       decode(): |
-        if succ == 0b1000 {
+        if (succ == 0b1000) {
           return "i";
-        } else if succ == 0b0100 {
+        } else if (succ == 0b0100) {
           return "o";
-        } else if succ == 0b0010 {
+        } else if (succ == 0b0010) {
           return "r";
-        } else if succ == 0b0001 {
+        } else if (succ == 0b0001) {
           return "w";
-        } else if succ == 0b1100 {
+        } else if (succ == 0b1100) {
           return "io";
-        } else if succ == 0b1010 {
+        } else if (succ == 0b1010) {
           return "ir";
-        } else if succ == 0b1001 {
+        } else if (succ == 0b1001) {
           return "iw";
-        } else if succ == 0b0110 {
+        } else if (succ == 0b0110) {
           return "or";
-        } else if succ == 0b0101 {
+        } else if (succ == 0b0101) {
           return "ow";
-        } else if succ == 0b0011 {
+        } else if (succ == 0b0011) {
           return "rw";
-        } else if succ == 0b1110 {
+        } else if (succ == 0b1110) {
           return "ior";
-        } else if succ == 0b1101 {
+        } else if (succ == 0b1101) {
           return "iow";
-        } else if succ == 0b0111 {
+        } else if (succ == 0b1011) {
+          return "irw";
+        } else if (succ == 0b0111) {
           return "orw";
-        } else {
+        } else if (succ == 0b1111) {
           return "iorw";
         }
+        raise("Invalid fence scope encoding ${succ}");
     - name: xs1
       location: 19-15
       encode(operands): return 0; # xs1 is unused, so it must be encoded as 0

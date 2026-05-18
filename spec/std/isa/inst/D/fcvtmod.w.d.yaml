@@ -50,24 +50,24 @@ encoding:
         if (operands[rm] == "dyn") {
           return 3'b111;
         }
-        raise(`Invalid rounding mode: ${operands[rm]}`);
+        raise("Invalid rounding mode: ${operands[rm]}");
       decode(): |
-        if (rm == 0'b000) {
+        if (rm == 3'b000) {
           return "rne";
         }
-        if (rm == 0'b001) {
+        if (rm == 3'b001) {
           return "rtz";
         }
-        if (rm == 0'b010) {
+        if (rm == 3'b010) {
           return "rdn";
         }
-        if (rm == 0'b011) {
+        if (rm == 3'b011) {
           return "rup";
         }
-        if (rm == 0'b100) {
+        if (rm == 3'b100) {
           return "rmm";
         }
-        if (rm == 0'b111) {
+        if (rm == 3'b111) {
           return "dyn";
         }
     - name: xd

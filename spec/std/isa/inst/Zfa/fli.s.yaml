@@ -115,7 +115,7 @@ encoding:
         if (operands[xs1] == "nan") {
           return 5'b11111;
         }
-        raise(`Unrecognized floating point immediate: ${operands[xs1]}`);
+        raise("Unrecognized floating point immediate: ${operands[xs1]}");
       decode(): |
         if (xs1 == 5'b00000) {
             return "-1.0";

@@ -21,12 +21,12 @@ encoding:
   variables:
     - name: r1s
       location: 9-7
-      encode(operands): return (operands[r1s] - 8) - 8 * ((operands[r1s] - 8) / 10)
-      decode(): return r1s + 8 + 8 * ((r1s + 6) / 8)
+      encode(operands): return (operands[r1s] - 8) - 8 * ((operands[r1s] - 8) / 10);
+      decode(): return r1s + 8 + 8 * ((r1s + 6) / 8);
     - name: r2s
       location: 4-2
-      encode(operands): return (operands[r2s] - 8) - 8 * ((operands[r2s] - 8) / 10)
-      decode(): return r2s + 8 + 8 * ((r2s + 6) / 8)
+      encode(operands): return (operands[r2s] - 8) - 8 * ((operands[r2s] - 8) / 10);
+      decode(): return r2s + 8 + 8 * ((r2s + 6) / 8);
 access:
   s: always
   u: always

@@ -27,17 +27,17 @@ encoding:
       location: 14-12
       encode(operands): |
         if (operands[rm] == "rne") {
-          return 3b'000;
+          return 3'b000;
         } else if (operands[rm] == "rtz") {
-          return 3b'001;
+          return 3'b001;
         } else if (operands[rm] == "rdn") {
-          return 3b'010;
+          return 3'b010;
         } else if (operands[rm] == "rup") {
-          return 3b'011;
+          return 3'b011;
         } else if (operands[rm] == "rmm") {
-          return 3b'100;
+          return 3'b100;
         } else if (operands[rm] == "dyn") {
-          return 3b'111;
+          return 3'b111;
         } # else reserved
 operands:
   - $inherits: operand/fd.yaml#/data
