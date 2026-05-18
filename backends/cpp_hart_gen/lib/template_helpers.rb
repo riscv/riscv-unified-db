@@ -16,6 +16,10 @@ module Udb
   class Instruction
     def assembly_fmt(xlen)
       fmt = assembly.dup
+      # fmt::format treats braces as replacement fields, so any literal braces in
+      # the assembly syntax must be escaped before we inject positional "{}".
+      fmt.gsub!("{", "{{")
+      fmt.gsub!("}", "}}")
       dvs = encoding(xlen).decode_variables
       dvs.each do |dv|
         fmt.gsub!(dv.name, "{}")

@@ -20,7 +20,7 @@ description: |
 definedBy:
   extension:
     name: Zcmp
-assembly: reg_list, stack_adj
+assembly: "{reg_list}, stack_adj"
 encoding:
   match: 10111010------10
   variables:

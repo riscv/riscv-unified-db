@@ -455,6 +455,20 @@ namespace udb {
     bool _decode(const XReg& pc, const Bits<<%= cfg_arch.largest_encoding %>>& encoding, InstBase* obj);
 
     uint64_t fetch() override { return _fetch().get(); }
+
+    void execute_instruction(const Bits<32>& encoding) {
+      InstBase* inst = reinterpret_cast<InstBase*>(m_execute_instruction_storage.data());
+      if (!_decode(m_pc, encoding, inst)) {
+        try {
+          raise(ExceptionCode{ExceptionCode::IllegalInstruction}, mode(), encoding);
+        } catch (const AbortInstruction&) {
+          throw; // propagate to outer instruction handler
+        }
+        return;
+      }
+      inst->execute();
+      // Note: PC is NOT advanced here; the calling instruction manages PC.
+    }
     PossiblyUnknownBits<INSTR_ENC_SIZE.get()> _fetch();
     void ifence() override {
       m_bb_cache.invalidate();
@@ -549,6 +563,7 @@ namespace udb {
       std::map<std::string, CsrBase*> m_csr_name_map;
 
       std::array<uint8_t, __MAX_INST_CPP_SIZE> m_run_one_inst_storage;
+      std::array<uint8_t, __MAX_INST_CPP_SIZE> m_execute_instruction_storage;
       BasicBlockCache<__MAX_INST_CPP_SIZE> m_bb_cache;
   };
 }

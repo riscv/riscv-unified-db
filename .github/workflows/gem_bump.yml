@@ -84,7 +84,9 @@ jobs:
           BODY="Automated gem version bump."$'\n\n'
           BODY+="**Bumped gems:**"$'\n'
           while IFS= read -r version_file; do
-            GEM_DIR=$(dirname "$(dirname "$version_file")")
+            # Path is tools/ruby-gems/<gem-name>/lib/<gem-name>/version.rb,
+            # so three dirname levels yield the gem directory.
+            GEM_DIR=$(dirname "$(dirname "$(dirname "$version_file")")")
             GEM_NAME=$(basename "$GEM_DIR")
             NEW_VERSION=$(ruby -e "content = File.read('$version_file'); puts content[/[\"'](\d+\.\d+\.\d+)[\"']/, 1]")
             BODY+="- \`${GEM_NAME}\` → ${NEW_VERSION}"$'\n'
