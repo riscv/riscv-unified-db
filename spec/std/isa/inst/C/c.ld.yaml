@@ -57,8 +57,8 @@ operation(): |
   if (xlen() == 32) {
     if (implemented?(ExtensionName::Zclsd)) {
       Bits<64> val = read_memory(64, X[creg2reg(xs1)] + imm, $encoding);
-      X[creg2reg(xd)] = val[31:0];
-      X[creg2reg(xd + 1)] = val[63:32];
+      X[creg2reg(xd)] = val[31 : 0];
+      X[creg2reg(xd + 1)] = val[63 : 32];
     } else {
       raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
     }

@@ -12,11 +12,12 @@ help() {
   echo ""
   echo "Commands:"
   echo ""
-  echo "  build:     Build an artifact        ('chore build -h' for more)"
-  echo "  container: Container operations     ('chore container -h' for more)"
-  echo "  gen:       Generate an artifact     ('chore gen -h' for more)"
-  echo "  install:   Install new libraries    ('chore install -h' for more)"
-  echo "  update:    Update libraries         ('chore update -h' for more)"
+  echo "  build:      Build an artifact        ('chore build -h' for more)"
+  echo "  container:  Container operations     ('chore container -h' for more)"
+  echo "  gen:        Generate an artifact     ('chore gen -h' for more)"
+  echo "  idl-format: Format IDL source        ('chore idl-format -h' for more)"
+  echo "  install:    Install new libraries    ('chore install -h' for more)"
+  echo "  update:     Update libraries         ('chore update -h' for more)"
   echo ""
 }
 
@@ -89,6 +90,24 @@ container_remove_usage() {
   echo "Options:"
   echo ""
   echo "  -h:           Print help"
+  echo ""
+}
+
+idl_format_subcmd_usage() {
+  echo "Usage: chore idl-format [-hfw] [FILES...]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:        Print help"
+  echo "  -f:        Fail on change; exit with status 1 if any file is reformatted"
+  echo "  -w WIDTH:  Two-pass reflow: after formatting, break lines longer than"
+  echo "             WIDTH columns at semantic boundaries (||, &&, commas), then"
+  echo "             re-format.  Useful for narrow-column output (e.g. PDF docs)."
+  echo ""
+  echo "Formats IDL in standalone .idl/.isa files and YAML-embedded"
+  echo "operation()/sw_read()/when() fields under spec/."
+  echo "If FILES are provided, only those files are formatted."
   echo ""
 }
 
@@ -279,17 +298,17 @@ do_gen_regress() {
 }
 
 #
-# Generate the IDL TextMate grammar for the VSCode extension from
-# the canonical Prism definition at doc/src/prism/idl.js
+# Generate IDL syntax highlighting artifacts (idl.tmLanguage.json, idl-hljs-lang.js,
+# idl_highlighter.rb) from the tree-sitter grammar (grammar.json + highlights.scm).
 #
-do_gen_vscode_idl() {
+do_gen_idl_highlight() {
+  echo "Generating IDL highlight artifacts from tree-sitter grammar"
   local out="$UDB_ROOT/tools/vscode/idl/syntaxes/idl.tmLanguage.json"
-  echo "Generating tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   if [ $fail_on_change -eq 1 ]; then
     local sha_before
     sha_before=$(sha256sum "$out")
   fi
-  node "$UDB_ROOT/tools/node/idl-grammar-gen/index.js"
+  node "$UDB_ROOT/tools/node/idl-gen/index.js"
   if [ $fail_on_change -eq 1 ]; then
     local sha_after
     sha_after=$(sha256sum "$out")
@@ -355,12 +374,22 @@ do_update_gem_versions() {
 }
 
 #
+# Format IDL source files (.idl, .isa) and YAML-embedded IDL snippets.
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
+#
+do_idl_format() {
+  local args=()
+  [ "${fail_on_change:-0}" -eq 1 ] && args+=("-f")
+  [ -n "${reflow_width:-}" ]       && args+=("--width=${reflow_width}")
+  "$UDB_ROOT/bin/idl-format" "${args[@]}" "$@"
+}
+
+#
 # Generate all development artifacts
 #
 do_gen_all() {
   do_gen_regress
-  do_gen_vscode_idl
-  do_gen_gem_versions
+  do_gen_idl_highlight
   do_ruby_type_def all
   do_gen_profile_cfgs
   do_gen_xqci_golden
@@ -373,8 +402,8 @@ do_gen_all() {
 #
 do_gen_smoke() {
   do_gen_regress
-  do_gen_vscode_idl
-  do_ruby_type_def all
+  do_gen_idl_highlight
+  do_gen_ruby_type_def all
 }
 
 #
@@ -646,8 +675,8 @@ case "$subcommand" in
         do_gen_gem_versions "$base_ref"
         exit 0
         ;;
-      vscode-idl )
-        do_gen_vscode_idl
+      idl-highlight | vscode-idl )
+        do_gen_idl_highlight
         exit 0
         ;;
       regress )
@@ -950,6 +979,32 @@ case "$subcommand" in
         build_subcmd_usage
         exit 1
     esac
+    ;;
+  idl-format )
+    fail_on_change=0
+    reflow_width=""
+    while getopts ":hfw:" opt; do
+      case $opt in
+        h )
+          idl_format_subcmd_usage
+          exit 0
+        ;;
+        f )
+          fail_on_change=1
+        ;;
+        w )
+          reflow_width="$OPTARG"
+        ;;
+        ? )
+          echo "[ERROR]: Invalid option: -${OPTARG}"
+          idl_format_subcmd_usage
+          exit 1
+        ;;
+      esac
+    done
+    shift $((OPTIND-1))
+    do_idl_format "$@"
+    exit $?
     ;;
   * )
     if [ ! -z "$subcommand" ]; then  # Don't show if no subcommand provided

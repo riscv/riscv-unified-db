@@ -15,8 +15,7 @@ schema:
 requirements:
   idl(): |
     # at least one of Bare, SvQQx4 must be supported
-    !GSTAGE_MODE_BARE && !SV39X4_TRANSLATION && !SV57X4_TRANSLATION
-      -> SV48X4_TRANSLATION;
+    !GSTAGE_MODE_BARE && !SV39X4_TRANSLATION && !SV57X4_TRANSLATION -> SV48X4_TRANSLATION;
   reason: at least one of Bare, SvQQx4 must be supported
 definedBy:
   allOf:

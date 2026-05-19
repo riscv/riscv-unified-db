@@ -4,7 +4,7 @@
 %version: 1.0
 
 # generated from extension information in arch definition
-generated enum InterruptCode;
+generated enum InterruptCode ;
 
 # the "hidden" part of mip.SEIP
 Boolean pending_smode_external_interrupt = false;
@@ -69,8 +69,8 @@ external function set_software_interrupt {
     } else if ((CSR[misa].S == 1'b1) && (target_mode == PrivilegeMode::S)) {
       # set the "hidden" bit, not the software-writable bit
       CSR[mip].SSIP = 1'b1;
-    # } else if ((CSR[misa].H == 1'b1) && (target_mode == PrivilegeMode::VS)) {
-    #   CSR[hvip].VSSIP = 1'b1;
+      # } else if ((CSR[misa].H == 1'b1) && (target_mode == PrivilegeMode::VS)) {
+      #   CSR[hvip].VSSIP = 1'b1;
     } else {
       assert(false, "Invalid target_mode");
     }
@@ -90,8 +90,8 @@ external function clear_software_interrupt {
     } else if ((CSR[misa].S == 1'b1) && (target_mode == PrivilegeMode::S)) {
       # set the "hidden" bit, not the software-writable bit
       CSR[mip].SSIP = 1'b0;
-    # } else if ((CSR[misa].H == 1'b1) && (target_mode == PrivilegeMode::VS)) {
-    #   CSR[hvip].VSSIP = 1'b0;
+      # } else if ((CSR[misa].H == 1'b1) && (target_mode == PrivilegeMode::VS)) {
+      #   CSR[hvip].VSSIP = 1'b0;
     } else {
       assert(false, "Invalid target_mode");
     }
@@ -169,14 +169,13 @@ function refresh_pending_interrupts {
       return;
     }
 
-    Boolean HAS_MIDELEG =
-      implemented_version?(ExtensionName::S, "<= 1.9.1") ||
-      (implemented_version?(ExtensionName::S, "> 1.9.1") && implemented_version?(ExtensionName::Sm, "> 1.9.1"));
+    Boolean HAS_MIDELEG = implemented_version?(ExtensionName::S, "<= 1.9.1") ||
+    (implemented_version?(ExtensionName::S, "> 1.9.1") && implemented_version?(ExtensionName::Sm,
+        "> 1.9.1"));
 
-    Bits<MXLEN> mmode_enabled_ints =
-      ((mode() == PrivilegeMode::M) && (CSR[mstatus].MIE == 1'b0))
-        ? 0
-        : ($bits(CSR[mie]) & (HAS_MIDELEG ? ~$bits(CSR[mideleg]) : ~MXLEN'0));
+    Bits<MXLEN> mmode_enabled_ints = ((mode() == PrivilegeMode::M) && (CSR[mstatus].MIE == 1'b0))
+      ? 0
+      : ($bits(CSR[mie]) & (HAS_MIDELEG ? ~$bits(CSR[mideleg]) : ~MXLEN'0));
     Bits<MXLEN> mmode_pending_and_enabled = pending_ints & mmode_enabled_ints;
     if (mmode_pending_and_enabled != 0) {
       pending_and_enabled_interrupts = mmode_pending_and_enabled;
@@ -184,10 +183,9 @@ function refresh_pending_interrupts {
     }
 
     if (CSR[misa].S == 1'b1) {
-      Bits<MXLEN> smode_enabled_ints =
-        ((mode() == PrivilegeMode::M) || (CSR[mstatus].SIE == 1'b0))
-          ? 0
-          : $bits(CSR[mie]) & ($bits(CSR[mideleg]));
+      Bits<MXLEN> smode_enabled_ints = ((mode() == PrivilegeMode::M) || (CSR[mstatus].SIE == 1'b0))
+        ? 0
+        : $bits(CSR[mie]) & ($bits(CSR[mideleg]));
       Bits<MXLEN> smode_pending_and_enabled = pending_ints & smode_enabled_ints;
       if (smode_pending_and_enabled != 0) {
         pending_and_enabled_interrupts = smode_pending_and_enabled;
@@ -227,7 +225,7 @@ function highest_priority_interrupt {
     Interrupt priority is:
       MEI, MSI, MTI, SEI, SSI, STI, SGEI, VSEI, VSSI, VSTI, LCOFI
   }
-  body{
+  body {
     if (int_mask[$bits(InterruptCode::MachineExternal)] == 1'b1) {
       return InterruptCode::MachineExternal;
     } else if (int_mask[$bits(InterruptCode::MachineSoftware)] == 1'b1) {
@@ -241,18 +239,17 @@ function highest_priority_interrupt {
         return InterruptCode::SupervisorSoftware;
       } else if (int_mask[$bits(InterruptCode::SupervisorTimer)] == 1'b1) {
         return InterruptCode::SupervisorTimer;
-      }
-    # } else if (CSR[misa].H == 1'b1) {
-    #   if (int_mask[$bits(InterruptCode::SupervisorGuestExternal)] == 1'b1) {
-    #     return InterruptCode::SupervisorGuestExternal;
-    #   } else if (int_mask[$bits(InterruptCode::VirtualSupervisorExternal)] == 1'b1) {
-    #     return InterruptCode::VirtualSupervisorExternal;
-    #   } else if (int_mask[$bits(InterruptCode::VirtualSupervisorSoftware)] == 1'b1) {
-    #     return InterruptCode::VirtualSupervisorSoftware;
-    #   } else if (int_mask[$bits(InterruptCode::VirtualSupervisorTimer)] == 1'b1) {
-    #     return InterruptCode::VirtualSupervisorTimer;
-    #   }
-    # }
+      } # } else if (CSR[misa].H == 1'b1) {
+      #   if (int_mask[$bits(InterruptCode::SupervisorGuestExternal)] == 1'b1) {
+      #     return InterruptCode::SupervisorGuestExternal;
+      #   } else if (int_mask[$bits(InterruptCode::VirtualSupervisorExternal)] == 1'b1) {
+      #     return InterruptCode::VirtualSupervisorExternal;
+      #   } else if (int_mask[$bits(InterruptCode::VirtualSupervisorSoftware)] == 1'b1) {
+      #     return InterruptCode::VirtualSupervisorSoftware;
+      #   } else if (int_mask[$bits(InterruptCode::VirtualSupervisorTimer)] == 1'b1) {
+      #     return InterruptCode::VirtualSupervisorTimer;
+      #   }
+      # }
     } else if (implemented?(ExtensionName::Sscofpmf)) {
       if (int_mask[$bits(InterruptCode::LocalCounterOverflow)] == 1'b1) {
         return InterruptCode::LocalCounterOverflow;
@@ -262,8 +259,12 @@ function highest_priority_interrupt {
   }
 }
 
+struct ChosenInterrupt {
+  InterruptCode code;PrivilegeMode to_mode;
+}
+
 function choose_interrupt {
-  returns InterruptCode, PrivilegeMode
+  returns ChosenInterrupt
   description {
     Return the highest priority interrupt
     that is both pending and enabled and the mode it will be taken in
@@ -271,31 +272,30 @@ function choose_interrupt {
   body {
     InterruptCode chosen;
 
-    Boolean HAS_MIDELEG =
-      implemented_version?(ExtensionName::S, "<= 1.9.1") ||
-      (implemented_version?(ExtensionName::S, "> 1.9.1") && implemented_version?(ExtensionName::Sm, "> 1.9.1"));
-
+    Boolean HAS_MIDELEG = implemented_version?(ExtensionName::S, "<= 1.9.1") ||
+    (implemented_version?(ExtensionName::S, "> 1.9.1") && implemented_version?(ExtensionName::Sm,
+        "> 1.9.1"));
 
     # check M mode interrupts
-    Bits<MXLEN> mmode_pending_and_enabled =
-      pending_and_enabled_interrupts & ~(HAS_MIDELEG ? $bits(CSR[mideleg]) : MXLEN'0);
+    Bits<MXLEN> mmode_pending_and_enabled = pending_and_enabled_interrupts & ~(HAS_MIDELEG
+      ? $bits(CSR[mideleg])
+      : MXLEN'0);
     if (mmode_pending_and_enabled != 0) {
       assert((mode() != PrivilegeMode::M) || (CSR[mstatus].MIE == 1'b1),
-             "M-mode interrupts are not enabled");
+          "M-mode interrupts are not enabled");
 
       chosen = highest_priority_interrupt(mmode_pending_and_enabled);
 
-    # check S-mode interrupts
+      # check S-mode interrupts
     } else if (CSR[misa].S == 1'b1) {
-      Bits<MXLEN> smode_pending_and_enabled =
-        (pending_and_enabled_interrupts & $bits(CSR[mideleg]))
-        # & ((CSR[misa].H == 1'b1) ? ~$bits(CSR[hideleg]) : ~MXLEN'0)
-        ;
+      Bits<MXLEN> smode_pending_and_enabled = (pending_and_enabled_interrupts & $bits(CSR[mideleg])) # & ((CSR[misa].H == 1'b1) ? ~$bits(CSR[hideleg]) : ~MXLEN'0)
+      ;
 
       if (smode_pending_and_enabled != 0) {
-        assert((mode() == PrivilegeMode::U) || (mode() == PrivilegeMode::VU) || (mode() == PrivilegeMode::VS) ||
-               (mode() == PrivilegeMode::S) && (CSR[mstatus].SIE == 1'b1),
-               "S-mode interrupt can't be triggered");
+        assert((mode() == PrivilegeMode::U) || (mode() == PrivilegeMode::VU) ||
+            (mode() == PrivilegeMode::VS) ||
+            (mode() == PrivilegeMode::S) && (CSR[mstatus].SIE == 1'b1),
+            "S-mode interrupt can't be triggered");
 
         chosen = highest_priority_interrupt(smode_pending_and_enabled);
       }
@@ -318,7 +318,10 @@ function choose_interrupt {
       }
     }
 
-    return chosen, to_mode;
+    ChosenInterrupt interrupt_result;
+    interrupt_result.code = chosen;
+    interrupt_result.to_mode = to_mode;
+    return interrupt_result;
   }
 }
 
@@ -328,16 +331,15 @@ function take_interrupt {
     that is both pending and enabled
   }
   body {
-    PrivilegeMode to_mode;
-    InterruptCode code;
-
-    (code, to_mode) = choose_interrupt();
+    ChosenInterrupt interrupt_result = choose_interrupt();
+    InterruptCode code = interrupt_result.code;
+    PrivilegeMode to_mode = interrupt_result.to_mode;
 
     if (to_mode == PrivilegeMode::M) {
       CSR[mepc].PC = $pc;
-      CSR[mstatus].MPP = $bits(mode())[1:0];
+      CSR[mstatus].MPP = $bits(mode())[1 : 0];
       if (CSR[misa].H == 1'b1) {
-        if(MXLEN == 64) {
+        if (MXLEN == 64) {
           CSR[mstatus].MPV = $bits(mode())[2];
         } else {
           CSR[mstatush].MPV = $bits(mode())[2];
@@ -353,7 +355,7 @@ function take_interrupt {
         $pc = {CSR[mtvec].BASE, 2'b00};
       } else if (CSR[mtvec].MODE == 1'b1) {
         # vectored
-        $pc = {CSR[mtvec].BASE, 2'b00} + ($bits(code)*4);
+        $pc = {CSR[mtvec].BASE, 2'b00} + ($bits(code) * 4);
       }
     } else if ((CSR[misa].S == 1'b1) && (to_mode == PrivilegeMode::S)) {
       CSR[sepc].PC = $pc;
@@ -369,7 +371,7 @@ function take_interrupt {
         $pc = {CSR[stvec].BASE, 2'b00};
       } else if (CSR[stvec].MODE == 1'b1) {
         # vectored
-        $pc = {CSR[stvec].BASE, 2'b00} + ($bits(code)*4);
+        $pc = {CSR[stvec].BASE, 2'b00} + ($bits(code) * 4);
       }
     } else if ((CSR[misa].H == 1'b1) && (to_mode == PrivilegeMode::VS)) {
       CSR[vsepc].PC = $pc;
@@ -377,12 +379,12 @@ function take_interrupt {
       CSR[vscause].CODE = $bits(code);
       CSR[vscause].INT = 1'b1;
       CSR[vstval].VALUE = 0;
-            if (CSR[vstvec].MODE == 0) {
+      if (CSR[vstvec].MODE == 0) {
         # direct mode
         $pc = {CSR[vstvec].BASE, 2'b00};
       } else if (CSR[vstvec].MODE == 1'b1) {
         # vectored
-        $pc = {CSR[vstvec].BASE, 2'b00} + ($bits(code)*4);
+        $pc = {CSR[vstvec].BASE, 2'b00} + ($bits(code) * 4);
       }
     }
 

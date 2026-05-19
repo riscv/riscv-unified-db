@@ -95,7 +95,7 @@ function raise_ilut {
     }
 
     $pc = {CSR[mtvec].BASE, 2'b00};
-    CSR[mcause].INT  = 1'b0;
+    CSR[mcause].INT = 1'b0;
     CSR[mcause].CODE = $bits(exception_code);
 
     set_mode(PrivilegeMode::M);
@@ -116,51 +116,44 @@ function is_pc_relative_inst? {
     16 bits are in a separate word and are not needed for this check).
   }
   body {
-    if (inst[1:0] != 2'b11) {
+    if (inst[1 : 0] != 2'b11) {
       # 16-bit compressed instruction: examine only the lower 16 bits
-      Bits<16> cinst = inst[15:0];
+      Bits<16> cinst = inst[15 : 0];
       # c.j:    funct3=101, op=01
-      if (cinst[15:13] == 3'b101 && cinst[1:0] == 2'b01) {
+      if (cinst[15 : 13] == 3'b101 && cinst[1 : 0] == 2'b01) {
         return true;
-      }
-      # c.jal:  funct3=001, op=01
-      if (cinst[15:13] == 3'b001 && cinst[1:0] == 2'b01) {
+      } # c.jal:  funct3=001, op=01
+      if (cinst[15 : 13] == 3'b001 && cinst[1 : 0] == 2'b01) {
         return true;
-      }
-      # c.beqz: funct3=110, op=01
-      if (cinst[15:13] == 3'b110 && cinst[1:0] == 2'b01) {
+      } # c.beqz: funct3=110, op=01
+      if (cinst[15 : 13] == 3'b110 && cinst[1 : 0] == 2'b01) {
         return true;
-      }
-      # c.bnez: funct3=111, op=01
-      if (cinst[15:13] == 3'b111 && cinst[1:0] == 2'b01) {
+      } # c.bnez: funct3=111, op=01
+      if (cinst[15 : 13] == 3'b111 && cinst[1 : 0] == 2'b01) {
         return true;
       }
       return false;
     } else {
       # 32-bit (or 48-bit) instruction: check opcode field bits[6:0]
-      Bits<7> opcode = inst[6:0];
+      Bits<7> opcode = inst[6 : 0];
       # auipc
       if (opcode == 7'b0010111) {
         return true;
-      }
-      # jal
+      } # jal
       if (opcode == 7'b1101111) {
         return true;
-      }
-      # branches
+      } # branches
       if (opcode == 7'b1100011) {
         return true;
-      }
-      # 48-bit Xqci PC-relative instructions (inst[4:2]==3'b111 indicates 48-bit length)
-      if (inst[4:2] == 3'b111) {
+      } # 48-bit Xqci PC-relative instructions (inst[4:2]==3'b111 indicates 48-bit length)
+      if (inst[4 : 2] == 3'b111) {
         # All Xqci 48-bit PC-relative instructions use opcode 7'b0011111
         if (opcode == 7'b0011111) {
           # qc.e.j / qc.e.jal: funct3=000, inst[24:20]==5'b00000
-          if (inst[14:12] == 3'b000 && inst[24:20] == 5'b00000) {
+          if (inst[14 : 12] == 3'b000 && inst[24 : 20] == 5'b00000) {
             return true;
-          }
-          # qc.e.beqi/bnei/blti/bgei/bltui/bgeui: funct3=100, inst[24:23]==2'b11
-          if (inst[14:12] == 3'b100 && inst[24:23] == 2'b11) {
+          } # qc.e.beqi/bnei/blti/bgei/bltui/bgeui: funct3=100, inst[24:23]==2'b11
+          if (inst[14 : 12] == 3'b100 && inst[24 : 23] == 2'b11) {
             return true;
           }
         }
@@ -181,15 +174,13 @@ function get_and_validate_stack_pointer {
 	In case when stack pointer is not 16-bytes aligned, raising exception IllegalStackPointer.
   }
   body {
-     if (sp < $bits(CSR[qc.mstkbottomaddr])) {
-       raise(ExceptionCode::SpOutOfRange, mode(), encoding);
-     }
-     else if (sp > $bits(CSR[qc.mstktopaddr])) {
-       raise(ExceptionCode::SpOutOfRange, mode(), encoding);
-     }
-     else if ((sp & 0xf) != 0) {
-       raise(ExceptionCode::IllegalStackPointer, mode(), encoding);
-     }
-     return sp;
-   }
- }
+    if (sp < $bits(CSR[qc.mstkbottomaddr])) {
+      raise(ExceptionCode::SpOutOfRange, mode(), encoding);
+    } else if (sp > $bits(CSR[qc.mstktopaddr])) {
+      raise(ExceptionCode::SpOutOfRange, mode(), encoding);
+    } else if ((sp & 0xf) != 0) {
+      raise(ExceptionCode::IllegalStackPointer, mode(), encoding);
+    }
+    return sp;
+  }
+}

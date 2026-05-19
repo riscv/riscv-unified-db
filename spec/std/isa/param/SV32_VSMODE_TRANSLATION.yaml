@@ -15,8 +15,7 @@ schema:
 requirements:
   idl(): |
     # at least one of Bare, Sv32 must be supported
-    !VSSTAGE_MODE_BARE
-      -> SV39_VSMODE_TRANSLATION;
+    !VSSTAGE_MODE_BARE -> SV39_VSMODE_TRANSLATION;
   reason: at least one of Bare, Sv32 must be supported
 definedBy:
   allOf:

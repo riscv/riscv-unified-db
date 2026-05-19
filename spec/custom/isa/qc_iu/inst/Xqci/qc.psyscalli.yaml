@@ -31,4 +31,4 @@ access:
 operation(): |
   XReg func = 11;
   XReg arg = imm;
-  iss_syscall(func,arg);
+  iss_syscall(func, arg);

@@ -44,10 +44,4 @@ module Idl
         rhs.written?(symtab, varname, in_assignment:)
     end
   end
-  class MultiVariableAssignmentAst < AstNode
-    def written?(symtab, varname, in_assignment: false)
-      variables.any? { |variable| variable.written?(symtab, varname, in_assignment: true) } || \
-        function_call.written?(symtab, varname, in_assignment:)
-    end
-  end
 end

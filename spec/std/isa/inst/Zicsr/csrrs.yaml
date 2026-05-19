@@ -66,9 +66,9 @@ operation(): |
   if (csr_handle.valid == false) {
     unimplemented_csr($encoding);
   } else if (!compatible_mode?(csr_handle.mode, mode())) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   } else if (will_write && csr_handle.writable == false) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   XReg initial_csr_value = csr_sw_read(csr_handle);

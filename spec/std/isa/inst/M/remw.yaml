@@ -36,23 +36,21 @@ access:
   vu: always
 operation(): |
   if (implemented?(ExtensionName::M) && (CSR[misa].M == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
-  Bits<32> src1 = X[xs1][31:0];
-  Bits<32> src2 = X[xs2][31:0];
+  Bits<32> src1 = X[xs1][31 : 0];
+  Bits<32> src2 = X[xs2][31 : 0];
 
   if (src2 == 0) {
     # division by zero. Since RISC-V does not have arithmetic exceptions, the result is defined
     # to be the dividend, sign extended to into the 64-bit register
     Bits<1> sign_bit = src1[31];
     X[xd] = {{32{sign_bit}}, src1};
-
   } else if ((src1 == 32'h80000000) && (src2 == 32'hFFFFFFFF)) {
     # signed overflow. Since RISC-V does not have arithmetic exceptions, the result is defined
     # to be zero
     X[xd] = 0;
-
   } else {
     # no special case
     Bits<32> result = $signed(src1) % $signed(src2);

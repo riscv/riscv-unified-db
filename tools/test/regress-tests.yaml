@@ -5,6 +5,12 @@
 
 ---
 tests:
+  regress-idl-format:
+    ci_stage: pr
+    test:
+      - name: Check IDL formatting
+        run: bin/chore idl-format -f
+
   regress-scripts-unit:
     ci_stage: pr
     tags:

@@ -127,3 +127,15 @@ path = [
 ]
 SPDX-FileCopyrightText = "NONE"
 SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+    "tools/node/idl-gen/package.json",
+    "tools/node/idl-reflow/package.json",
+    "tools/node/tree-sitter-idl/package.json",
+    "tools/node/tree-sitter-idl/package-lock.json",
+    "tools/node/tree-sitter-idl/src/grammar.json",
+    "tools/node/tree-sitter-idl/src/node-types.json",
+]
+SPDX-FileCopyrightText = "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries."
+SPDX-License-Identifier = "BSD-3-Clause-Clear"

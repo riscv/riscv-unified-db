@@ -70,10 +70,9 @@ fields:
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
-      if (CSR[mstateen0].JVT == 1'b0){
+      if (CSR[mstateen0].JVT == 1'b0) {
         return 0;
-      }
-      else if (mode() == PrivilegeMode::VS && CSR[hstateen0].JVT == 1'b0) {
+      } else if (mode() == PrivilegeMode::VS && CSR[hstateen0].JVT == 1'b0) {
         return 0;
       }
       return csr_value.JVT;
@@ -94,10 +93,9 @@ fields:
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
-      if (CSR[mstateen0].FCSR == 1'b0){
+      if (CSR[mstateen0].FCSR == 1'b0) {
         return 0;
-      }
-      else if (mode() == PrivilegeMode::VS && CSR[hstateen0].FCSR == 1'b0) {
+      } else if (mode() == PrivilegeMode::VS && CSR[hstateen0].FCSR == 1'b0) {
         return 0;
       }
       return csr_value.FCSR;
@@ -111,10 +109,9 @@ fields:
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
-      if (CSR[mstateen0].C == 1'b0){
+      if (CSR[mstateen0].C == 1'b0) {
         return 0;
-      }
-      else if (mode() == PrivilegeMode::VS && CSR[hstateen0].C == 1'b0) {
+      } else if (mode() == PrivilegeMode::VS && CSR[hstateen0].C == 1'b0) {
         return 0;
       }
       return csr_value.C;

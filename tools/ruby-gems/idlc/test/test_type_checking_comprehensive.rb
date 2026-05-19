@@ -480,33 +480,24 @@ class TestTypeCheckingComprehensive < Minitest::Test
   private
 
   def compile_statement(idl)
-    @compiler.parser.set_input_file("", 0)
-    m = @compiler.parser.parse(idl, root: :statement)
-    refute_nil m, "Failed to parse: #{idl}: #{@compiler.parser.failure_reason}"
-    ast = m.to_ast
-    refute_nil ast
+    ast = @compiler.build_ast(idl, root: :statement)
+    refute_nil ast, "Failed to build AST: #{idl}"
     ast.freeze_tree(@symtab)
     ast.type_check(@symtab, strict: false)
     ast
   end
 
   def compile_expression(idl)
-    @compiler.parser.set_input_file("", 0)
-    m = @compiler.parser.parse(idl, root: :expression)
-    refute_nil m, "Failed to parse: #{idl}"
-    ast = m.to_ast
-    refute_nil ast
+    ast = @compiler.build_ast(idl, root: :expression)
+    refute_nil ast, "Failed to build AST: #{idl}"
     ast.freeze_tree(@symtab)
     ast.type_check(@symtab, strict: false)
     ast
   end
 
   def compile_and_add_to_symtab(idl, root)
-    @compiler.parser.set_input_file("", 0)
-    m = @compiler.parser.parse(idl, root: root)
-    refute_nil m, "Failed to parse: #{idl}: #{@compiler.parser.failure_reason}"
-    ast = m.to_ast
-    refute_nil ast
+    ast = @compiler.build_ast(idl, root: root)
+    refute_nil ast, "Failed to build AST: #{idl}"
     ast.freeze_tree(@symtab)
     ast.add_symbol(@symtab)
     ast

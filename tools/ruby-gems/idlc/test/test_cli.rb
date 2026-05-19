@@ -84,9 +84,7 @@ class TestCli < CliTest
 
       compiler = Idl::Compiler.new
       compiler.pb = TTY::ProgressBar.new("compiling [:bar]")
-      m = compiler.parser.parse(idl, root: :instruction_operation)
-      refute_nil m
-      ast = m.to_ast
+      ast = compiler.build_ast(idl, root: :instruction_operation)
       refute_nil ast
       ast.set_input_file(__FILE__)
 

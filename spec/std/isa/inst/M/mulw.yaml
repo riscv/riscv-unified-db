@@ -43,11 +43,11 @@ access:
 data_independent_timing: true
 operation(): |
   if (implemented?(ExtensionName::M) && (CSR[misa].M == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
-  Bits<32> src1 = X[xs1][31:0];
-  Bits<32> src2 = X[xs2][31:0];
+  Bits<32> src1 = X[xs1][31 : 0];
+  Bits<32> src2 = X[xs2][31 : 0];
 
   Bits<32> result = src1 * src2;
   Bits<1> sign_bit = result[31];

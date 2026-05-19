@@ -89,32 +89,31 @@ operation(): |
   #   bits[1:0] != 2'b11 -> 16-bit instruction
   #   bits[1:0] == 2'b11 and bits[4:2] != 3'b111 -> 32-bit instruction
   #   bits[1:0] == 2'b11 and bits[4:2] == 3'b111 -> 48-bit instruction
-  Boolean has_second_inst = false; # true if this entry contains a second packed instruction
+  Boolean has_second_inst = false;
+  # true if this entry contains a second packed instruction
 
-  if (entry_lo[1:0] != 2'b11) {
+  if (entry_lo[1 : 0] != 2'b11) {
     # 16-bit first instruction; second instruction is in entry_lo[31:16]
-    Bits<16> second_lo = entry_lo[31:16];
+    Bits<16> second_lo = entry_lo[31 : 16];
     if (second_lo != 16'h0001) {
       has_second_inst = true;
     }
-  } else if (entry_lo[4:2] != 3'b111) {
+  } else if (entry_lo[4 : 2] != 3'b111) {
     # 32-bit first instruction
     if (is_double) {
       # Second instruction starts at entry_hi[15:0]
-      Bits<16> second_lo = entry_hi[15:0];
+      Bits<16> second_lo = entry_hi[15 : 0];
       if (second_lo != 16'h0001) {
         has_second_inst = true;
       }
-    }
-    # No room for a second instruction in a 32-bit entry after a 32-bit first
+    } # No room for a second instruction in a 32-bit entry after a 32-bit first
   } else {
     # 48-bit first instruction
     if (!is_double) {
       # 48-bit instruction does not fit in a 32-bit entry
       executing_second_inst = false;
       raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
-    }
-    # No room for a second instruction after a 48-bit first in a 64-bit entry
+    } # No room for a second instruction after a 48-bit first in a 64-bit entry
   }
 
   # PC-relative instruction check:
@@ -127,10 +126,10 @@ operation(): |
   }
   if (has_second_inst) {
     Bits<32> second_inst;
-    if (entry_lo[1:0] != 2'b11) {
-      second_inst = {16'b0, entry_lo[31:16]};
+    if (entry_lo[1 : 0] != 2'b11) {
+      second_inst = {16'b0, entry_lo[31 : 16]};
     } else {
-      second_inst = {16'b0, entry_hi[15:0]};
+      second_inst = {16'b0, entry_hi[15 : 0]};
     }
     if (is_pc_relative_inst?(second_inst)) {
       executing_second_inst = true;

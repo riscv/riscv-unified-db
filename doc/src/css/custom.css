@@ -8,6 +8,30 @@
  * work well for content-centric websites.
  */
 
+/* -----------------------------------------------------------------------
+ * Shiki dual-theme support
+ * Fenced code blocks are highlighted by @shikijs/rehype with defaultColor:false,
+ * which emits CSS variables per token (--shiki-light, --shiki-dark, etc.).
+ * These rules activate the right palette based on Docusaurus's data-theme attr.
+ * ----------------------------------------------------------------------- */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+  font-style: var(--shiki-light-font-style);
+  font-weight: var(--shiki-light-font-weight);
+  text-decoration: var(--shiki-light-text-decoration);
+}
+
+[data-theme='dark'] .shiki,
+[data-theme='dark'] .shiki span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+  text-decoration: var(--shiki-dark-text-decoration);
+}
+
 /* Logo color variables */
 :root {
   /* UDB logo colors */

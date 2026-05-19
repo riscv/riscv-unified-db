@@ -77,7 +77,6 @@ fields:
         }
       }
       return csr_value.RCID & ((1 `<< RCID_WIDTH) - 1);
-
   MCID:
     location: 27-16
     type: RW
@@ -99,7 +98,6 @@ fields:
         }
       }
       return csr_value.MCID & ((1 `<< MCID_WIDTH) - 1);
-
 sw_read(): |
   if (implemented?(ExtensionName::Smstateen)) {
     if (mode() < PrivilegeMode::M && CSR[mstateen0].SRMCFG == 0) {

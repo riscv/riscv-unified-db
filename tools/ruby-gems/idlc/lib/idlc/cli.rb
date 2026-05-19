@@ -91,18 +91,7 @@ module Idl
           File.open(options.output, "w")
         end
 
-      compiler.parser.set_input_file(args[0], 0)
-      m = compiler.parser.parse(File.read(args[0]), root: options.root)
-      if m.nil?
-        raise SyntaxError, <<~MSG
-          While parsing #{args[0]}:#{compiler.parser.failure_line}
-
-          #{compiler.parser.failure_reason}
-        MSG
-      end
-
-      ast = m.to_ast
-      ast.set_input_file(args[0], 0)
+      ast = compiler.build_ast(File.read(args[0]), root: options.root.to_sym, input_file: args[0])
 
       if options.format == "yaml"
         io.puts YAML.dump(ast.to_h)

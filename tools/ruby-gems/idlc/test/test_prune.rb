@@ -21,10 +21,7 @@ class TestVariables < Minitest::Test
     expected_idl = "5'd0"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
     pruned = ast.prune(symtab)
@@ -39,10 +36,7 @@ class TestVariables < Minitest::Test
     expected_idl = "5'd0"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
     pruned = ast.prune(symtab)
@@ -59,10 +53,7 @@ class TestVariables < Minitest::Test
       expected_idl = "5'#{eval "1 #{op} 1"}"
 
       symtab = Idl::SymbolTable.new
-      m = @compiler.parser.parse(orig_idl, root: :expression)
-      refute_nil m
-
-      ast = m.to_ast
+            ast = @compiler.build_ast(orig_idl, root: :expression)
       assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
       pruned = ast.prune(symtab)
@@ -77,10 +68,7 @@ class TestVariables < Minitest::Test
     expected_idl = "64'h80000000"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
     pruned = ast.prune(symtab)
@@ -94,10 +82,7 @@ class TestVariables < Minitest::Test
     expected_idl = "{32'0,1'b1,{31{1'bx}}}"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
     pruned = ast.prune(symtab)
@@ -111,10 +96,7 @@ class TestVariables < Minitest::Test
     expected_idl = "32'd1"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m, proc { @compiler.parser.failure_reason }
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -125,10 +107,7 @@ class TestVariables < Minitest::Test
     expected_idl = "16'128"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -139,10 +118,7 @@ class TestVariables < Minitest::Test
     expected_idl = "4'8"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -153,10 +129,7 @@ class TestVariables < Minitest::Test
     expected_idl = "false"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -167,10 +140,7 @@ class TestVariables < Minitest::Test
     expected_idl = "8'15"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -181,10 +151,7 @@ class TestVariables < Minitest::Test
     expected_idl = "8'8"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -195,10 +162,7 @@ class TestVariables < Minitest::Test
     expected_idl = "true"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -237,10 +201,7 @@ class TestVariables < Minitest::Test
     symtab = Idl::SymbolTable.new
     symtab.add("unknown_var", Idl::Var.new("unknown_var", Idl::Type.new(:bits, width: :unknown)))
     # Don't define unknown_var, so it remains unknown
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     # Should preserve the ternary since condition is unknown
@@ -501,10 +462,7 @@ class TestVariables < Minitest::Test
     expected_idl = "8'd15"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -515,10 +473,7 @@ class TestVariables < Minitest::Test
     expected_idl = "3'd2"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl

@@ -181,14 +181,6 @@ module Idl
       var.value = nil unless var.nil?
     end
   end
-  class MultiVariableAssignmentAst < AstNode
-    def nullify_assignments(symtab)
-      variables.each do |v|
-        sym = symtab.get(v.text_value)
-        sym.value = nil unless sym.nil?
-      end
-    end
-  end
   class PostIncrementExpressionAst < AstNode
     def nullify_assignments(symtab)
       var = symtab.get(rval.text_value)
@@ -876,21 +868,6 @@ module Idl
   class ReturnExpressionAst < AstNode
     def prune(symtab, forced_type: nil)
       ReturnExpressionAst.new(input, interval, return_value_nodes.map { |n| n.prune(symtab) })
-    end
-  end
-
-  class MultiVariableAssignmentAst < AstNode
-    def prune(symtab, forced_type: nil)
-      new_ast = MultiVariableAssignmentAst.new(
-        input, interval,
-        variables.map(&:dup),
-        function_call.prune(symtab)
-      )
-      value_try do
-        new_ast.execute(symtab)
-      end
-      # value_else: execute already sets nil on failure, nothing more to do
-      new_ast
     end
   end
 

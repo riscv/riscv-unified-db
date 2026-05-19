@@ -55,8 +55,8 @@ operation(): |
     if (implemented?(ExtensionName::Zilsd)) {
       Bits<64> data = read_memory(64, virtual_address, $encoding);
 
-      X[xd] = data[31:0];
-      X[xd+1] = data[63:32];
+      X[xd] = data[31 : 0];
+      X[xd + 1] = data[63 : 32];
     } else {
       raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
     }

@@ -38,10 +38,14 @@ h! `<%= arg.type_name.gen_adoc(0) %>`
 
 <%- unless f.builtin? || f.generated? -%>
 <%- body_ast = f.body -%>
-[source,idl,subs="specialchars,macros"]
+<%- _body_funcs = body_ast.gen_adoc(0).scan(/%%UDB_DOC_LINK%func;([^;%]+);/).flatten.uniq.map { |n| cfg_arch.function(n) }.compact -%>
+[source,idl]
 ----
-<%= body_ast.gen_adoc(0) %>
+<%= body_ast.to_idl %>
 ----
+<%- unless _body_funcs.empty? -%>
+Functions called: <%= _body_funcs.map { |fn| link_to(fn) }.join(", ") %>
+<%- end -%>
 <%- end -%>
 
 <%- end -%>

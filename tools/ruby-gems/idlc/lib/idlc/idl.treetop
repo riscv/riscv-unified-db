@@ -495,7 +495,6 @@ grammar Idl
   end
 
   rule assignment
-    '(' first:(id / dontcare_lvalue) space* rest:(',' space* var:(id / dontcare_lvalue) space*)+ ')' space* '=' space* function_call <Idl::MultiVariableAssignmentSyntaxNode> /
     single_declaration_with_initialization /
     dollar_variable space* '=' space* rval:expression <Idl::DollarVariableAssignmentSyntaxNode> /
     var:id space* '=' space* rval:expression <Idl::VariableAssignmentSyntaxNode> /
@@ -532,10 +531,6 @@ grammar Idl
     a:(function_call / assignment) space* 'if' space* expression space* ';' <Idl::ConditionalStatementSyntaxNode>
     /
     a:(function_call / assignment / declaration) space* ';' <Idl::StatementSyntaxNode>
-  end
-
-  rule dontcare_lvalue
-    '-' <Idl::DontCareLvalueSyntaxNode>
   end
 
   rule dontcare_return

@@ -83,7 +83,7 @@ fields:
       return (HPM_COUNTER_EN[11]) ? UNDEFINED_LEGAL : 0;
 sw_read(): |
   if (HPM_COUNTER_EN[11]) {
-    return read_hpm_counter(11)[63:32];
+    return read_hpm_counter(11)[63 : 32];
   } else {
     return 0;
   }

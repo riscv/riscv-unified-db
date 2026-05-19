@@ -31,7 +31,7 @@ operation(): |
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
-  XReg jump_table_base = { CSR[jvt].BASE, 6'b000000 };
+  XReg jump_table_base = {CSR[jvt].BASE, 6'b000000};
   XReg virtual_address = jump_table_base + index `* (xlen() / 8);
   XReg addr;
   TranslationResult result;

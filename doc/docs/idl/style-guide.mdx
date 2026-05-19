@@ -1,0 +1,361 @@
+---
+sidebar_position: 19
+title: Style Guide
+---
+
+This guide documents the canonical IDL formatting style enforced by `bin/idl-format`.
+Run `bin/idl-format` on any `.idl`, `.isa`, or `.yaml` file to apply it automatically.
+
+## General
+
+- **Indentation**: 2 spaces. No tabs.
+- **Encoding**: UTF-8.
+- **Line endings**: LF.
+- **Trailing whitespace**: none (the formatter removes it).
+- **Column limit**: 100 characters. `bin/idl-format` automatically reflows long lines at
+  semantic break points (`||`, `&&`, commas) to fit within this limit.
+
+## File header
+
+`%version:` must appear after any leading comments and before all definitions.
+Blank lines between `%version:` and the first definition are allowed.
+
+```idl
+# Copyright notice
+%version: 1.0
+
+include "other.idl"
+```
+
+## Comments
+
+Comments begin with `#` and run to end of line.
+
+**Standalone comment** — occupies its own line, indented to the same level as the surrounding code:
+
+```idl
+# This explains what follows.
+U32 FLEN = 64;
+```
+
+**Inline comment** — placed on the same line as a statement, after the terminating `;`:
+
+```idl
+U32 FLEN = 64; # runtime constant, not a compile-time literal
+```
+
+Blank lines immediately before a standalone comment group are preserved:
+
+```idl
+Bits<32> A = 0;
+
+# This group of constants is related.
+Bits<32> B = 1;
+Bits<32> C = 2;
+```
+
+## Global declarations
+
+Type name and identifier are separated by a single space.
+No alignment padding is added around `=`.
+
+```idl
+U32 INSTR_ENC_SIZE = 32;
+Bits<MXLEN> UNDEFINED_LEGAL;
+Bits<32> SP_POS_INF = 32'b0_11111111_00000000000000000000000;
+```
+
+**Array declarations** with a multi-line initializer use an expanded bracket style —
+opening `[` stays on the declaration line, elements are indented 2 spaces, closing `]`
+is on its own line:
+
+```idl
+Bits<FLEN> f[32] = [
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0
+];
+```
+
+Single-line array literals remain on one line: `[0, 1, 2]`.
+
+The formatter preserves source-driven line breaks in array literals.
+If the source breaks after a comma, the output keeps that break (and indents it);
+if the source keeps elements on one line, they stay on one line.
+
+## Enums
+
+`enum` keyword is followed by a space, then the name, then a space, then `{`.
+Each member occupies its own line, indented 2 spaces.
+Members have the form `Name value`, with a single space between name and value.
+Optional inline comment follows on the same line.
+
+```idl
+enum RoundingMode {
+  RNE 0b000 # Round to Nearest, ties to Even
+  RTZ 0b001 # Round toward Zero
+  RDN 0b010 # Round Down
+  RUP 0b011 # Round Up
+  DYN 0b111 # Dynamic
+}
+```
+
+`generated` and `external` enum declarations end with `;`:
+
+```idl
+generated enum ExtensionName;
+external enum MyEnum;
+```
+
+## Bitfields
+
+`bitfield` is written with no space before `(N)`. The name follows the closing `)`,
+preceded by a space. Each member is on its own line with a single space between
+the field name and its bit range.
+
+```idl
+bitfield(10) PteFlags {
+  RSW 9-8 # reserved
+  D 7     # dirty
+  A 6     # access
+  V 0     # valid
+}
+```
+
+## Structs
+
+`struct` keyword is followed by a space, then the name, then a space, then `{`.
+Each member is `Type name;` on its own line, indented 2 spaces.
+
+```idl
+struct TranslationResult {
+  Bits<PHYS_ADDR_WIDTH> paddr;
+  Pbmt pbmt;
+  PteFlags pte_flags;
+}
+```
+
+## Functions
+
+Function sections appear in order: `returns`, `arguments`, `description`, `body`.
+Each section keyword starts on a new line (at the function's indentation level).
+The keyword is followed by a space and then its content.
+
+```idl
+function creg2reg {
+  returns Bits<5>
+  arguments Bits<3> creg_idx
+  description {
+    Maps a compressed register index to an X register index.
+  }
+  body {
+    return creg_idx + 8;
+  }
+}
+```
+
+**Multiple arguments** — each argument on its own line, continuation indented 2 spaces
+past `arguments`:
+
+```idl
+function compatible_mode? {
+  returns Boolean
+  arguments PrivilegeMode target_mode,
+    PrivilegeMode actual_mode
+  description { ... }
+  body { ... }
+}
+```
+
+`builtin`, `generated`, and `external` function declarations follow the same layout
+and end with `;`:
+
+```idl
+builtin function X {
+  returns XReg
+  arguments Bits<5> idx;
+}
+```
+
+## Statements and semicolons
+
+Every statement ends with `;` with no space before it.
+Each statement occupies its own line.
+
+```idl
+Bits<MXLEN> src1 = X(rs1);
+Bits<MXLEN> src2 = X(rs2);
+```
+
+**Multi-variable declaration** — type followed by a comma-separated list of names:
+
+```idl
+Bits<2> fs_value, vs_value;
+```
+
+**Variable declaration with initialization**:
+
+```idl
+U32 i = 0;
+```
+
+## Control flow
+
+### if / else if / else
+
+Braces are always used, even for single-statement bodies.
+K&R brace style: `} else {` on a single line (no newline between `}` and `else`).
+Condition parentheses have no space inside.
+
+```idl
+if (flag == FpFlag::NX) {
+  CSR[fcsr].NX = 1;
+} else if (flag == FpFlag::UF) {
+  CSR[fcsr].UF = 1;
+} else {
+  unreachable();
+}
+```
+
+**Multi-line conditions** — continuation lines are indented 2 extra levels past `if`:
+
+```idl
+if ((!implemented?(ExtensionName::S)) &&
+    (!implemented?(ExtensionName::U)) &&
+    (!implemented?(ExtensionName::H))) {
+  return PrivilegeMode::M;
+}
+```
+
+**Trailing conditional** (postfix `if`) has a space before `if`:
+
+```idl
+return true if n == 8;
+```
+
+### for
+
+`for` keyword is followed by a space. The header uses the same parenthesis style
+as function calls (no space inside `(`/`)`). Semicolons in the header have no space
+before them; the condition and update expressions are preceded by a space.
+
+```idl
+for (U32 i = 0; i < N; i++) {
+  process(i);
+}
+```
+
+## Operators
+
+### Binary operators
+
+Single space before and after: `+`, `-`, `*`, `/`, `%`, `=`, `==`, `!=`, `<`, `>`,
+`<=`, `>=`, `&`, `|`, `^`, `<<`, `>>`, `>>>`, `` `+ ``, `` `- ``, `` `* ``,
+`` `<< ``, `->`.
+
+```idl
+result = (a + b) * c;
+flag = (x == y);
+```
+
+### Logical operators (`&&`, `||`)
+
+Single space before. Source-driven line breaks after: if the source placed a break
+after `&&` or `||`, the formatter preserves it; otherwise it keeps them on one line.
+
+```idl
+if ((a == 1) &&
+    (b == 2)) {
+```
+
+### Ternary operator
+
+Spaces around both `?` and `:`:
+
+```idl
+result = (flag) ? a : b;
+```
+
+### Unary operators
+
+`!` and `~` are written tight to their operand (no space after):
+
+```idl
+if (!implemented?(ExtensionName::F)) {
+```
+
+Postfix `++` and `--` are written tight to their operand (no space before):
+
+```idl
+i++;
+```
+
+Unary `-` is written tight to its operand:
+
+```idl
+x = -1;
+```
+
+### Namespace resolution (`::`)
+
+No spaces around `::`:
+
+```idl
+mode == PrivilegeMode::M
+```
+
+### Member access (`.`)
+
+No spaces around `.`:
+
+```idl
+CSR[fcsr].NX = 1;
+result.paddr
+```
+
+### Subscript (`[]`)
+
+No space after `[` or before `]`.
+Bit-range slices use spaces around `:`:
+
+```idl
+pte[9 : 0]
+cfg[7 : 0]
+```
+
+Regular single-index subscripts:
+
+```idl
+X[rs1]
+CSR[mstatus]
+```
+
+## Function calls
+
+No space after `(` or before `)`.
+Arguments are separated by `,` with no space before and a space (or line break) after.
+
+```idl
+notify_mode_change(new_mode, current_mode);
+```
+
+**Multi-line calls** — when the source breaks arguments across lines, each continuation
+line is indented 2 extra levels:
+
+```idl
+translate_gstage(
+    pte_gpaddr,
+    vaddr,
+    MemoryOperation::Read,
+    effective_mode);
+```
+
+## Return statements
+
+`return` keyword is followed by a space. Multi-line return expressions are indented
+one extra level:
+
+```idl
+return ((fs_value == 3) || (vs_value == 3)) ? 1 : 0;
+```

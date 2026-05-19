@@ -31,7 +31,7 @@ access:
 operation(): |
   check_f_ok($encoding);
 
-  Bits<16> hp_value = X[xs1][15:0];
+  Bits<16> hp_value = X[xs1][15 : 0];
 
   F[fd] = nan_box(16, FLEN, hp_value);
 

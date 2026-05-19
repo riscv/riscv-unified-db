@@ -35,17 +35,16 @@ access:
   vu: always
 operation(): |
   if (implemented?(ExtensionName::M) && (CSR[misa].M == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
-  Bits<32> src1 = X[xs1][31:0];
-  Bits<32> src2 = X[xs2][31:0];
+  Bits<32> src1 = X[xs1][31 : 0];
+  Bits<32> src2 = X[xs2][31 : 0];
 
   if (src2 == 0) {
     # division by zero. Since RISC-V does not have arithmetic exceptions, the result is defined
     # to be the largest 32-bit unsigned value (sign extended to 64-bits)
     X[xd] = {64{1'b1}};
-
   } else {
 
     Bits<32> result = src1 / src2;

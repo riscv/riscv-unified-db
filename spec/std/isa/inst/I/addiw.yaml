@@ -35,4 +35,4 @@ pseudoinstructions:
   - when: imm == 0
     to: sext.w xd, xs1
 operation(): |
-  X[xd] = $signed((X[xs1] + $signed(imm))[31:0]);
+  X[xd] = $signed((X[xs1] + $signed(imm))[31 : 0]);

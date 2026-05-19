@@ -42,7 +42,6 @@ operation(): |
   Csr csr = direct_csr_lookup(csr_addr);
   if (rd != 0) {
     X[rd] = csr_sw_read(csr);
-  }
-  # writes the zero-extended immediate to the CSR,
+  } # writes the zero-extended immediate to the CSR,
   # performing any WARL transformations first
-  csr_sw_write(csr, {{MXLEN-5{1'b0}}, imm});
+  csr_sw_write(csr, {{MXLEN - 5{1'b0}}, imm});

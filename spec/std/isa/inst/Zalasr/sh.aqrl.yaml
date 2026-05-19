@@ -44,4 +44,4 @@ operation(): |
     raise(ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
   }
 
-  write_memory_aligned(16, virtual_address, X[xs2][15:0], $encoding, 1'b1, 1'b1);
+  write_memory_aligned(16, virtual_address, X[xs2][15 : 0], $encoding, 1'b1, 1'b1);

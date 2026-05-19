@@ -18,7 +18,17 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.files       = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop"]
+  so_rel = "lib/idlc/libtree-sitter-idl.so"
+  so_abs = File.join(__dir__, so_rel)
+
+  if File.exist?(so_abs)
+    s.platform = Gem::Platform.local
+    s.files    = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop"] + [so_rel]
+  else
+    s.extensions = ["ext/idlc/extconf.rb"]
+    s.files      = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop",
+                       "ext/idlc/extconf.rb", "ext/idlc/*.c"]
+  end
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
     "homepage_uri" => "https://github.com/riscv/riscv-unified-db",
@@ -35,8 +45,8 @@ Gem::Specification.new do |s|
   s.add_dependency "commander", "~> 5"
   s.add_dependency "pp"
   s.add_dependency "sorbet-runtime"
-  s.add_dependency "treetop", "1.6.12"
   s.add_dependency "tty-progressbar"
+  s.add_dependency "ruby_tree_sitter"
 
   s.add_development_dependency "minitest"
   s.add_development_dependency "rake"

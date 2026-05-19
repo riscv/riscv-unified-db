@@ -161,7 +161,7 @@ fields:
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
-      if (CSR[menvcfg].SSE == 0 || CSR[henvcfg].SSE == 0){
+      if (CSR[menvcfg].SSE == 0 || CSR[henvcfg].SSE == 0) {
         return 0;
       }
       return csr_value.SSE;

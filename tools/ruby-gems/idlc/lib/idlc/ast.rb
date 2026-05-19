@@ -683,7 +683,6 @@ module Idl
       when "csr_read_expr"             then CsrReadExpressionAst.from_h(yaml, source_mapper)
       when "csr_sw_write_expr"         then CsrSoftwareWriteAst.from_h(yaml, source_mapper)
       when "dont_care"                 then DontCareReturnAst.from_h(yaml, source_mapper)
-      when "dont_care_lval"            then DontCareLvalueAst.from_h(yaml, source_mapper)
       when "else_if_stmt"              then ElseIfAst.from_h(yaml, source_mapper)
       when "enum_decl"                 then EnumDefinitionAst.from_h(yaml, source_mapper)
       when "enum_element_size_funcall" then EnumElementSizeAst.from_h(yaml, source_mapper)
@@ -706,7 +705,6 @@ module Idl
       when "isa"                       then IsaAst.from_h(yaml, source_mapper)
       when "global_var_decl_with_init" then GlobalWithInitializationAst.from_h(yaml, source_mapper)
       when "global_var_decl"           then GlobalAst.from_h(yaml, source_mapper)
-      when "multi_var_assignment"      then MultiVariableAssignmentAst.from_h(yaml, source_mapper)
       when "multi_var_decl"            then MultiVariableDeclarationAst.from_h(yaml, source_mapper)
       when "noop_expr"                 then NoopAst.from_h(yaml, source_mapper)
       when "paren_expr"                then ParenExpressionAst.from_h(yaml, source_mapper)
@@ -3409,132 +3407,6 @@ module Idl
       CsrFieldAssignmentAst.new(
         input, interval,
         T.cast(AstNode.from_h(yaml.fetch("csr_field"), source_mapper), CsrFieldReadExpressionAst),
-        T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
-      )
-    end
-  end
-
-  class MultiVariableAssignmentSyntaxNode < SyntaxNode
-    def to_ast
-      MultiVariableAssignmentAst.new(input, interval, [send(:first).to_ast] + send(:rest).elements.map { |r| r.var.to_ast }, send(:function_call).to_ast)
-    end
-  end
-
-  # represents assignment of multiple variable from a function call that returns multiple values
-  #
-  # for example:
-  #   (match_result, cfg) = pmp_match<access_size>(paddr);
-  class MultiVariableAssignmentAst < AstNode
-    include Executable
-
-    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
-    def const_eval?(symtab)
-      func_is_const_eval = function_call.const_eval?(symtab)
-      everything_is_const_eval = func_is_const_eval
-
-      variables.each do |variable|
-        var = symtab.get(variable.name)
-        type_error "#{var} was not declared" if var.nil?
-        everything_is_const_eval = false unless var.const_eval?
-
-        var.const_incompatible! unless func_is_const_eval
-      end
-
-      func_is_const_eval
-    end
-
-    def variables = @children[0..-2]
-    def function_call = @children.last
-
-    def initialize(input, interval, variables, function_call)
-      super(input, interval, variables + [function_call])
-    end
-
-    # @return [Array<AstNode>] The variables being assigned, in order
-    def vars
-      variables
-    end
-
-    def rhs
-      function_call
-    end
-
-    # @!macro type_check
-    def type_check(symtab, strict:)
-      function_call.type_check(symtab, strict:)
-      variables.each { |var| var.type_check(symtab, strict:) }
-
-      type_error "Assigning value to a constant" if variables.any? { |v| v.type(symtab).const? }
-
-      type_error "Function '#{function_call.name}' has no return type" if function_call.type(symtab).nil?
-      unless function_call.type(symtab).kind == :tuple
-        type_error "Function '#{function_call.name}' only returns 1 variable"
-      end
-
-      if function_call.type(symtab).tuple_types.size != vars.size
-        type_error "function '#{function_call.name}' returns #{function_call.type(symtab).tuple_types.size} arguments, but  #{variables.size} were specified"
-      end
-
-      function_call.type(symtab).tuple_types.each_index do |i|
-        next if variables[i].is_a?(DontCareLvalueAst)
-        raise "Implementation error" if variables[i].is_a?(DontCareReturnAst)
-
-        var = symtab.get(variables[i].text_value)
-        type_error "No symbol named '#{variables[i].text_value}'" if var.nil?
-
-        internal_error "Cannot determine type of #{variables[i].text_value}" unless var.respond_to?(:type)
-
-        unless var.type.convertable_to?(function_call.type(symtab).tuple_types[i])
-          type_error "'#{function_call.name}' expecting a #{function_call.type(symtab).tuple_types[i]} in argument #{i}, but was given #{var.type(symtab)}"
-        end
-      end
-    end
-
-    # @!macro execute
-    def execute(symtab)
-      value_result = value_try do
-        values = function_call.execute(symtab)
-
-        i = 0
-        variables.each do |v|
-          next if v.type(symtab).global?
-
-          var = symtab.get(v.text_value)
-          internal_error "call type check" if var.nil?
-
-          var.value = values[i]
-          i += 1
-        end
-      end
-      value_else(value_result) do
-        variables.each do |v|
-          symtab.get(v.text_value).value = nil
-        end
-        value_error "value of right-hand side of multi-variable assignment is unknown"
-      end
-    end
-
-    # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "(#{variables.map(&:to_idl).join(', ')}) = #{function_call.to_idl}"
-
-    sig { override.returns(T::Hash[String, T.untyped]) }
-    def to_h = {
-      "kind" => "multi_var_assignment",
-      "assignments" => variables.map(&:to_h),
-      "value" => function_call.to_h,
-      "source" => source_yaml
-    }
-
-    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(MultiVariableAssignmentAst) }
-    def self.from_h(yaml, source_mapper)
-      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "multi_var_assignment"
-
-      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
-      interval = interval_from_source_yaml(yaml.fetch("source"))
-      MultiVariableAssignmentAst.new(
-        input, interval,
-        yaml.fetch("assignments").map { |a| AstNode.from_h(a, source_mapper) },
         T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
       )
     end
@@ -6767,52 +6639,6 @@ module Idl
       input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
       interval = interval_from_source_yaml(yaml.fetch("source"))
       DontCareReturnAst.new(
-        input, interval
-      )
-    end
-  end
-
-  class DontCareLvalueSyntaxNode < SyntaxNode
-    def to_ast = DontCareLvalueAst.new(input, interval)
-  end
-
-  class DontCareLvalueAst < AstNode
-    include Rvalue
-
-    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
-    def const_eval?(symtab) = true
-
-    def initialize(input, interval) = super(input, interval, EMPTY_ARRAY)
-
-    # @!macro type_check_no_args
-    def type_check(_symtab, strict:)
-      # nothing to do!
-    end
-
-    # @!macro type_no_args
-    def type(_symtab)
-      Type.new(:dontcare)
-    end
-
-    # @!macro value_no_args
-    def value(_symtab) = internal_error "Why are you calling value for an lval?"
-
-    sig { override.returns(String) }
-    def to_idl = "-"
-
-    sig { override.returns(T::Hash[String, T.untyped]) }
-    def to_h = {
-      "kind" => "dont_care_lval",
-      "source" => source_yaml
-    }
-
-    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(DontCareLvalueAst) }
-    def self.from_h(yaml, source_mapper)
-      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "dont_care_lval"
-
-      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
-      interval = interval_from_source_yaml(yaml.fetch("source"))
-      DontCareLvalueAst.new(
         input, interval
       )
     end

@@ -79,8 +79,7 @@ fields:
             return csr_value.pmp4cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg1].pmp4cfg;
   pmp5cfg:
     location: 15-8
@@ -137,8 +136,7 @@ fields:
             return csr_value.pmp5cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg1].pmp5cfg;
   pmp6cfg:
     location: 23-16
@@ -195,8 +193,7 @@ fields:
             return csr_value.pmp6cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg1].pmp6cfg;
   pmp7cfg:
     location: 31-24
@@ -253,6 +250,5 @@ fields:
             return csr_value.pmp7cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg1].pmp7cfg;

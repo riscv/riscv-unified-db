@@ -18,8 +18,8 @@ PATH
       activesupport
       commander (~> 5)
       pp
+      ruby_tree_sitter
       sorbet-runtime
-      treetop (= 1.6.12)
       tty-progressbar
 
 PATH
@@ -151,6 +151,7 @@ GEM
     nkf (0.2.0)
     numbers_and_words (1.0.3)
       i18n (<= 2)
+    oppen (1.0.0)
     ostruct (0.6.3)
     parallel (1.28.0)
     parser (3.3.11.1)
@@ -256,6 +257,14 @@ GEM
       ostruct
     ruby-progressbar (1.13.0)
     ruby-rc4 (0.1.5)
+    ruby_tree_sitter (2.1.1-aarch64-linux-gnu)
+      oppen (~> 1.0)
+      sorbet-runtime
+      zeitwerk
+    ruby_tree_sitter (2.1.1-x86_64-linux-gnu)
+      oppen (~> 1.0)
+      sorbet-runtime
+      zeitwerk
     rubyzip (3.2.2)
     securerandom (0.4.1)
     simplecov (0.22.0)
@@ -344,6 +353,7 @@ GEM
       yard
     z3 (0.0.20251017)
       ffi (~> 1.17)
+    zeitwerk (2.7.5)
 
 PLATFORMS
   aarch64-linux-gnu
@@ -363,6 +373,7 @@ DEPENDENCIES
   rubocop-sorbet
   ruby-lsp
   ruby-prof
+  ruby_tree_sitter
   schema_doc_gen!
   simplecov
   simplecov-cobertura

@@ -51,32 +51,32 @@ sw_read(): |
   if (MXLEN == 32) {
     if ((PMP_GRANULARITY >= 16) &&
         (CSR[pmpcfg0].pmp0cfg[4] == 1)) {
-      return CSR[pmpaddr0].ADDR | {PMP_GRANULARITY-3{1'b1}};
+      return CSR[pmpaddr0].ADDR | {PMP_GRANULARITY - 3{1'b1}};
 
-    # when the mode is OFF or TOR and PMP_GRANULARITY >= 8,
-    # bits (PMP_GRANULARITY-3):0 must read as zeros
+      # when the mode is OFF or TOR and PMP_GRANULARITY >= 8,
+      # bits (PMP_GRANULARITY-3):0 must read as zeros
     } else if ((PMP_GRANULARITY >= 8) &&
-                (CSR[pmpcfg0].pmp0cfg[4] == 0)) {
-      Bits<PHYS_ADDR_WIDTH-2> mask = {PMP_GRANULARITY-2{1'b1}};
+        (CSR[pmpcfg0].pmp0cfg[4] == 0)) {
+      Bits<PHYS_ADDR_WIDTH-2> mask = {PMP_GRANULARITY - 2{1'b1}};
       return CSR[pmpaddr0].ADDR & ~mask;
 
-    # no modifications needed
+      # no modifications needed
     } else {
       return CSR[pmpaddr0].ADDR;
     }
   } else {
     if ((PMP_GRANULARITY >= 16) &&
         (CSR[pmpcfg0].pmp0cfg[4] == 1)) {
-      return CSR[pmpaddr0].ADDR | {PMP_GRANULARITY-3{1'b1}};
+      return CSR[pmpaddr0].ADDR | {PMP_GRANULARITY - 3{1'b1}};
 
-    # when the mode is OFF or TOR and PMP_GRANULARITY >= 8,
-    # bits (PMP_GRANULARITY-3):0 must read as zeros
+      # when the mode is OFF or TOR and PMP_GRANULARITY >= 8,
+      # bits (PMP_GRANULARITY-3):0 must read as zeros
     } else if ((PMP_GRANULARITY >= 8) &&
-                (CSR[pmpcfg0].pmp0cfg[4] == 0)) {
-      Bits<PHYS_ADDR_WIDTH-2> mask = {PMP_GRANULARITY-2{1'b1}};
+        (CSR[pmpcfg0].pmp0cfg[4] == 0)) {
+      Bits<PHYS_ADDR_WIDTH-2> mask = {PMP_GRANULARITY - 2{1'b1}};
       return CSR[pmpaddr0].ADDR & ~mask;
 
-    # no modifications needed
+      # no modifications needed
     } else {
       return CSR[pmpaddr0].ADDR;
     }

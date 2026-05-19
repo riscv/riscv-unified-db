@@ -165,8 +165,13 @@ written value:
 
 This CSR may return a value that is different from what is stored in hardware.
 
-[source,idl,subs="specialchars,macros"]
+<%- _sw_read_ast = csr.sw_read_ast(cfg_arch.symtab) -%>
+<%- _csr_funcs = _sw_read_ast.gen_adoc.scan(/%%UDB_DOC_LINK%func;([^;%]+);/).flatten.uniq.map { |n| cfg_arch.function(n) }.compact -%>
+[source,idl]
 ----
-<%= csr.sw_read_ast(cfg_arch.symtab).gen_adoc %>
+<%= _sw_read_ast.to_idl %>
 ----
+<%- unless _csr_funcs.empty? -%>
+Functions called: <%= _csr_funcs.map { |f| link_to(f) }.join(", ") %>
+<%- end -%>
 <%- end -%>

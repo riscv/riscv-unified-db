@@ -35,7 +35,7 @@ fields:
     location: 31
     alias: hstateen1.SE0
     sw_write(csr_value): |
-      if (CSR[mstateen1].SE0 == 1'b0){
+      if (CSR[mstateen1].SE0 == 1'b0) {
         return 0;
       }
       CSR[hstateen1].SE0 = csr_value.SE0;

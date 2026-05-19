@@ -76,6 +76,15 @@ repos:
           - "2"
           - --case-indent
 
+  - repo: local
+    hooks:
+      - id: idl-format
+        name: format IDL source
+        priority: 20
+        files: \.(idl|isa|yaml|yml)$
+        language: system
+        entry: bin/idl-format
+
   # JSON-schema validation: each variant filters a different subtree, so they
   # are independent and benefit greatly from running in parallel.
   - repo: https://github.com/python-jsonschema/check-jsonschema

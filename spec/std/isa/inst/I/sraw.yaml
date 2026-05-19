@@ -33,4 +33,4 @@ data_independent_timing: true
 operation(): |
   XReg operand1 = sext(X[xs1], 32);
 
-  X[xd] = sext(operand1 >>> X[xs2][4:0], 32);
+  X[xd] = sext(operand1 >>> X[xs2][4 : 0], 32);

@@ -34,12 +34,6 @@
       "include": "#boolean"
     },
     {
-      "include": "#type-alias"
-    },
-    {
-      "include": "#csr"
-    },
-    {
       "include": "#scope-resolution"
     },
     {
@@ -49,7 +43,7 @@
       "include": "#function-call"
     },
     {
-      "include": "#constant"
+      "include": "#type-name"
     },
     {
       "include": "#widening-operator"
@@ -137,7 +131,7 @@
       "patterns": [
         {
           "name": "keyword.control.idl",
-          "match": "\\b(?:if|else|for|returns|return|arguments|description|body|builtin|function|enum|bitfield|struct)\\b"
+          "match": "\\b(?:if|else|for|return|returns|arguments|body|description|function|enum|bitfield|struct|builtin|generated|external|fetch|include|const|CSR)\\b"
         }
       ]
     },
@@ -145,7 +139,7 @@
       "patterns": [
         {
           "name": "support.function.builtin.idl",
-          "match": "\\$(?:pc|encoding|signed|bits|enum_to_a|enum|array_size|enum_size|enum_element_size)\\b"
+          "match": "(?:\\$[a-zA-Z_][a-zA-Z0-9_?]*)\\b"
         }
       ]
     },
@@ -157,19 +151,11 @@
         }
       ]
     },
-    "type-alias": {
+    "type-name": {
       "patterns": [
         {
           "name": "entity.name.type.idl",
-          "match": "\\b(?:Bits|XReg|U64|U32|Boolean|String)\\b"
-        }
-      ]
-    },
-    "csr": {
-      "patterns": [
-        {
-          "name": "keyword.control.idl",
-          "match": "\\bCSR\\b"
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
         }
       ]
     },
@@ -218,14 +204,6 @@
         }
       ]
     },
-    "constant": {
-      "patterns": [
-        {
-          "name": "constant.language.idl",
-          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
-        }
-      ]
-    },
     "widening-operator": {
       "patterns": [
         {
@@ -246,7 +224,7 @@
       "patterns": [
         {
           "name": "punctuation.idl",
-          "match": "[{}[\\]();,.:]"
+          "match": "[{}\\[\\]();,.]"
         }
       ]
     }

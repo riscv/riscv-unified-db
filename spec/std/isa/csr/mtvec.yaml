@@ -29,7 +29,6 @@ fields:
       # Base spec says that BASE must be 4-byte aligned, which will always be the case
       # implementations may put further constraints on BASE when MODE != Direct
       # If that is the case, stvec should have an override for the implementation
-
       if (csr_value.MODE == 0) {
         if ($array_includes?(MTVEC_MODES, 0)) {
           return csr_value.BASE;

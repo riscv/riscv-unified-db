@@ -38,7 +38,7 @@ access:
   vu: always
 operation(): |
   if (!implemented?(ExtensionName::Zabha)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   XReg virtual_address = X[xs1];

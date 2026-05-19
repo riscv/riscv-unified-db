@@ -29,4 +29,4 @@ access:
 operation(): |
   XReg func = 8;
   XReg arg = 0;
-  iss_syscall(func,arg);
+  iss_syscall(func, arg);

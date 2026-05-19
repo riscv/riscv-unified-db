@@ -67,7 +67,7 @@ RV64::
 <%- end -%>
 ----
 <%- else -%>
-[source,idl,subs="specialchars,macros"]
+[source,idl]
 ----
 <%- inst.decode_variables(inst.base.nil? ? 64 : inst.base).each do |d| -%>
 <%= d.sext? ? 'signed ' : '' %>Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
@@ -78,10 +78,15 @@ RV64::
 
 <% unless inst.data["operation()"].nil? %>
 Operation::
-[source,idl,subs="specialchars,macros"]
+<%- _op_ast = inst.operation_ast -%>
+<%- _op_funcs = _op_ast.gen_adoc.scan(/%%UDB_DOC_LINK%func;([^;%]+);/).flatten.uniq.map { |n| cfg_arch.function(n) }.compact -%>
+[source,idl]
 ----
-<%= inst.fix_entities(inst.operation_ast.gen_adoc) %>
+<%= _op_ast.to_idl %>
 ----
+<%- unless _op_funcs.empty? -%>
+Functions called: <%= _op_funcs.map { |f| link_to(f) }.join(", ") %>
+<%- end -%>
 <% end %>
 
 Included in::
