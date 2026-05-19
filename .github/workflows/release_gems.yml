@@ -130,19 +130,14 @@ jobs:
             echo "TAG_EXISTS=false" >> "$GITHUB_ENV"
           fi
 
-      - name: Set up Ruby
+      - name: Set up mise environment
         if: env.TAG_EXISTS == 'false'
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-          working-directory: tools/ruby-gems/${{ matrix.gem_dir }}
+        uses: ./.github/actions/mise-setup
 
       - name: Prepare gem staging directory
         if: env.TAG_EXISTS == 'false'
         run: |
-          cd tools/ruby-gems/${{ matrix.gem_dir }}
-          bundle exec rake release:${{ matrix.rake_task }}:prepare
+          BUNDLE_GEMFILE=$PWD/Gemfile bundle exec rake release:${{ matrix.rake_task }}:prepare
 
       - name: Build gem
         if: env.TAG_EXISTS == 'false'
