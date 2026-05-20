@@ -270,8 +270,7 @@ builtin function ebreak {
 }
 
 builtin function execute_instruction {
-  arguments
-    Bits<32> encoding
+  arguments Bits<32> encoding
   description {
     Fetch and execute the instruction with the given 32-bit encoding in the current hart
     context. The instruction executes as if it were a normal instruction, with the

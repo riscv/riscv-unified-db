@@ -254,7 +254,6 @@ fields:
       } else {
         return 2;
       }
-
   SPELP:
     location: 23
     long_name: S-mode Previous Expected Landing Pad state
