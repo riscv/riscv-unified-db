@@ -1144,15 +1144,22 @@ function packToF16UI {
   }
 }
 
+struct NormSubnormalF16Sig {
+  Bits<5> exp;Bits<10> frac;
+}
+
 function softfloat_normSubnormalF16Sig {
-  returns Bits<5>, Bits<10>
+  returns NormSubnormalF16Sig
   arguments Bits<16> hp_value
   description {
     normalize subnormal half-precision value
   }
   body {
     Bits<8> shift_dist = count_leading_zeros(16, hp_value);
-    return 1 - shift_dist, hp_value << shift_dist;
+    NormSubnormalF16Sig result;
+    result.exp = 1 - shift_dist;
+    result.frac = hp_value << shift_dist;
+    return result;
   }
 }
 
