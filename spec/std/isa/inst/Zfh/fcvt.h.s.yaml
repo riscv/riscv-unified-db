@@ -39,11 +39,11 @@ access:
 operation(): |
   check_f_ok($encoding);
 
-  Bits<16> hp_value = F[fs1][15:0];
+  Bits<16> hp_value = F[fs1][15 : 0];
 
   Bits<1> sign = hp_value[15];
-  Bits<5> exp = hp_value[14:10];
-  Bits<10> frac = hp_value[9:0];
+  Bits<5> exp = hp_value[14 : 10];
+  Bits<10> frac = hp_value[9 : 0];
 
   if (exp == 0x1F) {
     if (frac != 0) {
@@ -59,8 +59,9 @@ operation(): |
       if (frac != 0) {
         F[fd] = packToF32UI(sign, 0, 0);
       } else {
-        Bits<6> norm_exp;
-        (norm_exp, frac) = softfloat_normSubnormalF16Sig( frac );
+        NormSubnormalF16Sig norm_sig = softfloat_normSubnormalF16Sig(frac);
+        Bits<6> norm_exp = norm_sig.exp;
+        frac = norm_sig.frac;
         exp = norm_exp - 1;
         F[fd] = packToF32UI(sign, exp + 0x70, frac << 13);
       }
