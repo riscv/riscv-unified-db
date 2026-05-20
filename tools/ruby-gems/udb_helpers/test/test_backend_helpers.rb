@@ -133,6 +133,7 @@ class TestAntoraUtils < Minitest::Test
   def test_resolve_links_inst
     assert_equal("xref:insts:foo.adoc#udb:doc:inst:foo[bar]", AntoraUtils.resolve_links("%%UDB_DOC_LINK%inst;foo;bar%%"))
     assert_equal("xref:insts:foo.adoc#udb:doc:inst:foo[foo]", AntoraUtils.resolve_links(link_to_udb_doc_inst("foo")))
+    assert_equal("xref:insts:fo_o.adoc#udb:doc:inst:fo_o[fo.o]", AntoraUtils.resolve_links(link_to_udb_doc_inst("fo.o")))
   end
 
   def test_resolve_links_csr
