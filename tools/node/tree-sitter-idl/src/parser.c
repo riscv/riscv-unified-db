@@ -1,5 +1,3 @@
-// SPDX-FileCopyrightText: Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-// SPDX-License-Identifier: BSD-3-Clause-Clear
 #include "tree_sitter/parser.h"
 
 #if defined(__GNUC__) || defined(__clang__)

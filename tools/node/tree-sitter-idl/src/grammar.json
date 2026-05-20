@@ -3250,8 +3250,14 @@
     }
   ],
   "conflicts": [
-    ["function_name", "primary_expression"],
-    ["function_name", "csr_field_access"]
+    [
+      "function_name",
+      "primary_expression"
+    ],
+    [
+      "function_name",
+      "csr_field_access"
+    ]
   ],
   "precedences": [],
   "externals": [

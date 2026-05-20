@@ -16,5 +16,10 @@ jobs:
           fetch-depth: 0
       - name: Set up mise environment
         uses: "./.github/actions/mise-setup"
+      - name: Cache tree-sitter-idl npm packages
+        uses: actions/cache@v4
+        with:
+          path: tools/node/tree-sitter-idl/node_modules
+          key: tree-sitter-idl-npm-${{ runner.os }}-${{ hashFiles('tools/node/tree-sitter-idl/package-lock.json') }}
       - run: ./bin/chore gen all
       - uses: autofix-ci/action@7a166d7532b277f34e16238930461bf77f9d7ed8 # v1.3.3

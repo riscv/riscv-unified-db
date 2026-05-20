@@ -123,16 +123,18 @@ gen_subcmd_usage() {
   echo ""
   echo "Commands:"
   echo ""
-  echo "  all:           Generate all development artifacts"
-  echo "  gem-versions:  Sync inter-gem version pins in gemspecs and Gemfile.lock files"
-  echo "                 (no version bumping; use 'chore update gem-versions' to also bump)"
-  echo "  profile-cfgs:  Generate strict config files for profiles (cfgs/profile/)"
-  echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
-  echo "  regress:       Generate .github/workflows/regress.yml"
-  echo "  ruby-type-def: Generate Ruby type signatutres"
-  echo "  schema-docs:   Generate schema documentation from JSON Schema files"
-  echo "  cfg-headers:   Generate golden cfg header files for regression testing"
-  echo "  xqci           Generate Xqci spec used for Golden regressions"
+  echo "  all:             Generate all development artifacts"
+  echo "  gem-versions:    Sync inter-gem version pins in gemspecs and Gemfile.lock files"
+  echo "                   (no version bumping; use 'chore update gem-versions' to also bump)"
+  echo "  profile-cfgs:    Generate strict config files for profiles (cfgs/profile/)"
+  echo "  ts-idl-parser:   Regenerate IDL tree-sitter parser (src/parser.c, src/tree_sitter/*.h)"
+  echo "                   from grammar.js via 'tree-sitter generate --no-bindings'"
+  echo "  vscode-idl:      Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
+  echo "  regress:         Generate .github/workflows/regress.yml"
+  echo "  ruby-type-def:   Generate Ruby type signatutres"
+  echo "  schema-docs:     Generate schema documentation from JSON Schema files"
+  echo "  cfg-headers:     Generate golden cfg header files for regression testing"
+  echo "  xqci             Generate Xqci spec used for Golden regressions"
   echo ""
 }
 
@@ -385,9 +387,46 @@ do_idl_format() {
 }
 
 #
+# Regenerate IDL tree-sitter parser and C API headers from grammar.js.
+# Requires tree-sitter-cli; installs it via npm ci in the subpackage if absent.
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
+#
+do_gen_ts_idl_parser() {
+  local ts_dir="$UDB_ROOT/tools/node/tree-sitter-idl"
+  local ts_cli="$ts_dir/node_modules/.bin/tree-sitter"
+
+  echo "Generating IDL tree-sitter parser from grammar.js"
+
+  if [ $fail_on_change -eq 1 ]; then
+    local sha_before
+    sha_before=$(find "$ts_dir/src" -type f \( -name "parser.c" -o -name "*.h" \) \
+      -exec sha256sum {} \; | sort | sha256sum)
+  fi
+
+  if [[ ! -x "$ts_cli" ]]; then
+    echo "  tree-sitter-cli not found; running npm ci in $ts_dir..."
+    (cd "$ts_dir" && "$UDB_ROOT/bin/npm" ci) || return 1
+  fi
+
+  (cd "$ts_dir" && "$ts_cli" generate --no-bindings) || return 1
+
+  if [ $fail_on_change -eq 1 ]; then
+    local sha_after
+    sha_after=$(find "$ts_dir/src" -type f \( -name "parser.c" -o -name "*.h" \) \
+      -exec sha256sum {} \; | sort | sha256sum)
+    if [ "$sha_before" != "$sha_after" ]; then
+      echo "[ERROR]: IDL tree-sitter parser files are out of date." \
+           "Run: bin/chore gen ts-idl-parser" >&2
+      return 1
+    fi
+  fi
+}
+
+#
 # Generate all development artifacts
 #
 do_gen_all() {
+  do_gen_ts_idl_parser
   do_gen_regress
   do_gen_idl_highlight
   do_ruby_type_def all
@@ -678,6 +717,11 @@ case "$subcommand" in
       idl-highlight | vscode-idl )
         do_gen_idl_highlight
         exit 0
+        ;;
+      ts-idl-parser )
+        do_gen_ts_idl_parser
+        exit_code=$?
+        exit $exit_code
         ;;
       regress )
         do_gen_regress

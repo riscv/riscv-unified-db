@@ -9,7 +9,6 @@ bindings/swift/
 binding.gyp
 node_modules/
 src/*.o
-src/tree_sitter/
 *.so
 *.a
 *.pc
