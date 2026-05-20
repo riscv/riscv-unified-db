@@ -49,3 +49,5 @@ tools/ruby-gems/udb/ext/udb_download/Makefile
 *~
 
 .wip
+
+.tmp
