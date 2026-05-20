@@ -92,26 +92,34 @@ access_detail: |
 
   <%- end -%>
 operation(): |
-  # first, perform all the access checks
+  Boolean tw_trap = false;
+  Boolean vtw_trap = false;
+
+  # U-mode always causes an illegal-instruction trap on timeout
   if (mode() == PrivilegeMode::U) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
-  }
-  if ((CSR[misa].S == 1) && (CSR[mstatus].TW == 1'b1)) {
-    if (mode() != PrivilegeMode::M) {
-      raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
-    }
-  }
-  if (CSR[misa].H == 1) {
+    tw_trap = true;
+  } else if ((CSR[misa].S == 1) && (CSR[mstatus].TW == 1'b1) && (mode() != PrivilegeMode::M)) {
+    # TW=1: any non-M mode traps with illegal-instruction on timeout
+    tw_trap = true;
+  } else if (CSR[misa].H == 1) {
+    # TW=0 with H extension: VU always traps virtually; VS traps virtually when VTW=1
     if (CSR[hstatus].VTW == 1'b0) {
       if (mode() == PrivilegeMode::VU) {
-        raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+        vtw_trap = true;
       }
-    } else if (CSR[hstatus].VTW == 1'b1) {
+    } else {
       if ((mode() == PrivilegeMode::VS) || (mode() == PrivilegeMode::VU)) {
-        raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+        vtw_trap = true;
       }
     }
   }
 
-  # passed, so now do the wait
-  wfi();
+  # Wait, then raise only if the implementation-specific timeout expired
+  Boolean timed_out = wfi(tw_trap, vtw_trap);
+  if (timed_out) {
+    if (tw_trap) {
+      raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    } else {
+      raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+    }
+  }
