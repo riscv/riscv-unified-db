@@ -127,4 +127,10 @@ operation(): |
       CSR[mepc].PC = real_pc | 32'b1;
     }
     execute_instruction(second_inst);
+    # Restore mepc/mnepc bit 0 to 0 after successful completion
+    if (implemented?(ExtensionName::Smrnmi) && CSR[mnstatus].NMIE == 1'b0) {
+      CSR[mnepc].PC = real_pc;
+    } else {
+      CSR[mepc].PC = real_pc;
+    }
   }
