@@ -97,6 +97,9 @@
             "implicit": {
               "type": "boolean"
             },
+            "decode()": {
+              "type": "string"
+            },
             "$child_of": {
               "type": "string"
             },
@@ -139,6 +142,9 @@
                 "type": "string",
                 "pattern": "^-?[0-9]+-(-?[0-9]+)$"
               }
+            },
+            "decode()": {
+              "type": "string"
             },
             "$child_of": {
               "type": "string"
@@ -184,6 +190,9 @@
               "items": {
                 "type": "integer"
               }
+            },
+            "decode()": {
+              "type": "string"
             },
             "$child_of": {
               "type": "string"
@@ -232,6 +241,9 @@
             "left_shifted": {
               "type": "integer"
             },
+            "decode()": {
+              "type": "string"
+            },
             "$child_of": {
               "type": "string"
             },
@@ -271,6 +283,9 @@
             "default": {
               "type": "string"
             },
+            "decode()": {
+              "type": "string"
+            },
             "$child_of": {
               "type": "string"
             },
@@ -306,6 +321,9 @@
               "items": {
                 "type": "string"
               }
+            },
+            "decode()": {
+              "type": "string"
             },
             "$child_of": {
               "type": "string"
@@ -346,6 +364,9 @@
             "default": {
               "type": "string"
             },
+            "decode()": {
+              "type": "string"
+            },
             "$child_of": {
               "type": "string"
             },
@@ -381,6 +402,9 @@
               "items": {
                 "type": "string"
               }
+            },
+            "decode()": {
+              "type": "string"
             },
             "$child_of": {
               "type": "string"
@@ -420,6 +444,9 @@
             },
             "implicit": {
               "type": "boolean"
+            },
+            "decode()": {
+              "type": "string"
             },
             "$child_of": {
               "type": "string"

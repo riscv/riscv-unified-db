@@ -12,3 +12,8 @@ data:
   reg_file: vr
   possible_values: [0]
   default: ""
+  decode(): |
+    if (vm == 1) {
+      return "";
+    }
+    return "v0.t";

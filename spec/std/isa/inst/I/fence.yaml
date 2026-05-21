@@ -168,39 +168,7 @@ encoding:
           return 0b1111;  # I/O/R/W
         }
         raise("Invalid predecessor operand: ${operands[pred]}");
-      decode(): |
-        if (pred == 0b1000) {
-          return "i";
-        } else if (pred == 0b0100) {
-          return "o";
-        } else if (pred == 0b0010) {
-          return "r";
-        } else if (pred == 0b0001) {
-          return "w";
-        } else if (pred == 0b1100) {
-          return "io";
-        } else if (pred == 0b1010) {
-          return "ir";
-        } else if (pred == 0b1001) {
-          return "iw";
-        } else if (pred == 0b0110) {
-          return "or";
-        } else if (pred == 0b0101) {
-          return "ow";
-        } else if (pred == 0b0011) {
-          return "rw";
-        } else if (pred == 0b1110) {
-          return "ior";
-        } else if (pred == 0b1101) {
-          return "iow";
-        } else if (pred == 0b1011) {
-          return "irw";
-        } else if (pred == 0b0111) {
-          return "orw";
-        } else if (pred == 0b1111) {
-          return "iorw";
-        }
-        raise("Invalid fence scope encoding ${pred}");
+
     - name: succ
       location: 23-20
       encode(operands): |
@@ -236,39 +204,7 @@ encoding:
           return 0b1111;  # I/O/R/W
         }
         raise("Invalid successor operand: ${operands[succ]}");
-      decode(): |
-        if (succ == 0b1000) {
-          return "i";
-        } else if (succ == 0b0100) {
-          return "o";
-        } else if (succ == 0b0010) {
-          return "r";
-        } else if (succ == 0b0001) {
-          return "w";
-        } else if (succ == 0b1100) {
-          return "io";
-        } else if (succ == 0b1010) {
-          return "ir";
-        } else if (succ == 0b1001) {
-          return "iw";
-        } else if (succ == 0b0110) {
-          return "or";
-        } else if (succ == 0b0101) {
-          return "ow";
-        } else if (succ == 0b0011) {
-          return "rw";
-        } else if (succ == 0b1110) {
-          return "ior";
-        } else if (succ == 0b1101) {
-          return "iow";
-        } else if (succ == 0b1011) {
-          return "irw";
-        } else if (succ == 0b0111) {
-          return "orw";
-        } else if (succ == 0b1111) {
-          return "iorw";
-        }
-        raise("Invalid fence scope encoding ${succ}");
+
     - name: xs1
       location: 19-15
       encode(operands): return 0; # xs1 is unused, so it must be encoded as 0
@@ -278,8 +214,74 @@ encoding:
 operands:
   - $inherits: operand/fence-scope.yaml#/data
     name: pred
+    decode(): |
+      if (pred == 0b1000) {
+        return "i";
+      } else if (pred == 0b0100) {
+        return "o";
+      } else if (pred == 0b0010) {
+        return "r";
+      } else if (pred == 0b0001) {
+        return "w";
+      } else if (pred == 0b1100) {
+        return "io";
+      } else if (pred == 0b1010) {
+        return "ir";
+      } else if (pred == 0b1001) {
+        return "iw";
+      } else if (pred == 0b0110) {
+        return "or";
+      } else if (pred == 0b0101) {
+        return "ow";
+      } else if (pred == 0b0011) {
+        return "rw";
+      } else if (pred == 0b1110) {
+        return "ior";
+      } else if (pred == 0b1101) {
+        return "iow";
+      } else if (pred == 0b1011) {
+        return "irw";
+      } else if (pred == 0b0111) {
+        return "orw";
+      } else if (pred == 0b1111) {
+        return "iorw";
+      }
+      raise("Invalid fence scope encoding ${pred}");
   - $inherits: operand/fence-scope.yaml#/data
     name: succ
+    decode(): |
+      if (succ == 0b1000) {
+        return "i";
+      } else if (succ == 0b0100) {
+        return "o";
+      } else if (succ == 0b0010) {
+        return "r";
+      } else if (succ == 0b0001) {
+        return "w";
+      } else if (succ == 0b1100) {
+        return "io";
+      } else if (succ == 0b1010) {
+        return "ir";
+      } else if (succ == 0b1001) {
+        return "iw";
+      } else if (succ == 0b0110) {
+        return "or";
+      } else if (succ == 0b0101) {
+        return "ow";
+      } else if (succ == 0b0011) {
+        return "rw";
+      } else if (succ == 0b1110) {
+        return "ior";
+      } else if (succ == 0b1101) {
+        return "iow";
+      } else if (succ == 0b1011) {
+        return "irw";
+      } else if (succ == 0b0111) {
+        return "orw";
+      } else if (succ == 0b1111) {
+        return "iorw";
+      }
+      raise("Invalid fence scope encoding ${succ}");
 access:
   s: always
   u: always

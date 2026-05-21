@@ -287,9 +287,6 @@
             },
             "encode(operands)": {
               "type": "string"
-            },
-            "decode()": {
-              "type": "string"
             }
           },
           "required": ["name", "location"],

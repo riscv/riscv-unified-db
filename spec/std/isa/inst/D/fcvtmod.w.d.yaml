@@ -51,25 +51,6 @@ encoding:
           return 3'b111;
         }
         raise("Invalid rounding mode: ${operands[rm]}");
-      decode(): |
-        if (rm == 3'b000) {
-          return "rne";
-        }
-        if (rm == 3'b001) {
-          return "rtz";
-        }
-        if (rm == 3'b010) {
-          return "rdn";
-        }
-        if (rm == 3'b011) {
-          return "rup";
-        }
-        if (rm == 3'b100) {
-          return "rmm";
-        }
-        if (rm == 3'b111) {
-          return "dyn";
-        }
     - name: xd
       location: 11-7
 operands:

@@ -26,11 +26,6 @@ encoding:
           raise("Invalid vector mask operand: ${operands[vm]}");
         }
         return 1;
-      decode(): |
-        if (vm == 1) {
-          return "";
-        }
-        return "v0.t";
     - name: xs1
       location: 19-15
     - name: vd
@@ -39,7 +34,7 @@ operands:
   - $inherits: operand/vd.yaml#/data
   - $inherits: operand/xs-nooffset.yaml#/data
     name: xs1
-  - $inherits: operand/vm.yaml#/data # needs to be "v0.t". hmm
+  - $inherits: operand/vm.yaml#/data
 access:
   s: always
   u: always

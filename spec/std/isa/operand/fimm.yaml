@@ -44,3 +44,98 @@ data:
       "inf",
       "nan",
     ]
+  decode(): |
+    if (xs1 == 5'b00000) {
+        return "-1.0";
+    }
+    if (xs1 == 5'b00001) {
+        return "min";
+    }
+    if (xs1 == 5'b00010) {
+        return "0.0000152587890625";
+    }
+    if (xs1 == 5'b00011) {
+        return "0.000030517578125";
+    }
+    if (xs1 == 5'b00100) {
+        return "0.00390625";
+    }
+    if (xs1 == 5'b00101) {
+        return "0.0078125";
+    }
+    if (xs1 == 5'b00110) {
+        return "0.0625";
+    }
+    if (xs1 == 5'b00111) {
+        return "0.125";
+    }
+    if (xs1 == 5'b01000) {
+        return "0.25";
+    }
+    if (xs1 == 5'b01001) {
+        return "0.3125";
+    }
+    if (xs1 == 5'b01010) {
+        return "0.375";
+    }
+    if (xs1 == 5'b01011) {
+        return "0.4375";
+    }
+    if (xs1 == 5'b01100) {
+        return "0.5";
+    }
+    if (xs1 == 5'b01101) {
+        return "0.625";
+    }
+    if (xs1 == 5'b01110) {
+        return "0.75";
+    }
+    if (xs1 == 5'b01111) {
+        return "0.875";
+    }
+    if (xs1 == 5'b10000) {
+        return "1.0";
+    }
+    if (xs1 == 5'b10001) {
+        return "1.25";
+    }
+    if (xs1 == 5'b10010) {
+        return "1.5";
+    }
+    if (xs1 == 5'b10011) {
+        return "1.75";
+    }
+    if (xs1 == 5'b10100) {
+        return "2.0";
+    }
+    if (xs1 == 5'b10101) {
+        return "2.5";
+    }
+    if (xs1 == 5'b10110) {
+        return "3";
+    }
+    if (xs1 == 5'b10111) {
+        return "4";
+    }
+    if (xs1 == 5'b11000) {
+        return "8";
+    }
+    if (xs1 == 5'b11001) {
+        return "16";
+    }
+    if (xs1 == 5'b11010) {
+        return "128";
+    }
+    if (xs1 == 5'b11011) {
+        return "256";
+    }
+    if (xs1 == 5'b11100) {
+        return "32768";
+    }
+    if (xs1 == 5'b11101) {
+        return "65536";
+    }
+    if (xs1 == 5'b11110) {
+        return "inf";
+    }
+    return "nan";

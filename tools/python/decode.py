@@ -124,24 +124,24 @@ def matches_pattern(opcode, pattern):
     return all((pattern[i] == "-" or opcode[i] == pattern[i]) for i in range(len(opcode)))
 
 
+def get_stanza(block, xlen):
+    rvtag = f"RV{xlen}"
+    print(block)
+    if rvtag in block:
+        return block[rvtag]
+    else:
+        return block
+
+
 def find_matching_instructions(opcode, xlen=64):
     """Find all instructions that match the given opcode."""
     matches = []
 
     for instruction in spec.instructions:
         if "encoding" in spec.instructions[instruction]:
-            encoding = spec.instructions[instruction]["encoding"]
-            match_pattern = None
-
-            # Extract match pattern based on encoding format and xlen
-            if f"RV{xlen}" in encoding and "match" in encoding[f"RV{xlen}"]:
-                match_pattern = encoding[f"RV{xlen}"]["match"]
-            elif "match" in encoding:
-                match_pattern = encoding["match"]
-            elif "RV32" in encoding and "match" in encoding["RV32"] and xlen == 32:
-                match_pattern = encoding["RV32"]["match"]
-            elif "RV64" in encoding and "match" in encoding["RV64"] and xlen == 64:
-                match_pattern = encoding["RV64"]["match"]
+            match_pattern = get_stanza(spec.instructions[instruction]["encoding"], xlen).get(
+                "match"
+            )
 
             if match_pattern and matches_pattern(opcode, match_pattern):
                 matches.append(spec.instructions[instruction])
@@ -151,18 +151,8 @@ def find_matching_instructions(opcode, xlen=64):
 
 def extract_variable_values(opcode, instruction, xlen=64):
     """Extract variable values from opcode based on instruction definition"""
-    encoding = instruction["encoding"]
-    variables = []
 
-    # Extract variables based on encoding format and xlen
-    if f"RV{xlen}" in encoding and "variables" in encoding[f"RV{xlen}"]:
-        variables = encoding[f"RV{xlen}"]["variables"]
-    elif "variables" in encoding:
-        variables = encoding["variables"]
-    elif "RV32" in encoding and "variables" in encoding["RV32"] and xlen == 32:
-        variables = encoding["RV32"]["variables"]
-    elif "RV64" in encoding and "variables" in encoding["RV64"] and xlen == 64:
-        variables = encoding["RV64"]["variables"]
+    variables = get_stanza(instruction["encoding"], xlen).get("variables") or []
 
     variable_values = {}
 
@@ -243,32 +233,13 @@ def append_assembly_operand(assembly_parts, operand, value):
     assembly_parts.append(str(value))
 
 
-def variable_by_name(variables, name):
-    for variable in variables or []:
-        if variable.get("name") == name:
-            return variable
-    return None
-
-
 def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
     """Format assembly instruction based on instruction definition and variable values"""
     mnemonic = instruction["name"]
 
     operands = []
     if "operands" in instruction:
-        if "RV32" in instruction["operands"] and xlen == 32:
-            operands = instruction["operands"]["RV32"]
-        elif "RV64" in instruction["operands"] and xlen == 64:
-            operands = instruction["operands"]["RV64"]
-        else:
-            operands = instruction["operands"]
-
-    if "RV32" in instruction["encoding"] and xlen == 32:
-        variables = instruction["encoding"]["RV32"].get("variables")
-    elif "RV64" in instruction["encoding"] and xlen == 64:
-        variables = instruction["encoding"]["RV64"].get("variables")
-    else:
-        variables = instruction["encoding"].get("variables")
+        operands = get_stanza(instruction["operands"], xlen)
 
     assembly_parts = []
 
@@ -324,11 +295,11 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
 
         elif operand.get("offset"):
             value = variable_values[operand_name]
-            variable = variable_by_name(variables, operand_name)
-            if variable and "decode()" in variable and "creg2reg" in variable["decode()"]:
+            decode_expr = operand.get("decode()")
+            if decode_expr and "creg2reg" in decode_expr:
                 value += 8
                 dprint(
-                    f"# Value after creg2reg transformation for variable '{variable['name']}': {value}"
+                    f"# Value after creg2reg transformation for operand '{operand_name}': {value}"
                 )
 
             dprint(f"# Handling offset for operand '{operand_name}' with value {value}")
@@ -440,18 +411,16 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
 
         else:
             value = variable_values[operand_name]
-            for variable in variables:
-                if variable["name"] == operand_name:
-                    if "decode()" in variable:
-                        if "creg2reg" in variable["decode()"]:
-                            value += 8
-                            dprint(
-                                f"# Value after creg2reg transformation for variable '{variable['name']}': {value}"
-                            )
+            decode_expr = operand.get("decode()")
+            if decode_expr:
+                if "creg2reg" in decode_expr:
+                    value += 8
+                    dprint(
+                        f"# Value after creg2reg transformation for operand '{operand_name}': {value}"
+                    )
 
-                        elif "r1s" in variable["decode()"] or "r2s" in variable["decode()"]:
-                            value = value + 8 + 8 * ((value + 6) // 8)
-                    break
+                elif "r1s" in decode_expr or "r2s" in decode_expr:
+                    value = value + 8 + 8 * ((value + 6) // 8)
             dprint(f"# map {operand_name} {value}")
             if operand["type"] in ["register", "register_pair"]:
                 append_assembly_operand(
