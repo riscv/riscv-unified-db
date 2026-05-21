@@ -192,10 +192,6 @@ def extract_variable_values(opcode, instruction, xlen=64):
             value = value << variable["left_shift"]
             dprint(f"# Value after left shift for variable '{var_name}': {value}")
 
-        if "decode()" in variable and "creg2reg" in variable["decode()"]:
-            value += 8
-            dprint(f"# Value after creg2reg transformation for variable '{var_name}': {value}")
-
         variable_values[var_name] = value
 
     return variable_values
@@ -235,6 +231,23 @@ def decoded_reg_list_value(rlist, abi_names=False):
         return reg_list_map_abi.get(rlist)
     else:
         return reg_list_map.get(rlist)
+
+
+def operand_has_default(operand):
+    return "default" in operand
+
+
+def append_assembly_operand(assembly_parts, operand, value):
+    if operand_has_default(operand) and value == operand["default"]:
+        return
+    assembly_parts.append(str(value))
+
+
+def variable_by_name(variables, name):
+    for variable in variables or []:
+        if variable.get("name") == name:
+            return variable
+    return None
 
 
 def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
@@ -291,7 +304,7 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
             if value not in scope_map:
                 print(f"# ERROR: unknown fence scope {value}")
                 continue
-            assembly_parts.append(scope_map[value])
+            append_assembly_operand(assembly_parts, operand, scope_map[value])
 
         elif operand["type"] == "rounding_mode":
             rm_map = {
@@ -307,10 +320,17 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
             if value not in rm_map:
                 print(f"# ERROR: unknown rounding mode {value}")
                 continue
-            assembly_parts.append(rm_map[value])
+            append_assembly_operand(assembly_parts, operand, rm_map[value])
 
         elif operand.get("offset"):
             value = variable_values[operand_name]
+            variable = variable_by_name(variables, operand_name)
+            if variable and "decode()" in variable and "creg2reg" in variable["decode()"]:
+                value += 8
+                dprint(
+                    f"# Value after creg2reg transformation for variable '{variable['name']}': {value}"
+                )
+
             dprint(f"# Handling offset for operand '{operand_name}' with value {value}")
             if operand["offset"]["name"] == "":
                 offset_value = ""
@@ -332,12 +352,15 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
                     f"# reg_list '{reg_list}' not valid for this xlen/instruction variant: {possible_values}"
                 )
                 return None
-            assembly_parts.append(reg_list)
+            append_assembly_operand(assembly_parts, operand, reg_list)
 
-        elif operand.get("optional"):
+        elif operand_has_default(operand):
             value = variable_values[operand_name]
-            if value == 0:  # vector mask
-                assembly_parts.append("v0.t")
+            if operand_name == "vm" and operand.get("type") == "register":
+                if value == 0:
+                    append_assembly_operand(assembly_parts, operand, "v0.t")
+            else:
+                append_assembly_operand(assembly_parts, operand, value)
 
         elif operand_name == "stack_adj":
             dprint("# Handling stack_adj")
@@ -346,7 +369,7 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
             register_space_aligned = int((register_space + 15) / 16) * 16
             extra_space = variable_values["spimm"] * 16
             total_space = register_space_aligned + extra_space
-            assembly_parts.append(str(-total_space))
+            append_assembly_operand(assembly_parts, operand, -total_space)
 
         elif operand["type"] == "float_immediate":
             if variable_values["xs1"] == 0:
@@ -413,23 +436,31 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
                 value = "inf"
             elif variable_values["xs1"] == 31:
                 value = "nan"
-            assembly_parts.append(value)
+            append_assembly_operand(assembly_parts, operand, value)
 
         else:
             value = variable_values[operand_name]
             for variable in variables:
                 if variable["name"] == operand_name:
                     if "decode()" in variable:
-                        if "r1s" in variable["decode()"] or "r2s" in variable["decode()"]:
+                        if "creg2reg" in variable["decode()"]:
+                            value += 8
+                            dprint(
+                                f"# Value after creg2reg transformation for variable '{variable['name']}': {value}"
+                            )
+
+                        elif "r1s" in variable["decode()"] or "r2s" in variable["decode()"]:
                             value = value + 8 + 8 * ((value + 6) // 8)
                     break
             dprint(f"# map {operand_name} {value}")
             if operand["type"] in ["register", "register_pair"]:
-                assembly_parts.append(
-                    register_name_for_index(operand.get("reg_file"), value, abi_names)
+                append_assembly_operand(
+                    assembly_parts,
+                    operand,
+                    register_name_for_index(operand.get("reg_file"), value, abi_names),
                 )
             else:
-                assembly_parts.append(str(value))
+                append_assembly_operand(assembly_parts, operand, value)
 
     if assembly_parts:
         return f"{mnemonic} {', '.join(assembly_parts)}"

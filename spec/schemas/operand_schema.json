@@ -84,8 +84,15 @@
                 "type": "integer"
               }
             },
-            "optional": {
-              "type": "boolean"
+            "default": {
+              "oneOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "const": ""
+                }
+              ]
             },
             "implicit": {
               "type": "boolean"
@@ -261,6 +268,9 @@
                 "type": "string"
               }
             },
+            "default": {
+              "type": "string"
+            },
             "$child_of": {
               "type": "string"
             },
@@ -333,8 +343,8 @@
                 "type": "string"
               }
             },
-            "optional": {
-              "type": "boolean"
+            "default": {
+              "type": "string"
             },
             "$child_of": {
               "type": "string"

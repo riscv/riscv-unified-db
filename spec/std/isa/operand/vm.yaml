@@ -11,4 +11,4 @@ data:
   type: register
   reg_file: vr
   possible_values: [0]
-  optional: true
+  default: ""

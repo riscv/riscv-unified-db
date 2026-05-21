@@ -96,8 +96,9 @@ def _operand_values(operand: dict, operand_name: str) -> list[object]:
     else:
         values = _non_register_values_for_operand(operand, operand_name)
 
-    if operand.get("optional"):
-        return ["", *values]
+    if "default" in operand:
+        default_value = operand["default"]
+        return [default_value, *[value for value in values if value != default_value]]
     return values
 
 
@@ -181,8 +182,7 @@ def render_instruction_combination(combo: dict[str, object], xlen: int = 64) -> 
             continue
 
         value = operand_map.get(operand_name, "")
-        if value == "":
-            # Optional operands are omitted when empty.
+        if "default" in operand and value == operand["default"]:
             continue
 
         if operand.get("type") == "reg_list":

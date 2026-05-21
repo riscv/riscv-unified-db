@@ -2,8 +2,14 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 import argparse
+import functools
 import re
+import subprocess
 import sys
+import tempfile
+from pathlib import Path
+
+import yaml
 
 import spec
 
@@ -233,31 +239,49 @@ def split_assembly_arguments(arguments_str):
     return arguments
 
 
+def operand_has_default(operand_def):
+    return "default" in operand_def
+
+
+def operand_default_value(operand_def):
+    return operand_def["default"]
+
+
+def operand_def_by_name(instruction_operands, operand_name):
+    for operand_def in instruction_operands:
+        if operand_def.get("name") == operand_name:
+            return operand_def
+    return None
+
+
 def parse_assembly_arguments(line, instruction_operands):
     """Parse assembly line arguments to extract operands based on instruction definition"""
     # Remove comments and leading/trailing whitespace
     line = line.split("#")[0].strip()
-    if " " not in line:
-        return {}
+    if " " in line:
+        # Extract arguments (everything after mnemonic, comma separated)
+        arguments_str = "".join(line.split()[1:])  # Skip the mnemonic
+        arguments = split_assembly_arguments(arguments_str)
+    else:
+        arguments = []
 
-    # Extract arguments (everything after mnemonic, comma separated)
-    arguments_str = "".join(line.split()[1:])  # Skip the mnemonic
-    arguments = split_assembly_arguments(arguments_str)
     explicit_operands = [
         operand_def for operand_def in instruction_operands if not operand_def.get("implicit")
     ]
 
     optional_operands = 0
     for operand_def in explicit_operands:
-        if operand_def.get("optional"):
+        if operand_has_default(operand_def):
             optional_operands += 1
 
-    optional_operands_to_keep = optional_operands - (len(explicit_operands) - len(arguments))
-    if optional_operands < optional_operands_to_keep:
+    min_arguments = len(explicit_operands) - optional_operands
+    if len(arguments) < min_arguments or len(arguments) > len(explicit_operands):
         print(
-            f"#    ERROR: insufficient arguments for instruction; got {len(arguments)} ({arguments}) needed at least {len(explicit_operands) - optional_operands}"
+            f"#    ERROR: invalid argument count for instruction; got {len(arguments)} ({arguments}) needed between {min_arguments} and {len(explicit_operands)}"
         )
         return {}
+
+    optional_operands_to_keep = len(arguments) - min_arguments
 
     # Map assembly arguments to instruction operands definition
     operand_values = {}
@@ -265,11 +289,14 @@ def parse_assembly_arguments(line, instruction_operands):
     for i, operand_def in enumerate(explicit_operands):
         dprint(f'# operand {i}: "{operand_def}"; {len(arguments)}')
         operand_name = operand_def.get("name", f"op{i}")
-        if operand_def.get("optional"):
+        if operand_has_default(operand_def):
             if optional_operands_to_keep > 0:
                 optional_operands_to_keep -= 1
             else:
-                dprint(f'# Skipping optional operand "{operand_name}"')
+                operand_values[operand_name] = operand_default_value(operand_def)
+                dprint(
+                    f'# Using default value "{operand_values[operand_name]}" for operand "{operand_name}"'
+                )
                 continue
 
         dprint(f"#    Creating operand '{operand_name}' ({operand_def['type']})")
@@ -568,40 +595,292 @@ def builtin_encode_float_immediate(value):
     return None
 
 
-def UDB_invoke_IDL(idl, operands, xlen):
-    if "operands[vm]" in idl:
-        if "vm" in operands:
-            return 0
-        return 1
-    if "return 1;" in idl:  # vector mask
-        return 1
-    if "return 0;" in idl:
-        return 0
-    if "stack_adj" in idl:
-        return builtin_encode_stack_adj(operands, xlen)
-    if "reg_list" in idl:
-        return builtin_encode_reg_list(operands)
-    if "iorw" in idl:
-        if "pred" in idl:
-            return builtin_encode_fence_scope(operands["pred"])
-        elif "succ" in idl:
-            return builtin_encode_fence_scope(operands["succ"])
-    if "rtz" in idl:
-        return builtin_encode_rounding_mode(operands["rm"])
-    if "r1s" in idl:
-        return builtin_encode_sreg(operands["r1s"])
-    if "r2s" in idl:
-        return builtin_encode_sreg(operands["r2s"])
-    if ".offset" in idl:
-        return operands["imm"]
-    if "reg2creg" in idl:
-        if "xd" in idl:
-            return operands["xd"] - 8
-        if "xs1" in idl:
-            return operands["xs1"] - 8
-    if "nan" in idl and "min" in idl and "inf" in idl:
-        return builtin_encode_float_immediate(operands["xs1"])
+class IdlExecutionError(Exception):
+    pass
+
+
+class _IdlReturn(Exception):
+    def __init__(self, value):
+        self.value = value
+
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_IDLC = _REPO_ROOT / "bin" / "idlc"
+
+
+@functools.cache
+def _compile_idl_function_body(idl):
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", suffix=".idl", delete_on_close=False
+    ) as idl_file:
+        idl_file.write(idl)
+        idl_path = idl_file.name
+        idl_file.close()
+
+        result = subprocess.run(
+            [
+                str(_IDLC),
+                "compile",
+                "--format",
+                "yaml",
+                "--root",
+                "function_body",
+                idl_path,
+            ],
+            cwd=_REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    if result.returncode != 0:
+        details = result.stderr.strip() or result.stdout.strip()
+        raise IdlExecutionError(f"IDL compile failed: {details}")
+
+    return yaml.safe_load(result.stdout)
+
+
+def _trunc_div(lhs, rhs):
+    if rhs == 0:
+        raise IdlExecutionError("division by zero")
+    sign = -1 if (lhs < 0) ^ (rhs < 0) else 1
+    return sign * (abs(lhs) // abs(rhs))
+
+
+def _operand_key(node, env):
+    if isinstance(node, dict) and node.get("kind") == "id":
+        return node["name"]
+    return _eval_idl_expr(node, env)
+
+
+def _operand_offset_value(operand_name, env):
+    for operand_def in env.get("operand_defs") or []:
+        if operand_def.get("name") != operand_name:
+            continue
+        offset_def = operand_def.get("offset")
+        if isinstance(offset_def, dict):
+            offset_name = offset_def.get("name")
+            if offset_name in env["operands"]:
+                return env["operands"][offset_name]
+
+    raise IdlExecutionError(f"no offset value found for operand '{operand_name}'")
+
+
+def _format_idl_message(message, env):
+    def replace_operand(match):
+        key = match.group(1)
+        return str(env["operands"].get(key, "??"))
+
+    return re.sub(r"\$\{operands\[([A-Za-z_][A-Za-z0-9_]*)\]\}", replace_operand, message)
+
+
+def _eval_idl_funcall(node, env):
+    func = node["func"]
+    args = [_eval_idl_expr(arg, env) for arg in node.get("args", [])]
+
+    if func == "reg2creg":
+        if len(args) != 1:
+            raise IdlExecutionError("reg2creg expects one argument")
+        return args[0] - 8
+    if func == "creg2reg":
+        if len(args) != 1:
+            raise IdlExecutionError("creg2reg expects one argument")
+        return args[0] + 8
+    if func == "xlen":
+        if args:
+            raise IdlExecutionError("xlen expects no arguments")
+        return env["xlen"]
+    if func == "raise":
+        message = args[0] if args else "IDL raised"
+        if isinstance(message, str):
+            message = _format_idl_message(message, env)
+        raise IdlExecutionError(str(message))
+
+    raise IdlExecutionError(f"unsupported IDL function '{func}'")
+
+
+def _eval_idl_binary(node, env):
+    op = node["op"]
+
+    if op == "||":
+        return bool(_eval_idl_expr(node["lhs"], env)) or bool(_eval_idl_expr(node["rhs"], env))
+    if op == "&&":
+        return bool(_eval_idl_expr(node["lhs"], env)) and bool(_eval_idl_expr(node["rhs"], env))
+
+    lhs = _eval_idl_expr(node["lhs"], env)
+    rhs = _eval_idl_expr(node["rhs"], env)
+
+    if op == "==":
+        return lhs == rhs
+    if op == "!=":
+        return lhs != rhs
+    if op == "<":
+        return lhs < rhs
+    if op == "<=":
+        return lhs <= rhs
+    if op == ">":
+        return lhs > rhs
+    if op == ">=":
+        return lhs >= rhs
+    if op == "+":
+        return lhs + rhs
+    if op == "-":
+        return lhs - rhs
+    if op == "*":
+        return lhs * rhs
+    if op == "/":
+        return _trunc_div(lhs, rhs)
+    if op == "%":
+        return lhs % rhs
+    if op == "<<":
+        return lhs << rhs
+    if op == ">>":
+        return lhs >> rhs
+    if op == "&":
+        return lhs & rhs
+    if op == "|":
+        return lhs | rhs
+    if op == "^":
+        return lhs ^ rhs
+
+    raise IdlExecutionError(f"unsupported IDL binary operator '{op}'")
+
+
+def _eval_idl_expr(node, env):
+    if not isinstance(node, dict):
+        return node
+
+    kind = node.get("kind")
+
+    if kind == "bits_literal":
+        return int(node["value"])
+    if kind == "string_literal":
+        return node["text"]
+    if kind == "id":
+        name = node["name"]
+        if name in env["vars"]:
+            return env["vars"][name]
+        raise IdlExecutionError(f"unknown IDL identifier '{name}'")
+    if kind == "paren_expr":
+        return _eval_idl_expr(node["expr"], env)
+    if kind == "array_access":
+        array = node["array"]
+        if (
+            isinstance(array, dict)
+            and array.get("kind") == "id"
+            and array.get("name") == "operands"
+        ):
+            return env["operands"].get(_operand_key(node["index"], env), "??")
+        array_value = _eval_idl_expr(array, env)
+        return array_value[_eval_idl_expr(node["index"], env)]
+    if kind == "operand_offset_access":
+        return _operand_offset_value(node["operand_name"], env)
+    if kind == "funcall_expr":
+        return _eval_idl_funcall(node, env)
+    if kind == "binary_operator_expr":
+        return _eval_idl_binary(node, env)
+    if kind == "unary_operator_expr":
+        op = node["op"]
+        value = _eval_idl_expr(node["expr"], env)
+        if op == "-":
+            return -value
+        if op == "+":
+            return value
+        if op == "!":
+            return not bool(value)
+        if op == "~":
+            return ~value
+        raise IdlExecutionError(f"unsupported IDL unary operator '{op}'")
+    if kind == "ternary_operator_expr":
+        branch = "true_expression" if _eval_idl_expr(node["condition"], env) else "false_expression"
+        return _eval_idl_expr(node[branch], env)
+    if kind == "var_decl_init":
+        value = _eval_idl_expr(node["value"], env)
+        env["vars"][node["name"]["name"]] = value
+        return value
+    if kind == "var_assignment":
+        value = _eval_idl_expr(node["value"], env)
+        var = node["var"]
+        if var.get("kind") != "id":
+            raise IdlExecutionError("unsupported assignment target")
+        env["vars"][var["name"]] = value
+        return value
+    if kind == "return_expr":
+        exprs = node.get("exprs", [])
+        if len(exprs) == 0:
+            raise _IdlReturn(None)
+        if len(exprs) == 1:
+            raise _IdlReturn(_eval_idl_expr(exprs[0], env))
+        raise _IdlReturn(tuple(_eval_idl_expr(expr, env) for expr in exprs))
+
+    raise IdlExecutionError(f"unsupported IDL expression kind '{kind}'")
+
+
+def _exec_idl_body(node, env):
+    if not isinstance(node, dict):
+        raise IdlExecutionError("invalid IDL body")
+
+    kind = node.get("kind")
+    if kind not in ("function_body", "if_body"):
+        raise IdlExecutionError(f"unsupported IDL body kind '{kind}'")
+
+    for stmt in node.get("stmts", []):
+        _exec_idl_stmt(stmt, env)
+
+
+def _exec_idl_if(node, env):
+    if _eval_idl_expr(node["condition"], env):
+        _exec_idl_body(node["taken_body"], env)
+        return
+
+    for else_if in node.get("else_ifs", []) or []:
+        if _eval_idl_expr(else_if["condition"], env):
+            _exec_idl_body(else_if["body"], env)
+            return
+
+    else_body = node.get("else")
+    if else_body:
+        _exec_idl_body(else_body, env)
+
+
+def _exec_idl_stmt(node, env):
+    if not isinstance(node, dict):
+        raise IdlExecutionError("invalid IDL statement")
+
+    kind = node.get("kind")
+    if kind == "stmt":
+        _eval_idl_expr(node["expr"], env)
+        return
+    if kind == "if_stmt":
+        _exec_idl_if(node, env)
+        return
+
+    raise IdlExecutionError(f"unsupported IDL statement kind '{kind}'")
+
+
+def execute_idl_encode(idl, operands, xlen, instruction_operands=None):
+    ast = _compile_idl_function_body(idl)
+    env = {
+        "operands": operands,
+        "operand_defs": instruction_operands or [],
+        "vars": {},
+        "xlen": xlen,
+    }
+
+    try:
+        _exec_idl_body(ast, env)
+    except _IdlReturn as ret:
+        return ret.value
+
     return None
+
+
+def UDB_invoke_IDL(idl, operands, xlen, instruction_operands=None):
+    try:
+        return execute_idl_encode(idl, operands, xlen, instruction_operands)
+    except IdlExecutionError as exc:
+        print(f"#  ERROR: IDL encode failed: {exc}")
+        return None
 
 
 def fill_in_variables(inst, assembly, xlen=64):
@@ -667,7 +946,12 @@ def fill_in_variables(inst, assembly, xlen=64):
         operand_value = 0  # Default value
 
         if "encode(operands)" in variable:
-            operand_value = UDB_invoke_IDL(variable["encode(operands)"], assembly_operands, xlen)
+            operand_value = UDB_invoke_IDL(
+                variable["encode(operands)"],
+                assembly_operands,
+                xlen,
+                instruction_operands,
+            )
             if operand_value is None:
                 print("#  ERROR: unsupported variable encoding")
                 return None
@@ -676,6 +960,9 @@ def fill_in_variables(inst, assembly, xlen=64):
                 f"#  Found direct match for variable '{var_name}' in assembly operands {assembly_operands[var_name]}"
             )
             operand_value = assembly_operands[var_name]
+            if operand_value is None:
+                print("#  ERROR: unsupported variable encoding")
+                return None
         else:
             print("#  ERROR: unknown variable encoding")
             return None

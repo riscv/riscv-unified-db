@@ -688,6 +688,7 @@ module Idl
       when "enum_decl"                 then EnumDefinitionAst.from_h(yaml, source_mapper)
       when "enum_element_size_funcall" then EnumElementSizeAst.from_h(yaml, source_mapper)
       when "enum_reference_expr"       then EnumRefAst.from_h(yaml, source_mapper)
+      when "operand_offset_access"     then OperandOffsetAccessAst.from_h(yaml, source_mapper)
       when "enum_size_funcall"         then EnumSizeAst.from_h(yaml, source_mapper)
       when "enum_to_array_cast"        then EnumArrayCastAst.from_h(yaml, source_mapper)
       when "false"                     then FalseExpressionAst.from_h(yaml, source_mapper)
@@ -2524,6 +2525,144 @@ module Idl
       end
 
       var
+    end
+  end
+
+  class OperandOffsetAccessSyntaxNode < SyntaxNode
+    def to_ast
+      OperandOffsetAccessAst.new(input, interval, send(:operand_name).text_value)
+    end
+  end
+
+  class OperandOffsetAccessAst < AstNode
+    include Rvalue
+
+    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
+    def const_eval?(symtab) = true
+
+    sig { returns(String) }
+    attr_reader :operand_name
+
+    sig { params(input: T.nilable(String), interval: T.nilable(T::Range[Integer]), operand_name: String).void }
+    def initialize(input, interval, operand_name)
+      super(input, interval, EMPTY_ARRAY)
+      @operand_name = operand_name
+    end
+
+    sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
+    def type_check(symtab, strict:)
+      offset_metadata(symtab)
+    end
+
+    sig { override.params(symtab: SymbolTable).returns(Type) }
+    def type(symtab)
+      self.class.type_from_offset_metadata(offset_metadata(symtab))
+    end
+
+    sig { override.params(symtab: SymbolTable).returns(ValueRbType) }
+    def value(symtab)
+      operands = symtab.instruction_operand_values
+      value_error "Instruction operand values are not known" if operands.nil?
+
+      operand_values = T.must(operands)
+      offset_name = offset_metadata(symtab).fetch("name", nil)
+      value =
+        if offset_name.is_a?(String) && operand_values.key?(offset_name)
+          operand_values[offset_name]
+        elsif operand_values.key?(operand_name) && operand_values[operand_name].is_a?(Hash)
+          T.cast(operand_values[operand_name], T::Hash[T.untyped, T.untyped])["offset"]
+        end
+
+      value_error "Value of operands[#{operand_name}].offset is not known" if value.nil?
+
+      T.cast(value, ValueRbType)
+    end
+
+    sig { override.returns(String) }
+    def to_idl = "operands[#{operand_name}].offset"
+
+    sig { override.returns(T::Hash[String, T.untyped]) }
+    def to_h = {
+      "kind" => "operand_offset_access",
+      "operand_name" => operand_name,
+      "source" => source_yaml
+    }
+
+    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(OperandOffsetAccessAst) }
+    def self.from_h(yaml, source_mapper)
+      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "operand_offset_access"
+
+      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
+      interval = interval_from_source_yaml(yaml.fetch("source"))
+      OperandOffsetAccessAst.new(input, interval, yaml.fetch("operand_name"))
+    end
+
+    sig { params(symtab: SymbolTable).returns(T::Hash[String, T.untyped]) }
+    def operand_metadata(symtab)
+      operands = symtab.instruction_operands
+      type_error "operands[#{operand_name}].offset requires instruction operand metadata" if operands.nil?
+
+      operand = T.must(operands)[operand_name]
+      type_error "Instruction operand '#{operand_name}' is not defined" if operand.nil?
+
+      operand
+    end
+
+    sig { params(symtab: SymbolTable).returns(T::Hash[String, T.untyped]) }
+    def offset_metadata(symtab)
+      offset = operand_metadata(symtab).fetch("offset", nil)
+      type_error "Instruction operand '#{operand_name}' has no offset" unless offset.is_a?(Hash)
+
+      offset
+    end
+
+    sig { params(offset: T::Hash[String, T.untyped]).returns(Type) }
+    def self.type_from_offset_metadata(offset)
+      min_value, max_value = offset_value_bounds(offset)
+      #left_shift = offset.fetch("left_shifted", 0).to_i
+      #value_width = min_value.negative? ? signed_width(min_value, max_value) : [max_value.bit_length, 1].max
+      width = min_value.negative? ? signed_width(min_value, max_value) : [max_value.bit_length, 1].max
+      #width = [value_width, left_shift + 1, 1].max
+      qualifiers = [:const]
+      qualifiers << :signed if min_value.negative?
+
+      Type.new(:bits, width:, qualifiers:)
+    end
+
+    sig { params(min_value: Integer, max_value: Integer).returns(Integer) }
+    def self.signed_width(min_value, max_value)
+      width = 1
+      until min_value >= -(1 << (width - 1)) && max_value <= ((1 << (width - 1)) - 1)
+        width += 1
+      end
+      width
+    end
+
+    sig { params(offset: T::Hash[String, T.untyped]).returns([Integer, Integer]) }
+    def self.offset_value_bounds(offset)
+      possible_values = offset.fetch("possible_values", [])
+      values = T.let([], T::Array[Integer])
+
+      if possible_values.is_a?(Array)
+        possible_values.each do |possible_value|
+          case possible_value
+          when Integer
+            values << possible_value
+          when String
+            match = possible_value.match(/\A(-?\d+)(?:-(-?\d+))?\z/)
+            raise "Invalid offset possible value '#{possible_value}'" if match.nil?
+
+            values << T.must(match[1]).to_i
+            values << (match[2].nil? ? T.must(match[1]).to_i : T.must(match[2]).to_i)
+          else
+            raise "Invalid offset possible value #{possible_value.inspect}"
+          end
+        end
+      end
+
+      return [0, 0] if values.empty?
+
+      [T.must(values.min), T.must(values.max)]
     end
   end
 

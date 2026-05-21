@@ -6115,6 +6115,80 @@ module Idl
     r0
   end
 
+  module OperandOffsetAccessExpression0
+    def operand_name
+      elements[2]
+    end
+
+  end
+
+  def _nt_operand_offset_access_expression
+    start_index = index
+    if node_cache[:operand_offset_access_expression].has_key?(index)
+      cached = node_cache[:operand_offset_access_expression][index]
+      if cached
+        node_cache[:operand_offset_access_expression][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    if (match_len = has_terminal?('operands', false, index))
+      r1 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+      @index += match_len
+    else
+      terminal_parse_failure('\'operands\'')
+      r1 = nil
+    end
+    s0 << r1
+    if r1
+      if (match_len = has_terminal?('[', false, index))
+        r2 = true
+        @index += match_len
+      else
+        terminal_parse_failure('\'[\'')
+        r2 = nil
+      end
+      s0 << r2
+      if r2
+        r3 = _nt_id
+        s0 << r3
+        if r3
+          if (match_len = has_terminal?(']', false, index))
+            r4 = true
+            @index += match_len
+          else
+            terminal_parse_failure('\']\'')
+            r4 = nil
+          end
+          s0 << r4
+          if r4
+            if (match_len = has_terminal?('.offset', false, index))
+              r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+              @index += match_len
+            else
+              terminal_parse_failure('\'.offset\'')
+              r5 = nil
+            end
+            s0 << r5
+          end
+        end
+      end
+    end
+    if s0.last
+      r0 = instantiate_node(Idl::OperandOffsetAccessSyntaxNode,input, i0...index, s0)
+      r0.extend(OperandOffsetAccessExpression0)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:operand_offset_access_expression][start_index] = r0
+
+    r0
+  end
+
   def _nt_field_access_eligible_expression
     start_index = index
     if node_cache[:field_access_eligible_expression].has_key?(index)
@@ -7139,104 +7213,110 @@ module Idl
           r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
           r0 = r3
         else
-          r19 = _nt_ary_access
+          r19 = _nt_operand_offset_access_expression
           if r19
             r19 = SyntaxNode.new(input, (index-1)...index) if r19 == true
             r0 = r19
           else
-            r20 = _nt_dollar_function_call
+            r20 = _nt_ary_access
             if r20
               r20 = SyntaxNode.new(input, (index-1)...index) if r20 == true
               r0 = r20
             else
-              r21 = _nt_paren_expression
+              r21 = _nt_dollar_function_call
               if r21
                 r21 = SyntaxNode.new(input, (index-1)...index) if r21 == true
                 r0 = r21
               else
-                i22, s22 = index, []
-                r23 = _nt_unary_operator
-                s22 << r23
-                if r23
-                  s24, i24 = [], index
-                  loop do
-                    r25 = _nt_space
-                    if r25
-                      s24 << r25
-                    else
-                      break
-                    end
-                  end
-                  r24 = instantiate_node(SyntaxNode,input, i24...index, s24)
-                  s22 << r24
-                  if r24
-                    r26 = _nt_unary_expression
-                    s22 << r26
-                  end
-                end
-                if s22.last
-                  r22 = instantiate_node(Idl::UnaryOperatorExpressionSyntaxNode,input, i22...index, s22)
-                  r22.extend(UnaryExpression2)
-                else
-                  @index = i22
-                  r22 = nil
-                end
+                r22 = _nt_paren_expression
                 if r22
                   r22 = SyntaxNode.new(input, (index-1)...index) if r22 == true
                   r0 = r22
                 else
-                  r27 = _nt_post_dec
-                  if r27
-                    r27 = SyntaxNode.new(input, (index-1)...index) if r27 == true
-                    r0 = r27
+                  i23, s23 = index, []
+                  r24 = _nt_unary_operator
+                  s23 << r24
+                  if r24
+                    s25, i25 = [], index
+                    loop do
+                      r26 = _nt_space
+                      if r26
+                        s25 << r26
+                      else
+                        break
+                      end
+                    end
+                    r25 = instantiate_node(SyntaxNode,input, i25...index, s25)
+                    s23 << r25
+                    if r25
+                      r27 = _nt_unary_expression
+                      s23 << r27
+                    end
+                  end
+                  if s23.last
+                    r23 = instantiate_node(Idl::UnaryOperatorExpressionSyntaxNode,input, i23...index, s23)
+                    r23.extend(UnaryExpression2)
                   else
-                    r28 = _nt_post_inc
+                    @index = i23
+                    r23 = nil
+                  end
+                  if r23
+                    r23 = SyntaxNode.new(input, (index-1)...index) if r23 == true
+                    r0 = r23
+                  else
+                    r28 = _nt_post_dec
                     if r28
                       r28 = SyntaxNode.new(input, (index-1)...index) if r28 == true
                       r0 = r28
                     else
-                      r29 = _nt_replication_expression
+                      r29 = _nt_post_inc
                       if r29
                         r29 = SyntaxNode.new(input, (index-1)...index) if r29 == true
                         r0 = r29
                       else
-                        r30 = _nt_concatenation_expression
+                        r30 = _nt_replication_expression
                         if r30
                           r30 = SyntaxNode.new(input, (index-1)...index) if r30 == true
                           r0 = r30
                         else
-                          r31 = _nt_field_access_expression
+                          r31 = _nt_concatenation_expression
                           if r31
                             r31 = SyntaxNode.new(input, (index-1)...index) if r31 == true
                             r0 = r31
                           else
-                            r32 = _nt_function_call
+                            r32 = _nt_field_access_expression
                             if r32
                               r32 = SyntaxNode.new(input, (index-1)...index) if r32 == true
                               r0 = r32
                             else
-                              r33 = _nt_csr_field_access_expression
+                              r33 = _nt_function_call
                               if r33
                                 r33 = SyntaxNode.new(input, (index-1)...index) if r33 == true
                                 r0 = r33
                               else
-                                r34 = _nt_csr_register_access_expression
+                                r34 = _nt_csr_field_access_expression
                                 if r34
                                   r34 = SyntaxNode.new(input, (index-1)...index) if r34 == true
                                   r0 = r34
                                 else
-                                  r35 = _nt_enum_ref
+                                  r35 = _nt_csr_register_access_expression
                                   if r35
                                     r35 = SyntaxNode.new(input, (index-1)...index) if r35 == true
                                     r0 = r35
                                   else
-                                    r36 = _nt_rval
+                                    r36 = _nt_enum_ref
                                     if r36
                                       r36 = SyntaxNode.new(input, (index-1)...index) if r36 == true
                                       r0 = r36
                                     else
-                                      @index = i0
-                                      r0 = nil
+                                      r37 = _nt_rval
+                                      if r37
+                                        r37 = SyntaxNode.new(input, (index-1)...index) if r37 == true
+                                        r0 = r37
+                                      else
+                                        @index = i0
+                                        r0 = nil
+                                      end
                                     end
                                   end
                                 end

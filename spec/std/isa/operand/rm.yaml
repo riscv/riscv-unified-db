@@ -10,3 +10,4 @@ data:
   name: rm
   type: rounding_mode
   possible_values: ["rne", "rtz", "rdn", "rup", "rmm", "dyn"]
+  default: "dyn"
