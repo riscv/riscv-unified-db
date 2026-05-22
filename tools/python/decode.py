@@ -126,26 +126,17 @@ def matches_pattern(opcode, pattern):
     return all((pattern[i] == "-" or opcode[i] == pattern[i]) for i in range(len(opcode)))
 
 
-def get_stanza(block, xlen):
-    rvtag = f"RV{xlen}"
-    if rvtag in block:
-        return block[rvtag]
-    else:
-        return block
-
-
 def find_matching_instructions(opcode, xlen=64):
     """Find all instructions that match the given opcode."""
     matches = []
 
     for instruction in spec.instructions:
-        if "encoding" in spec.instructions[instruction]:
-            match_pattern = get_stanza(spec.instructions[instruction]["encoding"], xlen).get(
-                "match"
-            )
+        match_pattern = (
+            spec.get_stanza(spec.instructions[instruction].get("encoding"), xlen) or {}
+        ).get("match") or ""
 
-            if match_pattern and matches_pattern(opcode, match_pattern):
-                matches.append(spec.instructions[instruction])
+        if matches_pattern(opcode, match_pattern):
+            matches.append(spec.instructions[instruction])
 
     return matches
 
@@ -153,7 +144,7 @@ def find_matching_instructions(opcode, xlen=64):
 def extract_variable_values(opcode, instruction, xlen=64):
     """Extract variable values from opcode based on instruction definition"""
 
-    variables = get_stanza(instruction["encoding"], xlen).get("variables") or []
+    variables = spec.get_stanza(instruction.get("encoding"), xlen).get("variables") or []
 
     variable_values = {}
 
@@ -208,9 +199,7 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
     """Format assembly instruction based on instruction definition and variable values"""
     mnemonic = instruction["name"]
 
-    operands = []
-    if "operands" in instruction:
-        operands = get_stanza(instruction["operands"], xlen)
+    operands = spec.get_stanza(instruction.get("operands"), xlen) or []
 
     assembly_parts = []
 

@@ -181,7 +181,6 @@ def set_bits(binary_str, positions, value):
     dprint(
         f"#    Setting bits at positions {positions} to value {value} (field width {field_w}) in binary string: {binary_str}"
     )
-    # Convert binary string to list for easier manipulation
     binary_list = list(binary_str)
     dprint(f"#    Initial binary list: {binary_list}")
 
@@ -443,49 +442,17 @@ def parse_assembly_arguments(line, instruction_operands):
     return operand_values
 
 
-def fill_in_variables(inst, assembly, xlen=64):
+def fill_in_variables(instruction, assembly, xlen=64):
     """Fill in variables in the match pattern based on the instruction's operands"""
-    # Initialize variables
-    match_pattern = ""
-    variables = []
 
-    if "encoding" not in inst:
-        print(f"  ERROR: No encoding information found for {inst.get('name', '<unknown>')}")
-        return None
+    match_pattern = (spec.get_stanza(instruction.get("encoding"), xlen) or {}).get("match") or ""
+    instruction_operands = spec.get_stanza(instruction.get("operands"), xlen) or []
 
-    encoding = inst["encoding"]
-
-    # Extract match pattern and variables based on encoding format and xlen
-    if f"RV{xlen}" in encoding and "match" in encoding[f"RV{xlen}"]:
-        match_pattern = encoding[f"RV{xlen}"]["match"]
-        variables = encoding[f"RV{xlen}"].get("variables", [])
-    elif "match" in encoding:
-        match_pattern = encoding["match"]
-        variables = encoding.get("variables", [])
-    elif "RV32" in encoding and "match" in encoding["RV32"] and xlen == 32:
-        match_pattern = encoding["RV32"]["match"]
-        variables = encoding["RV32"].get("variables", [])
-    elif "RV64" in encoding and "match" in encoding["RV64"] and xlen == 64:
-        match_pattern = encoding["RV64"]["match"]
-        variables = encoding["RV64"].get("variables", [])
-    else:
-        print("# ERROR: No match pattern found in encoding")
-        return None
-
-    if "operands" not in inst:
+    if not instruction_operands:
         return match_pattern
 
-    # Get operands based on xlen
-    if f"RV{xlen}" in inst["operands"]:
-        instruction_operands = inst["operands"][f"RV{xlen}"]
-    elif "RV32" in inst["operands"] and xlen == 32:
-        instruction_operands = inst["operands"]["RV32"]
-    elif "RV64" in inst["operands"] and xlen == 64:
-        instruction_operands = inst["operands"]["RV64"]
-    else:
-        instruction_operands = inst["operands"]
+    variables = spec.get_stanza(instruction.get("encoding"), xlen).get("variables") or []
 
-    # Parse assembly line to extract operands
     assembly_operands = parse_assembly_arguments(assembly, instruction_operands)
     if assembly_operands is None:
         print(f"#  ERROR: Failed to parse assembly operands for '{assembly}'")
@@ -495,7 +462,6 @@ def fill_in_variables(inst, assembly, xlen=64):
 
     encoded = match_pattern
 
-    # Process each variable
     for variable in variables:
         var_name = variable["name"]
         location = variable["location"]
@@ -530,23 +496,18 @@ def fill_in_variables(inst, assembly, xlen=64):
 
         dprint(f"#  Variable '{var_name}' value: {operand_value}")
 
-        # Parse the location string to get bit positions
         bit_positions = parse_location(location)
 
-        # Apply any shifts specified in the variable
         if "left_shift" in variable:
             operand_value = operand_value >> variable["left_shift"]
             dprint(f"#  Unapplied left shift {variable['left_shift']}, new value: {operand_value}")
 
-        # Set the bits in the binary match string
         encoded = set_bits(encoded, bit_positions, operand_value)
 
     return encoded
 
 
 def encode(assembly, xlen=64):
-    # This function will take an assembly instruction and encode it into binary
-    # For now, it's a placeholder that just prints the assembly instruction
     dprint(f"#Encoding assembly instruction: {assembly} with xlen={xlen}")
 
     mnemonic = extract_mnemonic(assembly)
@@ -586,7 +547,6 @@ def main():
     else:
         assembly_lines = sys.stdin.read().splitlines()
 
-    # Process assembly lines and print mnemonics
     for line in assembly_lines:
         line = line.split("#")[0].strip()  # Remove comments and whitespace
         if not line:

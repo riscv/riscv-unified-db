@@ -34,6 +34,13 @@ def _register_abi_name(register_entry: dict) -> str | None:
     return None
 
 
+def get_stanza(block, xlen):
+    rvtag = f"RV{xlen}"
+    if not block or rvtag not in block:
+        return block
+    return block[rvtag]
+
+
 def initialize_spec(spec_dir: str, quiet: bool = False) -> None:
     """
     Load all relevant YAML objects and build shared lookup maps.
