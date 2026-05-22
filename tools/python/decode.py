@@ -4,6 +4,8 @@
 import argparse
 import sys
 
+import idl
+
 import spec
 
 instruction_by_match = {}
@@ -126,7 +128,6 @@ def matches_pattern(opcode, pattern):
 
 def get_stanza(block, xlen):
     rvtag = f"RV{xlen}"
-    print(block)
     if rvtag in block:
         return block[rvtag]
     else:
@@ -187,42 +188,6 @@ def extract_variable_values(opcode, instruction, xlen=64):
     return variable_values
 
 
-def decoded_reg_list_value(rlist, abi_names=False):
-    """Return decoded reg_list text for PUSH/POP style instructions."""
-    reg_list_map = {
-        4: "{x1}",
-        5: "{x1,x8}",
-        6: "{x1,x8-x9}",
-        7: "{x1,x8-x9,x18}",
-        8: "{x1,x8-x9,x18-x19}",
-        9: "{x1,x8-x9,x18-x20}",
-        10: "{x1,x8-x9,x18-x21}",
-        11: "{x1,x8-x9,x18-x22}",
-        12: "{x1,x8-x9,x18-x23}",
-        13: "{x1,x8-x9,x18-x24}",
-        14: "{x1,x8-x9,x18-x25}",
-        15: "{x1,x8-x9,x18-x27}",
-    }
-    reg_list_map_abi = {
-        4: "{ra}",
-        5: "{ra,s0}",
-        6: "{ra,s0-s1}",
-        7: "{ra,s0-s2}",
-        8: "{ra,s0-s3}",
-        9: "{ra,s0-s4}",
-        10: "{ra,s0-s5}",
-        11: "{ra,s0-s6}",
-        12: "{ra,s0-s7}",
-        13: "{ra,s0-s8}",
-        14: "{ra,s0-s9}",
-        15: "{ra,s0-s11}",
-    }
-    if abi_names:
-        return reg_list_map_abi.get(rlist)
-    else:
-        return reg_list_map.get(rlist)
-
-
 def operand_has_default(operand):
     return "default" in operand
 
@@ -231,6 +196,12 @@ def append_assembly_operand(assembly_parts, operand, value):
     if operand_has_default(operand) and value == operand["default"]:
         return
     assembly_parts.append(str(value))
+
+
+def append_decoded_operand(assembly_parts, operand, value, abi_names=False):
+    if operand.get("type") in ["register", "register_pair"] and isinstance(value, int):
+        value = register_name_for_index(operand.get("reg_file"), value, abi_names)
+    append_assembly_operand(assembly_parts, operand, value)
 
 
 def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
@@ -252,46 +223,23 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
 
         dprint(f"# Processing operand '{operand_name}' ({operand['type']})")
 
-        if operand["type"] == "fence_scope":
-            scope_map = {
-                0b1111: "iorw",
-                0b1110: "ior",
-                0b1101: "iow",
-                0b1011: "irw",
-                0b0111: "orw",
-                0b1100: "io",
-                0b1010: "ir",
-                0b1001: "iw",
-                0b0110: "or",
-                0b0101: "ow",
-                0b0011: "rw",
-                0b1000: "i",
-                0b0100: "o",
-                0b0010: "r",
-                0b0001: "w",
-            }
+        decode_expr = operand.get("decode()")
+        if decode_expr:
+            try:
+                value = idl.execute(decode_expr, xlen, variables=variable_values)
+            except idl.IdlExecutionError as exc:
+                print(f"# ERROR: IDL decode failed for operand '{operand['name']}': {exc}")
+                return None
 
-            value = variable_values[operand_name]
-            if value not in scope_map:
-                print(f"# ERROR: unknown fence scope {value}")
-                continue
-            append_assembly_operand(assembly_parts, operand, scope_map[value])
-
-        elif operand["type"] == "rounding_mode":
-            rm_map = {
-                0b000: "rne",
-                0b001: "rtz",
-                0b010: "rdn",
-                0b011: "rup",
-                0b100: "rmm",
-                0b111: "dyn",
-            }
-
-            value = variable_values[operand_name]
-            if value not in rm_map:
-                print(f"# ERROR: unknown rounding mode {value}")
-                continue
-            append_assembly_operand(assembly_parts, operand, rm_map[value])
+            offset = operand.get("offset")
+            if offset:
+                offset_name = offset["name"]
+                offset_value = "" if offset_name == "" else variable_values[offset_name]
+                reg_name = register_name_for_index(operand.get("reg_file"), value, abi_names)
+                assembly_parts.append(f"{offset_value}({reg_name})")
+            else:
+                append_decoded_operand(assembly_parts, operand, value, abi_names)
+            continue
 
         elif operand.get("offset"):
             value = variable_values[operand_name]
@@ -312,19 +260,6 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
             reg_name = register_name_for_index(operand.get("reg_file"), value, abi_names)
             assembly_parts.append(f"{offset_value}({reg_name})")
 
-        elif operand["type"] == "reg_list":
-            reg_list = decoded_reg_list_value(variable_values["rlist"], abi_names)
-            if reg_list is None:
-                print(f"# ERROR: unknown reg_list encoding {variable_values['rlist']}")
-                continue
-            possible_values = operand.get("possible_values")
-            if isinstance(possible_values, list) and reg_list not in possible_values:
-                dprint(
-                    f"# reg_list '{reg_list}' not valid for this xlen/instruction variant: {possible_values}"
-                )
-                return None
-            append_assembly_operand(assembly_parts, operand, reg_list)
-
         elif operand_has_default(operand):
             value = variable_values[operand_name]
             if operand_name == "vm" and operand.get("type") == "register":
@@ -333,94 +268,8 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
             else:
                 append_assembly_operand(assembly_parts, operand, value)
 
-        elif operand_name == "stack_adj":
-            dprint("# Handling stack_adj")
-            registers = 13 if variable_values["rlist"] == 15 else (variable_values["rlist"] - 3)
-            register_space = registers * int(xlen / 8)
-            register_space_aligned = int((register_space + 15) / 16) * 16
-            extra_space = variable_values["spimm"] * 16
-            total_space = register_space_aligned + extra_space
-            append_assembly_operand(assembly_parts, operand, -total_space)
-
-        elif operand["type"] == "float_immediate":
-            if variable_values["xs1"] == 0:
-                value = "-1.0"
-            elif variable_values["xs1"] == 1:
-                value = "min"
-            elif variable_values["xs1"] == 2:
-                value = "0.0000152587890625"
-            elif variable_values["xs1"] == 3:
-                value = "0.000030517578125"
-            elif variable_values["xs1"] == 4:
-                value = "0.00390625"
-            elif variable_values["xs1"] == 5:
-                value = "0.0078125"
-            elif variable_values["xs1"] == 6:
-                value = "0.0625"
-            elif variable_values["xs1"] == 7:
-                value = "0.125"
-            elif variable_values["xs1"] == 8:
-                value = "0.25"
-            elif variable_values["xs1"] == 9:
-                value = "0.3125"
-            elif variable_values["xs1"] == 10:
-                value = "0.375"
-            elif variable_values["xs1"] == 11:
-                value = "0.4375"
-            elif variable_values["xs1"] == 12:
-                value = "0.5"
-            elif variable_values["xs1"] == 13:
-                value = "0.625"
-            elif variable_values["xs1"] == 14:
-                value = "0.75"
-            elif variable_values["xs1"] == 15:
-                value = "0.875"
-            elif variable_values["xs1"] == 16:
-                value = "1.0"
-            elif variable_values["xs1"] == 17:
-                value = "1.25"
-            elif variable_values["xs1"] == 18:
-                value = "1.5"
-            elif variable_values["xs1"] == 19:
-                value = "1.75"
-            elif variable_values["xs1"] == 20:
-                value = "2.0"
-            elif variable_values["xs1"] == 21:
-                value = "2.5"
-            elif variable_values["xs1"] == 22:
-                value = "3"
-            elif variable_values["xs1"] == 23:
-                value = "4"
-            elif variable_values["xs1"] == 24:
-                value = "8"
-            elif variable_values["xs1"] == 25:
-                value = "16"
-            elif variable_values["xs1"] == 26:
-                value = "128"
-            elif variable_values["xs1"] == 27:
-                value = "256"
-            elif variable_values["xs1"] == 28:
-                value = "32768"
-            elif variable_values["xs1"] == 29:
-                value = "65536"
-            elif variable_values["xs1"] == 30:
-                value = "inf"
-            elif variable_values["xs1"] == 31:
-                value = "nan"
-            append_assembly_operand(assembly_parts, operand, value)
-
         else:
             value = variable_values[operand_name]
-            decode_expr = operand.get("decode()")
-            if decode_expr:
-                if "creg2reg" in decode_expr:
-                    value += 8
-                    dprint(
-                        f"# Value after creg2reg transformation for operand '{operand_name}': {value}"
-                    )
-
-                elif "r1s" in decode_expr or "r2s" in decode_expr:
-                    value = value + 8 + 8 * ((value + 6) // 8)
             dprint(f"# map {operand_name} {value}")
             if operand["type"] in ["register", "register_pair"]:
                 append_assembly_operand(
