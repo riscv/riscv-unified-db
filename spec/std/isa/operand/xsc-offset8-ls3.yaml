@@ -12,4 +12,5 @@ data:
     name: imm
     possible_values: [0-248]
     left_shifted: 3
+    decode(): return imm << 3;
   decode(): return creg2reg(xs1);

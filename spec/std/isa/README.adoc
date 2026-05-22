@@ -240,6 +240,7 @@ Some fields are shifted before use, and can be represented using the `left_shift
       # encoding
       location: 31|19-12|20|30-21
       left_shift: 1
+      encode(operands): return operands[imm] >> 1;
     - name: rd
       location: 11-7
 ----

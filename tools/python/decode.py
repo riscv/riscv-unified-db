@@ -165,14 +165,11 @@ def extract_variable_values(opcode, instruction, xlen=64):
 
         # Apply any transformations
 
-        if "sign_extend" in variable:
+        if variable.get("sign_extend"):
             sign_bit = 1 << (len(bit_positions) - 1)
             if value & sign_bit:
                 value -= 1 << len(bit_positions)
             dprint(f"# Value after sign extension for variable '{var_name}': {value}")
-        if "left_shift" in variable:
-            value = value << variable["left_shift"]
-            dprint(f"# Value after left shift for variable '{var_name}': {value}")
 
         variable_values[var_name] = value
 
@@ -193,6 +190,24 @@ def append_decoded_operand(assembly_parts, operand, value, abi_names=False):
     if operand.get("type") in ["register", "register_pair"] and isinstance(value, int):
         value = register_name_for_index(operand.get("reg_file"), value, abi_names)
     append_assembly_operand(assembly_parts, operand, value)
+
+
+def decode_operand_offset(operand, variable_values, xlen=64):
+    offset = operand.get("offset")
+    if not offset:
+        return None
+
+    offset_name = offset.get("name")
+    if offset_name == "":
+        return ""
+    if offset_name not in variable_values:
+        return None
+
+    decode_expr = offset.get("decode()")
+    if decode_expr:
+        return idl.execute(decode_expr, xlen, variables=variable_values)
+
+    return variable_values[offset_name]
 
 
 def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
@@ -222,8 +237,13 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
 
             offset = operand.get("offset")
             if offset:
-                offset_name = offset["name"]
-                offset_value = "" if offset_name == "" else variable_values[offset_name]
+                try:
+                    offset_value = decode_operand_offset(operand, variable_values, xlen)
+                except idl.IdlExecutionError as exc:
+                    print(
+                        f"# ERROR: IDL decode failed for offset '{offset.get('name', '')}': {exc}"
+                    )
+                    return None
                 reg_name = register_name_for_index(operand.get("reg_file"), value, abi_names)
                 assembly_parts.append(f"{offset_value}({reg_name})")
             else:
@@ -232,20 +252,15 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
 
         elif operand.get("offset"):
             value = variable_values[operand_name]
-            decode_expr = operand.get("decode()")
-            if decode_expr and "creg2reg" in decode_expr:
-                value += 8
-                dprint(
-                    f"# Value after creg2reg transformation for operand '{operand_name}': {value}"
-                )
 
             dprint(f"# Handling offset for operand '{operand_name}' with value {value}")
-            if operand["offset"]["name"] == "":
-                offset_value = ""
-            else:
-                offset_value = variable_values[operand["offset"]["name"]]
-                if "left_shift" in operand["offset"]:
-                    offset_value = offset_value << operand["offset"]["left_shift"]
+            try:
+                offset_value = decode_operand_offset(operand, variable_values, xlen)
+            except idl.IdlExecutionError as exc:
+                print(
+                    f"# ERROR: IDL decode failed for offset '{operand['offset'].get('name', '')}': {exc}"
+                )
+                return None
             reg_name = register_name_for_index(operand.get("reg_file"), value, abi_names)
             assembly_parts.append(f"{offset_value}({reg_name})")
 

@@ -23,7 +23,7 @@ encoding:
       location: 5|12-10|6
       left_shift: 2
       encode(operands): |
-        return operands[xs1].offset;
+        return operands[xs1].offset >> 2;
     - name: xd
       location: 4-2
       encode(operands): |

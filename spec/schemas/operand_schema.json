@@ -50,6 +50,9 @@
                     "left_shifted": {
                       "type": "integer"
                     },
+                    "decode()": {
+                      "type": "string"
+                    },
                     "$child_of": {
                       "type": "string"
                     },

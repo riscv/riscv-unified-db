@@ -10,3 +10,4 @@ data:
   $inherits: operand/imm.yaml#/data
   possible_values: [-4096-4094]
   left_shifted: 1
+  decode(): return imm << 1;

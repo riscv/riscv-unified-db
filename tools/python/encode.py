@@ -117,6 +117,31 @@ def parse_range(s: str) -> tuple[int, int]:
     return start, end
 
 
+def value_in_possible_values(value, possible_values):
+    if possible_values is None:
+        return True
+
+    values = possible_values if isinstance(possible_values, list) else [possible_values]
+    if len(values) == 0:
+        return False
+
+    for possible in values:
+        if isinstance(possible, int):
+            if value == possible:
+                return True
+            continue
+
+        if isinstance(possible, str):
+            try:
+                min_val, max_val = parse_range(possible)
+            except ValueError:
+                continue
+            if min_val <= value <= max_val:
+                return True
+
+    return False
+
+
 def extract_mnemonic(line):
     """Extract the instruction mnemonic from an assembly line"""
     # Remove comments
@@ -319,16 +344,12 @@ def parse_assembly_arguments(line, instruction_operands):
                 operand_values[operand_def["offset"]["name"]] = int(offset_part)
 
                 if "possible_values" in operand_def["offset"]:
-                    if not operand_def["offset"]["possible_values"]:
+                    offset_possible_values = operand_def["offset"]["possible_values"]
+                    if not offset_possible_values:
                         if arguments[argi].split("(")[0].strip() != "":
                             print("#    ERROR: Register offset not permitted.")
                     else:
-                        is_possible = False
-                        for possible in operand_def["offset"]["possible_values"]:
-                            min_val, max_val = parse_range(str(possible))
-                            if int(offset_part) >= min_val and int(offset_part) <= max_val:
-                                is_possible = True
-                        if not is_possible:
+                        if not value_in_possible_values(int(offset_part), offset_possible_values):
                             print("#    ERROR: Register offset is invalid.")
 
                 if "left_shifted" in operand_def["offset"]:
@@ -342,26 +363,11 @@ def parse_assembly_arguments(line, instruction_operands):
 
             # Validate register range against possible_values
             if "possible_values" in operand_def:
-                if isinstance(
-                    operand_def["possible_values"], list
-                ) and reg_index not in operand_def.get("possible_values", []):
+                if not value_in_possible_values(reg_index, operand_def["possible_values"]):
                     print(
-                        f"#    ERROR: Register index {reg_index} is not valid, must be {operand_def.get('possible_values', [])}"
+                        f"#    ERROR: Register index {reg_index} is not valid, must be {operand_def['possible_values']}"
                     )
                     return None
-                elif isinstance(operand_def["possible_values"], str):
-                    try:
-                        min_val, max_val = parse_range(operand_def["possible_values"])
-                    except ValueError:
-                        print(
-                            f"#    ERROR: Invalid possible_values range for '{operand_name}': {operand_def['possible_values']}"
-                        )
-                        return None
-                    if reg_index < min_val or reg_index > max_val:
-                        print(
-                            f"#    ERROR: Register index {reg_index} is out of range, must be between {min_val} and {max_val}"
-                        )
-                        return None
 
             dprint(f"#    Final value for '{operand_name}': {reg_index}")
             operand_values[operand_def["name"]] = int(reg_index)
@@ -370,12 +376,7 @@ def parse_assembly_arguments(line, instruction_operands):
             dprint(f'#    immediate argument: "{arguments[argi]}"')
             imm_value = int(arguments[argi])
             if "possible_values" in operand_def:
-                is_possible = False
-                for possible in operand_def["possible_values"]:
-                    min_val, max_val = parse_range(str(possible))
-                    if int(imm_value) >= min_val and int(imm_value) <= max_val:
-                        is_possible = True
-                if not is_possible:
+                if not value_in_possible_values(int(imm_value), operand_def["possible_values"]):
                     print("#    ERROR: Register offset is invalid.")
 
             operand_values[operand_def["name"]] = imm_value
@@ -464,10 +465,6 @@ def fill_in_variables(instruction, assembly, xlen=64):
         dprint(f"#  Variable '{var_name}' value: {operand_value}")
 
         bit_positions = parse_location(location)
-
-        if "left_shift" in variable:
-            operand_value = operand_value >> variable["left_shift"]
-            dprint(f"#  Unapplied left shift {variable['left_shift']}, new value: {operand_value}")
 
         encoded = set_bits(encoded, bit_positions, operand_value)
 
