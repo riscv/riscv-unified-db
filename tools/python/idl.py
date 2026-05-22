@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 """IDL (Instruction Description Language) interpreter for RISC-V assembly semantics.
