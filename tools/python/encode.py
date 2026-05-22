@@ -295,8 +295,14 @@ def parse_assembly_arguments(line, instruction_operands):
                 continue
 
         dprint(f"#    Creating operand '{operand_name}' ({operand_def['type']})")
-        if operand_def["type"] in ["register", "register_pair"]:
-            if operand_def.get("offset"):
+        if operand_def["type"] in ["register", "register_pair", "csr"]:
+            if not operand_def.get("offset"):
+                dprint(f"#    Detected register argument: {arguments[argi]}")
+                reg_index = parse_register_value(arguments[argi], operand_def)
+                if reg_index is None:
+                    print(f"# ERROR: Unknown register name {arguments[argi]}")
+                    return None
+            else:
                 dprint(f'#    memory argument with offset "{arguments[argi]}"')
 
                 # Memory operand like "offset(rs1)"
@@ -334,13 +340,6 @@ def parse_assembly_arguments(line, instruction_operands):
                         )
                         return None
 
-            else:
-                dprint(f"#    Detected register argument: {arguments[argi]}")
-                reg_index = parse_register_value(arguments[argi], operand_def)
-                if reg_index is None:
-                    print(f"# ERROR: Unknown register name {arguments[argi]}")
-                    return None
-
             # Validate register range against possible_values
             if "possible_values" in operand_def:
                 if isinstance(
@@ -367,26 +366,6 @@ def parse_assembly_arguments(line, instruction_operands):
             dprint(f"#    Final value for '{operand_name}': {reg_index}")
             operand_values[operand_def["name"]] = int(reg_index)
 
-        elif operand_def["type"] == "csr":
-            dprint(f"#    Detected register argument: {arguments[argi]}")
-            reg_index = parse_register_value(arguments[argi], operand_def)
-            if reg_index is None:
-                print(f"# ERROR: Unknown register name {arguments[argi]}")
-                return None
-
-            # Validate register range against possible_values
-            if "possible_values" in operand_def:
-                for possible in operand_def["possible_values"]:
-                    min_val, max_val = parse_range(str(possible))
-                    if reg_index < min_val or reg_index > max_val:
-                        print(
-                            f"#    ERROR: Register index {reg_index} is out of range, must be between {min_val} and {max_val}"
-                        )
-                        return None
-
-            dprint(f"#    Final value for '{operand_name}': {reg_index}")
-            operand_values[operand_def["name"]] = int(reg_index)
-
         elif operand_def["type"] == "immediate":
             dprint(f'#    immediate argument: "{arguments[argi]}"')
             imm_value = int(arguments[argi])
@@ -402,14 +381,8 @@ def parse_assembly_arguments(line, instruction_operands):
             operand_values[operand_def["name"]] = imm_value
             dprint(f"#    Final value for '{operand_name}': {imm_value}")
 
-        elif operand_def["type"] == "fence_scope":
-            dprint(f"#    Detected fence_scope argument: {arguments[argi]}")
-
-            operand_values[operand_def["name"]] = arguments[argi]
-            dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
-
-        elif operand_def["type"] == "rounding_mode":
-            dprint(f"#    Detected rounding_mode argument: {arguments[argi]}")
+        elif operand_def["type"] in ["fence_scope", "rounding_mode", "float_immediate"]:
+            dprint(f"#    Detected {operand_def['type']} argument: {arguments[argi]}")
 
             operand_values[operand_def["name"]] = arguments[argi]
             dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
@@ -428,12 +401,6 @@ def parse_assembly_arguments(line, instruction_operands):
 
             operand_values[operand_def["name"]] = reg_list
             dprint(f"#    Final value for '{operand_name}': {reg_list}")
-
-        elif operand_def["type"] == "float_immediate":
-            dprint(f"#    Detected float_immediate argument: {arguments[argi]}")
-
-            operand_values[operand_def["name"]] = arguments[argi]
-            dprint(f"#    Final value for '{operand_name}': {arguments[argi]}")
 
         # consume argument
         argi += 1
