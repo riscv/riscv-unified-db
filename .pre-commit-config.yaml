@@ -65,6 +65,7 @@ repos:
         priority: 20
       - id: ruff-check
         priority: 30
+        args: ["--fix"]
 
   - repo: https://github.com/scop/pre-commit-shfmt
     rev: v3.11.0-1
