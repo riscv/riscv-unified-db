@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xdc-pair
+description: general purpose register compressed pair destination
 data:
   $inherits: operand/xdc.yaml#/data
   possible_values: [8, 10, 12, 14]

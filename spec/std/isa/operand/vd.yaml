@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: vd
+description: vector register destination
 data:
   name: vd
   type: register

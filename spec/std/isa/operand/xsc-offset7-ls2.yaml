@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xsc-offset7-ls2
+description: general purpose register base compressed with 7-bit offset shifted 2 bits
 data:
   $inherits: operand/xsc.yaml#/data
   offset:

@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: csrs
+description: CSR source
 data:
   name: csr
   type: csr

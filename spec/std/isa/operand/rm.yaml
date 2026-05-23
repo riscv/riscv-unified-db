@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: rm
+description: floating-point rounding mode
 data:
   name: rm
   type: rounding_mode

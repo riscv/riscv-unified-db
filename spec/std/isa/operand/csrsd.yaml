@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: csrsd
+description: CSR source and destination
 data:
   $inherits: operand/csrs.yaml#/data
   destination: true

@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: reg-list-rv64
+description: PUSH/POP register list (RV64)
 data:
   $inherits: operand/reg-list-rv32.yaml#/data
   possible_values:

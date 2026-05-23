@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xd-not0
+description: general purpose register destination, not 0
 data:
   $inherits: operand/xd.yaml#/data
   possible_values: [1-31]

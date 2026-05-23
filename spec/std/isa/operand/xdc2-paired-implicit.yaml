@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xdc2-paired-implicit
+description: general purpose register compressed implicit paired destination
 data:
   $inherits: operand/xdc.yaml#/data
   name: xd2

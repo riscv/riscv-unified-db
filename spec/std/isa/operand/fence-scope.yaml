@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: fence-scope
+description: FENCE scope
 data:
   name: scope
   type: fence_scope

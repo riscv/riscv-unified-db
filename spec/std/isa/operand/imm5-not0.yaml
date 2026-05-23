@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: imm5-not0
+description: 5-bit immediate, not 0
 data:
   $inherits: operand/imm.yaml#/data
   possible_values: [-32--1, 1-31]

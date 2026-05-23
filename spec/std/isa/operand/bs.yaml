@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: bs
+description: byte-wise substitution index for SM4 block cypher
 data:
   $inherits: operand/imm.yaml#/data
   name: bs

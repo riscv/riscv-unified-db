@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xsm
+description: compressed-move general purpose register source
 data:
   $inherits: operand/xs.yaml#/data
   name: xsm

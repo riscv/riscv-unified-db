@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: imm
+description: immediate
 data:
   name: imm
   type: immediate

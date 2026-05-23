@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: vm
+description: vector mask register
 data:
   name: vm
   type: register

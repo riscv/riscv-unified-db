@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: imm12
+description: 12-bit immediate
 data:
   $inherits: operand/imm.yaml#/data
   possible_values: [-2048-2047]

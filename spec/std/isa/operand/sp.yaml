@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: sp
+description: stack pointer (implicit)
 data:
   $inherits: operand/xsd.yaml#/data
   name: sp

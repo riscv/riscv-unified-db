@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: stack-adj-rv32
+description: PUSH/POP stack adjustment (RV32)
 data:
   type: immediate
   name: stack_adj

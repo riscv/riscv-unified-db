@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: fimm
+description: floating-point immediate
 data:
   name: fimm
   type: float_immediate

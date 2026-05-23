@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xd
+description: general purpose register destination
 data:
   name: xd
   type: register

@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xsd
+description: general purpose register source and destination
 data:
   $inherits: operand/xs.yaml#/data
   name: xsd

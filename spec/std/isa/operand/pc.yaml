@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: pc
+description: program counter (implicit)
 data:
   name: pc
   type: program_counter

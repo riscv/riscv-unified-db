@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xs-offset12
+description: general purpose register base with 12-bit offset
 data:
   $inherits: operand/xs.yaml#/data
   offset:

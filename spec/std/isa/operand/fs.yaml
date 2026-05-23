@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: fs
+description: floating-point register source
 data:
   name: fs
   type: register

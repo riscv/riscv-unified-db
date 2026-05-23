@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: vs
+description: vector register source
 data:
   $inherits: operand/xs.yaml#/data
   name: vs

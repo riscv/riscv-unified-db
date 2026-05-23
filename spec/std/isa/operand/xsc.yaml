@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xsc
+description: general purpose register compressed source
 data:
   $inherits: operand/xs.yaml#/data
   possible_values: [8-15]

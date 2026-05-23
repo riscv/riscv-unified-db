@@ -508,6 +508,9 @@
     "name": {
       "type": "string"
     },
+    "description": {
+      "type": "string"
+    },
     "data": {
       "$ref": "#/$defs/operand"
     },

@@ -6,6 +6,7 @@
 $schema: "operand_schema.json#"
 kind: operand
 name: xdm
+description: compressed-move general purpose register destination
 data:
   name: xdm
   type: register
