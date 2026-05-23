@@ -11,8 +11,7 @@ description: |
   When `mstateen0.CTR`=1, the SCTRCLR instruction performs the following operations:
 
   * Zeroes all CTR Entry Registers, for all DEPTH values
-  * Reset to Zero the optional CTR cycle counter where implemented
-  ** `ctrdata.CC` and `ctrdata.CCV` bit fields.
+  * Zeroes the CTR cycle counter and CCV
 
   Any read of `ctrsource`, `ctrtarget`, or `ctrdata` that follows SCTRCLR, such that it precedes the next
   qualified control transfer, will return the value 0.
@@ -66,10 +65,12 @@ operation(): |
   else {
     for (U32 i = 0; i < (16 << CSR[sctrdepth].DEPTH); i++) {
       CSR[siselect] = (0x200 + i);
-      CSR[sireg1] = 0;
+      CSR[sireg] = 0;
       CSR[sireg2] = 0;
       CSR[sireg3] = 0;
     }
-    CTR_CYCLE_COUNTER = 16'b0;
-    CCV_HW = 1'b0;
+    if (CTRCYCLECOUNTER_IMPLEMENTED) {
+      write_ctrcyclecounter(27'b0);
+      write_ccv(1'b0);
+    }
   }
