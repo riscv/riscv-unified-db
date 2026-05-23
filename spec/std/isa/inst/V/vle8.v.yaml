@@ -19,7 +19,7 @@ encoding:
     - name: vm
       location: 25-25
       encode(operands): |
-        if (operands[vm] == "v0.t") {
+        if (operands[vm] == "v0.t" || operands[vm] == "v0" || operands[vm] == 0) {
           return 0;
         }
         if (operands[vm] != "") {

@@ -6,6 +6,7 @@ This module compiles and evaluates IDL function bodies that describe the encode/
 semantics of RISC-V instructions.
 """
 
+import contextlib
 import functools
 import re
 import subprocess
@@ -134,6 +135,15 @@ def _eval_idl_binary(node, env):
 
     lhs = _eval_idl_expr(node["lhs"], env)
     rhs = _eval_idl_expr(node["rhs"], env)
+
+    # operands could be strings or ints; IDL constants appear as strings;
+    # coerce to common type if possible
+    if isinstance(lhs, int):
+        with contextlib.suppress(ValueError):
+            rhs = int(rhs)
+    elif isinstance(rhs, int):
+        with contextlib.suppress(ValueError):
+            lhs = int(lhs)
 
     if op == "==":
         return lhs == rhs

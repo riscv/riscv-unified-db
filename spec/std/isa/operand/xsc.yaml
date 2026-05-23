@@ -8,4 +8,5 @@ kind: operand
 name: xsc
 data:
   $inherits: operand/xs.yaml#/data
-  possible_values: [8, 9, 10, 11, 12, 13, 14, 15]
+  possible_values: [8-15]
+  decode(): return creg2reg(xs);

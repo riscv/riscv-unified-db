@@ -7,6 +7,8 @@ $schema: "operand_schema.json#"
 kind: operand
 name: xdc
 data:
-  $inherits: operand/xd.yaml#/data
-  possible_values: [8, 9, 10, 11, 12, 13, 14, 15]
+  $inherits: operand/xsc.yaml#/data
+  name: xd
+  source: false
+  destination: true
   decode(): return creg2reg(xd);

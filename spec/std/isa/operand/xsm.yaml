@@ -7,7 +7,8 @@ $schema: "operand_schema.json#"
 kind: operand
 name: xsm
 data:
+  $inherits: operand/xs.yaml#/data
   name: xsm
   type: register
   reg_file: gpr
-  possible_values: [8, 9, 18, 19, 20, 21, 22, 23]
+  possible_values: [8, 9, 18-23]
