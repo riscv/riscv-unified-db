@@ -24,9 +24,8 @@ description: |
 
   `qc.cm.ilut` is a 16-bit instruction that takes an 11-bit immediate index
   (range 0..2047) into the ILUT. The ILUT base address is held in the `qc.itba`
-  CSR (address 0x800). The hardware computes the byte offset of the addressed
-  entry from the base address, fetches the entry, parses the packed instructions
-  within it, and executes them in order.
+  CSR (address 0x800). The instruction architecturally behaves as the
+  sub-instruction(s) stored at the addressed ILUT entry, executed in order.
 
   ILUT memory is treated as instruction memory. It requires execute (X)
   permission and does NOT require read (R) permission. A `fence.i` instruction
@@ -80,9 +79,9 @@ description: |
 
   === Dual-Instruction Packing
 
-  Each ILUT entry may contain one or two instructions packed together. The
-  hardware determines instruction sizes by parsing bits[1:0] of each
-  sub-instruction after fetching the full entry.
+  Each ILUT entry may contain one or two instructions packed together.
+  Instruction sizes are determined by the standard RISC-V instruction-length
+  encoding (bits[1:0] of each sub-instruction).
 
   ==== 32-bit Entry Valid Combinations
 
@@ -110,53 +109,82 @@ description: |
 
   Unused bits in any entry MUST be padded with `c.nop` (16'h0001). Instruction
   combinations that do not fit within the entry size cause an illegal instruction
-  exception. Hardware determines instruction sizes by parsing bits[1:0] of each
-  sub-instruction after fetching the full entry.
+  exception. Instruction sizes are determined by the standard RISC-V
+  instruction-length encoding (bits[1:0] of each sub-instruction).
 
   === Instruction Restrictions
 
-  PC-relative instructions are NOT permitted in the ILUT. This includes:
+  Any instruction that references PC as an input or output is NOT permitted
+  in the ILUT. If any such instruction is present in the entry, an
+  IllegalInstruction exception is raised before any sub-instruction in the
+  entry takes architectural effect.
 
-  * `auipc`
-  * All branch instructions (beq, bne, blt, bge, bltu, bgeu, c.beqz, c.bnez, etc.)
-  * All jump instructions (jal, jalr, c.j, c.jal, c.jr, c.jalr, etc.)
+  Forbidden instructions fall into three categories:
 
-  If a PC-relative instruction is fetched from the ILUT, an illegal instruction
-  exception is raised. 16-bit compressed instructions (bits[1:0] != 2'b11) are
-  otherwise valid in ILUT entries.
+  * *PC-relative instructions* (read PC as input):
+  ** `auipc`
+  ** All branch instructions (`beq`, `bne`, `blt`, `bge`, `bltu`, `bgeu`,
+     `c.beqz`, `c.bnez`, etc.)
+  ** PC-relative jump instructions (`jal`, `c.j`, `c.jal`)
+
+  * *Register-indirect jumps* (write PC as output):
+  ** `jalr`
+  ** `c.jr`
+  ** `c.jalr`
+
+  * *Return instructions* (write PC as output):
+  ** `cm.popret`
+  ** `cm.popretz`
+  ** `qc.cm.popret`
+  ** `qc.cm.popretz`
+
+  The following push/pop instructions are explicitly *allowed* in ILUT entries
+  because they do not reference PC:
+  `cm.push`, `cm.pop`, `qc.cm.push`, `qc.cm.pushfp`, `qc.cm.pop`.
+
+  16-bit compressed instructions (bits[1:0] != 2'b11) are otherwise valid
+  in ILUT entries.
 
   === Execution Model
 
-  Logically, the PC points to the `qc.cm.ilut` instruction throughout the
-  execution of all instructions contained within the fetched entry. The
-  instructions within an entry execute as if they were a single atomic unit from
-  the perspective of interrupt handling:
+  The PC points to the `qc.cm.ilut` instruction throughout the execution of all
+  sub-instructions contained within the fetched ILUT entry. Sub-instructions
+  execute sequentially and independently:
 
-  * Interrupts cannot be taken between two instructions of the same entry once
-    the first instruction has committed.
-  * If the first instruction has not yet committed when an interrupt arrives, the
-    interrupt is taken with mepc set to the PC of `qc.cm.ilut`.
-  * If the first instruction has already committed when an interrupt arrives, the
-    interrupt is serviced after the second instruction commits, with mepc pointing
-    to the next instruction after `qc.cm.ilut`.
+  * The architectural state changes produced by the first sub-instruction are
+    visible to the second sub-instruction and to any subsequent trap handler.
+  * Each sub-instruction can trap independently; traps are taken precisely at the
+    sub-instruction that caused them, not deferred.
+  * After the final sub-instruction completes, the PC advances past `qc.cm.ilut`
+    normally.
 
   === Exception Handling
 
-  On any exception caused by an instruction fetched from the ILUT:
+  On any trap (exception, interrupt, NMI, or double-trap) occurring during the
+  execution of a sub-instruction fetched from the ILUT:
 
   * mepc (or mnepc for a double-trap) is set to the PC of `qc.cm.ilut`.
-  * Bit 0 of mepc/mnepc is set to 0 if the first instruction in the entry caused
-    the exception.
-  * Bit 0 of mepc/mnepc is set to 1 if the second instruction in the entry caused
-    the exception.
+  * Bit 0 of mepc/mnepc encodes which sub-instruction was executing when the trap
+    occurred:
+  ** Bit 0 = 0: the trap occurred during the first (or only) sub-instruction.
+  ** Bit 0 = 1: the trap occurred during the second sub-instruction (the
+     architectural effects of the first sub-instruction are already visible).
 
-  Bit 0 of mepc/mnepc is writable to 0 only; software cannot set it to 1.
-  Return-from-trap instructions (`mret`, `mnret`, `qc.c.mret`, `qc.c.mnret`,
-  `qc.c.mileaveret`) leave bit 0 of mepc/mnepc unchanged when returning.
+  On trap return (`mret`, `qc.c.mret`, `qc.c.mnret`, `qc.c.mileaveret`), $pc is
+  restored directly from mepc/mnepc including bit 0:
+
+  * If bit 0 = 0: `qc.cm.ilut` re-executes from the beginning, running both
+    sub-instructions.
+  * If bit 0 = 1: `qc.cm.ilut` skips the first sub-instruction and executes only
+    the second.
+
+  Bit 0 of mepc/mnepc is readable and writable in this architecture.
+  Software may explicitly set bit 0 to 1 to force resumption from the second
+  sub-instruction.
 
   NOTE: This is an architectural exception to the standard RISC-V requirement
-  that *epc bit 0 is always zero. The non-zero bit 0 encodes which instruction
-  within the ILUT entry caused the exception, enabling precise exception restart.
+  that *epc bit 0 is always zero. The non-zero bit 0 encodes which sub-instruction
+  within the ILUT entry was interrupted, enabling precise trap restart.
 
   === Encoding
 
@@ -206,6 +234,49 @@ versions:
     - Initial version. Custom instruction lookup table extension with dual-instruction
       packing and 64-bit double entries. Supports 16-bit, 32-bit, and 48-bit instructions
       in the ILUT. Introduces qc.itba and qc.itdec CSRs.
+  requirements:
+    allOf:
+      - extension:
+          name: Zca
+          version: ">= 1.0.0"
+      - extension:
+          name: Zicsr
+          version: ">= 2.0.0"
+      - not:
+          extension:
+            name: Zcd
+- version: "0.2.0"
+  state: development
+  contributors:
+  - name: Albert Yosher
+    company: Qualcomm Technologies, Inc.
+    email: ayosher@qti.qualcomm.com
+  - name: Derek Hower
+    company: Qualcomm Technologies, Inc.
+    email: dhower@qti.qualcomm.com
+  - name: Gil Zukerman
+    company: Qualcomm Technologies, Inc.
+    email: gzukerma@qti.qualcomm.com
+  changes:
+    - >-
+      Precise trap semantics: each sub-instruction in an ILUT entry can now trap
+      independently. Traps are taken immediately at the faulting sub-instruction
+      rather than being deferred.
+    - >-
+      Resume mechanism: bit 0 of mepc/mnepc encodes which sub-instruction caused
+      the trap. On trap return, qc.cm.ilut re-enters with PC bit 0 reflecting this
+      value; if set, the first sub-instruction is skipped and only the second is
+      re-executed.
+    - >-
+      mepc/mnepc bit 0 is readable and writable in this architecture.
+      Software may set bit 0 to 1 to force resumption from the second sub-instruction.
+    - >-
+      Expanded ILUT instruction restrictions to all PC-referencing instructions:
+      added register-indirect jumps (jalr, c.jr, c.jalr) and return instructions
+      (cm.popret, cm.popretz, qc.cm.popret, qc.cm.popretz) to the forbidden list.
+    - >-
+      Spec language audit: removed all implementation-implying language; descriptions
+      now define architectural behavior only.
   requirements:
     allOf:
       - extension:

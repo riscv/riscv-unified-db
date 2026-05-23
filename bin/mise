@@ -337,4 +337,13 @@ __mise_bootstrap() {
     test -f "$MISE_INSTALL_PATH" || install
 }
 __mise_bootstrap
+
+# Ensure 'mise' is resolvable as a bare command so mise's internal tooling
+# (e.g. rubygems_plugin.rb reshim hook) can find it without a global install.
+UDB_ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
+_mise_shim_dir="${UDB_ROOT}/.tmp/mise-shim-${MISE_INSTALL_PATH##*/}"
+mkdir -p "$_mise_shim_dir"
+ln -sf "$MISE_INSTALL_PATH" "$_mise_shim_dir/mise"
+export PATH="$_mise_shim_dir:$PATH"
+
 exec -a "$0" "$MISE_INSTALL_PATH" "$@"

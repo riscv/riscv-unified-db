@@ -14,7 +14,7 @@ PATH
 PATH
   remote: tools/ruby-gems/idlc
   specs:
-    idlc (0.1.4)
+    idlc (0.1.5)
       activesupport
       commander (~> 5)
       pp
@@ -25,7 +25,7 @@ PATH
 PATH
   remote: tools/ruby-gems/udb-gen
   specs:
-    udb-gen (0.1.11)
+    udb-gen (0.1.12)
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf
@@ -35,7 +35,7 @@ PATH
       tty-option
       tty-progressbar
       tty-table
-      udb (= 0.1.12)
+      udb (= 0.1.13)
       write_xlsx
 
 PATH
@@ -46,12 +46,12 @@ PATH
 PATH
   remote: tools/ruby-gems/udb
   specs:
-    udb (0.1.12)
+    udb (0.1.13)
       activesupport
       asciidoctor
       awesome_print
       concurrent-ruby
-      idlc (= 0.1.4)
+      idlc (= 0.1.5)
       json_schemer
       numbers_and_words
       ostruct

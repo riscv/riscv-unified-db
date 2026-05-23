@@ -74,7 +74,7 @@ module UdbGen
             urlPrefix = formatterParams.fetch(:urlPrefix)
             fp.write ", formatterParams:{\n"
             fp.write "      labelField:\"#{column_name}\",\n"
-            fp.write "      urlPrefix:\"#{urlPrefix}\"\n"
+            fp.write "      url: function(cell) { return \"#{urlPrefix}\" + cell.getValue().replace(/\\./g, \"_\"); }\n"
             fp.write "      }\n"
           end
           fp.write "    },\n"
