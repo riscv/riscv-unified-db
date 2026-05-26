@@ -542,6 +542,47 @@ class ActiveSupport::StringInquirer < ::String
   def respond_to_missing?(method_name, include_private = T.unsafe(nil)); end
 end
 
+module ActiveSupport::Testing; end
+
+module ActiveSupport::Testing::ErrorReporterAssertions
+  def assert_error_reported(error_class = T.unsafe(nil), &block); end
+  def assert_no_error_reported(&block); end
+  def capture_error_reports(error_class = T.unsafe(nil), &block); end
+end
+
+module ActiveSupport::Testing::ErrorReporterAssertions::ErrorCollector
+  class << self
+    def record; end
+    def report(error, **kwargs); end
+
+    private
+
+    def subscribe; end
+  end
+end
+
+class ActiveSupport::Testing::ErrorReporterAssertions::ErrorCollector::Report < ::Struct
+  def context; end
+  def context=(_); end
+  def error; end
+  def error=(_); end
+  def handled; end
+  def handled=(_); end
+  def handled?; end
+  def severity; end
+  def severity=(_); end
+  def source; end
+  def source=(_); end
+
+  class << self
+    def [](*_arg0); end
+    def inspect; end
+    def keyword_init?; end
+    def members; end
+    def new(*_arg0); end
+  end
+end
+
 class ActiveSupport::TimeWithZone
   include ::DateAndTime::Compatibility
   include ::Comparable
