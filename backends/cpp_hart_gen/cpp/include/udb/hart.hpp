@@ -124,12 +124,18 @@ namespace udb {
       throw AbortInstruction();
     }
 
-    void wfi() {
-      throw WfiException();
+    bool wfi(bool tw_trap, bool vtw_trap) {
+      //No timeout handling yet
+      if(!tw_trap && !vtw_trap)
+        throw WfiException();
+
+      return false;
     }
 
-    void wrs_nto() {
+    bool wrs_nto(bool tw_trap, bool vtw_trap) {
       // no-op: a valid implementation per the Zawrs spec
+      //No timeout handling yet
+      return false;
     }
 
     void wrs_sto() {
