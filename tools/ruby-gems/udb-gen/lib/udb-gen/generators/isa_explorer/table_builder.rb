@@ -140,7 +140,7 @@ module UdbGen
           row = [
             inst.name,
             inst.long_name,
-            inst.name + " " + inst.assembly.gsub("x", "r")
+            inst.name + " " + inst.assembly
           ]
 
           sorted_releases.each do |pr|

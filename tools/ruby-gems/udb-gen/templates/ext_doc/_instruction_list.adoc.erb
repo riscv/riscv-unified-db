@@ -27,7 +27,7 @@ The following <%= insts.size %> instructions must be implemented when <%= ext_re
 <%-     insts.each do |i| -%>
 | <%= i.rv32? ? "&#x2713;" : "" %>
 | <%= i.rv64? ? "&#x2713;" : "" %>
-| `<%= [i.name, i.assembly.gsub("x", "r").strip].join(" ").strip %>`
+| `<%= [i.name, i.assembly.strip].join(" ").strip %>`
 | <%= link_to(i, i.long_name) %>
 <%-       if versions.size > 1 -%>
 | <%= versions.map { |v| (-i.defined_by_condition & v.to_condition_exclusive).unsatisfiable_by_arch?(cfg_arch) ? "&#x2713;" : "" }.join(" | ") %>
@@ -55,7 +55,7 @@ of this extension.
 ^ Mnemonic ^ Instruction ^ Defined by
 
 <%-       implied_insts.sort.each do |i| -%>
-^ `<%= [i.name, i.assembly.gsub("x", "r").strip].join(" ").strip %>`
+^ `<%= [i.name, i.assembly.strip].join(" ").strip %>`
 ^ <%= link_to(i, i.long_name) %>
 a^ <%= i.defined_by_condition.to_asciidoc %>
 <%-       end -%>
