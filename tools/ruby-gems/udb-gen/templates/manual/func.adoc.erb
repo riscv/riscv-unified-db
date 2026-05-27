@@ -8,7 +8,7 @@
 = Functions
 
 <%- cfg_arch.functions.each do |f| -%>
-[#<%= f.name %>-func-def]
+<%= anchor_for(f) %>
 == <%= f.name %><%- if f.builtin? -%> (builtin)<%- end -%><%- if f.generated? -%> (generated)<%- end -%>
 
 <%= f.description %>
@@ -17,33 +17,20 @@
 |===
 h| Return Type
 a|
-[source,idl]
-----
-<%= f.return_type_list_str.join(', ') %>
-----
+<%= idl_code_html_block(f.return_type_list_str.join(', ')) %>
 
 h| Arguments
 a|
 <%- if f.arguments_list_str.empty? -%>
 None
 <%- else -%>
-[source,idl]
-----
-<%= f.arguments_list_str.join (', ') %>
-----
+<%= idl_code_html_block(f.arguments_list_str.join(', ')) %>
 <%- end -%>
 |===
 
 <%- unless f.builtin? || f.generated? -%>
 <%- body_ast = f.body -%>
-<%- _body_funcs = body_ast.gen_adoc.scan(/%%UDB_DOC_LINK%func;([^;%]+);/).flatten.uniq.map { |n| cfg_arch.function(n) }.compact -%>
-[source,idl]
-----
-<%= body_ast.to_idl %>
-----
-<%- unless _body_funcs.empty? -%>
-Functions called: <%= _body_funcs.map { |fn| link_to(fn) }.join(", ") %>
-<%- end -%>
+<%= idl_code_html_block(body_ast.to_idl, idl_link_map(body_ast)) %>
 <%- end -%>
 
 <%- end -%>

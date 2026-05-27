@@ -29,6 +29,7 @@ PATH
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf
+      idl_highlighter
       rake
       sorbet-runtime
       tty-exit

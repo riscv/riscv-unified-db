@@ -118,12 +118,14 @@
 
 ; statement_block: used by if_statement branches, for_loop, body_block, fetch_definition
 ; Each statement_block has exactly one { and } — no multi-match, correct indentation.
-; @append_hardline on { (not @append_spaced_softline) ensures idempotence: single-line
-; source like "if (c) { return X; }" always expands to multi-line on pass 1.
-; @append_hardline is NOT on } so that "} else" stays on the same line (K&R style) —
-; the existing "else" @prepend_space rule provides the space.  Hardlines before each
+; @append_hardline on { ensures single-line source like "if (c) { return X; }" always
+; expands to multi-line on pass 1.
+; @prepend_hardline on } (not @prepend_spaced_softline) ensures idempotence: the softline
+; variant causes non-idempotent output when multiple closing braces appear on the same
+; line (e.g., "} } }").  "} else" still works because the existing @prepend_space on
+; "else" (below) inserts the space between } and else.  Hardlines before each
 ; body_statement come from the rule below.
-(statement_block "{" @append_hardline @append_indent_start "}" @prepend_spaced_softline @prepend_indent_end)
+(statement_block "{" @append_hardline @append_indent_start "}" @prepend_hardline @prepend_indent_end)
 ; Hardline before every body_statement inside a statement_block.
 ; This replaces the @append_hardline that used to be on "}" — which also fired
 ; before "else", preventing K&R style.  The extra Hardline before the first

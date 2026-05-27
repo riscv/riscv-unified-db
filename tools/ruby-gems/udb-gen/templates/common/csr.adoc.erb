@@ -109,16 +109,8 @@ This CSR may store a value that is different from what software attempts to writ
 When a software write occurs (_e.g._, through `csrrw`), the following determines the
 written value:
 
-[source,idl]
-----
-<%- csr.fields.each do |field| -%>
-<%- if field.has_custom_sw_write? -%>
-<%= field.name %> = <%= field.data["sw_write(csr_value)"] %>
-<%- else -%>
-<%= field.name %> = csr_value.<%= field.name %>
-<%- end -%>
-<%- end -%>
-----
+<%- _sw_write_idl = csr.fields.map { |field| field.has_custom_sw_write? ? "#{field.name} = #{field.data["sw_write(csr_value)"]}" : "#{field.name} = csr_value.#{field.name}" }.join("\n") -%>
+<%= idl_code_html_block(_sw_write_idl, format: false) %>
 <%- end -%>
 
 <%- if csr.has_custom_sw_read? -%>
@@ -127,12 +119,5 @@ written value:
 This CSR may return a value that is different from what is stored in hardware.
 
 <%- _sw_read_ast = csr.sw_read_ast(cfg_arch.symtab) -%>
-<%- _csr_funcs = _sw_read_ast.gen_adoc.scan(/%%UDB_DOC_LINK%func;([^;%]+);/).flatten.uniq.map { |n| cfg_arch.function(n) }.compact -%>
-[source,idl]
-----
-<%= _sw_read_ast.to_idl %>
-----
-<%- unless _csr_funcs.empty? -%>
-Functions called: <%= _csr_funcs.map { |f| link_to(f) }.join(", ") %>
-<%- end -%>
+<%= idl_code_html_block(_sw_read_ast.to_idl, idl_link_map(_sw_read_ast)) %>
 <%- end -%>

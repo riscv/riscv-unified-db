@@ -238,7 +238,7 @@ module.exports = grammar({
 
     field_access_expression: $ => prec(PREC.POSTFIX, seq(
       choice($.paren_expression, $.function_call, $.identifier),
-      '.', field('field', $.identifier),
+      '.', field('field', choice($.type_identifier, $.identifier)),
     )),
 
     enum_ref: $ => seq(
@@ -277,9 +277,15 @@ module.exports = grammar({
       $.csr_register_access, '.', field('field', choice($.type_identifier, $.identifier)),
     ),
 
-    // CSR[name].sw_write(val) or CSR[name].fn(args) — method call
+    // CSR[name].sw_write(val) or CSR[name].fn(args) — method call.
+    // Also handles bare-name CSR syntax (mip.sw_read()) and two-level namespace
+    // syntax (qc.mcause.sw_read()) which to_idl generates for non-CSR[] CSR refs.
     csr_function_call: $ => seq(
-      $.csr_register_access,
+      field('csr', choice(
+        $.csr_register_access,                                    // CSR[name]
+        $.identifier,                                            // mip
+        seq($.identifier, '.', $.identifier),                    // qc.mcause
+      )),
       '.', field('method', $.function_name),
       '(', optional($.argument_list), ')',
     ),

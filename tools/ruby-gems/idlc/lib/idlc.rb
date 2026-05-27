@@ -10,6 +10,7 @@ require "sorbet-runtime"
 require_relative "idlc/syntax_node"
 
 require_relative "idlc/ast"
+require_relative "idlc/formatter"
 require_relative "idlc/symbol_table"
 require_relative "idlc/ts_parser"
 require_relative "idlc/ts_ast_builder"

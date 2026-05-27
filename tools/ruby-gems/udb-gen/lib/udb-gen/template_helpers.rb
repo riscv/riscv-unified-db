@@ -7,6 +7,15 @@
 require "sorbet-runtime"
 
 require_relative "adoc_helpers"
+require "idl_highlighter/linked_html_formatter"
+require "idlc/formatter"
+
+# rouge doesn't play well with sorbet, making idl_highlighter/linked_html_formatter
+# opaque to type checking. define the classes here to pass sorbet checking
+module IdlHighlighter
+  module LinkedHtmlFormatter
+  end
+end
 
 module UdbGen
   module TemplateHelpers
@@ -150,6 +159,68 @@ module UdbGen
           raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
         end
       end
+    end
+
+    # Returns a hash mapping IDL identifier names to their HTML href targets,
+    # derived from the %%UDB_DOC_LINK%% markers in the AST's gen_adoc output.
+    # Used to pass a link_map into idl_code_html_block.
+    #
+    # @param ast [#gen_adoc] any IDL AST node that responds to gen_adoc
+    # @return [Hash{String => String}] e.g. {"raise_Illegal_Instruction" => "../funcs/funcs.html#..."}
+    def idl_link_map(ast)
+      ast.gen_adoc.scan(/%%UDB_DOC_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/).each_with_object({}) do |(type, name, text), map|
+        placeholder = "%%UDB_DOC_LINK%#{type};#{name};__PLACEHOLDER__%%"
+        href_html = Udb::Helpers::AntoraUtils.resolve_links_html(placeholder)
+        if (m = href_html.match(/href="([^"]+)"/))
+          map[text] = m[1]
+        end
+      end
+    end
+
+    # Formats an IDL source string through the Topiary formatter (bin/idl-format).
+    # Falls back to the original string if the formatter is unavailable.
+    # Use this in templates wherever raw to_idl output appears in code blocks.
+    #
+    # @param idl_source [String]
+    # @param column_width [Integer, nil] when set, runs the reflow pass to break
+    #   lines longer than this many columns at semantic break points (e.g. 80 for PDF)
+    # @return [String] formatted IDL
+    def idl_format(idl_source, column_width: nil)
+      Idl::Formatter.format(idl_source, column_width: column_width)
+    end
+
+    # Generates an AsciiDoc ++++  passthrough block containing IDL source
+    # rendered as syntax-highlighted HTML with optional hyperlinks on identifiers.
+    # The IDL source is formatted through the Topiary formatter before rendering
+    # unless format: false is passed (for synthetic/pseudo-IDL that is not valid
+    # input to the formatter, e.g., CSR sw_write pseudo-code).
+    #
+    # @param idl_source [String] IDL source to render
+    # @param link_map [Hash{String => String}] identifier name → href (from idl_link_map)
+    # @param column_width [Integer, nil] passed to the formatter's reflow pass
+    # @param format [Boolean] whether to run the Topiary formatter (default true)
+    # @return [String] AsciiDoc passthrough block
+    def idl_code_html_block(idl_source, link_map = {}, column_width: nil, format: true)
+      formatted = format ? Idl::Formatter.format(idl_source, column_width: column_width) : idl_source
+      html = IdlHighlighter::LinkedHtmlFormatter.format(formatted, link_map)
+      "++++\n#{html}\n++++"
+    end
+
+    # Serializes a link map for use as the idl-links block attribute on PDF
+    # [source,idl] code blocks.  The asciidoctor-pdf extended converter reads
+    # this attribute to add hyperlinks when rendering the block.
+    #
+    # @param ast [#gen_adoc] any IDL AST node that responds to gen_adoc
+    # @return [String] e.g. "raise_Illegal_Instruction=udb-function-raise_Illegal_Instruction"
+    def idl_code_links_attr(ast)
+      ast.gen_adoc.scan(/%%UDB_DOC_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/).filter_map do |(type, name, text)|
+        anchor = case type
+                 when "func"  then "udb-function-#{name.gsub(".", "_")}"
+                 when "csr"   then "udb-csr-#{name.gsub(".", "_")}"
+                 else next
+                 end
+        "#{text}=#{anchor}"
+      end.uniq.join(",")
     end
   end
 end

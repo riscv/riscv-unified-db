@@ -6,6 +6,7 @@
 
 # Collection of "helper" functions that can be called from backends and/or ERB templates.
 
+require "cgi"
 require "erb"
 require "pathname"
 require "ostruct"
@@ -427,6 +428,55 @@ module Udb
             inst_name, id = name.split(".")
             "xref:insts:#{inst_name}.adoc#idl:code:inst:#{inst_name}:#{id}[#{link_text}]"
           # TODO: Add csr and csr_field support
+          else
+            raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
+          end
+        end
+      end
+
+      # Like resolve_links, but converts %%UDB_DOC_LINK%% markers to HTML <a href> tags
+      # instead of AsciiDoc xref: syntax. Used when generating ++++  passthrough blocks
+      # for Antora HTML output where Asciidoc macros are not processed.
+      #
+      # All Antora pages within a version sit one level deep in their module
+      # (module/pages/PAGE.adoc → module/PAGE.html), so cross-module links are
+      # always ../other-module/page.html#anchor from any page.
+      #
+      # @param str [String]
+      # @return [String]
+      def self.resolve_links_html(str)
+        str.gsub(/%%UDB_DOC_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
+          type = Regexp.last_match[1]
+          name = Regexp.last_match[2]
+          link_text = CGI.escapeHTML(Regexp.last_match[3])
+
+          case type
+          when "ext"
+            %(<a href="../exts/#{name}.html#udb:doc:ext:#{name}">#{link_text}</a>)
+          when "ext_param"
+            ext_name, param_name = name.split(".")
+            %(<a href="../exts/#{ext_name}.html#udb:doc:ext_param:#{ext_name}:#{param_name}">#{link_text}</a>)
+          when "inst"
+            %(<a href="../insts/#{name}.html#udb:doc:inst:#{name}">#{link_text}</a>)
+          when "csr"
+            %(<a href="../csrs/#{name}.html#udb:doc:csr:#{name}">#{link_text}</a>)
+          when "csr_field"
+            csr_name, field_name = name.split("*")
+            %(<a href="../csrs/#{csr_name}.html#udb:doc:csr_field:#{csr_name}:#{field_name}">#{link_text}</a>)
+          when "func"
+            %(<a href="../funcs/funcs.html#udb:doc:func:#{name}">#{link_text}</a>)
+          else
+            raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
+          end
+        end.gsub(/%%IDL_CODE_LINK%([^;%]+)\s*;\s*([^;%]+)\s*;\s*([^%]+)%%/) do
+          type = Regexp.last_match[1]
+          name = Regexp.last_match[2]
+          link_text = CGI.escapeHTML(Regexp.last_match[3])
+
+          case type
+          when "inst"
+            inst_name, id = name.split(".")
+            %(<a href="../insts/#{inst_name}.html#idl:code:inst:#{inst_name}:#{id}">#{link_text}</a>)
           else
             raise "Unhandled link type of '#{type}' for '#{name}' with link_text '#{link_text}'"
           end

@@ -1,4 +1,6 @@
 --dir
+tools/ruby-gems/idl_highlighter
+--dir
 tools/ruby-gems/idlc
 --dir
 tools/ruby-gems/udb

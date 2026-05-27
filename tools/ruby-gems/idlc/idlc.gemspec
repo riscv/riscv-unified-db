@@ -18,16 +18,20 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  so_rel = "lib/idlc/libtree-sitter-idl.so"
-  so_abs = File.join(__dir__, so_rel)
+  so_rel      = "lib/idlc/libtree-sitter-idl.so"
+  so_abs      = File.join(__dir__, so_rel)
+  queries_rel = Dir["lib/idlc/queries/*.scm"].map { |f| f.sub("#{__dir__}/", "") }
+  reflow_rel  = Dir["lib/idlc/idl-reflow/*.js"].map { |f| f.sub("#{__dir__}/", "") }
 
   if File.exist?(so_abs)
     s.platform = Gem::Platform.local
-    s.files    = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop"] + [so_rel]
+    s.files    = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop"] +
+                 [so_rel] + queries_rel + reflow_rel
   else
     s.extensions = ["ext/idlc/extconf.rb"]
     s.files      = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop",
-                       "ext/idlc/extconf.rb", "ext/idlc/*.c"]
+                       "ext/idlc/extconf.rb", "ext/idlc/*.c"] +
+                   queries_rel + reflow_rel
   end
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
