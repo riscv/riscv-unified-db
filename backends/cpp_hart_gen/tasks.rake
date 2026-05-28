@@ -8,6 +8,7 @@ require_relative "lib/template_helpers"
 require_relative "lib/csr_template_helpers"
 require_relative "lib/gen_cpp"
 require_relative "lib/decode_tree"
+require_relative "lib/gen_cpp_coverage" if ENV["COVERAGE"] == "1"
 require "idlc/passes/find_src_registers"
 
 CPP_HART_GEN_SRC = $root / "backends" / "cpp_hart_gen"
@@ -133,6 +134,7 @@ rule %r{#{CPP_HART_GEN_DST}/.*/include/udb/cfgs/[^/]+/[^/]+\.h(xx)?\.unformatted
   [
     "#{CPP_HART_GEN_SRC}/templates/#{filename}.erb",
     "#{CPP_HART_GEN_SRC}/lib/gen_cpp.rb",
+    "#{CPP_HART_GEN_SRC}/lib/gen_cpp_coverage.rb",
     "#{$root}/tools/ruby-gems/idlc/lib/idlc/passes/prune.rb",
     "#{CPP_HART_GEN_SRC}/lib/template_helpers.rb",
     "#{CPP_HART_GEN_SRC}/lib/csr_template_helpers.rb",
@@ -167,6 +169,7 @@ rule %r{#{CPP_HART_GEN_DST}/.*/src/cfgs/[^/]+/[^/]+\.cxx\.unformatted$} => proc 
   [
     "#{CPP_HART_GEN_SRC}/templates/#{filename}.erb",
     "#{CPP_HART_GEN_SRC}/lib/gen_cpp.rb",
+    "#{CPP_HART_GEN_SRC}/lib/gen_cpp_coverage.rb",
     "#{$root}/tools/ruby-gems/idlc/lib/idlc/passes/prune.rb",
     "#{CPP_HART_GEN_SRC}/lib/template_helpers.rb",
     "#{CPP_HART_GEN_SRC}/lib/csr_template_helpers.rb",
@@ -199,6 +202,10 @@ rule %r{#{CPP_HART_GEN_DST}/[^/]+/build/Makefile} => [
   "#{CPP_HART_GEN_SRC}/CMakeLists.txt"
 ] do |t|
   build_name = t.name.split("/")[-3]
+  build_dir = "#{CPP_HART_GEN_DST}/#{build_name}/build"
+  cache = "#{build_dir}/CMakeCache.txt"
+  # cmake refuses to change CMAKE_CXX_COMPILER in an existing cache; wipe it
+  FileUtils.rm_f(cache)
   cmd = [
     "cmake",
     "-S#{CPP_HART_GEN_DST}/#{build_name}",
@@ -215,6 +222,7 @@ rule %r{#{CPP_HART_GEN_DST}/[^/]+/build/Makefile} => [
   else
     cmd.push("-DIGNOREUNDEFINED=YES")
   end
+  cmd.push("-DUDB_IDL_COVERAGE=ON") if ENV["COVERAGE"] == "1"
 
   sh cmd.join(" ")
 end
@@ -332,6 +340,12 @@ namespace :gen do
 
     multitask "__generate_formatted_cpp_#{build_name}" => generated_files
     Rake::MultiTask["__generate_formatted_cpp_#{build_name}"].invoke
+
+    if ENV["COVERAGE"] == "1"
+      manifest_path = "#{CPP_HART_GEN_DST}/#{build_name}/idl_coverage_manifest.json"
+      IdlCoverageManifest.write(manifest_path)
+      IdlCoverageManifest.reset!
+    end
   end
 end
 
@@ -431,8 +445,12 @@ namespace :test do
     @cmd_runner.run(cmd, timeout: 10, only_output_on_error: true)
   end
 
-  task riscv_tests: ["build_riscv_tests", "build:iss"] do
-    configs_name, build_name = configs_build_name
+  # Yields (cmd, test_name) for each riscv-test binary in the standard suite.
+  def each_riscv_test(configs_name, build_name)
+    iss = "#{CPP_HART_GEN_DST}/#{build_name}/build/iss"
+    cfg = "#{$root}/cfgs/#{configs_name[0]}-riscv-tests.yaml"
+    xlen = configs_name[0]
+
     rv32uiTests = ["simple", "add", "addi", "and",
       "andi", "auipc", "beq", "bge", "bgeu", "blt",
       "bltu", "bne", "fence_i", "jal", "jalr",
@@ -459,70 +477,45 @@ namespace :test do
       "srl", "srli", "srliw", "srlw",
       "sub", "subw",
       "xor", "xori"]
-
     rv32umTests = ["div", "divu",
       "mul", "mulh", "mulhsu", "mulhu",
       "rem", "remu"]
     rv64umTests = ["div", "divu", "divuw", "divw",
       "mul", "mulh", "mulhsu", "mulhu", "mulw",
       "rem", "remu", "remuw", "remw"]
-
     rv32ufTests = [
       "fadd", "fclass", "fcmp", "fcvt", "fcvt_w", "fdiv", "fmadd", "fmin", "ldst", "move", "recoding"
     ]
     rv64ufTests = rv32ufTests
-
-    # compressed tests same for rv32 as rv64
     ucTests = ["rvc"]
-
     rv32siTests = ["csr", "dirty", "ma_fetch", "scall", "sbreak"]
     rv64siTests = ["csr", "dirty", "icache-alias", "ma_fetch", "scall", "sbreak"]
 
-    if configs_name[0] == "rv64"
-      uiTests = rv64uiTests
-      umTests = rv64umTests
-      siTests = rv64siTests
-      ufTests = rv64ufTests
-    else
-      uiTests = rv32uiTests
-      umTests = rv32umTests
-      siTests = rv32siTests
-      ufTests = rv32ufTests
-    end
+    uiTests, umTests, siTests, ufTests =
+      if xlen == "rv64"
+        [rv64uiTests, rv64umTests, rv64siTests, rv64ufTests]
+      else
+        [rv32uiTests, rv32umTests, rv32siTests, rv32ufTests]
+      end
 
-    uiTests.each do |t|
-      run_test(
-        "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-riscv-tests.yaml ext/riscv-tests/isa/#{configs_name[0]}ui-p-#{t}",
-        "#{configs_name[0]}ui-p-#{t}"
-      )
-    end
+    uiTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}ui-p-#{t}", "#{xlen}ui-p-#{t}" }
+    umTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}um-p-#{t}", "#{xlen}um-p-#{t}" }
+    ucTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}uc-p-#{t}", "#{xlen}um-p-#{t}" }
+    siTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}si-p-#{t}", "#{xlen}si-p-#{t}" }
+    ufTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}uf-p-#{t}", "#{xlen}uf-p-#{t}" }
+  end
 
-    umTests.each do |t|
-      run_test(
-        "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-riscv-tests.yaml ext/riscv-tests/isa/#{configs_name[0]}um-p-#{t}",
-        "#{configs_name[0]}um-p-#{t}"
-      )
-    end
+  task riscv_tests: ["build_riscv_tests", "build:iss"] do
+    configs_name, build_name = configs_build_name
+    each_riscv_test(configs_name, build_name) { |cmd, name| run_test(cmd, name) }
+  end
 
-    ucTests.each do |t|
-      run_test(
-        "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-riscv-tests.yaml ext/riscv-tests/isa/#{configs_name[0]}uc-p-#{t}",
-        "#{configs_name[0]}um-p-#{t}"
-      )
-    end
-
-    siTests.each do |t|
-      run_test(
-        "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-riscv-tests.yaml ext/riscv-tests/isa/#{configs_name[0]}si-p-#{t}",
-        "#{configs_name[0]}si-p-#{t}"
-      )
-    end
-
-    ufTests.each do |t|
-      run_test(
-        "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-riscv-tests.yaml ext/riscv-tests/isa/#{configs_name[0]}uf-p-#{t}",
-        "#{configs_name[0]}uf-p-#{t}"
-      )
+  task riscv_tests_coverage: ["build_riscv_tests", "build:iss"] do
+    configs_name, build_name = configs_build_name
+    cov_dir = "#{CPP_HART_GEN_DST}/#{build_name}/coverage"
+    FileUtils.mkdir_p(cov_dir)
+    each_riscv_test(configs_name, build_name) do |cmd, name|
+      run_test("#{cmd} --coverage-output #{cov_dir}/#{name}.json", name)
     end
   end
 
@@ -538,4 +531,12 @@ namespace :test do
       sh "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}.yaml tests/isa/rv#{base}uv-p-#{t}"
     end
   end
+end
+
+task merge_coverage: [] do
+  _, build_name = configs_build_name
+  cov_dir  = "#{CPP_HART_GEN_DST}/#{build_name}/coverage"
+  manifest = "#{CPP_HART_GEN_DST}/#{build_name}/idl_coverage_manifest.json"
+  output_dir = "#{CPP_HART_GEN_DST}/#{build_name}"
+  sh "ruby #{$root}/tools/scripts/merge_coverage.rb #{manifest} #{output_dir} #{cov_dir}/*.json"
 end

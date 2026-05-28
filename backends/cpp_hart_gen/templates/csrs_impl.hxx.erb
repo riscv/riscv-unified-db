@@ -1,5 +1,6 @@
 #pragma once
 
+#include "udb/coverage.hpp"
 #include <array>
 
 #include "udb/cfgs/<%= cfg_arch.name %>/structs.hxx"
@@ -14,6 +15,7 @@ namespace udb {
 <%- csrs = cfg_arch.possible_csrs -%>
 
 <%- csrs.each do |csr| -%>
+<%- IdlCoverageManifest.set_current_source(csr.name, "csr") if defined?(IdlCoverageManifest) -%>
 <%- fields = cfg_arch.fully_configured? ? csr.possible_fields : csr.fields.select { |field| field.exists_in_cfg?(cfg_arch) } -%>
 
 #define __UDB_RUNTIME_PARAM(param_name) m_hart->m_params.param_name.value()

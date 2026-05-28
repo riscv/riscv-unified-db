@@ -19,6 +19,7 @@
 #include "udb/Tracer.hpp"
 #include "udb/config_validator.hpp"
 #include "udb/htif.hpp"
+#include "udb/coverage.hpp"
 
 
 #define RISCV_REG_GPR_FIRST 0
@@ -43,6 +44,7 @@ struct Options
   bool gdbMode;
   uint16_t gdbPort;
   std::vector<std::string> trace;
+  std::string coverageOutputPath;
 
   Options()
   {
@@ -134,6 +136,8 @@ int ParseCommandLine(int argc, char *argv[], Options &options)
   app.add_flag("--halt", options.halt,
                "Halt before execution and wait for debugger to attach");
   app.add_option("elf_file", options.elfFilePath, "File to run");
+  app.add_option("--coverage-output", options.coverageOutputPath,
+                 "Write IDL coverage data to JSON file on exit");
 
   CLI11_PARSE(app, argc, argv);
   return 0;
@@ -348,6 +352,9 @@ int InstructionSetSimulator::Run()
   {
     result = m_pHart->exit_code();
   }
+
+  if (!m_opts.coverageOutputPath.empty())
+    COVERAGE_DUMP(m_opts.coverageOutputPath);
 
   return result;
 }

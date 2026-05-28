@@ -188,6 +188,11 @@ add_executable(iss
 if(IGNOREUNDEFINED STREQUAL "YES")
 target_compile_definitions(iss PUBLIC IGNOREUNDEFINED)
 endif()
+option(UDB_IDL_COVERAGE "Enable IDL code coverage instrumentation" OFF)
+if(UDB_IDL_COVERAGE)
+  target_compile_definitions(hart PUBLIC UDB_IDL_COVERAGE)
+  target_compile_definitions(iss  PRIVATE UDB_IDL_COVERAGE)
+endif()
 target_link_libraries(iss PRIVATE hart libelf_static CLI11::CLI11)
 add_dependencies(iss elfutils_libelf)
 

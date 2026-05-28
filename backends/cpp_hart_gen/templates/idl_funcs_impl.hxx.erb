@@ -8,6 +8,7 @@
 
 #include <type_traits>
 
+#include "udb/coverage.hpp"
 #include "udb/hart.hpp"
 
 #define __UDB_CONSTEXPR_FUNC_CALL <%= name_of(:hart, cfg_arch) %><SocType>::
@@ -29,6 +30,7 @@ namespace udb {
 <%# need to get symtab at function scope -%>
 <%- cfg_arch.reachable_functions.each do |func| -%>
 <%- next if func.builtin? || func.generated? -%>
+<%- IdlCoverageManifest.set_current_source(func.name, "func") if defined?(IdlCoverageManifest) -%>
 <%# next unless func.templated? || func.constexpr?(cfg_arch.symtab) # non-templated functions come next -%>
 <%- symtab = cfg_arch.symtab.global_clone.push(func) -%>
 
