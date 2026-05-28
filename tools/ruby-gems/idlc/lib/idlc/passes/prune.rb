@@ -97,6 +97,8 @@ end
 module Idl
   # set up a default
   class AstNode
+    def always_terminates? = false
+
     # forced_type, when not nil, is the type that the pruned result must be
     # if is used when pruning expressions to ensure that the prune doesn't change
     # bit width just because a value is known and would fit in something smaller
@@ -157,7 +159,9 @@ module Idl
           # array var itself is unknown; nothing more to do
         end
       when :bits
-        var = symtab.get(lhs.text_value)
+        root = lhs
+        root = root.var while root.is_a?(AryElementAccessAst) || root.is_a?(AryRangeAccessAst)
+        var = symtab.get(root.name)
         var.value = nil unless var.nil?
       end
     end
@@ -165,7 +169,9 @@ module Idl
   class AryRangeAssignmentAst < AstNode
     def nullify_assignments(symtab)
       return if variable.type(symtab).global?
-      var = symtab.get(variable.name)
+      root = variable
+      root = root.var while root.is_a?(AryElementAccessAst) || root.is_a?(AryRangeAccessAst)
+      var = symtab.get(root.name)
       var.value = nil unless var.nil?
     end
   end
@@ -319,6 +325,14 @@ module Idl
         end
 
         pruned_body = nil
+        prune_stmts = -> {
+          [].tap do |out|
+            statements.each do |s|
+              out << s.prune(symtab)
+              break if out.last.always_terminates?
+            end
+          end
+        }
 
         value_result = value_try do
           # go through the statements, and stop if we find one that returns or raises an exception
@@ -345,10 +359,10 @@ module Idl
             end
           end
 
-          pruned_body = FunctionBodyAst.new(input, interval, statements.map { |s| s.prune(symtab) })
+          pruned_body = FunctionBodyAst.new(input, interval, prune_stmts.())
         end
         value_else(value_result) do
-          pruned_body = FunctionBodyAst.new(input, interval, statements.map { |s| s.prune(symtab) })
+          pruned_body = FunctionBodyAst.new(input, interval, prune_stmts.())
         end
       ensure
         symtab.pop
@@ -358,6 +372,10 @@ module Idl
     end
   end
   class StatementAst < AstNode
+    def always_terminates?
+      action.is_a?(FunctionCallExpressionAst) && action.name == "raise"
+    end
+
     def prune(symtab, forced_type: nil)
       pruned_action = action.prune(symtab)
 
@@ -471,6 +489,10 @@ module Idl
   end
 
   class IfBodyAst < AstNode
+    def always_terminates?
+      !stmts.empty? && stmts.last.always_terminates?
+    end
+
     def prune(symtab, restore: true, forced_type: nil)
       pruned_stmts = []
       symtab.push(nil)
@@ -478,7 +500,7 @@ module Idl
       stmts.each do |s|
         pruned_stmts << s.prune(symtab)
 
-        break if pruned_stmts.last.is_a?(StatementAst) && pruned_stmts.last.action.is_a?(FunctionCallExpressionAst) && pruned_stmts.last.action.name == "raise"
+        break if pruned_stmts.last.always_terminates?
       end
       if restore
         symtab.restore_values(snapshot)
@@ -547,16 +569,23 @@ module Idl
           end
         end
         # we get here, then we don't know the value of anything. just return this if with everything pruned
+        # After pruning, some elseif conditions may resolve to a literal (e.g., `false && <runtime_csr_read>`
+        # fails value() due to the CSR read but prune() short-circuits the && to false). Filter those out.
+        pruned_elsifs = unknown_elsifs.filter_map do |eif|
+          pruned = eif.prune(symtab)
+          next nil if pruned.cond.is_a?(FalseExpressionAst)
+          pruned
+        end
         result = IfAst.new(
           input, interval,
           if_cond.prune(symtab),
           if_body.prune(symtab),
-          unknown_elsifs.map { |eif| eif.prune(symtab) },
+          pruned_elsifs,
           final_else_body.prune(symtab)
         )
         # Nullify any variable assigned in any branch, since we don't know which ran
         if_body.nullify_assignments(symtab)
-        unknown_elsifs.each { |eif| eif.body.nullify_assignments(symtab) }
+        pruned_elsifs.each { |eif| eif.body.nullify_assignments(symtab) }
         final_else_body.nullify_assignments(symtab)
         result
       end
@@ -837,6 +866,8 @@ module Idl
   end
 
   class ReturnStatementAst < AstNode
+    def always_terminates? = true
+
     def prune(symtab, forced_type: nil)
       ReturnStatementAst.new(input, interval, return_expression.prune(symtab))
     end

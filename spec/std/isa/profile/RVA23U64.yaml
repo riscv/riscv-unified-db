@@ -8,7 +8,7 @@ kind: profile
 name: RVA23U64
 long_name: U-mode extensions for version 23 of the 64-bit Apps Processor profile
 marketing_name: RVA23U64
-mode: Unpriv
+mode: U
 base: 64
 release: { $ref: profile_release/RVA23.yaml# }
 introduction: |
@@ -34,21 +34,27 @@ extensions:
 
   Zfhmin:
     presence: mandatory
+    version: ~> 1.0
 
   V:
     presence: mandatory
+    version: ~> 1.0
 
   Zvfhmin:
     presence: mandatory
+    version: ~> 1.0
 
   Zvbb:
     presence: mandatory
+    version: ~> 1.0
 
   Zvkt:
     presence: mandatory
+    version: ~> 1.0
 
   Supm:
     presence: mandatory
+    version: ~> 1.0
 
   #--------------------------------------------
   # Zvbc is an expansion option in RVB23U64
@@ -60,6 +66,7 @@ extensions:
   Zvbc:
     presence:
       optional: development
+    version: ~> 1.0
 
   #########################################################################
   # TRANSITORY EXPANSION extensions in RVA23U64
@@ -68,3 +75,10 @@ extensions:
   #--------------------------------------------
   # (there are no Transitory expansion options in RVA23U64)
   #--------------------------------------------
+requirements:
+  param:
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: UXLEN
+        includes: 64

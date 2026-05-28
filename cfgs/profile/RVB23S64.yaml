@@ -10,8 +10,7 @@ kind: architecture configuration
 type: partially configured
 name: RVB23S64
 description:
-params:
-  MXLEN: 64
+params: {}
 mandatory_extensions:
 - name: A
   version: "~> 2.1"
@@ -20,15 +19,17 @@ mandatory_extensions:
 - name: C
   version: "~> 2.0"
 - name: D
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: F
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: I
   version: "~> 2.1"
 - name: M
   version: "~> 2.0"
 - name: S
   version: "~> 1.13"
+- name: Sm
+  version: "~> 1.13.0"
 - name: Ssccptr
   version: "~> 1.0"
 - name: Sscofpmf
@@ -61,6 +62,10 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Za64rs
   version: "~> 1.0"
+- name: Zaamo
+  version: "~> 1.0.0"
+- name: Zalrsc
+  version: "~> 1.0.0"
 - name: Zawrs
   version: "~> 1.0"
 - name: Zba
@@ -69,8 +74,12 @@ mandatory_extensions:
   version: "~> 1.0"
 - name: Zbs
   version: "~> 1.0"
+- name: Zca
+  version: "~> 1.0.0"
 - name: Zcb
   version: "~> 1.0"
+- name: Zcd
+  version: "~> 1.0.0"
 - name: Zcmop
   version: "~> 1.0"
 - name: Zfa
@@ -98,7 +107,7 @@ mandatory_extensions:
 - name: Zicsr
   version: "~> 2.0"
 - name: Zifencei
-  version: "~> 1.0"
+  version: "~> 2.0"
 - name: Zihintntl
   version: "~> 1.0"
 - name: Zihintpause
@@ -121,9 +130,9 @@ non_mandatory_extensions:
 - name: Ssstrict
   version: "~> 1.0"
 - name: Sv48
-  version: "~> 1.13"
+  version: "~> 1.0"
 - name: Sv57
-  version: "~> 1.13"
+  version: "~> 1.0"
 - name: Svadu
   version: "~> 1.0"
 - name: Svvptc
@@ -145,3 +154,14 @@ non_mandatory_extensions:
 - name: Zks
   version: "~> 1.0"
 additional_extensions: true
+requirements:
+  param:
+    allOf:
+    - name: U_MODE_ENDIANNESS
+      equal: little
+    - name: S_MODE_ENDIANNESS
+      equal: little
+    - name: SXLEN
+      includes: 64
+    - name: UXLEN
+      includes: 64

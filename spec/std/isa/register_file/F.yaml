@@ -1,7 +1,7 @@
 # Copyright (c) Animesh Agarwal
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-# yaml-language-server: $schema=../../../../schemas/register_file_schema.json
+# yaml-language-server: $schema=../../../schemas/register_file_schema.json
 
 $schema: register_file_schema.json#
 kind: register_file
@@ -13,7 +13,8 @@ description: |
   participates in the standard calling convention defined by the RISC-V ABI spec.
 definedBy: F
 register_class: floating_point
-register_length: FLEN
+register_length(): |
+  return implemented?(ExtensionName::Q) ? 128 : (implemented?(ExtensionName::D) ? 64 : 32);
 registers:
   - name: f0
     abi_mnemonics: [ft0]

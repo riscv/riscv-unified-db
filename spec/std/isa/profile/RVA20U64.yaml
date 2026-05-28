@@ -8,7 +8,7 @@ kind: profile
 name: RVA20U64
 long_name: U-mode extensions for version 20 of the 64-bit Apps Processor profile
 marketing_name: RVA20U64
-mode: Unpriv
+mode: U
 base: 64
 release: { $ref: profile_release/RVA20.yaml# }
 introduction: |
@@ -21,21 +21,26 @@ extensions:
   $remove: Zifencei # Not allowed as an option for Unpriv ISA (only available in Priv ISA).
   A:
     presence: mandatory
+    version: ~> 2.1
   C:
     presence: mandatory
+    version: ~> 2.0
   D:
     presence: mandatory
+    version: ~> 2.2.0
   F:
     presence: mandatory
+    version: ~> 2.2.0
   M:
     presence: mandatory
+    version: ~> 2.0
   U:
     presence: mandatory
     version: "~> 1.0"
-  Zicsr:
+  Zicntr:
     presence: mandatory
     version: "~> 2.0"
-  Zicntr:
+  Zicsr:
     presence: mandatory
     version: "~> 2.0"
   Ziccif:
@@ -102,7 +107,11 @@ recommendations:
   - text: |
       Implementations are strongly recommended to raise illegal-instruction
       exceptions on attempts to execute unimplemented opcodes.
+
 requirements:
   param:
-    name: U_MODE_ENDIANNESS
-    equal: little
+    allOf:
+      - name: U_MODE_ENDIANNESS
+        equal: little
+      - name: UXLEN
+        includes: 64

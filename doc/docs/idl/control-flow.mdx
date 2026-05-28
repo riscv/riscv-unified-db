@@ -13,7 +13,7 @@ An `if` statement condition must be a `Boolean` type.
 Unlike C, a non-zero integer does **not** count as `true`. Using an integer directly as a condition is a compilation error — you must write an explicit comparison:
 
 ```idl
-XReg src1 = X[rs1];
+XReg src1 = X[xs1];
 
 if (src1 != 0) { ... }  # correct: explicit comparison
 # if (src1) { ... }     # compilation error: src1 is not Boolean

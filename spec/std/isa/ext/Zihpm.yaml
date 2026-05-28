@@ -13,15 +13,3 @@ versions:
   - version: "2.0.0"
     state: ratified
     ratification_date: 2023-03
-requirements:
-  idl(): |
-    -> (HPM_COUNTER_EN[3] || HPM_COUNTER_EN[4] || HPM_COUNTER_EN[5] ||
-        HPM_COUNTER_EN[6] || HPM_COUNTER_EN[7] || HPM_COUNTER_EN[8] ||
-        HPM_COUNTER_EN[9] || HPM_COUNTER_EN[10] || HPM_COUNTER_EN[11] ||
-        HPM_COUNTER_EN[12] || HPM_COUNTER_EN[13] || HPM_COUNTER_EN[14] ||
-        HPM_COUNTER_EN[15] || HPM_COUNTER_EN[16] || HPM_COUNTER_EN[17] ||
-        HPM_COUNTER_EN[18] || HPM_COUNTER_EN[19] || HPM_COUNTER_EN[20] ||
-        HPM_COUNTER_EN[21] || HPM_COUNTER_EN[22] || HPM_COUNTER_EN[23] ||
-        HPM_COUNTER_EN[24] || HPM_COUNTER_EN[25] || HPM_COUNTER_EN[26] ||
-        HPM_COUNTER_EN[27] || HPM_COUNTER_EN[28] || HPM_COUNTER_EN[29] ||
-        HPM_COUNTER_EN[30] || HPM_COUNTER_EN[31]);

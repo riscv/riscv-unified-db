@@ -204,6 +204,7 @@ rule %r{#{CPP_HART_GEN_DST}/[^/]+/build/Makefile} => [
     "-S#{CPP_HART_GEN_DST}/#{build_name}",
     "-B#{CPP_HART_GEN_DST}/#{build_name}/build",
     "-DCMAKE_CXX_COMPILER=#{$root}/bin/g++",
+    "-DCOVERAGE_COMMAND=#{$root}/bin/gcov",
     "-DCONFIG_LIST=\"#{ENV['CONFIG'].gsub(',', ';')}\"",
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
     "-DCMAKE_BUILD_TYPE=#{cmake_build_type}",
@@ -432,6 +433,7 @@ namespace :test do
       sh "make -j #{$jobs} test_bits_directed"
       sh "make -j #{$jobs} test_bits_random"
       sh "make -j #{$jobs} test_softfloat_fp"
+      sh "make -j #{$jobs} test_regfile"
       sh "ctest -T coverage -T test"
     end
   end
@@ -543,8 +545,9 @@ namespace :test do
     # uvTests are common for rv32/64
     uvTests = ["vsetivli", "vsetvl", "vsetvli_rs1_eq_zero", "vsetvli_vl_lt_vlmax",
                 "vle8", "vmv_v_i", "vadd.vv"]
+    base = YAML.load_file("#{$root}/cfgs/#{configs_name[0]}.yaml")["params"]["MXLEN"]
     uvTests.each do |t|
-      sh "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}-vector.yaml tests/isa/#{configs_name[0]}uv-p-#{t}"
+      sh "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}.yaml tests/isa/rv#{base}uv-p-#{t}"
     end
   end
 

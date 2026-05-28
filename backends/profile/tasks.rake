@@ -10,6 +10,9 @@ require "udb/portfolio_design"
 PROFILE_DOC_DIR = Pathname.new "#{$root}/backends/profile"
 PROFILE_GEN_DIR = $resolver.gen_path / "profile"
 
+UDB_GEM_SRC ||= $root / "tools/ruby-gems/udb"
+UDB_HELPERS_GEM_SRC = $root / "tools/ruby-gems/udb_helpers"
+
 Dir.glob("#{$resolver.std_path}/profile_release/*.yaml") do |f|
   release_name = File.basename(f, ".yaml")
   release_obj = YAML.load_file(f, permitted_classes: [Date])
@@ -29,10 +32,10 @@ Dir.glob("#{$resolver.std_path}/profile_release/*.yaml") do |f|
     __FILE__,
     "#{$resolver.std_path}/profile_family/#{family_name}.yaml",
     "#{$resolver.std_path}/profile_release/#{release_name}.yaml",
-    "#{Udb.gem_path}/lib/udb/obj/profile.rb",
-    "#{Udb.gem_path}/lib/udb/obj/portfolio.rb",
-    "#{Udb.gem_path}/lib/udb/portfolio_design.rb",
-    "#{Udb::Helpers.gem_path}/lib/udb_helpers/backend_helpers.rb",
+    "#{UDB_GEM_SRC}/lib/udb/obj/profile.rb",
+    "#{UDB_GEM_SRC}/lib/udb/obj/portfolio.rb",
+    "#{UDB_GEM_SRC}/lib/udb/portfolio_design.rb",
+    "#{UDB_HELPERS_GEM_SRC}/lib/udb_helpers/backend_helpers.rb",
     "#{$root}/backends/portfolio/templates/ext_appendix.adoc.erb",
     "#{$root}/backends/portfolio/templates/inst_appendix.adoc.erb",
     "#{$root}/backends/portfolio/templates/csr_appendix.adoc.erb",

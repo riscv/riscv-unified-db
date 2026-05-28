@@ -1,7 +1,12 @@
 ---
 sidebar_position: 5
 title: Operators
+status: complete
 ---
+
+:::info[Status: Complete]
+This documentation is complete and ready to use.
+:::
 
 Integer types (`Bits<N>`, `U64`) support most of the same operators as Verilog and use the same order of precedence. Notably excluded are many bitwise reduction operators (e.g., and-reduce, or-reduce).
 
@@ -12,6 +17,8 @@ The result of a binary operation is signed if both operands are signed; otherwis
 ## Widening Operators
 
 IDL includes widening variants of several binary operators, indicated by a backtick (`` ` ``) prefix. These are unique to IDL and have no direct C or Verilog equivalent. They are useful when you need to preserve the full result of an operation that would otherwise overflow or lose bits.
+
+In the table below, `L(i)` denotes the bit width of operand `i`, and `value(j)` denotes the compile-time constant value of `j`.
 
 | Operator | Operation | Result width |
 |----------|-----------|-------------|
@@ -31,7 +38,7 @@ Bits<32> narrow_mul = a * b;     # 0xFFFFFFFE (truncated)
 Bits<64> wide_mul = a `* b;      # 0x00000001FFFFFFFE
 
 # Standard addition: carry bit lost
-Bits<32> wrapped_add = a + b;    # 0x00000001 (overflow)
+Bits<32> wrapped_add = a + b;    # 0x00000001 (truncation)
 
 # Widening addition: carry preserved in extra bit, result is 33 bits
 Bits<33> wide_add = a `+ b;      # 0x100000001

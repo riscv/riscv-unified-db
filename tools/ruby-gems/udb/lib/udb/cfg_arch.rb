@@ -204,7 +204,19 @@ module Udb
         begin
           @symtab = create_symtab
 
-          global_ast.add_global_symbols(@symtab)
+          # Guard against re-entrant solver calls from within add_global_symbols.
+          # Global initializers (e.g. FLEN) may call implemented?(), which triggers
+          # prohibited_ext?() and the Z3 solver chain. If those calls see @symtab is
+          # already set (partial), they'd use an incomplete symtab and fail.
+          # A depth counter (rather than a boolean) is used so that if this block
+          # ever nests (e.g. create_symtab is called recursively in the future),
+          # the inner ensure does not prematurely clear the guard for the outer block.
+          @constructing_symtab_depth = (@constructing_symtab_depth || 0) + 1
+          begin
+            global_ast.add_global_symbols(@symtab)
+          ensure
+            @constructing_symtab_depth -= 1
+          end
 
           @symtab.deep_freeze
           raise if @symtab.name.nil?
@@ -212,6 +224,11 @@ module Udb
           @symtab
         end
     end
+
+    # @return [Boolean] true while add_global_symbols is running inside symtab construction
+    # Used by implemented? callback to avoid triggering the Z3 solver on a partial symtab.
+    sig { returns(T::Boolean) }
+    def constructing_symtab? = (@constructing_symtab_depth || 0) > 0
 
     sig { returns(Idl::IsaAst) }
     def global_ast
@@ -277,7 +294,7 @@ module Udb
           reasons << "#{h.fetch("name")} is not a known extension"
         end
         if extensions.any? { |e| e.name == h.fetch("name") } && !T.must(extension(h.fetch("name"))).versions.any? { |v| v.version_spec == h.fetch("version") }
-          reasons << "#{h.fetch("version")} is not a known extension"
+          reasons << "#{h.fetch("version")} is not a known version of extension #{h.fetch("name")}"
         end
       end
 
@@ -335,6 +352,8 @@ module Udb
       unless missing_params.empty?
         reasons += missing_params.map { |p| "Parameter is required but missing: '#{p.name}'" }
       end
+
+      validate_compatible(reasons)
 
       if reasons.empty?
         raise "bad validity check" unless to_condition.satisfiable?
@@ -466,6 +485,8 @@ module Udb
         end
       end
 
+      validate_compatible(reasons)
+
       if reasons.empty?
         raise "Bad validation" unless to_condition.satisfiable?
         return ValidationResult.new(valid: true, reasons: [])
@@ -488,6 +509,11 @@ module Udb
               # we can know if it is implemented, but not if it's not implemented for a partially configured
               if ext?(ext_name)
                 true
+              elsif constructing_symtab?
+                # During symtab construction (add_global_symbols), the Z3 solver is not
+                # available because the symtab is partial. Return nil (unknown) so that
+                # value_try falls back to storing the global with nil (no compile-time value).
+                nil
               elsif prohibited_ext?(ext_name)
                 false
               else
@@ -504,6 +530,9 @@ module Udb
               # we can know if it is implemented, but not if it's not implemented for a partially configured
               if ext?(ext_name, [version])
                 true
+              elsif constructing_symtab?
+                # Same guard as for implemented? above.
+                nil
               elsif prohibited_ext?(ext_name)
                 false
               else
@@ -583,6 +612,33 @@ module Udb
       end
       pb.finish
 
+      # Build a bootstrap symtab and compute RF max widths before constructing the real
+      # symtab. The bootstrap needs add_global_symbols so that implemented?() is a known
+      # function (required for type_check to pass). Running it under @constructing_symtab=true
+      # ensures implemented?() returns nil → value_error during value evaluation, which
+      # causes TernaryOperatorExpressionAst#max_value to explore both branches.
+      bootstrap_st = Idl::SymbolTable.new(
+        mxlen:,
+        builtin_global_vars: final_param_vars,
+        builtin_enums: symtab_enums,
+        builtin_funcs: symtab_callbacks,
+        params: all_params,
+        name: "#{@name}/bootstrap",
+        register_files: []
+      )
+      rf_max_widths = begin
+        @constructing_symtab_depth = (@constructing_symtab_depth || 0) + 1
+        global_ast.add_global_symbols(bootstrap_st)
+        register_files.each_with_object({}) do |rf, h|
+          node = @idl_compiler.compile_expression(rf.register_length_expr, bootstrap_st, pass_error: true)
+          max = node.max_value(bootstrap_st)
+          raise "Cannot determine max width for register file '#{rf.name}'" if max == :unknown
+          h[rf.name] = Integer(max)
+        end
+      ensure
+        @constructing_symtab_depth -= 1
+      end
+
       Idl::SymbolTable.new(
         mxlen:,
         possible_xlens_cb: proc { possible_xlens },
@@ -591,7 +647,9 @@ module Udb
         builtin_enums: symtab_enums,
         name: @name,
         csrs:,
-        params: all_params
+        params: all_params,
+        register_files: register_files,
+        register_file_max_widths: rf_max_widths
       )
     end
     private :create_symtab
@@ -665,6 +723,12 @@ module Udb
     #   @param name [String] The $1 name
     #   @return [$3] The $1
     #   @return [nil] if there is no $1 named +name+
+    # Class-level cache of raw YAML file contents keyed by "#{resolved_spec_path}/#{obj_type_dir}".
+    # Maps each directory to an array of [content, original_path, realpath] triples so that a
+    # second ConfiguredArchitecture sharing the same spec path skips disk I/O and file locking.
+    # Benign race: two threads both missing the cache produce identical entries.
+    @@yaml_data_cache = Concurrent::Hash.new
+
     sig { params(fn_name: String, arch_dir: String, obj_class: T.class_of(TopLevelDatabaseObject)).void }
     def self.generate_obj_methods(fn_name, arch_dir, obj_class)
 
@@ -675,12 +739,25 @@ module Udb
 
         @objects[arch_dir] = Concurrent::Array.new
         @object_hashes[arch_dir] = Concurrent::Hash.new
-        Dir.glob(@arch_dir / arch_dir / "**" / "*.yaml") do |obj_path|
-          f = File.open(obj_path)
-          f.flock(File::LOCK_EX)
-          obj_yaml = YAML.load(f.read, filename: obj_path, permitted_classes: [Date])
-          f.flock(File::LOCK_UN)
-          @objects[arch_dir] << obj_class.new(obj_yaml, Pathname.new(obj_path).realpath, T.cast(self, ConfiguredArchitecture))
+
+        yaml_cache_key = "#{@arch_dir}/#{arch_dir}"
+        cached_files = @@yaml_data_cache[yaml_cache_key]
+        if cached_files.nil?
+          entries = []
+          Dir.glob(@arch_dir / arch_dir / "**" / "*.yaml") do |obj_path|
+            File.open(obj_path) do |f|
+              f.flock(File::LOCK_EX)
+              content = f.read
+              f.flock(File::LOCK_UN)
+              entries << [content, obj_path, Pathname.new(obj_path).realpath]
+            end
+          end
+          cached_files = @@yaml_data_cache[yaml_cache_key] = entries
+        end
+
+        cached_files.each do |content, obj_path, realpath|
+          obj_yaml = YAML.load(content, filename: obj_path, permitted_classes: [Date])
+          @objects[arch_dir] << obj_class.new(obj_yaml, realpath, T.cast(self, ConfiguredArchitecture))
           @object_hashes[arch_dir][@objects[arch_dir].last.name] = @objects[arch_dir].last
         end
         @objects[arch_dir]
@@ -1721,6 +1798,59 @@ module Udb
         end
       end
     end
+
+    sig { params(pointer: String).returns(ConfiguredArchitecture) }
+    def resolve_compatible_pointer(pointer)
+      @config.info.resolver.cfg_arch_for_pointer(
+        pointer,
+        relative_dir: Pathname.new(@config.info.path).dirname
+      )
+    end
+    private :resolve_compatible_pointer
+
+    sig { params(other: ConfiguredArchitecture, reasons: T::Array[String], visited: T::Set[String]).void }
+    def check_compatible_with(other, reasons, visited)
+      return if visited.include?(other.name)
+      visited.add(other.name)
+
+      combined = to_condition & other.to_condition
+      unless combined.satisfiable_by_cfg_arch?(self)
+        combined.to_logic_tree(expand: true).minimal_unsat_subsets.each do |min|
+          reasons << "Config '#{name}' is not compatible with '#{other.name}': not satisfiable: #{min.to_s(format: LogicNode::LogicSymbolFormat::C)}"
+        end
+      end
+
+      # Resolve transitive pointers relative to `other`'s directory, not self's.
+      Array(other.config.compatible).each do |pointer|
+        begin
+          trans = other.send(:resolve_compatible_pointer, pointer)
+          check_compatible_with(trans, reasons, visited)
+        rescue => e
+          reasons << "Cannot resolve transitive compatible pointer '#{pointer}': #{e.message}"
+        end
+      end
+    end
+    private :check_compatible_with
+
+    sig { params(reasons: T::Array[String]).void }
+    def validate_compatible(reasons)
+      return if @config.compatible.nil?
+
+      # Use dup per top-level pointer so sibling pointers each get a fresh visited set —
+      # each branch independently validates against any shared transitive targets. Cycle
+      # detection within a single chain is still enforced because visited mutates in-place
+      # during the recursive descent.
+      visited = T.let(Set.new([name]), T::Set[String])
+      Array(@config.compatible).each do |pointer|
+        begin
+          other = resolve_compatible_pointer(pointer)
+          check_compatible_with(other, reasons, visited.dup)
+        rescue => e
+          reasons << "Cannot resolve compatible pointer '#{pointer}': #{e.message}"
+        end
+      end
+    end
+    private :validate_compatible
 
   end
 end

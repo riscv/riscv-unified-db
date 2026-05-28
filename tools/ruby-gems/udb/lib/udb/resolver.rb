@@ -15,6 +15,9 @@ require_relative "yaml/yaml_resolver"
 module Udb
   # resolves the specification in the context of a config, and writes to a generation folder
   #
+  # Raised by Resolver#cfg_info when a config name or path cannot be found.
+  class ConfigNotFoundError < StandardError; end
+
   # The primary interface for users will be #cfg_arch_for
   class Resolver
     extend T::Sig
@@ -250,8 +253,7 @@ module Udb
             if (@cfgs_path / "#{config_path_or_name}.yaml").file?
               (@cfgs_path / "#{config_path_or_name}.yaml").realpath
             else
-              Udb.logger.error "Could not find config: #{config_path_or_name}"
-              exit 1
+              raise ConfigNotFoundError, "Could not find config: #{config_path_or_name}"
             end
           else
             T.absurd(config_path_or_name)
@@ -301,6 +303,33 @@ module Udb
       end
     end
 
+    # Resolve a config pointer (name or file path) to a ConfiguredArchitecture.
+    # Resolution order:
+    #   1. If <cfgs_path>/<pointer>.yaml exists on disk, treat as a repo config name
+    #      (handles names that contain '/', e.g. "profile/RVA23U64").
+    #   2. If the pointer ends in .yaml/.yml, is absolute, or starts with ./ or ../,
+    #      treat as a file path resolved relative to +relative_dir+.
+    #   3. Otherwise raise ArgumentError — the pointer is neither a known config name
+    #      nor a recognisable file path.
+    sig { params(pointer: String, relative_dir: Pathname).returns(Udb::ConfiguredArchitecture) }
+    def cfg_arch_for_pointer(pointer, relative_dir:)
+      if (@cfgs_path / "#{pointer}.yaml").file?
+        # Repo config name — may contain '/' for nested configs (e.g. "profile/RVA23U64").
+        cfg_arch_for(pointer)
+      elsif pointer.end_with?(".yaml", ".yml") ||
+            Pathname.new(pointer).absolute? ||
+            pointer.start_with?("./", "../")
+        # Explicit file path — resolve relative to the caller's directory.
+        path = Pathname.new(pointer)
+        cfg_arch_for(path.absolute? ? path : (relative_dir / path).cleanpath)
+      else
+        raise ArgumentError,
+          "Cannot resolve config pointer '#{pointer}': not a known config name " \
+          "under '#{@cfgs_path}' and not a recognisable file path " \
+          "(.yaml/.yml extension, absolute, or starting with ./ or ../)"
+      end
+    end
+
     # resolve the specification for a config, and return a ConfiguredArchitecture
     sig { params(config_path_or_name: T.any(Pathname, String)).returns(Udb::ConfiguredArchitecture) }
     def cfg_arch_for(config_path_or_name)
@@ -320,6 +349,28 @@ module Udb
           Udb::AbstractConfig.create(gen_path / "cfgs" / "#{config_info.name}.yaml", config_info)
         )
       end
+    end
+
+    # Create a ConfiguredArchitecture directly from an in-memory config data hash,
+    # bypassing resolve_config and resolve_arch entirely. Only valid when the config
+    # has no arch_overlay (i.e., it uses the standard spec at gen/resolved_spec/_).
+    # Callers must ensure this precondition holds before calling this method.
+    sig { params(config_data: T::Hash[String, T.untyped]).returns(Udb::ConfiguredArchitecture) }
+    def cfg_arch_for_data(config_data)
+      info = ConfigInfo.new(
+        name: config_data["name"],
+        path: Pathname.new("portfolio/#{config_data["name"]}"),
+        overlay_path: nil,
+        unresolved_yaml: config_data,
+        spec_path: std_path,
+        merged_spec_path: @gen_path / "spec" / "_",
+        resolved_spec_path: @gen_path / "resolved_spec" / "_",
+        resolver: self
+      )
+      Udb::ConfiguredArchitecture.new(
+        config_data["name"],
+        Udb::AbstractConfig.create_from_data(config_data, info)
+      )
     end
 
     SCHEMAS_BASE_URL = "https://riscv.github.io/riscv-unified-db/schemas"

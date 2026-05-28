@@ -73,7 +73,39 @@ namespace udb {
       F29 = 61,
       F30 = 62,
       F31 = 63,
-      INVALID = 64
+      V0 = 64,
+      V1 = 65,
+      V2 = 66,
+      V3 = 67,
+      V4 = 68,
+      V5 = 69,
+      V6 = 70,
+      V7 = 71,
+      V8 = 72,
+      V9 = 73,
+      V10 = 74,
+      V11 = 75,
+      V12 = 76,
+      V13 = 77,
+      V14 = 78,
+      V15 = 79,
+      V16 = 80,
+      V17 = 81,
+      V18 = 82,
+      V19 = 83,
+      V20 = 84,
+      V21 = 85,
+      V22 = 86,
+      V23 = 87,
+      V24 = 88,
+      V25 = 89,
+      V26 = 90,
+      V27 = 91,
+      V28 = 92,
+      V29 = 93,
+      V30 = 94,
+      V31 = 95,
+      INVALID = 96
     };
 
     Reg(Enum r) : m_reg(r) {}
@@ -82,6 +114,16 @@ namespace udb {
     template <typename BitsClass>
       requires (BitsClass::IsABits)
     Reg(const BitsClass& r, bool is_fp = false) : m_reg(Enum(is_fp ? r.get() + 32 : r.get())) {}
+
+    template <typename T>
+    static Reg from_rf_index(T idx, uint64_t base) {
+      if constexpr (requires { T::IsABits; }) {
+        return Reg(Enum(idx.get() + base));
+      } else {
+        return Reg(Enum(static_cast<uint64_t>(idx) + base));
+      }
+    }
+
     operator Enum() const { return m_reg; }
     bool operator==(const Reg &other) const { return m_reg == other.m_reg; }
     bool operator==(Enum other) const { return m_reg == other; }
@@ -92,16 +134,18 @@ namespace udb {
 
     bool is_int() const { return m_reg <= X31; }
     bool is_fp() const { return m_reg >= F0 && m_reg <= F31; }
+    bool is_vec() const { return m_reg >= V0 && m_reg <= V31; }
 
     uint64_t get_num() const {
       uint64_t num = static_cast<uint64_t>(m_reg);
-      return (m_reg <= X31) ? num : num - 32;  // NOLINT
+      if (m_reg <= X31) return num;
+      if (m_reg <= F31) return num - 32u;  // NOLINT
+      return num - 64u;  // V  // NOLINT
     }
 
     std::string to_string(uint64_t size = 64) const {
-      if (is_fp()) {
-        return "f" + std::to_string(get_num());
-      }
+      if (is_fp()) return "f" + std::to_string(get_num());
+      if (is_vec()) return "v" + std::to_string(get_num());
       return "x" + std::to_string(get_num());
     }
 

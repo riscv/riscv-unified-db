@@ -66,6 +66,9 @@ See [Literals](./literals).
 # Logical (Boolean operands only)
 &&  ||  !
 
+# Increment/Decrement (for loop update only)
+i++  i--                    # post-increment/decrement on iteration variable
+
 # Ternary
 condition ? a : b
 
@@ -159,8 +162,8 @@ See [Builtins](./builtins).
 
 ```idl
 # Architectural register file
-X[rs1]                   # read x register (Bits<MXLEN>)
-X[rd] = value;           # write x register (x0 writes are discarded)
+X[xs1]                   # read x register (Bits<MXLEN>)
+X[xd] = value;           # write x register (x0 writes are discarded)
 
 # CSR access
 CSR[mstatus]             # read/write entire CSR
@@ -177,8 +180,8 @@ raise(ExceptionCode::IllegalInstruction);
 raise(ExceptionCode::LoadAccessFault, vaddr);   # with tval
 
 # Memory
-read_memory<32>(vaddr, $encoding)               # read N bits from virtual address
-write_memory<32>(vaddr, value, $encoding)       # write N bits to virtual address
+read_memory(32, vaddr, $encoding)                  # read N bits from virtual address
+write_memory(32, vaddr, value, $encoding)          # write N bits to virtual address
 ```
 
 See [Standard Library](./standard-library).

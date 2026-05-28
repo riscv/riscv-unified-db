@@ -38,6 +38,6 @@ operation(): |
   RoundingMode mode = rm_to_mode(rm, $encoding);
   # fnmadd: -(fs1 * fs2) - fs3 = -(fs1 * fs2) + (-fs3)
   # Negate fs3 by flipping its sign bit, then use subProd op
-  Bits<32> fs3_negated = f[fs3][31:0] ^ 32'h80000000;
-  f[fd] = f32_muladd(f[fs1], f[fs2], fs3_negated, F32MulAddOp::Softfloat_mulAdd_subProd, mode);
+  Bits<32> fs3_negated = F[fs3][31:0] ^ 32'h80000000;
+  F[fd] = f32_muladd(F[fs1], F[fs2], fs3_negated, F32MulAddOp::Softfloat_mulAdd_subProd, mode);
   mark_f_state_dirty();

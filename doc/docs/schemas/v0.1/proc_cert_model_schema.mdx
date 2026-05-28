@@ -1,0 +1,102 @@
+---
+title: Proc Cert Model Schema (v0.1)
+sidebar_label: Proc Cert Model Schema
+custom_edit_url: null
+# This file is auto-generated from proc_cert_model_schema.json
+# Do not edit manually - run `bin/chore gen schema-docs` to regenerate
+---
+
+
+import AnchorOpenDetails from '@site/src/components/AnchorOpenDetails';
+
+<AnchorOpenDetails />
+
+# Proc Cert Model Schema
+
+<span class="badge badge--secondary">v0.1</span>
+
+<br />
+
+:::note Auto-generated
+This page is generated from [`proc_cert_model_schema.json`](https://github.com/riscv/riscv-unified-db/blob/main/spec/schemas/proc_cert_model_schema.json) by the [schema doc generator](https://github.com/riscv/riscv-unified-db/blob/main/tools/internal-gems/schema_doc_gen/lib/schema_doc_gen.rb). To update this page, edit the schema file and run `bin/chore gen schema-docs`.
+:::
+
+
+## Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `$schema` | `any` | ✓ |  |
+| `kind` | `any` | ✓ |  |
+| `name` | `string` | ✓ | The short name of the model, used as a database key |
+| `long_name` | `string` | ✓ | One line description of certificate model |
+| `base` | `32` \| `64` | ✓ | Base of the model |
+| `recommendations` | Array&lt;\{`text`\}&gt; [↓&nbsp;schema](#recommendations-schema) |  |  |
+| `extra_notes` | Array&lt;\{`presence`, `text`\}&gt; [↓&nbsp;schema](#extra-notes-schema) |  |  |
+| `requirement_groups` | `object` |  |  |
+| `param_constraints` | `object` |  |  |
+| `extensions` | `object` |  |  |
+| `in_scope_priv_modes` | Array&lt;`M` \| `S` \| `U` \| `HS` \| `VS` \| `VU`&gt; |  | List of in-scope privilege modes for the certificate |
+| `debug_manual_revision` | `string` |  |  |
+| `priv_isa_manual_revision` | `string` |  |  |
+| `unpriv_isa_manual_revision` | `string` |  |  |
+| `tsc_profile_release` | One of: `null` \| `object` |  | Profile release associated with this certificate |
+| `introduction` | `string` |  | Asciidoc text containing the introduction prose for the model |
+| `revision_history` | Array&lt;\{`revision`, `date`, `changes`\}&gt; [↓&nbsp;schema](#revision-history-schema) |  | Revisions of the model document |
+| `versions` | Array&lt;\{`version`\}&gt; [↓&nbsp;schema](#versions-schema) |  | List of semantic versions within the model |
+| `class` | `object` |  | Reference to the class this model belongs to |
+| `$parent_of` | One of: `string` \| Array&lt;`string`&gt; |  |  |
+| `$child_of` | One of: `string` \| Array&lt;`string`&gt; |  |  |
+| `$inherits` | One of: `string` \| Array&lt;`string`&gt; |  |  |
+
+<details style={{padding: '1rem', backgroundColor: 'var(--ifm-color-emphasis-100)', borderLeft: '4px solid var(--ifm-color-primary)', borderRadius: '4px', marginBottom: '1rem'}}>
+<summary style={{cursor: 'pointer', fontWeight: 'bold'}}><a id="recommendations-schema"></a><code>recommendations</code> item schema</summary>
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `text` | `string` |  |  |
+
+</details>
+
+<details style={{padding: '1rem', backgroundColor: 'var(--ifm-color-emphasis-100)', borderLeft: '4px solid var(--ifm-color-primary)', borderRadius: '4px', marginBottom: '1rem'}}>
+<summary style={{cursor: 'pointer', fontWeight: 'bold'}}><a id="extra-notes-schema"></a><code>extra_notes</code> item schema</summary>
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `presence` | `mandatory` \| `optional` \| `prohibited` \| `object` |  |  |
+| `text` | `string` |  |  |
+
+</details>
+
+<details style={{padding: '1rem', backgroundColor: 'var(--ifm-color-emphasis-100)', borderLeft: '4px solid var(--ifm-color-primary)', borderRadius: '4px', marginBottom: '1rem'}}>
+<summary style={{cursor: 'pointer', fontWeight: 'bold'}}><a id="revision-history-schema"></a><code>revision_history</code> item schema</summary>
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `revision` | `string` | ✓ | Revision number |
+| `date` | `string` | ✓ | The date of the change |
+| `changes` | Array&lt;`string`&gt; | ✓ | List of changes |
+
+</details>
+
+<details style={{padding: '1rem', backgroundColor: 'var(--ifm-color-emphasis-100)', borderLeft: '4px solid var(--ifm-color-primary)', borderRadius: '4px', marginBottom: '1rem'}}>
+<summary style={{cursor: 'pointer', fontWeight: 'bold'}}><a id="versions-schema"></a><code>versions</code> item schema</summary>
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `version` | `string` | ✓ |  |
+
+</details>
+
+
+:::note Tooling field
+`$source` is an optional field set automatically by UDB tooling to record the file path this object was loaded from. You do not need to set it manually.
+:::
+
+
+## Schema Information
+
+| Property | Value |
+|----------|-------|
+| Version | `v0.1` |
+| JSON Schema Version | [Draft 07](https://json-schema.org/draft-07) |

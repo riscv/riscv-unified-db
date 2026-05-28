@@ -10,8 +10,7 @@ kind: architecture configuration
 type: partially configured
 name: RVI20U64
 description:
-params:
-  MXLEN: 64
+params: {}
 mandatory_extensions:
 - name: I
   version: "~> 2.1"
@@ -21,9 +20,9 @@ non_mandatory_extensions:
 - name: C
   version: "~> 2.0"
 - name: D
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: F
-  version: "~> 2.2"
+  version: "~> 2.2.0"
 - name: M
   version: "~> 2.0"
 - name: Zca
@@ -39,3 +38,10 @@ non_mandatory_extensions:
 - name: Zihpm
   version: "~> 2.0"
 additional_extensions: true
+requirements:
+  param:
+    allOf:
+    - name: U_MODE_ENDIANNESS
+      equal: little
+    - name: UXLEN
+      includes: 64

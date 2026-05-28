@@ -79,10 +79,10 @@ namespace udb {
     public:
       <%- cfg_arch.globals.each do |global| -%>
       <%- if global.is_a?(Idl::GlobalWithInitializationAst) -%>
-      <%- if global.type(cfg_arch.symtab).const? -%>
-      static <%= global.type(cfg_arch.symtab).const? ? 'constexpr ' : '' %><%= global.type(cfg_arch.symtab).to_cxx %> <%= global.id %> = <%= global.rhs.gen_cpp(cfg_arch.symtab, 0) %>;
+      <%- if global.is_a?(Idl::GlobalWithInitializationAst) && global.type(cfg_arch.symtab).const? && global.rhs.const_eval?(cfg_arch.symtab) -%>
+      static constexpr <%= global.type(cfg_arch.symtab).to_cxx %> <%= global.id %> = <%= global.rhs.gen_cpp(cfg_arch.symtab, 0) %>;
       <%- else -%>
-      static <%= global.type(cfg_arch.symtab).to_cxx %> <%= global.id %>;
+      static <%= global.type(cfg_arch.symtab).to_cxx.gsub("const ", "") %> <%= global.id %>;
       <%- end -%>
       <%- else -%>
       static <%= global.type(cfg_arch.symtab).to_cxx %> <%= global.id %>;
@@ -94,13 +94,18 @@ namespace udb {
       static constexpr unsigned MXLEN = <%= cfg_arch.mxlen.nil? ? 64 : cfg_arch.mxlen %>;
       using XReg = Bits<MXLEN>;
 
+#define __UDB_FUNC_CALL this->
       <%= hart_name -%>(uint64_t hart_id, SocType& soc, const Config& cfg)
         : HartBase<SocType>(hart_id, soc, cfg),
           m_params(cfg),
-          <%- if cfg_arch.mxlen.nil? -%>
-          m_xregs {
-            <%- 32.times do |i| -%>
-            { WidthArg(m_params.MXLEN.value()) },
+          <%- applicable_register_files.each do |rf| -%>
+          <%- rf_name = rf.name.downcase -%>
+          <%- width = rf.eval_register_length(cfg_arch) -%>
+          <%- next unless width.is_a?(String) -%>
+          <%- param_name = width -%>
+          m_<%= rf_name %>regs {
+            <%- rf.registers.count.times do -%>
+            PossiblyUnknownRuntimeBits<<%= rf.max_register_length %>>{ WidthArg(m_params.<%= param_name %>.has_value() ? static_cast<uint64_t>(m_params.<%= param_name %>.value().get()) : static_cast<uint64_t>(<%= rf.max_register_length %>)) },
             <%- end -%>
           },
           <%- end -%>
@@ -127,7 +132,14 @@ namespace udb {
             <%- end -%>
           }
       {
-        m_xregs[0] = 0_b; // set x0
+        <%- applicable_register_files.each do |rf| -%>
+        <%- rf_name = rf.name.downcase -%>
+        <%- rf.registers.each do |r| -%>
+        <%- next if r.reset_value.nil? -%>
+        <%- reset_cpp = compile_idl_expr(r.reset_value).gen_cpp(cfg_arch.symtab, 0) -%>
+        m_<%= rf_name %>regs[<%= r.index %>] = <%= reset_cpp %>;
+        <%- end -%>
+        <%- end -%>
       }
 
       void reset(uint64_t reset_pc) override {
@@ -137,8 +149,16 @@ namespace udb {
 
         <%- cfg_arch.globals.each do |global| -%>
         <%- if global.is_a?(Idl::GlobalWithInitializationAst) -%>
-        <%- next if global.type(cfg_arch.symtab).const? -%>
-        <%= global.id %> = <%= global.rhs.gen_cpp(cfg_arch.symtab, 0) %>;
+        <%- next if global.type(cfg_arch.symtab).const? && global.rhs.const_eval?(cfg_arch.symtab) -%>
+        <%- lhs_t = global.type(cfg_arch.symtab) -%>
+        <%- rhs_t = global.rhs.type(cfg_arch.symtab) -%>
+        <%- rhs_cpp = global.rhs.gen_cpp(cfg_arch.symtab, 0) -%>
+        <%- lhs_sub = lhs_t.sub_type.to_cxx_no_qualifiers if lhs_t.kind == :array -%>
+        <%- if lhs_t.kind == :array && rhs_t.kind == :array && lhs_sub != rhs_t.sub_type.to_cxx_no_qualifiers -%>
+        <%= global.id %> = array_cast<<%= lhs_sub %>>(<%= rhs_cpp %>);
+        <%- else -%>
+        <%= global.id %> = <%= rhs_cpp %>;
+        <%- end -%>
         <%- else -%>
         // <%= global.id %> = unknown;
         <%- end -%>
@@ -146,6 +166,7 @@ namespace udb {
 
         m_csrs.reset();
       }
+#undef __UDB_FUNC_CALL
 
       bool implemented_version_Q_(const ExtensionName& ext, const VersionRequirement& req) const override
       {
@@ -315,40 +336,74 @@ namespace udb {
 
       unsigned mxlen() override { return MXLEN; }
 
-      uint64_t xreg(unsigned num) const override {
-        if (num >= 32) {
-          throw std::out_of_range("X register indices are 0 - 31, inclusive");
+      <%- applicable_register_files.each do |rf| -%>
+      <%- rf_name = rf.name.downcase -%>
+      <%- bits_width = rf_elem_width(rf) -%>
+      <%- rf_width = rf.eval_register_length(cfg_arch) -%>
+      <%- is_runtime_width = rf_width.is_a?(String) -%>
+      <%- accessor_type = is_runtime_width ? "PossiblyUnknownRuntimeBits<#{rf.max_register_length}>" : "PossiblyUnknownBits<#{bits_width}>" -%>
+      <%- setter_param_type = is_runtime_width ? "_PossiblyUnknownRuntimeBits<#{rf.max_register_length}, false>" : "_PossiblyUnknownBits<#{bits_width}, false>" -%>
+      <%- entries_with_read = rf.registers.select { |r| r.arch_read } -%>
+      <%- entries_with_write = rf.registers.select { |r| r.arch_write } -%>
+
+      uint64_t <%= rf_name %>reg(unsigned num) const override {
+        if (num >= <%= rf.registers.count %>) {
+          throw std::out_of_range("<%= rf.name %> register indices are 0 - <%= rf.registers.count - 1 %>, inclusive");
         }
-        return _xreg(num).get();
+        <%- if is_runtime_width -%>
+        return static_cast<uint64_t>(_<%= rf_name %>reg(num).get().get_ui());
+        <%- else -%>
+        return _<%= rf_name %>reg(num).get();
+        <%- end -%>
       }
 
-      PossiblyUnknownBits<MXLEN> _xreg(unsigned num) const {
-        return m_xregs[num];
+      <%= accessor_type %> _<%= rf_name %>reg(unsigned num) const {
+        <%- if entries_with_read.any? -%>
+        switch (num) {
+          <%- entries_with_read.each do |r| -%>
+          case <%= r.index %>: return <%= accessor_type %>(<%= gen_arch_read_cpp(r) %>);
+          <%- end -%>
+          default: return m_<%= rf_name %>regs[num];
+        }
+        <%- else -%>
+        return m_<%= rf_name %>regs[num];
+        <%- end -%>
       }
 
       template <template <unsigned, bool> class BitsClass, unsigned N, bool Signed>
         requires (BitsType<BitsClass<N, Signed>>)
-      PossiblyUnknownBits<MXLEN> _xreg(const BitsClass<N, Signed>& num) const {
-        return m_xregs[num.get()];
+      <%= accessor_type %> _<%= rf_name %>reg(const BitsClass<N, Signed>& num) const {
+        return _<%= rf_name %>reg(static_cast<unsigned>(num.get()));
       }
 
-
-      // XRegister<MXLEN>& xregRef(unsigned num) { return m_xregs[num]; }
-
-      void set_xreg(unsigned num, uint64_t value) override {
-        if (num >= 32) {
-          throw std::out_of_range("X register indices are 0 - 31, inclusive");
+      void set_<%= rf_name %>reg(unsigned num, uint64_t value) override {
+        if (num >= <%= rf.registers.count %>) {
+          throw std::out_of_range("<%= rf.name %> register indices are 0 - <%= rf.registers.count - 1 %>, inclusive");
         }
-        _set_xreg(Bits<8>{num}, Bits<MXLEN>{value});
+        <%- if is_runtime_width -%>
+        _set_<%= rf_name %>reg(Bits<8>{num}, <%= accessor_type %>{value});
+        <%- else -%>
+        _set_<%= rf_name %>reg(Bits<8>{num}, Bits<<%= bits_width %>>{value});
+        <%- end -%>
       }
 
       template < template <unsigned, bool> class IdxType, unsigned IdxN, bool IdxSigned >
         requires (BitsType<IdxType<IdxN, IdxSigned>>)
-      void _set_xreg(const IdxType<IdxN, IdxSigned>& num, const _PossiblyUnknownBits<MXLEN, false>& value) {
-        if (num != 0_b) {
-          m_xregs[static_cast<unsigned>(num.get())] = value;
+      void _set_<%= rf_name %>reg(const IdxType<IdxN, IdxSigned>& num, const <%= setter_param_type %>& value) {
+        <%- if entries_with_write.any? -%>
+        auto to_store = value;
+        switch (static_cast<unsigned>(num.get())) {
+          <%- entries_with_write.each do |r| -%>
+          case <%= r.index %>: to_store = <%= gen_arch_write_cpp(r) %>; break;
+          <%- end -%>
+          default: break;
         }
+        m_<%= rf_name %>regs[static_cast<unsigned>(num.get())] = to_store;
+        <%- else -%>
+        m_<%= rf_name %>regs[static_cast<unsigned>(num.get())] = value;
+        <%- end -%>
       }
+      <%- end -%>
 
       void printState(FILE* out = stdout) const override;
 
@@ -400,6 +455,20 @@ namespace udb {
     bool _decode(const XReg& pc, const Bits<<%= cfg_arch.largest_encoding %>>& encoding, InstBase* obj);
 
     uint64_t fetch() override { return _fetch().get(); }
+
+    void execute_instruction(const Bits<32>& encoding) {
+      InstBase* inst = reinterpret_cast<InstBase*>(m_execute_instruction_storage.data());
+      if (!_decode(m_pc, encoding, inst)) {
+        try {
+          raise(ExceptionCode{ExceptionCode::IllegalInstruction}, mode(), encoding);
+        } catch (const AbortInstruction&) {
+          throw; // propagate to outer instruction handler
+        }
+        return;
+      }
+      inst->execute();
+      // Note: PC is NOT advanced here; the calling instruction manages PC.
+    }
     PossiblyUnknownBits<INSTR_ENC_SIZE.get()> _fetch();
     void ifence() override {
       m_bb_cache.invalidate();
@@ -479,10 +548,11 @@ namespace udb {
 
       <%= name_of(:params, cfg_arch) %> m_params;
 
-      <%- if cfg_arch.mxlen.nil? -%>
-      std::array<PossiblyUnknownRuntimeBits<64>, 32> m_xregs;
-      <%- else -%>
-      std::array<PossiblyUnknownBits<MXLEN>, 32> m_xregs;
+      <%- applicable_register_files.each do |rf| -%>
+      <%- rf_name = rf.name.downcase -%>
+      <%- width = rf.eval_register_length(cfg_arch) -%>
+      <%- cpp_type = width.is_a?(String) ? "PossiblyUnknownRuntimeBits<#{rf.max_register_length}>" : "PossiblyUnknownBits<#{width}>" -%>
+      std::array<<%= cpp_type %>, <%= rf.registers.count %>> m_<%= rf_name %>regs;
       <%- end -%>
 
       <%= name_of(:csr_container, cfg_arch) %><SocType> m_csrs;
@@ -493,6 +563,7 @@ namespace udb {
       std::map<std::string, CsrBase*> m_csr_name_map;
 
       std::array<uint8_t, __MAX_INST_CPP_SIZE> m_run_one_inst_storage;
+      std::array<uint8_t, __MAX_INST_CPP_SIZE> m_execute_instruction_storage;
       BasicBlockCache<__MAX_INST_CPP_SIZE> m_bb_cache;
   };
 }

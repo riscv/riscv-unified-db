@@ -107,9 +107,12 @@ gen_subcmd_usage() {
   echo "  all:           Generate all development artifacts"
   echo "  gem-versions:  Sync inter-gem version pins in gemspecs and Gemfile.lock files"
   echo "                 (no version bumping; use 'chore update gem-versions' to also bump)"
+  echo "  profile-cfgs:  Generate strict config files for profiles (cfgs/profile/)"
   echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
+  echo "  schema-docs:   Generate schema documentation from JSON Schema files"
+  echo "  cfg-headers:   Generate golden cfg header files for regression testing"
   echo "  xqci           Generate Xqci spec used for Golden regressions"
   echo ""
 }
@@ -297,29 +300,26 @@ do_gen_vscode_idl() {
 }
 
 #
-# Lock all Gemfiles with consistent platforms.
+# Generate schema documentation from JSON Schema files
 #
-# The root Gemfile is a union of all per-gem gemspecs and is used as the
-# authoritative dependency resolution context. It must be locked first so that
-# when Bundler locks each per-gem Gemfile (which runs under `bundle exec` from
-# the root context), it resolves transitive dependencies (e.g. activesupport,
-# sorbet) to the same versions as the root. If the per-gem locks ran first,
-# they could resolve to different versions and diverge from the root, causing
-# failures in tools like sorbet that compare the installed gem version against
-# committed RBI files.
-#
-# Args: extra args to pass to each `bundle lock` call (e.g. --update --bundler)
-#
-do_lock_all_gemfiles() {
-  # Always include both x86_64 and aarch64 Linux platforms so lock files are
-  # valid on both architectures.
-  local platforms="--add-platform x86_64-linux --add-platform x86_64-linux-gnu --add-platform aarch64-linux --add-platform aarch64-linux-gnu"
-  # BUNDLE_GEMFILE must be set to match --gemfile so that Bundler writes PATH
-  # remote: entries relative to the correct directory.
-  # Note: `bundle lock` (not `bundle exec bundle lock`) is used deliberately —
-  # `bundle exec` requires an existing lockfile to activate the bundle first,
-  # which breaks when lockfiles are missing or being regenerated from scratch.
-  env BUNDLE_GEMFILE="${UDB_ROOT}"/Gemfile "${UDB_ROOT}"/bin/bundle lock $platforms "$@" --gemfile "${UDB_ROOT}"/Gemfile
+do_gen_schema_docs() {
+  echo "Generating schema documentation"
+  if [ $fail_on_change -eq 1 ]; then
+    # Calculate checksum before generation
+    local sha_before
+    sha_before=$(find "$UDB_ROOT"/doc/docs/schemas -type f -name "*.mdx" -exec sha256sum {} \; 2>/dev/null | sort | sha256sum)
+  fi
+  "$UDB_ROOT/bin/ruby" "$UDB_ROOT/tools/internal-gems/schema_doc_gen/bin/schema-docs-all" \
+    --schema-dir "$UDB_ROOT/spec/schemas" \
+    --output-dir "$UDB_ROOT/doc/docs/schemas" \
+    --generate-index
+  if [ $fail_on_change -eq 1 ]; then
+    local sha_after
+    sha_after=$(find "$UDB_ROOT"/doc/docs/schemas -type f -name "*.mdx" -exec sha256sum {} \; 2>/dev/null | sort | sha256sum)
+    if [ "$sha_before" != "$sha_after" ]; then
+      exit 1
+    fi
+  fi
 }
 
 #
@@ -340,7 +340,6 @@ do_gen_gem_versions() {
   fi
 }
 
-#
 # Auto-increment versions for gems with source changes (with cascade),
 # then sync inter-gem version pins in gemspecs and Gemfile.lock.
 # Args: $1 - base ref (optional; defaults to origin/main)
@@ -363,7 +362,10 @@ do_gen_all() {
   do_gen_vscode_idl
   do_gen_gem_versions
   do_ruby_type_def all
+  do_gen_profile_cfgs
   do_gen_xqci_golden
+  do_gen_schema_docs
+  do_gen_cfg_headers_golden
 }
 
 #
@@ -373,6 +375,36 @@ do_gen_smoke() {
   do_gen_regress
   do_gen_vscode_idl
   do_ruby_type_def all
+}
+
+#
+# Generate strict config files for profiles (cfgs/profile/)
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
+#
+do_gen_profile_cfgs() {
+  echo "Generating profile config files in cfgs/profile/"
+  local cfgs_dir="${UDB_ROOT}/cfgs/profile"
+
+  # Capture the state before generation
+  local before_hash=""
+  if [ -d "$cfgs_dir" ]; then
+    before_hash=$(find "$cfgs_dir" -type f -name "*.yaml" -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+  fi
+
+  "${UDB_ROOT}"/bin/bundle exec rake gen:cfg
+
+  if [ $fail_on_change -eq 1 ]; then
+    local after_hash=""
+    if [ -d "$cfgs_dir" ]; then
+      after_hash=$(find "$cfgs_dir" -type f -name "*.yaml" -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+    fi
+
+    if [ "$before_hash" != "$after_hash" ]; then
+      echo "[ERROR]: Profile config files changed during generation"
+      return 1
+    fi
+  fi
+  return 0
 }
 
 #
@@ -391,6 +423,42 @@ do_gen_xqci_golden() {
   # Remove the commit info line from the golden file
   sed -i '/^This document was created using the http:\/\/github\.org\/riscv\/riscv-unified-db\[RISC-V Unified Database\] at commit/d' \
     "tests/data/golden/Xqci@${xqci_version}.adoc"
+}
+
+#
+# Generate golden cfg header files (C and SystemVerilog) for regression testing
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
+#
+do_gen_cfg_headers_golden() {
+  echo "Generating golden cfg header files"
+  local cfg="mc100-32-full-example"
+  local gen_dir="${UDB_ROOT}/gen/cfg_headers"
+  local golden_dir="${UDB_ROOT}/tests/golden"
+
+  # Capture the state before generation
+  local before_hash=""
+  if [ -d "$golden_dir" ]; then
+    before_hash=$(find "$golden_dir" -type f \( -name "${cfg}.golden.h" -o -name "${cfg}.golden.svh" \) -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+  fi
+
+  mkdir -p "$gen_dir" "$golden_dir"
+  "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-c-header -c "$cfg" -o "${gen_dir}/${cfg}.h"
+  "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-svh-header -c "$cfg" -o "${gen_dir}/${cfg}.svh"
+  cp "${gen_dir}/${cfg}.h" "${golden_dir}/${cfg}.golden.h"
+  cp "${gen_dir}/${cfg}.svh" "${golden_dir}/${cfg}.golden.svh"
+
+  if [ $fail_on_change -eq 1 ]; then
+    local after_hash=""
+    if [ -d "$golden_dir" ]; then
+      after_hash=$(find "$golden_dir" -type f \( -name "${cfg}.golden.h" -o -name "${cfg}.golden.svh" \) -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+    fi
+
+    if [ "$before_hash" != "$after_hash" ]; then
+      echo "[ERROR]: Golden cfg header files changed during generation"
+      return 1
+    fi
+  fi
+  return 0
 }
 
 #
@@ -586,9 +654,23 @@ case "$subcommand" in
         do_gen_regress
         exit 0
         ;;
+      schema-docs )
+        do_gen_schema_docs
+        exit 0
+        ;;
+      profile-cfgs )
+        do_gen_profile_cfgs
+        exit_code=$?
+        exit $exit_code
+        ;;
       xqci )
         do_gen_xqci_golden
         exit 0
+        ;;
+      cfg-headers )
+        do_gen_cfg_headers_golden
+        exit_code=$?
+        exit $exit_code
         ;;
       ruby-type-def )
         while getopts ":h" opt; do # Go through the options

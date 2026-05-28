@@ -5,7 +5,7 @@ title: IDL for Verilog Users
 
 IDL borrows heavily from Verilog and SystemVerilog: the bit-vector type model, Verilog-style numeric literals, bit-select and slice syntax, concatenation, and replication all work exactly as you would expect. If you have written RTL or verification code in Verilog or SV, the low-level data manipulation in IDL will feel immediately natural.
 
-The key shift is one of abstraction level. Verilog describes how logic is connected and how signals propagate through gates over time. IDL describes what an instruction *does* at the ISA level — the architectural state before and after execution. There are no modules, no ports, no clocks, no `always` blocks. What replaces them is a sequential, behavioral model where functions read and write architectural state (registers, CSRs, memory) directly.
+The key difference is the level of abstraction. Verilog describes how logic is connected and how signals propagate through gates over time. IDL describes what an instruction *does* at the ISA level — the architectural state before and after execution. There are no modules, no ports, no clocks, no `always` blocks. What replaces them is a sequential, behavioral model where functions read and write architectural state (registers, CSRs, memory) directly.
 
 ## What carries over
 
@@ -97,7 +97,7 @@ Recursive functions are a compilation error. Use `for` loops for iteration.
 
 ### Widening operators for carry-free results
 
-Standard arithmetic `+`, `-`, `*` truncate to the result width (like Verilog). IDL provides widening operators that produce a wider result to preserve carries and prevent overflow:
+Standard arithmetic `+`, `-`, `*` truncate to the result width (like Verilog). IDL provides widening operators that produce a wider result to preserve carries and prevent truncation:
 
 | Operator | Result width |
 |----------|-------------|
@@ -109,7 +109,7 @@ Standard arithmetic `+`, `-`, `*` truncate to the result width (like Verilog). I
 ```idl
 Bits<8> a = 200;
 Bits<8> b = 100;
-Bits<9> sum = a `+ b;  # 9-bit result; no overflow
+Bits<9> sum = a `+ b;  # 9-bit result; no truncation
 ```
 
 ## Quick reference
@@ -123,7 +123,7 @@ Bits<9> sum = a `+ b;  # 9-bit result; no overflow
 | `{a, b}` concatenation | Same: `{a, b}` |
 | `struct packed { ... }` | `bitfield (N) Name { ... }` |
 | `typedef enum { A=0 } T;` | `enum T { A 0 }` (members uppercase) |
-| `typedef struct { ... } T;` | `struct T { ... }` |
+| `typedef struct { ... } T;` | `struct T { ... }` (note: no semicolon) |
 | `parameter WIDTH = 32;` | Compile-time constant (`MXLEN`, etc.) |
 | Parameterized modules | No templates — use constants |
 | `always_comb` blocks | `operation()` body in instruction defs |

@@ -13,15 +13,15 @@ IDL source files use the `.idl` extension and live alongside the YAML/ADOC defin
 
 ## Anatomy of an `operation()` body
 
-Every instruction has an `operation()` block. Decode fields (`rd`, `rs1`, `rs2`, `imm`, etc.) are injected automatically from the instruction encoding before the body runs — you do not declare them:
+Every instruction has an `operation()` block. Decode fields (`xd`, `xs1`, `xs2`, `imm`, etc.) are defined in scope automatically from the instruction encoding before the body runs — you do not declare them:
 
 ```idl
-# From: arch/inst/I/add.yaml
+# From: spec/std/isa/inst/I/add.yaml
 # operation():
 
-Bits<MXLEN> src1 = X[rs1];      # rs1 is a decode field — already available
-Bits<MXLEN> src2 = X[rs2];      # rs2 likewise
-X[rd] = src1 + src2;            # write result to destination register
+Bits<MXLEN> src1 = X[xs1];      # xs1 is a decode field — already available
+Bits<MXLEN> src2 = X[xs2];      # xs2 likewise
+X[xd] = src1 + src2;            # write result to destination register
 ```
 
 The `operation()` body runs sequentially. When it returns, the instruction is complete and the PC advances to the next instruction (unless `jump()` or `raise()` was called).
@@ -31,8 +31,8 @@ The `operation()` body runs sequentially. When it returns, the instruction is co
 ### Reading and writing x registers
 
 ```idl
-Bits<MXLEN> src = X[rs1];       # read
-X[rd] = result;                  # write (writes to x0 are silently discarded)
+Bits<MXLEN> src = X[xs1];       # read
+X[xd] = result;                  # write (writes to x0 are silently discarded)
 ```
 
 When `MXLEN != XLEN`, writes are automatically sign-extended to `MXLEN` and reads ignore the upper bits. You do not need to handle this manually.
@@ -57,7 +57,7 @@ if (implemented?(ExtensionName::C) && CSR[misa].C == 1'b1) {
 }
 ```
 
-Use `implemented?()` for static (compile-time) presence checks and `CSR[misa]` for dynamic enable/disable via software.
+Use `implemented?()` for static (compile-time) checks of whether an extension is implemented.
 
 ### Raising exceptions
 
@@ -71,27 +71,28 @@ raise(ExceptionCode::LoadAddressMisaligned, vaddr);  # with tval
 ### Memory access
 
 ```idl
-Bits<32> word = read_memory<32>(vaddr, $encoding);    # load 32-bit word
-write_memory<64>(vaddr, value, $encoding);            # store 64-bit value
+Bits<32> word = read_memory(32, vaddr, $encoding);    # load 32-bit word
+write_memory(64, vaddr, value, $encoding);            # store 64-bit value
 ```
 
-The template parameter is the access width in bits. `$encoding` passes the raw instruction word for trapping purposes.
+The first argument is the access width in bits. `$encoding` passes the raw instruction word for trapping purposes.
 
 ### Jumping
 
 ```idl
-jump(PC + $signed(imm));    # PC-relative jump
-jump(target);               # absolute jump
+jump($pc + $signed(imm));    # PC-relative jump
+jump(target);                # absolute jump (word-aligned)
+jump_halfword(target);       # halfword-aligned jump (for C extension)
 ```
 
-`jump()` is a standard IDL function defined in the global scope. It validates alignment and raises `InstructionAddressMisaligned` if needed.
+`jump()` is a standard IDL function defined in the global scope. It validates alignment and raises `InstructionAddressMisaligned` if needed. Use `jump_halfword()` when the target may be halfword-aligned (e.g., for compressed instructions in the C extension).
 
 ### Sign-extending immediates
 
 Immediates decoded from instruction fields are `Bits<N>` — unsigned by default. Use `$signed()` when you need them treated as signed in arithmetic:
 
 ```idl
-X[rd] = X[rs1] + $signed(imm);   # sign-extend imm before adding
+X[xd] = X[xs1] + $signed(imm);   # sign-extend imm before adding
 ```
 
 ## Writing CSR callbacks

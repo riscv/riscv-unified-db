@@ -6,6 +6,23 @@
 
 require "ostruct"
 
+# Minimal mock register entry
+MockRegEntry = Struct.new(:name)
+
+# Minimal mock register file that satisfies SymbolTable's register_files interface.
+# Used to provide X (and other) register files in test symtab setup.
+class MockRegFile
+  attr_reader :name, :register_length, :registers
+
+  def initialize(name, register_length_idl, count)
+    @name = name
+    @register_length = register_length_idl
+    @registers = Array.new(count) { |i| MockRegEntry.new("#{name.downcase}#{i}") }
+  end
+end
+
+DEFAULT_X_REGISTER_FILE = MockRegFile.new("X", "return MXLEN;", 32)
+
 # Extension mock that returns an extension name
 class Xmockension
   attr_reader :name
@@ -64,7 +81,7 @@ module TestMixin
     def reset_value = @val.nil? ? "UNDEFINED_LEGAL" : @val
   end
   def setup
-    @symtab = Idl::SymbolTable.new
+    @symtab = Idl::SymbolTable.new(register_files: [DEFAULT_X_REGISTER_FILE])
     @compiler = Idl::Compiler.new
     @mock_csr_field_class = MockCsrFieldClass
   end

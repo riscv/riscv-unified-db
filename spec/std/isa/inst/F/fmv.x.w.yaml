@@ -32,4 +32,4 @@ data_independent_timing: true
 operation(): |
   check_f_ok($encoding);
 
-  X[xd] = sext(f[fs1][31:0], 32);
+  X[xd] = sext(F[fs1][31:0], 32);

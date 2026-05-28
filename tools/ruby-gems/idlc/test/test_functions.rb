@@ -15,8 +15,8 @@ $root ||= (Pathname.new(__FILE__) / ".." / ".." / ".." / "..").realpath
 
 require_relative "helpers"
 
-# test IDL variables
-class TestVariables < Minitest::Test
+# test IDL Functions
+class TestFunctions < Minitest::Test
   include TestMixin
 
   def test_that_reachable_raise_analysis_respects_transitive_known_values

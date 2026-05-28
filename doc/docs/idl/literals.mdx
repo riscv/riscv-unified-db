@@ -1,7 +1,12 @@
 ---
 sidebar_position: 4
 title: Literals
+status: complete
 ---
+
+:::info[Status: Complete]
+This documentation is complete and ready to use.
+:::
 
 ## Integer Literals
 
@@ -30,6 +35,7 @@ Literals may contain any number of underscores after the initial digit for clari
 
 32'h80000000  # 0x80000000, unsigned, 32-bit wide
 32'h8000_0000 # same as above (underscores ignored)
+32'd4_294_967_295 # 2^32-1, unsigned, 32-bit wide (underscores for readability)
 
 8'13          # 13 decimal, 8-bit wide (default radix is 10)
 
@@ -44,14 +50,21 @@ Literals may contain any number of underscores after the initial digit for clari
 ```
 
 :::warning Negating an unsigned literal discards the sign bit
-To negate a Verilog-style literal and get a negative value, the literal must be declared signed (prefix `s`). Without `s`, the literal is unsigned — negation wraps in two's complement and the sign bit is lost:
+To negate a Verilog-style literal and get a negative value, the literal must be declared signed (prefix `s`). The `s` prefix unconditionally adds a sign bit, making the literal `N+1` bits wide for an `N`-bit base width. Without `s`, the literal is unsigned — negation wraps in two's complement and the sign bit is lost:
 
 ```idl
--8'sd13   # -13: literal is signed, negation works correctly
+-8'sd13   # -13: literal is signed (9 bits), negation works correctly
 -4'd13    #   3: literal is 13 unsigned in 4 bits → negated → sign bit lost
 ```
 
 Use the `s` prefix whenever you intend a negative literal.
+
+The `s` prefix does not help when the declared width is already too narrow to represent the value. The width must be sufficient to hold both the value and the sign bit:
+
+```idl
+-3'sd13   # still wrong: 13 needs at least 4 bits, plus sign bit = 5 bits minimum
+-5'sd13   # correct: wide enough for value + sign bit
+```
 :::
 
 ### C style
@@ -91,6 +104,23 @@ A bare negative C-style literal like `-13` is **not** a negative number. It is t
 ```
 
 Use the `s` suffix (e.g., `-13s`, `-0xds`) whenever you need a true negative C-style literal.
+:::
+
+## Boolean Literals
+
+Boolean values are represented by the keywords `true` and `false`. These are the only two `Boolean` literal values in IDL.
+
+```idl title="Boolean literals"
+Boolean flag = true;
+Boolean ready = false;
+
+if (flag == true) {  # explicit comparison (can also write: if (flag))
+  # ...
+}
+```
+
+:::note
+Unlike C, integers are **not** implicitly boolean. You must use explicit comparisons (e.g., `x != 0`) in conditional expressions.
 :::
 
 ## Array Literals

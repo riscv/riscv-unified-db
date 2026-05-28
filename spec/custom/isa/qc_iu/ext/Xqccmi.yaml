@@ -1,0 +1,290 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Xqccmi
+long_name: Qualcomm Custom Compressed Instruction Lookup Table
+description: |
+  == Xqccmi: Qualcomm Custom Compressed Instruction Lookup Table
+
+  The Xqccmi extension adds the `qc.cm.ilut` instruction, a 16-bit compressed
+  instruction that fetches and executes one or two packed instructions from an
+  Instruction Lookup Table (ILUT) stored in memory. The extension also defines
+  two new user-level CSRs: `qc.itba` (ILUT Base Address) and `qc.itdec` (ILUT
+  Double Entry Count).
+
+  NOTE: Xqccmi uses the same encoding space as the `c.fld` instruction defined
+  by the Zcd extension (bits[1:0]=00, bits[15:13]=001). Therefore, Xqccmi and
+  Zcd are mutually exclusive and cannot be implemented together.
+
+  === Instruction Lookup Table (ILUT)
+
+  `qc.cm.ilut` is a 16-bit instruction that takes an 11-bit immediate index
+  (range 0..2047) into the ILUT. The ILUT base address is held in the `qc.itba`
+  CSR (address 0x800). The instruction architecturally behaves as the
+  sub-instruction(s) stored at the addressed ILUT entry, executed in order.
+
+  ILUT memory is treated as instruction memory. It requires execute (X)
+  permission and does NOT require read (R) permission. A `fence.i` instruction
+  must be executed after any write to ILUT memory to guarantee that subsequent
+  `qc.cm.ilut` executions observe the updated contents.
+
+  === qc.itba CSR (Address 0x800)
+
+  The `qc.itba` CSR holds the base address of the ILUT.
+
+  [cols="^1,^1,^3,^3",options="header"]
+  |===
+  | Bits   | Name     | Access      | Description
+  | 31:6   | base     | WARL (RW)   | 64-byte aligned base address of the ILUT. Bits[5:0] of the physical base address are implicitly zero.
+  | 5:0    | mode     | Read-only 0 | Reserved for future use. Always reads as zero; writes are ignored.
+  |===
+
+  `qc.itba` is a user-level read/write CSR. Software must save and restore
+  `qc.itba` on context switches.
+
+  === qc.itdec CSR (Address 0x801) — Double Entry Count
+
+  The `qc.itdec` CSR specifies how many of the leading ILUT entries are 64-bit
+  double entries. All remaining entries are 32-bit.
+
+  [cols="^1,^1,^3,^3",options="header"]
+  |===
+  | Bits   | Name | Access      | Description
+  | 13:3   | dec  | WARL (RW)   | 11-bit double entry count. Legal range: 0..2047. Reset value: 0.
+  | 31:14  | —    | Read-only 0 | Reserved. Always reads as zero; writes are ignored.
+  | 2:0    | —    | Read-only 0 | Reserved. Always reads as zero; writes are ignored.
+  |===
+
+  `qc.itdec` is a user-level read/write CSR. The default reset value of 0
+  selects backward-compatible mode in which all entries are 32-bit.
+
+  === Table Layout
+
+  The first DEC logical entries (indices 0 through DEC−1) are 64-bit double
+  entries. The remaining entries (indices DEC through 2047) are 32-bit entries.
+
+  The byte offset from the ILUT base address for logical index _i_ is:
+
+  * If _i_ < DEC: offset = _i_ × 8
+  * If _i_ ≥ DEC: offset = DEC × 8 + (_i_ − DEC) × 4
+
+  The maximum table size is DEC×8 + (2048−DEC)×4 bytes. This ranges from
+  approximately 8 KB (DEC=0, all 32-bit entries) up to approximately 16 KB
+  (DEC=2047, nearly all 64-bit entries). No alignment constraint beyond the
+  64-byte base alignment imposed by `qc.itba` is required for individual entries.
+
+  === Dual-Instruction Packing
+
+  Each ILUT entry may contain one or two instructions packed together.
+  Instruction sizes are determined by the standard RISC-V instruction-length
+  encoding (bits[1:0] of each sub-instruction).
+
+  ==== 32-bit Entry Valid Combinations
+
+  [cols="^1,^3",options="header"]
+  |===
+  | Combination             | Description
+  | One 32-bit instruction  | bits[1:0] == 2'b11; the entire 32-bit entry is a single RVI instruction.
+  | Two 16-bit instructions | bits[1:0] != 2'b11; the first 16-bit RVC instruction occupies bits[15:0] and the second occupies bits[31:16].
+  |===
+
+  ==== 64-bit Entry Valid Combinations
+
+  [cols="^1,^3",options="header"]
+  |===
+  | Combination               | Description
+  | 16 + 32 bits              | First instruction is 16-bit (bits[1:0] != 2'b11); second instruction is 32-bit.
+  | 16 + 48 bits              | First instruction is 16-bit; second instruction is 48-bit.
+  | 32 + 16 bits              | First instruction is 32-bit (bits[1:0] == 2'b11); second instruction is 16-bit occupying bits[47:32].
+  | 32 + 32 bits              | Both instructions are 32-bit.
+  | Single 48-bit instruction | A single 48-bit instruction occupying bits[47:0]; bits[63:48] must be padded with `c.nop` (16'h0001).
+  |===
+
+  A single 32-bit instruction placed in a 64-bit entry is valid as the 32+16
+  case with `c.nop` (16'h0001) padding in bits[63:48].
+
+  Unused bits in any entry MUST be padded with `c.nop` (16'h0001). Instruction
+  combinations that do not fit within the entry size cause an illegal instruction
+  exception. Instruction sizes are determined by the standard RISC-V
+  instruction-length encoding (bits[1:0] of each sub-instruction).
+
+  === Instruction Restrictions
+
+  Any instruction that references PC as an input or output is NOT permitted
+  in the ILUT. If any such instruction is present in the entry, an
+  IllegalInstruction exception is raised before any sub-instruction in the
+  entry takes architectural effect.
+
+  Forbidden instructions fall into three categories:
+
+  * *PC-relative instructions* (read PC as input):
+  ** `auipc`
+  ** All branch instructions (`beq`, `bne`, `blt`, `bge`, `bltu`, `bgeu`,
+     `c.beqz`, `c.bnez`, etc.)
+  ** PC-relative jump instructions (`jal`, `c.j`, `c.jal`)
+
+  * *Register-indirect jumps* (write PC as output):
+  ** `jalr`
+  ** `c.jr`
+  ** `c.jalr`
+
+  * *Return instructions* (write PC as output):
+  ** `cm.popret`
+  ** `cm.popretz`
+  ** `qc.cm.popret`
+  ** `qc.cm.popretz`
+
+  The following push/pop instructions are explicitly *allowed* in ILUT entries
+  because they do not reference PC:
+  `cm.push`, `cm.pop`, `qc.cm.push`, `qc.cm.pushfp`, `qc.cm.pop`.
+
+  16-bit compressed instructions (bits[1:0] != 2'b11) are otherwise valid
+  in ILUT entries.
+
+  === Execution Model
+
+  The PC points to the `qc.cm.ilut` instruction throughout the execution of all
+  sub-instructions contained within the fetched ILUT entry. Sub-instructions
+  execute sequentially and independently:
+
+  * The architectural state changes produced by the first sub-instruction are
+    visible to the second sub-instruction and to any subsequent trap handler.
+  * Each sub-instruction can trap independently; traps are taken precisely at the
+    sub-instruction that caused them, not deferred.
+  * After the final sub-instruction completes, the PC advances past `qc.cm.ilut`
+    normally.
+
+  === Exception Handling
+
+  On any trap (exception, interrupt, NMI, or double-trap) occurring during the
+  execution of a sub-instruction fetched from the ILUT:
+
+  * mepc (or mnepc for a double-trap) is set to the PC of `qc.cm.ilut`.
+  * Bit 0 of mepc/mnepc encodes which sub-instruction was executing when the trap
+    occurred:
+  ** Bit 0 = 0: the trap occurred during the first (or only) sub-instruction.
+  ** Bit 0 = 1: the trap occurred during the second sub-instruction (the
+     architectural effects of the first sub-instruction are already visible).
+
+  On trap return (`mret`, `qc.c.mret`, `qc.c.mnret`, `qc.c.mileaveret`), $pc is
+  restored directly from mepc/mnepc including bit 0:
+
+  * If bit 0 = 0: `qc.cm.ilut` re-executes from the beginning, running both
+    sub-instructions.
+  * If bit 0 = 1: `qc.cm.ilut` skips the first sub-instruction and executes only
+    the second.
+
+  Bit 0 of mepc/mnepc is readable and writable in this architecture.
+  Software may explicitly set bit 0 to 1 to force resumption from the second
+  sub-instruction.
+
+  NOTE: This is an architectural exception to the standard RISC-V requirement
+  that *epc bit 0 is always zero. The non-zero bit 0 encodes which sub-instruction
+  within the ILUT entry was interrupted, enabling precise trap restart.
+
+  === Encoding
+
+  `qc.cm.ilut` uses the same encoding as `c.fld` (bits[1:0]=00,
+  bits[15:13]=001). Xqccmi is therefore mutually exclusive with the Zcd
+  extension.
+
+  [cols="^2,^5,^2",options="header"]
+  |===
+  | Bits[15:13] | Bits[12:2]       | Bits[1:0]
+  | 001         | ilut_index[10:0] | 00
+  |===
+
+  The 11-bit `ilut_index` field (bits[12:2]) encodes the logical index into the
+  ILUT, selecting one of up to 2048 entries.
+
+  === Instruction Summary
+
+  [%header,cols="^1,^1,4,8"]
+  |===
+  |RV32
+  |RV64
+  |Mnemonic
+  |Instruction
+
+  |yes
+  |no
+  |qc.cm.ilut _index_
+  |<<#insns-qc_cm_ilut>>
+
+  |===
+type: unprivileged
+versions:
+- version: "0.1.0"
+  state: development
+  contributors:
+  - name: Albert Yosher
+    company: Qualcomm Technologies, Inc.
+    email: ayosher@qti.qualcomm.com
+  - name: Derek Hower
+    company: Qualcomm Technologies, Inc.
+    email: dhower@qti.qualcomm.com
+  - name: Gil Zukerman
+    company: Qualcomm Technologies, Inc.
+    email: gzukerma@qti.qualcomm.com
+  changes:
+    - Initial version. Custom instruction lookup table extension with dual-instruction
+      packing and 64-bit double entries. Supports 16-bit, 32-bit, and 48-bit instructions
+      in the ILUT. Introduces qc.itba and qc.itdec CSRs.
+  requirements:
+    allOf:
+      - extension:
+          name: Zca
+          version: ">= 1.0.0"
+      - extension:
+          name: Zicsr
+          version: ">= 2.0.0"
+      - not:
+          extension:
+            name: Zcd
+- version: "0.2.0"
+  state: development
+  contributors:
+  - name: Albert Yosher
+    company: Qualcomm Technologies, Inc.
+    email: ayosher@qti.qualcomm.com
+  - name: Derek Hower
+    company: Qualcomm Technologies, Inc.
+    email: dhower@qti.qualcomm.com
+  - name: Gil Zukerman
+    company: Qualcomm Technologies, Inc.
+    email: gzukerma@qti.qualcomm.com
+  changes:
+    - >-
+      Precise trap semantics: each sub-instruction in an ILUT entry can now trap
+      independently. Traps are taken immediately at the faulting sub-instruction
+      rather than being deferred.
+    - >-
+      Resume mechanism: bit 0 of mepc/mnepc encodes which sub-instruction caused
+      the trap. On trap return, qc.cm.ilut re-enters with PC bit 0 reflecting this
+      value; if set, the first sub-instruction is skipped and only the second is
+      re-executed.
+    - >-
+      mepc/mnepc bit 0 is readable and writable in this architecture.
+      Software may set bit 0 to 1 to force resumption from the second sub-instruction.
+    - >-
+      Expanded ILUT instruction restrictions to all PC-referencing instructions:
+      added register-indirect jumps (jalr, c.jr, c.jalr) and return instructions
+      (cm.popret, cm.popretz, qc.cm.popret, qc.cm.popretz) to the forbidden list.
+    - >-
+      Spec language audit: removed all implementation-implying language; descriptions
+      now define architectural behavior only.
+  requirements:
+    allOf:
+      - extension:
+          name: Zca
+          version: ">= 1.0.0"
+      - extension:
+          name: Zicsr
+          version: ">= 2.0.0"
+      - not:
+          extension:
+            name: Zcd

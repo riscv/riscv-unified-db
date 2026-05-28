@@ -11,8 +11,7 @@
 #   - integer arith (vadd/vsub/vrsub(.vv,.vx,.vi), compare, min, max)
 #   - integer widening arith ()
 
-# the vector register file
-Bits<128> v[32];
+# the vector register file is populated by the symtab from V.yaml
 
 enum VectorLmulType {
   Divide

@@ -47,10 +47,10 @@ Set up the Docusaurus project, CI/CD, and scaffolding before writing any content
   - `organizationName`: `riscv`, `projectName`: `riscv-unified-db`
   - `favicon`: `/img/udb-block.svg`
   - Note: `onBrokenLinks` is set to `warn` during scaffolding; change to `throw` once content pages exist (Phase 13+).
-- [x] **0.2.2** Configure navbar: `[UDB logo] [Docs] [API Reference] [Browse Spec ↗] [GitHub ↗]`
+- [x] **0.2.2** Configure navbar: `[UDB logo] [Docs] [API Reference] [Browse Spec ↗] [GitHub ↗]`. Note: the `title: 'UDB'` text next to the logo was later removed (the logo alone links home) — see D8.
 - [x] **0.2.3** Configure footer with license info and GitHub link.
 - [x] **0.2.4** Configure `plugin-content-docs` with `sidebarPath` pointing to `doc/sidebars.ts`. Added `planning/**` to the `exclude` list so Docusaurus does not treat `doc/planning/` as content.
-- [x] **0.2.5** Set `editUrl` to `https://github.com/riscv/riscv-unified-db/tree/main/doc/` so every page has an "Edit this page" link.
+- [x] **0.2.5** Set `editUrl` to `https://github.com/riscv/riscv-unified-db/tree/main/doc/` so every page has an "Edit this page" link. Note: auto-generated schema doc pages suppress this link via `custom_edit_url: null` and instead show an inline `:::note Auto-generated` admonition — see D7.
 
 ### 0.3 — Search
 
@@ -177,6 +177,54 @@ All four use CSS custom properties (`var(--idl-logo-bg)`, `var(--idl-logo-fg)`) 
 
 ---
 
+## Phase 0.9 — Documentation Status Indicators
+
+Make it clear to readers which documentation is complete vs. in-progress while the site is under active development.
+
+**Goal**: Set proper expectations for visitors during the construction phase and make the site feel professional rather than incomplete.
+
+- [x] **0.9.1** Create a `PageStatus` component (or use Docusaurus admonitions) to indicate completion status at the top of pages. Status values: "complete", "in-progress", "planned". Start with admonitions for MVP:
+  ```markdown
+  :::info[Status: Complete]
+  This documentation is complete and reviewed.
+  :::
+
+  :::warning[Status: In Progress]
+  This documentation is partially complete. Some sections may be missing or outdated.
+  :::
+
+  :::caution[Status: Planned]
+  This documentation is planned but not yet written. Check back soon.
+  :::
+  ```
+  Can be upgraded to a custom React component later for more polish.
+
+- [ ] **0.9.2** Add status indicators to the sidebar using custom CSS or sidebar item customization. Consider emoji (✅/🚧/📋) or colored dots for quick scanning. This makes status visible during navigation without requiring users to open each page.
+
+- [x] **0.9.3** Create a "Documentation Status" page at `docs/intro/doc-status.md` that lists all planned documentation sections with their current status, so readers can see at a glance what exists and what's coming. Structure it by the main categories from the site design (Getting Started, Concepts, Database, IDL, Tools, Generators). Use a table format:
+  | Section | Status |
+  |---------|--------|
+  | Getting Started for Users | 🚧 In Progress |
+  | Getting Started for Spec Writers | 📋 Planned |
+  | ... | ... |
+
+- [x] **0.9.4** Add a frontmatter field `status: complete|in-progress|planned` to all documentation pages. This can be consumed by the PageStatus component (if built) or by a build script that validates status consistency. Added to key pages as they are created.
+
+- [x] **0.9.5** (Optional) Add a global banner at the top of the site (using Docusaurus announcement bar) that says "🚧 This documentation site is under active construction. See [Documentation Status](/intro/doc-status) for details." Remove this once the site reaches stable status. Configure in `docusaurus.config.ts`:
+  ```typescript
+  announcementBar: {
+    id: 'under_construction',
+    content: '🚧 This documentation site is under active construction. See <a href="/intro/doc-status">Documentation Status</a> for details.',
+    backgroundColor: '#ffa500',
+    textColor: '#000000',
+    isCloseable: true,
+  }
+  ```
+
+**Acceptance**: Readers can immediately see which pages are trustworthy vs. incomplete. Status is visible both at the page level and in navigation. The Documentation Status page provides a roadmap of what's coming.
+
+---
+
 ## Phase 1 — Landing Page
 
 Build the custom landing page (`src/pages/index.tsx`).
@@ -275,12 +323,12 @@ Build the custom landing page (`src/pages/index.tsx`).
 
 ### 4.1 — Configurations (`docs/concepts/configurations/`)
 
-- [ ] **4.1.1** Write `overview.md`: what configurations are, the three types, why they exist.
+- [x] **4.1.1** Write `overview.md`: what configurations are, the three types, why they exist. *(Exists at `doc/docs/concepts/configurations/overview.md`; cross-linked to schema reference.)*
 - [ ] **4.1.2** Write `full-configs.md`: format, required fields, example (`cfgs/mc100-32-full-example.yaml`).
 - [ ] **4.1.3** Write `partial-configs.md`: format, `mandatory_extensions`, example.
 - [ ] **4.1.4** Write `unconfig.md`: what `_` means and when to use it.
 - [ ] **4.1.5** Write `config-file-format.md`: complete reference for the config YAML format, including overlays (`cfgs/NAME/arch_overlay/`). Reference `cfgs/example_rv64_with_overlay.yaml`.
-- [ ] **4.1.6** Write `validating-configs.md`: how to validate a config, compatibility checking against profiles.
+- [ ] **4.1.6** Write `validating-configs.md`: how to validate a config, compatibility checking against profiles. Must cover two levels of validation: (1) **Schema validation** — structural correctness checked by `bin/validate`; (2) **Semantic validation** — data-dependency rules that the schema cannot express, including: extension versions must exist in the database, the required set of `params` depends on which extensions are implemented (and on other parameter values), extension `requirements` conditions must be satisfied, and version constraints in partial configs must be satisfiable. Explain that a file can be schema-valid but semantically invalid, and that `bin/validate` checks both.
 
 ### 4.2 — The data pipeline (`docs/concepts/data-pipeline/`)
 
@@ -292,6 +340,7 @@ Build the custom landing page (`src/pages/index.tsx`).
 
 ### 4.3 — Conditions system (`docs/concepts/conditions.md`)
 
+- [ ] **4.3.0** Extract condition types (`condition`, `yaml_condition`, `idl_condition`, `xlen_condition`, `extension_condition`, `param_condition`) from `schema_defs.json` into a dedicated `spec/schemas/condition_schema.json`. Update all `$ref` paths in other schemas. This enables the schema doc generator to produce a standalone conditions reference page that can be linked from the `requirements` field in `config_schema.json` and other schemas.
 - [ ] **4.3.1** Convert `doc/schema/conditions.adoc` → Markdown.
 - [ ] **4.3.2** Review and update for accuracy/completeness.
 
@@ -332,12 +381,34 @@ For each table, create a page with: description, schema summary (auto-generated 
 
 - [ ] **5.4.1** Write `overview.md`: what schemas are, where they live (`spec/schemas/`), how they are enforced.
 - [ ] **5.4.2** Convert `doc/schema/versioning.adoc` → `versioning.md`.
-- [ ] **5.4.3** Set up auto-generation of per-schema documentation from the JSON Schema files in `spec/schemas/`. There are 26 files total (including `json-schema-draft-07.json` and `schema_defs.json` which are meta/shared — these may not need individual pages). Options:
-  - Use `jsonschema2md` or `@adobe/jsonschema2md` to generate Markdown from each schema.
-  - Or write a custom Ruby/Node script that reads each schema and emits a Markdown page.
-  - Integrate into the Docusaurus build so schema docs are always up to date.
-  - Note: `mmr_schema.json` (memory-mapped registers) and `prm_schema.json` (PRM structure) are present but have no corresponding ISA table — document them as standalone schema reference pages.
-- [ ] **5.4.4** Add a schema index page listing all documented schemas with links.
+- [x] **5.4.3** Set up auto-generation of per-schema documentation from the JSON Schema files in `spec/schemas/`. Implemented as a custom Ruby gem (`tools/internal-gems/schema_doc_gen/`) invoked via `bin/chore gen schema-docs`. Generates MDX pages under `doc/docs/schemas/<version>/`. See D7 in `decisions.md`.
+- [x] **5.4.4** Add a schema index page listing all documented schemas with links. *(Auto-generated at `doc/docs/schemas/index.mdx`.)*
+
+**Schema content review status** (improving `description` fields and `examples` in each schema file):
+- [x] `config_schema.json` — Fully reviewed and improved: top-level description with overview and semantic validation note, Quick Start examples, field descriptions for all properties, version format corrected (`MAJOR[.MINOR[.PATCH]]`), `additional_extensions` default documented, `requirements` description added, `arch_overlay` grammar fixed, `$source` hidden with tooling note, cross-link to concepts overview and validating-configs page.
+- [~] `schema_defs.json` — Partially improved: `extension_name`, `requirement_string`, `version_requirements`, `extension_version` (corrected format), `condition` (placeholder description pending 4.3.0), `spec_state` (full description with all enum values) descriptions added.
+- [ ] `exception_code_schema.json`
+- [~] `ext_schema.json` — Generator improved: bare `enum` (without `type`) now renders as pipe-separated values instead of `any`; `type` + `enum` together also renders enum values. Schema content review in progress.
+- [ ] `inst_schema.json`
+- [ ] `inst_opcode_schema.json`
+- [ ] `inst_subtype_schema.json`
+- [ ] `inst_type_schema.json`
+- [ ] `inst_var_schema.json`
+- [ ] `inst_var_type_schema.json`
+- [ ] `inst_variable_metadatas.json`
+- [ ] `interrupt_code_schema.json`
+- [ ] `manual_schema.json`
+- [ ] `manual_version_schema.json`
+- [ ] `mmr_schema.json`
+- [ ] `non_isa_schema.json`
+- [ ] `param_schema.json`
+- [ ] `prm_schema.json`
+- [ ] `proc_cert_class_schema.json`
+- [ ] `proc_cert_model_schema.json`
+- [ ] `profile_family_schema.json`
+- [ ] `profile_release_schema.json`
+- [ ] `profile_schema.json`
+- [ ] `register_file_schema.json`
 
 ---
 
@@ -367,7 +438,7 @@ All content sourced from `doc/idl.adoc` (41.6 KB — comprehensive). Convert to 
   - [x] `common-misunderstandings.mdx` — Eight common mistakes with examples and fixes
   - [x] `for-spec-writers.mdx` — Patterns for writing new instructions and CSR definitions
   - [x] `quick-reference.mdx` — Dense syntax cheat sheet covering all language constructs
-- [ ] **6.4** Write `docs/idl/idlc.md` — the `idlc` compiler: CLI, AST API, installation.
+- [x] **6.4** Write `docs/idl/idlc.md` — the `idlc` compiler: compilation pipeline, AST, symbol table, value tracking/snapshotting, analysis passes, Ruby API, error handling.
 - [x] **6.5** IDL syntax highlighting in Docusaurus — see D5 in `decisions.md`.
 
 ---
@@ -473,11 +544,13 @@ This phase sets up the tooling to keep docs in sync with source automatically.
 
 ### 10.1 — Schema documentation generation
 
-- [ ] **10.1.1** Evaluate `@adobe/jsonschema2md` for generating Markdown from the 27 JSON Schema files.
-- [ ] **10.1.2** If suitable, add it as a dev dependency and write a generation script.
-- [ ] **10.1.3** If not suitable, write a custom script (Ruby or Node) that reads each schema and emits structured Markdown.
-- [ ] **10.1.4** Add generation step to the pre-build pipeline.
-- [ ] **10.1.5** Improve schema files with better `description` fields and `examples` where missing (this is a data quality task, not just a docs task).
+- [x] **10.1.1** Evaluated `@adobe/jsonschema2md` — not suitable (poor MDX output, limited control over formatting). Chose custom Ruby implementation instead.
+- [-] **10.1.2** N/A — `@adobe/jsonschema2md` not used.
+- [x] **10.1.3** Wrote custom Ruby gem `tools/internal-gems/schema_doc_gen/` that reads each JSON Schema file and emits structured MDX. Invoked via `bin/chore gen schema-docs`. See D7 in `decisions.md` for design decisions.
+- [x] **10.1.4** Generation step added: `bin/chore gen schema-docs` (run manually; not yet wired into the Docusaurus pre-build step — see note below).
+- [~] **10.1.5** Improving schema files with better `description` fields and `examples`: `config_schema.json` fully done; `schema_defs.json` partially done (`extension_name`, `requirement_string`, `version_requirements`, `extension_version`, `condition` updated); remaining schemas not yet reviewed. See schema content review status in Phase 5.4.
+
+  **Note**: Schema docs are currently regenerated manually via `bin/chore gen schema-docs` and committed. Wiring into the Docusaurus pre-build step requires the Docker container to be available during `npm run build`, which is not the case in the current CI setup (see D4). Options: (a) keep committing generated files, (b) add a CI step that runs `bin/chore gen schema-docs` before the Docusaurus build, (c) move generation to a Node.js script that runs without Docker.
 
 ### 10.2 — CLI documentation generation
 
@@ -563,7 +636,7 @@ Components that need a `DOCS.md`:
 - [ ] **14.3** Verify mobile responsiveness.
 - [ ] **14.4** Verify dark mode.
 - [ ] **14.5** Add a "last updated" timestamp to pages (Docusaurus `showLastUpdateTime: true`).
-- [ ] **14.6** Add a "edit this page" link to all pages (configured via `editUrl` in Phase 0).
+- [ ] **14.6** Verify "Edit this page" links work on all hand-authored pages. Auto-generated pages (schema docs) suppress the edit link via `custom_edit_url: null` and show an inline provenance note instead — this is intentional.
 - [ ] **14.7** Write a redirect map for any URLs from the old Pages site that should continue to work.
 - [ ] **14.8** Announce the new site in the project README and update the README's documentation links.
 
@@ -619,6 +692,17 @@ Resolved decisions are recorded in [`decisions.md`](decisions.md) with rationale
 - [ ] **Q8** What is the exact destination path for generators after the `backends/` migration? Currently only `ext-doc`, `isa-explorer`, and `manual` are accessible via `bin/generate`. Update Phase 8.2 generator pages with correct invocation once the migration is complete.
 - [ ] **Q9** What is the disposition of `doc/idl.html` (the AsciiDoc-rendered IDL reference, built by `asciidoctor` in CI and published to the Pages site)? Once Phase 6 (IDL docs in Docusaurus) is complete, this artifact and its CI build step can be removed. Confirm before removing.
 - [ ] **Q10** `doc/prose-schema.adoc` documents the structured prose encoding system. The `prose` table in `spec/std/isa/` is being removed. Confirm whether `prose-schema.adoc` should be converted, archived, or dropped.
+- [ ] **Q11** Rename `arch_overlay` to `spec_overlay` globally in the repository (tools, configuration schema, and documentation). The current name is confusing; "spec overlay" more clearly indicates that this feature overlays the specification data, not the architecture itself. This is a breaking change for configuration files and requires coordination.
+
+---
+
+## Known Issues / Future Work
+
+Items identified during PR reviews or implementation that should be addressed in future updates:
+
+- **IDL examples using misa checks**: Several IDL code examples (e.g., in `overview.mdx` and `standard-library.mdx`) use `CSR[misa].C` checks to demonstrate dynamic extension enabling/disabling. However, the handling of mutable vs. immutable `misa` is still being finalized in the specification. These examples should be reviewed and potentially replaced with examples that don't depend on misa mutability semantics once the spec is settled. (Identified in PR 1723 review, comments 56-57)
+
+- **ERB syntax in function descriptions**: Function descriptions in `.idl` files may be processed through ERB templates. If ERB delimiters (like `<%-`) appear in a description, they could be interpreted as ERB code. Consider documenting this as a known limitation or adding validation to warn about ERB syntax in descriptions. (Identified in PR 1723 review, comment 55)
 
 ---
 

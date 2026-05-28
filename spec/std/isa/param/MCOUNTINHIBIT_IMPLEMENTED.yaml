@@ -1,0 +1,25 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: MCOUNTINHIBIT_IMPLEMENTED
+long_name: |
+  Whether or not the `mcountinhibit` CSR is implemented
+description: |
+  Options:
+
+    true::
+      The `mcountinhibit` CSR is implemented and can be accessed in M-mode.
+
+    false::
+      The `mcountinhibit` CSR is not implemented.
+      Accessing the CSR will cause an IllegalInstruction trap or enter an unpredictable state,
+      depending on TRAP_ON_UNIMPLEMENTED_CSR.
+schema:
+  type: boolean
+definedBy:
+  extension:
+    name: Sm

@@ -1,0 +1,10 @@
+= Profile Configurations
+
+Configs in `cfgs/profile` are generated from the specifications in `spec/std/isa/profile`.
+They are partial configurations that represent a profile-compliant implementation.
+
+The profile configurations are _strict_.
+That is, they list the extension/params listed in the profile spec,
+plus any extensions/params that are required transitively (e.g., A requires Zaamo and Zalrsc)
+
+The strict configs are compatible with non-strict configs (simply more expressive).

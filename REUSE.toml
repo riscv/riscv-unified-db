@@ -78,9 +78,10 @@ SPDX-License-Identifier = "CC0-1.0"
 
 [[annotations]]
 path = [
-  "doc/package.json",
-  "doc/tsconfig.json",
-  "doc/**/*.mdx"
+  "doc/**/*.json",
+  "doc/**/*.mdx",
+  "doc/**/*.md",
+  "tools/internal-gems/README.md"
 ]
 SPDX-FileCopyrightText = "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries."
 SPDX-License-Identifier = "BSD-3-Clause-Clear"

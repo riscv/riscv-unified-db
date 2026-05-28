@@ -1,6 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "v0.1",
+  "title": "Configuration Schema",
+  "description": "A configuration represents RISC-V architectural choices - ranging from complete design specifications to requirement sets to unconstrained baselines.\n\n> **See also:** Configurations Overview for a narrative introduction with examples and use cases.\n\nConfigurations come in three forms:\n\n- **Fully configured**: Concrete implementations with all extensions and parameters explicitly specified. These represent actual processor implementations where every architectural detail is known. Each extension must specify an exact version (e.g., `2.1.0` or `2.1`). Used for generating implementations, documentation, and test suites for specific hardware.\n\n- **Partially configured**: Profiles or configurable IP that define mandatory, optional, and prohibited extensions using version constraints (e.g., `>= 2.0`). These specify requirements that multiple implementations can satisfy. Can restrict whether additional extensions beyond those listed are allowed. Used for RISC-V compliance profiles, configurable IP offerings (a class of implementations a vendor may offer), and platform requirements.\n\n- **Unconfigured**: Special case representing the entire RISC-V specification without any implementation choices. Used to model the complete RISC-V architecture space before any configuration decisions are made.\n\nThe variant is selected by the `type` field. Fields common to all variants: `name`, `description`, `arch_overlay`. The `params` field is available on `fully configured` and `partially configured` variants.\n\n> **Note:** Schema validation checks structural correctness only. A schema-valid file can still be semantically invalid - for example, referencing an extension version that does not exist in the database, or omitting a parameter that is required by the implemented extensions.",
   "$defs": {
     "full_configuration": {
       "type": "object",
@@ -15,17 +17,18 @@
       ],
       "properties": {
         "$schema": {
-          "type": "string",
-          "format": "uri-reference",
-          "const": "config_schema.json#"
+          "const": "config_schema.json#",
+          "description": "Schema reference - must be `config_schema.json#`"
         },
         "kind": {
           "type": "string",
-          "const": "architecture configuration"
+          "const": "architecture configuration",
+          "description": "Document type identifier - must be `architecture configuration`"
         },
         "type": {
           "type": "string",
-          "const": "fully configured"
+          "const": "fully configured",
+          "description": "Configuration specificity level - `fully configured` means all extensions and parameters are explicitly specified"
         },
         "name": {
           "type": "string",
@@ -33,19 +36,32 @@
         },
         "description": {
           "type": "string",
-          "description": "An asciidoc description of the configuration"
+          "description": "Human-readable description of this configuration (AsciiDoc format)"
         },
         "arch_overlay": {
           "type": "string",
-          "description": "Optional arch overlay to apply. Can be either the name of a directory under arch_overlay/ or a (absolute or relative) path to an overlay directory"
+          "description": "Optional arch overlay to apply. Can be either the name of a directory under arch_overlay/ or an absolute or relative path to an overlay directory"
         },
         "$source": {
           "type": "string",
           "format": "uri",
-          "description": "Path to original file, when this is a copy"
+          "description": "Source file path when this configuration was generated or copied from another file"
+        },
+        "compatible": {
+          "description": "Declares that this configuration is compatible with one or more other configurations — meaning there exists at least one concrete hardware implementation that satisfies both this config and each listed config simultaneously. Each pointer is either the name of a config in the repository cfgs/ directory or a path to a config YAML file (absolute, or relative to this file). Compatibility is checked transitively: if config B lists config C as compatible, then this config must also be compatible with C.",
+          "examples": [
+            "profile/RVA23U64",
+            ["profile/RVA23U64", "profile/RVB23U64"],
+            "../other/my_config.yaml"
+          ],
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
         },
         "params": {
-          "type": "object"
+          "type": "object",
+          "description": "Architecture parameters that define implementation choices (e.g., `MXLEN: 64`, privilege modes, physical address width, etc.). Parameter names and valid values are defined by the parameter data files in `spec/std/isa/param/`."
         },
         "implemented_extensions": {
           "description": "Extensions implemented by this architecture",
@@ -62,7 +78,23 @@
                 "$ref": "schema_defs.json#/$defs/extension_version"
               }
             }
-          }
+          },
+          "examples": [
+            [
+              {
+                "name": "I",
+                "version": "2.1.0"
+              },
+              {
+                "name": "M",
+                "version": "2.0.0"
+              },
+              {
+                "name": "Zicsr",
+                "version": "2.0.0"
+              }
+            ]
+          ]
         }
       },
       "additionalProperties": false
@@ -81,15 +113,18 @@
         "$schema": {
           "type": "string",
           "format": "uri-reference",
-          "const": "config_schema.json#"
+          "const": "config_schema.json#",
+          "description": "Schema reference - must be `config_schema.json#`"
         },
         "kind": {
           "type": "string",
-          "const": "architecture configuration"
+          "const": "architecture configuration",
+          "description": "Document type identifier - must be `architecture configuration`"
         },
         "type": {
           "type": "string",
-          "const": "partially configured"
+          "const": "partially configured",
+          "description": "Configuration specificity level - `partially configured` means some extensions/parameters are specified as requirements while others are left open"
         },
         "name": {
           "type": "string",
@@ -97,19 +132,32 @@
         },
         "description": {
           "type": "string",
-          "description": "An asciidoc description of the configuration"
+          "description": "Human-readable description of this configuration (AsciiDoc format)"
         },
         "params": {
-          "type": "object"
+          "type": "object",
+          "description": "Architecture parameters that constrain compliant implementations. The entire `params` key may be omitted if no parameter constraints are needed. Parameter names and valid values are defined by the parameter data files in `spec/std/isa/param/`."
         },
         "arch_overlay": {
           "type": "string",
-          "description": "Optional arch overlay to apply. Can be either the name of a directory under arch_overlay/ or a (absolute or relative) path to an overlay directory"
+          "description": "Optional arch overlay to apply. Can be either the name of a directory under arch_overlay/ or an absolute or relative path to an overlay directory"
         },
         "$source": {
           "type": "string",
           "format": "uri",
-          "description": "Path to original file, when this is a copy"
+          "description": "Source file path when this configuration was generated or copied from another file"
+        },
+        "compatible": {
+          "description": "Declares that this configuration is compatible with one or more other configurations — meaning there exists at least one concrete hardware implementation that satisfies both this config and each listed config simultaneously. Each pointer is either the name of a config in the repository cfgs/ directory or a path to a config YAML file (absolute, or relative to this file). Compatibility is checked transitively: if config B lists config C as compatible, then this config must also be compatible with C.",
+          "examples": [
+            "profile/RVA23U64",
+            ["profile/RVA23U64", "profile/RVB23U64"],
+            "../other/my_config.yaml"
+          ],
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
         },
         "mandatory_extensions": {
           "description": "Extensions mandatory in this architecture",
@@ -119,7 +167,7 @@
           }
         },
         "non_mandatory_extensions": {
-          "description": "Extensions that are not mandatory but are still _special_ in this architecture. This could mean different things depending on the context: for certificates or generated IP, this would correspond to _optional supported_, and extensions not in non_mandatory are not possible. For profiles, this corresponds to some type of _profile optional_, but extensions in non_mandatory are still possible.",
+          "description": "Optional extensions with special significance in this architecture. For configurable IP, these are optionally supported extensions. For profiles, these are profile-optional extensions.",
           "type": "array",
           "items": {
             "$ref": "schema_defs.json#/$defs/extension_requirement"
@@ -138,10 +186,11 @@
         "additional_extensions": {
           "type": "boolean",
           "default": true,
-          "description": "Whether or not a compliant instance of this partial config can have more extensions than those listed in mandatory_extensions/non_mandatory_extensions"
+          "description": "Whether a compliant instance may implement extensions beyond those listed in `mandatory_extensions`/`non_mandatory_extensions`. Defaults to `true` if omitted."
         },
         "requirements": {
-          "$ref": "schema_defs.json#/$defs/condition"
+          "$ref": "schema_defs.json#/$defs/condition",
+          "description": "Additional condition that must be satisfied for this configuration to be valid (e.g., a parameter constraint or extension dependency)."
         }
       },
       "additionalProperties": false
@@ -153,15 +202,18 @@
         "$schema": {
           "type": "string",
           "format": "uri-reference",
-          "const": "config_schema.json#"
+          "const": "config_schema.json#",
+          "description": "Schema reference - must be `config_schema.json#`"
         },
         "kind": {
           "type": "string",
-          "const": "architecture configuration"
+          "const": "architecture configuration",
+          "description": "Document type identifier - must be `architecture configuration`"
         },
         "type": {
           "type": "string",
-          "const": "unconfigured"
+          "const": "unconfigured",
+          "description": "Configuration specificity level - `unconfigured` represents the entire RISC-V specification with all implementation choices left unresolved"
         },
         "name": {
           "type": "string",
@@ -169,16 +221,16 @@
         },
         "arch_overlay": {
           "type": "string",
-          "description": "Optional arch overlay to apply. Can be either the name of a directory under arch_overlay/ or a (absolute or relative) path to an overlay directory"
+          "description": "Optional arch overlay to apply. Can be either the name of a directory under arch_overlay/ or an absolute or relative path to an overlay directory"
         },
         "$source": {
           "type": "string",
           "format": "uri",
-          "description": "Path to original file, when this is a copy"
+          "description": "Source file path when this configuration was generated or copied from another file"
         },
         "description": {
           "type": "string",
-          "description": "An asciidoc description of the configuration"
+          "description": "Human-readable description of this configuration (AsciiDoc format)"
         }
       },
       "additionalProperties": false
@@ -193,6 +245,147 @@
     },
     {
       "$ref": "#/$defs/unconfiguration"
+    }
+  ],
+  "examples": [
+    {
+      "_title": "Minimal Fully Configured",
+      "_quick_start": true,
+      "$schema": "config_schema.json#",
+      "kind": "architecture configuration",
+      "type": "fully configured",
+      "name": "MyProcessor",
+      "description": "A minimal 64-bit RISC-V processor",
+      "params": {
+        "MXLEN": 64
+      },
+      "implemented_extensions": [
+        { "name": "I", "version": "2.1" },
+        { "name": "Sm", "version": "1.12" }
+      ]
+    },
+    {
+      "_title": "Minimal Partially Configured",
+      "_quick_start": true,
+      "$schema": "config_schema.json#",
+      "kind": "architecture configuration",
+      "type": "partially configured",
+      "name": "MyProfile",
+      "description": "A minimal profile requiring base integer instructions",
+      "mandatory_extensions": [{ "name": "I", "version": ">= 2.1" }]
+    },
+    {
+      "_title": "Minimal Unconfigured",
+      "_quick_start": true,
+      "$schema": "config_schema.json#",
+      "kind": "architecture configuration",
+      "type": "unconfigured",
+      "name": "generic",
+      "description": "The complete RISC-V specification with no implementation choices"
+    },
+    {
+      "_title": "Full Configuration Example (RV64)",
+      "$schema": "config_schema.json#",
+      "kind": "architecture configuration",
+      "type": "fully configured",
+      "name": "RV64GC",
+      "description": "64-bit RISC-V with General-purpose and Compressed extensions",
+      "params": {
+        "XLEN": 64,
+        "MXLEN": 64,
+        "SXLEN": 64,
+        "UXLEN": 64
+      },
+      "implemented_extensions": [
+        {
+          "name": "I",
+          "version": "2.1"
+        },
+        {
+          "name": "M",
+          "version": "2.0"
+        },
+        {
+          "name": "A",
+          "version": "2.1"
+        },
+        {
+          "name": "F",
+          "version": "2.2"
+        },
+        {
+          "name": "D",
+          "version": "2.2"
+        },
+        {
+          "name": "C",
+          "version": "2.0"
+        },
+        {
+          "name": "Zicsr",
+          "version": "2.0"
+        },
+        {
+          "name": "Zifencei",
+          "version": "2.0"
+        }
+      ]
+    },
+    {
+      "_title": "Partial Configuration Example (Profile)",
+      "$schema": "config_schema.json#",
+      "kind": "architecture configuration",
+      "type": "partially configured",
+      "name": "RVA22U64",
+      "description": "RISC-V Application Profile for 64-bit Unix-like systems",
+      "mandatory_extensions": [
+        {
+          "name": "I",
+          "version": ">= 2.1"
+        },
+        {
+          "name": "M",
+          "version": ">= 2.0"
+        },
+        {
+          "name": "A",
+          "version": ">= 2.1"
+        },
+        {
+          "name": "F",
+          "version": ">= 2.2"
+        },
+        {
+          "name": "D",
+          "version": ">= 2.2"
+        },
+        {
+          "name": "C",
+          "version": ">= 2.0"
+        },
+        {
+          "name": "Zicsr",
+          "version": ">= 2.0"
+        }
+      ],
+      "non_mandatory_extensions": [
+        {
+          "name": "V",
+          "version": ">= 1.0"
+        }
+      ],
+      "params": {
+        "XLEN": 64
+      },
+      "additional_extensions": false
+    },
+    {
+      "_title": "Unconfigured Example",
+      "$schema": "config_schema.json#",
+      "kind": "architecture configuration",
+      "type": "unconfigured",
+      "name": "generic",
+      "description": "Generic unconfigured RISC-V architecture"
     }
   ]
 }

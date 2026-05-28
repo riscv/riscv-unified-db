@@ -44,6 +44,18 @@ fields:
 
     type: RO
     reset_value: 2
+  SPELP:
+    alias: mstatus.SPELP
+    location: 23
+    description: |
+      *Previous Expected Landing Pad state*
+
+      Alias of `mstatus.SPELP`.
+    type: RW-H
+    definedBy:
+      extension:
+        name: Zicfilp
+    reset_value: UNDEFINED_LEGAL
   MXR:
     alias: mstatus.MXR
     location: 19

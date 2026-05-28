@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "v0.1",
+  "description": "An ISA extension defines a named set of instructions, CSRs, and behaviors that can be implemented by a RISC-V processor. Each extension has one or more versioned releases, with various ratification states (development, frozen, public-review, ratification-ready, ratified, or nonstandard-released).\n\n## Key Fields\n\n- `name`: Short identifier used throughout the database (e.g., `I`, `M`, `Zicsr`, `Smstateen`)\n- `long_name`: Human-readable one-line description\n- `description`: Full AsciiDoc documentation of the extension\n- `type`: Whether the extension is `unprivileged` or `privileged`\n- `versions`: Array of versioned releases, each with a `state` and optional `ratification_date`\n- `requirements`: Optional condition that must be true for the extension to be implementable (e.g., requires another extension)\n- `company`: Organization that developed the extension (defaults to RISC-V International for standard extensions)\n- `doc_license`: License for the extension documentation",
   "type": "object",
   "required": [
     "$schema",
@@ -11,50 +12,105 @@
     "long_name",
     "versions"
   ],
+  "examples": [
+    {
+      "_title": "Minimal Extension (Zicsr)",
+      "_quick_start": true,
+      "$schema": "ext_schema.json#",
+      "kind": "extension",
+      "name": "Zicsr",
+      "long_name": "Control and status register instructions",
+      "description": "Control and status register instructions",
+      "type": "unprivileged",
+      "versions": [
+        {
+          "version": "2.0.0",
+          "state": "ratified",
+          "ratification_date": "2019-04"
+        }
+      ]
+    },
+    {
+      "_title": "Extension with Requirements (B)",
+      "$schema": "ext_schema.json#",
+      "kind": "extension",
+      "name": "B",
+      "long_name": "Bit Manipulation",
+      "description": "The B standard extension comprises instructions provided by the Zba, Zbb, and Zbs extensions.",
+      "type": "unprivileged",
+      "company": {
+        "name": "RISC-V International",
+        "url": "https://riscv.org"
+      },
+      "doc_license": {
+        "name": "Creative Commons Attribution 4.0 International License",
+        "url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "state": "ratified",
+          "ratification_date": "2024-04",
+          "url": "https://drive.google.com/file/d/1SgLoasaBjs5WboQMaU3wpHkjUwV71UZn/view",
+          "requirements": {
+            "extension": {
+              "allOf": [
+                { "name": "Zba", "version": "= 1.0.0" },
+                { "name": "Zbb", "version": "= 1.0.0" },
+                { "name": "Zbs", "version": "= 1.0.0" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
   "properties": {
     "$schema": {
       "type": "string",
       "format": "uri-reference",
-      "description": "Path to schema, relative to <UDB ROOT>/schemas",
+      "description": "Schema reference - must be `ext_schema.json#`",
       "const": "ext_schema.json#"
     },
     "kind": {
       "type": "string",
       "const": "extension",
-      "description": "Object type"
+      "description": "Document type identifier - must be `extension`"
     },
     "name": {
       "$ref": "schema_defs.json#/$defs/extension_name"
     },
     "long_name": {
       "type": "string",
-      "description": "One line description for the extension"
+      "description": "One-line human-readable name for the extension (e.g., `Address generation`, `Bit Manipulation`)"
     },
     "description": {
       "$ref": "schema_defs.json#/$defs/spec_text",
-      "description": "Full documentation of the extension"
+      "description": "Full AsciiDoc documentation of the extension. May include multiple paragraphs, code examples, and cross-references."
     },
     "rvi_jira_issue": {
       "type": "string",
-      "description": "JIRA issue number for the RVI issue that tracks this extension"
+      "description": "JIRA issue number tracking this extension in the RISC-V International issue tracker"
     },
     "company": {
-      "description": "The company that developed this extension",
+      "description": "Organization that developed this extension. Omit for RISC-V International standard extensions.",
       "$ref": "schema_defs.json#/$defs/company"
     },
     "doc_license": {
+      "description": "License for the extension documentation",
       "$ref": "schema_defs.json#/$defs/license"
     },
     "type": {
       "enum": ["unprivileged", "privileged"],
-      "description": "Either unprivileged or privileged"
+      "description": "Privilege level of the extension. `unprivileged` extensions add instructions or behaviors accessible in user mode; `privileged` extensions add supervisor- or machine-mode functionality."
     },
     "requirements": {
-      "description": "Condition represeting requirements of this extension. If the condition is false, the extension cannot be implemented",
+      "description": "Condition that must be true for this extension to be implementable. If the condition is false, the extension cannot be implemented. Typically used to express that one extension requires another (e.g., `D` requires `F`).",
       "$ref": "schema_defs.json#/$defs/condition"
     },
     "versions": {
       "type": "array",
+      "description": "Ordered list of versioned releases of this extension, from oldest to newest.",
       "items": {
         "type": "object",
         "required": ["version", "state"],
@@ -100,31 +156,34 @@
         ],
         "properties": {
           "version": {
-            "$ref": "schema_defs.json#/$defs/extension_version"
+            "$ref": "schema_defs.json#/$defs/extension_version",
+            "description": "Version number in `MAJOR.MINOR.PATCH` format (e.g., `1.0.0`, `2.1.0`)"
           },
           "state": {
             "$ref": "schema_defs.json#/$defs/spec_state",
-            "description": "Current state of this version"
+            "description": "Ratification state of this version. See `spec_state` in schema_defs for all possible values and their meanings."
           },
           "repositories": {
-            "description": "Repositories associated with this extension",
+            "description": "Source repositories where this version of the extension is developed",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "url": {
                   "type": "string",
-                  "format": "uri"
+                  "format": "uri",
+                  "description": "Repository URL"
                 },
                 "branch": {
                   "type": "string",
-                  "description": "Branch/tag where the work is done"
+                  "description": "Branch or tag containing the work for this version"
                 }
               },
               "additionalProperties": false
             }
           },
           "ratification_date": {
+            "description": "Month when this version was ratified, in `YYYY-MM` format. Use `unknown` if the date is not recorded. Required when `state` is `ratified`.",
             "oneOf": [
               {
                 "type": "string",
@@ -169,37 +228,37 @@
             "items": {
               "type": "string"
             },
-            "description": "Changes since last version"
+            "description": "List of changes introduced in this version relative to the previous version"
           },
           "url": {
             "type": "string",
             "format": "uri",
-            "description": "Link to ratified document"
+            "description": "URL to the ratified specification document (e.g., a PDF on the RISC-V website)"
           },
           "contributors": {
-            "description": "List of contributors to this version of the extension",
+            "description": "People who contributed to this version of the extension",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "name": {
                   "type": "string",
-                  "description": "Contributor name, in 'GIVEN_NAME SURNAME' format"
+                  "description": "Contributor name in `GIVEN_NAME SURNAME` format"
                 },
                 "company": {
                   "type": "string",
-                  "description": "Company the contributor worked for, or 'Individual'"
+                  "description": "Company the contributor worked for at the time, or `Individual`"
                 },
                 "email": {
                   "type": "string",
                   "format": "email",
-                  "description": "E-mail address for the contributor"
+                  "description": "Contributor email address"
                 }
               }
             }
           },
           "requirements": {
-            "description": "Condition represeting requirements of this extension version _in addition to any specified for the extension overall_. If the condition is false, the extension version cannot be implemented",
+            "description": "Additional condition that must be true for this specific version to be implementable, beyond any requirements on the extension overall. If the condition is false, this version cannot be implemented.",
             "$ref": "schema_defs.json#/$defs/condition"
           }
         },
@@ -208,7 +267,7 @@
     },
     "$source": {
       "type": "string",
-      "description": "Source file where this extension was defined"
+      "description": "Source file path when this extension was generated or copied from another file"
     }
   },
   "additionalProperties": false

@@ -16,10 +16,10 @@ Two special variables give access to the current instruction's context. They are
 
 ```idl
 # $pc: use the current PC to compute a branch target
-jump(PC + $signed(imm));
+jump($pc + $signed(imm));
 
 # $encoding: pass the current instruction encoding to a memory access
-X[xd] = read_memory<32>(virtual_address, $encoding);
+X[xd] = read_memory(32, virtual_address, $encoding);
 
 # raise() uses $encoding as the tval for illegal instruction exceptions
 raise(ExceptionCode::IllegalInstruction, mode(), $encoding);

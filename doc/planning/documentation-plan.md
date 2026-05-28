@@ -198,6 +198,8 @@ Should include overview, usage details, installation details (if relevant), and 
 
 Tools to document:
 
+**Published Ruby Gems** (located in `tools/ruby-gems/`):
+
 | Tool | Location | Description |
 |---|---|---|
 | `udb` gem | `tools/ruby-gems/udb/` | Main database interface library; CLI and Ruby API |
@@ -205,6 +207,17 @@ Tools to document:
 | `idlc` gem | `tools/ruby-gems/idlc/` | IDL compiler; CLI and AST API |
 | `udb_helpers` gem | `tools/ruby-gems/udb_helpers/` | Template helpers used by generators |
 | `idl_highlighter` gem | `tools/ruby-gems/idl_highlighter/` | Syntax highlighting for IDL |
+
+**Internal Build Tools** (located in `tools/internal-gems/`):
+
+| Tool | Location | Description |
+|---|---|---|
+| `schema_doc_gen` gem | `tools/internal-gems/schema_doc_gen/` | Generates schema documentation (not published to RubyGems) |
+
+**Command-line Tools**:
+
+| Tool | Location | Description |
+|---|---|---|
 | `bin/generate` | `bin/generate` | Language-agnostic wrapper exposing all generators (Ruby via `udb-gen`, Python tools, etc.) |
 | `bin/regress` | `bin/regress` | Regression test runner |
 | `bin/chore` | `bin/chore` | Repository maintenance tool |

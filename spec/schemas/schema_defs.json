@@ -115,6 +115,7 @@
     },
     "spec_state": {
       "type": "string",
+      "description": "Ratification state of a specification or extension version: `development` (actively being worked on), `frozen` (feature-complete, under review), `public-review` (open for public comment), `ratification-ready` (approved by the task group, awaiting board vote), `ratified` (officially approved by RISC-V International), or `nonstandard-released` (released but not part of the RISC-V standard).",
       "enum": [
         "development",
         "frozen",
@@ -223,17 +224,20 @@
     },
     "extension_name": {
       "type": "string",
+      "description": "Extension name (e.g., `I`, `M`, `Zicsr`, `Smstateen`)",
       "pattern": "^(([A-WY])|([SXZ][a-z0-9]+))$"
     },
     "extension_version": {
-      "$ref": "#/$defs/rvi_version"
+      "$ref": "#/$defs/rvi_version",
+      "description": "Exact version in `MAJOR[.MINOR[.PATCH]]` format (e.g., `2.1.0`, `2.1`, `2`)"
     },
     "requirement_string": {
       "type": "string",
+      "description": "Version requirement string (e.g., `>= 2.0`, `~> 1.5`, `= 2.1`). The `~>` operator is a pessimistic version constraint: `~> X.Y` means `>= X.Y` and `< (X+1).0`; `~> X.Y.Z` means `>= X.Y.Z` and `< X.(Y+1).0`.",
       "pattern": "^((>=)|(>)|(~>)|(<)|(<=)|(=))?\\s*[0-9]+(\\.[0-9]+(\\.[0-9]+(-[a-fA-F0-9]+)?)?)?$"
     },
     "version_requirements": {
-      "description": "A (set of) version requirements",
+      "description": "Version requirement or list of requirements (e.g., `>= 2.0` or `['>= 2.0', '< 3.0']`)",
       "oneOf": [
         {
           "$ref": "#/$defs/requirement_string"
@@ -410,7 +414,7 @@
     "reference": {
       "type": "string",
       "pattern": "^.+\\.yaml#(/.*)?$",
-      "description": "refrence to another database object, as a JSON Reference"
+      "description": "reference to another database object, as a JSON Reference"
     },
     "integer": {
       "description": "An integer, either native to JSON or a number-like string",
@@ -784,6 +788,7 @@
       "additionalProperties": false
     },
     "condition": {
+      "description": "A condition (YAML structure or IDL function). See the conditions reference for details.",
       "oneOf": [
         {
           "$ref": "#/$defs/yaml_condition"

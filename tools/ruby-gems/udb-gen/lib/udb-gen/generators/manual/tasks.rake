@@ -6,6 +6,14 @@
 
 require "digest"
 
+def sanitized_inst_lookup
+  Rake.application.instance_variable_get(:@sanitized_inst_lookup) ||
+    Rake.application.instance_variable_set(
+      :@sanitized_inst_lookup,
+      Rake.application.cfg_arch.instructions.each_with_object({}) { |i, h| h[i.name.sanitize] = i }
+    )
+end
+
 def versions_from_env(versions)
   manual_name = "isa"
   output_hash = nil
@@ -184,11 +192,11 @@ rule %r{#{Rake.application.gen_dir}/.*/.*/antora/modules/insts/pages/.*.adoc} =>
   __FILE__,
   (UdbGen.root / "templates" / "manual" / "instruction.adoc.erb").to_s
 ] do |t|
-  inst_name = File.basename(t.name, ".adoc")
+  inst_sanitized_name = File.basename(t.name, ".adoc")
 
   cfg_arch = Rake.application.cfg_arch
-  inst = cfg_arch.instruction(inst_name)
-  raise "Can't find instruction '#{inst_name}'" if inst.nil?
+  inst = sanitized_inst_lookup[inst_sanitized_name]
+  raise "Can't find instruction with sanitized name '#{inst_sanitized_name}'" if inst.nil?
 
   inst_template_path = UdbGen.root / "templates" / "manual" / "instruction.adoc.erb"
   erb = ERB.new(inst_template_path.read, trim_mode: "-")
@@ -406,7 +414,7 @@ namespace :gen do
 
       Udb.logger.info "Generating Instructions"
       version_obj.instructions.each do |inst|
-        Rake::Task[antora_path / "modules" / "insts" / "pages" / "#{inst.name}.adoc"].invoke
+        Rake::Task[antora_path / "modules" / "insts" / "pages" / "#{inst.name.sanitize}.adoc"].invoke
       end
 
       Udb.logger.info "Generating Extensions"

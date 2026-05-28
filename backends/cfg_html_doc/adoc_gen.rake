@@ -33,7 +33,7 @@ require "ruby-prof"
       end
     when "inst"
       cfg_arch.transitive_implemented_instructions.each do |inst|
-        path = dir_path / "#{inst.name}.adoc"
+        path = dir_path / "#{inst.name.sanitize}.adoc"
         Udb.logger.info "  Generating #{path}"
         # RubyProf.start
         File.write(path, Udb::Helpers::AntoraUtils.resolve_links(cfg_arch.convert_monospace_to_links(erb.result(binding))))

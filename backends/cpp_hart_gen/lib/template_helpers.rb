@@ -16,6 +16,10 @@ module Udb
   class Instruction
     def assembly_fmt(xlen)
       fmt = assembly.dup
+      # fmt::format treats braces as replacement fields, so any literal braces in
+      # the assembly syntax must be escaped before we inject positional "{}".
+      fmt.gsub!("{", "{{")
+      fmt.gsub!("}", "}}")
       dvs = encoding(xlen).decode_variables
       dvs.each do |dv|
         fmt.gsub!(dv.name, "{}")
@@ -155,6 +159,53 @@ module CppHartGen
       else
         val
       end
+    end
+
+    # C++ width string for a register file element type (e.g. "64" or "VLEN").
+    # Used in template parameters like PossiblyUnknownBits<WIDTH>.
+    def rf_elem_width(rf)
+      width = rf.eval_register_length(cfg_arch)
+      width.is_a?(String) ? width : width.to_s
+    end
+
+    # Compile an IDL expression string to an AST node that responds to gen_cpp.
+    def compile_idl_expr(idl_str)
+      cfg_arch.idl_compiler.compile_expression(idl_str, cfg_arch.symtab)
+    end
+
+    # IDL Type for one register file element (Bits<WIDTH>).
+    def rf_elem_type(rf)
+      width = rf.eval_register_length(cfg_arch)
+      Idl::Type.new(:bits, width: width.is_a?(String) ? rf.max_register_length : width)
+    end
+
+    def gen_arch_read_cpp(entry) = idl_body_to_cpp(entry.arch_read)
+    def gen_arch_write_cpp(entry) = idl_body_to_cpp(entry.arch_write)
+
+    # True if the named register file (e.g. "F") has register_class: floating_point.
+    def rf_floating_point?(rf_name)
+      cfg_arch.register_files.find { |rf| rf.name == rf_name }&.register_class == "floating_point"
+    end
+
+    # Returns the base offset into udb::Reg::Enum for the named register file.
+    # Must match the enum layout in backends/cpp_hart_gen/cpp/include/udb/inst.hpp.
+    RF_ENUM_BASES = { "X" => 0, "F" => 32, "V" => 64 }.freeze
+    def rf_enum_base(rf_name)
+      RF_ENUM_BASES.fetch(rf_name) { raise "No Reg::Enum base defined for register file '#{rf_name}'" }
+    end
+
+    # All register files defined for this architecture.
+    # The ISS generates storage and accessors for all register files since
+    # for a partially-configured arch, any extension may be present.
+    def applicable_register_files
+      cfg_arch.register_files
+    end
+
+    private
+
+    def idl_body_to_cpp(body)
+      expr_str = body.strip.sub(/\Areturn\s+/, "").sub(/;\z/, "").strip
+      compile_idl_expr(expr_str).gen_cpp(cfg_arch.symtab, 0)
     end
   end
 

@@ -61,7 +61,7 @@ x = x + 1;  # end-of-line comment
 An `if` condition must be a `Boolean` type. Using an integer where a boolean is expected is a compilation error:
 
 ```idl
-XReg src1 = X[rs1];
+XReg src1 = X[xs1];
 
 if (src1 != 0) { ... }  # correct
 # if (src1) { ... }     # compilation error: not Boolean
@@ -76,6 +76,20 @@ count = count + 1;
 mask  = mask & 0xFF;
 ```
 
+### Post-increment/decrement in for loops only
+
+Post-increment (`i++`) and post-decrement (`i--`) are supported, but **only** in the update expression of a `for` loop on the iteration variable:
+
+```idl
+for (U32 i = 0; i < 10; i++) {  # valid: i++ in for loop update
+  # ...
+}
+
+# count++;  # compilation error: not allowed outside for loop update
+```
+
+Pre-increment (`++i`) and pre-decrement (`--i`) are not supported.
+
 ### Assignment is a statement, not an expression
 
 You cannot use assignment inside a condition or as a subexpression:
@@ -86,7 +100,10 @@ You cannot use assignment inside a condition or as a subexpression:
 
 # IDL form:
 x = read();
-if (x != 0) { ... }
+while (x != 0) {
+  # ... process x ...
+  x = read();
+}
 ```
 
 ### Case determines the kind of identifier
@@ -111,7 +128,7 @@ SatpMode mode = SatpMode::Sv39;   # correct
 
 ### No pointers, references, or heap allocation
 
-All architectural state — registers, CSRs, memory — is accessed through built-in syntax (`X[rs1]`, `CSR[mstatus]`, `read_memory`). There is no general-purpose addressable memory for local variables, so references and pointers have no meaning.
+All architectural state — registers, CSRs, memory — is accessed through built-in syntax (`X[xs1]`, `CSR[mstatus]`, `read_memory`). There is no general-purpose addressable memory for local variables, so references and pointers have no meaning.
 
 ### No recursion
 
@@ -144,8 +161,10 @@ Verilog-style literals are the preferred form when the bit width matters.
 |---|-----|
 | `uint32_t x = 0;` | `Bits<32> x = 0;` |
 | `// comment` | `# comment` |
+| `/* comment */` | Not supported |
 | `if (x) { }` | `if (x != 0) { }` |
 | `x += 1;` | `x = x + 1;` |
+| `i++` | `i++` (for loop update only) |
 | `(int) x` | `$signed(x)` |
 | `A` (enum member) | `MyEnum::A` |
 | `struct Foo { ... };` | `struct Foo { ... }` (no `;`) |

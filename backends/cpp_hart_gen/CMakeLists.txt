@@ -36,6 +36,16 @@ message("* Current build type is : ${CMAKE_BUILD_TYPE}")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -no-pie)
 
+# Only track dependencies within the project tree by default. Filters out
+# compiler-internal headers (e.g. /opt/rh/gcc-toolset-14/...) that exist only
+# inside the build container and would otherwise cause spurious full rebuilds
+# on every invocation. Allow callers/CI to override this with
+# -DCMAKE_DEPENDS_IN_PROJECT_ONLY=OFF when they need rebuilds to react to
+# non-project header or toolchain changes.
+if(NOT DEFINED CMAKE_DEPENDS_IN_PROJECT_ONLY)
+  set(CMAKE_DEPENDS_IN_PROJECT_ONLY ON)
+endif()
+
 if(NOT DEFINED UDB_ROOT OR UDB_ROOT STREQUAL "")
   get_filename_component(UDB_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 endif()
@@ -50,6 +60,16 @@ endif()
 include(${UDB_ROOT}/.toolchain/check_cxx.cmake)
 
 include(FetchContent)
+
+# Skip network update checks for already-fetched dependencies by default.
+# Without this, CMake re-contacts each upstream repo on every configure,
+# which fails in network-restricted build environments and adds unnecessary
+# latency elsewhere. Allow callers/CI to override this with
+# -DFETCHCONTENT_UPDATES_DISCONNECTED=OFF when update checks are desired.
+if(NOT DEFINED FETCHCONTENT_UPDATES_DISCONNECTED)
+  set(FETCHCONTENT_UPDATES_DISCONNECTED ON
+      CACHE BOOL "Skip FetchContent update checks for already-fetched dependencies.")
+endif()
 
 FetchContent_Declare(fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -256,6 +276,13 @@ target_compile_definitions(test_softfloat_fp PRIVATE
   UDB_FP_DIRECTED_JSONL="${UDB_ROOT}/tests/data/fp/directed/f32_fpgen_expanded.jsonl"
 )
 
+add_executable(test_regfile
+  ${CMAKE_SOURCE_DIR}/test/test_regfile.cpp
+  ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
+)
+target_include_directories(test_regfile PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_regfile PRIVATE hart Catch2::Catch2WithMain)
+
 # add_executable(test_decode
 #   ${CMAKE_SOURCE_DIR}/test/test_decode.cpp
 # )
@@ -265,6 +292,7 @@ target_compile_definitions(test_softfloat_fp PRIVATE
 include(CTest)
 include(Catch)
 catch_discover_tests(test_bits_directed)
+catch_discover_tests(test_regfile)
 
 foreach (random_test IN LISTS RANDOM_TESTS)
   catch_discover_tests(${random_test})

@@ -9,7 +9,7 @@ Functions are called using standard call syntax. Arguments are passed positional
 
 ```idl
 jump(PC + $signed(imm));          # void function call
-Bits<32> val = read_memory<32>(vaddr, $encoding); # call with return value
+Bits<32> val = read_memory(32, vaddr, $encoding); # call with return value
 ```
 
 All arguments are passed **by value**. There are no references.
@@ -89,7 +89,7 @@ function NAME {
 
 **Pass by value — no references or pointers**
 
-All arguments and return values are passed by value. There are no references, pointers, or heap allocation in IDL. This follows directly from what IDL describes: all architectural state — registers, CSRs, memory — is accessed via built-in syntax (`X[rs1]`, `CSR[mstatus]`, `read_memory`), not through addresses. Since there is no general-purpose addressable memory for local variables, references have no meaning in IDL's execution model.
+All arguments and return values are passed by value. There are no references, pointers, or heap allocation in IDL. This follows directly from what IDL describes: all architectural state — registers, CSRs, memory — is accessed via built-in syntax (`X[xs1]`, `CSR[mstatus]`, `read_memory`), not through addresses. Since there is no general-purpose addressable memory for local variables, references have no meaning in IDL's execution model.
 
 **Functions live in global scope and cannot be nested**
 
@@ -97,7 +97,7 @@ All functions are declared at the top level of `.idl` files. Nesting functions w
 
 **No function pointers**
 
-Functions have no address and cannot be assigned to a variable. Dynamic dispatch requires runtime indirection, which is incompatible with static hardware description and the backends IDL targets.
+Functions have no address and cannot be assigned to a variable. Dynamic dispatch requires runtime indirection, which is incompatible with static hardware description and the targets that consume IDL (backends such as instruction set simulators, formal verification tools, and hardware generators).
 
 **No recursion**
 
@@ -112,7 +112,7 @@ Builtin functions are used for:
 1. Functionality that is not architecturally visible (e.g., prefetch an address).
 2. Functionality that is highly implementation-dependent (e.g., fence).
 
-Builtin functions look like a normal function but with the `builtin` keyword before `function` and no `body`:
+Builtin functions look like normal functions but with the `builtin` keyword before `function` and no `body`:
 
 ```idl title="Builtin function definition"
 builtin function sfence_asid {

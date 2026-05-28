@@ -1,18 +1,23 @@
 ---
 sidebar_position: 1
 title: IDL Overview
+status: complete
 ---
 
 # ISA Description Language (IDL)
+
+:::info[Status: Complete]
+This documentation is complete and ready to use.
+:::
 
 The **ISA Description Language (IDL)** is a domain-specific language for formally specifying RISC-V instruction set architectures. IDL is designed to be:
 
 - **Human readable** — serves as a reliable documentation source alongside the spec.
 - **Familiar** — syntax resembles a mix of Verilog and C++, so hardware and software designers can read it with minimal ramp-up.
 - **Strongly typed** — reduces ambiguity as a documentation source.
-- **Modular** — reflects RISC-V's modular ISA structure. IDL can describe a wide range of devices, then be customized with configuration variables to generate an implementation-specific description.
+- **Configurable** — reflects RISC-V's configurable ISA structure. IDL can describe a wide range of devices, then be customized with configuration variables to generate an implementation-specific description.
 
-IDL is used to describe the behavior of RISC-V instructions, fetch, and (in cases where behavior is specialized) CSRs. Taken together, the IDL can be converted into a fully functioning Instruction Set Simulator (ISS) that is a golden model of execution.
+IDL is used to describe the behavior of RISC-V instructions and (in cases where behavior is specialized) CSRs. Taken together, the IDL can be converted into a fully functioning Instruction Set Simulator (ISS) that is a golden model of execution.
 
 :::tip Choose your starting point
 - **Hardware engineers** — see [IDL for Verilog Users](./guide-for-verilog-users)
@@ -63,21 +68,21 @@ Enable software development before hardware availability:
 
 ## Worked Example
 
-The following example shows how the Branch if Less Than or Equal Unsigned (`BLTU`) instruction is specified in IDL. `rs1`, `rs2`, and `imm` are decode fields extracted automatically from the instruction encoding before execution.
+The following example shows how the Branch if Less Than Unsigned (`BLTU`) instruction is specified in IDL. `xs1`, `xs2`, and `imm` are decode fields extracted automatically from the instruction encoding before execution.
 
 ```idl title="BLTU instruction"
-Bits<MXLEN> src1 = X[rs1]; # (1) Read X[rs1]
-Bits<MXLEN> src2 = X[rs2]; # (2) Read X[rs2]
+Bits<MXLEN> src1 = X[xs1]; # (1) Read X[xs1]
+Bits<MXLEN> src2 = X[xs2]; # (2) Read X[xs2]
 
-if (src1 <= src2) {        # (3) Unsigned comparison
-  jump(PC + $signed(imm)); # (4) Jump to target
+if (src1 < src2) {         # (3) Unsigned comparison
+  jump($pc + $signed(imm)); # (4) Jump to target
 }
 # fall through: advance to next instruction
 ```
 
-1. Read general-purpose register `rs1` into an MXLEN-bit variable `src1`. `MXLEN` is a configuration parameter available as a global constant.
-2. Read general-purpose register `rs2` into `src2`.
-3. Check if unsigned `src1` is less than or equal to unsigned `src2`.
+1. Read general-purpose register `xs1` into an MXLEN-bit variable `src1`. `MXLEN` is a configuration parameter available as a global constant.
+2. Read general-purpose register `xs2` into `src2`.
+3. Check if unsigned `src1` is less than unsigned `src2`.
 4. Call `jump` with a target address formed by adding a signed immediate to the PC.
 
 The `jump` function called above is itself defined in IDL:
@@ -142,7 +147,8 @@ description   builtin
 body          for
 if            else
 enum          bitfield
-struct
+struct        true
+false
 ```
 
 ---

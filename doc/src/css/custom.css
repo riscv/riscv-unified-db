@@ -90,3 +90,38 @@
   --ifm-color-primary-lightest: #c1c9f0;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+/* YAML syntax highlighting improvements */
+.language-yaml .token.key.atrule {
+  color: #0451a5; /* Blue for keys in light mode */
+}
+
+[data-theme='dark'] .language-yaml .token.key.atrule {
+  color: #9cdcfe; /* Light blue for keys in dark mode */
+}
+
+.language-yaml .token.punctuation {
+  color: #808080; /* Gray for punctuation (colons, dashes) */
+}
+
+.language-yaml .token.string {
+  color: #a31515; /* Red for string values in light mode */
+}
+
+[data-theme='dark'] .language-yaml .token.string {
+  color: #ce9178; /* Light red/orange for strings in dark mode */
+}
+
+.language-yaml .token.number,
+.language-yaml .token.boolean {
+  color: #098658; /* Green for numbers/booleans in light mode */
+}
+
+[data-theme='dark'] .language-yaml .token.number,
+[data-theme='dark'] .language-yaml .token.boolean {
+  color: #b5cea8; /* Light green for numbers/booleans in dark mode */
+}
+
+.language-yaml .token.important {
+  color: #e90; /* Orange for important tokens */
+}

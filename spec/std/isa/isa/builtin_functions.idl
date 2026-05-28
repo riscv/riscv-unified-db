@@ -280,6 +280,23 @@ builtin function ebreak {
   }
 }
 
+builtin function execute_instruction {
+  arguments
+    Bits<32> encoding
+  description {
+    Fetch and execute the instruction with the given 32-bit encoding in the current hart
+    context. The instruction executes as if it were a normal instruction, with the
+    following differences:
+
+    * The PC is not advanced after execution (the calling instruction is responsible
+      for PC management).
+    * If the instruction raises an exception, the exception propagates normally.
+
+    This builtin is intended for use by instructions that dynamically dispatch
+    sub-instructions fetched from memory (e.g., instruction lookup table instructions).
+  }
+}
+
 builtin function prefetch_instruction {
   arguments
     XReg virtual_address     # virtual cache block address

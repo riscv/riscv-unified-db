@@ -27,6 +27,10 @@
         "when": {
           "$ref": "schema_defs.json#/$defs/requires_entry"
         },
+        "reset_value": {
+          "type": "string",
+          "description": "IDL literal expression for the reset value (e.g., '0'). Omit if reset state is unknown."
+        },
         "arch_read()": {
           "type": "string",
           "description": "Function describing the architecturally defined read behavior. Use this for architecturally mandated effects (e.g., x0 always reads as zero)."
@@ -74,7 +78,7 @@
         "name",
         "long_name",
         "description",
-        "register_length",
+        "register_length()",
         "registers"
       ],
       "additionalProperties": false,
@@ -103,8 +107,9 @@
           "type": "string",
           "enum": ["general_purpose", "floating_point", "vector"]
         },
-        "register_length": {
-          "$ref": "schema_defs.json#/$defs/bit_length_value"
+        "register_length()": {
+          "type": "string",
+          "description": "IDL function body returning the register width in bits. May reference params (MXLEN, VLEN) or implemented?(). Example: 'return MXLEN;'"
         },
         "registers": {
           "type": "array",
