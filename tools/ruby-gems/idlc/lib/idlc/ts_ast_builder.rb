@@ -38,12 +38,26 @@ module Idl
     # --- Transparent wrappers ------------------------------------------------
 
     # Comments are extras and appear as named children; skip them to find content.
+    # Any comment nodes that immediately precede the content node (with no blank
+    # line between) are attached as leading comments on the first statement of the
+    # returned body, matching how attach_comments_to_siblings works inside a block.
     def visit_source_file(node)
-      named_children(node).each do |c|
-        result = visit(c)
-        return result unless result.nil?
+      ts_kids = all_named_children(node)
+      content_idx = ts_kids.index { |c| c.type != :comment }
+      return nil if content_idx.nil?
+
+      result = visit(ts_kids[content_idx])
+
+      if result.respond_to?(:stmts) && result.stmts.any?
+        leading = ts_kids[0...content_idx].select { |c| c.type == :comment }
+        first_stmt = result.stmts.first
+        leading.each do |c|
+          next if blank_line_between?(c.end_point.row, ts_kids[content_idx].start_point.row)
+          first_stmt.attach_leading_comment(CommentAst.new(@source, iv(c), node_text(c)))
+        end
       end
-      nil
+
+      result
     end
     def visit_expression_root(node) = visit(node.named_child(0))
     def visit_expression(node)      = visit(node.named_child(0))
@@ -118,8 +132,10 @@ module Idl
     # --- Statements ----------------------------------------------------------
 
     def visit_statement_list(node)
-      stmts = named_children(node).map { |c| visit(c) }
-      FunctionBodyAst.new(@source, iv(node), stmts)
+      ts_kids  = all_named_children(node)
+      ast_kids = ts_kids.reject { |c| c.type == :comment }.map { |c| visit(c) }
+      attach_comments_to_siblings(ts_kids, ast_kids)
+      FunctionBodyAst.new(@source, iv(node), ast_kids)
     end
 
     def visit_body_statement(node) = visit(node.named_child(0))
@@ -314,7 +330,10 @@ module Idl
     end
 
     def block_stmts(block_node)
-      named_children(block_node).filter_map { |c| visit(c) }
+      ts_kids  = all_named_children(block_node)
+      ast_kids = ts_kids.reject { |c| c.type == :comment }.filter_map { |c| visit(c) }
+      attach_comments_to_siblings(ts_kids, ast_kids)
+      ast_kids
     end
 
     # --- For loop ------------------------------------------------------------
@@ -360,6 +379,12 @@ module Idl
       end
     end
 
+    # Returns ALL named children including comment nodes.
+    # Used by sequential-child call sites that need to classify comments.
+    def all_named_children(node)
+      node.named_child_count.times.map { |i| node.named_child(i) }
+    end
+
     def visit_by_field(node, field_name)
       c = node.child_by_field_name(field_name)
       return nil if c.nil? || c.null?
@@ -368,6 +393,83 @@ module Idl
 
     def node_text(node)
       @source[node.start_byte...node.end_byte]
+    end
+
+    # Classify comment nodes in +ts_kids+ and attach them as leading or trailing
+    # comments on the corresponding elements of +ast_kids+ (parallel arrays where
+    # ast_kids[i] corresponds to ts_kids that are non-comment nodes in order).
+    #
+    # Uses the prettier blank-line heuristic:
+    #   - same start row as preceding sibling's end row  → trailing of preceding
+    #   - no blank line between run's last comment and following sibling → leading of following
+    #   - otherwise → trailing of preceding (or dangling/ignored if no preceding node)
+    #
+    # ts_kids  - Array of TreeSitter::Node (all named children, including comments)
+    # ast_kids - Array of AstNode (built from the non-comment ts_kids, in order)
+    def attach_comments_to_siblings(ts_kids, ast_kids)
+      return if ts_kids.none? { |c| c.type == :comment }
+
+      # Build a parallel index: ts_kids index → ast_kids index (nil for comments)
+      ast_idx = []
+      ai = 0
+      ts_kids.each do |c|
+        if c.type == :comment
+          ast_idx << nil
+        else
+          ast_idx << ai
+          ai += 1
+        end
+      end
+
+      # Walk ts_kids, collecting runs of consecutive comment nodes
+      i = 0
+      while i < ts_kids.length
+        unless ts_kids[i].type == :comment
+          i += 1
+          next
+        end
+
+        # Start of a comment run
+        run_start = i
+        i += 1
+        i += 1 while i < ts_kids.length && ts_kids[i].type == :comment
+        run_end = i - 1  # inclusive
+
+        run = ts_kids[run_start..run_end]
+        first_comment = run.first
+        last_comment  = run.last
+
+        # Find nearest non-comment neighbors
+        preceding_ts_idx  = (0...run_start).reverse_each.find { |j| ts_kids[j].type != :comment }
+        following_ts_idx  = (run_end + 1...ts_kids.length).find { |j| ts_kids[j].type != :comment }
+
+        preceding_ast = preceding_ts_idx ? ast_kids[ast_idx[preceding_ts_idx]] : nil
+        following_ast = following_ts_idx ? ast_kids[ast_idx[following_ts_idx]] : nil
+
+        comment_asts = run.map { |c| CommentAst.new(@source, iv(c), node_text(c)) }
+
+        eol_of_preceding = preceding_ast && ts_kids[preceding_ts_idx].end_point.row == first_comment.start_point.row
+        # "} # comment" pattern: preceding ends with '}' and there's a following
+        # sibling — the comment introduces the code after the closed block, so
+        # attach it as leading of the following node rather than trailing of the block.
+        brace_label = eol_of_preceding && @source[ts_kids[preceding_ts_idx].end_byte - 1] == '}' && following_ast
+
+        if eol_of_preceding && !brace_label
+          # Normal end-of-line comment: trailing of preceding sibling
+          comment_asts.each { |c| preceding_ast.attach_trailing_comment(c) }
+        elsif following_ast && (brace_label || !blank_line_between?(last_comment.end_point.row, ts_kids[following_ts_idx].start_point.row))
+          # "} # label" pattern, or own-line comment(s) with no blank line before next sibling → leading
+          comment_asts.each { |c| following_ast.attach_leading_comment(c) }
+        elsif preceding_ast
+          # Blank line on both sides (or no following node) → trailing of preceding
+          comment_asts.each { |c| preceding_ast.attach_trailing_comment(c) }
+        end
+        # If neither preceding nor following, comments are dangling (ignored for now)
+      end
+    end
+
+    def blank_line_between?(row_a, row_b)
+      (row_b - row_a) > 1
     end
 
     # --- Compound expressions ------------------------------------------------
@@ -538,8 +640,11 @@ module Idl
     end
 
     # Comments are extras in the grammar but appear as named nodes in the CST.
-    # The idlc AST does not represent comments, so we drop them.
-    def visit_comment(_node) = nil
+    # When encountered in a sequential child list, they are handled by
+    # attach_comments_to_siblings rather than via visit dispatch.
+    def visit_comment(node)
+      CommentAst.new(@source, iv(node), node_text(node))
+    end
 
     # --- CSR function calls --------------------------------------------------
 
@@ -562,8 +667,10 @@ module Idl
     # --- Constraint body -----------------------------------------------------
 
     def visit_constraint_body(node)
-      stmts = named_children(node).map { |c| visit(c) }
-      ConstraintBodyAst.new(@source, iv(node), stmts)
+      ts_kids  = all_named_children(node)
+      ast_kids = ts_kids.reject { |c| c.type == :comment }.map { |c| visit(c) }
+      attach_comments_to_siblings(ts_kids, ast_kids)
+      ConstraintBodyAst.new(@source, iv(node), ast_kids)
     end
 
     def visit_implication_statement(node)
@@ -686,10 +793,13 @@ module Idl
 
     def visit_bitfield_definition(node)
       children = named_children(node)
-      size_ast  = visit(children[0])                          # int_literal
-      name_ast  = make_user_type_name(children[1])            # type_identifier
-      fields    = children[2..].filter_map { |c| visit(c) }  # bitfield_member (skip comments)
-      BitfieldDefinitionAst.new(@source, iv(node), name_ast, size_ast, fields)
+      size_ast  = visit(children[0])            # int_literal
+      name_ast  = make_user_type_name(children[1]) # type_identifier
+      # Build fields with comment attachment on the sequential member list
+      field_ts_kids  = all_named_children(node).drop_while { |c| c.type != :bitfield_member }
+      field_ast_kids = field_ts_kids.reject { |c| c.type == :comment }.filter_map { |c| visit(c) }
+      attach_comments_to_siblings(field_ts_kids, field_ast_kids)
+      BitfieldDefinitionAst.new(@source, iv(node), name_ast, size_ast, field_ast_kids)
     end
 
     def visit_bitfield_member(node)

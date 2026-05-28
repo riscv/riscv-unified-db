@@ -295,7 +295,12 @@ module Idl
       e = expression.prune(symtab, forced_type:)
       if e.is_a?(ParenExpressionAst)
         e
-      elsif e.is_a?(IntLiteralAst) || e.is_a?(TrueExpressionAst) || e.is_a?(FalseExpressionAst) || e.is_a?(IdAst)
+      elsif e.is_a?(IntLiteralAst) || e.is_a?(TrueExpressionAst) || e.is_a?(FalseExpressionAst) ||
+            e.is_a?(IdAst) || e.is_a?(FunctionCallExpressionAst) ||
+            e.is_a?(AryElementAccessAst) || e.is_a?(AryRangeAccessAst) ||
+            e.is_a?(FieldAccessExpressionAst) || e.is_a?(CsrFieldReadExpressionAst) ||
+            e.is_a?(CsrReadExpressionAst) || e.is_a?(EnumRefAst) ||
+            e.is_a?(ConcatenationExpressionAst) || e.is_a?(ArrayLiteralAst)
         e
       else
         ParenExpressionAst.new(input, interval, e)
@@ -371,7 +376,7 @@ module Idl
     def prune(symtab, forced_type: nil)
       pruned_action = action.prune(symtab)
 
-      new_stmt = StatementAst.new(input, interval, pruned_action)
+      new_stmt = StatementAst.new(input, interval, pruned_action).copy_comments_from(self)
       # pruned_action.freeze_tree(symtab) unless pruned_action.frozen?
 
       pruned_action.add_symbol(symtab) if pruned_action.declaration?
@@ -594,7 +599,7 @@ module Idl
         end
       end
       value_else(value_result) do
-        ConditionalReturnStatementAst.new(input, interval, return_expression.prune(symtab), condition.prune(symtab))
+        ConditionalReturnStatementAst.new(input, interval, return_expression.prune(symtab), condition.prune(symtab)).copy_comments_from(self)
       end
     end
   end
@@ -609,7 +614,7 @@ module Idl
             pruned_action.execute(symtab) if pruned_action.executable?
           end
 
-          return StatementAst.new(input, interval, pruned_action)
+          return StatementAst.new(input, interval, pruned_action).copy_comments_from(self)
         else
           return NoopAst.new
         end
@@ -623,7 +628,7 @@ module Idl
         end
         # Condition is unknown, so the assignment may not have run; nullify to prevent leakage
         pruned_action.nullify_assignments(symtab)
-        ConditionalStatementAst.new(input, interval, pruned_action, condition.prune(symtab))
+        ConditionalStatementAst.new(input, interval, pruned_action, condition.prune(symtab)).copy_comments_from(self)
       end
     end
   end
@@ -861,7 +866,7 @@ module Idl
     def always_terminates? = true
 
     def prune(symtab, forced_type: nil)
-      ReturnStatementAst.new(input, interval, return_expression.prune(symtab))
+      ReturnStatementAst.new(input, interval, return_expression.prune(symtab)).copy_comments_from(self)
     end
   end
 

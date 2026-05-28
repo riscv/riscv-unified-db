@@ -29,7 +29,7 @@ PATH
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf
-      idl_highlighter
+      idl_highlighter (= 0.1.0)
       rake
       sorbet-runtime
       tty-exit

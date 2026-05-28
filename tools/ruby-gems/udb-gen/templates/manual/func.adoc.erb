@@ -30,7 +30,7 @@ None
 
 <%- unless f.builtin? || f.generated? -%>
 <%- body_ast = f.body -%>
-<%= idl_code_html_block(body_ast.to_idl, idl_link_map(body_ast)) %>
+<%= idl_code_html_block(body_ast.to_idl, idl_link_map(body_ast), column_width: 80) %>
 <%- end -%>
 
 <%- end -%>

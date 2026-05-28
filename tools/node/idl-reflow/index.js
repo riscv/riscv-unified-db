@@ -4,11 +4,10 @@
 //
 // idl-reflow — reflow long IDL lines to fit a target column width.
 //
-// Uses the tree-sitter IDL grammar to find semantically appropriate break
-// points (logical operators, commas) on lines that exceed the target width,
-// inserts line breaks at those points, then re-runs topiary to clean up
-// indentation.  Intended as a pre-processing step for narrow-column output
-// (e.g., documentation PDFs).
+// Scans each line for semantically appropriate break points (logical operators,
+// commas) on lines that exceed the target width, inserts line breaks at those
+// points, then re-runs topiary to clean up indentation.  Intended as a
+// pre-processing step for narrow-column output (e.g., documentation PDFs).
 //
 // Usage:
 //   node tools/node/idl-reflow/index.js <width> [files...]
@@ -17,14 +16,7 @@
 
 'use strict';
 
-const path   = require('path');
-const fs     = require('fs');
-
-// Resolve tree-sitter and the IDL language from the sibling tree-sitter-idl
-// package, which is already built and has its own node_modules.
-const TREE_SITTER_IDL_DIR = path.join(__dirname, '..', 'tree-sitter-idl');
-const Parser = require(path.join(TREE_SITTER_IDL_DIR, 'node_modules', 'tree-sitter'));
-const IDL    = require(path.join(TREE_SITTER_IDL_DIR, 'bindings', 'node'));
+const fs = require('fs');
 
 // ---------------------------------------------------------------------------
 // Break-point configuration
@@ -47,53 +39,94 @@ const BREAK_BEFORE = {
 };
 
 // ---------------------------------------------------------------------------
-// Tree-sitter helpers
+// Pure-JS lexer: find break candidates on a single source line
 // ---------------------------------------------------------------------------
+//
+// Scans the line character-by-character, skipping:
+//   - string literals  "..." and '...'
+//   - backtick-prefixed operators like `+ `- (treated as a single token)
+//   - line comments //...
+// Returns the same { priority, breakPos, breakCol, breakBefore } shape as
+// the old tree-sitter version (breakPos = byte offset from start of `source`).
 
-const _parser = new Parser();
-_parser.setLanguage(IDL);
-
-function parse(source) {
-  return _parser.parse(source);
-}
-
-// Collect all potential break-point tokens on `targetRow` (0-indexed).
-// Returns an array of { node, priority, breakPos, breakCol } sorted left-to-right
-// by breakCol.  breakPos/breakCol reflect whether the break is before or after the token.
-function breakCandidates(rootNode, targetRow) {
+function breakCandidatesForLine(source, lineStart, lineLen) {
   const results = [];
+  const end = lineStart + lineLen;
+  let i = lineStart;
 
-  function visit(n) {
-    if (n.endPosition.row   < targetRow) return;
-    if (n.startPosition.row > targetRow) return;
+  while (i < end) {
+    const ch = source[i];
 
-    if (n.childCount === 0 && n.startPosition.row === targetRow) {
-      const afterPri = BREAK_AFTER[n.type];
-      if (afterPri !== undefined) {
-        results.push({ node: n, priority: afterPri,
-          breakPos: n.endIndex, breakCol: n.endPosition.column, breakBefore: false });
+    // Skip string literals
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      i++;
+      while (i < end && source[i] !== quote) {
+        if (source[i] === '\\') i++; // skip escaped char
+        i++;
       }
-      const beforePri = BREAK_BEFORE[n.type];
-      if (beforePri !== undefined) {
-        results.push({ node: n, priority: beforePri,
-          breakPos: n.startIndex, breakCol: n.startPosition.column, breakBefore: true });
-      }
+      i++; // closing quote
+      continue;
     }
 
-    for (let i = 0; i < n.childCount; i++) visit(n.child(i));
+    // Line comments — nothing useful after this
+    if (ch === '#') break;
+    if (ch === '/' && source[i + 1] === '/') break;
+
+    // Two-character operators first
+    const two = source.slice(i, i + 2);
+    if (BREAK_AFTER[two] !== undefined) {
+      const col = i - lineStart;
+      results.push({ priority: BREAK_AFTER[two], breakPos: i + 2, breakCol: col + 2, breakBefore: false });
+      i += 2;
+      continue;
+    }
+
+    // Backtick operators: `+ `- `*
+    if (ch === '`') {
+      const tok = source.slice(i, i + 2);
+      if (BREAK_AFTER[tok] !== undefined) {
+        const col = i - lineStart;
+        results.push({ priority: BREAK_AFTER[tok], breakPos: i + 2, breakCol: col + 2, breakBefore: false });
+        i += 2;
+        continue;
+      }
+      i++;
+      continue;
+    }
+
+    // Single-character break-after operators (but not when part of && || already consumed)
+    if (BREAK_AFTER[ch] !== undefined) {
+      const col = i - lineStart;
+      results.push({ priority: BREAK_AFTER[ch], breakPos: i + 1, breakCol: col + 1, breakBefore: false });
+      i++;
+      continue;
+    }
+
+    // Single-character break-before operators
+    if (BREAK_BEFORE[ch] !== undefined) {
+      // Skip '::' — scope resolution operator is not a break point
+      if (ch === ':' && source[i + 1] === ':') { i += 2; continue; }
+      // Skip '?' when preceded by a word character — it's part of a predicate
+      // function name (e.g. implemented_version?) not a ternary operator
+      if (ch === '?' && i > lineStart && /\w/.test(source[i - 1])) { i++; continue; }
+      const col = i - lineStart;
+      results.push({ priority: BREAK_BEFORE[ch], breakPos: i, breakCol: col, breakBefore: true });
+      i++;
+      continue;
+    }
+
+    i++;
   }
 
-  visit(rootNode);
   results.sort((a, b) => a.breakCol - b.breakCol);
   return results;
 }
 
-// Pick the best break point for a line exceeding maxWidth.
-//
-// Strategy: prefer the RIGHTMOST candidate whose end-column is ≤ maxWidth
-// (the left part of the line fits).  If no candidate fits within the limit,
-// fall back to the leftmost available candidate (at least make some progress).
-// When multiple candidates share the same position, prefer higher priority.
+// ---------------------------------------------------------------------------
+// Break-point selection (unchanged from original)
+// ---------------------------------------------------------------------------
+
 function bestBreakPoint(candidates, maxWidth) {
   let best = null;
 
@@ -119,87 +152,88 @@ function bestBreakPoint(candidates, maxWidth) {
 // Core reflow logic
 // ---------------------------------------------------------------------------
 
-// Insert a newline after byte offset `pos` in `source`.
-// `indent` is the whitespace string placed at the start of the continuation.
 function insertBreak(source, pos, indent) {
   return source.slice(0, pos) + '\n' + indent + source.slice(pos);
 }
 
-// Derive the indentation string for a continuation line.
-// We keep the same leading whitespace as the current line.  Topiary will
-// re-indent properly on its second formatting pass; this just ensures
-// the continuation isn't at column 0.
 function continuationIndent(line) {
   return (line.match(/^(\s*)/) || ['', ''])[1];
 }
 
-// Given a ternary '?' or ':' node, return all '?' and ':' direct children of
-// its parent ternary_expression (i.e. the sibling operators including itself).
-// Returns null if the parent is not a ternary_expression.
-function ternaryPairedOps(node) {
-  const parent = node.parent;
-  if (!parent || parent.type !== 'ternary_expression') return null;
-  const ops = [];
-  for (let i = 0; i < parent.childCount; i++) {
-    const child = parent.child(i);
-    if (child.type === '?' || child.type === ':') ops.push(child);
-  }
-  return ops;
-}
-
-// True if byte offset `index` in `source` is preceded only by whitespace
-// since the last newline (i.e. the token is already at a line start).
 function alreadyAtLineStart(source, index) {
   const lineStart = source.lastIndexOf('\n', index - 1) + 1;
   return source.slice(lineStart, index).trim() === '';
 }
 
-// Reflow `source` so that no line exceeds `maxWidth` columns.
-// Returns the modified source string.
+// Find all '?' and ':' positions on the same row as `breakPos` for ternary grouping.
+// Pure-JS version: scans the line for ? and : at the top nesting level.
+function ternaryPairedPositions(source, lineStart, lineLen, isBefore) {
+  const end = lineStart + lineLen;
+  const positions = [];
+  let i = lineStart;
+  let depth = 0;
+
+  while (i < end) {
+    const ch = source[i];
+    if (ch === '(' || ch === '[' || ch === '{') { depth++; i++; continue; }
+    if (ch === ')' || ch === ']' || ch === '}') { depth--; i++; continue; }
+    if (depth === 0 && (ch === '?' || ch === ':')) {
+      // Skip '::' — scope-resolution operator is not a ternary operator
+      if (ch === ':' && source[i + 1] === ':') { i += 2; continue; }
+      // Skip '?' when preceded by a word character — predicate function name, not ternary
+      if (ch === '?' && i > lineStart && /\w/.test(source[i - 1])) { i++; continue; }
+      positions.push(i);
+    }
+    i++;
+  }
+  return positions;
+}
+
 function reflow(source, maxWidth) {
-  const MAX_ITERS = source.split('\n').length * 4;  // generous safety cap
+  // Each break inserts a newline, and the shortest breakable token span is 2 chars
+  // (e.g. "||"), so at most ceil(sourceLength / 2) breaks are ever needed.
+  // The old `lines * 4` was too small when a single very long line arrived (e.g.
+  // when topiary failed on pass 1 and the formatter fell back to an unformatted
+  // one-liner containing many chained operators).
+  const MAX_ITERS = Math.ceil(source.length / 2);
   let current = source;
-  // Row indices (0-based) where we found no break candidates — skip these
-  // when searching for the next long line to avoid an infinite loop.
   const skipRows = new Set();
 
   for (let iter = 0; iter < MAX_ITERS; iter++) {
     const lines = current.split('\n');
 
-    // Find the first long line that isn't stuck.
     let longRow = -1;
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].length > maxWidth && !skipRows.has(i)) { longRow = i; break; }
     }
-    if (longRow === -1) break;  // no more breakable long lines — done
+    if (longRow === -1) break;
 
-    const tree = parse(current);
-    const candidates = breakCandidates(tree.rootNode, longRow);
+    // Compute byte offset of the start of longRow in current
+    let lineStart = 0;
+    for (let r = 0; r < longRow; r++) lineStart += lines[r].length + 1;
+
+    const lineLen = lines[longRow].length;
+    const candidates = breakCandidatesForLine(current, lineStart, lineLen);
     const bp = candidates.length > 0 ? bestBreakPoint(candidates, maxWidth) : null;
 
     if (!bp) {
-      // No break point found on this line; mark it as stuck and try the next.
       skipRows.add(longRow);
       continue;
     }
 
-    // For ternary operators, break before all ? and : of the same ternary
-    // expression at once so the result is always:
-    //   condition
-    //     ? consequence
-    //     : alternative
     const indent = continuationIndent(lines[longRow]);
     let breakPositions;
-    if (bp.breakBefore && (bp.node.type === '?' || bp.node.type === ':')) {
-      const paired = ternaryPairedOps(bp.node);
-      if (paired) {
+
+    // For ternary operators, break before all ? and : on the line at once
+    if (bp.breakBefore && (current[bp.breakPos] === '?' || current[bp.breakPos] === ':')) {
+      const paired = ternaryPairedPositions(current, lineStart, lineLen);
+      if (paired.length > 1) {
         breakPositions = paired
-          .filter(op => op.startPosition.row === longRow &&
-                        !alreadyAtLineStart(current, op.startIndex))
-          .map(op => op.startIndex)
-          .sort((a, b) => b - a);  // right-to-left preserves earlier positions
+          .filter(pos => !alreadyAtLineStart(current, pos))
+          .sort((a, b) => b - a); // right-to-left
       }
     }
+
     if (!breakPositions || breakPositions.length === 0) {
       breakPositions = [bp.breakPos];
     }
@@ -208,8 +242,6 @@ function reflow(source, maxWidth) {
       current = insertBreak(current, pos, indent);
     }
 
-    // Each insertion adds a new line after longRow, so skipRow indices
-    // greater than longRow shift up by the number of breaks inserted.
     const numInserted = breakPositions.length;
     const shifted = new Set();
     for (const r of skipRows) shifted.add(r > longRow ? r + numInserted : r);
@@ -249,6 +281,7 @@ if (files.length === 0) {
   process.stdin.on('data', chunk => { data += chunk; });
   process.stdin.on('end', () => {
     process.stdout.write(reflow(data, maxWidth));
+    process.exit(0);
   });
 } else {
   // In-place mode

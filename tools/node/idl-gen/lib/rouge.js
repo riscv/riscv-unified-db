@@ -31,6 +31,7 @@ function generate(grammarData) {
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
+# typed: ignore
 # frozen_string_literal: true
 
 require "rouge"
@@ -65,11 +66,20 @@ module Rouge
         rule ws, Text::Whitespace
         rule %r{#.*}, Comment::Single
         rule %r{"[^"]*"}, Str::Double
-        rule %r{${constantPat}}, Name::Constant
-        rule %r{(?:(?:[0-9]+)|(?:MXLEN))?'s?[bBoOdDhH][0-9_a-fA-F]+}, Num
+        # Verilog integer literals must precede the constant/identifier rules so
+        # that width prefixes like MXLEN are consumed as part of the literal.
+        # 1) Explicit-base Verilog with width:  32'b1010  MXLEN'hff  8'sd42
+        rule %r{(?:[0-9]+|MXLEN)'s?[bBoOdDhH][0-9_a-fA-FxXzZ]+}, Num
+        # 2) Implicit-decimal Verilog with width:  MXLEN'1  32'0
+        rule %r{(?:[0-9]+|MXLEN)'s?[0-9_]+}, Num
+        # 3) Bare Verilog (no width prefix):  'b1010  'hff  '0
+        rule %r{'s?[bBoOdDhH][0-9_a-fA-FxXzZ]+}, Num
+        # C-style and plain numeric literals
+        rule %r/0[bB][01_]+s?/, Num::Bin
         rule %r/0x[0-9a-f]+[lu]*/i, Num::Hex
         rule %r/0[0-7]+[lu]*/i, Num::Oct
-        rule %r{\\d+}, Num::Integer
+        rule %r{\\d+s?}, Num::Integer
+        rule %r{${constantPat}}, Name::Constant
         rule %r{${builtinPat}\\b}, Name::Builtin
         rule %r{[.,;:\\[\\]\\(\\)\\}\\{]}, Punctuation
         rule %r([~!%^&*+=\\|?:<>/\`-]), Operator

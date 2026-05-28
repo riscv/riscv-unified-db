@@ -91,7 +91,7 @@ endif::[]
 <% unless inst.data["operation()"].nil? %>
 Operation::
 <%- _op_ast = inst.operation_ast -%>
-<%- _op_idl = idl_format(_op_ast.to_idl, column_width: 80) -%>
+<%- _op_idl = idl_format(_op_ast.to_idl(include_comments: true), column_width: 80) -%>
 ifdef::backend-pdf[]
 [source,idl,idl-links="<%= idl_code_links_attr(_op_ast) %>"]
 ----

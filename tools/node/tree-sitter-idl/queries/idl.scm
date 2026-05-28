@@ -222,6 +222,13 @@
 "&&" @prepend_space @append_input_softline
 "||" @prepend_space @append_input_softline
 
+; Hanging indent for multi-line binary expressions (||, &&, comparisons, etc.).
+; The first child opens an indent level; the last child closes it.
+; Combined with @append_input_softline on || and &&, this ensures continuation
+; lines are indented one level when reflow breaks a long logical expression.
+(binary_expression . (_) @append_indent_start)
+(binary_expression (_) @append_indent_end .)
+
 ; < and > only in binary/template comparison contexts, NOT in Bits<N>
 (binary_expression "<" @prepend_space @append_space)
 (binary_expression ">" @prepend_space @append_space)
@@ -277,6 +284,12 @@
 ; @append_spaced_softline / @prepend_spaced_softline become newlines in expanded
 ; (multi-line) mode and are suppressed by @append_antispace in flat (single-line) mode.
 (array_literal "[" @append_indent_start @append_spaced_softline "]" @prepend_indent_end @prepend_spaced_softline)
+; Hanging indent for multi-line concatenation expressions {a, b, c} and
+; replication expressions {N{val}}.  @append_input_softline on "," preserves
+; reflow-inserted line breaks; these rules ensure continuation items are
+; indented one level relative to the opening "{".
+(concatenation_expression "{" @append_indent_start "}" @prepend_indent_end)
+(replication_expression "{" @append_indent_start "}" @prepend_indent_end)
 "(" @append_antispace
 ")" @prepend_antispace
 "[" @append_antispace

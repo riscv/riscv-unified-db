@@ -38,7 +38,7 @@ h! `<%= arg.type_name.gen_adoc(0) %>`
 
 <%- unless f.builtin? || f.generated? -%>
 <%- body_ast = f.body -%>
-<%- _body_idl = idl_format(body_ast.to_idl, column_width: 80) -%>
+<%- _body_idl = idl_format(body_ast.to_idl(include_comments: true), column_width: 80) -%>
 ifdef::backend-pdf[]
 [source,idl,idl-links="<%= idl_code_links_attr(body_ast) %>"]
 ----
