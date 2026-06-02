@@ -8,7 +8,11 @@ kind: extension
 name: Zicfilp
 long_name: Landing Pad
 description: |
-  TODO
+  The Zicfilp extension adds the Landing Pad extension, which provides
+  forward-edge control-flow integrity. When enabled (via the `LPE` field
+  in `menvcfg`, `henvcfg`, or `senvcfg`), the `LPAD` instruction is used
+  to set a landing pad expectation, and indirect jumps must target a
+  matching `LPAD` instruction or an exception is raised.
 type: unprivileged
 versions:
   - version: "1.0.0"
