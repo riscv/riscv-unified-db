@@ -27,3 +27,40 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  # Get current vector state
+  VectorState state = vector_state();
+  VectorLmulType lmul_type = state.lmul_type;
+
+  XReg vlen = VLEN;
+  XReg vlmax;
+  if (lmul_type == VectorLmulType::Multiply) {
+    vlmax = (vlen << state.log2_lmul) >> state.log2_sew;
+  } else {
+    # (lmul_type == VectorLmulType::Divide)
+    vlmax = (vlen >> state.log2_lmul) >> state.log2_sew;
+  }
+
+  # Iterate through elements from vstart to vl, copying vs1[i] -> vd[i]
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    U32 start_bit_pos = i * state.sew;
+    U32 end_bit_pos = start_bit_pos + state.sew - 1;
+
+    # Read element i from source register vs1
+    XReg src_elem = v[vs1][end_bit_pos:start_bit_pos];
+
+    # Write element i to destination register vd,
+    # guarding against invalid bit-slice ranges at vector register boundaries
+    if (start_bit_pos == 0) {
+      if (end_bit_pos == VLEN - 1) {
+        v[vd] = src_elem;
+      } else {
+        v[vd] = {v[vd][VLEN-1:end_bit_pos + 1], src_elem};
+      }
+    } else if (end_bit_pos == VLEN - 1) {
+      v[vd] = {src_elem, v[vd][start_bit_pos-1:0]};
+    } else {
+      v[vd] = {v[vd][VLEN-1:end_bit_pos + 1], src_elem, v[vd][start_bit_pos-1:0]};
+    }
+  }
+
+  CSR[vstart].VALUE = 0;
