@@ -129,6 +129,7 @@ A list of tags for categorizing and filtering tests. Common tags include:
 
 * `smoke`: Quick smoke tests
 * `unit`: Unit tests
+* `integration`: Integration tests
 * `artifacts`: Tests that produce artifacts for deployment
 
 .Example

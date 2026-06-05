@@ -40,6 +40,24 @@ tests:
       - name: Run udb-helpers unit tests
         run: ./do test:udb_helpers:unit
 
+  regress-udb-gen-unit:
+    ci_stage: pr
+    tags:
+      - unit
+      - smoke
+    test:
+      - name: Check udb-gen unit tests
+        run: ./do test:udb_gen:unit
+
+  regress-udb-gen-integration:
+    ci_stage: pr
+    tags:
+      - integration
+      - smoke
+    test:
+      - name: Check udb-gen integration tests
+        run: ./do test:udb_gen:integration
+
   regress-sorbet:
     ci_stage: pr
     tags:
