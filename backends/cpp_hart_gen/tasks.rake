@@ -500,7 +500,7 @@ namespace :test do
 
     uiTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}ui-p-#{t}", "#{xlen}ui-p-#{t}" }
     umTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}um-p-#{t}", "#{xlen}um-p-#{t}" }
-    ucTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}uc-p-#{t}", "#{xlen}um-p-#{t}" }
+    ucTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}uc-p-#{t}", "#{xlen}uc-p-#{t}" }
     siTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}si-p-#{t}", "#{xlen}si-p-#{t}" }
     ufTests.each { |t| yield "#{iss} -m #{xlen} -c #{cfg} ext/riscv-tests/isa/#{xlen}uf-p-#{t}", "#{xlen}uf-p-#{t}" }
   end
