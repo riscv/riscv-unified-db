@@ -58,6 +58,14 @@ tests:
       - name: Check udb-gen integration tests
         run: ./do test:udb_gen:integration
 
+  regress-udb-gen-chore:
+    ci_stage: pr
+    tags:
+      - smoke
+    test:
+      - name: Generate udb-gen golden files
+        run: ./bin/chore gen -f udb-gen
+
   regress-sorbet:
     ci_stage: pr
     tags:

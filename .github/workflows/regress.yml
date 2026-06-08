@@ -338,6 +338,15 @@ jobs:
       uses: "./.github/actions/mise-setup"
     - name: Check udb-gen integration tests
       run: "./do test:udb_gen:integration"
+  regress-udb-gen-chore:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone Github Repo Action
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Set up mise environment
+      uses: "./.github/actions/mise-setup"
+    - name: Generate udb-gen golden files
+      run: "./bin/chore gen -f udb-gen"
   regress-sorbet:
     runs-on: ubuntu-latest
     steps:
@@ -882,6 +891,7 @@ jobs:
     - regress-udb-helpers-unit
     - regress-udb-gen-unit
     - regress-udb-gen-integration
+    - regress-udb-gen-chore
     - regress-sorbet
     - regress-ext-explorer
     - regress-idl-typecheck-smoke
