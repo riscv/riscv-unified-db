@@ -645,11 +645,12 @@ std::string GDBServer::GetSupportedString()
 {
   std::string supported;
   PGDBFEATURE pGdbFeature;
+  const size_t featureCount = sizeof(gFeatureTable) / sizeof(gFeatureTable[0]);
 
   for(uint64_t id = 1; id != 0 && id <= m_uiSupport; id <<= 1)
   {
     for(pGdbFeature = (PGDBFEATURE)&gFeatureTable[0];
-      pGdbFeature < gFeatureTable + sizeof(gFeatureTable);
+      pGdbFeature < gFeatureTable + featureCount;
       pGdbFeature++)
     {
       if(pGdbFeature->uiId == id)
@@ -884,6 +885,9 @@ char GDBPacket::HexCharToValue(unsigned char hexChar)
 int GDBPacket::Write(const std::string& str)
 {
   int len = str.length();
+  if((size_t)(m_pNextPos - m_pPacket + len) > m_size)
+    return -1;
+
   for(int i = 0 ; i < len ; i++)
   {
     *m_pNextPos++ = str[i];

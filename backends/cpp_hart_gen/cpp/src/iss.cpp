@@ -316,6 +316,11 @@ int InstructionSetSimulator::Run()
     case STATE_SINGLE_STEP:
       stopReason = m_pHart->run_one();
       m_state = STATE_HALT;
+      if(m_opts.gdbMode)
+      {
+        // Notify debugger that single-step completed and target is halted again.
+        Halt(HALT_STEP, m_pHart->hartid().get(), m_pHart->pc());
+      }
       break;
     case STATE_RUN:
       stopReason = m_pHart->run_one();
@@ -357,7 +362,16 @@ int InstructionSetSimulator::OnReadGPR(REGISTERFILE& registerFile)
   registerFile.nXRegs = MIN(registerFile.nXRegs, 32);
   for(int i = 0 ; i < registerFile.nXRegs ; i++)
   {
-    registerFile.xReg[i] = m_pHart->xreg(i);
+    try
+    {
+      registerFile.xReg[i] = m_pHart->xreg(i);
+    }
+    catch(...)
+    {
+      // Unknown values are legal in model state before first execution.
+      // Return a deterministic placeholder so GDB register fetch does not abort ISS.
+      registerFile.xReg[i] = 0;
+    }
   }
   return 0;
 }
@@ -379,16 +393,20 @@ int InstructionSetSimulator::OnReadMemory(uint64_t uiAddress, uint64_t& uiLen, v
     auto translationResult = m_pHart->translate_native(uiAddress, udb::MemoryOperation{udb::MemoryOperation::Read},
       m_pHart->_get_mode(), uiAddress);
 
-    if(m_pSoC->memcpy_to_host((uint8_t*)pBuffer, translationResult.pAddr, uiLen) == 0)
+    if(m_pSoC->memcpy_to_host((uint8_t*)pBuffer, translationResult.pAddr, uiLen) >= 0)
       return 0;
-    else
-      return -1;
   }
-  catch(const udb::AbortInstruction& e)
+  catch(...)
   {
-    //memory not mapped for reading
-    return -1;
+    // Fall through to physical-address fallback below.
   }
+
+  // Debugger memory inspection may happen before translation state is fully usable.
+  // Try direct physical access to keep disassembly/memory view functional.
+  if(m_pSoC->memcpy_to_host((uint8_t*)pBuffer, uiAddress, uiLen) >= 0)
+    return 0;
+
+  return -1;
 }
 
 int InstructionSetSimulator::OnWriteMemory(uint64_t uiAddress, uint64_t& uiLen, void* pMemBuffer)
@@ -398,22 +416,34 @@ int InstructionSetSimulator::OnWriteMemory(uint64_t uiAddress, uint64_t& uiLen, 
     auto translationResult = m_pHart->translate_native(uiAddress, udb::MemoryOperation{udb::MemoryOperation::Write},
       m_pHart->_get_mode(), uiAddress);
 
-    if(m_pSoC->memcpy_from_host(translationResult.pAddr, (const uint8_t*)pMemBuffer, uiLen) == 0)
+    if(m_pSoC->memcpy_from_host(translationResult.pAddr, (const uint8_t*)pMemBuffer, uiLen) >= 0)
       return 0;
-    else
-      return -1;
   }
-  catch(const udb::AbortInstruction& e)
+  catch(...)
   {
-    //memory not mapped for writing
-    return -1;
+    // Fall through to physical-address fallback below.
   }
+
+  // Keep debugger memory writes usable when VA translation path is unavailable.
+  if(m_pSoC->memcpy_from_host(uiAddress, (const uint8_t*)pMemBuffer, uiLen) >= 0)
+    return 0;
+
+  return -1;
 }
 
 int InstructionSetSimulator::OnReadSingleRegister(int reg, uint64_t& value)
 {
   if(reg >= RISCV_REG_GPR_FIRST && reg <= RISCV_REG_GPR_LAST)
-    value = m_pHart->xreg(reg);
+  {
+    try
+    {
+      value = m_pHart->xreg(reg);
+    }
+    catch(...)
+    {
+      value = 0;
+    }
+  }
   else if (reg == RISCV_REG_PC)
     value = m_pHart->pc();
   else if (reg >= RISCV_REG_FPR_FIRST && reg <= RISCV_REG_FPR_LAST)
