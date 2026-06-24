@@ -17,6 +17,11 @@ description: |
   and not the associated CSR controls that exist at a higher privilege level (i.e., in the execution environment).
 
 type: privileged
+requirements:
+  extension:
+    anyOf:
+      - name: Ssnpm
+      - name: Smnpm
 versions:
   - version: "1.0.0"
     state: ratified
