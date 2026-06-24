@@ -23,15 +23,15 @@ module Idl
   # first (where the platform gem bundles the artifacts), then falls back to
   # the in-repo tree-sitter-idl/idl-reflow trees for dev-mode use.
   module Formatter
-    # Grammar .so — same search order as TsParser::LIB_PATH.
-    _gem_so = Gem.loaded_specs["idlc"]&.full_gem_path&.then do |p|
-      File.join(p, "lib/idlc/libtree-sitter-idl.so")
-    end
-    _repo_so = File.expand_path(
-      "../../../../../tools/node/tree-sitter-idl/libtree-sitter-idl.so",
-      __dir__
-    )
-    GRAMMAR_SO = [_gem_so, _repo_so].compact.find { |p| File.exist?(p) }
+    # Grammar shared library — same search order as TsParser::LIB_PATH.
+    # Accept either ".so" (gem builds) or ".dylib" (dev-mode build on macOS).
+    _grammar_dirs = [
+      Gem.loaded_specs["idlc"]&.full_gem_path&.then { |p| File.join(p, "lib/idlc") },
+      File.expand_path("../../../../../tools/node/tree-sitter-idl", __dir__)
+    ].compact
+    GRAMMAR_SO = _grammar_dirs.product(%w[libtree-sitter-idl.so libtree-sitter-idl.dylib])
+                              .map { |dir, name| File.join(dir, name) }
+                              .find { |p| File.exist?(p) }
 
     # Topiary queries directory (contains idl.scm).
     _gem_queries = Gem.loaded_specs["idlc"]&.full_gem_path&.then do |p|

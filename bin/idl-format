@@ -25,8 +25,13 @@ require "open3"
 require "tempfile"
 
 ROOT = File.expand_path("../..", __FILE__)
-GRAMMAR_SO   = File.join(ROOT, "tools", "node", "tree-sitter-idl", "libtree-sitter-idl.so")
-QUERY_DIR    = File.join(ROOT, "tools", "node", "tree-sitter-idl", "queries")
+GRAMMAR_DIR  = File.join(ROOT, "tools", "node", "tree-sitter-idl")
+# The Makefile builds libtree-sitter-idl.so on Linux and .dylib on macOS; accept
+# whichever exists.
+GRAMMAR_SO   = %w[libtree-sitter-idl.so libtree-sitter-idl.dylib]
+               .map { |n| File.join(GRAMMAR_DIR, n) }
+               .find { |p| File.exist?(p) }
+QUERY_DIR    = File.join(GRAMMAR_DIR, "queries")
 GRAMMAR_PATH = GRAMMAR_SO
 REFLOW_JS    = File.join(ROOT, "tools", "node", "idl-reflow", "index.js")
 NODE_BIN     = File.join(ROOT, "bin", "node")
@@ -37,8 +42,8 @@ reflow_width = 100
 ARGV.delete_if { |a| a =~ /\A--width=(\d+)\z/ && (reflow_width = $1.to_i) }
 
 # Warn early if the compiled grammar is missing
-unless File.exist?(GRAMMAR_SO)
-  $stderr.puts "idl-format: grammar not compiled — run: cd tools/node/tree-sitter-idl && make libtree-sitter-idl.so"
+if GRAMMAR_SO.nil?
+  $stderr.puts "idl-format: grammar not compiled — run: bin/setup (or: make -C tools/node/tree-sitter-idl)"
   exit 1
 end
 

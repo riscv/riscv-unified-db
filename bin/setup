@@ -141,14 +141,21 @@ _ok "Native dependencies ready"
 
 _section "IDL tree-sitter parser"
 
-_TS_IDL_SO="$ROOT/tools/node/tree-sitter-idl/libtree-sitter-idl.so"
+# The Makefile builds a platform-native shared library: libtree-sitter-idl.so
+# on Linux, libtree-sitter-idl.dylib on macOS (SOEXT in the Makefile). Build and
+# check for the native artifact; the Ruby loaders accept either extension.
+case "$(uname -s)" in
+  Darwin) _TS_IDL_SOEXT=dylib ;;
+  *)      _TS_IDL_SOEXT=so ;;
+esac
+_TS_IDL_LIB="$ROOT/tools/node/tree-sitter-idl/libtree-sitter-idl.${_TS_IDL_SOEXT}"
 
-if [[ -f "$_TS_IDL_SO" ]]; then
+if [[ -f "$_TS_IDL_LIB" ]]; then
   _ok "IDL tree-sitter parser already built"
 else
-  _run "Building libtree-sitter-idl.so..."
-  if ! make -C "$ROOT/tools/node/tree-sitter-idl" libtree-sitter-idl.so; then
-    printf "\nERROR: IDL tree-sitter parser build failed. Ensure gcc is installed.\n" >&2
+  _run "Building libtree-sitter-idl.${_TS_IDL_SOEXT}..."
+  if ! make -C "$ROOT/tools/node/tree-sitter-idl" "libtree-sitter-idl.${_TS_IDL_SOEXT}"; then
+    printf "\nERROR: IDL tree-sitter parser build failed. Ensure a C compiler is installed.\n" >&2
     exit 1
   fi
   _ok "IDL tree-sitter parser built"

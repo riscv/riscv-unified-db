@@ -10,20 +10,23 @@ module Idl
   module TsParser
     # Absolute path to the compiled IDL language shared library.
     #
-    # Search order:
+    # Search directories, in order:
     #   1. lib/idlc/ within the installed gem (platform gem bundles it there;
     #      source gem's extconf.rb compiles it there at install time)
-    #   2. Repo dev mode fallback: the Node project's pre-compiled .so, reached
-    #      via __dir__ when loaded via `gemspec path:` in the repo Gemfile
-    _gem_lib_so = Gem.loaded_specs["idlc"]&.full_gem_path&.then do |p|
-      File.join(p, "lib/idlc/libtree-sitter-idl.so")
-    end
-    _repo_so = File.expand_path(
-      "../../../../../tools/node/tree-sitter-idl/libtree-sitter-idl.so",
-      __dir__
-    )
-    LIB_PATH = [_gem_lib_so, _repo_so].compact.find { |p| File.exist?(p) }.freeze
-    raise "Cannot find libtree-sitter-idl.so (searched: #{[_gem_lib_so, _repo_so].compact.join(", ")})" if LIB_PATH.nil?
+    #   2. Repo dev mode fallback: the Node project's pre-compiled library,
+    #      reached via __dir__ when loaded via `gemspec path:` in the repo Gemfile
+    #
+    # The library is named ".so" in gem builds (extconf + platform-gem
+    # convention), but the dev-mode Makefile build produces a platform-native
+    # ".dylib" on macOS, so accept either extension.
+    _lib_dirs = [
+      Gem.loaded_specs["idlc"]&.full_gem_path&.then { |p| File.join(p, "lib/idlc") },
+      File.expand_path("../../../../../tools/node/tree-sitter-idl", __dir__)
+    ].compact
+    _candidates = _lib_dirs.product(%w[libtree-sitter-idl.so libtree-sitter-idl.dylib])
+                           .map { |dir, name| File.join(dir, name) }
+    LIB_PATH = _candidates.find { |p| File.exist?(p) }&.freeze
+    raise "Cannot find libtree-sitter-idl.{so,dylib} (searched: #{_candidates.join(", ")})" if LIB_PATH.nil?
 
     @language = nil
     @language_mutex = Mutex.new

@@ -10,6 +10,7 @@ binding.gyp
 node_modules/
 src/*.o
 *.so
+*.dylib
 *.a
 *.pc
 build/
