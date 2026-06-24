@@ -27,6 +27,7 @@ help() {
   echo "  cfg-c-header:  Generate C header for a config      ('generate cfg-c-header -h' for more)"
   echo "  cfg-svh-header: Generate SystemVerilog header for a config ('generate cfg-svh-header -h' for more)"
   echo "  ext-doc:       Generate documentation for an extension ('generate ext-doc -h' for more)"
+  echo "  inst-table:    Generate instruction table              ('generate inst-table -h' for more)"
   echo "  isa-explorer:  Generate tables of ISA information      ('generate isa-explorer -h' for more)"
   echo "  manual:        Generate ISA manual                     ('generate manual -h' for more)"
   echo ""
@@ -50,7 +51,7 @@ done
 subcommand=$1
 
 case "$subcommand" in
-  ext-doc | isa-explorer | manual | cfg-c-header | cfg-svh-header )
+  ext-doc | isa-explorer | manual | cfg-c-header | cfg-svh-header | inst-table)
     exec "${ROOT}/udb-gen" "${@:1}"
     exit 0
     ;;

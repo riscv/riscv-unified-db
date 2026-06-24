@@ -23,7 +23,7 @@ implemented_extensions:
   - { name: Zihpm, version: "= 2.0" }
   - { name: Xqccmp, version: "= 0.3" }
   - { name: Xqccmt, version: "= 0.1.0" }
-  - { name: Xqccmi, version: "= 0.1.0" }
+  - { name: Xqccmi, version: "= 0.2.0" }
   - { name: Xqci, version: "= 0.13" }
   - { name: Xqcia, version: "= 0.7.0" }
   - { name: Xqciac, version: "= 0.3.0" }

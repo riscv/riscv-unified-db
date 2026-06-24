@@ -23,9 +23,9 @@ function has_virt_mem? {
   }
   body {
     return implemented?(ExtensionName::Sv32) ||
-      implemented?(ExtensionName::Sv39) ||
-      implemented?(ExtensionName::Sv48) ||
-      implemented?(ExtensionName::Sv57);
+        implemented?(ExtensionName::Sv39) ||
+        implemented?(ExtensionName::Sv48) ||
+        implemented?(ExtensionName::Sv57);
   }
 }
 
@@ -34,7 +34,8 @@ function max_va_size {
   description {
     Returns the largest possible Virtual Address width in any supported translation mode.
 
-    The max VA is determined by physical address size when in M mode or S-mode with Bare translation.
+    The max VA is determined by physical address size when in M mode or S-
+    mode with Bare translation.
     Otherwise, max VA is the size of a virtual address in the largest supported Sv* mode.
 
     Return the largest that applies.
@@ -211,7 +212,8 @@ function in_naturally_aligned_region? {
     XReg address, # starting address
     U32 length # length of the access
   description {
-    Checks if a length-bit access starting at +address+ lies entirely within an N-bit naturally-aligned region.
+    Checks if a length-bit access starting at +address+ lies entirely within an N-bit naturally-
+    aligned region.
   }
   body {
     XReg Mask = (N / 8) - 1;
@@ -233,6 +235,6 @@ function contains? {
   }
   body {
     return target_start >= region_start &&
-      (target_start + target_size) <= (region_start + region_size);
+        (target_start + target_size) <= (region_start + region_size);
   }
 }

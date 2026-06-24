@@ -45,11 +45,11 @@ operation(): |
   } else {
     if (sign_a != sign_b) {
       X[xd] = ((sign_a == 1) || # b is pos and a neg
-      ((sp_value_a[30 : 0] | sp_value_b[30 : 0]) == 0) # both are zero (one pos, one neg)
+        ((sp_value_a[30 : 0] | sp_value_b[30 : 0]) == 0) # both are zero (one pos, one neg)
       ) ? 1 : 0;
     } else {
       X[xd] = ((sp_value_a == sp_value_b) || # a and b are equal
-      (sign_a ^ ((sp_value_a < sp_value_b) ? 1 : 0)) == 1 # a < b
+        (sign_a ^ ((sp_value_a < sp_value_b) ? 1 : 0)) == 1 # a < b
       ) ? 1 : 0;
     }
   }

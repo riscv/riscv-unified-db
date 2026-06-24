@@ -33,7 +33,7 @@ operation(): |
   Bits<ASID_WIDTH> asid = X[xs2][ASID_WIDTH - 1 : 0];
 
   if (CSR[mstatus].TVM == 1 &&
-      ((mode() == PrivilegeMode::S) || (mode() == PrivilegeMode::VS))) {
+        ((mode() == PrivilegeMode::S) || (mode() == PrivilegeMode::VS))) {
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 

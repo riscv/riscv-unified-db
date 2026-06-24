@@ -200,8 +200,8 @@ function is_sp_neg_norm? {
   }
   body {
     return (sp_value[31] == 1) # negative
-      && (sp_value[30 : 23] != 0b11111111) # not inf/NaN
-      && (sp_value[30 : 23] != 0b00000000);
+        && (sp_value[30 : 23] != 0b11111111) # not inf/NaN
+        && (sp_value[30 : 23] != 0b00000000);
     # not zero or subnormal
   }
 }
@@ -214,8 +214,8 @@ function is_sp_pos_norm? {
   }
   body {
     return (sp_value[31] == 0) # positive
-      && (sp_value[30 : 23] != 0b11111111) # not inf/NaN
-      && (sp_value[30 : 23] != 0b00000000);
+        && (sp_value[30 : 23] != 0b11111111) # not inf/NaN
+        && (sp_value[30 : 23] != 0b00000000);
     # not zero
   }
 }
@@ -228,8 +228,8 @@ function is_sp_neg_subnorm? {
   }
   body {
     return (sp_value[31] == 1) # negative
-      && (sp_value[30 : 23] == 0) # subnormal exponent
-      && (sp_value[22 : 0] != 0);
+        && (sp_value[30 : 23] == 0) # subnormal exponent
+        && (sp_value[22 : 0] != 0);
     # not zero
   }
 }
@@ -242,8 +242,8 @@ function is_sp_pos_subnorm? {
   }
   body {
     return (sp_value[31] == 0) # positive
-      && (sp_value[30 : 23] == 0) # subnormal exponent
-      && (sp_value[22 : 0] != 0);
+        && (sp_value[30 : 23] == 0) # subnormal exponent
+        && (sp_value[22 : 0] != 0);
     # not zero
   }
 }
@@ -290,7 +290,7 @@ function is_sp_signaling_nan? {
   }
   body {
     return (sp_value[30 : 23] == 0b11111111) && (sp_value[22] == 0) # signaling bit
-      && (sp_value[21 : 0] != 0);
+        && (sp_value[21 : 0] != 0);
     # not infinity
   }
 }
@@ -1526,7 +1526,7 @@ function softfloat_subMagsF32 {
         sigY = sigB + ((expB != 0) ? 0x40000000 : sigB);
       }
       return softfloat_normRoundPackToF32(signZ, expZ, sigX - softfloat_shiftRightJam32(sigY,
-                expDiff), mode);
+                  expDiff), mode);
     }
   }
 }
@@ -1844,7 +1844,8 @@ function round_f32_to_integral {
     This 32-bit integer is represented as a floating point number and returned.
   }
   body {
-    if ((is_sp_neg_inf?(a)) || (is_sp_pos_inf?(a)) || (is_sp_pos_zero?(a)) || (is_sp_neg_zero?(a))) {
+    if ((is_sp_neg_inf?(a)) || (is_sp_pos_inf?(a)) || (is_sp_pos_zero?(a)) ||
+          (is_sp_neg_zero?(a))) {
       # Return zero or infinity respectively for zero or infinity inputs
       return a;
     } else if (is_sp_signaling_nan?(a)) {
@@ -1915,8 +1916,8 @@ function softfloat_roundToI64 {
       }
     } else {
       if ((sigExtra != 0) && ((sign != 0)
-            ? (roundingMode == RoundingMode::RDN)
-            : (roundingMode == RoundingMode::RUP))) {
+              ? (roundingMode == RoundingMode::RDN)
+              : (roundingMode == RoundingMode::RUP))) {
         needs_increment = true;
       }
     }

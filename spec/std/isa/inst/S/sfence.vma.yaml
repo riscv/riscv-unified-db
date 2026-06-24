@@ -238,7 +238,7 @@ operation(): |
   }
 
   if (CSR[mstatus].TVM == 1 &&
-      ((mode() == PrivilegeMode::S) || (mode() == PrivilegeMode::VS))) {
+        ((mode() == PrivilegeMode::S) || (mode() == PrivilegeMode::VS))) {
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 

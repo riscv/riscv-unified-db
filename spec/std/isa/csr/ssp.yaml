@@ -31,20 +31,20 @@ fields:
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
       if ((mode() < PrivilegeMode::M && CSR[menvcfg].SSE == 0) ||
-          (mode() == PrivilegeMode::U && CSR[senvcfg].SSE == 0)) {
+            (mode() == PrivilegeMode::U && CSR[senvcfg].SSE == 0)) {
         raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
       } else if ((mode() == PrivilegeMode::VS && CSR[henvcfg].SSE == 0) ||
-          (mode() == PrivilegeMode::VU && (CSR[henvcfg].SSE == 0 || CSR[senvcfg].SSE == 0))) {
+            (mode() == PrivilegeMode::VU && (CSR[henvcfg].SSE == 0 || CSR[senvcfg].SSE == 0))) {
         raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
       } else {
         return csr_value.VALUE;
       }
 sw_read(): |
   if ((mode() < PrivilegeMode::M && CSR[menvcfg].SSE == 0) ||
-      (mode() == PrivilegeMode::U && CSR[senvcfg].SSE == 0)) {
+        (mode() == PrivilegeMode::U && CSR[senvcfg].SSE == 0)) {
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   } else if ((mode() == PrivilegeMode::VS && CSR[henvcfg].SSE == 0) ||
-      (mode() == PrivilegeMode::VU && (CSR[henvcfg].SSE == 0 || CSR[senvcfg].SSE == 0))) {
+        (mode() == PrivilegeMode::VU && (CSR[henvcfg].SSE == 0 || CSR[senvcfg].SSE == 0))) {
     raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
   } else if (xlen() == 32) {
     return ($bits(CSR[ssp]) & ~MXLEN'3);

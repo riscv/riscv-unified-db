@@ -170,8 +170,8 @@ function refresh_pending_interrupts {
     }
 
     Boolean HAS_MIDELEG = implemented_version?(ExtensionName::S, "<= 1.9.1") ||
-    (implemented_version?(ExtensionName::S, "> 1.9.1") && implemented_version?(ExtensionName::Sm,
-        "> 1.9.1"));
+      (implemented_version?(ExtensionName::S, "> 1.9.1") && implemented_version?(ExtensionName::Sm,
+            "> 1.9.1"));
 
     Bits<MXLEN> mmode_enabled_ints = ((mode() == PrivilegeMode::M) && (CSR[mstatus].MIE == 1'b0))
       ? 0
@@ -273,13 +273,13 @@ function choose_interrupt {
     InterruptCode chosen;
 
     Boolean HAS_MIDELEG = implemented_version?(ExtensionName::S, "<= 1.9.1") ||
-    (implemented_version?(ExtensionName::S, "> 1.9.1") && implemented_version?(ExtensionName::Sm,
-        "> 1.9.1"));
+      (implemented_version?(ExtensionName::S, "> 1.9.1") && implemented_version?(ExtensionName::Sm,
+            "> 1.9.1"));
 
     # check M mode interrupts
     Bits<MXLEN> mmode_pending_and_enabled = pending_and_enabled_interrupts & ~(HAS_MIDELEG
-      ? $bits(CSR[mideleg])
-      : MXLEN'0);
+        ? $bits(CSR[mideleg])
+        : MXLEN'0);
     if (mmode_pending_and_enabled != 0) {
       assert((mode() != PrivilegeMode::M) || (CSR[mstatus].MIE == 1'b1),
           "M-mode interrupts are not enabled");
@@ -293,8 +293,8 @@ function choose_interrupt {
 
       if (smode_pending_and_enabled != 0) {
         assert((mode() == PrivilegeMode::U) || (mode() == PrivilegeMode::VU) ||
-            (mode() == PrivilegeMode::VS) ||
-            (mode() == PrivilegeMode::S) && (CSR[mstatus].SIE == 1'b1),
+              (mode() == PrivilegeMode::VS) ||
+              (mode() == PrivilegeMode::S) && (CSR[mstatus].SIE == 1'b1),
             "S-mode interrupt can't be triggered");
 
         chosen = highest_priority_interrupt(smode_pending_and_enabled);

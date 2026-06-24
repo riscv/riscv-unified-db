@@ -35,11 +35,11 @@
       "description": "One line description for the MMR"
     },
     "description": {
-      "$ref": "schema_defs.json#/definitions/spec_text",
+      "$ref": "schema_defs.json#/$defs/spec_text",
       "description": "Function of the register"
     },
     "definedBy": {
-      "$ref": "schema_defs.json#/definitions/condition",
+      "$ref": "schema_defs.json#/$defs/condition",
       "description": "Extension(s) that define the MMR"
     },
     "physical_address": {
@@ -59,7 +59,7 @@
       "type": "object",
       "patternProperties": {
         "^[a-zA-Z].*$": {
-          "$ref": "csr_schema.json#/definitions/csr_field"
+          "$ref": "csr_schema.json#/$defs/csr_field"
         }
       },
       "description": "fields of this MMR",

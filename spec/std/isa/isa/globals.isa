@@ -232,8 +232,8 @@ function mode {
   }
   body {
     if ((!implemented?(ExtensionName::S)) &&
-        (!implemented?(ExtensionName::U)) &&
-        (!implemented?(ExtensionName::H))) {
+          (!implemented?(ExtensionName::U)) &&
+          (!implemented?(ExtensionName::H))) {
       return PrivilegeMode::M;
     } else {
       return current_mode;
@@ -280,20 +280,20 @@ function compatible_mode? {
       return actual_mode == PrivilegeMode::M;
     } else if (target_mode == PrivilegeMode::S) {
       return (actual_mode == PrivilegeMode::M) ||
-        (actual_mode == PrivilegeMode::S);
+          (actual_mode == PrivilegeMode::S);
     } else if (target_mode == PrivilegeMode::U) {
       return (actual_mode == PrivilegeMode::M) ||
-        (actual_mode == PrivilegeMode::S) ||
-        (actual_mode == PrivilegeMode::U);
+          (actual_mode == PrivilegeMode::S) ||
+          (actual_mode == PrivilegeMode::U);
     } else if (target_mode == PrivilegeMode::VS) {
       return (actual_mode == PrivilegeMode::M) ||
-        (actual_mode == PrivilegeMode::S) ||
-        (actual_mode == PrivilegeMode::VS);
+          (actual_mode == PrivilegeMode::S) ||
+          (actual_mode == PrivilegeMode::VS);
     } else if (target_mode == PrivilegeMode::VU) {
       return (actual_mode == PrivilegeMode::M) ||
-        (actual_mode == PrivilegeMode::S) ||
-        (actual_mode == PrivilegeMode::VS) ||
-        (actual_mode == PrivilegeMode::VU);
+          (actual_mode == PrivilegeMode::S) ||
+          (actual_mode == PrivilegeMode::VS) ||
+          (actual_mode == PrivilegeMode::VU);
     }
   }
 }
@@ -310,14 +310,14 @@ function exception_handling_mode {
       # mode is M, the value of medeleg is irrelevant
       return PrivilegeMode::M;
     } else if (implemented?(ExtensionName::S) && ((mode() == PrivilegeMode::HS) ||
-        (mode() == PrivilegeMode::U))) {
+            (mode() == PrivilegeMode::U))) {
       if (($bits(CSR[medeleg]) & (MXLEN'1 << $bits(exception_code))) != 0) {
         return PrivilegeMode::HS;
       } else {
         return PrivilegeMode::M;
       }
     } else if (implemented?(ExtensionName::H) && ((mode() == PrivilegeMode::VS) ||
-        (mode() == PrivilegeMode::VU))) {
+            (mode() == PrivilegeMode::VU))) {
       if (($bits(CSR[medeleg]) & (MXLEN'1 << $bits(exception_code))) != 0) {
         if (($bits(CSR[hedeleg]) & (MXLEN'1 << $bits(exception_code))) != 0) {
           return PrivilegeMode::VS;
@@ -341,7 +341,8 @@ function creg2reg {
     Maps a C register index (_e.g._, `rs1'` in the specification) to an X register index. From the
     specification:
 
-    .Registers specified by the three-bit _rs1_&#x2032;, _rs2_&#x2032;, and _rd_&#x2032; fields of the CIW, CL, CS, CA, and CB formats.
+    .Registers specified by the three-bit _rs1_&
+    #x2032;, _rs2_&#x2032;, and _rd_&#x2032; fields of the CIW, CL, CS, CA, and CB formats.
     //[cols="20%,10%,10%,10%,10%,10%,10%,10%,10%"]
     [float="center",align="center",cols="1a, 1a",frame="none",grid="none"]
     |===
@@ -411,18 +412,18 @@ function mtval_readonly? {
   }
   body {
     return !(REPORT_VA_IN_MTVAL_ON_BREAKPOINT ||
-      REPORT_VA_IN_MTVAL_ON_LOAD_MISALIGNED ||
-      REPORT_VA_IN_MTVAL_ON_STORE_AMO_MISALIGNED ||
-      REPORT_VA_IN_MTVAL_ON_INSTRUCTION_MISALIGNED ||
-      REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT ||
-      REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT ||
-      REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT ||
-      REPORT_VA_IN_MTVAL_ON_LOAD_PAGE_FAULT ||
-      REPORT_VA_IN_MTVAL_ON_STORE_AMO_PAGE_FAULT ||
-      REPORT_VA_IN_MTVAL_ON_INSTRUCTION_PAGE_FAULT ||
-      REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION ||
-      REPORT_CAUSE_IN_MTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK ||
-      REPORT_CAUSE_IN_MTVAL_ON_LANDING_PAD_SOFTWARE_CHECK # || implemented?(ExtensionName::Sdext)
+        REPORT_VA_IN_MTVAL_ON_LOAD_MISALIGNED ||
+        REPORT_VA_IN_MTVAL_ON_STORE_AMO_MISALIGNED ||
+        REPORT_VA_IN_MTVAL_ON_INSTRUCTION_MISALIGNED ||
+        REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT ||
+        REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT ||
+        REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT ||
+        REPORT_VA_IN_MTVAL_ON_LOAD_PAGE_FAULT ||
+        REPORT_VA_IN_MTVAL_ON_STORE_AMO_PAGE_FAULT ||
+        REPORT_VA_IN_MTVAL_ON_INSTRUCTION_PAGE_FAULT ||
+        REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION ||
+        REPORT_CAUSE_IN_MTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK ||
+        REPORT_CAUSE_IN_MTVAL_ON_LANDING_PAD_SOFTWARE_CHECK # || implemented?(ExtensionName::Sdext)
       );
   }
 }
@@ -435,18 +436,18 @@ function stval_readonly? {
   body {
     if (implemented?(ExtensionName::S)) {
       return !(REPORT_VA_IN_STVAL_ON_BREAKPOINT ||
-        REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED ||
-        REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED ||
-        REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED ||
-        REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT ||
-        REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT ||
-        REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT ||
-        REPORT_VA_IN_STVAL_ON_LOAD_PAGE_FAULT ||
-        REPORT_VA_IN_STVAL_ON_STORE_AMO_PAGE_FAULT ||
-        REPORT_VA_IN_STVAL_ON_INSTRUCTION_PAGE_FAULT ||
-        REPORT_ENCODING_IN_STVAL_ON_ILLEGAL_INSTRUCTION ||
-        REPORT_CAUSE_IN_STVAL_ON_SHADOW_STACK_SOFTWARE_CHECK ||
-        REPORT_CAUSE_IN_STVAL_ON_LANDING_PAD_SOFTWARE_CHECK # || implemented?(ExtensionName::Sdext)
+          REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED ||
+          REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED ||
+          REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED ||
+          REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT ||
+          REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT ||
+          REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT ||
+          REPORT_VA_IN_STVAL_ON_LOAD_PAGE_FAULT ||
+          REPORT_VA_IN_STVAL_ON_STORE_AMO_PAGE_FAULT ||
+          REPORT_VA_IN_STVAL_ON_INSTRUCTION_PAGE_FAULT ||
+          REPORT_ENCODING_IN_STVAL_ON_ILLEGAL_INSTRUCTION ||
+          REPORT_CAUSE_IN_STVAL_ON_SHADOW_STACK_SOFTWARE_CHECK ||
+          REPORT_CAUSE_IN_STVAL_ON_LANDING_PAD_SOFTWARE_CHECK # || implemented?(ExtensionName::Sdext)
         );
     } else {
       return true;
@@ -462,18 +463,18 @@ function vstval_readonly? {
   body {
     if (implemented?(ExtensionName::H)) {
       return !(REPORT_VA_IN_VSTVAL_ON_BREAKPOINT ||
-        REPORT_VA_IN_VSTVAL_ON_LOAD_MISALIGNED ||
-        REPORT_VA_IN_VSTVAL_ON_STORE_AMO_MISALIGNED ||
-        REPORT_VA_IN_VSTVAL_ON_INSTRUCTION_MISALIGNED ||
-        REPORT_VA_IN_VSTVAL_ON_LOAD_ACCESS_FAULT ||
-        REPORT_VA_IN_VSTVAL_ON_STORE_AMO_ACCESS_FAULT ||
-        REPORT_VA_IN_VSTVAL_ON_INSTRUCTION_ACCESS_FAULT ||
-        REPORT_VA_IN_VSTVAL_ON_LOAD_PAGE_FAULT ||
-        REPORT_VA_IN_VSTVAL_ON_STORE_AMO_PAGE_FAULT ||
-        REPORT_VA_IN_VSTVAL_ON_INSTRUCTION_PAGE_FAULT ||
-        REPORT_ENCODING_IN_VSTVAL_ON_ILLEGAL_INSTRUCTION ||
-        REPORT_CAUSE_IN_VSTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK ||
-        REPORT_CAUSE_IN_VSTVAL_ON_LANDING_PAD_SOFTWARE_CHECK # || implemented?(ExtensionName::Sdext)
+          REPORT_VA_IN_VSTVAL_ON_LOAD_MISALIGNED ||
+          REPORT_VA_IN_VSTVAL_ON_STORE_AMO_MISALIGNED ||
+          REPORT_VA_IN_VSTVAL_ON_INSTRUCTION_MISALIGNED ||
+          REPORT_VA_IN_VSTVAL_ON_LOAD_ACCESS_FAULT ||
+          REPORT_VA_IN_VSTVAL_ON_STORE_AMO_ACCESS_FAULT ||
+          REPORT_VA_IN_VSTVAL_ON_INSTRUCTION_ACCESS_FAULT ||
+          REPORT_VA_IN_VSTVAL_ON_LOAD_PAGE_FAULT ||
+          REPORT_VA_IN_VSTVAL_ON_STORE_AMO_PAGE_FAULT ||
+          REPORT_VA_IN_VSTVAL_ON_INSTRUCTION_PAGE_FAULT ||
+          REPORT_ENCODING_IN_VSTVAL_ON_ILLEGAL_INSTRUCTION ||
+          REPORT_CAUSE_IN_VSTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK ||
+          REPORT_CAUSE_IN_VSTVAL_ON_LANDING_PAD_SOFTWARE_CHECK # || implemented?(ExtensionName::Sdext)
         );
     } else {
       return true;
@@ -741,25 +742,25 @@ function raise_precise {
         if (from_mode == PrivilegeMode::VU || from_mode == PrivilegeMode::VS) {
           CSR[hstatus].SPV = 1;
           if (((exception_code == ExceptionCode::Breakpoint) &&
-              (REPORT_VA_IN_STVAL_ON_BREAKPOINT)) ||
-              ((exception_code == ExceptionCode::LoadAddressMisaligned) &&
-              (REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED)) ||
-              ((exception_code == ExceptionCode::StoreAmoAddressMisaligned) &&
-              (REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED)) ||
-              ((exception_code == ExceptionCode::InstructionAddressMisaligned) &&
-              (REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED)) ||
-              ((exception_code == ExceptionCode::LoadAccessFault) &&
-              (REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT)) ||
-              ((exception_code == ExceptionCode::StoreAmoAccessFault) &&
-              (REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT)) ||
-              ((exception_code == ExceptionCode::InstructionAccessFault) &&
-              (REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT)) ||
-              ((exception_code == ExceptionCode::LoadPageFault) &&
-              (REPORT_VA_IN_STVAL_ON_LOAD_PAGE_FAULT)) ||
-              ((exception_code == ExceptionCode::StoreAmoPageFault) &&
-              (REPORT_VA_IN_STVAL_ON_STORE_AMO_PAGE_FAULT)) ||
-              ((exception_code == ExceptionCode::InstructionPageFault) &&
-              (REPORT_VA_IN_STVAL_ON_INSTRUCTION_PAGE_FAULT))) {
+                (REPORT_VA_IN_STVAL_ON_BREAKPOINT)) ||
+                ((exception_code == ExceptionCode::LoadAddressMisaligned) &&
+                  (REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED)) ||
+                ((exception_code == ExceptionCode::StoreAmoAddressMisaligned) &&
+                  (REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED)) ||
+                ((exception_code == ExceptionCode::InstructionAddressMisaligned) &&
+                  (REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED)) ||
+                ((exception_code == ExceptionCode::LoadAccessFault) &&
+                  (REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT)) ||
+                ((exception_code == ExceptionCode::StoreAmoAccessFault) &&
+                  (REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT)) ||
+                ((exception_code == ExceptionCode::InstructionAccessFault) &&
+                  (REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT)) ||
+                ((exception_code == ExceptionCode::LoadPageFault) &&
+                  (REPORT_VA_IN_STVAL_ON_LOAD_PAGE_FAULT)) ||
+                ((exception_code == ExceptionCode::StoreAmoPageFault) &&
+                  (REPORT_VA_IN_STVAL_ON_STORE_AMO_PAGE_FAULT)) ||
+                ((exception_code == ExceptionCode::InstructionPageFault) &&
+                  (REPORT_VA_IN_STVAL_ON_INSTRUCTION_PAGE_FAULT))) {
             # note: guest page faults handled through raise_guest_page_fault
             CSR[hstatus].GVA = 1;
           } else {
@@ -1355,12 +1356,12 @@ function current_translation_mode {
           # Sv32 is only defined when XLEN == 32
           if (MXLEN == 64) {
             if ((effective_mode == PrivilegeMode::VS) &&
-                (CSR[hstatus].VSXL != $bits(XRegWidth::XLEN32))) {
+                  (CSR[hstatus].VSXL != $bits(XRegWidth::XLEN32))) {
               # not supported in this XLEN
               return SatpMode::Reserved;
             }
             if ((effective_mode == PrivilegeMode::VU) &&
-                (CSR[vsstatus].UXL != $bits(XRegWidth::XLEN32))) {
+                  (CSR[vsstatus].UXL != $bits(XRegWidth::XLEN32))) {
               # not supported in this XLEN
               return SatpMode::Reserved;
             }
@@ -1375,12 +1376,12 @@ function current_translation_mode {
         } else if ((MXLEN == 64) && (mode_val == $bits(SatpMode::Sv39))) {
           # Sv39 is only defined when XLEN == 64
           if (effective_mode == PrivilegeMode::VS &&
-              CSR[hstatus].VSXL != $bits(XRegWidth::XLEN64)) {
+                CSR[hstatus].VSXL != $bits(XRegWidth::XLEN64)) {
             # not supported in this XLEN
             return SatpMode::Reserved;
           }
           if (effective_mode == PrivilegeMode::VU &&
-              CSR[vsstatus].UXL != $bits(XRegWidth::XLEN64)) {
+                CSR[vsstatus].UXL != $bits(XRegWidth::XLEN64)) {
             # not supported in this XLEN
             return SatpMode::Reserved;
           }
@@ -1394,12 +1395,12 @@ function current_translation_mode {
         } else if ((MXLEN == 64) && (mode_val == $bits(SatpMode::Sv48))) {
           # Sv48 is only defined when XLEN == 64
           if (effective_mode == PrivilegeMode::VS &&
-              CSR[hstatus].VSXL != $bits(XRegWidth::XLEN64)) {
+                CSR[hstatus].VSXL != $bits(XRegWidth::XLEN64)) {
             # not supported in this XLEN
             return SatpMode::Reserved;
           }
           if (effective_mode == PrivilegeMode::VU &&
-              CSR[vsstatus].UXL != $bits(XRegWidth::XLEN64)) {
+                CSR[vsstatus].UXL != $bits(XRegWidth::XLEN64)) {
             # not supported in this XLEN
             return SatpMode::Reserved;
           }
@@ -1413,12 +1414,12 @@ function current_translation_mode {
         } else if ((MXLEN == 64) && (mode_val == $bits(SatpMode::Sv57))) {
           # Sv57 is only defined when XLEN == 64
           if (effective_mode == PrivilegeMode::VS &&
-              CSR[hstatus].VSXL != $bits(XRegWidth::XLEN64)) {
+                CSR[hstatus].VSXL != $bits(XRegWidth::XLEN64)) {
             # not supported in this XLEN
             return SatpMode::Reserved;
           }
           if (effective_mode == PrivilegeMode::VU &&
-              CSR[vsstatus].UXL != $bits(XRegWidth::XLEN64)) {
+                CSR[vsstatus].UXL != $bits(XRegWidth::XLEN64)) {
             # not supported in this XLEN
             return SatpMode::Reserved;
           }
@@ -1539,7 +1540,7 @@ function translate_gstage {
     TranslationResult result;
 
     if (!implemented?(ExtensionName::H) || effective_mode == PrivilegeMode::S ||
-        effective_mode == PrivilegeMode::U) {
+          effective_mode == PrivilegeMode::U) {
       # there is no gstage page walk
       result.paddr = gpaddr;
       return result;
@@ -1604,7 +1605,7 @@ function tinst_value_for_guest_page_fault {
           return 0;
         } else if (TINST_VALUE_ON_FINAL_LOAD_GUEST_PAGE_FAULT == "always pseudoinstruction") {
           if (($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) || ((MXLEN == 64) &&
-              (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32)))) {
+                  (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32)))) {
             return 0x00002000;
           } else {
             return 0x00003000;
@@ -1620,7 +1621,7 @@ function tinst_value_for_guest_page_fault {
           return 0;
         } else if (TINST_VALUE_ON_FINAL_STORE_AMO_GUEST_PAGE_FAULT == "always pseudoinstruction") {
           if (($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) || ((MXLEN == 64) &&
-              (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32)))) {
+                  (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32)))) {
             return 0x00002020;
           } else {
             return 0x00003020;
@@ -1636,10 +1637,10 @@ function tinst_value_for_guest_page_fault {
       if (REPORT_GPA_IN_TVAL_ON_INTERMEDIATE_GUEST_PAGE_FAULT) {
         # spec states hardware must write the pseduo-instruction values to *tinst
         if (($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) || ((MXLEN == 64) &&
-            (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32)))) {
+                (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32)))) {
           return 0x00002000;
         } else if (($array_size(VSXLEN) == 1 && VSXLEN[0] == 64) || ((MXLEN == 64) &&
-            (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN64)))) {
+                (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN64)))) {
           return 0x00003000;
         }
       }
@@ -1926,7 +1927,7 @@ function gstage_page_walk {
         }
 
         if (((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)) &&
-            (pte_flags.W == 0)) {
+              (pte_flags.W == 0)) {
           # not write permission for store
           raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
         } else if ((op == MemoryOperation::Fetch) && (pte_flags.X == 0)) {
@@ -1946,8 +1947,8 @@ function gstage_page_walk {
 
         # check access and dirty bits
         if ((pte_flags.A == 0) # access is clear
-            || ((pte_flags.D == 0) # or dirty is clear and this is a (read-modify-)write
-            && ((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)))) {
+              || ((pte_flags.D == 0) # or dirty is clear and this is a (read-modify-)write
+                && ((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)))) {
 
           # check for hardware update of A/D bits
           if (adue) {
@@ -1966,7 +1967,7 @@ function gstage_page_walk {
             Boolean success;
             Bits<PTESIZE> updated_pte;
             if (pte_flags.D == 0 && (op == MemoryOperation::Write ||
-                op == MemoryOperation::ReadModifyWrite)) {
+                    op == MemoryOperation::ReadModifyWrite)) {
               # try to set both A and D bits
               updated_pte = pte | 0b11000000;
             } else {
@@ -2092,7 +2093,7 @@ function stage1_page_walk {
     # access/dirty bit hardware update enable?
     Boolean adue;
     if (CSR[misa].H == 1 && (effective_mode == PrivilegeMode::VS ||
-        effective_mode == PrivilegeMode::VU)) {
+            effective_mode == PrivilegeMode::VU)) {
       adue = implemented?(ExtensionName::Svadu) && CSR[henvcfg].ADUE == 1;
     } else {
       adue = implemented?(ExtensionName::Svadu) && CSR[menvcfg].ADUE == 1;
@@ -2105,7 +2106,7 @@ function stage1_page_walk {
       pbmte = false;
     } else {
       if (CSR[misa].H == 1 && (effective_mode == PrivilegeMode::VS ||
-          effective_mode == PrivilegeMode::VU)) {
+              effective_mode == PrivilegeMode::VU)) {
         pbmte = implemented?(ExtensionName::Svpbmt) && CSR[henvcfg].PBMTE == 1;
       } else {
         pbmte = implemented?(ExtensionName::Svpbmt) && CSR[menvcfg].PBMTE == 1;
@@ -2115,7 +2116,7 @@ function stage1_page_walk {
     # make execute readable?
     Boolean mxr;
     if (CSR[misa].H == 1 && (effective_mode == PrivilegeMode::VS ||
-        effective_mode == PrivilegeMode::VU)) {
+            effective_mode == PrivilegeMode::VU)) {
       # HS-level sstatus.MXR makes execute-only pages readable for both stages of address translation
       # (VS-stage and G-stage), whereas vsstatus.MXR affects only the first translation stage (VS-stage)
       mxr = (CSR[mstatus].MXR == 1) || (CSR[vsstatus].MXR == 1);
@@ -2239,7 +2240,7 @@ function stage1_page_walk {
           }
         }
         if (((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)) &&
-            (pte_flags.W == 0)) {
+              (pte_flags.W == 0)) {
           # no write permission
           raise(page_fault_code, mode(), vaddr);
         } else if ((op == MemoryOperation::Fetch) && (pte_flags.X == 0)) {
@@ -2255,8 +2256,8 @@ function stage1_page_walk {
 
         # check access and dirty bits
         if ((pte_flags.A == 0) # access is clear
-            || ((pte_flags.D == 0) # or dirty is clear and this is a (read-modify-)write
-            && ((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)))) {
+              || ((pte_flags.D == 0) # or dirty is clear and this is a (read-modify-)write
+                && ((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)))) {
 
           # check for hardware update of A/D bits
           if (adue) {
@@ -2282,7 +2283,7 @@ function stage1_page_walk {
             Boolean success;
             Bits<PTESIZE> updated_pte;
             if (pte_flags.D == 0 && (op == MemoryOperation::Write ||
-                op == MemoryOperation::ReadModifyWrite)) {
+                    op == MemoryOperation::ReadModifyWrite)) {
               # try to set both A and D bits
               updated_pte = pte | 0b11000000;
             } else {
@@ -2529,16 +2530,16 @@ function misaligned_is_atomic? {
     return false if MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE == 0;
 
     if (pma_applies?(PmaAttribute::MAG16, physical_address, N) &&
-        in_naturally_aligned_region?(128, physical_address, N)) {
+          in_naturally_aligned_region?(128, physical_address, N)) {
       return true;
     } else if (pma_applies?(PmaAttribute::MAG8, physical_address, N) &&
-        in_naturally_aligned_region?(64, physical_address, N)) {
+          in_naturally_aligned_region?(64, physical_address, N)) {
       return true;
     } else if (pma_applies?(PmaAttribute::MAG4, physical_address, N) &&
-        in_naturally_aligned_region?(32, physical_address, N)) {
+          in_naturally_aligned_region?(32, physical_address, N)) {
       return true;
     } else if (pma_applies?(PmaAttribute::MAG2, physical_address, N) &&
-        in_naturally_aligned_region?(16, physical_address, N)) {
+          in_naturally_aligned_region?(16, physical_address, N)) {
       return true;
     } else {
       # not saved by a Misaligned Atomicity Granule
@@ -2645,7 +2646,7 @@ function read_memory {
         XReg result = 0;
         for (U32 I = 0; I < (LEN / 8); I++) {
           result = result | (read_memory_aligned(8, virtual_address + I, encoding, 1'b0,
-              1'b0) `<< (8 * I));
+                1'b0) `<< (8 * I));
         }
         return result;
       } else if (MISALIGNED_SPLIT_STRATEGY == "custom") {
@@ -2692,7 +2693,8 @@ function read_memory_xlen_aligned {
   arguments XReg virtual_address,
     Bits<INSTR_ENC_SIZE> encoding # the encoding of an instruction causing this access, or 0 if a fetch
   description {
-    Read from virtual memory XLEN (which may be runtime-determined) bits using a known aligned address.
+    Read from virtual memory XLEN (which may be runtime-
+    determined) bits using a known aligned address.
   }
   body {
     TranslationResult result;
@@ -2921,21 +2923,23 @@ function amo {
     if (pma_applies?(PmaAttribute::AmoNone, physical_address, N)) {
       raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
     } else if (((op == AmoOperation::Add || op == AmoOperation::Max || op == AmoOperation::Maxu ||
-        op == AmoOperation::Min || op == AmoOperation::Minu)) &&
-        !pma_applies?(PmaAttribute::AmoArithmetic, physical_address, N)) {
-      raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
-    } else if (((op == AmoOperation::And || op == AmoOperation::Or || op == AmoOperation::Xor)) &&
-        !pma_applies?(PmaAttribute::AmoLogical, physical_address, N)) {
-      raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+          op == AmoOperation::Min || op == AmoOperation::Minu))) {
+      if (!pma_applies?(PmaAttribute::AmoArithmetic, physical_address, N)) {
+        raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+      }
+    } else if (((op == AmoOperation::And || op == AmoOperation::Or || op == AmoOperation::Xor))) {
+      if (!pma_applies?(PmaAttribute::AmoLogical, physical_address, N)) {
+        raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+      }
     } else {
       assert(pma_applies?(PmaAttribute::AmoSwap, physical_address, N) &&
-          op == AmoOperation::Swap,
+            op == AmoOperation::Swap,
           "Bad AMO operation");
     }
 
     # pma alignment checks
     if (!aligned &&
-        !misaligned_is_atomic?(N, physical_address)) {
+          !misaligned_is_atomic?(N, physical_address)) {
       raise(ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
     }
 
@@ -3079,16 +3083,17 @@ function write_memory_xlen_aligned {
 function mstatus_sd_has_known_reset {
   returns Boolean
   description {
-    Returns true if the mstatus.SD bit has a defined reset value, as determined by various parameters.
+    Returns true if the mstatus.SD bit has a defined reset value,
+     as determined by various parameters.
   }
   body {
     # the reset value is known if both FS and VS are known
 
     Boolean fs_has_single_value = ((!implemented?(ExtensionName::F)) ||
-    ($array_size(MSTATUS_FS_LEGAL_VALUES) == 1));
+      ($array_size(MSTATUS_FS_LEGAL_VALUES) == 1));
 
     Boolean vs_has_single_value = ((!implemented?(ExtensionName::V)) ||
-    ($array_size(MSTATUS_VS_LEGAL_VALUES) == 1));
+      ($array_size(MSTATUS_VS_LEGAL_VALUES) == 1));
 
     return fs_has_single_value && vs_has_single_value;
   }
@@ -3121,22 +3126,25 @@ function mstatus_sd_reset_value {
 function check_zcmt_enabled {
   arguments Bits<INSTR_ENC_SIZE> encoding
   description {
-    If the Smstateen extension is implemented, then bit 2 in `mstateen0`, `sstateen0`, and `hstateen0` is
-    implemented. If bit 2 of a controlling `stateen0` CSR is zero, then access to the `jvt` CSR and execution
-    of a `cm.jalt` or `cm.jt` instruction by a lower privilege level results in an illegal-instruction trap (or, if
+    If the Smstateen extension is implemented, then bit 2 in `mstateen0`, `sstateen0`,
+     and `hstateen0` is
+    implemented. If bit 2 of a controlling `stateen0` CSR is zero,
+     then access to the `jvt` CSR and execution
+    of a `cm.jalt` or `cm.jt` instruction by a lower privilege level results in an illegal-
+    instruction trap (or, if
     appropriate, a virtual-instruction trap).
   }
   body {
     if ((mode() != PrivilegeMode::M && implemented?(ExtensionName::Smstateen) &&
-        CSR[mstateen0].JVT == 1'b0) ||
-        (mode() == PrivilegeMode::U && implemented?(ExtensionName::Ssstateen) &&
-        CSR[sstateen0].JVT == 1'b0)) {
+          CSR[mstateen0].JVT == 1'b0) ||
+          (mode() == PrivilegeMode::U && implemented?(ExtensionName::Ssstateen) &&
+            CSR[sstateen0].JVT == 1'b0)) {
 
       raise(ExceptionCode::IllegalInstruction, mode(), encoding);
     } else if ((mode() == PrivilegeMode::VS && implemented?(ExtensionName::Ssstateen) &&
-        CSR[hstateen0].JVT == 1'b0) ||
-        (mode() == PrivilegeMode::VU && implemented?(ExtensionName::Ssstateen) &&
-        (CSR[sstateen0].JVT == 1'b0 || CSR[hstateen0].JVT == 1'b0))) {
+          CSR[hstateen0].JVT == 1'b0) ||
+          (mode() == PrivilegeMode::VU && implemented?(ExtensionName::Ssstateen) &&
+            (CSR[sstateen0].JVT == 1'b0 || CSR[hstateen0].JVT == 1'b0))) {
 
       raise(ExceptionCode::VirtualInstruction, mode(), encoding);
     }

@@ -75,7 +75,7 @@ namespace :gen do
     end
   end
 
-  desc "Resolve the configuration CFG in arch/, and write it to gen/resolved_arch/<CFG>. Default CFG is the standard, \"_\"."
+  desc "Resolve the configuration CFG with spec/ and write it to gen/resolved_arch/<CFG>. Default CFG is the standard \"_\"."
   task "resolved_arch" do
     cfg = ENV["CFG"]
     if cfg.nil?
@@ -245,7 +245,7 @@ namespace :test do
 
   task :idl do
     cfg = ENV["CFG"]
-    raise "Missing CFG enviornment variable" if cfg.nil?
+    raise "Missing CFG environment variable" if cfg.nil?
 
     print "Parsing IDL code for #{cfg}..."
     cfg_arch = $resolver.cfg_arch_for(cfg)
