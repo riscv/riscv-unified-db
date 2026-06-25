@@ -269,10 +269,10 @@ jobs:
         PRE="source scl_source enable gcc-toolset-12"
         echo "PRE=$PRE" >> $GITHUB_ENV
     - if: matrix.container == 'ruby:3-slim'
-      name: Install make
+      name: Install make and a C compiler
       run: |
         apt-get update -qq && \
-        apt-get install --no-install-recommends -y make
+        apt-get install --no-install-recommends -y make gcc libc6-dev
     - name: download udb gem
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
