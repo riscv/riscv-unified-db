@@ -231,8 +231,6 @@ jobs:
       run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
     - if: matrix.gem == 'idlc'
       name: Stage tree-sitter C sources into the idlc gem
-      # The idlc source gem compiles the grammar at install time via
-      # ext/idlc/extconf.rb; stage the C sources + headers it needs.
       run: |
         mkdir -p gem-build-dir/ext/idlc
         cp tools/node/tree-sitter-idl/src/parser.c  gem-build-dir/ext/idlc/

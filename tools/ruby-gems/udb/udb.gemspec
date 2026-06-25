@@ -45,6 +45,10 @@ Gem::Specification.new do |s|
   s.add_dependency "terminal-table"
   s.add_dependency "thor"
   s.add_dependency "tilt"
+  # udb directly requires treetop (lib/udb/eqn.rb, lib/udb/logic.rb). It used to
+  # come in transitively via idlc, but idlc moved to tree-sitter and dropped the
+  # treetop dependency, so declare it directly here.
+  s.add_dependency "treetop", "1.6.12"
   s.add_dependency "tty-command"
   s.add_dependency "tty-logger"
   s.add_dependency "tty-progressbar"

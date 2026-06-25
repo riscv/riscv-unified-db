@@ -62,6 +62,7 @@ PATH
       terminal-table
       thor
       tilt
+      treetop (= 1.6.12)
       tty-command
       tty-logger
       tty-progressbar
