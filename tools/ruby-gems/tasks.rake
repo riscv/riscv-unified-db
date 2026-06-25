@@ -54,7 +54,19 @@ namespace :release do
       prepare_gem_copy(
         src: $root / "tools/ruby-gems/idlc",
         dst: Pathname.new(ENV.fetch("IDLC_GEM_GEN_DIR", ($root / "gen" / "idlc_gem").to_s)),
-        gem_name: "idlc"
+        gem_name: "idlc",
+        # The source gem compiles the tree-sitter grammar at install time via
+        # ext/idlc/extconf.rb, which needs parser.c, scanner.c, and the
+        # tree_sitter/ headers. They live in the Node project, so stage them
+        # into ext/idlc before the gem is built.
+        after_copy: lambda do |release_dir|
+          ts_src  = $root / "tools" / "node" / "tree-sitter-idl" / "src"
+          ext_dir = release_dir / "ext" / "idlc"
+          FileUtils.mkdir_p(ext_dir)
+          FileUtils.cp(ts_src / "parser.c",  ext_dir / "parser.c")
+          FileUtils.cp(ts_src / "scanner.c", ext_dir / "scanner.c")
+          FileUtils.cp_r(ts_src / "tree_sitter", ext_dir / "tree_sitter")
+        end
       )
     end
   end
