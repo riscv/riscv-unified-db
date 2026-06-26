@@ -419,7 +419,16 @@ module Udb
             if e.is_a?(Array)
               { "name" => e[0], "version" => e[1] }
             elsif e.is_a?(Hash)
-              { "name" => e.fetch("name"), "version" => RequirementSpec.new(e.fetch("version")).version_spec.to_s }
+              version_str = e.fetch("version")
+              # Try RequirementSpec first (handles "= 2.1", ">= 2.1", etc.)
+              # Fall back to VersionSpec for bare versions (e.g., "2.1")
+              version =
+                begin
+                  RequirementSpec.new(version_str).version_spec.to_s
+                rescue ArgumentError
+                  VersionSpec.new(version_str).to_s
+                end
+              { "name" => e.fetch("name"), "version" => version }
             end
           end
         end
