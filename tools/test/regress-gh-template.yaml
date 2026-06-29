@@ -239,11 +239,13 @@ jobs:
       - name: Copy the gem directory to resolve symlinks
         run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
       - if: matrix.gem == 'idlc'
-        name: Stage tree-sitter C sources into the idlc gem
-        # The idlc source gem compiles the grammar at install time via
-        # ext/idlc/extconf.rb; stage the C sources + headers it needs.
+        name: Stage tree-sitter grammar version + C sources into the idlc gem
+        # At install time ext/idlc/extconf.rb downloads a prebuilt grammar
+        # (keyed by TS_IDL_VERSION) and falls back to compiling the C sources +
+        # headers. Stage all of them.
         run: |
           mkdir -p gem-build-dir/ext/idlc
+          cp tools/node/tree-sitter-idl/TS_IDL_VERSION gem-build-dir/ext/idlc/
           cp tools/node/tree-sitter-idl/src/parser.c  gem-build-dir/ext/idlc/
           cp tools/node/tree-sitter-idl/src/scanner.c gem-build-dir/ext/idlc/
           cp -r tools/node/tree-sitter-idl/src/tree_sitter gem-build-dir/ext/idlc/

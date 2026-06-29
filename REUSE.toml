@@ -134,6 +134,7 @@ path = [
     "tools/node/idl-reflow/package.json",
     "tools/node/tree-sitter-idl/package.json",
     "tools/node/tree-sitter-idl/package-lock.json",
+    "tools/node/tree-sitter-idl/TS_IDL_VERSION",
     "tools/node/tree-sitter-idl/src/grammar.json",
     "tools/node/tree-sitter-idl/src/node-types.json",
     "tools/node/tree-sitter-idl/src/parser.c",

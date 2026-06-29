@@ -68,10 +68,16 @@ Additionally, developers will be interested in the following:
 
 UnifiedDB tooling is designed to run natively on your host using https://mise.jdx.dev[mise].
 
-A C compiler (GCC or Clang) is required. The `idlc` gem includes a native
-extension—the tree-sitter IDL grammar—that `bin/setup` compiles from source,
-and that is also compiled when the published `idlc`/`udb` gems are installed.
-mise provides `make` and `cmake` but not the compiler itself, so make sure one
+The `idlc` gem includes a native extension—the tree-sitter IDL grammar. When
+the published `idlc`/`udb` gems are installed on a common platform (Linux or
+macOS, x64 or arm64), a prebuilt grammar binary is downloaded from the project's
+GitHub releases—just like the `z3`/`espresso`/`eqntott`/`must` binaries the
+`udb` gem depends on—so no C compiler is needed for `gem install`.
+
+A C compiler (GCC or Clang) is only required as a fallback: when developing in
+this repository (`bin/setup` builds the grammar from source), on platforms with
+no prebuilt binary, or when `IDLC_BUILD_FROM_SOURCE` is set. mise provides
+`make` and `cmake` but not the compiler itself, so for those cases make sure one
 is available via your system (for example, the Xcode Command Line Tools on
 macOS, or the `build-essential`/`gcc` package on Debian/Ubuntu).
 

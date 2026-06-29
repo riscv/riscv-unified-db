@@ -169,6 +169,8 @@ update_subcmd_usage() {
   echo "                 ('chore update must -h' for more)"
   echo "  z3:            Update the z3 shared library used by the udb gem"
   echo "                 ('chore update z3 -h' for more)"
+  echo "  tree-sitter-idl: Build/publish the prebuilt IDL grammar shared library"
+  echo "                 ('chore update tree-sitter-idl -h' for more)"
   echo ""
 }
 
@@ -217,6 +219,22 @@ update_z3_usage() {
   echo "  -h:      Print help"
   echo "  -n:      Build only for native/host platform (for use in CI matrix builds)"
   echo "  -f:      Force rebuild and release even if release already exists"
+  echo ""
+}
+
+update_tree_sitter_idl_usage() {
+  echo "Usage: chore update tree-sitter-idl [-hnf]"
+  echo ""
+  echo "Builds the tree-sitter IDL grammar for the native (OS, CPU) and uploads"
+  echo "it as an asset on the 'tree-sitter-idl-<TS_IDL_VERSION>' GitHub release."
+  echo "The idlc gem downloads this at install time instead of compiling from"
+  echo "source. Run the release_udb_deps workflow to publish all platforms."
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -n:      Build only for native/host platform (always native; for CI symmetry)"
+  echo "  -f:      Force rebuild and re-upload even if the asset already exists"
   echo ""
 }
 
@@ -986,6 +1004,31 @@ case "$subcommand" in
           esac
         done
         do_update_z3 "$native_only" "$force"
+        exit 0
+        ;;
+      tree-sitter-idl )
+        native_only=no
+        force=no
+        while getopts ":hnf" opt; do
+          case $opt in
+            h )
+              update_tree_sitter_idl_usage
+              exit 0
+              ;;
+            n )
+              native_only=yes
+              ;;
+            f )
+              force=yes
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              update_tree_sitter_idl_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_update_tree_sitter_idl "$native_only" "$force"
         exit 0
         ;;
       * )

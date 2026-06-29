@@ -29,12 +29,14 @@ Gem::Specification.new do |s|
                  [so_rel] + queries_rel + reflow_rel
   else
     s.extensions = ["ext/idlc/extconf.rb"]
-    # parser.c/scanner.c and the tree_sitter/ headers are staged into ext/idlc
-    # at gem-build time (see release:idlc:prepare and the create-gems CI job);
-    # extconf.rb compiles them at install time.
+    # TS_IDL_VERSION (which prebuilt grammar release to fetch) plus the
+    # parser.c/scanner.c sources and tree_sitter/ headers (the source-build
+    # fallback) are staged into ext/idlc at gem-build time (see
+    # release:idlc:prepare and the create-gems CI job); extconf.rb downloads or
+    # compiles them at install time.
     s.files      = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop",
                        "ext/idlc/extconf.rb", "ext/idlc/*.c",
-                       "ext/idlc/tree_sitter/*.h"] +
+                       "ext/idlc/tree_sitter/*.h", "ext/idlc/TS_IDL_VERSION"] +
                    queries_rel + reflow_rel
   end
   s.license     = "BSD-3-Clause-Clear"
