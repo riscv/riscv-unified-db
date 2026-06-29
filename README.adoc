@@ -68,6 +68,13 @@ Additionally, developers will be interested in the following:
 
 UnifiedDB tooling is designed to run natively on your host using https://mise.jdx.dev[mise].
 
+A C compiler (GCC or Clang) is required. The `idlc` gem includes a native
+extension—the tree-sitter IDL grammar—that `bin/setup` compiles from source,
+and that is also compiled when the published `idlc`/`udb` gems are installed.
+mise provides `make` and `cmake` but not the compiler itself, so make sure one
+is available via your system (for example, the Xcode Command Line Tools on
+macOS, or the `build-essential`/`gcc` package on Debian/Ubuntu).
+
 A container runtime (Docker or Podman) is optional. It is only required for building generated
 C++ ISS code when a suitable native C++ toolchain and/or RISC-V cross-compiler is unavailable natively.
 
