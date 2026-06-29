@@ -7,6 +7,7 @@
 require "pathname"
 require "sorbet-runtime"
 
+require_relative "idlc/version"
 require_relative "idlc/syntax_node"
 
 require_relative "idlc/ast"

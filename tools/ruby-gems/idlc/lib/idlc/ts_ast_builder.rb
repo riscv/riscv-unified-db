@@ -140,16 +140,6 @@ module Idl
 
     def visit_body_statement(node) = visit(node.named_child(0))
 
-    def visit_statement(node)
-      action = visit(node.named_child(0))
-      if node.named_child_count == 2
-        cond = visit(node.named_child(1))
-        ConditionalStatementAst.new(@source, iv(node), action, cond)
-      else
-        StatementAst.new(@source, iv(node), action)
-      end
-    end
-
     def visit_action(node)     = visit(node.named_child(0))
     def visit_assignment(node) = visit(node.named_child(0))
 
@@ -351,16 +341,6 @@ module Idl
       lhs = visit(node.named_child(0))
       rhs = visit(node.named_child(1))
       VariableAssignmentAst.new(@source, iv(node), lhs, rhs)
-    end
-
-    def visit_return_statement(node)
-      ret_expr = visit(node.named_child(0))
-      if node.named_child_count == 2
-        cond = visit(node.named_child(1))
-        ConditionalReturnStatementAst.new(@source, iv(node), ret_expr, cond)
-      else
-        ReturnStatementAst.new(@source, iv(node), ret_expr)
-      end
     end
 
     def visit_return_expression(node)

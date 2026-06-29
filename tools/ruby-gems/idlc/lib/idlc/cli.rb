@@ -66,8 +66,7 @@ module Idl
       when "-"
         $stdout.puts expr_ast.value(symtab)
       else
-        f = File.open(options.output, "w")
-        f.puts expr_ast.value(symtab)
+        File.open(options.output, "w") { |f| f.puts expr_ast.value(symtab) }
       end
     end
 
@@ -84,19 +83,15 @@ module Idl
 
       compiler = Compiler.new
 
-      io =
-        if options.output == "-"
-          $stdout
-        else
-          File.open(options.output, "w")
-        end
-
       ast = compiler.build_ast(File.read(args[0]), root: options.root.to_sym, input_file: args[0])
 
-      if options.format == "yaml"
+      raise "Unknown format: #{options.format}" unless options.format == "yaml"
+
+      io = options.output == "-" ? $stdout : File.open(options.output, "w")
+      begin
         io.puts YAML.dump(ast.to_h)
-      else
-        raise "Unknown format: #{options.format}"
+      ensure
+        io.close unless io.equal?($stdout)
       end
     end
 
@@ -175,7 +170,7 @@ module Idl
         c.summary = "Evaluate an IDL expression"
         c.example "Print '15'", "idlc eval -DA=5 -DB=10 A+B"
 
-        c.option "-o,--output FILE", String, "Output file (- for STDOUT)"
+        c.option "-o", "--output FILE", String, "Output file (- for STDOUT)"
         add_define_option.call(c)
 
         c.action do |args, options|
