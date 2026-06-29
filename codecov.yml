@@ -7,6 +7,9 @@ coverage:
       default:
         target: auto
         threshold: 1%
+        # Don't count pure code removal as a coverage regression: adjust the
+        # base coverage to exclude deleted lines. Real drops are still caught.
+        removed_code_behavior: adjust_base
     patch:
       default:
         target: 50%
@@ -18,5 +21,6 @@ flag_management:
       - type: project
         target: auto
         threshold: 1%
+        removed_code_behavior: adjust_base
       - type: patch
         target: 50%
