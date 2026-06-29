@@ -67,6 +67,16 @@ _record_warn() { ((_WARN_COUNT++)) || true; }
 _check_core_prerequisites() {
   _section "Core Prerequisites"
 
+  # gpg
+  if command -v gpg > /dev/null 2>&1 || command -v gpg2 > /dev/null 2>&1; then
+    _pass "gpg  ${_C_DIM}found${_C_RESET}"
+    _record_pass
+  else
+    _fail "gpg not found"
+    _info "Fix: install gnupg via your package manager (e.g. \`brew install gnupg\`)"
+    _record_fail
+  fi
+
   # git
   if command -v git > /dev/null 2>&1; then
     local git_ver
