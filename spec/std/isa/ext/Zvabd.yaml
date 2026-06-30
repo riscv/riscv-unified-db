@@ -27,4 +27,4 @@ versions:
     state: frozen
 requirements:
   extension:
-    - name: Zve32x
+    name: Zve32x
