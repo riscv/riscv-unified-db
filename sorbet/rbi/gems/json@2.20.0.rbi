@@ -218,6 +218,20 @@ module JSON::ParserOptions
   end
 end
 
+class JSON::ResumableParser
+  def initialize(*_arg0); end
+
+  def <<(_arg0); end
+  def clear; end
+  def eos?; end
+  def parse; end
+  def parsed_bytes; end
+  def partial_value; end
+  def rest; end
+  def value; end
+  def value?; end
+end
+
 JSON::State = JSON::Ext::Generator::State
 
 module Kernel

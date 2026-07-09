@@ -170,6 +170,7 @@ module Treetop::Compiler::Metagrammar
   def _nt_declaration; end
   def _nt_declaration_sequence; end
   def _nt_double_quoted_string; end
+  def _nt_eol; end
   def _nt_grammar; end
   def _nt_grammar_name; end
   def _nt_include_declaration; end
@@ -181,6 +182,7 @@ module Treetop::Compiler::Metagrammar
   def _nt_module_declaration; end
   def _nt_module_or_grammar; end
   def _nt_named_label; end
+  def _nt_nbwhite; end
   def _nt_node_class_declarations; end
   def _nt_node_class_expression; end
   def _nt_non_space_char; end
@@ -190,6 +192,7 @@ module Treetop::Compiler::Metagrammar
   def _nt_optional_suffix; end
   def _nt_optionally_labeled_sequence_primary; end
   def _nt_parenthesized_expression; end
+  def _nt_parsing_endless_rule; end
   def _nt_parsing_expression; end
   def _nt_parsing_rule; end
   def _nt_predicate_block; end
@@ -400,6 +403,15 @@ module Treetop::Compiler::Metagrammar::ParenthesizedExpression1
   def parent_modules; end
 end
 
+class Treetop::Compiler::Metagrammar::Parser < ::Treetop::Runtime::CompiledParser
+  include ::Treetop::Compiler::Metagrammar
+end
+
+module Treetop::Compiler::Metagrammar::ParsingEndlessRule0
+  def nonterminal; end
+  def parsing_expression; end
+end
+
 module Treetop::Compiler::Metagrammar::ParsingRule0
   def space; end
 end
@@ -603,9 +615,7 @@ module Treetop::Compiler::Metagrammar::VariableLengthSequenceBody2
   def tail; end
 end
 
-class Treetop::Compiler::MetagrammarParser < ::Treetop::Runtime::CompiledParser
-  include ::Treetop::Compiler::Metagrammar
-end
+Treetop::Compiler::MetagrammarParser = Treetop::Compiler::Metagrammar::Parser
 
 class Treetop::Compiler::Nonterminal < ::Treetop::Compiler::AtomicExpression
   def compile(address, builder, parent_expression = T.unsafe(nil)); end
