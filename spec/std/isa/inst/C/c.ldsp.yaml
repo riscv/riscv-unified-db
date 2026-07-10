@@ -57,8 +57,8 @@ operation(): |
   Bits<64> value = read_memory(64, virtual_address, $encoding);
 
   if (xlen()== 64) {
-    X[creg2reg(xd)] = value;
+    X[xd] = value;
   } else if (xlen() == 32) {
-    X[creg2reg(xd)]     = value[31:0];
-    X[creg2reg(xd) + 1] = value[63:32];
+    X[xd]     = value[31:0];
+    X[xd + 1] = value[63:32];
   }

@@ -316,6 +316,11 @@ int InstructionSetSimulator::Run()
     case STATE_SINGLE_STEP:
       stopReason = m_pHart->run_one();
       m_state = STATE_HALT;
+      if(m_opts.gdbMode)
+      {
+        // Notify debugger that single-step completed and target is halted again.
+        Halt(HALT_STEP, m_pHart->hartid().get(), m_pHart->pc());
+      }
       break;
     case STATE_RUN:
       stopReason = m_pHart->run_one();
@@ -379,7 +384,7 @@ int InstructionSetSimulator::OnReadMemory(uint64_t uiAddress, uint64_t& uiLen, v
     auto translationResult = m_pHart->translate_native(uiAddress, udb::MemoryOperation{udb::MemoryOperation::Read},
       m_pHart->_get_mode(), uiAddress);
 
-    if(m_pSoC->memcpy_to_host((uint8_t*)pBuffer, translationResult.pAddr, uiLen) == 0)
+    if(m_pSoC->memcpy_to_host((uint8_t*)pBuffer, translationResult.pAddr, uiLen) >= 0)
       return 0;
     else
       return -1;
@@ -398,7 +403,7 @@ int InstructionSetSimulator::OnWriteMemory(uint64_t uiAddress, uint64_t& uiLen, 
     auto translationResult = m_pHart->translate_native(uiAddress, udb::MemoryOperation{udb::MemoryOperation::Write},
       m_pHart->_get_mode(), uiAddress);
 
-    if(m_pSoC->memcpy_from_host(translationResult.pAddr, (const uint8_t*)pMemBuffer, uiLen) == 0)
+    if(m_pSoC->memcpy_from_host(translationResult.pAddr, (const uint8_t*)pMemBuffer, uiLen) >= 0)
       return 0;
     else
       return -1;

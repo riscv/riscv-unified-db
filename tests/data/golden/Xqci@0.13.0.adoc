@@ -1846,40 +1846,40 @@ of this extension.
 |===
 ^ Mnemonic ^ Instruction ^ Defined by
 
-^ `qc.addsat rd, rs1, rs2`
+^ `qc.addsat xd, xs1, xs2`
 ^ xref:#udb-insn-qc_addsat[Saturating signed addition]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.addusat rd, rs1, rs2`
+^ `qc.addusat xd, xs1, xs2`
 ^ xref:#udb-insn-qc_addusat[Saturating unsigned addition]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.beqi rs1, imm, offset`
+^ `qc.beqi xs1, imm, offset`
 ^ xref:#udb-insn-qc_beqi[Branch on equal (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.bgei rs1, imm, offset`
+^ `qc.bgei xs1, imm, offset`
 ^ xref:#udb-insn-qc_bgei[Branch on greater than or equal (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.bgeui rs1, imm, offset`
+^ `qc.bgeui xs1, imm, offset`
 ^ xref:#udb-insn-qc_bgeui[Branch on greater than or equal unsigned (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.blti rs1, imm, offset`
+^ `qc.blti xs1, imm, offset`
 ^ xref:#udb-insn-qc_blti[Branch on less than (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.bltui rs1, imm, offset`
+^ `qc.bltui xs1, imm, offset`
 ^ xref:#udb-insn-qc_bltui[Branch on less than unsigned (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.bnei rs1, imm, offset`
+^ `qc.bnei xs1, imm, offset`
 ^ xref:#udb-insn-qc_bnei[Branch on not equal (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.brev32 rd, rs1`
+^ `qc.brev32 xd, xs1`
 ^ xref:#udb-insn-qc_brev32[Reverse bit order]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.c.bexti rd, shamt`
+^ `qc.c.bexti xd, shamt`
 ^ xref:#udb-insn-qc_c_bexti[Single-Bit extract (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.c.bseti rd, shamt`
+^ `qc.c.bseti xd, shamt`
 ^ xref:#udb-insn-qc_c_bseti[Single-Bit set (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.c.clrint rs1`
+^ `qc.c.clrint xs1`
 ^ xref:#udb-insn-qc_c_clrint[Clear interrupt (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
 ^ `qc.c.delay imm`
@@ -1888,16 +1888,16 @@ a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisync[`Xqcisync`])
 ^ xref:#udb-insn-qc_c_di[`qc.c.di`]
 ^ xref:#udb-insn-qc_c_di[Disable interrupts]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
-^ `qc.c.dir rd`
+^ `qc.c.dir xd`
 ^ xref:#udb-insn-qc_c_dir[Disable interrupts (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
 ^ xref:#udb-insn-qc_c_ei[`qc.c.ei`]
 ^ xref:#udb-insn-qc_c_ei[Enable interrupts]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
-^ `qc.c.eir rs1`
+^ `qc.c.eir xs1`
 ^ xref:#udb-insn-qc_c_eir[Restore interrupts (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
-^ `qc.c.extu rd, width`
+^ `qc.c.extu xd, width`
 ^ xref:#udb-insn-qc_c_extu[Extract bits unsigned]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
 ^ xref:#udb-insn-qc_c_mienter[`qc.c.mienter`]
@@ -1915,16 +1915,16 @@ a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
 ^ xref:#udb-insn-qc_c_mret[`qc.c.mret`]
 ^ xref:#udb-insn-qc_c_mret[Machine Exception Return]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
-^ `qc.c.muliadd rd, rs1, uimm`
+^ `qc.c.muliadd xd, xs1, uimm`
 ^ xref:#udb-insn-qc_c_muliadd[Multiply and accumulate (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciac[`Xqciac`])
-^ `qc.c.mveqz rd, rs1`
+^ `qc.c.mveqz xd, xs1`
 ^ xref:#udb-insn-qc_c_mveqz[Conditional Move if equal to zero]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
 ^ xref:#udb-insn-qc_c_ptrace[`qc.c.ptrace`]
 ^ xref:#udb-insn-qc_c_ptrace[Tracing pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
-^ `qc.c.setint rs1`
+^ `qc.c.setint xs1`
 ^ xref:#udb-insn-qc_c_setint[Set interrupt (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
 ^ `qc.c.sync slist`
@@ -1939,55 +1939,55 @@ a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisync[`Xqcisync`])
 ^ `qc.c.syncwl slist`
 ^ xref:#udb-insn-qc_c_syncwl[Non-memory-mapped device write-after-read synchronization to completion]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisync[`Xqcisync`])
-^ `qc.clo rd, rs1`
+^ `qc.clo xd, xs1`
 ^ xref:#udb-insn-qc_clo[Count leading ones]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.clrinti rs1`
+^ `qc.clrinti xs1`
 ^ xref:#udb-insn-qc_clrinti[Clear interrupt (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
-^ `qc.compress2 rd, rs1`
+^ `qc.compress2 xd, xs1`
 ^ xref:#udb-insn-qc_compress2[Bit compression (every 2nd bit)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.compress3 rd, rs1`
+^ `qc.compress3 xd, xs1`
 ^ xref:#udb-insn-qc_compress3[Bit compression (every 3rd bit)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.csrrwr rd, rs1, rs2`
+^ `qc.csrrwr xd, xs1, xs2`
 ^ xref:#udb-insn-qc_csrrwr[Atomic Read/Write CSR (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicsr[`Xqcicsr`])
-^ `qc.csrrwri rd, imm, rs2`
+^ `qc.csrrwri xd, imm, xs2`
 ^ xref:#udb-insn-qc_csrrwri[Atomic Read/Write CSR (Register) Immediate]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicsr[`Xqcicsr`])
-^ `qc.cto rd, rs1`
+^ `qc.cto xd, xs1`
 ^ xref:#udb-insn-qc_cto[Count trailing ones]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.e.addai rd, imm`
+^ `qc.e.addai xd, imm`
 ^ xref:#udb-insn-qc_e_addai[Add immediate]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilia[`Xqcilia`])
-^ `qc.e.addi rd, rs1, imm`
+^ `qc.e.addi xd, xs1, imm`
 ^ xref:#udb-insn-qc_e_addi[Add immediate]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilia[`Xqcilia`])
-^ `qc.e.andai rd, imm`
+^ `qc.e.andai xd, imm`
 ^ xref:#udb-insn-qc_e_andai[And immediate]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilia[`Xqcilia`])
-^ `qc.e.andi rd, rs1, imm`
+^ `qc.e.andi xd, xs1, imm`
 ^ xref:#udb-insn-qc_e_andi[Add immediate]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilia[`Xqcilia`])
-^ `qc.e.beqi rs1, imm, offset`
+^ `qc.e.beqi xs1, imm, offset`
 ^ xref:#udb-insn-qc_e_beqi[Branch on equal (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.e.bgei rs1, imm, offset`
+^ `qc.e.bgei xs1, imm, offset`
 ^ xref:#udb-insn-qc_e_bgei[Branch on greater than or equal (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.e.bgeui rs1, imm, offset`
+^ `qc.e.bgeui xs1, imm, offset`
 ^ xref:#udb-insn-qc_e_bgeui[Branch on greater than or equal unsigned (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.e.blti rs1, imm, offset`
+^ `qc.e.blti xs1, imm, offset`
 ^ xref:#udb-insn-qc_e_blti[Branch on less than (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.e.bltui rs1, imm, offset`
+^ `qc.e.bltui xs1, imm, offset`
 ^ xref:#udb-insn-qc_e_bltui[Branch on less than unsigned (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
-^ `qc.e.bnei rs1, imm, offset`
+^ `qc.e.bnei xs1, imm, offset`
 ^ xref:#udb-insn-qc_e_bnei[Branch on not equal (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibi[`Xqcibi`])
 ^ `qc.e.j imm`
@@ -1996,307 +1996,307 @@ a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilb[`Xqcilb`])
 ^ `qc.e.jal imm`
 ^ xref:#udb-insn-qc_e_jal[Jump and link]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilb[`Xqcilb`])
-^ `qc.e.lb rd, imm(rs1)`
+^ `qc.e.lb xd, imm(xs1)`
 ^ xref:#udb-insn-qc_e_lb[Load byte]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilo[`Xqcilo`])
-^ `qc.e.lbu rd, imm(rs1)`
+^ `qc.e.lbu xd, imm(xs1)`
 ^ xref:#udb-insn-qc_e_lbu[Load byte unsigned]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilo[`Xqcilo`])
-^ `qc.e.lh rd, imm(rs1)`
+^ `qc.e.lh xd, imm(xs1)`
 ^ xref:#udb-insn-qc_e_lh[Load halfword]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilo[`Xqcilo`])
-^ `qc.e.lhu rd, imm(rs1)`
+^ `qc.e.lhu xd, imm(xs1)`
 ^ xref:#udb-insn-qc_e_lhu[Load halfword unsigned]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilo[`Xqcilo`])
-^ `qc.e.li rd, imm`
+^ `qc.e.li xd, imm`
 ^ xref:#udb-insn-qc_e_li[Load immediate large]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcili[`Xqcili`])
-^ `qc.e.lw rd, imm(rs1)`
+^ `qc.e.lw xd, imm(xs1)`
 ^ xref:#udb-insn-qc_e_lw[Load word]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilo[`Xqcilo`])
-^ `qc.e.orai rd, imm`
+^ `qc.e.orai xd, imm`
 ^ xref:#udb-insn-qc_e_orai[Or immediate]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilia[`Xqcilia`])
-^ `qc.e.ori rd, rs1, imm`
+^ `qc.e.ori xd, xs1, imm`
 ^ xref:#udb-insn-qc_e_ori[Or immediate]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilia[`Xqcilia`])
-^ `qc.e.sb rs2, imm(rs1)`
+^ `qc.e.sb xs2, imm(xs1)`
 ^ xref:#udb-insn-qc_e_sb[Store byte]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilo[`Xqcilo`])
-^ `qc.e.sh rs2, imm(rs1)`
+^ `qc.e.sh xs2, imm(xs1)`
 ^ xref:#udb-insn-qc_e_sh[Store halfword]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilo[`Xqcilo`])
-^ `qc.e.sw rs2, imm(rs1)`
+^ `qc.e.sw xs2, imm(xs1)`
 ^ xref:#udb-insn-qc_e_sw[Store word]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilo[`Xqcilo`])
-^ `qc.e.xorai rd, imm`
+^ `qc.e.xorai xd, imm`
 ^ xref:#udb-insn-qc_e_xorai[Exclusive Or immediate]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilia[`Xqcilia`])
-^ `qc.e.xori rd, rs1, imm`
+^ `qc.e.xori xd, xs1, imm`
 ^ xref:#udb-insn-qc_e_xori[Exclusive Or immediate]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilia[`Xqcilia`])
-^ `qc.expand2 rd, rs1`
+^ `qc.expand2 xd, xs1`
 ^ xref:#udb-insn-qc_expand2[Bit expansion (every 2nd bit)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.expand3 rd, rs1`
+^ `qc.expand3 xd, xs1`
 ^ xref:#udb-insn-qc_expand3[Bit expansion (every 3rd bit)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.ext rd, rs1, width, shamt`
+^ `qc.ext xd, xs1, width, shamt`
 ^ xref:#udb-insn-qc_ext[Extract bits signed]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.extd rd, rs1, width, shamt`
+^ `qc.extd xd, xs1, width, shamt`
 ^ xref:#udb-insn-qc_extd[Extract bits from pair signed (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.extdpr rd, rs1, rs2`
+^ `qc.extdpr xd, xs1, xs2`
 ^ xref:#udb-insn-qc_extdpr[Extract bits from pair signed, packed descriptor (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.extdprh rd, rs1, rs2`
+^ `qc.extdprh xd, xs1, xs2`
 ^ xref:#udb-insn-qc_extdprh[Extract bits from pair signed, packed descriptor high part (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.extdr rd, rs1, rs2`
+^ `qc.extdr xd, xs1, xs2`
 ^ xref:#udb-insn-qc_extdr[Extract bits from pair signed (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.extdu rd, rs1, width, shamt`
+^ `qc.extdu xd, xs1, width, shamt`
 ^ xref:#udb-insn-qc_extdu[Extract bits from pair unsigned (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.extdupr rd, rs1, rs2`
+^ `qc.extdupr xd, xs1, xs2`
 ^ xref:#udb-insn-qc_extdupr[Extract bits from pair unsigned, packed descriptor (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.extduprh rd, rs1, rs2`
+^ `qc.extduprh xd, xs1, xs2`
 ^ xref:#udb-insn-qc_extduprh[Extract bits from pair unsigned, packed descriptor high part (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.extdur rd, rs1, rs2`
+^ `qc.extdur xd, xs1, xs2`
 ^ xref:#udb-insn-qc_extdur[Extract bits from pair unsigned (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.extu rd, rs1, width, shamt`
+^ `qc.extu xd, xs1, width, shamt`
 ^ xref:#udb-insn-qc_extu[Extract bits unsigned]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.insb rd, rs1, width, shamt`
+^ `qc.insb xd, xs1, width, shamt`
 ^ xref:#udb-insn-qc_insb[Insert bits (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.insbh rd, rs1, width, shamt`
+^ `qc.insbh xd, xs1, width, shamt`
 ^ xref:#udb-insn-qc_insbh[Insert bits in 64-bit higher part (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.insbhr rd, rs1, rs2`
+^ `qc.insbhr xd, xs1, xs2`
 ^ xref:#udb-insn-qc_insbhr[Insert bits in 64-bit higher part (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.insbi rd, imm, width, shamt`
+^ `qc.insbi xd, imm, width, shamt`
 ^ xref:#udb-insn-qc_insbi[Insert bits (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.insbpr rd, rs1, rs2`
+^ `qc.insbpr xd, xs1, xs2`
 ^ xref:#udb-insn-qc_insbpr[Insert bits, packed descriptor (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.insbprh rd, rs1, rs2`
+^ `qc.insbprh xd, xs1, xs2`
 ^ xref:#udb-insn-qc_insbprh[Insert bits, packed descriptor high part (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.insbr rd, rs1, rs2`
+^ `qc.insbr xd, xs1, xs2`
 ^ xref:#udb-insn-qc_insbr[Insert bits (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.insbri rd, rs1, imm`
+^ `qc.insbri xd, xs1, imm`
 ^ xref:#udb-insn-qc_insbri[Insert bits (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.inw rd, imm(rs1)`
+^ `qc.inw xd, imm(xs1)`
 ^ xref:#udb-insn-qc_inw[Input word from non-memory-mapped device]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciio[`Xqciio`])
-^ `qc.li rd, imm`
+^ `qc.li xd, imm`
 ^ xref:#udb-insn-qc_li[Load immediate large]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcili[`Xqcili`])
-^ `qc.lieq rd, rs1, rs2, simm`
+^ `qc.lieq xd, xs1, xs2, simm`
 ^ xref:#udb-insn-qc_lieq[Conditional load immediate if equal (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.lieqi rd, rs1, imm, simm`
+^ `qc.lieqi xd, xs1, imm, simm`
 ^ xref:#udb-insn-qc_lieqi[Conditional load immediate if equal (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.lige rd, rs1, rs2, simm`
+^ `qc.lige xd, xs1, xs2, simm`
 ^ xref:#udb-insn-qc_lige[Conditional load immediate if great or equal than (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.ligei rd, rs1, imm, simm`
+^ `qc.ligei xd, xs1, imm, simm`
 ^ xref:#udb-insn-qc_ligei[Conditional load immediate if great or equal than (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.ligeu rd, rs1, rs2, simm`
+^ `qc.ligeu xd, xs1, xs2, simm`
 ^ xref:#udb-insn-qc_ligeu[Conditional load immediate if great or equal than unsigned (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.ligeui rd, rs1, imm, simm`
+^ `qc.ligeui xd, xs1, imm, simm`
 ^ xref:#udb-insn-qc_ligeui[Conditional load immediate if great or equal than unsigned (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.lilt rd, rs1, rs2, simm`
+^ `qc.lilt xd, xs1, xs2, simm`
 ^ xref:#udb-insn-qc_lilt[Conditional load immediate if less than (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.lilti rd, rs1, imm, simm`
+^ `qc.lilti xd, xs1, imm, simm`
 ^ xref:#udb-insn-qc_lilti[Conditional load immediate if less than (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.liltu rd, rs1, rs2, simm`
+^ `qc.liltu xd, xs1, xs2, simm`
 ^ xref:#udb-insn-qc_liltu[Conditional load immediate if less than unsigned (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.liltui rd, rs1, imm, simm`
+^ `qc.liltui xd, xs1, imm, simm`
 ^ xref:#udb-insn-qc_liltui[Conditional load immediate if less than unsigned (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.line rd, rs1, rs2, simm`
+^ `qc.line xd, xs1, xs2, simm`
 ^ xref:#udb-insn-qc_line[Conditional load immediate if not equal (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.linei rd, rs1, imm, simm`
+^ `qc.linei xd, xs1, imm, simm`
 ^ xref:#udb-insn-qc_linei[Conditional load immediate if not equal (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicli[`Xqcicli`])
-^ `qc.lrb rd, rs1, rs2, shamt`
+^ `qc.lrb xd, xs1, xs2, shamt`
 ^ xref:#udb-insn-qc_lrb[Load indexed byte]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisls[`Xqcisls`])
-^ `qc.lrbu rd, rs1, rs2, shamt`
+^ `qc.lrbu xd, xs1, xs2, shamt`
 ^ xref:#udb-insn-qc_lrbu[Load indexed unsigned byte]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisls[`Xqcisls`])
-^ `qc.lrh rd, rs1, rs2, shamt`
+^ `qc.lrh xd, xs1, xs2, shamt`
 ^ xref:#udb-insn-qc_lrh[Load indexed halfword]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisls[`Xqcisls`])
-^ `qc.lrhu rd, rs1, rs2, shamt`
+^ `qc.lrhu xd, xs1, xs2, shamt`
 ^ xref:#udb-insn-qc_lrhu[Load indexed unsigned halfword]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisls[`Xqcisls`])
-^ `qc.lrw rd, rs1, rs2, shamt`
+^ `qc.lrw xd, xs1, xs2, shamt`
 ^ xref:#udb-insn-qc_lrw[Load indexed word]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisls[`Xqcisls`])
-^ `qc.lwm rd, rs2, imm(rs1)`
+^ `qc.lwm xd, xs2, imm(xs1)`
 ^ xref:#udb-insn-qc_lwm[Load word multiple]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilsm[`Xqcilsm`])
-^ `qc.lwmi rd, length, imm(rs1)`
+^ `qc.lwmi xd, length, imm(xs1)`
 ^ xref:#udb-insn-qc_lwmi[Load word multiple (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilsm[`Xqcilsm`])
-^ `qc.muliadd rd, rs1, imm`
+^ `qc.muliadd xd, xs1, imm`
 ^ xref:#udb-insn-qc_muliadd[Multiply and accumulate (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciac[`Xqciac`])
-^ `qc.mveq rd, rs1, rs2, rs3`
+^ `qc.mveq xd, xs1, xs2, xs3`
 ^ xref:#udb-insn-qc_mveq[Conditional move if equal (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mveqi rd, rs1, imm, rs3`
+^ `qc.mveqi xd, xs1, imm, xs3`
 ^ xref:#udb-insn-qc_mveqi[Conditional move if equal (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvge rd, rs1, rs2, rs3`
+^ `qc.mvge xd, xs1, xs2, xs3`
 ^ xref:#udb-insn-qc_mvge[Conditional move if great or equal than (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvgei rd, rs1, imm, rs3`
+^ `qc.mvgei xd, xs1, imm, xs3`
 ^ xref:#udb-insn-qc_mvgei[Conditional move if great or equal than (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvgeu rd, rs1, rs2, rs3`
+^ `qc.mvgeu xd, xs1, xs2, xs3`
 ^ xref:#udb-insn-qc_mvgeu[Conditional move if great or equal than unsigned (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvgeui rd, rs1, imm, rs3`
+^ `qc.mvgeui xd, xs1, imm, xs3`
 ^ xref:#udb-insn-qc_mvgeui[Conditional move if great or equal than unsigned (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvlt rd, rs1, rs2, rs3`
+^ `qc.mvlt xd, xs1, xs2, xs3`
 ^ xref:#udb-insn-qc_mvlt[Conditional move if less than (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvlti rd, rs1, imm, rs3`
+^ `qc.mvlti xd, xs1, imm, xs3`
 ^ xref:#udb-insn-qc_mvlti[Conditional move if less than (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvltu rd, rs1, rs2, rs3`
+^ `qc.mvltu xd, xs1, xs2, xs3`
 ^ xref:#udb-insn-qc_mvltu[Conditional move if less than unsigned (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvltui rd, rs1, imm, rs3`
+^ `qc.mvltui xd, xs1, imm, xs3`
 ^ xref:#udb-insn-qc_mvltui[Conditional move if less than unsigned (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvne rd, rs1, rs2, rs3`
+^ `qc.mvne xd, xs1, xs2, xs3`
 ^ xref:#udb-insn-qc_mvne[Conditional move if not equal (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.mvnei rd, rs1, imm, rs3`
+^ `qc.mvnei xd, xs1, imm, xs3`
 ^ xref:#udb-insn-qc_mvnei[Conditional move if not equal (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcicm[`Xqcicm`])
-^ `qc.norm rd, rs1`
+^ `qc.norm xd, xs1`
 ^ xref:#udb-insn-qc_norm[Signed Normalization]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.normeu rd, rs1`
+^ `qc.normeu xd, xs1`
 ^ xref:#udb-insn-qc_normeu[Unsigned Even Normalization]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.normu rd, rs1`
+^ `qc.normu xd, xs1`
 ^ xref:#udb-insn-qc_normu[Unsigned Normalization]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.outw rs2, imm(rs1)`
+^ `qc.outw xs2, imm(xs1)`
 ^ xref:#udb-insn-qc_outw[Output word to non-memory-mapped device]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciio[`Xqciio`])
 ^ xref:#udb-insn-qc_pcoredump[`qc.pcoredump`]
 ^ xref:#udb-insn-qc_pcoredump[Print core dump pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
-^ `qc.pexit rs1`
+^ `qc.pexit xs1`
 ^ xref:#udb-insn-qc_pexit[Exit call with register argument pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
-^ `qc.ppreg rs1`
+^ `qc.ppreg xs1`
 ^ xref:#udb-insn-qc_ppreg[Print register pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
 ^ xref:#udb-insn-qc_ppregs[`qc.ppregs`]
 ^ xref:#udb-insn-qc_ppregs[Print all registers pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
-^ `qc.pputc rs1`
+^ `qc.pputc xs1`
 ^ xref:#udb-insn-qc_pputc[Print character passed in register argument pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
 ^ `qc.pputci imm`
 ^ xref:#udb-insn-qc_pputci[Print character passed in the immediate argument pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
-^ `qc.pputs rs1`
+^ `qc.pputs xs1`
 ^ xref:#udb-insn-qc_pputs[Print string pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
-^ `qc.psyscall rs1`
+^ `qc.psyscall xs1`
 ^ xref:#udb-insn-qc_psyscall[System call with register argument pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
 ^ `qc.psyscalli imm`
 ^ xref:#udb-insn-qc_psyscalli[System call with immediate argument pseudo-instruction (hint) working only in simulation environment]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisim[`Xqcisim`])
-^ `qc.selecteqi rd, imm, rs2, rs3`
+^ `qc.selecteqi xd, imm, xs2, xs3`
 ^ xref:#udb-insn-qc_selecteqi[Select load immediate or register if equal (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcics[`Xqcics`])
-^ `qc.selectieq rd, rs1, rs2, simm2`
+^ `qc.selectieq xd, xs1, xs2, simm2`
 ^ xref:#udb-insn-qc_selectieq[Select load immediate or register if equal (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcics[`Xqcics`])
-^ `qc.selectieqi rd, imm, rs2, simm2`
+^ `qc.selectieqi xd, imm, xs2, simm2`
 ^ xref:#udb-insn-qc_selectieqi[Select load immediate or register if equal (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcics[`Xqcics`])
-^ `qc.selectiieq rd, rs1, simm1, simm2`
+^ `qc.selectiieq xd, xs1, simm1, simm2`
 ^ xref:#udb-insn-qc_selectiieq[Select load immediate if equal (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcics[`Xqcics`])
-^ `qc.selectiine rd, rs1, simm1, simm2`
+^ `qc.selectiine xd, xs1, simm1, simm2`
 ^ xref:#udb-insn-qc_selectiine[Select load immediate if not equal (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcics[`Xqcics`])
-^ `qc.selectine rd, rs1, rs2, simm2`
+^ `qc.selectine xd, xs1, xs2, simm2`
 ^ xref:#udb-insn-qc_selectine[Select load immediate or register if not equal (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcics[`Xqcics`])
-^ `qc.selectinei rd, imm, rs2, simm2`
+^ `qc.selectinei xd, imm, xs2, simm2`
 ^ xref:#udb-insn-qc_selectinei[Select load immediate or register if not equal (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcics[`Xqcics`])
-^ `qc.selectnei rd, imm, rs2, rs3`
+^ `qc.selectnei xd, imm, xs2, xs3`
 ^ xref:#udb-insn-qc_selectnei[Select load immediate or register if not equal (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcics[`Xqcics`])
 ^ `qc.setinti imm`
 ^ xref:#udb-insn-qc_setinti[Set interrupt (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
-^ `qc.setwm rs3, rs2, imm(rs1)`
+^ `qc.setwm xs3, xs2, imm(xs1)`
 ^ xref:#udb-insn-qc_setwm[Set word multiple (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilsm[`Xqcilsm`])
-^ `qc.setwmi rs3, length, imm(rs1)`
+^ `qc.setwmi xs3, length, imm(xs1)`
 ^ xref:#udb-insn-qc_setwmi[Set word multiple (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilsm[`Xqcilsm`])
-^ `qc.shladd rd, rs1, rs2, shamt`
+^ `qc.shladd xd, xs1, xs2, shamt`
 ^ xref:#udb-insn-qc_shladd[Shift left and add (immediate)]
 a^ ++(++xlen+++()+++ == 32 && ++(++xref:#udb-extension-Xqci[`Xqci`] pass:[||] xref:#udb-extension-Xqciac[`Xqciac`]))
-^ `qc.shlsat rd, rs1, rs2`
+^ `qc.shlsat xd, xs1, xs2`
 ^ xref:#udb-insn-qc_shlsat[Saturating signed left shift]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.shlusat rd, rs1, rs2`
+^ `qc.shlusat xd, xs1, xs2`
 ^ xref:#udb-insn-qc_shlusat[Saturating unsigned left shift]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.srb rs3, rs1, rs2, shamt`
+^ `qc.srb xs3, xs1, xs2, shamt`
 ^ xref:#udb-insn-qc_srb[Store indexed byte]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisls[`Xqcisls`])
-^ `qc.srh rs3, rs1, rs2, shamt`
+^ `qc.srh xs3, xs1, xs2, shamt`
 ^ xref:#udb-insn-qc_srh[Store indexed halfword]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisls[`Xqcisls`])
-^ `qc.srw rs3, rs1, rs2, shamt`
+^ `qc.srw xs3, xs1, xs2, shamt`
 ^ xref:#udb-insn-qc_srw[Store indexed word]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisls[`Xqcisls`])
-^ `qc.subsat rd, rs1, rs2`
+^ `qc.subsat xd, xs1, xs2`
 ^ xref:#udb-insn-qc_subsat[Saturating signed subtraction]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.subusat rd, rs1, rs2`
+^ `qc.subusat xd, xs1, xs2`
 ^ xref:#udb-insn-qc_subusat[Saturating unsigned subtraction]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.swm rs3, rs2, imm(rs1)`
+^ `qc.swm xs3, xs2, imm(xs1)`
 ^ xref:#udb-insn-qc_swm[Store word multiple]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilsm[`Xqcilsm`])
-^ `qc.swmi rs3, length, imm(rs1)`
+^ `qc.swmi xs3, length, imm(xs1)`
 ^ xref:#udb-insn-qc_swmi[Store word multiple (immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcilsm[`Xqcilsm`])
 ^ `qc.sync imm`
@@ -2311,10 +2311,10 @@ a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisync[`Xqcisync`])
 ^ `qc.syncwl imm`
 ^ xref:#udb-insn-qc_syncwl[Non-memory-mapped device write-after-read synchronization to completion]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisync[`Xqcisync`])
-^ `qc.wrap rd, rs1, rs2`
+^ `qc.wrap xd, xs1, xs2`
 ^ xref:#udb-insn-qc_wrap[Wraparound (Register)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
-^ `qc.wrapi rd, rs1, imm`
+^ `qc.wrapi xd, xs1, imm`
 ^ xref:#udb-insn-qc_wrapi[Wraparound (Unsigned Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcia[`Xqcia`])
 |===
@@ -2385,11 +2385,11 @@ The following 2 instructions must be implemented when Xqciio is implemented:
 | RV32 | RV64 | Mnemonic | Instruction 
 | &#x2713;
 | 
-| `qc.inw rd, imm(rs1)`
+| `qc.inw xd, imm(xs1)`
 | xref:#udb-insn-qc_inw[Input word from non-memory-mapped device]
 | &#x2713;
 | 
-| `qc.outw rs2, imm(rs1)`
+| `qc.outw xs2, imm(xs1)`
 | xref:#udb-insn-qc_outw[Output word to non-memory-mapped device]
 |===
 
@@ -25645,7 +25645,7 @@ Saturating signed addition
 
 Mnemonic::
 ----
-qc.addsat rd, rs1, rs2
+qc.addsat xd, xs1, xs2
 ----
 
 Encoding::
@@ -25737,7 +25737,7 @@ Saturating unsigned addition
 
 Mnemonic::
 ----
-qc.addusat rd, rs1, rs2
+qc.addusat xd, xs1, xs2
 ----
 
 Encoding::
@@ -25823,7 +25823,7 @@ Branch on equal (Immediate)
 
 Mnemonic::
 ----
-qc.beqi rs1, imm, offset
+qc.beqi xs1, imm, offset
 ----
 
 Encoding::
@@ -25905,7 +25905,7 @@ Branch on greater than or equal (immediate)
 
 Mnemonic::
 ----
-qc.bgei rs1, imm, offset
+qc.bgei xs1, imm, offset
 ----
 
 Encoding::
@@ -25987,7 +25987,7 @@ Branch on greater than or equal unsigned (immediate)
 
 Mnemonic::
 ----
-qc.bgeui rs1, imm, offset
+qc.bgeui xs1, imm, offset
 ----
 
 Encoding::
@@ -26069,7 +26069,7 @@ Branch on less than (immediate)
 
 Mnemonic::
 ----
-qc.blti rs1, imm, offset
+qc.blti xs1, imm, offset
 ----
 
 Encoding::
@@ -26151,7 +26151,7 @@ Branch on less than unsigned (immediate)
 
 Mnemonic::
 ----
-qc.bltui rs1, imm, offset
+qc.bltui xs1, imm, offset
 ----
 
 Encoding::
@@ -26233,7 +26233,7 @@ Branch on not equal (immediate)
 
 Mnemonic::
 ----
-qc.bnei rs1, imm, offset
+qc.bnei xs1, imm, offset
 ----
 
 Encoding::
@@ -26315,7 +26315,7 @@ Reverse bit order
 
 Mnemonic::
 ----
-qc.brev32 rd, rs1
+qc.brev32 xd, xs1
 ----
 
 Encoding::
@@ -26399,7 +26399,7 @@ Single-Bit extract (Immediate)
 
 Mnemonic::
 ----
-qc.c.bexti rd, shamt
+qc.c.bexti xd, shamt
 ----
 
 Encoding::
@@ -26481,7 +26481,7 @@ Single-Bit set (Immediate)
 
 Mnemonic::
 ----
-qc.c.bseti rd, shamt
+qc.c.bseti xd, shamt
 ----
 
 Encoding::
@@ -26563,7 +26563,7 @@ Clear interrupt (Register)
 
 Mnemonic::
 ----
-qc.c.clrint rs1
+qc.c.clrint xs1
 ----
 
 Encoding::
@@ -26803,7 +26803,7 @@ Disable interrupts (Register)
 
 Mnemonic::
 ----
-qc.c.dir rd
+qc.c.dir xd
 ----
 
 Encoding::
@@ -26966,7 +26966,7 @@ Restore interrupts (Register)
 
 Mnemonic::
 ----
-qc.c.eir rs1
+qc.c.eir xs1
 ----
 
 Encoding::
@@ -27048,7 +27048,7 @@ Extract bits unsigned
 
 Mnemonic::
 ----
-qc.c.extu rd, width
+qc.c.extu xd, width
 ----
 
 Encoding::
@@ -27700,7 +27700,7 @@ Multiply and accumulate (Immediate)
 
 Mnemonic::
 ----
-qc.c.muliadd rd, rs1, uimm
+qc.c.muliadd xd, xs1, uimm
 ----
 
 Encoding::
@@ -27783,7 +27783,7 @@ Conditional Move if equal to zero
 
 Mnemonic::
 ----
-qc.c.mveqz rd, rs1
+qc.c.mveqz xd, xs1
 ----
 
 Encoding::
@@ -27946,7 +27946,7 @@ Set interrupt (Register)
 
 Mnemonic::
 ----
-qc.c.setint rs1
+qc.c.setint xs1
 ----
 
 Encoding::
@@ -28404,7 +28404,7 @@ Count leading ones
 
 Mnemonic::
 ----
-qc.clo rd, rs1
+qc.clo xd, xs1
 ----
 
 Encoding::
@@ -28487,7 +28487,7 @@ Clear interrupt (Immediate)
 
 Mnemonic::
 ----
-qc.clrinti rs1
+qc.clrinti xs1
 ----
 
 Encoding::
@@ -28569,7 +28569,7 @@ Bit compression (every 2nd bit)
 
 Mnemonic::
 ----
-qc.compress2 rd, rs1
+qc.compress2 xd, xs1
 ----
 
 Encoding::
@@ -28651,7 +28651,7 @@ Bit compression (every 3rd bit)
 
 Mnemonic::
 ----
-qc.compress3 rd, rs1
+qc.compress3 xd, xs1
 ----
 
 Encoding::
@@ -28733,7 +28733,7 @@ Atomic Read/Write CSR (Register)
 
 Mnemonic::
 ----
-qc.csrrwr rd, rs1, rs2
+qc.csrrwr xd, xs1, xs2
 ----
 
 Encoding::
@@ -28828,7 +28828,7 @@ Atomic Read/Write CSR (Register) Immediate
 
 Mnemonic::
 ----
-qc.csrrwri rd, imm, rs2
+qc.csrrwri xd, imm, xs2
 ----
 
 Encoding::
@@ -28919,7 +28919,7 @@ Count trailing ones
 
 Mnemonic::
 ----
-qc.cto rd, rs1
+qc.cto xd, xs1
 ----
 
 Encoding::
@@ -29002,7 +29002,7 @@ Add immediate
 
 Mnemonic::
 ----
-qc.e.addai rd, imm
+qc.e.addai xd, imm
 ----
 
 Encoding::
@@ -29081,7 +29081,7 @@ Add immediate
 
 Mnemonic::
 ----
-qc.e.addi rd, rs1, imm
+qc.e.addi xd, xs1, imm
 ----
 
 Encoding::
@@ -29162,7 +29162,7 @@ And immediate
 
 Mnemonic::
 ----
-qc.e.andai rd, imm
+qc.e.andai xd, imm
 ----
 
 Encoding::
@@ -29241,7 +29241,7 @@ Add immediate
 
 Mnemonic::
 ----
-qc.e.andi rd, rs1, imm
+qc.e.andi xd, xs1, imm
 ----
 
 Encoding::
@@ -29322,7 +29322,7 @@ Branch on equal (immediate)
 
 Mnemonic::
 ----
-qc.e.beqi rs1, imm, offset
+qc.e.beqi xs1, imm, offset
 ----
 
 Encoding::
@@ -29404,7 +29404,7 @@ Branch on greater than or equal (immediate)
 
 Mnemonic::
 ----
-qc.e.bgei rs1, imm, offset
+qc.e.bgei xs1, imm, offset
 ----
 
 Encoding::
@@ -29486,7 +29486,7 @@ Branch on greater than or equal unsigned (immediate)
 
 Mnemonic::
 ----
-qc.e.bgeui rs1, imm, offset
+qc.e.bgeui xs1, imm, offset
 ----
 
 Encoding::
@@ -29568,7 +29568,7 @@ Branch on less than (immediate)
 
 Mnemonic::
 ----
-qc.e.blti rs1, imm, offset
+qc.e.blti xs1, imm, offset
 ----
 
 Encoding::
@@ -29650,7 +29650,7 @@ Branch on less than unsigned (immediate)
 
 Mnemonic::
 ----
-qc.e.bltui rs1, imm, offset
+qc.e.bltui xs1, imm, offset
 ----
 
 Encoding::
@@ -29732,7 +29732,7 @@ Branch on not equal (immediate)
 
 Mnemonic::
 ----
-qc.e.bnei rs1, imm, offset
+qc.e.bnei xs1, imm, offset
 ----
 
 Encoding::
@@ -29973,7 +29973,7 @@ Load byte
 
 Mnemonic::
 ----
-qc.e.lb rd, imm(rs1)
+qc.e.lb xd, imm(xs1)
 ----
 
 Encoding::
@@ -30056,7 +30056,7 @@ Load byte unsigned
 
 Mnemonic::
 ----
-qc.e.lbu rd, imm(rs1)
+qc.e.lbu xd, imm(xs1)
 ----
 
 Encoding::
@@ -30139,7 +30139,7 @@ Load halfword
 
 Mnemonic::
 ----
-qc.e.lh rd, imm(rs1)
+qc.e.lh xd, imm(xs1)
 ----
 
 Encoding::
@@ -30222,7 +30222,7 @@ Load halfword unsigned
 
 Mnemonic::
 ----
-qc.e.lhu rd, imm(rs1)
+qc.e.lhu xd, imm(xs1)
 ----
 
 Encoding::
@@ -30305,7 +30305,7 @@ Load immediate large
 
 Mnemonic::
 ----
-qc.e.li rd, imm
+qc.e.li xd, imm
 ----
 
 Encoding::
@@ -30384,7 +30384,7 @@ Load word
 
 Mnemonic::
 ----
-qc.e.lw rd, imm(rs1)
+qc.e.lw xd, imm(xs1)
 ----
 
 Encoding::
@@ -30467,7 +30467,7 @@ Or immediate
 
 Mnemonic::
 ----
-qc.e.orai rd, imm
+qc.e.orai xd, imm
 ----
 
 Encoding::
@@ -30546,7 +30546,7 @@ Or immediate
 
 Mnemonic::
 ----
-qc.e.ori rd, rs1, imm
+qc.e.ori xd, xs1, imm
 ----
 
 Encoding::
@@ -30627,7 +30627,7 @@ Store byte
 
 Mnemonic::
 ----
-qc.e.sb rs2, imm(rs1)
+qc.e.sb xs2, imm(xs1)
 ----
 
 Encoding::
@@ -30709,7 +30709,7 @@ Store halfword
 
 Mnemonic::
 ----
-qc.e.sh rs2, imm(rs1)
+qc.e.sh xs2, imm(xs1)
 ----
 
 Encoding::
@@ -30791,7 +30791,7 @@ Store word
 
 Mnemonic::
 ----
-qc.e.sw rs2, imm(rs1)
+qc.e.sw xs2, imm(xs1)
 ----
 
 Encoding::
@@ -30873,7 +30873,7 @@ Exclusive Or immediate
 
 Mnemonic::
 ----
-qc.e.xorai rd, imm
+qc.e.xorai xd, imm
 ----
 
 Encoding::
@@ -30952,7 +30952,7 @@ Exclusive Or immediate
 
 Mnemonic::
 ----
-qc.e.xori rd, rs1, imm
+qc.e.xori xd, xs1, imm
 ----
 
 Encoding::
@@ -31033,7 +31033,7 @@ Bit expansion (every 2nd bit)
 
 Mnemonic::
 ----
-qc.expand2 rd, rs1
+qc.expand2 xd, xs1
 ----
 
 Encoding::
@@ -31117,7 +31117,7 @@ Bit expansion (every 3rd bit)
 
 Mnemonic::
 ----
-qc.expand3 rd, rs1
+qc.expand3 xd, xs1
 ----
 
 Encoding::
@@ -31201,7 +31201,7 @@ Extract bits signed
 
 Mnemonic::
 ----
-qc.ext rd, rs1, width, shamt
+qc.ext xd, xs1, width, shamt
 ----
 
 Encoding::
@@ -31286,7 +31286,7 @@ Extract bits from pair signed (Immediate)
 
 Mnemonic::
 ----
-qc.extd rd, rs1, width, shamt
+qc.extd xd, xs1, width, shamt
 ----
 
 Encoding::
@@ -31371,7 +31371,7 @@ Extract bits from pair signed, packed descriptor (Register)
 
 Mnemonic::
 ----
-qc.extdpr rd, rs1, rs2
+qc.extdpr xd, xs1, xs2
 ----
 
 Encoding::
@@ -31463,7 +31463,7 @@ Extract bits from pair signed, packed descriptor high part (Register)
 
 Mnemonic::
 ----
-qc.extdprh rd, rs1, rs2
+qc.extdprh xd, xs1, xs2
 ----
 
 Encoding::
@@ -31555,7 +31555,7 @@ Extract bits from pair signed (Register)
 
 Mnemonic::
 ----
-qc.extdr rd, rs1, rs2
+qc.extdr xd, xs1, xs2
 ----
 
 Encoding::
@@ -31647,7 +31647,7 @@ Extract bits from pair unsigned (Immediate)
 
 Mnemonic::
 ----
-qc.extdu rd, rs1, width, shamt
+qc.extdu xd, xs1, width, shamt
 ----
 
 Encoding::
@@ -31732,7 +31732,7 @@ Extract bits from pair unsigned, packed descriptor (Register)
 
 Mnemonic::
 ----
-qc.extdupr rd, rs1, rs2
+qc.extdupr xd, xs1, xs2
 ----
 
 Encoding::
@@ -31824,7 +31824,7 @@ Extract bits from pair unsigned, packed descriptor high part (Register)
 
 Mnemonic::
 ----
-qc.extduprh rd, rs1, rs2
+qc.extduprh xd, xs1, xs2
 ----
 
 Encoding::
@@ -31916,7 +31916,7 @@ Extract bits from pair unsigned (Register)
 
 Mnemonic::
 ----
-qc.extdur rd, rs1, rs2
+qc.extdur xd, xs1, xs2
 ----
 
 Encoding::
@@ -32008,7 +32008,7 @@ Extract bits unsigned
 
 Mnemonic::
 ----
-qc.extu rd, rs1, width, shamt
+qc.extu xd, xs1, width, shamt
 ----
 
 Encoding::
@@ -32092,7 +32092,7 @@ Insert bits (Register)
 
 Mnemonic::
 ----
-qc.insb rd, rs1, width, shamt
+qc.insb xd, xs1, width, shamt
 ----
 
 Encoding::
@@ -32178,7 +32178,7 @@ Insert bits in 64-bit higher part (Register)
 
 Mnemonic::
 ----
-qc.insbh rd, rs1, width, shamt
+qc.insbh xd, xs1, width, shamt
 ----
 
 Encoding::
@@ -32273,7 +32273,7 @@ Insert bits in 64-bit higher part (Register)
 
 Mnemonic::
 ----
-qc.insbhr rd, rs1, rs2
+qc.insbhr xd, xs1, xs2
 ----
 
 Encoding::
@@ -32370,7 +32370,7 @@ Insert bits (Immediate)
 
 Mnemonic::
 ----
-qc.insbi rd, imm, width, shamt
+qc.insbi xd, imm, width, shamt
 ----
 
 Encoding::
@@ -32457,7 +32457,7 @@ Insert bits, packed descriptor (Register)
 
 Mnemonic::
 ----
-qc.insbpr rd, rs1, rs2
+qc.insbpr xd, xs1, xs2
 ----
 
 Encoding::
@@ -32548,7 +32548,7 @@ Insert bits, packed descriptor high part (Register)
 
 Mnemonic::
 ----
-qc.insbprh rd, rs1, rs2
+qc.insbprh xd, xs1, xs2
 ----
 
 Encoding::
@@ -32639,7 +32639,7 @@ Insert bits (Register)
 
 Mnemonic::
 ----
-qc.insbr rd, rs1, rs2
+qc.insbr xd, xs1, xs2
 ----
 
 Encoding::
@@ -32730,7 +32730,7 @@ Insert bits (Immediate)
 
 Mnemonic::
 ----
-qc.insbri rd, rs1, imm
+qc.insbri xd, xs1, imm
 ----
 
 Encoding::
@@ -32822,7 +32822,7 @@ Input word from non-memory-mapped device
 
 Mnemonic::
 ----
-qc.inw rd, imm(rs1)
+qc.inw xd, imm(xs1)
 ----
 
 Encoding::
@@ -32905,7 +32905,7 @@ Load immediate large
 
 Mnemonic::
 ----
-qc.li rd, imm
+qc.li xd, imm
 ----
 
 Encoding::
@@ -32984,7 +32984,7 @@ Conditional load immediate if equal (Register)
 
 Mnemonic::
 ----
-qc.lieq rd, rs1, rs2, simm
+qc.lieq xd, xs1, xs2, simm
 ----
 
 Encoding::
@@ -33067,7 +33067,7 @@ Conditional load immediate if equal (Immediate)
 
 Mnemonic::
 ----
-qc.lieqi rd, rs1, imm, simm
+qc.lieqi xd, xs1, imm, simm
 ----
 
 Encoding::
@@ -33150,7 +33150,7 @@ Conditional load immediate if great or equal than (Register)
 
 Mnemonic::
 ----
-qc.lige rd, rs1, rs2, simm
+qc.lige xd, xs1, xs2, simm
 ----
 
 Encoding::
@@ -33233,7 +33233,7 @@ Conditional load immediate if great or equal than (Immediate)
 
 Mnemonic::
 ----
-qc.ligei rd, rs1, imm, simm
+qc.ligei xd, xs1, imm, simm
 ----
 
 Encoding::
@@ -33316,7 +33316,7 @@ Conditional load immediate if great or equal than unsigned (Register)
 
 Mnemonic::
 ----
-qc.ligeu rd, rs1, rs2, simm
+qc.ligeu xd, xs1, xs2, simm
 ----
 
 Encoding::
@@ -33399,7 +33399,7 @@ Conditional load immediate if great or equal than unsigned (Immediate)
 
 Mnemonic::
 ----
-qc.ligeui rd, rs1, imm, simm
+qc.ligeui xd, xs1, imm, simm
 ----
 
 Encoding::
@@ -33482,7 +33482,7 @@ Conditional load immediate if less than (Register)
 
 Mnemonic::
 ----
-qc.lilt rd, rs1, rs2, simm
+qc.lilt xd, xs1, xs2, simm
 ----
 
 Encoding::
@@ -33565,7 +33565,7 @@ Conditional load immediate if less than (Immediate)
 
 Mnemonic::
 ----
-qc.lilti rd, rs1, imm, simm
+qc.lilti xd, xs1, imm, simm
 ----
 
 Encoding::
@@ -33648,7 +33648,7 @@ Conditional load immediate if less than unsigned (Register)
 
 Mnemonic::
 ----
-qc.liltu rd, rs1, rs2, simm
+qc.liltu xd, xs1, xs2, simm
 ----
 
 Encoding::
@@ -33731,7 +33731,7 @@ Conditional load immediate if less than unsigned (Immediate)
 
 Mnemonic::
 ----
-qc.liltui rd, rs1, imm, simm
+qc.liltui xd, xs1, imm, simm
 ----
 
 Encoding::
@@ -33814,7 +33814,7 @@ Conditional load immediate if not equal (Register)
 
 Mnemonic::
 ----
-qc.line rd, rs1, rs2, simm
+qc.line xd, xs1, xs2, simm
 ----
 
 Encoding::
@@ -33897,7 +33897,7 @@ Conditional load immediate if not equal (Immediate)
 
 Mnemonic::
 ----
-qc.linei rd, rs1, imm, simm
+qc.linei xd, xs1, imm, simm
 ----
 
 Encoding::
@@ -33980,7 +33980,7 @@ Load indexed byte
 
 Mnemonic::
 ----
-qc.lrb rd, rs1, rs2, shamt
+qc.lrb xd, xs1, xs2, shamt
 ----
 
 Encoding::
@@ -34064,7 +34064,7 @@ Load indexed unsigned byte
 
 Mnemonic::
 ----
-qc.lrbu rd, rs1, rs2, shamt
+qc.lrbu xd, xs1, xs2, shamt
 ----
 
 Encoding::
@@ -34147,7 +34147,7 @@ Load indexed halfword
 
 Mnemonic::
 ----
-qc.lrh rd, rs1, rs2, shamt
+qc.lrh xd, xs1, xs2, shamt
 ----
 
 Encoding::
@@ -34231,7 +34231,7 @@ Load indexed unsigned halfword
 
 Mnemonic::
 ----
-qc.lrhu rd, rs1, rs2, shamt
+qc.lrhu xd, xs1, xs2, shamt
 ----
 
 Encoding::
@@ -34314,7 +34314,7 @@ Load indexed word
 
 Mnemonic::
 ----
-qc.lrw rd, rs1, rs2, shamt
+qc.lrw xd, xs1, xs2, shamt
 ----
 
 Encoding::
@@ -34397,7 +34397,7 @@ Load word multiple
 
 Mnemonic::
 ----
-qc.lwm rd, rs2, imm(rs1)
+qc.lwm xd, xs2, imm(xs1)
 ----
 
 Encoding::
@@ -34485,7 +34485,7 @@ Load word multiple (Immediate)
 
 Mnemonic::
 ----
-qc.lwmi rd, length, imm(rs1)
+qc.lwmi xd, length, imm(xs1)
 ----
 
 Encoding::
@@ -34572,7 +34572,7 @@ Multiply and accumulate (Immediate)
 
 Mnemonic::
 ----
-qc.muliadd rd, rs1, imm
+qc.muliadd xd, xs1, imm
 ----
 
 Encoding::
@@ -34653,7 +34653,7 @@ Conditional move if equal (Register)
 
 Mnemonic::
 ----
-qc.mveq rd, rs1, rs2, rs3
+qc.mveq xd, xs1, xs2, xs3
 ----
 
 Encoding::
@@ -34736,7 +34736,7 @@ Conditional move if equal (Immediate)
 
 Mnemonic::
 ----
-qc.mveqi rd, rs1, imm, rs3
+qc.mveqi xd, xs1, imm, xs3
 ----
 
 Encoding::
@@ -34819,7 +34819,7 @@ Conditional move if great or equal than (Register)
 
 Mnemonic::
 ----
-qc.mvge rd, rs1, rs2, rs3
+qc.mvge xd, xs1, xs2, xs3
 ----
 
 Encoding::
@@ -34902,7 +34902,7 @@ Conditional move if great or equal than (Immediate)
 
 Mnemonic::
 ----
-qc.mvgei rd, rs1, imm, rs3
+qc.mvgei xd, xs1, imm, xs3
 ----
 
 Encoding::
@@ -34985,7 +34985,7 @@ Conditional move if great or equal than unsigned (Register)
 
 Mnemonic::
 ----
-qc.mvgeu rd, rs1, rs2, rs3
+qc.mvgeu xd, xs1, xs2, xs3
 ----
 
 Encoding::
@@ -35068,7 +35068,7 @@ Conditional move if great or equal than unsigned (Immediate)
 
 Mnemonic::
 ----
-qc.mvgeui rd, rs1, imm, rs3
+qc.mvgeui xd, xs1, imm, xs3
 ----
 
 Encoding::
@@ -35151,7 +35151,7 @@ Conditional move if less than (Register)
 
 Mnemonic::
 ----
-qc.mvlt rd, rs1, rs2, rs3
+qc.mvlt xd, xs1, xs2, xs3
 ----
 
 Encoding::
@@ -35234,7 +35234,7 @@ Conditional move if less than (Immediate)
 
 Mnemonic::
 ----
-qc.mvlti rd, rs1, imm, rs3
+qc.mvlti xd, xs1, imm, xs3
 ----
 
 Encoding::
@@ -35317,7 +35317,7 @@ Conditional move if less than unsigned (Register)
 
 Mnemonic::
 ----
-qc.mvltu rd, rs1, rs2, rs3
+qc.mvltu xd, xs1, xs2, xs3
 ----
 
 Encoding::
@@ -35400,7 +35400,7 @@ Conditional move if less than unsigned (Immediate)
 
 Mnemonic::
 ----
-qc.mvltui rd, rs1, imm, rs3
+qc.mvltui xd, xs1, imm, xs3
 ----
 
 Encoding::
@@ -35483,7 +35483,7 @@ Conditional move if not equal (Register)
 
 Mnemonic::
 ----
-qc.mvne rd, rs1, rs2, rs3
+qc.mvne xd, xs1, xs2, xs3
 ----
 
 Encoding::
@@ -35566,7 +35566,7 @@ Conditional move if not equal (Immediate)
 
 Mnemonic::
 ----
-qc.mvnei rd, rs1, imm, rs3
+qc.mvnei xd, xs1, imm, xs3
 ----
 
 Encoding::
@@ -35649,7 +35649,7 @@ Signed Normalization
 
 Mnemonic::
 ----
-qc.norm rd, rs1
+qc.norm xd, xs1
 ----
 
 Encoding::
@@ -35735,7 +35735,7 @@ Unsigned Even Normalization
 
 Mnemonic::
 ----
-qc.normeu rd, rs1
+qc.normeu xd, xs1
 ----
 
 Encoding::
@@ -35820,7 +35820,7 @@ Unsigned Normalization
 
 Mnemonic::
 ----
-qc.normu rd, rs1
+qc.normu xd, xs1
 ----
 
 Encoding::
@@ -35905,7 +35905,7 @@ Output word to non-memory-mapped device
 
 Mnemonic::
 ----
-qc.outw rs2, imm(rs1)
+qc.outw xs2, imm(xs1)
 ----
 
 Encoding::
@@ -36070,7 +36070,7 @@ Exit call with register argument pseudo-instruction (hint) working only in simul
 
 Mnemonic::
 ----
-qc.pexit rs1
+qc.pexit xs1
 ----
 
 Encoding::
@@ -36151,7 +36151,7 @@ Print register pseudo-instruction (hint) working only in simulation environment
 
 Mnemonic::
 ----
-qc.ppreg rs1
+qc.ppreg xs1
 ----
 
 Encoding::
@@ -36313,7 +36313,7 @@ Print character passed in register argument pseudo-instruction (hint) working on
 
 Mnemonic::
 ----
-qc.pputc rs1
+qc.pputc xs1
 ----
 
 Encoding::
@@ -36475,7 +36475,7 @@ Print string pseudo-instruction (hint) working only in simulation environment
 
 Mnemonic::
 ----
-qc.pputs rs1
+qc.pputs xs1
 ----
 
 Encoding::
@@ -36557,7 +36557,7 @@ System call with register argument pseudo-instruction (hint) working only in sim
 
 Mnemonic::
 ----
-qc.psyscall rs1
+qc.psyscall xs1
 ----
 
 Encoding::
@@ -36721,7 +36721,7 @@ Select load immediate or register if equal (Immediate)
 
 Mnemonic::
 ----
-qc.selecteqi rd, imm, rs2, rs3
+qc.selecteqi xd, imm, xs2, xs3
 ----
 
 Encoding::
@@ -36807,7 +36807,7 @@ Select load immediate or register if equal (Register)
 
 Mnemonic::
 ----
-qc.selectieq rd, rs1, rs2, simm2
+qc.selectieq xd, xs1, xs2, simm2
 ----
 
 Encoding::
@@ -36893,7 +36893,7 @@ Select load immediate or register if equal (Immediate)
 
 Mnemonic::
 ----
-qc.selectieqi rd, imm, rs2, simm2
+qc.selectieqi xd, imm, xs2, simm2
 ----
 
 Encoding::
@@ -36979,7 +36979,7 @@ Select load immediate if equal (Register)
 
 Mnemonic::
 ----
-qc.selectiieq rd, rs1, simm1, simm2
+qc.selectiieq xd, xs1, simm1, simm2
 ----
 
 Encoding::
@@ -37065,7 +37065,7 @@ Select load immediate if not equal (Register)
 
 Mnemonic::
 ----
-qc.selectiine rd, rs1, simm1, simm2
+qc.selectiine xd, xs1, simm1, simm2
 ----
 
 Encoding::
@@ -37151,7 +37151,7 @@ Select load immediate or register if not equal (Register)
 
 Mnemonic::
 ----
-qc.selectine rd, rs1, rs2, simm2
+qc.selectine xd, xs1, xs2, simm2
 ----
 
 Encoding::
@@ -37237,7 +37237,7 @@ Select load immediate or register if not equal (Immediate)
 
 Mnemonic::
 ----
-qc.selectinei rd, imm, rs2, simm2
+qc.selectinei xd, imm, xs2, simm2
 ----
 
 Encoding::
@@ -37323,7 +37323,7 @@ Select load immediate or register if not equal (Immediate)
 
 Mnemonic::
 ----
-qc.selectnei rd, imm, rs2, rs3
+qc.selectnei xd, imm, xs2, xs3
 ----
 
 Encoding::
@@ -37491,7 +37491,7 @@ Set word multiple (Register)
 
 Mnemonic::
 ----
-qc.setwm rs3, rs2, imm(rs1)
+qc.setwm xs3, xs2, imm(xs1)
 ----
 
 Encoding::
@@ -37579,7 +37579,7 @@ Set word multiple (Immediate)
 
 Mnemonic::
 ----
-qc.setwmi rs3, length, imm(rs1)
+qc.setwmi xs3, length, imm(xs1)
 ----
 
 Encoding::
@@ -37666,7 +37666,7 @@ Shift left and add (immediate)
 
 Mnemonic::
 ----
-qc.shladd rd, rs1, rs2, shamt
+qc.shladd xd, xs1, xs2, shamt
 ----
 
 Encoding::
@@ -37747,7 +37747,7 @@ Saturating signed left shift
 
 Mnemonic::
 ----
-qc.shlsat rd, rs1, rs2
+qc.shlsat xd, xs1, xs2
 ----
 
 Encoding::
@@ -37837,7 +37837,7 @@ Saturating unsigned left shift
 
 Mnemonic::
 ----
-qc.shlusat rd, rs1, rs2
+qc.shlusat xd, xs1, xs2
 ----
 
 Encoding::
@@ -37924,7 +37924,7 @@ Store indexed byte
 
 Mnemonic::
 ----
-qc.srb rs3, rs1, rs2, shamt
+qc.srb xs3, xs1, xs2, shamt
 ----
 
 Encoding::
@@ -38007,7 +38007,7 @@ Store indexed halfword
 
 Mnemonic::
 ----
-qc.srh rs3, rs1, rs2, shamt
+qc.srh xs3, xs1, xs2, shamt
 ----
 
 Encoding::
@@ -38090,7 +38090,7 @@ Store indexed word
 
 Mnemonic::
 ----
-qc.srw rs3, rs1, rs2, shamt
+qc.srw xs3, xs1, xs2, shamt
 ----
 
 Encoding::
@@ -38173,7 +38173,7 @@ Saturating signed subtraction
 
 Mnemonic::
 ----
-qc.subsat rd, rs1, rs2
+qc.subsat xd, xs1, xs2
 ----
 
 Encoding::
@@ -38265,7 +38265,7 @@ Saturating unsigned subtraction
 
 Mnemonic::
 ----
-qc.subusat rd, rs1, rs2
+qc.subusat xd, xs1, xs2
 ----
 
 Encoding::
@@ -38345,7 +38345,7 @@ Store word multiple
 
 Mnemonic::
 ----
-qc.swm rs3, rs2, imm(rs1)
+qc.swm xs3, xs2, imm(xs1)
 ----
 
 Encoding::
@@ -38433,7 +38433,7 @@ Store word multiple (immediate)
 
 Mnemonic::
 ----
-qc.swmi rs3, length, imm(rs1)
+qc.swmi xs3, length, imm(xs1)
 ----
 
 Encoding::
@@ -38848,7 +38848,7 @@ Wraparound (Register)
 
 Mnemonic::
 ----
-qc.wrap rd, rs1, rs2
+qc.wrap xd, xs1, xs2
 ----
 
 Encoding::
@@ -38931,7 +38931,7 @@ Wraparound (Unsigned Immediate)
 
 Mnemonic::
 ----
-qc.wrapi rd, rs1, imm
+qc.wrapi xd, xs1, imm
 ----
 
 Encoding::

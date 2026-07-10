@@ -937,7 +937,7 @@ The file `globals.idl` is implicitly treated as the top-level source file. Other
 
 === Instruction definitions
 
-Instruction definitions in `arch/inst` use IDL to formally specify the execution behavior via the "operation()" key. The IDL executes at Instruction scope when the instruction executes on a hart.
+Instruction definitions in `spec/std/isa/inst` use IDL to formally specify the execution behavior via the "operation()" key. The IDL executes at Instruction scope when the instruction executes on a hart.
 
 "operation()" has no arguments (though decode variables are populated prior to execution) and no return value.
 
@@ -961,7 +961,7 @@ add:
 
 === CSR definitions
 
-IDL is used in several places of a CSR definition in `arch/csr`:
+IDL is used in several places of a CSR definition in `spec/std/isa/csr`:
 
 sw_read()::
 

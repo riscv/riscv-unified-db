@@ -38,4 +38,4 @@ operation(): |
     raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
-  X[xd] = X[xs2] & ~X[xs1];
+  X[xd] = X[xs1] & ~X[xs2];

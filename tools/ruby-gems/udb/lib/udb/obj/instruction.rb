@@ -791,7 +791,7 @@ module Udb
         @left_shift = field_data["left_shift"].nil? ? 0 : field_data["left_shift"]
         @sext = field_data["sign_extend"].nil? ? false : field_data["sign_extend"]
         @alias = field_data["alias"].nil? ? nil : field_data["alias"]
-        @location = field_data["location"]
+        @location = field_data["location"].to_s
         extract_location(field_data["location"])
         @excludes =
           if field_data.key?("not")

@@ -2932,12 +2932,14 @@ function amo {
     # PMA Atomicity checks
     if (pma_applies?(PmaAttribute::AmoNone, physical_address, N)) {
       raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
-    } else if (((op == AmoOperation::Add || op == AmoOperation::Max || op == AmoOperation::Maxu || op == AmoOperation::Min || op == AmoOperation::Minu)) &&
-               !pma_applies?(PmaAttribute::AmoArithmetic, physical_address, N)) {
-      raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
-    } else if (((op == AmoOperation::And || op == AmoOperation::Or || op == AmoOperation::Xor)) &&
-                !pma_applies?(PmaAttribute::AmoLogical, physical_address, N)) {
-      raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+    } else if (((op == AmoOperation::Add || op == AmoOperation::Max || op == AmoOperation::Maxu || op == AmoOperation::Min || op == AmoOperation::Minu))) {
+      if (!pma_applies?(PmaAttribute::AmoArithmetic, physical_address, N)) {
+        raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+      }
+    } else if (((op == AmoOperation::And || op == AmoOperation::Or || op == AmoOperation::Xor))) {
+      if (!pma_applies?(PmaAttribute::AmoLogical, physical_address, N)) {
+        raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+      }
     } else {
       assert(
         pma_applies?(PmaAttribute::AmoSwap, physical_address, N) &&
