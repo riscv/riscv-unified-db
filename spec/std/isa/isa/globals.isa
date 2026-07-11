@@ -2031,7 +2031,7 @@ function gstage_page_walk {
         ppn = pte[PA_SIZE-3:10] << 12;
       }
     }
-    return result;
+    unreachable();
   }
 }
 
@@ -2378,7 +2378,7 @@ function stage1_page_walk {
         ppn = pte[PA_SIZE-3:10];
       }
     }
-    return result;
+    unreachable();
   }
 }
 
