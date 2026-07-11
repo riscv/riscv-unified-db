@@ -4,7 +4,7 @@
 # For native setup: install mise, then run `mise install` from this directory.
 
 [tools]
-ruby = "3.4.8"
+ruby = "3.4.10"
 prek = "0.4.6"
 node = "24.13.1"
 uv = "0.10.2"
