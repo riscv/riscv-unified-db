@@ -114,6 +114,7 @@ gen_subcmd_usage() {
   echo "  schema-docs:   Generate schema documentation from JSON Schema files"
   echo "  cfg-headers:   Generate golden cfg header files for regression testing"
   echo "  xqci           Generate Xqci spec used for Golden regressions"
+  echo "  udb-gen:       Generate test case fixtures for udb-gen"
   echo ""
 }
 
@@ -355,6 +356,13 @@ do_update_gem_versions() {
 }
 
 #
+# Generate test cases for udb_gen
+#
+do_gen_udb_gen_fixtures() {
+  "$UDB_ROOT/do" chore:udb_gen:update_fixtures
+}
+
+#
 # Generate all development artifacts
 #
 do_gen_all() {
@@ -366,6 +374,7 @@ do_gen_all() {
   do_gen_xqci_golden
   do_gen_schema_docs
   do_gen_cfg_headers_golden
+  do_gen_udb_gen_fixtures
 }
 
 #
@@ -665,6 +674,10 @@ case "$subcommand" in
         ;;
       xqci )
         do_gen_xqci_golden
+        exit 0
+        ;;
+      udb-gen )
+        do_gen_udb_gen_fixtures
         exit 0
         ;;
       cfg-headers )

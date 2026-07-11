@@ -1,0 +1,136 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:best-practices"],
+  "timezone": "America/Los_Angeles",
+  "labels": ["dependencies"],
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 10,
+  "rebaseWhen": "conflicted",
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "automerge": true,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "labels": ["dependencies", "security"],
+    "minimumReleaseAge": "4 hours"
+  },
+  "ignorePaths": [
+    ".github/workflows/regress.yml",
+    "doc/node_modules/**",
+    "ext/**",
+    "gen/**",
+    "node_modules/**",
+    "tools/eclipse/udb-vscode/node_modules/**"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "github-actions": {
+    "managerFilePatterns": [
+      "/^tools/test/[^/]+-tests\\.yaml$/",
+      "/^tools/test/regress-gh-template\\.yaml$/"
+    ]
+  },
+  "bundler": {
+    "managerFilePatterns": ["/(^|/)Gemfile\\.lock$/", "/(^|/)[^/]+\\.gemspec$/"]
+  },
+  "git-submodules": {
+    "enabled": true
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "customManagers": [
+    {
+      "description": "RISC-V GNU toolchain release in the toolchain container",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.toolchain/Dockerfile$/"],
+      "matchStrings": ["ARG RISCV_TOOLCHAIN_VERSION=(?<currentValue>[\\d.]+)"],
+      "depNameTemplate": "riscv-collab/riscv-gnu-toolchain",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose"
+    },
+    {
+      "description": "Z3 release used by the udb gem binary downloader",
+      "customType": "regex",
+      "managerFilePatterns": ["/^tools/ruby-gems/udb/lib/udb/Z3_VERSION$/"],
+      "matchStrings": ["z3-(?<currentValue>[\\d.]+)"],
+      "depNameTemplate": "Z3Prover/z3",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^z3-(?<version>.*)$"
+    },
+    {
+      "description": "Bundler version recorded in lockfiles",
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)Gemfile\\.lock$/"],
+      "matchStrings": ["BUNDLED WITH\\s+(?<currentValue>[\\d.]+)"],
+      "depNameTemplate": "gem:bundler",
+      "packageNameTemplate": "bundler",
+      "datasourceTemplate": "rubygems"
+    },
+    {
+      "description": "Xtext version shared by the Eclipse Maven and Gradle projects",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^tools/eclipse/dev/org\\.xtext\\.udb\\.parent/pom\\.xml$/",
+        "/^tools/eclipse/udb-ls/build\\.gradle$/"
+      ],
+      "matchStrings": [
+        "<xtextVersion>(?<currentValue>[^<]+)</xtextVersion>",
+        "xtextVersion\\s*=\\s*'(?<currentValue>[^']+)'"
+      ],
+      "depNameTemplate": "org.eclipse.xtext:xtext-dev-bom",
+      "datasourceTemplate": "maven"
+    },
+    {
+      "description": "Tycho version in Eclipse Maven project",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^tools/eclipse/dev/org\\.xtext\\.udb\\.parent/pom\\.xml$/"
+      ],
+      "matchStrings": ["<tycho-version>(?<currentValue>[^<]+)</tycho-version>"],
+      "depNameTemplate": "org.eclipse.tycho:tycho-maven-plugin",
+      "datasourceTemplate": "maven"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Keep ruff in sync across pyproject.toml and the pre-commit hook",
+      "matchDepNames": ["ruff", "astral-sh/ruff-pre-commit"],
+      "groupName": "ruff"
+    },
+    {
+      "description": "Keep uv in sync across .mise.toml and the pre-commit hook",
+      "matchDepNames": ["uv", "astral-sh/uv-pre-commit"],
+      "groupName": "uv"
+    },
+    {
+      "description": "Group GitHub Actions updates into one PR",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions"
+    },
+    {
+      "description": "Group remaining pre-commit hook bumps",
+      "matchManagers": ["pre-commit"],
+      "matchDepNames": [
+        "!astral-sh/ruff-pre-commit",
+        "!astral-sh/uv-pre-commit"
+      ],
+      "groupName": "pre-commit hooks",
+      "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "Do not update Ruby major versions automatically",
+      "matchDepNames": ["ruby"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Update LLVM submodule weekly",
+      "matchManagers": ["git-submodules"],
+      "matchDepNames": ["ext/llvm-project"],
+      "schedule": ["before 6am on monday"]
+    }
+  ]
+}
