@@ -13,7 +13,7 @@ runs:
     - name: Pre-initialize GPG
       shell: bash
       run: mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
-    - uses: jdx/mise-action@v4
+    - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4
       with:
         version: 2026.4.18
     # Set bundler gem path before restoring the cache and before bin/setup,
@@ -51,19 +51,19 @@ runs:
     # already populated the relevant paths.  This means bin/setup completes in
     # seconds on a cache hit without any separate install steps.
     - name: Cache bundler gems
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: vendor/bundle
         key: bundler-${{ runner.os }}-${{ hashFiles('.mise.toml', 'Gemfile.lock', 'tools/ruby-gems/*/Gemfile.lock', 'tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
     - name: Cache udb native deps (z3, espresso, eqntott, must)
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: ~/.cache/udb
         key: udb-deps-${{ runner.os }}-${{ hashFiles('tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
     # bin/.venv-deps installs to ~/.local/share/udb/venv-<hash>/ (not in-tree).
     # Cache the uv artifact cache (for fast re-installs) and the shared venv dir.
     - name: Cache uv packages
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: |
           ~/.cache/uv
@@ -72,7 +72,7 @@ runs:
     # bin/.npm-deps installs to ~/.local/share/udb/npm-<hash>/node_modules and
     # leaves a symlink at node_modules.  Cache the real install dir, not the symlink.
     - name: Cache npm packages
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: ~/.local/share/udb/npm-*
         key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
