@@ -1663,7 +1663,7 @@ function tinst_transform {
         return {encoding[31:20], addr_offset, encoding[14:0]};
       } else {
         assert(false, "Bad transform");
-        return 0;
+        unreachable();
       }
     } else {
       assert(false, "TODO: compressed instruction");
