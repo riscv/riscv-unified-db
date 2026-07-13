@@ -41003,7 +41003,6 @@ if pass:[(]!MISALIGNED_LDST) {
     }
   } else if pass:[(]MISALIGNED_SPLIT_STRATEGY == "custom") {
     xref:#udb-function-unpredictable[unpredictable]pass:[(]"An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
-    return ;
   }
 }
 ----
