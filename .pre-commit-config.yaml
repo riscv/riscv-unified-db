@@ -40,7 +40,7 @@ repos:
 
   # Formatters touching distinct file extensions (parallel).
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.8.1
+    rev: v3.9.4
     hooks:
       - id: prettier
         priority: 20
@@ -48,7 +48,7 @@ repos:
         exclude: schemas/json-schema-draft-07.json|cfgs/profile/.*
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: "v20.1.8"
+    rev: "v22.1.5"
     hooks:
       - id: clang-format
         priority: 20
@@ -59,7 +59,7 @@ repos:
         exclude: backends/cpp_hart_gen
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.1
+    rev: v0.15.20
     hooks:
       - id: ruff-format
         priority: 20
@@ -80,7 +80,7 @@ repos:
   # JSON-schema validation: each variant filters a different subtree, so they
   # are independent and benefit greatly from running in parallel.
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.36.1
+    rev: 0.37.4
     hooks:
       - id: check-metaschema
         priority: 30
@@ -182,7 +182,7 @@ repos:
         exclude: COMMIT_EDITMSG|MERGE_MSG
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 43.15.1
+    rev: 43.251.3
     hooks:
       - id: renovate-config-validator
         priority: 30
