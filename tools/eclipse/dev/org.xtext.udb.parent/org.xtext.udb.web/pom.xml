@@ -107,12 +107,12 @@
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>jquery</artifactId>
-			<version>3.7.1</version>
+			<version>4.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>ace</artifactId>
-			<version>1.23.4</version>
+			<version>07.31.2013</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
