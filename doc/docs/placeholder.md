@@ -1,10 +1,11 @@
-<!--
-Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-SPDX-License-Identifier: BSD-3-Clause-Clear
--->
 ---
 sidebar_position: 1
 ---
+
+{/*
+Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+SPDX-License-Identifier: BSD-3-Clause-Clear
+*/}
 
 # UDB Documentation
 
