@@ -9,7 +9,7 @@
 # Build:
 #   docker build --platform linux/amd64 -t udb-toolchain .
 #   docker build --platform linux/arm64 -t udb-toolchain .
-FROM almalinux:8
+FROM almalinux:10@sha256:cc24bc5b6ac7e284f2f62a07bdaa1b15d3319fdcf46413c6b8fe9fa245068ddd
 LABEL org.opencontainers.image.source=https://github.com/riscv/riscv-unified-db
 
 # Install host C/C++ toolchain (gcc-toolset-14), make, gdb, clang
