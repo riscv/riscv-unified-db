@@ -1682,7 +1682,7 @@ function transformed_standard_instruction_for_tinst {
   }
   body {
     assert(false, "TODO");
-    return 0;
+    unreachable();
   }
 }
 
