@@ -36,3 +36,4 @@ operation(): |
     U32 end_bit_pos = start_bit_pos + 7;
     V[vd][end_bit_pos:start_bit_pos] = read_memory(8, virtual_address + i, $encoding)[7:0];
   }
+  CSR[vstart].VALUE = 0;
