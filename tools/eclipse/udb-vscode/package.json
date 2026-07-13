@@ -52,7 +52,7 @@
     "@types/vscode": "1.125.0",
     "@vscode/test-electron": "2.5.2",
     "glob": "13.0.6",
-    "mocha": "10.8.2",
+    "mocha": "11.7.6",
     "typescript": "5.9.3"
   },
   "dependencies": {
