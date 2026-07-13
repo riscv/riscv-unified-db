@@ -110,6 +110,8 @@ class JSON::Ext::Generator::State
   def script_safe; end
   def script_safe=(_arg0); end
   def script_safe?; end
+  def sort_keys; end
+  def sort_keys=(_arg0); end
   def space; end
   def space=(_arg0); end
   def space_before; end
@@ -128,6 +130,7 @@ class JSON::Ext::Generator::State
 
   class << self
     def _generate_no_fallback(_arg0, _arg1, _arg2); end
+    def default_sort_keys_proc=(_arg0); end
     def from_state(_arg0); end
     def generate(_arg0, _arg1, _arg2); end
   end
@@ -216,6 +219,22 @@ module JSON::ParserOptions
     def create_additions_warning; end
     def object_class_proc(object_class, on_load); end
   end
+end
+
+class JSON::ResumableParser
+  def initialize(*_arg0); end
+
+  def <<(_arg0); end
+  def clear; end
+  def empty?; end
+  def eos?; end
+  def parse; end
+  def parsed_bytes; end
+  def partial_value; end
+  def partial_value?; end
+  def rest; end
+  def value; end
+  def value?; end
 end
 
 JSON::State = JSON::Ext::Generator::State

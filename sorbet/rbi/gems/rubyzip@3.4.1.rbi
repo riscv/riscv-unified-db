@@ -24,6 +24,8 @@ module Zip
   def sort_entries=(_arg0); end
   def unicode_names; end
   def unicode_names=(_arg0); end
+  def validate_declared_number_of_entries; end
+  def validate_declared_number_of_entries=(_arg0); end
   def validate_entry_sizes; end
   def validate_entry_sizes=(_arg0); end
   def warn_invalid_date; end
@@ -116,6 +118,7 @@ class Zip::CentralDirectory
   def unpack_64_e_o_c_d(buffer); end
   def unpack_64_eocd_locator(buffer); end
   def unpack_e_o_c_d(buffer); end
+  def validate_size!(size, size_in_bytes); end
   def write_64_e_o_c_d(io, offset, cdir_size); end
   def write_64_eocd_locator(io, zip64_eocd_offset); end
   def write_e_o_c_d(io, offset, cdir_size); end
@@ -192,7 +195,7 @@ Zip::Decompressor::CHUNK_SIZE = T.let(T.unsafe(nil), Integer)
 class Zip::DecryptedIo
   def initialize(io, decrypter, compressed_size); end
 
-  def read(length = T.unsafe(nil), outbuf = T.unsafe(nil)); end
+  def read(maxlen = T.unsafe(nil)); end
 
   private
 
@@ -384,6 +387,12 @@ end
 
 class Zip::EntryNameError < ::Zip::Error
   def initialize(name = T.unsafe(nil)); end
+
+  def message; end
+end
+
+class Zip::EntryNumberMismatchError < ::Zip::Error
+  def initialize(size, size_in_bytes); end
 
   def message; end
 end
@@ -872,18 +881,18 @@ module Zip::IOExtras::AbstractInputStream
 
   def initialize; end
 
-  def each(a_sep_string = T.unsafe(nil)); end
-  def each_line(a_sep_string = T.unsafe(nil)); end
+  def each(sep = T.unsafe(nil), limit = T.unsafe(nil), chomp: T.unsafe(nil)); end
+  def each_line(sep = T.unsafe(nil), limit = T.unsafe(nil), chomp: T.unsafe(nil)); end
   def eof; end
   def eof?; end
   def flush; end
-  def gets(a_sep_string = T.unsafe(nil), number_of_bytes = T.unsafe(nil)); end
+  def gets(sep = T.unsafe(nil), limit = T.unsafe(nil), chomp: T.unsafe(nil)); end
   def lineno; end
   def lineno=(_arg0); end
   def pos; end
-  def read(number_of_bytes = T.unsafe(nil), buf = T.unsafe(nil)); end
-  def readline(a_sep_string = T.unsafe(nil)); end
-  def readlines(a_sep_string = T.unsafe(nil)); end
+  def read(maxlen = T.unsafe(nil), out_string = T.unsafe(nil)); end
+  def readline(sep = T.unsafe(nil), limit = T.unsafe(nil), chomp: T.unsafe(nil)); end
+  def readlines(sep = T.unsafe(nil), limit = T.unsafe(nil), chomp: T.unsafe(nil)); end
   def ungetc(byte); end
 end
 
@@ -908,7 +917,7 @@ class Zip::Inflater < ::Zip::Decompressor
 
   def eof; end
   def eof?; end
-  def read(length = T.unsafe(nil), outbuf = T.unsafe(nil)); end
+  def read(maxlen = T.unsafe(nil)); end
 
   private
 
@@ -927,7 +936,7 @@ class Zip::InputStream
   def get_next_entry; end
   def rewind; end
   def size; end
-  def sysread(length = T.unsafe(nil), outbuf = T.unsafe(nil)); end
+  def sysread(maxlen = T.unsafe(nil), out_string = T.unsafe(nil)); end
 
   protected
 
@@ -937,7 +946,7 @@ class Zip::InputStream
   def get_io(io_or_file, offset = T.unsafe(nil)); end
   def input_finished?; end
   def open_entry; end
-  def produce_input; end
+  def produce_input(maxlen = T.unsafe(nil)); end
 
   class << self
     def open(filename_or_io, offset: T.unsafe(nil), decrypter: T.unsafe(nil)); end
@@ -1046,7 +1055,7 @@ class Zip::PassThruDecompressor < ::Zip::Decompressor
 
   def eof; end
   def eof?; end
-  def read(length = T.unsafe(nil), outbuf = T.unsafe(nil)); end
+  def read(maxlen = T.unsafe(nil)); end
 end
 
 Zip::RUNNING_ON_WINDOWS = T.let(T.unsafe(nil), T.untyped)

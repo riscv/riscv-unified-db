@@ -5,12 +5,6 @@
 # Please instead update this file by running `bin/tapioca gem asciidoctor`.
 
 
-class Array
-  include ::Enumerable
-
-  def nil_or_empty?; end
-end
-
 module Asciidoctor
   class << self
     def const_missing(name); end
@@ -1643,25 +1637,3 @@ module Asciidoctor::Writer
 end
 
 Asciidoctor::XmlSanitizeRx = T.let(T.unsafe(nil), Regexp)
-
-class Hash
-  include ::Enumerable
-
-  def nil_or_empty?; end
-end
-
-class NilClass
-  def nil_or_empty?; end
-end
-
-class Numeric
-  include ::Comparable
-
-  def nil_or_empty?; end
-end
-
-class String
-  include ::Comparable
-
-  def nil_or_empty?; end
-end
