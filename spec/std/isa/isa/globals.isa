@@ -2463,6 +2463,7 @@ function translate {
       result = stage1_page_walk(57, 56, 64, 5, vaddr, op, effective_mode, encoding);
     } else {
       assert(false, "Unexpected SatpMode");
+      unreachable();
     }
 
     maybe_cache_translation(vaddr, op, result);
