@@ -2308,6 +2308,7 @@ function stage1_page_walk {
               success = atomic_check_then_write_64(pte_phys.paddr, pte, updated_pte);
             } else {
               assert(false, "Unexpected PTESIZE");
+              unreachable();
             }
 
 
