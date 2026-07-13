@@ -1181,7 +1181,7 @@ function mpv {
       return (MXLEN == 32) ? CSR[mstatush].MPV : CSR[mstatus].MPV;
     } else {
       assert(false, "TODO");
-      return 0;
+      unreachable();
     }
   }
 }
