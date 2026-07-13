@@ -40909,6 +40909,7 @@ if pass:[(]translation_mode == SatpMode::Bare) {
   result = xref:#udb-function-stage1_page_walk[stage1_page_walk]pass:[(]57, 56, 64, 5, vaddr, op, effective_mode, encoding);
 } else {
   xref:#udb-function-assert[assert]pass:[(]false, "Unexpected SatpMode");
+  xref:#udb-function-unreachable[unreachable]pass:[(]);
 }
 xref:#udb-function-maybe_cache_translation[maybe_cache_translation]pass:[(]vaddr, op, result);
 return result;
