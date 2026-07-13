@@ -30,9 +30,9 @@ operation(): |
   XReg input = X[xs1];
   XReg output = 0;
 
-  for(U32 i=0; i<(xlen()-8); i = i+8) {
+  for(U32 i=0; i < xlen(); i = i+8) {
     for(U32 j=0; j<8; j = j+1) {
-      output[(i*8)+(7-j)] = input[(i*8)+j];
+      output[i+(7-j)] = input[i+j];
     }
   }
 

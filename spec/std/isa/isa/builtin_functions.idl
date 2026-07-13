@@ -439,6 +439,7 @@ function read_physical_memory {
       return read_physical_memory_64(paddr);
     } else {
       assert(false, "Invalid len");
+      return 0;
     }
   }
 }
