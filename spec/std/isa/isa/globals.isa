@@ -1796,6 +1796,7 @@ function tinst_value {
       }
     } else {
       assert(false, "Unhandled exception type");
+      unreachable();
     }
   }
 }
