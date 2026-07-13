@@ -1,0 +1,102 @@
+Phase 8 — Parameter Tag Insertion Report
+============================================================
+
+Mode             : run
+Spec directory   : /Users/ashish/lfx/riscv-unified-db/ext/riscv-isa-manual/src
+Spreadsheet      : /Users/ashish/lfx/riscv-unified-db/param_extraction/data/parameters.csv
+Min confidence   : medium
+
+Requests         : 346
+Tags inserted    : 328
+  inline wraps   : 68
+  bare anchors   : 260
+Overlaps w/ norm : 260
+Unmatched rows   : 18
+
+Per-file breakdown:
+  ext/riscv-isa-manual/src/machine.adoc                         req= 59  ins= 55  bare=54  unmatched= 4
+  ext/riscv-isa-manual/src/v-st-ext.adoc                        req= 39  ins= 35  bare=30  unmatched= 4
+  ext/riscv-isa-manual/src/supervisor.adoc                      req= 28  ins= 28  bare=10  unmatched= 0
+  ext/riscv-isa-manual/src/vector-crypto.adoc                   req= 23  ins= 23  bare=22  unmatched= 0
+  ext/riscv-isa-manual/src/unpriv-cfi.adoc                      req= 21  ins= 21  bare=21  unmatched= 0
+  ext/riscv-isa-manual/src/hypervisor.adoc                      req= 17  ins= 13  bare=10  unmatched= 4
+  ext/riscv-isa-manual/src/smctr.adoc                           req= 12  ins= 12  bare=12  unmatched= 0
+  ext/riscv-isa-manual/src/smstateen.adoc                       req= 10  ins= 10  bare= 9  unmatched= 0
+  ext/riscv-isa-manual/src/cmo.adoc                             req=  9  ins=  9  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/scalar-crypto.adoc                   req=  9  ins=  9  bare= 0  unmatched= 0
+  ext/riscv-isa-manual/src/smcdeleg.adoc                        req=  9  ins=  9  bare= 7  unmatched= 0
+  ext/riscv-isa-manual/src/c-st-ext.adoc                        req=  8  ins=  8  bare= 8  unmatched= 0
+  ext/riscv-isa-manual/src/rv32.adoc                            req=  7  ins=  7  bare= 7  unmatched= 0
+  ext/riscv-isa-manual/src/indirect-csr.adoc                    req=  9  ins=  6  bare= 5  unmatched= 3
+  ext/riscv-isa-manual/src/intro.adoc                           req=  6  ins=  6  bare= 4  unmatched= 0
+  ext/riscv-isa-manual/src/priv-cfi.adoc                        req=  6  ins=  6  bare= 5  unmatched= 0
+  ext/riscv-isa-manual/src/zc.adoc                              req=  5  ins=  5  bare= 3  unmatched= 0
+  ext/riscv-isa-manual/src/a-st-ext.adoc                        req=  6  ins=  4  bare= 3  unmatched= 2
+  ext/riscv-isa-manual/src/b-st-ext.adoc                        req=  4  ins=  4  bare= 4  unmatched= 0
+  ext/riscv-isa-manual/src/bfloat16.adoc                        req=  4  ins=  4  bare= 0  unmatched= 0
+  ext/riscv-isa-manual/src/counters.adoc                        req=  4  ins=  4  bare= 4  unmatched= 0
+  ext/riscv-isa-manual/src/rnmi.adoc                            req=  4  ins=  4  bare= 4  unmatched= 0
+  ext/riscv-isa-manual/src/smepmp.adoc                          req=  4  ins=  4  bare= 4  unmatched= 0
+  ext/riscv-isa-manual/src/zawrs.adoc                           req=  4  ins=  4  bare= 4  unmatched= 0
+  ext/riscv-isa-manual/src/zpm.adoc                             req=  4  ins=  4  bare= 4  unmatched= 0
+  ext/riscv-isa-manual/src/f-st-ext.adoc                        req=  3  ins=  3  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/priv-csrs.adoc                       req=  3  ins=  3  bare= 3  unmatched= 0
+  ext/riscv-isa-manual/src/sstc.adoc                            req=  3  ins=  3  bare= 3  unmatched= 0
+  ext/riscv-isa-manual/src/priv-intro.adoc                      req=  2  ins=  2  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/rv64.adoc                            req=  2  ins=  2  bare= 2  unmatched= 0
+  ext/riscv-isa-manual/src/rvwmo.adoc                           req=  2  ins=  2  bare= 2  unmatched= 0
+  ext/riscv-isa-manual/src/ssdbltrp.adoc                        req=  2  ins=  2  bare= 2  unmatched= 0
+  ext/riscv-isa-manual/src/zalasr.adoc                          req=  2  ins=  2  bare= 2  unmatched= 0
+  ext/riscv-isa-manual/src/zilsd.adoc                           req=  2  ins=  2  bare= 2  unmatched= 0
+  ext/riscv-isa-manual/src/smcntrpmf.adoc                       req=  1  ins=  1  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/smdbltrp.adoc                        req=  1  ins=  1  bare= 0  unmatched= 0
+  ext/riscv-isa-manual/src/sscofpmf.adoc                        req=  1  ins=  1  bare= 0  unmatched= 0
+  ext/riscv-isa-manual/src/zabha.adoc                           req=  1  ins=  1  bare= 0  unmatched= 0
+  ext/riscv-isa-manual/src/zacas.adoc                           req=  1  ins=  1  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/zfa.adoc                             req=  1  ins=  1  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/zfinx.adoc                           req=  1  ins=  1  bare= 0  unmatched= 0
+  ext/riscv-isa-manual/src/zicond.adoc                          req=  1  ins=  1  bare= 0  unmatched= 0
+  ext/riscv-isa-manual/src/zicsr.adoc                           req=  1  ins=  1  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/zifencei.adoc                        req=  1  ins=  1  bare= 0  unmatched= 0
+  ext/riscv-isa-manual/src/zihintntl.adoc                       req=  1  ins=  1  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/zihintpause.adoc                     req=  1  ins=  1  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/ztso-st-ext.adoc                     req=  1  ins=  1  bare= 1  unmatched= 0
+  ext/riscv-isa-manual/src/d-st-ext.adoc                        req=  1  ins=  0  bare= 0  unmatched= 1
+
+Failures:
+  [ext/riscv-isa-manual/src/a-st-ext.adoc]
+  ✗ LRSC_MISALIGNED_BEHAVIOR: excerpt not found
+  [ext/riscv-isa-manual/src/a-st-ext.adoc]
+  ✗ MISALIGNED_AMO: excerpt not found
+  [ext/riscv-isa-manual/src/d-st-ext.adoc]
+  ✗ FLEN: excerpt not found
+  [ext/riscv-isa-manual/src/hypervisor.adoc]
+  ✗ HTVAL_TRAPVAL_PARAM: excerpt not found
+  [ext/riscv-isa-manual/src/hypervisor.adoc]
+  ✗ GSTAGE_MODE_BARE: excerpt not found
+  [ext/riscv-isa-manual/src/hypervisor.adoc]
+  ✗ VS_STAGE_SPECULATIVE_A_BIT: excerpt not found
+  [ext/riscv-isa-manual/src/hypervisor.adoc]
+  ✗ MTVAL2_TRAPVAL_PARAM: excerpt not found
+  [ext/riscv-isa-manual/src/indirect-csr.adoc]
+  ✗ MISELECT_WIDTH: excerpt not found
+  [ext/riscv-isa-manual/src/indirect-csr.adoc]
+  ✗ MSTATEEN_CSRIND_TYPE: excerpt not found
+  [ext/riscv-isa-manual/src/indirect-csr.adoc]
+  ✗ HSTATEEN_CSRIND_TYPE: excerpt not found
+  [ext/riscv-isa-manual/src/machine.adoc]
+  ✗ MTVEC_ACCESS: excerpt not found
+  [ext/riscv-isa-manual/src/machine.adoc]
+  ✗ CONFIG_PTR_ADDRESS: excerpt not found
+  [ext/riscv-isa-manual/src/machine.adoc]
+  ✗ PMP_HARDWIRED_REGIONS: excerpt not found
+  [ext/riscv-isa-manual/src/machine.adoc]
+  ✗ PMPADDR_WARL_MASK: excerpt not found
+  [ext/riscv-isa-manual/src/v-st-ext.adoc]
+  ✗ ELEN: excerpt not found
+  [ext/riscv-isa-manual/src/v-st-ext.adoc]
+  ✗ VLEN: excerpt not found
+  [ext/riscv-isa-manual/src/v-st-ext.adoc]
+  ✗ VECTOR_LS_WHOLEREG_MISSALIGNED_EXCEPTION: excerpt not found
+  [ext/riscv-isa-manual/src/v-st-ext.adoc]
+  ✗ ZVE_EEW64_NSUPPORT_XLEN32: excerpt not found

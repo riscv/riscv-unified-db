@@ -1,0 +1,2490 @@
+diff --git a/src/a-st-ext.adoc b/src/a-st-ext.adoc
+index 1ca38e4..3c6349f 100644
+--- a/src/a-st-ext.adoc
++++ b/src/a-st-ext.adoc
+@@ -140,10 +140,10 @@ multiple reservation sets at once, which present definitions do not
+ provide for.
+ ====
+ 
+-[#norm:lr_reservation_set_size]#An implementation can register an arbitrarily large reservation set on
++[#param:LRSC_RESERVATION_STRATEGY]##[#norm:lr_reservation_set_size]#An implementation can register an arbitrarily large reservation set on
+ each LR, provided the reservation set includes all bytes of the
+ addressed data word or doubleword.# [#norm:sc_pairs_latest_lr]#An SC can only pair with the most
+-recent LR in program order.# [#norm:sc_success_conditions]#An SC may succeed only if no store from
++recent LR in program order.# [#param:LRSC_FAIL_ON_NON_EXACT_LRSC]##[#norm:sc_success_conditions]#An SC may succeed only if no store from
+ another hart to the reservation set can be observed to have occurred
+ between the LR and the SC, and if there is no other SC between the LR
+ and itself in program order.# [#norm:sc_device_write_failure]#An SC may succeed only if no write from a
+@@ -154,10 +154,10 @@ SC's address as part of the reservation set.
+ 
+ [NOTE]
+ ====
+-Following this model, in systems with memory translation, an SC is
++[#param:LRSC_FAIL_ON_VA_SYNONYM]#Following this model, in systems with memory translation, an SC is
+ allowed to succeed if the earlier LR reserved the same location using an
+ alias with a different virtual address, but is also allowed to fail if
+-the virtual address is different.
++the virtual address is different.#
+ 
+ To accommodate legacy devices and buses, writes from devices other than
+ RISC-V harts are only required to invalidate reservations when they
+@@ -382,7 +382,7 @@ be generated for a memory access that would otherwise be able to
+ complete except for the misalignment, if the misaligned access should
+ not be emulated.
+ 
+-[#norm:amo_misaligned_atomicity_granule]#The misaligned atomicity granule PMA, defined in Volume II of this manual,
++[#param:MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE]##[#norm:amo_misaligned_atomicity_granule]#The misaligned atomicity granule PMA, defined in Volume II of this manual,
+ optionally relaxes this alignment requirement.
+ If present, the misaligned atomicity granule PMA specifies the size
+ of a misaligned atomicity granule, a power-of-two number of bytes.
+diff --git a/src/b-st-ext.adoc b/src/b-st-ext.adoc
+index 68f7c46..32cb318 100644
+--- a/src/b-st-ext.adoc
++++ b/src/b-st-ext.adoc
+@@ -1060,7 +1060,7 @@ Encoding (RV64)::
+ Description::
+ This instruction returns _rs1_ with a single bit inverted at the index specified in _shamt_.
+ The index is read from the lower log2(XLEN) bits of _shamt_.
+-[#norm:binvi_shamt_rsv_rv32]#For RV32, the encodings corresponding to shamt[5]=1 are reserved.#
++[#param:BCLRI_SHAMT_RSV_RV32]##[#norm:binvi_shamt_rsv_rv32]#For RV32, the encodings corresponding to shamt[5]=1 are reserved.#
+ 
+ [[norm:binvi_op]]
+ Operation::
+@@ -1171,7 +1171,7 @@ Encoding (RV64)::
+ Description::
+ This instruction returns _rs1_ with a single bit set at the index specified in _shamt_.
+ The index is read from the lower log2(XLEN) bits of _shamt_.
+-[#norm:bseti_shamt_rsv_rv32]#For RV32, the encodings corresponding to shamt[5]=1 are reserved.#
++[#param:BSETI_SHAMT_RSV_RV32]##[#param:BINVI_SHAMT_RSV_RV32]##[#param:BEXTI_SHAMT_RSV_RV32]##[#norm:bseti_shamt_rsv_rv32]#For RV32, the encodings corresponding to shamt[5]=1 are reserved.#
+ 
+ [[norm:bseti_op]]
+ Operation::
+diff --git a/src/bfloat16.adoc b/src/bfloat16.adoc
+index 185fb59..3ba7645 100644
+--- a/src/bfloat16.adoc
++++ b/src/bfloat16.adoc
+@@ -155,9 +155,9 @@ in the trailing fractional bits are called subnormal numbers. Basically, the ide
+ a trade off of precision to support _gradual underflow_.
+ 
+ [[norm:bf16_subnorm]]
+-All of the BF16 instructions in the extensions defined in this specification (i.e., Zfbfmin, Zvfbfmin,
++[#param:BF16_SUBNORMAL_SUPPORT]#All of the BF16 instructions in the extensions defined in this specification (i.e., Zfbfmin, Zvfbfmin,
+ and Zvfbfwma) fully support subnormal numbers. That is, instructions are able to accept subnormal values as
+-inputs and they can produce subnormal results.
++inputs and they can produce subnormal results.#
+ 
+ 
+ [NOTE]
+@@ -581,7 +581,7 @@ Encoding::
+ 
+ Reserved Encodings::
+ [[norm:vfncvtbf16-f-f-w_sew_rsv]]
+-* `SEW` is any value other than 16
++* `[#param:VFWCVTBF16_SEW_SUPPORT]#[#param:VFNCVTBF16_SEW_SUPPORT]##SEW` is any value other than 16#
+ 
+ Arguments::
+ 
+@@ -718,7 +718,7 @@ Encoding (Vector-Scalar)::
+ 
+ Reserved Encodings::
+ [[norm:vfwmaccbf16_sew_rsv]]
+-* `SEW` is any value other than 16
++* `[#param:VFWMACCBF16_SEW_SUPPORT]#SEW` is any value other than 16#
+ 
+ Arguments::
+ [%autowidth]
+diff --git a/src/c-st-ext.adoc b/src/c-st-ext.adoc
+index 4736ea6..448beb6 100644
+--- a/src/c-st-ext.adoc
++++ b/src/c-st-ext.adoc
+@@ -21,7 +21,7 @@ of common 32-bit RISC-V instructions when:
+ * the registers used are the 8 most popular ones.
+ 
+ The C extension is compatible with all other standard instruction
+-extensions. [#norm:Zca_align16]#The C extension allows 16-bit instructions to be freely
++extensions. [#param:IALIGN]##[#norm:Zca_align16]#The C extension allows 16-bit instructions to be freely
+ intermixed with 32-bit instructions, with the latter now able to start
+ on any 16-bit boundary, i.e., IALIGN=16.# [#norm:Zca_no_misaligned]#With the addition of the C
+ extension, no instructions can raise instruction-address-misaligned
+@@ -168,7 +168,7 @@ performance impact as doubling the instruction cache size. cite:[waterman-ms]
+ ((((compressed, formats))))
+ 
+ <<rvc-form>> shows the nine compressed instruction
+-formats. CR, CI, and CSS can use any of the 32 RVI registers, but [#norm:Zca_regs8]#CIW,
++formats. CR, CI, and CSS can use any of the 32 RVI registers, but [#param:COMPRESSED_REGISTER_SET]##[#norm:Zca_regs8]#CIW,
+ CL, CS, CA, and CB are limited to just 8 of them.
+ <<registers>> lists these popular registers, which
+ correspond to registers `x8` to `x15`.# Note that there is a separate
+@@ -186,7 +186,7 @@ having a contiguous naturally aligned set of register numbers, and is
+ also compatible with the RV32E and RV64E base ISAs, which only have 16 integer
+ registers.
+ ====
+-[#norm:Zc_fp_regs]#Compressed register-based floating-point loads and stores also use the
++[#param:COMPRESSED_FP_REGISTER_SET]##[#norm:Zc_fp_regs]#Compressed register-based floating-point loads and stores also use the
+ CL and CS formats respectively, with the eight registers mapping to `f8` to `f15`.#
+ ((((calling convention, standard))))
+ [NOTE]
+@@ -463,7 +463,7 @@ register `_rs1′_`. It expands to
+ === Control Transfer Instructions
+ 
+ RVC provides unconditional jump instructions and conditional branch
+-instructions. [#norm:Zca_offsets_mul2]#As with base RVI instructions, the offsets of all RVC
++instructions. [#param:RVC_OFFSET_ALIGNMENT]##[#norm:Zca_offsets_mul2]#As with base RVI instructions, the offsets of all RVC
+ control transfer instructions are in multiples of 2 bytes.#
+ 
+ [[c-cj-format-ls]]
+@@ -646,7 +646,7 @@ C.SRLI expands into `srli rd′, rd′, shamt`.#
+ 
+ [#norm:c-srli_hint]#The C.SRLI code points with _shamt_=0 are HINTs.#
+ 
+-[#norm:c-srli_shamt5]#For RV32C, _shamt[5]_ must be zero; the code points with _shamt[5]_=1
++[#param:RV32C_SRLI_SHAMT5_RESTRICTION]##[#param:RV32C_SLLI_SHAMT5_RESTRICTION]##[#norm:c-srli_shamt5]#For RV32C, _shamt[5]_ must be zero; the code points with _shamt[5]_=1
+ are designated for custom extensions.#
+ 
+ [#norm:c-srai_op]#C.SRAI is defined analogously to C.SRLI, but instead performs an
+@@ -753,7 +753,7 @@ improvement in static and dynamic compression.
+ include::images/wavedrom/c-def-illegal-inst.edn[]
+ ((((compressed. C.DIINST))))
+ 
+-[#norm:Zca_illegal]#A 16-bit instruction with all bits zero is permanently reserved as an
++[#param:COMPRESSED_ALL_ZERO_ILLEGAL]##[#norm:Zca_illegal]#A 16-bit instruction with all bits zero is permanently reserved as an
+ illegal instruction.#
+ 
+ [NOTE]
+@@ -807,7 +807,7 @@ C instructions will eventually complete.
+ [[rvc-hints]]
+ === HINT Instructions
+ 
+-[#norm:Zca_hints]#A portion of the RVC encoding space is reserved for microarchitectural
++[#param:RVC_HINT_SUPPORT]##[#norm:Zca_hints]#A portion of the RVC encoding space is reserved for microarchitectural
+ HINTs. Like the HINTs in the RV32I base ISA (see
+ <<rv32i-hints>>), these instructions do not
+ modify any architectural state, except for advancing the `pc` and any
+diff --git a/src/cmo.adoc b/src/cmo.adoc
+index 4963951..6dbe56e 100644
+--- a/src/cmo.adoc
++++ b/src/cmo.adoc
+@@ -90,11 +90,11 @@ a cache that first performs a read transfer from memory._
+ Caches organize copies of data into _cache blocks_, each of which represents a
+ contiguous, naturally aligned power-of-two (or _NAPOT_) range of memory
+ locations. A cache block is identified by any of the physical addresses corresponding to
+-the underlying memory locations. The capacity and organization of a cache and
++the underlying memory locations. [#param:CACHE_BLOCK_SIZE]#The capacity and organization of a cache and
+ the size of a cache block are both _implementation-specific_, and the execution
+ environment provides software a means to discover information about the caches
+-and cache blocks in a system. In the initial set of CMO extensions, the size of
+-a cache block shall be uniform throughout the system.
++and cache blocks in a system.# [#param:UNIFORM_CACHE_BLOCK_SIZE]#In the initial set of CMO extensions, the size of
++a cache block shall be uniform throughout the system.#
+ 
+ [NOTE]
+ ====
+@@ -328,7 +328,7 @@ constraints on the physical addresses in a given cache block:
+   and if write permission is granted by the supported access type PMAs, read
+   permission shall also be granted#
+ 
+-[#norm:cbo_rsv]#If the above constraints are not met, the behavior of a CBO instruction is
++[#param:CBO_BEHAVIOR_ON_CONSTRAINT_VIOLATION]##[#norm:cbo_rsv]#If the above constraints are not met, the behavior of a CBO instruction is
+ UNSPECIFIED.#
+ 
+ [NOTE]
+@@ -355,10 +355,10 @@ whether accesses by cache-block zero instructions are supported.
+ 
+ [#norm:cbm_access]#A cache-block management instruction is permitted to access the specified cache
+ block whenever a load instruction or store instruction is permitted to access
+-the corresponding physical addresses.# If neither a load instruction nor store
++the corresponding physical addresses.# [#param:CBM_ACCESS_ON_IFETCH_ONLY]#If neither a load instruction nor store
+ instruction is permitted to access the physical addresses, but an instruction
+ fetch is permitted to access the physical addresses, whether a cache-block
+-management instruction is permitted to access the cache block is UNSPECIFIED. [#norm:cbm_unperm_fault]#If
++management instruction is permitted to access the cache block is UNSPECIFIED.# [#norm:cbm_unperm_fault]#If
+ access to the cache block is not permitted, a cache-block management instruction
+ raises a store page-fault or store guest-page-fault exception if address
+ translation does not permit any access or raises a store access-fault exception
+@@ -659,8 +659,8 @@ else
+ The CBIE/CBCFE/CBZE fields in each `x{csrname}` register do not affect the
+ read and write behavior of the same fields in the other `x{csrname}` registers.
+ 
+-Each `x{csrname}` register is WARL; however, software should determine the legal
+-values from the execution environment discovery mechanism.
++[#param:XENVCFG_LEGAL_VALUES]#Each `x{csrname}` register is WARL; however, software should determine the legal
++values from the execution environment discovery mechanism.#
+ 
+ [#extensions,reftext="Extensions"]
+ === Extensions
+@@ -750,8 +750,8 @@ Memory Type (PBMT) downgrade from cacheable to non-cacheable._
+ ==== Cache-Block Zero Instructions
+ 
+ Cache-block zero instructions store zeros to the set of bytes corresponding to a
+-cache block. An implementation may update the bytes in any order and with any
+-granularity and atomicity, including individual bytes.
++cache block. [#param:CBO_ZERO_GRANULARITY]#An implementation may update the bytes in any order and with any
++granularity and atomicity, including individual bytes.#
+ 
+ [NOTE]
+ ====
+@@ -862,10 +862,10 @@ agent executing the instruction.
+ 
+ [NOTE]
+ ====
+-_When executing a *cbo.clean* instruction, an implementation may instead perform
++_[#param:FORCE_UPGRADE_CBO_CLEAN_TO_FLUSH]#When executing a *cbo.clean* instruction, an implementation may instead perform
+ a flush operation, since the result of that operation is indistinguishable from
+ the sequence of performing a clean operation just before deallocating all cached
+-copies in the set of coherent caches._
++copies in the set of coherent caches.#_
+ ====
+ 
+ [#insns-cbo_flush,reftext="Cache Block Flush"]
+@@ -939,10 +939,10 @@ that computes the offset shall evaluate to zero.
+ 
+ [NOTE]
+ ====
+-_When executing a *cbo.inval* instruction, an implementation may instead perform
++_[#param:FORCE_UPGRADE_CBO_INVAL_TO_FLUSH]#When executing a *cbo.inval* instruction, an implementation may instead perform
+ a flush operation, since the result of that operation is indistinguishable from
+ the sequence of performing a write transfer to memory just before performing an
+-invalidate operation._
++invalidate operation.#_
+ ====
+ 
+ [#insns-cbo_zero,reftext="Cache Block Zero"]
+@@ -972,8 +972,8 @@ Description::
+ corresponding to the cache block that contains the address specified in _rs1_.#
+ [#norm:cbo-zero_unaligned]#It is not required that _rs1_ is aligned to the size of a cache block.# On
+ faults, the faulting virtual address is considered to be the value in rs1,
+-rather than the base address of the cache block. An implementation may or
+-may not update the entire set of bytes atomically.
++rather than the base address of the cache block. [#param:CBO_ZERO_ATOMICITY]#An implementation may or
++may not update the entire set of bytes atomically.#
+ 
+ [[norm:cbo-zero_offset]]
+ The assembly _offset_ operand may be omitted. If it isn't then any expression
+diff --git a/src/counters.adoc b/src/counters.adoc
+index dd883f4..d4b51b6 100644
+--- a/src/counters.adoc
++++ b/src/counters.adoc
+@@ -208,10 +208,10 @@ this would increase the size of the user context, especially for
+ implementations with a richer set of counters.
+ ====
+ 
+-[#norm:hpm_platform_specific_impl]#The implemented number and width of these additional counters, and the
+-set of events they count, are platform-specific.# [#norm:hpm_unimplemented_counter_access]#Accessing an
++[#param:HPM_EVENTS]##[#param:HPM_COUNTER_EN]##[#norm:hpm_platform_specific_impl]#The implemented number and width of these additional counters, and the
++set of events they count, are platform-specific.# [#param:TRAP_ON_UNIMPLEMENTED_HPM_COUNTER]##[#norm:hpm_unimplemented_counter_access]#Accessing an
+ unimplemented counter may cause an illegal-instruction exception or may
+-return a constant value.# [#norm:hpm_misconfigured_event_behavior]#If the configuration used to select the events
++return a constant value.# [#param:HPM_MISCONFIGURED_BEHAVIOR]##[#norm:hpm_misconfigured_event_behavior]#If the configuration used to select the events
+ counted by a counter is misconfigured, the counter may return a constant
+ value.#
+ 
+diff --git a/src/f-st-ext.adoc b/src/f-st-ext.adoc
+index 95a9371..24eca59 100644
+--- a/src/f-st-ext.adoc
++++ b/src/f-st-ext.adoc
+@@ -120,7 +120,7 @@ preserve the contents of these bits.
+ the instruction, or a dynamic rounding mode held in `frm`. Rounding
+ modes are encoded as shown in <<norm:dyn_round_enc>>. A value of 111 in the
+ instruction's _rm_ field selects the dynamic rounding mode held in
+-`frm`#. [#norm:roundingmode_rsv]#The behavior of floating-point instructions that depend on
++`frm`#. [#param:TRAP_ON_RESERVED_INSTRUCTION]##[#norm:roundingmode_rsv]#The behavior of floating-point instructions that depend on
+ rounding mode when executed with a reserved rounding mode is _reserved_, including both static reserved rounding modes (101-110) and dynamic reserved rounding modes (101-111). Some instructions, including widening conversions, have the _rm_ field but are nevertheless mathematically unaffected by the rounding mode; software should set their _rm_ field to
+ RNE (000) but implementations must treat the _rm_ field as usual (in
+ particular, with regard to decoding legal vs. reserved encodings).#
+@@ -188,8 +188,8 @@ ultimately chose to omit these instructions to keep the ISA simple.
+ === NaN Generation and Propagation
+ 
+ [[norm:F_canonical_NaN]]
+-Except when otherwise stated, if the result of a floating-point
+-operation is NaN, it is the canonical NaN. The canonical NaN has a
++[#param:F_CANONICAL_NAN]#Except when otherwise stated, if the result of a floating-point
++operation is NaN, it is the canonical NaN.# The canonical NaN has a
+ positive sign and all significand bits clear except the MSB, a.k.a. the
+ quiet bit. For single-precision floating-point, this corresponds to the pattern `0x7fc00000`.
+ (((NaN, generation)))
+@@ -252,7 +252,7 @@ address is naturally aligned.
+ FLW and FSW do not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
+ 
+ [[norm:fp_misaligned]]
+-As described in <<ldst>>, the execution environment defines whether misaligned floating-point loads and stores are handled invisibly or raise a contained or fatal trap.
++[#param:MISALIGNED_LDST]#As described in <<ldst>>, the execution environment defines whether misaligned floating-point loads and stores are handled invisibly or raise a contained or fatal trap.#
+ 
+ [[single-float-compute]]
+ === Single-Precision Floating-Point Computational Instructions
+diff --git a/src/hypervisor.adoc b/src/hypervisor.adoc
+index 5d4d609..491e492 100644
+--- a/src/hypervisor.adoc
++++ b/src/hypervisor.adoc
+@@ -22,8 +22,8 @@ expected to implement the SBI for its VS-mode guest.
+ 
+ The hypervisor extension depends on an "I" base integer ISA with 32
+ `x` registers (RV32I or RV64I), not RV32E or RV64E, which have only 16 `x`
+-registers. [#norm:H_mtval_nrz]#CSR `mtval` must not be read-only zero#, and
+-[#norm:H_vm_supported]#standard
++registers. [#param:MTVAL_IMPLEMENTED]##[#norm:H_mtval_nrz]#CSR `mtval` must not be read-only zero#, and
++[#param:VM_MODES_SUPPORTED]##[#norm:H_vm_supported]#standard
+ page-based address translation must be supported, either Sv32 for RV32,
+ or a minimum of Sv39 for RV64#.
+ 
+@@ -160,8 +160,8 @@ exactly the right moment. Currently, most supervisor CSRs fall into this
+ category, but future ones might not.
+ ====
+ 
+-In this chapter, [#norm:hsxlen_param]#we use the term _HSXLEN_ to refer to the effective XLEN
+-when executing in HS-mode#, and [#norm:vsxlen_param]#_VSXLEN_ to refer to the effective XLEN
++In this chapter, [#param:SXLEN]##[#norm:hsxlen_param]#we use the term _HSXLEN_ to refer to the effective XLEN
++when executing in HS-mode#, and [#param:VSXLEN]##[#norm:vsxlen_param]#_VSXLEN_ to refer to the effective XLEN
+ when executing in VS-mode.#
+ 
+ [[sec:hstatus]]
+@@ -224,7 +224,7 @@ tracking and controlling the exception behavior of a VS-mode guest.
+ VSXLEN), which may differ from the XLEN for HS-mode (HSXLEN).# [#norm:hstatus-vsxl_32]#When
+ HSXLEN=32, the VSXL field does not exist, and VSXLEN=32.# [#norm:hstatus-vsxl_64]#When HSXLEN=64,
+ VSXL is a *WARL* field that is encoded the same as the MXL field of `misa`,
+-shown in <<norm:misa_mxl_enc>>.# [#norm:vsxl_ro_param]#In particular, an
++shown in <<norm:misa_mxl_enc>>.# [#param:VSXL_RO_PARAM]##[#norm:vsxl_ro_param]#In particular, an
+ implementation may make VSXL be a read-only field whose value always
+ ensures that VSXLEN=HSXLEN.#
+ 
+@@ -242,7 +242,7 @@ virtual-instruction exception.#
+ [#norm:hstatus-vtw_op]#When VTW=1 (and assuming `mstatus`.TW=0),
+ an attempt in VS-mode to execute WFI raises a virtual-instruction
+ exception if the WFI does not complete within an
+-implementation-specific, bounded time limit.# [#norm:vtw_virtinstr_param]#An implementation may have
++implementation-specific, bounded time limit.# [#param:VTW_VIRTINSTR_PARAM]##[#norm:vtw_virtinstr_param]#An implementation may have
+ WFI always raise a virtual-instruction exception in VS-mode when VTW=1
+ (and `mstatus`.TW=0), even if there are pending globally-disabled
+ interrupts when the instruction is executed.#
+@@ -256,8 +256,8 @@ guest external interrupt source for VS-level external interrupts. VGEIN
+ is a *WLRL* field that must be able to hold values between zero and the
+ maximum guest external interrupt number (known as GEILEN), inclusive.
+ When VGEIN=0, no guest external interrupt source is selected for
+-VS-level external interrupts. GEILEN may be zero, in which case VGEIN
+-may be read-only zero. Guest external interrupts are explained in
++VS-level external interrupts. [#param:GEILEN]#GEILEN may be zero, in which case VGEIN
++may be read-only zero#. Guest external interrupts are explained in
+ <<hgeinterruptregs>>, and the use of VGEIN is covered
+ further in <<hinterruptregs>>.
+ 
+@@ -1067,8 +1067,8 @@ Sv57). +
+ _Reserved_
+ |===
+ 
+-Implementations are not required to support all defined MODE settings
+-when HSXLEN=64.
++[#param:HGATP_MODES_SUPPORTED]#Implementations are not required to support all defined MODE settings
++when HSXLEN=64#.
+ 
+ [[norm:hgatp-mode_warl]]
+ A write to `hgatp` with an unsupported MODE value is not ignored as it
+@@ -1084,10 +1084,10 @@ these modes, the lowest two bits of the physical page number (PPN) in
+ defined paged virtual-memory schemes and/or Bare may make PPN[1:0]
+ read-only zero.
+ 
+-[#norm:hgatp-vmid_param]#The number of VMID bits is UNSPECIFIED and may be zero.# The number of implemented
++[#param:VMID_WIDTH]##[#norm:hgatp-vmid_param]#The number of VMID bits is UNSPECIFIED and may be zero.# The number of implemented
+ VMID bits, termed _VMIDLEN_, may be determined by writing one to every
+ bit position in the VMID field, then reading back the value in `hgatp`
+-to see which bit positions in the VMID field hold a one. [#norm:hgatp-vmid_lsbs]#The
++to see which bit positions in the VMID field hold a one. [#param:HGATP_VMID_LSBS]##[#norm:hgatp-vmid_lsbs]#The
+ least-significant bits of VMID are implemented first: that is, if
+ VMIDLEN > 0, VMID[VMIDLEN-1:0] is writable. The maximal
+ value of VMIDLEN, termed VMIDMAX, is 7 for Sv32x4 or 14 for Sv39x4,
+@@ -1220,8 +1220,8 @@ is visible to VS-mode only. For example, the value of the HS-level
+ `sstatus`.FS does not affect `vsstatus`.SD.
+ 
+ [[norm:vsstatus-ube_param]]
+-An implementation may make field UBE be a read-only copy of
+-`hstatus`.VSBE.
++[#param:VSSTATUS_UBE_PARAM]#An implementation may make field UBE be a read-only copy of
++`hstatus`.VSBE#.
+ 
+ [[norm:vsstatus_v0]]
+ When V=0, `vsstatus` does not directly affect the behavior of the
+@@ -1412,9 +1412,9 @@ instructions that are mispredicted must not cause VS-stage
+ A bits to be set.
+ ====
+ 
+-[#norm:vsatp_mode_unsupported_v0]#When V=0, a write to `vsatp` with an unsupported MODE value is either
++[#param:VSATP_MODE_UNSUPPORTED_V0]##[#norm:vsatp_mode_unsupported_v0]#When V=0, a write to `vsatp` with an unsupported MODE value is either
+ ignored as it is for `satp`, or the fields of `vsatp` are treated as *WARL* in
+-the normal way.# [#norm:vsatp_mode_unsupported_v1]#However, when V=1, a write to `satp` with an unsupported
++the normal way.# [#param:VSATP_MODE_UNSUPPORTED_V1]##[#norm:vsatp_mode_unsupported_v1]#However, when V=1, a write to `satp` with an unsupported
+ MODE value _is_ ignored and no write to `vsatp` is effected.#
+ 
+ [[norm:vsatp_v0]]
+diff --git a/src/indirect-csr.adoc b/src/indirect-csr.adoc
+index 4f88295..0692e54 100644
+--- a/src/indirect-csr.adoc
++++ b/src/indirect-csr.adoc
+@@ -21,7 +21,7 @@ without requiring a switch statement with a case for each register.
+ [NOTE]
+ ====
+ CSRs are accessed indirectly via this extension using select values, in
+-contrast to being accessed directly using standard CSR numbers. [#norm:csr_access]#A CSR
++contrast to being accessed directly using standard CSR numbers. [#param:CSR_DUAL_ACCESS_SUPPORT]##[#norm:csr_access]#A CSR
+ accessible via one method may or may not be accessible via the other
+ method.# [#norm:select_value_separate_address_space]#Select values are a separate address space from CSR numbers, and
+ from tselect values in the Sdtrig extension.# [#norm:select_value_unrelated]#If a CSR is both directly
+@@ -29,7 +29,7 @@ and indirectly accessible, the CSR's select value is unrelated to its
+ CSR number.#
+ 
+ Further, Machine-level and Supervisor-level select values are separate
+-address spaces from each other; however, [#norm:csrs_alias]#Machine-level and
++address spaces from each other; however, [#param:MSISELECT_ALIASING]##[#norm:csrs_alias]#Machine-level and
+ Supervisor-level CSRs with the same select value may be defined by an
+ extension as partial or full aliases with respect to each other.# This
+ typically would be done for CSRs that can be delegated from
+@@ -70,14 +70,14 @@ register state indirectly. [#norm:miselect_op]#The value of `miselect` determine
+ register is accessed upon read or write of each of the machine indirect alias
+ CSRs (`mireg*`).# [#norm:miselect_value_range]#`miselect` value ranges are allocated to dependent
+ extensions, which specify the register state accessible via each
+-`mireg__i__` register, for each `miselect` value.# [#norm:miselect_WARL]#`miselect` is a WARL
++`mireg__i__` register, for each `miselect` value.# [#param:MISELECT_LEGAL_VALUES]##[#norm:miselect_WARL]#`miselect` is a WARL
+ register.#
+ 
+ [#norm:miselect_min_sz]#The `miselect` register implements at least enough bits to support all
+ implemented `miselect` values (corresponding to the implemented extensions
+-that utilize `miselect`/`mireg*` to indirectly access register state).# The
++that utilize `miselect`/`mireg*` to indirectly access register state).# [#param:MISELECT_ACCESS]#The
+ `miselect` register may be read-only zero if there are no extensions
+-implemented that utilize it.
++implemented that utilize it.#
+ 
+ [[norm:miselect-msb_op]]
+ Values of `miselect` with the most-significant bit set (bit XLEN - 1 = 1)
+@@ -145,7 +145,7 @@ Six `\*ireg*` registers are defined in order to ensure that the needs of extensi
+ 
+ The CSRs in the table above are required if S-mode is implemented.
+ 
+-[#norm:siselect_min_range]#The `siselect` register will support the value range 0..0xFFF at a
++[#param:SISELECT_MIN_RANGE]##[#norm:siselect_min_range]#The `siselect` register will support the value range 0..0xFFF at a
+ minimum.# A future extension may define a value range outside of this
+ minimum range. Only if such an extension is implemented will `siselect` be
+ required to support larger values.
+@@ -236,7 +236,7 @@ implemented. These VS CSRs all match supervisor CSRs, and substitute for
+ those supervisor CSRs when executing in a virtual machine (in VS-mode or
+ VU-mode).
+ 
+-[#norm:vsiselect_min_range]#The `vsiselect` register will support the value range 0..0xFFF at a
++[#param:VSISELECT_MIN_RANGE]##[#norm:vsiselect_min_range]#The `vsiselect` register will support the value range 0..0xFFF at a
+ minimum.# A future extension may define a value range outside of this
+ minimum range. Only if such an extension is implemented will `vsiselect`
+ be required to support larger values.
+diff --git a/src/intro.adoc b/src/intro.adoc
+index 4b4c7db..9c17235 100644
+--- a/src/intro.adoc
++++ b/src/intro.adoc
+@@ -124,7 +124,7 @@ all legal instructions executed on each hart (i.e., the ISA is one
+ component of the EEI), and the handling of any interrupts or exceptions
+ raised during execution including environment calls. Examples of EEIs
+ include the Linux application binary interface (ABI), or the RISC-V
+-supervisor binary interface (SBI). [#norm:execution_environment_implementation_flexibility]#The implementation of a RISC-V
++supervisor binary interface (SBI). [#param:EXECUTION_ENVIRONMENT_IMPLEMENTATION]##[#norm:execution_environment_implementation_flexibility]#The implementation of a RISC-V
+ execution environment can be pure hardware, pure software, or a
+ combination of hardware and software. For example, opcode traps and
+ software emulation can be used to implement functionality not provided
+@@ -216,15 +216,15 @@ Although it is convenient to speak of _the_ RISC-V ISA, RISC-V is
+ actually a family of related ISAs, of which there are currently four
+ base ISAs. Each base integer instruction set is characterized by the
+ width of the integer registers and the corresponding size of the address
+-space and by the number of integer registers. [#norm:base_integer_variants]#There are two primary base
++space and by the number of integer registers. [#param:BASE_INTEGER_VARIANT]##[#norm:base_integer_variants]#There are two primary base
+ integer variants, RV32I and RV64I, described in
+ <<rv32>> and <<rv64>>, which provide 32-bit
+-or 64-bit address spaces respectively.# [#norm:xlen_definition]#We use the term XLEN to refer to
++or 64-bit address spaces respectively.# [#param:MXLEN]##[#norm:xlen_definition]#We use the term XLEN to refer to
+ the width of an integer register in bits (either 32 or 64).#
+ <<rv32e>> describes the RV32E and RV64E subset variants of the
+ RV32I or RV64I base instruction sets respectively, which have been added to support small
+ microcontrollers, and which have half the number of integer registers.
+-[#norm:twos_complement_signed_integers]#The base integer instruction sets use a two's-complement
++[#param:SIGNED_INTEGER_REPRESENTATION]##[#norm:twos_complement_signed_integers]#The base integer instruction sets use a two's-complement
+ representation for signed integer values.#
+ 
+ 
+@@ -461,11 +461,11 @@ the compressed ISA extension, relax IALIGN to 16 bits. IALIGN may not
+ take on any value other than 16 or 32.
+ (((ILEN)))
+ 
+-We use the term ILEN (measured in bits) to refer to the maximum
++[#param:ILEN]#We use the term ILEN (measured in bits) to refer to the maximum
+ instruction length supported by an implementation, and which is always a
+ multiple of IALIGN. For implementations supporting only a base
+ instruction set, ILEN is 32 bits. Implementations supporting longer
+-instructions have larger values of ILEN.
++instructions have larger values of ILEN.#
+ 
+ All the 32-bit
+ instructions in the base ISA have their lowest two bits set to `11`. The
+@@ -532,8 +532,8 @@ such an instruction borders a protection boundary, complicating
+ variable-instruction-length fetch and decode.
+ ====
+ (((endian, little and big)))
+-RISC-V base ISAs have either little-endian or big-endian memory systems,
+-with the privileged architecture further defining bi-endian operation.
++[#param:MEMORY_ENDIANNESS]#RISC-V base ISAs have either little-endian or big-endian memory systems,
++with the privileged architecture further defining bi-endian operation.#
+ Instructions are stored in memory as a sequence of 16-bit little-endian
+ parcels, regardless of memory system endianness. Parcels forming one
+ instruction are stored at increasing halfword addresses, with the
+diff --git a/src/machine.adoc b/src/machine.adoc
+index e3986ac..ed9214b 100644
+--- a/src/machine.adoc
++++ b/src/machine.adoc
+@@ -20,7 +20,7 @@ In addition to the machine-level CSRs described in this section,
+ 
+ [#norm:misa_acc]#The `misa` CSR is a *WARL* read-write register# reporting the ISA supported by the hart.
+ [#norm:misa_always_rd]#This register must be readable in any implementation#,
+-but [#norm:misa_csr_implemented]#a value of zero can be returned to indicate the `misa` register has not been implemented#, requiring that CPU capabilities be determined through a separate non-standard mechanism.
++but [#param:MISA_CSR_IMPLEMENTED]##[#norm:misa_csr_implemented]#a value of zero can be returned to indicate the `misa` register has not been implemented#, requiring that CPU capabilities be determined through a separate non-standard mechanism.
+ 
+ [[norm:misa_enc_img]]
+ .Machine ISA register (misa)
+@@ -68,7 +68,7 @@ extension "A" , bit 1 encodes presence of extension "B", through to
+ bit 25 which encodes "Z").#
+ [#norm:misa_i_op]#The "I" bit will be set for the RV32I and RV64I base ISAs#,
+ and [#norm:misa_e_op]#the "E" bit will be set for RV32E and RV64E.#
+-[#norm:misa_extensions_warl_op]#The Extensions field is a *WARL* field that can contain writable bits where the
++[#param:MUTABLE_MISA_V]##[#param:MUTABLE_MISA_U]##[#param:MUTABLE_MISA_S]##[#param:MUTABLE_MISA_Q]##[#param:MUTABLE_MISA_M]##[#param:MUTABLE_MISA_H]##[#param:MUTABLE_MISA_F]##[#param:MUTABLE_MISA_D]##[#param:MUTABLE_MISA_C]##[#param:MUTABLE_MISA_B]##[#param:MUTABLE_MISA_A]##[#norm:misa_extensions_warl_op]#The Extensions field is a *WARL* field that can contain writable bits where the
+ implementation allows the supported ISA to be modified.#
+ [#norm:misa_extensions_rst1]#At reset, the Extensions field shall contain the maximal set of supported extensions,
+ and "I" shall be selected over "E" if both are available.#
+@@ -262,7 +262,7 @@ reserved, not necessarily illegal.
+ 
+ [#norm:mvendorid_sz_acc_op]#The `mvendorid` CSR is a 32-bit read-only register providing the JEDEC
+ manufacturer ID of the provider of the core.#
+-[#norm:mvendorid_always_rd]#This register must be readable in any implementation, but a value of 0 can be returned to
++[#param:MARCHID_IMPLEMENTED]##[#param:ARCH_ID_VALUE]##[#param:VENDOR_ID_OFFSET]##[#param:VENDOR_ID_BANK]##[#norm:mvendorid_always_rd]#This register must be readable in any implementation, but a value of 0 can be returned to
+ indicate the field is not implemented or that this is a non-commercial implementation.#
+ 
+ //.Vendor ID register (`mvendorid`)
+@@ -336,7 +336,7 @@ variants of a design.
+ 
+ [#norm:mimpid_op]#The `mimpid` CSR provides a unique encoding of the version of the
+ processor implementation.#
+-[#norm:mimpid_always_rd]#This register must be readable in any
++[#param:MIMPID_IMPLEMENTED]##[#param:IMP_ID_VALUE]##[#norm:mimpid_always_rd]#This register must be readable in any
+ implementation, but a value of 0 can be returned to indicate that the field is not implemented.#
+ The Implementation value should reflect the design of the RISC-V processor itself and not any surrounding system.
+ 
+@@ -576,12 +576,12 @@ When MXLEN=32, the SXL and UXL fields do not exist, and SXLEN=32 and UXLEN=32.
+ 
+ [#norm:mstatus_sxl_acc_mxlen64]#When MXLEN=64, if S-mode is not supported, then SXL is read-only zero.
+ Otherwise, it is a *WARL* field that encodes the current value of SXLEN.#
+-In particular, [#norm:mstatus_sxl_rdonly_mxlen64]#an implementation may make SXL be a read-only field whose
++In particular, [#param:SXLEN]##[#norm:mstatus_sxl_rdonly_mxlen64]#an implementation may make SXL be a read-only field whose
+ value always ensures that SXLEN=MXLEN.#
+ 
+ [#norm:mstatus_uxl_acc_mxlen64]#When MXLEN=64, if U-mode is not supported, then UXL is read-only zero.
+ Otherwise, it is a *WARL* field that encodes the current value of UXLEN.#
+-In particular, [#norm:mstatus_uxl_rdonly_mxlen64]#an implementation may make UXL be a read-only field whose
++In particular, [#param:UXLEN]##[#norm:mstatus_uxl_rdonly_mxlen64]#an implementation may make UXL be a read-only field whose
+ value always ensures that UXLEN=MXLEN or UXLEN=SXLEN.#
+ 
+ [[norm:mstatus_uxl_legal_vals_smode]]
+@@ -676,7 +676,7 @@ whether access-fault exceptions are raised due to PMAs or PMP.
+ 
+ ===== Endianness Control in `mstatus` and `mstatush` Registers
+ 
+-[#norm:mstatus_mstatush_xbe_warl]#The MBE, SBE, and UBE bits in `mstatus` and `mstatush` are *WARL* fields# that
++[#param:M_MODE_ENDIANNESS]##[#norm:mstatus_mstatush_xbe_warl]#The MBE, SBE, and UBE bits in `mstatus` and `mstatush` are *WARL* fields# that
+ control the endianness of memory accesses other than instruction fetches.
+ [#norm:endianness_inst_fetch_little]#Instruction fetches are always little-endian.#
+ 
+@@ -713,9 +713,9 @@ SFENCE.VMA is necessary, beyond what would ordinarily be required for a
+ world switch.
+ ====
+ 
+-[#norm:mstatus_sbe_rocopy]#If S-mode is supported, an implementation may make SBE be a read-only
++[#param:S_MODE_ENDIANNESS]##[#norm:mstatus_sbe_rocopy]#If S-mode is supported, an implementation may make SBE be a read-only
+ copy of MBE.#
+-[#norm:mstatus_ube_rocopy]#If U-mode is supported, an implementation may make UBE be a
++[#param:U_MODE_ENDIANNESS]##[#norm:mstatus_ube_rocopy]#If U-mode is supported, an implementation may make UBE be a
+ read-only copy of either MBE or SBE.#
+ 
+ [NOTE]
+@@ -1009,7 +1009,7 @@ of errant speculation. Some platforms may choose to disallow
+ speculatively writing FS to close a potential side channel.
+ ====
+ 
+-[#norm:mstatus_fs_no_change_dirty]#If an instruction explicitly or implicitly writes a floating-point
++[#param:HW_MSTATUS_FS_DIRTY_UPDATE]##[#norm:mstatus_fs_no_change_dirty]#If an instruction explicitly or implicitly writes a floating-point
+ register or the `fcsr` but does not alter its contents, and FS=Initial
+ or FS=Clean, it is implementation-defined whether FS transitions to
+ Dirty.#
+@@ -1216,11 +1216,11 @@ include::images/bytefield/mtvec.edn[]
+ 
+ [#norm:mtvec_mandatory]#The `mtvec` register must always be implemented#, but
+ [#norm:mtvec_rdonly]#can contain a read-only value.#
+-If `mtvec` is writable, the set of values the register
+-may hold can vary by implementation.
+-[#norm:mtvec_base_align_4B]#The value in the BASE field must
++[#param:MTVEC_MODES]#If `mtvec` is writable, the set of values the register
++may hold can vary by implementation#.
++[#param:MTVEC_BASE_ALIGNMENT_DIRECT]##[#norm:mtvec_base_align_4B]#The value in the BASE field must
+ always be aligned on a 4-byte boundary#, and
+-[#norm:mtvec_base_align_func_mode]#the MODE setting may impose
++[#param:MTVEC_BASE_ALIGNMENT_VECTORED]##[#norm:mtvec_base_align_func_mode]#the MODE setting may impose
+ additional alignment constraints on the value in the BASE field.#
+ Note that the CSR contains only bits XLEN-1 through 2 of the address BASE.
+ When used as an address, the lower two bits are filled with zeroes to obtain
+@@ -1310,7 +1310,7 @@ time of the trap; and the SIE field of `mstatus` is cleared.#
+ [#norm:trap_del_S-mode_no_M-mode]#The `mcause`, `mepc`, and `mtval` registers and the MPP and MPIE fields of
+ `mstatus` are not written.#
+ 
+-[#norm:medeleg_mideleg_warl]#An implementation can choose to subset the delegatable traps, with the
++[#param:MIDELEG_WARL_MASK]##[#param:MEDELEG_WARL_MASK]##[#norm:medeleg_mideleg_warl]#An implementation can choose to subset the delegatable traps, with the
+ supported delegatable bits found by writing one to every bit location,
+ then reading back the value in `medeleg` or `mideleg` to see which bit
+ positions hold a one.#
+@@ -1410,13 +1410,13 @@ which these interrupt trap conditions expressly depend (including `mip`,
+ [[norm:intr_M-mode_highest_pri]]
+ Interrupts to M-mode take priority over any interrupts to lower privilege modes.
+ 
+-[#norm:mip_bits_wr_or_rdonly]#Each individual bit in register `mip` may be writable or may be read-only.#
++[#param:MIP_WRITABLE_MASK]##[#norm:mip_bits_wr_or_rdonly]#Each individual bit in register `mip` may be writable or may be read-only.#
+ [#norm:mip_bits_wr_op]#When bit _i_ in `mip` is writable, a pending interrupt _i_
+ can be cleared by writing 0 to this bit.#
+ [#norm:mip_bits_rdonly_op]#If interrupt _i_ can become pending but bit _i_ in `mip` is read-only, the implementation must
+ provide some other mechanism for clearing the pending interrupt.#
+ 
+-[#norm:mie_bits_wr]#A bit in `mie` must be writable if the corresponding interrupt can ever become pending.#
++[#param:MIE_WRITABLE_MASK]##[#norm:mie_bits_wr]#A bit in `mie` must be writable if the corresponding interrupt can ever become pending.#
+ [#norm:mie_bits_rdonly0]#Bits of `mie` that are not writable must be read-only zero.#
+ 
+ [#norm:mip_mie_std_enc_txt]#The standard portions (bits 15:0) of the `mip` and `mie` registers are
+@@ -1600,7 +1600,7 @@ CSRs return bits 63-32 of the corresponding register, and writes change only bit
+ [[mcounteren]]
+ ==== Machine Counter-Enable (`mcounteren`) Register
+ 
+-[#norm:mcounteren_sz]#The counter-enable `mcounteren` register is a 32-bit register# that
++[#param:MCOUNTENABLE_EN]##[#norm:mcounteren_sz]#The counter-enable `mcounteren` register is a 32-bit register# that
+ [#norm:mcounteren_op]#controls the availability of the hardware performance-monitoring
+ counters to the next-lower privileged mode.#
+ 
+@@ -1648,7 +1648,7 @@ shadows only the lower 32 bits of `mtime`.
+ 
+ [NOTE]
+ ====
+-[#norm:time_csr_architectural_availability]#Implementations can convert reads of the `time` and `timeh` CSRs into
++[#param:TIME_CSR_IMPLEMENTED]##[#norm:time_csr_architectural_availability]#Implementations can convert reads of the `time` and `timeh` CSRs into
+ loads to the memory-mapped `mtime` register, or emulate this
+ functionality on behalf of less-privileged modes in M-mode software.#
+ ====
+@@ -1666,7 +1666,7 @@ executing in a less-privileged mode.#
+ .Counter-inhibit `mcountinhibit` register
+ include::images/bytefield/counterinh.edn[]
+ 
+-[#norm:mcountinhibit_sz_warl_op1]#The counter-inhibit register `mcountinhibit` is a 32-bit
++[#param:COUNTINHIBIT_EN]##[#norm:mcountinhibit_sz_warl_op1]#The counter-inhibit register `mcountinhibit` is a 32-bit
+ *WARL* register that controls which of the hardware performance-monitoring counters increment.#
+ [#norm:mcountinhibit_only_inc]#The settings in this register only control whether the
+ counters increment; their accessibility is not affected by the setting
+@@ -2074,7 +2074,7 @@ variable-length instructions, then `mtval` will contain the virtual
+ address of the portion of the instruction that caused the fault#, while
+ [#norm:mepc_varlen_wr]#`mepc` will point to the beginning of the instruction.#
+ 
+-[#norm:mtval_instr_bits_lead-in]#The `mtval` register can optionally also be used to return the faulting
++[#param:REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION]##[#norm:mtval_instr_bits_lead-in]#The `mtval` register can optionally also be used to return the faulting
+ instruction bits on an illegal-instruction exception# (`mepc` points to
+ the faulting instruction in memory). If `mtval` is written with a
+ nonzero value when an illegal-instruction exception occurs, then `mtval`
+@@ -2191,7 +2191,7 @@ instruction that accesses a region ordered as device I/O has its _aq_
+ and/or _rl_ bit set, then that instruction is ordered as though it
+ accesses both device I/O and memory.#
+ 
+-[#norm:menvcfg_fiom_rdonly0_ok]#If S-mode is not supported, or if `satp`.MODE is read-only zero (always
++[#param:MENVCFG_FIOM_IMPLEMENTED]##[#norm:menvcfg_fiom_rdonly0_ok]#If S-mode is not supported, or if `satp`.MODE is read-only zero (always
+ Bare), the implementation may make FIOM read-only zero.#
+ 
+ [[norm:menvcfg_fiom_fence_presuc_op]]
+@@ -2221,7 +2221,7 @@ in S-mode and G-stage address translation (i.e., for page tables pointed
+ to by `satp` or `hgatp`). When PBMTE=1, Svpbmt is available for S-mode
+ and G-stage address translation. When PBMTE=0, the implementation
+ behaves as though Svpbmt were not implemented.#
+-[#norm:menvcfg_pbmte_rdonly0]#If Svpbmt is not implemented, PBMTE is read-only zero.#
++[#param:MENVCFG_PBMTE_IMPLEMENTED]##[#norm:menvcfg_pbmte_rdonly0]#If Svpbmt is not implemented, PBMTE is read-only zero.#
+ Furthermore,
+ [#norm:menvcfg_pbmte_henvcfg_pbmte_rdonly0]#for implementations with the hypervisor extension,
+ `henvcfg`.PBMTE is read-only zero if `menvcfg`.PBMTE is zero.#
+@@ -2243,7 +2243,7 @@ implementation behaves as though the Svade extension were not implemented for
+ G-stage address translation.
+ When ADUE=0, the implementation behaves as though Svade were implemented for
+ S-mode and G-stage address translation.#
+-[#norm:menvcfg_adue_rdonly0]#If Svadu is not implemented, ADUE is read-only zero.#
++[#param:MENVCFG_ADUE_IMPLEMENTED]##[#norm:menvcfg_adue_rdonly0]#If Svadu is not implemented, ADUE is read-only zero.#
+ Furthermore, [#norm:menvcfg_adue_henvcfg_adue_rdonly0]#for implementations with the hypervisor extension,
+ `henvcfg`.ADUE is read-only zero if `menvcfg`.ADUE is zero.#
+ 
+@@ -2259,10 +2259,10 @@ A/D bits need be set, hence Svade is implemented when ADUE=0.
+ [#norm:menvcfg_cde_op]#If the Smcdeleg extension is implemented, the CDE (Counter Delegation Enable) bit
+ controls whether Zicntr and Zihpm counters can be delegated to S-mode. When CDE=1, the Smcdeleg extension is
+ enabled, see <<smcdeleg>>. When CDE=0, the Smcdeleg and Ssccfg extensions appear to be not implemented.#
+-[#norm:menvcfg_cde_rdonly0]#If Smcdeleg is not implemented, CDE is read-only zero.#
++[#param:MENVCFG_CDE_IMPLEMENTED]##[#norm:menvcfg_cde_rdonly0]#If Smcdeleg is not implemented, CDE is read-only zero.#
+ 
+ [#norm:menvcfg_stce_op1]#The Sstc extension adds the `STCE` (STimecmp Enable) bit to `menvcfg` CSR.#
+-[#norm:menvcfg_stce_rdonly0]#When the Sstc extension is not implemented, `STCE` is read-only zero.#
++[#param:MENVCFG_STCE_IMPLEMENTED]##[#norm:menvcfg_stce_rdonly0]#When the Sstc extension is not implemented, `STCE` is read-only zero.#
+ [#norm:menvcfg_stce_op2]#The `STCE` bit enables `stimecmp` for S-mode when set to one.
+ When this extension is implemented and `STCE` in `menvcfg` is zero, an attempt to access `stimecmp`
+ in a mode other than M-mode raises an illegal-instruction exception, `STCE` in
+@@ -2276,16 +2276,16 @@ to `menvcfg`. When the `CBZE` field is set to 1, it enables execution of the
+ cache block zero instruction, `CBO.ZERO`, in modes less privileged than M.
+ Otherwise, the instruction raises an illegal-instruction exception in modes less
+ privileged than M.#
+-[#norm:menvcfg_cbze_rdonly0]#When the Zicboz extension is not implemented, `CBZE` is read-only zero.#
++[#param:MENVCFG_CBZE_IMPLEMENTED]##[#norm:menvcfg_cbze_rdonly0]#When the Zicboz extension is not implemented, `CBZE` is read-only zero.#
+ 
+ [#norm:menvcfg_cbcfe_op]#The Zicbom extension adds the `CBCFE` (Cache Block Clean and Flush instruction
+ Enable) field to `menvcfg`. When the `CBCFE` field is set to 1, it enables
+ execution of the cache block clean instruction (`CBO.CLEAN`) and the cache block
+ flush instruction (`CBO.FLUSH`) in modes less privileged than M. Otherwise, these
+ instructions raise an illegal-instruction exception in modes less privileged than M.#
+-[#norm:menvcfg_cbcfe_rdonly0]#When the Zicbom extension is not implemented, `CBCFE` is read-only zero.#
++[#param:MENVCFG_CBCFE_IMPLEMENTED]##[#norm:menvcfg_cbcfe_rdonly0]#When the Zicbom extension is not implemented, `CBCFE` is read-only zero.#
+ 
+-[#norm:menvcfg_cbie_warl_op]#The Zicbom extension adds the `CBIE` (Cache Block Invalidate instruction Enable)
++[#param:MENVCFG_CBIE_LEGAL_VALUES]##[#norm:menvcfg_cbie_warl_op]#The Zicbom extension adds the `CBIE` (Cache Block Invalidate instruction Enable)
+ WARL field to `menvcfg` to control execution of the cache block invalidate
+ instruction (`CBO.INVAL`) in modes less privileged than M. When `CBIE` is set to
+ `00b`, the instruction raises an illegal-instruction exception in modes less
+@@ -2307,7 +2307,7 @@ behaves as follows:#
+ pointer masking (see <<Zpm>>) for the next-lower privilege mode (S-/HS-mode if
+ S-mode is implemented, or U-mode otherwise), according to the values in
+ <<norm:menvcfg_pmm_enc>>.#
+-[#norm:menvcfg_pmm_rdonly0]#If Smnpm is not implemented, `PMM` is read-only zero.
++[#param:MENVCFG_PMM_IMPLEMENTED]##[#norm:menvcfg_pmm_rdonly0]#If Smnpm is not implemented, `PMM` is read-only zero.
+ The `PMM` field is read-only zero for RV32.#
+ 
+ [[norm:menvcfg_pmm_enc]]
+@@ -2342,10 +2342,10 @@ the following rules apply to privilege modes that are less than M:#
+ * The `pte.xwr=010b` encoding in VS/S-stage page tables becomes reserved.
+ * `SSAMOSWAP.W/D` raises an illegal-instruction exception.
+ 
+-[#norm:menvcfg_sse_rdonly0]#When `menvcfg.SSE` is 0, the `henvcfg.SSE` and `senvcfg.SSE` fields are
++[#param:MENVCFG_SSE_IMPLEMENTED]##[#norm:menvcfg_sse_rdonly0]#When `menvcfg.SSE` is 0, the `henvcfg.SSE` and `senvcfg.SSE` fields are
+ read-only zero.#
+ 
+-[#norm:menvcfg_dte_op]#The Ssdbltrp extension adds the double-trap-enable (`DTE`) field in `menvcfg`.
++[#param:MENVCFG_DTE_IMPLEMENTED]##[#norm:menvcfg_dte_op]#The Ssdbltrp extension adds the double-trap-enable (`DTE`) field in `menvcfg`.
+ When `menvcfg.DTE` is zero, the implementation behaves as though Ssdbltrp is not
+ implemented. When Ssdbltrp is not implemented `sstatus.SDT`, `vsstatus.SDT`, and
+ `henvcfg.DTE` bits are read-only zero.#
+@@ -2376,13 +2376,13 @@ control access to the `seed` CSR from modes less privileged than M.
+ illegal-instruction exception. When `USEED` is 1, read-write access to the
+ `seed` CSR from U-mode is allowed; all other types of accesses raise an
+ illegal-instruction exception.#
+-[#norm:mseccfg_useed_rdonly0]#If Zkr or U-mode is not implemented, `USEED` is read-only zero.#
++[#param:MSECCFG_USEED_IMPLEMENTED]##[#norm:mseccfg_useed_rdonly0]#If Zkr or U-mode is not implemented, `USEED` is read-only zero.#
+ 
+ [#norm:mseccfg_sseed_SorHS-mode_op]#When `SSEED` is 0, access to the `seed` CSR from S-/HS-mode raises an
+ illegal-instruction exception. When `SSEED` is 1, read-write access to the
+ `seed` CSR from S-/HS-mode is allowed; all other types of accesses raise an
+ illegal-instruction exception.#
+-[#norm:mseccfg_sseed_rdonly0]#If Zkr or S-mode is not implemented, `SSEED` is read-only zero.#
++[#param:MSECCFG_SSEED_IMPLEMENTED]##[#norm:mseccfg_sseed_rdonly0]#If Zkr or S-mode is not implemented, `SSEED` is read-only zero.#
+ 
+ [#norm:mseccfg_sseed_VSorVU-mode_op]#When the H extension is also implemented,
+ access to the `seed` CSR from an
+@@ -2505,7 +2505,7 @@ until a *PMP reset*.#
+ [#norm:mseccfg_pmm_presence_op]#If the Smmpm extension is implemented,
+ the `PMM` field enables or disables pointer masking (see <<Zpm>>) for M-mode
+ according to the values in <<norm:mseccfg_pmm_enc>>.#
+-[#norm:mseccfg_pmm_rdonly0]#If Smmpm is not implemented, `PMM` is read-only zero.
++[#param:MSECCFG_PMM_IMPLEMENTED]##[#norm:mseccfg_pmm_rdonly0]#If Smmpm is not implemented, `PMM` is read-only zero.
+ The `PMM` field is read-only zero for RV32.#
+ 
+ [[norm:mseccfg_pmm_enc]]
+@@ -3330,7 +3330,7 @@ privileges (read, write, execute) to be specified for each physical
+ memory region. The PMP values are checked in parallel with the PMA
+ checks described in <<pma>>.
+ 
+-[#norm:pmp_granularity_param]#The granularity of PMP access control settings are platform-specific,
++[#param:PMP_GRANULARITY]##[#norm:pmp_granularity_param]#The granularity of PMP access control settings are platform-specific,
+ but the standard PMP encoding supports regions as small as four bytes.#
+ [#norm:pmp_mmode_only_regions]#Certain regions’ privileges can be hardwired—for example, some regions
+ might only ever be visible in machine mode but in no lower-privilege
+@@ -3348,7 +3348,7 @@ S or U, including instruction fetches and data accesses in S and U mode,
+ and data accesses in M-mode when the MPRV bit in `mstatus` is set and
+ the MPP field in `mstatus` contains S or U.# [#norm:pmp_check_pagetable_access]#PMP checks are also applied
+ to page-table accesses for virtual-address translation, for which the
+-effective privilege mode is S.# [#norm:pmp_mmode_locking]#Optionally, PMP checks may additionally
++effective privilege mode is S.# [#param:PMP_MMODE_LOCKING]##[#norm:pmp_mmode_locking]#Optionally, PMP checks may additionally
+ apply to M-mode accesses, in which case the PMP registers themselves are
+ locked, so that even M-mode software cannot change them until the hart
+ is reset.# In effect, PMP can _grant_ permissions to S and U modes, which
+@@ -3361,9 +3361,9 @@ default has full permissions.
+ 
+ [#norm:pmp_entry_structure]#PMP entries are described by an 8-bit configuration register and one
+ MXLEN-bit address register. Some PMP settings additionally use the
+-address register associated with the preceding PMP entry.# [#norm:pmp_entry_count]#Up to 64 PMP
++address register associated with the preceding PMP entry.# [#param:NUM_PMP_ENTRIES]##[#norm:pmp_entry_count]#Up to 64 PMP
+ entries are supported. Implementations may implement zero, 16, or 64 PMP
+-entries; the lowest-numbered PMP entries must be implemented first.# [#norm:pmp_csrs_warl_access]#All
++entries; the lowest-numbered PMP entries must be implemented first.# [#param:PMP_CSR_FIELDS_WARL]##[#norm:pmp_csrs_warl_access]#All
+ PMP CSR fields are *WARL* and may be read-only zero.# [#norm:pmp_csr_mode]#PMP CSRs are only
+ accessible to M-mode.#
+ 
+@@ -3425,7 +3425,7 @@ include::images/bytefield/pmpaddr-rv64.edn[]
+ register. The R, W, and X bits, when set, indicate that the PMP entry
+ permits read, write, and instruction execution, respectively. When one
+ of these bits is clear, the corresponding access type is denied.#
+-[#norm:pmp_rwx_warl]#The R,
++[#param:PMP_RWX_WARL_VALUES]##[#norm:pmp_rwx_warl]#The R,
+ W, and X fields form a collective *WARL* field for which the combinations with R=0 and W=1 are reserved.# The remaining two fields, A and L, are described in the following sections.
+ 
+ [[pmpcfg]]
+@@ -3534,7 +3534,7 @@ If the supervisor manages memory at base-page granularity, just 0.00002% of
+ the 16{nbsp}GiB address space is lost.
+ ====
+ 
+-[#norm:pmp_region_granularity_g]#Although the PMP mechanism supports regions as small as four bytes,
++[#param:PMP_GRAIN_G]##[#norm:pmp_region_granularity_g]#Although the PMP mechanism supports regions as small as four bytes,
+ platforms may specify coarser PMP regions. In general, the PMP grain is
+ 2^G+2^ bytes and must be the same across all PMP regions.#
+ [#norm:pmp_na4_select_restriction]#When G {ge} 1, the NA4 mode is not selectable.# [#norm:pmp_napot_addr_read_mask]#When
+diff --git a/src/priv-cfi.adoc b/src/priv-cfi.adoc
+index 9145308..4722e8f 100644
+--- a/src/priv-cfi.adoc
++++ b/src/priv-cfi.adoc
+@@ -87,8 +87,8 @@ the previous `ELP` state on traps to VS-mode, a `SPELP` bit is defined in the
+ transition to Debug Mode, a `pelp` bit is defined in the `dcsr` register.#
+ 
+ [[norm:Zicfilp_pelp_trap]]
+-When a trap is taken into privilege mode `x`, the `__x__PELP` is set to `ELP`
+-and `ELP` is set to `NO_LP_EXPECTED`.
++[#param:REPORT_CAUSE_IN_VSTVAL_ON_LANDING_PAD_SOFTWARE_CHECK]##[#param:REPORT_CAUSE_IN_STVAL_ON_LANDING_PAD_SOFTWARE_CHECK]##[#param:REPORT_CAUSE_IN_MTVAL_ON_LANDING_PAD_SOFTWARE_CHECK]#When a trap is taken into privilege mode `x`, the `__x__PELP` is set to `ELP`
++and `ELP` is set to `NO_LP_EXPECTED`.#
+ 
+ [[norm:Zicfilp_pelp_trap_return]]
+ An `MRET` or `SRET` instruction is used to return from a trap in M-mode or
+@@ -259,7 +259,7 @@ As of the drafting of this specification, instruction fetches are the sole type
+ of implicit access subjected to single- or VS-stage address translation.
+ ====
+ 
+-[#norm:ss_fault_exception_code]#If a shadow stack (SS) instruction raises an access-fault, page-fault, or
++[#param:REPORT_CAUSE_IN_VSTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK]##[#param:REPORT_CAUSE_IN_STVAL_ON_SHADOW_STACK_SOFTWARE_CHECK]##[#param:REPORT_CAUSE_IN_MTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK]##[#norm:ss_fault_exception_code]#If a shadow stack (SS) instruction raises an access-fault, page-fault, or
+ guest-page-fault exception that is supposed to indicate the original instruction
+ type (load or store/AMO), then the reported exception cause is respectively a
+ store/AMO access fault (code 7), a store/AMO page fault (code 15), or a
+diff --git a/src/priv-csrs.adoc b/src/priv-csrs.adoc
+index 0f8de5e..c7eceff 100644
+--- a/src/priv-csrs.adoc
++++ b/src/priv-csrs.adoc
+@@ -59,7 +59,7 @@ standard extensions.
+ Machine-mode standard read-write CSRs `0x7A0`-`0x7BF` are reserved for
+ use by the debug system. Of these CSRs, `0x7A0`-`0x7AF` are accessible
+ to machine mode, whereas
+-[#norm:Zicsr_debug-illegal]#`0x7B0`-`0x7BF` are only visible to debug mode.
++[#param:DEBUG_CSR_ACCESS_CONTROL]##[#norm:Zicsr_debug-illegal]#`0x7B0`-`0x7BF` are only visible to debug mode.
+ Implementations should raise illegal-instruction exceptions on
+ machine-mode access to the latter set of registers.#
+ 
+@@ -1133,7 +1133,7 @@ behavior of fields within the CSRs.
+ Some whole read/write fields are reserved for future use. Software
+ should ignore the values read from these fields, and should preserve the
+ values held in these fields when writing values to other fields of the
+-same register. [#norm:Zicsr_wpri_roz]#For forward compatibility, implementations that do not
++same register. [#param:WPRI_FIELDS_IMPLEMENTATION]##[#norm:Zicsr_wpri_roz]#For forward compatibility, implementations that do not
+ furnish these fields must make them read-only zero. These fields are
+ labeled *WPRI* in the register descriptions.#
+ 
+@@ -1166,7 +1166,7 @@ differentiate between the supported values, but must always return the
+ complete specified bit-encoding of any supported value when read.
+ ====
+ 
+-[#norm:Zicsr_wlrl_exception_param]#Implementations are permitted but not required to raise an
++[#param:TRAP_ON_ILLEGAL_WLRL]##[#norm:Zicsr_wlrl_exception_param]#Implementations are permitted but not required to raise an
+ illegal-instruction exception if an instruction attempts to write a
+ non-supported value to a *WLRL* field.#
+ Implementations can return arbitrary
+diff --git a/src/priv-intro.adoc b/src/priv-intro.adoc
+index 2ce58a7..c7ad5ec 100644
+--- a/src/priv-intro.adoc
++++ b/src/priv-intro.adoc
+@@ -155,7 +155,7 @@ optional standard extension for memory protection. Also, supervisor mode
+ can be extended to support Type-2 hypervisor execution as described in
+ <<hypervisor>>.
+ 
+-[#norm:priv-combs-txt]#Implementations might provide anywhere from 1 to 3 privilege modes#
++[#param:NUM_PRIVILEGE_MODES]##[#norm:priv-combs-txt]#Implementations might provide anywhere from 1 to 3 privilege modes#
+ trading off reduced isolation for lower implementation cost, as shown in
+ <<norm:priv-combs-tbl>>.
+ 
+@@ -208,8 +208,8 @@ control to a horizontal trap handler in the less-privileged mode.
+ 
+ === Debug Mode
+ 
+-Implementations may also include a debug mode to support off-chip
+-debugging and/or manufacturing test. Debug mode (D-mode) can be
++[#param:DEBUG_MODE_IMPLEMENTED]#Implementations may also include a debug mode to support off-chip
++debugging and/or manufacturing test.# Debug mode (D-mode) can be
+ considered an additional privilege mode, with even more access than
+ M-mode. The separate debug specification describes operation of
+ a RISC-V hart in debug mode. Debug mode reserves a few CSR addresses
+diff --git a/src/rnmi.adoc b/src/rnmi.adoc
+index 651cbb7..f68f0a7 100644
+--- a/src/rnmi.adoc
++++ b/src/rnmi.adoc
+@@ -22,9 +22,9 @@ by clearing the `mstatus`.MIE register.#
+ 
+ === RNMI Handler Addresses
+ 
+-[#norm:rnmi_trap_addr]#The RNMI interrupt trap handler address is implementation-defined.#
++[#param:RNMI_TRAP_HANDLER_ADDRESS]##[#norm:rnmi_trap_addr]#The RNMI interrupt trap handler address is implementation-defined.#
+ 
+-[#norm:rnmi_exc_trap_addr]#RNMI also has an associated exception trap handler address, which is
++[#param:RNMI_EXCEPTION_TRAP_HANDLER_ADDRESS]##[#norm:rnmi_exc_trap_addr]#RNMI also has an associated exception trap handler address, which is
+ implementation defined.#
+ 
+ NOTE: For example, some implementations might use the address specified
+@@ -61,7 +61,7 @@ remains writable when IALIGN=32.#
+ 
+ [#norm:mnepc_warl]#`mnepc` is a *WARL* register that must be able to hold all valid virtual
+ addresses.# It need not be capable of holding all possible invalid
+-addresses. [#norm:mnepc_invalid_convert]#Prior to writing `mnepc`, implementations may convert an
++addresses. [#param:MNEPC_INVALID_ADDRESS_CONVERSION]##[#norm:mnepc_invalid_convert]#Prior to writing `mnepc`, implementations may convert an
+ invalid address into some other invalid address that `mnepc` is capable
+ of holding.#
+ 
+@@ -71,7 +71,7 @@ include::images/bytefield/mncause.edn[]
+ [#norm:mncause_op]#The `mncause` CSR holds the reason for the RNMI.#
+ [#norm:mncause_interrupt]#If the reason is an interrupt, bit MXLEN-1 is set to 1,# and [#norm:mncause_interrupt_code]#the RNMI
+ cause is encoded in the least-significant bits.#
+-[#norm:mncause_interrupt_zero]#If the reason is an interrupt and RNMI causes are not supported, bit MXLEN-1 is
++[#param:RNMI_CAUSE_CODES_SUPPORTED]##[#norm:mncause_interrupt_zero]#If the reason is an interrupt and RNMI causes are not supported, bit MXLEN-1 is
+ set to 1, and zero is written to the least-significant bits.#
+ [#norm:mncause_doubletrap]#If the reason is an exception within M-mode that results in a double trap as
+ specified in the Smdbltrp extension, bit MXLEN-1 is set to 0 and the
+diff --git a/src/rv32.adoc b/src/rv32.adoc
+index ca72ebd..5e250e1 100644
+--- a/src/rv32.adoc
++++ b/src/rv32.adoc
+@@ -681,7 +681,7 @@ be read only, or support word access only).
+ `x0` must still raise any exceptions and cause any other side effects
+ even though the load value is discarded.#
+ 
+-[#norm:ENDIANNESS_LITTLE_OR_BIG]#The EEI will define whether the memory system is little-endian or big-endian.#
++[#param:ENDIANNESS_LITTLE_OR_BIG]##[#norm:ENDIANNESS_LITTLE_OR_BIG]#The EEI will define whether the memory system is little-endian or big-endian.#
+ [#norm:ldst_endian_byte_invariant]#In RISC-V, endianness is byte-address invariant.#
+ 
+ [NOTE]
+@@ -729,19 +729,19 @@ in _rd_.#
+ 
+ Regardless of EEI, [#norm:ldst_no_exc_aligned]#loads and stores whose effective addresses are
+ naturally aligned shall not raise an address-misaligned exception.#
+-[#norm:MISALIGNED_LDST_EEI_DEPENDENT_BEHAVIOR]#Loads and stores whose effective address is not naturally aligned to the
++[#param:MISALIGNED_LDST_EEI_DEPENDENT_BEHAVIOR]##[#norm:MISALIGNED_LDST_EEI_DEPENDENT_BEHAVIOR]#Loads and stores whose effective address is not naturally aligned to the
+ referenced datatype (i.e., the effective address is not divisible by the
+ size of the access in bytes) have behavior dependent on the EEI.#
+ 
+ An EEI may guarantee that misaligned loads and stores are fully
+ supported, and so the software running inside the execution environment
+ will never experience a contained or fatal address-misaligned trap. In this case, the
+-[#norm:MISALIGNED_LDST_FULLY_HW_SUPPORTED]#misaligned loads and stores can be handled in hardware#, or
+-[#norm:MISALIGNED_LDST_INVISIBLE_TRAP]#via an invisible trap into the execution environment implementation#, or possibly a
+-[#norm:MISALIGNED_LDST_HW_OR_INVISIBLE_TRAP_FUNC_OF_ADDR]#combination of hardware and invisible trap depending on address.#
++[#param:MISALIGNED_LDST_FULLY_HW_SUPPORTED]##[#norm:MISALIGNED_LDST_FULLY_HW_SUPPORTED]#misaligned loads and stores can be handled in hardware#, or
++[#param:MISALIGNED_LDST_INVISIBLE_TRAP]##[#norm:MISALIGNED_LDST_INVISIBLE_TRAP]#via an invisible trap into the execution environment implementation#, or possibly a
++[#param:MISALIGNED_LDST_HW_OR_INVISIBLE_TRAP_FUNC_OF_ADDR]##[#norm:MISALIGNED_LDST_HW_OR_INVISIBLE_TRAP_FUNC_OF_ADDR]#combination of hardware and invisible trap depending on address.#
+ 
+ An EEI may not guarantee misaligned loads and stores are handled invisibly. In this case,
+-[#norm:MISALIGNED_LDST_FULLY_HW_SUPPORTED_OR_VISIBLE_TRAP]#loads and stores that are not naturally aligned
++[#param:MISALIGNED_LDST_FULLY_HW_SUPPORTED_OR_VISIBLE_TRAP]##[#norm:MISALIGNED_LDST_FULLY_HW_SUPPORTED_OR_VISIBLE_TRAP]#loads and stores that are not naturally aligned
+ may either complete execution successfully or raise an exception.#
+ [#norm:ldst_addr_misaligned_or_access_fault_exc]#The exception raised can be either an
+ address-misaligned exception or an access-fault exception.
+@@ -750,7 +750,7 @@ to complete except for the misalignment, an access-fault exception can
+ be raised instead of an address-misaligned exception if the misaligned
+ access should not be emulated, e.g., if accesses to the memory region
+ have side effects.#
+-[#norm:MISALIGNED_LDST_CONTAINED_OR_FATAL_TRAP]#When an EEI does not guarantee misaligned loads and
++[#param:MISALIGNED_LDST_CONTAINED_OR_FATAL_TRAP]##[#norm:MISALIGNED_LDST_CONTAINED_OR_FATAL_TRAP]#When an EEI does not guarantee misaligned loads and
+ stores are handled invisibly, the EEI must define if exceptions caused
+ by address misalignment result in a contained trap (allowing software
+ running inside the execution environment to handle the trap) or a fatal
+diff --git a/src/rv64.adoc b/src/rv64.adoc
+index 12a0c55..6591f1a 100644
+--- a/src/rv64.adoc
++++ b/src/rv64.adoc
+@@ -15,7 +15,7 @@ in conjunction with the earlier chapter.
+ 
+ Most integer computational instructions operate on XLEN-bit values.
+ Additional instruction variants are provided to manipulate 32-bit values
+-in RV64I, indicated by a 'W' suffix to the opcode. [#norm:rv64_w_sex]#These "*W"
++in RV64I, indicated by a 'W' suffix to the opcode. [#param:RV64_W_INSTRUCTION_BEHAVIOR]##[#norm:rv64_w_sex]#These "*W"
+ instructions ignore the upper 32 bits of their inputs and always produce
+ 32-bit signed values, sign-extending them to 64 bits, i.e. bits XLEN-1
+ through 31 are equal.#
+@@ -72,7 +72,7 @@ include::images/wavedrom/rv64i-slliw.edn[]
+ 
+ [#norm:slliw_srliw_sraiw_op]#SLLIW, SRLIW, and SRAIW are RV64I-only instructions that are analogously
+ defined but operate on 32-bit values and sign-extend their 32-bit
+-results to 64 bits.# [#norm:slliw_srliw_sraiw_imm5_rsv]#SLLIW, SRLIW, and SRAIW encodings with
++results to 64 bits.# [#param:SLLIW_SRLIW_SRAIW_IMM5_HANDLING]##[#norm:slliw_srliw_sraiw_imm5_rsv]#SLLIW, SRLIW, and SRAIW encodings with
+ _imm[5] {ne} 0_ are reserved.#
+ 
+ [NOTE]
+diff --git a/src/rvwmo.adoc b/src/rvwmo.adoc
+index 894fca9..babb266 100644
+--- a/src/rvwmo.adoc
++++ b/src/rvwmo.adoc
+@@ -97,9 +97,9 @@ may give rise to multiple memory operations.# However, the memory model for thes
+ has not yet been formalized.
+ ====
+ 
+-[#norm:rvwmo_misaligned_ldst_memops]#A misaligned load or store instruction may be decomposed
++[#param:MISALIGNED_SPLIT_STRATEGY]##[#norm:rvwmo_misaligned_ldst_memops]#A misaligned load or store instruction may be decomposed
+ into a set of component memory operations of any granularity.#
+-[#norm:rvwmo_fp_gt_xlen_memops]#A floating-point load or store of more than XLEN bits may
++[#param:FP_LDST_DECOMPOSITION_STRATEGY]##[#norm:rvwmo_fp_gt_xlen_memops]#A floating-point load or store of more than XLEN bits may
+ also be decomposed into a set of component memory operations of any granularity.#
+ [#norm:rvwmo_order_multi_memops]#The memory operations generated by such instructions
+ are not ordered with respect to each other in program order, but they are ordered normally with
+diff --git a/src/scalar-crypto.adoc b/src/scalar-crypto.adoc
+index 24a8a2e..585b0cd 100644
+--- a/src/scalar-crypto.adoc
++++ b/src/scalar-crypto.adoc
+@@ -336,7 +336,7 @@ Instructions for accelerating the SM3 hash function.
+ ==== `Zkr` - Entropy Source Extension
+ 
+ [[norm:zkr_seed_addr]]
+-The entropy source extension defines the `seed` CSR at address `0x015`.
++[#param:SEED_CSR_ADDRESS]#The entropy source extension defines the `seed` CSR at address `0x015`.#
+ This CSR provides up to 16 physical `entropy` bits that can be used to
+ seed cryptographic random bit generators.
+ 
+@@ -3549,10 +3549,10 @@ The 32-bit contents of `seed` are as follows:
+ |`15: 0` |`entropy` |16 bits of randomness, only when `OPST=ES16`.
+ |=======================================================================
+ 
+-Attempts to access the `seed` CSR using a read-only CSR-access instruction
++[#param:SEED_CSR_ACCESS_CONTROL]#Attempts to access the `seed` CSR using a read-only CSR-access instruction
+ (`CSRRS`/`CSRRC` with _rs1_=`x0` or `CSRRSI`/`CSRRCI` with _uimm_=0) raise an
+ illegal-instruction exception; any other CSR-access instruction may be used
+-to access `seed`.
++to access `seed`.#
+ The write value (in `rs1` or `uimm`) must be ignored by implementations.
+ The purpose of the write is to signal polling and flushing.
+ 
+@@ -3571,9 +3571,9 @@ Encoding::
+ ]}
+ ....
+ 
+-The `seed` CSR is also access controlled by execution mode, and attempted
++[#param:SEED_CSR_MODE_ACCESS]#The `seed` CSR is also access controlled by execution mode, and attempted
+ read or write access will raise an illegal-instruction exception outside M mode
+-unless access is explicitly granted. See <<crypto_scalar_es_access>> for
++unless access is explicitly granted.# See <<crypto_scalar_es_access>> for
+ more details.
+ 
+ The status bits `seed[31:30]` = `OPST` may be `ES16` (10),
+@@ -3585,7 +3585,7 @@ when `OPST`=`ES16` (`seed[31:30]` = `10`), even if its numerical value is
+ the same as that of a previously polled `entropy` value. The implementation
+ requirements of `entropy` bits are defined in <<crypto_scalar_es_req>>.
+ When `OPST` is not `ES16`, `entropy` must be set to 0.
+-An implementation may safely set reserved and custom bits to zeros.
++[#param:SEED_CSR_RESERVED_BITS]#An implementation may safely set reserved and custom bits to zeros.#
+ 
+ For security reasons, the interface guarantees that secret `entropy`
+ words are not made available multiple times. Hence polling (reading) must
+@@ -3769,8 +3769,8 @@ data generation is made with an appropriately seeded, secure software DRBG.
+ See  <<crypto_scalar_appx_es_access>> for security considerations related
+ to direct access to entropy sources.
+ 
+-Implementations may implement `mseccfg` such that `[s,u]seed` is a read-only
+-constant value `0`. Software may discover if access to the `seed` CSR can be
++[#param:MSECCFG_SEED_FIELDS_IMPLEMENTED]#Implementations may implement `mseccfg` such that `[s,u]seed` is a read-only
++constant value `0`.# Software may discover if access to the `seed` CSR can be
+ enabled in U and S mode by writing a `1` to `[s,u]seed` and reading back
+ the result.
+ 
+@@ -3778,8 +3778,8 @@ the result.
+ 
+ === Data Independent Execution Latency Subset: Zkt
+ 
+-The Zkt extension attests that the machine has data-independent execution
+-time for a safe subset of instructions. This property is commonly called
++[#param:ZKT_IMPLEMENTED]#The Zkt extension attests that the machine has data-independent execution
++time for a safe subset of instructions.# This property is commonly called
+ _"constant-time"_ although should not be taken with that literal meaning.
+ 
+ All currently defined cryptographic instructions (Zk* and Zbk* extensions) are on
+@@ -3820,8 +3820,8 @@ timing side channels when compiled and running on a Zkt-enabled RISC-V target.
+ The Zkt extension explicitly states many of the common latency assumptions
+ made by cryptography developers.
+ 
+-Vendors do not have to implement all of the list's instructions to be Zkt
+-compliant; however, if they claim to have Zkt and implement any of the listed instructions, it must have data-independent latency.
++[#param:ZKT_INSTRUCTION_SUBSET]#Vendors do not have to implement all of the list's instructions to be Zkt
++compliant; however, if they claim to have Zkt and implement any of the listed instructions, it must have data-independent latency.#
+ 
+ For example, many simple RV32I and RV64I cores (without Multiply, Compressed,
+ Bitmanip, or Cryptographic extensions) are technically compliant with Zkt.
+@@ -5195,10 +5195,10 @@ as is the address of the custom `mnoise` CSR. Other contents and behavior of the
+ CSR only can be interpreted in the context of `mvendorid`, `marchid`, and
+ `mimpid` CSR identifiers.
+ 
+-When not implemented (e.g., in virtual machines), `mnoise` can permanently
+-read zero (`0x00000000`) and ignore writes.
+-When available, but `NOISE_TEST = 0`, `mnoise` can return a
+-nonzero constant (e.g. `0x00000001`) but no noise samples.
++[#param:MNOISE_CSR_IMPLEMENTED]#When not implemented (e.g., in virtual machines), `mnoise` can permanently
++read zero (`0x00000000`) and ignore writes.#
++[#param:MNOISE_CSR_IDLE_VALUE]#When available, but `NOISE_TEST = 0`, `mnoise` can return a
++nonzero constant (e.g. `0x00000001`) but no noise samples.#
+ 
+ [[crypto_scalar_es_noistest,reftext="Custom Entropy Test Mode Diagram"]]
+ ====
+diff --git a/src/smcdeleg.adoc b/src/smcdeleg.adoc
+index 2f74776..9477726 100644
+--- a/src/smcdeleg.adoc
++++ b/src/smcdeleg.adoc
+@@ -32,7 +32,7 @@ supervisor-level state.[#norm:smcdeleg_ssccfg_tandem]#For a RISC-V hardware plat
+ === Counter Delegation
+ 
+ The `mcounteren` register allows M-mode to provide the next-lower
+-privilege mode with read access to select counters.[#norm:smcdeleg_cde_en]#When the Smcdeleg/Ssccfg extensions are enabled (`menvcfg`.CDE=1), it further allows M-mode to delegate select counters to S-mode.#
++privilege mode with read access to select counters.[#param:SMCDELEG_SSCCFG_SUPPORT]##[#norm:smcdeleg_cde_en]#When the Smcdeleg/Ssccfg extensions are enabled (`menvcfg`.CDE=1), it further allows M-mode to delegate select counters to S-mode.#
+ 
+ The `siselect` (and `vsiselect`) index range 0x40-0x5F is reserved for
+ delegated counter access. When a counter _i_ is delegated
+@@ -92,7 +92,7 @@ treatment of `siselect` value 0x41 described above._
+ 
+ For each `siselect` and `sireg*` combination defined in <<indirect-hpm-state-mappings>>, the table
+ further indicates the extensions upon which the underlying counter state
+-depends.[#norm:ssccfg_missing_extension_illegal]#If any extension upon which the underlying state depends is not implemented, an attempt from M or S mode to access the given state through `sireg*` raises an illegal-instruction exception.#
++depends.[#param:ZIHPM_SUPPORT]##[#param:ZICNTR_SUPPORT]##[#param:SSCOFPMF_SUPPORT]##[#param:SMCNTRPMF_SUPPORT]##[#norm:ssccfg_missing_extension_illegal]#If any extension upon which the underlying state depends is not implemented, an attempt from M or S mode to access the given state through `sireg*` raises an illegal-instruction exception.#
+ 
+ [[norm:ssccfg_hyp_vs_or_vu_access_vsireg_illegal]]
+ If the hypervisor (H) extension is also implemented, then as specified
+@@ -121,14 +121,14 @@ or VU-mode raise a virtual-instruction  exception.
+ === Virtualizing Local-Counter-Overflow Interrupts
+ 
+ [[norm:ssccfg_lcofi_mvip_mvien]]
+-For implementations that support Smcdeleg, Sscofpmf, and Smaia, the
++For implementations that support Smcdeleg, Sscofpmf, and Smaia, [#param:MVIP_LCOFI_IMPLEMENTED]##[#param:MVIEN_LCOFI_IMPLEMENTED]#the
+ local-counter-overflow interrupt (LCOFI) bit (bit 13) in each of CSRs
+-`mvip` and `mvien` is implemented and writable.
++`mvip` and `mvien` is implemented and writable.#
+ 
+ [[norm:ssccfg_lcofi_hvip_hvien]]
+ For implementations that support Smcdeleg/Ssccfg, Sscofpmf,
+-Smaia/Ssaia, and the H extension, the LCOFI bit (bit 13) in each of `hvip`
+-and `hvien` is implemented and writable.
++Smaia/Ssaia, and the H extension, [#param:HVIP_LCOFI_IMPLEMENTED]##[#param:HVIEN_LCOFI_IMPLEMENTED]#the LCOFI bit (bit 13) in each of `hvip`
++and `hvien` is implemented and writable.#
+ 
+ [NOTE]
+ ====
+diff --git a/src/smcntrpmf.adoc b/src/smcntrpmf.adoc
+index 4af5537..15b726a 100644
+--- a/src/smcntrpmf.adoc
++++ b/src/smcntrpmf.adoc
+@@ -35,7 +35,7 @@ Smcntrpmf remedies these issues by introducing privilege mode filtering for the
+ 
+ [#norm:all_xinh_zero]#When all __x__INH bits are zero, event counting is enabled in all modes.#
+ 
+-[#norm:unimplemented_mode_bits]#For each bit in 61:58, if the associated privilege mode is not implemented, the bit is read-only zero.#
++[#param:MCYCLECFG_PRIVILEGE_MODE_BITS]##[#norm:unimplemented_mode_bits]#For each bit in 61:58, if the associated privilege mode is not implemented, the bit is read-only zero.#
+ 
+ [#norm:rv32_high_access]#For RV32, bits 63:32 of mcyclecfg can be accessed via the mcyclecfgh CSR, and bits 63:32 of minstretcfg can be accessed via the minstretcfgh CSR.#
+ 
+diff --git a/src/smctr.adoc b/src/smctr.adoc
+index 684cd8f..54cc6e5 100644
+--- a/src/smctr.adoc
++++ b/src/smctr.adoc
+@@ -6,7 +6,7 @@ A method for recording control flow transfer history is valuable not only for pe
+ 
+ Control flow trace capabilities offer very deep transfer history, but the volume of data produced can result in significant performance overheads due to memory bandwidth consumption, buffer management, and decoder overhead. The Control Transfer Records (CTR) extension provides a method to record a limited history in register-accessible internal chip storage, with the intent of dramatically reducing the performance overhead and complexity of collecting transfer history.
+ 
+-CTR defines a circular (FIFO) buffer.  Each buffer entry holds a record for a single recorded control flow transfer.  [#norm:CTR_DEPTH]#The number of records that can be held in the buffer depends upon both the implementation (the maximum supported depth) and the CTR configuration (the software selected depth).#
++CTR defines a circular (FIFO) buffer.  Each buffer entry holds a record for a single recorded control flow transfer.  [#param:CTR_MAX_DEPTH]##[#norm:CTR_DEPTH]#The number of records that can be held in the buffer depends upon both the implementation (the maximum supported depth) and the CTR configuration (the software selected depth).#
+ 
+ [#norm:Smctr_recording_criteria]#Only qualified transfers are recorded.  Qualified transfers are those that meet the filtering criteria, which include the privilege mode and the transfer type.#
+ 
+@@ -106,7 +106,7 @@ CTR defines a circular (FIFO) buffer.  Each buffer entry holds a record for a si
+ 
+ [%unbreakable]
+ --
+-[#norm:mctrctl-impl]#All fields are optional except for M, S, U, and BPFRZ.  All unimplemented fields are read-only 0, while all implemented fields are writable.  If the Sscofpmf extension is implemented, LCOFIFRZ must be writable.#
++[#param:MCTRCTL_FIELD_SUPPORT]##[#param:MCTRCTL_LCOFIFRZ_CONDITIONAL]##[#norm:mctrctl-impl]#All fields are optional except for M, S, U, and BPFRZ.  All unimplemented fields are read-only 0, while all implemented fields are writable.  If the Sscofpmf extension is implemented, LCOFIFRZ must be writable.#
+ --
+ 
+ [NOTE]
+@@ -212,7 +212,7 @@ The 32-bit `sctrdepth` register specifies the depth of the CTR buffer.
+ 
+ [#norm:sctrdepth-depth_op1]#The depth of the CTR buffer dictates the number of entries to which the hardware records transfers. For a depth of N, the hardware records transfers to entries 0..N-1. All <<_entry_registers, Entry Registers>> read as '0' and are read-only when the selected entry is in the range N to 255.  When the depth is increased, the newly accessible entries contain unspecified but legal values.#
+ 
+-[#norm:sctrdepth-depth_param]#It is implementation-specific which DEPTH value(s) are supported.#
++[#param:SCTRDEPTH_SUPPORTED_VALUES]##[#norm:sctrdepth-depth_param]#It is implementation-specific which DEPTH value(s) are supported.#
+ |===
+ 
+ [#norm:sctrdepth_mode]#Attempts to access `sctrdepth` from VS-mode or VU-mode raise a virtual-instruction exception, unless CTR state enable access restrictions apply.#  See <<State Enable Access Control>>.
+@@ -316,7 +316,7 @@ _CTR entry registers are defined as MXLEN, despite the_ `x__ireg*__` _CSRs used
+ [#norm:ctrtarget_op]#The `ctrtarget` register contains the target (destination) program counter
+ of the recorded transfer.#
+ [#norm:ctrtarget_pc_next_br]#For a not-taken branch, `ctrtarget` holds the PC of the next sequential instruction following the branch.#
+-[#norm:ctrtarget_misp]#The optional MISP bit is set by the hardware
++[#param:CTRTARGET_MISP_SUPPORT]##[#norm:ctrtarget_misp]#The optional MISP bit is set by the hardware
+ when the recorded transfer is an instruction whose target or
+ taken/not-taken direction was mispredicted by the branch predictor. MISP
+ is read-only 0 when not implemented.#
+@@ -336,7 +336,7 @@ is read-only 0 when not implemented.#
+ 
+ ==== Control Transfer Record Metadata Register (`ctrdata`)
+ 
+-[#norm:ctrdata_sz_acc]#The `ctrdata` register contains metadata for the recorded transfer. This
++[#param:CTRDATA_FIELD_SUPPORT]##[#norm:ctrdata_sz_acc]#The `ctrdata` register contains metadata for the recorded transfer. This
+ register must be implemented, though all fields within it are optional.
+ Unimplemented fields are read-only 0.  `ctrdata` is a 64-bit register.#
+ 
+@@ -359,7 +359,7 @@ Unimplemented fields are read-only 0.  `ctrdata` is a 64-bit register.#
+ |===
+ |Field |Description |Access
+ |TYPE[3:0] a|
+-[#norm:ctrdata-type]#Identifies the type of the control flow transfer recorded in the entry, using the encodings listed in xref:transfer-type-defs[xrefstyle=short].  Implementations that do not support this field will report 0.#
++[#param:CTRDATA_TYPE_SUPPORT]##[#norm:ctrdata-type]#Identifies the type of the control flow transfer recorded in the entry, using the encodings listed in xref:transfer-type-defs[xrefstyle=short].  Implementations that do not support this field will report 0.#
+ |WARL
+ 
+ |CCV |[#norm:ctrdata-ccv]#Cycle Count Valid.# See <<Cycle Counting>>. |WARL
+@@ -550,11 +550,11 @@ _Note that external trap recording does not depend on EXCINH/INTRINH.  Thus, whe
+ _STE allows recording of traps from U-mode to S-mode as well as from VS/VU-mode to HS-mode.  The hypervisor can flip `sctrctl`.STE before entering a guest if it wants different behavior for U-to-S vs VS/VU-to-HS._
+ ====
+ 
+-[#norm:exttrap_implreq]#If external trap recording is implemented, `mctrctl`.MTE and `sctrctl`.STE must be implemented, while `vsctrctl`.STE must be implemented if the H extension is implemented.#
++[#param:EXTERNAL_TRAP_RECORDING_SUPPORT]##[#norm:exttrap_implreq]#If external trap recording is implemented, `mctrctl`.MTE and `sctrctl`.STE must be implemented, while `vsctrctl`.STE must be implemented if the H extension is implemented.#
+ 
+ ==== Transfer Type Filtering
+ 
+-[#norm:ttf_default]#Default CTR behavior, when all transfer type filter bits (`__x__ctrctl`[47:32]) are unimplemented or 0, is to record all control transfers within enabled privileged modes. By setting transfer type filter bits, software can opt out of recording select transfer types, or opt into recording non-default operations.  All transfer type filter bits are optional.#
++[#param:TRANSFER_TYPE_FILTER_SUPPORT]##[#norm:ttf_default]#Default CTR behavior, when all transfer type filter bits (`__x__ctrctl`[47:32]) are unimplemented or 0, is to record all control transfers within enabled privileged modes. By setting transfer type filter bits, software can opt out of recording select transfer types, or opt into recording non-default operations.  All transfer type filter bits are optional.#
+ 
+ [NOTE]
+ [%unbreakable]
+@@ -633,7 +633,7 @@ _If implementation of any transfer type filter bit results in reduced software p
+ 
+ ==== Cycle Counting
+ 
+-[#norm:ctrdata_cc_supported_param]#The `ctrdata` register may optionally include a count of CPU cycles elapsed since the prior CTR record.  The elapsed cycle count value is represented by the CC field, which has a 12-bit mantissa component (Cycle Count Mantissa, or CCM) and a 4-bit exponent component (Cycle Count Exponent, or CCE).#
++[#param:CYCLE_COUNTING_SUPPORT]##[#norm:ctrdata_cc_supported_param]#The `ctrdata` register may optionally include a count of CPU cycles elapsed since the prior CTR record.  The elapsed cycle count value is represented by the CC field, which has a 12-bit mantissa component (Cycle Count Mantissa, or CCM) and a 4-bit exponent component (Cycle Count Exponent, or CCE).#
+ 
+ [#norm:ccounter_inc]#The elapsed cycle counter (CtrCycleCounter) increments at the same rate as the `mcycle` counter.  Only cycles while CTR is active are counted, where active implies that the current privilege mode is enabled for recording and CTR is not frozen.  The CC field is encoded such that CCE holds 0 if the CtrCycleCounter value is less than 4096, otherwise it holds the index of the most significant one bit in the CtrCycleCounter value, minus 11.  CCM holds CtrCycleCounter bits CCE+10:CCE-1.#
+ 
+@@ -651,7 +651,7 @@ endif
+ 
+ [#norm:ccounter_reset]#The CtrCycleCounter is reset on writes to `__x__ctrctl`, and on execution of SCTRCLR, to ensure that any accumulated cycle counts do not persist across a context switch.#
+ 
+-[#norm:ccounter_impl]#An implementation that supports cycle counting must implement CCV and all
++[#param:CCE_WIDTH]##[#norm:ccounter_impl]#An implementation that supports cycle counting must implement CCV and all
+ CCM bits, but may implement 0..4 exponent bits in CCE. Unimplemented CCE
+ bits are read-only 0. For implementations that support transfer type
+ filtering, it is recommended to implement at least 3 exponent bits. This
+@@ -686,7 +686,7 @@ _Though this compressed method of representation results in some imprecision for
+ 
+ ==== RAS (Return Address Stack) Emulation Mode
+ 
+-[#norm:ctrctl_rasemu_op]#When the optional `__x__ctrctl`.RASEMU bit is implemented and set to 1, transfer recording behavior is altered to emulate the behavior of a return-address stack (RAS).#
++[#param:RASEMU_SUPPORT]##[#norm:ctrctl_rasemu_op]#When the optional `__x__ctrctl`.RASEMU bit is implemented and set to 1, transfer recording behavior is altered to emulate the behavior of a return-address stack (RAS).#
+ 
+ * Indirect and direct calls are recorded as normal
+ * Function returns pop the most recent call, by decrementing the WRPTR then invalidating the WRPTR entry (by setting ctrsource.V=0).  As a result, logical entry 0 is invalidated and moves to logical entry depth-1, while logical entries 1..depth-1 move to 0..depth-2.
+diff --git a/src/smdbltrp.adoc b/src/smdbltrp.adoc
+index dbd0a4b..fad37b3 100644
+--- a/src/smdbltrp.adoc
++++ b/src/smdbltrp.adoc
+@@ -10,8 +10,8 @@ hart to a critical error state and enables signaling the critical error to the
+ platform.
+ 
+ To improve error diagnosis and resolution, this extension supports debugging
+-harts in a critical error state. The extension introduces a mechanism to enter
++harts in a critical error state. [#param:SMDBLTRP_DEBUG_MODE_ON_CRITICAL_ERROR]#The extension introduces a mechanism to enter
+ Debug Mode instead of asserting a critical-error signal to the platform when the
+-hart is in a critical error state. See cite:[DEBUG_SPEC] for details.
++hart is in a critical error state.# See cite:[DEBUG_SPEC] for details.
+ 
+ See <<machine-double-trap>> for the operational details.
+diff --git a/src/smepmp.adoc b/src/smepmp.adoc
+index 8eafc26..952dd7c 100644
+--- a/src/smepmp.adoc
++++ b/src/smepmp.adoc
+@@ -36,7 +36,7 @@ Section <<smepmp_rationale>>.
+ 
+ === Smepmp Physical Memory Protection Rules
+ 
+-To address the threat model outlined in Section <<smepmp_threat>>, [#norm:mseccfg_fields_exist]#this
++To address the threat model outlined in Section <<smepmp_threat>>, [#param:MSECCFG_RLB_IMPLEMENTED]##[#param:MSECCFG_MMWP_IMPLEMENTED]##[#param:MSECCFG_MML_IMPLEMENTED]##[#norm:mseccfg_fields_exist]#this
+ extension introduces the `RLB`, `MMWP`, and `MML` fields in the `mseccfg` CSR
+ and their associated rules.# See <<norm:mseccfg_enc_img>> for the detailed
+ specification of these fields and the corresponding rules.
+@@ -73,4 +73,4 @@ image::smepmp-visual-representation.png[]
+ 
+ === Smepmp software discovery
+ 
+-[#norm:mseccfg_locking]#Since all fields defined in ``mseccfg`` as part of this extension are locked when set (``MMWP``/``MML``) or locked when cleared (``RLB``), software can't poll them for determining the presence of Smepmp.# [#norm:bootrom_discovery]#It is expected that BootROM will set ``mseccfg.MMWP`` and/or ``mseccfg.MML`` during early boot, before jumping to the firmware, so that the firmware will be able to determine the presence of Smepmp by reading ``mseccfg`` and checking the state of ``mseccfg.MMWP`` and ``mseccfg.MML``.#
++[#param:SMEPMP_EXTENSION_IMPLEMENTED]##[#norm:mseccfg_locking]#Since all fields defined in ``mseccfg`` as part of this extension are locked when set (``MMWP``/``MML``) or locked when cleared (``RLB``), software can't poll them for determining the presence of Smepmp.# [#norm:bootrom_discovery]#It is expected that BootROM will set ``mseccfg.MMWP`` and/or ``mseccfg.MML`` during early boot, before jumping to the firmware, so that the firmware will be able to determine the presence of Smepmp by reading ``mseccfg`` and checking the state of ``mseccfg.MMWP`` and ``mseccfg.MML``.#
+diff --git a/src/smstateen.adoc b/src/smstateen.adoc
+index 0ceaa27..5349881 100644
+--- a/src/smstateen.adoc
++++ b/src/smstateen.adoc
+@@ -131,8 +131,8 @@ the `mstateen` CSRs, except controlling accesses for a virtual machine (from VS
+ and VU modes).
+ 
+ [[norm:stateen_warl_access]]
+-Each standard-defined bit of a `stateen` CSR is WARL and may be read-only zero or
+-one, subject to the following conditions.
++[#param:SSTATEEN_JVT_TYPE]##[#param:MSTATEEN_JVT_TYPE]##[#param:MSTATEEN_IMSIC_TYPE]##[#param:MSTATEEN_ENVCFG_TYPE]##[#param:MSTATEEN_CONTEXT_TYPE]##[#param:MSTATEEN_AIA_TYPE]##[#param:HSTATEEN_IMSIC_TYPE]##[#param:HSTATEEN_ENVCFG_TYPE]##[#param:HSTATEEN_CONTEXT_TYPE]##[#param:HSTATEEN_AIA_TYPE]#Each standard-defined bit of a `stateen` CSR is WARL and may be read-only zero or
++one, subject to the following conditions.#
+ 
+ [#norm:stateen_unimplemented_state_roz]#Bits in any `stateen` CSR that are defined to control state that a hart doesn't
+ implement are read-only zeros for that hart.# [#norm:stateen-reserved_roz]#Likewise, all reserved bits not
+diff --git a/src/sscofpmf.adoc b/src/sscofpmf.adoc
+index f8220ea..0c6812b 100644
+--- a/src/sscofpmf.adoc
++++ b/src/sscofpmf.adoc
+@@ -49,8 +49,8 @@ The following bits are added to `mhpmevent`:
+ | _WPRI_ | Reserved
+ |====
+ 
+-For each ``x``INH bit, if the associated privilege mode is not implemented,
+-the bit is read-only zero.
++[#param:MHPMEVENT_INH_BITS_IMPLEMENTED]#For each ``x``INH bit, if the associated privilege mode is not implemented,
++the bit is read-only zero.#
+ 
+ [[norm:mhpmevent-INH_op]]
+ Each of the five ``x``INH bits, when set, inhibit counting of events while in
+diff --git a/src/ssdbltrp.adoc b/src/ssdbltrp.adoc
+index f1b94c5..a5fb023 100644
+--- a/src/ssdbltrp.adoc
++++ b/src/ssdbltrp.adoc
+@@ -7,8 +7,8 @@ handler in a virtual machine on a double trap in VS-mode.# [#norm:M-mode_invoke_
+ to invoke a critical error handler in the OS/Hypervisor on a double trap in
+ S/HS-mode.#
+ 
+-[#norm:menvcfg_DTE]#The Ssdbltrp extension adds the `menvcfg`.DTE (See <<sec:menvcfg>>)# [#norm:sstatus_SDT]#and the
+-`sstatus`.SDT fields (See <<sstatus>>).# [#norm:henvcfg_DTE]#If the hypervisor extension is
++[#param:SSDBLTRP_EXTENSION]##[#norm:menvcfg_DTE]#The Ssdbltrp extension adds the `menvcfg`.DTE (See <<sec:menvcfg>>)# [#norm:sstatus_SDT]#and the
++`sstatus`.SDT fields (See <<sstatus>>).# [#param:HYPERVISOR_EXTENSION]##[#norm:henvcfg_DTE]#If the hypervisor extension is
+ additionally implemented, then the extension adds the `henvcfg`.DTE (See
+ <<sec:henvcfg>>)# [#norm:vsstatus_SDT]#and the `vsstatus`.SDT fields (See <<vsstatus>>).#
+ 
+diff --git a/src/sstc.adoc b/src/sstc.adoc
+index 3c3b8cf..ec39196 100644
+--- a/src/sstc.adoc
++++ b/src/sstc.adoc
+@@ -18,7 +18,7 @@ M-mode.# [#norm:sstc_vs_facility]#Further, this extension adds a similar facilit
+ extension for VS-mode.#
+ 
+ The extension name is "Sstc" ('Ss' for Privileged arch and Supervisor-level
+-extensions, and 'tc' for timecmp). [#norm:stimecmp_exist]#This extension adds the S-level `stimecmp`
+-CSR (<<stimecmp>>)# [#norm:vstimecmp_exist]#and the VS-level `vstimecmp` CSR (<<vstimecmp>>).# [#norm:stce_bit_exist]#This extension adds the `STCE` bit to the `menvcfg`
++extensions, and 'tc' for timecmp). [#param:STIMECMP_IMPLEMENTED]##[#norm:stimecmp_exist]#This extension adds the S-level `stimecmp`
++CSR (<<stimecmp>>)# [#param:VSTIMECMP_IMPLEMENTED]##[#norm:vstimecmp_exist]#and the VS-level `vstimecmp` CSR (<<vstimecmp>>).# [#param:STCE_BIT_IMPLEMENTED]##[#norm:stce_bit_exist]#This extension adds the `STCE` bit to the `menvcfg`
+ (<<sec:menvcfg>>) and `henvcfg`
+ (<<sec:henvcfg>>) CSRs.#
+diff --git a/src/supervisor.adoc b/src/supervisor.adoc
+index 799bee6..a22c7e8 100644
+--- a/src/supervisor.adoc
++++ b/src/supervisor.adoc
+@@ -140,10 +140,10 @@ encoding of UXL is the same as that of the MXL field of `misa`, shown in
+ <<norm:misa_mxl_enc>>.
+ 
+ [[norm:sstatus-uxl_sz]]
+-When SXLEN=32, the UXL field does not exist, and UXLEN=32. When
++When SXLEN=32, the UXL field does not exist, and UXLEN=32. [#param:SSTATUS_UXL_ACCESS]#When
+ SXLEN=64, it is a *WARL* field that encodes the current value of UXLEN. In
+ particular, an implementation may make UXL be a read-only field whose
+-value always ensures that UXLEN=SXLEN.
++value always ensures that UXLEN=SXLEN.#
+ 
+ [[norm:sstatus-uxl_behavior]]
+ If UXLEN≠SXLEN, instructions executed in the narrower
+@@ -160,10 +160,10 @@ user-mode memory accesses reference the lowest 4 GiB of the address space.
+ Some HINT instructions are encoded as integer computational instructions that
+ overwrite their destination register with its current value, e.g.,
+ `c.addi x8, 0`.
+-When such a HINT is executed with XLEN < SXLEN and bits SXLEN..XLEN of the
++[#param:HINT_SXLEN_PARAM]#When such a HINT is executed with XLEN < SXLEN and bits SXLEN..XLEN of the
+ destination register not all equal to bit XLEN-1, it is implementation-defined
+ whether bits SXLEN..XLEN of the destination register are unchanged or are
+-overwritten with copies of bit XLEN-1.
++overwritten with copies of bit XLEN-1.#
+ 
+ NOTE: This definition allows implementations to elide register write-back for
+ some HINTs, while allowing them to execute other HINTs in the same manner as
+@@ -193,7 +193,7 @@ never execute instructions from user pages, regardless of the state of
+ SUM.
+ 
+ [[norm:sstatus-sum_satp-mode]]
+-SUM is read-only 0 if `satp`.MODE is read-only 0.
++[#param:SSTATUS_SUM_ACCESS]#SUM is read-only 0 if `satp`.MODE is read-only 0.#
+ 
+ [NOTE]
+ ====
+@@ -222,10 +222,10 @@ the alternate mapping.
+ ===== Endianness Control in `sstatus` Register
+ 
+ [[norm:sstatus-ube]]
+-The UBE bit is a *WARL* field that controls the endianness of explicit memory
++[#param:SSTATUS_UBE_ACCESS]#The UBE bit is a *WARL* field that controls the endianness of explicit memory
+ accesses made from U-mode, which may differ from the endianness of
+ memory accesses in S-mode. An implementation may make UBE be a read-only
+-field that always specifies the same endianness as for S-mode.
++field that always specifies the same endianness as for S-mode.#
+ 
+ UBE controls whether explicit load and store memory accesses made from
+ U-mode are little-endian (UBE=0) or big-endian (UBE=1).
+@@ -258,8 +258,8 @@ when `V=1`.
+ ===== Double Trap Control in `sstatus` Register
+ 
+ [[norm:sstatus-sdt]]
+-The S-mode-disable-trap (`SDT`) bit is a WARL field introduced by the Ssdbltrp
+-extension to address double trap (See <<machine-double-trap>>) at privilege
++[#param:SSTATUS_SDT_ACCESS]#The S-mode-disable-trap (`SDT`) bit is a WARL field introduced by the Ssdbltrp
++extension to address double trap# (See <<machine-double-trap>>) at privilege
+ modes lower than M.
+ 
+ [[norm:sstatus-sdt_sstatus-sie_overwrite]]
+@@ -397,14 +397,14 @@ and `sstatus`).
+ Interrupts to S-mode take priority over any interrupts to lower
+ privilege modes.
+ 
+-[#norm:sip_acc]#Each individual bit in register `sip` may be writable or may be
++[#param:SIP_ACCESS]##[#norm:sip_acc]#Each individual bit in register `sip` may be writable or may be
+ read-only.# [#norm:sip_op]#When bit _i_ in `sip` is writable, a pending interrupt _i_
+ can be cleared by writing 0 to this bit. If interrupt _i_ can become
+ pending but bit _i_ in `sip` is read-only, the implementation must
+ provide some other mechanism for clearing the pending interrupt (which
+ may involve a call to the execution environment).#
+ 
+-[#norm:sie_acc]#A bit in `sie` must be writable if the corresponding interrupt can ever
++[#param:SIE_ACCESS]##[#norm:sie_acc]#A bit in `sie` must be writable if the corresponding interrupt can ever
+ become pending. Bits of `sie` that are not writable are read-only zero.#
+ 
+ [[norm:sip_sie_bits_sz]]
+@@ -462,9 +462,9 @@ to be set in the recipient hart’s `sip` register.
+ ====
+ 
+ [[norm:sip_sie_unimpl]]
+-Each standard interrupt type (SEI, STI, SSI, or LCOFI) may not be implemented,
++[#param:SIP_SIE_UNIMPL]#Each standard interrupt type (SEI, STI, SSI, or LCOFI) may not be implemented,
+ in which case the corresponding interrupt-pending and interrupt-enable
+-bits are read-only zeros. All bits in `sip` and `sie` are *WARL* fields. The
++bits are read-only zeros.# All bits in `sip` and `sie` are *WARL* fields. The
+ implemented interrupts may be found by writing one to every bit location
+ in `sie`, then reading back to see which bit positions hold a one.
+ 
+@@ -515,10 +515,10 @@ exception. When one of these bits is set, access to the corresponding
+ register is permitted.
+ 
+ [[norm:scounteren_acc]]
+-`scounteren` must be implemented. However, any of the bits may be
++`[#param:SCOUNTEREN_ACCESS]#scounteren` must be implemented. However, any of the bits may be
+ read-only zero, indicating reads to the corresponding counter will cause
+ an exception when executing in U-mode. Hence, they are effectively
+-*WARL* fields.
++*WARL* fields.#
+ 
+ [NOTE]
+ ====
+@@ -556,9 +556,9 @@ the implicit read by the SRET instruction. Though masked, `sepc[1]`
+ remains writable when IALIGN=32.
+ 
+ [[norm:sepc_acc_invalid_addr]]
+-`sepc` is a *WARL* register that must be able to hold all valid virtual
++`[#param:SEPC_WARL_VALUES]#sepc` is a *WARL* register that must be able to hold all valid virtual
+ addresses. It need not be capable of holding all possible invalid
+-addresses. Prior to writing `sepc`, implementations may convert an
++addresses.# Prior to writing `sepc`, implementations may convert an
+ invalid address into some other invalid address that `sepc` is capable
+ of holding.
+ 
+@@ -586,7 +586,7 @@ implementation, though it may be explicitly written by software.
+ The Interrupt bit in the `scause` register is set if the trap was caused
+ by an interrupt. The Exception Code field contains a code identifying
+ the last exception or interrupt. <<scauses>> lists
+-the possible exception codes for the current supervisor ISAs. [#norm:scause-exception_code_acc]#The
++the possible exception codes for the current supervisor ISAs. [#param:SCAUSE_EXCEPTION_CODE_WARL_VALUES]##[#norm:scause-exception_code_acc]#The
+ Exception Code is a *WLRL* field.# [#norm:scause-exception_code_sz]#It is required to hold the values 0–31
+ (i.e., bits 4–0 must be implemented), but otherwise it is only
+ guaranteed to hold supported exception codes.#
+@@ -745,8 +745,8 @@ address of the portion of the instruction that caused the fault, while
+ `sepc` will point to the beginning of the instruction.
+ 
+ [[norm:stval_op_illegal_instr]]
+-The `stval` register can optionally also be used to return the faulting
+-instruction bits on an illegal-instruction exception (`sepc` points to
++[#param:REPORT_ENCODING_IN_STVAL_ON_ILLEGAL_INSTRUCTION]#The `stval` register can optionally also be used to return the faulting
++instruction bits on an illegal-instruction exception# (`sepc` points to
+ the faulting instruction in memory). If `stval` is written with a
+ nonzero value when an illegal-instruction exception occurs, then `stval`
+ will contain the shortest of:
+@@ -772,9 +772,9 @@ For other traps, `stval` is set to zero, but a future standard may
+ redefine `stval`’s setting for other traps.
+ 
+ [[norm:stval_acc]]
+-`stval` is a *WARL* register that must be able to hold all valid virtual
++`[#param:STVAL_WARL_VALUES]#stval` is a *WARL* register that must be able to hold all valid virtual
+ addresses and the value 0. It need not be capable of holding all
+-possible invalid addresses. Prior to writing `stval`, implementations
++possible invalid addresses.# Prior to writing `stval`, implementations
+ may convert an invalid address into some other invalid address that
+ `stval` is capable of holding. If the feature to return the faulting
+ instruction bits is implemented, `stval` must also be able to hold all
+@@ -837,8 +837,8 @@ set, then that instruction is ordered as though it accesses both device
+ I/O and memory.
+ 
+ [[norm:senvcfg-fiom_acc]]
+-If `satp`.MODE is read-only zero (always Bare), the implementation may
+-make FIOM read-only zero.
++[#param:SENVCFG_FIOM_ACCESS]#If `satp`.MODE is read-only zero (always Bare), the implementation may
++make FIOM read-only zero.#
+ 
+ [[senvcfg-FIOM]]
+ .Modified interpretation of FENCE predecessor and successor sets in U-mode when FIOM=1.
+@@ -895,22 +895,22 @@ The Zicboz extension adds the `CBZE` (Cache Block Zero instruction enable) field
+ to `senvcfg`. The `CBZE` field controls execution of the cache block zero
+ instruction (`CBO.ZERO`) in U-mode. Execution of `CBO.ZERO` in U-mode is enabled
+ only if execution of the instruction is enabled for use in S-mode and `CBZE` is
+-set to 1; otherwise, an illegal-instruction exception is raised. When the Zicboz
+-extension is not implemented, `CBZE` is read-only zero.
++set to 1; otherwise, an illegal-instruction exception is raised. [#param:SENVCFG_CBZE_ACCESS]#When the Zicboz
++extension is not implemented, `CBZE` is read-only zero.#
+ 
+ [[norm:senvcfg-cbcfe]]
+ The Zicbom extension adds the `CBCFE` (Cache Block Clean and Flush instruction
+ Enable) field to `senvcfg` to control execution of the `CBO.CLEAN` and
+ `CBO.FLUSH` instructions in U-mode. Execution of these instructions in U-mode is
+ enabled only if execution of these instructions is enabled for use in S-mode and
+-`CBCFE` is set to 1; otherwise, an illegal-instruction exception is raised. When
+-the Zicbom extension is not implemented, `CBCFE` is read-only zero.
++`CBCFE` is set to 1; otherwise, an illegal-instruction exception is raised. [#param:SENVCFG_CBCFE_ACCESS]#When
++the Zicbom extension is not implemented, `CBCFE` is read-only zero.#
+ 
+ [[norm:senvcfg-cbie]]
+ The Zicbom extension adds the `CBIE` (Cache Block Invalidate instruction Enable)
+ WARL field to `senvcfg` to control execution of the `CBO.INVAL` instruction in
+-U-mode. The encoding `10b` is reserved. When the Zicbom extension is not
+-implemented, `CBIE` is read-only zero. Execution of `CBO.INVAL` in U-mode is
++U-mode. The encoding `10b` is reserved. [#param:SENVCFG_CBIE_ACCESS]#When the Zicbom extension is not
++implemented, `CBIE` is read-only zero.# Execution of `CBO.INVAL` in U-mode is
+ enabled only if execution of the instruction is enabled for use in S-mode and
+ `CBIE` is set to `01b` or `11b`; otherwise, an illegal-instruction exception is
+ raised.
+@@ -926,9 +926,9 @@ is set to `11b`. Otherwise, the instruction behaves as follows, depending on the
+ [[norm:senvcfg-pmm_Ssnpm]]
+ If the Ssnpm extension is implemented, the `PMM` field enables or disables
+ pointer masking (see <<Zpm>>) for the next-lower privilege mode (U/VU),
+-according to the values in <<senvcfg-pmm-values>>. If Ssnpm is not
++according to the values in <<senvcfg-pmm-values>>. [#param:SENVCFG_PMM_ACCESS]#If Ssnpm is not
+ implemented, `PMM` is read-only zero. The `PMM` field is read-only zero for
+-RV32.
++RV32.#
+ 
+ [[senvcfg-pmm-values]]
+ 
+@@ -1045,15 +1045,15 @@ settings are reserved for future use and may define different
+ interpretations of the other fields in `satp`.
+ 
+ [[norm:satp-mode_op_unsupported]]
+-Implementations are not required to support all MODE settings, and if
++[#param:SATP_MODE_BARE]#Implementations are not required to support all MODE settings, and if
+ `satp` is written with an unsupported MODE, the entire write has no
+-effect; no fields in `satp` are modified.
++effect; no fields in `satp` are modified.#
+ 
+ [[norm:satp-asidlen]]
+-The number of ASID bits is UNSPECIFIED and may be zero. The number of implemented
++[#param:ASID_WIDTH]#The number of ASID bits is UNSPECIFIED and may be zero. The number of implemented
+ ASID bits, termed _ASIDLEN_, may be determined by writing one to every
+ bit position in the ASID field, then reading back the value in `satp` to
+-see which bit positions in the ASID field hold a one. The
++see which bit positions in the ASID field hold a one.# The
+ least-significant bits of ASID are implemented first: that is, if
+ ASIDLEN > 0, ASID[ASIDLEN-1:0] is writable. The maximal
+ value of ASIDLEN, termed ASIDMAX, is 9 for Sv32 or 16 for Sv39, Sv48,
+@@ -1423,9 +1423,9 @@ attractive for its simplicity and possibly better scalability.
+ ====
+ 
+ [[norm:satp-mode_roz_sfence_illegal_param]]
+-For implementations that make `satp`.MODE read-only zero (always Bare),
++[#param:TRAP_ON_SFENCE_VMA_WHEN_SATP_MODE_IS_READ_ONLY]#For implementations that make `satp`.MODE read-only zero (always Bare),
+ attempts to execute an SFENCE.VMA instruction might raise an
+-illegal-instruction exception.
++illegal-instruction exception.#
+ 
+ No SFENCE.VMA is required after enabling or disabling pointer masking
+ (see <<Zpm>>), as pointer masking applies to the effective address only and
+@@ -1924,11 +1924,11 @@ register's PPN field.
+ The PTE format for Sv39 is shown in <<sv39pte>>.
+ Bits 9-0 have the same meaning as for Sv32.
+ Bit 63 is reserved for use by the Svnapot extension in <<svnapot>>.
+-[#norm:Sv39_pte_svnapot_rsv]#If Svnapot is not implemented, bit 63 remains
++[#param:SVNAPOT_IMPLEMENTED]##[#norm:Sv39_pte_svnapot_rsv]#If Svnapot is not implemented, bit 63 remains
+ reserved and must be zeroed by software for forward compatibility, or
+ else a page-fault exception is raised#.
+ Bits 62-61 are reserved for use by the Svpbmt extension in <<svpbmt>>.
+-[#norm:Sv39_pte_svpbmt_rsv]#If Svpbmt is not implemented, bits 62-61 remain
++[#param:SVPBMT_IMPLEMENTED]##[#norm:Sv39_pte_svpbmt_rsv]#If Svpbmt is not implemented, bits 62-61 remain
+ reserved and must be zeroed by software for forward compatibility, or
+ else a page-fault exception is raised#.
+ Bits 60-54 are reserved for future standard use and, until their use is
+@@ -2298,7 +2298,7 @@ Non-cacheable, non-idempotent, strongly-ordered (I/O ordering), I/O +
+ _Reserved for future standard use_
+ |===
+ 
+-[#norm:Svpbmt_impl_may_override_pmas]#Implementations may override additional PMAs not explicitly listed in
++[#param:SVPBMT_IMPL_MAY_OVERRIDE_PMAS]##[#norm:Svpbmt_impl_may_override_pmas]#Implementations may override additional PMAs not explicitly listed in
+ <<pbmt>>.#
+ For example, to be consistent with the characteristics of a typical I/O region,
+ a misaligned memory access to a page with PBMT=IO might raise an exception,
+@@ -2508,8 +2508,8 @@ instructions as no-ops.
+ 
+ The Svadu extension adds support and CSR controls for hardware updating of PTE A/D bits.
+ 
+-[#norm:Svadu_hw_update_a_d_bits]#If the Svadu extension is implemented, the `menvcfg`.ADUE field is writable.#
+-[#norm:Svadu_hypervisor_adue_writable]#If the hypervisor extension is additionally implemented, the `henvcfg`.ADUE
++[#param:SVADU_IMPLEMENTED]##[#norm:Svadu_hw_update_a_d_bits]#If the Svadu extension is implemented, the `menvcfg`.ADUE field is writable.#
++[#param:HYPERVISOR_IMPLEMENTED]##[#norm:Svadu_hypervisor_adue_writable]#If the hypervisor extension is additionally implemented, the `henvcfg`.ADUE
+ field is also writable.#
+ See <<sec:menvcfg>> and <<sec:henvcfg>> for the definitions of those fields.
+ 
+@@ -2614,7 +2614,7 @@ NOTE: The Ssqosid extension does not require that S-mode mode be implemented.
+ 
+ === Supervisor Resource Management Configuration (`srmcfg`) register
+ 
+-[#norm:Ssqosid_srmcfg_register_size]#The `srmcfg` register is an SXLEN-bit read/write register used to configure a
++[#param:SRMCFG_RCID_WARL_VALUES]##[#param:SRMCFG_MCID_WARL_VALUES]##[#norm:Ssqosid_srmcfg_register_size]#The `srmcfg` register is an SXLEN-bit read/write register used to configure a
+ Resource Control ID (`RCID`) and a Monitoring Counter ID (`MCID`). Both `RCID`
+ and `MCID` are WARL fields.#  The register is formatted as shown in <<SRMCFG64>>
+ when SXLEN=64 and <<SRMCFG32>> when SXLEN=32.
+diff --git a/src/unpriv-cfi.adoc b/src/unpriv-cfi.adoc
+index bc34944..71a8934 100644
+--- a/src/unpriv-cfi.adoc
++++ b/src/unpriv-cfi.adoc
+@@ -70,7 +70,7 @@ Privileged ISA specification.
+ 
+ To enforce forward-edge control-flow integrity, the Zicfilp extension introduces
+ a landing pad (`LPAD`) instruction. The `LPAD` instruction must be placed at the
+-program locations that are valid targets of indirect jumps or calls. [#norm:zicflip_lpad_enc]#The `LPAD`
++program locations that are valid targets of indirect jumps or calls. [#param:ZICFILP_LPAD_ENCODING]##[#norm:zicflip_lpad_enc]#The `LPAD`
+ instruction (See <<LP_INST>>) is encoded using the `AUIPC` major opcode with
+ _rd_=`x0`.#
+ 
+@@ -213,9 +213,9 @@ performing bounds checking on the index into the table, etc.).
+ ====
+ 
+ The landing pad may be labeled. Zicfilp extension designates the register `x7`
+-for use as the landing pad label register. [#norm:zicflip_lpad_label]#To support labeled landing pads, the
++for use as the landing pad label register. [#param:ZICFILP_LABEL_SUPPORT]##[#norm:zicflip_lpad_label]#To support labeled landing pads, the
+ indirect call/jump sites establish an expected landing pad label (e.g., using
+-the `LUI` instruction) in the bits 31:12 of the `x7` register.# [#norm:zicflip_lpad_imm_enc]#The `LPAD`
++the `LUI` instruction) in the bits 31:12 of the `x7` register.# [#param:ZICFILP_LPL_ENCODING]##[#norm:zicflip_lpad_imm_enc]#The `LPAD`
+ instruction is encoded with a 20-bit immediate value called the landing-pad-label
+ (`LPL`) that is matched to the expected landing pad label. When `LPL` is encoded
+ as zero, the `LPAD` instruction does not perform the label check and in programs
+@@ -257,14 +257,14 @@ the accidental landing pad.
+ [[LP_INST]]
+ ==== Landing Pad Instruction
+ 
+-[#norm:zicflip_lpad_enabled_instr_allowed]#When Zicfilp is enabled, `LPAD` is the only instruction allowed to execute when
++[#param:ZICFILP_ENABLED]##[#norm:zicflip_lpad_enabled_instr_allowed]#When Zicfilp is enabled, `LPAD` is the only instruction allowed to execute when
+ the `ELP` state is `LP_EXPECTED`. If Zicfilp is not enabled then the instruction
+-is a no-op.# [#norm:zicflip_lpad_enabled_exception]#If Zicfilp is enabled, the `LPAD` instruction causes a
++is a no-op.# [#param:REPORT_CAUSE_IN_MTVAL_ON_LANDING_PAD_SOFTWARE_CHECK]##[#norm:zicflip_lpad_enabled_exception]#If Zicfilp is enabled, the `LPAD` instruction causes a
+ software-check exception with `__x__tval` set to "landing pad fault (code=2)"# if
+ any of the following conditions are true:
+ 
+-* [#norm:zicflip_lpad_alignment_exception]#The `pc` is not 4-byte aligned and `ELP` is `LP_EXPECTED`.#
+-* [#norm:zicflip_lpad_label_exception]#The `ELP` is `LP_EXPECTED` and the `LPL` is not zero and the `LPL` does not match the expected landing pad label in bits 31:12 of the `x7` register.#
++* [#param:ZICFILP_LPAD_ALIGNMENT_REQUIREMENT]##[#norm:zicflip_lpad_alignment_exception]#The `pc` is not 4-byte aligned and `ELP` is `LP_EXPECTED`.#
++* [#param:ZICFILP_LABEL_MISMATCH_EXCEPTION]##[#norm:zicflip_lpad_label_exception]#The `ELP` is `LP_EXPECTED` and the `LPL` is not zero and the `LPL` does not match the expected landing pad label in bits 31:12 of the `x7` register.#
+ 
+ [[norm:zicflip_lpad_no_sw_exception]]
+ If a software-check exception is not caused then the `ELP` is updated to
+@@ -333,18 +333,18 @@ to/from the shadow stack and to check the integrity of the return address. The
+ extension provides instructions to support common stack maintenance operations
+ such as stack unwinding and stack switching.
+ 
+-[#norm:zicfiss_link_reg_func_enter]#When Zicfiss is enabled, each function that needs to spill the link register,
++[#param:ZICFISS_ENABLED]##[#norm:zicfiss_link_reg_func_enter]#When Zicfiss is enabled, each function that needs to spill the link register,
+ typically non-leaf functions, store the link register value to the regular stack
+ and a shadow copy of the link register value to the shadow stack when the
+-function is entered (the prologue).# [#norm:zicfiss_link_reg_func_return]#When such a function returns (the
++function is entered (the prologue).# [#param:ZICFISS_LINK_REG_RESTORE]##[#norm:zicfiss_link_reg_func_return]#When such a function returns (the
+ epilogue), the function loads the link register from the regular stack and
+-the shadow copy of the link register from the shadow stack.# [#norm:zicfiss_stack_compare]#Then, the link
++the shadow copy of the link register from the shadow stack.# [#param:REPORT_CAUSE_IN_MTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK]##[#norm:zicfiss_stack_compare]#Then, the link
+ register value from the regular stack and the shadow link register value from
+ the shadow stack are compared. A mismatch of the two values is indicative of a
+ subversion of the return address control variable and causes a software-check
+ exception.#
+ 
+-[#norm:zicfiss_enc]#The Zicfiss instructions, except `SSAMOSWAP.W/D`, are encoded using a subset of
++[#param:ZICFISS_INSTRUCTION_ENCODING]##[#norm:zicfiss_enc]#The Zicfiss instructions, except `SSAMOSWAP.W/D`, are encoded using a subset of
+ May-Be-Operation instructions defined by the Zimop and Zcmop extensions.#
+ This subset of instructions revert to their Zimop/Zcmop defined behavior when
+ the Zicfiss extension is not implemented or if the extension has not been
+@@ -386,17 +386,17 @@ requires S-mode to be implemented. Use of Zicfiss in M-mode is not supported.
+ The Zicfiss extension introduces the following instructions:
+ 
+ * Push to the shadow stack (See <<SS_PUSH>>)
+-** [#norm:zicfiss_sspush_enc]#`SSPUSH x1` and `SSPUSH x5` - encoded using `MOP.RR.7`#
+-** [#norm:zicfiss_c-sspush_enc]#`C.SSPUSH x1` - encoded using `C.MOP.1`#
++** [#param:ZICFISS_SSPUSH_ENCODING]##[#norm:zicfiss_sspush_enc]#`SSPUSH x1` and `SSPUSH x5` - encoded using `MOP.RR.7`#
++** [#param:ZICFISS_C_SSPUSH_ENCODING]##[#norm:zicfiss_c-sspush_enc]#`C.SSPUSH x1` - encoded using `C.MOP.1`#
+ 
+ * Pop from the shadow stack (See <<SS_POP>>)
+-** [#norm:zicfiss_sspopchk_enc]#`SSPOPCHK x1` and `SSPOPCHK x5` - encoded using `MOP.R.28`#
+-** [#norm:zicfiss_c-sspopchk_enc]#`C.SSPOPCHK x5` - encoded using `C.MOP.5`#
++** [#param:ZICFISS_SSPOPCHK_ENCODING]##[#norm:zicfiss_sspopchk_enc]#`SSPOPCHK x1` and `SSPOPCHK x5` - encoded using `MOP.R.28`#
++** [#param:ZICFISS_C_SSPOPCHK_ENCODING]##[#norm:zicfiss_c-sspopchk_enc]#`C.SSPOPCHK x5` - encoded using `C.MOP.5`#
+ 
+ * Read the value of `ssp` into a register (See <<SSP_READ>>)
+-** [#norm:zicfiss_ssrdp_enc]#`SSRDP` - encoded using `MOP.R.28`#
++** [#param:ZICFISS_SSRDP_ENCODING]##[#norm:zicfiss_ssrdp_enc]#`SSRDP` - encoded using `MOP.R.28`#
+ 
+-* [#norm:zicfiss_atomic_swap]#Perform an atomic swap from a shadow stack location (See <<SSAMOSWAP>>)#
++* [#param:ZICFISS_SSAMOSWAP_SUPPORT]##[#norm:zicfiss_atomic_swap]#Perform an atomic swap from a shadow stack location (See <<SSAMOSWAP>>)#
+ ** `SSAMOSWAP.W` and `SSAMOSWAP.D`
+ 
+ Zicfiss does not use all encodings of `MOP.RR.7` or `MOP.R.28`. When a
+@@ -406,10 +406,10 @@ redefined by another extension.
+ 
+ ==== Shadow Stack Pointer (`ssp`)
+ 
+-[#norm:ssp_op]#The `ssp` CSR is an unprivileged read-write (URW) CSR that reads and writes
+-`XLEN` low order bits of the shadow stack pointer (`ssp`).# [#norm:ssp_addr]#The CSR address is
+-0x011.# [#norm:ssp_sz]#There is no high CSR defined as the `ssp` is always as wide as the `XLEN`
+-of the current privilege mode.# [#norm:ssp-field_1_0]#The bits 1:0 of `ssp` are read-only zero. If the
++[#param:SSP_CSR_ACCESS]##[#norm:ssp_op]#The `ssp` CSR is an unprivileged read-write (URW) CSR that reads and writes
++`XLEN` low order bits of the shadow stack pointer (`ssp`).# [#param:SSP_CSR_ADDRESS]##[#norm:ssp_addr]#The CSR address is
++0x011.# [#param:SSP_CSR_WIDTH]##[#norm:ssp_sz]#There is no high CSR defined as the `ssp` is always as wide as the `XLEN`
++of the current privilege mode.# [#param:SSP_ALIGNMENT_BITS]##[#norm:ssp-field_1_0]#The bits 1:0 of `ssp` are read-only zero. If the
+ UXLEN or SXLEN may never be 32, then the bit 2 is also read-only zero.#
+ 
+ <<<
+diff --git a/src/v-st-ext.adoc b/src/v-st-ext.adoc
+index 1f09c50..1157cfc 100644
+--- a/src/v-st-ext.adoc
++++ b/src/v-st-ext.adoc
+@@ -107,7 +107,7 @@ will typically use VS to reduce context-swap overhead.
+ If `mstatus.VS` is Dirty, `mstatus.SD` is 1;
+ otherwise, `mstatus.SD` is set in accordance with existing specifications.
+ 
+-[#norm:mutable_misa_v_param]#Implementations may have a writable `misa.V` field.#  [#norm:mstatus_vs_exists_param]#Analogous to the
++[#norm:mutable_misa_v_param]#Implementations may have a writable `misa.V` field.#  [#param:MSTATUS_VS_EXISTS]##[#norm:mstatus_vs_exists_param]#Analogous to the
+ way in which the floating-point unit is handled, the `mstatus.VS`
+ field may exist even if `misa.V` is clear.#
+ 
+@@ -130,7 +130,7 @@ illegal-instruction exception when either field is set to Off.
+ [#norm:vsstatus-vs_mstatus-vs_op_active]#When V=1 and neither `vsstatus.VS` nor `mstatus.VS` is set to Off, executing
+ any instruction that changes vector state, including the vector CSRs, will
+ change both `mstatus.VS` and `vsstatus.VS` to Dirty.#
+-[#norm:hw_mstatus_vs_dirty_update_param]#Implementations may also change `mstatus.VS` or `vsstatus.VS` from Initial or
++[#param:HW_MSTATUS_VS_DIRTY_UPDATE]##[#norm:hw_mstatus_vs_dirty_update_param]#Implementations may also change `mstatus.VS` or `vsstatus.VS` from Initial or
+ Clean to Dirty at any time, even when there is no change in vector state.#
+ 
+ [[norm:vsstatus-sd_op_vs]]
+@@ -142,8 +142,8 @@ If `mstatus.VS` is Dirty, `mstatus.SD` is 1;
+ otherwise, `mstatus.SD` is set in accordance with existing specifications.
+ 
+ [[norm:vsstatus_vs_exists_param]]
+-For implementations with a writable `misa.V` field,
+-the `vsstatus.VS` field may exist even if `misa.V` is clear.
++[#param:VSSTATUS_VS_EXISTS]#For implementations with a writable `misa.V` field,
++the `vsstatus.VS` field may exist even if `misa.V` is clear.#
+ 
+ ==== Vector Type (`vtype`) Register
+ 
+@@ -166,7 +166,7 @@ written with zero, and non-zero values in this field are reserved.
+ include::images/wavedrom/vtype-format.edn[]
+ 
+ 
+-NOTE: [#norm:vill_implicit_encoding_param]#A small implementation supporting ELEN=32 requires only seven bits of state in `vtype`: two bits for `ma` and `ta`, two bits for `vsew[1:0]` and three bits for `vlmul[2:0]`.  The illegal value represented by `vill` can be internally encoded using the illegal 64-bit combination in `vsew[1:0]` without requiring an additional storage
++NOTE: [#param:VILL_IMPLICIT_ENCODING]##[#norm:vill_implicit_encoding_param]#A small implementation supporting ELEN=32 requires only seven bits of state in `vtype`: two bits for `ma` and `ta`, two bits for `vsew[1:0]` and three bits for `vlmul[2:0]`.  The illegal value represented by `vill` can be internally encoded using the illegal 64-bit combination in `vsew[1:0]` without requiring an additional storage
+ bit to hold `vill`.#
+ 
+ NOTE: Further standard and custom vector extensions may extend these
+@@ -245,7 +245,7 @@ their inclusion is to allow double-width or larger elements to be
+ operated on with the same vector length as single-width elements.  The
+ vector length multiplier, _LMUL_, when greater than 1, represents the
+ default number of vector registers that are combined to form a vector
+-register group.  [#norm:vtype-lmul_val]#Implementations must support LMUL integer values of
++register group.  [#param:LMUL_SUPPORT]##[#norm:vtype-lmul_val]#Implementations must support LMUL integer values of
+ 1, 2, 4, and 8.#
+ 
+ 
+@@ -338,15 +338,15 @@ given the current SEW and LMUL settings as shown in the table below.
+ 
+ When LMUL=2, the vector register group contains vector register `v`
+ __n__ and vector register `v` __n__+1, providing twice the vector
+-length in bits.  [#norm:vreg_offgroup_lmul2_rsv]#Instructions specifying an LMUL=2 vector register group
++length in bits.  [#param:VREG_OFFGROUP_LMUL2_RSV]##[#norm:vreg_offgroup_lmul2_rsv]#Instructions specifying an LMUL=2 vector register group
+ with an odd-numbered vector register are reserved.#
+ 
+ When LMUL=4, the vector register group contains four vector registers,
+-and [#norm:vreg_offgroup_lmul4_rsv]#instructions specifying an LMUL=4 vector register group using vector
++and [#param:VREG_OFFGROUP_LMUL4_RSV]##[#norm:vreg_offgroup_lmul4_rsv]#instructions specifying an LMUL=4 vector register group using vector
+ register numbers that are not multiples of four are reserved.#
+ 
+ When LMUL=8, the vector register group contains eight vector
+-registers, and [#norm:vreg_offgroup_lmul8_rsv]#instructions specifying an LMUL=8 vector register group
++registers, and [#param:VREG_OFFGROUP_LMUL8_RSV]##[#norm:vreg_offgroup_lmul8_rsv]#instructions specifying an LMUL=8 vector register group
+ using register numbers that are not multiples of eight are reserved.#
+ 
+ [[norm:vreg_mask_lmul_indp]]
+@@ -1276,7 +1276,7 @@ When _rs1_=`x0` but _rd_≠`x0`, the maximum unsigned integer value (`~0`)
+ is used as the AVL, and the resulting VLMAX is written to `vl` and
+ also to the `x` register specified by `rd`.
+ 
+-[#norm:vsetvl_op_rs1_x0_rd_x0]#When _rs1_=`x0` and _rd_=`x0`, the instructions operate as if the current vector length in `vl` is used as the AVL, and the resulting value is written to `vl`, but not to a destination register.  This form can only be used when VLMAX and hence `vl` is not actually changed by the new SEW/LMUL ratio.#  [#norm:vtype_vset_rsv]#Use of the instructions with a new SEW/LMUL ratio that would result in a change of VLMAX is reserved. Use of the instructions is also reserved if `vill` was 1 beforehand.# [#norm:reserved_vill_set_param]#Implementations may set `vill` in either case.#
++[#norm:vsetvl_op_rs1_x0_rd_x0]#When _rs1_=`x0` and _rd_=`x0`, the instructions operate as if the current vector length in `vl` is used as the AVL, and the resulting value is written to `vl`, but not to a destination register.  This form can only be used when VLMAX and hence `vl` is not actually changed by the new SEW/LMUL ratio.#  [#norm:vtype_vset_rsv]#Use of the instructions with a new SEW/LMUL ratio that would result in a change of VLMAX is reserved. Use of the instructions is also reserved if `vill` was 1 beforehand.# [#param:RESERVED_VILL_SET]##[#norm:reserved_vill_set_param]#Implementations may set `vill` in either case.#
+ 
+ NOTE: This last form of the instructions allows the `vtype` register to
+ be changed while maintaining the current `vl`, provided VLMAX is not
+@@ -1377,8 +1377,8 @@ exceptions for active elements.#
+ [#norm:vector_masked_inactive_behavior]#Masked vector loads do not update inactive elements in the destination vector
+ register group, unless masked agnostic is specified (`vtype.vma`=1).#
+ [[norm:vector_ls_vstart_param]]
+-All vector loads and stores may
+-generate and accept a non-zero `vstart` value.
++[#param:VECTOR_LS_VSTART]#All vector loads and stores may
++generate and accept a non-zero `vstart` value.#
+ 
+ ==== Vector Load/Store Instruction Encoding
+ 
+@@ -1751,9 +1751,9 @@ vectorize loops with data-dependent exit conditions ("while" loops).
+ These instructions execute as a regular load except that they will
+ only take a trap caused by a synchronous exception on element 0.# [#norm:vector_ff_op]#If element 0 raises an exception, `vl` is not modified, and the trap is taken.  If an element > 0 raises an exception, the corresponding trap is not taken, and the vector length `vl` is reduced to the index of the element that would have raised an exception.#
+ 
+-[#norm:vector_ls_overwrite_past_trap_param]#Load instructions may overwrite active destination vector register
++[#param:VECTOR_LS_OVERWRITE_PAST_TRAP]##[#norm:vector_ls_overwrite_past_trap_param]#Load instructions may overwrite active destination vector register
+ group elements past the element index at which the trap is reported.#
+-[#norm:vector_ff_past_trap_param]#Similarly, fault-only-first load instructions may update active destination elements past the element that causes trimming of the vector length (but not past the original vector length).  The values of these spurious updates do not have to correspond to the values in memory at the addressed memory locations.  Non-idempotent memory locations can only be accessed when it is known the corresponding element load operation will not be restarted due to a trap or vector-length trimming.#
++[#param:VECTOR_FF_PAST_TRAP]##[#norm:vector_ff_past_trap_param]#Similarly, fault-only-first load instructions may update active destination elements past the element that causes trimming of the vector length (but not past the original vector length).  The values of these spurious updates do not have to correspond to the values in memory at the addressed memory locations.  Non-idempotent memory locations can only be accessed when it is known the corresponding element load operation will not be restarted due to a trap or vector-length trimming.#
+ 
+ ----
+ # Vector unit-stride fault-only-first loads
+@@ -1869,7 +1869,7 @@ For segment loads and stores, the individual memory accesses used to
+ access fields within each segment are unordered with respect to each
+ other even for ordered indexed segment loads and stores.
+ 
+-[#norm:vector_ls_seg_vstart_dep]#The `vstart` value is in units of whole segments.#  [#norm:vector_ls_seg_partial_access_param]#If a trap occurs during
++[#norm:vector_ls_seg_vstart_dep]#The `vstart` value is in units of whole segments.#  [#param:VECTOR_LS_SEG_PARTIAL_ACCESS]##[#norm:vector_ls_seg_partial_access_param]#If a trap occurs during
+ access to a segment, it is implementation-defined whether a subset
+ of the faulting segment's accesses are performed before the trap is taken.#
+ 
+@@ -1934,13 +1934,13 @@ through accessing the zeroth segment, the trap is taken.
+ If an exception is detected partway through accessing a subsequent segment,
+ `vl` is reduced to the index of that segment.
+ [[norm:vector_ff_seg_partial_access_param]]
+-In both cases, it is implementation-defined whether a subset of the segment is
+-loaded.
++[#param:VECTOR_FF_SEG_PARTIAL_ACCESS]#In both cases, it is implementation-defined whether a subset of the segment is
++loaded.#
+ 
+ [[norm:vector_ls_seg_ff_overload_param]]
+-These instructions may overwrite destination vector register group
++[#param:VECTOR_LS_SEG_FF_OVERLOAD]#These instructions may overwrite destination vector register group
+ elements past the point at which a trap is reported or past the point
+-at which vector length is trimmed.
++at which vector length is trimmed.#
+ 
+ ===== Vector Constant-Stride Segment Loads and Stores
+ 
+@@ -2180,10 +2180,10 @@ vsetvli x0, t0, <new type>         # Restore vl (potentially already present)
+ === Vector Memory Alignment Constraints
+ 
+ [[norm:vector_ls_missaligned_exception_param]]
+-If an element accessed by a vector memory instruction is not naturally
++[#param:VECTOR_LS_MISSALIGNED_EXCEPTION]#If an element accessed by a vector memory instruction is not naturally
+ aligned to the size of the element, either the element is transferred
+ successfully or an address-misaligned exception is raised on that
+-element.
++element.#
+ 
+ [[norm:vector_ls_scalar_missaligned_independence]]
+ Support for misaligned vector memory accesses is independent of an
+@@ -5090,11 +5090,11 @@ supported.
+ | Zve64d    | 64    | 8, 16, 32, 64 |   Y   |  Y
+ |===
+ 
+-[#norm:Zve32f_Zve64x_dependent_Zve32x]#The Zve32f and Zve64x extensions depend on the Zve32x extension.#
+-[#norm:Zve64f_dependent_Zve32f_Zve64x]#The Zve64f extension depends on the Zve32f and Zve64x extensions.#
+-[#norm:Zve64d_dependent_Zve64f]#The Zve64d extension depends on the Zve64f extension.#
++[#param:ZVE32F_ZVE64X_DEPENDENT_ZVE32X]##[#norm:Zve32f_Zve64x_dependent_Zve32x]#The Zve32f and Zve64x extensions depend on the Zve32x extension.#
++[#param:ZVE64F_DEPENDENT_ZVE32F_ZVE64X]##[#norm:Zve64f_dependent_Zve32f_Zve64x]#The Zve64f extension depends on the Zve32f and Zve64x extensions.#
++[#param:ZVE64D_DEPENDENT_ZVE64F]##[#norm:Zve64d_dependent_Zve64f]#The Zve64d extension depends on the Zve64f extension.#
+ 
+-[#norm:Zve_precise_traps]#All Zve* extensions have precise traps.#
++[#param:ZVE_PRECISE_TRAPS]##[#norm:Zve_precise_traps]#All Zve* extensions have precise traps.#
+ 
+ NOTE: There is currently no standard support for handling imprecise
+ traps, so standard extensions have to provide precise traps.
+@@ -5109,7 +5109,7 @@ All Zve* extensions support the vector configuration instructions
+ (<<sec-vector-memory>>), except Zve64* extensions do not
+ support EEW=64 for index values when XLEN=32.#
+ 
+-[#norm:Zve64_eew64_nsupport_vmulh]#All Zve* extensions support all vector integer instructions
++[#param:ZVE64_EEW64_NSUPPORT_VMULH]##[#norm:Zve64_eew64_nsupport_vmulh]#All Zve* extensions support all vector integer instructions
+ (<<sec-vector-integer>>), except that the `vmulh` integer multiply
+ variants that return the high word of the product (`vmulh.vv`,
+ `vmulh.vx`, `vmulhu.vv`, `vmulhu.vx`, `vmulhsu.vv`, `vmulhsu.vx`) are
+@@ -5118,7 +5118,7 @@ not included for EEW=64 in Zve64*.#
+ NOTE: Producing the high-word of a product can take substantial
+ additional gates for large EEW.
+ 
+-[#norm:Zve64_eew64_nsupport_vsmul]#All Zve* extensions support all vector fixed-point arithmetic
++[#param:ZVE64_EEW64_NSUPPORT_VSMUL]##[#norm:Zve64_eew64_nsupport_vsmul]#All Zve* extensions support all vector fixed-point arithmetic
+ instructions (<<sec-vector-fixed-point>>), except that `vsmul.vv` and
+ `vsmul.vx` are not included in EEW=64 in Zve64*.#
+ 
+@@ -5132,13 +5132,13 @@ widening reduction operations (<<sec-vector-integer-reduce>>,
+ All Zve* extensions support all vector mask instructions
+ (<<sec-vector-mask>>).
+ 
+-[#norm:Zve32x_Zve64x_nsupport_freg]#All Zve* extensions support all vector permutation instructions
++[#param:ZVE32X_ZVE64X_NSUPPORT_FREG]##[#norm:Zve32x_Zve64x_nsupport_freg]#All Zve* extensions support all vector permutation instructions
+ (<<sec-vector-permute>>), except that Zve32x and Zve64x
+ do not include those with floating-point operands, and Zve64f does not include those
+ with EEW=64 floating-point operands.#
+ 
+-[#norm:Zve32x_dependent_Zicsr]#The Zve32x extension depends on the Zicsr extension.#
+-[#norm:Zve32f_Zve64f_dependent_F]#The Zve32f and Zve64f extensions depend upon the F extension,
++[#param:ZVE32X_DEPENDENT_ZICSR]##[#norm:Zve32x_dependent_Zicsr]#The Zve32x extension depends on the Zicsr extension.#
++[#param:ZVE32F_ZVE64F_DEPENDENT_F]##[#norm:Zve32f_Zve64f_dependent_F]#The Zve32f and Zve64f extensions depend upon the F extension,
+ and implement all
+ vector floating-point instructions (<<sec-vector-float>>) for
+ floating-point operands with EEW=32. Vector single-width floating-point reduction
+@@ -5158,12 +5158,12 @@ from FP32 to FP64.
+ The single-letter V extension is intended for use in application
+ processor profiles.
+ 
+-[#norm:misa-V_op]#The `misa.v` bit is set for implementations providing `misa` and
++[#param:MISA_V_OP]##[#norm:misa-V_op]#The `misa.v` bit is set for implementations providing `misa` and
+ supporting V.#
+ 
+-[#norm:V_precise_traps]#The V vector extension has precise traps.#
++[#param:V_PRECISE_TRAPS]##[#norm:V_precise_traps]#The V vector extension has precise traps.#
+ 
+-[#norm:V_dependent_Zvl128b_Zve64d]#The V vector extension depends upon the Zvl128b and Zve64d extensions.#
++[#param:V_DEPENDENT_ZVL128B_ZVE64D]##[#norm:V_dependent_Zvl128b_Zve64d]#The V vector extension depends upon the Zvl128b and Zve64d extensions.#
+ 
+ NOTE: The value of 128 was chosen as a compromise for application
+ processors. Providing a larger VLEN allows strip-mining code to be
+@@ -5179,7 +5179,7 @@ processed without strip mining using four vector register groups.
+ [#norm:V_instr_config]#The V extension supports the vector configuration instructions
+ (<<sec-vector-config>>).#
+ 
+-[#norm:V_instr_ls_eew64_nsupported_xlen32]#The V extension supports all vector load and store instructions
++[#param:V_INSTR_LS_EEW64_NSUPPORTED_XLEN32]##[#norm:V_instr_ls_eew64_nsupported_xlen32]#The V extension supports all vector load and store instructions
+ (<<sec-vector-memory>>), except the V extension does not
+ support EEW=64 for index values when XLEN=32.#
+ 
+@@ -5199,7 +5199,7 @@ widening reduction operations (<<sec-vector-integer-reduce>>,
+ [#norm:V_instr_perm]#The V extension supports all vector permutation instructions
+ (<<sec-vector-permute>>).#
+ 
+-[#norm:V_dependent_F_D]#The V extension depends upon the F and D
++[#param:V_DEPENDENT_F_D]##[#norm:V_dependent_F_D]#The V extension depends upon the F and D
+ extensions, and implements all vector floating-point instructions
+ (<<sec-vector-float>>) for floating-point operands with EEW=32
+ or EEW=64 (including widening instructions and conversions between
+@@ -5224,7 +5224,7 @@ When the Zvfhmin extension is implemented, the `vfwcvt.f.f.v` and
+ The EEW=16 floating-point operands of these instructions use the binary16
+ format.
+ 
+-[#norm:Zvfhmin_dependent_Zve32f]#The Zvfhmin extension depends on the Zve32f extension.#
++[#param:ZVFHMIN_DEPENDENT_ZVE32F]##[#norm:Zvfhmin_dependent_Zve32f]#The Zvfhmin extension depends on the Zve32f extension.#
+ 
+ ==== Zvfh: Vector Extension for Half-Precision Floating-Point
+ 
+@@ -5243,7 +5243,7 @@ provided.  The floating-point-to-integer narrowing conversions
+ (`vfncvt[.rtz].x[u].f.w`) and integer-to-floating-point
+ widening conversions (`vfwcvt.f.x[u].v`) become defined when SEW=8.#
+ 
+-[#norm:Zvfh_dependent_Zve32f_Zfhmin]#The Zvfh extension depends on the Zve32f and Zfhmin extensions.#
++[#param:ZVFH_DEPENDENT_ZVE32F_ZFHMIN]##[#norm:Zvfh_dependent_Zve32f_Zfhmin]#The Zvfh extension depends on the Zve32f and Zfhmin extensions.#
+ 
+ NOTE: Requiring basic scalar half-precision support makes Zvfh's
+ vector-scalar instructions substantially more useful.
+@@ -5283,7 +5283,7 @@ strip-mine iterations in vector-length-agnostic code.
+ The element group size is statically encoded in the instruction, often
+ implicitly as part of the opcode.
+ 
+-[#norm:egs_ge_vlmax_rsv]#Vector instructions with EGS > VLMAX are reserved.#
++[#param:EGS_GE_VLMAX_RSV]##[#norm:egs_ge_vlmax_rsv]#Vector instructions with EGS > VLMAX are reserved.#
+ 
+ NOTE: The vector instructions in the base V vector ISA can be viewed
+ as all having an element group size of 1 for all operands statically
+@@ -5297,14 +5297,14 @@ size of 2 and SHA-256 requires an element group size of 4).
+ 
+ Each source and destination operand to a vector instruction might be
+ defined as either a single element group or a vector of element
+-groups.  [#norm:egs_vl_rsv]#When an operand is a vector of element groups, the `vl`
++groups.  [#param:EGS_VL_RSV]##[#norm:egs_vl_rsv]#When an operand is a vector of element groups, the `vl`
+ setting must correspond to an integer multiple of the element group
+ size, with other values of `vl` reserved.#
+ 
+ NOTE: For example, a SHA-256 instruction would require that `vl` is a
+ multiple of 4.
+ 
+-[#norm:egs_vl_avl]#When element group instructions are present, an additional constraint
++[#param:EGS_VL_AVL]##[#norm:egs_vl_avl]#When element group instructions are present, an additional constraint
+ is placed on the setting of `vl` based on an AVL value
+ (augmenting <<constraints-on-setting-vl>>).
+ EGSMAX is the largest EGS supported by the
+diff --git a/src/vector-crypto.adoc b/src/vector-crypto.adoc
+index b1ddce1..c5b7248 100644
+--- a/src/vector-crypto.adoc
++++ b/src/vector-crypto.adoc
+@@ -202,7 +202,7 @@ parameters: EGW, EGS, and EEW.
+ ====
+ 
+ [[norm:veccrypto_eeweqsew]]
+-For all of the vector crypto instructions in this specification, `EEW`=`SEW`.
++[#param:VECCRYPTO_EEW_EQUALS_SEW]#For all of the vector crypto instructions in this specification, `EEW`=`SEW`.#
+ 
+ [NOTE]
+ ====
+@@ -252,11 +252,11 @@ The following is a quick reference for the various constraints of specific Vecto
+ 
+ 
+ vl and vstart constraints::
+-[#norm:veccrypto_vl_vstart_egsconstr]#Since `vl` and `vstart` refer to elements, Vector Crypto instructions that use elements groups
++[#param:VECCRYPTO_VL_VSTART_EGS_CONSTRAINT]##[#norm:veccrypto_vl_vstart_egsconstr]#Since `vl` and `vstart` refer to elements, Vector Crypto instructions that use elements groups
+ (See <<crypto-vector-element-groups>>) require that these values are an integer multiple of the
+ Element Group Size (`EGS`).#
+ 
+-- [#norm:veccrypto_vl_vstart_rsv]#Instructions that violate the `vl` or `vstart` requirements are _reserved_.#
++- [#param:VECCRYPTO_VL_VSTART_VIOLATION_RESERVED]##[#norm:veccrypto_vl_vstart_rsv]#Instructions that violate the `vl` or `vstart` requirements are _reserved_.#
+ 
+ [%autowidth]
+ [%header,cols="4,4"]
+@@ -273,7 +273,7 @@ Element Group Size (`EGS`).#
+ |===
+ 
+ LMUL constraints::
+-[#norm:veccrypto_lmul_egwconstr]#For element-group instructions, `LMUL`*`VLEN` must always be at least as large as `EGW`, otherwise an
++[#param:VECCRYPTO_LMUL_VLEN_EGW_CONSTRAINT]##[#norm:veccrypto_lmul_egwconstr]#For element-group instructions, `LMUL`*`VLEN` must always be at least as large as `EGW`, otherwise an
+ _illegal-instruction exception_ is raised, even if `vl`=0.#
+ 
+ [%autowidth]
+@@ -294,7 +294,7 @@ _illegal-instruction exception_ is raised, even if `vl`=0.#
+ 
+ 
+ SEW constraints::
+-[#norm:veccrypto_sew_rsv]#Some Vector Crypto instructions are only defined for a specific `SEW`. In such a case
++[#param:VECCRYPTO_SEW_SPECIFIC_RESERVED]##[#norm:veccrypto_sew_rsv]#Some Vector Crypto instructions are only defined for a specific `SEW`. In such a case
+ all other `SEW` values are _reserved_.#
+ 
+ [%autowidth]
+@@ -322,8 +322,8 @@ This specification defines new vector/scalar (.vs) instructions that uses *Scala
+ Scalar element group operands do not need to be aligned to LMUL for any implementation with VLEN >= EGW.
+ ====
+ 
+-[#norm:veccrypto_vsins_vs2]#In the case of the `.vs` instructions defined in this specification, `vs2` holds a 128-bit scalar element group.#
+-[#norm:veccrypto_vsins_vdvs2overlap]#For implementations with `VLEN` ≥ 128, `vs2` refers to a single register. Thus, the `vd` register group must not
++[#param:VECCRYPTO_VS_INSTRUCTIONS_VS2_128BIT]##[#norm:veccrypto_vsins_vs2]#In the case of the `.vs` instructions defined in this specification, `vs2` holds a 128-bit scalar element group.#
++[#param:VECCRYPTO_VS_INSTRUCTIONS_VD_VS2_OVERLAP]##[#norm:veccrypto_vsins_vdvs2overlap]#For implementations with `VLEN` ≥ 128, `vs2` refers to a single register. Thus, the `vd` register group must not
+ overlap the `vs2` register.
+ However, in implementations where `VLEN` < 128, `vs2` refers to a register group comprised of the number
+ of registers needed to hold the 128-bit scalar element group. In this case, the `vd` register group must not
+@@ -364,7 +364,7 @@ The Vector Crypto Extensions define Vector-Scalar instructions that are similar
+ Vector Reduction Operations in that they get a scalar operand from a vector register. However, they differ
+ in that they get a scalar element group
+ (see <<crypto-vector-element-groups>>)
+-from `vs2` and [#norm:veccrypto_vsins_vd]#they return _vector_ results to `vd`, which is also a source vector operand.#
++from `vs2` and [#param:VECCRYPTO_VS_INSTRUCTIONS_VD_VECTOR_RESULT]##[#norm:veccrypto_vsins_vd]#they return _vector_ results to `vd`, which is also a source vector operand.#
+ These Vector-Scalar crypto instructions also use the `.vs` suffix in their mnemonics.
+ 
+ [NOTE]
+@@ -374,7 +374,7 @@ specifier as additional encoding bits for these instructions. This allows these
+ much smaller encoding footprint, leaving more rooms for other instructions in the future.
+ ====
+ 
+-[#norm:veccrypto_vsins_vs2function]#These instructions enable a single key, specified as a scalar element group in `vs2`, to be
++[#param:VECCRYPTO_VS_INSTRUCTIONS_KEY_APPLICATION]##[#norm:veccrypto_vsins_vs2function]#These instructions enable a single key, specified as a scalar element group in `vs2`, to be
+ applied to each element group of register group `vd`.#
+ 
+ [NOTE]
+@@ -477,11 +477,11 @@ likely be too burdensome for `VLEN`=64 implementations.
+ The section introduces all of the  extensions in the Vector Cryptography
+ Instruction Set Extension Specification.
+ 
+-[#norm:Zvknhb_Zvbc_Zvkn_Zvknc_Zvkng_depZve64x]#The <<zvknh,Zvknhb>> and <<zvbc>> Vector Crypto Extensions
++[#param:ZVKNHB_ZVBC_COMPOSITE_DEPEND_ZVE64X]##[#norm:Zvknhb_Zvbc_Zvkn_Zvknc_Zvkng_depZve64x]#The <<zvknh,Zvknhb>> and <<zvbc>> Vector Crypto Extensions
+ --and accordingly the composite extensions <<Zvkn>>, <<Zvknc>>, <<Zvkng>>, and <<Zvksc>>--
+ depend on Zve64x.#
+ 
+-[#norm:Zvbb_Zvkb_Zvkg_Zvkned_Zvknha_Zvksed_Zvksh_Zvks_Zvksc_Zvksg_Zvkt_depZve32x]#All of the other Vector Crypto Extensions depend on `Zve32x`.#
++[#param:OTHER_VECCRYPTO_DEPEND_ZVE32X]##[#norm:Zvbb_Zvkb_Zvkg_Zvkned_Zvknha_Zvksed_Zvksh_Zvks_Zvksc_Zvksg_Zvkt_depZve32x]#All of the other Vector Crypto Extensions depend on `Zve32x`.#
+ 
+ Note: If `Zve32x` is supported then `Zvkb` or `Zvbb` provide support for EEW of 8, 16, and 32. If `Zve64x` is supported then `Zvkb` or `Zvbb` also add support for EEW 64.
+ 
+@@ -494,7 +494,7 @@ All _cryptography-specific_ instructions defined in this Vector Crypto specifica
+ in <<zvkned>>, <<zvknh,Zvknh[ab]>>, <<Zvkg>>, <<Zvksed>> and <<zvksh>> but _not_ <<zvbb>>,<<zvkb>>, or <<zvbc>>) shall
+ be executed with data-independent execution latency as defined in the
+ <<#crypto_scalar_instructions,RISC-V Scalar Cryptography Extensions specification>>.
+-[#norm:veccrypto_indepZkt]#It is important to note that the Vector Crypto instructions are independent of the
++[#param:VECCRYPTO_INDEPENDENT_ZKT]##[#norm:veccrypto_indepZkt]#It is important to note that the Vector Crypto instructions are independent of the
+ implementation of the `Zkt` extension and do not require that `Zkt` is implemented.#
+ 
+ This specification includes a <<Zvkt>> extension that, when implemented, requires certain vector instructions
+@@ -546,7 +546,7 @@ This extension is a superset of the <<Zvkb>> extension.
+ General purpose carry-less multiplication instructions which are commonly used in cryptography
+ and hashing (e.g., Elliptic curve cryptography, GHASH, CRC).
+ 
+-[#norm:Zvbc_sew64only]#These instructions are only defined for `SEW`=64.#
++[#param:ZVBC_SEW64_ONLY]##[#norm:Zvbc_sew64only]#These instructions are only defined for `SEW`=64.#
+ 
+ [%autowidth]
+ [%header,cols="^2,4"]
+@@ -601,7 +601,7 @@ in the Zvbb extension: vbrev.v, vclz.v, vctz.v, vcpop.v, and vwsll.[vv,vx,vi].
+ Instructions to enable the efficient implementation of GHASH~H~ which is used in Galois/Counter Mode (GCM) and
+ Galois Message Authentication Code (GMAC).
+ 
+-[#norm:Zvkg_egw128b_elem32b]#All of these instructions work on 128-bit element groups comprised of four 32-bit elements.#
++[#param:ZVKG_EGW128B_ELEM32B]##[#norm:Zvkg_egw128b_elem32b]#All of these instructions work on 128-bit element groups comprised of four 32-bit elements.#
+ 
+ GHASH~H~ is defined in the
+ // link:https://csrc.nist.gov/publications/detail/sp/800-38d/final[NIST Special Publication 800-38D]
+@@ -616,12 +616,12 @@ provide authentication.
+ GMAC is used to provide authentication of a message without encryption.
+ ====
+ 
+-[#norm:Zvkg_dataindeptiming]#To help avoid side-channel timing attacks, these instructions shall be implemented with data-independent timing.#
++[#param:ZVKG_DATA_INDEPENDENT_TIMING]##[#norm:Zvkg_dataindeptiming]#To help avoid side-channel timing attacks, these instructions shall be implemented with data-independent timing.#
+ 
+-[#norm:Zvkg_vl]#The number of element groups to be processed is `vl`/`EGS`.
++[#param:ZVKG_VL_CONSTRAINT]##[#norm:Zvkg_vl]#The number of element groups to be processed is `vl`/`EGS`.
+ `vl` must be set to the number of `SEW=32` elements to be processed and
+ therefore must be a multiple of `EGS=4`.# +
+-[#norm:Zvkg_vstart]#Likewise, `vstart` must be a multiple of `EGS=4`.#
++[#param:ZVKG_VSTART_CONSTRAINT]##[#norm:Zvkg_vstart]#Likewise, `vstart` must be a multiple of `EGS=4`.#
+ 
+ [%autowidth]
+ [%header,cols="^2,4,4,4"]
+@@ -3360,8 +3360,8 @@ Encoding (Vector-Vector)::
+ ]}
+ ....
+ Reserved Encodings::
+-* [#norm:vsha2ms-vv_Zvknha_sewn32_rsv]#`zvknha`: `SEW` is any value other than 32#
+-* [#norm:vsha2ms-vv_Zvknhb_sewn32or64_rsv]#`zvknhb`: `SEW` is any value other than 32 or 64#
++* [#param:VSHA2MS_ZVKNHA_SEW_SUPPORT]##[#norm:vsha2ms-vv_Zvknha_sewn32_rsv]#`zvknha`: `SEW` is any value other than 32#
++* [#param:VSHA2MS_ZVKNHB_SEW_SUPPORT]##[#norm:vsha2ms-vv_Zvknhb_sewn32or64_rsv]#`zvknhb`: `SEW` is any value other than 32 or 64#
+ * [#norm:vsha2ms-vv_vdoverlapvs1vs2_rsv]#The `vd` register group overlaps with either `vs1` or `vs2`#
+ Arguments::
+ 
+@@ -3545,7 +3545,7 @@ Encoding::
+ ]}
+ ....
+ Reserved Encodings::
+-* [#norm:vsm3c-vi_sewn32_rsv]#`SEW` is any value other than 32#
++* [#param:VSM3ME_SEW_SUPPORT]##[#param:VSM3C_SEW_SUPPORT]##[#norm:vsm3c-vi_sewn32_rsv]#`SEW` is any value other than 32#
+ * [#norm:vsm3c-vi_vdoverlapvs2_rsv]#The `vd` register group overlaps with the `vs2` register group#
+ 
+ Arguments::
+@@ -3738,7 +3738,7 @@ Encoding::
+ ]}
+ ....
+ Reserved Encodings::
+-* [#norm:vsm3me-vv_sewn32_rsv]#`SEW` is any value other than 32#
++* [#param:VSM4K_SEW_SUPPORT]##[#norm:vsm3me-vv_sewn32_rsv]#`SEW` is any value other than 32#
+ * [#norm:vsm3me-vv_vdoverlapvs2_rsv]#The `vd` register group overlaps with the `vs2` register group.#
+ 
+ Arguments::
+@@ -3890,7 +3890,7 @@ Encoding::
+ ]}
+ ....
+ Reserved Encodings::
+-* [#norm:vsm4k-vi_sewn32_rsv]#`SEW` is any value other than 32#
++* [#param:VSM4R_SEW_SUPPORT]##[#norm:vsm4k-vi_sewn32_rsv]#`SEW` is any value other than 32#
+ 
+ Arguments::
+ 
+diff --git a/src/zabha.adoc b/src/zabha.adoc
+index 4c2da04..aa8d5b0 100644
+--- a/src/zabha.adoc
++++ b/src/zabha.adoc
+@@ -55,8 +55,8 @@ bits of the original value in `rd`.#
+ 
+ [#norm:Zabha_rs1_align_addr]#Similar to the AMOs specified in the A extension, the Zabha extension mandates
+ that the address contained in the `rs1` register must be naturally aligned to
+-the size of the operand.# The same exception options as specified in the A
+-extension are applicable in cases where the address is not naturally aligned.
++the size of the operand.# [#param:MISALIGNED_AMO]#The same exception options as specified in the A
++extension are applicable in cases where the address is not naturally aligned.#
+ 
+ Similar to the AMOs specified in the A and Zacas extensions, the AMOs in the
+ Zabha extension optionally provide release consistency semantics, using the `aq`
+diff --git a/src/zacas.adoc b/src/zacas.adoc
+index a4e5574..07ef2db 100644
+--- a/src/zacas.adoc
++++ b/src/zacas.adoc
+@@ -153,7 +153,7 @@ retry:
+   ret
+ ====
+ 
+-Just as for AMOs in the A extension, [#norm:Zacas_amocas_rs1_addr_alignment]#`AMOCAS.W/D/Q` requires that the address
++Just as for AMOs in the A extension, [#param:MISALIGNED_AMOCAS]##[#norm:Zacas_amocas_rs1_addr_alignment]#`AMOCAS.W/D/Q` requires that the address
+ held in `rs1` be naturally aligned to the size of the operand (i.e., 16-byte
+ aligned for _quadwords_, eight-byte aligned for _doublewords_, and four-byte
+ aligned for _words_).# And the same exception options apply if the address
+diff --git a/src/zalasr.adoc b/src/zalasr.adoc
+index 5eff069..9e0b94f 100644
+--- a/src/zalasr.adoc
++++ b/src/zalasr.adoc
+@@ -20,10 +20,10 @@ With the combination of Zaamo, Zabha, and Zalasr all {cpp} atomic operations can
+ 
+ [#norm:zalasr_signext_rd]#The Zalasr instructions always sign-extend the value placed in _rd_# and [#norm:zalasr_ignore_rs2_upper]#ignore the upper bits of the value of _rs2_.#
+ [#norm:zalasr_natural_align]#The instructions in the Zalasr extension require that the address held in _rs1_ be naturally aligned to the size in bytes (2^width^) of the operand.#
+-[#norm:zalasr_misaligned_exception]#If the address is not naturally aligned, an address-misaligned exception or an access-fault exception will be generated.#
++[#param:ZALASR_MISALIGNED_EXCEPTION_TYPE]##[#norm:zalasr_misaligned_exception]#If the address is not naturally aligned, an address-misaligned exception or an access-fault exception will be generated.#
+ The access-fault exception can be generated for a memory access that would otherwise be able to complete except for the misalignment, if the misaligned access should not be emulated.
+ 
+-[#norm:zalasr_misaligned_pma_relax]#The misaligned atomicity granule PMA, defined in Volume II of this manual, optionally relaxes this alignment requirement.#
++[#param:ZALASR_MISALIGNED_ATOMICITY_GRANULE]##[#norm:zalasr_misaligned_pma_relax]#The misaligned atomicity granule PMA, defined in Volume II of this manual, optionally relaxes this alignment requirement.#
+ [#norm:zalasr_misaligned_single_op]#If all accessed bytes lie within the same misaligned atomicity granule, the instruction will not raise an exception for reasons of address alignment, and the instruction will give rise to only one memory operation for the purposes of RVWMO—i.e., it will execute atomically.#
+ 
+ <<<
+diff --git a/src/zawrs.adoc b/src/zawrs.adoc
+index e1ae96c..b5d3467 100644
+--- a/src/zawrs.adoc
++++ b/src/zawrs.adoc
+@@ -27,7 +27,7 @@ or an interrupt is observed.#
+ 
+ Sometimes the program waiting on a memory update may also need to carry out a
+ task at a future time or otherwise place an upper bound on the wait. To support
+-such use cases a second instruction [#norm:Zawrs_wrs-sto_stall_duration]#`WRS.STO` (WRS-with-short-timeout) is
++such use cases a second instruction [#param:WRS_STO_TIMEOUT_DURATION]##[#norm:Zawrs_wrs-sto_stall_duration]#`WRS.STO` (WRS-with-short-timeout) is
+ provided that works like `WRS.NTO` but bounds the stall duration to an
+ implementation-define short timeout such that the stall is terminated on the
+ timeout if no other conditions have occurred to terminate the stall.# The
+@@ -67,18 +67,18 @@ Hart execution may be stalled while the following conditions are all satisfied:
+     . If `WRS.STO`, a "short" duration since start of stall has not elapsed
+     . No pending interrupt is observed (see the rules below)
+ 
+-[#norm:Zawrs_stall_terminate]#While stalled, an implementation is permitted to occasionally terminate the
++[#param:WRS_EARLY_TERMINATION_POLICY]##[#norm:Zawrs_stall_terminate]#While stalled, an implementation is permitted to occasionally terminate the
+ stall and complete execution for any reason.#
+ 
+ [#norm:Zawrs_exec_resume_rules]#`WRS.NTO` and `WRS.STO` instructions follow the rules of the `WFI` instruction
+ for resuming execution on a pending  interrupt.#
+ 
+-[#norm:Zawrs_priv_illegal_instr_excp]#When the `TW` (Timeout Wait) bit in `mstatus` is set and `WRS.NTO` is executed
++[#param:WRS_NTO_TW_TIMEOUT_DURATION]##[#norm:Zawrs_priv_illegal_instr_excp]#When the `TW` (Timeout Wait) bit in `mstatus` is set and `WRS.NTO` is executed
+ in any privilege mode other than M mode, and it does not complete within an
+ implementation-specific bounded time limit, the `WRS.NTO` instruction will cause
+ an illegal-instruction exception.#
+ 
+-[#norm:Zawrs_virtual_instr_excp]#When executing in VS or VU mode, if the `VTW` bit is set in `hstatus`, the
++[#param:WRS_NTO_VTW_TIMEOUT_DURATION]##[#norm:Zawrs_virtual_instr_excp]#When executing in VS or VU mode, if the `VTW` bit is set in `hstatus`, the
+ `TW` bit in `mstatus` is clear, and the `WRS.NTO` does not complete within an
+ implementation-specific bounded time limit, the `WRS.NTO` instruction will cause
+ a virtual-instruction  exception.#
+diff --git a/src/zc.adoc b/src/zc.adoc
+index e23a853..51d3758 100644
+--- a/src/zc.adoc
++++ b/src/zc.adoc
+@@ -1183,7 +1183,7 @@ The entire PUSH/POP sequence is re-executed after returning from the trap handle
+ [#norm:Zcmp_trap]#If a trap occurs during the sequence then _xEPC_ is updated with the PC of the instruction, _xTVAL_ (if not read-only-zero) updated with the bad address if it was an access fault and _xCAUSE_ updated with the type of trap.#
+ 
+ [[norm:interrupts_allowed_in_pushpop_param]]
+-NOTE: It is implementation defined whether interrupts can also be taken during the sequence execution.
++NOTE: [#param:INTERRUPTS_ALLOWED_IN_PUSHPOP]#It is implementation defined whether interrupts can also be taken during the sequence execution.#
+ 
+ [#pushpop-software-view]
+ ==== Software view of execution
+@@ -1207,8 +1207,8 @@ If an implementation allows interrupts during the sequence, and the interrupt ha
+ 
+ [[norm:Zcmp_bus_fault]]
+ Stores may also return imprecise faults from the bus.
+-It is platform defined whether the core implementation waits for the bus responses before continuing to the final stage of the sequence,
+-or handles errors responses after completing the PUSH instruction.
++[#param:PUSHPOP_BUS_FAULT_HANDLING]#It is platform defined whether the core implementation waits for the bus responses before continuing to the final stage of the sequence,
++or handles errors responses after completing the PUSH instruction.#
+ 
+ <<<
+ 
+@@ -2396,9 +2396,9 @@ Format (RV64):
+ 
+ Description::
+ 
+-[#norm:jvt_reg]#The _jvt_ register is an XLEN-bit *WARL* read/write register that holds the jump table configuration, consisting of the jump table base address (BASE) and the jump table mode (MODE).#
++[#param:JVT_READ_ONLY]##[#norm:jvt_reg]#The _jvt_ register is an XLEN-bit *WARL* read/write register that holds the jump table configuration, consisting of the jump table base address (BASE) and the jump table mode (MODE).#
+ 
+-[#norm:jvt_op]#If <<Zcmt>> is implemented then _jvt_ must also be implemented, but can contain a read-only value. If _jvt_ is writable, the set of values the register may hold can vary by implementation. The value in the BASE field must always be aligned on a 64-byte boundary.
++[#param:JVT_BASE_MASK]##[#norm:jvt_op]#If <<Zcmt>> is implemented then _jvt_ must also be implemented, but can contain a read-only value. If _jvt_ is writable, the set of values the register may hold can vary by implementation. The value in the BASE field must always be aligned on a 64-byte boundary.
+ Note that the CSR contains only bits XLEN-1 through 6 of the address _base_. When computing jump-table accesses, the lower six bits of _base_ are filled with zeroes to obtain an XLEN-bit jump-table base address _jvt.base_ that is always aligned on a 64-byte boundary.#
+ 
+ [#norm:jvt_base_vm]#_jvt.base_ is a virtual address, whenever virtual memory is enabled.#
+@@ -2414,7 +2414,7 @@ The memory pointed to by _jvt.base_ is treated as instruction memory for the pur
+ | others | *reserved for future standard use*
+ |=============================================================================================
+ 
+-[#norm:jvt_mode_acc]#_jvt.mode_ is a *WARL* field, so can only be programmed to modes which are implemented.# Therefore the discovery mechanism is to
++[#param:JVT_BASE_TYPE]##[#norm:jvt_mode_acc]#_jvt.mode_ is a *WARL* field, so can only be programmed to modes which are implemented.# Therefore the discovery mechanism is to
+ attempt to program different modes and read back the values to see which are available. Jump table mode _must_ be implemented.
+ 
+ [NOTE]
+diff --git a/src/zfa.adoc b/src/zfa.adoc
+index a44bfac..ef3e473 100644
+--- a/src/zfa.adoc
++++ b/src/zfa.adoc
+@@ -181,7 +181,7 @@ zero.
+ Floating-point exception flags are raised the same as they would be for
+ FCVT.W.D with the same input operand.
+ 
+-This instruction is only provided if the D extension is implemented. [#norm:fcvtmod-w-d_rsw]#It
++This instruction is only provided if the D extension is implemented. [#param:FCVTMOD_RM_RESERVED_BEHAVIOR]##[#norm:fcvtmod-w-d_rsw]#It
+ is encoded like FCVT.W.D, but with the rs2 field set to 8 and the _rm_
+ field set to 1 (RTZ). Other _rm_ values are _reserved_.#
+ [NOTE]
+diff --git a/src/zfinx.adoc b/src/zfinx.adoc
+index 13f968c..fd33e14 100644
+--- a/src/zfinx.adoc
++++ b/src/zfinx.adoc
+@@ -147,10 +147,10 @@ but would require quad-register groups.
+ === Privileged Architecture Implications
+ 
+ [[norm:Zfinx_mstatus-FS_zero]]
+-In the standard privileged architecture defined in Volume II, the
++[#param:MSTATUS_FS_LEGAL_VALUES]#In the standard privileged architecture defined in Volume II, the
+ `mstatus` field FS is hardwired to 0 if the Zfinx extension is
+ implemented, and FS no longer affects the trapping behavior of
+-floating-point instructions or `fcsr` accesses.
++floating-point instructions or `fcsr` accesses.#
+ 
+ [[norm:Zfinx_misa-F_D_Q_zero]]
+ The `misa` bits F, D, and Q are hardwired to 0 when the Zfinx extension
+diff --git a/src/zicond.adoc b/src/zicond.adoc
+index b653584..3cbd0c5 100644
+--- a/src/zicond.adoc
++++ b/src/zicond.adoc
+@@ -53,7 +53,7 @@ If _rs2_ contains the value zero, this instruction writes the value zero to _rd_
+ 
+ This instruction carries a syntactic dependency from both _rs1_ and _rs2_ to _rd_.
+ [[norm:czero-eqz_inst_ctime]]
+-Furthermore, if the Zkt extension is implemented, this instruction's timing is independent of the data values in _rs1_ and _rs2_.
++[#param:ZKT_EXTENSION_IMPLEMENTED]#Furthermore, if the Zkt extension is implemented, this instruction's timing is independent of the data values in _rs1_ and _rs2_.#
+ 
+ SAIL code::
+ [source,sail]
+diff --git a/src/zicsr.adoc b/src/zicsr.adoc
+index f8de697..c90faab 100644
+--- a/src/zicsr.adoc
++++ b/src/zicsr.adoc
+@@ -241,7 +241,7 @@ Most CSRs (including, e.g., the `fcsr`) are not visible to other harts;
+ their accesses can be freely reordered in the global memory order with
+ respect to FENCE instructions without violating this specification.
+ ====
+-[#norm:csr_strongly_ordered]#The hardware platform may define that accesses to certain CSRs are
++[#param:CSR_STRONGLY_ORDERED]##[#norm:csr_strongly_ordered]#The hardware platform may define that accesses to certain CSRs are
+ strongly ordered, as defined by the Memory-Ordering PMAs section in
+ Volume II of this manual. Accesses to strongly ordered CSRs have
+ stronger ordering constraints with respect to accesses to both weakly
+diff --git a/src/zifencei.adoc b/src/zifencei.adoc
+index 1a36a52..2c373bd 100644
+--- a/src/zifencei.adoc
++++ b/src/zifencei.adoc
+@@ -113,9 +113,9 @@ that instruction gives rise to.
+ 
+ [[norm:fence_i_rsv]]
+ The unused fields in the FENCE.I instruction, _funct12_, _rs1_, and
+-_rd_, are reserved for finer-grain fences in future extensions. For
++_rd_, are reserved for finer-grain fences in future extensions. [#param:FENCE_I_RESERVED_FIELD_BEHAVIOR]#For
+ forward compatibility, base implementations shall ignore these fields,
+-and standard software shall zero these fields.
++and standard software shall zero these fields.#
+ (((FENCE.I, finer-grained)))
+ (((FENCE.I, forward compatibility)))
+ 
+diff --git a/src/zihintntl.adoc b/src/zihintntl.adoc
+index 61dfc4c..e11cb4e 100644
+--- a/src/zihintntl.adoc
++++ b/src/zihintntl.adoc
+@@ -159,7 +159,7 @@ instruction that does not explicitly access memory. Nonadherence to this
+ recommendation might reduce performance but otherwise has no
+ architecturally visible effect.
+ 
+-[#norm:NTL-trap_behavior]#In the event that a trap is taken on the target instruction,
++[#param:NTL_TRAP_BEHAVIOR]##[#norm:NTL-trap_behavior]#In the event that a trap is taken on the target instruction,
+ implementations are discouraged from applying the NTL to the first
+ instruction in the trap handler. Instead, implementations are
+ recommended to ignore the HINT in this case.#
+diff --git a/src/zihintpause.adoc b/src/zihintpause.adoc
+index eb8f46c..f40fe3e 100644
+--- a/src/zihintpause.adoc
++++ b/src/zihintpause.adoc
+@@ -1,6 +1,6 @@
+ [[zihintpause]]
+ == "Zihintpause" Extension for Pause Hint, Version 2.0
+-[#norm:pause_op]#The PAUSE instruction is a HINT that indicates the current hart's rate
++[#param:PAUSE_DURATION]##[#norm:pause_op]#The PAUSE instruction is a HINT that indicates the current hart's rate
+ of instruction retirement should be temporarily reduced or paused. The
+ duration of its effect must be bounded and may be zero.#
+ (((PAUSE, HINT)))
+diff --git a/src/zilsd.adoc b/src/zilsd.adoc
+index 757e9cb..231fb7c 100644
+--- a/src/zilsd.adoc
++++ b/src/zilsd.adoc
+@@ -35,9 +35,9 @@ The Zilsd extension adds the following RV32-only instructions:
+ 
+ [#norm:Zilsd_align8_no_exc]#As the access size is 64-bit, accesses are only considered naturally aligned for effective addresses that are a multiple of 8.
+ In this case, these instructions are guaranteed to not raise an address-misaligned exception.#
+-[#norm:Zilsd_align8_atomic]#Even if naturally aligned, the memory access might not be performed atomically.#
++[#param:ZILSD_8BYTE_ATOMIC]##[#norm:Zilsd_align8_atomic]#Even if naturally aligned, the memory access might not be performed atomically.#
+ 
+-[#norm:Zilsd_align4_atomic]#If the effective address is a multiple of 4, then each word access is required to be performed atomically.#
++[#param:ZILSD_4BYTE_WORD_ATOMIC]##[#norm:Zilsd_align4_atomic]#If the effective address is a multiple of 4, then each word access is required to be performed atomically.#
+ 
+ The following table summarizes the required behavior:
+ 
+diff --git a/src/zpm.adoc b/src/zpm.adoc
+index 903efde..bff567f 100644
+--- a/src/zpm.adoc
++++ b/src/zpm.adoc
+@@ -7,7 +7,7 @@
+ 
+ HWASAN leverages tags in the upper bits of the address to identify memory errors such as use-after-free or buffer overflow errors. By storing a *pointer tag* in the upper bits of the address and checking it against a *memory tag* stored in a side table, it can identify whether a pointer is pointing to a valid location. Doing this without hardware support introduces significant overheads since the pointer tag needs to be manually removed for every conventional memory operation. Pointer masking support reduces these overheads.
+ 
+-Pointer masking only adds the ability to ignore pointer tags during regular memory accesses. [#norm:pm_tag_check_impl]#The tag checks themselves can be implemented in software or hardware.# If implemented in software, pointer masking still provides performance benefits since non-checked accesses do not need to transform the address before every memory access. Hardware implementations are expected to provide even larger benefits due to performing tag checks out-of-band and hardening security guarantees derived from these checks. We anticipate that future extensions may build on pointer masking to support this functionality in hardware.
++Pointer masking only adds the ability to ignore pointer tags during regular memory accesses. [#param:PM_TAG_CHECK_IMPLEMENTATION]##[#norm:pm_tag_check_impl]#The tag checks themselves can be implemented in software or hardware.# If implemented in software, pointer masking still provides performance benefits since non-checked accesses do not need to transform the address before every memory access. Hardware implementations are expected to provide even larger benefits due to performing tag checks out-of-band and hardening security guarantees derived from these checks. We anticipate that future extensions may build on pointer masking to support this functionality in hardware.
+ 
+ It is worth mentioning that while HWASAN is the primary use-case for the current pointer masking extension, a number of other hardware/software features may be implemented leveraging Pointer Masking. Some of these use cases include sandboxing, object type checks and garbage collection bits in runtime systems. Note that the current version of the spec does not explicitly address these use cases, but future extensions may build on it to do so.
+ 
+@@ -105,7 +105,7 @@ If the address was a physical address rather than a virtual address with Sv57, t
+ 
+ From an implementation perspective, ignoring bits is deeply connected to the maximum virtual and physical address space supported by the processor (e.g., Bare, Sv48, Sv57). In particular, applying the above transformation is cheap if it covers only bits that are not used by **any** supported address translation mode (as it is equivalent to switching off validity checks). Masking NVBITS beyond those bits is more expensive as it requires ignoring them in the TLB tag, and even more expensive if the masked bits extend into the VBITS portion of the address (as it requires performing the actual sign extension). Similarly, when running in Bare or M mode, it is common for implementations to not use a particular number of bits at the top of the physical address range and fix them to zero. Applying the ignore transformation to those bits is cheap as well, since it will result in a valid physical address with all the upper bits fixed to 0.
+ 
+-[#norm:pmlen_supported_values]#The current standard only supports PMLEN=XLEN-48 (i.e., PMLEN=16 in RV64) and PMLEN=XLEN-57 (i.e., PMLEN=7 in RV64).# [#norm:pmlen_future_reserved]#A setting has been reserved to potentially support other values of PMLEN in future standards.# In such future standards, different supported values of PMLEN may be defined for each privilege mode (U/VU, S/HS, and M).
++[#param:PMLEN]##[#norm:pmlen_supported_values]#The current standard only supports PMLEN=XLEN-48 (i.e., PMLEN=16 in RV64) and PMLEN=XLEN-57 (i.e., PMLEN=7 in RV64).# [#norm:pmlen_future_reserved]#A setting has been reserved to potentially support other values of PMLEN in future standards.# In such future standards, different supported values of PMLEN may be defined for each privilege mode (U/VU, S/HS, and M).
+ 
+ [NOTE]
+ ====
+@@ -215,7 +215,7 @@ Future extensions may introduce additional CSRs to allow different privilege mod
+ 
+ ==== Number of Masked Bits
+ 
+-As described in <<_determining_the_value_of_pmlen>>, [#norm:pmlen_mode_depend]#the supported values of PMLEN may depend on the effective privilege mode. The current standard only defines PMLEN=XLEN-48 and PMLEN=XLEN-57,# but this assumption may be relaxed in future extensions and profiles. [#norm:pmlen_illegal_warl]#Trying to enable pointer masking in an unsupported scenario represents an illegal write to the corresponding pointer masking enable bit and follows WARL semantics.# Future profiles may choose to define certain combinations of privilege modes and supported values of PMLEN as mandatory.
++As described in <<_determining_the_value_of_pmlen>>, [#param:PMLEN_PER_MODE_SUPPORT]##[#norm:pmlen_mode_depend]#the supported values of PMLEN may depend on the effective privilege mode. The current standard only defines PMLEN=XLEN-48 and PMLEN=XLEN-57,# but this assumption may be relaxed in future extensions and profiles. [#param:PM_ENABLE_WARL_BEHAVIOR]##[#norm:pmlen_illegal_warl]#Trying to enable pointer masking in an unsupported scenario represents an illegal write to the corresponding pointer masking enable bit and follows WARL semantics.# Future profiles may choose to define certain combinations of privilege modes and supported values of PMLEN as mandatory.
+ 
+ [NOTE]
+ ====
+diff --git a/src/ztso-st-ext.adoc b/src/ztso-st-ext.adoc
+index 06bede2..cdc1766 100644
+--- a/src/ztso-st-ext.adoc
++++ b/src/ztso-st-ext.adoc
+@@ -36,7 +36,7 @@ store buffer to a subsequent (in program order) load—that is to say that
+ stores can be forwarded locally before they are visible to other harts._
+ ====
+ 
+-[#norm:ztso_vect_mem]#Additionally, if the Ztso extension is implemented, then vector memory
++[#param:ZTSO_EXTENSION_IMPLEMENTED]##[#norm:ztso_vect_mem]#Additionally, if the Ztso extension is implemented, then vector memory
+ instructions in the V extension and Zve family of extensions follow RVTSO at
+ the instruction level.#
+ The Ztso extension does not strengthen the ordering of intra-instruction
