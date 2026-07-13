@@ -51,7 +51,7 @@
     "@types/node": "24.13.3",
     "@types/vscode": "1.125.0",
     "@vscode/test-electron": "2.5.2",
-    "glob": "7.2.3",
+    "glob": "13.0.6",
     "mocha": "10.8.2",
     "typescript": "5.9.3"
   },
