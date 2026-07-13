@@ -31,27 +31,27 @@ jobs:
     if: false
     steps:
     - name: Use download-artifact
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
     - name: Use upload-artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         path: "."
   regress-pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       with:
         submodules: 'true'
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
-    - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037
+    - uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d
   regress-llvm:
     runs-on: ubuntu-latest
     needs:
     - build-llvm
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Get current LLVM submodule commit SHA
@@ -59,7 +59,7 @@ jobs:
       run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
     - name: Restore cache RISC-V JSON
       id: cache-riscv
-      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: ext/llvm-project/riscv.json
         key: "${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}"
@@ -70,7 +70,7 @@ jobs:
     outputs:
       configs: "${{ steps.configs.outputs.configs }}"
     steps:
-    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: 3.4.10
@@ -85,11 +85,11 @@ jobs:
     - regress-udb-unit-test
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: download coverage
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
         pattern: udb-*-cov
         path: _cov/udb
@@ -98,7 +98,7 @@ jobs:
     - name: Collate coverage
       run: "./do chore:udb:collate_cov[_cov/udb]"
     - name: Upload udb coverage reports to Codecov
-      uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
       with:
         token: "${{ secrets.CODECOV_TOKEN }}"
         disable_search: true
@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository (no submodules, shallow fetch)
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       with:
         submodules: false
         fetch-depth: 1
@@ -117,7 +117,7 @@ jobs:
       run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
     - name: Cache RISC-V JSON
       id: cache-riscv
-      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: ext/llvm-project/riscv.json
         key: "${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}"
@@ -151,7 +151,7 @@ jobs:
     - name: Show riscv.json output
       run: ls -l ext/llvm-project/riscv.json
     - name: Upload RISC-V JSON as Artifact
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: riscv-json
         path: ext/llvm-project/riscv.json
@@ -162,7 +162,7 @@ jobs:
       run:
         working-directory: tools/eclipse/dev/org.xtext.udb.parent
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Setup Temurin JDK 21
       uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520
       with:
@@ -176,7 +176,7 @@ jobs:
       run: mvn -B -U -Dheadless=true verify
     - name: Archive surefire reports (always)
       if: always()
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: surefire-reports
         path: |
@@ -190,10 +190,10 @@ jobs:
       run:
         working-directory: tools/eclipse/udb-vscode
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
       with:
-        node-version: '20'
+        node-version: '24'
         cache: npm
         cache-dependency-path: tools/eclipse/udb-vscode/package-lock.json
     - name: Setup Temurin JDK 21 (for LS)
@@ -209,7 +209,7 @@ jobs:
       run: xvfb-run -a npm test
     - name: Archive VS Code test logs (always)
       if: always()
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: vscode-test-logs
         path: |
@@ -226,7 +226,7 @@ jobs:
         - udb
         - udb_helpers
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Copy the gem directory to resolve symlinks
       run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
     - name: Create the ${{ matrix.gem }} gem
@@ -234,7 +234,7 @@ jobs:
         cd gem-build-dir && \
         gem build -o ${{ matrix.gem }}.gem ${{ matrix.gem }}.gemspec
     - name: Upload the ${{ matrix.gem }} gem
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: "${{ matrix.gem }}.gem"
         path: gem-build-dir/${{ matrix.gem }}.gem
@@ -253,7 +253,7 @@ jobs:
     container: "${{ matrix.container }}"
     needs: create-gems
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - if: matrix.container == 'almalinux:8'
       name: Install ruby
       run: |
@@ -267,15 +267,15 @@ jobs:
         apt-get update -qq && \
         apt-get install --no-install-recommends -y make
     - name: download udb gem
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
         name: udb.gem
     - name: download idlc gem
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
         name: idlc.gem
     - name: download udb_helpers gem
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
         name: udb_helpers.gem
     - name: install gems
@@ -290,7 +290,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Run tools/scripts unit tests
@@ -299,13 +299,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Run idlc unit tests
       run: "./do test:idlc:unit"
     - name: Upload idlc coverage reports to Codecov
-      uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
       with:
         token: "${{ secrets.CODECOV_TOKEN }}"
         disable_search: true
@@ -315,7 +315,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Run udb-helpers unit tests
@@ -324,7 +324,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Check udb-gen unit tests
@@ -333,7 +333,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Check udb-gen integration tests
@@ -342,7 +342,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate udb-gen golden files
@@ -351,7 +351,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Run sorbet checks
@@ -360,7 +360,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate ISA Explorer browser artifacts
@@ -369,7 +369,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Type check IDL for ${{ matrix.cfg }}
@@ -383,7 +383,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Type check IDL for ${{ matrix.cfg }}
@@ -397,7 +397,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Checking for conflicts in instruction encodings
@@ -406,7 +406,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: checkout ISA manual
@@ -419,7 +419,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate instruction appendix asciidoc
@@ -430,7 +430,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate HTML ISA manual
@@ -439,7 +439,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate Xqci extension PDF
@@ -448,7 +448,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate extension PDF
@@ -457,7 +457,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Check that profile configs are up to date
@@ -466,7 +466,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Run udb gem ${{ matrix.test }} unit tests
@@ -474,7 +474,7 @@ jobs:
     - name: Rename coverage file
       run: mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
     - name: Save coverage report
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: udb-${{ matrix.test }}-cov
         path: tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
@@ -499,7 +499,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate Go code
@@ -508,7 +508,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate c_header code
@@ -517,7 +517,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate sverilog_header code
@@ -526,7 +526,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate cfg header golden files
@@ -535,7 +535,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
       with:
@@ -546,7 +546,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
       with:
@@ -559,7 +559,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
       with:
@@ -572,7 +572,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
       with:
@@ -585,7 +585,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Check profile_extensions
@@ -594,7 +594,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Build udb gem via chore
@@ -605,7 +605,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Test that local regress runner works
@@ -615,13 +615,13 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Create reuse manifest
       run: "./bin/reuse spdx -o reuse_bom.txt"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: reuse-manifest
@@ -631,13 +631,13 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate UDB API Docs
       run: "./do gen:udb:api_doc"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: udb-api
@@ -648,7 +648,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Resolve Unconfig with IDL AST
@@ -656,7 +656,7 @@ jobs:
     - name: Tar unconfig
       run: tar czf gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_ && mv gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_/resolved_spec.tar.gz
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: resolved-spec
@@ -667,13 +667,13 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate ISA Explorer CSR
       run: "./bin/udb-gen isa-explorer -t csr-browser -o gen/isa_explorer/browser"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-explorer-csr
@@ -683,13 +683,13 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate ISA Explorer Extension
       run: "./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer/browser"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-explorer-ext
@@ -699,13 +699,13 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate ISA Explorer Instruction
       run: "./bin/udb-gen isa-explorer -t inst-browser -o gen/isa_explorer/browser"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-explorer-inst
@@ -715,13 +715,13 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate ISA Explorer Spreadsheet
       run: "./bin/udb-gen isa-explorer -t xlsx -o gen/isa_explorer/spreadsheet"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-explorer-spreadsheet
@@ -731,13 +731,13 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate HTML ISA manual
       run: "./bin/generate manual -v all -f html"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: isa-html-manual
@@ -747,13 +747,13 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate HTML ISA manual for a config
       run: "./do gen:html[example_rv64_with_overlay]"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: cfg-html-manual
@@ -763,7 +763,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: checkout docs resources
@@ -771,7 +771,7 @@ jobs:
     - name: Generate instruction appendix
       run: "./do gen:instruction_appendix"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: inst-appendix
@@ -781,7 +781,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate ${{ matrix.profile }}
@@ -789,7 +789,7 @@ jobs:
         PROFILE_NAME="${{ matrix.profile }}"
         ./do gen:profile_release_pdf[${PROFILE_NAME}]
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: "${{ matrix.profile }}"
@@ -806,7 +806,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Check schema versions against published URLs
@@ -815,7 +815,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Generate schema documentation
@@ -825,13 +825,13 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Build IDL doc
       run: "./bin/bundle exec asciidoctor -r idl_highlighter -a toc=left -a source-highlighter=rouge -o idl.html doc/idl.adoc"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: idl-doc
@@ -840,7 +840,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       with:
         fetch-depth: 0
     - name: Set up mise environment
@@ -860,7 +860,7 @@ jobs:
     timeout-minutes: 10
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Run smoke regression suite (must complete within 10 minutes)
@@ -870,7 +870,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
     - name: Clone Github Repo Action
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Set up mise environment
       uses: "./.github/actions/mise-setup"
     - name: Install Node dependencies
@@ -878,7 +878,7 @@ jobs:
     - name: Build Docusaurus site
       run: "./bin/npm run build --workspace=doc"
     - name: Upload artifact
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ((github.event_name == 'push') && (github.ref_name == 'main'))
       with:
         name: docs-site
