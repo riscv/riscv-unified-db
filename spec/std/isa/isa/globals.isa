@@ -1667,7 +1667,7 @@ function tinst_transform {
       }
     } else {
       assert(false, "TODO: compressed instruction");
-      return 0;
+      unreachable();
     }
   }
 }
