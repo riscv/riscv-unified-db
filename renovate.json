@@ -70,6 +70,49 @@
       "datasourceTemplate": "rubygems"
     },
     {
+      "description": "Bundler version installed by default via mise",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.default-gems$/"],
+      "matchStrings": ["^bundler\\s+(?<currentValue>[\\d.]+)"],
+      "depNameTemplate": "gem:bundler",
+      "packageNameTemplate": "bundler",
+      "datasourceTemplate": "rubygems"
+    },
+    {
+      "description": "must (mustool) commit tracked by the udb gem binary version file",
+      "customType": "regex",
+      "managerFilePatterns": ["/^tools/ruby-gems/udb/lib/udb/MUST_VERSION$/"],
+      "matchStrings": ["^must-(?<currentDigest>[a-f0-9]{7,40})\\s*$"],
+      "currentValueTemplate": "master",
+      "depNameTemplate": "jar-ben/mustool",
+      "packageNameTemplate": "https://github.com/jar-ben/mustool",
+      "datasourceTemplate": "git-refs"
+    },
+    {
+      "description": "eqntott commit tracked by the udb gem binary version file",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION$/"
+      ],
+      "matchStrings": ["^eqntott-(?<currentDigest>[a-f0-9]{7,40})\\s*$"],
+      "currentValueTemplate": "master",
+      "depNameTemplate": "TheProjecter/eqntott",
+      "packageNameTemplate": "https://github.com/TheProjecter/eqntott",
+      "datasourceTemplate": "git-refs"
+    },
+    {
+      "description": "espresso commit tracked by the udb gem binary version file",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION$/"
+      ],
+      "matchStrings": ["^espresso-(?<currentDigest>[a-f0-9]{7,40})\\s*$"],
+      "currentValueTemplate": "master",
+      "depNameTemplate": "psksvp/espresso-ab-1.0",
+      "packageNameTemplate": "https://github.com/psksvp/espresso-ab-1.0",
+      "datasourceTemplate": "git-refs"
+    },
+    {
       "description": "Xtext version shared by the Eclipse Maven and Gradle projects",
       "customType": "regex",
       "managerFilePatterns": [
@@ -131,6 +174,13 @@
       "matchManagers": ["git-submodules"],
       "matchDepNames": ["ext/llvm-project"],
       "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "Keep AlmaLinux on major version 8 (toolchain container requires its older glibc for prebuilt toolchain compatibility)",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["almalinux"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }

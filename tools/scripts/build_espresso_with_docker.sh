@@ -8,6 +8,9 @@
 # Usage: build_espresso_with_docker.sh [output_dir] [architecture]
 #   output_dir   - where to place the binary (default: ./espresso-build)
 #   architecture - x64 or arm64 (default: x64)
+#
+# ESPRESSO_VERSION in the udb gem is the single source of truth.
+# To update: change tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION.
 
 set -euo pipefail
 
@@ -15,6 +18,24 @@ error() { echo "ERROR: $*" >&2; exit 1; }
 info()  { echo "INFO: $*"  >&2; }
 
 command_exists() { command -v "$1" >/dev/null 2>&1; }
+
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+UDB_ROOT=$(cd -- "${SCRIPT_DIR}/../.." && pwd)
+ESPRESSO_VERSION_FILE="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION"
+ESPRESSO_VERSION=$(<"${ESPRESSO_VERSION_FILE}") || error "Could not read ${ESPRESSO_VERSION_FILE}"
+
+case "${ESPRESSO_VERSION}" in
+    espresso-*)
+        ESPRESSO_COMMIT="${ESPRESSO_VERSION#espresso-}"
+        ;;
+    *)
+        error "Invalid ESPRESSO_VERSION '${ESPRESSO_VERSION}'; expected espresso-<git-commit>"
+        ;;
+esac
+
+if [[ ! "${ESPRESSO_COMMIT}" =~ ^[a-f0-9]{7,40}$ ]]; then
+    error "Invalid ESPRESSO_VERSION '${ESPRESSO_VERSION}'; expected espresso-<7-to-40-char-hex-commit>"
+fi
 
 build_espresso_with_docker() {
     local output_dir="${1:-./espresso-build}"
@@ -34,7 +55,7 @@ build_espresso_with_docker() {
             ;;
     esac
 
-    info "Building espresso"
+    info "Building espresso (${ESPRESSO_VERSION}, commit ${ESPRESSO_COMMIT})"
     info "Output directory: $output_dir"
     info "Architecture: $architecture ($docker_platform)"
 
@@ -46,7 +67,7 @@ build_espresso_with_docker() {
 
     info "Using temporary directory: $temp_dir"
 
-    # Write Dockerfile
+    # Write Dockerfile - ESPRESSO_COMMIT is baked in at image-build time via ARG
     cat > "$temp_dir/Dockerfile" << 'EOF'
 FROM almalinux:8
 
@@ -60,6 +81,7 @@ RUN dnf install -y \
 ENV PATH=/opt/rh/gcc-toolset-12/root/usr/bin:$PATH \
     LD_LIBRARY_PATH=/opt/rh/gcc-toolset-12/root/usr/lib64
 
+ARG ESPRESSO_COMMIT
 WORKDIR /build
 
 RUN curl -L -o musl-1.2.5.tar.gz https://musl.libc.org/releases/musl-1.2.5.tar.gz \
@@ -68,7 +90,9 @@ RUN curl -L -o musl-1.2.5.tar.gz https://musl.libc.org/releases/musl-1.2.5.tar.g
   && ./configure && make install
 
 # Clone espresso source
-RUN git clone --depth=1 https://github.com/psksvp/espresso-ab-1.0.git espresso
+RUN git clone https://github.com/psksvp/espresso-ab-1.0.git espresso && \
+    cd espresso && \
+    git checkout ${ESPRESSO_COMMIT}
 
 WORKDIR /build/espresso
 
@@ -82,7 +106,12 @@ EOF
 
     local image_name="espresso-builder-$$"
     info "Building Docker image for $docker_platform..."
-    docker build --platform="$docker_platform" -t "$image_name" -f "$temp_dir/Dockerfile" "$temp_dir" \
+    docker build \
+        --platform="$docker_platform" \
+        --build-arg "ESPRESSO_COMMIT=$ESPRESSO_COMMIT" \
+        -t "$image_name" \
+        -f "$temp_dir/Dockerfile" \
+        "$temp_dir" \
         || error "Docker build failed"
 
     local container_name="espresso-extract-$$"

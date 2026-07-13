@@ -27,6 +27,39 @@ do_update_gems() {
   do_ruby_type_def udb-gen
 }
 
+# Read a git-pinned binary dependency version from its *_VERSION file.
+# Args: $1 - tool/release prefix, e.g. "espresso"
+#       $2 - version file path
+#       $3 - output variable for the full version string
+#       $4 - output variable for the git commit portion
+read_git_pinned_tool_version() {
+  local tool=$1
+  local version_file=$2
+  local version_var=$3
+  local commit_var=$4
+  local version
+  local commit
+
+  version=$(<"${version_file}") || {
+    echo "ERROR: Could not read ${version_file}" >&2
+    exit 1
+  }
+
+  if [[ "${version}" != "${tool}-"* ]]; then
+    echo "ERROR: Invalid ${version_file}: expected ${tool}-<git-commit>, got '${version}'" >&2
+    exit 1
+  fi
+
+  commit="${version#${tool}-}"
+  if [[ ! "${commit}" =~ ^[a-f0-9]{7,40}$ ]]; then
+    echo "ERROR: Invalid ${version_file}: expected ${tool}-<7-to-40-char-hex-commit>, got '${version}'" >&2
+    exit 1
+  fi
+
+  printf -v "${version_var}" "%s" "${version}"
+  printf -v "${commit_var}" "%s" "${commit}"
+}
+
 #
 # Update espresso binary
 # Args: $1 - native_only ("yes" to build only for native platform, "no" for both x64 and arm64)
@@ -43,9 +76,12 @@ do_update_espresso() {
     exit 1
   fi
 
-  # For espresso, we use a fixed version since it builds from a fixed git repo
-  local espresso_version="espresso-1.0"
-  echo "==> Building espresso version: ${espresso_version}"
+  # ESPRESSO_VERSION is the source of truth for both the release tag and git commit.
+  local espresso_version_file="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION"
+  local espresso_version
+  local espresso_commit
+  read_git_pinned_tool_version espresso "${espresso_version_file}" espresso_version espresso_commit
+  echo "==> Building espresso version: ${espresso_version} (commit: ${espresso_commit})"
 
   # Check if the GitHub Release exists
   local release_exists=no
@@ -147,7 +183,7 @@ do_update_espresso() {
       gh release create "${release_tag}" \
         --repo riscv/riscv-unified-db \
         --title "Espresso binaries ${espresso_version}" \
-        --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
+        --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${espresso_commit}" \
         "${work_dir}/espresso-${native_arch}" \
         "${work_dir}/espresso-${native_arch}.checksum"
     fi
@@ -156,7 +192,7 @@ do_update_espresso() {
     gh release create "${release_tag}" \
       --repo riscv/riscv-unified-db \
       --title "Espresso binaries ${espresso_version}" \
-      --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8)." \
+      --notes "Pre-built espresso binaries for the udb gem (Linux x64 and arm64, built on AlmaLinux 8). Commit: ${espresso_commit}" \
       "${work_dir}/espresso-x64" \
       "${work_dir}/espresso-arm64" \
       "${work_dir}/espresso-x64.checksum" \
@@ -186,16 +222,11 @@ do_update_must() {
     exit 1
   fi
 
-  # Read the commit hash from the build script
+  # MUST_VERSION is the source of truth for both the release tag and git commit.
+  local must_version_file="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/MUST_VERSION"
+  local must_version
   local must_commit
-  must_commit=$(grep '^MUST_COMMIT=' "${UDB_ROOT}/tools/scripts/build_must_with_docker.sh" | cut -d'"' -f2)
-  if [ -z "$must_commit" ]; then
-    echo "ERROR: Could not read MUST_COMMIT from build_must_with_docker.sh" >&2
-    exit 1
-  fi
-
-  # Use short commit hash for the version tag
-  local must_version="must-${must_commit:0:7}"
+  read_git_pinned_tool_version must "${must_version_file}" must_version must_commit
   echo "==> Building must version: ${must_version} (commit: ${must_commit})"
 
   # Check if the GitHub Release exists
@@ -337,16 +368,11 @@ do_update_eqntott() {
     exit 1
   fi
 
-  # Read the commit hash from the build script
+  # EQNTOTT_VERSION is the source of truth for both the release tag and git commit.
+  local eqntott_version_file="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION"
+  local eqntott_version
   local eqntott_commit
-  eqntott_commit=$(grep '^EQNTOTT_COMMIT=' "${UDB_ROOT}/tools/scripts/build_eqntott_with_docker.sh" | cut -d'"' -f2)
-  if [ -z "$eqntott_commit" ]; then
-    echo "ERROR: Could not read EQNTOTT_COMMIT from build_eqntott_with_docker.sh" >&2
-    exit 1
-  fi
-
-  # Use short commit hash for the version tag
-  local eqntott_version="eqntott-${eqntott_commit:0:7}"
+  read_git_pinned_tool_version eqntott "${eqntott_version_file}" eqntott_version eqntott_commit
   echo "==> Building eqntott version: ${eqntott_version} (commit: ${eqntott_commit})"
 
   # Check if the GitHub Release exists
@@ -488,52 +514,30 @@ do_update_z3() {
     exit 1
   fi
 
-  # Read the version currently tracked in dep_versions.rb
-  local z3_version_rb="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/dep_versions.rb"
-  local current_version
-  current_version=$(ruby -e "load '${z3_version_rb}'; puts Udb::Z3_VERSION" 2>/dev/null) || {
-    echo "ERROR: Could not read current Z3 version from ${z3_version_rb}" >&2
+  # Z3_VERSION is the source of truth for the release tag and upstream version.
+  local z3_version_file="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/Z3_VERSION"
+  local z3_version
+  z3_version=$(<"${z3_version_file}") || {
+    echo "ERROR: Could not read ${z3_version_file}" >&2
     exit 1
   }
-  echo "==> Current Z3 version in dep_versions.rb: ${current_version}"
 
-  # Query the latest Z3 release tag from upstream (Z3Prover/z3)
-  local latest_version
-  latest_version=$(gh release list --repo Z3Prover/z3 --limit 50 --json tagName \
-    --jq '[.[] | select(.tagName | test("^z3-[0-9]+\\.[0-9]+\\.[0-9]+$"))] | .[0].tagName' 2>/dev/null) || {
-    echo "ERROR: Could not query latest Z3 release from Z3Prover/z3. Check gh authentication." >&2
+  if [[ ! "${z3_version}" =~ ^z3-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "ERROR: Invalid ${z3_version_file}: expected z3-<major>.<minor>.<patch>, got '${z3_version}'" >&2
     exit 1
-  }
-  echo "==> Latest upstream Z3 release: ${latest_version}"
-
-  # Compare versions: strip "z3-" prefix and use sort -V to determine which is newer
-  local current_ver="${current_version#z3-}"
-  local latest_ver="${latest_version#z3-}"
-  local newest
-  newest=$(printf '%s\n%s\n' "${current_ver}" "${latest_ver}" | sort -V | tail -1)
-
-  # Determine the target version to build/release
-  local target_version
-  if [ "${latest_ver}" = "${current_ver}" ]; then
-    echo "==> Z3 is already up to date (${current_version})."
-    target_version="${current_version}"
-  elif [ "${newest}" != "${latest_ver}" ]; then
-    echo "==> Current version (${current_version}) is already newer than upstream (${latest_version})."
-    target_version="${current_version}"
-  else
-    echo "==> New Z3 version available: ${latest_version} (current: ${current_version})."
-    target_version="${latest_version}"
   fi
+
+  echo "==> Building Z3 version: ${z3_version}"
 
   # Check if the GitHub Release exists
   local release_exists=no
-  if gh release view "${target_version}" --repo riscv/riscv-unified-db &>/dev/null; then
+  if gh release view "${z3_version}" --repo riscv/riscv-unified-db &>/dev/null; then
     release_exists=yes
   fi
 
   # Handle based on force flag and release existence
   if [ "${force}" != "yes" ] && [ "${release_exists}" = "yes" ]; then
-    echo "==> GitHub Release ${target_version} already exists. Nothing to do."
+    echo "==> GitHub Release ${z3_version} already exists. Nothing to do."
     echo "    Use -f flag to force rebuild."
     return 0
   fi
@@ -543,103 +547,64 @@ do_update_z3() {
     # Only delete the release if we're building both architectures (not native_only)
     # For native_only builds, we'll use --clobber to replace individual assets
     if [ "${native_only}" != "yes" ]; then
-      echo "==> Deleting existing GitHub Release ${target_version}..."
-      gh release delete "${target_version}" --repo riscv/riscv-unified-db --yes
+      echo "==> Deleting existing GitHub Release ${z3_version}..."
+      gh release delete "${z3_version}" --repo riscv/riscv-unified-db --yes
     else
       echo "==> Will replace existing assets with --clobber"
     fi
   fi
 
-  echo "==> Building Z3 ${target_version}..."
+  echo "==> Building Z3 ${z3_version}..."
 
   local orig_dir="${PWD}"
   local work_dir
   work_dir=$(mktemp -d --tmpdir="$PWD" build-z3.XXXXXX)
 
-  local z3_version
-  if [ "${target_version}" != "${current_version}" ]; then
-    # New upstream version: build from source
-    if [ "${native_only}" = "yes" ]; then
-      # Detect native architecture
-      local native_arch
-      case "$(uname -m)" in
-        x86_64)
-          native_arch="x64"
-          ;;
-        aarch64)
-          native_arch="arm64"
-          ;;
-        *)
-          echo "ERROR: Unsupported architecture: $(uname -m)" >&2
-          exit 1
-          ;;
-      esac
-      echo "==> Building Z3 for native platform (${native_arch})..."
-      "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-${native_arch}" Release "${native_arch}" || exit 1
+  if [ "${native_only}" = "yes" ]; then
+    # Detect native architecture
+    local native_arch
+    case "$(uname -m)" in
+      x86_64)
+        native_arch="x64"
+        ;;
+      aarch64)
+        native_arch="arm64"
+        ;;
+      *)
+        echo "ERROR: Unsupported architecture: $(uname -m)" >&2
+        exit 1
+        ;;
+    esac
+    echo "==> Building Z3 for native platform (${native_arch})..."
+    "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-${native_arch}" Release "${native_arch}" || exit 1
 
-      # Read the version produced by the build
-      z3_version=$(cat "${work_dir}/z3-${native_arch}/VERSION")
-      echo "==> Built Z3 version: ${z3_version}"
-
-      # Rename the .so file to the asset name expected by extconf.rb / setup_z3
-      cp "${work_dir}/z3-${native_arch}/lib/libz3.so" "${work_dir}/libz3-${native_arch}.so"
-    else
-      # Build for both architectures
-      echo "==> Building Z3 for x64..."
-      "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-x64" Release x64 || exit 1
-
-      echo "==> Building Z3 for arm64..."
-      "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-arm64" Release arm64 || exit 1
-
-      # Read the version produced by the build
-      z3_version=$(cat "${work_dir}/z3-x64/VERSION")
-      echo "==> Built Z3 version: ${z3_version}"
-
-      # Rename the .so files to the asset names expected by extconf.rb / setup_z3
-      cp "${work_dir}/z3-x64/lib/libz3.so"   "${work_dir}/libz3-x64.so"
-      cp "${work_dir}/z3-arm64/lib/libz3.so" "${work_dir}/libz3-arm64.so"
+    local built_version
+    built_version=$(cat "${work_dir}/z3-${native_arch}/VERSION")
+    if [ "${built_version}" != "${z3_version}" ]; then
+      echo "ERROR: Built Z3 version ${built_version} does not match ${z3_version}" >&2
+      exit 1
     fi
+
+    # Rename the .so file to the asset name expected by extconf.rb / setup_z3
+    cp "${work_dir}/z3-${native_arch}/lib/libz3.so" "${work_dir}/libz3-${native_arch}.so"
   else
-    # Version unchanged: use the already-installed libraries from the XDG cache
-    z3_version="${current_version}"
-    local xdg_cache="${XDG_CACHE_HOME:-${HOME}/.cache}"
+    # Build for both architectures
+    echo "==> Building Z3 for x64..."
+    "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-x64" Release x64 || exit 1
 
-    if [ "${native_only}" = "yes" ]; then
-      # Detect native architecture
-      local native_arch
-      case "$(uname -m)" in
-        x86_64)
-          native_arch="x64"
-          ;;
-        aarch64)
-          native_arch="arm64"
-          ;;
-        *)
-          echo "ERROR: Unsupported architecture: $(uname -m)" >&2
-          exit 1
-          ;;
-      esac
-      local cache_native="${xdg_cache}/udb/z3/${current_version}/${native_arch}/libz3.so"
-      if [ ! -f "${cache_native}" ]; then
-        echo "ERROR: Cached Z3 library not found. Run 'bin/setup' first to download it." >&2
-        echo "  Expected: ${cache_native}" >&2
-        exit 1
-      fi
-      cp "${cache_native}" "${work_dir}/libz3-${native_arch}.so"
-      echo "==> Using cached Z3 library for ${z3_version} (${native_arch})"
-    else
-      local cache_x64="${xdg_cache}/udb/z3/${current_version}/x64/libz3.so"
-      local cache_arm64="${xdg_cache}/udb/z3/${current_version}/arm64/libz3.so"
-      if [ ! -f "${cache_x64}" ] || [ ! -f "${cache_arm64}" ]; then
-        echo "ERROR: Cached Z3 libraries not found. Run 'bin/setup' first to download them." >&2
-        echo "  Expected: ${cache_x64}" >&2
-        echo "  Expected: ${cache_arm64}" >&2
-        exit 1
-      fi
-      cp "${cache_x64}"   "${work_dir}/libz3-x64.so"
-      cp "${cache_arm64}" "${work_dir}/libz3-arm64.so"
-      echo "==> Using cached Z3 libraries for ${z3_version}"
+    echo "==> Building Z3 for arm64..."
+    "${UDB_ROOT}"/tools/scripts/build_z3_with_docker.sh "${work_dir}/z3-arm64" Release arm64 || exit 1
+
+    local built_version
+    built_version=$(cat "${work_dir}/z3-x64/VERSION")
+    if [ "${built_version}" != "${z3_version}" ]; then
+      echo "ERROR: Built Z3 version ${built_version} does not match ${z3_version}" >&2
+      exit 1
     fi
+
+    # Rename the .so files to the asset names expected by extconf.rb / setup_z3
+    cp "${work_dir}/z3-x64/lib/libz3.so"   "${work_dir}/libz3-x64.so"
+    cp "${work_dir}/z3-arm64/lib/libz3.so" "${work_dir}/libz3-arm64.so"
   fi
 
   # Generate checksum files
@@ -704,24 +669,9 @@ do_update_z3() {
       "${work_dir}/libz3-arm64.checksum"
   fi
 
-  if [ "${target_version}" != "${current_version}" ]; then
-    # Update dep_version.rb so the gem knows which release to download
-    # z3_version_rb already declared above
-    echo "${z3_version}" > "${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/Z3_VERSION"
-    echo "==> Updated ${z3_version_rb}"
-  fi
-
   cd "${orig_dir}" || exit 1
   rm -rf "${work_dir}"
 
   echo ""
-  if [ "${target_version}" != "${current_version}" ]; then
-    echo "Done. Next steps:"
-    echo "  1. git add tools/ruby-gems/udb/lib/udb/dep_versions.rb"
-    echo "  2. git add tools/ruby-gems/udb/lib/udb/Z3_VERSION"
-    echo "  2. git commit -m 'chore: update Z3 to ${z3_version}'"
-    echo "  3. Open a PR"
-  else
-    echo "Done. GitHub Release ${z3_version} created on riscv/riscv-unified-db."
-  fi
+  echo "Done. GitHub Release ${z3_version} created on riscv/riscv-unified-db."
 }
