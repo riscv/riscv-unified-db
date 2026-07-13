@@ -112,7 +112,7 @@
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>ace</artifactId>
-			<version>1.23.4</version>
+			<version>07.31.2013</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
