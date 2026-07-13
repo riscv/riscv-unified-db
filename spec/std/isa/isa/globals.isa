@@ -2793,6 +2793,7 @@ function register_reservation_set {
       unpredictable("Implementations may set reservation sets of any size, as long as they cover the reserved accessed");
     } else {
       assert(false, "Unexpected LRSC_RESERVATION_STRATEGY");
+      unreachable();
     }
   }
 }
