@@ -3077,7 +3077,6 @@ function write_memory {
         }
       } else if (MISALIGNED_SPLIT_STRATEGY == "custom") {
         unpredictable("An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
-        return;
       }
     }
   }
