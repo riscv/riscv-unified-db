@@ -25,8 +25,8 @@ jobs:
         id: tag
         run: |
           TAG=$(sha256sum .toolchain/Dockerfile | cut -c1-16)
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Check if tag already exists in GHCR
         id: check

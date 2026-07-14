@@ -16,17 +16,15 @@ definedBy:
     - extension:
         name: Zba
 assembly: xd, xs1, xs2
-format:
-  $inherits:
-    - inst_subtype/R/R-x.yaml#/data
-  opcodes:
-    funct7:
-      display_name: ADD.UW
-      value: 0b0000100
-    funct3:
-      display_name: ADD.UW
-      value: 0b000
-    opcode: { $inherits: inst_opcode/OP-32.yaml#/data }
+encoding:
+  match: 0000100----------000-----0111011
+  variables:
+    - name: xs2
+      location: 24-20
+    - name: xs1
+      location: 19-15
+    - name: xd
+      location: 11-7
 access:
   s: always
   u: always

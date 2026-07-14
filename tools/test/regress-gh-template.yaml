@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
   packages: read
 
-"on": # needs to be quoted or else Psych treats this as true
+on:
   pull_request:
     branches:
       - main
@@ -34,7 +34,7 @@ jobs:
   never-runs:
     # this just exists so that renovate can keep action version pointers up-to-date
     runs-on: ubuntu-latest
-    if: "false"
+    if: false
     steps:
       - name: Use download-artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -49,9 +49,9 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         # there are some symlinks in udb-gen that look broken without submodules
         with:
-          submodules: "true"
+          submodules: true
       - name: Set up mise environment
-        uses: "./.github/actions/mise-setup"
+        uses: ./.github/actions/mise-setup
       - uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d # v2
 
   regress-llvm:
@@ -64,7 +64,7 @@ jobs:
         uses: ./.github/actions/mise-setup
       - name: Get current LLVM submodule commit SHA
         id: get-llvm-sha
-        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
+        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> "$GITHUB_ENV"
       - name: Restore cache RISC-V JSON
         id: cache-riscv
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -80,13 +80,16 @@ jobs:
       configs: ${{ steps.configs.outputs.configs }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.4.10"
       - name: Find configuration files
         id: configs
         run: |
-          ruby -e "puts 'configs=[\"' + Dir.glob('cfgs/*.yaml').map { |f| File.basename(f, '.yaml') }.join('\", \"') + '\"]'" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+
+          configs = sorted(path.stem for path in Path("cfgs").glob("*.yaml"))
+          print("configs=" + json.dumps(configs))
+          PY
 
   regress-udb-cov-report:
     runs-on: ubuntu-latest
@@ -123,7 +126,7 @@ jobs:
           fetch-depth: 1
       - name: Get current LLVM submodule commit SHA
         id: get-llvm-sha
-        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
+        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> "$GITHUB_ENV"
       - name: Cache RISC-V JSON
         id: cache-riscv
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -270,7 +273,7 @@ jobs:
           dnf module enable -y ruby:3.3
           dnf install -y ruby ruby-devel gcc-toolset-12
           PRE="source scl_source enable gcc-toolset-12"
-          echo "PRE=$PRE" >> $GITHUB_ENV
+          echo "PRE=$PRE" >> "$GITHUB_ENV"
       - if: matrix.container == 'ruby:3-slim'
         name: Install make
         run: |
