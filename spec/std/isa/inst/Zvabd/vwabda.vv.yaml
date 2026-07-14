@@ -13,8 +13,6 @@ description: |
   a 2*SEW-bit operand vd.
 
   Reserved when SEW is neither 8 nor 16.
-
-  Encoded as funct6 = 010101 with funct3 = 010 (OPMVV).
 definedBy:
   extension:
     name: Zvabd
