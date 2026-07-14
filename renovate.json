@@ -15,7 +15,6 @@
     "minimumReleaseAge": "4 hours"
   },
   "ignorePaths": [
-    ".github/workflows/regress.yml",
     "doc/node_modules/**",
     "ext/**",
     "gen/**",
