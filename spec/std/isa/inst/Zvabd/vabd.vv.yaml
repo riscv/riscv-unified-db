@@ -12,8 +12,6 @@ description: |
   source operands vs1 and vs2 and writes the result to vd according to mask vm.
 
   Reserved when SEW is neither 8 nor 16.
-
-  Encoded as funct6 = 010001 with funct3 = 010 (OPMVV).
 definedBy:
   extension:
     name: Zvabd
