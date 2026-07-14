@@ -20,7 +20,7 @@ encoding:
   match: 010011-----------010-----1010111
   variables:
     - name: vm
-      location: 25-25
+      location: 25
     - name: vs2
       location: 24-20
     - name: vs1
