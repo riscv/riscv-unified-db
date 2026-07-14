@@ -205,13 +205,13 @@ uint64_t normalize_integer_result(const TestVector& v, uint32_t a32, uint64_t bi
     return (!is_nan_input && (a32 & 0x80000000U)) ? 0x80000000ULL : 0x7fffffffULL;
   }
   if (v.op == "f32_to_ui32") {
-    return (a32 & 0x80000000U) != 0 ? 0ULL : 0xffffffffULL;
+    return (!is_nan_input && (a32 & 0x80000000U)) ? 0ULL : 0xffffffffULL;
   }
   if (v.op == "f32_to_i64") {
     return (!is_nan_input && (a32 & 0x80000000U)) ? 0x8000000000000000ULL : 0x7fffffffffffffffULL;
   }
   if (v.op == "f32_to_ui64") {
-    return (a32 & 0x80000000U) != 0 ? 0ULL : 0xffffffffffffffffULL;
+    return (!is_nan_input && (a32 & 0x80000000U)) ? 0ULL : 0xffffffffffffffffULL;
   }
 
   return bits;

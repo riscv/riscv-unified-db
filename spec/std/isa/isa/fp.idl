@@ -1919,8 +1919,10 @@ function softfloat_normSubnormalF32Sig {
   description {
     Normalize a subnormal F32 significand.
     Returns (exp, sig32) where exp is the adjusted exponent (two's complement
-    in Bits<8>) and sig32 is the normalized significand with implicit leading 1
-    at bit 23.
+    in Bits<16>) and sig32 is the normalized significand with implicit leading 1
+    at bit 23. The exponent is widened to Bits<16> (rather than the natural
+    Bits<8>) so that callers can add two adjusted exponents together (e.g.
+    expA + expB - bias) without overflow.
   }
   body {
     Bits<16> shiftDist = count_leading_zeros(32, sig) - 8;

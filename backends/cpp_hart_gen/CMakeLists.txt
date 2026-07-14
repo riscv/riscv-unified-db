@@ -128,12 +128,23 @@ FetchContent_MakeAvailable(compile_time_regular_expressions)
 # -----------------------------------------------------------------------
 # berkeley-softfloat-3
 # -----------------------------------------------------------------------
+# berkeley-softfloat-3's build/ directory has one Makefile per supported
+# platform/toolchain (e.g. Linux-x86_64-GCC, Linux-RISCV64-GCC,
+# Win64-MinGW-w64); there is no generic host/toolchain-derived name to
+# compute, and no macOS entry exists upstream at all. Expose the spec as a
+# cache variable so builds on a platform other than the default CI target
+# can point at the matching upstream directory instead of failing.
+set(SOFTFLOAT_BUILD_SPEC "Linux-x86_64-GCC" CACHE STRING
+  "Subdirectory of berkeley-softfloat-3/build to compile, matching one of \
+the platform/toolchain directories in the upstream repository (e.g. \
+Linux-x86_64-GCC, Linux-RISCV64-GCC, Win64-MinGW-w64)")
+
 ExternalProject_Add(berkeley_softfloat
   GIT_REPOSITORY      https://github.com/ucb-bar/berkeley-softfloat-3.git
   GIT_TAG             a0c6494cdc11865811dec815d5c0049fba9d82a8
   UPDATE_DISCONNECTED TRUE
   CONFIGURE_COMMAND   ""
-  BUILD_COMMAND       make -C <SOURCE_DIR>/build/Linux-x86_64-GCC
+  BUILD_COMMAND       make -C <SOURCE_DIR>/build/${SOFTFLOAT_BUILD_SPEC}
   INSTALL_COMMAND     ""
 )
 
@@ -142,7 +153,7 @@ file(MAKE_DIRECTORY "${SOURCE_DIR}/source/include") # Prevent CMake error before
 
 add_library(libsoftfloat_static STATIC IMPORTED)
 set_target_properties(libsoftfloat_static PROPERTIES
-  IMPORTED_LOCATION             "${SOURCE_DIR}/build/Linux-x86_64-GCC/softfloat.a"
+  IMPORTED_LOCATION             "${SOURCE_DIR}/build/${SOFTFLOAT_BUILD_SPEC}/softfloat.a"
   INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/source/include"
 )
 add_dependencies(libsoftfloat_static berkeley_softfloat)
