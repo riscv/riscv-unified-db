@@ -268,7 +268,7 @@ do_gen_regress() {
     sha_before=$(sha256sum "$UDB_ROOT"/.github/workflows/regress.yml)
   fi
   rm -f .github/workflows/regress.yml
-  "$UDB_ROOT/bin/bundle" exec ruby tools/test/gen_regress.rb
+  "$UDB_ROOT/bin/python" tools/test/gen_regress.py
   chmod -wx .github/workflows/regress.yml
   if [ $fail_on_change -eq 1 ]; then
     local sha_after

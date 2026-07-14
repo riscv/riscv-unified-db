@@ -192,7 +192,7 @@ repos:
       - id: regress
         name: generate regress.yml
         priority: 90
-        files: (tools/test/gen_regress\.rb|tools/test/regress-tests.yaml|tools/test/regress-gh-template.yaml)
+        files: (tools/test/gen_regress\.py|tools/test/regress-tests.yaml|tools/test/regress-gh-template.yaml)
         pass_filenames: false
         language: system
         entry: >-

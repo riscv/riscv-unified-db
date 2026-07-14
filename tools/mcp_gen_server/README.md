@@ -30,7 +30,7 @@ The server provides organized access to:
 ## Prerequisites
 
 - Python 3.10+
-- Virtual environment with `mcp[cli]` and `pyyaml` installed
+- Virtual environment with `mcp[cli]` and `ruamel.yaml` installed
 - Pre-generated data in `gen/` directory
 
 ## Setup
@@ -40,7 +40,7 @@ The server provides organized access to:
    ```bash
    python3 -m venv .venv_mcp
    . .venv_mcp/bin/activate
-   pip install "mcp[cli]" pyyaml
+   pip install "mcp[cli]" ruamel.yaml
    ```
 
 2. Generate data (if not already done):

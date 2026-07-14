@@ -80,7 +80,7 @@ FetchContent_MakeAvailable(fmt)
 FetchContent_Declare(
   yaml-cpp
   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-  GIT_TAG yaml-cpp-0.7.0
+  GIT_TAG yaml-cpp-0.9.0
 )
 FetchContent_MakeAvailable(yaml-cpp)
 
@@ -88,7 +88,7 @@ FetchContent_Declare(
     cli11_proj
     QUIET
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-    GIT_TAG f4d0731
+    GIT_TAG v2.6.2
 )
 
 FetchContent_MakeAvailable(cli11_proj)
@@ -96,7 +96,7 @@ FetchContent_MakeAvailable(cli11_proj)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.7.1
+  GIT_TAG        v3.15.2
 )
 
 FetchContent_MakeAvailable(Catch2)
@@ -104,7 +104,7 @@ FetchContent_MakeAvailable(Catch2)
 FetchContent_Declare(
   nlohmann_json_schema_validator
   GIT_REPOSITORY https://github.com/pboettch/json-schema-validator.git
-  GIT_TAG        2.3.0
+  GIT_TAG        2.4.0
 )
 
 FetchContent_MakeAvailable(nlohmann_json_schema_validator)
@@ -112,7 +112,7 @@ FetchContent_MakeAvailable(nlohmann_json_schema_validator)
 FetchContent_Declare(
   compile_time_regular_expressions
   GIT_REPOSITORY https://github.com/hanickadot/compile-time-regular-expressions.git
-  GIT_TAG        v3.9.0
+  GIT_TAG        v3.11.0
 )
 FetchContent_MakeAvailable(compile_time_regular_expressions)
 
@@ -120,8 +120,8 @@ FetchContent_MakeAvailable(compile_time_regular_expressions)
 # libelf — built from elfutils source; no system package required
 # -----------------------------------------------------------------------
 ExternalProject_Add(elfutils_libelf
-  URL      https://sourceware.org/elfutils/ftp/0.192/elfutils-0.192.tar.bz2
-  URL_HASH SHA256=616099beae24aba11f9b63d86ca6cc8d566d968b802391334c91df54eab416b4
+  URL      https://sourceware.org/elfutils/ftp/0.195/elfutils-0.195.tar.bz2
+  URL_HASH SHA256=37629fdf7f1f3dc2818e138fca2b8094177d6c2d0f701d3bb650a561218dc026
   CONFIGURE_COMMAND ""
   BUILD_COMMAND   ${UDB_ROOT}/.toolchain/.build-elfutils.sh
                     <SOURCE_DIR> <BINARY_DIR> <INSTALL_DIR>

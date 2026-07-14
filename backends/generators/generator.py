@@ -4,7 +4,9 @@ import logging
 import os
 import pprint
 
-import yaml
+from ruamel.yaml import YAML
+
+YAML_SAFE = YAML(typ="safe")
 
 pp = pprint.PrettyPrinter(indent=2)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:: %(message)s")
@@ -215,7 +217,7 @@ def load_instructions(root_dir, enabled_extensions, include_all=False, target_ar
             path = os.path.join(dirpath, fname)
             try:
                 with open(path, encoding="utf-8") as f:
-                    data = yaml.safe_load(f)
+                    data = YAML_SAFE.load(f)
             except Exception as e:
                 logging.error(f"Error parsing {path}: {e}")
                 continue
@@ -397,7 +399,7 @@ def load_csrs(csr_root, enabled_extensions, include_all=False, target_arch="RV64
             path = os.path.join(dirpath, fname)
             try:
                 with open(path, encoding="utf-8") as f:
-                    data = yaml.safe_load(f)
+                    data = YAML_SAFE.load(f)
             except Exception as e:
                 logging.error(f"Error parsing CSR file {path}: {e}")
                 continue
