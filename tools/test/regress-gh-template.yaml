@@ -51,7 +51,7 @@ jobs:
         with:
           submodules: true
       - name: Set up mise environment
-        uses: "./.github/actions/mise-setup"
+        uses: ./.github/actions/mise-setup
       - uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d # v2
 
   regress-llvm:
@@ -64,7 +64,7 @@ jobs:
         uses: ./.github/actions/mise-setup
       - name: Get current LLVM submodule commit SHA
         id: get-llvm-sha
-        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
+        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> "$GITHUB_ENV"
       - name: Restore cache RISC-V JSON
         id: cache-riscv
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -126,7 +126,7 @@ jobs:
           fetch-depth: 1
       - name: Get current LLVM submodule commit SHA
         id: get-llvm-sha
-        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
+        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> "$GITHUB_ENV"
       - name: Cache RISC-V JSON
         id: cache-riscv
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -273,7 +273,7 @@ jobs:
           dnf module enable -y ruby:3.3
           dnf install -y ruby ruby-devel gcc-toolset-12
           PRE="source scl_source enable gcc-toolset-12"
-          echo "PRE=$PRE" >> $GITHUB_ENV
+          echo "PRE=$PRE" >> "$GITHUB_ENV"
       - if: matrix.container == 'ruby:3-slim'
         name: Install make
         run: |
