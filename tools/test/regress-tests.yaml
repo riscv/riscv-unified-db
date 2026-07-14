@@ -217,6 +217,17 @@ tests:
       - name: Generate cfg header golden files
         run: ./bin/chore gen -f cfg-headers
 
+  regress-gen-capstone:
+    ci_stage: pr
+    gh_pre:
+      - name: Install Capstone dependency
+        run: python3 -m pip install capstone
+    test:
+      - name: Generate Capstone code
+        run: ./do gen:capstone
+      - name: Run Capstone regression test
+        run: python3 tools/python-packages/udb-capstone/regress.py
+
   regress-cpp-unit:
     ci_stage: pr
     toolchain_container: true
