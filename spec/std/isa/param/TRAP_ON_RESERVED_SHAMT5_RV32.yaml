@@ -25,8 +25,12 @@ description: |
 schema:
   type: boolean
 definedBy:
-  extension:
-    anyOf:
-      - name: Zbs
-      - name: Zbb
-      - name: Zbkb
+  allOf:
+    - extension:
+        anyOf:
+          - name: Zbs
+          - name: Zbb
+          - name: Zbkb
+    - param:
+        name: MXLEN
+        equal: 32
