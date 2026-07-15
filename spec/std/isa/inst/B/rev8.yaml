@@ -54,8 +54,8 @@ operation(): |
 
   XReg j = xlen() - 1;
 
-  for (U32 i=0; i < xlen(); i = i+8) {
-    output[(i+7):i] = input[j:(j-7)];
+  for (U32 i = 0; i < xlen(); i = i + 8) {
+    output[(i + 7):i] = input[j : (j - 7)];
     j = j - 8;
   }
 
