@@ -3,158 +3,176 @@
 # Instead, edit `tools/test/regress-tests.yaml` (preferred) or `tools/test/regress-gh-template.yaml`
 
 ---
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
 name: CI/CD
+
 permissions:
   contents: read
   pull-requests: write
   packages: read
-'on':
+
+on:
   pull_request:
     branches:
-    - main
+      - main
   merge_group:
-    types:
-    - checks_requested
+    types: [checks_requested]
   workflow_dispatch:
   push:
     branches:
-    - main
+      - main
+
 env:
   DEPLOY_DIR: _site
-  GITHUB_TOKEN: "${{ github.token }}"
+  GITHUB_TOKEN: ${{ github.token }}
+
+# cancel any prior actions from the same PR that are still running (we only care about the final commit)
 concurrency:
-  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
 jobs:
   never-runs:
+    # this just exists so that renovate can keep action version pointers up-to-date
     runs-on: ubuntu-latest
     if: false
     steps:
-    - name: Use download-artifact
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-    - name: Use upload-artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      with:
-        path: "."
+      - name: Use download-artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+      - name: Use upload-artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: .
+
   regress-pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-      with:
-        submodules: 'true'
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        # there are some symlinks in udb-gen that look broken without submodules
+        with:
+          submodules: true
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d # v2
+
   regress-llvm:
     runs-on: ubuntu-latest
-    needs:
-    - build-llvm
+    needs: [build-llvm]
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Get current LLVM submodule commit SHA
-      id: get-llvm-sha
-      run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
-    - name: Restore cache RISC-V JSON
-      id: cache-riscv
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
-      with:
-        path: ext/llvm-project/riscv.json
-        key: "${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}"
-    - name: Test LLVM
-      run: "./do test:llvm"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Get current LLVM submodule commit SHA
+        id: get-llvm-sha
+        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> "$GITHUB_ENV"
+      - name: Restore cache RISC-V JSON
+        id: cache-riscv
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ext/llvm-project/riscv.json
+          key: ${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}
+      - name: Test LLVM
+        run: ./do test:llvm
+
   regress-find-configs:
     runs-on: ubuntu-latest
     outputs:
-      configs: "${{ steps.configs.outputs.configs }}"
+      configs: ${{ steps.configs.outputs.configs }}
     steps:
-    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.2'
-    - name: Find configuration files
-      id: configs
-      run: 'ruby -e "puts ''configs=[\"'' + Dir.glob(''cfgs/*.yaml'').map { |f| File.basename(f, ''.yaml'') }.join(''\", \"'') + ''\"]''" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Find configuration files
+        id: configs
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
 
-        '
+          configs = sorted(path.stem for path in Path("cfgs").glob("*.yaml"))
+          print("configs=" + json.dumps(configs))
+          PY
+
   regress-udb-cov-report:
     runs-on: ubuntu-latest
-    needs:
-    - regress-udb-unit-test
+    needs: [regress-udb-unit-test]
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: download coverage
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-      with:
-        pattern: udb-*-cov
-        path: _cov/udb
-        merge-multiple: true
-        github-token: "${{ secrets.GITHUB_TOKEN }}"
-    - name: Collate coverage
-      run: "./do chore:udb:collate_cov[_cov/udb]"
-    - name: Upload udb coverage reports to Codecov
-      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
-      with:
-        token: "${{ secrets.CODECOV_TOKEN }}"
-        disable_search: true
-        files: tools/ruby-gems/udb/coverage/coverage.xml
-        flags: udb
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: download coverage
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: udb-*-cov
+          path: _cov/udb
+          merge-multiple: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Collate coverage
+        run: ./do chore:udb:collate_cov[_cov/udb]
+      - name: Upload udb coverage reports to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
+          files: tools/ruby-gems/udb/coverage/coverage.xml
+          flags: udb
+
   build-llvm:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out repository (no submodules, shallow fetch)
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        submodules: false
-        fetch-depth: 1
-    - name: Get current LLVM submodule commit SHA
-      id: get-llvm-sha
-      run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
-    - name: Cache RISC-V JSON
-      id: cache-riscv
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
-      with:
-        path: ext/llvm-project/riscv.json
-        key: "${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}"
-    - name: Initialize LLVM submodule (shallow + sparse)
-      if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
-      run: |
-        rm -rf ext/llvm-project
-        git submodule sync --recursive
-        git submodule update --init --recursive --depth=1 ext/llvm-project
-    - name: Check for required directories and files
-      if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
-      run: |
-        ls -l ext/llvm-project/llvm/include
-        ls -l ext/llvm-project/llvm/lib/Target/RISCV
-        ls -l ext/llvm-project/llvm/lib/Target/RISCV/RISCV.td
-    - name: Configure and build llvm-tblgen
-      if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
-      run: |
-        cmake -S ext/llvm-project/llvm -B ext/llvm-project/build -DCMAKE_BUILD_TYPE=Release
-        cmake --build ext/llvm-project/build --target llvm-tblgen
-    - name: Generate RISC-V JSON
-      if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
-      run: |
-        chmod +x ./ext/llvm-project/build/bin/llvm-tblgen
-        ./ext/llvm-project/build/bin/llvm-tblgen \
-          -I ext/llvm-project/llvm/include \
-          -I ext/llvm-project/llvm/lib/Target/RISCV \
-          ext/llvm-project/llvm/lib/Target/RISCV/RISCV.td \
-          --dump-json \
-          -o ext/llvm-project/riscv.json
-    - name: Show riscv.json output
-      run: ls -l ext/llvm-project/riscv.json
-    - name: Upload RISC-V JSON as Artifact
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      with:
-        name: riscv-json
-        path: ext/llvm-project/riscv.json
+      - name: Check out repository (no submodules, shallow fetch)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+          fetch-depth: 1
+      - name: Get current LLVM submodule commit SHA
+        id: get-llvm-sha
+        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> "$GITHUB_ENV"
+      - name: Cache RISC-V JSON
+        id: cache-riscv
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ext/llvm-project/riscv.json
+          key: ${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}
+      - name: Initialize LLVM submodule (shallow + sparse)
+        if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
+        run: |
+          rm -rf ext/llvm-project
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth=1 ext/llvm-project
+      - name: Check for required directories and files
+        if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
+        run: |
+          ls -l ext/llvm-project/llvm/include
+          ls -l ext/llvm-project/llvm/lib/Target/RISCV
+          ls -l ext/llvm-project/llvm/lib/Target/RISCV/RISCV.td
+      - name: Configure and build llvm-tblgen
+        if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
+        run: |
+          cmake -S ext/llvm-project/llvm -B ext/llvm-project/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build ext/llvm-project/build --target llvm-tblgen
+      - name: Generate RISC-V JSON
+        if: ${{ steps.cache-riscv.outputs.cache-hit != 'true' }}
+        run: |
+          chmod +x ./ext/llvm-project/build/bin/llvm-tblgen
+          ./ext/llvm-project/build/bin/llvm-tblgen \
+            -I ext/llvm-project/llvm/include \
+            -I ext/llvm-project/llvm/lib/Target/RISCV \
+            ext/llvm-project/llvm/lib/Target/RISCV/RISCV.td \
+            --dump-json \
+            -o ext/llvm-project/riscv.json
+      - name: Show riscv.json output
+        run: ls -l ext/llvm-project/riscv.json
+      - name: Upload RISC-V JSON as Artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: riscv-json
+          path: ext/llvm-project/riscv.json
+
   java-tests:
     name: Java (Xtext) tests
     runs-on: ubuntu-latest
@@ -162,26 +180,27 @@ jobs:
       run:
         working-directory: tools/eclipse/dev/org.xtext.udb.parent
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-    - name: Setup Temurin JDK 21
-      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
-      with:
-        distribution: temurin
-        java-version: '21'
-        cache: maven
-    - name: Build & test (whole reactor)
-      working-directory: tools/eclipse/dev/org.xtext.udb.parent
-      env:
-        MAVEN_OPTS: "-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 -Djdk.xml.entityExpansionLimit=0"
-      run: mvn -B -U -Dheadless=true verify
-    - name: Archive surefire reports (always)
-      if: always()
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      with:
-        name: surefire-reports
-        path: |
-          **/target/surefire-reports/*.xml
-          **/target/surefire-reports/*.txt
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Setup Temurin JDK 21
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build & test (whole reactor)
+        working-directory: tools/eclipse/dev/org.xtext.udb.parent
+        env:
+          MAVEN_OPTS: "-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 -Djdk.xml.entityExpansionLimit=0"
+        run: mvn -B -U -Dheadless=true verify
+      - name: Archive surefire reports (always)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: surefire-reports
+          path: |
+            **/target/surefire-reports/*.xml
+            **/target/surefire-reports/*.txt
+
   vscode-tests:
     name: VS Code Mocha tests
     runs-on: ubuntu-latest
@@ -190,762 +209,807 @@ jobs:
       run:
         working-directory: tools/eclipse/udb-vscode
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-      with:
-        node-version: '20'
-        cache: npm
-        cache-dependency-path: tools/eclipse/udb-vscode/package-lock.json
-    - name: Setup Temurin JDK 21 (for LS)
-      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
-      with:
-        distribution: temurin
-        java-version: '21'
-    - name: Install deps
-      run: npm ci
-    - name: Compile
-      run: npm run compile
-    - name: Run VS Code tests
-      run: xvfb-run -a npm test
-    - name: Archive VS Code test logs (always)
-      if: always()
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      with:
-        name: vscode-test-logs
-        path: |
-          tools/eclipse/udb-vscode/.vscode-test/**/*
-          tools/eclipse/udb-vscode/out/test/**/*
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: tools/eclipse/udb-vscode/package-lock.json
+      - name: Setup Temurin JDK 21 (for LS)
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install deps
+        run: npm ci
+      - name: Compile
+        run: npm run compile
+      - name: Run VS Code tests
+        run: xvfb-run -a npm test
+      - name: Archive VS Code test logs (always)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: vscode-test-logs
+          path: |
+            tools/eclipse/udb-vscode/.vscode-test/**/*
+            tools/eclipse/udb-vscode/out/test/**/*
+
   create-gems:
     name: Create the gems
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        gem:
-        - idlc
-        - udb
-        - udb_helpers
+        gem: [idlc, udb, udb_helpers]
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-    - name: Copy the gem directory to resolve symlinks
-      run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
-    - name: Create the ${{ matrix.gem }} gem
-      run: |
-        cd gem-build-dir && \
-        gem build -o ${{ matrix.gem }}.gem ${{ matrix.gem }}.gemspec
-    - name: Upload the ${{ matrix.gem }} gem
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      with:
-        name: "${{ matrix.gem }}.gem"
-        path: gem-build-dir/${{ matrix.gem }}.gem
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Copy the gem directory to resolve symlinks
+        run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
+      - name: Create the ${{ matrix.gem }} gem
+        run: |
+          cd gem-build-dir && \
+          gem build -o ${{ matrix.gem }}.gem ${{ matrix.gem }}.gemspec
+      - name: Upload the ${{ matrix.gem }} gem
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ matrix.gem }}.gem
+          path: gem-build-dir/${{ matrix.gem }}.gem
+
   udb-gem-z3:
     name: Test udb gem using z3 across several distros and platforms
     strategy:
       fail-fast: false
       matrix:
         platform:
-        - ubuntu-24.04
-        - ubuntu-24.04-arm
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
         container:
-        - almalinux:8
-        - ruby:3-slim
-    runs-on: "${{ matrix.platform }}"
-    container: "${{ matrix.container }}"
+          - almalinux:8
+          - ruby:3-slim
+    runs-on: ${{ matrix.platform }}
+    container: ${{ matrix.container }}
     needs: create-gems
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-    - if: matrix.container == 'almalinux:8'
-      name: Install ruby
-      run: |
-        dnf module enable -y ruby:3.3
-        dnf install -y ruby ruby-devel gcc-toolset-12
-        PRE="source scl_source enable gcc-toolset-12"
-        echo "PRE=$PRE" >> $GITHUB_ENV
-    - if: matrix.container == 'ruby:3-slim'
-      name: Install make
-      run: |
-        apt-get update -qq && \
-        apt-get install --no-install-recommends -y make
-    - name: download udb gem
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-      with:
-        name: udb.gem
-    - name: download idlc gem
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-      with:
-        name: idlc.gem
-    - name: download udb_helpers gem
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-      with:
-        name: udb_helpers.gem
-    - name: install gems
-      run: |
-        $PRE && \
-        gem install idlc.gem && \
-        gem install udb_helpers.gem && \
-        gem install udb.gem
-    - name: try z3
-      run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - if: matrix.container == 'almalinux:8'
+        name: Install ruby
+        run: |
+          dnf module enable -y ruby:3.3
+          dnf install -y ruby ruby-devel gcc-toolset-12
+          PRE="source scl_source enable gcc-toolset-12"
+          echo "PRE=$PRE" >> "$GITHUB_ENV"
+      - if: matrix.container == 'ruby:3-slim'
+        name: Install make
+        run: |
+          apt-get update -qq && \
+          apt-get install --no-install-recommends -y make
+      - name: download udb gem
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: udb.gem
+      - name: download idlc gem
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: idlc.gem
+      - name: download udb_helpers gem
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: udb_helpers.gem
+      - name: install gems
+        run: |
+          $PRE && \
+          gem install idlc.gem && \
+          gem install udb_helpers.gem && \
+          gem install udb.gem
+      - name: try z3
+        run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
   regress-scripts-unit:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Run tools/scripts unit tests
-      run: "./bin/ruby -Itools/scripts tools/scripts/test/run.rb"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Run tools/scripts unit tests
+        run: ./bin/ruby -Itools/scripts tools/scripts/test/run.rb
+
   regress-idlc-unit:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Run idlc unit tests
-      run: "./do test:idlc:unit"
-    - name: Upload idlc coverage reports to Codecov
-      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
-      with:
-        token: "${{ secrets.CODECOV_TOKEN }}"
-        disable_search: true
-        files: tools/ruby-gems/idlc/coverage/coverage.xml
-        flags: idlc
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Run idlc unit tests
+        run: ./do test:idlc:unit
+      - name: Upload idlc coverage reports to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
+          files: tools/ruby-gems/idlc/coverage/coverage.xml
+          flags: idlc
+
   regress-udb-helpers-unit:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Run udb-helpers unit tests
-      run: "./do test:udb_helpers:unit"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Run udb-helpers unit tests
+        run: ./do test:udb_helpers:unit
+
   regress-udb-gen-unit:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Check udb-gen unit tests
-      run: "./do test:udb_gen:unit"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Check udb-gen unit tests
+        run: ./do test:udb_gen:unit
+
   regress-udb-gen-integration:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Check udb-gen integration tests
-      run: "./do test:udb_gen:integration"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Check udb-gen integration tests
+        run: ./do test:udb_gen:integration
+
   regress-udb-gen-chore:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate udb-gen golden files
-      run: "./bin/chore gen -f udb-gen"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate udb-gen golden files
+        run: ./bin/chore gen -f udb-gen
+
   regress-sorbet:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Run sorbet checks
-      run: "./do test:sorbet"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Run sorbet checks
+        run: ./do test:sorbet
+
   regress-ext-explorer:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate ISA Explorer browser artifacts
-      run: "./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer --skip 6"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate ISA Explorer browser artifacts
+        run: ./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer --skip 6
+
   regress-idl-typecheck-smoke:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Type check IDL for ${{ matrix.cfg }}
-      run: "./do test:idl CFG=${{ matrix.cfg }}"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Type check IDL for ${{ matrix.cfg }}
+        run: ./do test:idl CFG=${{ matrix.cfg }}
+
     strategy:
       matrix:
         cfg:
-        - rv64
-        - qc_iu
+          - rv64 # a simple standard config
+          - qc_iu # a config with overlay
   regress-idl-typecheck-other:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Type check IDL for ${{ matrix.cfg }}
-      run: "./do test:idl CFG=${{ matrix.cfg }}"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Type check IDL for ${{ matrix.cfg }}
+        run: ./do test:idl CFG=${{ matrix.cfg }}
+
     strategy:
       matrix:
         cfg:
-        - _
-        - rv32
+          - _
+          - rv32
   regress-test-inst-encodings:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Checking for conflicts in instruction encodings
-      run: "./do test:inst_encodings"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Checking for conflicts in instruction encodings
+        run: ./do test:inst_encodings
+
   regress-gen-isa-manual:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: checkout ISA manual
-      run: git submodule update --init ext/riscv-isa-manual
-    - name: Mark isa-manual as safe
-      run: ./bin/bash -c "git config --local --add safe.directory '*'"
-    - name: Generate HTML ISA manual
-      run: "./bin/generate manual -c regress -v isa_regress -f html"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: checkout ISA manual
+        run: git submodule update --init ext/riscv-isa-manual
+      - name: Mark isa-manual as safe
+        # Run in docker to get git config set correctly for submodules
+        run: ./bin/bash -c "git config --local --add safe.directory '*'"
+      - name: Generate HTML ISA manual
+        run: ./bin/generate manual -c regress -v isa_regress -f html
+
   regress-gen-instruction-appendix:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate instruction appendix asciidoc
-      run: "./do gen:instruction_appendix_adoc"
-    - name: Check instruction appendix result
-      run: "./do test:instruction_appendix"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate instruction appendix asciidoc
+        run: ./do gen:instruction_appendix_adoc
+      - name: Check instruction appendix result
+        run: ./do test:instruction_appendix
+
   regress-cfg-manual:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate HTML ISA manual
-      run: "./do gen:html[example_rv64_with_overlay]"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate HTML ISA manual
+        run: ./do gen:html[example_rv64_with_overlay]
+
   regress-gen-ext-pdf:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate Xqci extension PDF
-      run: "./bin/ruby tools/scripts/gen_xqci.rb"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate Xqci extension PDF
+        run: ./bin/ruby tools/scripts/gen_xqci.rb
+
   regress-gen-profile:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate extension PDF
-      run: "./do gen:profile_release_pdf[RVI20]"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate extension PDF
+        run: ./do gen:profile_release_pdf[RVI20]
+
   regress-profile-strict-cfg:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Check that profile configs are up to date
-      run: "./bin/chore gen -f profile-cfgs"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Check that profile configs are up to date
+        run: ./bin/chore gen -f profile-cfgs
+
   regress-udb-unit-test:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Run udb gem ${{ matrix.test }} unit tests
-      run: "./bin/ruby tools/ruby-gems/udb/test/test_${{ matrix.test }}.rb"
-    - name: Rename coverage file
-      run: mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
-    - name: Save coverage report
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      with:
-        name: udb-${{ matrix.test }}-cov
-        path: tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Run udb gem ${{ matrix.test }} unit tests
+        run: ./bin/ruby tools/ruby-gems/udb/test/test_${{ matrix.test }}.rb
+      - name: Rename coverage file
+        run: mv tools/ruby-gems/udb/coverage/.resultset.json tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
+      - name: Save coverage report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: udb-${{ matrix.test }}-cov
+          path: tools/ruby-gems/udb/coverage/${{ matrix.test }}.resultset.json
+
     strategy:
       matrix:
         test:
-        - logic
-        - conditions
-        - cli
-        - yaml_loader
-        - cfg_arch
-        - cfg
-        - mmr
-        - mmr_schema
-        - schema_versioning
-        - instruction
-        - z3
-        - z3_extensions
-        - z3_finite_array
-        - z3_parameter_constraints
+          - logic
+          - conditions
+          - cli
+          - yaml_loader
+          - cfg_arch
+          - cfg
+          - mmr
+          - mmr_schema
+          - schema_versioning
+          - instruction
+          - z3
+          - z3_extensions
+          - z3_finite_array
+          - z3_parameter_constraints
   regress-gen-go:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate Go code
-      run: "./do gen:go"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate Go code
+        run: ./do gen:go
+
   regress-gen-c-header:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate c_header code
-      run: "./do gen:c_header"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate c_header code
+        run: ./do gen:c_header
+
   regress-gen-sverilog:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate sverilog_header code
-      run: "./do gen:sverilog"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate sverilog_header code
+        run: ./do gen:sverilog
+
   regress-cfg-headers:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate cfg header golden files
-      run: "./bin/chore gen -f cfg-headers"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate cfg header golden files
+        run: ./bin/chore gen -f cfg-headers
+
   regress-cpp-unit:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-      with:
-        toolchain: 'true'
-    - name: Run cpp unit tests
-      run: "./do test:cpp_hart CONFIG=rv64 JOBS=4 BUILD_TYPE=debug"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+        with:
+          toolchain: true
+      - name: Run cpp unit tests
+        run: ./do test:cpp_hart CONFIG=rv64 JOBS=4 BUILD_TYPE=debug
+
   regress-riscv-tests-32:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-      with:
-        toolchain: 'true'
-    - name: check out riscv-tests
-      run: git submodule update --init ext/riscv-tests
-    - name: Run RV32 riscv-tests
-      run: "./do test:riscv_tests CONFIG=rv32 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+        with:
+          toolchain: true
+      - name: check out riscv-tests
+        run: git submodule update --init ext/riscv-tests
+      - name: Run RV32 riscv-tests
+        run: ./do test:riscv_tests CONFIG=rv32 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
+
   regress-riscv-tests-64:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-      with:
-        toolchain: 'true'
-    - name: check out riscv-tests
-      run: git submodule update --init ext/riscv-tests
-    - name: Run RV64 riscv-tests
-      run: "./do test:riscv_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+        with:
+          toolchain: true
+      - name: check out riscv-tests
+        run: git submodule update --init ext/riscv-tests
+      - name: Run RV64 riscv-tests
+        run: ./do test:riscv_tests CONFIG=rv64 IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
+
   regress-riscv-tests-vector:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-      with:
-        toolchain: 'true'
-    - name: check out riscv-tests
-      run: git submodule update --init ext/riscv-tests
-    - name: Run vector riscv-tests
-      run: "./do test:riscv_vector_tests CONFIG=rv64-vector IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+        with:
+          toolchain: true
+      - name: check out riscv-tests
+        run: git submodule update --init ext/riscv-tests
+      - name: Run vector riscv-tests
+        run: ./do test:riscv_vector_tests CONFIG=rv64-vector IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
+
   regress-profile-extensions:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Check profile_extensions
-      run: "./do test:profile_extensions"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Check profile_extensions
+        run: ./do test:profile_extensions
+
   regress-build-udb-gem:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Build udb gem via chore
-      run: "./bin/chore build udb-gem"
-    - name: Verify udb gem was built
-      run: ls gen/udb_gem/udb-*.gem
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Build udb gem via chore
+        run: ./bin/chore build udb-gem
+      - name: Verify udb gem was built
+        run: ls gen/udb_gem/udb-*.gem
+
   regress-regress:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Test that local regress runner works
-      run: "./bin/regress -n regress-sorbet"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Test that local regress runner works
+        run: ./bin/regress -n regress-sorbet
+
   build-reuse-manifest:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Create reuse manifest
-      run: "./bin/reuse spdx -o reuse_bom.txt"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: reuse-manifest
-        path: reuse_bom.txt
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Create reuse manifest
+        run: ./bin/reuse spdx -o reuse_bom.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: reuse-manifest
+          path: reuse_bom.txt
   build-udb-api-docs:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate UDB API Docs
-      run: "./do gen:udb:api_doc"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: udb-api
-        path: gen/udb_api_doc
-        include-hidden-files: true
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate UDB API Docs
+        run: ./do gen:udb:api_doc
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: udb-api
+          path: gen/udb_api_doc
+          include-hidden-files: true
   resolve-unconfig:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Resolve Unconfig with IDL AST
-      run: "./do gen:resolved_arch COMPILE_IDL=1"
-    - name: Tar unconfig
-      run: tar czf gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_ && mv gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_/resolved_spec.tar.gz
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: resolved-spec
-        path: gen/resolved_spec/_
-        include-hidden-files: true
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Resolve Unconfig with IDL AST
+        run: ./do gen:resolved_arch COMPILE_IDL=1
+      - name: Tar unconfig
+        run: tar czf gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_ && mv gen/resolved_spec/_resolved_spec.tar.gz gen/resolved_spec/_/resolved_spec.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: resolved-spec
+          path: gen/resolved_spec/_
+          include-hidden-files: true
   build-isa-explorer-csr:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate ISA Explorer CSR
-      run: "./bin/udb-gen isa-explorer -t csr-browser -o gen/isa_explorer/browser"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: isa-explorer-csr
-        path: gen/isa_explorer/browser
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate ISA Explorer CSR
+        run: ./bin/udb-gen isa-explorer -t csr-browser -o gen/isa_explorer/browser
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: isa-explorer-csr
+          path: gen/isa_explorer/browser
   build-isa-explorer-ext:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate ISA Explorer Extension
-      run: "./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer/browser"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: isa-explorer-ext
-        path: gen/isa_explorer/browser
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate ISA Explorer Extension
+        run: ./bin/udb-gen isa-explorer -t ext-browser -o gen/isa_explorer/browser
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: isa-explorer-ext
+          path: gen/isa_explorer/browser
   build-isa-explorer-inst:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate ISA Explorer Instruction
-      run: "./bin/udb-gen isa-explorer -t inst-browser -o gen/isa_explorer/browser"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: isa-explorer-inst
-        path: gen/isa_explorer/browser
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate ISA Explorer Instruction
+        run: ./bin/udb-gen isa-explorer -t inst-browser -o gen/isa_explorer/browser
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: isa-explorer-inst
+          path: gen/isa_explorer/browser
   build-isa-explorer-spreadsheet:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate ISA Explorer Spreadsheet
-      run: "./bin/udb-gen isa-explorer -t xlsx -o gen/isa_explorer/spreadsheet"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: isa-explorer-spreadsheet
-        path: gen/isa_explorer/spreadsheet
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate ISA Explorer Spreadsheet
+        run: ./bin/udb-gen isa-explorer -t xlsx -o gen/isa_explorer/spreadsheet
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: isa-explorer-spreadsheet
+          path: gen/isa_explorer/spreadsheet
   build-html-isa-manual:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate HTML ISA manual
-      run: "./bin/generate manual -v all -f html"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: isa-html-manual
-        path: gen/manual/isa/top/all/html
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate HTML ISA manual
+        run: ./bin/generate manual -v all -f html
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: isa-html-manual
+          path: gen/manual/isa/top/all/html
   build-html-cfg-isa-manual:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate HTML ISA manual for a config
-      run: "./do gen:html[example_rv64_with_overlay]"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: cfg-html-manual
-        path: gen/cfg_html_doc/example_rv64_with_overlay/html
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate HTML ISA manual for a config
+        run: ./do gen:html[example_rv64_with_overlay]
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: cfg-html-manual
+          path: gen/cfg_html_doc/example_rv64_with_overlay/html
   build-instruction-appendix:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: checkout docs resources
-      run: git submodule update --init ext/docs-resources
-    - name: Generate instruction appendix
-      run: "./do gen:instruction_appendix"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: inst-appendix
-        path: gen/instructions_appendix/instructions_appendix.pdf
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: checkout docs resources
+        run: git submodule update --init ext/docs-resources
+      - name: Generate instruction appendix
+        run: ./do gen:instruction_appendix
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: inst-appendix
+          path: gen/instructions_appendix/instructions_appendix.pdf
   build-profile:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate ${{ matrix.profile }}
-      run: |
-        PROFILE_NAME="${{ matrix.profile }}"
-        ./do gen:profile_release_pdf[${PROFILE_NAME}]
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: "${{ matrix.profile }}"
-        path: gen/profile/pdf/${{ matrix.profile }}ProfileRelease.pdf
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate ${{ matrix.profile }}
+        run: |
+          PROFILE_NAME="${{ matrix.profile }}"
+          ./do gen:profile_release_pdf[${PROFILE_NAME}]
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: ${{ matrix.profile }}
+          path: gen/profile/pdf/${{ matrix.profile }}ProfileRelease.pdf
     strategy:
       matrix:
         profile:
-        - RVI20
-        - RVA20
-        - RVA22
-        - RVA23
-        - RVB23
+          - RVI20
+          - RVA20
+          - RVA22
+          - RVA23
+          - RVB23
   regress-schema-versions:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Check schema versions against published URLs
-      run: "./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Check schema versions against published URLs
+        run: ./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb
+
   regress-schema-docs:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Generate schema documentation
-      run: "./bin/chore gen -f schema-docs"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Generate schema documentation
+        run: ./bin/chore gen -f schema-docs
+
   build-idl-doc:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Build IDL doc
-      run: "./bin/bundle exec asciidoctor -r idl_highlighter -a toc=left -a source-highlighter=rouge -o idl.html doc/idl.adoc"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: idl-doc
-        path: idl.html
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Build IDL doc
+        run: ./bin/bundle exec asciidoctor -r idl_highlighter -a toc=left -a source-highlighter=rouge -o idl.html doc/idl.adoc
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: idl-doc
+          path: idl.html
   check-gem-versions:
     runs-on: ubuntu-latest
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        fetch-depth: 0
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Check gem versions, pins, and lock files are up to date
-      run: "./bin/chore gen -f gem-versions"
-    - name: Check lockfiles have no drift after re-locking
-      run: |
-        git diff --exit-code -- \
-          Gemfile.lock \
-          tools/ruby-gems/idlc/Gemfile.lock \
-          tools/ruby-gems/udb/Gemfile.lock \
-          tools/ruby-gems/udb-gen/Gemfile.lock \
-          tools/ruby-gems/udb_helpers/Gemfile.lock
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Check gem versions, pins, and lock files are up to date
+        run: ./bin/chore gen -f gem-versions
+      - name: Check lockfiles have no drift after re-locking
+        run: |
+          git diff --exit-code -- \
+            Gemfile.lock \
+            tools/ruby-gems/idlc/Gemfile.lock \
+            tools/ruby-gems/udb/Gemfile.lock \
+            tools/ruby-gems/udb-gen/Gemfile.lock \
+            tools/ruby-gems/udb_helpers/Gemfile.lock
+
   regress-smoke-perf:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Run smoke regression suite (must complete within 10 minutes)
-      run: "./bin/regress -t smoke"
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Run smoke regression suite (must complete within 10 minutes)
+        run: ./bin/regress -t smoke
+
   build-docs-site:
     runs-on: ubuntu-latest
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
-    - name: Clone Github Repo Action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Set up mise environment
-      uses: "./.github/actions/mise-setup"
-    - name: Install Node dependencies
-      run: "./bin/npm ci"
-    - name: Build Docusaurus site
-      run: "./bin/npm run build --workspace=doc"
-    - name: Upload artifact
-      uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5
-      if: ((github.event_name == 'push') && (github.ref_name == 'main'))
-      with:
-        name: docs-site
-        path: doc/build
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Install Node dependencies
+        run: ./bin/npm ci
+      - name: Build Docusaurus site
+        run: ./bin/npm run build --workspace=doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ((github.event_name == 'push') && (github.ref_name == 'main'))
+        with:
+          name: docs-site
+          path: doc/build
   regress-complete:
     runs-on: ubuntu-latest
     needs:
-    - regress-scripts-unit
-    - regress-idlc-unit
-    - regress-udb-helpers-unit
-    - regress-udb-gen-unit
-    - regress-udb-gen-integration
-    - regress-udb-gen-chore
-    - regress-sorbet
-    - regress-ext-explorer
-    - regress-idl-typecheck-smoke
-    - regress-idl-typecheck-other
-    - regress-test-inst-encodings
-    - regress-gen-isa-manual
-    - regress-gen-instruction-appendix
-    - regress-cfg-manual
-    - regress-gen-ext-pdf
-    - regress-gen-profile
-    - regress-profile-strict-cfg
-    - regress-udb-unit-test
-    - regress-gen-go
-    - regress-gen-c-header
-    - regress-gen-sverilog
-    - regress-cfg-headers
-    - regress-cpp-unit
-    - regress-riscv-tests-32
-    - regress-riscv-tests-64
-    - regress-riscv-tests-vector
-    - regress-profile-extensions
-    - regress-build-udb-gem
-    - regress-regress
-    - build-reuse-manifest
-    - build-udb-api-docs
-    - resolve-unconfig
-    - build-isa-explorer-csr
-    - build-isa-explorer-ext
-    - build-isa-explorer-inst
-    - build-isa-explorer-spreadsheet
-    - build-html-isa-manual
-    - build-html-cfg-isa-manual
-    - build-instruction-appendix
-    - build-profile
-    - regress-schema-versions
-    - regress-schema-docs
-    - build-idl-doc
-    - check-gem-versions
-    - regress-smoke-perf
-    - build-docs-site
-    - regress-pre-commit
-    - regress-llvm
-    - regress-find-configs
-    - regress-udb-cov-report
-    - build-llvm
-    - java-tests
-    - vscode-tests
-    - create-gems
-    - udb-gem-z3
+      - regress-scripts-unit
+      - regress-idlc-unit
+      - regress-udb-helpers-unit
+      - regress-udb-gen-unit
+      - regress-udb-gen-integration
+      - regress-udb-gen-chore
+      - regress-sorbet
+      - regress-ext-explorer
+      - regress-idl-typecheck-smoke
+      - regress-idl-typecheck-other
+      - regress-test-inst-encodings
+      - regress-gen-isa-manual
+      - regress-gen-instruction-appendix
+      - regress-cfg-manual
+      - regress-gen-ext-pdf
+      - regress-gen-profile
+      - regress-profile-strict-cfg
+      - regress-udb-unit-test
+      - regress-gen-go
+      - regress-gen-c-header
+      - regress-gen-sverilog
+      - regress-cfg-headers
+      - regress-cpp-unit
+      - regress-riscv-tests-32
+      - regress-riscv-tests-64
+      - regress-riscv-tests-vector
+      - regress-profile-extensions
+      - regress-build-udb-gem
+      - regress-regress
+      - build-reuse-manifest
+      - build-udb-api-docs
+      - resolve-unconfig
+      - build-isa-explorer-csr
+      - build-isa-explorer-ext
+      - build-isa-explorer-inst
+      - build-isa-explorer-spreadsheet
+      - build-html-isa-manual
+      - build-html-cfg-isa-manual
+      - build-instruction-appendix
+      - build-profile
+      - regress-schema-versions
+      - regress-schema-docs
+      - build-idl-doc
+      - check-gem-versions
+      - regress-smoke-perf
+      - build-docs-site
+      - regress-pre-commit
+      - regress-llvm
+      - regress-find-configs
+      - regress-udb-cov-report
+      - build-llvm
+      - java-tests
+      - vscode-tests
+      - create-gems
+      - udb-gem-z3
     if: always()
     steps:
-    - name: exit failure
-      if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-      run: exit 1
-    - name: exit success
-      if: '!contains(needs.*.result, ''failure'') && !contains(needs.*.result, ''cancelled'')'
-      run: exit 0
+      - name: exit failure
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - name: exit success
+        if: "!contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')"
+        run: exit 0

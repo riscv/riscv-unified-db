@@ -2,9 +2,10 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-# Build Z3 from source using Docker and AlmaLinux 8
-# This script downloads the latest Z3 release, compiles it in a Docker container,
-# and extracts the installation files to the host.
+# Build Z3 from source using Docker and AlmaLinux 8.
+# Z3_VERSION in the udb gem is the single source of truth; this script downloads
+# that upstream Z3 release, compiles it in a Docker container, and extracts the
+# installation files to the host.
 
 set -euo pipefail
 
@@ -23,6 +24,15 @@ info() {
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
+
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+UDB_ROOT=$(cd -- "${SCRIPT_DIR}/../.." && pwd)
+Z3_VERSION_FILE="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/Z3_VERSION"
+Z3_VERSION=$(<"${Z3_VERSION_FILE}") || error "Could not read ${Z3_VERSION_FILE}"
+
+if [[ ! "${Z3_VERSION}" =~ ^z3-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    error "Invalid Z3_VERSION '${Z3_VERSION}'; expected z3-<major>.<minor>.<patch>"
+fi
 
 # Main function to build Z3
 build_z3_with_docker() {
@@ -50,7 +60,7 @@ build_z3_with_docker() {
             ;;
     esac
 
-    info "Starting Z3 build process"
+    info "Starting Z3 build process (${Z3_VERSION})"
     info "Output directory: $output_dir"
     info "Build type: $build_type"
     info "Architecture: $architecture ($docker_platform)"
@@ -72,9 +82,8 @@ build_z3_with_docker() {
 
     info "Using temporary directory: $temp_dir"
 
-    # Get latest Z3 release version from GitHub API
-    info "Fetching latest Z3 release information from GitHub..."
-    local latest_release
+    local version="${Z3_VERSION}"
+    info "Z3 version: ${version}"
 
     # Check for GitHub token for authentication (helps avoid rate limits)
     local auth_header=""
@@ -83,35 +92,8 @@ build_z3_with_docker() {
         info "Using GitHub authentication token"
     fi
 
-    if command_exists curl; then
-        if [[ -n "$auth_header" ]]; then
-            latest_release=$(curl -s -H "$auth_header" https://api.github.com/repos/Z3Prover/z3/releases/latest)
-        else
-            latest_release=$(curl -s https://api.github.com/repos/Z3Prover/z3/releases/latest)
-        fi
-    else
-        if [[ -n "$auth_header" ]]; then
-            latest_release=$(wget -qO- --header="$auth_header" https://api.github.com/repos/Z3Prover/z3/releases/latest)
-        else
-            latest_release=$(wget -qO- https://api.github.com/repos/Z3Prover/z3/releases/latest)
-        fi
-    fi
-
-    local version
-    version=$(echo "$latest_release" | grep -o '"tag_name": *"[^"]*"' | sed 's/"tag_name": *"\(.*\)"/\1/')
-
-    if [[ -z "$version" ]]; then
-        # Check if we hit rate limit
-        if echo "$latest_release" | grep -q "rate limit"; then
-            error "GitHub API rate limit exceeded. Please set GITHUB_TOKEN environment variable or try again later."
-        fi
-        error "Failed to fetch latest Z3 version from GitHub. Response: $(echo "$latest_release" | head -c 200)"
-    fi
-
-    info "Latest Z3 version: $version"
-
     # Download source tarball
-    local tarball_url="http://github.com/Z3Prover/z3/archive/refs/tags/${version}.tar.gz"
+    local tarball_url="https://github.com/Z3Prover/z3/archive/refs/tags/${version}.tar.gz"
     local tarball_path="$temp_dir/z3-${version}.tar.gz"
 
     info "Downloading Z3 source from: $tarball_url"
@@ -133,7 +115,7 @@ build_z3_with_docker() {
     if ! file "$tarball_path" | grep -q "gzip compressed"; then
         info "Downloaded file is not a gzip archive. First 500 bytes:"
         head -c 500 "$tarball_path" >&2
-        error "Downloaded file is not in gzip format. This may indicate a rate limit or download error."
+        error "Downloaded file is not in gzip format. Check that ${version} is a valid Z3 tag."
     fi
 
     # Extract tarball

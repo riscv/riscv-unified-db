@@ -259,6 +259,7 @@ function highest_priority_interrupt {
       }
     }
     assert(false, "There is no valid interrupt");
+    unreachable();
   }
 }
 

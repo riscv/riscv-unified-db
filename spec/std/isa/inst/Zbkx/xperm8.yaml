@@ -35,7 +35,7 @@ operation(): |
   XReg input2 = X[xs2];
   XReg output = 0;
 
-  for(U32 i=0; i<(xlen()-8); i = i+8) {
+  for(U32 i=0; i < xlen(); i = i+8) {
     XReg index = input2[i+7:i];
     if(8*index < xlen()) {
       output[i+7:i] = input1[8*index+7:8*index];

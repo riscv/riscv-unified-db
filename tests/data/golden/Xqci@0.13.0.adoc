@@ -40475,8 +40475,10 @@ if pass:[(]!MISALIGNED_LDST) {
     return result;
   } else if pass:[(]MISALIGNED_SPLIT_STRATEGY == "custom") {
     xref:#udb-function-unpredictable[unpredictable]pass:[(]"An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
+    return 0;
   }
 }
+return 0;
 ----
 
 [#udb-function-read_memory_aligned]
@@ -40573,6 +40575,7 @@ if pass:[(]len == 8) {
   return xref:#udb-function-read_physical_memory_64[read_physical_memory_64]pass:[(]paddr);
 } else {
   xref:#udb-function-assert[assert]pass:[(]false, "Invalid len");
+  return 0;
 }
 ----
 
@@ -40906,6 +40909,7 @@ if pass:[(]translation_mode == SatpMode::Bare) {
   result = xref:#udb-function-stage1_page_walk[stage1_page_walk]pass:[(]57, 56, 64, 5, vaddr, op, effective_mode, encoding);
 } else {
   xref:#udb-function-assert[assert]pass:[(]false, "Unexpected SatpMode");
+  xref:#udb-function-unreachable[unreachable]pass:[(]);
 }
 xref:#udb-function-maybe_cache_translation[maybe_cache_translation]pass:[(]vaddr, op, result);
 return result;

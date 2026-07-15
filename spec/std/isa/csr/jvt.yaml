@@ -56,6 +56,7 @@ fields:
             && (CSR[sstateen0].JVT == 1'b0 || CSR[hstateen0].JVT == 1'b0) )) {
 
         unimplemented_csr($encoding);
+        return 0;
       }
       else {
         if (JVT_BASE_TYPE == "custom") {
