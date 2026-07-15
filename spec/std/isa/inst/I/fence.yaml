@@ -159,31 +159,53 @@ operation(): |
   # apply FIOM overrides
   if (mode() == PrivilegeMode::S) {
     if (CSR[menvcfg].FIOM == 1) {
-      if (pred_i) { pred_r = true; }
-      if (pred_o) { pred_w = true; }
-      if (succ_i) { succ_r = true; }
-      if (succ_o) { succ_w = true; }
+      if (pred_i) {
+        pred_r = true;
+      }
+      if (pred_o) {
+        pred_w = true;
+      }
+      if (succ_i) {
+        succ_r = true;
+      }
+      if (succ_o) {
+        succ_w = true;
+      }
     }
   } else if (mode() == PrivilegeMode::U) {
     if ((CSR[menvcfg].FIOM | CSR[senvcfg].FIOM) == 1) {
-      if (pred_i) { pred_r = true; }
-      if (pred_o) { pred_w = true; }
-      if (succ_i) { succ_r = true; }
-      if (succ_o) { succ_w = true; }
+      if (pred_i) {
+        pred_r = true;
+      }
+      if (pred_o) {
+        pred_w = true;
+      }
+      if (succ_i) {
+        succ_r = true;
+      }
+      if (succ_o) {
+        succ_w = true;
+      }
     }
   } else if (mode() == PrivilegeMode::VS || mode() == PrivilegeMode::VU) {
     if ((CSR[menvcfg].FIOM | CSR[henvcfg].FIOM) == 1) {
-      if (pred_i) { pred_r = true; }
-      if (pred_o) { pred_w = true; }
-      if (succ_i) { succ_r = true; }
-      if (succ_o) { succ_w = true; }
+      if (pred_i) {
+        pred_r = true;
+      }
+      if (pred_o) {
+        pred_w = true;
+      }
+      if (succ_i) {
+        succ_r = true;
+      }
+      if (succ_o) {
+        succ_w = true;
+      }
     }
   }
 
-  fence(
-    pred_i, pred_o, pred_r, pred_w,
-    succ_i, succ_o, succ_r, succ_w
-  );
+  fence(pred_i, pred_o, pred_r, pred_w,
+      succ_i, succ_o, succ_r, succ_w);
 hints:
   - { $ref: inst/I/fence.tso.yaml# }
   - { $ref: inst/Zihintpause/pause.yaml# }

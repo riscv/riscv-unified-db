@@ -28,7 +28,7 @@ fields:
     reset_value: UNDEFINED_LEGAL
     affectedBy: [Zicntr, Smcntrpmf, Smcdeleg, Ssccfg]
     sw_write(csr_value): |
-      CSR[mcycle].COUNT = {csr_value.COUNT[31:0], CSR[minstret].COUNT[31:0]};
+      CSR[mcycle].COUNT = {csr_value.COUNT[31 : 0], CSR[minstret].COUNT[31 : 0]};
       return csr_value.COUNT;
 definedBy:
   allOf:
@@ -36,4 +36,4 @@ definedBy:
     - extension:
         name: Zicntr
 sw_read(): |
-  return CSR[minstret].COUNT[63:32];
+  return CSR[minstret].COUNT[63 : 32];

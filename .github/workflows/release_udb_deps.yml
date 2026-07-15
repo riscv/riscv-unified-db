@@ -29,6 +29,7 @@ on:
           - espresso
           - must
           - z3
+          - tree-sitter-idl
           - all
       force:
         description: "Force rebuild and release even if release already exists"
@@ -195,4 +196,41 @@ jobs:
             ./bin/chore update must -n -f
           else
             ./bin/chore update must -n
+          fi
+
+  build-tree-sitter-idl:
+    if: inputs.tool == 'tree-sitter-idl' || inputs.tool == 'all'
+    name: Build tree-sitter-idl grammar (${{ matrix.os }}-${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      # The grammar is a native shared object, so it must be built on the
+      # matching OS. Each runner builds and uploads only its own (OS, CPU)
+      # asset to the shared release.
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            os: linux
+            arch: x64
+          - runner: ubuntu-24.04-arm
+            os: linux
+            arch: arm64
+          - runner: macos-13
+            os: macos
+            arch: x64
+          - runner: macos-14
+            os: macos
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Build and upload tree-sitter-idl for ${{ matrix.os }}-${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ./bin/chore update tree-sitter-idl -n -f
+          else
+            ./bin/chore update tree-sitter-idl -n
           fi

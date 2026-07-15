@@ -32,14 +32,14 @@ access:
 data_independent_timing: true
 operation(): |
   if (implemented?(ExtensionName::B) && (CSR[misa].B == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   XReg xs1_val = X[xs1];
   XReg xs2_val = X[xs2];
   XReg output = 0;
 
-  for (U32 i=1; i <= xlen(); i++) {
+  for (U32 i = 1; i <= xlen(); i++) {
     output = (((xs2_val >> i) & 1) == 1)
       ? output ^ (xs1_val >> (xlen() - i))
       : output;

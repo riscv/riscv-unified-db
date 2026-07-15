@@ -39,5 +39,5 @@ operation(): |
   X[rd] = ($signed(rs1_value) >= $signed(X[rs2]))
     ? rs1_value - X[rs2]
     : (($signed(rs1_value) < 's0)
-       ? (rs1_value + X[rs2])
-       : rs1_value);
+      ? (rs1_value + X[rs2])
+      : rs1_value);

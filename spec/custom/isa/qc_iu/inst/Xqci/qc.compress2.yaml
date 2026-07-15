@@ -32,6 +32,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  XReg b0 = {X[rs1][14],X[rs1][12],X[rs1][10],X[rs1][8],X[rs1][6],X[rs1][4],X[rs1][2],X[rs1][0]};
-  XReg b1 = {X[rs1][30],X[rs1][28],X[rs1][26],X[rs1][24],X[rs1][22],X[rs1][20],X[rs1][18],X[rs1][16]};
-  X[rd] = {16'b0,b1[7:0],b0[7:0]};
+  XReg b0 = {X[rs1][14], X[rs1][12], X[rs1][10], X[rs1][8], X[rs1][6], X[rs1][4], X[rs1][2], X[rs1][0]};
+  XReg b1 = {X[rs1][30], X[rs1][28], X[rs1][26], X[rs1][24], X[rs1][22], X[rs1][20], X[rs1][18], X[rs1][16]};
+  X[rd] = {16'b0, b1[7 : 0], b0[7 : 0]};

@@ -199,7 +199,7 @@ fields:
           return UNDEFINED_LEGAL_DETERMINISTIC;
         }
       }
-      return csr_value.VMID[VMID_WIDTH-1:0];
+      return csr_value.VMID[VMID_WIDTH - 1 : 0];
   PPN:
     location_rv32: 21-0
     location_rv64: 43-0
@@ -229,12 +229,8 @@ fields:
         }
       }
       return csr_value.PPN;
-
 sw_read(): |
-  if ((CSR[hgatp].MODE == $bits(HgatpMode::Sv32x4))
-      || (CSR[hgatp].MODE == $bits(HgatpMode::Sv39x4))
-      || (CSR[hgatp].MODE == $bits(HgatpMode::Sv48x4))
-      || (CSR[hgatp].MODE == $bits(HgatpMode::Sv57x4))) {
+  if ((CSR[hgatp].MODE == $bits(HgatpMode::Sv32x4)) || (CSR[hgatp].MODE == $bits(HgatpMode::Sv39x4)) || (CSR[hgatp].MODE == $bits(HgatpMode::Sv48x4)) || (CSR[hgatp].MODE == $bits(HgatpMode::Sv57x4))) {
     # bits 1:0 of PPN read as zero
     return $bits(CSR[hgatp]) & ~64'h3;
   } else {

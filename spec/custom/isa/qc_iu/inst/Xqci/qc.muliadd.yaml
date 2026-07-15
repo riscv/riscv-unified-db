@@ -34,4 +34,4 @@ access:
   vu: always
 operation(): |
   XReg orig_val = X[rd];
-  X[rd] = orig_val + (X[rs1] * sext(imm,12));
+  X[rd] = orig_val + (X[rs1] * sext(imm, 12));

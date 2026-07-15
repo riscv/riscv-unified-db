@@ -111,6 +111,7 @@ _check_core_prerequisites() {
 # Map of mise tool name -> binary name (only entries that differ)
 declare -A _MISE_BINARY_OVERRIDE=(
   ["github-cli"]="gh"
+  ["cargo:topiary-cli"]="topiary"
 )
 
 _check_mise_tool() {
@@ -153,7 +154,7 @@ _check_mise_tools() {
     return
   fi
 
-  local tools=(ruby node uv cmake make shellcheck github-cli prek)
+  local tools=(ruby node uv cmake make shellcheck github-cli prek rust "cargo:topiary-cli")
   for tool in "${tools[@]}"; do
     _check_mise_tool "$tool"
   done
@@ -390,6 +391,17 @@ _check_developer_setup() {
       _info "Fix: run \`bin/setup\` to re-download native dependencies"
       _record_warn
     fi
+  fi
+
+  local ts_idl_so="$ROOT/tools/node/tree-sitter-idl/libtree-sitter-idl.so"
+  if [[ -f "$ts_idl_so" ]]; then
+    _pass "IDL tree-sitter parser built"
+    _record_pass
+  else
+    _fail "IDL tree-sitter parser not built"
+    _info "Expected: $ts_idl_so"
+    _info "Fix: run \`bin/setup\` to build the IDL tree-sitter parser"
+    _record_fail
   fi
 }
 

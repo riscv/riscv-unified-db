@@ -300,15 +300,6 @@ module Idl
     end
   end
 
-  class MultiVariableAssignmentAst < AstNode
-    sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
-    def gen_cpp(symtab, indent = 2, indent_spaces: 2)
-      lhs = "std::tie(#{variables.map { |v| v.gen_cpp(symtab, 0, indent_spaces:) }.join(', ')})"
-      rhs = function_call.gen_cpp(symtab, 0, indent_spaces:)
-      "#{' ' * indent}#{lhs} = #{rhs}"
-    end
-  end
-
   class CsrFunctionCallAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 2, indent_spaces: 2)

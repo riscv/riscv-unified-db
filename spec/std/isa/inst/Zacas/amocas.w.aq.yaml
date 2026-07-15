@@ -38,7 +38,7 @@ access:
   vu: always
 operation(): |
   if (!implemented?(ExtensionName::Zacas)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   memory_model_acquire();

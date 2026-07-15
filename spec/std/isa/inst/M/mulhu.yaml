@@ -42,11 +42,11 @@ access:
 data_independent_timing: true
 operation(): |
   if (implemented?(ExtensionName::M) && (CSR[misa].M == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   # enlarge and zero-extend the sources
-  Bits<MXLEN*8'd2> src1 = {{MXLEN{1'b0}}, X[xs1]};
-  Bits<MXLEN*8'd2> src2 = {{MXLEN{1'b0}}, X[xs2]};
+  Bits<MXLEN * 8'd2> src1 = {{MXLEN{1'b0}}, X[xs1]};
+  Bits<MXLEN * 8'd2> src2 = {{MXLEN{1'b0}}, X[xs2]};
 
-  X[xd] = (src1 * src2)[(MXLEN*8'd2)-1:MXLEN];
+  X[xd] = (src1 * src2)[(MXLEN * 8'd2) - 1 : MXLEN];

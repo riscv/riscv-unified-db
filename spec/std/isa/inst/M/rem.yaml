@@ -33,7 +33,7 @@ access:
   vu: always
 operation(): |
   if (implemented?(ExtensionName::M) && (CSR[misa].M == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   XReg src1 = X[xs1];
@@ -43,12 +43,10 @@ operation(): |
     # division by zero. Since RISC-V does not have arithmetic exceptions, the result is defined
     # to be the dividend
     X[xd] = src1;
-
-  } else if ((src1 == {1'b1, {MXLEN-1{1'b0}}}) && (src2 == {MXLEN{1'b1}})) {
+  } else if ((src1 == {1'b1, {MXLEN - 1{1'b0}}}) && (src2 == {MXLEN{1'b1}})) {
     # signed overflow. Since RISC-V does not have arithmetic exceptions, the result is defined
     # to be zero
     X[xd] = 0;
-
   } else {
     X[xd] = $signed(src1) % $signed(src2);
   }

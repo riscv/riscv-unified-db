@@ -98,6 +98,44 @@ module Idl
     sig { returns(T::Array[AstNode]) }
     attr_reader :children
 
+    # @return [Array<CommentAst>] Comments that precede this node in source
+    attr_reader :leading_comments
+
+    # @return [Array<CommentAst>] Comments that trail this node on the same line
+    attr_reader :trailing_comments
+
+    def attach_leading_comment(c)  = @leading_comments  << c
+    def attach_trailing_comment(c) = @trailing_comments << c
+
+    def with_comments(str)
+      leading  = @leading_comments.map(&:to_idl).join
+      trailing = @trailing_comments.empty? ? "" : "  #{@trailing_comments.map { |c| c.to_idl.chomp }.join("  ")}"
+      "#{leading}#{str}#{trailing}"
+    end
+
+    # Like to_idl but always includes attached leading/trailing comments.
+    # Used by container to_idl_with_comments implementations.
+    def to_idl_with_comments
+      to_idl(include_comments: true)
+    end
+
+    # Join a sequence of statement nodes for inclusion in a body to_idl.
+    # Uses a blank line before any statement that carries leading comments so
+    # that topiary's @allow_blank_line_before preserves the separation and
+    # doesn't pull the comment up onto the preceding closing brace line.
+    def self.join_stmts(stmts, include_comments:)
+      parts = stmts.map { |s| s.to_idl(include_comments:) }
+      result = +""
+      parts.each_with_index do |part, i|
+        if i > 0
+          sep = (include_comments && stmts[i].leading_comments.any?) ? "\n\n" : "\n"
+          result << sep
+        end
+        result << part
+      end
+      result
+    end
+
     # error that is thrown when compilation reveals a type error
     class TypeError < StandardError
       extend T::Sig
@@ -242,6 +280,20 @@ module Idl
       @children = children
       @parent = nil # will be set later unless this is the root
       @children.each { |child| child.instance_variable_set(:@parent, self) }
+      @leading_comments  = []
+      @trailing_comments = []
+    end
+
+    def initialize_copy(orig)
+      super
+      @leading_comments  = orig.leading_comments.dup
+      @trailing_comments = orig.trailing_comments.dup
+    end
+
+    def copy_comments_from(other)
+      other.leading_comments.each  { |c| attach_leading_comment(c) }
+      other.trailing_comments.each { |c| attach_trailing_comment(c) }
+      self
     end
 
     # Sets the input file for this syntax node unless it has already been set.
@@ -557,8 +609,8 @@ module Idl
 
     # @!macro to_idl
     # @abstract
-    sig { abstract.returns(String) }
-    def to_idl; end
+    sig { abstract.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false); end
 
     # return yaml to indicate where the node comes from
     # the retrun value will be:
@@ -683,7 +735,6 @@ module Idl
       when "csr_read_expr"             then CsrReadExpressionAst.from_h(yaml, source_mapper)
       when "csr_sw_write_expr"         then CsrSoftwareWriteAst.from_h(yaml, source_mapper)
       when "dont_care"                 then DontCareReturnAst.from_h(yaml, source_mapper)
-      when "dont_care_lval"            then DontCareLvalueAst.from_h(yaml, source_mapper)
       when "else_if_stmt"              then ElseIfAst.from_h(yaml, source_mapper)
       when "enum_decl"                 then EnumDefinitionAst.from_h(yaml, source_mapper)
       when "enum_element_size_funcall" then EnumElementSizeAst.from_h(yaml, source_mapper)
@@ -706,7 +757,6 @@ module Idl
       when "isa"                       then IsaAst.from_h(yaml, source_mapper)
       when "global_var_decl_with_init" then GlobalWithInitializationAst.from_h(yaml, source_mapper)
       when "global_var_decl"           then GlobalAst.from_h(yaml, source_mapper)
-      when "multi_var_assignment"      then MultiVariableAssignmentAst.from_h(yaml, source_mapper)
       when "multi_var_decl"            then MultiVariableDeclarationAst.from_h(yaml, source_mapper)
       when "noop_expr"                 then NoopAst.from_h(yaml, source_mapper)
       when "paren_expr"                then ParenExpressionAst.from_h(yaml, source_mapper)
@@ -963,8 +1013,11 @@ module Idl
       super(input, interval, [filename])
     end
 
-    sig { override.returns(String) }
-    def to_idl = "include \"#{filename}\""
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "include \"#{filename}\""
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.params(symtab: SymbolTable, strict: T::Boolean).void }
     def type_check(symtab, strict:); end
@@ -998,8 +1051,11 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(TrueClass) }
     def value(symtab) = true
 
-    sig { override.returns(String) }
-    def to_idl = "true"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "true"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1045,8 +1101,11 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(FalseClass) }
     def value(symtab) = false
 
-    sig { override.returns(String) }
-    def to_idl = "false"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "false"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1171,8 +1230,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = name
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = name
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1259,9 +1321,12 @@ module Idl
     end
 
     # @1macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      var_decl_with_init.to_idl
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        var_decl_with_init.to_idl(include_comments:)
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -1323,8 +1388,11 @@ module Idl
       declaration.add_symbol(symtab)
     end
 
-    sig { override.returns(String) }
-    def to_idl = declaration.to_idl
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = declaration.to_idl(include_comments:)
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1442,18 +1510,21 @@ module Idl
       type_error "Multiple fetch blocks defined" if fetch_blocks.size > 1
     end
 
-    sig { override.returns(String) }
-    def to_idl
-      <<~IDL
-        %version 1.0
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        <<~IDL
+          %version 1.0
 
-        #{globals.map(&:to_idl).join("\n")}
-        #{enums.map(&:to_idl).join("\n")}
-        #{bitfields.map(&:to_idl).join("\n")}
-        #{structs.map(&:to_idl).join("\n")}
-        #{functions.map(&:to_idl).join("\n")}
-        #{fetch.to_idl}
-      IDL
+          #{globals.map { |_n| _n.to_idl(include_comments:) }.join("\n")}
+          #{enums.map { |_n| _n.to_idl(include_comments:) }.join("\n")}
+          #{bitfields.map { |_n| _n.to_idl(include_comments:) }.join("\n")}
+          #{structs.map { |_n| _n.to_idl(include_comments:) }.join("\n")}
+          #{functions.map { |_n| _n.to_idl(include_comments:) }.join("\n")}
+          #{fetch.to_idl(include_comments:)}
+        IDL
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -1546,8 +1617,11 @@ module Idl
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
     def const_eval?(symtab) = true
 
-    sig { override.returns(String) }
-    def to_idl = "$array_size(#{ary.to_idl}, #{expr.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$array_size(#{ary.to_idl(include_comments:)}, #{expr.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1608,8 +1682,11 @@ module Idl
       T.cast(w, Integer)
     end
 
-    sig { override.returns(String) }
-    def to_idl = "$array_size(#{expression.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$array_size(#{expression.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1665,8 +1742,11 @@ module Idl
       enum_class.type(symtab).element_names.size
     end
 
-    sig { override.returns(String) }
-    def to_idl = "$enum_size(#{enum_class.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$enum_size(#{enum_class.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1717,8 +1797,11 @@ module Idl
       enum_class.type(symtab).width
     end
 
-    sig { override.returns(String) }
-    def to_idl = "$enum_element_size(#{enum_class.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$enum_element_size(#{enum_class.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1791,8 +1874,11 @@ module Idl
 
     def value(symtab) = expression.value(symtab)
 
-    sig { override.returns(String) }
-    def to_idl = "$enum(#{enum_name.to_idl}, #{expression.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$enum(#{enum_name.to_idl(include_comments:)}, #{expression.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1850,8 +1936,11 @@ module Idl
       enum_class.type(symtab).element_values
     end
 
-    sig { override.returns(String) }
-    def to_idl = "$enum_to_a(#{enum_class.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$enum_to_a(#{enum_class.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -1996,14 +2085,17 @@ module Idl
     def name = @user_type.text_value
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      idl = "enum #{name} { "
-      element_names.each_index do |idx|
-        idl << "#{element_names[idx]} #{element_values[idx]} "
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        idl = "enum #{name} { "
+        element_names.each_index do |idx|
+          idl << "#{element_names[idx]} #{element_values[idx]} "
+        end
+        idl << "}"
+        idl
       end
-      idl << "}"
-      idl
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -2087,8 +2179,11 @@ module Idl
     def name = @user_type.text_value
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "generated enum #{@user_type.text_value}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "generated enum #{@user_type.text_value}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -2162,13 +2257,16 @@ module Idl
       end
     end
 
-    sig { override.returns(String) }
-    def to_idl
-      if @lsb.nil?
-        "#{@name} #{@msb.to_idl}"
-      else
-        "#{@name} #{@msb.to_idl}-#{@lsb.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        if @lsb.nil?
+          "#{@name} #{@msb.to_idl(include_comments:)}"
+        else
+          "#{@name} #{@msb.to_idl(include_comments:)}-#{@lsb.to_idl(include_comments:)}"
+        end
       end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -2321,14 +2419,17 @@ module Idl
     def value(_symtab) = raise AstNode::InternalError, "Bitfield definitions have no value"
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      idl = ["bitfield (#{@size.to_idl}) #{@name.to_idl} { "]
-      @fields.each do |f|
-        idl << f.to_idl
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        idl = ["bitfield (#{@size.to_idl(include_comments:)}) #{@name.to_idl(include_comments:)} { "]
+        @fields.each do |f|
+          idl << f.to_idl(include_comments:)
+        end
+        idl << "}"
+        idl.join("\n")
       end
-      idl << "}"
-      idl.join("\n")
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -2444,13 +2545,16 @@ module Idl
     # @return [Integer] Number of members
     def num_members = member_names.size
 
-    sig { override.returns(String) }
-    def to_idl
-      member_decls = []
-      num_members.times do |i|
-        member_decls << "#{member_types[i].to_idl} #{member_names[i]}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        member_decls = []
+        num_members.times do |i|
+          member_decls << "#{member_types[i].to_idl(include_comments:)} #{member_names[i]}"
+        end
+        "struct #{name} { #{member_decls.join("; ")}; }"
       end
-      "struct #{name} { #{member_decls.join("; ")}; }"
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -2621,8 +2725,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{var.to_idl}[#{index.to_idl}]"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{var.to_idl(include_comments:)}[#{index.to_idl(include_comments:)}]"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -2724,8 +2831,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{var.to_idl}[#{msb.to_idl}:#{lsb.to_idl}]"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{var.to_idl(include_comments:)}[#{msb.to_idl(include_comments:)}:#{lsb.to_idl(include_comments:)}]"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -2786,8 +2896,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "$pc = #{rhs.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$pc = #{rhs.to_idl(include_comments:)}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -2896,8 +3009,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{lhs.to_idl} = #{rhs.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{lhs.to_idl(include_comments:)} = #{rhs.to_idl(include_comments:)}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -3020,8 +3136,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{lhs.to_idl}[#{idx.to_idl}] = #{rhs.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{lhs.to_idl(include_comments:)}[#{idx.to_idl(include_comments:)}] = #{rhs.to_idl(include_comments:)}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -3176,8 +3295,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{variable.to_idl}[#{msb.to_idl}:#{lsb.to_idl}] = #{write_value.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{variable.to_idl(include_comments:)}[#{msb.to_idl(include_comments:)}:#{lsb.to_idl(include_comments:)}] = #{write_value.to_idl(include_comments:)}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -3321,8 +3443,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{id.to_idl}.#{@field_name} = #{rhs.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{id.to_idl(include_comments:)}.#{@field_name} = #{rhs.to_idl(include_comments:)}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -3389,8 +3514,11 @@ module Idl
       value_error "CSR field writes are never compile-time-executable"
     end
 
-    sig { override.returns(String) }
-    def to_idl = "#{csr_field.to_idl} = #{write_value.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{csr_field.to_idl(include_comments:)} = #{write_value.to_idl(include_comments:)}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -3409,132 +3537,6 @@ module Idl
       CsrFieldAssignmentAst.new(
         input, interval,
         T.cast(AstNode.from_h(yaml.fetch("csr_field"), source_mapper), CsrFieldReadExpressionAst),
-        T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
-      )
-    end
-  end
-
-  class MultiVariableAssignmentSyntaxNode < SyntaxNode
-    def to_ast
-      MultiVariableAssignmentAst.new(input, interval, [send(:first).to_ast] + send(:rest).elements.map { |r| r.var.to_ast }, send(:function_call).to_ast)
-    end
-  end
-
-  # represents assignment of multiple variable from a function call that returns multiple values
-  #
-  # for example:
-  #   (match_result, cfg) = pmp_match<access_size>(paddr);
-  class MultiVariableAssignmentAst < AstNode
-    include Executable
-
-    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
-    def const_eval?(symtab)
-      func_is_const_eval = function_call.const_eval?(symtab)
-      everything_is_const_eval = func_is_const_eval
-
-      variables.each do |variable|
-        var = symtab.get(variable.name)
-        type_error "#{var} was not declared" if var.nil?
-        everything_is_const_eval = false unless var.const_eval?
-
-        var.const_incompatible! unless func_is_const_eval
-      end
-
-      func_is_const_eval
-    end
-
-    def variables = @children[0..-2]
-    def function_call = @children.last
-
-    def initialize(input, interval, variables, function_call)
-      super(input, interval, variables + [function_call])
-    end
-
-    # @return [Array<AstNode>] The variables being assigned, in order
-    def vars
-      variables
-    end
-
-    def rhs
-      function_call
-    end
-
-    # @!macro type_check
-    def type_check(symtab, strict:)
-      function_call.type_check(symtab, strict:)
-      variables.each { |var| var.type_check(symtab, strict:) }
-
-      type_error "Assigning value to a constant" if variables.any? { |v| v.type(symtab).const? }
-
-      type_error "Function '#{function_call.name}' has no return type" if function_call.type(symtab).nil?
-      unless function_call.type(symtab).kind == :tuple
-        type_error "Function '#{function_call.name}' only returns 1 variable"
-      end
-
-      if function_call.type(symtab).tuple_types.size != vars.size
-        type_error "function '#{function_call.name}' returns #{function_call.type(symtab).tuple_types.size} arguments, but  #{variables.size} were specified"
-      end
-
-      function_call.type(symtab).tuple_types.each_index do |i|
-        next if variables[i].is_a?(DontCareLvalueAst)
-        raise "Implementation error" if variables[i].is_a?(DontCareReturnAst)
-
-        var = symtab.get(variables[i].text_value)
-        type_error "No symbol named '#{variables[i].text_value}'" if var.nil?
-
-        internal_error "Cannot determine type of #{variables[i].text_value}" unless var.respond_to?(:type)
-
-        unless var.type.convertable_to?(function_call.type(symtab).tuple_types[i])
-          type_error "'#{function_call.name}' expecting a #{function_call.type(symtab).tuple_types[i]} in argument #{i}, but was given #{var.type(symtab)}"
-        end
-      end
-    end
-
-    # @!macro execute
-    def execute(symtab)
-      value_result = value_try do
-        values = function_call.execute(symtab)
-
-        i = 0
-        variables.each do |v|
-          next if v.type(symtab).global?
-
-          var = symtab.get(v.text_value)
-          internal_error "call type check" if var.nil?
-
-          var.value = values[i]
-          i += 1
-        end
-      end
-      value_else(value_result) do
-        variables.each do |v|
-          symtab.get(v.text_value).value = nil
-        end
-        value_error "value of right-hand side of multi-variable assignment is unknown"
-      end
-    end
-
-    # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "(#{variables.map(&:to_idl).join(', ')}) = #{function_call.to_idl}"
-
-    sig { override.returns(T::Hash[String, T.untyped]) }
-    def to_h = {
-      "kind" => "multi_var_assignment",
-      "assignments" => variables.map(&:to_h),
-      "value" => function_call.to_h,
-      "source" => source_yaml
-    }
-
-    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(MultiVariableAssignmentAst) }
-    def self.from_h(yaml, source_mapper)
-      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "multi_var_assignment"
-
-      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
-      interval = interval_from_source_yaml(yaml.fetch("source"))
-      MultiVariableAssignmentAst.new(
-        input, interval,
-        yaml.fetch("assignments").map { |a| AstNode.from_h(a, source_mapper) },
         T.cast(AstNode.from_h(yaml.fetch("value"), source_mapper), RvalueAst)
       )
     end
@@ -3610,8 +3612,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{type_name.to_idl} #{var_name_nodes.map(&:to_idl).join(', ')}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{type_name.to_idl(include_comments:)} #{var_name_nodes.map { |_n| _n.to_idl(include_comments:) }.join(', ')}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -3763,13 +3768,16 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      if ary_size.nil?
-        "#{type_name.to_idl} #{id.to_idl}"
-      else
-        "#{type_name.to_idl} #{id.to_idl}[#{T.must(ary_size).to_idl}]"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        if ary_size.nil?
+          "#{type_name.to_idl(include_comments:)} #{id.to_idl(include_comments:)}"
+        else
+          "#{type_name.to_idl(include_comments:)} #{id.to_idl(include_comments:)}[#{T.must(ary_size).to_idl(include_comments:)}]"
+        end
       end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -3997,13 +4005,16 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      if ary_size.nil?
-        "#{type_name.to_idl} #{lhs.to_idl} = #{rhs.to_idl}"
-      else
-        "#{type_name.to_idl} #{lhs.to_idl}[#{T.must(ary_size).to_idl}] = #{rhs.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        if ary_size.nil?
+          "#{type_name.to_idl(include_comments:)} #{lhs.to_idl(include_comments:)} = #{rhs.to_idl(include_comments:)}"
+        else
+          "#{type_name.to_idl(include_comments:)} #{lhs.to_idl(include_comments:)}[#{T.must(ary_size).to_idl(include_comments:)}] = #{rhs.to_idl(include_comments:)}"
+        end
       end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -4122,8 +4133,11 @@ module Idl
       T.cast(consequent.value(symtab), T::Boolean)
     end
 
-    sig { override.returns(String) }
-    def to_idl = "#{antecedent.to_idl} -> #{consequent.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{antecedent.to_idl(include_comments:)} -> #{consequent.to_idl(include_comments:)}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -4182,8 +4196,11 @@ module Idl
       expression.satisfied?(symtab)
     end
 
-    sig { override.returns(String) }
-    def to_idl = "#{expression.to_idl};"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{expression.to_idl(include_comments:)};"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -4249,9 +4266,12 @@ module Idl
       end
     end
 
-    sig { override.returns(String) }
-    def to_idl
-      stmts.map(&:to_idl).join("\n")
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        stmts.map { |_n| _n.to_idl(include_comments:) }.join("\n")
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -4318,8 +4338,11 @@ module Idl
       T.cast(v, Integer)
     end
 
-    sig { override.returns(String) }
-    def to_idl = "$width(#{expression.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$width(#{expression.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -4381,8 +4404,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "$signed(#{expression.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$signed(#{expression.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -4485,8 +4511,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "$bits(#{expr.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "$bits(#{expr.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -4564,9 +4593,12 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      "(#{lhs.to_idl} #{op} #{rhs.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        "(#{lhs.to_idl(include_comments:)} #{op} #{rhs.to_idl(include_comments:)})"
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -5375,8 +5407,11 @@ module Idl
     def min_value(symtab) = expression.min_value(symtab)
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "(#{expression.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "(#{expression.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -5439,8 +5474,11 @@ module Idl
       element_nodes.map { |e| e.value(symtab) }
     end
 
-    sig { override.returns(String) }
-    def to_idl = "[#{element_nodes.map(&:to_idl).join(',')}]"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "[#{element_nodes.map { |_n| _n.to_idl(include_comments:) }.join(',')}]"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -5544,8 +5582,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "{#{expressions.map { |exp| exp.to_idl }.join(',')}}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "{#{expressions.map { |exp| exp.to_idl(include_comments:) }.join(',')}}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -5628,8 +5669,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "{#{n.to_idl}{#{v.to_idl}}}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "{#{n.to_idl(include_comments:)}{#{v.to_idl(include_comments:)}}}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -5704,8 +5748,11 @@ module Idl
       end
     end
 
-    sig { override.returns(String) }
-    def to_idl = "#{rval.to_idl}--"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{rval.to_idl(include_comments:)}--"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -5774,8 +5821,11 @@ module Idl
       value_error "Cannot know the value of pc or encoding"
     end
 
-    sig { override.returns(String) }
-    def to_idl = name
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = name
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -5910,8 +5960,11 @@ module Idl
     sig { params(symtab: SymbolTable).returns(T.untyped) }
     def value(symtab) = value_error "Can't take value of a type error"
 
-    sig { override.returns(String) }
-    def to_idl = text_value
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = text_value
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = { "kind" => "ParseTimeDetectedTypeError", "reason" => @reason, "source" => source_yaml }
@@ -5972,8 +6025,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{rval.to_idl}++"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{rval.to_idl(include_comments:)}++"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -6070,8 +6126,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{obj.to_idl}.#{@field_name}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{obj.to_idl(include_comments:)}.#{@field_name}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -6159,8 +6218,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{@enum_class_name}::#{@member_name}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{@enum_class_name}::#{@member_name}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -6304,8 +6366,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{op}#{expression.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{op}#{expression.to_idl(include_comments:)}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -6507,8 +6572,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{condition.to_idl} ? #{true_expression.to_idl} : #{false_expression.to_idl}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{condition.to_idl(include_comments:)} ? #{true_expression.to_idl(include_comments:)} : #{false_expression.to_idl(include_comments:)}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -6555,8 +6623,11 @@ module Idl
     def execute(symtab); end
 
     # @1macro to_idl
-    sig { override.returns(String) }
-    def to_idl = ""
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = ""
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -6606,8 +6677,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{action.to_idl};"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{action.to_idl(include_comments:)};"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -6676,9 +6750,12 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      "#{action.to_idl} if (#{condition.to_idl});"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        "#{action.to_idl(include_comments:)} if (#{condition.to_idl(include_comments:)});"
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -6751,8 +6828,11 @@ module Idl
       @expected_type = t
     end
 
-    sig { override.returns(String) }
-    def to_idl = "-"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "-"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -6767,52 +6847,6 @@ module Idl
       input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
       interval = interval_from_source_yaml(yaml.fetch("source"))
       DontCareReturnAst.new(
-        input, interval
-      )
-    end
-  end
-
-  class DontCareLvalueSyntaxNode < SyntaxNode
-    def to_ast = DontCareLvalueAst.new(input, interval)
-  end
-
-  class DontCareLvalueAst < AstNode
-    include Rvalue
-
-    sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
-    def const_eval?(symtab) = true
-
-    def initialize(input, interval) = super(input, interval, EMPTY_ARRAY)
-
-    # @!macro type_check_no_args
-    def type_check(_symtab, strict:)
-      # nothing to do!
-    end
-
-    # @!macro type_no_args
-    def type(_symtab)
-      Type.new(:dontcare)
-    end
-
-    # @!macro value_no_args
-    def value(_symtab) = internal_error "Why are you calling value for an lval?"
-
-    sig { override.returns(String) }
-    def to_idl = "-"
-
-    sig { override.returns(T::Hash[String, T.untyped]) }
-    def to_h = {
-      "kind" => "dont_care_lval",
-      "source" => source_yaml
-    }
-
-    sig { params(yaml: T::Hash[String, T.untyped], source_mapper: T::Hash[String, String]).returns(DontCareLvalueAst) }
-    def self.from_h(yaml, source_mapper)
-      raise "Bad YAML" unless yaml.key?("kind") && yaml.fetch("kind") == "dont_care_lval"
-
-      input = input_from_source_yaml(yaml.fetch("source"), source_mapper)
-      interval = interval_from_source_yaml(yaml.fetch("source"))
-      DontCareLvalueAst.new(
         input, interval
       )
     end
@@ -6882,8 +6916,11 @@ module Idl
       return_expression.return_values(symtab)
     end
 
-    sig { override.returns(String) }
-    def to_idl = "#{return_expression.to_idl};"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{return_expression.to_idl(include_comments:)};"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -6998,8 +7035,11 @@ module Idl
       end
     end
 
-    sig { override.returns(String) }
-    def to_idl = "return #{return_value_nodes.map(&:to_idl).join(',')}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "return #{return_value_nodes.map { |_n| _n.to_idl(include_comments:) }.join(',')}"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -7081,8 +7121,11 @@ module Idl
       end
     end
 
-    sig { override.returns(String) }
-    def to_idl = "#{return_expression.to_idl} if (#{condition.to_idl});"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{return_expression.to_idl(include_comments:)} if (#{condition.to_idl(include_comments:)});"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -7131,8 +7174,11 @@ module Idl
     #    # This is a comment     #=> "This is a comment"
     def content = T.must(text_value[1..]).strip
 
-    sig { override.returns(String) }
-    def to_idl = "# #{content}\n"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "# #{content}\n"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -7261,13 +7307,16 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      if @type_name == "Bits"
-        "Bits<#{bits_expression.to_idl}>"
-      else
-        @type_name
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        if @type_name == "Bits"
+          "Bits<#{bits_expression.to_idl(include_comments:)}>"
+        else
+          @type_name
+        end
       end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -7345,8 +7394,11 @@ module Idl
       text_value.gsub('"', "")
     end
 
-    sig { override.returns(String) }
-    def to_idl = text_value
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = text_value
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -7722,8 +7774,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = text_value
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = text_value
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { returns(T::Boolean) }
     def signed?
@@ -7983,9 +8038,12 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      "#{name}(#{arg_nodes.map(&:to_idl).join(',')})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        "#{name}(#{arg_nodes.map { |_n| _n.to_idl(include_comments:) }.join(',')})"
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -8042,8 +8100,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = text_value
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = text_value
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -8187,9 +8248,10 @@ module Idl
       values.uniq
     end
 
-    sig { override.returns(String) }
-    def to_idl
-      stmts.map(&:to_idl).join("\n")
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = AstNode.join_stmts(stmts, include_comments:)
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -8237,13 +8299,16 @@ module Idl
       @ret_type = Type.new(:bits, width: symtab.get("INSTR_ENC_WIDTH").value)
     end
 
-    sig { override.returns(String) }
-    def to_idl
-      <<~IDL
-        fetch {
-          #{body.to_idl}
-        }
-      IDL
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        <<~IDL
+          fetch {
+            #{body.to_idl(include_comments:)}
+          }
+        IDL
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -8534,39 +8599,42 @@ module Idl
       end
     end
 
-    sig { override.returns(String) }
-    def to_idl
-      qualifier = qualifier_str
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        qualifier = qualifier_str
 
-      returns_idl =
-        if return_type_nodes.empty?
-          ""
-        else
-          "returns #{return_type_nodes.map(&:to_idl).join(', ')}"
-        end
+        returns_idl =
+          if return_type_nodes.empty?
+            ""
+          else
+            "returns #{return_type_nodes.map { |_n| _n.to_idl(include_comments:) }.join(', ')}"
+          end
 
-      args_idl =
-        if @argument_nodes.empty?
-          ""
-        else
-          "arguments #{@argument_nodes.map(&:to_idl).join(", ")}"
-        end
+        args_idl =
+          if @argument_nodes.empty?
+            ""
+          else
+            "arguments #{@argument_nodes.map { |_n| _n.to_idl(include_comments:) }.join(", ")}"
+          end
 
-      body_idl =
-        if builtin? || generated?
-          ""
-        else
-          "body { #{@body.to_idl} }"
-        end
+        body_idl =
+          if builtin? || generated?
+            ""
+          else
+            "body { #{@body.to_idl(include_comments:)} }"
+          end
 
-      <<~IDL
-        #{qualifier} function #{name} {
-          #{returns_idl}
-          #{args_idl}
-          description { #{description} }
-          #{body_idl}
-        }
-      IDL
+        <<~IDL
+          #{qualifier} function #{name} {
+            #{returns_idl}
+            #{args_idl}
+            description { #{description} }
+            #{body_idl}
+          }
+        IDL
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -8757,14 +8825,14 @@ module Idl
     def execute(symtab) = return_value(symtab)
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      idl = "for (#{init.to_idl}; #{condition.to_idl}; #{update.to_idl}) {"
-      stmts.each do |s|
-        idl << s.to_idl
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        body_str = AstNode.join_stmts(stmts, include_comments:)
+        sep = body_str.end_with?("\n") ? "" : "\n"
+        "for (#{init.to_idl(include_comments:)}; #{condition.to_idl(include_comments:)}; #{update.to_idl(include_comments:)}) {#{body_str}#{sep}}"
       end
-      idl << "}"
-      idl
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -8909,9 +8977,10 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      stmts.map(&:to_idl).join("")
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = AstNode.join_stmts(stmts, include_comments:)
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -8997,9 +9066,14 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      " else if (#{cond.to_idl}) { #{body.to_idl} }"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        body_str = body.to_idl(include_comments:)
+        sep = body_str.end_with?("\n") ? "" : "\n"
+        " else if (#{cond.to_idl(include_comments:)}) { #{body_str}#{sep}}"
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -9291,20 +9365,25 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      result = "if (#{if_cond.to_idl}) { "
-      result << if_body.to_idl
-      result << "} "
-      elseifs.each do |eif|
-        result << eif.to_idl
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        body_str = if_body.to_idl(include_comments:)
+        # Ensure the closing } is on its own line when the body ends with a
+        # trailing comment — otherwise the } would appear inside the comment.
+        sep = body_str.end_with?("\n") ? "" : "\n"
+        result = "if (#{if_cond.to_idl(include_comments:)}) { #{body_str}#{sep}} "
+        elseifs.each do |eif|
+          result << eif.to_idl(include_comments:)
+        end
+        unless final_else_body.stmts.empty?
+          else_body_str = final_else_body.to_idl(include_comments:)
+          else_sep = else_body_str.end_with?("\n") ? "" : "\n"
+          result << " else { #{else_body_str}#{else_sep}} "
+        end
+        result
       end
-      unless final_else_body.stmts.empty?
-        result << " else { "
-        result << final_else_body.to_idl
-        result << "} "
-      end
-      result
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -9397,9 +9476,12 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      "CSR[#{csr_name}].#{@field_name}"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        "CSR[#{csr_name}].#{@field_name}"
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -9539,8 +9621,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "CSR[#{@csr_name}]"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "CSR[#{@csr_name}]"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -9605,8 +9690,11 @@ module Idl
     def execute(_symtab) = value_error "CSR writes are global"
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "#{csr.to_idl}.sw_write(#{expression.to_idl})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "#{csr.to_idl(include_comments:)}.sw_write(#{expression.to_idl(include_comments:)})"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {
@@ -9725,9 +9813,12 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl
-      "#{csr_name}.#{function_name}(#{args.map(&:to_idl).join(', ')})"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = begin
+        "#{csr_name}.#{function_name}(#{args.map { |_n| _n.to_idl(include_comments:) }.join(', ')})"
+      end
+      include_comments ? with_comments(_idl) : _idl
     end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
@@ -9806,8 +9897,11 @@ module Idl
     end
 
     # @!macro to_idl
-    sig { override.returns(String) }
-    def to_idl = "CSR[#{idx.text_value}]"
+    sig { override.params(include_comments: T::Boolean).returns(String) }
+    def to_idl(include_comments: false)
+      _idl = "CSR[#{idx.text_value}]"
+      include_comments ? with_comments(_idl) : _idl
+    end
 
     sig { override.returns(T::Hash[String, T.untyped]) }
     def to_h = {

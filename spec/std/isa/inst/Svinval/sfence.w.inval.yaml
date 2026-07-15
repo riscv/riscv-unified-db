@@ -24,11 +24,11 @@ access:
 assembly: ""
 operation(): |
   if (mode() == PrivilegeMode::U) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   if (CSR[misa].H == 1 && mode() == PrivilegeMode::VU) {
-    raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+    raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
   }
 
   # order all prior stores already visible to the current hart

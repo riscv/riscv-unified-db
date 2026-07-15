@@ -39,7 +39,7 @@ pseudoinstructions:
 operation(): |
   check_f_ok($encoding);
 
-  Bits<32> sp_value = {F[fs2][31], F[fs1][30:0]};
+  Bits<32> sp_value = {F[fs2][31], F[fs1][30 : 0]};
 
   if (implemented?(ExtensionName::D)) {
     F[fd] = nan_box(32, 64, sp_value);

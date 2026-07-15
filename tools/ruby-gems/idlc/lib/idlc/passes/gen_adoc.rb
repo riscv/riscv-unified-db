@@ -72,11 +72,6 @@ module Idl
       "#{' ' * indent}#{text_value}"
     end
   end
-  class MultiVariableAssignmentAst < AstNode
-    def gen_adoc(indent, indent_spaces: 2)
-      "#{' ' * indent}(#{variables.map { |v| v.gen_adoc(0, indent_spaces:) }.join(', ')} = #{function_call.gen_adoc(0, indent_spaces:)})"
-    end
-  end
   class CsrFunctionCallAst < AstNode
     def gen_adoc(indent, indent_spaces: 2)
       args_adoc = args.map { |arg| arg.gen_adoc(0) }

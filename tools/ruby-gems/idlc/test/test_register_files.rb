@@ -51,7 +51,7 @@ class TestRegisterFiles < Minitest::Test
     refute_nil f_var, "Expected 'F' to be defined in symtab"
     assert_equal :array, f_var.type.kind
     assert_equal 32, f_var.type.width
-    assert f_var.type.qualifiers.include?(:global), "Expected :global qualifier on F"
+    assert_includes f_var.type.qualifiers, :global, "Expected :global qualifier on F"
 
     sub = f_var.type.sub_type
     assert_instance_of Idl::RegFileElementType, sub, "Expected sub_type to be RegFileElementType"
@@ -106,9 +106,7 @@ class TestRegisterFiles < Minitest::Test
   def test_regfile_not_const_eval
     symtab = Idl::SymbolTable.new(register_files: [@mock_f_rf])
 
-    m = @compiler.parser.parse("F[0]", root: :expression)
-    refute_nil m
-    ast = m.to_ast
+    ast = @compiler.ts_build("F[0]", filename: "[EXPRESSION]", root: :expression)
 
     refute ast.const_eval?(symtab), "F[0] should not be compile-time-evaluable"
   end
@@ -123,9 +121,7 @@ class TestRegisterFiles < Minitest::Test
       ]
     )
 
-    m = @compiler.parser.parse("F[rs1]", root: :expression)
-    refute_nil m
-    ast = m.to_ast
+    ast = @compiler.ts_build("F[rs1]", filename: "[EXPRESSION]", root: :expression)
 
     srcs = ast.find_src_registers(symtab)
     assert_equal [["F", 3]], srcs, "Expected find_src_registers to return [[\"F\", 3]]"
@@ -142,9 +138,7 @@ class TestRegisterFiles < Minitest::Test
       ]
     )
 
-    m = @compiler.parser.parse("F[rd] = v;", root: :statement)
-    refute_nil m
-    ast = m.to_ast
+    ast = @compiler.ts_build("F[rd] = v;", filename: "[STATEMENT]", root: :statement)
 
     dsts = ast.find_dst_registers(symtab)
     assert_equal [["F", 7]], dsts, "Expected find_dst_registers to return [[\"F\", 7]]"
@@ -161,7 +155,7 @@ class TestRegisterFiles < Minitest::Test
     refute_nil x_var, "X should still be in symtab"
     assert_equal :array, x_var.type.kind
     assert_equal 32, x_var.type.width
-    assert x_var.type.qualifiers.include?(:global)
+    assert_includes x_var.type.qualifiers, :global
 
     sub = x_var.type.sub_type
     assert_instance_of Idl::RegFileElementType, sub

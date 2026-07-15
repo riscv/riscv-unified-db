@@ -34,7 +34,7 @@ operation(): |
   XReg orig_val = X[rs1];
   XReg tmp;
 
-  for (U32 i=0; i<xlen(); i++) {
+  for (U32 i = 0; i < xlen(); i++) {
     tmp[xlen() - 1 - i] = orig_val[i];
   }
 

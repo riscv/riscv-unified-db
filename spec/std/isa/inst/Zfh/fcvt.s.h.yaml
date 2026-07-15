@@ -36,11 +36,11 @@ access:
 operation(): |
   check_f_ok($encoding);
 
-  Bits<32> sp_value = F[fs1][31:0];
+  Bits<32> sp_value = F[fs1][31 : 0];
 
   Bits<1> sign = sp_value[31];
-  Bits<8> exp = sp_value[30:23];
-  Bits<23> frac = sp_value[22:0];
+  Bits<8> exp = sp_value[30 : 23];
+  Bits<23> frac = sp_value[22 : 0];
 
   if (exp == 0xFF) {
     if (frac != 0) {
@@ -49,7 +49,7 @@ operation(): |
       }
       F[fd] = nan_box(16, FLEN, HP_CANONICAL_NAN);
     } else {
-      F[fd] = nan_box(16, FLEN, packToF16UI( sign, 0x1F, 0 ));
+      F[fd] = nan_box(16, FLEN, packToF16UI(sign, 0x1F, 0));
     }
   } else {
 
@@ -58,12 +58,11 @@ operation(): |
     # is OR-red with the sticky
     Bits<16> frac16 = (frac >> 9) | ((frac & 0x1ff) != 0 ? 1 : 0);
     if ((exp | frac16) == 0) {
-      F[fd] = nan_box(16, FLEN, packToF16UI( sign, 0, 0 ));
+      F[fd] = nan_box(16, FLEN, packToF16UI(sign, 0, 0));
     } else {
       assert(false, "TODO: implement roundPackToF16");
       # F[fd] = soffloat_roundPackToF16(sign, exp - 0x71, frac16 | 0x4000);
     }
-
   }
 
   mark_f_state_dirty();

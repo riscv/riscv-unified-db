@@ -1,0 +1,10 @@
+{
+  "name": "idl-gen",
+  "version": "0.1.0",
+  "description": "Generate IDL syntax highlighting artifacts from the tree-sitter grammar",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "generate": "node index.js"
+  }
+}

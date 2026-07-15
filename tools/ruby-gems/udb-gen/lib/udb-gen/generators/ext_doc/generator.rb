@@ -181,6 +181,7 @@ module UdbGen
         "-a imagesdir=#{params[:images]}",
         "-r asciidoctor-diagram",
         "-r idl_highlighter",
+        "-r idl_highlighter/pdf_ext",
         "-a wavedrom=#{Udb.repo_root}/node_modules/.bin/wavedrom-cli",
         "-o #{pdf_filename}",
         adoc_filename

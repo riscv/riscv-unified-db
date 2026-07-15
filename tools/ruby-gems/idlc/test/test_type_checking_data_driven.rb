@@ -104,15 +104,8 @@ class TestTypeCheckingDataDriven < Minitest::Test
   def compile_idl(idl, test_type)
     root = test_type == "initialization" ? :assignment : :expression
 
-    @compiler.parser.set_input_file("", 0)
-    m = @compiler.parser.parse(idl, root: root)
-
-    unless m
-      raise "Failed to parse IDL: #{idl}\nReason: #{@compiler.parser.failure_reason}"
-    end
-
-    ast = m.to_ast
-    raise "Failed to convert to AST" unless ast
+    ast = @compiler.build_ast(idl, root: root)
+    raise "Failed to build AST for IDL: #{idl}" unless ast
 
     ast.freeze_tree(@symtab)
     ast.type_check(@symtab, strict: false)

@@ -87,4 +87,4 @@ sw_read(): |
     }
   }
 
-  return read_mtime()[63:32];
+  return read_mtime()[63 : 32];

@@ -37,7 +37,7 @@ operation(): |
   XReg return_addr = $pc + 2;
   X[1] = return_addr;
 
-  XReg jump_table_base = { CSR[jvt].BASE, 6'b000000 };
+  XReg jump_table_base = {CSR[jvt].BASE, 6'b000000};
   XReg virtual_address = jump_table_base + index `* (xlen() / 8);
   XReg addr;
   TranslationResult result;
@@ -56,7 +56,7 @@ operation(): |
     addr = read_physical_memory(32, result.paddr);
   } else {
     addr = read_physical_memory(64, result.paddr);
-  }  # Ensure low-order bit is clear
+  } # Ensure low-order bit is clear
 
   addr = addr & $signed(2'b10);
 

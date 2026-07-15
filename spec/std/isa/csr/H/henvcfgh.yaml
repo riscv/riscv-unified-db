@@ -117,4 +117,4 @@ fields:
     reset_value(): |
       return (implemented?(ExtensionName::Svadu)) ? UNDEFINED_LEGAL : 0;
 sw_read(): |
-  return CSR[henvcfg].sw_read()[63:32];
+  return CSR[henvcfg].sw_read()[63 : 32];

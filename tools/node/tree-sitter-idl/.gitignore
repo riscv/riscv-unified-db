@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+bindings/c/
+bindings/go/
+bindings/node/
+bindings/python/
+bindings/rust/
+bindings/swift/
+binding.gyp
+node_modules/
+src/*.o
+*.so
+*.dylib
+*.a
+*.pc
+build/

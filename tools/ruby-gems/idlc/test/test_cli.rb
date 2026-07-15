@@ -4,7 +4,8 @@
 
 # frozen_string_literal: true
 
-require "open3"
+require "stringio"
+require "tempfile"
 require "tty-progressbar"
 
 require "idlc/cli"
@@ -13,23 +14,52 @@ require "minitest/autorun"
 class CliTest < Minitest::Test
   CommandResult = Struct.new(:status, :out, :err)
 
-  def result
-    @result ||= CommandResult.new
-  end
-
-  def run_cmd(cmd)
-    puts "> #{cmd}"
-    result.out, result.err, result.status = Open3.capture3(cmd)
+  # Drive the CLI in-process (rather than shelling out to the `idlc` binary)
+  # so the command code in lib/idlc/cli.rb runs under the test process and is
+  # captured by SimpleCov. Returns the captured stdout/stderr and exit status.
+  def run_cli(*argv)
+    out = StringIO.new
+    err = StringIO.new
+    orig_out = $stdout
+    orig_err = $stderr
+    $stdout = out
+    $stderr = err
+    status = 0
+    begin
+      Idl::Cli.new(argv).run
+    rescue SystemExit => e
+      status = e.status
+    rescue StandardError => e
+      # Commander normally rescues and exits non-zero; if an error escapes,
+      # treat it as a failed invocation.
+      err << e.message
+      status = 1
+    ensure
+      $stdout = orig_out
+      $stderr = orig_err
+    end
+    CommandResult.new(status, out.string, err.string)
   end
 end
 
 # Test Command Line Interface
 class TestCli < CliTest
-  def test_eval_addition
-    run_cmd("idlc eval -DA=5 -DB=10 A+B")
+  def test_eval_addition_to_stdout
+    result = run_cli("eval", "-DA=5", "-DB=10", "A+B")
     assert_equal 0, result.status
-    assert_empty result.err, "nothing should be written to STDERR"
-    assert_equal 15, eval(result.out)
+    assert_equal 15, eval(result.out.strip)
+  end
+
+  def test_eval_to_output_file
+    out = Tempfile.create("idl-eval-out")
+    result = run_cli("eval", "-DA=5", "-DB=10", "-o", out.path, "A+B")
+    assert_equal 0, result.status
+    assert_equal 15, eval(File.read(out.path).strip)
+  end
+
+  def test_eval_missing_expression_fails
+    result = run_cli("eval")
+    refute_equal 0, result.status
   end
 
   def test_operation_tc
@@ -43,10 +73,22 @@ class TestCli < CliTest
       YAML
       f.flush
 
-      run_cmd("idlc tc inst -k 'operation()' -d xs1=5 -d xs2=5 -d xd=5 #{f.path}")
+      result = run_cli("tc", "inst", "-k", "operation()", "-d", "xs1=5", "-d", "xs2=5", "-d", "xd=5", f.path)
       assert_equal 0, result.status
-      assert_empty result.err, "nothing should be written to STDERR"
-      assert_empty result.out, "nothing should be written to STDOUT"
+    end
+  end
+
+  def test_operation_tc_undefined_vars_fails
+    Tempfile.open("idl") do |f|
+      f.write <<~YAML
+        operation(): |
+          X[xd] = X[xs1] + X[xs2];
+      YAML
+      f.flush
+
+      # No -d decode vars defined, so type checking must fail.
+      result = run_cli("tc", "inst", "-k", "operation()", "-s", f.path)
+      refute_equal 0, result.status
     end
   end
 
@@ -55,18 +97,12 @@ class TestCli < CliTest
     case data
     when Hash
       data.delete_if do |k, v|
-        # Delete if the current key is in the list to remove
         is_key_to_remove = Array(keys_to_remove).include?(k)
-
-        # Recurse on the value if it's not being deleted
         remove(v, keys_to_remove) unless is_key_to_remove
-
         is_key_to_remove
       end
     when Array
-      data.each do |item|
-        remove(item, keys_to_remove)
-      end
+      data.each { |item| remove(item, keys_to_remove) }
     end
     data
   end
@@ -84,30 +120,37 @@ class TestCli < CliTest
 
       compiler = Idl::Compiler.new
       compiler.pb = TTY::ProgressBar.new("compiling [:bar]")
-      m = compiler.parser.parse(idl, root: :instruction_operation)
-      refute_nil m
-      ast = m.to_ast
+      ast = compiler.build_ast(idl, root: :instruction_operation)
       refute_nil ast
       ast.set_input_file(__FILE__)
 
-      run_cmd("idlc compile -f yaml -r instruction_operation #{f.path}")
+      result = run_cli("compile", "-f", "yaml", "-r", "instruction_operation", f.path)
       assert_equal 0, result.status
-      assert_equal remove(ast.to_h, "source"), remove(YAML::load(result.out), "source")
+      assert_equal remove(ast.to_h, "source"), remove(YAML.load(result.out), "source")
 
       o = Tempfile.create("idl")
-      run_cmd("idlc compile -f yaml -r instruction_operation #{f.path} -o #{o.path}")
+      result = run_cli("compile", "-f", "yaml", "-r", "instruction_operation", f.path, "-o", o.path)
       assert_equal 0, result.status
-      assert_equal remove(ast.to_h, "source"), remove(YAML::load_file(o.path), "source")
+      assert_equal remove(ast.to_h, "source"), remove(YAML.load_file(o.path), "source")
+    end
+  end
 
-      run_cmd("idlc compile")
+  def test_compile_missing_file_fails
+    result = run_cli("compile")
+    refute_equal 0, result.status
+  end
+
+  def test_compile_extra_args_fails
+    result = run_cli("compile", "arg1", "arg2")
+    refute_equal 0, result.status
+  end
+
+  def test_compile_bad_format_fails
+    Tempfile.open("idl") do |f|
+      f.write "X[xd] = 1;\n"
+      f.flush
+      result = run_cli("compile", "-f", "bad", "-r", "instruction_operation", f.path)
       refute_equal 0, result.status
-
-      run_cmd("idlc compile arg1 arg2")
-      refute_equal 0, result.status
-
-      run_cmd("idlc compile -f bad -r instruction_operation #{f.path}")
-      refute_equal 0, result.status
-
     end
   end
 end

@@ -156,3 +156,52 @@ class TestAntoraUtils < Minitest::Test
     assert_equal("xref:insts:foo.adoc#idl:code:inst:foo:bar[foo.bar]", AntoraUtils.resolve_links(link_into_idl_inst_code("foo","bar")))
   end
 end
+
+class TestAntoraUtilsResolveLinksHtml < Minitest::Test
+  AntoraUtils = Udb::Helpers::AntoraUtils
+
+  include Udb::Helpers::TemplateHelpers
+
+  def test_resolve_links_html_ext
+    assert_equal('<a href="../exts/foo.html#udb:doc:ext:foo">bar</a>', AntoraUtils.resolve_links_html("%%UDB_DOC_LINK%ext;foo;bar%%"))
+    assert_equal('<a href="../exts/foo.html#udb:doc:ext:foo">foo</a>', AntoraUtils.resolve_links_html(link_to_udb_doc_ext("foo")))
+  end
+
+  def test_resolve_links_html_ext_param
+    assert_equal('<a href="../exts/foo.html#udb:doc:ext_param:foo:bar">zort</a>', AntoraUtils.resolve_links_html("%%UDB_DOC_LINK%ext_param;foo.bar;zort%%"))
+    assert_equal('<a href="../exts/foo.html#udb:doc:ext_param:foo:bar">bob</a>', AntoraUtils.resolve_links_html(link_to_udb_doc_ext_param("foo","bar","bob")))
+  end
+
+  def test_resolve_links_html_inst
+    assert_equal('<a href="../insts/foo.html#udb:doc:inst:foo">bar</a>', AntoraUtils.resolve_links_html("%%UDB_DOC_LINK%inst;foo;bar%%"))
+    assert_equal('<a href="../insts/foo.html#udb:doc:inst:foo">foo</a>', AntoraUtils.resolve_links_html(link_to_udb_doc_inst("foo")))
+  end
+
+  def test_resolve_links_html_csr
+    assert_equal('<a href="../csrs/foo.html#udb:doc:csr:foo">bar</a>', AntoraUtils.resolve_links_html("%%UDB_DOC_LINK%csr;foo;bar%%"))
+    assert_equal('<a href="../csrs/foo.html#udb:doc:csr:foo">foo</a>', AntoraUtils.resolve_links_html(link_to_udb_doc_csr("foo")))
+  end
+
+  def test_resolve_links_html_csr_field
+    assert_equal('<a href="../csrs/foo.html#udb:doc:csr_field:foo:bar">zort</a>', AntoraUtils.resolve_links_html("%%UDB_DOC_LINK%csr_field;foo*bar;zort%%"))
+    assert_equal('<a href="../csrs/foo.html#udb:doc:csr_field:foo:bar">foo.bar</a>', AntoraUtils.resolve_links_html(link_to_udb_doc_csr_field("foo","bar")))
+  end
+
+  def test_resolve_links_html_func
+    assert_equal('<a href="../funcs/funcs.html#udb:doc:func:foo">bar</a>', AntoraUtils.resolve_links_html("%%UDB_DOC_LINK%func;foo;bar%%"))
+    assert_equal('<a href="../funcs/funcs.html#udb:doc:func:foo">foo</a>', AntoraUtils.resolve_links_html(link_to_udb_doc_idl_func("foo")))
+  end
+
+  def test_resolve_links_html_idl_code
+    assert_equal('<a href="../insts/foo.html#idl:code:inst:foo:bar">zort</a>', AntoraUtils.resolve_links_html("%%IDL_CODE_LINK%inst;foo.bar;zort%%"))
+    assert_equal('<a href="../insts/foo.html#idl:code:inst:foo:bar">foo.bar</a>', AntoraUtils.resolve_links_html(link_into_idl_inst_code("foo","bar")))
+  end
+
+  def test_resolve_links_html_escapes_link_text
+    assert_equal('<a href="../funcs/funcs.html#udb:doc:func:foo">&lt;foo&gt;</a>', AntoraUtils.resolve_links_html("%%UDB_DOC_LINK%func;foo;<foo>%%"))
+  end
+
+  def test_resolve_links_html_passthrough_non_link_text
+    assert_equal("some plain text", AntoraUtils.resolve_links_html("some plain text"))
+  end
+end

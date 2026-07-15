@@ -384,19 +384,7 @@ module Udb
                 :function_body
               end
             compiler = T.must(@compiler)
-            compiler.parser.set_input_file(obj_file_path.to_s, starting_line, starting_offset, line_file_offsets)
-            m = compiler.parser.parse(idl_source, root: parse_root)
-            if m.nil?
-              raise SyntaxError, <<~MSG
-                While parsing #{obj_file_path}:#{compiler.parser.failure_line}
-
-                #{compiler.parser.failure_reason}
-              MSG
-            end
-            ast = m.to_ast
-            if ast.nil?
-              raise "IDL compiler could not convert to ast"
-            end
+            ast = compiler.ts_build(idl_source, filename: obj_file_path.to_s, starting_line:, root: parse_root)
             ast.set_input_file_unless_already_set(obj_file_path, starting_line, starting_offset, line_file_offsets)
             resolved[key_minus_args] = ast.to_h
           end

@@ -49,8 +49,8 @@ operation(): |
   # Skip over _this_ 16-bit instruction
   XReg return_addr = $pc + 2;
 
-  XReg jump_table_base = { CSR[jvt].BASE, 6'b000000 };
-  XReg index = { index_7_5, index_4_0 };
+  XReg jump_table_base = {CSR[jvt].BASE, 6'b000000};
+  XReg index = {index_7_5, index_4_0};
   XReg virtual_address = jump_table_base + index `* (xlen() / 8);
   XReg entry;
   TranslationResult result;
@@ -73,9 +73,11 @@ operation(): |
 
   # Bit 0 of entry is metadata: 0 = link to ra (x1), 1 = link to t0 (x5)
   if (entry[0] == 1'b1) {
-    X[5] = return_addr;  # t0
+    X[5] = return_addr;
+    # t0
   } else {
-    X[1] = return_addr;  # ra
+    X[1] = return_addr;
+    # ra
   }
 
   # Jump target always has bit 0 cleared

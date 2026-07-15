@@ -35,6 +35,6 @@ pseudoinstructions:
   - when: xs1 == 0
     to: negw xd, xs2
 operation(): |
-  Bits<32> t0 = X[xs1][31:0];
-  Bits<32> t1 = X[xs2][31:0];
+  Bits<32> t0 = X[xs1][31 : 0];
+  Bits<32> t1 = X[xs2][31 : 0];
   X[xd] = sext(t0 - t1, 32);

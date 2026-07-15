@@ -32,6 +32,7 @@ Gem::Specification.new do |s|
   s.add_dependency "asciidoctor"
   s.add_dependency "asciidoctor-diagram"
   s.add_dependency "asciidoctor-pdf"
+  s.add_dependency "idl_highlighter", "= 0.1.0"
   s.add_dependency "rake"
   s.add_dependency "sorbet-runtime"
   s.add_dependency "tty-exit"

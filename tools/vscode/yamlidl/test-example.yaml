@@ -35,7 +35,6 @@ behavior(): |
     X[rd] = X[rs1] + X[rs2]
   }
   return true
-
 # Block scalar with folded style (>)
 description_long(): >
   function add(Bits<5> rd, Bits<5> rs1) {
@@ -53,14 +52,12 @@ instruction:
       Bits<XLEN> result = X[rs1] + X[rs2]
       X[rd] = result
     }
-
   # Another nested example
   decode(Bits<32> inst): |
-    Bits<5> rd = inst[11:7]
-    Bits<5> rs1 = inst[19:15]
-    Bits<5> rs2 = inst[24:20]
+    Bits<5> rd = inst[11 : 7]
+    Bits<5> rs1 = inst[19 : 15]
+    Bits<5> rs2 = inst[24 : 20]
     return {rd, rs1, rs2}
-
 # Multiple levels of nesting
 processor:
   core:

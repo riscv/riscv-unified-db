@@ -39,7 +39,6 @@ fields:
     type(): |
       # this is read-only if FS and VS are both read-only
       # otherwise, it is read-only with hardware update
-
       if (implemented?(ExtensionName::F) && (HW_MSTATUS_FS_DIRTY_UPDATE != "never")) {
         return CsrFieldType::ROH;
       } else if (implemented?(ExtensionName::V) && (HW_MSTATUS_VS_DIRTY_UPDATE != "never")) {
@@ -50,13 +49,11 @@ fields:
     reset_value(): |
       # the reset value is known if both FS and VS are legal
       # make this a function call so that it can be displayed succinctly in docs
-
       if (mstatus_sd_has_known_reset()) {
         return mstatus_sd_reset_value();
       } else {
         return UNDEFINED_LEGAL;
       }
-
   MDT:
     location: 42
     long_name: Machine Disable Trap
@@ -135,11 +132,9 @@ fields:
       Since the CPU does not support little endian, this is hardwired to 1.
     type(): |
       return (M_MODE_ENDIANNESS == "dynamic") ? CsrFieldType::RW : CsrFieldType::RO;
-
     # if endianness is mutable, MBE comes out of reset in little-endian mode
     reset_value(): |
       return (M_MODE_ENDIANNESS == "big") ? 1 : 0;
-
   SBE:
     location: 36
     definedBy:
@@ -159,14 +154,14 @@ fields:
       Since the CPU does not support little endian, this is hardwired to 1.
     type(): |
       return (S_MODE_ENDIANNESS == "dynamic") ? CsrFieldType::RW : CsrFieldType::RO;
-
     reset_value(): |
       if (S_MODE_ENDIANNESS == "little") {
         return 0;
       } else if (S_MODE_ENDIANNESS == "big") {
         return 1;
       } else {
-        return 0; # little endian
+        return 0;
+        # little endian
       }
   SXL:
     location: 35-34
@@ -195,7 +190,6 @@ fields:
       --
     type(): |
       return (implemented?(ExtensionName::S) && $array_size(SXLEN) > 1) ? CsrFieldType::RW : CsrFieldType::RO;
-
     sw_write(csr_value): |
       if (csr_value.SXL < csr_value.UXL) {
         return CSR[mstatus].SXL;
@@ -205,7 +199,6 @@ fields:
       } else {
         return csr_value.SXL;
       }
-
     reset_value(): |
       if ($array_size(SXLEN) == 1 && $array_includes?(SXLEN, 32)) {
         return 1;
@@ -214,7 +207,6 @@ fields:
       } else {
         return 2;
       }
-
   UXL:
     location: 33-32
     definedBy:
@@ -245,7 +237,6 @@ fields:
       --
     type(): |
       return ($array_size(UXLEN) > 1) ? CsrFieldType::RW : CsrFieldType::RO;
-
     sw_write(csr_value): |
       if (csr_value.SXL < csr_value.UXL) {
         return CSR[mstatus].UXL;
@@ -255,7 +246,6 @@ fields:
       } else {
         return csr_value.UXL;
       }
-
     reset_value(): |
       if ($array_size(UXLEN) == 1 && UXLEN[0] == 32) {
         return 1;
@@ -264,7 +254,6 @@ fields:
       } else {
         return 2;
       }
-
   SPELP:
     location: 23
     long_name: S-mode Previous Expected Landing Pad state
@@ -497,7 +486,7 @@ fields:
         return $array_size(MSTATUS_VS_LEGAL_VALUES) == 1 ? CsrFieldType::RO : CsrFieldType::RW;
       }
     reset_value(): |
-      if (CSR[misa].V == 1'b1){
+      if (CSR[misa].V == 1'b1) {
         return UNDEFINED_LEGAL;
       } else if ((CSR[misa].S == 1'b0) && (CSR[misa].V == 1'b0)) {
         # must be read-only-0
@@ -513,7 +502,7 @@ fields:
         }
       }
     sw_write(csr_value): |
-      if (implemented?(ExtensionName::V) && CSR[misa].V == 1'b1){
+      if (implemented?(ExtensionName::V) && CSR[misa].V == 1'b1) {
         return $array_includes?(MSTATUS_VS_LEGAL_VALUES, csr_value.VS) ? csr_value.VS : UNDEFINED_LEGAL_DETERMINISTIC;
       } else if (!implemented?(ExtensionName::S) && !implemented?(ExtensionName::V)) {
         # must be read-only-0
@@ -583,7 +572,6 @@ fields:
       Since the CPU does not support little endian in U-mode, this is hardwired to 1.
     type(): |
       return (U_MODE_ENDIANNESS == "dynamic") ? CsrFieldType::RW : CsrFieldType::RO;
-
     reset_value(): |
       if (U_MODE_ENDIANNESS == "little") {
         return 0;
@@ -592,7 +580,6 @@ fields:
       } else {
         return UNDEFINED_LEGAL;
       }
-
   SPIE:
     location: 5
     long_name: S-mode Previous Interrupt Enable

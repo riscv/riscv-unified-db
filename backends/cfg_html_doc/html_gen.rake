@@ -125,7 +125,8 @@ rule %r{#{$root}/gen/cfg_html_doc/.*/antora/playbook.yaml} => proc { |tname|
       - path: partials/footer-scripts.hbs
         contents: |
           <script id="site-script" src="{{{uiRootPath}}}/js/site.js" data-ui-root-path="{{{uiRootPath}}}"></script>
-          <script async src="{{{uiRootPath}}}/js/vendor/highlight.js"></script>
+          <script src="{{{uiRootPath}}}/js/vendor/highlight.js"></script>
+          <script src="{{{uiRootPath}}}/js/vendor/highlight-idl.js"></script>
           <script async src="{{{uiRootPath}}}/js/vendor/tabs.js"></script>
           {{#if env.SITE_SEARCH_PROVIDER}}
           {{> search-scripts}}
@@ -136,7 +137,9 @@ rule %r{#{$root}/gen/cfg_html_doc/.*/antora/playbook.yaml} => proc { |tname|
           <link rel="stylesheet" href="{{{uiRootPath}}}/css/vendor/tabs.css">
           <link rel="stylesheet" href="{{{uiRootPath}}}/css/vendor/custom.css">
       - path: js/vendor/highlight.js
-        contents: #{$root}/backends/cfg_html_doc/ui/highlight.js
+        contents: #{$root}/node_modules/@highlightjs/cdn-assets/highlight.min.js
+      - path: js/vendor/highlight-idl.js
+        contents: #{$root}/backends/cfg_html_doc/ui/idl-hljs-lang.js
       - path: css/vendor/custom.css
         contents: |
           .small {

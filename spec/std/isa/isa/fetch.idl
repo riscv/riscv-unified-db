@@ -5,8 +5,7 @@
 
 function fetch_memory_aligned_16 {
   returns Bits<16>
-  arguments
-    XReg virtual_address
+  arguments XReg virtual_address
   description {
     Fetch 16 bits from virtual memory using a known aligned address.
   }
@@ -20,7 +19,8 @@ function fetch_memory_aligned_16 {
     }
 
     # may raise an exception
-    access_check(result.paddr, 16, virtual_address, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
+    access_check(result.paddr, 16, virtual_address, MemoryOperation::Fetch,
+        ExceptionCode::InstructionAccessFault, mode());
 
     return read_physical_memory(16, result.paddr);
   }
@@ -28,8 +28,7 @@ function fetch_memory_aligned_16 {
 
 function fetch_memory_aligned_32 {
   returns Bits<32>
-  arguments
-    XReg virtual_address
+  arguments XReg virtual_address
   description {
     Fetch 32 bits from virtual memory using a known aligned address.
   }
@@ -43,7 +42,8 @@ function fetch_memory_aligned_32 {
     }
 
     # may raise an exception
-    access_check(result.paddr, 32, virtual_address, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
+    access_check(result.paddr, 32, virtual_address, MemoryOperation::Fetch,
+        ExceptionCode::InstructionAccessFault, mode());
 
     return read_physical_memory(32, result.paddr);
   }
@@ -60,7 +60,7 @@ fetch {
   if (ialign() == 16) {
     # must fetch 16 bits at a time
     enc = fetch_memory_aligned_16($pc);
-    if (enc[1:0] == 2'b11) {
+    if (enc[1 : 0] == 2'b11) {
       Bits<32> upper = fetch_memory_aligned_16($pc + 2);
       enc = (upper << 16) | enc;
     }

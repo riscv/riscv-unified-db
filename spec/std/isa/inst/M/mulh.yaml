@@ -42,15 +42,15 @@ access:
 data_independent_timing: true
 operation(): |
   if (implemented?(ExtensionName::M) && (CSR[misa].M == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   # enlarge and sign extend the sources
-  Bits<1> xs1_sign_bit = X[xs1][xlen()-1];
+  Bits<1> xs1_sign_bit = X[xs1][xlen() - 1];
   Bits<MXLEN `* 2> src1 = {{xlen(){xs1_sign_bit}}, X[xs1]};
 
-  Bits<1> xs2_sign_bit = X[xs2][xlen()-1];
+  Bits<1> xs2_sign_bit = X[xs2][xlen() - 1];
   Bits<MXLEN `* 2> src2 = {{xlen(){xs2_sign_bit}}, X[xs2]};
 
   # grab the high half of the result, and put it in xd
-  X[xd] = (src1 * src2)[(xlen()*8'd2)-1:xlen()];
+  X[xd] = (src1 * src2)[(xlen() * 8'd2) - 1 : xlen()];

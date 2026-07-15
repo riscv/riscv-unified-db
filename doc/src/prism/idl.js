@@ -1,14 +1,8 @@
+// AUTO-GENERATED — do not edit by hand.
+// Source: tools/node/tree-sitter-idl/grammar.json + queries/highlights.scm
+// Regenerate: bin/chore gen idl-highlight
 // Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: BSD-3-Clause-Clear
-//
-// Prism language definition for IDL (ISA Description Language).
-//
-// THIS IS THE CANONICAL SOURCE for IDL syntax highlighting.
-// The TextMate grammar at tools/vscode/idl/syntaxes/idl.tmLanguage.json
-// is generated from this file. To regenerate it, run:
-//
-//   bin/chore gen vscode-idl
-//
 
 module.exports = function (Prism) {
   Prism.languages.idl = {
@@ -19,7 +13,7 @@ module.exports = function (Prism) {
       greedy: true,
     },
 
-    // description { ... } block — content is treated as a string
+    // description { ... } block — content treated as prose
     description: {
       pattern: /\bdescription\s*\{[^}]*\}/,
       greedy: true,
@@ -35,9 +29,9 @@ module.exports = function (Prism) {
       greedy: true,
     },
 
-    // Verilog-style sized literals: 32'hDEAD, 8'd255, 1'b1, 4'o7
+    // Verilog-style sized literals: 32'hDEAD, 8'd255, 1'b1, MXLEN'0
     'verilog-literal': {
-      pattern: /\b(?:\d+|MXLEN)'s?[bBoOdDhH][0-9a-fA-F_]+\b/,
+      pattern: /\b(?:\d+|MXLEN)'s?[bBoOdDhH][0-9a-fA-F_xXzZ]*\b/,
       alias: 'number',
     },
 
@@ -56,34 +50,28 @@ module.exports = function (Prism) {
     // Decimal integers
     number: /\b\d+\b/,
 
-    // Keywords
-    keyword: /\b(?:if|else|for|returns|return|arguments|description|body|builtin|function|enum|bitfield|struct)\b/,
+    // Keywords (from highlights.scm)
+    keyword: /\b(?:if|else|for|return|returns|arguments|body|description|function|enum|bitfield|struct|builtin|generated|external|fetch|include|const|CSR)\b/,
 
-    // Builtin variables and cast operators ($ prefix)
-    builtin: /\$(?:pc|encoding|signed|bits|enum_to_a|enum|array_size|enum_size|enum_element_size)\b/,
+    // Builtin variables and cast operators ($ prefix, from grammar.json)
+    builtin: /\$[a-zA-Z_][a-zA-Z0-9_?]*\b/,
 
     // Boolean literals
     boolean: /\b(?:true|false)\b/,
 
-    // Type aliases
+    // Builtin type names
     'type-alias': {
       pattern: /\b(?:Bits|XReg|U64|U32|Boolean|String)\b/,
       alias: 'class-name',
     },
 
-    // CSR access: CSR[name] or CSR[name].field
-    csr: {
-      pattern: /\bCSR\b/,
-      alias: 'keyword',
-    },
-
     // Enum/bitfield scope operator: Type::Member
     'scope-resolution': {
-      pattern: /\b([A-Z][a-zA-Z0-9_]*)(::[A-Za-z][A-Za-z0-9_]*)\b/,
+      pattern: /\b([A-Z][A-Za-z0-9_]*)(::[A-Z][A-Za-z0-9_]*)\b/,
       inside: {
-        'class-name': /^[A-Z][a-zA-Z0-9_]*/,
+        'class-name': /^[A-Z][A-Za-z0-9_]*/,
         punctuation: /::/,
-        property: /[A-Za-z][A-Za-z0-9_]*$/,
+        property: /[A-Z][A-Za-z0-9_]*$/,
       },
     },
 
@@ -94,7 +82,7 @@ module.exports = function (Prism) {
       alias: 'function',
     },
 
-    // Function calls: name( or name<...>(
+    // Function calls: name( or name?(
     'function-call': {
       pattern: /\b([a-z][a-zA-Z0-9_]*\??)\s*(?:<[^>]*>\s*)?\(/,
       inside: {
@@ -104,7 +92,7 @@ module.exports = function (Prism) {
     },
 
     // Constants and type names (uppercase-first identifiers)
-    constant: /\b[A-Z][a-zA-Z0-9_]*\b/,
+    constant: /\b[A-Z][A-Za-z0-9_]*\b/,
 
     // Widening operators (backtick prefix)
     'widening-operator': {
@@ -113,7 +101,7 @@ module.exports = function (Prism) {
     },
 
     // Operators
-    operator: /->|[+\-*/%&|^~]|<<=?|>>=?|<=?|>=?|[!=]=|&&|\|\||[!~]/,
+    operator: /->|[+\-*\/%&|^~]|<<=?|>>=?|<=?|>=?|[!=]=|&&|\|\||[!~]/,
 
     // Punctuation
     punctuation: /[{}[\]();,.:]/,

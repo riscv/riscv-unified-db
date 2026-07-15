@@ -35,7 +35,7 @@ fields:
       It is recommended that at reset, vill is set.
     type: RO-H
     reset_value(): |
-      return (FOLLOW_VTYPE_RESET_RECOMMENDATION)? 1 : UNDEFINED_LEGAL;
+      return (FOLLOW_VTYPE_RESET_RECOMMENDATION) ? 1 : UNDEFINED_LEGAL;
   VMA:
     location: 7
     description: |
@@ -54,7 +54,7 @@ fields:
       It is recommended that at reset, vill is set, and the remaining bits in vtype are zero.
     type: RO-H
     reset_value(): |
-      return (FOLLOW_VTYPE_RESET_RECOMMENDATION)? 0 : UNDEFINED_LEGAL;
+      return (FOLLOW_VTYPE_RESET_RECOMMENDATION) ? 0 : UNDEFINED_LEGAL;
   VTA:
     location: 6
     description: |
@@ -73,7 +73,7 @@ fields:
       It is recommended that at reset, vill is set, and the remaining bits in vtype are zero.
     type: RO-H
     reset_value(): |
-      return (FOLLOW_VTYPE_RESET_RECOMMENDATION)? 0 : UNDEFINED_LEGAL;
+      return (FOLLOW_VTYPE_RESET_RECOMMENDATION) ? 0 : UNDEFINED_LEGAL;
   VSEW:
     location: 5-3
     description: |
@@ -92,7 +92,7 @@ fields:
       It is recommended that at reset, vill is set, and the remaining bits in vtype are zero.
     type: RO-H
     reset_value(): |
-      return (FOLLOW_VTYPE_RESET_RECOMMENDATION)? 0 : UNDEFINED_LEGAL;
+      return (FOLLOW_VTYPE_RESET_RECOMMENDATION) ? 0 : UNDEFINED_LEGAL;
   VLMUL:
     location: 2-0
     description: |
@@ -122,4 +122,4 @@ fields:
       It is recommended that at reset, vill is set, and the remaining bits in vtype are zero.
     type: RO-H
     reset_value(): |
-      return (FOLLOW_VTYPE_RESET_RECOMMENDATION)? 0 : UNDEFINED_LEGAL;
+      return (FOLLOW_VTYPE_RESET_RECOMMENDATION) ? 0 : UNDEFINED_LEGAL;

@@ -246,6 +246,17 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Copy the gem directory to resolve symlinks
         run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
+      - if: matrix.gem == 'idlc'
+        name: Stage tree-sitter grammar version + C sources into the idlc gem
+        # At install time ext/idlc/extconf.rb downloads a prebuilt grammar
+        # (keyed by TS_IDL_VERSION) and falls back to compiling the C sources +
+        # headers. Stage all of them.
+        run: |
+          mkdir -p gem-build-dir/ext/idlc
+          cp tools/node/tree-sitter-idl/TS_IDL_VERSION gem-build-dir/ext/idlc/
+          cp tools/node/tree-sitter-idl/src/parser.c  gem-build-dir/ext/idlc/
+          cp tools/node/tree-sitter-idl/src/scanner.c gem-build-dir/ext/idlc/
+          cp -r tools/node/tree-sitter-idl/src/tree_sitter gem-build-dir/ext/idlc/
       - name: Create the ${{ matrix.gem }} gem
         run: |
           cd gem-build-dir && \
@@ -280,10 +291,12 @@ jobs:
           PRE="source scl_source enable gcc-toolset-12"
           echo "PRE=$PRE" >> "$GITHUB_ENV"
       - if: matrix.container == 'ruby:3-slim'
-        name: Install make
+        name: Install make and a C compiler
+        # idlc ships a native extension (tree-sitter grammar) compiled at
+        # install time, so a C toolchain is required, not just make.
         run: |
           apt-get update -qq && \
-          apt-get install --no-install-recommends -y make
+          apt-get install --no-install-recommends -y make gcc libc6-dev
       - name: download udb gem
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
@@ -304,6 +317,16 @@ jobs:
           gem install udb.gem
       - name: try z3
         run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
+  regress-idl-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Check IDL formatting
+        run: bin/chore idl-format -f
+
   regress-scripts-unit:
     runs-on: ubuntu-latest
     steps:
@@ -950,6 +973,7 @@ jobs:
   regress-complete:
     runs-on: ubuntu-latest
     needs:
+      - regress-idl-format
       - regress-scripts-unit
       - regress-idlc-unit
       - regress-udb-helpers-unit

@@ -18,15 +18,10 @@ class TestVariables < Minitest::Test
   include TestMixin
 
   def test_array_decl
-    idl = "XReg ary [8]"
-
     compiler = Idl::Compiler.new
     symtab = Idl::SymbolTable.new
 
-    m = compiler.parser.parse(idl, root: :single_declaration)
-    refute_nil m
-
-    ast = m.to_ast
+    ast = compiler.build_ast("XReg ary [8];", root: :single_declaration)
     assert_instance_of Idl::VariableDeclarationAst, ast
 
     assert_equal :array, ast.type(symtab).kind
@@ -34,15 +29,10 @@ class TestVariables < Minitest::Test
   end
 
   def test_ternary_max_size
-    idl = "true ? 5'b0 : 'b0"
-
     compiler = Idl::Compiler.new
     symtab = Idl::SymbolTable.new
 
-    m = compiler.parser.parse(idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+    ast = compiler.build_ast("true ? 5'b0 : 'b0", root: :expression)
     assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
     assert_equal :bits, ast.type(symtab).kind

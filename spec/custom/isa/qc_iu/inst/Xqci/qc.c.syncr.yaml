@@ -43,4 +43,4 @@ operation(): |
     bitmask = (5'b1 << shift) - 1;
   }
   fence_tso();
-  sync_read_after_write_device(false,bitmask);
+  sync_read_after_write_device(false, bitmask);

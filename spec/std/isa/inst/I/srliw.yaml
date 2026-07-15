@@ -33,6 +33,6 @@ access:
 data_independent_timing: true
 operation(): |
   # shamt is between 0-31
-  XReg operand = X[xs1][31:0];
+  XReg operand = X[xs1][31 : 0];
 
   X[xd] = sext(operand >> shamt, 32);

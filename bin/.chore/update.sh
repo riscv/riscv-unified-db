@@ -675,3 +675,112 @@ do_update_z3() {
   echo ""
   echo "Done. GitHub Release ${z3_version} created on riscv/riscv-unified-db."
 }
+
+# Portable sha256 of a single file, printing just the hex digest.
+_chore_sha256() {
+  if command -v sha256sum &>/dev/null; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+#
+# Build and publish the prebuilt tree-sitter IDL grammar shared library.
+#
+# Unlike z3/espresso/eqntott/must (built for several Linux arches via Docker on
+# one runner), the grammar is a native shared object that must be built on the
+# matching OS, so this always builds for the *native* (OS, CPU) only. The
+# release_udb_deps.yml workflow fans out across linux/macos x64/arm64 runners,
+# each uploading its own asset to the shared release with --clobber.
+#
+# Args: $1 - native_only (accepted for interface symmetry; always native)
+#       $2 - force ("yes" to re-upload even if the asset already exists)
+# Returns: 0 on success, exits with 1 on error
+#
+do_update_tree_sitter_idl() {
+  local force=${2:-no}
+
+  if ! command -v gh &>/dev/null; then
+    echo "ERROR: 'gh' CLI is required for 'chore update tree-sitter-idl'. Install from https://cli.github.com" >&2
+    exit 1
+  fi
+
+  local grammar_dir="${UDB_ROOT}/tools/node/tree-sitter-idl"
+  local version_file="${grammar_dir}/TS_IDL_VERSION"
+  local version
+  version=$(tr -d '[:space:]' < "${version_file}") || {
+    echo "ERROR: Could not read ${version_file}" >&2
+    exit 1
+  }
+  local release_tag="tree-sitter-idl-${version}"
+  echo "==> tree-sitter-idl version: ${version} (release tag ${release_tag})"
+
+  # Detect native OS + CPU and the matching shared-object extension.
+  local os ext
+  case "$(uname -s)" in
+    Darwin) os=macos; ext=dylib ;;
+    Linux)  os=linux; ext=so ;;
+    *) echo "ERROR: Unsupported OS: $(uname -s)" >&2; exit 1 ;;
+  esac
+  local cpu
+  case "$(uname -m)" in
+    x86_64)        cpu=x64 ;;
+    arm64|aarch64) cpu=arm64 ;;
+    *) echo "ERROR: Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+  esac
+  local asset="libtree-sitter-idl-${os}-${cpu}.${ext}"
+
+  # If the asset already exists in the release and we're not forcing, skip.
+  if [ "${force}" != "yes" ] && gh release view "${release_tag}" --repo riscv/riscv-unified-db &>/dev/null; then
+    if gh release view "${release_tag}" --repo riscv/riscv-unified-db --json assets \
+         --jq '.assets[].name' 2>/dev/null | grep -qx "${asset}"; then
+      echo "==> ${asset} already present in ${release_tag}. Nothing to do (use -f to rebuild)."
+      return 0
+    fi
+  fi
+
+  echo "==> Building ${asset}..."
+  # parser.c is committed but generated from grammar.json; touch it so make does
+  # not try to regenerate it (which would require the tree-sitter CLI).
+  [ -f "${grammar_dir}/src/parser.c" ] && touch "${grammar_dir}/src/parser.c"
+  if ! make -C "${grammar_dir}" "libtree-sitter-idl.${ext}"; then
+    echo "ERROR: Failed to build libtree-sitter-idl.${ext}. Ensure a C compiler is installed." >&2
+    exit 1
+  fi
+
+  local orig_dir="${PWD}"
+  local work_dir
+  work_dir=$(mktemp -d "${PWD}/build-ts-idl.XXXXXX") || {
+    echo "ERROR: Could not create work directory" >&2
+    exit 1
+  }
+  cp "${grammar_dir}/libtree-sitter-idl.${ext}" "${work_dir}/${asset}"
+
+  echo "==> Generating checksum..."
+  ( cd "${work_dir}" && echo "sha256:$(_chore_sha256 "${asset}")" > "${asset}.checksum" )
+  echo "  $(cat "${work_dir}/${asset}.checksum")"
+
+  echo "==> Uploading ${asset} to GitHub Release ${release_tag}..."
+  # Upload to the existing release; create it first if it doesn't exist yet
+  # (handles parallel CI matrix builds racing to create the release).
+  if ! gh release upload "${release_tag}" \
+    --repo riscv/riscv-unified-db \
+    --clobber \
+    "${work_dir}/${asset}" \
+    "${work_dir}/${asset}.checksum" 2>/dev/null; then
+    echo "==> Release doesn't exist yet, creating it..."
+    gh release create "${release_tag}" \
+      --repo riscv/riscv-unified-db \
+      --title "tree-sitter-idl grammar ${version}" \
+      --notes "Pre-built tree-sitter IDL grammar shared libraries for the idlc/udb gems (linux & macos, x64 & arm64)." \
+      "${work_dir}/${asset}" \
+      "${work_dir}/${asset}.checksum"
+  fi
+
+  cd "${orig_dir}" || exit 1
+  rm -rf "${work_dir}"
+
+  echo ""
+  echo "Done. ${asset} uploaded to GitHub Release ${release_tag} on riscv/riscv-unified-db."
+}

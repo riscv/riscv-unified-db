@@ -38,10 +38,16 @@ h! `<%= arg.type_name.gen_adoc(0) %>`
 
 <%- unless f.builtin? || f.generated? -%>
 <%- body_ast = f.body -%>
-[source,idl,subs="specialchars,macros"]
+<%- _body_idl = idl_format(body_ast.to_idl(include_comments: true), column_width: 80) -%>
+ifdef::backend-pdf[]
+[source,idl,idl-links="<%= idl_code_links_attr(body_ast) %>"]
 ----
-<%= body_ast.gen_adoc(0) %>
+<%= _body_idl %>
 ----
+endif::[]
+ifndef::backend-pdf[]
+<%= idl_code_html_block(_body_idl, idl_link_map(body_ast), format: false) %>
+endif::[]
 <%- end -%>
 
 <%- end -%>

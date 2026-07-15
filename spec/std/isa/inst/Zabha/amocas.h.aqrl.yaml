@@ -38,7 +38,7 @@ access:
   vu: always
 operation(): |
   if (!implemented?(ExtensionName::Zabha)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   memory_model_acquire();

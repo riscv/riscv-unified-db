@@ -84,10 +84,7 @@ class TestControlFlow < Minitest::Test
 
     begin
       compiler = Idl::Compiler.new
-      m = compiler.parser.parse(full_idl, root: :isa)
-      raise "#{compiler.parser.failure_reason}" if m.nil?
-
-      ast = m.to_ast
+      ast = compiler.build_ast(full_idl, root: :isa)
 
       # Create a symbol table and type-check
       symtab = Idl::SymbolTable.new

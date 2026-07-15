@@ -26,7 +26,7 @@ fields:
       # since writes to this register may not be hart-local, it must be handled
       # as a special case
       if (xlen() == 32) {
-        return sw_write_mcycle({csr_value.COUNT[31:0], read_mcycle()[31:0]});
+        return sw_write_mcycle({csr_value.COUNT[31 : 0], read_mcycle()[31 : 0]});
       } else {
         return sw_write_mcycle(csr_value.COUNT);
       }
@@ -37,4 +37,4 @@ fields:
 sw_read(): |
   # since the counter may be shared among harts, reads must be handled
   # as a builtin function
-  return read_mcycle()[63:32];
+  return read_mcycle()[63 : 32];

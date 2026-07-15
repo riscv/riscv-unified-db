@@ -21,10 +21,7 @@ class TestVariables < Minitest::Test
     expected_idl = "5'd0"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
     pruned = ast.prune(symtab)
@@ -39,10 +36,7 @@ class TestVariables < Minitest::Test
     expected_idl = "5'd0"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
     pruned = ast.prune(symtab)
@@ -59,10 +53,7 @@ class TestVariables < Minitest::Test
       expected_idl = "5'#{eval "1 #{op} 1"}"
 
       symtab = Idl::SymbolTable.new
-      m = @compiler.parser.parse(orig_idl, root: :expression)
-      refute_nil m
-
-      ast = m.to_ast
+            ast = @compiler.build_ast(orig_idl, root: :expression)
       assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
       pruned = ast.prune(symtab)
@@ -77,10 +68,7 @@ class TestVariables < Minitest::Test
     expected_idl = "64'h80000000"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
     pruned = ast.prune(symtab)
@@ -94,10 +82,7 @@ class TestVariables < Minitest::Test
     expected_idl = "{32'0,1'b1,{31{1'bx}}}"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     assert_instance_of Idl::TernaryOperatorExpressionAst, ast
 
     pruned = ast.prune(symtab)
@@ -111,10 +96,7 @@ class TestVariables < Minitest::Test
     expected_idl = "32'd1"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m, proc { @compiler.parser.failure_reason }
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -125,10 +107,7 @@ class TestVariables < Minitest::Test
     expected_idl = "16'128"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -139,10 +118,7 @@ class TestVariables < Minitest::Test
     expected_idl = "4'8"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -153,10 +129,7 @@ class TestVariables < Minitest::Test
     expected_idl = "false"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -167,10 +140,7 @@ class TestVariables < Minitest::Test
     expected_idl = "8'15"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -181,10 +151,7 @@ class TestVariables < Minitest::Test
     expected_idl = "8'8"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -195,10 +162,7 @@ class TestVariables < Minitest::Test
     expected_idl = "true"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -237,10 +201,7 @@ class TestVariables < Minitest::Test
     symtab = Idl::SymbolTable.new
     symtab.add("unknown_var", Idl::Var.new("unknown_var", Idl::Type.new(:bits, width: :unknown)))
     # Don't define unknown_var, so it remains unknown
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     # Should preserve the ternary since condition is unknown
@@ -501,10 +462,7 @@ class TestVariables < Minitest::Test
     expected_idl = "8'd15"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -515,10 +473,7 @@ class TestVariables < Minitest::Test
     expected_idl = "3'd2"
 
     symtab = Idl::SymbolTable.new
-    m = @compiler.parser.parse(orig_idl, root: :expression)
-    refute_nil m
-
-    ast = m.to_ast
+        ast = @compiler.build_ast(orig_idl, root: :expression)
     pruned = ast.prune(symtab)
 
     assert_equal expected_idl, pruned.to_idl
@@ -895,5 +850,103 @@ class TestVariables < Minitest::Test
     )
     refute_nil(expected_ast)
     assert_equal expected_ast.to_idl, pruned_ast.to_idl
+  end
+end
+
+# Partial constant-folding / identity pruning of binary expressions where one
+# operand is symbolic (a decode variable: known type/width, unknown value), so
+# the whole expression cannot be folded to a literal and the operator-specific
+# pruning logic in BinaryExpressionAst#prune is exercised.
+class TestBinaryExpressionPrune < Minitest::Test
+  include TestMixin
+
+  def sym_symtab
+    st = Idl::SymbolTable.new
+    st.add!("x", Idl::Var.new("x", Idl::Type.new(:bits, width: 8), decode_var: true))
+    st.add!("y", Idl::Var.new("y", Idl::Type.new(:bits, width: 8), decode_var: true))
+    st.add!("b", Idl::Var.new("b", Idl::Type.new(:boolean), decode_var: true))
+    st.add!("d", Idl::Var.new("d", Idl::Type.new(:boolean), decode_var: true))
+    st
+  end
+
+  def prune_expr(src)
+    @compiler.build_ast(src, root: :expression).prune(sym_symtab)
+  end
+
+  def assert_folds_to(src, expected_idl)
+    assert_equal expected_idl, prune_expr(src).to_idl, "pruning #{src.inspect}"
+  end
+
+  def assert_preserved(src)
+    assert_instance_of Idl::BinaryExpressionAst, prune_expr(src), "pruning #{src.inspect}"
+  end
+
+  # logical AND
+  def test_and_with_true_operand_returns_other
+    assert_folds_to "true && b", "b"
+    assert_folds_to "b && true", "b"
+  end
+
+  def test_and_with_false_operand_is_false
+    assert_folds_to "b && false", "false"
+    assert_folds_to "false && b", "false"
+  end
+
+  def test_and_both_symbolic_preserved
+    assert_preserved "b && d"
+  end
+
+  # logical OR
+  def test_or_with_true_operand_is_true
+    assert_folds_to "b || true", "true"
+    assert_folds_to "true || b", "true"
+  end
+
+  def test_or_with_false_operand_returns_other
+    assert_folds_to "false || b", "b"
+    assert_folds_to "b || false", "b"
+  end
+
+  def test_or_both_symbolic_preserved
+    assert_preserved "b || d"
+  end
+
+  # bitwise AND: x & 0 == 0, x & ~0 == x
+  def test_bitand_zero_is_zero
+    assert_folds_to "x & 0", "8'0"
+    assert_folds_to "0 & x", "8'0"
+  end
+
+  def test_bitand_allones_is_identity
+    assert_folds_to "x & 8'hff", "x"
+    assert_folds_to "8'hff & x", "x"
+  end
+
+  def test_bitand_both_symbolic_preserved
+    assert_preserved "x & y"
+  end
+
+  # bitwise OR: x | 0 == x, x | ~0 == ~0
+  def test_bitor_zero_is_identity
+    assert_folds_to "x | 0", "x"
+    assert_folds_to "0 | x", "x"
+  end
+
+  def test_bitor_allones_is_allones
+    assert_instance_of Idl::IntLiteralAst, prune_expr("x | 8'hff")
+    assert_instance_of Idl::IntLiteralAst, prune_expr("8'hff | x")
+  end
+
+  def test_bitor_both_symbolic_preserved
+    assert_preserved "x | y"
+  end
+
+  # equality and other operators with a symbolic operand are preserved
+  def test_equality_with_symbolic_preserved
+    assert_preserved "x == 8'd5"
+  end
+
+  def test_other_operator_with_symbolic_preserved
+    assert_preserved "x + 8'd1"
   end
 end
