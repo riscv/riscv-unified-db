@@ -1,5 +1,23 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # bin/doctor — check that the development environment is correctly set up.
+
+# Require bash 4.2+ for associative arrays (declare -A) and the [[ -v VAR ]]
+# variable-set test used throughout this script.
+# macOS ships bash 3.2 due to GPLv2 licensing constraints. Install a newer bash:
+#   brew install bash
+# Then re-run with: /opt/homebrew/bin/bash bin/doctor
+# Or add /opt/homebrew/bin to the front of your PATH.
+if [[ "${BASH_VERSINFO[0]}" -lt 4 ]] || \
+   { [[ "${BASH_VERSINFO[0]}" -eq 4 ]] && [[ "${BASH_VERSINFO[1]}" -lt 2 ]]; }; then
+  echo "ERROR: bin/doctor requires bash 4.2 or later." >&2
+  echo "  Your bash: ${BASH_VERSION} ($(command -v bash))" >&2
+  echo "" >&2
+  echo "  macOS ships bash 3.2 due to licensing. Install a newer version:" >&2
+  echo "    brew install bash" >&2
+  echo "" >&2
+  echo "  Then re-run with: /opt/homebrew/bin/bash bin/doctor" >&2
+  exit 1
+fi
 
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 
