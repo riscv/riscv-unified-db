@@ -14,7 +14,11 @@ definedBy:
     name: Zca
 assembly: ""
 encoding:
-  match: "0000000000000001"
+  match: 000-00000-----01
+  variables:
+    - name: imm
+      location: 12|6-2
+      sign_extend: true
 access:
   s: always
   u: always
