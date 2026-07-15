@@ -30,6 +30,11 @@ case "${1:-}" in
     usage
     exit 0
     ;;
+  -*)
+    printf 'bin/doctor: unknown option: %s\n' "$1" >&2
+    usage >&2
+    exit 1
+    ;;
 esac
 
 # Load local toolchain preference (same as ./do)
