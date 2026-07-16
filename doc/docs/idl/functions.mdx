@@ -47,22 +47,6 @@ function maybe_set_flag {
 }
 ```
 
-For functions that return multiple values, list the values after `return`:
-
-```idl
-function divmod {
-  returns Bits<32>, Bits<32>
-  arguments Bits<32> a, Bits<32> b
-  description { Returns quotient and remainder of a / b. }
-  body {
-    return a / b, a % b;
-  }
-}
-
-# at the call site, decompose with a tuple:
-(quot, rem) = divmod(x, y);
-```
-
 ## Function Declarations
 
 The basic form of a function declaration:

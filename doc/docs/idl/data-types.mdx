@@ -18,7 +18,6 @@ IDL has the following types:
   - Bitfields
   - Structs
   - Arrays
-  - Tuples
 - **Other**
   - Strings (limited operators; mainly for configuration parameter checking)
 
@@ -62,7 +61,7 @@ All strings must be compile-time-known values.
 
 ## Composite Types
 
-IDL supports four main composite types — enumerations, bitfields, structs, and arrays — plus a restricted tuple type used only for multi-value function returns.
+IDL supports four composite types: enumerations, bitfields, structs, and arrays.
 
 ### Enumerations
 
@@ -185,17 +184,3 @@ matrix_of_words[3][4]  # Bits<32>; fourth word in the third array of matrix_of_w
 ```
 
 Arrays cannot be cast to `Bits<N>`, so storage order is irrelevant and unspecified.
-
-### Tuples
-
-IDL has a tuple type used to return multiple values from a function. Tuples cannot be instantiated outside of a function call — they must be immediately decomposed into individual variables (no tuple variables).
-
-```idl title="Multiple value function return"
-(quot, remainder) = divmod(32, 5);
-```
-
-When one or more values in a tuple are not needed, assign them to the don't-care symbol (`-`):
-
-```idl title="Discarding a return value"
-(-, remainder) = divmod(value); # quotient is discarded
-```

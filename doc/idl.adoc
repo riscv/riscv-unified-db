@@ -281,24 +281,6 @@ matrix_of_words[3][4]  # Bits<32> type; the fourth word in the third array of ma
 
 Arrays cannot be casted to Bits<N> type, so the storage order is irrelevant and unspecified.
 
-==== Tuples
-
-Technically, IDL also has a tuple type that is used to return multiple values from a function. However, they cannot be instantiated outside of a function call, and must be immediately decomposed into individual variables (_i.e._, you cannot create a tuple variable).
-
-.Multiple value function return
-[source,idl]
-----
-(quot,remainder) = divmod(32, 5);
-----
-
-When one or more values in a tuple is not needed, it can be assigned to the don't-care symbol (`-`).
-
-.Don't care return value
-[source,idl]
-----
-(-, remainder) = divmod(value); # quotient is discarded
-----
-
 == Literals
 
 === Integer literals
