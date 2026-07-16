@@ -13,6 +13,7 @@ require "yaml"
 require "udb/logic"
 require "udb/cfg_arch"
 require "udb/resolver"
+require "udb/obj/non_isa_specification"
 
 class TestCfgArch < Minitest::Test
   include Udb
