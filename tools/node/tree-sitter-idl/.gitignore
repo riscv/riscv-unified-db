@@ -3,9 +3,6 @@
 bindings/c/
 bindings/go/
 bindings/node/
-bindings/python/
-bindings/rust/
-bindings/swift/
 binding.gyp
 node_modules/
 src/*.o
