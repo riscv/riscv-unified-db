@@ -26,6 +26,9 @@ long_description: |
 operation(): "X[rd] = X[rs1] + X[rs2]"
 encoding(): "0000000 rs2 rs1 000 rd 0110011"
 
+# Keys starting with sail() should NOT get IDL highlighting (Issue #1715)
+sail(): "wfi_execution_environment_behavior"
+
 # Keys with arguments - IDL highlighting should be applied
 execute(Bits<5> rd, Bits<5> rs1, Bits<5> rs2): "X[rd] = X[rs1] & X[rs2]"
 
