@@ -1,6 +1,12 @@
 # SPDX-FileCopyrightText: Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
+# Grammar/soname version (drives .pc pkg-config generation and the shared
+# library's SONAME_MAJOR/MINOR below). Independent of TS_IDL_VERSION, which
+# is this repo's own release-tag for the prebuilt-binary GitHub release
+# (bumped by release_udb_deps.yml) — the two are not meant to track each
+# other, and neither tracks package.json's version (unused npm metadata;
+# nothing in this repo publishes to npm).
 VERSION := 0.0.1
 
 LANGUAGE_NAME := tree-sitter-idl
