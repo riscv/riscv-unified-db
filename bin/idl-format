@@ -35,6 +35,7 @@ QUERY_DIR    = File.join(GRAMMAR_DIR, "queries")
 GRAMMAR_PATH = GRAMMAR_SO
 REFLOW_JS    = File.join(ROOT, "tools", "node", "idl-reflow", "index.js")
 NODE_BIN     = File.join(ROOT, "bin", "node")
+TOPIARY_BIN  = File.join(ROOT, "bin", "topiary")
 
 fail_on_change = ARGV.delete("-f")
 
@@ -66,7 +67,7 @@ NCL
 TOPIARY_CONFIG_FILE.flush
 
 TOPIARY_ENV = { "TOPIARY_LANGUAGE_DIR" => QUERY_DIR }.freeze
-TOPIARY_CMD = ["topiary", "--configuration", TOPIARY_CONFIG_FILE.path].freeze
+TOPIARY_CMD = [TOPIARY_BIN, "--configuration", TOPIARY_CONFIG_FILE.path].freeze
 
 at_exit { TOPIARY_CONFIG_FILE.close! }
 
