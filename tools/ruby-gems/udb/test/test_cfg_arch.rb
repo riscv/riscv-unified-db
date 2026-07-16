@@ -107,6 +107,37 @@ class TestCfgArch < Minitest::Test
     end
   end
 
+  def test_implemented_extensions_hash_versions_match_schema
+    info = Udb::Resolver::ConfigInfo.new(
+      name: "test",
+      path: Pathname.new("test.yaml"),
+      overlay_path: nil,
+      unresolved_yaml: {},
+      spec_path: Pathname.new("spec"),
+      merged_spec_path: Pathname.new("merged_spec"),
+      resolved_spec_path: Pathname.new("resolved_spec"),
+      resolver: @resolver
+    )
+
+    cfg = Udb::AbstractConfig.create_from_data({
+      "type" => "fully configured",
+      "name" => "test",
+      "params" => { "MXLEN" => 32 },
+      "implemented_extensions" => [{ "name" => "I", "version" => "2.1" }]
+    }, info)
+
+    assert_equal [{ "name" => "I", "version" => "2.1" }], cfg.implemented_extensions
+
+    assert_raises(ArgumentError) do
+      Udb::AbstractConfig.create_from_data({
+        "type" => "fully configured",
+        "name" => "test",
+        "params" => { "MXLEN" => 32 },
+        "implemented_extensions" => [{ "name" => "I", "version" => "= 2.1" }]
+      }, info).implemented_extensions
+    end
+  end
+
   def test_invalid_full_config
     cfg = <<~CFG
       $schema: config_schema.json#

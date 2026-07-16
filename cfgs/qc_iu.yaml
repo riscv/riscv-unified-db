@@ -7,42 +7,42 @@ name: qc_iu
 arch_overlay: qc_iu
 description: Configuration with the Xqci, Xqccmp, Xqccmt, and Xqccmi custom extensions.
 implemented_extensions:
-  - { name: Sm, version: "= 1.13" }
-  - { name: Smrnmi, version: "= 1.0" }
-  - { name: Smdbltrp, version: "= 1.0" }
-  - { name: I, version: "= 2.1" }
-  - { name: M, version: "= 2.0" }
-  - { name: B, version: "= 1.0" }
-  - { name: Zbs, version: "= 1.0" }
-  - { name: Zbb, version: "= 1.0" }
-  - { name: Zba, version: "= 1.0" }
-  - { name: Zca, version: "= 1.0" }
-  - { name: Zcb, version: "= 1.0" }
-  - { name: Zicntr, version: "= 2.0" }
-  - { name: Zicsr, version: "= 2.0" }
-  - { name: Zihpm, version: "= 2.0" }
-  - { name: Xqccmp, version: "= 0.3" }
-  - { name: Xqccmt, version: "= 0.1.0" }
-  - { name: Xqccmi, version: "= 0.2.0" }
-  - { name: Xqci, version: "= 0.13" }
-  - { name: Xqcia, version: "= 0.7.0" }
-  - { name: Xqciac, version: "= 0.3.0" }
-  - { name: Xqcibi, version: "= 0.2.0" }
-  - { name: Xqcibm, version: "= 0.8.0" }
-  - { name: Xqcicli, version: "= 0.3.0" }
-  - { name: Xqcicm, version: "= 0.2.0" }
-  - { name: Xqcics, version: "= 0.2.0" }
-  - { name: Xqcicsr, version: "= 0.4.0" }
-  - { name: Xqciint, version: "= 0.10.0" }
-  - { name: Xqciio, version: "= 0.1.0" }
-  - { name: Xqcilb, version: "= 0.2.0" }
-  - { name: Xqcili, version: "= 0.2.0" }
-  - { name: Xqcilia, version: "= 0.2.0" }
-  - { name: Xqcilo, version: "= 0.3.0" }
-  - { name: Xqcilsm, version: "= 0.6.0" }
-  - { name: Xqcisim, version: "= 0.2.0" }
-  - { name: Xqcisls, version: "= 0.2.0" }
-  - { name: Xqcisync, version: "= 0.3.0" }
+  - { name: Sm, version: "1.13" }
+  - { name: Smrnmi, version: "1.0" }
+  - { name: Smdbltrp, version: "1.0" }
+  - { name: I, version: "2.1" }
+  - { name: M, version: "2.0" }
+  - { name: B, version: "1.0" }
+  - { name: Zbs, version: "1.0" }
+  - { name: Zbb, version: "1.0" }
+  - { name: Zba, version: "1.0" }
+  - { name: Zca, version: "1.0" }
+  - { name: Zcb, version: "1.0" }
+  - { name: Zicntr, version: "2.0" }
+  - { name: Zicsr, version: "2.0" }
+  - { name: Zihpm, version: "2.0" }
+  - { name: Xqccmp, version: "0.3" }
+  - { name: Xqccmt, version: "0.1.0" }
+  - { name: Xqccmi, version: "0.2.0" }
+  - { name: Xqci, version: "0.13" }
+  - { name: Xqcia, version: "0.7.0" }
+  - { name: Xqciac, version: "0.3.0" }
+  - { name: Xqcibi, version: "0.2.0" }
+  - { name: Xqcibm, version: "0.8.0" }
+  - { name: Xqcicli, version: "0.3.0" }
+  - { name: Xqcicm, version: "0.2.0" }
+  - { name: Xqcics, version: "0.2.0" }
+  - { name: Xqcicsr, version: "0.4.0" }
+  - { name: Xqciint, version: "0.10.0" }
+  - { name: Xqciio, version: "0.1.0" }
+  - { name: Xqcilb, version: "0.2.0" }
+  - { name: Xqcili, version: "0.2.0" }
+  - { name: Xqcilia, version: "0.2.0" }
+  - { name: Xqcilo, version: "0.3.0" }
+  - { name: Xqcilsm, version: "0.6.0" }
+  - { name: Xqcisim, version: "0.2.0" }
+  - { name: Xqcisls, version: "0.2.0" }
+  - { name: Xqcisync, version: "0.3.0" }
 params:
   MXLEN: 32
   PHYS_ADDR_WIDTH: 32
