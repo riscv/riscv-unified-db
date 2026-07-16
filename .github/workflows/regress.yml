@@ -266,6 +266,18 @@ jobs:
           cp -r tools/node/tree-sitter-idl/queries gem-build-dir/lib/idlc/queries
           mkdir -p gem-build-dir/lib/idlc/idl-reflow
           cp tools/node/idl-reflow/index.js gem-build-dir/lib/idlc/idl-reflow/index.js
+      - if: matrix.gem == 'udb'
+        name: Stage the bundled spec data into the udb gem
+        # udb.gemspec packages .data/**/* (see release:udb:prepare's after_copy
+        # in tasks.rake, which this mirrors): without it, Udb.default_cfgs_path
+        # and friends resolve to an empty directory in an installed gem with no
+        # repo checkout reachable, and the gem is unusable stand-alone.
+        run: |
+          mkdir -p gem-build-dir/.data/spec/std gem-build-dir/.data/spec/custom
+          cp -r spec/std/isa    gem-build-dir/.data/spec/std/isa
+          cp -r spec/custom/isa gem-build-dir/.data/spec/custom/isa
+          cp -r spec/schemas    gem-build-dir/.data/spec/schemas
+          cp -r cfgs            gem-build-dir/.data/cfgs
       - name: Create the ${{ matrix.gem }} gem
         run: |
           cd gem-build-dir && \
@@ -377,10 +389,13 @@ jobs:
       - name: install gems
         # No C compiler needed here: the platform gem ships a precompiled .so
         # and has no ext/idlc/extconf.rb, unlike the source gem tested above.
+        # --user-install: this job runs directly on the runner (no container,
+        # unlike udb-gem-z3 below), where the default system Ruby's gem dir
+        # isn't writable by the runner user.
         run: |
-          gem install idlc-platform.gem && \
-          gem install udb_helpers.gem && \
-          gem install udb.gem
+          gem install --user-install idlc-platform.gem && \
+          gem install --user-install udb_helpers.gem && \
+          gem install --user-install udb.gem
       - name: gem install smoke test (platform gem — see idlc.gemspec)
         run: ruby tools/test/gem_install_smoke_test.rb
   regress-idl-format:
