@@ -252,6 +252,15 @@ jobs:
           cp tools/node/tree-sitter-idl/src/parser.c  gem-build-dir/ext/idlc/
           cp tools/node/tree-sitter-idl/src/scanner.c gem-build-dir/ext/idlc/
           cp -r tools/node/tree-sitter-idl/src/tree_sitter gem-build-dir/ext/idlc/
+      - if: matrix.gem == 'idlc'
+        name: Stage Topiary queries + reflow script into the idlc gem
+        # Idl::Formatter looks for lib/idlc/queries and lib/idlc/idl-reflow
+        # inside the installed gem; without staging them the gem silently
+        # skips formatting/reflow.
+        run: |
+          cp -r tools/node/tree-sitter-idl/queries gem-build-dir/lib/idlc/queries
+          mkdir -p gem-build-dir/lib/idlc/idl-reflow
+          cp tools/node/idl-reflow/index.js gem-build-dir/lib/idlc/idl-reflow/index.js
       - name: Create the ${{ matrix.gem }} gem
         run: |
           cd gem-build-dir && \

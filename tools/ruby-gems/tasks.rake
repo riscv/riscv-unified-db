@@ -61,6 +61,12 @@ namespace :release do
         # from source. Those sources live in the Node project, so stage them —
         # plus the version file the download path keys off — into ext/idlc
         # before the gem is built.
+        #
+        # Also stage the Topiary query file and the reflow script: Idl::Formatter
+        # (lib/idlc/formatter.rb) looks for them at lib/idlc/queries and
+        # lib/idlc/idl-reflow inside the installed gem, falling back to the
+        # in-repo tools/node/ trees only in dev mode. Without this, a released
+        # idlc/udb-gen install silently skips formatting/reflow.
         after_copy: lambda do |release_dir|
           ts_dir  = $root / "tools" / "node" / "tree-sitter-idl"
           ts_src  = ts_dir / "src"
@@ -70,6 +76,12 @@ namespace :release do
           FileUtils.cp(ts_src / "scanner.c", ext_dir / "scanner.c")
           FileUtils.cp_r(ts_src / "tree_sitter", ext_dir / "tree_sitter")
           FileUtils.cp(ts_dir / "TS_IDL_VERSION", ext_dir / "TS_IDL_VERSION")
+
+          lib_dir = release_dir / "lib" / "idlc"
+          FileUtils.cp_r(ts_dir / "queries", lib_dir / "queries")
+          FileUtils.mkdir_p(lib_dir / "idl-reflow")
+          FileUtils.cp($root / "tools" / "node" / "idl-reflow" / "index.js",
+                       lib_dir / "idl-reflow" / "index.js")
         end
       )
     end
