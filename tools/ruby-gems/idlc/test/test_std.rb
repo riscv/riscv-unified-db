@@ -64,4 +64,32 @@ class TestStd < Minitest::Test
       end
     end
   end
+
+  # Regression test for a shared-mutable-AST-cache bug: compile_file's class-level
+  # @@parse_cache must hold source text only, not the built AST. Two "configs" that
+  # both compile the same file (with the same includes) must get independent AST
+  # objects, so freezing one (via freeze_tree, as ConfiguredArchitecture#symtab does)
+  # cannot leave the other silently frozen against the wrong SymbolTable.
+  def test_compile_file_returns_independent_ast_per_call
+    top_level = Pathname.new(__dir__) / "idl" / "std" / "isa" / "isa" / "globals.isa"
+
+    compiler_a = Idl::Compiler.new
+    ast_a = compiler_a.compile_file(top_level)
+
+    compiler_b = Idl::Compiler.new
+    ast_b = compiler_b.compile_file(top_level)
+
+    refute_same ast_a, ast_b,
+      "compile_file must build a fresh AST per call; a shared cached AST leaks mutated/frozen state across configs"
+
+    # ConfiguredArchitecture#symtab calls global_ast.freeze_tree(@symtab) on the
+    # AST returned by compile_file. freeze_tree short-circuits on an already-
+    # frozen tree (`return self if frozen?`), so if compile_file ever returns a
+    # shared cached object again, a second config's freeze would silently no-op
+    # and that config would use the first config's resolved tree.
+    ast_a.freeze
+
+    refute ast_b.frozen?,
+      "a second compile_file call must not receive an AST already frozen by a prior caller"
+  end
 end

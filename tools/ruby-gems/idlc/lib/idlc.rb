@@ -21,10 +21,13 @@ module Idl
   class Compiler
     extend T::Sig
 
-    # Class-level parse cache: absolute file path (String) → IsaSyntaxNode.
-    # Shared across all Compiler instances so each file is parsed only once per
-    # process.  Safe to share because IsaSyntaxNode#to_ast is non-destructive
-    # and returns a fresh, independent IsaAst on every call.
+    # Class-level parse cache: absolute file path (String) → raw source text.
+    # Shared across all Compiler instances so each file's content is read from
+    # disk only once per process. Deliberately caches source, not the built
+    # AST: compile_file mutates the tree in place (replace_include!) and
+    # callers freeze it against a config-specific SymbolTable, so a cached
+    # AST would leak one config's resolved/frozen tree into another config
+    # that happens to include the same file. Build a fresh IsaAst per call.
     # Mutex guards writes; under MRI, reads without the lock are safe.
     @@parse_cache = {}
     @@parse_cache_mutex = Mutex.new
@@ -125,44 +128,35 @@ module Idl
     def compile_file(path, source_mapper = nil)
       path_key = path.realpath.to_s
 
-      # Cache now stores IsaAst directly (built by TsAstBuilder).
-      # Reads without the lock are safe under MRI; writes are locked.
-      cached = T.let(@@parse_cache[path_key], T.nilable(IsaAst))
+      content = T.let(@@parse_cache[path_key], T.nilable(String))
 
-      if cached.nil?
+      if content.nil?
         @@parse_cache_mutex.synchronize do
-          unless @@parse_cache.key?(path_key)
-            content = path.read
-            source_mapper[path_key] = content unless source_mapper.nil?
+          @@parse_cache[path_key] = path.read unless @@parse_cache.key?(path_key)
+          content = @@parse_cache[path_key]
+        end
+      end
+      content = T.must(content)
+      source_mapper[path_key] = content unless source_mapper.nil?
 
-            old_format = @pb.format unless @pb.nil?
-            @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
-            pid = unless @pb.nil?
-                    fork {
-                      loop do
-                        sleep 1
-                        @pb.advance unless @pb.nil?
-                      end
-                    }
-                  end
-
-            ast = ts_build(content, filename: path_key)
-
-            unless @pb.nil?
-              Process.kill("TERM", T.must(pid))
-              Process.wait(T.must(pid))
-              @pb.format = old_format
+      old_format = @pb.format unless @pb.nil?
+      @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
+      pid = unless @pb.nil?
+              fork {
+                loop do
+                  sleep 1
+                  @pb.advance unless @pb.nil?
+                end
+              }
             end
 
-            @@parse_cache[path_key] = ast
-          end
-          cached = @@parse_cache[path_key]
-        end
-      else
-        source_mapper[path_key] = path.read unless source_mapper.nil?
-      end
+      ast = T.cast(ts_build(content, filename: path_key), IsaAst)
 
-      ast = T.must(cached)
+      unless @pb.nil?
+        Process.kill("TERM", T.must(pid))
+        Process.wait(T.must(pid))
+        @pb.format = old_format
+      end
 
       ast.children.each do |child|
         next unless child.is_a?(IncludeStatementAst)
