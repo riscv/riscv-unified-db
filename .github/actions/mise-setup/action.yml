@@ -76,6 +76,13 @@ runs:
       with:
         path: ~/.local/share/udb/npm-*
         key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+    # bin/setup builds the IDL tree-sitter parser, which needs `npm install` in
+    # this directory first (a separate npm project from the root package.json).
+    - name: Cache tree-sitter-idl npm packages
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: tools/node/tree-sitter-idl/node_modules
+        key: tree-sitter-idl-npm-${{ runner.os }}-${{ hashFiles('tools/node/tree-sitter-idl/package-lock.json') }}
     - name: Set up environment and install dependencies
       shell: bash
       run: ./bin/setup
