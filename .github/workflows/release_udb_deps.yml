@@ -18,6 +18,7 @@ on:
       - "tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION"
       - "tools/ruby-gems/udb/lib/udb/MUST_VERSION"
       - "tools/ruby-gems/udb/lib/udb/Z3_VERSION"
+      - "tools/node/tree-sitter-idl/TS_IDL_VERSION"
   workflow_dispatch:
     inputs:
       tool:
@@ -56,7 +57,7 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             if [[ "${{ inputs.tool }}" == "all" ]]; then
-              TOOLS='["eqntott","espresso","must","z3"]'
+              TOOLS='["eqntott","espresso","must","z3","tree-sitter-idl"]'
             else
               TOOLS='["${{ inputs.tool }}"]'
             fi
@@ -82,6 +83,11 @@ jobs:
 
             if echo "$CHANGED_FILES" | grep -q "^tools/ruby-gems/udb/lib/udb/Z3_VERSION$"; then
               TOOLS="${TOOLS}${SEPARATOR}\"z3\""
+              SEPARATOR=","
+            fi
+
+            if echo "$CHANGED_FILES" | grep -q "^tools/node/tree-sitter-idl/TS_IDL_VERSION$"; then
+              TOOLS="${TOOLS}${SEPARATOR}\"tree-sitter-idl\""
             fi
 
             TOOLS="${TOOLS}]"
@@ -199,7 +205,8 @@ jobs:
           fi
 
   build-tree-sitter-idl:
-    if: inputs.tool == 'tree-sitter-idl' || inputs.tool == 'all'
+    needs: detect-tools
+    if: contains(fromJson(needs.detect-tools.outputs.tools), 'tree-sitter-idl')
     name: Build tree-sitter-idl grammar (${{ matrix.os }}-${{ matrix.arch }})
     strategy:
       fail-fast: false
