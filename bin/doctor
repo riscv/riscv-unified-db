@@ -1,23 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # bin/doctor — check that the development environment is correctly set up.
-
-# Require bash 4.2+ for associative arrays (declare -A) and the [[ -v VAR ]]
-# variable-set test used throughout this script.
-# macOS ships bash 3.2 due to GPLv2 licensing constraints. Install a newer bash:
-#   brew install bash
-# Then re-run with: /opt/homebrew/bin/bash bin/doctor
-# Or add /opt/homebrew/bin to the front of your PATH.
-if [[ "${BASH_VERSINFO[0]}" -lt 4 ]] || \
-   { [[ "${BASH_VERSINFO[0]}" -eq 4 ]] && [[ "${BASH_VERSINFO[1]}" -lt 2 ]]; }; then
-  echo "ERROR: bin/doctor requires bash 4.2 or later." >&2
-  echo "  Your bash: ${BASH_VERSION} ($(command -v bash))" >&2
-  echo "" >&2
-  echo "  macOS ships bash 3.2 due to licensing. Install a newer version:" >&2
-  echo "    brew install bash" >&2
-  echo "" >&2
-  echo "  Then re-run with: /opt/homebrew/bin/bash bin/doctor" >&2
-  exit 1
-fi
 
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 
@@ -126,14 +108,12 @@ _check_core_prerequisites() {
 # Section 2: Mise Tools
 # ---------------------------------------------------------------------------
 
-# Map of mise tool name -> binary name (only entries that differ)
-declare -A _MISE_BINARY_OVERRIDE=(
-  ["github-cli"]="gh"
-)
-
 _check_mise_tool() {
   local tool="$1"
-  local binary="${_MISE_BINARY_OVERRIDE[$tool]:-$tool}"
+  local binary="$tool"
+  if [[ "$tool" == "github-cli" ]]; then
+    binary="gh"
+  fi
 
   local bin_path
   bin_path=$("$ROOT/bin/mise" which "$binary" 2>/dev/null)
@@ -289,7 +269,7 @@ _check_developer_setup() {
   _section "Developer Setup"
 
   # Pre-commit hook (skip in CI)
-  if [[ -v GITHUB_ACTIONS ]]; then
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
     _info "Pre-commit hook check skipped (CI environment)"
   else
     local git_hooks_dir
