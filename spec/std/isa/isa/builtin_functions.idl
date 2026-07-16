@@ -525,23 +525,42 @@ builtin function write_physical_memory_64 {
 }
 
 builtin function wfi {
+  returns Boolean
+  arguments
+    Boolean tw_trap,   #< true if an illegal-instruction trap applies on timeout
+    Boolean vtw_trap   #< true if a virtual-instruction trap applies on timeout
   description {
-    Wait-for-interrupt: hint that the processor
-    should enter a low power state until the next interrupt.
+    Wait-for-interrupt with bounded-timeout enforcement when trap conditions apply.
 
-    A valid implementation is a no-op.
+    When tw_trap or vtw_trap is true, the implementation must wait for at most an
+    implementation-specific bounded time before returning true (timed out). The time
+    limit may be zero, in which case the function returns true immediately.
+
+    When neither trap condition applies, the implementation waits indefinitely for an
+    interrupt and either does not return (implementation may signal via exception) or
+    returns false.
 
     The model will advance the PC; this function does not need to.
   }
 }
 
 builtin function wrs_nto {
+  returns Boolean
+  arguments
+    Boolean tw_trap,   #< true if an illegal-instruction trap applies on timeout
+    Boolean vtw_trap   #< true if a virtual-instruction trap applies on timeout
   description {
-    Wait-on-reservation-set with no timeout: hint that the processor
-    should enter a low power state until the reservation set is invalidated
-    or an interrupt is pending.
+    Wait-on-reservation-set with no timeout, with bounded-timeout enforcement when
+    trap conditions apply.
 
-    A valid implementation is a no-op.
+    When tw_trap or vtw_trap is true, the implementation must wait for at most an
+    implementation-specific bounded time before returning true (timed out). The time
+    limit may be zero, in which case the function returns true immediately.
+
+    When neither trap condition applies, the implementation waits indefinitely until
+    the reservation set is invalidated or an interrupt is pending, then returns false.
+
+    A valid implementation is a no-op (return false).
 
     The model will advance the PC; this function does not need to.
   }

@@ -53,25 +53,29 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  # wrs.nto follows TW/VTW trap rules similar to WFI, but unlike WFI it
-  # does NOT cause an illegal instruction exception in U-mode when TW=0.
+  Boolean tw_trap = false;
+  Boolean vtw_trap = false;
 
-  # When TW=1, any mode other than M traps with IllegalInstruction
-  if ((CSR[misa].S == 1) && (CSR[mstatus].TW == 1'b1)) {
-    if (mode() != PrivilegeMode::M) {
-      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-    }
-  }
-
-  # When H extension is present, TW=0, and VTW=1, VS/VU mode traps
-  # with VirtualInstruction. Unlike WFI, VU does NOT trap when VTW=0.
-  if (CSR[misa].H == 1) {
+  # Unlike WFI, U-mode does NOT trap when TW=0
+  if ((CSR[misa].S == 1) && (CSR[mstatus].TW == 1'b1) && (mode() != PrivilegeMode::M)) {
+    # TW=1: any non-M mode traps with illegal-instruction on timeout
+    tw_trap = true;
+  } else if (CSR[misa].H == 1) {
+    # TW=0, VTW=1: VS/VU mode traps with virtual-instruction on timeout
+    # Unlike WFI, VU does NOT trap when VTW=0
     if ((CSR[mstatus].TW == 1'b0) && (CSR[hstatus].VTW == 1'b1)) {
       if ((mode() == PrivilegeMode::VS) || (mode() == PrivilegeMode::VU)) {
-        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        vtw_trap = true;
       }
     }
   }
 
-  # stall while the reservation set is valid and no interrupt is pending
-  wrs_nto();
+  # Wait, then raise only if the implementation-specific timeout expired
+  Boolean timed_out = wrs_nto(tw_trap, vtw_trap);
+  if (timed_out) {
+    if (tw_trap) {
+      raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    } else {
+      raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+    }
+  }
