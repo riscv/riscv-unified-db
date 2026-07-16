@@ -93,6 +93,9 @@ any_changed = false
 unless idl_files.empty?
   if fail_on_change
     # Check mode: format each file to a temp copy and compare; topiary 0.7.x has no --check flag.
+    # Must mirror the fix-mode pipeline below (topiary -> reflow -> topiary) or a
+    # file that only needs the reflow pass would pass CI yet still get rewritten
+    # by a plain `bin/idl-format` run.
     idl_files.each do |f|
       tmp = Tempfile.new(["idl-check", File.extname(f)])
       begin
@@ -101,6 +104,18 @@ unless idl_files.empty?
           $stderr.puts "idl-format: topiary failed on #{f}"
           any_changed = true
           next
+        end
+        if reflow_width
+          unless system(NODE_BIN, REFLOW_JS, reflow_width.to_s, tmp.path)
+            $stderr.puts "idl-format: reflow failed on #{f}"
+            any_changed = true
+            next
+          end
+          unless topiary("format", tmp.path)
+            $stderr.puts "idl-format: topiary re-format after reflow failed on #{f}"
+            any_changed = true
+            next
+          end
         end
         if File.read(tmp.path, encoding: "utf-8") != File.read(f, encoding: "utf-8")
           $stderr.puts "idl-format: #{f} not formatted — run `bin/idl-format` to fix"
