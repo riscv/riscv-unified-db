@@ -5,7 +5,7 @@
 name = "tree-sitter-idl"
 description = "Idl grammar for tree-sitter"
 version = "0.0.1"
-license = "MIT"
+license = "BSD-3-Clause-Clear"
 readme = "README.md"
 keywords = ["incremental", "parsing", "tree-sitter", "idl"]
 categories = ["parsing", "text-editors"]
