@@ -329,7 +329,7 @@ do_gen_idl_highlight() {
     local sha_before
     sha_before=$(sha256sum "$out")
   fi
-  node "$UDB_ROOT/tools/node/idl-gen/index.js"
+  "${UDB_ROOT}"/bin/node "$UDB_ROOT/tools/node/idl-gen/index.js"
   if [ $fail_on_change -eq 1 ]; then
     local sha_after
     sha_after=$(sha256sum "$out")
