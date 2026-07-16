@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
   packages: read
 
-"on": # needs to be quoted or else Psych treats this as true
+on:
   pull_request:
     branches:
       - main
@@ -34,40 +34,40 @@ jobs:
   never-runs:
     # this just exists so that renovate can keep action version pointers up-to-date
     runs-on: ubuntu-latest
-    if: "false"
+    if: false
     steps:
       - name: Use download-artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       - name: Use upload-artifact
-        uses: actions/upload-artifact@47309c993abb98030a35d55ef7ff34b7fa1074b5 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: .
 
   regress-pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         # there are some symlinks in udb-gen that look broken without submodules
         with:
-          submodules: "true"
+          submodules: true
       - name: Set up mise environment
-        uses: "./.github/actions/mise-setup"
-      - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037 # v1
+        uses: ./.github/actions/mise-setup
+      - uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d # v2
 
   regress-llvm:
     runs-on: ubuntu-latest
     needs: [build-llvm]
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Get current LLVM submodule commit SHA
         id: get-llvm-sha
-        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
+        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> "$GITHUB_ENV"
       - name: Restore cache RISC-V JSON
         id: cache-riscv
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ext/llvm-project/riscv.json
           key: ${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}
@@ -79,25 +79,28 @@ jobs:
     outputs:
       configs: ${{ steps.configs.outputs.configs }}
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.2"
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Find configuration files
         id: configs
         run: |
-          ruby -e "puts 'configs=[\"' + Dir.glob('cfgs/*.yaml').map { |f| File.basename(f, '.yaml') }.join('\", \"') + '\"]'" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+
+          configs = sorted(path.stem for path in Path("cfgs").glob("*.yaml"))
+          print("configs=" + json.dumps(configs))
+          PY
 
   regress-udb-cov-report:
     runs-on: ubuntu-latest
     needs: [regress-udb-unit-test]
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: download coverage
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: udb-*-cov
           path: _cov/udb
@@ -106,7 +109,7 @@ jobs:
       - name: Collate coverage
         run: ./do chore:udb:collate_cov[_cov/udb]
       - name: Upload udb coverage reports to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
@@ -117,16 +120,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository (no submodules, shallow fetch)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
           fetch-depth: 1
       - name: Get current LLVM submodule commit SHA
         id: get-llvm-sha
-        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> $GITHUB_ENV
+        run: echo "LLVM_SHA=$(git ls-tree HEAD ext/llvm-project | awk '{print $3}')" >> "$GITHUB_ENV"
       - name: Cache RISC-V JSON
         id: cache-riscv
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ext/llvm-project/riscv.json
           key: ${{ runner.os }}-riscv-json-${{ env.LLVM_SHA }}
@@ -160,7 +163,7 @@ jobs:
       - name: Show riscv.json output
         run: ls -l ext/llvm-project/riscv.json
       - name: Upload RISC-V JSON as Artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: riscv-json
           path: ext/llvm-project/riscv.json
@@ -172,9 +175,9 @@ jobs:
       run:
         working-directory: tools/eclipse/dev/org.xtext.udb.parent
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Setup Temurin JDK 21
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
         with:
           distribution: temurin
           java-version: "21"
@@ -186,7 +189,7 @@ jobs:
         run: mvn -B -U -Dheadless=true verify
       - name: Archive surefire reports (always)
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: surefire-reports
           path: |
@@ -201,14 +204,14 @@ jobs:
       run:
         working-directory: tools/eclipse/udb-vscode
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: tools/eclipse/udb-vscode/package-lock.json
       - name: Setup Temurin JDK 21 (for LS)
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
         with:
           distribution: temurin
           java-version: "21"
@@ -220,7 +223,7 @@ jobs:
         run: xvfb-run -a npm test
       - name: Archive VS Code test logs (always)
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: vscode-test-logs
           path: |
@@ -235,7 +238,7 @@ jobs:
       matrix:
         gem: [idlc, udb, udb_helpers]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Copy the gem directory to resolve symlinks
         run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
       - name: Create the ${{ matrix.gem }} gem
@@ -243,7 +246,7 @@ jobs:
           cd gem-build-dir && \
           gem build -o ${{ matrix.gem }}.gem ${{ matrix.gem }}.gemspec
       - name: Upload the ${{ matrix.gem }} gem
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ matrix.gem }}.gem
           path: gem-build-dir/${{ matrix.gem }}.gem
@@ -263,29 +266,29 @@ jobs:
     container: ${{ matrix.container }}
     needs: create-gems
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - if: matrix.container == 'almalinux:8'
         name: Install ruby
         run: |
           dnf module enable -y ruby:3.3
           dnf install -y ruby ruby-devel gcc-toolset-12
           PRE="source scl_source enable gcc-toolset-12"
-          echo "PRE=$PRE" >> $GITHUB_ENV
+          echo "PRE=$PRE" >> "$GITHUB_ENV"
       - if: matrix.container == 'ruby:3-slim'
         name: Install make
         run: |
           apt-get update -qq && \
           apt-get install --no-install-recommends -y make
       - name: download udb gem
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: udb.gem
       - name: download idlc gem
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: idlc.gem
       - name: download udb_helpers gem
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: udb_helpers.gem
       - name: install gems

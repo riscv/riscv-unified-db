@@ -19,6 +19,7 @@ schema:
     - rw
     - read-only-0
     - read-only-1
+  default: rw
 definedBy:
   extension:
     allOf:

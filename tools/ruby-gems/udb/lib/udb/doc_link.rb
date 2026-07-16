@@ -33,12 +33,11 @@
 module Udb
   class DocLink
     # @param dst_link [String] The documentation link provided in the YAML
-    # @param db_obj [String] Database object
+    # @param db_obj [Object] Database object
     def initialize(dst_link, db_obj)
-      raise ArgumentError, "Need String but was passed a #{data.class}" unless dst_link.is_a?(String)
+      raise ArgumentError, "Missing documentation link for #{db_obj.name} of kind #{db_obj.kind}" if dst_link.nil?
+      raise ArgumentError, "Need String but was passed a #{dst_link.class}" unless dst_link.is_a?(String)
       @dst_link = dst_link
-
-      raise ArgumentError, "Missing documentation link for #{db_obj.name} of kind #{db_obj.kind}" if @dst_link.nil?
     end
 
     # @return [String] Unique ID of the linked to normative rule

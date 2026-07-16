@@ -290,26 +290,3 @@ end
 class Logger
   include ::AwesomePrint::Logger
 end
-
-class String
-  include ::Comparable
-
-  def black(*html); end
-  def blue(*html); end
-  def blueish(*html); end
-  def cyan(*html); end
-  def cyanish(*html); end
-  def gray(*html); end
-  def grayish(*html); end
-  def green(*html); end
-  def greenish(*html); end
-  def pale(*html); end
-  def purple(*html); end
-  def purpleish(*html); end
-  def red(*html); end
-  def redish(*html); end
-  def white(*html); end
-  def whiteish(*html); end
-  def yellow(*html); end
-  def yellowish(*html); end
-end

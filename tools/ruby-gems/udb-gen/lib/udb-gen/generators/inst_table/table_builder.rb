@@ -27,7 +27,7 @@ module UdbGen
 
         enc_obj = inst.encoding(base)
         fixed = enc_obj.opcode_fields.map do |fo|
-          "#{fo.name}<#{fo.range.last}"
+          "#{fo.name}<#{fo.range.first}"
         end
 
         fields.append(fixed.join("|"))

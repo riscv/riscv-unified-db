@@ -88,6 +88,16 @@ _ok "mise ready ($("$MISE_BIN" --version 2>/dev/null | head -1))"
 
 _section "Tool versions (Ruby, Node.js, uv, CMake, …)"
 
+# gpg is required by some asdf plugins (make, node, ruby) during
+# mise install. Check for it early to surface a clear error.
+if ! command -v gpg > /dev/null 2>&1 && ! command -v gpg2 > /dev/null 2>&1; then
+  printf "\nERROR: GnuPG (gpg) is required but not found.\n" >&2
+  printf "       Install it via your package manager (e.g. \`brew install gnupg\` on macOS,\n" >&2
+  printf "       \`apt install gnupg\` on Debian/Ubuntu).\n\n" >&2
+  exit 1
+fi
+_note "gpg found"
+
 # Pre-initialize ~/.gnupg before mise install so parallel gpg invocations
 # (e.g. for node, make, ruby) don't race to create the directory.
 mkdir -p "${GNUPGHOME:-$HOME/.gnupg}" && chmod 700 "${GNUPGHOME:-$HOME/.gnupg}"

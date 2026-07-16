@@ -1125,8 +1125,8 @@ module Udb
       @solver = T.let(Z3::Solver.new, Z3::Solver)
 
       # Stacks for incremental solving with push/pop
-      @ext_vers = T.let([{}], T::Array[T::Hash[String, Z3ExtensionVersion]])
-      @ext_reqs = T.let([{}], T::Array[T::Hash[String, Z3ExtensionRequirement]])
+      @ext_vers = T.let([{}], T::Array[T::Hash[Integer, Z3ExtensionVersion]])
+      @ext_reqs = T.let([{}], T::Array[T::Hash[Integer, Z3ExtensionRequirement]])
       @param_terms = T.let([{}], T::Array[T::Hash[String, Z3ParameterTerm]])
 
       # Extension version component terms (shared across versions of same extension)

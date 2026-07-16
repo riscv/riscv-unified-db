@@ -16,13 +16,12 @@ end
 
 UDB_GEN_ROOT = (Pathname.new(__dir__) / "..").realpath
 
-if SIMPLECOV_AVAILABLE && !SimpleCov.running && ENV["COVERAGE"] != "0"
+if SIMPLECOV_AVAILABLE && !SimpleCov.active_session? && ENV["COVERAGE"] != "0"
   SimpleCov.start do
-    enable_coverage :branch
-    add_filter "/test/"
+    enable_coverage :branch, :eval
+    skip "/test/"
     root UDB_GEN_ROOT.to_s
     coverage_dir (UDB_GEN_ROOT / "coverage").to_s
-    enable_coverage_for_eval
     formatter SimpleCov::Formatter::MultiFormatter.new([
       SimpleCov::Formatter::CoberturaFormatter,
       SimpleCov::Formatter::HTMLFormatter,

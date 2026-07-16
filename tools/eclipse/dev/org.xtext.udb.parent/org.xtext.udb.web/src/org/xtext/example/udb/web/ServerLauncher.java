@@ -4,14 +4,14 @@
 package org.xtext.example.udb.web;
 
 import java.net.InetSocketAddress;
-import org.eclipse.jetty.annotations.AnnotationConfiguration;
+import org.eclipse.jetty.ee10.annotations.AnnotationConfiguration;
+import org.eclipse.jetty.ee10.webapp.Configuration;
+import org.eclipse.jetty.ee10.webapp.MetaInfConfiguration;
+import org.eclipse.jetty.ee10.webapp.WebAppConfiguration;
+import org.eclipse.jetty.ee10.webapp.WebAppContext;
+import org.eclipse.jetty.ee10.webapp.WebInfConfiguration;
+import org.eclipse.jetty.ee10.webapp.WebXmlConfiguration;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.webapp.Configuration;
-import org.eclipse.jetty.webapp.MetaInfConfiguration;
-import org.eclipse.jetty.webapp.WebAppConfiguration;
-import org.eclipse.jetty.webapp.WebAppContext;
-import org.eclipse.jetty.webapp.WebInfConfiguration;
-import org.eclipse.jetty.webapp.WebXmlConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,10 +25,8 @@ public class ServerLauncher {
 
 	public static void main(String[] args) {
 		Server server = new Server(new InetSocketAddress("localhost", 8080));
-		WebAppContext ctx = new WebAppContext();
-		ctx.setResourceBase("WebRoot");
+		WebAppContext ctx = new WebAppContext("WebRoot", "/");
 		ctx.setWelcomeFiles(new String[] {"index.html"});
-		ctx.setContextPath("/");
 		ctx.setConfigurations(new Configuration[] {
 			new AnnotationConfiguration(),
 			new WebXmlConfiguration(),
