@@ -3,7 +3,7 @@
 # Safe to run multiple times; skips hooks that are already installed.
 # Skipped automatically in CI (GITHUB_ACTIONS).
 
-if [[ -v GITHUB_ACTIONS ]]; then
+if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
   exit 0
 fi
 

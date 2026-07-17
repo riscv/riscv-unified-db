@@ -20,6 +20,7 @@ description: |
 long_name: TODO
 schema:
   type: boolean
+  default: false
 definedBy:
   extension:
     allOf:

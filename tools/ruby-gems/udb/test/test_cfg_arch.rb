@@ -7,21 +7,35 @@
 require_relative "test_helper"
 
 require "fileutils"
+require "json"
+require "json_schemer"
 require "tmpdir"
 require "yaml"
 
 require "udb/logic"
 require "udb/cfg_arch"
 require "udb/resolver"
+require "udb/obj/non_isa_specification"
 
 class TestCfgArch < Minitest::Test
   include Udb
+
+  SCHEMA_DIR = (Pathname.new(__dir__) / ".." / ".." / ".." / ".." / "spec" / "schemas").realpath
+  CONFIG_SCHEMA_PATH = SCHEMA_DIR / "config_schema.json"
 
   def setup
     @gen_dir = Dir.mktmpdir
     @resolver = Udb::Resolver.new(
       Udb.repo_root,
       gen_path_override: Pathname.new(@gen_dir)
+    )
+    @config_schemer = JSONSchemer.schema(
+      JSON.parse(File.read(CONFIG_SCHEMA_PATH)),
+      ref_resolver: proc { |uri|
+        data = JSON.parse(File.read(SCHEMA_DIR / File.basename(uri.path)))
+        data["definitions"] = data["$defs"] if data["$defs"] && !data.key?("definitions")
+        data
+      }
     )
   end
 
@@ -104,6 +118,59 @@ class TestCfgArch < Minitest::Test
       assert param_reasons.first.include?("Failing condition(s):"), "Expected failing conjuncts header in: #{param_reasons.first}"
       assert param_reasons.first.include?("  - "), "Expected at least one failing conjunct line in: #{param_reasons.first}"
       assert result.reasons.any? { |r| r =~ /Mandatory extension requirements conflict: This is not satisfiable: / }
+    end
+  end
+
+  def test_implemented_extensions_hash_versions_match_schema
+    info = Udb::Resolver::ConfigInfo.new(
+      name: "test",
+      path: Pathname.new("test.yaml"),
+      overlay_path: nil,
+      unresolved_yaml: {},
+      spec_path: Pathname.new("spec"),
+      merged_spec_path: Pathname.new("merged_spec"),
+      resolved_spec_path: Pathname.new("resolved_spec"),
+      resolver: @resolver
+    )
+
+    bare_cfg = Udb::AbstractConfig.create_from_data({
+      "type" => "fully configured",
+      "name" => "test",
+      "params" => { "MXLEN" => 32 },
+      "implemented_extensions" => [{ "name" => "I", "version" => "2.1" }]
+    }, info)
+    equal_cfg = Udb::AbstractConfig.create_from_data({
+      "type" => "fully configured",
+      "name" => "test",
+      "params" => { "MXLEN" => 32 },
+      "implemented_extensions" => [{ "name" => "I", "version" => "= 2.1" }]
+    }, info)
+
+    assert_equal [{ "name" => "I", "version" => "2.1" }], bare_cfg.implemented_extensions
+    assert_equal [{ "name" => "I", "version" => "2.1" }], equal_cfg.implemented_extensions
+
+    base_schema_data = {
+      "$schema" => "config_schema.json#",
+      "kind" => "architecture configuration",
+      "type" => "fully configured",
+      "name" => "test",
+      "description" => "test",
+      "params" => { "MXLEN" => 32 },
+      "implemented_extensions" => [{ "name" => "I", "version" => "2.1" }]
+    }
+    assert_empty @config_schemer.validate(base_schema_data).to_a
+    base_schema_data["implemented_extensions"][0]["version"] = "= 2.1"
+    assert_empty @config_schemer.validate(base_schema_data).to_a
+    base_schema_data["implemented_extensions"][0]["version"] = ">= 2.1"
+    refute_empty @config_schemer.validate(base_schema_data).to_a
+
+    assert_raises(ArgumentError) do
+      Udb::AbstractConfig.create_from_data({
+        "type" => "fully configured",
+        "name" => "test",
+        "params" => { "MXLEN" => 32 },
+        "implemented_extensions" => [{ "name" => "I", "version" => ">= 2.1" }]
+      }, info).implemented_extensions
     end
   end
 
