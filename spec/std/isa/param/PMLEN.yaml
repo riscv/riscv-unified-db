@@ -8,10 +8,29 @@ kind: parameter
 name: PMLEN
 description: |
   The number of high-order bits of an address that are masked by the
-  pointer masking facility.
+  pointer masking facility, selectable via the `PMM` field.
+
+  Options:
+
+    7::
+      PMLEN=XLEN-57 (i.e., PMLEN=7 on RV64)
+    16::
+      PMLEN=XLEN-48 (i.e., PMLEN=16 on RV64)
+
+  The current standard only supports these two values (`zpm.adoc`, tag
+  `norm:pmlen_supported_values`); a setting is reserved to potentially
+  support other values in future standards. If only one value is given,
+  `PMM` is assumed to be read-only with that value. Otherwise, `PMM` is
+  read-write and software selects between the given values.
 long_name: TODO
 schema:
-  type: integer
+  type: array
+  items:
+    type: integer
+    enum: [7, 16]
+  minItems: 1
+  maxItems: 2
+  uniqueItems: true
 definedBy:
   extension:
     anyOf:
