@@ -8,10 +8,8 @@ import os
 import sys
 
 # Add parent directory to path to import generator.py
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from generator import load_instructions_with_metadata, parse_match
-
-logging.basicConfig(level=logging.INFO, format="%(levelname)s:: %(message)s")
 
 
 def calculate_mask(match_str):
