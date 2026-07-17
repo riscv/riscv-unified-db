@@ -23,25 +23,36 @@ def generate_overlap_header(instr_dict, metadata_dict, output_file):
     overlaps = []
 
     names = sorted(instr_dict.keys())
+
+    # Precompute match and mask values for all instructions
+    precomputed = {}
+    for name in names:
+        match_str = instr_dict[name]["match"]
+        precomputed[name] = {
+            "match_str": match_str,
+            "match_val": parse_match(match_str),
+            "mask_val": calculate_mask(match_str),
+            "exts": set(metadata_dict[name]["extensions"]),
+        }
+
     for i in range(len(names)):
         name_a = names[i]
-        match_str_a = instr_dict[name_a]["match"]
-        match_val_a = parse_match(match_str_a)
-        mask_val_a = calculate_mask(match_str_a)
-        exts_a = set(metadata_dict[name_a]["extensions"])
+        a = precomputed[name_a]
 
         for j in range(i + 1, len(names)):
             name_b = names[j]
-            match_str_b = instr_dict[name_b]["match"]
-            match_val_b = parse_match(match_str_b)
-            mask_val_b = calculate_mask(match_str_b)
-            exts_b = set(metadata_dict[name_b]["extensions"])
+            b = precomputed[name_b]
+
+            # Only compare encodings of the same width (e.g., 16b vs 16b, 32b vs 32b)
+            if len(a["match_str"]) != len(b["match_str"]):
+                continue
 
             # Check if instructions come from completely different extensions
-            if exts_a.isdisjoint(exts_b):
-                # Check for encoding overlap
-                if (match_val_a & mask_val_b) == (match_val_b & mask_val_a):
-                    overlaps.append((name_a, list(exts_a), name_b, list(exts_b)))
+            if a["exts"].isdisjoint(b["exts"]):
+                # Overlap exists if all common fixed bits agree
+                common_mask = a["mask_val"] & b["mask_val"]
+                if ((a["match_val"] ^ b["match_val"]) & common_mask) == 0:
+                    overlaps.append((name_a, sorted(a["exts"]), name_b, sorted(b["exts"])))
 
     # Format overlaps for output
     output_lines = [
@@ -56,7 +67,7 @@ def generate_overlap_header(instr_dict, metadata_dict, output_file):
 
     declared = set()
     for name_a, exts_a, name_b, exts_b in overlaps:
-        for ext in exts_a:
+        for ext in sorted(exts_a):
             # Handle instructions ending in _rv32
             base_name_a = name_a.replace(".", "_")
             if base_name_a.endswith("_rv32"):
@@ -65,7 +76,7 @@ def generate_overlap_header(instr_dict, metadata_dict, output_file):
             if decl_a not in declared:
                 output_lines.append(decl_a)
                 declared.add(decl_a)
-        for ext in exts_b:
+        for ext in sorted(exts_b):
             base_name_b = name_b.replace(".", "_")
             if base_name_b.endswith("_rv32"):
                 base_name_b = base_name_b[:-5]
