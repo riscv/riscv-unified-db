@@ -24,7 +24,7 @@ encoding:
       sign_extend: true
 pseudoinstructions:
   - when: imm == 0
-    to: ""
+    to: "c.nop"
 access:
   s: always
   u: always
