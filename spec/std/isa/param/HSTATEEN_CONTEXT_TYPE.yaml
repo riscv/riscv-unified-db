@@ -19,6 +19,7 @@ schema:
     - rw
     - read-only-0
     - read-only-1
+  default: rw
 requirements:
   idl(): |
     MSTATEEN_CONTEXT_TYPE == "read-only-0" -> HSTATEEN_CONTEXT_TYPE == "read-only-0";

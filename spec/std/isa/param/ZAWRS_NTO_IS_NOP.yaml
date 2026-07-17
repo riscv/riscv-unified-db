@@ -1,0 +1,19 @@
+# Copyright (c) 2025-26 Harvey Mudd College
+# Author: Ellen Yu (ellyu@hmc.edu)
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: ZAWRS_NTO_IS_NOP
+description: |
+  When true, WRS.NTO completes immediately, behaving as a no-op, rather than
+  stalling the hart.
+
+long_name: TODO
+schema:
+  type: boolean
+definedBy:
+  extension:
+    name: Zawrs
