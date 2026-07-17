@@ -15,9 +15,15 @@ description: |
   that is a separate, run-time concept controlled by `mcountinhibit`
   (see `COUNTINHIBIT_EN`).
 
-  There is one entry for each hpmcounter.
+  There is one entry for each hpmcounter, indexed 0-31.
 
-  The first three entries *must* be false (as they correspond to CY, IR, TM in, _e.g._ `mcountinhibit`)
+  Indices 0-2 *must* be false: they are reserved slots for the mandatory `cycle`/`mcycle`
+  (CY), `time` (TM), and `instret`/`minstret` (IR) counters, in that order, which are not
+  optional HPM counters and so this parameter never applies to them. The slots exist only
+  so index N lines up with the CY=0/TM=1/IR=2/HPM_*n*=*n* numbering used by `mcounteren`
+  (and `scounteren`/`hcounteren`). Note that `mcountinhibit` has no `TM` bit at all -- the
+  `time` counter cannot be inhibited since it mirrors an external time source rather than
+  counting locally.
   Index 3 in HPM_COUNTER_EN corresponds to mhpmcounter3.
   Index 31 in HPM_COUNTER_EN corresponds to mhpmcounter31.
 long_name: TODO
