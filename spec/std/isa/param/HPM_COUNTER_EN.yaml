@@ -21,9 +21,9 @@ description: |
   (CY), `time` (TM), and `instret`/`minstret` (IR) counters, in that order, which are not
   optional HPM counters and so this parameter never applies to them. The slots exist only
   so index N lines up with the CY=0/TM=1/IR=2/HPM_*n*=*n* numbering used by `mcounteren`
-  (and `scounteren`/`hcounteren`). Note that `mcountinhibit` has no `TM` bit at all -- the
-  `time` counter cannot be inhibited since it mirrors an external time source rather than
-  counting locally.
+  (and `scounteren`/`hcounteren`). Note that `mcountinhibit` has no live `TM` field: bit 1
+  is reserved and always reads as 0, since the `time` counter mirrors an external time
+  source and cannot be inhibited locally (see `COUNTINHIBIT_EN[1]`).
   Index 3 in HPM_COUNTER_EN corresponds to mhpmcounter3.
   Index 31 in HPM_COUNTER_EN corresponds to mhpmcounter31.
 long_name: TODO
