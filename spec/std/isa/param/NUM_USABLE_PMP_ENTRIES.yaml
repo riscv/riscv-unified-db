@@ -1,0 +1,35 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: NUM_USABLE_PMP_ENTRIES
+description: |
+  Number of implemented PMP entries that are actually usable.
+
+  An implementation may implement PMP entries (NUM_PMP_ENTRIES) but hardwire
+  some of them to zero (read-only zero). Such entries exist -- their
+  `pmpaddrN`/`pmpNcfg` registers are accessible and will not cause an exception
+  from M-mode -- but they cannot be configured to guard a region.
+
+  NUM_USABLE_PMP_ENTRIES gives the number of low-numbered entries that are
+  writable/usable. Entries `0` through `NUM_USABLE_PMP_ENTRIES-1` are usable;
+  entries `NUM_USABLE_PMP_ENTRIES` through `NUM_PMP_ENTRIES-1` are read-only
+  zero.
+
+  Must be between 0 and NUM_PMP_ENTRIES, inclusive.
+long_name: TODO
+schema:
+  type: integer
+  minimum: 0
+  maximum: 64
+definedBy:
+  param:
+    name: NUM_PMP_ENTRIES
+    greaterThan: 0
+requirements:
+  idl(): |
+    NUM_PMP_ENTRIES == 16 -> NUM_USABLE_PMP_ENTRIES <= 16;
+  reason: Usable PMP entries cannot exceed the number of implemented PMP entries

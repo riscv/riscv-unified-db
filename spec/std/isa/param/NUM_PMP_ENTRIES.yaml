@@ -7,36 +7,25 @@ $schema: param_schema.json#
 kind: parameter
 name: NUM_PMP_ENTRIES
 description: |
-  Number of implemented PMP entries. Can be any value between 0-64, inclusive.
+  Number of implemented PMP entries.
 
   The architecture mandates that the number of implemented PMP registers
-  must appear to be 0, 16, or 64.
-
-  Therefore, pmp registers will behave as follows according to NUN_PMP_ENTRIES:
-
-  [separator="!"]
-  !===
-  ! NUM_PMP_ENTRIES ! pmpaddr<0-15> / pmpcfg<0-3> ! pmpaddr<16-63> / pmpcfg<4-15>
-  ! 0               ! N                           ! N
-  ! 1-16            ! Y                           ! N
-  ! 17-64           ! Y                           ! Y
-  !===
-
-  ** N = Not implemented; access will cause `IllegalInstruction`
-     if TRAP_ON_UNIMPLEMENTED_CSR is true
-  ** Y = Implemented; access will not cause an exception (from M-mode), but register
-     may be read-only-zero if NUM_PMP_ENTRIES is less than the corresponding register
+  must appear to be 0, 16, or 64, so NUM_PMP_ENTRIES must be one of those values.
+  It directly determines which PMP registers exist: `pmpaddr0`-`pmpaddr<N-1>`
+  and their corresponding `pmpNcfg` fields are implemented, and the rest are
+  not. Accessing an unimplemented PMP register causes an `IllegalInstruction`
+  when TRAP_ON_UNIMPLEMENTED_CSR is true.
 
   [NOTE]
-  `pmpcfgN` for an odd N never exists when XLEN == 64
+  `pmpcfgN` for an odd N never exists when XLEN == 64.
 
-  When NUM_PMP_ENTRIES is not exactly 0, 16, or 64, some extant pmp registers,
-  and associated pmpNcfg, will be read-only zero (but will never cause an exception).
+  An implemented entry may still be read-only zero (but will never cause an exception).
+  The number of entries that are actually usable is given by
+  NUM_USABLE_PMP_ENTRIES.
 long_name: TODO
 schema:
   type: integer
-  minimum: 0
-  maximum: 64
+  enum: [0, 16, 64]
 definedBy:
   extension:
     name: Sm

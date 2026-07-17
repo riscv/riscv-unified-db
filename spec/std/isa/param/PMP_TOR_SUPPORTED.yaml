@@ -1,0 +1,18 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: PMP_TOR_SUPPORTED
+description: |
+  Whether or not the Top-of-Range (TOR) PMP address matching mode is supported.
+
+long_name: PMP TOR mode supported
+schema:
+  type: boolean
+definedBy:
+  param:
+    name: NUM_PMP_ENTRIES
+    greaterThan: 0
