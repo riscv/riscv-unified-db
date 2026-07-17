@@ -138,7 +138,8 @@ namespace :gen do
   DESC
   task overlap: "#{$root}/gen/overlap" do
     config_name = ENV["CONFIG"] || "_"
-    output_dir = ENV["OUTPUT_DIR"] || "#{$root}/gen/overlap/"
+    output_dir = ENV["OUTPUT_DIR"] || "#{$root}/gen/overlap"
+    output_file = File.join(output_dir, "overlap_list.out.h")
 
     # Ensure the output directory exists
     FileUtils.mkdir_p output_dir
@@ -149,6 +150,6 @@ namespace :gen do
     inst_dir = cfg_arch.path / "inst"
 
     sh "uv run #{$root}/backends/generators/overlap/overlap_generator.py " \
-       "--inst-dir=#{inst_dir} --output=#{output_dir}overlap_list.out.h --include-all"
+       "--inst-dir=#{inst_dir} --output=#{output_file} --include-all"
   end
 end
