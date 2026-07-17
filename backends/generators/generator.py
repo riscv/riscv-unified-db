@@ -600,7 +600,7 @@ def extract_extensions(defined_by):
                 exts.extend(extract_extensions(req))
         elif "name" in defined_by:
             exts.append(defined_by["name"])
-    return list(set(exts))
+    return sorted(set(exts))
 
 
 def load_instructions_with_metadata(
