@@ -6,66 +6,31 @@
 
 require "pathname"
 require "sorbet-runtime"
-require "treetop"
 
+require_relative "idlc/version"
 require_relative "idlc/syntax_node"
 
-class IdlParser < Treetop::Runtime::CompiledParser
-  attr_reader :input_file
-
-  def set_input_file(filename, starting_line = 0, starting_offset = 0, line_file_offsets = nil)
-    @input_file = filename
-    @starting_line = starting_line
-    @starting_offset = starting_offset
-    @line_file_offsets = line_file_offsets
-  end
-
-  # alias instantiate_node so we can call it from the override
-  alias idlc_instantiate_node instantiate_node
-
-  # override instatiate_node so we can set the input file
-  def instantiate_node(node_type, *args)
-    node = T.unsafe(self).idlc_instantiate_node(node_type, *args)
-    node.set_input_file(input_file, @starting_line.nil? ? 0 : @starting_line, @starting_offset.nil? ? 0 : @starting_offset, @line_file_offsets)
-    node
-  end
-end
-
-# rebuild the idl parser if the grammar has changed
-tt_path = Pathname.new(__dir__) / "idlc" / "idl.treetop"
-rb_path = Pathname.new(__dir__) / "idlc" / "idl_parser.rb"
-needs_grammar_recompile = !rb_path.exist? || (rb_path.mtime < tt_path.mtime)
-if needs_grammar_recompile
-  tt_compiler = Treetop::Compiler::GrammarCompiler.new
-  tt_compiler.compile(tt_path, rb_path)
-
-  # make sure there is a single newline at the end
-  compiler_src = File.read rb_path
-  File.write rb_path, "#{compiler_src.strip}\n"
-end
-
 require_relative "idlc/ast"
+require_relative "idlc/formatter"
 require_relative "idlc/symbol_table"
-require_relative "idlc/idl_parser"
+require_relative "idlc/ts_parser"
+require_relative "idlc/ts_ast_builder"
 
 module Idl
   # the Idl compiler
   class Compiler
     extend T::Sig
 
-    attr_reader :parser
-
-    # Class-level parse cache: absolute file path (String) → IsaSyntaxNode.
-    # Shared across all Compiler instances so each file is parsed only once per
-    # process.  Safe to share because IsaSyntaxNode#to_ast is non-destructive
-    # and returns a fresh, independent IsaAst on every call.
+    # Class-level parse cache: absolute file path (String) → raw source text.
+    # Shared across all Compiler instances so each file's content is read from
+    # disk only once per process. Deliberately caches source, not the built
+    # AST: compile_file mutates the tree in place (replace_include!) and
+    # callers freeze it against a config-specific SymbolTable, so a cached
+    # AST would leak one config's resolved/frozen tree into another config
+    # that happens to include the same file. Build a fresh IsaAst per call.
     # Mutex guards writes; under MRI, reads without the lock are safe.
     @@parse_cache = {}
     @@parse_cache_mutex = Mutex.new
-
-    def initialize
-      @parser = ::IdlParser.new
-    end
 
     # set a progressbar
     def pb=(pb)
@@ -78,57 +43,120 @@ module Idl
       @pb = nil
     end
 
+    # Build an AST from source without running type-checking. This is the
+    # tree-sitter replacement for the old `compiler.parser.parse(src, root: :x)`
+    # + `m.to_ast` pattern used in tests.
+    #
+    # root: accepts the same symbolic names as Treetop's root: argument and
+    # performs any wrapping/unwrapping needed to produce an equivalent AST node.
+    def build_ast(source, root: :auto, input_file: "[build_ast]", starting_line: 0)
+      src = source
+      # ISA definitions need the %version: header to be detected by tree-sitter.
+      isa_def_roots = %i[enum_definition bitfield_definition struct_definition]
+      if isa_def_roots.include?(root)
+        src = "%version: 1.0\n#{source}"
+      end
+      # :assignment and :single_declaration lack the trailing ';' in some
+      # Treetop usages; tree-sitter needs a statement-terminated input.
+      if %i[assignment single_declaration].include?(root)
+        src = src.end_with?(";") ? src : "#{src};"
+      end
+
+      ast = ts_build(src, filename: input_file.to_s, starting_line: starting_line.to_i)
+
+      # Unwrap to match what Treetop's root: argument returned.
+      ast = case root
+            when :statement
+              ast.is_a?(FunctionBodyAst) ? ast.stmts.first : ast
+            when :assignment, :single_declaration
+              stmt = ast.is_a?(FunctionBodyAst) ? ast.stmts.first : ast
+              stmt.respond_to?(:action) ? stmt.action : stmt
+            when *isa_def_roots
+              ast.is_a?(IsaAst) ? ast.children.first : ast
+            else
+              ast
+            end
+
+      ast.set_input_file(input_file, starting_line) if ast
+      ast
+    end
+
+    private
+
+    def ts_syntax_detail(source, filename:, starting_line: 0)
+      errors = TsParser.check_errors(source)
+      return nil if errors.empty?
+      TsParser.format_errors(source, errors, filename: filename.to_s, starting_line: starting_line)
+    end
+
+    def ts_parser
+      @ts_parser ||= TreeSitter::Parser.new.tap { |p| p.language = TsParser.language }
+    end
+
+    public
+
+    # Parse +source+ with tree-sitter, raise SyntaxError on parse errors, and
+    # return the built AST. Does not call set_input_file — callers handle that.
+    #
+    # root: :for_loop unwraps FunctionBodyAst → its single inner ForLoopAst,
+    # matching what Treetop's `root: :for_loop` returned.
+    sig {
+      params(
+        source: String,
+        filename: T.any(String, Pathname),
+        starting_line: Integer,
+        root: Symbol
+      )
+      .returns(AstNode)
+      .checked(:never)
+    }
+    def ts_build(source, filename:, starting_line: 0, root: :auto)
+      tree  = ts_parser.parse_string(nil, source)
+      errs  = TsParser.collect_errors(tree.root_node, [])
+      unless errs.empty?
+        detail = TsParser.format_errors(source, errs, filename: filename.to_s, starting_line: starting_line.to_i)
+        raise SyntaxError, "While parsing #{filename}:\n\n#{detail}"
+      end
+      ast = TsAstBuilder.new(source).build(tree.root_node)
+      if root == :for_loop && ast.is_a?(FunctionBodyAst)
+        ast.stmts.first
+      else
+        ast
+      end
+    end
+
     def compile_file(path, source_mapper = nil)
       path_key = path.realpath.to_s
 
-      m = T.let(@@parse_cache[path_key], T.nilable(IsaSyntaxNode))
+      content = T.let(@@parse_cache[path_key], T.nilable(String))
 
-      if m.nil?
+      if content.nil?
         @@parse_cache_mutex.synchronize do
-          # Re-check inside the lock in case another thread just populated the entry.
-          unless @@parse_cache.key?(path_key)
-            @parser.set_input_file(path_key)
-
-            content = path.read
-            source_mapper[path_key] = content unless source_mapper.nil?
-
-            old_format = @pb.format unless @pb.nil?
-            @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
-            pid = unless @pb.nil?
-                    fork {
-                      loop do
-                        sleep 1
-                        @pb.advance unless @pb.nil?
-                      end
-                    }
-                  end
-            m = @parser.parse(content)
-            unless @pb.nil?
-              Process.kill("TERM", T.must(pid))
-              Process.wait(T.must(pid))
-              @pb.format = old_format
-            end
-
-            if m.nil?
-              raise SyntaxError, <<~MSG
-                While parsing #{@parser.input_file}:#{@parser.failure_line}:#{@parser.failure_column}
-
-                #{@parser.failure_reason}
-              MSG
-            end
-
-            raise "unexpected type #{m.class.name}" unless m.is_a?(IsaSyntaxNode)
-
-            @@parse_cache[path_key] = m
-          end
-          m = @@parse_cache[path_key]
+          @@parse_cache[path_key] = path.read unless @@parse_cache.key?(path_key)
+          content = @@parse_cache[path_key]
         end
-      else
-        # Cache hit: still populate source_mapper if provided (test-only path).
-        source_mapper[path_key] = path.read unless source_mapper.nil?
       end
+      content = T.must(content)
+      source_mapper[path_key] = content unless source_mapper.nil?
 
-      ast = T.must(m).to_ast
+      old_format = @pb.format unless @pb.nil?
+      @pb.format = "Parsing #{File.basename(path)} [:bar]" unless @pb.nil?
+      pid = unless @pb.nil?
+              fork {
+                loop do
+                  sleep 1
+                  @pb.advance unless @pb.nil?
+                end
+              }
+            end
+
+      ast = T.cast(ts_build(content, filename: path_key), IsaAst)
+
+      unless @pb.nil?
+        Process.kill("TERM", T.must(pid))
+        Process.wait(T.must(pid))
+        @pb.format = old_format
+      end
 
       ast.children.each do |child|
         next unless child.is_a?(IncludeStatementAst)
@@ -176,16 +204,7 @@ module Idl
 
     sig { params(loop: String, symtab: SymbolTable, pass_error: T::Boolean).returns(ForLoopAst) }
     def compile_for_loop(loop, symtab, pass_error: false)
-      m = @parser.parse(loop, root: :for_loop)
-      if m.nil?
-        raise SyntaxError, <<~MSG
-          While parsing #{loop}:#{@parser.failure_line}:#{@parser.failure_column}
-
-          #{@parser.failure_reason}
-        MSG
-      end
-
-      ast = m.to_ast
+      ast = T.cast(ts_build(loop, filename: "[for loop]", root: :for_loop), ForLoopAst)
       ast.set_input_file("[LOOP]", 0)
       value_result = ast.value_try do
         ast.freeze_tree(symtab)
@@ -229,27 +248,7 @@ module Idl
     # @param no_rescue [Boolean] Whether or not to automatically catch any errors
     # @return [Ast] The root of the abstract syntax tree
     def compile_func_body(body, return_type: nil, symtab: nil, name: nil, input_file: nil, input_line: 0, starting_offset: 0, line_file_offsets: nil, no_rescue: false, extra_syms: {}, type_check: true)
-      @parser.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
-
-      m = @parser.parse(body, root: :function_body)
-      if m.nil?
-        unless input_file.nil? || input_line.nil?
-          raise SyntaxError, <<~MSG
-            While parsing #{name} at #{input_file}:#{input_line + @parser.failure_line}
-
-            #{@parser.failure_reason}
-          MSG
-        else
-          raise SyntaxError, <<~MSG
-            While parsing #{name}
-
-            #{@parser.failure_reason}
-          MSG
-        end
-      end
-
-      # fix up left recursion
-      ast = m.to_ast
+      ast = T.cast(ts_build(body, filename: input_file || name.to_s, starting_line: input_line.to_i), FunctionBodyAst)
       ast.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
       ast.freeze_tree(symtab)
 
@@ -290,20 +289,22 @@ module Idl
       ast
     end
 
+    sig {
+      params(
+        idl: String,
+        symtab: SymbolTable,
+        input_file: T.any(String, Pathname),
+        input_line: Integer,
+        starting_offset: Integer,
+        line_file_offsets: T.nilable(T::Array[Integer])
+      )
+      .returns(FunctionBodyAst)
+    }
     def compile_inst_scope(idl, symtab:, input_file:, input_line: 0, starting_offset: 0, line_file_offsets: nil)
-      @parser.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
-
-      m = @parser.parse(idl, root: :instruction_operation)
-      if m.nil?
-        raise SyntaxError, <<~MSG
-          While parsing #{input_file}:#{input_line + @parser.failure_line}
-
-          #{@parser.failure_reason}
-        MSG
+      if idl.empty?
+        return FunctionBodyAst.new(nil, 0...0, [])
       end
-
-      # fix up left recursion
-      ast = m.to_ast
+      ast = T.cast(ts_build(idl, filename: input_file, starting_line: input_line.to_i), FunctionBodyAst)
       ast.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
       ast.freeze_tree(symtab)
 
@@ -357,16 +358,7 @@ module Idl
     end
 
     def compile_expression(expression, symtab, pass_error: false)
-      m = @parser.parse(expression, root: :expression)
-      if m.nil?
-        raise SyntaxError, <<~MSG
-          While parsing #{expression}:#{@parser.failure_line}:#{@parser.failure_column}
-
-          #{@parser.failure_reason}
-        MSG
-      end
-
-      ast = m.to_ast
+      ast = ts_build(expression, filename: "[expression]")
       ast.set_input_file("[EXPRESSION]", 0)
       value_result = ast.value_try do
         ast.freeze_tree(symtab)
@@ -404,7 +396,7 @@ module Idl
         body: String,
         symtab: SymbolTable,
         pass_error: T::Boolean,
-        input_file: T.nilable(T.any(String, Pathname)),
+        input_file: T.any(String, Pathname),
         input_line: Integer,
         starting_offset: Integer,
         line_file_offsets: T.nilable(T::Array[Integer])
@@ -413,17 +405,7 @@ module Idl
     def compile_constraint(body, symtab, pass_error: false,
                            input_file: "[CONSTRAINT]", input_line: 0,
                            starting_offset: 0, line_file_offsets: nil)
-      m = @parser.parse(body, root: :constraint_body)
-      if m.nil?
-        raise SyntaxError, <<~MSG
-          While parsing #{body}:#{@parser.failure_line}:#{@parser.failure_column}
-
-          #{@parser.failure_reason}
-        MSG
-      end
-
-      # fix up left recursion
-      ast = m.to_ast
+      ast = T.cast(ts_build(body, filename: input_file, root: :constraint_body), ConstraintBodyAst)
       ast.set_input_file(input_file, input_line, starting_offset, line_file_offsets)
       ast.freeze_tree(symtab)
 

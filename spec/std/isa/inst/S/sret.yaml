@@ -76,32 +76,32 @@ operation(): |
   if (implemented?(ExtensionName::H)) {
     if (CSR[mstatus].TSR == 1'b0 && CSR[hstatus].VTSR == 1'b0) {
       if (mode() == PrivilegeMode::U) {
-        raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
       } else if (mode() == PrivilegeMode::VU) {
-        raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
       }
     } else if (CSR[mstatus].TSR == 1'b0 && CSR[hstatus].VTSR == 1'b1) {
       if (mode() == PrivilegeMode::U) {
-        raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
       } else if (mode() == PrivilegeMode::VU || mode() == PrivilegeMode::VS) {
-        raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
       }
     } else if (CSR[mstatus].TSR == 1'b1 && CSR[hstatus].VTSR == 1'b0) {
       if (mode() == PrivilegeMode::U || mode() == PrivilegeMode::S) {
-        raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
       } else if (mode() == PrivilegeMode::VU) {
-        raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
       }
     } else if (CSR[mstatus].TSR == 1'b1 && CSR[hstatus].VTSR == 1'b1) {
       if (mode() == PrivilegeMode::U || mode() == PrivilegeMode::S) {
-        raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
       } else if (mode() == PrivilegeMode::VU || mode() == PrivilegeMode::VS) {
-        raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
       }
     }
   } else {
     if (mode() == PrivilegeMode::U) {
-      raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
     }
   }
 
@@ -135,7 +135,7 @@ operation(): |
     $pc = $bits(CSR[sepc]);
   } else if (implemented?(ExtensionName::H)) {
     if (CSR[mstatus].TSR == 1'b1) {
-      raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
     }
     CSR[vsstatus].SPP = 0;
     CSR[vsstatus].SIE = CSR[vsstatus].SPIE;

@@ -37,28 +37,19 @@ fields:
     type(): |
       if (JVT_READ_ONLY) {
         return CsrFieldType::RO;
-      }
-      else {
+      } else {
         return CsrFieldType::RW;
       }
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
-      if (( mode() != PrivilegeMode::M && implemented?(ExtensionName::Smstateen)
-            && CSR[mstateen0].JVT == 1'b0 )
-          ||
-          ( mode() == PrivilegeMode::U && implemented?(ExtensionName::Ssstateen)
-            && CSR[sstateen0].JVT == 1'b0 )
-          ||
-          ( mode() == PrivilegeMode::VS && implemented?(ExtensionName::Ssstateen)
-            && CSR[hstateen0].JVT == 1'b0 )
-          ||
-          ( mode() == PrivilegeMode::VU && implemented?(ExtensionName::Ssstateen)
-            && (CSR[sstateen0].JVT == 1'b0 || CSR[hstateen0].JVT == 1'b0) )) {
+      if ((mode() != PrivilegeMode::M && implemented?(ExtensionName::Smstateen) && CSR[mstateen0].JVT == 1'b0) ||
+            (mode() == PrivilegeMode::U && implemented?(ExtensionName::Ssstateen) && CSR[sstateen0].JVT == 1'b0) ||
+            (mode() == PrivilegeMode::VS && implemented?(ExtensionName::Ssstateen) && CSR[hstateen0].JVT == 1'b0) ||
+            (mode() == PrivilegeMode::VU && implemented?(ExtensionName::Ssstateen) && (CSR[sstateen0].JVT == 1'b0 || CSR[hstateen0].JVT == 1'b0))) {
 
         unimplemented_csr($encoding);
         return 0;
-      }
-      else {
+      } else {
         if (JVT_BASE_TYPE == "custom") {
           unpredictable("jvt.BASE has custom behavior");
         } else {
@@ -75,8 +66,7 @@ fields:
     type(): |
       if (JVT_READ_ONLY) {
         return CsrFieldType::RO;
-      }
-      else {
+      } else {
         return CsrFieldType::RW;
       }
     reset_value: 0

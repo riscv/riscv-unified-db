@@ -43,5 +43,5 @@ operation(): |
   X[rd] = ($signed(rs1_value) >= $signed({1'b0, imm}))
     ? rs1_value - imm
     : (($signed(rs1_value) < 's0)
-       ? ($signed(rs1_value) + imm)
-       : rs1_value);
+      ? ($signed(rs1_value) + imm)
+      : rs1_value);

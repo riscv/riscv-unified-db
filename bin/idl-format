@@ -1,0 +1,342 @@
+#!/usr/bin/env ruby
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# bin/idl-format — format IDL source in .idl, .isa, and .yaml files.
+#
+# Usage:
+#   bin/idl-format [-f] [--width=N] [FILES...]
+#
+#   -f          Fail on change: exit 1 if any file was modified
+#   --width=N   Override the default 100-column reflow width. Lines are broken
+#               at semantic boundaries (||, &&, commas) to fit within N columns,
+#               then re-formatted.  Useful for narrow-column output such as
+#               documentation PDFs.
+#
+#   With no FILES, formats all spec/**/*.{idl,isa} and spec/**/*.yaml.
+#
+# Dispatch:
+#   .idl / .isa  →  topiary format (formats the file in-place)
+#   .yaml        →  extracts IDL from operation()/sw_read()/when() fields,
+#                   formats each snippet via topiary, rewrites the file
+
+require "fileutils"
+require "open3"
+require "tempfile"
+
+ROOT = File.expand_path("../..", __FILE__)
+GRAMMAR_DIR  = File.join(ROOT, "tools", "node", "tree-sitter-idl")
+# The Makefile builds libtree-sitter-idl.so on Linux and .dylib on macOS; accept
+# whichever exists.
+GRAMMAR_SO   = %w[libtree-sitter-idl.so libtree-sitter-idl.dylib]
+               .map { |n| File.join(GRAMMAR_DIR, n) }
+               .find { |p| File.exist?(p) }
+QUERY_DIR    = File.join(GRAMMAR_DIR, "queries")
+GRAMMAR_PATH = GRAMMAR_SO
+REFLOW_JS    = File.join(ROOT, "tools", "node", "idl-reflow", "index.js")
+NODE_BIN     = File.join(ROOT, "bin", "node")
+TOPIARY_BIN  = File.join(ROOT, "bin", "topiary")
+
+fail_on_change = ARGV.delete("-f")
+
+reflow_width = 100
+ARGV.delete_if { |a| a =~ /\A--width=(\d+)\z/ && (reflow_width = $1.to_i) }
+
+# Warn early if the compiled grammar is missing
+if GRAMMAR_SO.nil?
+  $stderr.puts "idl-format: grammar not compiled — run: bin/setup (or: make -C tools/node/tree-sitter-idl)"
+  exit 1
+end
+
+# Write a temporary config with the absolute grammar path so Topiary can
+# resolve it regardless of the current working directory.
+TOPIARY_CONFIG_FILE = Tempfile.new(["topiary-idl-config", ".ncl"])
+TOPIARY_CONFIG_FILE.write(<<~NCL)
+  {
+    languages = {
+      idl = {
+        extensions | default = ["idl", "isa"],
+        indent | default = "  ",
+        grammar.source | default = {
+          path = "#{GRAMMAR_PATH}",
+        },
+      },
+    },
+  }
+NCL
+TOPIARY_CONFIG_FILE.flush
+
+TOPIARY_ENV = { "TOPIARY_LANGUAGE_DIR" => QUERY_DIR }.freeze
+TOPIARY_CMD = [TOPIARY_BIN, "--configuration", TOPIARY_CONFIG_FILE.path].freeze
+
+at_exit { TOPIARY_CONFIG_FILE.close! }
+
+def topiary(*args)
+  system(TOPIARY_ENV, *TOPIARY_CMD, *args)
+end
+
+files =
+  if ARGV.empty?
+    Dir.glob(File.join(ROOT, "spec/**/*.{idl,isa,yaml}"))
+  else
+    ARGV.dup
+  end
+
+idl_files, yaml_files = files.partition { |f| f.match?(/\.(idl|isa)\z/) }
+
+any_changed = false
+
+# -------------------------------------------------------------------------
+# Format standalone .idl / .isa files
+# -------------------------------------------------------------------------
+
+unless idl_files.empty?
+  if fail_on_change
+    # Check mode: format each file to a temp copy and compare; topiary 0.7.x has no --check flag.
+    # Must mirror the fix-mode pipeline below (topiary -> reflow -> topiary) or a
+    # file that only needs the reflow pass would pass CI yet still get rewritten
+    # by a plain `bin/idl-format` run.
+    idl_files.each do |f|
+      tmp = Tempfile.new(["idl-check", File.extname(f)])
+      begin
+        FileUtils.cp(f, tmp.path)
+        unless topiary("format", tmp.path)
+          $stderr.puts "idl-format: topiary failed on #{f}"
+          any_changed = true
+          next
+        end
+        if reflow_width
+          unless system(NODE_BIN, REFLOW_JS, reflow_width.to_s, tmp.path)
+            $stderr.puts "idl-format: reflow failed on #{f}"
+            any_changed = true
+            next
+          end
+          unless topiary("format", tmp.path)
+            $stderr.puts "idl-format: topiary re-format after reflow failed on #{f}"
+            any_changed = true
+            next
+          end
+        end
+        if File.read(tmp.path, encoding: "utf-8") != File.read(f, encoding: "utf-8")
+          $stderr.puts "idl-format: #{f} not formatted — run `bin/idl-format` to fix"
+          any_changed = true
+        end
+      ensure
+        tmp.close!
+      end
+    end
+  else
+    # Pass 1: Topiary — canonical spacing and indentation
+    unless topiary("format", *idl_files)
+      $stderr.puts "idl-format: topiary format failed"
+      exit 1
+    end
+
+    # Pass 2 (optional): reflow long lines at semantic break points, then
+    # re-run Topiary to clean up indentation on the new continuation lines.
+    if reflow_width
+      unless system(NODE_BIN, REFLOW_JS, reflow_width.to_s, *idl_files)
+        $stderr.puts "idl-format: reflow failed"
+        exit 1
+      end
+      unless topiary("format", *idl_files)
+        $stderr.puts "idl-format: topiary re-format after reflow failed"
+        exit 1
+      end
+    end
+  end
+end
+
+# -------------------------------------------------------------------------
+# Format inline IDL blocks in .yaml files
+# -------------------------------------------------------------------------
+
+# Matches any YAML key with parentheses (function-like), e.g.:
+#   operation(): |   sw_read(): |   when(): |   arch_write(value): |   ...
+# Also handles block chomping indicators like |-, |2-, |- etc.
+IDL_FIELD_RE = /\A(\s*)\w+\([^)]*\):\s*\|/
+
+# Scan a YAML file's lines and return the bare IDL snippet text for each matched
+# IDL block, in document order.  Used by batch_format_yaml_snippets so that the
+# block-detection logic is shared with format_yaml_file.
+def scan_idl_snippets(lines)
+  snippets = []
+  i = 0
+  while i < lines.length
+    line = lines[i]
+    if (m = IDL_FIELD_RE.match(line))
+      key_indent = m[1].length
+      i += 1
+      block_start = i
+      while i < lines.length
+        l = lines[i]
+        if l.rstrip.empty?
+          i += 1
+          next
+        end
+        break if l.match(/\A(\s*)/)[1].length <= key_indent
+        i += 1
+      end
+      block_lines = lines[block_start...i]
+      non_empty = block_lines.reject { |l| l.strip.empty? }
+      if non_empty.empty?
+        snippets << nil
+      else
+        content_indent = non_empty.first.match(/\A(\s*)/)[1].length
+        bare_lines = block_lines.map { |l| l.strip.empty? ? "\n" : (l[content_indent..] || "\n") }
+        snippets << bare_lines.join
+      end
+    else
+      i += 1
+    end
+  end
+  snippets
+end
+
+# Pre-format all IDL snippets embedded in the given YAML files using a single
+# batched topiary call instead of one call per snippet.  Returns a Hash mapping
+# snippet text to formatted text.  Returns {} on batch failure (callers fall
+# back to per-snippet formatting via stdin).
+def batch_format_yaml_snippets(yaml_files)
+  return {} if yaml_files.empty?
+
+  unique_snips = {}  # snippet_text => Tempfile
+  yaml_files.each do |path|
+    begin
+      lines = File.readlines(path, encoding: "utf-8")
+    rescue
+      next
+    end
+    scan_idl_snippets(lines).each do |snippet|
+      next if snippet.nil? || unique_snips.key?(snippet)
+      tmp = Tempfile.new(["idl-snippet", ".idl"])
+      tmp.write(snippet)
+      tmp.flush
+      unique_snips[snippet] = tmp
+    end
+  end
+  return {} if unique_snips.empty?
+
+  tmp_paths = unique_snips.values.map(&:path)
+  unless topiary("format", *tmp_paths)
+    unique_snips.values.each(&:close!)
+    return {}  # batch failed — callers will fall back to per-snippet stdin mode
+  end
+
+  result = {}
+  unique_snips.each do |snippet, tmp|
+    result[snippet] = File.read(tmp.path, encoding: "utf-8")
+    tmp.close!
+  end
+  result
+end
+
+def format_idl_snippet(snippet, cache = {})
+  return cache[snippet] if cache.key?(snippet)
+  out, status = Open3.capture2(TOPIARY_ENV, *TOPIARY_CMD, "format", "--language", "idl", stdin_data: snippet)
+  status.success? ? out : nil
+rescue Errno::ENOENT
+  $stderr.puts "idl-format: 'topiary' not found — run `bin/mise install`"
+  exit 1
+end
+
+def format_yaml_file(path, snippet_cache = {})
+  lines = File.readlines(path, encoding: "utf-8")
+  output = []
+  changed = false
+  i = 0
+
+  while i < lines.length
+    line = lines[i]
+
+    if (m = IDL_FIELD_RE.match(line))
+      key_indent = m[1].length
+      output << line
+      i += 1
+
+      # Collect the YAML block scalar content: lines with indent > key_indent,
+      # plus empty/whitespace-only lines within the block.
+      block_start = i
+      while i < lines.length
+        l = lines[i]
+        stripped = l.rstrip
+        if stripped.empty?
+          # Blank lines are part of the block if we haven't left yet
+          i += 1
+          next
+        end
+        indent = l.match(/\A(\s*)/)[1].length
+        break if indent <= key_indent
+
+        i += 1
+      end
+      block_lines = lines[block_start...i]
+
+      non_empty = block_lines.reject { |l| l.strip.empty? }
+      if non_empty.empty?
+        output.concat(block_lines)
+        next
+      end
+
+      content_indent = non_empty.first.match(/\A(\s*)/)[1].length
+
+      # Strip leading content_indent from each line to get bare IDL
+      bare_lines = block_lines.map do |l|
+        l.strip.empty? ? "\n" : (l[content_indent..] || "\n")
+      end
+      snippet = bare_lines.join
+
+      formatted = format_idl_snippet(snippet, snippet_cache)
+      if formatted.nil?
+        output.concat(block_lines)
+        next
+      end
+
+      # Re-indent the formatted IDL back to content_indent
+      prefix = " " * content_indent
+      new_lines = formatted.split("\n", -1).map.with_index do |l, idx|
+        if l.empty?
+          (idx == formatted.split("\n", -1).length - 1) ? "" : "\n"
+        else
+          "#{prefix}#{l}\n"
+        end
+      end
+      # Drop trailing empty string artifact from split
+      new_lines.pop if new_lines.last == ""
+
+      if new_lines != block_lines
+        changed = true
+        output.concat(new_lines)
+      else
+        output.concat(block_lines)
+      end
+    else
+      output << line
+      i += 1
+    end
+  end
+
+  [output.join, changed]
+end
+
+snippet_cache = batch_format_yaml_snippets(yaml_files)
+
+yaml_files.each do |path|
+  begin
+    result, changed = format_yaml_file(path, snippet_cache)
+  rescue => e
+    $stderr.puts "idl-format: error processing #{path}: #{e}"
+    next
+  end
+
+  if changed
+    if fail_on_change
+      $stderr.puts "idl-format: #{path} changed — run `bin/idl-format` to fix"
+      any_changed = true
+    else
+      File.write(path, result, encoding: "utf-8")
+    end
+  end
+end
+
+exit 1 if any_changed

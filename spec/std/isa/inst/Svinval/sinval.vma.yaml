@@ -30,23 +30,23 @@ access:
 assembly: xs1, xs2
 operation(): |
   XReg vaddr = X[xs1];
-  Bits<ASID_WIDTH> asid = X[xs2][ASID_WIDTH-1:0];
+  Bits<ASID_WIDTH> asid = X[xs2][ASID_WIDTH - 1 : 0];
 
   if (CSR[mstatus].TVM == 1 &&
-      ((mode() == PrivilegeMode::S) || (mode() == PrivilegeMode::VS))) {
+        ((mode() == PrivilegeMode::S) || (mode() == PrivilegeMode::VS))) {
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   if (CSR[misa].H == 1 && CSR[hstatus].VTVM == 1 && mode() == PrivilegeMode::VS) {
-    raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+    raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
   }
 
   if (mode() == PrivilegeMode::U) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   if (CSR[misa].H == 1 && mode() == PrivilegeMode::VU) {
-    raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+    raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
   }
 
   # note: this will default to "all"
@@ -65,7 +65,6 @@ operation(): |
     vma_type.global = true;
 
     invalidate_translations(vma_type);
-
   } else if ((xs1 == 0) && (xs2 != 0)) {
     # invalidates all translations from ASID 'asid'
     # does not affect global mappings
@@ -73,7 +72,6 @@ operation(): |
     vma_type.asid = asid;
 
     invalidate_translations(vma_type);
-
   } else if ((xs1 != 0) && (xs2 == 0)) {
     # invalidate all translations from leaf page tables containing 'vaddr'
     # does not affect global mappings
@@ -82,10 +80,7 @@ operation(): |
       vma_type.vaddr = vaddr;
 
       invalidate_translations(vma_type);
-
-    }
-    # else, silently do nothing
-
+    } # else, silently do nothing
   } else {
     # invalidate all translations from leaf page tables for address space 'asid' containing 'vaddr'
     # does not affect global mappings
@@ -96,7 +91,5 @@ operation(): |
       vma_type.vaddr = vaddr;
 
       invalidate_translations(vma_type);
-
-    }
-    # else, silently do nothing
+    } # else, silently do nothing
   }

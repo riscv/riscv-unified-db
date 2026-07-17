@@ -47,11 +47,7 @@ class TestValues < Minitest::Test
       possible_xlens_cb: proc { [32, 64] }
     )
 
-    idl = "CSR[mockcsr].ONE"
-    @compiler.parser.set_input_file("", 0)
-    m = @compiler.parser.parse(idl, root: :csr_field_access_expression)
-    refute_nil m
-    ast = m.to_ast
+    ast = @compiler.build_ast("CSR[mockcsr].ONE", root: :csr_field_access_expression)
     refute_nil ast
     ast.freeze_tree(symtab)
     assert_equal 0, ast.value(symtab)

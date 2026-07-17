@@ -61,4 +61,5 @@ sw_read(): |
   }
 
   # return the value of mcontext
-  return $bits(CSR[mcontext]); # might truncate if xlen() < MXLEN, but that's the expected behavior
+  return $bits(CSR[mcontext]);
+  # might truncate if xlen() < MXLEN, but that's the expected behavior

@@ -51,37 +51,56 @@ Decode Variables::
 <%- if inst.multi_encoding? -%>
 RV32::
 +
+<%- _dv32 = inst.decode_variables(32).map { |d| "#{d.sext? ? 'signed ' : ''}Bits<#{d.size}> #{d.name} = #{d.extract};" }.join("\n") -%>
+ifdef::backend-pdf[]
 [source,idl]
 ----
-<%- inst.decode_variables(32).each do |d| -%>
-<%= d.sext? ? 'signed ' : '' %>Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
-<%- end -%>
+<%= _dv32 %>
 ----
+endif::[]
+ifndef::backend-pdf[]
+<%= idl_code_html_block(_dv32, format: false) %>
+endif::[]
 
 RV64::
 +
+<%- _dv64 = inst.decode_variables(64).map { |d| "#{d.sext? ? 'signed ' : ''}Bits<#{d.size}> #{d.name} = #{d.extract};" }.join("\n") -%>
+ifdef::backend-pdf[]
 [source,idl]
 ----
-<%- inst.decode_variables(64).each do |d| -%>
-<%= d.sext? ? 'signed ' : '' %>Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
-<%- end -%>
+<%= _dv64 %>
 ----
+endif::[]
+ifndef::backend-pdf[]
+<%= idl_code_html_block(_dv64, format: false) %>
+endif::[]
 <%- else -%>
-[source,idl,subs="specialchars,macros"]
+<%- _dv = inst.decode_variables(inst.base.nil? ? 64 : inst.base).map { |d| "#{d.sext? ? 'signed ' : ''}Bits<#{d.size}> #{d.name} = #{d.extract};" }.join("\n") -%>
+ifdef::backend-pdf[]
+[source,idl]
 ----
-<%- inst.decode_variables(inst.base.nil? ? 64 : inst.base).each do |d| -%>
-<%= d.sext? ? 'signed ' : '' %>Bits<<%= d.size %>> <%= d.name %> = <%= d.extract %>;
-<%- end -%>
+<%= _dv %>
 ----
+endif::[]
+ifndef::backend-pdf[]
+<%= idl_code_html_block(_dv, format: false) %>
+endif::[]
 <%- end # if multi_encoding? -%>
 <%- end # if no decode variables-%>
 
 <% unless inst.data["operation()"].nil? %>
 Operation::
-[source,idl,subs="specialchars,macros"]
+<%- _op_ast = inst.operation_ast -%>
+<%- _op_idl = idl_format(_op_ast.to_idl(include_comments: true), column_width: 80) -%>
+ifdef::backend-pdf[]
+[source,idl,idl-links="<%= idl_code_links_attr(_op_ast) %>"]
 ----
-<%= inst.fix_entities(inst.operation_ast.gen_adoc) %>
+<%= _op_idl %>
 ----
+endif::[]
+ifndef::backend-pdf[]
+<%= idl_code_html_block(_op_idl, idl_link_map(_op_ast), format: false) %>
+endif::[]
 <% end %>
 
 Included in::

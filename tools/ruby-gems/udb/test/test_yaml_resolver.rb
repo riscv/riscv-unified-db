@@ -441,14 +441,7 @@ class TestYamlResolver < Minitest::Test
         parse_root = pair[:parse_root]
         key_path   = pair[:path]
 
-        compiler.parser.set_input_file(rel_path, 0)
-        m = compiler.parser.parse(idl_text, root: parse_root)
-        assert m,
-          "Failed to re-parse IDL text for #{rel_path} at #{key_path.inspect} " \
-          "(kind=#{ast_hash["kind"].inspect}): #{idl_text[0, 80].inspect}\n" \
-          "#{compiler.parser.failure_reason}"
-
-        reparsed_ast = m.to_ast
+        reparsed_ast = compiler.build_ast(idl_text, root: parse_root, input_file: rel_path)
         assert reparsed_ast,
           "IDL compiler returned nil AST for #{rel_path} at #{key_path.inspect}"
 

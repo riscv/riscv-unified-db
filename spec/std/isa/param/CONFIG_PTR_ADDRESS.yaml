@@ -20,9 +20,9 @@ schema:
 
 requirements:
   idl(): |
-    (MXLEN == 32) -> (CONFIG_PTR_ADDRESS[2:0] == 0);
+    (MXLEN == 32) -> (CONFIG_PTR_ADDRESS[2 : 0] == 0);
     (MXLEN == 32) -> (CONFIG_PTR_ADDRESS <= 32'hffffffff);
-    (MXLEN == 64) -> (CONFIG_PTR_ADDRESS[3:0] == 0);
+    (MXLEN == 64) -> (CONFIG_PTR_ADDRESS[3 : 0] == 0);
   reason: |
     The pointer alignment in bits must be no smaller than MXLEN:
     i.e., if MXLEN is 8 x n, then mconfigptr[(log2(n)-1:0] must be zero.

@@ -18,6 +18,7 @@ on:
       - "tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION"
       - "tools/ruby-gems/udb/lib/udb/MUST_VERSION"
       - "tools/ruby-gems/udb/lib/udb/Z3_VERSION"
+      - "tools/node/tree-sitter-idl/TS_IDL_VERSION"
   workflow_dispatch:
     inputs:
       tool:
@@ -29,6 +30,7 @@ on:
           - espresso
           - must
           - z3
+          - tree-sitter-idl
           - all
       force:
         description: "Force rebuild and release even if release already exists"
@@ -55,7 +57,7 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             if [[ "${{ inputs.tool }}" == "all" ]]; then
-              TOOLS='["eqntott","espresso","must","z3"]'
+              TOOLS='["eqntott","espresso","must","z3","tree-sitter-idl"]'
             else
               TOOLS='["${{ inputs.tool }}"]'
             fi
@@ -81,6 +83,11 @@ jobs:
 
             if echo "$CHANGED_FILES" | grep -q "^tools/ruby-gems/udb/lib/udb/Z3_VERSION$"; then
               TOOLS="${TOOLS}${SEPARATOR}\"z3\""
+              SEPARATOR=","
+            fi
+
+            if echo "$CHANGED_FILES" | grep -q "^tools/node/tree-sitter-idl/TS_IDL_VERSION$"; then
+              TOOLS="${TOOLS}${SEPARATOR}\"tree-sitter-idl\""
             fi
 
             TOOLS="${TOOLS}]"
@@ -195,4 +202,42 @@ jobs:
             ./bin/chore update must -n -f
           else
             ./bin/chore update must -n
+          fi
+
+  build-tree-sitter-idl:
+    needs: detect-tools
+    if: contains(fromJson(needs.detect-tools.outputs.tools), 'tree-sitter-idl')
+    name: Build tree-sitter-idl grammar (${{ matrix.os }}-${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      # The grammar is a native shared object, so it must be built on the
+      # matching OS. Each runner builds and uploads only its own (OS, CPU)
+      # asset to the shared release.
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            os: linux
+            arch: x64
+          - runner: ubuntu-24.04-arm
+            os: linux
+            arch: arm64
+          - runner: macos-13
+            os: macos
+            arch: x64
+          - runner: macos-14
+            os: macos
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Build and upload tree-sitter-idl for ${{ matrix.os }}-${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ./bin/chore update tree-sitter-idl -n -f
+          else
+            ./bin/chore update tree-sitter-idl -n
           fi

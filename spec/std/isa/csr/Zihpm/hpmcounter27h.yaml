@@ -66,4 +66,4 @@ sw_read(): |
     }
   }
 
-  return read_hpm_counter(27)[63:32];
+  return read_hpm_counter(27)[63 : 32];

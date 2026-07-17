@@ -1,0 +1,10 @@
+{
+  "name": "idl-reflow",
+  "version": "0.1.0",
+  "description": "Reflow IDL source to fit a target column width using tree-sitter",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "reflow": "node index.js"
+  }
+}

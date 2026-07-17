@@ -43,9 +43,9 @@ operation(): |
   if (csr_handle.valid == false) {
     unimplemented_csr($encoding);
   } else if (!compatible_mode?(csr_handle.mode, mode())) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   } else if (csr_handle.writable == false) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   if (xd != 0) {
@@ -54,4 +54,4 @@ operation(): |
 
   # writes the zero-extended immediate to the CSR,
   # performing any WARL transformations first
-  csr_sw_write(csr_handle, {{MXLEN-5{1'b0}}, imm});
+  csr_sw_write(csr_handle, {{MXLEN - 5{1'b0}}, imm});

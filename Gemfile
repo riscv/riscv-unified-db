@@ -6,6 +6,7 @@ source "https://rubygems.org"
 
 # external gems (published/publishable)
 gem "tty-spinner"
+gem "ruby_tree_sitter"
 
 # local gems in UDB
 gemspec path: "tools/ruby-gems/idlc"

@@ -12,6 +12,9 @@ cmake = "4.4.0"
 make = "4.4.1"
 shellcheck = "0.11.0"
 "github-cli" = "2.96.0"
+rust = "1.95.0"
+cargo-binstall = "1.19.1"
+"cargo:topiary-cli" = "0.7.3"
 
 [env]
 RUBY_YJIT_ENABLE = "1"
@@ -21,6 +24,11 @@ BUNDLE_LOCKFILE_CHECKSUMS = "false"
 # install at XDG_DATA_HOME:-~/.local/share/gem
 BUNDLE_PATH = "{{xdg_data_home}}/gem"
 
+RUSTUP_INIT_SKIP_PATH_CHECK = "yes"
+# install at XDG_DATA_HOME:-~/.local/cache/cargo
+CARGO_HOME="{{xdg_cache_home}}/cargo"
+
 [settings]
 ruby.compile = false
 ruby.default_packages_file = ".default-gems"
+cargo.binstall = true

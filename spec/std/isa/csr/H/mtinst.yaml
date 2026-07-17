@@ -25,22 +25,7 @@ fields:
     location_rv64: 63-0
     location_rv32: 31-0
     type(): |
-      if (   (TINST_VALUE_ON_FINAL_LOAD_GUEST_PAGE_FAULT != "always zero")
-          || (TINST_VALUE_ON_FINAL_STORE_AMO_GUEST_PAGE_FAULT != "always zero")
-          || (TINST_VALUE_ON_FINAL_INSTRUCTION_GUEST_PAGE_FAULT != "always zero")
-          || (TINST_VALUE_ON_INSTRUCTION_ADDRESS_MISALIGNED != "always zero")
-          || (TINST_VALUE_ON_BREAKPOINT != "always zero")
-          || (TINST_VALUE_ON_VIRTUAL_INSTRUCTION != "always zero")
-          || (TINST_VALUE_ON_LOAD_ADDRESS_MISALIGNED != "always zero")
-          || (TINST_VALUE_ON_LOAD_ACCESS_FAULT != "always zero")
-          || (TINST_VALUE_ON_STORE_AMO_ADDRESS_MISALIGNED != "always zero")
-          || (TINST_VALUE_ON_STORE_AMO_ACCESS_FAULT != "always_zero")
-          || (TINST_VALUE_ON_UCALL != "always zero")
-          || (TINST_VALUE_ON_SCALL != "always zero")
-          || (TINST_VALUE_ON_MCALL != "always zero")
-          || (TINST_VALUE_ON_VSCALL != "always zero")
-          || (TINST_VALUE_ON_LOAD_PAGE_FAULT  != "always zero")
-          || (TINST_VALUE_ON_STORE_AMO_PAGE_FAULT != "always zero")) {
+      if ((TINST_VALUE_ON_FINAL_LOAD_GUEST_PAGE_FAULT != "always zero") || (TINST_VALUE_ON_FINAL_STORE_AMO_GUEST_PAGE_FAULT != "always zero") || (TINST_VALUE_ON_FINAL_INSTRUCTION_GUEST_PAGE_FAULT != "always zero") || (TINST_VALUE_ON_INSTRUCTION_ADDRESS_MISALIGNED != "always zero") || (TINST_VALUE_ON_BREAKPOINT != "always zero") || (TINST_VALUE_ON_VIRTUAL_INSTRUCTION != "always zero") || (TINST_VALUE_ON_LOAD_ADDRESS_MISALIGNED != "always zero") || (TINST_VALUE_ON_LOAD_ACCESS_FAULT != "always zero") || (TINST_VALUE_ON_STORE_AMO_ADDRESS_MISALIGNED != "always zero") || (TINST_VALUE_ON_STORE_AMO_ACCESS_FAULT != "always_zero") || (TINST_VALUE_ON_UCALL != "always zero") || (TINST_VALUE_ON_SCALL != "always zero") || (TINST_VALUE_ON_MCALL != "always zero") || (TINST_VALUE_ON_VSCALL != "always zero") || (TINST_VALUE_ON_LOAD_PAGE_FAULT != "always zero") || (TINST_VALUE_ON_STORE_AMO_PAGE_FAULT != "always zero")) {
         return CsrFieldType::RWH;
       } else {
         return CsrFieldType::RO;

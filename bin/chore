@@ -12,11 +12,12 @@ help() {
   echo ""
   echo "Commands:"
   echo ""
-  echo "  build:     Build an artifact        ('chore build -h' for more)"
-  echo "  container: Container operations     ('chore container -h' for more)"
-  echo "  gen:       Generate an artifact     ('chore gen -h' for more)"
-  echo "  install:   Install new libraries    ('chore install -h' for more)"
-  echo "  update:    Update libraries         ('chore update -h' for more)"
+  echo "  build:      Build an artifact        ('chore build -h' for more)"
+  echo "  container:  Container operations     ('chore container -h' for more)"
+  echo "  gen:        Generate an artifact     ('chore gen -h' for more)"
+  echo "  idl-format: Format IDL source        ('chore idl-format -h' for more)"
+  echo "  install:    Install new libraries    ('chore install -h' for more)"
+  echo "  update:     Update libraries         ('chore update -h' for more)"
   echo ""
 }
 
@@ -92,6 +93,24 @@ container_remove_usage() {
   echo ""
 }
 
+idl_format_subcmd_usage() {
+  echo "Usage: chore idl-format [-hfw] [FILES...]"
+  echo ""
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:        Print help"
+  echo "  -f:        Fail on change; exit with status 1 if any file is reformatted"
+  echo "  -w WIDTH:  Two-pass reflow: after formatting, break lines longer than"
+  echo "             WIDTH columns at semantic boundaries (||, &&, commas), then"
+  echo "             re-format.  Useful for narrow-column output (e.g. PDF docs)."
+  echo ""
+  echo "Formats IDL in standalone .idl/.isa files and YAML-embedded"
+  echo "operation()/sw_read()/when() fields under spec/."
+  echo "If FILES are provided, only those files are formatted."
+  echo ""
+}
+
 gen_subcmd_usage() {
   echo "Usage: chore gen [-h] [-f] [-b BASE_REF] TARGET"
   echo ""
@@ -104,17 +123,19 @@ gen_subcmd_usage() {
   echo ""
   echo "Commands:"
   echo ""
-  echo "  all:           Generate all development artifacts"
-  echo "  gem-versions:  Sync inter-gem version pins in gemspecs and Gemfile.lock files"
-  echo "                 (no version bumping; use 'chore update gem-versions' to also bump)"
-  echo "  profile-cfgs:  Generate strict config files for profiles (cfgs/profile/)"
-  echo "  vscode-idl:    Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
-  echo "  regress:       Generate .github/workflows/regress.yml"
-  echo "  ruby-type-def: Generate Ruby type signatutres"
-  echo "  schema-docs:   Generate schema documentation from JSON Schema files"
-  echo "  cfg-headers:   Generate golden cfg header files for regression testing"
-  echo "  xqci           Generate Xqci spec used for Golden regressions"
-  echo "  udb-gen:       Generate test case fixtures for udb-gen"
+  echo "  all:             Generate all development artifacts"
+  echo "  gem-versions:    Sync inter-gem version pins in gemspecs and Gemfile.lock files"
+  echo "                   (no version bumping; use 'chore update gem-versions' to also bump)"
+  echo "  profile-cfgs:    Generate strict config files for profiles (cfgs/profile/)"
+  echo "  ts-idl-parser:   Regenerate IDL tree-sitter parser (src/parser.c, src/tree_sitter/*.h)"
+  echo "                   from grammar.js via 'tree-sitter generate --no-bindings'"
+  echo "  vscode-idl:      Generate tools/vscode/idl/syntaxes/idl.tmLanguage.json"
+  echo "  regress:         Generate .github/workflows/regress.yml"
+  echo "  ruby-type-def:   Generate Ruby type signatutres"
+  echo "  schema-docs:     Generate schema documentation from JSON Schema files"
+  echo "  cfg-headers:     Generate golden cfg header files for regression testing"
+  echo "  xqci             Generate Xqci spec used for Golden regressions"
+  echo "  udb-gen:         Generate test case fixtures for udb-gen"
   echo ""
 }
 
@@ -148,6 +169,8 @@ update_subcmd_usage() {
   echo "                 ('chore update must -h' for more)"
   echo "  z3:            Update the z3 shared library used by the udb gem"
   echo "                 ('chore update z3 -h' for more)"
+  echo "  tree-sitter-idl: Build/publish the prebuilt IDL grammar shared library"
+  echo "                 ('chore update tree-sitter-idl -h' for more)"
   echo ""
 }
 
@@ -196,6 +219,22 @@ update_z3_usage() {
   echo "  -h:      Print help"
   echo "  -n:      Build only for native/host platform (for use in CI matrix builds)"
   echo "  -f:      Force rebuild and release even if release already exists"
+  echo ""
+}
+
+update_tree_sitter_idl_usage() {
+  echo "Usage: chore update tree-sitter-idl [-hnf]"
+  echo ""
+  echo "Builds the tree-sitter IDL grammar for the native (OS, CPU) and uploads"
+  echo "it as an asset on the 'tree-sitter-idl-<TS_IDL_VERSION>' GitHub release."
+  echo "The idlc gem downloads this at install time instead of compiling from"
+  echo "source. Run the release_udb_deps workflow to publish all platforms."
+  echo ""
+  echo "Options:"
+  echo ""
+  echo "  -h:      Print help"
+  echo "  -n:      Build only for native/host platform (always native; for CI symmetry)"
+  echo "  -f:      Force rebuild and re-upload even if the asset already exists"
   echo ""
 }
 
@@ -280,17 +319,17 @@ do_gen_regress() {
 }
 
 #
-# Generate the IDL TextMate grammar for the VSCode extension from
-# the canonical Prism definition at doc/src/prism/idl.js
+# Generate IDL syntax highlighting artifacts (idl.tmLanguage.json, idl-hljs-lang.js,
+# idl_highlighter.rb) from the tree-sitter grammar (grammar.json + highlights.scm).
 #
-do_gen_vscode_idl() {
+do_gen_idl_highlight() {
+  echo "Generating IDL highlight artifacts from tree-sitter grammar"
   local out="$UDB_ROOT/tools/vscode/idl/syntaxes/idl.tmLanguage.json"
-  echo "Generating tools/vscode/idl/syntaxes/idl.tmLanguage.json"
   if [ $fail_on_change -eq 1 ]; then
     local sha_before
     sha_before=$(sha256sum "$out")
   fi
-  node "$UDB_ROOT/tools/node/idl-grammar-gen/index.js"
+  "${UDB_ROOT}"/bin/node "$UDB_ROOT/tools/node/idl-gen/index.js"
   if [ $fail_on_change -eq 1 ]; then
     local sha_after
     sha_after=$(sha256sum "$out")
@@ -356,6 +395,53 @@ do_update_gem_versions() {
 }
 
 #
+# Format IDL source files (.idl, .isa) and YAML-embedded IDL snippets.
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
+#
+do_idl_format() {
+  local args=()
+  [ "${fail_on_change:-0}" -eq 1 ] && args+=("-f")
+  [ -n "${reflow_width:-}" ]       && args+=("--width=${reflow_width}")
+  "$UDB_ROOT/bin/idl-format" "${args[@]}" "$@"
+}
+
+#
+# Regenerate IDL tree-sitter parser and C API headers from grammar.js.
+# Requires tree-sitter-cli; installs it via npm ci in the subpackage if absent.
+# Returns: 0 on success, 1 if files changed (when fail_on_change=1)
+#
+do_gen_ts_idl_parser() {
+  local ts_dir="$UDB_ROOT/tools/node/tree-sitter-idl"
+  local ts_cli="$ts_dir/node_modules/.bin/tree-sitter"
+
+  echo "Generating IDL tree-sitter parser from grammar.js"
+
+  if [ $fail_on_change -eq 1 ]; then
+    local sha_before
+    sha_before=$(find "$ts_dir/src" -type f \( -name "parser.c" -o -name "*.h" \) \
+      -exec sha256sum {} \; | sort | sha256sum)
+  fi
+
+  if [[ ! -x "$ts_cli" ]]; then
+    echo "  tree-sitter-cli not found; running npm ci in $ts_dir..."
+    (cd "$ts_dir" && "$UDB_ROOT/bin/npm" ci) || return 1
+  fi
+
+  (cd "$ts_dir" && "$ts_cli" generate --no-bindings) || return 1
+
+  if [ $fail_on_change -eq 1 ]; then
+    local sha_after
+    sha_after=$(find "$ts_dir/src" -type f \( -name "parser.c" -o -name "*.h" \) \
+      -exec sha256sum {} \; | sort | sha256sum)
+    if [ "$sha_before" != "$sha_after" ]; then
+      echo "[ERROR]: IDL tree-sitter parser files are out of date." \
+           "Run: bin/chore gen ts-idl-parser" >&2
+      return 1
+    fi
+  fi
+}
+
+#
 # Generate test cases for udb_gen
 #
 do_gen_udb_gen_fixtures() {
@@ -366,9 +452,9 @@ do_gen_udb_gen_fixtures() {
 # Generate all development artifacts
 #
 do_gen_all() {
+  do_gen_ts_idl_parser
   do_gen_regress
-  do_gen_vscode_idl
-  do_gen_gem_versions
+  do_gen_idl_highlight
   do_ruby_type_def all
   do_gen_profile_cfgs
   do_gen_xqci_golden
@@ -382,8 +468,8 @@ do_gen_all() {
 #
 do_gen_smoke() {
   do_gen_regress
-  do_gen_vscode_idl
-  do_ruby_type_def all
+  do_gen_idl_highlight
+  do_gen_ruby_type_def all
 }
 
 #
@@ -655,9 +741,14 @@ case "$subcommand" in
         do_gen_gem_versions "$base_ref"
         exit 0
         ;;
-      vscode-idl )
-        do_gen_vscode_idl
+      idl-highlight | vscode-idl )
+        do_gen_idl_highlight
         exit 0
+        ;;
+      ts-idl-parser )
+        do_gen_ts_idl_parser
+        exit_code=$?
+        exit $exit_code
         ;;
       regress )
         do_gen_regress
@@ -915,6 +1006,31 @@ case "$subcommand" in
         do_update_z3 "$native_only" "$force"
         exit 0
         ;;
+      tree-sitter-idl )
+        native_only=no
+        force=no
+        while getopts ":hnf" opt; do
+          case $opt in
+            h )
+              update_tree_sitter_idl_usage
+              exit 0
+              ;;
+            n )
+              native_only=yes
+              ;;
+            f )
+              force=yes
+              ;;
+            ? )
+              echo "[ERROR]: Invalid option: -${OPTARG}"
+              update_tree_sitter_idl_usage
+              exit 1
+              ;;
+          esac
+        done
+        do_update_tree_sitter_idl "$native_only" "$force"
+        exit 0
+        ;;
       * )
         echo "Invalid target: $subcommand"
         update_subcmd_usage
@@ -963,6 +1079,32 @@ case "$subcommand" in
         build_subcmd_usage
         exit 1
     esac
+    ;;
+  idl-format )
+    fail_on_change=0
+    reflow_width=""
+    while getopts ":hfw:" opt; do
+      case $opt in
+        h )
+          idl_format_subcmd_usage
+          exit 0
+        ;;
+        f )
+          fail_on_change=1
+        ;;
+        w )
+          reflow_width="$OPTARG"
+        ;;
+        ? )
+          echo "[ERROR]: Invalid option: -${OPTARG}"
+          idl_format_subcmd_usage
+          exit 1
+        ;;
+      esac
+    done
+    shift $((OPTIND-1))
+    do_idl_format "$@"
+    exit $?
     ;;
   * )
     if [ ! -z "$subcommand" ]; then  # Don't show if no subcommand provided

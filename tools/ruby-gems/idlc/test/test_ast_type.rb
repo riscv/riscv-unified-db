@@ -18,49 +18,36 @@ class TestAstType < Minitest::Test
   include TestMixin
 
   def test_enum_ref
-    def_idl = "enum MyEnum { Member 0b0 }"
     symtab = Idl::SymbolTable.new(
       possible_xlens_cb: proc { [32, 64] }
     )
-    @compiler.parser.set_input_file("", 0)
-    m = @compiler.parser.parse(def_idl, root: :enum_definition)
-    refute_nil m
-    ast = m.to_ast
-    refute_nil ast
-    ast.freeze_tree(symtab)
-    ast.add_symbol(symtab)
 
-    idl = "MyEnum::Member"
-    m = @compiler.parser.parse(idl, root: :enum_ref)
-    refute_nil m
-    ast = m.to_ast
+    enum_ast = @compiler.build_ast("enum MyEnum { Member 0b0 }", root: :enum_definition)
+    refute_nil enum_ast
+    enum_ast.freeze_tree(symtab)
+    enum_ast.add_symbol(symtab)
+
+    ast = @compiler.build_ast("MyEnum::Member", root: :enum_ref)
     refute_nil ast
     assert_equal Idl::Type.new(:enum_ref, enum_class: symtab.get("MyEnum")), ast.type(symtab)
     ast.freeze_tree(symtab)
     assert_equal Idl::Type.new(:enum_ref, enum_class: symtab.get("MyEnum")), ast.type(symtab)
 
-    idl = "NotAnEnum::Member"
-    m = @compiler.parser.parse(idl, root: :enum_ref)
-    refute_nil m
-    ast = m.to_ast
-    refute_nil ast
+    ast2 = @compiler.build_ast("NotAnEnum::Member", root: :enum_ref)
+    refute_nil ast2
     assert_raises Idl::AstNode::TypeError do
-      ast.type(symtab)
+      ast2.type(symtab)
     end
     assert_raises Idl::AstNode::TypeError do
-      ast.enum_def_type(symtab)
+      ast2.enum_def_type(symtab)
     end
-
   end
 
   def test_bits_cast
     symtab = Idl::SymbolTable.new(
       possible_xlens_cb: proc { [32, 64] }
     )
-    idl = "$bits(1'b0)"
-    m = @compiler.parser.parse(idl, root: :dollar_function_call)
-    refute_nil m
-    ast = m.to_ast
+    ast = @compiler.build_ast("$bits(1'b0)", root: :dollar_function_call)
     refute_nil ast
     assert_equal Idl::Type.new(:bits, width: 1), ast.type(symtab)
   end
@@ -81,10 +68,7 @@ class TestAstType < Minitest::Test
       possible_xlens_cb: proc { [32, 64] }
     )
 
-    idl = "$bits(CSR[mockcsr_dyn])"
-    m = @compiler.parser.parse(idl, root: :dollar_function_call)
-    refute_nil m
-    ast = m.to_ast
+    ast = @compiler.build_ast("$bits(CSR[mockcsr_dyn])", root: :dollar_function_call)
     refute_nil ast
 
     t = ast.type(symtab)
@@ -132,11 +116,7 @@ class TestAstType < Minitest::Test
       possible_xlens_cb: proc { [32, 64] }
     )
 
-    idl = "CSR[mockcsr].UNKNOWN = 1"
-    @compiler.parser.set_input_file("", 0)
-    m = @compiler.parser.parse(idl, root: :assignment)
-    refute_nil m
-    ast = m.to_ast
+    ast = @compiler.build_ast("CSR[mockcsr].UNKNOWN = 1", root: :assignment)
     refute_nil ast
     ast.freeze_tree(symtab)
 
@@ -145,15 +125,10 @@ class TestAstType < Minitest::Test
     assert_equal Idl::Type.new(:bits, width: 16), ast.csr_field.type(symtab)
     assert_equal Idl::Type.new(:bits, width: 16), ast.type(symtab)
 
-    idl = "CSR[notacsr].FIELD = 1"
-    @compiler.parser.set_input_file("", 0)
-    m = @compiler.parser.parse(idl, root: :assignment)
-    refute_nil m
-    ast = m.to_ast
-    refute_nil ast
+    ast2 = @compiler.build_ast("CSR[notacsr].FIELD = 1", root: :assignment)
+    refute_nil ast2
     assert_raises Idl::AstNode::TypeError do
-      ast.type_check(symtab, strict: false)
+      ast2.type_check(symtab, strict: false)
     end
-
   end
 end

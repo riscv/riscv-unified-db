@@ -76,11 +76,13 @@ fields:
         } else {
           return UNDEFINED_LEGAL_DETERMINISTIC;
         }
-      }
-      else if (implemented?(ExtensionName::Sv39) && csr_value.MODE == 8) { return csr_value.MODE; }
-      else if (implemented?(ExtensionName::Sv48) && csr_value.MODE == 9) { return csr_value.MODE; }
-      else if (implemented?(ExtensionName::Sv57) && csr_value.MODE == 10) { return csr_value.MODE; }
-      else {
+      } else if (implemented?(ExtensionName::Sv39) && csr_value.MODE == 8) {
+        return csr_value.MODE;
+      } else if (implemented?(ExtensionName::Sv48) && csr_value.MODE == 9) {
+        return csr_value.MODE;
+      } else if (implemented?(ExtensionName::Sv57) && csr_value.MODE == 10) {
+        return csr_value.MODE;
+      } else {
         return UNDEFINED_LEGAL_DETERMINISTIC;
       }
   ASID:

@@ -18,7 +18,27 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Hower"]
   s.email       = ["dhower@qti.qualcomm.com"]
   s.homepage    = "https://github.com/riscv/riscv-unified-db"
-  s.files       = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop"]
+  so_rel      = "lib/idlc/libtree-sitter-idl.so"
+  so_abs      = File.join(__dir__, so_rel)
+  queries_rel = Dir["lib/idlc/queries/*.scm"].map { |f| f.sub("#{__dir__}/", "") }
+  reflow_rel  = Dir["lib/idlc/idl-reflow/*.js"].map { |f| f.sub("#{__dir__}/", "") }
+
+  if File.exist?(so_abs)
+    s.platform = Gem::Platform.local
+    s.files    = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop"] +
+                 [so_rel] + queries_rel + reflow_rel
+  else
+    s.extensions = ["ext/idlc/extconf.rb"]
+    # TS_IDL_VERSION (which prebuilt grammar release to fetch) plus the
+    # parser.c/scanner.c sources and tree_sitter/ headers (the source-build
+    # fallback) are staged into ext/idlc at gem-build time (see
+    # release:idlc:prepare and the create-gems CI job); extconf.rb downloads or
+    # compiles them at install time.
+    s.files      = Dir["lib/**/*.rb", "LICENSE", "lib/idlc/idl.treetop",
+                       "ext/idlc/extconf.rb", "ext/idlc/*.c",
+                       "ext/idlc/tree_sitter/*.h", "ext/idlc/TS_IDL_VERSION"] +
+                   queries_rel + reflow_rel
+  end
   s.license     = "BSD-3-Clause-Clear"
   s.metadata    = {
     "homepage_uri" => "https://github.com/riscv/riscv-unified-db",
@@ -35,8 +55,8 @@ Gem::Specification.new do |s|
   s.add_dependency "commander", "~> 5"
   s.add_dependency "pp"
   s.add_dependency "sorbet-runtime"
-  s.add_dependency "treetop", "1.6.12"
   s.add_dependency "tty-progressbar"
+  s.add_dependency "ruby_tree_sitter"
 
   s.add_development_dependency "minitest"
   s.add_development_dependency "rake"

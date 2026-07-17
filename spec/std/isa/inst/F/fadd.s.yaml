@@ -39,10 +39,10 @@ operation(): |
 
   if (implemented?(ExtensionName::D)) {
     # check for incorrectly NaN-boxed inputs
-    if (F[fs1][63:32] != 32'hffffffff) {
+    if (F[fs1][63 : 32] != 32'hffffffff) {
       a = SP_CANONICAL_NAN;
     }
-    if (F[fs2][63:32] != 32'hffffffff) {
+    if (F[fs2][63 : 32] != 32'hffffffff) {
       b = SP_CANONICAL_NAN;
     }
   }

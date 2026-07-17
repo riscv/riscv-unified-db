@@ -23,9 +23,9 @@ function has_virt_mem? {
   }
   body {
     return implemented?(ExtensionName::Sv32) ||
-           implemented?(ExtensionName::Sv39) ||
-           implemented?(ExtensionName::Sv48) ||
-           implemented?(ExtensionName::Sv57);
+        implemented?(ExtensionName::Sv39) ||
+        implemented?(ExtensionName::Sv48) ||
+        implemented?(ExtensionName::Sv57);
   }
 }
 
@@ -34,7 +34,8 @@ function max_va_size {
   description {
     Returns the largest possible Virtual Address width in any supported translation mode.
 
-    The max VA is determined by physical address size when in M mode or S-mode with Bare translation.
+    The max VA is determined by physical address size when in M mode or S-
+    mode with Bare translation.
     Otherwise, max VA is the size of a virtual address in the largest supported Sv* mode.
 
     Return the largest that applies.
@@ -73,7 +74,7 @@ function highest_set_bit {
     or -1 if value is zero.
   }
   body {
-    for (Bits<8> i=xlen()-1; i >= 0; i--) {
+    for (Bits<8> i = xlen() - 1; i >= 0; i--) {
       if (value[i] == 1) {
         return i;
       }
@@ -92,7 +93,7 @@ function lowest_set_bit {
     or XLEN if value is zero.
   }
   body {
-    for (Bits<8> i=0; i < xlen(); i++) {
+    for (Bits<8> i = 0; i < xlen(); i++) {
       if (value[i] == 1) {
         return i;
       }
@@ -126,17 +127,15 @@ function bit_length {
 }
 
 function count_leading_zeros {
-  returns
-    XReg  # Number of leading zeros in +value+
-  arguments
-    U32 N,               # bit width
-    XReg value           # value to count zero in
+  returns XReg # Number of leading zeros in +value+
+  arguments U32 N, # bit width
+    XReg value # value to count zero in
   description {
     Returns the number of leading 0 bits before the most-significant 1 bit of +value+,
     or N if value is zero.
   }
   body {
-    for (U32 i=0; i < N; i++) {
+    for (U32 i = 0; i < N; i++) {
       if (value[N - 1 - i] == 1) {
         return i;
       }
@@ -148,17 +147,15 @@ function count_leading_zeros {
 }
 
 function count_leading_zeros_64 {
-  returns
-    XReg  # Number of leading zeros in +value+
-  arguments
-    U32 N,               # bit width
-    Bits<64> value           # value to count zero in
+  returns XReg # Number of leading zeros in +value+
+  arguments U32 N, # bit width
+    Bits<64> value # value to count zero in
   description {
     Returns the number of leading 0 bits before the most-significant 1 bit of +value+,
     or N if value is zero.
   }
   body {
-    for (U32 i=0; i < N; i++) {
+    for (U32 i = 0; i < N; i++) {
       if (value[N - 1 - i] == 1) {
         return i;
       }
@@ -185,8 +182,8 @@ function sext {
     if (first_extended_bit == MXLEN) {
       return value;
     } else {
-      Bits<1> sign = value[first_extended_bit-1];
-      for (U32 i = MXLEN-1; i >= first_extended_bit; i--) {
+      Bits<1> sign = value[first_extended_bit - 1];
+      for (U32 i = MXLEN - 1; i >= first_extended_bit; i--) {
         value[i] = sign;
       }
       return value;
@@ -201,24 +198,25 @@ function is_naturally_aligned {
     Checks if value is naturally aligned to N bits.
   }
   body {
-    return true if N == 8; # everything is byte aligned
+    return true if N == 8;
+    # everything is byte aligned
 
-    XReg Mask = (N/8) - 1;
+    XReg Mask = (N / 8) - 1;
     return (value & ~Mask) == value;
   }
 }
 
 function in_naturally_aligned_region? {
   returns Boolean
-  arguments
-    U32  N,         # alignment size in bits
-    XReg address,   # starting address
-    U32  length     # length of the access
+  arguments U32 N, # alignment size in bits
+    XReg address, # starting address
+    U32 length # length of the access
   description {
-    Checks if a length-bit access starting at +address+ lies entirely within an N-bit naturally-aligned region.
+    Checks if a length-bit access starting at +address+ lies entirely within an N-bit naturally-
+    aligned region.
   }
   body {
-    XReg Mask = (N/8) - 1;
+    XReg Mask = (N / 8) - 1;
 
     return (address & ~Mask) == ((address + length - 1) & ~Mask);
   }
@@ -226,19 +224,17 @@ function in_naturally_aligned_region? {
 
 function contains? {
   returns Boolean
-  arguments
-    XReg region_start,
-    U32  region_size,
+  arguments XReg region_start,
+    U32 region_size,
     XReg target_start,
-    U32  target_size
+    U32 target_size
   description {
     Given a _region_ defined by region_start, region_size,
     determine if a _target_ defined by target_start, target_size
     is completely contained with the region.
   }
   body {
-    return
-      target_start >= region_start &&
-      (target_start + target_size) <= (region_start + region_size);
+    return target_start >= region_start &&
+        (target_start + target_size) <= (region_start + region_size);
   }
 }

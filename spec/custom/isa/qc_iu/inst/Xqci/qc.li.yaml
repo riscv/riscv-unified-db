@@ -30,4 +30,4 @@ access:
   vs: always
   vu: always
 operation(): |
-  X[rd] = sext(imm,20);
+  X[rd] = sext(imm, 20);

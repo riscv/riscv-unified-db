@@ -61,7 +61,7 @@ access:
   vu: always
 operation(): |
   XReg real_pc = $pc & ~32'b1;
-  Boolean resuming_second = ($pc[0:0] == 1'b1);
+  Boolean resuming_second = ($pc[0 : 0] == 1'b1);
 
   XReg N = {21'b0, CSR[qc.itdec].dec};
   XReg base_addr = CSR[qc.itba].base << 6;
@@ -87,13 +87,20 @@ operation(): |
   XReg entry_lo = read_physical_memory(32, result.paddr);
   XReg entry_hi = is_double ? read_physical_memory(32, result.paddr + 4) : 32'b0;
 
-  Boolean has_second_inst = false; # true if entry contains a second packed instruction
-  if (entry_lo[1:0] != 2'b11) {
-    if (entry_lo[31:16] != 16'h0001) { has_second_inst = true; }
-  } else if (entry_lo[4:2] != 3'b111) {
-    if (is_double && entry_hi[15:0] != 16'h0001) { has_second_inst = true; }
+  Boolean has_second_inst = false;
+  # true if entry contains a second packed instruction
+  if (entry_lo[1 : 0] != 2'b11) {
+    if (entry_lo[31 : 16] != 16'h0001) {
+      has_second_inst = true;
+    }
+  } else if (entry_lo[4 : 2] != 3'b111) {
+    if (is_double && entry_hi[15 : 0] != 16'h0001) {
+      has_second_inst = true;
+    }
   } else {
-    if (!is_double) { raise_ilut(ExceptionCode::IllegalInstruction, $encoding); }
+    if (!is_double) {
+      raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
+    }
   }
 
   if (is_pc_referencing_inst?(entry_lo)) {
@@ -101,7 +108,7 @@ operation(): |
     raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
   }
   if (has_second_inst) {
-    Bits<32> second_inst = (entry_lo[1:0] != 2'b11) ? {16'b0, entry_lo[31:16]} : {16'b0, entry_hi[15:0]};
+    Bits<32> second_inst = (entry_lo[1 : 0] != 2'b11) ? {16'b0, entry_lo[31 : 16]} : {16'b0, entry_hi[15 : 0]};
     if (is_pc_referencing_inst?(second_inst)) {
       executing_second_inst = true;
       raise_ilut(ExceptionCode::IllegalInstruction, $encoding);
@@ -120,7 +127,7 @@ operation(): |
 
   # Execute second instruction if present
   if (has_second_inst) {
-    Bits<32> second_inst = (entry_lo[1:0] != 2'b11) ? {16'b0, entry_lo[31:16]} : {16'b0, entry_hi[15:0]};
+    Bits<32> second_inst = (entry_lo[1 : 0] != 2'b11) ? {16'b0, entry_lo[31 : 16]} : {16'b0, entry_hi[15 : 0]};
     if (implemented?(ExtensionName::Smrnmi) && CSR[mnstatus].NMIE == 1'b0) {
       CSR[mnepc].PC = real_pc | 32'b1;
     } else {

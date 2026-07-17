@@ -227,28 +227,28 @@ access:
   vu: never
 operation(): |
   XReg vaddr = X[xs1];
-  Bits<16> asid = X[xs2][ASID_WIDTH-1:0];
+  Bits<16> asid = X[xs2][ASID_WIDTH - 1 : 0];
 
   if (mode() == PrivilegeMode::U) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   if (CSR[misa].H == 1 && mode() == PrivilegeMode::VU) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   if (CSR[mstatus].TVM == 1 &&
-      ((mode() == PrivilegeMode::S) || (mode() == PrivilegeMode::VS))) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+        ((mode() == PrivilegeMode::S) || (mode() == PrivilegeMode::VS))) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
   if (CSR[misa].H == 1 && CSR[hstatus].VTVM == 1 && mode() == PrivilegeMode::VS) {
-    raise (ExceptionCode::VirtualInstruction, mode(), $encoding);
+    raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
   }
 
   if (!implemented?(ExtensionName::Sv32) && !implemented?(ExtensionName::Sv39) && !implemented?(ExtensionName::Sv48) && !implemented?(ExtensionName::Sv57)) {
     if (TRAP_ON_SFENCE_VMA_WHEN_SATP_MODE_IS_READ_ONLY) {
-      raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
     }
   }
 
@@ -270,7 +270,6 @@ operation(): |
     order_pgtbl_writes_before_vmafence(vma_type);
     invalidate_translations(vma_type);
     order_pgtbl_reads_after_vmafence(vma_type);
-
   } else if ((xs1 == 0) && (xs2 != 0)) {
     # invalidates all translations from ASID 'asid'
     # does not affect global mappings
@@ -280,7 +279,6 @@ operation(): |
     order_pgtbl_writes_before_vmafence(vma_type);
     invalidate_translations(vma_type);
     order_pgtbl_reads_after_vmafence(vma_type);
-
   } else if ((xs1 != 0) && (xs2 == 0)) {
     # invalidate all translations from leaf page tables containing 'vaddr'
     # does not affect global mappings
@@ -291,9 +289,7 @@ operation(): |
       order_pgtbl_writes_before_vmafence(vma_type);
       invalidate_translations(vma_type);
       order_pgtbl_reads_after_vmafence(vma_type);
-    }
-    # else, silently do nothing
-
+    } # else, silently do nothing
   } else {
     # invalidate all translations from leaf page tables for address space 'asid' containing 'vaddr'
     # does not affect global mappings
@@ -306,6 +302,5 @@ operation(): |
       order_pgtbl_writes_before_vmafence(vma_type);
       invalidate_translations(vma_type);
       order_pgtbl_reads_after_vmafence(vma_type);
-    }
-    # else, silently do nothing
+    } # else, silently do nothing
   }

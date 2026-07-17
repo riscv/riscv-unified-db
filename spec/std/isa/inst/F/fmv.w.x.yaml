@@ -31,7 +31,7 @@ data_independent_timing: true
 operation(): |
   check_f_ok($encoding);
 
-  Bits<32> sp_value = X[xs1][31:0];
+  Bits<32> sp_value = X[xs1][31 : 0];
 
   if (implemented?(ExtensionName::D)) {
     F[fd] = nan_box(32, 64, sp_value);

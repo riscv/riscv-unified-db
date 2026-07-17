@@ -1,0 +1,45 @@
+{
+  "name": "tree-sitter-idl",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for the ISA Description Language (IDL)",
+  "main": "bindings/node",
+  "types": "bindings/node",
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "build": "node-gyp rebuild",
+    "test": "tree-sitter test",
+    "parse-all": "node test/parse_all_test.js",
+    "install": "node-gyp-build",
+    "prebuildify": "prebuildify --napi --strip"
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.0",
+    "prebuildify": "^6.0.0",
+    "tree-sitter-cli": "^0.22"
+  },
+  "dependencies": {
+    "node-gyp-build": "^4.8.0"
+  },
+  "peerDependencies": {
+    "tree-sitter": "^0.22.4"
+  },
+  "peerDependenciesMeta": {
+    "tree_sitter": {
+      "optional": true
+    }
+  },
+  "files": [
+    "grammar.js",
+    "binding.gyp",
+    "prebuilds/**",
+    "bindings/node/*",
+    "queries/*",
+    "src/**"
+  ],
+  "tree-sitter": [
+    {
+      "scope": "source.idl",
+      "injection-regex": "^idl$"
+    }
+  ]
+}

@@ -131,16 +131,6 @@ function my_func {
     return a + 1;
   }
 }
-
-# Multiple return values
-function divmod {
-  returns Bits<32>, Bits<32>
-  arguments Bits<32> a, Bits<32> b
-  description { Returns quotient and remainder. }
-  body { return a / b, a % b; }
-}
-(quot, rem) = divmod(x, y);     # decompose at call site
-(-, rem)    = divmod(x, y);     # discard unwanted return values with -
 ```
 
 See [Functions](./functions).

@@ -68,7 +68,6 @@ access_detail: |
 operation(): |
   # Access checks for cbo.zero per envcfg CBZE bits.
   # M-mode always has access.
-
   if (CSR[misa].S == 1) {
     if (CSR[menvcfg].CBZE == 0) {
       # menvcfg.CBZE=0: all non-M modes trap
@@ -102,6 +101,6 @@ operation(): |
 
   TranslationResult result;
   result = translate(cache_block_vaddr, MemoryOperation::Write, effective_ldst_mode(), $encoding);
-  access_check(result.paddr, CACHE_BLOCK_SIZE*8, cache_block_vaddr, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
+  access_check(result.paddr, CACHE_BLOCK_SIZE * 8, cache_block_vaddr, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
 
   cache_block_zero(result.paddr);

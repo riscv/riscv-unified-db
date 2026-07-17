@@ -162,7 +162,8 @@ fields:
       WARL bits designated for custom use. The value 0 must correspond to standard behavior.
 sw_read(): |
   Bits<12> addr = 0x14E;
-  Bits<64> mask = 0x00000000000803; # U, S, and BPFRZ are not optional
+  Bits<64> mask = 0x00000000000803;
+  # U, S, and BPFRZ are not optional
   Csr csr_handle = direct_csr_lookup(addr);
   if (!csr_handle.valid) {
     unimplemented_csr($encoding);

@@ -73,13 +73,12 @@ fields:
         if (!(((csr_value.pmp48cfg & 0x1) == 0) && ((csr_value.pmp48cfg & 0x2) == 0x2))) {
           # not R = 0, W =1, which is reserved
           if ((PMP_GRANULARITY < 2) ||
-              ((csr_value.pmp48cfg & 0x18) != 0x10)) {
+                ((csr_value.pmp48cfg & 0x18) != 0x10)) {
             # NA4 is not allowed when PMP granularity is larger than 4 bytes
             return csr_value.pmp48cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg12].pmp48cfg;
   pmp49cfg:
     location: 15-8
@@ -131,13 +130,12 @@ fields:
         if (!(((csr_value.pmp49cfg & 0x1) == 0) && ((csr_value.pmp49cfg & 0x2) == 0x2))) {
           # not R = 0, W =1, which is reserved
           if ((PMP_GRANULARITY < 2) ||
-              ((csr_value.pmp49cfg & 0x18) != 0x10)) {
+                ((csr_value.pmp49cfg & 0x18) != 0x10)) {
             # NA4 is not allowed when PMP granularity is larger than 4 bytes
             return csr_value.pmp49cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg12].pmp49cfg;
   pmp50cfg:
     location: 23-16
@@ -189,13 +187,12 @@ fields:
         if (!(((csr_value.pmp50cfg & 0x1) == 0) && ((csr_value.pmp50cfg & 0x2) == 0x2))) {
           # not R = 0, W =1, which is reserved
           if ((PMP_GRANULARITY < 2) ||
-              ((csr_value.pmp50cfg & 0x18) != 0x10)) {
+                ((csr_value.pmp50cfg & 0x18) != 0x10)) {
             # NA4 is not allowed when PMP granularity is larger than 4 bytes
             return csr_value.pmp50cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg12].pmp50cfg;
   pmp51cfg:
     location: 31-24
@@ -247,13 +244,12 @@ fields:
         if (!(((csr_value.pmp51cfg & 0x1) == 0) && ((csr_value.pmp51cfg & 0x2) == 0x2))) {
           # not R = 0, W =1, which is reserved
           if ((PMP_GRANULARITY < 2) ||
-              ((csr_value.pmp51cfg & 0x18) != 0x10)) {
+                ((csr_value.pmp51cfg & 0x18) != 0x10)) {
             # NA4 is not allowed when PMP granularity is larger than 4 bytes
             return csr_value.pmp51cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg12].pmp51cfg;
   pmp52cfg:
     location: 39-32
@@ -307,13 +303,12 @@ fields:
         if (!(((csr_value.pmp52cfg & 0x1) == 0) && ((csr_value.pmp52cfg & 0x2) == 0x2))) {
           # not R = 0, W =1, which is reserved
           if ((PMP_GRANULARITY < 2) ||
-              ((csr_value.pmp52cfg & 0x18) != 0x10)) {
+                ((csr_value.pmp52cfg & 0x18) != 0x10)) {
             # NA4 is not allowed when PMP granularity is larger than 4 bytes
             return csr_value.pmp52cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg12].pmp52cfg;
   pmp53cfg:
     location: 47-40
@@ -367,13 +362,12 @@ fields:
         if (!(((csr_value.pmp53cfg & 0x1) == 0) && ((csr_value.pmp53cfg & 0x2) == 0x2))) {
           # not R = 0, W =1, which is reserved
           if ((PMP_GRANULARITY < 2) ||
-              ((csr_value.pmp53cfg & 0x18) != 0x10)) {
+                ((csr_value.pmp53cfg & 0x18) != 0x10)) {
             # NA4 is not allowed when PMP granularity is larger than 4 bytes
             return csr_value.pmp53cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg12].pmp53cfg;
   pmp54cfg:
     location: 55-48
@@ -427,13 +421,12 @@ fields:
         if (!(((csr_value.pmp54cfg & 0x1) == 0) && ((csr_value.pmp54cfg & 0x2) == 0x2))) {
           # not R = 0, W =1, which is reserved
           if ((PMP_GRANULARITY < 2) ||
-              ((csr_value.pmp54cfg & 0x18) != 0x10)) {
+                ((csr_value.pmp54cfg & 0x18) != 0x10)) {
             # NA4 is not allowed when PMP granularity is larger than 4 bytes
             return csr_value.pmp54cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg12].pmp54cfg;
   pmp55cfg:
     location: 63-56
@@ -487,11 +480,10 @@ fields:
         if (!(((csr_value.pmp55cfg & 0x1) == 0) && ((csr_value.pmp55cfg & 0x2) == 0x2))) {
           # not R = 0, W =1, which is reserved
           if ((PMP_GRANULARITY < 2) ||
-              ((csr_value.pmp55cfg & 0x18) != 0x10)) {
+                ((csr_value.pmp55cfg & 0x18) != 0x10)) {
             # NA4 is not allowed when PMP granularity is larger than 4 bytes
             return csr_value.pmp55cfg;
           }
         }
-      }
-      # fall through: keep old value
+      } # fall through: keep old value
       return CSR[pmpcfg12].pmp55cfg;

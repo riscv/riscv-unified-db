@@ -31,4 +31,4 @@ access:
   vu: always
 operation(): |
   fence_tso();
-  sync_read_after_write_device(false,imm);
+  sync_read_after_write_device(false, imm);

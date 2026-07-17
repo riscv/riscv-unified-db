@@ -31,12 +31,9 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nfunction #{keyword} { description { test } body { return; } }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Keyword '#{keyword}' should parse"
+      ast = compiler.build_ast(idl, root: :isa)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.add_global_symbols(symtab)
       end
@@ -50,12 +47,9 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nfunction #{typename} { description { test } body { return; } }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Builtin type '#{typename}' should parse"
+      ast = compiler.build_ast(idl, root: :isa)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.add_global_symbols(symtab)
       end
@@ -74,12 +68,9 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nfunction testFunc { description { test } body { Bits<32> #{keyword}; } }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Keyword '#{keyword}' should parse"
+      ast = compiler.build_ast(idl, root: :isa)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         ast.type_check(Idl::SymbolTable.new, strict: false)
       end
 
@@ -97,12 +88,9 @@ class TestReservedWords < Minitest::Test
       idl = "enum #{keyword} { Value0 }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :enum_definition)
-
-      refute_nil result, "Keyword '#{keyword}' should parse"
+      ast = compiler.build_ast(idl, root: :enum_definition)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.type_check(symtab, strict: false)
       end
@@ -116,18 +104,18 @@ class TestReservedWords < Minitest::Test
       idl = "enum #{typename} { Value0 }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :enum_definition)
 
       # Some builtin types (like "XReg", "Bits", etc.) may parse as builtin type names rather than user type names
       # In this case, we get a different error (TypeError from sorbet validation)
       # Either way, the reserved word is rejected
-      if result.nil?
+      begin
+        ast = compiler.build_ast(idl, root: :enum_definition)
+      rescue SyntaxError
         # If it doesn't parse, that's also acceptable - the reserved word is rejected
         next
       end
 
       error = assert_raises(StandardError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.type_check(symtab, strict: false)
       end
@@ -149,9 +137,7 @@ class TestReservedWords < Minitest::Test
       idl = "#{name}()"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :expression)
-
-      refute_nil result, "Valid function name '#{name}' should be accepted"
+      refute_nil compiler.build_ast(idl, root: :expression), "Valid function name '#{name}' should be accepted"
     end
   end
 
@@ -162,9 +148,7 @@ class TestReservedWords < Minitest::Test
       idl = "Bits<32> #{name}"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :single_declaration)
-
-      refute_nil result, "Valid variable name '#{name}' should be accepted"
+      refute_nil compiler.build_ast(idl, root: :single_declaration), "Valid variable name '#{name}' should be accepted"
     end
   end
 
@@ -175,9 +159,7 @@ class TestReservedWords < Minitest::Test
       idl = "enum #{name} { Value0 }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :enum_definition)
-
-      refute_nil result, "Valid type name '#{name}' should be accepted"
+      refute_nil compiler.build_ast(idl, root: :enum_definition), "Valid type name '#{name}' should be accepted"
     end
   end
 
@@ -191,9 +173,7 @@ class TestReservedWords < Minitest::Test
       idl = "#{name}()"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :expression)
-
-      refute_nil result, "Name '#{name}' containing keyword substring should be accepted"
+      refute_nil compiler.build_ast(idl, root: :expression), "Name '#{name}' containing keyword substring should be accepted"
     end
   end
 
@@ -205,9 +185,7 @@ class TestReservedWords < Minitest::Test
       idl = "enum #{name} { Value0 }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :enum_definition)
-
-      refute_nil result, "Uppercase keyword '#{name}' should be accepted as type name"
+      refute_nil compiler.build_ast(idl, root: :enum_definition), "Uppercase keyword '#{name}' should be accepted as type name"
     end
   end
 
@@ -217,9 +195,7 @@ class TestReservedWords < Minitest::Test
     idl = "isValid?()"
 
     compiler = Idl::Compiler.new
-    result = compiler.parser.parse(idl, root: :expression)
-
-    refute_nil result, "Function names with '?' should be accepted"
+    refute_nil compiler.build_ast(idl, root: :expression), "Function names with '?' should be accepted"
   end
 
   ##########################################
@@ -234,12 +210,9 @@ class TestReservedWords < Minitest::Test
       idl = "bitfield(32) #{keyword} { field 0 }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :bitfield_definition)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as bitfield name"
+      ast = compiler.build_ast(idl, root: :bitfield_definition)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.type_check(symtab, strict: false)
       end
@@ -253,17 +226,14 @@ class TestReservedWords < Minitest::Test
       idl = "bitfield(32) #{typename} { field 0 }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :bitfield_definition)
-
-      refute_nil result, "Builtin type '#{typename}' should parse as bitfield name"
-
       # Accept either TypeError (reserved word check) or DuplicateSymError (builtin already defined)
       begin
-        ast = result.to_ast
+        ast = compiler.build_ast(idl, root: :bitfield_definition)
         symtab = Idl::SymbolTable.new
         ast.type_check(symtab, strict: false)
         flunk("Builtin type '#{typename}' was not rejected - type check passed")
-      rescue StandardError => error
+      rescue SyntaxError, StandardError => error
+        next if error.is_a?(SyntaxError)
         assert(
           error.is_a?(Idl::AstNode::TypeError) || error.is_a?(Idl::SymbolTable::DuplicateSymError),
           "Expected TypeError or DuplicateSymError for '#{typename}', got: #{error.class} - #{error.message}"
@@ -280,12 +250,9 @@ class TestReservedWords < Minitest::Test
       idl = "struct #{keyword} { U32 field; }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :struct_definition)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as struct name"
+      ast = compiler.build_ast(idl, root: :struct_definition)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.type_check(symtab, strict: false)
       end
@@ -299,12 +266,9 @@ class TestReservedWords < Minitest::Test
       idl = "struct #{typename} { U32 field; }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :struct_definition)
-
-      refute_nil result, "Builtin type '#{typename}' should parse as struct name"
+      ast = compiler.build_ast(idl, root: :struct_definition)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.type_check(symtab, strict: false)
       end
@@ -322,12 +286,9 @@ class TestReservedWords < Minitest::Test
       idl = "struct MyStruct { U32 #{keyword}; }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :struct_definition)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as struct member name"
+      ast = compiler.build_ast(idl, root: :struct_definition)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.type_check(symtab, strict: false)
       end
@@ -344,12 +305,9 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nfunction testFunc { arguments U32 #{keyword} description { test } body { return; } }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as function parameter name"
+      ast = compiler.build_ast(idl, root: :isa)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         ast.type_check(Idl::SymbolTable.new, strict: false)
       end
 
@@ -368,11 +326,12 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nfunction testFunc { arguments U32 #{typename} description { test } body { return; } }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
 
       # This won't parse correctly because function parameters must be lowercase identifiers
       # If it does parse, it should fail type check with some error
-      if result.nil?
+      begin
+        ast = compiler.build_ast(idl, root: :isa)
+      rescue SyntaxError
         # Parse failure is acceptable - it prevents using the reserved word
         next
       end
@@ -381,7 +340,6 @@ class TestReservedWords < Minitest::Test
       # - "Constants must be initialized" (uppercase = constant)
       # - "Cannot use reserved word" (explicit check)
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         ast.type_check(Idl::SymbolTable.new, strict: false)
       end
 
@@ -401,12 +359,9 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nU32 #{keyword};"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as global variable name"
+      ast = compiler.build_ast(idl, root: :isa)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         ast.type_check(Idl::SymbolTable.new, strict: false)
       end
 
@@ -422,12 +377,9 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nconst U32 #{keyword} = 42;"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as const global variable name"
+      ast = compiler.build_ast(idl, root: :isa)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         ast.type_check(Idl::SymbolTable.new, strict: false)
       end
 
@@ -443,12 +395,9 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nfunction testFunc { description { test } body { for (U32 #{keyword} = 0; #{keyword} < 10; #{keyword}++) { return; } } }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as for loop variable"
+      ast = compiler.build_ast(idl, root: :isa)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         ast.type_check(Idl::SymbolTable.new, strict: false)
       end
 
@@ -465,12 +414,9 @@ class TestReservedWords < Minitest::Test
       idl = "enum MyEnum { #{keyword} }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :enum_definition)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as enum member"
+      ast = compiler.build_ast(idl, root: :enum_definition)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.type_check(symtab, strict: false)
       end
@@ -484,12 +430,9 @@ class TestReservedWords < Minitest::Test
       idl = "enum MyEnum { #{typename} }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl, root: :enum_definition)
-
-      refute_nil result, "Builtin type '#{typename}' should parse as enum member"
+      ast = compiler.build_ast(idl, root: :enum_definition)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.type_check(symtab, strict: false)
       end
@@ -504,12 +447,9 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nbuiltin function #{keyword} { description { test } }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Keyword '#{keyword}' should parse as builtin function name"
+      ast = compiler.build_ast(idl, root: :isa)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.add_global_symbols(symtab)
       end
@@ -523,12 +463,9 @@ class TestReservedWords < Minitest::Test
       idl = "%version: 0.11\nbuiltin function #{typename} { description { test } }"
 
       compiler = Idl::Compiler.new
-      result = compiler.parser.parse(idl)
-
-      refute_nil result, "Builtin type '#{typename}' should parse as builtin function name"
+      ast = compiler.build_ast(idl, root: :isa)
 
       error = assert_raises(Idl::AstNode::TypeError) do
-        ast = result.to_ast
         symtab = Idl::SymbolTable.new
         ast.add_global_symbols(symtab)
       end

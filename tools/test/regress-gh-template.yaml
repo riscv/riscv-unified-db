@@ -241,6 +241,38 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Copy the gem directory to resolve symlinks
         run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
+      - if: matrix.gem == 'idlc'
+        name: Stage tree-sitter grammar version + C sources into the idlc gem
+        # At install time ext/idlc/extconf.rb downloads a prebuilt grammar
+        # (keyed by TS_IDL_VERSION) and falls back to compiling the C sources +
+        # headers. Stage all of them.
+        run: |
+          mkdir -p gem-build-dir/ext/idlc
+          cp tools/node/tree-sitter-idl/TS_IDL_VERSION gem-build-dir/ext/idlc/
+          cp tools/node/tree-sitter-idl/src/parser.c  gem-build-dir/ext/idlc/
+          cp tools/node/tree-sitter-idl/src/scanner.c gem-build-dir/ext/idlc/
+          cp -r tools/node/tree-sitter-idl/src/tree_sitter gem-build-dir/ext/idlc/
+      - if: matrix.gem == 'idlc'
+        name: Stage Topiary queries + reflow script into the idlc gem
+        # Idl::Formatter looks for lib/idlc/queries and lib/idlc/idl-reflow
+        # inside the installed gem; without staging them the gem silently
+        # skips formatting/reflow.
+        run: |
+          cp -r tools/node/tree-sitter-idl/queries gem-build-dir/lib/idlc/queries
+          mkdir -p gem-build-dir/lib/idlc/idl-reflow
+          cp tools/node/idl-reflow/index.js gem-build-dir/lib/idlc/idl-reflow/index.js
+      - if: matrix.gem == 'udb'
+        name: Stage the bundled spec data into the udb gem
+        # udb.gemspec packages .data/**/* (see release:udb:prepare's after_copy
+        # in tasks.rake, which this mirrors): without it, Udb.default_cfgs_path
+        # and friends resolve to an empty directory in an installed gem with no
+        # repo checkout reachable, and the gem is unusable stand-alone.
+        run: |
+          mkdir -p gem-build-dir/.data/spec/std gem-build-dir/.data/spec/custom
+          cp -r spec/std/isa    gem-build-dir/.data/spec/std/isa
+          cp -r spec/custom/isa gem-build-dir/.data/spec/custom/isa
+          cp -r spec/schemas    gem-build-dir/.data/spec/schemas
+          cp -r cfgs            gem-build-dir/.data/cfgs
       - name: Create the ${{ matrix.gem }} gem
         run: |
           cd gem-build-dir && \
@@ -275,10 +307,12 @@ jobs:
           PRE="source scl_source enable gcc-toolset-12"
           echo "PRE=$PRE" >> "$GITHUB_ENV"
       - if: matrix.container == 'ruby:3-slim'
-        name: Install make
+        name: Install make and a C compiler
+        # idlc ships a native extension (tree-sitter grammar) compiled at
+        # install time, so a C toolchain is required, not just make.
         run: |
           apt-get update -qq && \
-          apt-get install --no-install-recommends -y make
+          apt-get install --no-install-recommends -y make gcc libc6-dev
       - name: download udb gem
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
@@ -299,3 +333,63 @@ jobs:
           gem install udb.gem
       - name: try z3
         run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
+      - name: gem install smoke test (source gem — see idlc.gemspec)
+        run: ruby tools/test/gem_install_smoke_test.rb
+
+  create-idlc-platform-gem:
+    name: Create the idlc platform gem (precompiled grammar, no extconf.rb)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Build the tree-sitter grammar
+        run: make -C tools/node/tree-sitter-idl libtree-sitter-idl.so
+      - name: Copy the gem directory to resolve symlinks
+        run: cp -L -r tools/ruby-gems/idlc gem-build-dir
+      - name: Stage the precompiled grammar so idlc.gemspec builds a platform gem
+        # idlc.gemspec checks for this file's presence at `gem build` time: if
+        # present, it builds a Gem::Platform.local-tagged gem with the .so
+        # bundled directly and no ext/idlc/extconf.rb at all.
+        run: cp tools/node/tree-sitter-idl/libtree-sitter-idl.so gem-build-dir/lib/idlc/libtree-sitter-idl.so
+      - name: Stage Topiary queries + reflow script into the idlc gem
+        run: |
+          cp -r tools/node/tree-sitter-idl/queries gem-build-dir/lib/idlc/queries
+          mkdir -p gem-build-dir/lib/idlc/idl-reflow
+          cp tools/node/idl-reflow/index.js gem-build-dir/lib/idlc/idl-reflow/index.js
+      - name: Create the idlc platform gem
+        run: cd gem-build-dir && gem build -o idlc-platform.gem idlc.gemspec
+      - name: Upload the idlc platform gem
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: idlc-platform.gem
+          path: gem-build-dir/idlc-platform.gem
+
+  test-idlc-platform-gem:
+    name: Test the idlc platform gem install
+    runs-on: ubuntu-24.04
+    needs: [create-idlc-platform-gem, create-gems]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: download idlc platform gem
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: idlc-platform.gem
+      - name: download udb gem
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: udb.gem
+      - name: download udb_helpers gem
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: udb_helpers.gem
+      - name: install gems
+        # No C compiler needed here: the platform gem ships a precompiled .so
+        # and has no ext/idlc/extconf.rb, unlike the source gem tested above.
+        # --user-install: this job runs directly on the runner (no container,
+        # unlike udb-gem-z3 below), where the default system Ruby's gem dir
+        # isn't writable by the runner user.
+        run: |
+          gem install --user-install idlc-platform.gem && \
+          gem install --user-install udb_helpers.gem && \
+          gem install --user-install udb.gem
+      - name: gem install smoke test (platform gem — see idlc.gemspec)
+        run: ruby tools/test/gem_install_smoke_test.rb

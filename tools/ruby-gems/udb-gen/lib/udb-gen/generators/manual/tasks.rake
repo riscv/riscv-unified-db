@@ -202,8 +202,10 @@ rule %r{#{Rake.application.gen_dir}/.*/.*/antora/modules/insts/pages/.*.adoc} =>
   erb = ERB.new(inst_template_path.read, trim_mode: "-")
   erb.filename = inst_template_path.to_s
 
+  ctx = OpenStruct.new(cfg_arch: cfg_arch, inst: inst)
+  ctx.singleton_class.include(UdbGen::TemplateHelpers)
   FileUtils.mkdir_p File.dirname(t.name)
-  File.write t.name, Udb::Helpers::AntoraUtils.resolve_links(cfg_arch.convert_monospace_to_links(erb.result(binding)))
+  File.write t.name, Udb::Helpers::AntoraUtils.resolve_links(cfg_arch.convert_monospace_to_links(erb.result(ctx.instance_eval { binding })))
 end
 
 # rule to create csr appendix page
@@ -222,8 +224,10 @@ rule %r{#{Rake.application.gen_dir}/.*/.*/antora/modules/csrs/pages/.*\.adoc} =>
   erb = ERB.new(csr_template_path.read, trim_mode: "-")
   erb.filename = csr_template_path.to_s
 
+  ctx = OpenStruct.new(cfg_arch: cfg_arch, csr: csr)
+  ctx.singleton_class.include(UdbGen::TemplateHelpers)
   FileUtils.mkdir_p File.dirname(t.name)
-  File.write t.name, Udb::Helpers::AntoraUtils.resolve_links(cfg_arch.convert_monospace_to_links(erb.result(binding)))
+  File.write t.name, Udb::Helpers::AntoraUtils.resolve_links(cfg_arch.convert_monospace_to_links(erb.result(ctx.instance_eval { binding })))
 end
 
 # rule to create ext appendix page
@@ -256,8 +260,10 @@ rule %r{#{Rake.application.gen_dir}/.*/.*/antora/modules/funcs/pages/funcs.adoc}
   erb = ERB.new(funcs_template_path.read, trim_mode: "-")
   erb.filename = funcs_template_path.to_s
 
+  ctx = OpenStruct.new(cfg_arch: cfg_arch)
+  ctx.singleton_class.include(UdbGen::TemplateHelpers)
   FileUtils.mkdir_p File.dirname(t.name)
-  File.write t.name, Udb::Helpers::AntoraUtils.resolve_links(cfg_arch.convert_monospace_to_links(erb.result(binding)))
+  File.write t.name, Udb::Helpers::AntoraUtils.resolve_links(cfg_arch.convert_monospace_to_links(erb.result(ctx.instance_eval { binding })))
 end
 
 # rule to create IDL function appendix page
