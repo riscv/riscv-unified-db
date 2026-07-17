@@ -25,7 +25,7 @@ access:
   u: always
   vs: always
   vu: always
-data_independent_timing: false
+data_independent_timing: true
 operation(): |
   XReg input = X[xs1];
   XReg output = 0;
