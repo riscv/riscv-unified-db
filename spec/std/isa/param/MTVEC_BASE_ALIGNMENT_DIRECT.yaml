@@ -25,6 +25,7 @@ description: |
   the base, the minimum alignment cannot be less than 4.
 schema:
   description: An unsigned power of 2 greater than or equal to 4 that fits in 64 bits
+  default: 4
   enum:
     [
       4,
