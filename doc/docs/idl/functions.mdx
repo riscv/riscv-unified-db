@@ -8,7 +8,7 @@ title: Functions
 Functions are called using standard call syntax. Arguments are passed positionally.
 
 ```idl
-jump(PC + $signed(imm));          # void function call
+jump($pc + $signed(imm));          # void function call
 Bits<32> val = read_memory(32, vaddr, $encoding); # call with return value
 ```
 
