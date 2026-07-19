@@ -51,7 +51,7 @@ ENV LD_LIBRARY_PATH=/opt/rh/gcc-toolset-14/root/usr/lib64${LD_LIBRARY_PATH:+:$LD
 #   riscv64-unknown-linux-gnu-gcc (Linux glibc cross-compiler)
 #
 # Source: https://github.com/riscv-collab/riscv-gnu-toolchain
-ARG RISCV_TOOLCHAIN_VERSION=2026.07.10
+ARG RISCV_TOOLCHAIN_VERSION=2026.07.11
 
 RUN set -e; \
     git clone --depth 1 --branch "${RISCV_TOOLCHAIN_VERSION}" \
