@@ -9,8 +9,8 @@
 #   output_dir   - where to place the binary (default: ./eqntott-build)
 #   architecture - x64 or arm64 (default: x64)
 #
-# The pinned commit matches EQNTOTT_VERSION in the udb gem.
-# To update: change EQNTOTT_COMMIT below and update lib/udb/EQNTOTT_VERSION accordingly.
+# EQNTOTT_VERSION in the udb gem is the single source of truth.
+# To update: change tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION.
 
 set -euo pipefail
 
@@ -19,8 +19,23 @@ info()  { echo "INFO: $*"  >&2; }
 
 command_exists() { command -v "$1" >/dev/null 2>&1; }
 
-# Pinned commit - must match lib/udb/EQNTOTT_VERSION
-EQNTOTT_COMMIT="392759e6493a46f1d1ed7d9fb1c7c31197b0f6a8"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+UDB_ROOT=$(cd -- "${SCRIPT_DIR}/../.." && pwd)
+EQNTOTT_VERSION_FILE="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION"
+EQNTOTT_VERSION=$(<"${EQNTOTT_VERSION_FILE}") || error "Could not read ${EQNTOTT_VERSION_FILE}"
+
+case "${EQNTOTT_VERSION}" in
+    eqntott-*)
+        EQNTOTT_COMMIT="${EQNTOTT_VERSION#eqntott-}"
+        ;;
+    *)
+        error "Invalid EQNTOTT_VERSION '${EQNTOTT_VERSION}'; expected eqntott-<git-commit>"
+        ;;
+esac
+
+if [[ ! "${EQNTOTT_COMMIT}" =~ ^[a-f0-9]{7,40}$ ]]; then
+    error "Invalid EQNTOTT_VERSION '${EQNTOTT_VERSION}'; expected eqntott-<7-to-40-char-hex-commit>"
+fi
 
 build_eqntott_with_docker() {
     local output_dir="${1:-./eqntott-build}"
@@ -40,7 +55,7 @@ build_eqntott_with_docker() {
             ;;
     esac
 
-    info "Building eqntott (commit $EQNTOTT_COMMIT)"
+    info "Building eqntott (${EQNTOTT_VERSION}, commit ${EQNTOTT_COMMIT})"
     info "Output directory: $output_dir"
     info "Architecture: $architecture ($docker_platform)"
 

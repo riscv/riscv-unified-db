@@ -73,5 +73,7 @@ operation(): |
     }
   }
 
-  # stall while the reservation set is valid and no interrupt is pending
-  wrs_nto();
+  if (!ZAWRS_NTO_IS_NOP) {
+    # stall while the reservation set is valid and no interrupt is pending
+    wrs_nto();
+  }

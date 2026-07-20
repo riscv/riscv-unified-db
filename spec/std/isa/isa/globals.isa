@@ -307,6 +307,7 @@ function compatible_mode? {
         (actual_mode == PrivilegeMode::VS) ||
         (actual_mode == PrivilegeMode::VU);
     }
+    return false;
   }
 }
 
@@ -1180,6 +1181,7 @@ function mpv {
       return (MXLEN == 32) ? CSR[mstatush].MPV : CSR[mstatus].MPV;
     } else {
       assert(false, "TODO");
+      unreachable();
     }
   }
 }
@@ -1605,6 +1607,7 @@ function tinst_value_for_guest_page_fault {
           return tinst_transform(encoding, 0); # all guest page faults are aligned
         } else {
           unpredictable("Custom value written into htinst/mtinst");
+          return 0;
         }
       } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
         if (TINST_VALUE_ON_FINAL_STORE_AMO_GUEST_PAGE_FAULT == "always zero") {
@@ -1619,6 +1622,7 @@ function tinst_value_for_guest_page_fault {
           return tinst_transform(encoding, 0); # all guest page faults are aligned
         } else {
           unpredictable("Custom value written into htinst/mtinst");
+          return 0;
         }
       }
     } else {
@@ -1631,6 +1635,7 @@ function tinst_value_for_guest_page_fault {
         }
       }
     }
+    return 0;
   }
 }
 
@@ -1658,9 +1663,11 @@ function tinst_transform {
         return {encoding[31:20], addr_offset, encoding[14:0]};
       } else {
         assert(false, "Bad transform");
+        unreachable();
       }
     } else {
       assert(false, "TODO: compressed instruction");
+      unreachable();
     }
   }
 }
@@ -1675,7 +1682,7 @@ function transformed_standard_instruction_for_tinst {
   }
   body {
     assert(false, "TODO");
-    return 0;
+    unreachable();
   }
 }
 
@@ -1789,6 +1796,7 @@ function tinst_value {
       }
     } else {
       assert(false, "Unhandled exception type");
+      unreachable();
     }
   }
 }
@@ -1974,6 +1982,7 @@ function gstage_page_walk {
               success = atomic_check_then_write_64(pte_paddr, pte, updated_pte);
             } else {
               assert(false, "Unexpected PTESIZE");
+              unreachable();
             }
 
 
@@ -2024,6 +2033,7 @@ function gstage_page_walk {
         ppn = pte[PA_SIZE-3:10] << 12;
       }
     }
+    unreachable();
   }
 }
 
@@ -2298,6 +2308,7 @@ function stage1_page_walk {
               success = atomic_check_then_write_64(pte_phys.paddr, pte, updated_pte);
             } else {
               assert(false, "Unexpected PTESIZE");
+              unreachable();
             }
 
 
@@ -2370,6 +2381,7 @@ function stage1_page_walk {
         ppn = pte[PA_SIZE-3:10];
       }
     }
+    unreachable();
   }
 }
 
@@ -2451,6 +2463,7 @@ function translate {
       result = stage1_page_walk(57, 56, 64, 5, vaddr, op, effective_mode, encoding);
     } else {
       assert(false, "Unexpected SatpMode");
+      unreachable();
     }
 
     maybe_cache_translation(vaddr, op, result);
@@ -2496,6 +2509,7 @@ function canonical_vaddr? {
     } else if ((MXLEN == 64) && satp_mode == SatpMode::Sv57) {
       return eaddr[63:57] == {6{eaddr[56]}};
     }
+    return false;
   }
 }
 
@@ -2522,6 +2536,7 @@ function canonical_gpaddr? {
     } else if ((MXLEN > 32) && (satp_mode == SatpMode::Sv57)) {
       return gpaddr[63:57] == {6{gpaddr[56]}};
     }
+    return false;
   }
 }
 
@@ -2658,8 +2673,10 @@ function read_memory {
         return result;
       } else if (MISALIGNED_SPLIT_STRATEGY == "custom") {
         unpredictable("An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
+        return 0;
       }
     }
+    return 0;
   }
 }
 
@@ -2776,6 +2793,7 @@ function register_reservation_set {
       unpredictable("Implementations may set reservation sets of any size, as long as they cover the reserved accessed");
     } else {
       assert(false, "Unexpected LRSC_RESERVATION_STRATEGY");
+      unreachable();
     }
   }
 }

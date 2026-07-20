@@ -417,12 +417,24 @@ module Udb
         else
           @data["implemented_extensions"].map do |e|
             if e.is_a?(Array)
-              { "name" => e[0], "version" => e[1] }
+              { "name" => e[0], "version" => implemented_extension_version(e[1]) }
             elsif e.is_a?(Hash)
-              { "name" => e.fetch("name"), "version" => RequirementSpec.new(e.fetch("version")).version_spec.to_s }
+              { "name" => e.fetch("name"), "version" => implemented_extension_version(e.fetch("version")) }
             end
           end
         end
+    end
+
+    private
+
+    sig { params(version: String).returns(String) }
+    def implemented_extension_version(version)
+      version_str = version.strip
+      if version_str.start_with?("=")
+        RequirementSpec.new(version_str).version_spec.to_s
+      else
+        VersionSpec.new(version_str).to_s
+      end
     end
 
   end

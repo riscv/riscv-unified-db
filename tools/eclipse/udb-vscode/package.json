@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.91.0"
   },
   "activationEvents": [],
   "contributes": {
@@ -46,16 +46,15 @@
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
-    "@types/glob": "8.1.0",
     "@types/mocha": "10.0.10",
-    "@types/node": "24.10.12",
-    "@types/vscode": "1.109.0",
-    "@vscode/test-electron": "2.5.2",
-    "glob": "7.2.3",
-    "mocha": "10.8.2",
-    "typescript": "5.9.3"
+    "@types/node": "24.13.3",
+    "@types/vscode": "1.125.0",
+    "@vscode/test-electron": "3.0.0",
+    "glob": "13.0.6",
+    "mocha": "11.7.6",
+    "typescript": "7.0.2"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^10.0.0"
   }
 }

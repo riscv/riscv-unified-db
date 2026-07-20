@@ -328,6 +328,8 @@ fields:
     type(): |
       if (CSR[misa].S == 1'b0) {
         return CsrFieldType::RO;
+      } else if (!(implemented?(ExtensionName::Sv32) || implemented?(ExtensionName::Sv39) || implemented?(ExtensionName::Sv48) || implemented?(ExtensionName::Sv57))) {
+        return CsrFieldType::RO;
       } else {
         return CsrFieldType::RW;
       }
@@ -337,18 +339,18 @@ fields:
     reset_value(): |
       if (CSR[misa].S == 1'b0) {
         return 0;
-      } else if (MSTATUS_TVM_IMPLEMENTED) {
-        return UNDEFINED_LEGAL;
-      } else {
+      } else if (!(implemented?(ExtensionName::Sv32) || implemented?(ExtensionName::Sv39) || implemented?(ExtensionName::Sv48) || implemented?(ExtensionName::Sv57))) {
         return 0;
+      } else {
+        return UNDEFINED_LEGAL;
       }
     sw_write(csr_value): |
       if (CSR[misa].S == 1'b0) {
         return 0;
-      } else if (MSTATUS_TVM_IMPLEMENTED) {
-        return csr_value.TVM;
-      } else {
+      } else if (!(implemented?(ExtensionName::Sv32) || implemented?(ExtensionName::Sv39) || implemented?(ExtensionName::Sv48) || implemented?(ExtensionName::Sv57))) {
         return 0;
+      } else {
+        return csr_value.TVM;
       }
   MXR:
     location: 19

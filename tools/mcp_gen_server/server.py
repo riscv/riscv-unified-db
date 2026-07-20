@@ -29,10 +29,10 @@ import re
 from pathlib import Path
 from typing import Any
 
-import yaml
 from mcp.server.lowlevel.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
+from ruamel.yaml import YAML
 
 # ============================================================================
 # Constants and Configuration
@@ -40,6 +40,7 @@ from mcp.types import TextContent, Tool
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GEN_DIR = REPO_ROOT / "gen"
+YAML_SAFE = YAML(typ="safe")
 
 
 # ============================================================================
@@ -144,7 +145,7 @@ def _ensure_in_gen(path: Path) -> Path:
 def _load_yaml(path: Path) -> dict:
     """Load and parse a YAML file."""
     with open(path, encoding="utf-8") as fh:
-        return yaml.safe_load(fh) or {}
+        return YAML_SAFE.load(fh) or {}
 
 
 def _extract_defined_by(data: dict) -> list[str]:

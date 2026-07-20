@@ -339,7 +339,7 @@ Tests are automatically executed in GitHub Actions workflows based on their `ci_
 * *PR stage*: Tests run on pull requests, in the merge queue, and on a push to main.
 * *Merge queue stage*: Tests run when PR enters merge queue and on a push to main.
 
-The schema is used by `tools/test/gen_regress.rb` to generate GitHub Actions workflow files.
+The schema is used by `tools/test/gen_regress.py` to generate GitHub Actions workflow files.
 
 === Best Practices
 
