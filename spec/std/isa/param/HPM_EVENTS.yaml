@@ -7,7 +7,7 @@ $schema: param_schema.json#
 kind: parameter
 name: HPM_EVENTS
 description: List of defined event numbers that can be written into mhpmeventN
-long_name: TODO
+long_name: Hardware Performance Monitor event selector values
 schema:
   type: array
   items:
@@ -28,9 +28,7 @@ definedBy:
           - name: HPM_COUNTER_EN
             index: 4
             equal: true
-          - name: HPM_COUNTER_EN
-            index: 4
-            equal: true
+
           - name: HPM_COUNTER_EN
             index: 5
             equal: true
