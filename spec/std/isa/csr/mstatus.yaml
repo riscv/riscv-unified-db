@@ -111,7 +111,7 @@ fields:
     long_name: Guest Virtual Address
     description: |
       When a trap is taken and a guest virtual address is written into mtval, GVA is set.
-      When a trap is taken and a guest virtual address is written into mtval, GVA is cleared.
+      When a trap is taken and a non-guest virtual address is written into mtval, GVA is cleared.
     type: RW-H
     reset_value: 0
     definedBy:
