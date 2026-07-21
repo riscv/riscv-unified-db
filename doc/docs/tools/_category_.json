@@ -1,0 +1,8 @@
+{
+  "label": "Tools",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Overview of tools in the UDB ecosystem."
+  }
+}
