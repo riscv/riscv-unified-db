@@ -76,7 +76,7 @@
     },
     {
       "comment": "Match quoted string values after keys ending with ()",
-      "begin": "^(\\s*)([\\w-]+)(\\([^)]*\\))\\s*:\\s*(['\"])",
+      "begin": "^(\\s*)(?!sail\\()([\\w-]+)(\\([^)]*\\))\\s*:\\s*(['\"])",
       "beginCaptures": {
         "2": {
           "name": "entity.name.function.yaml"
@@ -107,7 +107,7 @@
     },
     {
       "comment": "Match unquoted single-line scalar values after keys ending with ()",
-      "begin": "^(\\s*)([\\w-]+)(\\([^)]*\\))\\s*:\\s*(?=[^\\s#])(?![\\|>\\[\\{'\"])",
+      "begin": "^(\\s*)(?!sail\\()([\\w-]+)(\\([^)]*\\))\\s*:\\s*(?=[^\\s#])(?![\\|>\\[\\{'\"])",
       "beginCaptures": {
         "2": {
           "name": "entity.name.function.yaml"
@@ -130,7 +130,7 @@
     },
     {
       "comment": "Match block scalar (literal |) values after keys ending with ()",
-      "begin": "^(\\s*)([\\w-]+)(\\([^)]*\\))\\s*:\\s*\\|[-+]?\\s*$",
+      "begin": "^(\\s*)(?!sail\\()([\\w-]+)(\\([^)]*\\))\\s*:\\s*\\|[-+]?\\s*$",
       "beginCaptures": {
         "2": {
           "name": "entity.name.function.yaml"
@@ -153,7 +153,7 @@
     },
     {
       "comment": "Match block scalar (folded >) values after keys ending with ()",
-      "begin": "^(\\s*)([\\w-]+)(\\([^)]*\\))\\s*:\\s*>[-+]?\\s*$",
+      "begin": "^(\\s*)(?!sail\\()([\\w-]+)(\\([^)]*\\))\\s*:\\s*>[-+]?\\s*$",
       "beginCaptures": {
         "2": {
           "name": "entity.name.function.yaml"
