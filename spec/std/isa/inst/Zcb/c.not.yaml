@@ -27,8 +27,5 @@ access:
   vu: always
 operation(): |
 
-  if (implemented?(ExtensionName::C) && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-  }
 
   X[creg2reg(xd)] = ~X[creg2reg(xd)];

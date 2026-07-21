@@ -37,9 +37,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  if (implemented?(ExtensionName::Xqccmp) && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-  }
 
   XReg virtual_address_sp = get_and_validate_stack_pointer(X[2], $encoding);
   XReg size = xlen() / 8;

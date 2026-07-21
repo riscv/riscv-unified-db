@@ -33,8 +33,5 @@ access:
   vs: always
   vu: always
 operation(): |
-  if (implemented?(ExtensionName::C) && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-  }
 
   X[xd] = sext((X[xd] + sext(imm, 6)), 32);

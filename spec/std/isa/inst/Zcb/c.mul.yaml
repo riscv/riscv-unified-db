@@ -30,12 +30,6 @@ access:
   vu: always
 operation(): |
 
-  if (implemented?(ExtensionName::M) && (CSR[misa].M == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
-  }
 
-  if (implemented?(ExtensionName::C) && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-  }
 
   X[creg2reg(xd)] = X[creg2reg(xd)] * X[creg2reg(xs2)];

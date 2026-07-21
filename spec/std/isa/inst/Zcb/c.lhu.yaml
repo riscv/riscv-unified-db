@@ -31,9 +31,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  if (implemented?(ExtensionName::C) && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-  }
 
   XReg virtual_address = X[creg2reg(xs1)] + imm;
 

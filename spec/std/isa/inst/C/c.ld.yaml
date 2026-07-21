@@ -50,9 +50,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  if (implemented?(ExtensionName::C) && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-  }
 
   if (xlen() == 32) {
     if (implemented?(ExtensionName::Zclsd)) {
