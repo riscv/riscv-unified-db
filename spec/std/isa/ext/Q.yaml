@@ -17,9 +17,11 @@ description: |
   a double-precision value which is itself NaN-boxed inside a quad-precision value.
 type: unprivileged
 versions:
-  - version: "1.0.0"
+  - version: "2.2.0"
     state: ratified
-    ratification_date: 2019-04
+    ratification_date: 2019-12
+    changes:
+      - Define NaN-boxing scheme, changed definition of FMAX and FMIN
     requirements:
       extension:
         name: D
