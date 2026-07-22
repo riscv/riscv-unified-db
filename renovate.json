@@ -15,7 +15,6 @@
     "minimumReleaseAge": "4 hours"
   },
   "ignorePaths": [
-    ".github/workflows/regress.yml",
     "doc/node_modules/**",
     "ext/**",
     "gen/**",
@@ -70,6 +69,49 @@
       "datasourceTemplate": "rubygems"
     },
     {
+      "description": "Bundler version installed by default via mise",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.default-gems$/"],
+      "matchStrings": ["^bundler\\s+(?<currentValue>[\\d.]+)"],
+      "depNameTemplate": "gem:bundler",
+      "packageNameTemplate": "bundler",
+      "datasourceTemplate": "rubygems"
+    },
+    {
+      "description": "must (mustool) commit tracked by the udb gem binary version file",
+      "customType": "regex",
+      "managerFilePatterns": ["/^tools/ruby-gems/udb/lib/udb/MUST_VERSION$/"],
+      "matchStrings": ["^must-(?<currentDigest>[a-f0-9]{7,40})\\s*$"],
+      "currentValueTemplate": "master",
+      "depNameTemplate": "jar-ben/mustool",
+      "packageNameTemplate": "https://github.com/jar-ben/mustool",
+      "datasourceTemplate": "git-refs"
+    },
+    {
+      "description": "eqntott commit tracked by the udb gem binary version file",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION$/"
+      ],
+      "matchStrings": ["^eqntott-(?<currentDigest>[a-f0-9]{7,40})\\s*$"],
+      "currentValueTemplate": "master",
+      "depNameTemplate": "TheProjecter/eqntott",
+      "packageNameTemplate": "https://github.com/TheProjecter/eqntott",
+      "datasourceTemplate": "git-refs"
+    },
+    {
+      "description": "espresso commit tracked by the udb gem binary version file",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION$/"
+      ],
+      "matchStrings": ["^espresso-(?<currentDigest>[a-f0-9]{7,40})\\s*$"],
+      "currentValueTemplate": "master",
+      "depNameTemplate": "psksvp/espresso-ab-1.0",
+      "packageNameTemplate": "https://github.com/psksvp/espresso-ab-1.0",
+      "datasourceTemplate": "git-refs"
+    },
+    {
       "description": "Xtext version shared by the Eclipse Maven and Gradle projects",
       "customType": "regex",
       "managerFilePatterns": [
@@ -92,6 +134,67 @@
       "matchStrings": ["<tycho-version>(?<currentValue>[^<]+)</tycho-version>"],
       "depNameTemplate": "org.eclipse.tycho:tycho-maven-plugin",
       "datasourceTemplate": "maven"
+    },
+    {
+      "description": "fmt version fetched by cpp_hart_gen's CMake FetchContent",
+      "customType": "regex",
+      "managerFilePatterns": ["/^backends/cpp_hart_gen/CMakeLists\\.txt$/"],
+      "matchStrings": [
+        "FetchContent_Declare\\(fmt\\s+GIT_REPOSITORY https://github\\.com/fmtlib/fmt\\.git\\s+GIT_TAG (?<currentValue>\\S+)\\s*\\)"
+      ],
+      "depNameTemplate": "fmtlib/fmt",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "description": "yaml-cpp version fetched by cpp_hart_gen's CMake FetchContent",
+      "customType": "regex",
+      "managerFilePatterns": ["/^backends/cpp_hart_gen/CMakeLists\\.txt$/"],
+      "matchStrings": [
+        "FetchContent_Declare\\(\\s*yaml-cpp\\s+GIT_REPOSITORY https://github\\.com/jbeder/yaml-cpp\\.git\\s+GIT_TAG (?<currentValue>\\S+)\\s*\\)"
+      ],
+      "depNameTemplate": "jbeder/yaml-cpp",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^(?:yaml-cpp-)?(?<version>.*)$"
+    },
+    {
+      "description": "CLI11 version fetched by cpp_hart_gen's CMake FetchContent",
+      "customType": "regex",
+      "managerFilePatterns": ["/^backends/cpp_hart_gen/CMakeLists\\.txt$/"],
+      "matchStrings": [
+        "FetchContent_Declare\\(\\s*cli11_proj\\s+QUIET\\s+GIT_REPOSITORY https://github\\.com/CLIUtils/CLI11\\.git\\s+GIT_TAG (?<currentValue>\\S+)\\s*\\)"
+      ],
+      "depNameTemplate": "CLIUtils/CLI11",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "description": "Catch2 version fetched by cpp_hart_gen's CMake FetchContent",
+      "customType": "regex",
+      "managerFilePatterns": ["/^backends/cpp_hart_gen/CMakeLists\\.txt$/"],
+      "matchStrings": [
+        "FetchContent_Declare\\(\\s*Catch2\\s+GIT_REPOSITORY https://github\\.com/catchorg/Catch2\\.git\\s+GIT_TAG\\s+(?<currentValue>\\S+)\\s*\\)"
+      ],
+      "depNameTemplate": "catchorg/Catch2",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "description": "json-schema-validator version fetched by cpp_hart_gen's CMake FetchContent",
+      "customType": "regex",
+      "managerFilePatterns": ["/^backends/cpp_hart_gen/CMakeLists\\.txt$/"],
+      "matchStrings": [
+        "FetchContent_Declare\\(\\s*nlohmann_json_schema_validator\\s+GIT_REPOSITORY https://github\\.com/pboettch/json-schema-validator\\.git\\s+GIT_TAG\\s+(?<currentValue>\\S+)\\s*\\)"
+      ],
+      "depNameTemplate": "pboettch/json-schema-validator",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "description": "compile-time-regular-expressions version fetched by cpp_hart_gen's CMake FetchContent",
+      "customType": "regex",
+      "managerFilePatterns": ["/^backends/cpp_hart_gen/CMakeLists\\.txt$/"],
+      "matchStrings": [
+        "FetchContent_Declare\\(\\s*compile_time_regular_expressions\\s+GIT_REPOSITORY https://github\\.com/hanickadot/compile-time-regular-expressions\\.git\\s+GIT_TAG\\s+(?<currentValue>\\S+)\\s*\\)"
+      ],
+      "depNameTemplate": "hanickadot/compile-time-regular-expressions",
+      "datasourceTemplate": "github-releases"
     }
   ],
   "packageRules": [
@@ -131,6 +234,13 @@
       "matchManagers": ["git-submodules"],
       "matchDepNames": ["ext/llvm-project"],
       "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "Keep AlmaLinux on major version 8 (toolchain container requires its older glibc for prebuilt toolchain compatibility)",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["almalinux"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }

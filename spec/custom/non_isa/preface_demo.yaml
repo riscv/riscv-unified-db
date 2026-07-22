@@ -31,9 +31,7 @@ sections:
       The manual is designed to be accessible to both new and experienced users, with clear explanations, diagrams, and practical examples. It emphasizes portability, compliance with RISC-V standards, and best practices for system design and software development.
   - title: Audience
     content:
-      - id: sec-preface-audience
-        normative: false
-        text: |
+      - text: |
           This document is intended for:
 
           * System architects and designers
@@ -42,9 +40,7 @@ sections:
           * Technical writers and educators
 
           The manual assumes a basic familiarity with computer architecture and programming concepts, but provides background information and references for further study.
-      - id: sec-preface-audience-conditional
-        normative: false
-        text: |
+      - text: |
           This section is only included for educational distributions.
         when(): "distribution_type == 'educational'"
   - title: Notation and Conventions

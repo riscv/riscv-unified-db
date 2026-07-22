@@ -40,7 +40,7 @@ repos:
 
   # Formatters touching distinct file extensions (parallel).
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.9.4
+    rev: v3.9.5
     hooks:
       - id: prettier
         priority: 20
@@ -48,7 +48,7 @@ repos:
         exclude: schemas/json-schema-draft-07.json|cfgs/profile/.*
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: "v22.1.5"
+    rev: "v22.1.8"
     hooks:
       - id: clang-format
         priority: 20
@@ -59,7 +59,7 @@ repos:
         exclude: backends/cpp_hart_gen
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.20
+    rev: v0.15.21
     hooks:
       - id: ruff-format
         priority: 20
@@ -182,7 +182,7 @@ repos:
         exclude: COMMIT_EDITMSG|MERGE_MSG
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 43.252.1
+    rev: 43.260.3
     hooks:
       - id: renovate-config-validator
         priority: 30
@@ -192,7 +192,7 @@ repos:
       - id: regress
         name: generate regress.yml
         priority: 90
-        files: (tools/test/gen_regress\.rb|tools/test/regress-tests.yaml|tools/test/regress-gh-template.yaml)
+        files: (tools/test/gen_regress\.py|tools/test/regress-tests.yaml|tools/test/regress-gh-template.yaml)
         pass_filenames: false
         language: system
         entry: >-

@@ -12,15 +12,22 @@ import tempfile
 from copy import deepcopy
 from pathlib import Path
 
+from deepmerge import Merger
 from jsonschema import Draft7Validator, validators
 from jsonschema.exceptions import ValidationError, best_match
-from mergedeep import Strategy, merge
 from referencing import Registry, Resource
 from ruamel.yaml import YAML
 from tqdm.auto import tqdm
 
 # cache of Schema validators
 schemas = {}
+
+
+_REPLACE_MERGER = Merger(
+    [(dict, ["merge"])],
+    ["override"],
+    ["override"],
+)
 
 
 def udb_root(d):
@@ -389,8 +396,8 @@ def _resolve(obj, obj_path, obj_file_path, doc_obj, arch_root, do_checks, compil
             for key in ref_obj:
                 if key == "$parent_of" or key == "$child_of":
                     continue  # we don't propagate $parent_of / $child_of
-                if isinstance(parent_obj.get(key), dict):
-                    merge(parent_obj[key], ref_obj[key], strategy=Strategy.REPLACE)
+                if isinstance(parent_obj.get(key), dict) and isinstance(ref_obj[key], dict):
+                    _REPLACE_MERGER.merge(parent_obj[key], deepcopy(ref_obj[key]))
                 else:
                     parent_obj[key] = deepcopy(ref_obj[key])
 
@@ -429,31 +436,20 @@ def _resolve(obj, obj_path, obj_file_path, doc_obj, arch_root, do_checks, compil
                     compile_idl,
                 )
             else:
-                if isinstance(parent_obj[key], dict):
-                    final_obj[key] = merge(
-                        yaml.load("{}"),
-                        parent_obj[key],
-                        _resolve(
-                            obj[key],
-                            obj_path + [key],
-                            obj_file_path,
-                            doc_obj,
-                            arch_root,
-                            do_checks,
-                            compile_idl,
-                        ),
-                        strategy=Strategy.REPLACE,
-                    )
+                resolved_child_value = _resolve(
+                    obj[key],
+                    obj_path + [key],
+                    obj_file_path,
+                    doc_obj,
+                    arch_root,
+                    do_checks,
+                    compile_idl,
+                )
+                if isinstance(parent_obj[key], dict) and isinstance(resolved_child_value, dict):
+                    final_obj[key] = deepcopy(parent_obj[key])
+                    _REPLACE_MERGER.merge(final_obj[key], deepcopy(resolved_child_value))
                 else:
-                    final_obj[key] = _resolve(
-                        obj[key],
-                        obj_path + [key],
-                        obj_file_path,
-                        doc_obj,
-                        arch_root,
-                        do_checks,
-                        compile_idl,
-                    )
+                    final_obj[key] = resolved_child_value
 
         if "$remove" in final_obj:
             if isinstance(final_obj["$remove"], list):

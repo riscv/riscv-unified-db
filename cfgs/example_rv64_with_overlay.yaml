@@ -358,23 +358,21 @@ params:
   # this address is reported in the mconfigptr CSR
   CONFIG_PTR_ADDRESS: 0x1000
 
-  # number of implemented PMP entries. Can be any value between 0-64, inclusive.
-  #
-  # the number of implemented PMP registers must be 0, 16, or 64.
-  #
-  # Therefore, whether or not a pmpaddrN or pmpcfgN register exists depends on
-  # NUM_PMP_ENTRIES as follows:
-  # |===
-  # | NUM_PMP_ENTRIES | pmpaddr<0-15> / pmpcfg<0-3> | pmpaddr<16-63> / pmpcfg<4-15>
-  # | 0               | N                           | N
-  # | 1-16            | Y                           | N
-  # | 17-64           | Y                           | Y
-  # |===
-  # ** pmpcfgN for an odd N never exist when XLEN == 64
-  #
-  # when NUM_PMP_ENTRIES is not exactly 0, 16, or 64, some extant pmp registers,
-  # and associated pmpNcfg, will be read-only zero (but will not cause an exception).
-  NUM_PMP_ENTRIES: 14
+  # number of implemented PMP entries, some may be read-only zero.
+  # Must be 0, 16, or 64.
+  NUM_PMP_ENTRIES: 16
+
+  # number of implemented PMP entries that are actually usable (writable).
+  # Must be between 0 and NUM_PMP_ENTRIES, inclusive. Entries at and above this
+  # index are implemented as read-only zero (they exist but cannot be
+  # configured). Here, 16 entries are implemented but only 14 are usable.
+  NUM_USABLE_PMP_ENTRIES: 14
+
+  # Which PMP address matching modes are supported.
+  # NA4 must be false unless PMP_GRANULARITY == 2 (4-byte granularity).
+  PMP_TOR_SUPPORTED: true
+  PMP_NA4_SUPPORTED: false
+  PMP_NAPOT_SUPPORTED: true
 
   # log2 of the smallest supported PMP region
   # generally, for systems with an MMU, should not be smaller than 12,
@@ -596,7 +594,6 @@ params:
   MTVEC_BASE_ALIGNMENT_DIRECT: 4
   MTVEC_BASE_ALIGNMENT_VECTORED: 4
   MSTATUS_FS_LEGAL_VALUES: [0, 1, 2, 3]
-  MSTATUS_TVM_IMPLEMENTED: true
   HW_MSTATUS_FS_DIRTY_UPDATE: precise
   MSTATUS_VS_LEGAL_VALUES: [0, 1, 2, 3]
   HW_MSTATUS_VS_DIRTY_UPDATE: precise

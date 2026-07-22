@@ -9,8 +9,8 @@
 #   output_dir   - where to place the binary (default: ./must-build)
 #   architecture - x64 or arm64 (default: x64)
 #
-# The pinned commit matches MUST_VERSION in the udb gem.
-# To update: change MUST_COMMIT below and update lib/udb/MUST_VERSION accordingly.
+# MUST_VERSION in the udb gem is the single source of truth.
+# To update: change tools/ruby-gems/udb/lib/udb/MUST_VERSION.
 
 set -euo pipefail
 
@@ -19,8 +19,23 @@ info()  { echo "INFO: $*"  >&2; }
 
 command_exists() { command -v "$1" >/dev/null 2>&1; }
 
-# Pinned commit - must match lib/udb/MUST_VERSION
-MUST_COMMIT="17fa9f9542a9ce05328dfccd1cd410f05f741ab3"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+UDB_ROOT=$(cd -- "${SCRIPT_DIR}/../.." && pwd)
+MUST_VERSION_FILE="${UDB_ROOT}/tools/ruby-gems/udb/lib/udb/MUST_VERSION"
+MUST_VERSION=$(<"${MUST_VERSION_FILE}") || error "Could not read ${MUST_VERSION_FILE}"
+
+case "${MUST_VERSION}" in
+    must-*)
+        MUST_COMMIT="${MUST_VERSION#must-}"
+        ;;
+    *)
+        error "Invalid MUST_VERSION '${MUST_VERSION}'; expected must-<git-commit>"
+        ;;
+esac
+
+if [[ ! "${MUST_COMMIT}" =~ ^[a-f0-9]{7,40}$ ]]; then
+    error "Invalid MUST_VERSION '${MUST_VERSION}'; expected must-<7-to-40-char-hex-commit>"
+fi
 
 build_must_with_docker() {
     local output_dir="${1:-./must-build}"
@@ -40,7 +55,7 @@ build_must_with_docker() {
             ;;
     esac
 
-    info "Building must (mustool @ $MUST_COMMIT)"
+    info "Building must (${MUST_VERSION}, commit ${MUST_COMMIT})"
     info "Output directory: $output_dir"
     info "Architecture: $architecture ($docker_platform)"
 

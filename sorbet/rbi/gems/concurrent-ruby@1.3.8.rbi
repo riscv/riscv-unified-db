@@ -312,6 +312,7 @@ end
 
 module Concurrent::AtomicNumericCompareAndSetWrapper
   def compare_and_set(old_value, new_value); end
+  def compare_and_swap(old_value, new_value); end
 end
 
 class Concurrent::AtomicReference < ::Concurrent::MutexAtomicReference
@@ -1069,8 +1070,6 @@ class Concurrent::MutexAtomicReference
 
   def initialize(value = T.unsafe(nil)); end
 
-  def _compare_and_set(old_value, new_value); end
-  def compare_and_swap(old_value, new_value); end
   def get; end
   def get_and_set(new_value); end
   def set(new_value); end
@@ -1081,6 +1080,10 @@ class Concurrent::MutexAtomicReference
   protected
 
   def synchronize; end
+
+  private
+
+  def _compare_and_set(old_value, new_value); end
 end
 
 class Concurrent::MutexCountDownLatch < ::Concurrent::Synchronization::LockableObject
@@ -1454,6 +1457,8 @@ class Concurrent::Promises::Future < ::Concurrent::Promises::AbstractEventFuture
   def run_test(v); end
   def wait_until_resolved!(timeout = T.unsafe(nil)); end
 end
+
+Concurrent::Promises::Future::SET_BACKTRACE_LOCATIONS_SUPPORTED = T.let(T.unsafe(nil), TrueClass)
 
 class Concurrent::Promises::FutureWrapperPromise < ::Concurrent::Promises::BlockedPromise
   def initialize(delayed, blockers_count, default_executor); end

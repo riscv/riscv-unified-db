@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.91.0"
   },
   "activationEvents": [],
   "contributes": {
@@ -52,9 +52,9 @@
     "@vscode/test-electron": "3.0.0",
     "glob": "13.0.6",
     "mocha": "11.7.6",
-    "typescript": "5.9.3"
+    "typescript": "7.0.2"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^10.0.0"
   }
 }

@@ -7,7 +7,9 @@ import re
 from pathlib import Path
 
 import pytest
-import yaml
+from ruamel.yaml import YAML
+
+YAML_SAFE = YAML(typ="safe")
 
 yaml_instructions = {}
 REPO_DIRECTORY = None
@@ -67,7 +69,7 @@ def load_inherited_variable(var_path, repo_dir):
             return None
 
         with open(full_path) as f:
-            data = yaml.safe_load(f)
+            data = YAML_SAFE.load(f)
 
         for key in anchor.split("/"):
             if key in data:
@@ -136,7 +138,7 @@ def load_yaml_encoding(instr_name):
         return None, None, None
 
     with open(yaml_file_path) as yf:
-        ydata = yaml.safe_load(yf)
+        ydata = YAML_SAFE.load(yf)
 
     encoding = safe_get(ydata, "encoding", {})
     yaml_match = safe_get(encoding, "match", None)

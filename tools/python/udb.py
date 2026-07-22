@@ -6,7 +6,9 @@
 from collections.abc import Iterable
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
+
+YAML_SAFE = YAML(typ="safe")
 
 
 def find_and_load_yaml(path: str | Path, kinds: Iterable[str] | None = None) -> list[dict]:
@@ -21,7 +23,7 @@ def find_and_load_yaml(path: str | Path, kinds: Iterable[str] | None = None) -> 
     p = Path(path)
     for file in p.rglob("*.yaml"):
         with file.open(encoding="utf-8") as f:
-            y = yaml.safe_load(f)
+            y = YAML_SAFE.load(f)
             if (
                 isinstance(y, dict)
                 and "kind" in y
