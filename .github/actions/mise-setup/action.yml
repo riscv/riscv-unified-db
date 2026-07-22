@@ -15,7 +15,7 @@ runs:
       run: mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
     - uses: jdx/mise-action@dad1bfd3df957f44999b559dd69dc1671cb4e9ea # v4
       with:
-        version: 2026.7.6
+        version: 2026.7.7
     # Set bundler gem path before restoring the cache and before bin/setup,
     # so bundle install (inside bin/setup) writes to the cacheable path.
     - name: Set bundler PATH
