@@ -1489,6 +1489,9 @@ function softfloat_subMagsF32 {
 
       # check if A is infinity or NaN
       if (expA == 8'hFF) {
+        if ((sigA != 0) || (sigB != 0)) {
+          return SP_CANONICAL_NAN;
+        }
         set_fp_flag(FpFlag::NV);
         return SP_CANONICAL_NAN;
       }
