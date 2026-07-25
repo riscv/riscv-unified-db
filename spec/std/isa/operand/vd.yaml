@@ -8,8 +8,6 @@ kind: operand
 name: vd
 description: vector register destination
 data:
+  $inherits: operand/xd.yaml#/data
   name: vd
-  type: register
   reg_file: V
-  source: false
-  destination: true

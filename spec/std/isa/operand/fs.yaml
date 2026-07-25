@@ -8,6 +8,6 @@ kind: operand
 name: fs
 description: floating-point register source
 data:
+  $inherits: operand/xs.yaml#/data
   name: fs
-  type: register
   reg_file: F

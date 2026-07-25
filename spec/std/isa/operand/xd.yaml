@@ -8,9 +8,8 @@ kind: operand
 name: xd
 description: general purpose register destination
 data:
+  $inherits: operand/xs.yaml#/data
   name: xd
-  type: register
-  reg_file: gpr
   source: false
   destination: true
   offset: false

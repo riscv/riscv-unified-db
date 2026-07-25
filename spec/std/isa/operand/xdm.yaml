@@ -8,9 +8,7 @@ kind: operand
 name: xdm
 description: compressed-move general purpose register destination
 data:
+  $inherits: operand/xsm.yaml#/data
   name: xdm
-  type: register
-  reg_file: gpr
-  possible_values: [8, 9, 18, 19, 20, 21, 22, 23]
   source: false
   destination: true

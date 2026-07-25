@@ -8,9 +8,8 @@ kind: operand
 name: vm
 description: vector mask register
 data:
+  $inherits: operand/vs.yaml#/data
   name: vm
-  type: register
-  reg_file: vr
   possible_values: [0]
   default: ""
   decode(): |

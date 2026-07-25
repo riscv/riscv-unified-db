@@ -8,8 +8,6 @@ kind: operand
 name: fd
 description: floating-point register destination
 data:
+  $inherits: operand/xd.yaml#/data
   name: fd
-  type: register
   reg_file: F
-  source: false
-  destination: true
