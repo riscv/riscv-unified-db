@@ -27,9 +27,17 @@ def _instruction_names(instructions: list[str]) -> list[str]:
     return sorted(spec.instructions)
 
 
+def match_string(instruction, xlen):
+    encoding = instruction["encoding"]
+    if encoding.get("match") is None:
+        encoding = encoding[f"RV{xlen}"]
+    return encoding["match"]
+
+
 def iter_roundtrip_results(spec_dir: str, instructions: list[str], xlen: int = 64):
     """Yield (status_line, is_ok) for generated assembly examples."""
     spec.initialize_spec(spec_dir, quiet=True)
+    instructions_by_specificity = dict(sorted(spec.instructions.items(), key=lambda item: match_string(item[1], xlen).count("-")))
 
     # Keep imported tool modules quiet: this script emits only round-trip status lines.
     encode.quiet = True
@@ -48,7 +56,7 @@ def iter_roundtrip_results(spec_dir: str, instructions: list[str], xlen: int = 6
                 yield (f"KO {example}; ERROR", False)
                 continue
 
-            decoded = _silent_invoke(decode.decode, opcode, xlen, False)
+            decoded = _silent_invoke(decode.decode, instructions_by_specificity, opcode, xlen, False)
             if decoded is None:
                 yield (f"KO {example}; ERROR", False)
                 continue

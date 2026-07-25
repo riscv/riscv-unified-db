@@ -126,17 +126,17 @@ def matches_pattern(opcode, pattern):
     return all((pattern[i] == "-" or opcode[i] == pattern[i]) for i in range(len(opcode)))
 
 
-def find_matching_instructions(opcode, xlen=64):
+def find_matching_instructions(instructions, opcode, xlen=64):
     """Find all instructions that match the given opcode."""
     matches = []
 
-    for instruction in spec.instructions:
+    for instruction in instructions:
         match_pattern = (
-            spec.get_stanza(spec.instructions[instruction].get("encoding"), xlen) or {}
+            spec.get_stanza(instructions[instruction].get("encoding"), xlen) or {}
         ).get("match") or ""
 
         if matches_pattern(opcode, match_pattern):
-            matches.append(spec.instructions[instruction])
+            matches.append(instructions[instruction])
 
     return matches
 
@@ -291,12 +291,12 @@ def format_assembly(instruction, variable_values, xlen=64, abi_names=False):
     return mnemonic
 
 
-def decode(opcode, xlen=64, abi_names=False):
+def decode(instructions, opcode, xlen=64, abi_names=False):
     """Decode an opcode into an assembly instruction"""
     dprint(f"# Decoding opcode: {opcode} with xlen={xlen}")
 
     # Find matching instructions and try each one until formatting succeeds.
-    matching_instructions = find_matching_instructions(opcode, xlen)
+    matching_instructions = find_matching_instructions(instructions, opcode, xlen)
     if not matching_instructions:
         print(f"# ERROR: No matching instruction found for opcode: {opcode}")
         return None
@@ -334,6 +334,7 @@ def main():
     qprint(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
 
     spec.initialize_spec(args.spec, quiet=quiet)
+    instructions_by_specificity = dict(sorted(spec.instructions.items(), key=item[1]["encoding"].get("match","").count('-')))
 
     if args.opcode_files:
         opcodes = []
@@ -348,7 +349,7 @@ def main():
         opcode = opcode.split("#")[0].strip()  # Remove comments and whitespace
         if not opcode:
             continue  # Skip empty lines
-        assembly = decode(opcode, xlen, abi_names=args.abi_names)
+        assembly = decode(instructions_by_specificity, opcode, xlen, abi_names=args.abi_names)
         if assembly:
             print(f"{assembly}")
         else:
