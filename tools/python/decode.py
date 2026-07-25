@@ -334,7 +334,12 @@ def main():
     qprint(f"# Using RISC-V {xlen}-bit architecture (xlen={xlen})")
 
     spec.initialize_spec(args.spec, quiet=quiet)
-    instructions_by_specificity = dict(sorted(spec.instructions.items(), key=item[1]["encoding"].get("match","").count('-')))
+    instructions_by_specificity = dict(
+        sorted(
+            spec.instructions.items(),
+            key=lambda item: item[1]["encoding"].get("match", "").count("-"),
+        )
+    )
 
     if args.opcode_files:
         opcodes = []
