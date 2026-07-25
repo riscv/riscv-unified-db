@@ -499,31 +499,17 @@ fields:
         return $array_size(MSTATUS_VS_LEGAL_VALUES) == 1 ? CsrFieldType::RO : CsrFieldType::RW;
       }
     reset_value(): |
-      if (CSR[misa].V == 1'b1){
-        return UNDEFINED_LEGAL;
-      } else if ((CSR[misa].S == 1'b0) && (CSR[misa].V == 1'b0)) {
+      if ((!implemented?(ExtensionName::S) && !implemented?(ExtensionName::V)) || (MISA_CSR_IMPLEMENTED && (CSR[misa].S == 1'b0) && (CSR[misa].V == 1'b0))) {
         # must be read-only-0
         return 0;
-      } else {
-        # there will be no hardware update in this case because we know the V extension isn't implemented
-        if ($array_size(MSTATUS_VS_LEGAL_VALUES) == 0) {
-          return 0;
-        } else if ($array_size(MSTATUS_VS_LEGAL_VALUES) == 1) {
-          return MSTATUS_VS_LEGAL_VALUES[0];
-        } else {
-          return UNDEFINED_LEGAL;
-        }
       }
+      return $array_size(MSTATUS_VS_LEGAL_VALUES) == 1 ? MSTATUS_VS_LEGAL_VALUES[0] : UNDEFINED_LEGAL;
     sw_write(csr_value): |
-      if (implemented?(ExtensionName::V) && CSR[misa].V == 1'b1){
-        return $array_includes?(MSTATUS_VS_LEGAL_VALUES, csr_value.VS) ? csr_value.VS : UNDEFINED_LEGAL_DETERMINISTIC;
-      } else if (!implemented?(ExtensionName::S) && !implemented?(ExtensionName::V)) {
+      if ((!implemented?(ExtensionName::S) && !implemented?(ExtensionName::V)) || (MISA_CSR_IMPLEMENTED && (CSR[misa].S == 1'b0) && (CSR[misa].V == 1'b0))) {
         # must be read-only-0
         return 0;
-      } else {
-        # there will be no hardware update in this case because we know the V extension isn't implemented
-        return $array_includes?(MSTATUS_VS_LEGAL_VALUES, csr_value.VS) ? csr_value.VS : UNDEFINED_LEGAL_DETERMINISTIC;
       }
+      return $array_includes?(MSTATUS_VS_LEGAL_VALUES, csr_value.VS) ? csr_value.VS : UNDEFINED_LEGAL_DETERMINISTIC;
   SPP:
     location: 8
     long_name: S-mode Previous Privilege
