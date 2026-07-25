@@ -11,5 +11,5 @@ data:
   $inherits: operand/xs.yaml#/data
   name: xsm
   type: register
-  reg_file: gpr
+  reg_file: X
   possible_values: [8, 9, 18-23]
