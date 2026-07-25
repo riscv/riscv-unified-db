@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
 
 yamls: list[dict] = []
 instructions: dict[str, dict] = {}
@@ -45,6 +45,7 @@ def initialize_spec(spec_dir: str, quiet: bool = False) -> None:
     """
     Load all relevant YAML objects and build shared lookup maps.
     """
+    yaml = YAML(typ="safe")
     yamls.clear()
     instructions.clear()
     register_files.clear()
@@ -56,7 +57,7 @@ def initialize_spec(spec_dir: str, quiet: bool = False) -> None:
     for yaml_path in root_path.rglob("*.yaml"):
         try:
             with yaml_path.open(encoding="utf-8") as handle:
-                data = yaml.safe_load(handle)
+                data = yaml.load(handle)
         except (OSError, yaml.YAMLError):
             print(f'# ERROR: Failed to load "{yaml_path}".')
             continue

@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
 
 
 class IdlExecutionError(Exception):
@@ -58,7 +58,8 @@ def _compile_idl_function_body(idl):
         details = result.stderr.strip() or result.stdout.strip()
         raise IdlExecutionError(f"IDL compile failed: {details}")
 
-    return yaml.safe_load(result.stdout)
+    yaml = YAML(typ="safe")
+    return yaml.load(result.stdout)
 
 
 def _trunc_div(lhs, rhs):

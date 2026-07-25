@@ -1,4 +1,3 @@
-KO c.nop; c.addi x0, 0
 KO cm.push {ra}, -16; cm.push {x1}, -16
 KO cm.push {ra}, -32; cm.push {x1}, -32
 KO cm.push {ra}, -48; cm.push {x1}, -48
