@@ -5,14 +5,14 @@
 
 $schema: param_schema.json#
 kind: parameter
-name: MSTATUS_TVM_IMPLEMENTED
+name: PMP_TOR_SUPPORTED
 description: |
-  Whether or not mstatus.TVM is implemented.
+  Whether or not the Top-of-Range (TOR) PMP address matching mode is supported.
 
-  When not implemented mstatus.TVM will be read-only-zero.
-long_name: TODO
+long_name: PMP TOR mode supported
 schema:
   type: boolean
 definedBy:
-  extension:
-    name: S
+  param:
+    name: NUM_PMP_ENTRIES
+    greaterThan: 0

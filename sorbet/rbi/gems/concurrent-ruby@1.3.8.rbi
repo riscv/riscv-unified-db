@@ -1458,6 +1458,8 @@ class Concurrent::Promises::Future < ::Concurrent::Promises::AbstractEventFuture
   def wait_until_resolved!(timeout = T.unsafe(nil)); end
 end
 
+Concurrent::Promises::Future::SET_BACKTRACE_LOCATIONS_SUPPORTED = T.let(T.unsafe(nil), TrueClass)
+
 class Concurrent::Promises::FutureWrapperPromise < ::Concurrent::Promises::BlockedPromise
   def initialize(delayed, blockers_count, default_executor); end
 
