@@ -8,13 +8,23 @@ kind: instruction
 name: c.nop
 long_name: Non-operation
 description: |
+  C.NOP does not change any user-visible state, except for advancing the pc and
+  accepting any HINTs.
   C.NOP expands into `addi x0, x0, 0`.
+  C.NOP with non-zero immediate values are HINTs.
 definedBy:
   extension:
     name: Zca
-assembly: ""
+assembly: imm
 encoding:
-  match: "0000000000000001"
+  match: 000-00000-----01
+  variables:
+    - name: imm
+      location: 12|6-2
+      sign_extend: true
+pseudoinstructions:
+  - when: imm == 0
+    to: "c.nop"
 access:
   s: always
   u: always

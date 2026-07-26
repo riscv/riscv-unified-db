@@ -1,0 +1,23 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: PMP_NA4_SUPPORTED
+description: |
+  Whether or not the Naturally Aligned four-byte (NA4) PMP address matching
+  mode is supported.
+
+long_name: PMP NA4 mode supported
+schema:
+  type: boolean
+definedBy:
+  param:
+    name: NUM_PMP_ENTRIES
+    greaterThan: 0
+requirements:
+  idl(): |
+    PMP_NA4_SUPPORTED -> (PMP_GRANULARITY == 2);
+  reason: NA4 is not valid when the PMP granularity is larger than 4 bytes

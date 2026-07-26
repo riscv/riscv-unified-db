@@ -108,14 +108,12 @@ _check_core_prerequisites() {
 # Section 2: Mise Tools
 # ---------------------------------------------------------------------------
 
-# Map of mise tool name -> binary name (only entries that differ)
-declare -A _MISE_BINARY_OVERRIDE=(
-  ["github-cli"]="gh"
-)
-
 _check_mise_tool() {
   local tool="$1"
-  local binary="${_MISE_BINARY_OVERRIDE[$tool]:-$tool}"
+  local binary="$tool"
+  if [[ "$tool" == "github-cli" ]]; then
+    binary="gh"
+  fi
 
   local bin_path
   bin_path=$("$ROOT/bin/mise" which "$binary" 2>/dev/null)
@@ -271,7 +269,7 @@ _check_developer_setup() {
   _section "Developer Setup"
 
   # Pre-commit hook (skip in CI)
-  if [[ -v GITHUB_ACTIONS ]]; then
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
     _info "Pre-commit hook check skipped (CI environment)"
   else
     local git_hooks_dir
