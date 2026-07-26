@@ -512,6 +512,7 @@ jobs:
         test:
           - logic
           - conditions
+          - database_obj_compare
           - cli
           - yaml_loader
           - cfg_arch
