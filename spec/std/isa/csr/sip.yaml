@@ -20,7 +20,7 @@ definedBy:
   extension:
     name: S
 sw_read(): |
-  return $bits(CSR[mip].sw_read()) & $bits(CSR[mideleg]);
+  return $bits(CSR[mip]) & $bits(CSR[mideleg]);
 fields:
   SSIP:
     location: 1
@@ -163,7 +163,7 @@ fields:
       !===
     type: RW-RH
     sw_write(csr_value): |
-      if (implemented?(ExtensionName::Sscofpmf) && CSR[mideleg].LCOFI == 1'b1) {
+      if (CSR[mideleg].LCOFI == 1'b1) {
         CSR[mip].LCOFIP = csr_value.LCOFIP;
         return csr_value.LCOFIP;
       }
