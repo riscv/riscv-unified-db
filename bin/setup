@@ -51,7 +51,7 @@ printf "\n"
 if [[ -t 0 ]] && [[ -z "${GITHUB_ACTIONS:-}" ]]; then
   printf "    Press ${_BOLD}Enter${_RESET} to continue, or type ${_BOLD}m${_RESET} to see how to change these paths: "
   read -r _SETUP_LOC_CHOICE
-  if [[ "${_SETUP_LOC_CHOICE,,}" == m* ]]; then
+  if [[ "$_SETUP_LOC_CHOICE" == [mM]* ]]; then
     printf "\n"
     printf "    To change install paths, export XDG environment variables in your shell\n"
     printf "    profile (${_CYAN}~/.bashrc${_RESET}, ${_CYAN}~/.zshrc${_RESET}, etc.) before re-running setup:\n\n"
