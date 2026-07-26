@@ -37,11 +37,13 @@ def schema_index_html(deploy_dir: Path, pages_url: str) -> str:
     html_lines: list[str] = []
     for schema_name, versions in sorted(schemas.items()):
         if not isinstance(versions, list):
-            continue
+            raise ValueError(
+                f"{schema_index_path}: expected versions for {schema_name} to be a list"
+            )
+        if not versions:
+            raise ValueError(f"{schema_index_path}: schema {schema_name} has no versions")
 
         version_names = sorted({str(version) for version in versions}, reverse=True)
-        if not version_names:
-            continue
 
         schema_name_html = escape(str(schema_name), quote=True)
         html_lines.append(f"          <h4>{schema_name_html}</h4>")
