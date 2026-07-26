@@ -26,7 +26,7 @@ description: |
   setting). If only one value is given, `PMM` is assumed to be
   read-only with that value. Otherwise, `PMM` is read-write and
   software selects between the given values.
-long_name: TODO
+long_name: Pointer mask length for next mode below M mode
 schema:
   type: array
   items:
