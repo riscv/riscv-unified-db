@@ -20,7 +20,7 @@ When converting or validating instruction data, use the schema and regression
 tooling in this repository rather than editing generated output by hand.
 Relevant entry points include:
 
-* `./bin/do test:schema`
+* `./do test:schema`
 * `./bin/regress --tag smoke`
 * `./bin/generate -h`
 
