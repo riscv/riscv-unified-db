@@ -10,6 +10,9 @@ long_name: Vector Single-Width Signed Integer Absolute
 description: |
   An absolute value operation is performed on each element of vs2, storing the
   result in vector register vd according to mask vm.
+
+  vabs.v supports SEW of 8, 16, and 32 when Zve32x is implemented.
+  When Zve64x is implemented, vabs.v also supports SEW of 64.
 definedBy:
   extension:
     name: Zvabd

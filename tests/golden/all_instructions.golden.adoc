@@ -38862,8 +38862,6 @@ source operands vs1 and vs2 and writes the result to vd according to mask vm.
 
 Reserved when SEW is neither 8 nor 16.
 
-Encoded as funct6 = 010001 with funct3 = 010 (OPMVV).
-
 
 Decode Variables::
 [width="100%", cols="1,2", options="header"]
@@ -38920,8 +38918,6 @@ source operands vs1 and vs2 and writes the result to vd according to mask vm.
 
 Reserved when SEW is neither 8 nor 16.
 
-Encoded as funct6 = 010011 with funct3 = 010 (OPMVV).
-
 
 Decode Variables::
 [width="100%", cols="1,2", options="header"]
@@ -38976,8 +38972,8 @@ Description::
 An absolute value operation is performed on each element of vs2, storing the
 result in vector register vd according to mask vm.
 
-Encoded as VXUNARY0 (funct6 = 010010, OPMVV) with the vs1 sub-opcode field
-set to 10000.
+vabs.v supports SEW of 8, 16, and 32 when Zve32x is implemented.
+When Zve64x is implemented, vabs.v also supports SEW of 64.
 
 
 Decode Variables::
@@ -72055,8 +72051,6 @@ a 2*SEW-bit operand vd.
 
 Reserved when SEW is neither 8 nor 16.
 
-Encoded as funct6 = 010101 with funct3 = 010 (OPMVV).
-
 
 Decode Variables::
 [width="100%", cols="1,2", options="header"]
@@ -72113,8 +72107,6 @@ source operands vs1 and vs2, and accumulates the results into the elements of
 a 2*SEW-bit operand vd.
 
 Reserved when SEW is neither 8 nor 16.
-
-Encoded as funct6 = 010110 with funct3 = 010 (OPMVV).
 
 
 Decode Variables::
