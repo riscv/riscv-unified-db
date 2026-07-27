@@ -8,7 +8,25 @@ kind: extension
 name: Zicfilp
 long_name: Landing Pad
 description: |
-  TODO
+  The `Zicfilp` extension provides forward-edge control-flow integrity (CFI) for RISC-V.
+  It introduces a Landing Pad (`LPAD`) instruction that must be the first instruction
+  at each valid indirect-call or indirect-jump target. If an indirect control-flow
+  transfer lands on any instruction other than `LPAD`, a software-check exception is
+  raised, preventing attackers from redirecting control flow to arbitrary code locations
+  (a technique known as jump-oriented programming, or JOP).
+
+  The extension adds a new CPU state, the Landing Pad State (`ELP`), which transitions
+  from `NO_LP_EXPECTED` to `LP_EXPECTED` after an indirect JALR or C.JALR instruction
+  is retired. When `ELP` is `LP_EXPECTED`, the next instruction fetched must be `LPAD`
+  or a software-check exception (`chkfail`) is raised and `ELP` is reset.
+
+  `LPAD` encodes a 20-bit label. When landing-pad label checking is enabled, the label
+  must match a value supplied by the caller (via register `t2`), providing an additional
+  layer of granularity that can distinguish between different classes of call targets
+  (e.g., function pointers vs. virtual-dispatch targets).
+
+  The `Zicfilp` extension is part of the RISC-V Control-Flow Integrity (CFI) specification,
+  which also includes `Zicfiss` for shadow-stack (backward-edge) CFI.
 type: unprivileged
 versions:
   - version: "1.0.0"

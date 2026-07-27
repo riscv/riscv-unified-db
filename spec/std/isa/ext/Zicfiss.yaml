@@ -8,7 +8,27 @@ kind: extension
 name: Zicfiss
 long_name: Shadow Stack
 description: |
-  TODO
+  The `Zicfiss` extension provides backward-edge control-flow integrity (CFI) for RISC-V
+  using a hardware-managed shadow stack. The shadow stack is a second, protected call stack
+  that stores only return addresses. On function call (`JAL`, `JALR` with link register),
+  the return address is pushed onto both the regular stack and the shadow stack. On function
+  return (e.g., `JALR x0, 0(x1)`), the return address is popped from both stacks and
+  compared; if they differ, a software-check exception (`chkfail`) is raised.
+
+  The extension introduces three new instructions:
+  * `SSPUSH` — pushes `x1` or `x5` onto the shadow stack.
+  * `SSPOPCHK` — pops the top of the shadow stack and compares it against `x1` or `x5`.
+    Raises a software-check exception if the values differ.
+  * `SSRDP` — reads the current shadow-stack pointer into a register.
+
+  Shadow-stack memory is protected by PMP/PMA and virtual-memory mechanisms: pages mapped
+  as shadow-stack pages (using the page-table `X`/`W`/`R` bit combination reserved for this
+  purpose) can only be written by shadow-stack instructions, preventing regular store
+  instructions from corrupting return addresses.
+
+  `Zicfiss` can be independently enabled or disabled per privilege mode via bits in
+  `menvcfg`, `senvcfg`, and `henvcfg`. It is part of the RISC-V CFI specification,
+  complementing `Zicfilp` for forward-edge protection.
 type: unprivileged
 versions:
   - version: "1.0.0"
