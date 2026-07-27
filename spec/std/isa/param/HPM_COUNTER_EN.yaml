@@ -13,7 +13,7 @@ description: |
   The first three entries *must* be false (as they correspond to CY, IR, TM in, _e.g._ `mhmpcountinhibit`)
   Index 3 in HPM_COUNTER_EN corresponds to mhpmcounter3.
   Index 31 in HPM_COUNTER_EN corresponds to mhpmcounter31.
-long_name: TODO
+long_name: Hardware Performance Monitor counter registers implemented list
 schema:
   type: array
   items:
