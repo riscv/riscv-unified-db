@@ -3460,7 +3460,11 @@ module Udb
         Tempfile.create do |rf|
           # run must, re-use the tempfile for the result
           _stdout, stderr, status = Open3.capture3(Udb::MustPath.binary, "-o", rf.path, f.path)
-          raise "could not find minimal subsets: #{stderr.strip}" unless status.success?
+          unless status.success?
+            msg = "could not find minimal subsets"
+            msg += ": #{stderr.strip}" unless stderr.strip.empty?
+            raise msg
+          end
 
           rf.rewind
           result = rf.read
@@ -3514,7 +3518,11 @@ module Udb
             f.flush
 
             tt, stderr, status = Open3.capture3(Udb::EqntottPath.binary, "-l", T.must(f.path))
-            raise "eqntott failure: #{stderr.strip}" unless status.success?
+            unless status.success?
+              msg = "eqntott failure"
+              msg += ": #{stderr.strip}" unless stderr.strip.empty?
+              raise msg
+            end
           end
 
           if T.must(tt).lines.any? { |l| l =~ /^\.p 0/ }
