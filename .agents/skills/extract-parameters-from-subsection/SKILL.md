@@ -56,7 +56,7 @@ Scan the normative text of the subsection for sentences that hand a value or beh
 
 - `UNSPECIFIED` / `is UNSPECIFIED` — the spec explicitly declines to fix a value (e.g., "The number of ASID bits is UNSPECIFIED").
 - `implementation-defined` / `IMPLEMENTATION-DEFINED` / `implementation-specific` — an implementation chooses (e.g., "the size of a cache block ... implementation-specific").
-- `WARL` (Write-Any-Read-Legal) — a field whose set of legal values is implementation-chosen; the _set_ is a parameter.
+- `WARL` (Write-Any-Read-Legal) — a parameter **only when the set of legal values is itself implementation-chosen**. The `WARL` label on its own is not a signal: a field can be WARL while the ISA fixes the legal set completely, in which case there is no implementation choice and no parameter. `mtvec.MODE` is a true positive (which modes are legal is up to the implementation); a WARL field whose only legal value is fixed by the ISA is not. Require the excerpt to show _who chooses the legal set_, not merely that the field is labelled WARL.
 - `platform-specific` / `vendor-defined` / `custom` — decision delegated below the ISA.
 
 **Contextual signals — a parameter only when paired with a quantity or a named field:**
@@ -65,6 +65,16 @@ Scan the normative text of the subsection for sentences that hand a value or beh
 - `the size of <X>` / `the width of <X>` — a size/width parameter.
 - `reserved` — a parameter only when the reservation is _for implementation use_; plain "reserved, must be zero" encodings are **not** parameters and must be excluded.
 - `may be` / `may support` / `optionally` guarding a concrete value or range.
+
+**Negative controls — text that looks like a signal but is not a parameter.** Each of these has produced a plausible-looking false positive, so check a candidate against this list before keeping it:
+
+- **WARL with an ISA-fixed legal set** — see above. The word `WARL` is present, the legal values are not implementation-chosen.
+- **Fixed encoding or address conventions** — a CSR number, an opcode, a field position. Fixed by the ISA for every implementation, so nothing is delegated.
+- **Advice aimed at software** — `should` / `may` / `is recommended` addressed to compilers, assemblers or programmers describes how to _use_ the ISA, not a hardware choice.
+- **A bare `shall` constraint** — a requirement every implementation must meet delegates nothing. A constraint becomes a parameter only when the spec also says the implementation picks the value.
+- **`reserved, must be zero`** — a fixed encoding, not a reservation for implementation use.
+
+A candidate that matches one of these must be dropped, not downgraded.
 
 **Named-value anchors:** the spec often tags the exact normative sentence with an inline anchor — a block anchor `[[norm:<id>]]` on its own line, or an inline anchor `[#norm:<id>]#...#` wrapping the sentence. When present, capture the `<id>`; it is the authoritative provenance link for the parameter and pairs the candidate to its normative text.
 
@@ -75,7 +85,9 @@ For every signal that survives step 3, build a candidate with:
 - **name** — an UPPER_SNAKE_CASE identifier in UnifiedDB style. Prefer the spec's own term when it names one (`ASIDLEN` → `ASID_WIDTH`, `PMLEN` → `PMLEN`); otherwise synthesize a descriptive name from the noun phrase (`CACHE_BLOCK_SIZE`).
 - **excerpt** — the verbatim sentence(s) from the subsection that justify the parameter. This is mandatory: no excerpt, no candidate. This is the anti-hallucination guard — a reviewer must be able to confirm the parameter against the copied text without re-reading the spec.
 - **source** — `file`, `subsection`, and the `norm:<id>` anchor if one exists.
-- **definedBy** — the extension(s) that introduce the parameter, as a `condition` per `param_schema.json` (a single `extension: {name: ...}`, or `anyOf`/`allOf` of extension names). Infer from the subsection's owning extension.
+- **definedBy** — the extension(s) that introduce the parameter, as a `condition` per `param_schema.json` (a single `extension: {name: ...}`, or `anyOf`/`allOf` of extension names). Infer from the subsection's owning extension **only when that extension is unambiguous**. The inference is unsafe in two common cases; in both, emit the best guess with `uncertain: true` and an `open_question` rather than asserting it:
+  - the parameter is gated by several extensions, none of which owns the subsection — `CACHE_BLOCK_SIZE` lives in a CMO subsection but is defined by `anyOf` Zicbom/Zicbop/Zicboz;
+  - applicability depends on another **parameter** rather than an extension — e.g. how many PMP entries are usable follows `NUM_PMP_ENTRIES`, which no `definedBy` condition expresses.
 - **schema** — a JSON-Schema-draft-07 fragment for the legal values. Emit `type: integer` / `type: boolean` / `enum: [...]`. **Only** add `minimum`/`maximum`/`enum` bounds that the spec states explicitly (e.g., "ASIDMAX ... is 9 for Sv32 or 16 for Sv39/48/57" → `maximum: 16`). If the spec gives no bound, leave the type unbounded — never invent limits.
 - **classification** (the two axes the parameter-extraction effort tracks):
   - `named`: `true` if the spec gives the value an explicit name (`ASIDLEN`, `PMLEN`), else `false`.
@@ -87,12 +99,22 @@ For every candidate, check whether UnifiedDB already models it: list `spec/std/i
 
 - `status: existing` — already in `spec/std/isa/param/` (report the matching filename). Useful as a precision/recall check on the extractor.
 - `status: new` — not yet modeled; a genuine recall candidate for a human to review and add.
+- `status: possible_duplicate` — a plausible match exists but the correspondence is not one-to-one: the existing file uses a different name for the same concept, the candidate covers only part of an existing parameter, or one candidate spans several existing files. Name the file(s) considered and state what is unresolved.
+
+Matching by name alone is not sufficient — renames and conceptual duplicates will not match textually. When in doubt use `possible_duplicate` rather than guessing: a wrong `new` inflates the apparent recall gap, and a wrong `existing` hides a real one.
 
 Do not overwrite or propose edits to existing files from this skill; it only surfaces candidates for review.
 
-### 7. Write the output
+### 7. Write the review envelope
 
-Derive the output filename from argument 1 (lowercased, spaces → hyphens). Write `/tmp/<derived-name>.yaml` in this review-friendly shape (a superset of `param_schema.json` — it carries the schema-relevant fields plus `excerpt`, `source`, `classification`, and `status` for the reviewer):
+This skill produces **two artifacts, in order**, and stops after the first:
+
+1. **The review envelope** — what is written here. It carries the evidence a reviewer needs: excerpt, anchor, classification, status, uncertainty and open questions.
+2. **Mergeable UnifiedDB YAML** — one `param_schema.json`-valid file per parameter, written **only after a human has accepted the candidate**, with every review-only key stripped.
+
+Keeping them separate matters because the envelope is deliberately **not** a valid UnifiedDB parameter file and must not be presented as one: it nests candidates under a `parameters:` wrapper that is outside the parameter object schema, and it omits the required `kind`, `long_name` and `description`. Emitting it is a review step, not a merge-ready result.
+
+Derive the output filename from argument 1 (lowercased, spaces → hyphens). Write `/tmp/<derived-name>.yaml` in this shape:
 
 ```yaml
 parameters:
@@ -108,6 +130,9 @@ parameters:
     classification:
       named: true # spec calls it ASIDLEN
       config_dependent: true # ASIDMAX depends on paging mode (Sv32 vs Sv39/48/57)
+    signal: is UNSPECIFIED + the number of <X> bits
+    uncertain: false
+    open_questions: []
     excerpt: |
       The number of ASID bits is UNSPECIFIED and may be zero. The number of
       implemented ASID bits, termed ASIDLEN, ... The maximal value of ASIDLEN,
@@ -120,14 +145,29 @@ parameters:
 
 Use the Write tool to create the file.
 
-### 8. Report
+### 8. Self-check before reporting
+
+Run these checks and fix or drop any candidate that fails. They are mechanical on purpose — each one catches a failure mode that is otherwise invisible in a plausible-looking result:
+
+1. **Excerpt is real.** Search the subsection text for each `excerpt` and confirm it appears verbatim. A candidate whose excerpt cannot be found was hallucinated; drop it.
+2. **Excerpt is normative.** Confirm the excerpt does not start inside a block skipped in step 3 (`[NOTE]`, `NOTE:`, `----`, `....`, `[source]`).
+3. **Signal is named.** Every candidate must cite which signal from step 4 it matched. No signal, no candidate.
+4. **Negative controls applied.** Re-read each candidate against the negative-control list in step 4. For a `WARL` candidate, confirm the excerpt shows the implementation choosing the legal set.
+5. **Uncertainty is recorded, not resolved.** Any `definedBy` that was inferred across multiple extensions, and any name-vs-meaning match that was not exact, carries `uncertain: true` and an `open_question`.
+6. **Names are well formed and unique** — UPPER_SNAKE_CASE, no duplicates within the file.
+
+Report the counts from checks 1 and 2 in step 9; a non-zero drop count is a useful signal, not a failure.
+
+### 9. Report
 
 Print a summary:
 
 - The subsection title found
-- The number of candidates extracted, split by `new` vs `existing`
-- The path written
-- A one-line-per-candidate list: `name (status, named=?, config_dependent=?)`
+- The number of candidates extracted, split by `new` / `existing` / `possible_duplicate`
+- How many candidates were dropped by the self-check, and why
+- How many candidates carry `uncertain: true`
+- The path written, and a reminder that it is a review envelope, not a mergeable parameter file
+- A one-line-per-candidate list: `name (status, named=?, config_dependent=?, uncertain=?)`
 
 ## Worked example (validated against the current database)
 
