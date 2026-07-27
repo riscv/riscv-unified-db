@@ -1,6 +1,6 @@
 # This workflow creates GitHub releases for schema files that have changed.
 # It runs after the CI/CD workflow completes successfully on the main branch.
-# Each schema version gets its own release tag (e.g., schemas/v0.1).
+# Each schema version gets its own release tag (e.g., schemas/<schema_name>/<version>).
 # If a schema file has changed relative to the published release, the release
 # assets are updated.
 
@@ -24,11 +24,8 @@ jobs:
       - name: Clone Github Repo Action
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.4.10'
-          bundler-cache: true
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
 
       - name: Generate resolved schemas
         run: ./do gen:schemas
@@ -36,4 +33,4 @@ jobs:
       - name: Publish changed schema versions
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./bin/ruby tools/scripts/publish_schemas.rb
+        run: ./bin/python tools/scripts/publish_schemas.py

@@ -5,24 +5,21 @@
 
 $schema: param_schema.json#
 kind: parameter
-name: MTVEC_BASE_ALIGNMENT_DIRECT
+name: STVEC_BASE_ALIGNMENT_VECTORED
 long_name: |
-  Minumum alignment of `mtvec.BASE` when `mtvec.MODE` is 0 (direct)
+  Minimum alignment of `stvec.BASE` when `stvec.MODE` is 1 (Vectored)
 definedBy:
   allOf:
     - extension:
-        name: Sm
+        name: S
     - param:
-        allOf:
-          - name: MTVEC_MODES
-            includes: 0
-            reason: Only relevant when direct mode is supported
-          - name: MTVEC_ACCESS
-            equal: rw
-            reason: Base address is hard-coded when MTVEC_ACCESS is read-only
+        name: STVEC_MODES
+        includes: 1
+        reason: Only relevant when vectored mode is supported
 description: |
-  Minimum alignment of the base pointer. Because `mtvec` excludes the two least-significant bits of
-  the base, the minimum alignment cannot be less than 4.
+  Minimum alignment of the base pointer when `stvec.MODE` is Vectored. Because
+  `stvec` excludes the two least-significant bits of the base, the minimum
+  alignment cannot be less than 4 bytes.
 schema:
   description: An unsigned power of 2 greater than or equal to 4 that fits in 64 bits
   default: 0x4
@@ -95,9 +92,9 @@ schema:
 requirements:
   if:
     param:
-      name: MXLEN
-      equal: 32
+      name: SXLEN
+      includes: 32
   then:
     param:
-      name: MTVEC_BASE_ALIGNMENT_DIRECT
+      name: STVEC_BASE_ALIGNMENT_VECTORED
       lessThanOrEqual: 0x80000000
