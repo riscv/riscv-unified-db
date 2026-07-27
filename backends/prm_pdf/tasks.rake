@@ -67,7 +67,7 @@ namespace :prm do
     when /darwin/
       system("open", pdf_path.to_s)
     when /mswin|mingw/
-      system("start", '""', pdf_path.to_s)
+      system("cmd", "/c", "start", '""', pdf_path.to_s)
     else
       puts "Please open: #{pdf_path}"
     end
