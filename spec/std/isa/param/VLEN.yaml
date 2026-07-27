@@ -8,7 +8,7 @@ kind: parameter
 name: VLEN
 description: |
   The number of bits in a single vector register.
-long_name: TODO
+long_name: Vector register length
 schema:
   type: integer
   minimum: 32
