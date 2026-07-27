@@ -29,7 +29,8 @@
 #                      appendix for UDB documentation that has normative rules and test plans in appendices
 #                   where <id> is the ID of the normative rule
 #   IDL code      idl:code:inst:<inst-name>:<location>
-#                 TODO for CSR and CSR Fields
+#                 idl:code:csr:<csr-name>:<location>
+#                 idl:code:csr_field:<csr-name>:<field-name>:<location>
 module Udb
   class DocLink
     # @param dst_link [String] The documentation link provided in the YAML
