@@ -46,7 +46,7 @@ operation(): |
     if (vm == 1'b1 || V[0][i:i] == 1'b1) {
       # active element
       if (V[vs2][end_bit_pos:end_bit_pos] == 1'b1) {
-        V[vd][end_bit_pos:start_bit_pos] = 0 - V[vs2][end_bit_pos:start_bit_pos];
+        V[vd][end_bit_pos:start_bit_pos] = -$signed(V[vs2][end_bit_pos:start_bit_pos]);
       } else {
         V[vd][end_bit_pos:start_bit_pos] = V[vs2][end_bit_pos:start_bit_pos];
       }
