@@ -41,8 +41,14 @@ gen_schemas_dir.glob("**/*.json").sort.each do |schema_file|
   end
 
   if response.code == "200"
-    remote_content = response.body
-    local_content = schema_file.read
+    # Compare raw bytes. Net::HTTP returns a body tagged ASCII-8BIT while
+    # Pathname#read returns UTF-8, and Ruby considers two strings with
+    # different encodings unequal as soon as either contains a non-ASCII
+    # byte -- even when their bytes are identical. Comparing the decoded
+    # strings therefore reported a spurious mismatch for every published
+    # schema containing a non-ASCII character.
+    remote_content = response.body.b
+    local_content = schema_file.binread
     if remote_content.strip != local_content.strip
       failures << "Schema mismatch for #{published_id}:\n" \
                   "  Local:  #{schema_file}\n" \

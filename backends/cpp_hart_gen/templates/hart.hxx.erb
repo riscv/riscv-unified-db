@@ -381,7 +381,7 @@ namespace udb {
           throw std::out_of_range("<%= rf.name %> register indices are 0 - <%= rf.registers.count - 1 %>, inclusive");
         }
         <%- if is_runtime_width -%>
-        _set_<%= rf_name %>reg(Bits<8>{num}, <%= accessor_type %>{value});
+        _set_<%= rf_name %>reg(Bits<8>{num}, <%= accessor_type %>{Bits<64>{value}});
         <%- else -%>
         _set_<%= rf_name %>reg(Bits<8>{num}, Bits<<%= bits_width %>>{value});
         <%- end -%>

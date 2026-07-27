@@ -73,7 +73,7 @@ endif()
 
 FetchContent_Declare(fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 10.2.1
+  GIT_TAG 12.2.0
 )
 FetchContent_MakeAvailable(fmt)
 
@@ -101,6 +101,15 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
+# nlohmann_json is header-only; fetched here so its headers are available to
+# hart (transitively needed by nlohmann_json_schema_validator headers).
+FetchContent_Declare(
+  nlohmann_json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG        v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
 FetchContent_Declare(
   nlohmann_json_schema_validator
   GIT_REPOSITORY https://github.com/pboettch/json-schema-validator.git
@@ -115,6 +124,39 @@ FetchContent_Declare(
   GIT_TAG        v3.11.0
 )
 FetchContent_MakeAvailable(compile_time_regular_expressions)
+
+# -----------------------------------------------------------------------
+# berkeley-softfloat-3
+# -----------------------------------------------------------------------
+# berkeley-softfloat-3's build/ directory has one Makefile per supported
+# platform/toolchain (e.g. Linux-x86_64-GCC, Linux-RISCV64-GCC,
+# Win64-MinGW-w64); there is no generic host/toolchain-derived name to
+# compute, and no macOS entry exists upstream at all. Expose the spec as a
+# cache variable so builds on a platform other than the default CI target
+# can point at the matching upstream directory instead of failing.
+set(SOFTFLOAT_BUILD_SPEC "Linux-x86_64-GCC" CACHE STRING
+  "Subdirectory of berkeley-softfloat-3/build to compile, matching one of \
+the platform/toolchain directories in the upstream repository (e.g. \
+Linux-x86_64-GCC, Linux-RISCV64-GCC, Win64-MinGW-w64)")
+
+ExternalProject_Add(berkeley_softfloat
+  GIT_REPOSITORY      https://github.com/ucb-bar/berkeley-softfloat-3.git
+  GIT_TAG             a0c6494cdc11865811dec815d5c0049fba9d82a8
+  UPDATE_DISCONNECTED TRUE
+  CONFIGURE_COMMAND   ""
+  BUILD_COMMAND       make -C <SOURCE_DIR>/build/${SOFTFLOAT_BUILD_SPEC}
+  INSTALL_COMMAND     ""
+)
+
+ExternalProject_Get_Property(berkeley_softfloat SOURCE_DIR)
+file(MAKE_DIRECTORY "${SOURCE_DIR}/source/include") # Prevent CMake error before it is cloned
+
+add_library(libsoftfloat_static STATIC IMPORTED)
+set_target_properties(libsoftfloat_static PROPERTIES
+  IMPORTED_LOCATION             "${SOURCE_DIR}/build/${SOFTFLOAT_BUILD_SPEC}/softfloat.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/source/include"
+)
+add_dependencies(libsoftfloat_static berkeley_softfloat)
 
 # -----------------------------------------------------------------------
 # libelf — built from elfutils source; no system package required
@@ -235,6 +277,16 @@ add_executable(test_version
 target_include_directories(test_version PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_version PRIVATE hart Catch2::Catch2WithMain)
 
+add_executable(test_softfloat_fp
+  ${CMAKE_SOURCE_DIR}/test/test_softfloat_fp.cpp
+  ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
+)
+target_include_directories(test_softfloat_fp PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_softfloat_fp PRIVATE hart Catch2::Catch2WithMain libsoftfloat_static)
+target_compile_definitions(test_softfloat_fp PRIVATE
+  UDB_FP_DIRECTED_JSONL="${UDB_ROOT}/tests/data/fp/directed/f32_fpgen_expanded.jsonl"
+)
+
 add_executable(test_regfile
   ${CMAKE_SOURCE_DIR}/test/test_regfile.cpp
   ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
@@ -256,6 +308,8 @@ catch_discover_tests(test_regfile)
 foreach (random_test IN LISTS RANDOM_TESTS)
   catch_discover_tests(${random_test})
 endforeach()
+
+catch_discover_tests(test_softfloat_fp)
 
 # catch_discover_tests(test_version)
 # catch_discover_tests(test_csr)
