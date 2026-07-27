@@ -13,8 +13,6 @@ description: |
   variants. These operations are widely used in image registration, object
   recognition, motion estimation, and loop filters for video workloads.
 
-  This extension follows the vector arithmetic instruction specification in the
-  base "V" Standard Extension and depends on Zve32x.
   If Zve32x is supported then vabs provide support for SEW of 8, 16, and 32.
   If Zve64x is supported then vabs also add support for SEW 64.
 type: unprivileged
