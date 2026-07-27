@@ -13,10 +13,6 @@ description: |
   variants. These operations are widely used in image registration, object
   recognition, motion estimation, and loop filters for video workloads.
 
-  vabs.v supports SEW = 8, 16, 32 (and 64 when Zve64x is implemented).
-  vabd[u].vv and vwabda[u].vv are defined only for SEW = 8 and SEW = 16; other
-  SEW values produce a reserved encoding.
-
   This extension follows the vector arithmetic instruction specification in the
   base "V" Standard Extension and depends on Zve32x.
   If Zve32x is supported then vabs provide support for SEW of 8, 16, and 32.
