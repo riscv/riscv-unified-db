@@ -51,7 +51,7 @@ jobs:
   regress-pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         # there are some symlinks in udb-gen that look broken without submodules
         with:
           submodules: true
@@ -64,7 +64,7 @@ jobs:
     needs: [build-llvm]
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Get current LLVM submodule commit SHA
@@ -84,7 +84,7 @@ jobs:
     outputs:
       configs: ${{ steps.configs.outputs.configs }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Find configuration files
         id: configs
         run: |
@@ -101,7 +101,7 @@ jobs:
     needs: [regress-udb-unit-test]
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: download coverage
@@ -125,7 +125,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository (no submodules, shallow fetch)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: false
           fetch-depth: 1
@@ -180,7 +180,7 @@ jobs:
       run:
         working-directory: tools/eclipse/dev/org.xtext.udb.parent
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Temurin JDK 21
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
@@ -209,7 +209,7 @@ jobs:
       run:
         working-directory: tools/eclipse/udb-vscode
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
@@ -243,7 +243,7 @@ jobs:
       matrix:
         gem: [idlc, udb, udb_helpers]
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Copy the gem directory to resolve symlinks
         run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
       - name: Create the ${{ matrix.gem }} gem
@@ -271,7 +271,7 @@ jobs:
     container: ${{ matrix.container }}
     needs: create-gems
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - if: matrix.container == 'almalinux:8'
         name: Install ruby
         run: |
@@ -308,7 +308,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Run tools/scripts unit tests
@@ -318,7 +318,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Run idlc unit tests
@@ -335,7 +335,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Run udb-helpers unit tests
@@ -345,7 +345,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Check udb-gen unit tests
@@ -355,7 +355,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Check udb-gen integration tests
@@ -365,7 +365,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate udb-gen golden files
@@ -375,7 +375,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Run sorbet checks
@@ -385,7 +385,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate ISA Explorer browser artifacts
@@ -395,7 +395,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Type check IDL for ${{ matrix.cfg }}
@@ -410,7 +410,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Type check IDL for ${{ matrix.cfg }}
@@ -425,7 +425,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Checking for conflicts in instruction encodings
@@ -435,7 +435,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: checkout ISA manual
@@ -450,7 +450,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate instruction appendix asciidoc
@@ -462,7 +462,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate HTML ISA manual
@@ -472,7 +472,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate Xqci extension PDF
@@ -482,7 +482,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate extension PDF
@@ -492,7 +492,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Check that profile configs are up to date
@@ -502,7 +502,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Run udb gem ${{ matrix.test }} unit tests
@@ -536,7 +536,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate Go code
@@ -546,7 +546,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate c_header code
@@ -556,7 +556,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate sverilog_header code
@@ -566,7 +566,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate cfg header golden files
@@ -576,7 +576,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
         with:
@@ -588,7 +588,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
         with:
@@ -602,7 +602,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
         with:
@@ -616,7 +616,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
         with:
@@ -630,7 +630,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Check profile_extensions
@@ -640,7 +640,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Build udb gem via chore
@@ -652,7 +652,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Test that local regress runner works
@@ -663,7 +663,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Create reuse manifest
@@ -680,7 +680,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate UDB API Docs
@@ -698,7 +698,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Resolve Unconfig with IDL AST
@@ -718,7 +718,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate ISA Explorer CSR
@@ -735,7 +735,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate ISA Explorer Extension
@@ -752,7 +752,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate ISA Explorer Instruction
@@ -769,7 +769,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate ISA Explorer Spreadsheet
@@ -786,7 +786,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate HTML ISA manual
@@ -803,7 +803,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate HTML ISA manual for a config
@@ -820,7 +820,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: checkout docs resources
@@ -839,7 +839,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate ${{ matrix.profile }}
@@ -865,7 +865,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Check schema versions against published URLs
@@ -875,7 +875,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate schema documentation
@@ -886,7 +886,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Build IDL doc
@@ -902,7 +902,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Set up mise environment
@@ -923,7 +923,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Run smoke regression suite (must complete within 10 minutes)
@@ -934,7 +934,7 @@ jobs:
     if: (github.event_name == 'merge_group') || ((github.event_name == 'push') && (github.ref_name == 'main'))
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Install Node dependencies
