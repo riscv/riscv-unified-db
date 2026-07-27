@@ -11,7 +11,7 @@ description:
   of a virtual machine ID).
 
   "
-long_name: TODO
+long_name: Virtual machine ID width
 schema:
   type: integer
   minimum: 0
