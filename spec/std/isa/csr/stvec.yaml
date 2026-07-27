@@ -45,16 +45,9 @@ fields:
     type(): |
       return ($array_size(STVEC_MODES) == 1) ? CsrFieldType::RO : CsrFieldType::RWR;
     sw_write(csr_value): |
-      if (csr_value.MODE == 0) {
-        if ($array_includes?(STVEC_MODES, 0)) {
-          return csr_value.MODE;
-        }
-      } else if (csr_value.MODE == 1) {
-        if ($array_includes?(STVEC_MODES, 1)) {
-          return csr_value.MODE;
-        }
+      if ($array_includes?(STVEC_MODES, csr_value.MODE)) {
+        return csr_value.MODE;
       }
-
       return UNDEFINED_LEGAL_DETERMINISTIC;
     reset_value(): |
       return ($array_size(STVEC_MODES) == 1) ? STVEC_MODES[0] : UNDEFINED_LEGAL;
