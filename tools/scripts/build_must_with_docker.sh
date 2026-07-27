@@ -41,7 +41,9 @@ build_must_with_docker() {
     local output_dir="${1:-./must-build}"
     local architecture="${2:-x64}"
 
-    case "${architecture,,}" in
+    local arch_lower
+    arch_lower=$(echo "$architecture" | tr '[:upper:]' '[:lower:]')
+    case "$arch_lower" in
         x64|amd64|x86_64)
             architecture="x64"
             local docker_platform="linux/amd64"
