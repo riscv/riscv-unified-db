@@ -869,7 +869,7 @@ jobs:
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Check schema versions against published URLs
-        run: ./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb
+        run: ./do gen:schemas && ./bin/python tools/scripts/check_schema_versions.py
 
   regress-schema-docs:
     runs-on: ubuntu-latest

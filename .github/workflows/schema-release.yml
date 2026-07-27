@@ -1,8 +1,8 @@
-# This workflow creates GitHub releases for schema files that have changed.
+# This workflow creates GitHub releases for schema files.
 # It runs after the CI/CD workflow completes successfully on the main branch.
 # Each schema version gets its own release tag (e.g., schemas/<schema_name>/<version>).
-# If a schema file has changed relative to the published release, the release
-# assets are updated.
+# Published schema version assets are immutable; if content changes, bump the
+# schema $id so a new release tag is created.
 
 name: Schema Release
 
