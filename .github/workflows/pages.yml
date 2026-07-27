@@ -25,6 +25,9 @@ jobs:
       - name: Clone Github Repo Action
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+
       - name: Make _site
         run: mkdir _site
       - name: Download reuse BOM
@@ -161,14 +164,14 @@ jobs:
               gh release download "${tag}" --dir "_site/schemas/${schema_name}/${version}" --pattern "*.json" 2>/dev/null || true
             done
           # Write a JSON index of all available schema versions and files
-          ruby tools/scripts/gen_schema_index.rb _site/schemas _site/schemas/index.json
+          ./bin/python tools/scripts/gen_schema_index.py _site/schemas _site/schemas/index.json
 
       - name: Create index
         env:
           PAGES_URL: https://riscv.github.io/riscv-unified-db
         run: >
           cp doc/udb-block.svg _site/ &&
-          ruby -r erb -r date -e "File.write('_site/index.html', ERB.new(File.read('tools/scripts/pages.html.erb'), trim_mode: '-').result(binding))"
+          ./bin/python tools/scripts/gen_pages_index.py
 
       - name: Setup Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
