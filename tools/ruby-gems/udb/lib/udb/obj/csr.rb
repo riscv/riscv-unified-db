@@ -198,7 +198,7 @@ module Udb
         # VSXLEN condition applies if VS-mode is possible
         (cfg_arch.mxlen.nil?) || \
         (cfg_arch.possible_extensions.map(&:name).include?("S") && \
-          (cfg_arch.param_values["SXLEN"].nil? || cfg_arch.param_values["SXLEN"].size > 1)) && \
+          (cfg_arch.param_values["SXLEN"].nil? || cfg_arch.param_values["SXLEN"].size > 1)) || \
         (cfg_arch.possible_extensions.map(&:name).include?("H") && \
           (cfg_arch.param_values["VSXLEN"].nil? || cfg_arch.param_values["VSXLEN"].size > 1))
       else
