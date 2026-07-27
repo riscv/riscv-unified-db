@@ -663,14 +663,14 @@ module Idl
       if ary_size.nil?
         "#{type_name.gen_c(symtab)} #{id.gen_c(symtab)}"
       else
-        cpp = nil
+        c_code = nil
         value_result = value_try do
-          cpp = "#{type_name.gen_c(symtab)} #{id.gen_c(symtab)}[#{ary_size.value(symtab)}]"
+          c_code = "#{type_name.gen_c(symtab)} #{id.gen_c(symtab)}[#{ary_size.value(symtab)}]"
         end
         value_else(value_result) do
-          cpp = "#{type_name.gen_c(symtab)} #{id.gen_c(symtab)}[#{ary_size.text_value}]"
+          c_code = "#{type_name.gen_c(symtab)} #{id.gen_c(symtab)}[#{ary_size.text_value}]"
         end
-        cpp
+        c_code
       end
     end
 
