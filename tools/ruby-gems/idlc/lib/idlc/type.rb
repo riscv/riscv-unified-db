@@ -350,9 +350,9 @@ module Idl
         if signed?
           raise "Cannot directly represent a signed bits"
         else
-          "Bits<#{@width}"
+          "Bits<#{@width}>"
         end
-      when :String
+      when :string
         "String"
       when :boolean
         "Boolean"
