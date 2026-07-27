@@ -31,8 +31,33 @@ encoding:
     - name: rm
       location: 14-12
       not: [0, 2, 3, 4, 5, 6, 7]
+      encode(operands): |
+        if (operands[rm] == "rne") {
+          return 3'b000;
+        }
+        if (operands[rm] == "rtz") {
+          return 3'b001;
+        }
+        if (operands[rm] == "rdn") {
+          return 3'b010;
+        }
+        if (operands[rm] == "rup") {
+          return 3'b011;
+        }
+        if (operands[rm] == "rmm") {
+          return 3'b100;
+        }
+        if (operands[rm] == "dyn") {
+          return 3'b111;
+        }
+        raise("Invalid rounding mode: ${operands[rm]}");
     - name: xd
       location: 11-7
+operands:
+  - $inherits: operand/xd.yaml#/data
+  - $inherits: operand/fs.yaml#/data
+    name: fs1
+  - $inherits: operand/rm.yaml#/data
 access:
   s: always
   u: always

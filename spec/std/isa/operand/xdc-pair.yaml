@@ -1,0 +1,12 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: xdc-pair
+description: general purpose register compressed pair destination
+data:
+  $inherits: operand/xdc.yaml#/data
+  possible_values: [8, 10, 12, 14]

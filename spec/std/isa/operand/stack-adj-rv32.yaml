@@ -1,0 +1,20 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: stack-adj-rv32
+description: PUSH/POP stack adjustment (RV32)
+data:
+  type: immediate
+  name: stack_adj
+  possible_values: [-16, -32, -48, -64, -80, -96, -112]
+  decode(): |
+    XReg additional_bytes = spimm << 4;
+    XReg registers = (rlist == 15) ? 13 : (rlist - 3);
+    XReg bytes_per_register = xlen() / 8;
+    XReg register_space_bytes = registers * bytes_per_register;
+    XReg register_space_bytes_aligned_16 = ((register_space_bytes + 15) / 16) * 16;
+    return -(register_space_bytes_aligned_16 + additional_bytes);

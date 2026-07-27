@@ -1,0 +1,15 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: xdc
+description: general purpose register compressed destination
+data:
+  $inherits: operand/xsc.yaml#/data
+  name: xd
+  source: false
+  destination: true
+  decode(): return creg2reg(xd);

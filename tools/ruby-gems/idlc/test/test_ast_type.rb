@@ -156,4 +156,38 @@ class TestAstType < Minitest::Test
     end
 
   end
+
+  def test_operand_offset_access
+    symtab = Idl::SymbolTable.new(
+      possible_xlens_cb: proc { [32, 64] }
+    )
+    symtab.instruction_operands = {
+      "xs1" => {
+        "offset" => {
+          "name" => "imm",
+          "possible_values" => ["0-124"],
+          "left_shifted" => 2
+        }
+      }
+    }
+
+    ast = @compiler.compile_func_body(
+      "return operands[xs1].offset;",
+      symtab:,
+      input_file: __FILE__,
+      type_check: false
+    )
+    ast.freeze_tree(symtab)
+    operand_offset_node = ast.statements.fetch(0).return_expression.return_value_nodes.fetch(0)
+
+    assert_instance_of Idl::OperandOffsetAccessAst, operand_offset_node
+    assert_equal "operands[xs1].offset", operand_offset_node.to_idl
+    assert_equal "operand_offset_access", operand_offset_node.to_h.fetch("kind")
+    assert_equal "xs1", operand_offset_node.to_h.fetch("operand_name")
+
+    type = operand_offset_node.type(symtab)
+    assert_equal :bits, type.kind
+    assert_equal 7, type.width
+    assert_includes type.qualifiers, :const
+  end
 end

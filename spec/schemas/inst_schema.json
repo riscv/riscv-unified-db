@@ -284,12 +284,21 @@
                 }
               ],
               "description": "Specific value(s) that are not permitted for this field."
+            },
+            "encode(operands)": {
+              "type": "string"
             }
           },
           "required": ["name", "location"],
           "additionalProperties": false
         }
       ]
+    },
+    "operands_def": {
+      "type": "array",
+      "items": {
+        "$ref": "operand_schema.json#/$defs/operand"
+      }
     }
   },
   "type": "object",
@@ -389,6 +398,26 @@
     "assembly": {
       "type": "string",
       "description": "Assembly format of the instruction. Can use decode variables"
+    },
+    "operands": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/operands_def"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "RV32": {
+              "$ref": "#/$defs/operands_def"
+            },
+            "RV64": {
+              "$ref": "#/$defs/operands_def"
+            }
+          },
+          "required": ["RV32", "RV64"],
+          "additionalProperties": false
+        }
+      ]
     },
     "data_independent_timing": {
       "type": "boolean",

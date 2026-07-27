@@ -22,11 +22,20 @@ encoding:
     - name: imm
       location: 31|7|30-25|11-8
       left_shift: 1
+      encode(operands): return operands[imm] >> 1;
       sign_extend: true
     - name: xs2
       location: 24-20
     - name: xs1
       location: 19-15
+operands:
+  - $inherits: operand/xs.yaml#/data
+    name: xs1
+  - $inherits: operand/xs.yaml#/data
+    name: xs2
+  - $inherits: operand/imm13-ls1.yaml#/data
+  - $inherits: operand/pc.yaml#/data
+    destination: true
 access:
   s: always
   u: always

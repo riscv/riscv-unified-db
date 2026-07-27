@@ -21,13 +21,22 @@ encoding:
   variables:
     - name: r1s
       location: 9-7
+      encode(operands): return (operands[r1s] - 8) - 8 * ((operands[r1s] - 8) / 10);
     - name: r2s
       location: 4-2
+      encode(operands): return (operands[r2s] - 8) - 8 * ((operands[r2s] - 8) / 10);
 access:
   s: always
   u: always
   vs: always
   vu: always
+operands:
+  - $inherits: operand/xdm.yaml#/data
+    name: r1s
+    decode(): return r1s + 8 + 8 * ((r1s + 6) / 8);
+  - $inherits: operand/xdm.yaml#/data
+    name: r2s
+    decode(): return r2s + 8 + 8 * ((r2s + 6) / 8);
 operation(): |
   if (implemented?(ExtensionName::Zcmp) && (CSR[misa].C == 1'b0)) {
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);

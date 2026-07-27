@@ -458,6 +458,16 @@ jobs:
       - name: Check instruction appendix result
         run: ./do test:instruction_appendix
 
+  regress-encode-decode:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Check instruction encode() and decode() methods
+        run: ./do test:encode_decode
+
   regress-cfg-manual:
     runs-on: ubuntu-latest
     steps:
@@ -963,6 +973,7 @@ jobs:
       - regress-test-inst-encodings
       - regress-gen-isa-manual
       - regress-gen-instruction-appendix
+      - regress-encode-decode
       - regress-cfg-manual
       - regress-gen-ext-pdf
       - regress-gen-profile

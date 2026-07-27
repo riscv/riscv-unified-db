@@ -21,15 +21,105 @@ description: |
 definedBy:
   extension:
     name: Zcmp
-assembly: "{reg_list}, -stack_adj"
+assembly: "reg_list, -stack_adj" # should be "{reg_list}, -stack_adj"
+operands:
+  RV32:
+    - $inherits: operand/reg-list-rv32.yaml#/data
+    - $inherits: operand/stack-adj-rv32.yaml#/data
+    - $inherits: operand/sp.yaml#/data
+  RV64:
+    - $inherits: operand/reg-list-rv64.yaml#/data
+    - $inherits: operand/stack-adj-rv64.yaml#/data
+    - $inherits: operand/sp.yaml#/data
 encoding:
   match: 10111000------10
   variables:
     - name: rlist
       location: 7-4
       not: [0, 1, 2, 3]
+      encode(operands): |
+        if (operands[reg_list] == "{ra}" || operands[reg_list] == "{x1}") {
+          return 4;
+        }
+        if (operands[reg_list] == "{ra,s0}" || operands[reg_list] == "{x1,x8}") {
+          return 5;
+        }
+        if (operands[reg_list] == "{ra,s0-s1}" || operands[reg_list] == "{x1,x8-x9}") {
+          return 6;
+        }
+        if (xlen() > 32) {
+          if (operands[reg_list] == "{ra,s0-s2}" || operands[reg_list] == "{x1,x8-x9,x18}") {
+            return 7;
+          }
+          if (operands[reg_list] == "{ra,s0-s3}" || operands[reg_list] == "{x1,x8-x9,x18-x19}") {
+            return 8;
+          }
+          if (operands[reg_list] == "{ra,s0-s4}" || operands[reg_list] == "{x1,x8-x9,x18-x20}") {
+            return 9;
+          }
+          if (operands[reg_list] == "{ra,s0-s5}" || operands[reg_list] == "{x1,x8-x9,x18-x21}") {
+            return 10;
+          }
+          if (operands[reg_list] == "{ra,s0-s6}" || operands[reg_list] == "{x1,x8-x9,x18-x22}") {
+            return 11;
+          }
+          if (operands[reg_list] == "{ra,s0-s7}" || operands[reg_list] == "{x1,x8-x9,x18-x23}") {
+            return 12;
+          }
+          if (operands[reg_list] == "{ra,s0-s8}" || operands[reg_list] == "{x1,x8-x9,x18-x24}") {
+            return 13;
+          }
+          if (operands[reg_list] == "{ra,s0-s9}" || operands[reg_list] == "{x1,x8-x9,x18-x25}") {
+            return 14;
+          }
+          if (operands[reg_list] == "{ra,s0-s11}" || operands[reg_list] == "{x1,x8-x9,x18-x27}") {
+            return 15;
+          }
+        }
+        raise("Invalid reg_list: ${operands[reg_list]}");
+
     - name: spimm
       location: 3-2
+      #left_shift: 4
+      encode(operands): |
+        XReg rlist = 0;
+        if (operands[reg_list] == "{ra}" || operands[reg_list] == "{x1}") {
+          rlist = 4;
+        } else if (operands[reg_list] == "{ra,s0}" || operands[reg_list] == "{x1,x8}") {
+          rlist = 5;
+        } else if (operands[reg_list] == "{ra,s0-s1}" || operands[reg_list] == "{x1,x8-x9}") {
+          rlist = 6;
+        } else if (operands[reg_list] == "{ra,s0-s2}" || operands[reg_list] == "{x1,x8-x9,x18}") {
+          rlist = 7;
+        } else if (operands[reg_list] == "{ra,s0-s3}" || operands[reg_list] == "{x1,x8-x9,x18-x19}") {
+          rlist = 8;
+        } else if (operands[reg_list] == "{ra,s0-s4}" || operands[reg_list] == "{x1,x8-x9,x18-x20}") {
+          rlist = 9;
+        } else if (operands[reg_list] == "{ra,s0-s5}" || operands[reg_list] == "{x1,x8-x9,x18-x21}") {
+          rlist = 10;
+        } else if (operands[reg_list] == "{ra,s0-s6}" || operands[reg_list] == "{x1,x8-x9,x18-x22}") {
+          rlist = 11;
+        } else if (operands[reg_list] == "{ra,s0-s7}" || operands[reg_list] == "{x1,x8-x9,x18-x23}") {
+          rlist = 12;
+        } else if (operands[reg_list] == "{ra,s0-s8}" || operands[reg_list] == "{x1,x8-x9,x18-x24}") {
+          rlist = 13;
+        } else if (operands[reg_list] == "{ra,s0-s9}" || operands[reg_list] == "{x1,x8-x9,x18-x25}") {
+          rlist = 14;
+        } else if (operands[reg_list] == "{ra,s0-s11}" || operands[reg_list] == "{x1,x8-x9,x18-x27}") {
+          rlist = 15;
+        }
+
+        if (rlist == 0) {
+          raise("Invalid reg_list: ${operands[reg_list]}");
+        }
+
+        XReg registers = (rlist == 15) ? 13 : (rlist - 3);
+        XReg bytes_per_register = xlen() / 8;
+        XReg register_space_bytes = registers * bytes_per_register;
+        XReg register_space_bytes_aligned_16 = ((register_space_bytes + 15) / 16) * 16;
+        XReg additional_bytes = (-operands[stack_adj]) - register_space_bytes_aligned_16;
+        return additional_bytes >> 4;
+
 access:
   s: always
   u: always

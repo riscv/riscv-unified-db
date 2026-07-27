@@ -1,0 +1,17 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: xs
+description: general purpose register source
+data:
+  name: xs
+  type: register
+  reg_file: X
+  source: true
+  destination: false
+  possible_values: [0-31]
+  implicit: false

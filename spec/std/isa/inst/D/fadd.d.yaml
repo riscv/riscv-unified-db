@@ -16,6 +16,13 @@ description: |
   The `fadd.d` instruction is analogous to `fadd.s` and performs double-precision floating-point addition of
   `fs1` and `fs2` and writes the final result to `fd`.
 assembly: fd, fs1, fs2, rm
+operands:
+  - $inherits: operand/fd.yaml#/data
+  - $inherits: operand/fs.yaml#/data
+    name: fs1
+  - $inherits: operand/fs.yaml#/data
+    name: fs2
+  - $inherits: operand/rm.yaml#/data
 encoding:
   match: 0000001------------------1010011
   variables:
@@ -25,6 +32,20 @@ encoding:
       location: 19-15
     - name: rm
       location: 14-12
+      encode(operands): |
+        if (operands[rm] == "rne") {
+          return 3'b000;
+        } else if (operands[rm] == "rtz") {
+          return 3'b001;
+        } else if (operands[rm] == "rdn") {
+          return 3'b010;
+        } else if (operands[rm] == "rup") {
+          return 3'b011;
+        } else if (operands[rm] == "rmm") {
+          return 3'b100;
+        } else if (operands[rm] == "dyn") {
+          return 3'b111;
+        } # else reserved
     - name: fd
       location: 11-7
 access:

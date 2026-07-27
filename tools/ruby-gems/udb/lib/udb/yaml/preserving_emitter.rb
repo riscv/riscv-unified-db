@@ -328,6 +328,13 @@ module Udb
         return true if str.start_with?("!", "%")
         return true if str.start_with?("'", '"')
         return true if str.match?(/^(true|false|null|yes|no|on|off|~)$/i)
+        # Quote scalars that YAML parsers can coerce to numeric values.
+        # This includes signed decimals and scientific notation (e.g. "-1.0").
+        return true if str.match?(/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/)
+        return true if str.match?(/^[+-]?0x[0-9a-f_]+$/i)
+        return true if str.match?(/^[+-]?0o[0-7_]+$/i)
+        return true if str.match?(/^[+-]?0b[01_]+$/i)
+        return true if str.match?(/^[+-]?\.(?:inf|nan)$/i)
         return true if str.match?(/^\d+$/)
         return false if str.match?(/^\d+-\d+$/)
         return true if str.match?(/^[0-9]/)

@@ -1,6 +1,6 @@
 = Instruction Appendix
 :doctype: book
-:wavedrom: /home/jcarlin/riscv-projects/riscv-unified-db/node_modules/.bin/wavedrom-cli
+:wavedrom: /node_modules/.bin/wavedrom-cli
 // Now the document header is complete and the wavedrom attribute is active.
 
 
@@ -15915,7 +15915,7 @@ Base::
 |===
 
 Assembly::
-cm.pop {reg_list}, stack_adj
+cm.pop reg_list, stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -15974,7 +15974,7 @@ Base::
 |===
 
 Assembly::
-cm.popret {reg_list}, stack_adj
+cm.popret reg_list, stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -16033,7 +16033,7 @@ Base::
 |===
 
 Assembly::
-cm.popretz {reg_list}, stack_adj
+cm.popretz reg_list, stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -16092,7 +16092,7 @@ Base::
 |===
 
 Assembly::
-cm.push {reg_list}, -stack_adj
+cm.push reg_list, -stack_adj
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -17424,8 +17424,8 @@ Decode Variables::
 |Variable Name |Location
 |fs2 |$encoding[24:20]
 |fs1 |$encoding[19:15]
-|rm |$encoding[14:12]
 |fd |$encoding[11:7]
+|rm |$encoding[14:12]
 |===
 
 Included in::

@@ -18,10 +18,23 @@ encoding:
   variables:
     - name: vm
       location: 25-25
+      encode(operands): |
+        if (operands[vm] == "v0.t" || operands[vm] == "v0" || operands[vm] == 0) {
+          return 0;
+        }
+        if (operands[vm] != "") {
+          raise("Invalid vector mask operand: ${operands[vm]}");
+        }
+        return 1;
     - name: xs1
       location: 19-15
     - name: vd
       location: 11-7
+operands:
+  - $inherits: operand/vd.yaml#/data
+  - $inherits: operand/xs-nooffset.yaml#/data
+    name: xs1
+  - $inherits: operand/vm.yaml#/data
 access:
   s: always
   u: always

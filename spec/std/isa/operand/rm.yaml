@@ -1,0 +1,33 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: rm
+description: floating-point rounding mode
+data:
+  name: rm
+  type: rounding_mode
+  possible_values: ["rne", "rtz", "rdn", "rup", "rmm", "dyn"]
+  default: "dyn"
+  decode(): |
+    if (rm == 3'b000) {
+      return "rne";
+    }
+    if (rm == 3'b001) {
+      return "rtz";
+    }
+    if (rm == 3'b010) {
+      return "rdn";
+    }
+    if (rm == 3'b011) {
+      return "rup";
+    }
+    if (rm == 3'b100) {
+      return "rmm";
+    }
+    if (rm == 3'b111) {
+      return "dyn";
+    }

@@ -412,9 +412,32 @@ module Udb
       @data["assembly"]
     end
 
+    def operand_metadata(effective_xlen = nil)
+      operands = @data["operands"]
+      return nil if operands.nil?
+
+      operand_list =
+        if operands.is_a?(Hash)
+          if effective_xlen.nil?
+            (operands["RV32"] || []) + (operands["RV64"] || [])
+          else
+            operands["RV#{effective_xlen}"] || []
+          end
+        else
+          operands
+        end
+
+      operand_list.each_with_object({}) do |operand, metadata|
+        next unless operand.is_a?(Hash) && operand["name"].is_a?(String)
+
+        metadata[operand["name"]] ||= operand
+      end
+    end
+
     def fill_symtab(effective_xlen, ast)
       symtab = cfg_arch.symtab.global_clone
       symtab.push(ast)
+      symtab.instruction_operands = operand_metadata(effective_xlen)
       symtab.add(
         "__instruction_encoding_size",
         Idl::Var.new("__instruction_encoding_size", Idl::Type.new(:bits, width: encoding_width.bit_length), encoding_width)

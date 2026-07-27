@@ -26,6 +26,9 @@ encoding:
     - name: xd
       location: 11-7
       not: 0
+operands:
+  - $inherits: operand/xd-not0.yaml#/data
+  - $inherits: operand/imm5-not0.yaml#/data
 access:
   s: always
   u: always

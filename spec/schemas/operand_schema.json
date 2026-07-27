@@ -1,0 +1,524 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "v0.1",
+  "title": "Instruction Operand Schema",
+  "description": "Schema definitions for instruction operands",
+  "$defs": {
+    "operand": {
+      "oneOf": [
+        {
+          "description": "Register with optional dereference and immediate offset",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "register"
+            },
+            "name": {
+              "type": "string"
+            },
+            "reg_file": {
+              "enum": ["X", "F", "V"]
+            },
+            "offset": {
+              "oneOf": [
+                {
+                  "const": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "immediate"
+                    },
+                    "possible_values": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^-?[0-9]+-(-?[0-9]+)$"
+                          }
+                        ]
+                      }
+                    },
+                    "left_shifted": {
+                      "type": "integer"
+                    },
+                    "decode()": {
+                      "type": "string"
+                    },
+                    "$child_of": {
+                      "type": "string"
+                    },
+                    "$parent_of": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["possible_values"],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "source": {
+              "type": "boolean"
+            },
+            "destination": {
+              "type": "boolean"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^-?[0-9]+-(-?[0-9]+)$"
+                  }
+                ]
+              }
+            },
+            "default": {
+              "oneOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "const": ""
+                }
+              ]
+            },
+            "implicit": {
+              "type": "boolean"
+            },
+            "decode()": {
+              "type": "string"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type", "reg_file"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Condition and Status Register (CSR)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "csr"
+            },
+            "name": {
+              "type": "string"
+            },
+            "source": {
+              "type": "boolean"
+            },
+            "destination": {
+              "type": "boolean"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^-?[0-9]+-(-?[0-9]+)$"
+              }
+            },
+            "decode()": {
+              "type": "string"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type", "name"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Register pair (implicit)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "register_pair"
+            },
+            "name": {
+              "type": "string"
+            },
+            "reg_file": {
+              "enum": ["X", "F", "V"]
+            },
+            "source": {
+              "type": "boolean"
+            },
+            "destination": {
+              "type": "boolean"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "decode()": {
+              "type": "string"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type", "reg_file"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Immediate",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "immediate"
+            },
+            "name": {
+              "type": "string"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^-?[0-9]+-(-?[0-9]+)$"
+                  }
+                ]
+              }
+            },
+            "left_shifted": {
+              "type": "integer"
+            },
+            "decode()": {
+              "type": "string"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type", "name", "possible_values"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Floating-point Rounding Mode",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "rounding_mode"
+            },
+            "name": {
+              "type": "string"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "default": {
+              "type": "string"
+            },
+            "decode()": {
+              "type": "string"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": false
+        },
+        {
+          "description": "FENCE scope",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "fence_scope"
+            },
+            "name": {
+              "type": "string"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "decode()": {
+              "type": "string"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type", "possible_values"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Register list (for PUSH/POP reg_list)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "reg_list"
+            },
+            "name": {
+              "type": "string"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "default": {
+              "type": "string"
+            },
+            "decode()": {
+              "type": "string"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type", "possible_values"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Floating point immediate",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "float_immediate"
+            },
+            "name": {
+              "type": "string"
+            },
+            "possible_values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "decode()": {
+              "type": "string"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type", "possible_values"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Program Counter (PC)",
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "program_counter"
+            },
+            "name": {
+              "const": "pc"
+            },
+            "source": {
+              "type": "boolean"
+            },
+            "destination": {
+              "type": "boolean"
+            },
+            "implicit": {
+              "type": "boolean"
+            },
+            "decode()": {
+              "type": "string"
+            },
+            "$child_of": {
+              "type": "string"
+            },
+            "$parent_of": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": false
+        },
+        {
+          "description": "inherits",
+          "type": "object",
+          "properties": {
+            "$inherits": {
+              "type": "string",
+              "pattern": "^operand/.+\\.yaml#/data",
+              "description": "Reference to variable metadata"
+            },
+            "$child_of": {
+              "type": "string"
+            }
+          },
+          "required": ["$inherits"]
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "const": "operand_schema.json#"
+    },
+    "kind": {
+      "const": "operand"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "data": {
+      "$ref": "#/$defs/operand"
+    },
+    "$source": {
+      "description": "Path to the source file. Used by downstream tooling; not expected to be found in handwritten files",
+      "type": "string"
+    }
+  },
+  "required": ["$schema", "kind", "name", "data"],
+  "additionalProperties": false
+}

@@ -132,14 +132,156 @@ encoding:
   variables:
     - name: fm
       location: 31-28
+      encode(operands): return 0; # fm is reserved for future use, so it must be encoded as 0
     - name: pred
       location: 27-24
+      encode(operands): |
+        if (operands[pred] == "i") {
+          return 0b1000;  # I/O
+        } else if (operands[pred] == "o") {
+          return 0b0100;  # O
+        } else if (operands[pred] == "r") {
+          return 0b0010;  # R
+        } else if (operands[pred] == "w") {
+          return 0b0001;  # W
+        } else if (operands[pred] == "io") {
+          return 0b1100;  # I/O
+        } else if (operands[pred] == "ir") {
+          return 0b1010;  # I/R
+        } else if (operands[pred] == "iw") {
+          return 0b1001;  # I/W
+        } else if (operands[pred] == "or") {
+          return 0b0110;  # O/R
+        } else if (operands[pred] == "ow") {
+          return 0b0101;  # O/W
+        } else if (operands[pred] == "rw") {
+          return 0b0011;  # R/W
+        } else if (operands[pred] == "ior") {
+          return 0b1110;  # I/O/R
+        } else if (operands[pred] == "iow") {
+          return 0b1101;  # I/O/W
+        } else if (operands[pred] == "irw") {
+          return 0b1011;  # I/R/W
+        } else if (operands[pred] == "orw") {
+          return 0b0111;  # O/R/W
+        } else if (operands[pred] == "iorw") {
+          return 0b1111;  # I/O/R/W
+        }
+        raise("Invalid predecessor operand: ${operands[pred]}");
+
     - name: succ
       location: 23-20
+      encode(operands): |
+        if (operands[succ] == "i") {
+          return 0b1000;  # I
+        } else if (operands[succ] == "o") {
+          return 0b0100;  # O
+        } else if (operands[succ] == "r") {
+          return 0b0010;  # R
+        } else if (operands[succ] == "w") {
+          return 0b0001;  # W
+        } else if (operands[succ] == "io") {
+          return 0b1100;  # I/O
+        } else if (operands[succ] == "ir") {
+          return 0b1010;  # I/R
+        } else if (operands[succ] == "iw") {
+          return 0b1001;  # I/W
+        } else if (operands[succ] == "or") {
+          return 0b0110;  # O/R
+        } else if (operands[succ] == "ow") {
+          return 0b0101;  # O/W
+        } else if (operands[succ] == "rw") {
+          return 0b0011;  # R/W
+        } else if (operands[succ] == "ior") {
+          return 0b1110;  # I/O/R
+        } else if (operands[succ] == "iow") {
+          return 0b1101;  # I/O/W
+        } else if (operands[succ] == "irw") {
+          return 0b1011;  # I/O/W
+        } else if (operands[succ] == "orw") {
+          return 0b0111;  # O/R/W
+        } else if (operands[succ] == "iorw") {
+          return 0b1111;  # I/O/R/W
+        }
+        raise("Invalid successor operand: ${operands[succ]}");
+
     - name: xs1
       location: 19-15
+      encode(operands): return 0; # xs1 is unused, so it must be encoded as 0
     - name: xd
       location: 11-7
+      encode(operands): return 0; # xd is unused, so it must be encoded as 0
+operands:
+  - $inherits: operand/fence-scope.yaml#/data
+    name: pred
+    decode(): |
+      if (pred == 0b1000) {
+        return "i";
+      } else if (pred == 0b0100) {
+        return "o";
+      } else if (pred == 0b0010) {
+        return "r";
+      } else if (pred == 0b0001) {
+        return "w";
+      } else if (pred == 0b1100) {
+        return "io";
+      } else if (pred == 0b1010) {
+        return "ir";
+      } else if (pred == 0b1001) {
+        return "iw";
+      } else if (pred == 0b0110) {
+        return "or";
+      } else if (pred == 0b0101) {
+        return "ow";
+      } else if (pred == 0b0011) {
+        return "rw";
+      } else if (pred == 0b1110) {
+        return "ior";
+      } else if (pred == 0b1101) {
+        return "iow";
+      } else if (pred == 0b1011) {
+        return "irw";
+      } else if (pred == 0b0111) {
+        return "orw";
+      } else if (pred == 0b1111) {
+        return "iorw";
+      }
+      raise("Invalid fence scope encoding ${pred}");
+  - $inherits: operand/fence-scope.yaml#/data
+    name: succ
+    decode(): |
+      if (succ == 0b1000) {
+        return "i";
+      } else if (succ == 0b0100) {
+        return "o";
+      } else if (succ == 0b0010) {
+        return "r";
+      } else if (succ == 0b0001) {
+        return "w";
+      } else if (succ == 0b1100) {
+        return "io";
+      } else if (succ == 0b1010) {
+        return "ir";
+      } else if (succ == 0b1001) {
+        return "iw";
+      } else if (succ == 0b0110) {
+        return "or";
+      } else if (succ == 0b0101) {
+        return "ow";
+      } else if (succ == 0b0011) {
+        return "rw";
+      } else if (succ == 0b1110) {
+        return "ior";
+      } else if (succ == 0b1101) {
+        return "iow";
+      } else if (succ == 0b1011) {
+        return "irw";
+      } else if (succ == 0b0111) {
+        return "orw";
+      } else if (succ == 0b1111) {
+        return "iorw";
+      }
+      raise("Invalid fence scope encoding ${succ}");
 access:
   s: always
   u: always

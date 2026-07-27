@@ -182,6 +182,12 @@ module Idl
 
     attr_reader :builtin_funcs
 
+    sig { returns(T.nilable(T::Hash[String, T::Hash[String, T.untyped]])) }
+    attr_reader :instruction_operands
+
+    sig { returns(T.nilable(T::Hash[String, T.untyped])) }
+    attr_reader :instruction_operand_values
+
     sig { params(csr_name: String).returns(T::Boolean) }
     def csr?(csr_name) = csr_hash.key?(csr_name)
 
@@ -264,6 +270,8 @@ module Idl
         add!(enum_def.name, EnumerationType.new(enum_def.name, enum_def.element_names, enum_def.element_values))
       end
       @builtin_funcs = builtin_funcs
+      @instruction_operands = T.let(nil, T.nilable(T::Hash[String, T::Hash[String, T.untyped]]))
+      @instruction_operand_values = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
       @csrs = csrs
       @csr_hash = @csrs.map { |csr| [csr.name.freeze, csr].freeze }.to_h.freeze
 
@@ -323,6 +331,8 @@ module Idl
         copy.instance_variable_set(:@possible_xlens_cb, @possible_xlens_cb)
         copy.instance_variable_set(:@params, @params)
         copy.instance_variable_set(:@builtin_funcs, @builtin_funcs)
+        copy.instance_variable_set(:@instruction_operands, @instruction_operands)
+        copy.instance_variable_set(:@instruction_operand_values, @instruction_operand_values)
         copy.instance_variable_set(:@csrs, @csrs)
         copy.instance_variable_set(:@csr_hash, @csr_hash)
         copy.instance_variable_set(:@global_clone_pool, @global_clone_pool)
@@ -531,6 +541,8 @@ module Idl
         copy.instance_variable_set(:@possible_xlens_cb, @possible_xlens_cb)
         copy.instance_variable_set(:@params, @params)
         copy.instance_variable_set(:@builtin_funcs, @builtin_funcs)
+        copy.instance_variable_set(:@instruction_operands, @instruction_operands)
+        copy.instance_variable_set(:@instruction_operand_values, @instruction_operand_values)
         copy.instance_variable_set(:@csrs, @csrs)
         copy.instance_variable_set(:@csr_hash, @csr_hash)
         copy.instance_variable_set(:@global_clone_pool, @global_clone_pool)
@@ -548,8 +560,21 @@ module Idl
         raise "You are calling release on the frozen SymbolTable" if frozen?
         raise "Double release detected" unless in_use?
 
+        @instruction_operands = nil
+        @instruction_operand_values = nil
+
         @in_use.release
       end
+    end
+
+    sig { params(operands: T.nilable(T::Hash[String, T::Hash[String, T.untyped]])).void }
+    def instruction_operands=(operands)
+      @instruction_operands = operands
+    end
+
+    sig { params(values: T.nilable(T::Hash[String, T.untyped])).void }
+    def instruction_operand_values=(values)
+      @instruction_operand_values = values
     end
 
     def in_use? = @in_use.available_permits.zero?

@@ -24,6 +24,13 @@ encoding:
       location: 19-15
     - name: xd
       location: 11-7
+operands:
+  - $inherits: operand/xd.yaml#/data
+  - $inherits: operand/xs.yaml#/data
+    name: xs1
+  - $inherits: operand/xs.yaml#/data
+    name: xs2
+  - $inherits: operand/bs.yaml#/data
 access:
   s: always
   u: always

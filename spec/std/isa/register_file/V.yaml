@@ -17,6 +17,7 @@ register_class: vector
 register_length(): return VLEN;
 registers:
   - name: v0
+    abi_mnemonics: [v0.t]
     caller_saved: true
     roles: [temporary]
     description: Caller-saved vector temporary register.

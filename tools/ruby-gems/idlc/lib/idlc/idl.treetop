@@ -289,6 +289,11 @@ grammar Idl
     'CSR' space* '[' space* csr_name space* ']' <Idl::CsrReadExpressionSyntaxNode>
   end
 
+  rule operand_offset_access_expression
+    # Instruction operand offset access. No spaces are allowed inside this form.
+    'operands' '[' operand_name:id ']' '.offset' <Idl::OperandOffsetAccessSyntaxNode>
+  end
+
   rule field_access_eligible_expression
     paren_expression
     /
@@ -352,6 +357,8 @@ grammar Idl
     'false' <Idl::FalseExpressionSyntaxNode>
     /
     '[' space* first:expression rest:(space* ',' space* expression)* space* ']' <Idl::ArrayLiteralSyntaxNode>
+    /
+    operand_offset_access_expression
     /
     ary_access
     /

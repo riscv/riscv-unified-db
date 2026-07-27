@@ -89,6 +89,13 @@ Decode field
 
 </details>
 
+<details>
+<summary><a id="operands-def"></a><strong><code>operands_def</code></strong></summary>
+
+**Type:** `array`
+
+</details>
+
 
 
 ## Properties
@@ -107,6 +114,7 @@ Decode field
 | `format` | `object` |  |  |
 | `pseudoinstructions` | Array&lt;\{`when`, `to`\}&gt; [↓&nbsp;schema](#pseudoinstructions-schema) |  | Variations of this instruction that form a pseudoinstruction |
 | `data_independent_timing` | `boolean` |  | Whether or not the instruction must execute with data-independent timing when the Zkt extension is supported |
+| `operands` | One of: [`operands_def`](#operands-def) \| `object` |  |  |
 | `operation_ast` | `object` |  |  |
 | `operation()` | `string` |  | Functional description of the instruction using IDL language |
 | `access_detail` | `string` |  | Extra detail about access when at least one mode is 'sometimes' |

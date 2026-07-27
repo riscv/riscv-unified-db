@@ -1,0 +1,14 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: imm13-ls1
+description: 13-bit immediate, shifted 1 bit
+data:
+  $inherits: operand/imm.yaml#/data
+  possible_values: [-4096-4094]
+  left_shifted: 1
+  decode(): return imm << 1;

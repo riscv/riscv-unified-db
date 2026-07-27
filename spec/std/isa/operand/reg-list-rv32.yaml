@@ -1,0 +1,52 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/operand_schema.json
+
+$schema: "operand_schema.json#"
+kind: operand
+name: reg-list-rv32
+description: PUSH/POP register list (RV32)
+data:
+  type: reg_list
+  name: reg_list
+  possible_values:
+    ["{ra}", "{x1}", "{ra,s0}", "{x1,x8}", "{ra,s0-s1}", "{x1,x8-x9}"]
+  decode(): |
+    if (rlist == 4) {
+      return "{x1}";
+    }
+    if (rlist == 5) {
+      return "{x1,x8}";
+    }
+    if (rlist == 6) {
+      return "{x1,x8-x9}";
+    }
+    if (rlist == 7) {
+      return "{x1,x8-x9,x18}";
+    }
+    if (rlist == 8) {
+      return "{x1,x8-x9,x18-x19}";
+    }
+    if (rlist == 9) {
+      return "{x1,x8-x9,x18-x20}";
+    }
+    if (rlist == 10) {
+      return "{x1,x8-x9,x18-x21}";
+    }
+    if (rlist == 11) {
+      return "{x1,x8-x9,x18-x22}";
+    }
+    if (rlist == 12) {
+      return "{x1,x8-x9,x18-x23}";
+    }
+    if (rlist == 13) {
+      return "{x1,x8-x9,x18-x24}";
+    }
+    if (rlist == 14) {
+      return "{x1,x8-x9,x18-x25}";
+    }
+    if (rlist == 15) {
+      return "{x1,x8-x9,x18-x27}";
+    }
+    raise("Invalid rlist: ${rlist}");

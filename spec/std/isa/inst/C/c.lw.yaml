@@ -22,10 +22,20 @@ encoding:
     - name: imm
       location: 5|12-10|6
       left_shift: 2
+      encode(operands): |
+        return operands[xs1].offset >> 2;
     - name: xd
       location: 4-2
+      encode(operands): |
+        return reg2creg(operands[xd]);
     - name: xs1
       location: 9-7
+      encode(operands): |
+        return reg2creg(operands[xs1]);
+operands:
+  - $inherits: operand/xdc.yaml#/data
+  - $inherits: operand/xsc-offset7-ls2.yaml#/data
+    name: xs1
 access:
   s: always
   u: always

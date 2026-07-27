@@ -21,10 +21,31 @@ encoding:
       location: 24-20
     - name: fs1
       location: 19-15
-    - name: rm
-      location: 14-12
     - name: fd
       location: 11-7
+    - name: rm
+      location: 14-12
+      encode(operands): |
+        if (operands[rm] == "rne") {
+          return 3'b000;
+        } else if (operands[rm] == "rtz") {
+          return 3'b001;
+        } else if (operands[rm] == "rdn") {
+          return 3'b010;
+        } else if (operands[rm] == "rup") {
+          return 3'b011;
+        } else if (operands[rm] == "rmm") {
+          return 3'b100;
+        } else if (operands[rm] == "dyn") {
+          return 3'b111;
+        } # else reserved
+operands:
+  - $inherits: operand/fd.yaml#/data
+  - $inherits: operand/fs.yaml#/data
+    name: fs1
+  - $inherits: operand/fs.yaml#/data
+    name: fs2
+  - $inherits: operand/rm.yaml#/data
 access:
   s: always
   u: always
