@@ -5,7 +5,7 @@
 
 $schema: param_schema.json#
 kind: parameter
-name: PMLEN_SSNPM
+name: SUPPORTED_PMLEN_SSNPM
 description: |
   The number of high-order bits of an address that are masked by the
   `Ssnpm` pointer masking facility for the next privilege mode below
@@ -23,17 +23,15 @@ description: |
 
   The current standard only supports these values (`zpm.adoc`, tag
   `norm:pmlen_supported_values`, plus the mandatory PMM=00 disabled
-  setting). If only one value is given, `PMM` is assumed to be
-  read-only with that value. Otherwise, `PMM` is read-write and
-  software selects between the given values.
+  setting).
 long_name: Pointer mask length for next mode below S-mode
 schema:
   type: array
   items:
     type: integer
-    enum: [0, 7, 16]
+    enum: [7, 16]
   minItems: 1
-  maxItems: 3
+  maxItems: 2
   uniqueItems: true
 definedBy:
   extension:
