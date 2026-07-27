@@ -8,29 +8,35 @@ require "udb"
 require_relative "../../../backends/cpp_hart_gen/lib/gen_cpp"
 
 class TestGenC < Minitest::Test
+  def setup
+    @symtab = Idl::SymbolTable.new
+  end
+
   def parse(idl)
     compiler = Idl::Compiler.new
-    ast = compiler.parser.parse(idl, root: :single_declaration)&.to_ast
+    m = compiler.parser.parse(idl, root: :single_declaration)
+    refute_nil m
+
+    ast = m.to_ast
     refute_nil ast
     assert_instance_of Idl::VariableDeclarationAst, ast
+
     ast
   end
 
   def test_array_decl_gen_c
     ast = parse("U32 foo [ 32 ]")
-    symtab = Idl::SymbolTable.new
 
     # Regression test for array declarations in the C backend.
-    c_code = ast.gen_c(symtab)
+    c_code = ast.gen_c(@symtab)
     assert_equal "uint32_t foo[32]", c_code
   end
 
   def test_array_decl_gen_c_with_expression
     ast = parse("U32 bar [ VLEN ]")
-    symtab = Idl::SymbolTable.new
 
     # Regression test for array declarations in the C backend.
-    c_code = ast.gen_c(symtab)
+    c_code = ast.gen_c(@symtab)
     assert_equal "uint32_t bar[VLEN]", c_code
   end
 end
