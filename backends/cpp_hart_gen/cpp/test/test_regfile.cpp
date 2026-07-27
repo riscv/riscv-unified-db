@@ -66,8 +66,8 @@ params:
   MISA_CSR_IMPLEMENTED: true
   MTVEC_ACCESS: rw
   MTVEC_MODES: [0, 1]
-  MTVEC_BASE_ALIGNMENT_DIRECT: 4
-  MTVEC_BASE_ALIGNMENT_VECTORED: 4
+  MTVEC_BASE_ALIGNMENT_DIRECT: 0x4
+  MTVEC_BASE_ALIGNMENT_VECTORED: 0x4
   MTVEC_ILLEGAL_WRITE_BEHAVIOR: retain
   MUTABLE_MISA_C: false
   MUTABLE_MISA_M: false
@@ -94,8 +94,8 @@ params:
   MCOUNTENABLE_EN: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
   SCOUNTENABLE_EN: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
   COUNTINHIBIT_EN: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
-  STVEC_MODE_DIRECT: true
-  STVEC_MODE_VECTORED: true
+  STVEC_MODES: [0, 1]
+  STVEC_BASE_ALIGNMENT_VECTORED: 0x4
   SATP_MODE_BARE: true
   TRAP_ON_ECALL_FROM_S: true
   TRAP_ON_ECALL_FROM_U: true

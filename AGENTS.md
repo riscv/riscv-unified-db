@@ -123,6 +123,6 @@ CI is split into PR tests (`ci_stage: pr`) and merge-queue deployment tests (`ci
 
 - Squash merge policy: PR title/description becomes the commit message
 - Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0) style (not enforced)
-- PRs require approval from a Code Owner (see `.github/CODEOWNERS`)
+- PRs require approval from a maintainer
 - Link PRs to issues with `Fixes #<number>` or `Closes #<number>` in the PR description
 - All PRs must pass `./bin/regress --all`

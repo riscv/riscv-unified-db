@@ -65,7 +65,7 @@ Set up the Docusaurus project, CI/CD, and scaffolding before writing any content
 - [ ] **0.4.2** Decide whether the new Docusaurus site replaces or coexists with the existing `pages.yml` workflow.
   - **Recommended**: Keep `pages.yml` for generated artifacts; have the Docusaurus site link out to them. Merge the two deployments into a single Pages root once the Docusaurus site is ready to go live.
   - **This decision (Q4) must be made before 0.4.3 is executed.** See Open Questions.
-- [ ] **0.4.3** Integrate the Docusaurus build output into the assembled `_site/` directory. The current `pages.yml` places generated artifacts at `_site/resolved_spec`, `_site/htmls/udb_api_doc`, etc., and generates `_site/index.html` from `tools/scripts/pages.html.erb`. The Docusaurus build output must go at the `_site/` root, which means the ERB-generated `index.html` must be removed or redirected. **Concrete plan**: place the Docusaurus build at `_site/` root; move the generated-artifacts landing page to `_site/artifacts/` and update the Docusaurus site to link there. Coordinate with Phase 15 cutover.
+- [ ] **0.4.3** Integrate the Docusaurus build output into the assembled `_site/` directory. The current `pages.yml` places generated artifacts at `_site/resolved_spec`, `_site/htmls/udb_api_doc`, etc., and generates `_site/index.html` from `tools/scripts/pages.html.template` using `tools/scripts/gen_pages_index.py`. The Docusaurus build output must go at the `_site/` root, which means the generated `index.html` must be removed or redirected. **Concrete plan**: place the Docusaurus build at `_site/` root; move the generated-artifacts landing page to `_site/artifacts/` and update the Docusaurus site to link there. Coordinate with Phase 15 cutover.
 
 ### 0.5 — Asset structure
 
@@ -100,7 +100,7 @@ Inline content assets (diagrams, screenshots) live under `doc/docs/<section>/ass
   - `doc/idl-navbar-logo.svg` → `doc/static/img/idl-navbar-logo.svg`
 - [ ] **0.5.4** Update references to the old `doc/*.svg` paths:
   - `README.adoc` line 1: `image::doc/udb.svg[UDB banner]` — **Decision**: keep `doc/udb.svg` in place (do not move it) until the AsciiDoc pipeline is retired in Phase 15. Copy the file to `doc/static/img/udb.svg` rather than moving it. The copy can be removed once `README.adoc` is updated.
-  - `tools/scripts/pages.html.erb` line 14: `<img src="udb-block.svg" ...>` — **Decision**: leave this reference unchanged until Phase 15 cutover. The `pages.yml` workflow copies `doc/udb-block.svg` to `_site/`; keep that copy step in place until the ERB template is retired.
+  - `tools/scripts/pages.html.template`: `<img src="udb-block.svg" ...>` — **Decision**: leave this reference unchanged until Phase 15 cutover. The `pages.yml` workflow copies `doc/udb-block.svg` to `_site/`; keep that copy step in place until the generated landing page is retired.
 - [ ] **0.5.5** Generate `doc/static/favicon.ico` from `idl-favicon.svg`. **Tool decision**: use `imagemagick` (`convert` command), which is available in the CI container. Add a one-time generation step to the build setup notes; do not add it to the automated pre-build pipeline (the `.ico` file will be committed to the repo).
 
 ### 0.6 — Theming and branding
@@ -647,7 +647,7 @@ Components that need a `DOCS.md`:
 - [ ] **15.1** Run the new site in parallel with the old Pages site for a review period.
 - [ ] **15.2** Get sign-off from maintainers (Derek Hower, Paul Clarke).
 - [ ] **15.3** Update `pages.yml` to deploy the Docusaurus site as the root of GitHub Pages.
-- [ ] **15.4** Archive or redirect the old ERB-generated landing page (`tools/scripts/pages.html.erb`).
+- [ ] **15.4** Archive or redirect the generated landing page (`tools/scripts/pages.html.template` and `tools/scripts/gen_pages_index.py`).
 - [ ] **15.5** Update any external links (RISC-V International, downstream projects) to point to the new site.
 - [ ] **15.6** Update `README.adoc` to point to the new Docusaurus site URL and remove links to the old Pages site.
 - [ ] **15.7** Remove the `asciidoctor` IDL HTML build step from CI (`regress.yml` / `pages.yml`) once Phase 6 IDL docs are live and Q9 is confirmed. Delete `doc/idl.html` artifact references.
