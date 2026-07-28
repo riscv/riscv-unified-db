@@ -485,57 +485,37 @@ def load_csrs(csr_root, enabled_extensions, include_all=False, target_arch="RV64
     return csrs
 
 
-def load_exception_codes(
-    ext_dir, enabled_extensions=None, include_all=False, resolved_codes_file=None
-):
-    """Load exception codes from extension YAML files or pre-resolved JSON file."""
+def load_exception_codes(resolved_codes_file):
+    """Load exception codes from a pre-resolved JSON file.
+
+    Exception code names in the raw YAML contain unresolved ERB templates, so they
+    must be resolved by the Ruby side first (see with_resolved_exception_codes in
+    backends/generators/tasks.rake). There is deliberately no fallback to reading
+    the YAML directly: it emitted identifiers containing literal template markers.
+
+    Raises ValueError if the file is missing or cannot be parsed, so a broken
+    exception code list fails the build instead of silently generating none.
+    """
+    if not resolved_codes_file:
+        raise ValueError("A resolved exception codes file is required (--resolved-codes)")
+
+    try:
+        with open(resolved_codes_file, encoding="utf-8") as f:
+            resolved_codes = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        raise ValueError(f"Could not load resolved exception codes from {resolved_codes_file}: {e}")
+
     exception_codes = []
-    found_extensions = 0
-    found_files = 0
+    for code in resolved_codes:
+        num = code.get("num")
+        name = code.get("name")
+        if num is not None and name is not None:
+            sanitized_name = name.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
+            exception_codes.append((num, sanitized_name))
 
-    if enabled_extensions is None:
-        enabled_extensions = []
-    # If we have a resolved codes file, use it instead of processing YAML files
-    if resolved_codes_file and os.path.exists(resolved_codes_file):
-        try:
-            with open(resolved_codes_file, encoding="utf-8") as f:
-                resolved_codes = json.load(f)
-
-            for code in resolved_codes:
-                num = code.get("num")
-                name = code.get("name")
-                if num is not None and name is not None:
-                    sanitized_name = (
-                        name.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
-                    )
-                    exception_codes.append((num, sanitized_name))
-
-            logging.info(
-                f"Loaded {len(exception_codes)} pre-resolved exception codes from {resolved_codes_file}"
-            )
-
-            # Sort by exception code number and deduplicate
-            seen_nums = set()
-            unique_codes = []
-            for num, name in sorted(exception_codes, key=lambda x: x[0]):
-                if num not in seen_nums:
-                    seen_nums.add(num)
-                    unique_codes.append((num, name))
-
-            return unique_codes
-
-        except Exception as e:
-            logging.error(f"Error loading resolved codes file {resolved_codes_file}: {e}")
-    # Logging an error and skipping the exception cause generation if no resolved codes file found
-    else:
-        logging.error(f"Resolved codes file not found: {resolved_codes_file}")
-        return
-
-    if found_extensions > 0:
-        logging.info(f"Found {found_extensions} extension definitions in {found_files} files")
-        logging.info(f"Added {len(exception_codes)} exception codes to the output")
-    else:
-        logging.warning(f"No extension definitions found in {ext_dir}")
+    logging.info(
+        f"Loaded {len(exception_codes)} pre-resolved exception codes from {resolved_codes_file}"
+    )
 
     # Sort by exception code number and deduplicate
     seen_nums = set()

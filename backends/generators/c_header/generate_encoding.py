@@ -237,13 +237,7 @@ def main():
     )
 
     # Load exception codes
-    logging.info(f"Loading exception codes from {args.ext_dir}")
-    causes = load_exception_codes(
-        args.ext_dir,
-        args.extensions,
-        include_all=args.include_all,
-        resolved_codes_file=args.resolved_codes,
-    )
+    causes = load_exception_codes(args.resolved_codes)
 
     # Process instructions and calculate masks
     instr_dict = {}

@@ -177,12 +177,7 @@ def main():
     logging.info(f"Loaded {len(csrs)} CSRs")
 
     # Load exception codes
-    causes = load_exception_codes(
-        args.ext_dir,
-        args.extensions,
-        include_all=args.include_all,
-        resolved_codes_file=args.resolved_codes,
-    )
+    causes = load_exception_codes(args.resolved_codes)
     logging.info(f"Loaded {len(causes)} exception codes")
 
     # Generate the SystemVerilog file

@@ -14,6 +14,15 @@ tests:
       - name: Run tools/scripts unit tests
         run: ./bin/ruby -Itools/scripts tools/scripts/test/run.rb
 
+  regress-generators-unit:
+    ci_stage: pr
+    tags:
+      - unit
+      - smoke
+    test:
+      - name: Run backends/generators unit tests
+        run: uv run pytest backends/generators/test_generator.py
+
   regress-idlc-unit:
     ci_stage: pr
     tags:

@@ -314,6 +314,16 @@ jobs:
       - name: Run tools/scripts unit tests
         run: ./bin/ruby -Itools/scripts tools/scripts/test/run.rb
 
+  regress-generators-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Github Repo Action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+      - name: Run backends/generators unit tests
+        run: uv run pytest backends/generators/test_generator.py
+
   regress-idlc-unit:
     runs-on: ubuntu-latest
     steps:
@@ -951,6 +961,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - regress-scripts-unit
+      - regress-generators-unit
       - regress-idlc-unit
       - regress-udb-helpers-unit
       - regress-udb-gen-unit
