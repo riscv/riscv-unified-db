@@ -6,8 +6,9 @@ SPDX-License-Identifier: BSD-3-Clause-Clear
 # Parameter-extraction evaluation fixtures
 
 A frozen set of specification excerpts paired with the outcome a
-parameter-extraction procedure should reach on each. Nine cases: five positives
-and four negatives.
+parameter-extraction procedure should reach on each. Eleven cases: six
+positives, four negatives, and one candidate, which is text that should be
+surfaced and then classified out rather than dropped in silence.
 
 ```bash
 ./bin/python -m pytest tools/python/param-extraction-eval -v
@@ -23,23 +24,40 @@ should not exist:
 
 | Case | The mistake it catches |
 |------|------------------------|
-| `NEG_WARL_FIXED_LEGAL_SET` | treating the WARL keyword as sufficient |
 | `NEG_FIXED_ENCODING` | turning a fixed encoding convention into a parameter |
 | `NEG_SHALL_NO_DELEGATION` | reading a bare `shall` as an implementation choice |
 | `NEG_SOFTWARE_ADVICE` | reading `should`/`may` software advice as hardware configuration |
+| `NEG_EXT_GATED_PBMTE` | reading extension gating as a parameter |
+
+`NEG_EXT_GATED_PBMTE` is the subtlest. "If Svpbmt is not implemented, PBMTE is
+read-only zero" describes writability that depends on configuration, which is the
+shape a legal-value parameter has, but UnifiedDB expresses it with
+`definedBy: {extension: {name: Svpbmt}}` and no parameter exists.
+
+## Firing too rarely is the other half
+
+A rule keyed on the `WARL` and `WLRL` tokens misses fields whose legal values
+depend on the implementation without either token appearing in the prose. Cases
+marked `recall_case` contain no such token, and the suite asserts they do not, so
+a token-keyed rule cannot reach them. `POS_RECALL_COUNT_GEILEN` is one: the
+writability of `hstatus.VGEIN` follows a count that UnifiedDB already models as
+`NUM_EXTERNAL_GUEST_INTERRUPTS`.
+
+Without cases of this shape the set measures precision only.
 
 ## The WARL distinction
 
-`NEG_WARL_FIXED_LEGAL_SET` is the reason this set exists.
+`CAND_WARL_FIXED_LEGAL_SET` is the reason this set exists.
 
 A CSR field can carry the word **WARL** while its set of legal values is fixed by
 the ISA. Software may write anything, the implementation legalises the write, and
-the only legal encoding is the same for every implementation. No implementation
-choice exists, so there is no architectural parameter, even though the field is
-labelled WARL.
+the only legal encoding is the same for every implementation. No parameter
+follows, and no parameter under `spec/std/isa/param` admits exactly one value.
 
-A rule keyed on the keyword alone gets this wrong. The correct test is whether
-the **set of legal values is implementation-chosen**.
+It is filed as a candidate rather than a negative. The outcome is the same, no
+parameter, but the two differ in what the procedure should do on the way there:
+a negative should never be raised, while this should be raised and then
+classified out, so that the decision is visible to whoever reviews the output.
 
 `POS_WARL_MTVEC_MODES` is deliberately paired with it. Without a WARL positive, a
 rule that rejected every WARL field would pass the set while being useless. The
@@ -52,7 +70,10 @@ suite asserts both are present for that reason.
   `spec/std/isa/param`, so an upstream rename fails here rather than silently
   invalidating the fixture.
 - Every negative expects nothing extracted and records the risk it guards.
-- The WARL negative and its paired positive are both present.
+- Every candidate expects to be surfaced and to yield no parameter.
+- The WARL candidate and its paired positive are both present.
+- At least two cases exercise the recall direction, and none of them contains a
+  `WARL` or `WLRL` token.
 
 ## Scope, and what this is not
 

@@ -4,9 +4,13 @@
 """Integrity checks for the parameter-extraction evaluation fixtures.
 
 The fixtures are a frozen set of specification excerpts paired with the outcome
-a parameter-extraction procedure should reach on each. Five are positives, four
-are negatives, and the negatives carry the weight: they are cases where a
-plausible rule produces a parameter that should not exist.
+a parameter-extraction procedure should reach on each. Cases come in three kinds:
+
+  * positives yield a parameter that UnifiedDB already models
+  * negatives yield nothing, and are passages where a plausible rule produces a
+    parameter that should not exist
+  * candidates are surfaced and then classified out. They yield no parameter,
+    but dropping them silently during extraction hides the decision from review
 
 This file checks the *fixtures*, not a model. It is deterministic, needs no API
 key and no network, and exists so the set cannot rot unnoticed:
@@ -15,8 +19,8 @@ key and no network, and exists so the set cannot rot unnoticed:
   * every positive is anchored to a parameter file that still exists upstream,
     so an upstream rename breaks the test instead of silently invalidating it
   * every negative expects nothing extracted and records the risk it guards
-  * the WARL-with-ISA-fixed-legal-set negative is present, since that is the
-    distinction the set exists to protect
+  * the set exercises both directions: a rule can fire where it should not, and
+    it can fail to fire where it should
 
 Run:
 
@@ -48,13 +52,15 @@ def _load(path: Path) -> dict:
 
 POSITIVES = _cases("positives")
 NEGATIVES = _cases("negatives")
-ALL_CASES = POSITIVES + NEGATIVES
+CANDIDATES = _cases("candidates")
+ALL_CASES = POSITIVES + NEGATIVES + CANDIDATES
 
 
 def test_the_set_is_the_expected_shape():
     """An emptied fixture directory should fail loudly rather than pass vacuously."""
-    assert len(POSITIVES) == 5, f"expected 5 positives, found {len(POSITIVES)}"
+    assert len(POSITIVES) == 6, f"expected 6 positives, found {len(POSITIVES)}"
     assert len(NEGATIVES) == 4, f"expected 4 negatives, found {len(NEGATIVES)}"
+    assert len(CANDIDATES) == 1, f"expected 1 candidate, found {len(CANDIDATES)}"
 
 
 @pytest.mark.parametrize("case", ALL_CASES, ids=lambda p: p.name)
@@ -120,35 +126,73 @@ def test_positive_gold_file_agrees_with_expectation(case: Path):
         assert gold["class"] == exp["class"], f"{case.name}: class disagrees between files"
 
 
-def test_warl_fixed_legal_set_negative_is_present():
+@pytest.mark.parametrize("case", CANDIDATES, ids=lambda p: p.name)
+def test_candidate_is_surfaced_then_classified_out(case: Path):
+    """A candidate is neither a positive nor a negative.
+
+    It must be surfaced, because a procedure that drops it during extraction
+    hides the decision from whoever reviews the output, and it must yield no
+    parameter, because none exists to model.
+    """
+    exp = _load(case / "expected.yaml")
+    assert exp["expect_extract"] is True, f"{case.name}: candidate must set expect_extract true"
+    assert exp.get("expect_params") == 0, f"{case.name}: candidate must expect 0 parameters"
+    assert exp.get("kind"), f"{case.name}: candidate must name the kind"
+    assert exp.get("skill_risk"), f"{case.name}: candidate must state what it guards against"
+
+
+def test_warl_fixed_legal_set_case_is_present():
     """The distinction the set exists to protect.
 
     A field can carry the word WARL while its legal value set is fixed by the
-    ISA. No implementation choice exists, so it is not an architectural
-    parameter. A rule keyed on the WARL keyword alone gets this wrong, and the
-    positive WARL case is what stops the rule being tightened into uselessness.
+    ISA, and no parameter follows. It is filed as a candidate rather than a
+    negative: the outcome is no parameter either way, but the procedure should
+    record that decision instead of never raising the case at all.
+
+    The WARL positive is what stops the rule being tightened into uselessness.
     """
-    assert "NEG_WARL_FIXED_LEGAL_SET" in {c.name for c in NEGATIVES}, (
-        "the WARL-with-ISA-fixed-legal-set negative is missing; "
+    assert "CAND_WARL_FIXED_LEGAL_SET" in {c.name for c in CANDIDATES}, (
+        "the WARL-with-ISA-fixed-legal-set case is missing; "
         "without it the set no longer guards its central distinction"
     )
-    neg = CASES / "negatives" / "NEG_WARL_FIXED_LEGAL_SET"
-    assert _load(neg / "expected.yaml")["expect_params"] == 0
-    assert "WARL" in (neg / "source.txt").read_text(encoding="utf-8"), (
-        "the WARL negative should contain the WARL keyword, or it tests nothing"
+    case = CASES / "candidates" / "CAND_WARL_FIXED_LEGAL_SET"
+    assert _load(case / "expected.yaml")["expect_params"] == 0
+    assert "WARL" in (case / "source.txt").read_text(encoding="utf-8"), (
+        "the WARL candidate should contain the WARL keyword, or it tests nothing"
     )
 
     positive_warl = [
         c for c in POSITIVES if _load(c / "expected.yaml").get("warl_true_parameter") is True
     ]
     assert positive_warl, (
-        "a WARL positive must exist alongside the WARL negative, otherwise a rule "
-        "that rejects every WARL field would pass the set"
+        "a WARL positive must exist alongside it, otherwise a rule that rejects "
+        "every WARL field would pass the set"
     )
+
+
+def test_the_set_exercises_both_directions():
+    """Over-firing is only half the problem.
+
+    A rule keyed on the WARL and WLRL tokens misses fields whose legal values
+    depend on the implementation without either token appearing. Cases marked
+    recall_case carry no such token, so a set without them measures precision
+    only.
+    """
+    recall = [c for c in ALL_CASES if _load(c / "expected.yaml").get("recall_case") is True]
+    assert len(recall) >= 2, (
+        f"expected at least 2 recall cases, found {len(recall)}; "
+        "without them the set tests only whether a rule fires too often"
+    )
+    for case in recall:
+        text = (case / "source.txt").read_text(encoding="utf-8")
+        assert "WARL" not in text and "WLRL" not in text, (
+            f"{case.name}: a recall case must not contain a WARL or WLRL token, "
+            "otherwise a token-keyed rule would find it and it tests nothing"
+        )
 
 
 @pytest.mark.parametrize("case", ALL_CASES, ids=lambda p: p.name)
 def test_case_id_prefix_matches_its_directory(case: Path):
     exp = _load(case / "expected.yaml")
-    prefix = "POS_" if case.parent.name == "positives" else "NEG_"
+    prefix = {"positives": "POS_", "negatives": "NEG_", "candidates": "CAND_"}[case.parent.name]
     assert exp["id"].startswith(prefix), f"{case.name}: id should start with {prefix}"
