@@ -1,6 +1,6 @@
 = Instruction Appendix
 :doctype: book
-:wavedrom: /home/jcarlin/riscv-projects/riscv-unified-db/node_modules/.bin/wavedrom-cli
+:wavedrom: /Users/rajveerbishnoi/riscv-unified-db/node_modules/.bin/wavedrom-cli
 // Now the document header is complete and the wavedrom attribute is active.
 
 
@@ -14984,8 +14984,6 @@ Included in::
 
 | *Zcb*
 | any
-| *Zbb*
-| any
 |===
 
 
@@ -15091,7 +15089,7 @@ Included in::
 
 | *Zcb*
 | any
-| *Zbb*
+| *Zba*
 | any
 |===
 
@@ -20940,7 +20938,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |$encoding[31:20]
+|imm |sext($encoding[31:20], 12)
 |xs1 |$encoding[19:15]
 |fd |$encoding[11:7]
 |===
@@ -21423,7 +21421,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |$encoding[31:20]
+|imm |sext($encoding[31:20], 12)
 |xs1 |$encoding[19:15]
 |fd |$encoding[11:7]
 |===
@@ -21693,7 +21691,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |$encoding[31:20]
+|imm |sext($encoding[31:20], 12)
 |xs1 |$encoding[19:15]
 |fd |$encoding[11:7]
 |===
@@ -22174,7 +22172,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |$encoding[31:20]
+|imm |sext($encoding[31:20], 12)
 |xs1 |$encoding[19:15]
 |fd |$encoding[11:7]
 |===
@@ -25153,7 +25151,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[31:25], $encoding[11:7]}
+|imm |sext({$encoding[31:25], $encoding[11:7]}, 12)
 |fs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
@@ -25830,7 +25828,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[31:25], $encoding[11:7]}
+|imm |sext({$encoding[31:25], $encoding[11:7]}, 12)
 |xs1 |$encoding[19:15]
 |fs2 |$encoding[24:20]
 |===
@@ -25887,7 +25885,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[31:25], $encoding[11:7]}
+|imm |sext({$encoding[31:25], $encoding[11:7]}, 12)
 |fs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
@@ -26344,7 +26342,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[31:25], $encoding[11:7]}
+|imm |sext({$encoding[31:25], $encoding[11:7]}, 12)
 |fs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
@@ -59407,7 +59405,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |$encoding[19:15]
+|imm |sext($encoding[19:15], 5)
 |vd |$encoding[11:7]
 |===
 
