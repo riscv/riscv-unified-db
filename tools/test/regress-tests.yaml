@@ -434,9 +434,13 @@ tests:
                 done
           )"
           if [ -n "$changed_old_docs" ]; then
-            echo "Schema docs for old versions changed:"
+            echo "ERROR: Schema docs for old versions changed:"
             echo "$changed_old_docs"
-            echo "Bump the schema \$id and add a new generated page instead."
+            echo
+            echo "Schema documentation for old schema versions is immutable. To update docs for a schema change:"
+            echo '  1. Increment the "$id" value in the modified schema file.'
+            echo "  2. Restore the old doc file(s) listed above."
+            echo "  3. The new versioned doc page will be generated automatically by autofix."
             exit 1
           fi
 
