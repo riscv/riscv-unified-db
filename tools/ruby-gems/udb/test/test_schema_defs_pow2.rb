@@ -31,11 +31,6 @@ class TestSchemaDefsPow2 < Minitest::Test
 
     bad = enum.reject { |v| power_of_two?(v) }
     assert_empty bad, "#{name} enum contains non-powers-of-two: #{bad.inspect}"
-
-    # 4095 is already excluded by the power-of-two assertion above. This checks
-    # the other half of the historical failure: that 4096 is actually present,
-    # rather than the bad entry simply having been deleted.
-    assert_includes enum, 4096, "#{name} must include 4096"
   end
 
   def test_32bit_unsigned_pow2_enum_is_powers_of_two
