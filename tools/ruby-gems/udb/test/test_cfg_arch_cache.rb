@@ -35,13 +35,20 @@ class TestCfgArchCache < Minitest::Test
   class FakeCondition
     def initialize(results_by_cfg)
       @results_by_cfg = results_by_cfg
+      @calls = Hash.new(0)
+    end
+
+    def calls
+      @calls.dup
     end
 
     def could_be_satisfied_by_cfg_arch?(cfg_arch)
+      @calls[cfg_arch] += 1
       @results_by_cfg.fetch(cfg_arch)
     end
 
     def satisfied_by_cfg_arch?(cfg_arch)
+      @calls[cfg_arch] += 1
       @results_by_cfg.fetch(cfg_arch)
     end
 
@@ -67,7 +74,26 @@ class TestCfgArchCache < Minitest::Test
   end
 
   def make_cfg_arch(partially_configured: true)
-    ConfiguredArchitecture.new(partially_configured)
+    name = partially_configured ? "partial_cfg_#{object_id}_#{rand(1_000_000)}" : "full_cfg_#{object_id}_#{rand(1_000_000)}"
+    cfg_arch = ConfiguredArchitecture.allocate
+    cfg_arch.instance_variable_set(:@name, name)
+    cfg_arch.instance_variable_set(:@name_sym, name.to_sym)
+    cfg_arch.instance_variable_set(:@partially_configured, partially_configured)
+    def cfg_arch.partially_configured?
+      @partially_configured
+    end
+    def cfg_arch.hash
+      @name_sym.hash
+    end
+    def cfg_arch.eql?(other)
+      return false unless other.respond_to?(:name)
+
+      @name.eql?(other.name)
+    end
+    def cfg_arch.name
+      @name
+    end
+    cfg_arch
   end
 
   def make_csr(condition)
@@ -88,8 +114,12 @@ class TestCfgArchCache < Minitest::Test
     csr = make_csr(FakeCondition.new(cfg_true => true, cfg_false => false))
 
     assert_equal true, csr.exists_in_cfg?(cfg_true)
-    assert_equal false, csr.exists_in_cfg?(cfg_false)
     assert_equal true, csr.exists_in_cfg?(cfg_true)
+    assert_equal 1, csr.defined_by_condition.calls[cfg_true]
+
+    assert_equal false, csr.exists_in_cfg?(cfg_false)
+    assert_equal false, csr.exists_in_cfg?(cfg_false)
+    assert_equal 1, csr.defined_by_condition.calls[cfg_false]
   end
 
   def test_mmr_exists_in_cfg_is_keyed_by_cfg_arch
@@ -98,8 +128,12 @@ class TestCfgArchCache < Minitest::Test
     mmr = make_mmr(FakeCondition.new(cfg_true => true, cfg_false => false))
 
     assert_equal true, mmr.exists_in_cfg?(cfg_true)
-    assert_equal false, mmr.exists_in_cfg?(cfg_false)
     assert_equal true, mmr.exists_in_cfg?(cfg_true)
+    assert_equal 1, mmr.defined_by_condition.calls[cfg_true]
+
+    assert_equal false, mmr.exists_in_cfg?(cfg_false)
+    assert_equal false, mmr.exists_in_cfg?(cfg_false)
+    assert_equal 1, mmr.defined_by_condition.calls[cfg_false]
   end
 
   def test_optional_in_cfg_is_keyed_by_cfg_arch
@@ -108,7 +142,11 @@ class TestCfgArchCache < Minitest::Test
     probe = OptionalProbe.new(FakeCondition.new(cfg_true => Udb::SatisfiedResult::Maybe, cfg_false => Udb::SatisfiedResult::No))
 
     assert_equal true, probe.optional_in_cfg?(cfg_true)
-    assert_equal false, probe.optional_in_cfg?(cfg_false)
     assert_equal true, probe.optional_in_cfg?(cfg_true)
+    assert_equal 1, probe.defined_by_condition.calls[cfg_true]
+
+    assert_equal false, probe.optional_in_cfg?(cfg_false)
+    assert_equal false, probe.optional_in_cfg?(cfg_false)
+    assert_equal 1, probe.defined_by_condition.calls[cfg_false]
   end
 end

@@ -90,7 +90,10 @@ class Mmr < TopLevelDatabaseObject
   sig { params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
   def exists_in_cfg?(cfg_arch)
     @exists_in_cfg_cache ||= {}
-    @exists_in_cfg_cache[cfg_arch] ||= defined_by_condition.could_be_satisfied_by_cfg_arch?(cfg_arch)
+
+    return @exists_in_cfg_cache[cfg_arch] if @exists_in_cfg_cache.key?(cfg_arch)
+
+    @exists_in_cfg_cache[cfg_arch] = defined_by_condition.could_be_satisfied_by_cfg_arch?(cfg_arch)
   end
 
   # Stubs for Sorbet — CsrField.parent is T.any(Csr, Mmr) but these methods
