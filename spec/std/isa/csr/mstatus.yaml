@@ -436,6 +436,10 @@ fields:
           - name: F
           - name: S
     reset_value(): |
+      if (MISA_CSR_IMPLEMENTED && (CSR[misa].S == 1'b0) && (CSR[misa].F == 1'b0)) {
+        # must be read-only-0
+        return 0;
+      }
       return $array_size(MSTATUS_FS_LEGAL_VALUES) == 1 ? MSTATUS_FS_LEGAL_VALUES[0] : UNDEFINED_LEGAL;
     sw_write(csr_value): |
       if (MISA_CSR_IMPLEMENTED && (CSR[misa].S == 1'b0) && (CSR[misa].F == 1'b0)) {
