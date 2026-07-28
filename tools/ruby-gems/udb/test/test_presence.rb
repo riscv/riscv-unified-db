@@ -11,6 +11,7 @@ require_relative "../lib/udb/presence"
 class TestPresence < Minitest::Test
   def test_from_yaml_accepts_known_string_values
     assert_equal Udb::Presence::Mandatory, Udb::Presence.from_yaml("mandatory")
+    assert_equal Udb::Presence::Option, Udb::Presence.from_yaml("optional")
     assert_equal Udb::Presence::Option, Udb::Presence.from_yaml("option")
   end
 

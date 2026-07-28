@@ -26,7 +26,7 @@ module Udb
         case yaml
         when "mandatory"
           Mandatory
-        when "option"
+        when "optional", "option"
           Option
         else
           raise "Unrecognized presence string '#{yaml}'"
