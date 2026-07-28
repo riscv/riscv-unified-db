@@ -89,7 +89,7 @@ class Mmr < TopLevelDatabaseObject
   # @return [Boolean] whether or not the MMR is possibly implemented given the supplied config options
   sig { params(cfg_arch: ConfiguredArchitecture).returns(T::Boolean) }
   def exists_in_cfg?(cfg_arch)
-    @exists_in_cfg_cache ||= {}
+    @exists_in_cfg_cache ||= {}.compare_by_identity
 
     return @exists_in_cfg_cache[cfg_arch] if @exists_in_cfg_cache.key?(cfg_arch)
 
