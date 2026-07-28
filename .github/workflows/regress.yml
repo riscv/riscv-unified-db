@@ -876,13 +876,14 @@ jobs:
     steps:
       - name: Clone Github Repo Action
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Generate schema documentation
         run: ./bin/chore gen -f schema-docs
       - name: Check old schema MDX files were not modified
         run: |
-          git fetch --no-tags --depth=1 origin main
           base="$(git merge-base origin/main HEAD)"
           changed_old_docs="$(
             git diff --name-only --diff-filter=ACDMRT "$base" HEAD -- 'doc/docs/schemas/*/*.mdx' \

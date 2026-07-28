@@ -416,12 +416,13 @@ tests:
     ci_stage: pr
     tags:
       - smoke
+    checkout_with:
+      fetch-depth: 0
     test:
       - name: Generate schema documentation
         run: ./bin/chore gen -f schema-docs
       - name: Check old schema MDX files were not modified
         run: |
-          git fetch --no-tags --depth=1 origin main
           base="$(git merge-base origin/main HEAD)"
           changed_old_docs="$(
             git diff --name-only --diff-filter=ACDMRT "$base" HEAD -- 'doc/docs/schemas/*/*.mdx' \
