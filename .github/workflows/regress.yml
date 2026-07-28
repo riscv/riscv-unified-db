@@ -880,6 +880,25 @@ jobs:
         uses: ./.github/actions/mise-setup
       - name: Generate schema documentation
         run: ./bin/chore gen -f schema-docs
+      - name: Check old schema MDX files were not modified
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          base="$(git merge-base origin/main HEAD)"
+          changed_old_docs="$(
+            git diff --name-only --diff-filter=ACDMRT "$base" HEAD -- 'doc/docs/schemas/*/*.mdx' \
+              | while IFS= read -r doc; do
+                  schema="spec/schemas/$(basename "$doc" .mdx).json"
+                  version="$(basename "$(dirname "$doc")")"
+                  current_version="$(./bin/python -c 'import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.loads(p.read_text()).get("$id", "") if p.exists() else "")' "$schema")"
+                  [ "$version" = "$current_version" ] || printf '%s\n' "$doc"
+                done
+          )"
+          if [ -n "$changed_old_docs" ]; then
+            echo "Schema docs for old versions changed:"
+            echo "$changed_old_docs"
+            echo "Bump the schema \$id and add a new generated page instead."
+            exit 1
+          fi
 
   build-idl-doc:
     runs-on: ubuntu-latest
