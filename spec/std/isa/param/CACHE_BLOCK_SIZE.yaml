@@ -6,14 +6,11 @@
 $schema: param_schema.json#
 kind: parameter
 name: CACHE_BLOCK_SIZE
-description: "The observable size of a cache block, in bytes
-
-  "
+description: The observable size of a cache block, in bytes. A cache block is a
+  naturally aligned power-of-two (NAPOT) range of memory locations, per the CMO
+  specification.
 long_name: TODO
 schema:
-  # A cache block is a "naturally aligned power-of-two (or NAPOT) range of memory
-  # locations" (RISC-V CMO spec, Zicbom/Zicbop/Zicboz). The previous bounds
-  # (1 .. 2**64-1) admitted non-power-of-two sizes.
   $ref: schema_defs.json#/$defs/64bit_unsigned_pow2
 definedBy:
   extension:
