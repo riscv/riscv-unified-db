@@ -1,0 +1,5 @@
+﻿id: NEG_WARL_FIXED_LEGAL_SET
+kind: warl_word_but_isa_fixed
+expect_extract: false
+expect_params: 0
+skill_risk: WARL keyword alone must not force a free-standing architectural parameter when the legal set is ISA-fixed
