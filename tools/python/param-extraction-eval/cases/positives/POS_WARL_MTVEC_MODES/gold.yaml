@@ -6,7 +6,7 @@ schema:
   items:
     type: integer
     enum:
-    - 0
-    - 1
+      - 0
+      - 1
   minItems: 1
   uniqueItems: true

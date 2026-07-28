@@ -4,5 +4,5 @@ class: NORM_CSR_RW
 schema:
   type: string
   enum:
-  - ro
-  - rw
+    - ro
+    - rw
