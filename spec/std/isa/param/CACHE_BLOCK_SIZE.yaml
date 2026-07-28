@@ -11,9 +11,10 @@ description: "The observable size of a cache block, in bytes
   "
 long_name: TODO
 schema:
-  type: integer
-  minimum: 1
-  maximum: 18446744073709551615
+  # A cache block is a "naturally aligned power-of-two (or NAPOT) range of memory
+  # locations" (RISC-V CMO spec, Zicbom/Zicbop/Zicboz). The previous bounds
+  # (1 .. 2**64-1) admitted non-power-of-two sizes.
+  $ref: schema_defs.json#/$defs/64bit_unsigned_pow2
 definedBy:
   extension:
     anyOf:
