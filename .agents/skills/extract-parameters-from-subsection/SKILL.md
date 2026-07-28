@@ -56,8 +56,10 @@ Scan the normative text of the subsection for sentences that hand a value or beh
 
 - `UNSPECIFIED` / `is UNSPECIFIED` — the spec explicitly declines to fix a value (e.g., "The number of ASID bits is UNSPECIFIED").
 - `implementation-defined` / `IMPLEMENTATION-DEFINED` / `implementation-specific` — an implementation chooses (e.g., "the size of a cache block ... implementation-specific").
-- `WARL` (Write-Any-Read-Legal) — a parameter **only when the set of legal values is itself implementation-chosen**. The `WARL` label on its own is not a signal: a field can be WARL while the ISA fixes the legal set completely, in which case there is no implementation choice and no parameter. `mtvec.MODE` is a true positive (which modes are legal is up to the implementation); a WARL field whose only legal value is fixed by the ISA is not. Require the excerpt to show _who chooses the legal set_, not merely that the field is labelled WARL.
+- `WARL` (Write-Any-Read-Legal) / `WLRL` (Write-Legal-Read-Legal) — a field declared WARL or WLRL **is** a parameter; the parameter is its **set of legal values**. Do not require the excerpt to prove that the set is implementation-chosen before accepting the candidate. A set that the ISA happens to fix completely is a degenerate case of the legal-value classification, not a reason to reject the field. Emit the legal-value set as one of the classifications used by the UnifiedDB schema, and fall back to the schema's escape hatch when a field does not fit one.
 - `platform-specific` / `vendor-defined` / `custom` — decision delegated below the ISA.
+
+**WARL behaviour without the label.** Searching for the `WARL`/`WLRL` tokens under-reports: a field can have WARL behaviour without being declared as such. The clearest case is a read/write field that is fixed to zero under some circumstances — the set of values it will accept depends on the implementation or on configuration, which is exactly what a WARL legal-value set describes. Treat "this field reads as zero when …", "is read-only zero if …" and similar conditional-writability phrasing as a legal-value parameter even though no WARL token appears.
 
 **Contextual signals — a parameter only when paired with a quantity or a named field:**
 
@@ -68,7 +70,6 @@ Scan the normative text of the subsection for sentences that hand a value or beh
 
 **Negative controls — text that looks like a signal but is not a parameter.** Each of these has produced a plausible-looking false positive, so check a candidate against this list before keeping it:
 
-- **WARL with an ISA-fixed legal set** — see above. The word `WARL` is present, the legal values are not implementation-chosen.
 - **Fixed encoding or address conventions** — a CSR number, an opcode, a field position. Fixed by the ISA for every implementation, so nothing is delegated.
 - **Advice aimed at software** — `should` / `may` / `is recommended` addressed to compilers, assemblers or programmers describes how to _use_ the ISA, not a hardware choice.
 - **A bare `shall` constraint** — a requirement every implementation must meet delegates nothing. A constraint becomes a parameter only when the spec also says the implementation picks the value.
@@ -152,7 +153,7 @@ Run these checks and fix or drop any candidate that fails. They are mechanical o
 1. **Excerpt is real.** Search the subsection text for each `excerpt` and confirm it appears verbatim. A candidate whose excerpt cannot be found was hallucinated; drop it.
 2. **Excerpt is normative.** Confirm the excerpt does not start inside a block skipped in step 3 (`[NOTE]`, `NOTE:`, `----`, `....`, `[source]`).
 3. **Signal is named.** Every candidate must cite which signal from step 4 it matched. No signal, no candidate.
-4. **Negative controls applied.** Re-read each candidate against the negative-control list in step 4. For a `WARL` candidate, confirm the excerpt shows the implementation choosing the legal set.
+4. **Negative controls applied.** Re-read each candidate against the negative-control list in step 4. For a WARL/WLRL candidate, confirm a legal-value classification has been assigned (or the escape hatch used) rather than the candidate being dropped.
 5. **Uncertainty is recorded, not resolved.** Any `definedBy` that was inferred across multiple extensions, and any name-vs-meaning match that was not exact, carries `uncertain: true` and an `open_question`.
 6. **Names are well formed and unique** — UPPER_SNAKE_CASE, no duplicates within the file.
 
