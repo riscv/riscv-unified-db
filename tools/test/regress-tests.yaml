@@ -410,7 +410,7 @@ tests:
       - smoke
     test:
       - name: Check schema versions against published URLs
-        run: ./do gen:schemas && ./bin/ruby tools/scripts/check_schema_versions.rb
+        run: ./do gen:schemas && ./bin/python tools/scripts/check_schema_versions.py
 
   regress-schema-docs:
     ci_stage: pr

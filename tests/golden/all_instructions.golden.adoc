@@ -1,6 +1,6 @@
 = Instruction Appendix
 :doctype: book
-:wavedrom: /home/jcarlin/riscv-projects/riscv-unified-db/node_modules/.bin/wavedrom-cli
+:wavedrom: /Users/rajveerbishnoi/riscv-unified-db/node_modules/.bin/wavedrom-cli
 // Now the document header is complete and the wavedrom attribute is active.
 
 
@@ -14984,8 +14984,6 @@ Included in::
 
 | *Zcb*
 | any
-| *Zbb*
-| any
 |===
 
 
@@ -15091,7 +15089,7 @@ Included in::
 
 | *Zcb*
 | any
-| *Zbb*
+| *Zba*
 | any
 |===
 

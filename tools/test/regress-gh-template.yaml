@@ -46,7 +46,7 @@ jobs:
   regress-pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         # there are some symlinks in udb-gen that look broken without submodules
         with:
           submodules: true
@@ -59,7 +59,7 @@ jobs:
     needs: [build-llvm]
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: Get current LLVM submodule commit SHA
@@ -79,7 +79,7 @@ jobs:
     outputs:
       configs: ${{ steps.configs.outputs.configs }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Find configuration files
         id: configs
         run: |
@@ -96,7 +96,7 @@ jobs:
     needs: [regress-udb-unit-test]
     steps:
       - name: Clone Github Repo Action
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
       - name: download coverage
@@ -120,7 +120,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository (no submodules, shallow fetch)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: false
           fetch-depth: 1
@@ -175,7 +175,7 @@ jobs:
       run:
         working-directory: tools/eclipse/dev/org.xtext.udb.parent
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Temurin JDK 21
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
@@ -204,7 +204,7 @@ jobs:
       run:
         working-directory: tools/eclipse/udb-vscode
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
@@ -238,7 +238,7 @@ jobs:
       matrix:
         gem: [idlc, udb, udb_helpers]
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Copy the gem directory to resolve symlinks
         run: cp -L -r tools/ruby-gems/${{ matrix.gem }} gem-build-dir
       - name: Create the ${{ matrix.gem }} gem
@@ -266,7 +266,7 @@ jobs:
     container: ${{ matrix.container }}
     needs: create-gems
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - if: matrix.container == 'almalinux:8'
         name: Install ruby
         run: |

@@ -6,8 +6,8 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
-import sys
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -57,33 +57,56 @@ def create_release(schema_name: str, version: str, tag: str) -> None:
     )
 
 
-def asset_content(tag: str, asset_name: str) -> str | None:
+def asset_names(tag: str) -> set[str]:
+    result = subprocess.run(
+        ["gh", "release", "view", tag, "--json", "assets"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return {asset["name"] for asset in json.loads(result.stdout)["assets"]}
+
+
+def asset_content(tag: str, asset_name: str) -> bytes | None:
+    if asset_name not in asset_names(tag):
+        return None
+
     result = subprocess.run(
         ["gh", "release", "download", tag, "--pattern", asset_name, "--output", "-"],
         check=False,
         capture_output=True,
-        text=True,
     )
-    return result.stdout if result.returncode == 0 else None
+    if result.returncode != 0:
+        stderr = result.stderr.decode().strip()
+        raise RuntimeError(f"Failed to download {asset_name} from {tag}:\n{stderr}")
+
+    return result.stdout
 
 
 def publish_asset(tag: str, schema_file: Path) -> None:
     asset_name = schema_file.name
-    local_content = schema_file.read_text(encoding="utf-8").strip()
+    local_content = schema_file.read_bytes()
     remote_content = asset_content(tag, asset_name)
 
-    if remote_content is not None and remote_content.strip() == local_content:
+    if remote_content is None:
+        print(f"  Uploading new asset: {asset_name}")
+        subprocess.run(["gh", "release", "upload", tag, str(schema_file)], check=True)
+        return
+
+    if remote_content == local_content:
         print(f"  Unchanged: {asset_name}")
         return
 
-    action = "Uploading new" if remote_content is None else "Updating changed"
-    print(f"  {action} asset: {asset_name}")
-    subprocess.run(["gh", "release", "upload", tag, str(schema_file), "--clobber"], check=True)
+    raise RuntimeError(
+        f"Published schema asset differs for {tag}/{asset_name}.\n"
+        "Published schema versions are immutable; bump the schema $id instead of "
+        "overwriting this release."
+    )
 
 
 def main() -> None:
     if not GEN_SCHEMAS_DIR.is_dir():
-        sys.exit("gen/schemas does not exist; run './do gen:schemas' first")
+        raise FileNotFoundError("gen/schemas does not exist; run './do gen:schemas' first")
 
     for schema_name, version, version_dir in schema_versions(GEN_SCHEMAS_DIR):
         tag = f"schemas/{schema_name}/{version}"
