@@ -15,12 +15,6 @@ schema:
   type: integer
   minimum: 0
   maximum: 64
-requirements:
-  idl(): |
-    $array_includes?(SXLEN, 32) -> STVAL_WIDTH <= 32;
-  reason: |
-    `stval` is an SXLEN-bit register, so it cannot hold more than 32 bits
-    whenever S-mode can run with SXLEN == 32
 definedBy:
   extension:
     name: S
