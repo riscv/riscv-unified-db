@@ -32,6 +32,11 @@ def parse_args():
         help="Directory containing extension YAML files",
     )
     parser.add_argument(
+        "--exc-root",
+        default="../../../arch/exception_code/",
+        help="Directory containing exception_code YAML files",
+    )
+    parser.add_argument(
         "--output",
         default="riscv_decode_package.svh",
         help="Output SystemVerilog file name",
@@ -178,7 +183,7 @@ def main():
 
     # Load exception codes
     causes = load_exception_codes(
-        args.ext_dir,
+        args.exc_root,
         args.extensions,
         include_all=args.include_all,
         resolved_codes_file=args.resolved_codes,

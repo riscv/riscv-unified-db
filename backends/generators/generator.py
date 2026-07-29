@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import pprint
+import re
 
 from ruamel.yaml import YAML
 
@@ -486,17 +487,32 @@ def load_csrs(csr_root, enabled_extensions, include_all=False, target_arch="RV64
 
 
 def load_exception_codes(
-    ext_dir, enabled_extensions=None, include_all=False, resolved_codes_file=None
+    exc_root, enabled_extensions=None, include_all=False, resolved_codes_file=None
 ):
-    """Load exception codes from extension YAML files or pre-resolved JSON file."""
+    """Load exception codes from extension YAML files or pre-resolved JSON file.
+
+    exc_root: Path to the exception_code directory containing YAML files with kind: exception_code.
+
+    When include_all=True, loads all exception codes from YAML files regardless of
+    extension filtering. When include_all=False, uses resolved_codes_file if available
+    (which contains only codes from enabled extensions), otherwise falls back to YAML loading
+    with extension filtering.
+    """
     exception_codes = []
-    found_extensions = 0
     found_files = 0
 
     if enabled_extensions is None:
         enabled_extensions = []
-    # If we have a resolved codes file, use it instead of processing YAML files
-    if resolved_codes_file and os.path.exists(resolved_codes_file):
+
+    # exc_root is passed directly - no derivation needed
+    exc_dir = exc_root if exc_root else None
+    # Normalize path
+    if exc_dir:
+        exc_dir = os.path.normpath(exc_dir)
+
+    # If include_all=True, bypass resolved_codes_file and load directly from YAML files
+    if not include_all and resolved_codes_file and os.path.exists(resolved_codes_file):
+        # Use resolved codes file (only contains codes from enabled extensions)
         try:
             with open(resolved_codes_file, encoding="utf-8") as f:
                 resolved_codes = json.load(f)
@@ -505,8 +521,10 @@ def load_exception_codes(
                 num = code.get("num")
                 name = code.get("name")
                 if num is not None and name is not None:
+                    # Convert CamelCase to snake_case: "DoubleTrap" -> "double_trap"
+                    snake_name = re.sub(r"([a-z])([A-Z])", r"\1_\2", name)
                     sanitized_name = (
-                        name.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
+                        snake_name.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
                     )
                     exception_codes.append((num, sanitized_name))
 
@@ -526,16 +544,57 @@ def load_exception_codes(
 
         except Exception as e:
             logging.error(f"Error loading resolved codes file {resolved_codes_file}: {e}")
-    # Logging an error and skipping the exception cause generation if no resolved codes file found
-    else:
-        logging.error(f"Resolved codes file not found: {resolved_codes_file}")
-        return
+            # Fall through to YAML loading below
 
-    if found_extensions > 0:
-        logging.info(f"Found {found_extensions} extension definitions in {found_files} files")
-        logging.info(f"Added {len(exception_codes)} exception codes to the output")
-    else:
-        logging.warning(f"No extension definitions found in {ext_dir}")
+    # Load from exception_code YAML files directly
+    # This is used when include_all=True or when resolved_codes_file is not available
+    if exc_dir and os.path.isdir(exc_dir):
+        for dirpath, _, filenames in os.walk(exc_dir):
+            for fname in filenames:
+                if not fname.endswith(".yaml"):
+                    continue
+                found_files += 1
+                path = os.path.join(dirpath, fname)
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        data = YAML_SAFE.load(f)
+                except Exception as e:
+                    logging.error(f"Error parsing exception code file {path}: {e}")
+                    continue
+
+                if data.get("kind") != "exception_code":
+                    continue
+
+                ecode_name = data.get("name")
+                ecode_num = data.get("num")
+                if ecode_name is None or ecode_num is None:
+                    logging.warning(f"Exception code missing name or num in {path}")
+                    continue
+
+                # Check extension filtering unless include_all is True
+                if not include_all:
+                    definedBy = data.get("definedBy")
+                    if definedBy is not None:
+                        meets_ext_req = parse_extension_requirements(definedBy)
+                        if not meets_ext_req(enabled_extensions):
+                            logging.debug(
+                                f"Skipping exception code {ecode_name} because its extension is not enabled"
+                            )
+                            continue
+
+                # Convert CamelCase to snake_case: "DoubleTrap" -> "double_trap"
+                # First, insert underscore before uppercase letters that follow lowercase letters
+                snake_name = re.sub(r"([a-z])([A-Z])", r"\1_\2", ecode_name)
+                sanitized_name = (
+                    snake_name.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
+                )
+                exception_codes.append((ecode_num, sanitized_name))
+
+        if found_files > 0:
+            logging.info(f"Found {found_files} exception code files")
+
+    if found_files == 0:
+        logging.warning(f"No exception code definitions found in {exc_dir}")
 
     # Sort by exception code number and deduplicate
     seen_nums = set()
@@ -545,6 +604,7 @@ def load_exception_codes(
             seen_nums.add(num)
             unique_codes.append((num, name))
 
+    logging.info(f"Added {len(unique_codes)} exception codes to the output")
     return unique_codes
 
 

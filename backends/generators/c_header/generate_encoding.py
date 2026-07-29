@@ -188,6 +188,11 @@ def main():
         help="Directory containing extension YAML files",
     )
     parser.add_argument(
+        "--exc-root",
+        default="../../../arch/exception_code/",
+        help="Directory containing exception_code YAML files",
+    )
+    parser.add_argument(
         "--output",
         default="encoding.out.h",
         help="Output filename (default: encoding.out.h)",
@@ -237,9 +242,9 @@ def main():
     )
 
     # Load exception codes
-    logging.info(f"Loading exception codes from {args.ext_dir}")
+    logging.info(f"Loading exception codes from {args.exc_root}")
     causes = load_exception_codes(
-        args.ext_dir,
+        args.exc_root,
         args.extensions,
         include_all=args.include_all,
         resolved_codes_file=args.resolved_codes,

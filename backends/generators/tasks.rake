@@ -90,11 +90,12 @@ namespace :gen do
     inst_dir = cfg_arch.path / "inst"
     csr_dir = cfg_arch.path / "csr"
     ext_dir = cfg_arch.path / "ext"
+    exc_dir = cfg_arch.path / "exception_code"
 
     with_resolved_exception_codes(cfg_arch) do |resolved_codes|
       sh "uv run #{$root}/backends/generators/c_header/generate_encoding.py " \
          "--inst-dir=#{inst_dir} --csr-dir=#{csr_dir} --ext-dir=#{ext_dir} " \
-         "--resolved-codes=#{resolved_codes} " \
+         "--exc-root=#{exc_dir} --resolved-codes=#{resolved_codes} " \
          "--output=#{output_dir}encoding.out.h --include-all"
     end
   end
@@ -119,11 +120,12 @@ namespace :gen do
     inst_dir = cfg_arch.path / "inst"
     csr_dir = cfg_arch.path / "csr"
     ext_dir = cfg_arch.path / "ext"
+    exc_dir = cfg_arch.path / "exception_code"
 
     with_resolved_exception_codes(cfg_arch) do |resolved_codes|
       sh "uv run #{$root}/backends/generators/sverilog/sverilog_generator.py " \
          "--inst-dir=#{inst_dir} --csr-dir=#{csr_dir} --ext-dir=#{ext_dir} " \
-         "--resolved-codes=#{resolved_codes} " \
+         "--exc-root=#{exc_dir} --resolved-codes=#{resolved_codes} " \
          "--output=#{output_dir}riscv_decode_package.svh --include-all"
     end
   end
