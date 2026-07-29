@@ -13,7 +13,7 @@ description: |
    * big:     VS-mode data is always big endian
    * dynamic: VS-mode data can be either little or big endian,
               depending on the CSR field `hstatus.VSBE`
-long_name: Vs-mode data endianness
+long_name: VS-mode data endianness
 schema:
   type: string
   enum:
