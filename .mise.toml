@@ -18,8 +18,34 @@ RUBY_YJIT_ENABLE = "1"
 # Disable the CHECKSUMS section in lockfiles — checksums can't be fully populated
 # across all platforms (e.g. aarch64 variants on an x86 machine) so we opt out entirely.
 BUNDLE_LOCKFILE_CHECKSUMS = "false"
-# install at XDG_DATA_HOME:-~/.local/share/gem
-BUNDLE_PATH = "{{xdg_data_home}}/gem"
+
+[hooks]
+# Temporary migration shim for existing users with symlinks from the old shared-env setup.
+# This runs from existing post-merge/post-checkout hooks because they call `mise install`
+# when .mise.toml changes. Remove after some time has passed and everyone has migrated.
+postinstall = { shell = "bash -c", run = '''
+root="${MISE_PROJECT_ROOT:-$PWD}"
+
+if [[ -L "$root/.venv" ]]; then
+  venv_target=$(readlink "$root/.venv")
+  if [[ "$venv_target" == "${XDG_DATA_HOME:-$HOME/.local/share}/udb/venv-"* ]]; then
+    echo "mise: removing old shared .venv symlink"
+    rm -f "$root/.venv"
+    echo "mise: running uv sync"
+    "$root/bin/uv" sync
+  fi
+fi
+
+if [[ -L "$root/node_modules" ]]; then
+  node_modules_target=$(readlink "$root/node_modules")
+  if [[ "$node_modules_target" == "${XDG_DATA_HOME:-$HOME/.local/share}/udb/npm-"*/node_modules ]]; then
+    echo "mise: removing old shared node_modules symlink"
+    rm -f "$root/node_modules"
+    echo "mise: running npm ci"
+    "$root/bin/npm" ci
+  fi
+fi
+''' }
 
 [settings]
 ruby.compile = false

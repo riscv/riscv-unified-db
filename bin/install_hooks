@@ -39,12 +39,12 @@ fi
 
 if echo "$_changed" | grep -qF 'uv.lock'; then
   echo "⚙  uv.lock changed — syncing Python packages..."
-  "$ROOT/bin/.venv-deps"
+  (cd "$ROOT" && "$ROOT/bin/uv" sync)
 fi
 
 if echo "$_changed" | grep -qF 'package-lock.json'; then
   echo "⚙  package-lock.json changed — syncing npm packages..."
-  "$ROOT/bin/.npm-deps"
+  (cd "$ROOT" && "$ROOT/bin/npm" ci)
 fi
 HOOK
 chmod +x "$GIT_HOOKS_DIR/post-merge"
@@ -75,12 +75,12 @@ fi
 
 if echo "$_changed" | grep -qF 'uv.lock'; then
   echo "⚙  uv.lock changed — syncing Python packages..."
-  "$ROOT/bin/.venv-deps"
+  (cd "$ROOT" && "$ROOT/bin/uv" sync)
 fi
 
 if echo "$_changed" | grep -qF 'package-lock.json'; then
   echo "⚙  package-lock.json changed — syncing npm packages..."
-  "$ROOT/bin/.npm-deps"
+  (cd "$ROOT" && "$ROOT/bin/npm" ci)
 fi
 HOOK
 chmod +x "$GIT_HOOKS_DIR/post-checkout"

@@ -16,11 +16,6 @@ runs:
     - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4
       with:
         version: 2026.7.11
-    # Set bundler gem path before restoring the cache and before bin/setup,
-    # so bundle install (inside bin/setup) writes to the cacheable path.
-    - name: Set bundler PATH
-      shell: bash
-      run: bundle config set --local path 'vendor/bundle'
     # Write toolchain preference to .toolchain-local so bin/setup (section 7)
     # finds it and section 8 behaves correctly without prompting.
     - name: Configure toolchain
@@ -45,36 +40,22 @@ runs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ github.token }}
-    # Restore all four caches BEFORE bin/setup runs.  bin/setup has idempotency
-    # guards in each section (bundle check, extconf.rb file checks, shared venv/npm
-    # directory checks, uv sync lockfile check) that skip work when the cache hit
-    # already populated the relevant paths.  This means bin/setup completes in
-    # seconds on a cache hit without any separate install steps.
-    - name: Cache bundler gems
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-      with:
-        path: vendor/bundle
-        key: bundler-${{ runner.os }}-${{ hashFiles('.mise.toml', 'Gemfile.lock', 'tools/ruby-gems/*/Gemfile.lock', 'tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
+    # Cache downloaded artifacts only; let bundler, uv, and npm use their default
+    # install locations in the workspace/environment.
     - name: Cache udb native deps (z3, espresso, eqntott, must)
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: ~/.cache/udb
         key: udb-deps-${{ runner.os }}-${{ hashFiles('tools/ruby-gems/udb/lib/udb/Z3_VERSION', 'tools/ruby-gems/udb/lib/udb/ESPRESSO_VERSION', 'tools/ruby-gems/udb/lib/udb/EQNTOTT_VERSION', 'tools/ruby-gems/udb/lib/udb/MUST_VERSION') }}
-    # bin/.venv-deps installs to ~/.local/share/udb/venv-<hash>/ (not in-tree).
-    # Cache the uv artifact cache (for fast re-installs) and the shared venv dir.
     - name: Cache uv packages
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
-        path: |
-          ~/.cache/uv
-          ~/.local/share/udb/venv-*
+        path: ~/.cache/uv
         key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
-    # bin/.npm-deps installs to ~/.local/share/udb/npm-<hash>/node_modules and
-    # leaves a symlink at node_modules.  Cache the real install dir, not the symlink.
     - name: Cache npm packages
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
-        path: ~/.local/share/udb/npm-*
+        path: ~/.npm
         key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
     - name: Set up environment and install dependencies
       shell: bash
