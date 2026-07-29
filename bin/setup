@@ -2,8 +2,7 @@
 # shellcheck disable=SC2059
 # bin/setup — one-command developer setup for UnifiedDB.
 #
-# Run this once after cloning the repository. Safe to re-run at any time;
-# every step checks whether work is needed before doing it.
+# Run this once after cloning the repository. Safe to re-run at any time.
 
 ROOT=$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 cd "$ROOT" || exit 1
@@ -32,42 +31,7 @@ _info()    { printf "    ${_DIM}%s${_RESET}\n" "$1"; }
 printf "${_BOLD}=== UnifiedDB Setup ===${_RESET}\n"
 
 # ---------------------------------------------------------------------------
-# Install location overview
-# ---------------------------------------------------------------------------
-
-_XDG_DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
-_XDG_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}"
-
-_section "Install locations"
-printf "    UDB follows the XDG Base Directory specification.\n"
-printf "    The following directories will be used:\n\n"
-printf "    %-24s  %s\n" "mise tools:"         "${MISE_DATA_DIR:-$_XDG_DATA/mise}"
-printf "    %-24s  %s\n" "Ruby gems:"          "$_XDG_DATA/gem"
-printf "    %-24s  %s\n" "Python packages:"    "$_XDG_DATA/udb/venv-*/"
-printf "    %-24s  %s\n" "npm packages:"       "$_XDG_DATA/udb/npm-*/"
-printf "    %-24s  %s\n" "Caches/native deps:" "$_XDG_CACHE/udb/"
-printf "\n"
-
-if [[ -t 0 ]] && [[ -z "${GITHUB_ACTIONS:-}" ]]; then
-  printf "    Press ${_BOLD}Enter${_RESET} to continue, or type ${_BOLD}m${_RESET} to see how to change these paths: "
-  read -r _SETUP_LOC_CHOICE
-  if [[ "${_SETUP_LOC_CHOICE,,}" == m* ]]; then
-    printf "\n"
-    printf "    To change install paths, export XDG environment variables in your shell\n"
-    printf "    profile (${_CYAN}~/.bashrc${_RESET}, ${_CYAN}~/.zshrc${_RESET}, etc.) before re-running setup:\n\n"
-    printf "    ${_CYAN}export XDG_DATA_HOME=\"\$HOME/.local/share\"${_RESET}   # gems and npm packages\n"
-    printf "    ${_CYAN}export XDG_CACHE_HOME=\"\$HOME/.cache\"${_RESET}        # caches and native deps\n\n"
-    printf "    For tool-specific overrides (take precedence over XDG_DATA_HOME):\n\n"
-    printf "    ${_CYAN}export MISE_DATA_DIR=\"...\"${_RESET}   # mise tools only\n"
-    printf "    ${_CYAN}export BUNDLE_PATH=\"...\"${_RESET}     # Ruby gems only\n\n"
-    printf "    After updating your profile, open a new shell (or source it), then re-run:\n\n"
-    printf "        ${_BOLD}bin/setup${_RESET}\n\n"
-    exit 0
-  fi
-fi
-
-# ---------------------------------------------------------------------------
-# 1. Bootstrap mise via bin/mise
+# Bootstrap mise via bin/mise
 # ---------------------------------------------------------------------------
 
 _section "mise (tool version manager)"
@@ -83,7 +47,7 @@ fi
 _ok "mise ready ($("$MISE_BIN" --version 2>/dev/null | head -1))"
 
 # ---------------------------------------------------------------------------
-# 2. Install tool versions via mise
+# Install tool versions via mise
 # ---------------------------------------------------------------------------
 
 _section "Tool versions (Ruby, Node.js, uv, CMake, …)"
@@ -111,7 +75,7 @@ fi
 _ok "All tool versions installed"
 
 # ---------------------------------------------------------------------------
-# 3. Ruby gems
+# Ruby gems
 # ---------------------------------------------------------------------------
 
 _section "Ruby gems"
@@ -128,7 +92,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Native dependencies (z3, espresso, eqntott, must)
+# Native dependencies (z3, espresso, eqntott, must)
 # ---------------------------------------------------------------------------
 
 _section "Native dependencies (z3, espresso, eqntott, must)"
@@ -146,27 +110,51 @@ fi
 _ok "Native dependencies ready"
 
 # ---------------------------------------------------------------------------
-# 5. Python packages (uv installs Python itself if needed)
+# Python packages (uv installs Python itself if needed)
 # ---------------------------------------------------------------------------
 
 _section "Python packages (uv-managed Python)"
 
-if ! "$ROOT/bin/.venv-deps"; then
-  exit 1
+# Temporary migration shim for existing users with symlinks from the old shared-env setup.
+if [[ -L "$ROOT/.venv" ]]; then
+  _VENV_TARGET=$(readlink "$ROOT/.venv")
+  if [[ "$_VENV_TARGET" == "${XDG_DATA_HOME:-$HOME/.local/share}/udb/venv-"* ]]; then
+    _run "Removing old shared .venv symlink..."
+    rm -f "$ROOT/.venv"
+  fi
 fi
 
+_run "Running uv sync..."
+if ! "$ROOT/bin/uv" sync; then
+  printf "\nERROR: uv sync failed.\n" >&2
+  exit 1
+fi
+_ok "Python packages installed"
+
 # ---------------------------------------------------------------------------
-# 6. npm packages
+# npm packages
 # ---------------------------------------------------------------------------
 
 _section "npm packages"
 
-if ! "$ROOT/bin/.npm-deps"; then
-  exit 1
+# Temporary migration shim for existing users with symlinks from the old shared-env setup.
+if [[ -L "$ROOT/node_modules" ]]; then
+  _NODE_MODULES_TARGET=$(readlink "$ROOT/node_modules")
+  if [[ "$_NODE_MODULES_TARGET" == "${XDG_DATA_HOME:-$HOME/.local/share}/udb/npm-"*/node_modules ]]; then
+    _run "Removing old shared node_modules symlink..."
+    rm -f "$ROOT/node_modules"
+  fi
 fi
 
+_run "Running npm ci..."
+if ! "$ROOT/bin/npm" ci; then
+  printf "\nERROR: npm ci failed.\n" >&2
+  exit 1
+fi
+_ok "npm packages installed"
+
 # ---------------------------------------------------------------------------
-# 7. C++ toolchain preference
+# C++ toolchain preference
 # ---------------------------------------------------------------------------
 
 _section "C++ toolchain"
@@ -229,7 +217,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 8. Pull or build toolchain container if needed
+# Pull or build toolchain container if needed
 # ---------------------------------------------------------------------------
 
 if [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
@@ -253,7 +241,7 @@ if [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 9. Git hooks
+# Git hooks
 # ---------------------------------------------------------------------------
 
 _section "Git hooks"

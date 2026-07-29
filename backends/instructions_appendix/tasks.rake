@@ -118,13 +118,13 @@ namespace :test do
       puts "PASSED"
     else
       warn <<~MSG
-        The golden output for the instruction appendix has changed. If this is expected, run
+              The golden output for the instruction appendix has changed. If this is expected, run
 
-        cp gen/instructions_appendix/all_instructions.adoc tests/golden/all_instructions.golden.adoc
-        git add tests/golden/all_instructions.golden.adoc
+              cp gen/instructions_appendix/all_instructions.adoc tests/golden/all_instructions.golden.adoc
+              git add tests/golden/all_instructions.golden.adoc
 
-        And commit
-      MSG
+              And commit
+            MSG
       exit 1
     end
   end
