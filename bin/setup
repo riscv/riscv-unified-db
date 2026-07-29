@@ -31,7 +31,7 @@ _info()    { printf "    ${_DIM}%s${_RESET}\n" "$1"; }
 printf "${_BOLD}=== UnifiedDB Setup ===${_RESET}\n"
 
 # ---------------------------------------------------------------------------
-# 1. Bootstrap mise via bin/mise
+# Bootstrap mise via bin/mise
 # ---------------------------------------------------------------------------
 
 _section "mise (tool version manager)"
@@ -47,7 +47,7 @@ fi
 _ok "mise ready ($("$MISE_BIN" --version 2>/dev/null | head -1))"
 
 # ---------------------------------------------------------------------------
-# 2. Install tool versions via mise
+# Install tool versions via mise
 # ---------------------------------------------------------------------------
 
 _section "Tool versions (Ruby, Node.js, uv, CMake, …)"
@@ -75,7 +75,7 @@ fi
 _ok "All tool versions installed"
 
 # ---------------------------------------------------------------------------
-# 3. Ruby gems
+# Ruby gems
 # ---------------------------------------------------------------------------
 
 _section "Ruby gems"
@@ -92,7 +92,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Native dependencies (z3, espresso, eqntott, must)
+# Native dependencies (z3, espresso, eqntott, must)
 # ---------------------------------------------------------------------------
 
 _section "Native dependencies (z3, espresso, eqntott, must)"
@@ -110,7 +110,7 @@ fi
 _ok "Native dependencies ready"
 
 # ---------------------------------------------------------------------------
-# 5. Python packages (uv installs Python itself if needed)
+# Python packages (uv installs Python itself if needed)
 # ---------------------------------------------------------------------------
 
 _section "Python packages (uv-managed Python)"
@@ -132,7 +132,7 @@ fi
 _ok "Python packages installed"
 
 # ---------------------------------------------------------------------------
-# 6. npm packages
+# npm packages
 # ---------------------------------------------------------------------------
 
 _section "npm packages"
@@ -154,7 +154,7 @@ fi
 _ok "npm packages installed"
 
 # ---------------------------------------------------------------------------
-# 7. C++ toolchain preference
+# C++ toolchain preference
 # ---------------------------------------------------------------------------
 
 _section "C++ toolchain"
@@ -217,7 +217,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 8. Pull or build toolchain container if needed
+# Pull or build toolchain container if needed
 # ---------------------------------------------------------------------------
 
 if [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
@@ -241,7 +241,7 @@ if [[ "${UDB_TOOLCHAIN_CONTAINER:-0}" = "1" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 9. Git hooks
+# Git hooks
 # ---------------------------------------------------------------------------
 
 _section "Git hooks"
