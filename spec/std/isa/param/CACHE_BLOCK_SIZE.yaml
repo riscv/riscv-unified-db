@@ -7,8 +7,7 @@ $schema: param_schema.json#
 kind: parameter
 name: CACHE_BLOCK_SIZE
 description: The observable size of a cache block, in bytes. A cache block is a
-  naturally aligned power-of-two (NAPOT) range of memory locations, per the CMO
-  specification.
+  naturally aligned power-of-two (NAPOT) range of memory.
 long_name: cache block size
 schema:
   type: integer
