@@ -50,14 +50,21 @@ module Idl
 
     def ==(other)
       return false unless other.is_a?(Type)
+      return false unless @kind == other.kind
 
-      case other.kind
+      case @kind
+      when :void, :boolean, :string, :dontcare
+        true
       when :bits
-        @kind == :bits && @width == other.width
-      when :enum_ref
-        @kind == :enum_ref && T.must(@enum_class).name == other.name
+        @width == other.width
+      when :enum, :enum_ref, :struct, :csr, :bitfield, :function
+        name == other.name
+      when :array
+        @width == other.width && T.must(@sub_type) == T.must(other.sub_type)
+      when :tuple
+        @tuple_types == other.tuple_types
       else
-        raise "TODO: Type == for #{other.kind}"
+        raise "TODO: Type == for #{@kind}"
       end
     end
 

@@ -63,11 +63,11 @@ namespace :prm do
     puts "Opening PDF: #{pdf_path}"
     case RbConfig::CONFIG['host_os']
     when /linux/
-      system("xdg-open #{pdf_path} &")
+      spawn("xdg-open", pdf_path.to_s)
     when /darwin/
-      system("open #{pdf_path}")
+      system("open", pdf_path.to_s)
     when /mswin|mingw/
-      system("start \"\" #{pdf_path}")
+      system("cmd", "/c", "start", '""', pdf_path.to_s)
     else
       puts "Please open: #{pdf_path}"
     end
