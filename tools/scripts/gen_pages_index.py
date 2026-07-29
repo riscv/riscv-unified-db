@@ -10,7 +10,7 @@ import argparse
 import json
 import os
 import re
-from datetime import date
+from datetime import UTC, datetime
 from html import escape
 from pathlib import Path
 from urllib.parse import quote
@@ -37,7 +37,7 @@ def schema_index_html(deploy_dir: Path, pages_url: str) -> str:
     html_lines: list[str] = []
     for schema_name, versions in sorted(schemas.items()):
         if not isinstance(versions, list):
-            raise ValueError(
+            raise TypeError(
                 f"{schema_index_path}: expected versions for {schema_name} to be a list"
             )
         if not versions:
@@ -81,7 +81,7 @@ def render_index(deploy_dir: Path, template_path: Path) -> str:
         "GITHUB_SHA": escape(os.environ.get("GITHUB_SHA", ""), quote=True),
         "PAGES_URL": escape(pages_url, quote=True),
         "SCHEMA_INDEX_HTML": schema_index_html(deploy_dir, pages_url),
-        "TODAY": date.today().isoformat(),
+        "TODAY": datetime.now(UTC).date().isoformat(),
     }
     return render_template(template_path, replacements)
 
