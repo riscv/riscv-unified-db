@@ -8,7 +8,7 @@ kind: parameter
 name: ELEN
 description: |
   The maximum size in bits of a vector element that any operation can produce or consume.
-long_name: TODO
+long_name: Maximum vector element size
 schema:
   type: integer
 #    requirements:
