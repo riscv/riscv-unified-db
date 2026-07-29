@@ -32,6 +32,7 @@ All patches must meet the UnifiedDB code standards. This includes:
 * Pass regression tests
 ** run locally as `./bin/regress --all`...though this will take a while to run sequentially. These will also run in GitHub automatically.
 * Use appropriate commit messages
+* Sign off every commit under the <<dco,Developer Certificate of Origin>>
 * Go through code review as a Pull Request
 
 === Regression tests
@@ -52,6 +53,81 @@ Fixes #<issue number>
 Closes #<issue number>
 ```
 
+[[dco]]
+=== Developer Certificate of Origin (DCO)
+
+To uphold licensing criteria and demonstrate good faith, this project requires that every commit follow the Developer Certificate of Origin (DCO) process.
+
+The DCO is an attestation appended to every contribution from each author.
+In the commit message, the author adds a `Signed-off-by` statement, thereby accepting the DCO.
+When an author submits a patch, they affirm that they possess the right to submit the patch under the <<legal,license the project uses>>.
+The DCO agreement is reproduced below and is also published at https://developercertificate.org[developercertificate.org].
+
+The `DCO Check` GitHub workflow runs on every Pull Request and fails if any commit is missing a sign-off.
+Commits authored by bots (for example, `autofix-ci[bot]` or Renovate) are exempt.
+
+....
+Developer's Certificate of Origin 1.1
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b), or (c), and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
+....
+
+==== Sign-off methods
+
+The DCO requires a sign-off message in the following format on every commit in the Pull Request:
+
+```
+Signed-off-by: Your Name <your.email@example.com>
+```
+
+Please use your real name in the sign-off message, and make sure the name and email address match those associated with your GitHub account.
+
+Manual method::
+Pass `-s` (or `--signoff`) to `git commit`:
++
+```bash
+git commit -s -m "fix(csr): correct mstatus.FS reset value"
+```
++
+If you forget the sign-off, amend the previous commit with `git commit --amend -s`.
+To sign off an entire branch, use `git rebase --signoff main`.
+If you have already pushed, you will need to force push afterward with `git push -f`.
+
+Automated template method (easier)::
+Save a file (for example, `~/.gitmessage`) containing your sign-off line:
++
+```
+Signed-off-by: Your Name <your.email@example.com>
+```
++
+Then configure git to use it:
++
+```bash
+git config --global commit.template ~/.gitmessage
+```
+
 === Code review
 
 All Pull Requests must go through the code review process.
@@ -62,6 +138,7 @@ All Pull Requests require approval by at least one maintainer.
 
 If you are looking to contribute but are unsure what to do, browse through the https://github.com/riscv/riscv-unified-db/issues[issues]. We try to keep them tagged by area and mark easier tasks with "good first issue".
 
+[[legal]]
 == Legal
 
 All contributions to UnifiedDB are by default made under the xref:LICENSE-BSD-3-Clause-Clear.txt[BSD-3-Clause-Clear license].
