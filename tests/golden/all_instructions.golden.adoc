@@ -1,6 +1,6 @@
 = Instruction Appendix
 :doctype: book
-:wavedrom: /Users/rajveerbishnoi/riscv-unified-db/node_modules/.bin/wavedrom-cli
+:wavedrom: /home/jcarlin/riscv-projects/riscv-unified-db/bin/wavedrom
 // Now the document header is complete and the wavedrom attribute is active.
 
 
