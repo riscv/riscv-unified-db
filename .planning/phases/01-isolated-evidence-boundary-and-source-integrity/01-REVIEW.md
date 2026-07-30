@@ -1,115 +1,145 @@
 ---
 phase: 01-isolated-evidence-boundary-and-source-integrity
-reviewed: 2026-07-30T21:46:42Z
+reviewed: 2026-07-30T22:07:48Z
 depth: standard
-files_reviewed: 10
+files_reviewed: 13
 files_reviewed_list:
+  - experiments/specchoice-v1.3.2/baselines/phase-start-v5-gap-closure.json
   - experiments/specchoice-v1.3.2/receipts/boundary-restart-v5.json
   - experiments/specchoice-v1.3.2/config/boundary_allowlist-v5-gap-closure.json
-  - experiments/specchoice-v1.3.2/baselines/phase-start-v5-gap-closure.json
   - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v5.json
   - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v5.md
   - experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py
-  - experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py
+  - experiments/specchoice-v1.3.2/src/specchoice_evidence/bundle.py
   - experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py
+  - experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py
+  - experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py
+  - experiments/specchoice-v1.3.2/tests/test_bundle_verifier.py
   - experiments/specchoice-v1.3.2/tests/test_filesystem_boundary.py
   - experiments/specchoice-v1.3.2/tests/test_receipts.py
 findings:
-  critical: 1
+  critical: 2
   warning: 0
   info: 0
-  total: 1
+  total: 2
 status: issues_found
 ---
 
 # Phase 01: Code Review Report
 
-**Reviewed:** 2026-07-30T21:46:42Z
+**Reviewed:** 2026-07-30T22:07:48Z
 **Depth:** standard
-**Files Reviewed:** 10
+**Files Reviewed:** 13
 **Status:** issues_found
 
 ## Summary
 
-This iteration reviewed the same ten v5-boundary files after commits `2b878a2c`,
-`20226897`, and `e5a97340`. The two prior implementation defects are fixed:
-the active baseline/restart defaults are absolute v5 paths from either repository
-or experiment cwd, v5 without restart fails closed, and both write/accept and
-finalization enforce the decision's receipt-basis hash.
+Fourth independent review of `35302680`, `e780289b`, and `55a7963e` found
+that the new proposal-only basis command correctly separates a full,
+revision-pinned committed projection from the moving current-state gate. It is
+read-only, cannot self-approve a decision, and the existing v5 decision/receipt
+basis mismatch correctly fails closed with `LOCAL_RECEIPT_BASIS_MISMATCH`.
 
-The existing decision basis
-`32d6146ad1e6a75d8a83b29bdb82ed80289f3a16d4c1ddf1cdd838fbc71c399a`
-does not match the existing v5 receipt basis
-`f402e860e4dd31dd0af1d21bf3b16740d5357e6fc9adabada3cafdb3306ef8d8`.
-`finalize-review` now correctly rejects that pair with
-`LOCAL_RECEIPT_BASIS_MISMATCH`; this is not a bypass. The accepted source
-identity, its immutable artifacts, and `external_publication_authorized:false`
-remain unchanged.
+The immutable v5 baseline/restart/allowlist and v5 receipt/Markdown remain
+canonical. The accepted identity remains
+`source-contract-v2-pr2192-86a0021b-verifier-rooted-v1` with the recorded
+core/root/snapshot hashes, and external publication is still false.
 
-However, a replacement authorized decision/receipt cannot be created through a
-stable, formal frozen-basis workflow. This is a code blocker, not merely pending
-human authorization.
+Two critical bypasses remain: finalization still accepts the legacy schema-2
+pair as a current pass, and the current combined boundary gate misses an
+out-of-boundary file that was committed and then deleted before finalization.
+The exact-basis human authorization checkpoint must not open yet.
 
 ## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: No constructible, revision-pinned v5 receipt-basis workflow
+### CR-01: `finalize-review` still promotes the historical schema-2 receipt as a current pass
 
-**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py:404-473`, `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py:301-339`, `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py:296-345`
+**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py:608-689`, `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py:296-365`
 
-**Issue:** The fix correctly rejects a basis mismatch, but it provides no formal
-CLI command that computes and freezes the receipt basis for an exact reviewed
-commit before a new decision and receipt are added. `check-boundary` accepts
-`--reviewed-revision` but only emits classifications, not the basis
-(`cli.py:97-116`). More importantly, `check_boundary()` always merges
-`capture_live_state(root)` even when a revision is supplied
-(`baseline.py:308-312`), while the write and accept paths call it with the
-implicit moving `HEAD` (`cli.py:412`, `459`) and expose no reviewed-revision
-argument. The local-decision schema has no revision/projection binding
-(`source_contract.py:299-345`).
+**Issue:** The new active issuance path rejects schema-2 authority in
+`_validate_local_mvp_receipt_basis()` (`cli.py:513-518`), but
+`command_finalize_review()` accepts receipt schemas 2/3/4 and explicitly loads
+the decision with `allow_historical=True` (`cli.py:611-643`, `649-663`). It
+does not require a schema-4 receipt and schema-3 revision-pinned decision.
 
-Consequently, calculating a basis before creating a new decision/receipt is not
-replayable: the new files are in the allowed experiment root and change the
-classification list used by `local_receipt_basis_sha256()`
-(`receipt.py:64-84`). Calculating after adding them instead computes a different
-basis. There is also no CLI output that a reviewer can independently place into
-a canonical decision without importing a private Python helper. The current
-`LOCAL_RECEIPT_BASIS_MISMATCH` is therefore correctly fail-closed, but there is
-no safe, supported route to issue the next authorized receipt.
+On the current checkout, this command succeeds and emits a machine-eligible
+pass for the old authority:
 
-**Fix:** Add a formal, non-mutating `compute-local-mvp-receipt-basis` command
-that requires a full immutable `--reviewed-revision`, exact baseline,
-environment decision, and approved generation; it must emit canonical basis
-inputs and the resulting digest evaluated against that revision. Extend the
-local-acceptance decision (new schema version, retaining schema-2 read
-compatibility only for explicitly selected historical evidence) with the
-resolved commit and basis/projection hash. Make `accept-local-mvp` and
-`write-local-mvp-receipt` recompute exactly that pinned projection, and make
-`finalize-review` verify the same binding. Preserve a separate fail-closed live
-state check so uncommitted/staged changes cannot be silently excluded from the
-gate. Add regression tests that (1) freeze at a named commit, (2) add the
-decision and receipt afterwards, and (3) still reproduce the frozen basis while
-rejecting a moving, unrelated, or dirty revision.
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m specchoice_evidence.cli \
+  finalize-review --decision receipts/reviewer-boundary-decision.json \
+  --receipt receipts/integrity-receipt.json --markdown receipts/integrity-receipt.md
+# {"outcome":"pass",...}
+```
 
-## Blocking Human Authorization (not a code finding)
+That pair is schema-2 and carries the old basis `32d6146a...`; it bypasses the
+new exact-basis human checkpoint even though the schema-3 v5 receipt correctly
+fails it. An explicit receipt pathname is not a sufficient historical-only
+guard because the command's success result is indistinguishable from active
+phase finalization.
 
-After CR-01 is fixed, a reviewer must issue a new canonical decision carrying
-the formal command's exact v5 revision and basis evidence, then create and
-finalize the new receipt. The old decision and existing v5 receipt must not be
-manually patched or treated as accepted. Until that receipt finalizes, Phase 01
-is not ready for independent phase verification.
+**Fix:** Make `finalize-review` for the active v5 route require receipt schema
+4 and decision schema 3, including the revision and committed-projection
+bindings. Move schemas 2/3 to a separate read-only historical-verification
+command (or an explicit historical mode that can never emit `outcome: pass` or
+advance phase state). Add a regression that the exact command above fails with
+a stable `HISTORICAL_RECEIPT_NOT_FINALIZABLE` diagnostic.
+
+### CR-02: A committed-and-reverted out-of-boundary change is invisible to both frozen and current gates
+
+**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py:205-238`, `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py:262-304`, `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py:437-445`
+
+**Issue:** `capture_committed_history()` is implemented as one net
+`git diff --raw start reviewed` (`baseline.py:210-214`), rather than traversing
+the commits in the range. If a forbidden file is added in one post-baseline
+commit and deleted in a later clean commit, the range's final tree has no path
+delta. The function returns no record, so both
+`committed_boundary_projection()` and `check_current_boundary()` report zero
+blockers. This contradicts the requirement that any later clean committed
+out-of-boundary path remains blocking.
+
+Reproduction in a disposable repository: baseline -> commit `outside.txt` ->
+commit deletion of `outside.txt`; `git diff --raw --no-renames
+--diff-filter=AMDT <baseline> HEAD` is empty even though both forbidden commits
+remain in history.
+
+**Fix:** Build committed history by walking every commit in
+`start..reviewed` (including the relevant merge-parent handling) and aggregate
+raw A/M/D/T records per path. Preserve at least one history event for an
+added-then-deleted path and classify an out-of-boundary path as blocking even
+when its final tree entry is absent. Add a test that commits, removes, and then
+successfully reaches a clean worktree; assert both the frozen projection at a
+post-delete revision and `check_current_boundary()` remain blocking.
+
+## Verified Non-Findings
+
+- `compute-local-mvp-receipt-basis` has no write path and emits
+  `proposal_only:true`; it cannot grant approval itself.
+- The frozen projection remains unchanged after later allowed decision/receipt
+  commits, while a persistent clean committed violation is detected by the
+  separate current gate.
+- The old decision with the existing v5 receipt rejects with
+  `LOCAL_RECEIPT_BASIS_MISMATCH`; that behavior is the correct human gate, not
+  a defect.
+- Accepted-bundle identity and `external_publication_authorized:false` did not
+  drift.
 
 ## Validation Performed
 
-- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests.test_receipts -v` — 12 passed.
-- `check-boundary --reviewed-revision HEAD` — v5 baseline, 0 blockers; only
-  `.DS_Store` records are non-blocking OS metadata.
-- `finalize-review` against the old decision and v5 receipt — rejected with
-  `LOCAL_RECEIPT_BASIS_MISMATCH`, as required.
+- Full stdlib suite: 68 tests passed.
+- `compute-local-mvp-receipt-basis` at the full current commit produced a
+  canonical `proposal_only` result from the experiment cwd.
+- v5 JSON and deterministic Markdown projection validated.
+- Historical schema-2 finalization was executed and reproduced the CR-01
+  bypass; the old-decision/v5-receipt finalization correctly returned
+  `LOCAL_RECEIPT_BASIS_MISMATCH`.
+- A disposable Git history reproduction confirmed the CR-02 net-diff blind
+  spot.
 
 ---
 
-_Reviewed: 2026-07-30T21:46:42Z_
+_Reviewed: 2026-07-30T22:07:48Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
