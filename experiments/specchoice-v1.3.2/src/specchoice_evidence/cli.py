@@ -16,6 +16,7 @@ from .baseline import (
     load_baseline,
     validate_restart_lineage,
 )
+from .receipt import ReceiptError, build_blocked_receipt, validate_receipt, write_receipt_package
 from .bundle import construct_candidate, publish_accepted, verify_candidate
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
@@ -319,6 +320,44 @@ def command_publish_accepted(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_write_integrity_receipt(args: argparse.Namespace) -> int:
+    """Write the canonical fail-closed receipt for the currently rejected source route."""
+    repository = _repository_root(Path.cwd())
+    baseline = args.baseline if args.baseline.is_absolute() else Path.cwd() / args.baseline
+    environment = (
+        args.environment_decision
+        if args.environment_decision.is_absolute()
+        else Path.cwd() / args.environment_decision
+    )
+    rejected = args.rejected_attempt if args.rejected_attempt.is_absolute() else Path.cwd() / args.rejected_attempt
+    boundary = check_boundary(repository, baseline)
+    receipt = build_blocked_receipt(
+        boundary.baseline_sha256,
+        sha256_bytes(environment.read_bytes()),
+        sha256_bytes(rejected.read_bytes()),
+        boundary.classifications,
+    )
+    result = write_receipt_package(receipt, args.receipt, args.markdown)
+    _print_json(result)
+    return 0 if result["outcome"] == "pass" and result["reviewer_package_complete"] else 2
+
+
+def command_finalize_review(args: argparse.Namespace) -> int:
+    """Refuse to finalize unless a reviewer decision and already-passing receipt exist."""
+    receipt = validate_receipt(args.receipt)
+    if not args.decision.is_file():
+        raise ReceiptError("REVIEW_DECISION_MISSING")
+    decision = json.loads(args.decision.read_text(encoding="utf-8"))
+    if not isinstance(decision, dict) or decision.get("disposition") != "approved":
+        raise ReceiptError("REVIEW_NOT_APPROVED")
+    if receipt["outcome"] != "pass" or not receipt["reviewer_package_complete"]:
+        raise ReceiptError("REVIEW_MACHINE_GATE_NOT_ELIGIBLE")
+    if args.markdown.read_text(encoding="utf-8") != __import__("specchoice_evidence.receipt", fromlist=["render_markdown"]).render_markdown(receipt):
+        raise ReceiptError("REVIEW_MARKDOWN_MISMATCH")
+    _print_json({"outcome": "pass", "receipt_sha256": receipt["receipt_sha256"]})
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-evidence")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -411,6 +450,18 @@ def build_parser() -> argparse.ArgumentParser:
     publish = commands.add_parser("publish-accepted")
     publish.add_argument("--decision", type=Path, default=Path("receipts/source-publication-decision.json"))
     publish.set_defaults(handler=command_publish_accepted)
+    integrity = commands.add_parser("write-integrity-receipt")
+    integrity.add_argument("--baseline", type=Path, default=_default_active_baseline())
+    integrity.add_argument("--environment-decision", type=Path, default=Path("receipts/environment-decision.json"))
+    integrity.add_argument("--rejected-attempt", type=Path, default=Path("bundles/rejected/pr-2192-current-head/attempt-receipt.json"))
+    integrity.add_argument("--receipt", type=Path, default=Path("receipts/integrity-receipt.json"))
+    integrity.add_argument("--markdown", type=Path, default=Path("receipts/integrity-receipt.md"))
+    integrity.set_defaults(handler=command_write_integrity_receipt)
+    finalize = commands.add_parser("finalize-review")
+    finalize.add_argument("--decision", type=Path, required=True)
+    finalize.add_argument("--receipt", type=Path, required=True)
+    finalize.add_argument("--markdown", type=Path, required=True)
+    finalize.set_defaults(handler=command_finalize_review)
     return parser
 
 
