@@ -27,6 +27,7 @@ from .source_contract import (
     require_source_extraction_authorization,
     validate_source_publication_decision,
 )
+from .verify import _bundle_artifacts, embed_verifier_artifacts
 
 
 class BundleError(ValueError):
@@ -246,6 +247,8 @@ def construct_candidate(decision: object, proposal: object, git_repository: Path
     temporary = Path(tempfile.mkdtemp(prefix=f".{generation}.staging-", dir=candidates_root))
     try:
         core, artifacts = _core_and_artifacts(snapshots, files, temporary, git_repository)
+        core["bundle_artifacts"] = embed_verifier_artifacts(temporary)
+        artifacts.extend(_bundle_artifacts(core, temporary))
         core_bytes = canonical_json_bytes(core)
         manifest_sha256 = sha256_bytes(core_bytes)
         root_sha256 = _root_digest(manifest_sha256, artifacts)
@@ -308,6 +311,11 @@ def verify_candidate(candidate: Path) -> dict[str, object]:
             if evidence.file_kind != "regular_file" or evidence.byte_length != file.get("raw_byte_length") or evidence.sha256 != file.get("raw_sha256"):
                 raise BundleError("STAGED_RAW_CUSTODY_MISMATCH")
             artifacts.append({"byte_length": evidence.byte_length, "kind": "raw", "local_bundle_path": local, "raw_sha256": evidence.sha256, "relationship": "authoritative_raw"})
+    if "bundle_artifacts" in core:
+        try:
+            artifacts.extend(_bundle_artifacts(core, candidate))
+        except Exception as error:
+            raise BundleError(str(error)) from error
     recomputed = _root_digest(actual_manifest, sorted(artifacts, key=lambda item: item["local_bundle_path"]))
     if recomputed != root_sha256:
         raise BundleError("ROOT_SHA256_MISMATCH")
