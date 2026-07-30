@@ -4,17 +4,17 @@ milestone: v1.3.2
 milestone_name: milestone
 current_phase: 01
 current_phase_name: Isolated Evidence Boundary and Source Integrity
-status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-07-30T15:05:19.818Z"
+status: verifying
+stopped_at: Completed 01-04-PLAN.md locally; no external publication authorized
+last_updated: "2026-07-30T15:52:51.026Z"
 last_activity: 2026-07-30
-last_activity_desc: Completed 01-03 candidate source construction with accepted publication closed
+last_activity_desc: Completed 01-04 local-only MVP acceptance; external publication remains prohibited
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
-  percent: 75
+  completed_plans: 4
+  percent: 14
 ---
 
 # Project State
@@ -30,10 +30,10 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 
 Phase: 01 (Isolated Evidence Boundary and Source Integrity) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-30 — Completed 01-03 candidate source construction with accepted publication closed
 
-Progress: [████████░░] 75%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [████████░░] 75%
 | Phase 01 P01 | 10min | 3 tasks | 14 files |
 | Phase 01 P02 | 7min | 2 tasks | 7 files |
 | Phase 01 P03 | 49min | 3 tasks | 16 files |
+| Phase 01 P04 | 32min | 3 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Unexpected dependency incidents use a cumulative 90-minute clock whose retries and waits never reset or pause it.
 - [Phase 01]: Candidate construction is authorized only for the exact proposal hash and seven-file inventory; accepted publication remains false.
 - [Phase 01]: Candidate core/root binding is deterministic and non-cyclic; Plan 04 must prove offline replay before accepted publication.
+- [Phase 01]: Phase 01 local-only acceptance binds the verifier-rooted generation while external publication remains forbidden.
+- [Phase 01]: The final integrity receipt binds the reviewer decision through a non-cyclic receipt-basis projection.
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-30T15:05:19.797Z
-Stopped at: Completed 01-03-PLAN.md
-Resume file: .planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-04-PLAN.md
+Last session: 2026-07-30T15:52:51.012Z
+Stopped at: Completed 01-04-PLAN.md locally; no external publication authorized
+Resume file: None
