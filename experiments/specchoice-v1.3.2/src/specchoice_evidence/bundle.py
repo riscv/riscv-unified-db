@@ -414,7 +414,7 @@ def publish_accepted(decision: object) -> None:
 
 
 def accept_local_candidate(
-    decision: object, candidate: Path, accepted_root: Path
+    decision: object, candidate: Path, accepted_root: Path, *, allow_historical: bool = False
 ) -> dict[str, object]:
     """Atomically pin one already-rooted candidate for local MVP use only.
 
@@ -429,7 +429,10 @@ def accept_local_candidate(
         raise BundleError("SNAPSHOT_MANIFEST_SELF_DIGEST_MISMATCH")
     try:
         require_local_accepted_generation_authorization(
-            _mapping(decision, "INVALID_LOCAL_ACCEPTANCE_DECISION"), identity, snapshot_sha256
+            _mapping(decision, "INVALID_LOCAL_ACCEPTANCE_DECISION"),
+            identity,
+            snapshot_sha256,
+            allow_historical=allow_historical,
         )
     except SourceContractProposalError as error:
         raise BundleError(str(error)) from error

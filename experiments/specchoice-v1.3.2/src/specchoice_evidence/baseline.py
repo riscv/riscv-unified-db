@@ -188,6 +188,20 @@ def _commit(root: Path, revision: str) -> str:
     return value
 
 
+def require_full_commit(root: Path, revision: object) -> str:
+    """Resolve an immutable, canonical commit spelling for frozen evidence."""
+    if (
+        not isinstance(revision, str)
+        or len(revision) != 40
+        or any(character not in "0123456789abcdef" for character in revision)
+    ):
+        raise BaselineError("BOUNDARY_REVIEWED_REVISION_NOT_FULL")
+    resolved = _commit(root, revision)
+    if resolved != revision:
+        raise BaselineError("BOUNDARY_REVIEWED_REVISION_MOVED")
+    return resolved
+
+
 def capture_committed_history(root: Path, start_commit: str, reviewed_revision: str) -> list[CommittedPathChange]:
     start, reviewed = _commit(root, start_commit), _commit(root, reviewed_revision)
     if subprocess.run(["git", "-C", os.fspath(root), "merge-base", "--is-ancestor", start, reviewed]).returncode:
@@ -243,6 +257,87 @@ def merge_boundary_changes(committed: list[CommittedPathChange], live: dict[str,
 def capture_current_paths(root: Path) -> set[str]:
     """Collect the current delta plus visible `.DS_Store` metadata paths."""
     return set(capture_live_state(root))
+
+
+def committed_boundary_projection(
+    root: Path, baseline_path: Path, *, reviewed_revision: object
+) -> dict[str, object]:
+    """Project only committed baseline-to-revision evidence, never the live filesystem.
+
+    This is deliberately separate from ``check_boundary``.  A reviewer can freeze this
+    projection before writing a decision or receipt; later index/worktree/untracked files
+    cannot change its bytes.
+    """
+    baseline, baseline_sha256 = load_baseline(baseline_path)
+    repository = baseline.get("repository")
+    start = repository.get("head_commit") if isinstance(repository, dict) else None
+    if not isinstance(start, str) or not start:
+        raise BaselineError("BOUNDARY_HISTORY_START_MISSING")
+    reviewed = require_full_commit(root, reviewed_revision)
+    committed = capture_committed_history(root, start, reviewed)
+    merged = merge_boundary_changes(committed, {})
+    worktree = baseline["worktree"]
+    prior_entries = [*worktree["tracked_changes"], *worktree["untracked_files"]]
+    prior_paths = {str(item["path"]): item for item in prior_entries}
+    classifications: list[dict[str, object]] = []
+    for path in sorted(prior_paths):
+        evidence = merged.get(path)
+        if evidence is None:
+            record = _classification(path, "preexisting_unrelated", allowed=False)
+        else:
+            change = evidence["committed_change"]
+            assert isinstance(change, dict)
+            status = "deleted_out_of_boundary" if change["change_kind"] == "deleted" else "modified_out_of_boundary"
+            record = _classification(path, status, allowed=path_is_allowed(path, baseline["allowlist"]))
+            record.update(evidence)
+        classifications.append(record)
+    for path in sorted(set(merged) - set(prior_paths)):
+        record = _classification(path, "new_out_of_boundary", allowed=path_is_allowed(path, baseline["allowlist"]))
+        record.update(merged[path])
+        classifications.append(record)
+    return {
+        "boundary_classifications": classifications,
+        "history_start_commit": _commit(root, start),
+        "phase_start_baseline_sha256": baseline_sha256,
+        "reviewed_revision": reviewed,
+        "unique_changed_path_count": len(classifications),
+    }
+
+
+def committed_boundary_projection_sha256(projection: dict[str, object]) -> str:
+    """Return the canonical digest of a committed-only boundary projection."""
+    return sha256_bytes(canonical_json_bytes(projection))
+
+
+def check_live_boundary(root: Path, baseline_path: Path) -> BoundaryResult:
+    """Fail closed on staged, worktree, and untracked changes without history reads."""
+    baseline, baseline_sha256 = load_baseline(baseline_path)
+    worktree = baseline["worktree"]
+    prior_entries = [*worktree["tracked_changes"], *worktree["untracked_files"]]
+    prior_paths = {str(item["path"]): item for item in prior_entries}
+    live = capture_live_state(root)
+    try:
+        relative_baseline = baseline_path.relative_to(root).as_posix()
+        live.pop(relative_baseline, None)
+    except ValueError:
+        pass
+    classifications: list[dict[str, object]] = []
+    for path in sorted(prior_paths):
+        current = _current_fingerprint(root, path)
+        evidence = live.get(path)
+        if evidence is None and current is not None and _matches_baseline(prior_paths[path], current):
+            record = _classification(path, "preexisting_unrelated", allowed=False)
+        else:
+            status = "deleted_out_of_boundary" if current is None else "modified_out_of_boundary"
+            record = _classification(path, status, allowed=path_is_allowed(path, baseline["allowlist"]))
+        if evidence is not None:
+            record.update({"path": path, "change_sources": sorted(item["source"] for item in evidence), "live_changes": evidence})
+        classifications.append(record)
+    for path in sorted(set(live) - set(prior_paths)):
+        record = _classification(path, "new_out_of_boundary", allowed=path_is_allowed(path, baseline["allowlist"]))
+        record.update({"path": path, "change_sources": sorted(item["source"] for item in live[path]), "live_changes": live[path]})
+        classifications.append(record)
+    return BoundaryResult(baseline_sha256, classifications, sum(bool(item["blocking"]) for item in classifications), None, None, len(classifications))
 
 
 def _current_fingerprint(root: Path, path: str) -> dict[str, object] | None:
@@ -337,6 +432,17 @@ def check_boundary(root: Path, baseline_path: Path, *, reviewed_revision: str = 
         record = _classification(path, "new_out_of_boundary", allowed=allowed); record.update(merged[path]); classifications.append(record)
     blocking = sum(bool(item["blocking"]) for item in classifications)
     return BoundaryResult(baseline_sha256, classifications, blocking, str(start) if start else None, reviewed, len(classifications))
+
+
+def check_current_boundary(root: Path, baseline_path: Path) -> BoundaryResult:
+    """Gate the entire current repository: committed history through current HEAD plus live state.
+
+    Frozen receipt-basis construction must not use this function: it deliberately observes
+    the moving current repository state.  Issuance and finalization use it after proving
+    the frozen revision projection, so a clean worktree cannot hide a later bad commit.
+    """
+    current_head = _commit(root, "HEAD")
+    return check_boundary(root, baseline_path, reviewed_revision=current_head)
 
 
 def validate_boundary_restart(baseline_path: Path, previous_baseline_path: Path, allowlist_path: Path, incident_receipt_path: Path) -> dict[str, object]:

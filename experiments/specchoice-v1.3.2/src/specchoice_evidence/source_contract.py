@@ -293,7 +293,9 @@ def require_accepted_publication_authorization(decision: Mapping[str, object]) -
         raise SourceContractProposalError("ACCEPTED_PUBLICATION_NOT_AUTHORIZED")
 
 
-def validate_local_accepted_generation_decision(decision: object) -> dict[str, object]:
+def validate_local_accepted_generation_decision(
+    decision: object, *, allow_historical: bool = False
+) -> dict[str, object]:
     """Validate the local-only reviewer disposition without granting publication authority."""
     payload = _require_mapping(decision, "INVALID_LOCAL_ACCEPTANCE_DECISION")
     expected_fields = {
@@ -305,10 +307,19 @@ def validate_local_accepted_generation_decision(decision: object) -> dict[str, o
         "schema_version",
         "state",
     }
+    schema_version = payload.get("schema_version")
+    if schema_version == "3":
+        expected_fields |= {
+            "committed_boundary_projection_sha256",
+            "phase_start_baseline_sha256",
+            "reviewed_revision",
+        }
     if set(payload) != expected_fields:
         raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_FIELDS_INVALID")
-    if payload.get("schema_version") != "2":
+    if schema_version not in {"2", "3"}:
         raise SourceContractProposalError("UNSUPPORTED_LOCAL_ACCEPTANCE_DECISION_SCHEMA")
+    if schema_version == "2" and not allow_historical:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_HISTORICAL_DECISION_REQUIRES_EXPLICIT_PATH")
     if payload.get("approval_scope") != "local_accepted_generation_only":
         raise SourceContractProposalError("LOCAL_ACCEPTANCE_SCOPE_INVALID")
     if payload.get("state") != "local_accepted_generation_authorized":
@@ -342,14 +353,24 @@ def validate_local_accepted_generation_decision(decision: object) -> dict[str, o
         require_sha256(payload.get("reviewed_receipt_basis_sha256"))
     except ValueError as error:
         raise SourceContractProposalError("LOCAL_ACCEPTANCE_RECEIPT_BASIS_INVALID") from error
+    if schema_version == "3":
+        revision = payload.get("reviewed_revision")
+        if not isinstance(revision, str) or len(revision) != 40 or any(char not in "0123456789abcdef" for char in revision):
+            raise SourceContractProposalError("LOCAL_ACCEPTANCE_REVIEWED_REVISION_INVALID")
+        for field in ("phase_start_baseline_sha256", "committed_boundary_projection_sha256"):
+            try:
+                require_sha256(payload.get(field))
+            except ValueError as error:
+                raise SourceContractProposalError("LOCAL_ACCEPTANCE_PROJECTION_BINDING_INVALID") from error
     return dict(payload)
 
 
 def require_local_accepted_generation_authorization(
-    decision: Mapping[str, object], identity: Mapping[str, object], snapshot_manifest_sha256: str
+    decision: Mapping[str, object], identity: Mapping[str, object], snapshot_manifest_sha256: str,
+    *, allow_historical: bool = False,
 ) -> None:
     """Require exact local-only authority for one already-verified candidate identity."""
-    validated = validate_local_accepted_generation_decision(decision)
+    validated = validate_local_accepted_generation_decision(decision, allow_historical=allow_historical)
     binding = _require_mapping(validated["approved_generation"], "LOCAL_ACCEPTANCE_BINDING_MISSING")
     for field in ("generation", "root_sha256", "manifest_sha256"):
         expected_field = "core_sha256" if field == "manifest_sha256" else field

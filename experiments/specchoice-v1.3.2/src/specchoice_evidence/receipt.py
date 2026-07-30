@@ -66,22 +66,27 @@ def local_receipt_basis_sha256(
     environment_sha256: str,
     local_identity: dict[str, object],
     boundary_classifications: list[dict[str, object]],
+    *,
+    reviewed_revision: str | None = None,
+    committed_boundary_projection_sha256: str | None = None,
 ) -> str:
     """Hash the reviewer-visible local facts without creating a receipt/decision cycle."""
-    return sha256_bytes(
-        canonical_json_bytes(
-            {
-                "boundary_classifications": _validate_classifications(boundary_classifications),
-                "environment_decision_sha256": _require_digest(
-                    environment_sha256, "RECEIPT_DIGEST_INVALID"
-                ),
-                "phase_start_baseline_sha256": _require_digest(
-                    baseline_sha256, "RECEIPT_DIGEST_INVALID"
-                ),
-                "source_identity": _local_source_identity(local_identity),
-            }
+    if (reviewed_revision is None) != (committed_boundary_projection_sha256 is None):
+        raise ReceiptError("LOCAL_RECEIPT_PROJECTION_BINDING_INVALID")
+    basis: dict[str, object] = {
+        "boundary_classifications": _validate_classifications(boundary_classifications),
+        "environment_decision_sha256": _require_digest(environment_sha256, "RECEIPT_DIGEST_INVALID"),
+        "phase_start_baseline_sha256": _require_digest(baseline_sha256, "RECEIPT_DIGEST_INVALID"),
+        "source_identity": _local_source_identity(local_identity),
+    }
+    if reviewed_revision is not None:
+        if len(reviewed_revision) != 40 or any(char not in "0123456789abcdef" for char in reviewed_revision):
+            raise ReceiptError("LOCAL_REVIEWED_REVISION_INVALID")
+        basis["committed_boundary_projection_sha256"] = _require_digest(
+            committed_boundary_projection_sha256, "LOCAL_RECEIPT_PROJECTION_INVALID"
         )
-    )
+        basis["reviewed_revision"] = reviewed_revision
+    return sha256_bytes(canonical_json_bytes(basis))
 
 
 def validate_receipt(source: dict[str, Any] | Path) -> dict[str, Any]:
@@ -96,9 +101,9 @@ def validate_receipt(source: dict[str, Any] | Path) -> dict[str, Any]:
             raise ReceiptError("RECEIPT_NOT_CANONICAL")
     else:
         receipt = source
-    if not isinstance(receipt, dict) or receipt.get("schema_version") not in {"1", "2", "3"}:
+    if not isinstance(receipt, dict) or receipt.get("schema_version") not in {"1", "2", "3", "4"}:
         raise ReceiptError("RECEIPT_SCHEMA_INVALID")
-    if receipt.get("generator_version") not in {"1", "2", "3"}:
+    if receipt.get("generator_version") not in {"1", "2", "3", "4"}:
         raise ReceiptError("RECEIPT_GENERATOR_INVALID")
     for key in ("phase_start_baseline_sha256", "environment_decision_sha256", "receipt_sha256"):
         _require_digest(receipt.get(key), "RECEIPT_DIGEST_INVALID")
@@ -162,7 +167,7 @@ def validate_receipt(source: dict[str, Any] | Path) -> dict[str, Any]:
         receipt.get("outcome") != "pass" or receipt.get("blocking_diagnostics") != []
     ):
         raise ReceiptError("LOCAL_SOURCE_CANNOT_BE_BLOCKED_PASS")
-    if receipt.get("schema_version") == "3":
+    if receipt.get("schema_version") in {"3", "4"}:
         lineage = receipt.get("restart_lineage")
         if not isinstance(lineage, dict) or set(lineage) != {"allowlist", "baseline", "incident_receipt", "previous_baseline", "reason_code", "reviewed_revision", "scope"}:
             raise ReceiptError("RESTART_LINEAGE_INVALID")
@@ -174,6 +179,11 @@ def validate_receipt(source: dict[str, Any] | Path) -> dict[str, Any]:
             _require_digest(lineage[name].get("sha256"), "RESTART_LINEAGE_INVALID")
         if lineage["baseline"]["sha256"] != receipt["phase_start_baseline_sha256"]:
             raise ReceiptError("RESTART_LINEAGE_BASELINE_MISMATCH")
+    if receipt.get("schema_version") == "4":
+        revision = receipt.get("reviewed_revision")
+        if not isinstance(revision, str) or len(revision) != 40 or any(char not in "0123456789abcdef" for char in revision):
+            raise ReceiptError("LOCAL_REVIEWED_REVISION_INVALID")
+        _require_digest(receipt.get("committed_boundary_projection_sha256"), "LOCAL_RECEIPT_PROJECTION_INVALID")
     return receipt
 
 
@@ -215,31 +225,46 @@ def build_local_mvp_receipt(
     reviewer_decision_sha256: str,
     reviewed_receipt_basis_sha256: str,
     restart_lineage: dict[str, object] | None = None,
+    *,
+    reviewed_revision: str | None = None,
+    committed_boundary_projection_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Build a pass receipt for a local-only accepted identity after all machine gates pass."""
+    if reviewed_revision is not None and restart_lineage is None:
+        raise ReceiptError("RESTART_LINEAGE_REQUIRED")
     source_identity = _local_source_identity(approved_generation)
     records = _validate_classifications(boundary_classifications)
     if any(record["blocking"] for record in records):
         raise ReceiptError("LOCAL_MVP_BOUNDARY_BLOCKING")
-    basis = local_receipt_basis_sha256(baseline_sha256, environment_sha256, source_identity, records)
+    basis = local_receipt_basis_sha256(
+        baseline_sha256,
+        environment_sha256,
+        source_identity,
+        records,
+        reviewed_revision=reviewed_revision,
+        committed_boundary_projection_sha256=committed_boundary_projection_sha256,
+    )
     if reviewed_receipt_basis_sha256 != basis:
         raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
     receipt: dict[str, Any] = {
         "blocking_diagnostics": [],
         "boundary_classifications": records,
         "environment_decision_sha256": _require_digest(environment_sha256, "RECEIPT_DIGEST_INVALID"),
-        "generator_version": "3" if restart_lineage is not None else "2",
+        "generator_version": "4" if reviewed_revision is not None else ("3" if restart_lineage is not None else "2"),
         "nonblocking_diagnostics": ["LOCAL_MVP_ONLY_EXTERNAL_PUBLICATION_PROHIBITED"],
         "outcome": "pass",
         "phase_start_baseline_sha256": _require_digest(baseline_sha256, "RECEIPT_DIGEST_INVALID"),
         "receipt_basis_sha256": _require_digest(basis, "RECEIPT_DIGEST_INVALID"),
         "reviewer_decision_sha256": _require_digest(reviewer_decision_sha256, "RECEIPT_DIGEST_INVALID"),
         "reviewer_package_complete": False,
-        "schema_version": "3" if restart_lineage is not None else "2",
+        "schema_version": "4" if reviewed_revision is not None else ("3" if restart_lineage is not None else "2"),
         "source_identity": source_identity,
     }
     if restart_lineage is not None:
         receipt["restart_lineage"] = restart_lineage
+    if reviewed_revision is not None:
+        receipt["reviewed_revision"] = reviewed_revision
+        receipt["committed_boundary_projection_sha256"] = committed_boundary_projection_sha256
     return validate_receipt(_hashed(receipt))
 
 

@@ -12,6 +12,9 @@ from .baseline import (
     BaselineError,
     capture_baseline,
     check_boundary,
+    check_current_boundary,
+    committed_boundary_projection,
+    committed_boundary_projection_sha256,
     create_restart_baseline,
     load_baseline,
     validate_boundary_restart,
@@ -87,6 +90,85 @@ def _print_json(value: object) -> None:
     sys.stdout.buffer.write(canonical_json_bytes(value))
 
 
+def _resolve_experiment_path(path: Path) -> Path:
+    """Accept explicit paths and make default experiment-relative paths cwd-independent."""
+    if path.is_absolute():
+        return path
+    cwd_path = Path.cwd() / path
+    return cwd_path if cwd_path.exists() else _experiment_root() / path
+
+
+def _canonical_environment_sha256(path: Path) -> str:
+    raw = path.read_bytes()
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ReceiptError("ENVIRONMENT_DECISION_INVALID") from error
+    if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
+        raise ReceiptError("ENVIRONMENT_DECISION_NOT_CANONICAL")
+    return sha256_bytes(raw)
+
+
+def _approved_identity(
+    accepted_directory: Path, generation: str, *, candidate_relative_path: str | None = None
+) -> dict[str, object]:
+    """Verify a concrete accepted generation and return the decision/receipt identity."""
+    if not isinstance(generation, str) or not generation or "/" in generation or "\\" in generation:
+        raise ReceiptError("APPROVED_GENERATION_INVALID")
+    candidate = accepted_directory / generation
+    verified = verify_candidate(candidate)
+    final = json.loads((candidate / "snapshot-manifest.json").read_text(encoding="utf-8"))
+    if not isinstance(final, dict) or not isinstance(final.get("snapshot_manifest_sha256"), str):
+        raise ReceiptError("SNAPSHOT_MANIFEST_INVALID")
+    if candidate_relative_path is None:
+        try:
+            relative = candidate.resolve().relative_to(_experiment_root().resolve()).as_posix()
+        except ValueError as error:
+            raise ReceiptError("APPROVED_GENERATION_PATH_INVALID") from error
+    else:
+        relative = candidate_relative_path
+    return {
+        "candidate_relative_path": relative,
+        "core_sha256": verified["manifest_sha256"],
+        "generation": verified["generation"],
+        "root_sha256": verified["root_sha256"],
+        "snapshot_manifest_sha256": final["snapshot_manifest_sha256"],
+    }
+
+
+def _committed_basis_material(
+    *, root: Path, baseline: Path, environment: Path, approved_generation: dict[str, object], reviewed_revision: object
+) -> dict[str, object]:
+    """Compute the immutable reviewer proposal before any decision/receipt is written."""
+    projection = committed_boundary_projection(root, baseline, reviewed_revision=reviewed_revision)
+    projection_sha256 = committed_boundary_projection_sha256(projection)
+    environment_sha256 = _canonical_environment_sha256(environment)
+    basis = local_receipt_basis_sha256(
+        str(projection["phase_start_baseline_sha256"]),
+        environment_sha256,
+        approved_generation,
+        list(projection["boundary_classifications"]),
+        reviewed_revision=str(projection["reviewed_revision"]),
+        committed_boundary_projection_sha256=projection_sha256,
+    )
+    return {
+        "committed_boundary_projection": projection,
+        "committed_boundary_projection_sha256": projection_sha256,
+        "environment_decision_sha256": environment_sha256,
+        "phase_start_baseline_sha256": projection["phase_start_baseline_sha256"],
+        "receipt_basis_sha256": basis,
+        "reviewed_revision": projection["reviewed_revision"],
+        "source_identity": approved_generation,
+    }
+
+
+def _require_current_boundary_clean(repository: Path, baseline: Path) -> None:
+    """Apply the moving, fail-closed issuance/finalization gate after frozen-basis proof."""
+    current = check_current_boundary(repository, baseline)
+    if current.blocking_violations:
+        raise ReceiptError("LOCAL_MVP_CURRENT_BOUNDARY_BLOCKING")
+
+
 def command_capture(args: argparse.Namespace) -> int:
     payload = json.loads(args.input.read_text(encoding="utf-8"))
     baseline_hash = capture_baseline(args.baseline, payload)
@@ -114,6 +196,31 @@ def command_check(args: argparse.Namespace) -> int:
         "unique_changed_path_count": result.unique_changed_path_count,
     })
     return 0 if result.blocking_violations == 0 else 1
+
+
+def command_compute_local_mvp_receipt_basis(args: argparse.Namespace) -> int:
+    """Emit a non-authoritative, revision-pinned receipt-basis proposal.
+
+    The command is intentionally read-only: it never writes a decision, receipt, bundle,
+    index entry, or other repository artifact.  Human review remains the only authority
+    that can turn this proposal into a schema-3 local acceptance decision.
+    """
+    repository = args.root.resolve() if args.root is not None else _repository_root(Path.cwd())
+    baseline = _resolve_experiment_path(args.baseline).resolve()
+    environment = _resolve_experiment_path(args.environment_decision).resolve()
+    accepted = _resolve_experiment_path(args.accepted_directory).resolve()
+    identity = _approved_identity(
+        accepted, args.approved_generation, candidate_relative_path=args.candidate_relative_path
+    )
+    material = _committed_basis_material(
+        root=repository,
+        baseline=baseline,
+        environment=environment,
+        approved_generation=identity,
+        reviewed_revision=args.reviewed_revision,
+    )
+    _print_json({"proposal_only": True, "status": "proposal_only", **material})
+    return 0
 
 
 def command_validate_baseline(args: argparse.Namespace) -> int:
@@ -378,7 +485,9 @@ def command_write_integrity_receipt(args: argparse.Namespace) -> int:
     return 0 if result["outcome"] == "pass" and result["reviewer_package_complete"] else 2
 
 
-def _load_canonical_local_acceptance_decision(path: Path) -> dict[str, object]:
+def _load_canonical_local_acceptance_decision(
+    path: Path, *, allow_historical: bool = False
+) -> dict[str, object]:
     raw = path.read_bytes()
     try:
         payload = json.loads(raw.decode("utf-8"))
@@ -386,40 +495,47 @@ def _load_canonical_local_acceptance_decision(path: Path) -> dict[str, object]:
         raise SourceContractProposalError("INVALID_LOCAL_ACCEPTANCE_DECISION_JSON") from error
     if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
         raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_NOT_CANONICAL")
-    return validate_local_accepted_generation_decision(payload)
+    return validate_local_accepted_generation_decision(payload, allow_historical=allow_historical)
 
 
 def command_accept_local_mvp(args: argparse.Namespace) -> int:
     """Create the exact immutable local accepted copy and canonical local-only receipt."""
     decision_raw = args.decision.read_bytes()
-    decision = _load_canonical_local_acceptance_decision(args.decision)
     restart_lineage = _restart_lineage_for_local_mvp_receipt(args)
-    _validate_local_mvp_receipt_basis(args, decision)
+    decision = _load_canonical_local_acceptance_decision(args.decision, allow_historical=True)
+    material = _validate_local_mvp_receipt_basis(args, decision)
     identity = accept_local_candidate(decision, args.candidate_directory, args.accepted_directory)
-    result = _write_local_mvp_receipt(args, decision, decision_raw, identity, restart_lineage)
+    result = _write_local_mvp_receipt(args, decision, decision_raw, identity, restart_lineage, material)
     _print_json({**identity, "outcome": result["outcome"], "receipt_sha256": result["receipt_sha256"]})
     return 0 if result["outcome"] == "pass" and result["reviewer_package_complete"] else 2
 
 
-def _validate_local_mvp_receipt_basis(args: argparse.Namespace, decision: dict[str, object]) -> None:
+def _validate_local_mvp_receipt_basis(args: argparse.Namespace, decision: dict[str, object]) -> dict[str, object]:
+    """Verify the decision's frozen proposal, then apply an independent live gate."""
+    if decision.get("schema_version") != "3":
+        # The active v5 route never upgrades historical authority.  It remains readable
+        # only so the old decision/receipt pair reaches its established basis failure.
+        raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
     repository = _repository_root(Path.cwd())
-    baseline = args.baseline if args.baseline.is_absolute() else Path.cwd() / args.baseline
-    environment = (
-        args.environment_decision
-        if args.environment_decision.is_absolute()
-        else Path.cwd() / args.environment_decision
-    )
-    boundary = check_boundary(repository, baseline)
+    baseline = _resolve_experiment_path(args.baseline).resolve()
+    environment = _resolve_experiment_path(args.environment_decision).resolve()
     approved_generation = decision["approved_generation"]
     assert isinstance(approved_generation, dict)
-    basis = local_receipt_basis_sha256(
-        boundary.baseline_sha256,
-        sha256_bytes(environment.read_bytes()),
-        approved_generation,
-        boundary.classifications,
+    material = _committed_basis_material(
+        root=repository,
+        baseline=baseline,
+        environment=environment,
+        approved_generation=approved_generation,
+        reviewed_revision=decision.get("reviewed_revision"),
     )
-    if decision["reviewed_receipt_basis_sha256"] != basis:
+    if decision.get("phase_start_baseline_sha256") != material["phase_start_baseline_sha256"]:
+        raise ReceiptError("LOCAL_RECEIPT_BASELINE_MISMATCH")
+    if decision.get("committed_boundary_projection_sha256") != material["committed_boundary_projection_sha256"]:
+        raise ReceiptError("LOCAL_RECEIPT_PROJECTION_MISMATCH")
+    if decision.get("reviewed_receipt_basis_sha256") != material["receipt_basis_sha256"]:
         raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
+    _require_current_boundary_clean(repository, baseline)
+    return material
 
 
 def _restart_lineage_for_local_mvp_receipt(args: argparse.Namespace) -> dict[str, object] | None:
@@ -448,27 +564,22 @@ def _write_local_mvp_receipt(
     decision_raw: bytes,
     identity: dict[str, object],
     restart_lineage: dict[str, object] | None,
+    material: dict[str, object],
 ) -> dict[str, object]:
-    repository = _repository_root(Path.cwd())
-    baseline = args.baseline if args.baseline.is_absolute() else Path.cwd() / args.baseline
-    environment = (
-        args.environment_decision
-        if args.environment_decision.is_absolute()
-        else Path.cwd() / args.environment_decision
-    )
-    boundary = check_boundary(repository, baseline)
     approved_generation = decision["approved_generation"]
     assert isinstance(approved_generation, dict)
     reviewed_basis = decision["reviewed_receipt_basis_sha256"]
     assert isinstance(reviewed_basis, str)
     receipt = build_local_mvp_receipt(
-        boundary.baseline_sha256,
-        sha256_bytes(environment.read_bytes()),
+        str(material["phase_start_baseline_sha256"]),
+        str(material["environment_decision_sha256"]),
         approved_generation,
-        boundary.classifications,
+        list(material["committed_boundary_projection"]["boundary_classifications"]),
         sha256_bytes(decision_raw),
         reviewed_basis,
         restart_lineage=restart_lineage,
+        reviewed_revision=str(material["reviewed_revision"]),
+        committed_boundary_projection_sha256=str(material["committed_boundary_projection_sha256"]),
     )
     result = write_receipt_package(receipt, args.receipt, args.markdown)
     return result
@@ -476,10 +587,10 @@ def _write_local_mvp_receipt(
 
 def command_write_local_mvp_receipt(args: argparse.Namespace) -> int:
     """Finalize review artifacts for an already-created exact local accepted copy only."""
-    decision_raw = args.decision.read_bytes()
-    decision = _load_canonical_local_acceptance_decision(args.decision)
     restart_lineage = _restart_lineage_for_local_mvp_receipt(args)
-    _validate_local_mvp_receipt_basis(args, decision)
+    decision_raw = args.decision.read_bytes()
+    decision = _load_canonical_local_acceptance_decision(args.decision, allow_historical=True)
+    material = _validate_local_mvp_receipt_basis(args, decision)
     generation = decision["approved_generation"]["generation"]
     assert isinstance(generation, str)
     identity = verify_candidate(args.accepted_directory / generation)
@@ -489,7 +600,7 @@ def command_write_local_mvp_receipt(args: argparse.Namespace) -> int:
     require_local_accepted_generation_authorization(
         decision, identity, final["snapshot_manifest_sha256"]
     )
-    result = _write_local_mvp_receipt(args, decision, decision_raw, identity, restart_lineage)
+    result = _write_local_mvp_receipt(args, decision, decision_raw, identity, restart_lineage, material)
     _print_json({**identity, "outcome": result["outcome"], "receipt_sha256": result["receipt_sha256"]})
     return 0 if result["outcome"] == "pass" and result["reviewer_package_complete"] else 2
 
@@ -497,7 +608,7 @@ def command_write_local_mvp_receipt(args: argparse.Namespace) -> int:
 def command_finalize_review(args: argparse.Namespace) -> int:
     """Refuse to finalize unless a reviewer decision and already-passing receipt exist."""
     receipt = validate_receipt(args.receipt)
-    if receipt.get("schema_version") == "3":
+    if receipt.get("schema_version") in {"3", "4"}:
         experiment_root = args.receipt.resolve().parent.parent
         expected_paths = {
             "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
@@ -529,13 +640,7 @@ def command_finalize_review(args: argparse.Namespace) -> int:
         if lineage != expected_lineage:
             raise ReceiptError("RESTART_LINEAGE_PROJECTION_MISMATCH")
         repository = _repository_root(experiment_root)
-        boundary = check_boundary(
-            repository,
-            experiment_root / expected_paths["baseline"],
-            reviewed_revision=str(projection["reviewed_revision"]),
-        )
-        if boundary.blocking_violations:
-            raise ReceiptError("RESTART_BOUNDARY_BLOCKING")
+        _require_current_boundary_clean(repository, experiment_root / expected_paths["baseline"])
     if not args.decision.is_file():
         raise ReceiptError("REVIEW_DECISION_MISSING")
     decision_raw = args.decision.read_bytes()
@@ -545,7 +650,7 @@ def command_finalize_review(args: argparse.Namespace) -> int:
         if canonical_json_bytes(decision) != decision_raw:
             raise ReceiptError("LOCAL_ACCEPTANCE_DECISION_NOT_CANONICAL")
         try:
-            local_decision = validate_local_accepted_generation_decision(decision)
+            local_decision = validate_local_accepted_generation_decision(decision, allow_historical=True)
         except SourceContractProposalError as error:
             raise ReceiptError(str(error)) from error
         if source.get("external_publication_authorized") is not False:
@@ -556,6 +661,25 @@ def command_finalize_review(args: argparse.Namespace) -> int:
             raise ReceiptError("REVIEW_DECISION_IDENTITY_MISMATCH")
         if receipt.get("receipt_basis_sha256") != local_decision["reviewed_receipt_basis_sha256"]:
             raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
+        if receipt.get("schema_version") == "4":
+            if local_decision.get("schema_version") != "3":
+                raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
+            repository = _repository_root(args.receipt.resolve().parent.parent)
+            material = _committed_basis_material(
+                root=repository,
+                baseline=args.receipt.resolve().parent.parent / "baselines/phase-start-v5-gap-closure.json",
+                environment=args.receipt.resolve().parent.parent / "receipts/environment-decision.json",
+                approved_generation=local_decision["approved_generation"],
+                reviewed_revision=local_decision.get("reviewed_revision"),
+            )
+            if receipt.get("reviewed_revision") != material["reviewed_revision"]:
+                raise ReceiptError("LOCAL_REVIEWED_REVISION_MISMATCH")
+            if receipt.get("phase_start_baseline_sha256") != material["phase_start_baseline_sha256"]:
+                raise ReceiptError("LOCAL_RECEIPT_BASELINE_MISMATCH")
+            if receipt.get("committed_boundary_projection_sha256") != material["committed_boundary_projection_sha256"]:
+                raise ReceiptError("LOCAL_RECEIPT_PROJECTION_MISMATCH")
+            if receipt.get("receipt_basis_sha256") != material["receipt_basis_sha256"]:
+                raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
     elif not isinstance(decision, dict) or decision.get("disposition") != "approved":
         raise ReceiptError("REVIEW_NOT_APPROVED")
     if receipt["outcome"] != "pass" or not receipt["reviewer_package_complete"]:
@@ -579,6 +703,15 @@ def build_parser() -> argparse.ArgumentParser:
     boundary.add_argument("--policy-override", type=Path, default=_default_policy_override())
     boundary.add_argument("--reviewed-revision", default="HEAD")
     boundary.set_defaults(handler=command_check)
+    basis = commands.add_parser("compute-local-mvp-receipt-basis")
+    basis.add_argument("--root", type=Path)
+    basis.add_argument("--baseline", type=Path, default=_default_active_baseline())
+    basis.add_argument("--environment-decision", type=Path, required=True)
+    basis.add_argument("--accepted-directory", type=Path, required=True)
+    basis.add_argument("--approved-generation", required=True)
+    basis.add_argument("--candidate-relative-path")
+    basis.add_argument("--reviewed-revision", required=True)
+    basis.set_defaults(handler=command_compute_local_mvp_receipt_basis)
     validate = commands.add_parser("validate-baseline")
     validate.add_argument("--baseline", type=Path, default=_default_active_baseline())
     validate.set_defaults(handler=command_validate_baseline)
