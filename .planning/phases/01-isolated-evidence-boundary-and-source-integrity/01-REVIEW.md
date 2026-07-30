@@ -1,28 +1,19 @@
 ---
 phase: 01-isolated-evidence-boundary-and-source-integrity
-reviewed: 2026-07-30T16:00:48Z
+reviewed: 2026-07-30T18:16:43Z
 depth: standard
-files_reviewed: 19
+files_reviewed: 10
 files_reviewed_list:
-  - experiments/specchoice-v1.3.2/audit/environment/environment-receipt-phase-start-001.json
-  - experiments/specchoice-v1.3.2/baselines/phase-start-v2.json
-  - experiments/specchoice-v1.3.2/bundles/candidates/source-contract-v2-pr2192-86a0021b/snapshot-manifest.json
-  - experiments/specchoice-v1.3.2/config/boundary_allowlist.json
-  - experiments/specchoice-v1.3.2/receipts/control-update-decision-plan01.json
-  - experiments/specchoice-v1.3.2/receipts/environment-decision.json
-  - experiments/specchoice-v1.3.2/receipts/integrity-receipt.json
-  - experiments/specchoice-v1.3.2/receipts/integrity-receipt.md
-  - experiments/specchoice-v1.3.2/receipts/reviewer-boundary-decision.json
-  - experiments/specchoice-v1.3.2/receipts/source-publication-decision.json
+  - experiments/specchoice-v1.3.2/receipts/boundary-restart-v5.json
+  - experiments/specchoice-v1.3.2/config/boundary_allowlist-v5-gap-closure.json
+  - experiments/specchoice-v1.3.2/baselines/phase-start-v5-gap-closure.json
+  - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v5.json
+  - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v5.md
   - experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py
-  - experiments/specchoice-v1.3.2/src/specchoice_evidence/bundle.py
-  - experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py
-  - experiments/specchoice-v1.3.2/src/specchoice_evidence/environment.py
   - experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py
-  - experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py
-  - experiments/specchoice-v1.3.2/tests/test_bundle_verifier.py
-  - experiments/specchoice-v1.3.2/tests/test_environment.py
+  - experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py
   - experiments/specchoice-v1.3.2/tests/test_filesystem_boundary.py
+  - experiments/specchoice-v1.3.2/tests/test_receipts.py
 findings:
   critical: 2
   warning: 2
@@ -33,63 +24,86 @@ status: issues_found
 
 # Phase 01: Code Review Report
 
-**Reviewed:** 2026-07-30T16:00:48Z
+**Reviewed:** 2026-07-30T18:16:43Z
 **Depth:** standard
-**Files Reviewed:** 19
+**Files Reviewed:** 10
 **Status:** issues_found
 
 ## Summary
 
-The boundary, candidate, receipt, environment, and reviewer-decision flows were reviewed in context, including the verifier and filesystem dependencies they call. The submitted tests pass, but the authority checks are forgeable by any writer of the local artifacts and receipt publication can overwrite or tear the established integrity package.
+The v5 baseline, allowlist, restart receipt, history-aware Git query, receipt projection, and focused tests were reviewed in context. The original TS-01 committed-history blind spot is closed for endpoint changes: `check-boundary` now resolves the baseline commit, rejects non-descendant revisions, and compares it through an exact reviewed commit. The current invocation showed all non-metadata v5 changes allowed and all `.DS_Store` paths visible but nonblocking.
+
+That improvement is not sufficient to advance the phase. The newly introduced schema-3 receipt path can mint a passing self-hashed receipt without the reviewer-approved receipt basis and does not prove that its claimed v5 lineage baseline is the baseline named by the receipt. These are integrity-boundary failures. 01-05 is **not ready** for ASVS L1 security audit or independent phase verification until the blockers are fixed and re-reviewed.
 
 ## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: Reviewer authorization is only forgeable payload text
+### CR-01: v5 receipt construction bypasses the reviewer-approved basis
 
 **Classification:** BLOCKER
 
-**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py:236`
+**File:** `experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py:223`
 
-**Issue:** `validate_source_publication_decision()` treats a fixed literal token and three JSON booleans as reviewer authorization (lines 236-261). The local-acceptance path repeats the pattern with a fixed disposition and booleans (lines 316-324), then `command_accept_local_mvp()` accepts the resulting decision (CLI lines 366-374). There is no signature, trusted key, immutable attestation, or protected reviewer-owned store. Consequently, any local process that can write a JSON file can manufacture an "approved" decision for a candidate and generate a locally accepted receipt; the SHA-256 fields only bind attacker-controlled bytes and do not authenticate the reviewer. This defeats the Phase 1 reviewer boundary.
+**Issue:** The mismatch check is conditioned on `restart_lineage is None`. Every v5/schema-3 receipt supplies restart lineage, so `build_local_mvp_receipt()` accepts an arbitrary `reviewed_receipt_basis_sha256` and then emits a passing, self-hashed receipt based on newly computed boundary facts. A direct call with a deliberately wrong basis (`"0" * 64`) and valid lineage returns `outcome: "pass"`. This defeats the required binding between the recorded reviewer decision and the local receipt basis; the CLI's earlier preflight check does not make the constructor safe against a changed boundary state or other callers.
 
-**Fix:** Define a reviewer trust root outside the writable evidence directory (for example, a pinned public key), require a detached signature over the canonical decision bytes, and verify that signature in both source-publication and local-acceptance validation before honoring authorization fields. Bind the verified signer identity and signature algorithm/key ID into the decision schema.
+**Fix:** Enforce the basis comparison for every receipt version before constructing the receipt.
 
-### CR-02: Receipt commands overwrite the established integrity receipt
+```python
+basis = local_receipt_basis_sha256(
+    baseline_sha256, environment_sha256, source_identity, records
+)
+if reviewed_receipt_basis_sha256 != basis:
+    raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
+```
+
+Add a schema-3 regression that passes a valid `restart_lineage` with a wrong reviewer basis and asserts `LOCAL_RECEIPT_BASIS_MISMATCH`.
+
+### CR-02: Schema-3 validation accepts a receipt whose lineage names a different baseline
+
+**File:** `experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py:165`
 
 **Classification:** BLOCKER
 
-**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py:270`
+**Issue:** `validate_receipt()` checks only that each `restart_lineage` hash is syntactically a SHA-256 value. It never requires `restart_lineage["baseline"]["sha256"]` to equal `phase_start_baseline_sha256`, nor binds the other lineage fields to the stated restart generation. Consequently, a canonical, self-hashed passing schema-3 receipt can pair its boundary classifications and top-level baseline digest with an unrelated but well-formed lineage. `finalize-review` relies on this validator, so it does not repair the missing check. The committed v5 artifact happens to match, but the validator does not prove the claimed v5 binding.
 
-**Issue:** `write_receipt_package()` uses unconditional `write_text()` and `write_bytes()` (lines 276-281), so it silently replaces existing evidence. In particular, `write-integrity-receipt` defaults to the same `receipts/integrity-receipt.json` and `.md` paths as the local-MVP success flow (CLI lines 590-596), but constructs the intentionally rejected receipt (CLI lines 333-350). Running that command after local acceptance destroys the passing receipt and replaces it with a failure artifact. This is data loss and breaks the claimed immutable, replayable evidence chain.
+**Fix:** Reject mismatched lineage fields in the canonical validator, then add a negative finalization test.
 
-**Fix:** Make receipt targets create-once (`open("xb")` plus fsync and atomic rename) and reject pre-existing paths. Use separate, generation-specific filenames for blocked versus local-MVP receipts; never let commands with opposite outcomes share defaults.
+```python
+if lineage["baseline"]["sha256"] != receipt["phase_start_baseline_sha256"]:
+    raise ReceiptError("RESTART_LINEAGE_BASELINE_MISMATCH")
+```
+
+Also validate the lineage projection against `validate_boundary_restart()` in the command path, including its fixed predecessor, allowlist, incident-receipt paths, and reviewed revision.
 
 ## Warnings
 
-### WR-01: Candidate construction bypasses the canonical decision-file gate
+### WR-01: Baseline-inventory paths discard committed and live provenance
 
 **Classification:** WARNING
 
-**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py:311`
+**File:** `experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py:306`
 
-**Issue:** `command_build_candidate()` decodes `args.decision` directly (line 313), unlike `command_validate_source_decision()` which rejects non-canonical decision bytes (lines 274-280). A non-canonical source decision is therefore rejected by the validation command but can still authorize construction. This creates a candidate whose stated approval artifact fails the advertised canonicality gate.
+**Issue:** `merge_boundary_changes()` correctly combines committed and live sources, but `check_boundary()` handles every path already in `prior_paths` by creating a fresh classification and never copies the corresponding `merged[path]` fields. A modified/deleted path present in the phase-start inventory therefore loses `change_sources`, `committed_change`, `live_changes`, modes, and change kind; if its bytes still match the snapshot, it is reported as `preexisting_unrelated` even when it was subsequently committed. This violates the v5 per-path source-preservation contract and prevents an independent reviewer from seeing how that path entered the result.
 
-**Fix:** Add a canonical source-decision loader analogous to `_load_canonical_local_acceptance_decision()` and use it in both validation and candidate construction.
+**Fix:** Merge evidence into the classification for both baseline-inventory and newly discovered paths, and base a `preexisting_unrelated` result on the absence of post-baseline contributors as well as matching bytes. Add a fixture where an inventory path has both a committed change and a worktree change, then assert one record contains all sources.
 
-### WR-02: Receipt package writes are ordered inconsistently and are not crash-safe
+### WR-02: Required history edge cases have no regression coverage
 
 **Classification:** WARNING
 
-**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py:276`
+**File:** `experiments/specchoice-v1.3.2/tests/test_filesystem_boundary.py:33`
 
-**Issue:** The method docstring promises to persist canonical JSON first, but the implementation writes Markdown claiming `reviewer_package_complete: true` before it writes the JSON (lines 276-281). If the later JSON write fails, the Markdown remains a completed-looking package while the JSON is missing or still represents an older receipt. The error path handles only Markdown failure, so this split-brain state is left on disk.
+**Issue:** The only v5 committed-history test creates one added path. No submitted test exercises committed modified, deleted, or type-changed records, deduplication of a path present in history and live layers, malformed raw-diff rejection, or an invalid/non-descendant reviewed revision. The receipt test at `tests/test_receipts.py:22` checks the recorded artifact but does not test either schema-3 binding failure above. These are the exact fail-closed cases introduced by 01-05, so the suite cannot reliably prevent their regression.
 
-**Fix:** Stage both artifacts under unique temporary names, fsync them, publish the authoritative JSON with `reviewer_package_complete: false`, then publish the Markdown and finally atomically replace JSON with the completed version. On any failure, remove only the staged files and leave the prior package untouched.
+**Fix:** Add isolated Git-fixture tests for A/M/D/T, history-plus-staged/worktree deduplication, malformed/truncated raw records, and invalid/non-descendant revisions; add schema-3 receipt tampering tests for reviewer basis and lineage/top-level baseline mismatch.
+
+## Historical Advisory Debt (not reclassified in this scope)
+
+The earlier report's CR-01, CR-02, WR-01, and WR-02 remain historical out-of-scope hardening debt: reviewer authorization is not independently authenticated, receipt writes are replaceable/not crash-atomic, and candidate construction bypasses the canonical decision loader. 01-05 did not materially worsen those items, so they are retained as advisory context and are not included in this report's severity counts.
 
 ---
 
-_Reviewed: 2026-07-30T16:00:48Z_
+_Reviewed: 2026-07-30T18:16:43Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
