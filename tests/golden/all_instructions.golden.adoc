@@ -14666,6 +14666,109 @@ Included in::
 
 
 
+[#udb:doc:inst:c_sspopchk]
+== c.sspopchk
+
+Synopsis::
+Compressed Shadow Stack Pop and Check
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+c.sspopchk x5
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":16,"name": 0x6281,"type":2}]}
+....
+
+Description::
+C.SSPOPCHK pops a value from the shadow stack and checks it against link
+register `x5`.
+
+This instruction uses the xref:insts:c_mop_5.adoc#udb:doc:inst:c_mop_5[c.mop.5] codepoint provided by Zcmop and expands
+to `sspopchk x5`.
+
+
+Decode Variables::
+c.sspopchk has no decode variables.
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zicfiss*
+| any
+| *Zcmop*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:c_sspush]
+== c.sspush
+
+Synopsis::
+Compressed Shadow Stack Push
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+c.sspush x1
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":16,"name": 0x6081,"type":2}]}
+....
+
+Description::
+C.SSPUSH pushes link register `x1` to the shadow stack.
+
+This instruction uses the xref:insts:c_mop_1.adoc#udb:doc:inst:c_mop_1[c.mop.1] codepoint provided by Zcmop and expands
+to `sspush x1`.
+
+
+Decode Variables::
+c.sspush has no decode variables.
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zicfiss*
+| any
+| *Zcmop*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:c_sub]
 == c.sub
 
