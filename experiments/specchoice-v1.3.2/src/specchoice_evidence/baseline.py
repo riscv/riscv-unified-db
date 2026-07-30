@@ -38,6 +38,7 @@ class CommittedPathChange:
     new_mode: str
     old_object: str
     new_object: str
+    commit: str = ""
 
 
 @dataclass(frozen=True)
@@ -203,21 +204,59 @@ def require_full_commit(root: Path, revision: object) -> str:
 
 
 def capture_committed_history(root: Path, start_commit: str, reviewed_revision: str) -> list[CommittedPathChange]:
+    """Capture every A/M/D/T event between two commits without net-diff collapse.
+
+    The traversal walks every commit reachable from ``reviewed`` but not ``start`` in
+    reverse topological order.  For merge commits, the event is the deterministic
+    first-parent-to-merge diff; this preserves the merge result while still retaining
+    the events from each side branch's individual commits.
+    """
     start, reviewed = _commit(root, start_commit), _commit(root, reviewed_revision)
     if subprocess.run(["git", "-C", os.fspath(root), "merge-base", "--is-ancestor", start, reviewed]).returncode:
         raise BaselineError("BOUNDARY_HISTORY_NOT_DESCENDANT")
     try:
-        raw = subprocess.run(
-            [
-                "git", "-C", os.fspath(root), "diff", "--raw", "-z", "--no-renames",
-                "--diff-filter=AMDT", start, reviewed,
-            ],
+        history = subprocess.run(
+            ["git", "-C", os.fspath(root), "rev-list", "--reverse", "--topo-order", f"{start}..{reviewed}"],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-        ).stdout
+        ).stdout.decode("ascii").splitlines()
     except subprocess.CalledProcessError as error:
         raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR") from error
+    except UnicodeDecodeError as error:
+        raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR") from error
+    if any(len(commit) != 40 or any(character not in "0123456789abcdef" for character in commit) for commit in history):
+        raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR")
+    records: list[CommittedPathChange] = []
+    for commit in history:
+        try:
+            parents = subprocess.run(
+                ["git", "-C", os.fspath(root), "rev-list", "--parents", "-n", "1", commit],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).stdout.decode("ascii").split()
+            if len(parents) < 2 or parents[0] != commit:
+                raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR")
+            raw = subprocess.run(
+                [
+                    "git", "-C", os.fspath(root), "diff", "--raw", "-z", "--no-renames",
+                    "--diff-filter=AMDT", parents[1], commit,
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).stdout
+        except subprocess.CalledProcessError as error:
+            raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR") from error
+        except UnicodeDecodeError as error:
+            raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR") from error
+        records.extend(_parse_committed_changes(raw, commit))
+    return records
+
+
+def _parse_committed_changes(raw: bytes, commit: str) -> list[CommittedPathChange]:
+    """Parse one first-parent commit diff as uncollapsed path events."""
     raw_fields = raw[:-1].split(b"\0") if raw.endswith(b"\0") else []
     if raw and (not raw_fields or len(raw_fields) % 2):
         raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR")
@@ -234,7 +273,7 @@ def capture_committed_history(root: Path, start_commit: str, reviewed_revision: 
         if len(fields) != 5 or not fields[0].startswith(":") or fields[4] not in {"A", "M", "D", "T"}:
             raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR")
         old_mode, new_mode, old_object, new_object = fields[0][1:], fields[1], fields[2], fields[3]
-        records.append(CommittedPathChange(path, {"A":"added","M":"modified","D":"deleted","T":"type_changed"}[fields[4]], old_mode, new_mode, old_object, new_object))
+        records.append(CommittedPathChange(path, {"A":"added","M":"modified","D":"deleted","T":"type_changed"}[fields[4]], old_mode, new_mode, old_object, new_object, commit))
     return records
 
 
@@ -247,7 +286,23 @@ def capture_live_state(root: Path) -> dict[str, list[dict[str, str]]]:
 def merge_boundary_changes(committed: list[CommittedPathChange], live: dict[str, list[dict[str, str]]]) -> dict[str, dict[str, object]]:
     merged: dict[str, dict[str, object]] = {}
     for change in committed:
-        merged[change.path] = {"path": change.path, "change_sources": ["committed_history"], "committed_change": {"change_kind": change.change_kind, "old_mode": change.old_mode, "new_mode": change.new_mode, "old_object": change.old_object, "new_object": change.new_object}, "change_kind": change.change_kind, "old_mode": change.old_mode, "new_mode": change.new_mode, "live_changes": []}
+        event = {
+            "commit": change.commit,
+            "change_kind": change.change_kind,
+            "old_mode": change.old_mode,
+            "new_mode": change.new_mode,
+            "old_object": change.old_object,
+            "new_object": change.new_object,
+        }
+        record = merged.setdefault(
+            change.path,
+            {"path": change.path, "change_sources": ["committed_history"], "committed_changes": [], "live_changes": []},
+        )
+        committed_changes = record["committed_changes"]
+        assert isinstance(committed_changes, list)
+        committed_changes.append(event)
+        # Retain the final event as the compatibility summary, but never discard history.
+        record.update({"committed_change": event, "change_kind": change.change_kind, "old_mode": change.old_mode, "new_mode": change.new_mode})
     for path, changes in live.items():
         record = merged.setdefault(path, {"path": path, "change_sources": [], "live_changes": []})
         record["live_changes"] = changes; record["change_sources"] = sorted(set([*record["change_sources"], *(item["source"] for item in changes)]))

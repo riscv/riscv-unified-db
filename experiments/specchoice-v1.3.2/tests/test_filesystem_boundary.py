@@ -118,6 +118,10 @@ class FilesystemBoundaryTests(unittest.TestCase):
             assert isinstance(command, list)
             if "merge-base" in command:
                 return subprocess.CompletedProcess(command, 0)
+            if "rev-list" in command and "--parents" in command:
+                return subprocess.CompletedProcess(command, 0, stdout=(b"a" * 40) + b" " + (b"b" * 40) + b"\n")
+            if "rev-list" in command:
+                return subprocess.CompletedProcess(command, 0, stdout=(b"a" * 40) + b"\n")
             if "diff" in command:
                 return subprocess.CompletedProcess(command, 0, stdout=b":100644 100644 a b M\0")
             return subprocess.CompletedProcess(command, 0, stdout=(b"a" * 40) + b"\n")
@@ -153,6 +157,44 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 check_boundary(root, baseline, reviewed_revision="missing")
             with self.assertRaisesRegex(BaselineError, "BOUNDARY_HISTORY_NOT_DESCENDANT"):
                 check_boundary(root, baseline, reviewed_revision=other)
+
+    def test_committed_history_preserves_add_then_delete_and_blocks_the_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._git(root, "init")
+            (root / "initial.txt").write_text("baseline", encoding="utf-8")
+            self._git(root, "add", "initial.txt")
+            baseline_commit = self._commit(root, "baseline")
+            baseline = root / "baseline.json"
+            capture_baseline(
+                baseline,
+                {
+                    "allowlist": {"exact_files": [], "roots": []},
+                    "repository": {"head_commit": baseline_commit, "path_basis": "repository_relative_posix"},
+                    "schema_version": "1",
+                    "worktree": {"ignored_paths_in_scope": [], "tracked_changes": [], "untracked_files": []},
+                },
+            )
+            transient = root / "outside-transient.txt"
+            transient.write_text("must remain attributable", encoding="utf-8")
+            self._git(root, "add", transient.name)
+            self._commit(root, "add outside path")
+            self._git(root, "rm", transient.name)
+            reviewed = self._commit(root, "delete outside path")
+
+            events = [event for event in capture_committed_history(root, baseline_commit, reviewed) if event.path == transient.name]
+            frozen = committed_boundary_projection(root, baseline, reviewed_revision=reviewed)
+            current = check_current_boundary(root, baseline)
+
+        self.assertEqual([event.change_kind for event in events], ["added", "deleted"])
+        self.assertEqual(len({event.commit for event in events}), 2)
+        by_path = {item["path"]: item for item in frozen["boundary_classifications"]}
+        self.assertEqual(
+            [event["change_kind"] for event in by_path["outside-transient.txt"]["committed_changes"]],
+            ["added", "deleted"],
+        )
+        self.assertTrue(by_path["outside-transient.txt"]["blocking"])
+        self.assertTrue({item["path"]: item for item in current.classifications}["outside-transient.txt"]["blocking"])
 
     def test_committed_projection_is_frozen_at_revision_and_live_gate_is_separate(self) -> None:
         """Later decision/receipt commits and live dirt cannot alter an already reviewed basis."""
