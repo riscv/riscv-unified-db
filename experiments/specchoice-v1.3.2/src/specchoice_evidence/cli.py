@@ -14,7 +14,6 @@ from .baseline import (
     check_boundary,
     create_restart_baseline,
     load_baseline,
-    validate_boundary_restart,
     validate_restart_lineage,
 )
 from .receipt import (
@@ -80,21 +79,18 @@ def command_capture(args: argparse.Namespace) -> int:
 def command_check(args: argparse.Namespace) -> int:
     root = args.root.resolve() if args.root is not None else _repository_root(Path.cwd())
     baseline = args.baseline.resolve()
-    if args.policy_override.exists() and load_baseline(baseline)[0].get("schema_version") == "1":
+    if args.policy_override.exists():
         policy = json.loads(args.policy_override.read_text(encoding="utf-8"))
         active = policy.get("active_baseline")
         if not isinstance(active, dict) or active.get("sha256") != load_baseline(baseline)[1]:
             raise BaselineError("DS_STORE_POLICY_BASELINE_MISMATCH")
         if policy.get("decision", {}).get("code") != "DS_STORE_IGNORED_OS_METADATA":
             raise BaselineError("INVALID_DS_STORE_POLICY")
-    result = check_boundary(root, baseline, reviewed_revision=args.reviewed_revision)
+    result = check_boundary(root, baseline)
     _print_json({
         "baseline": {"schema_version": "1", "sha256": result.baseline_sha256},
         "blocking_violations": result.blocking_violations,
         "classifications": result.classifications,
-        "history_start_commit": result.history_start_commit,
-        "reviewed_revision": result.reviewed_revision,
-        "unique_changed_path_count": result.unique_changed_path_count,
     })
     return 0 if result.blocking_violations == 0 else 1
 
@@ -137,11 +133,6 @@ def command_validate_restart(args: argparse.Namespace) -> int:
             "status": "restart_lineage_valid",
         }
     )
-    return 0
-
-
-def command_validate_boundary_restart(args: argparse.Namespace) -> int:
-    _print_json(validate_boundary_restart(args.baseline, args.previous_baseline, args.allowlist, args.incident_receipt))
     return 0
 
 
@@ -498,7 +489,6 @@ def build_parser() -> argparse.ArgumentParser:
     boundary.add_argument("--root", type=Path)
     boundary.add_argument("--baseline", type=Path, default=_default_active_baseline())
     boundary.add_argument("--policy-override", type=Path, default=_default_policy_override())
-    boundary.add_argument("--reviewed-revision", default="HEAD")
     boundary.set_defaults(handler=command_check)
     validate = commands.add_parser("validate-baseline")
     validate.add_argument("--baseline", type=Path, default=_default_active_baseline())
@@ -516,12 +506,6 @@ def build_parser() -> argparse.ArgumentParser:
     validate_restart.add_argument("--previous", type=Path, required=True)
     validate_restart.add_argument("--baseline", type=Path, required=True)
     validate_restart.set_defaults(handler=command_validate_restart)
-    boundary_restart = commands.add_parser("validate-boundary-restart")
-    boundary_restart.add_argument("--baseline", type=Path, required=True)
-    boundary_restart.add_argument("--previous-baseline", type=Path, required=True)
-    boundary_restart.add_argument("--allowlist", type=Path, required=True)
-    boundary_restart.add_argument("--incident-receipt", type=Path, required=True)
-    boundary_restart.set_defaults(handler=command_validate_boundary_restart)
     control_decision = commands.add_parser("validate-control-decision")
     control_decision.add_argument("decision", type=Path)
     control_decision.add_argument("--baseline", type=Path, default=_default_active_baseline())
