@@ -130,35 +130,35 @@ Roadmap creation maps every v1 requirement to exactly one phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TS-01 | TBD | Pending |
-| TS-02 | TBD | Pending |
-| TS-03 | TBD | Pending |
-| TS-04 | TBD | Pending |
-| TS-05 | TBD | Pending |
-| TS-06 | TBD | Pending |
-| TS-07 | TBD | Pending |
-| TS-08 | TBD | Pending |
-| TS-09 | TBD | Pending |
-| TS-10 | TBD | Pending |
-| TS-11 | TBD | Pending |
-| TS-12 | TBD | Pending |
-| TS-13 | TBD | Pending |
-| TS-14 | TBD | Pending |
-| TS-15 | TBD | Pending |
-| H1-01 | TBD | Pending |
-| H1-02 | TBD | Pending |
-| H1-03 | TBD | Pending |
-| H1-04 | TBD | Pending |
-| H2-01 | TBD | Pending |
-| H2-02 | TBD | Pending |
-| H2-03 | TBD | Pending |
-| H2-04 | TBD | Pending |
+| TS-01 | Phase 1 | Pending |
+| TS-02 | Phase 1 | Pending |
+| TS-03 | Phase 2 | Pending |
+| TS-04 | Phase 2 | Pending |
+| TS-05 | Phase 2 | Pending |
+| TS-06 | Phase 6 | Pending |
+| TS-07 | Phase 5 | Pending |
+| TS-08 | Phase 3 | Pending |
+| TS-09 | Phase 3 | Pending |
+| TS-10 | Phase 4 | Pending |
+| TS-11 | Phase 5 | Pending |
+| TS-12 | Phase 5 | Pending |
+| TS-13 | Phase 6 | Pending |
+| TS-14 | Phase 7 | Pending |
+| TS-15 | Phase 7 | Pending |
+| H1-01 | Phase 4 | Pending |
+| H1-02 | Phase 6 | Pending |
+| H1-03 | Phase 6 | Pending |
+| H1-04 | Phase 6 | Pending |
+| H2-01 | Phase 3 | Pending |
+| H2-02 | Phase 4 | Pending |
+| H2-03 | Phase 6 | Pending |
+| H2-04 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- Mapped to phases: 23
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-30*  
-*Last updated: 2026-07-30 after initial definition*
+*Last updated: 2026-07-30 after roadmap creation*
