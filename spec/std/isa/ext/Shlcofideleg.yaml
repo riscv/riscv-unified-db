@@ -11,10 +11,7 @@ description: |
   Shlcofideleg supports delegating Local Counter Overflow Interrupts
   (LCOFIs) to VS-mode.
 
-  When Shlcofideleg is implemented, `hideleg` bit 13 is writable. When
-  `hideleg`.LCOFI is set, `vsip`.LCOFIP and `vsie`.LCOFIE are aliases of
-  `sip`.LCOFIP and `sie`.LCOFIE, respectively. Otherwise, `vsip`.LCOFIP and
-  `vsie`.LCOFIE are read-only zeros.
+  When Shlcofideleg is implemented, `hideleg` bit 13 is writable.
 type: privileged
 versions:
   - version: "1.0.0"
