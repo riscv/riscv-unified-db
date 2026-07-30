@@ -18,6 +18,7 @@ from .baseline import (
 )
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
+from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
 
 
 def _default_capture_baseline() -> Path:
@@ -189,6 +190,34 @@ def command_record_environment(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_audit_sources(args: argparse.Namespace) -> int:
+    """Run construction-only PR proofs and emit rejected evidence when a gate fails."""
+    raw = args.config.read_bytes()
+    try:
+        config = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise GitProofError("INVALID_SOURCE_SNAPSHOTS_CONFIG") from error
+    if canonical_json_bytes(config) != raw:
+        raise GitProofError("SOURCE_SNAPSHOTS_NOT_CANONICAL")
+    if not isinstance(config, dict) or config.get("schema_version") != "1":
+        raise GitProofError("INVALID_SOURCE_SNAPSHOTS_CONFIG")
+    results, failures = audit_snapshots(config, args.rejected_directory)
+    _print_json(
+        {"failures": failures, "results": results, "status": "rejected" if failures else "passed"}
+    )
+    return 1 if failures else 0
+
+
+def command_validate_source_request(args: argparse.Namespace) -> int:
+    """Check that request inventory cannot authorize unreviewed source extraction."""
+    config = json.loads(args.config.read_text(encoding="utf-8"))
+    if not isinstance(config, dict):
+        raise GitProofError("INVALID_SOURCE_SNAPSHOTS_CONFIG")
+    entries = validate_consumed_file_request(config.get("consumed_file_request"))
+    _print_json({"entry_count": len(entries), "status": "reviewed"})
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-evidence")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -231,6 +260,17 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("audit/environment/environment-receipt-phase-start-001.json"),
     )
     environment.set_defaults(handler=command_record_environment)
+    audit_sources = commands.add_parser("audit-sources")
+    audit_sources.add_argument(
+        "--config", type=Path, default=Path("config/source_snapshots.json")
+    )
+    audit_sources.add_argument("--rejected-directory", type=Path, default=Path("bundles/rejected"))
+    audit_sources.set_defaults(handler=command_audit_sources)
+    source_request = commands.add_parser("validate-source-request")
+    source_request.add_argument(
+        "--config", type=Path, default=Path("config/source_snapshots.json")
+    )
+    source_request.set_defaults(handler=command_validate_source_request)
     return parser
 
 
@@ -238,7 +278,7 @@ def main() -> int:
     args = build_parser().parse_args()
     try:
         return args.handler(args)
-    except (BaselineError, ValueError, OSError) as error:
+    except (BaselineError, GitProofError, ValueError, OSError) as error:
         print(str(error), file=sys.stderr)
         return 2
 

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import tempfile
 import unittest
@@ -84,17 +85,57 @@ class GitProofTests(unittest.TestCase):
         with self.assertRaisesRegex(GitProofError, "PIN_COMMIT_MISSING"):
             prove_pinned_snapshot(self.audit, 7, "0" * 40)
 
+        def missing_tree(arguments: tuple[str, ...]) -> subprocess.CompletedProcess[bytes]:
+            if arguments[-1].endswith("^{tree}"):
+                return subprocess.CompletedProcess(arguments, 1, b"", b"missing tree")
+            return subprocess.run(arguments, check=False, capture_output=True)
+
+        with self.assertRaisesRegex(GitProofError, "PIN_TREE_MISSING"):
+            prove_pinned_snapshot(self.audit, 7, self.ancestor, runner=missing_tree)
+
         with self.assertRaisesRegex(GitProofError, "REQUESTED_PATH_MISSING"):
             read_pinned_path(self.audit, self.ancestor, "missing.txt")
 
         with self.assertRaisesRegex(GitProofError, "PR_REF_MISSING"):
             prove_pinned_snapshot(self.audit, 999, self.ancestor)
 
+        def unavailable(_: tuple[str, ...]) -> subprocess.CompletedProcess[bytes]:
+            raise FileNotFoundError("git")
+
+        with self.assertRaisesRegex(GitProofError, "GIT_CAPABILITY_UNAVAILABLE"):
+            initialize_disposable_bare_repository(self.root / "unavailable.git", runner=unavailable)
+
     def test_empty_or_unresolved_requests_never_authorize_whole_tree_copy(self) -> None:
         with self.assertRaisesRegex(GitProofError, "CONSUMED_FILE_INVENTORY_UNRESOLVED"):
-            validate_consumed_file_request({"schema_version": "1", "state": "unresolved", "entries": []})
+            validate_consumed_file_request(
+                {"schema_version": "1", "state": "unresolved", "entries": []}
+            )
         with self.assertRaisesRegex(GitProofError, "CONSUMED_FILE_INVENTORY_EMPTY"):
-            validate_consumed_file_request({"schema_version": "1", "state": "reviewed", "entries": []})
+            validate_consumed_file_request(
+                {"schema_version": "1", "state": "reviewed", "entries": []}
+            )
+
+    def test_frozen_pr_2192_is_a_rejected_receipt_without_accepted_identity(self) -> None:
+        receipt_path = (
+            Path(__file__).parents[1]
+            / "bundles/rejected/pr-2192-current-head/attempt-receipt.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(receipt["diagnostic"], "PR_PIN_NOT_REACHABLE")
+        self.assertEqual(
+            receipt["expected"]["pinned_commit_sha"], "4bdaa4be1a404f78ff5b2841edd535afb637566b"
+        )
+        self.assertEqual(
+            receipt["observed"]["pinned_tree_sha"], "de6ff1cf69d4585bc7078ffab5c1888b71830ba9"
+        )
+        self.assertRegex(receipt["observed"]["resolved_head_sha"], r"^[0-9a-f]{40}$")
+        self.assertNotEqual(
+            receipt["observed"]["resolved_head_sha"], receipt["expected"]["pinned_commit_sha"]
+        )
+        self.assertEqual(receipt["status"], "rejected")
+        self.assertNotIn("generation", receipt)
+        self.assertNotIn("root_sha256", receipt)
 
 
 if __name__ == "__main__":
