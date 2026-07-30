@@ -426,14 +426,6 @@ def _write_local_mvp_receipt(
         approved_generation,
         boundary.classifications,
     )
-    restart_lineage = None
-    if getattr(args, "restart_receipt", None) is not None:
-        restart_lineage = validate_boundary_restart(
-            args.baseline,
-            Path("baselines/phase-start-v2.json"),
-            Path("config/boundary_allowlist-v4-gap-closure.json"),
-            args.restart_receipt,
-        )
     receipt = build_local_mvp_receipt(
         boundary.baseline_sha256,
         sha256_bytes(environment.read_bytes()),
@@ -441,7 +433,6 @@ def _write_local_mvp_receipt(
         boundary.classifications,
         sha256_bytes(decision_raw),
         basis,
-        restart_lineage=restart_lineage,
     )
     result = write_receipt_package(receipt, args.receipt, args.markdown)
     return result
@@ -611,7 +602,6 @@ def build_parser() -> argparse.ArgumentParser:
     local_receipt.add_argument("--environment-decision", type=Path, default=Path("receipts/environment-decision.json"))
     local_receipt.add_argument("--receipt", type=Path, default=Path("receipts/integrity-receipt.json"))
     local_receipt.add_argument("--markdown", type=Path, default=Path("receipts/integrity-receipt.md"))
-    local_receipt.add_argument("--restart-receipt", type=Path)
     local_receipt.set_defaults(handler=command_write_local_mvp_receipt)
     integrity = commands.add_parser("write-integrity-receipt")
     integrity.add_argument("--baseline", type=Path, default=_default_active_baseline())
