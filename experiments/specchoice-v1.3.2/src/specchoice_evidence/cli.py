@@ -22,6 +22,7 @@ from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_re
 from .source_contract import (
     SourceContractProposalError,
     validate_source_contract_proposal,
+    validate_source_publication_decision,
     verify_source_contract_proposal_git,
 )
 
@@ -256,6 +257,43 @@ def command_verify_source_contract_proposal_git(args: argparse.Namespace) -> int
     return 0
 
 
+def command_validate_source_decision(args: argparse.Namespace) -> int:
+    """Validate a hash-bound approval without treating it as construction authority."""
+    raw = args.decision.read_bytes()
+    try:
+        decision = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SourceContractProposalError("INVALID_SOURCE_DECISION_JSON") from error
+    if canonical_json_bytes(decision) != raw:
+        raise SourceContractProposalError("SOURCE_DECISION_NOT_CANONICAL")
+    proposal_raw = args.proposal.read_bytes()
+    proposal = _load_canonical_source_contract_proposal(args.proposal)
+    validated = validate_source_publication_decision(
+        decision,
+        proposal,
+        proposal_path=args.proposal.as_posix(),
+        proposal_sha256=sha256_bytes(proposal_raw),
+    )
+    contract = validated["approved_contract"]
+    assert isinstance(contract, dict)
+    consumed_files = contract["consumed_files"]
+    snapshots = contract["snapshots"]
+    assert isinstance(consumed_files, list)
+    assert isinstance(snapshots, list)
+    _print_json(
+        {
+            "accepted_publication_authorized": False,
+            "candidate_construction_authorized": False,
+            "consumed_file_count": len(consumed_files),
+            "proposal_sha256": sha256_bytes(proposal_raw),
+            "snapshot_count": len(snapshots),
+            "source_extraction_authorized": False,
+            "state": "contract_approved",
+        }
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-evidence")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -326,6 +364,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     proposal_git.add_argument("--git-repository", type=Path, required=True)
     proposal_git.set_defaults(handler=command_verify_source_contract_proposal_git)
+    source_decision = commands.add_parser("validate-source-decision")
+    source_decision.add_argument(
+        "decision", type=Path, nargs="?", default=Path("receipts/source-publication-decision.json")
+    )
+    source_decision.add_argument(
+        "--proposal",
+        type=Path,
+        default=Path("receipts/source-contract-correction-proposal-v2.json"),
+    )
+    source_decision.set_defaults(handler=command_validate_source_decision)
     return parser
 
 

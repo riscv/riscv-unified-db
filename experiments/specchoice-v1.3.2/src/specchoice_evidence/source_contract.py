@@ -11,10 +11,8 @@ from __future__ import annotations
 import hashlib
 import os
 import subprocess
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
-
 from .canonical import require_byte_length, require_sha256
 from .filesystem import FilesystemPolicyError, require_relative_posix_path
 from .git_proof import GitProofError
@@ -169,6 +167,107 @@ def validate_source_contract_proposal(proposal: object) -> dict[str, object]:
     ):
         raise SourceContractProposalError("PROPOSAL_CONSUMED_FILE_ORDER_NONDETERMINISTIC")
     return {"consumed_files": normalized_files, "snapshots": snapshots}
+
+
+def _approved_contract(proposal: Mapping[str, object]) -> dict[str, object]:
+    """Return the exact proposal projection a proposal-only decision may bind."""
+    return {
+        "base_frozen_contract": proposal["base_frozen_contract"],
+        "consumed_files": proposal["consumed_files"],
+        "historical_rejected_receipt": proposal["historical_rejected_receipt"],
+        "proposed_contract_version": proposal["proposed_contract_version"],
+        "requested_generation_label": proposal["requested_generation_label"],
+        "snapshots": proposal["snapshots"],
+    }
+
+
+def validate_source_publication_decision(
+    decision: object,
+    proposal: object,
+    *,
+    proposal_path: str,
+    proposal_sha256: str,
+) -> dict[str, object]:
+    """Validate a narrow proposal-only approval without authorizing custody actions."""
+    validate_source_contract_proposal(proposal)
+    proposal_payload = _require_mapping(proposal, "INVALID_SOURCE_CONTRACT_PROPOSAL")
+    payload = _require_mapping(decision, "INVALID_SOURCE_PUBLICATION_DECISION")
+    expected_fields = {
+        "approval_scope",
+        "approved_contract",
+        "authorization",
+        "proposal",
+        "reviewer",
+        "schema_version",
+        "state",
+    }
+    if set(payload) != expected_fields:
+        raise SourceContractProposalError("SOURCE_DECISION_FIELDS_INVALID")
+    if payload.get("schema_version") != "1":
+        raise SourceContractProposalError("UNSUPPORTED_SOURCE_DECISION_SCHEMA")
+    if payload.get("state") != "contract_approved":
+        raise SourceContractProposalError("SOURCE_DECISION_NOT_CONTRACT_APPROVED")
+    if payload.get("approval_scope") != "proposal_only":
+        raise SourceContractProposalError("SOURCE_DECISION_SCOPE_INVALID")
+
+    proposal_binding = _require_mapping(payload.get("proposal"), "SOURCE_DECISION_PROPOSAL_MISSING")
+    if set(proposal_binding) != {"path", "sha256"}:
+        raise SourceContractProposalError("SOURCE_DECISION_PROPOSAL_BINDING_INVALID")
+    if _normalized_path(proposal_binding.get("path"), "decision_proposal_path") != proposal_path:
+        raise SourceContractProposalError("SOURCE_DECISION_PROPOSAL_PATH_MISMATCH")
+    try:
+        proposal_digest = require_sha256(proposal_binding.get("sha256"))
+    except ValueError as error:
+        raise SourceContractProposalError("SOURCE_DECISION_PROPOSAL_SHA256_INVALID") from error
+    if proposal_digest != proposal_sha256:
+        raise SourceContractProposalError("SOURCE_DECISION_PROPOSAL_SHA256_MISMATCH")
+
+    approved_contract = _require_mapping(
+        payload.get("approved_contract"), "SOURCE_DECISION_CONTRACT_MISSING"
+    )
+    if dict(approved_contract) != _approved_contract(proposal_payload):
+        raise SourceContractProposalError("SOURCE_DECISION_CONTRACT_MISMATCH")
+    reviewer = _require_mapping(payload.get("reviewer"), "SOURCE_DECISION_REVIEWER_MISSING")
+    if reviewer != {"approval_token": "approve-proposal-only"}:
+        raise SourceContractProposalError("SOURCE_DECISION_REVIEWER_APPROVAL_INVALID")
+    authorization = _require_mapping(
+        payload.get("authorization"), "SOURCE_DECISION_AUTHORIZATION_MISSING"
+    )
+    expected_authorization = {
+        "accepted_publication_authorized": False,
+        "candidate_construction_authorized": False,
+        "source_extraction_authorized": False,
+    }
+    if dict(authorization) != expected_authorization:
+        raise SourceContractProposalError("SOURCE_DECISION_AUTHORIZATION_INVALID")
+    return dict(payload)
+
+
+def require_source_extraction_authorization(decision: Mapping[str, object]) -> None:
+    """Fail closed unless a later, separately authorized decision permits extraction."""
+    authorization = _require_mapping(
+        decision.get("authorization"), "SOURCE_DECISION_AUTHORIZATION_MISSING"
+    )
+    if authorization.get("source_extraction_authorized") is not True:
+        raise SourceContractProposalError("SOURCE_EXTRACTION_NOT_AUTHORIZED")
+
+
+def require_candidate_construction_authorization(decision: Mapping[str, object]) -> None:
+    """Fail closed unless a later decision expressly permits candidate construction."""
+    authorization = _require_mapping(
+        decision.get("authorization"), "SOURCE_DECISION_AUTHORIZATION_MISSING"
+    )
+    if authorization.get("candidate_construction_authorized") is not True:
+        raise SourceContractProposalError("CANDIDATE_CONSTRUCTION_NOT_AUTHORIZED")
+
+
+def require_accepted_publication_authorization(decision: Mapping[str, object]) -> None:
+    """Fail closed unless a later decision expressly permits accepted publication."""
+    authorization = _require_mapping(
+        decision.get("authorization"), "SOURCE_DECISION_AUTHORIZATION_MISSING"
+    )
+    if authorization.get("accepted_publication_authorized") is not True:
+        raise SourceContractProposalError("ACCEPTED_PUBLICATION_NOT_AUTHORIZED")
 
 
 def _run_git(repository: Path, *arguments: str) -> subprocess.CompletedProcess[bytes]:

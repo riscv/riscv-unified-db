@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import subprocess
 import tempfile
 import unittest
@@ -12,9 +13,14 @@ from pathlib import Path
 
 from specchoice_evidence.source_contract import (
     SourceContractProposalError,
+    require_accepted_publication_authorization,
+    require_candidate_construction_authorization,
+    require_source_extraction_authorization,
     validate_source_contract_proposal,
+    validate_source_publication_decision,
     verify_source_contract_proposal_git,
 )
+from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 
 
 def git(*arguments: str, cwd: Path | None = None) -> str:
@@ -56,6 +62,33 @@ def proposal_for(raw: bytes, commit: str, tree: str) -> dict[str, object]:
                 "declared_transforms": [],
             }
         ],
+    }
+
+
+def proposal_only_decision_for(proposal: dict[str, object]) -> dict[str, object]:
+    approved_contract = {
+        "base_frozen_contract": proposal["base_frozen_contract"],
+        "consumed_files": proposal["consumed_files"],
+        "historical_rejected_receipt": proposal["historical_rejected_receipt"],
+        "proposed_contract_version": proposal["proposed_contract_version"],
+        "requested_generation_label": proposal["requested_generation_label"],
+        "snapshots": proposal["snapshots"],
+    }
+    return {
+        "approval_scope": "proposal_only",
+        "approved_contract": approved_contract,
+        "authorization": {
+            "accepted_publication_authorized": False,
+            "candidate_construction_authorized": False,
+            "source_extraction_authorized": False,
+        },
+        "proposal": {
+            "path": "receipts/source-contract-correction-proposal-v2.json",
+            "sha256": sha256_bytes(canonical_json_bytes(proposal)),
+        },
+        "reviewer": {"approval_token": "approve-proposal-only"},
+        "schema_version": "1",
+        "state": "contract_approved",
     }
 
 
@@ -115,6 +148,63 @@ class SourceContractProposalTests(unittest.TestCase):
         directory_path["consumed_files"][0]["upstream_path"] = "."
         with self.assertRaises(SourceContractProposalError):
             verify_source_contract_proposal_git(directory_path, self.audit)
+
+    def test_proposal_only_decision_cannot_authorize_extraction_or_publication(self) -> None:
+        decision = proposal_only_decision_for(self.proposal)
+        validated = validate_source_publication_decision(
+            decision,
+            self.proposal,
+            proposal_path="receipts/source-contract-correction-proposal-v2.json",
+            proposal_sha256=sha256_bytes(canonical_json_bytes(self.proposal)),
+        )
+
+        with self.assertRaisesRegex(SourceContractProposalError, "SOURCE_EXTRACTION_NOT_AUTHORIZED"):
+            require_source_extraction_authorization(validated)
+        with self.assertRaisesRegex(
+            SourceContractProposalError, "CANDIDATE_CONSTRUCTION_NOT_AUTHORIZED"
+        ):
+            require_candidate_construction_authorization(validated)
+        with self.assertRaisesRegex(SourceContractProposalError, "ACCEPTED_PUBLICATION_NOT_AUTHORIZED"):
+            require_accepted_publication_authorization(validated)
+
+    def test_proposal_only_decision_rejects_scope_escalation_and_contract_drift(self) -> None:
+        decision = proposal_only_decision_for(self.proposal)
+        decision["authorization"]["source_extraction_authorized"] = True
+        with self.assertRaisesRegex(SourceContractProposalError, "AUTHORIZATION_INVALID"):
+            validate_source_publication_decision(
+                decision,
+                self.proposal,
+                proposal_path="receipts/source-contract-correction-proposal-v2.json",
+                proposal_sha256=sha256_bytes(canonical_json_bytes(self.proposal)),
+            )
+
+        decision = proposal_only_decision_for(self.proposal)
+        decision["approved_contract"]["snapshots"] = []
+        with self.assertRaisesRegex(SourceContractProposalError, "CONTRACT_MISMATCH"):
+            validate_source_publication_decision(
+                decision,
+                self.proposal,
+                proposal_path="receipts/source-contract-correction-proposal-v2.json",
+                proposal_sha256=sha256_bytes(canonical_json_bytes(self.proposal)),
+            )
+
+    def test_repository_decision_binds_v2_without_accepted_generation(self) -> None:
+        experiment_root = Path(__file__).parents[1]
+        proposal_raw = (experiment_root / "receipts/source-contract-correction-proposal-v2.json").read_bytes()
+        decision_raw = (experiment_root / "receipts/source-publication-decision.json").read_bytes()
+        proposal = json.loads(proposal_raw.decode("utf-8"))
+        decision = json.loads(decision_raw.decode("utf-8"))
+        validated = validate_source_publication_decision(
+            decision,
+            proposal,
+            proposal_path="receipts/source-contract-correction-proposal-v2.json",
+            proposal_sha256=sha256_bytes(proposal_raw),
+        )
+
+        self.assertEqual(validated["state"], "contract_approved")
+        self.assertNotIn("generation", validated)
+        self.assertNotIn("root_sha256", validated)
+        self.assertEqual(list((experiment_root / "bundles/accepted").glob("*")), [])
 
 
 if __name__ == "__main__":
