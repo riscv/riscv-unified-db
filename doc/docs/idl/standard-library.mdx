@@ -149,3 +149,12 @@ write_memory(32, virtual_address, X[xs2][31:0], $encoding);
 :::note
 Both `read_memory` and `write_memory` may raise exceptions (access fault, page fault, misaligned) as a side effect of the access. No explicit error handling is needed in the calling code — the exception propagates automatically via `raise()`.
 :::
+
+### `sext(value, first_extended_bit)`
+
+Sign-extends `value` (an `XReg`) by replicating bit `first_extended_bit - 1` into bits `[MXLEN-1:first_extended_bit]` of the result.
+
+```idl
+# Load word (sign-extended via sext helper)
+X[xd] = sext(read_memory(32, virtual_address, $encoding), 32);
+```
