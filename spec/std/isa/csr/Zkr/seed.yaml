@@ -9,10 +9,11 @@ name: seed
 long_name: Seed for cryptographic random bit generators
 address: 0x015
 writable: true
-priv_mode: M
+priv_mode: U
 length: 32
 description: |
-  The `seed` CSR provides an interface to a physical Entropy Source.
+  The seed CSR provides an interface to a NIST SP 800-90B (Turan et al., 2018)
+  or BSI AIS-31 (Killmann & Schindler, 2011) compliant physical Entropy Source (ES).
 
   The CSR provides up to 16 physical entropy bits that can be used to seed
   cryptographic random bit generators. The write value is ignored by
@@ -46,7 +47,7 @@ fields:
           raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
         }
       }
-      return CSR[seed].OPST;
+      return CSR[seed].OPST; # TODO: Implement OPST as a builtin?
   ENTROPY:
     location: 15-0
     description: |
@@ -68,14 +69,12 @@ fields:
           raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
         }
       }
-      return CSR[seed].ENTROPY;
+      return CSR[seed].ENTROPY; # TODO: Implement ENTROPY as a builtin?
 sw_read(): |
-  Bits<3> csr_funct3 = $encoding[14:12];
-  Bits<5> csr_rs1_uimm = $encoding[19:15];
+  # CSRRS/CSRRC/CSRRSI/CSRRCI are the CSR instructions with funct3[1] set.
+  Boolean read_only_access = ($encoding[13] == 1'b1) && ($encoding[19:15] == 5'b00000);
 
-  if (((csr_funct3 == 3'b010) || (csr_funct3 == 3'b011) ||
-       (csr_funct3 == 3'b110) || (csr_funct3 == 3'b111)) &&
-      (csr_rs1_uimm == 5'b00000)) {
+  if (read_only_access) {
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
