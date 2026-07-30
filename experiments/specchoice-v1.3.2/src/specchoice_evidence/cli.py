@@ -33,6 +33,10 @@ def _default_policy_override() -> Path:
     return Path("baselines/ds-store-policy-override-v1.json")
 
 
+def _default_allowlist() -> Path:
+    return Path("config/boundary_allowlist.json")
+
+
 def _repository_root(start: Path) -> Path:
     """Find the repository root without invoking Git for offline-compatible reads."""
     for candidate in (start.resolve(), *start.resolve().parents):
@@ -112,6 +116,60 @@ def command_validate_restart(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_validate_control_decision(args: argparse.Namespace) -> int:
+    """Validate the reviewer approval that authorizes only GSD control updates."""
+    raw = args.decision.read_bytes()
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise BaselineError("INVALID_CONTROL_DECISION_JSON") from error
+    if canonical_json_bytes(payload) != raw:
+        raise BaselineError("CONTROL_DECISION_NOT_CANONICAL")
+    if not isinstance(payload, dict) or payload.get("schema_version") != "1":
+        raise BaselineError("UNSUPPORTED_CONTROL_DECISION_SCHEMA")
+
+    baseline, baseline_sha256 = load_baseline(args.baseline)
+    del baseline
+    allowlist_sha256 = sha256_bytes(args.allowlist.read_bytes())
+    policy_raw = args.policy_override.read_bytes()
+    try:
+        policy = json.loads(policy_raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise BaselineError("INVALID_DS_STORE_POLICY") from error
+    if canonical_json_bytes(policy) != policy_raw or policy.get("schema_version") != "1":
+        raise BaselineError("INVALID_DS_STORE_POLICY")
+
+    expected = (
+        ("baseline", args.baseline, baseline_sha256),
+        ("allowlist", args.allowlist, allowlist_sha256),
+        ("boundary_policy", args.policy_override, sha256_bytes(policy_raw)),
+    )
+    for field, path, digest in expected:
+        entry = payload.get(field)
+        if not isinstance(entry, dict):
+            raise BaselineError("CONTROL_DECISION_BINDING_MISSING")
+        if entry.get("path") != path.as_posix() or entry.get("sha256") != digest:
+            raise BaselineError("CONTROL_DECISION_BINDING_MISMATCH")
+        require_sha256(entry.get("sha256"))
+    boundary_policy = payload["boundary_policy"]
+    if boundary_policy.get("schema_version") != policy["schema_version"]:
+        raise BaselineError("CONTROL_DECISION_POLICY_SCHEMA_MISMATCH")
+    reviewer = payload.get("reviewer")
+    if not isinstance(reviewer, dict) or reviewer.get("disposition") != "approved":
+        raise BaselineError("CONTROL_DECISION_NOT_APPROVED")
+    if payload.get("disputes") != []:
+        raise BaselineError("CONTROL_DECISION_DISPUTES_PRESENT")
+    _print_json(
+        {
+            "allowlist_sha256": allowlist_sha256,
+            "boundary_policy_schema_version": policy["schema_version"],
+            "phase_start_baseline_sha256": baseline_sha256,
+            "status": "control_update_approved",
+        }
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-evidence")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -140,6 +198,12 @@ def build_parser() -> argparse.ArgumentParser:
     validate_restart.add_argument("--previous", type=Path, required=True)
     validate_restart.add_argument("--baseline", type=Path, required=True)
     validate_restart.set_defaults(handler=command_validate_restart)
+    control_decision = commands.add_parser("validate-control-decision")
+    control_decision.add_argument("decision", type=Path)
+    control_decision.add_argument("--baseline", type=Path, default=_default_active_baseline())
+    control_decision.add_argument("--allowlist", type=Path, default=_default_allowlist())
+    control_decision.add_argument("--policy-override", type=Path, default=_default_policy_override())
+    control_decision.set_defaults(handler=command_validate_control_decision)
     return parser
 
 

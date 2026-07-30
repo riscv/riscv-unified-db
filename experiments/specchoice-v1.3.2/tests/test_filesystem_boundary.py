@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from specchoice_evidence.canonical import canonical_json_bytes
+from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.baseline import (
     BaselineError,
     capture_baseline,
@@ -25,9 +25,47 @@ from specchoice_evidence.filesystem import (
     reject_hardlink_dependency,
     require_relative_posix_path,
 )
+from specchoice_evidence.cli import build_parser
 
 
 class FilesystemBoundaryTests(unittest.TestCase):
+    def test_control_decision_binds_active_artifacts_and_requires_approval(self) -> None:
+        experiment_root = Path(__file__).resolve().parents[1]
+        baseline = experiment_root / "baselines/phase-start-v2.json"
+        allowlist = experiment_root / "config/boundary_allowlist.json"
+        policy = experiment_root / "baselines/ds-store-policy-override-v1.json"
+        payload = {
+            "allowlist": {"path": "config/boundary_allowlist.json", "sha256": sha256_bytes(allowlist.read_bytes())},
+            "baseline": {"path": "baselines/phase-start-v2.json", "sha256": sha256_bytes(baseline.read_bytes())},
+            "boundary_policy": {
+                "path": "baselines/ds-store-policy-override-v1.json",
+                "schema_version": "1",
+                "sha256": sha256_bytes(policy.read_bytes()),
+            },
+            "disputes": [],
+            "reviewer": {"disposition": "approved", "signal": "approved"},
+            "schema_version": "1",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            decision = Path(directory) / "control-decision.json"
+            decision.write_bytes(canonical_json_bytes(payload))
+            parser = build_parser()
+            arguments = [
+                "validate-control-decision",
+                str(decision),
+                "--baseline",
+                "baselines/phase-start-v2.json",
+                "--allowlist",
+                "config/boundary_allowlist.json",
+                "--policy-override",
+                "baselines/ds-store-policy-override-v1.json",
+            ]
+            self.assertEqual(parser.parse_args(arguments).handler(parser.parse_args(arguments)), 0)
+            payload["reviewer"]["disposition"] = "disputed"
+            decision.write_bytes(canonical_json_bytes(payload))
+            with self.assertRaisesRegex(BaselineError, "CONTROL_DECISION_NOT_APPROVED"):
+                parser.parse_args(arguments).handler(parser.parse_args(arguments))
+
     def test_allowlist_is_exact_not_prefix(self) -> None:
         allowlist = {"roots": ["experiments/specchoice-v1.3.2/"], "exact_files": [".planning/STATE.md"]}
         self.assertTrue(path_is_allowed("experiments/specchoice-v1.3.2/a.txt", allowlist))
