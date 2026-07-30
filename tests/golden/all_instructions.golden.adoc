@@ -21429,15 +21429,10 @@ Decode Variables::
 Included in::
 
 
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
+This instruction requires the following:
 
-| *Zfhmin*
-| any
-|===
-
-
+xref:exts:Zfhmin.adoc#udb:doc:ext:Zfhmin[Zfhmin]
+xref:exts:Zfbfmin.adoc#udb:doc:ext:Zfbfmin[Zfbfmin]
 
 
 [#udb:doc:inst:fli_d]
@@ -23781,15 +23776,10 @@ Decode Variables::
 Included in::
 
 
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
+This instruction requires the following:
 
-| *Zfhmin*
-| any
-|===
-
-
+xref:exts:Zfhmin.adoc#udb:doc:ext:Zfhmin[Zfhmin]
+xref:exts:Zfbfmin.adoc#udb:doc:ext:Zfbfmin[Zfbfmin]
 
 
 [#udb:doc:inst:fmv_w_x]
@@ -23947,15 +23937,10 @@ Decode Variables::
 Included in::
 
 
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
+This instruction requires the following:
 
-| *Zfhmin*
-| any
-|===
-
-
+xref:exts:Zfhmin.adoc#udb:doc:ext:Zfhmin[Zfhmin]
+xref:exts:Zfbfmin.adoc#udb:doc:ext:Zfbfmin[Zfbfmin]
 
 
 [#udb:doc:inst:fmv_x_w]
@@ -25836,15 +25821,10 @@ Decode Variables::
 Included in::
 
 
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
+This instruction requires the following:
 
-| *Zfhmin*
-| any
-|===
-
-
+xref:exts:Zfhmin.adoc#udb:doc:ext:Zfhmin[Zfhmin]
+xref:exts:Zfbfmin.adoc#udb:doc:ext:Zfbfmin[Zfbfmin]
 
 
 [#udb:doc:inst:fsq]
