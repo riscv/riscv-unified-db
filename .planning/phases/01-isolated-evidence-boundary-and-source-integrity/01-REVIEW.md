@@ -1,6 +1,6 @@
 ---
 phase: 01-isolated-evidence-boundary-and-source-integrity
-reviewed: 2026-07-30T18:16:43Z
+reviewed: 2026-07-30T18:42:00Z
 depth: standard
 files_reviewed: 10
 files_reviewed_list:
@@ -16,94 +16,78 @@ files_reviewed_list:
   - experiments/specchoice-v1.3.2/tests/test_receipts.py
 findings:
   critical: 2
-  warning: 2
+  warning: 0
   info: 0
-  total: 4
+  total: 2
 status: issues_found
 ---
 
 # Phase 01: Code Review Report
 
-**Reviewed:** 2026-07-30T18:16:43Z
+**Reviewed:** 2026-07-30T18:42:00Z
 **Depth:** standard
 **Files Reviewed:** 10
 **Status:** issues_found
 
 ## Summary
 
-The v5 baseline, allowlist, restart receipt, history-aware Git query, receipt projection, and focused tests were reviewed in context. The original TS-01 committed-history blind spot is closed for endpoint changes: `check-boundary` now resolves the baseline commit, rejects non-descendant revisions, and compares it through an exact reviewed commit. The current invocation showed all non-metadata v5 changes allowed and all `.DS_Store` paths visible but nonblocking.
+The direct constructor checks added for the prior review are effective: schema-3 construction now rejects a wrong basis, schema-3 validation rejects a lineage/top-level baseline mismatch, and finalization rejects a modified lineage projection. The provenance fix also retains committed/staged/worktree evidence for baseline-inventory paths. The submitted tests meaningfully exercise A/M/D/T records, deduplication, malformed raw Git output, and missing/non-descendant revisions; the focused 26-test suite passed.
 
-That improvement is not sufficient to advance the phase. The newly introduced schema-3 receipt path can mint a passing self-hashed receipt without the reviewer-approved receipt basis and does not prove that its claimed v5 lineage baseline is the baseline named by the receipt. These are integrity-boundary failures. 01-05 is **not ready** for ASVS L1 security audit or independent phase verification until the blockers are fixed and re-reviewed.
+However, the authorized v5 command path bypasses the repaired constructor check by passing its freshly computed basis rather than the reviewer-approved basis. The committed v5 artifact proves the bypass: its receipt basis is `f402e860...`, while its hash-bound reviewer decision records `32d6146a...`; `finalize-review` still returns `pass`. Separately, v5 remains opt-in even though it is the active recovery lineage: CLI defaults resolve to v2 from the experiment directory (and v1 from the repository root), and a v5 receipt can be emitted without a restart receipt. Phase 01 is not ready for ASVS L1 or independent verification.
 
 ## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: v5 receipt construction bypasses the reviewer-approved basis
+### CR-01: Canonical v5 write/finalize path still bypasses the reviewer-approved receipt basis
 
 **Classification:** BLOCKER
 
-**File:** `experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py:223`
+**File:** `experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py:423-444`
 
-**Issue:** The mismatch check is conditioned on `restart_lineage is None`. Every v5/schema-3 receipt supplies restart lineage, so `build_local_mvp_receipt()` accepts an arbitrary `reviewed_receipt_basis_sha256` and then emits a passing, self-hashed receipt based on newly computed boundary facts. A direct call with a deliberately wrong basis (`"0" * 64`) and valid lineage returns `outcome: "pass"`. This defeats the required binding between the recorded reviewer decision and the local receipt basis; the CLI's earlier preflight check does not make the constructor safe against a changed boundary state or other callers.
+**Issue:** `_write_local_mvp_receipt()` computes `basis` from current facts, then supplies that same value as `reviewed_receipt_basis_sha256` to `build_local_mvp_receipt()` at line 443. This makes the constructor comparison at `receipt.py:224-226` tautological and entirely skips `decision["reviewed_receipt_basis_sha256"]`. `command_write_local_mvp_receipt()` never calls the preflight that does compare the decision basis (`cli.py:386-404`). Finalization only checks the decision file hash and generation (`cli.py:519-527`), not the receipt basis against that decision. The shipped receipt's basis differs from the reviewed decision's basis yet finalizes successfully, so an altered boundary projection can be self-hashed and presented as a passing local receipt without the required reviewer basis.
 
-**Fix:** Enforce the basis comparison for every receipt version before constructing the receipt.
+**Fix:** Make the write path validate and pass the decision's frozen basis; independently enforce the same equality during finalization.
 
 ```python
-basis = local_receipt_basis_sha256(
-    baseline_sha256, environment_sha256, source_identity, records
+_validate_local_mvp_receipt_basis(args, decision)
+reviewed_basis = decision["reviewed_receipt_basis_sha256"]
+assert isinstance(reviewed_basis, str)
+receipt = build_local_mvp_receipt(
+    ..., reviewed_receipt_basis_sha256=reviewed_basis,
+    restart_lineage=restart_lineage,
 )
-if reviewed_receipt_basis_sha256 != basis:
+
+# command_finalize_review, after local_decision validation
+if receipt.get("receipt_basis_sha256") != local_decision["reviewed_receipt_basis_sha256"]:
     raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
 ```
 
-Add a schema-3 regression that passes a valid `restart_lineage` with a wrong reviewer basis and asserts `LOCAL_RECEIPT_BASIS_MISMATCH`.
+Add an integration test through `write-local-mvp-receipt` and `finalize-review` that changes the recomputed boundary basis while retaining valid schema-3 lineage, then asserts both commands fail. Regenerate the receipt only under a reviewer decision bound to its new basis.
 
-### CR-02: Schema-3 validation accepts a receipt whose lineage names a different baseline
-
-**File:** `experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py:165`
+### CR-02: Active v5 recovery lineage is neither the CLI default nor required for local receipt issuance
 
 **Classification:** BLOCKER
 
-**Issue:** `validate_receipt()` checks only that each `restart_lineage` hash is syntactically a SHA-256 value. It never requires `restart_lineage["baseline"]["sha256"]` to equal `phase_start_baseline_sha256`, nor binds the other lineage fields to the stated restart generation. Consequently, a canonical, self-hashed passing schema-3 receipt can pair its boundary classifications and top-level baseline digest with an unrelated but well-formed lineage. `finalize-review` relies on this validator, so it does not repair the missing check. The committed v5 artifact happens to match, but the validator does not prove the claimed v5 binding.
+**File:** `experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py:47-50`
 
-**Fix:** Reject mismatched lineage fields in the canonical validator, then add a negative finalization test.
+**Issue:** `_default_active_baseline()` selects only `phase-start-v2.json`; it never selects the declared active v5 baseline. Therefore `check-boundary` and `write-local-mvp-receipt` default to v2 when invoked from the experiment directory (`cli.py:547`, `cli.py:649`), and to the nonexistent v1 fallback when invoked from the repository root. In addition, `--restart-receipt` is optional (`cli.py:653`), so even an explicit v5 baseline can produce schema 2 without restart lineage. This permits the normal receipt command to omit the v5 committed-history recovery and its projection checks, defeating the intended active local-only boundary.
+
+**Fix:** Resolve the active v5 baseline deterministically, and require a validated restart receipt whenever that baseline is used.
 
 ```python
-if lineage["baseline"]["sha256"] != receipt["phase_start_baseline_sha256"]:
-    raise ReceiptError("RESTART_LINEAGE_BASELINE_MISMATCH")
+def _default_active_baseline() -> Path:
+    return Path("baselines/phase-start-v5-gap-closure.json")
+
+# In _write_local_mvp_receipt after resolving baseline:
+if baseline.name == "phase-start-v5-gap-closure.json" and args.restart_receipt is None:
+    raise ReceiptError("RESTART_RECEIPT_REQUIRED")
 ```
 
-Also validate the lineage projection against `validate_boundary_restart()` in the command path, including its fixed predecessor, allowlist, incident-receipt paths, and reviewed revision.
-
-## Warnings
-
-### WR-01: Baseline-inventory paths discard committed and live provenance
-
-**Classification:** WARNING
-
-**File:** `experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py:306`
-
-**Issue:** `merge_boundary_changes()` correctly combines committed and live sources, but `check_boundary()` handles every path already in `prior_paths` by creating a fresh classification and never copies the corresponding `merged[path]` fields. A modified/deleted path present in the phase-start inventory therefore loses `change_sources`, `committed_change`, `live_changes`, modes, and change kind; if its bytes still match the snapshot, it is reported as `preexisting_unrelated` even when it was subsequently committed. This violates the v5 per-path source-preservation contract and prevents an independent reviewer from seeing how that path entered the result.
-
-**Fix:** Merge evidence into the classification for both baseline-inventory and newly discovered paths, and base a `preexisting_unrelated` result on the absence of post-baseline contributors as well as matching bytes. Add a fixture where an inventory path has both a committed change and a worktree change, then assert one record contains all sources.
-
-### WR-02: Required history edge cases have no regression coverage
-
-**Classification:** WARNING
-
-**File:** `experiments/specchoice-v1.3.2/tests/test_filesystem_boundary.py:33`
-
-**Issue:** The only v5 committed-history test creates one added path. No submitted test exercises committed modified, deleted, or type-changed records, deduplication of a path present in history and live layers, malformed raw-diff rejection, or an invalid/non-descendant reviewed revision. The receipt test at `tests/test_receipts.py:22` checks the recorded artifact but does not test either schema-3 binding failure above. These are the exact fail-closed cases introduced by 01-05, so the suite cannot reliably prevent their regression.
-
-**Fix:** Add isolated Git-fixture tests for A/M/D/T, history-plus-staged/worktree deduplication, malformed/truncated raw records, and invalid/non-descendant revisions; add schema-3 receipt tampering tests for reviewer basis and lineage/top-level baseline mismatch.
-
-## Historical Advisory Debt (not reclassified in this scope)
-
-The earlier report's CR-01, CR-02, WR-01, and WR-02 remain historical out-of-scope hardening debt: reviewer authorization is not independently authenticated, receipt writes are replaceable/not crash-atomic, and candidate construction bypasses the canonical decision loader. 01-05 did not materially worsen those items, so they are retained as advisory context and are not included in this report's severity counts.
+Add CLI tests, with the experiment directory as the working directory, asserting that every boundary/receipt default is v5 and that a v5 write without `--restart-receipt` fails closed. Keep explicit schema-2 compatibility available only through an intentional historical path, not the active command default.
 
 ---
 
-_Reviewed: 2026-07-30T18:16:43Z_
+_Reviewed: 2026-07-30T18:42:00Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
