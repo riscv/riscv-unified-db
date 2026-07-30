@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -62,6 +63,36 @@ class FilesystemBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(FilesystemPolicyError, "HARDLINK_DEPENDENCY_REJECTED"):
             reject_hardlink_dependency(True)
         reject_hardlink_dependency(False)
+
+    def test_regular_hardlink_remains_independently_hashed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.bin"
+            source.write_bytes(b"independent content")
+            os.link(source, root / "linked.bin")
+            evidence = inspect_authoritative_path(root, "linked.bin")
+        self.assertEqual(evidence.file_kind, "regular_file")
+        self.assertEqual(evidence.hardlink_count, 2)
+        self.assertEqual(evidence.byte_length, len(b"independent content"))
+
+    def test_fifo_and_unproven_mount_boundary_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            os.mkfifo(root / "evidence.fifo")
+            with self.assertRaisesRegex(FilesystemPolicyError, "SPECIAL_FILE_KIND_REJECTED"):
+                inspect_authoritative_path(root, "evidence.fifo")
+        root_stat = os.stat_result((stat.S_IFDIR | 0o755, 1, 10, 1, 0, 0, 0, 0, 0, 0))
+        mounted_stat = os.stat_result((stat.S_IFDIR | 0o755, 2, 11, 1, 0, 0, 0, 0, 0, 0))
+
+        def fake_lstat(path: Path) -> os.stat_result:
+            return root_stat if path.name == "root" else mounted_stat
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "root"
+            root.mkdir()
+            with patch.object(Path, "lstat", fake_lstat):
+                with self.assertRaisesRegex(FilesystemPolicyError, "MOUNT_BOUNDARY_UNPROVEN"):
+                    inspect_authoritative_path(root, "mounted")
 
     def test_baseline_refuses_overwrite_and_requires_canonical_bytes(self) -> None:
         payload = {
