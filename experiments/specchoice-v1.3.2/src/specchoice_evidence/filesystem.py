@@ -28,8 +28,11 @@ def require_relative_posix_path(value: str) -> PurePosixPath:
     """Reject absolute, traversal, empty, and platform-specific escape syntax."""
     if not isinstance(value, str) or not value or "\\" in value:
         raise FilesystemPolicyError("PATH_ESCAPE_DETECTED")
+    raw_parts = value.split("/")
+    if any(part in {"", ".", ".."} for part in raw_parts):
+        raise FilesystemPolicyError("PATH_ESCAPE_DETECTED")
     candidate = PurePosixPath(value)
-    if candidate.is_absolute() or any(part in {"", ".", ".."} for part in candidate.parts):
+    if candidate.is_absolute() or any(part in {".", ".."} for part in candidate.parts):
         raise FilesystemPolicyError("PATH_ESCAPE_DETECTED")
     return candidate
 

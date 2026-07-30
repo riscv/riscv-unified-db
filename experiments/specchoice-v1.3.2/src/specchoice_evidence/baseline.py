@@ -80,13 +80,16 @@ def load_baseline(path: Path) -> tuple[dict[str, Any], str]:
         entries = worktree.get(section)
         if not isinstance(entries, list):
             raise BaselineError("INVALID_BASELINE")
+        paths: list[str] = []
         for item in entries:
             if not isinstance(item, dict):
                 raise BaselineError("INVALID_BASELINE")
-            _relative(str(item.get("path", "")))
+            paths.append(_relative(str(item.get("path", ""))))
             if item.get("file_kind") == "regular_file":
                 require_byte_length(item.get("byte_length"))
                 require_sha256(item.get("sha256"))
+        if paths != sorted(paths) or len(paths) != len(set(paths)):
+            raise BaselineError("BASELINE_PATHS_NOT_SORTED")
     allowlist = payload.get("allowlist")
     if not isinstance(allowlist, dict):
         raise BaselineError("INVALID_ALLOWLIST")
