@@ -6,7 +6,10 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
+import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -18,6 +21,7 @@ from specchoice_evidence.source_contract import (
     require_accepted_publication_authorization,
     validate_source_publication_decision,
 )
+from specchoice_evidence.verify import create_synthetic_accepted_bundle, verify_accepted_bundle
 
 
 def git(*arguments: str, cwd: Path | None = None) -> str:
@@ -190,6 +194,40 @@ class CandidateBundleTests(unittest.TestCase):
             )
         with self.assertRaisesRegex(SourceContractProposalError, "ACCEPTED_PUBLICATION_NOT_AUTHORIZED"):
             require_accepted_publication_authorization(self.decision)
+
+    def test_copied_accepted_bundle_replays_without_git_network_or_repository_modules(self) -> None:
+        construct_candidate(self.decision, self.proposal, self.audit, self.candidates)
+        candidate = self.candidates / "candidate-v2"
+        accepted = self.root / "accepted" / "fixture-accepted"
+        identity = create_synthetic_accepted_bundle(candidate, accepted, "fixture-accepted")
+        self.assertEqual(verify_accepted_bundle(accepted)["root_sha256"], identity["root_sha256"])
+
+        copied = self.root / "copied-away"
+        shutil.copytree(accepted, copied)
+        shim = self.root / "no-git"
+        shim.mkdir()
+        (shim / "git").write_text("#!/bin/sh\nexit 97\n", encoding="utf-8")
+        os.chmod(shim / "git", 0o755)
+        environment = {
+            "PATH": f"{shim}{os.pathsep}{os.environ.get('PATH', '')}",
+            "PYTHONPATH": "",
+            "SPECHOICE_BLOCK_NETWORK": "1",
+        }
+        completed = subprocess.run(
+            [sys.executable, "verify_bundle.py"],
+            cwd=copied,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        verifier = copied / "verifier/specchoice_evidence/verify.py"
+        verifier.write_text(verifier.read_text(encoding="utf-8") + "# tampered\n", encoding="utf-8")
+        completed = subprocess.run(
+            [sys.executable, "verify_bundle.py"], cwd=copied, env=environment, check=False
+        )
+        self.assertNotEqual(completed.returncode, 0)
 
 
 if __name__ == "__main__":
