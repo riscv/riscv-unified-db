@@ -38,7 +38,7 @@ access:
   vu: always
 operation(): |
   XReg lhs = X[xs1];
-  XReg rhs = sext((cimm == 0) ? {MXLEN{1'b1}} : {{MXLEN-5{1'b0}}, cimm}, xlen());
+  XReg rhs = (cimm == 0) ? {MXLEN{1'b1}} : cimm;
 
   if (lhs == rhs) {
     jump_halfword($pc + $signed(offset));
