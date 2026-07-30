@@ -45,9 +45,26 @@ def _default_capture_baseline() -> Path:
 
 
 def _default_active_baseline() -> Path:
-    """Use the latest D-15 successor when a restart has been recorded."""
-    successor = Path("baselines/phase-start-v2.json")
-    return successor if successor.exists() else _default_capture_baseline()
+    """Return the active v5 baseline without depending on the caller's cwd."""
+    return _experiment_root() / "baselines/phase-start-v5-gap-closure.json"
+
+
+def _experiment_root() -> Path:
+    """Locate the experiment from this installed module, not the caller's cwd."""
+    return Path(__file__).resolve().parents[2]
+
+
+def _default_active_restart_receipt() -> Path:
+    """Return the restart authority bound to the active v5 baseline."""
+    return _experiment_root() / "receipts/boundary-restart-v5.json"
+
+
+def _active_v5_previous_baseline() -> Path:
+    return _experiment_root() / "baselines/phase-start-v2.json"
+
+
+def _active_v5_allowlist() -> Path:
+    return _experiment_root() / "config/boundary_allowlist-v5-gap-closure.json"
 
 
 def _default_policy_override() -> Path:
@@ -376,9 +393,10 @@ def command_accept_local_mvp(args: argparse.Namespace) -> int:
     """Create the exact immutable local accepted copy and canonical local-only receipt."""
     decision_raw = args.decision.read_bytes()
     decision = _load_canonical_local_acceptance_decision(args.decision)
+    restart_lineage = _restart_lineage_for_local_mvp_receipt(args)
     _validate_local_mvp_receipt_basis(args, decision)
     identity = accept_local_candidate(decision, args.candidate_directory, args.accepted_directory)
-    result = _write_local_mvp_receipt(args, decision, decision_raw, identity)
+    result = _write_local_mvp_receipt(args, decision, decision_raw, identity, restart_lineage)
     _print_json({**identity, "outcome": result["outcome"], "receipt_sha256": result["receipt_sha256"]})
     return 0 if result["outcome"] == "pass" and result["reviewer_package_complete"] else 2
 
@@ -404,11 +422,32 @@ def _validate_local_mvp_receipt_basis(args: argparse.Namespace, decision: dict[s
         raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
 
 
+def _restart_lineage_for_local_mvp_receipt(args: argparse.Namespace) -> dict[str, object] | None:
+    """Require the v5 restart authority; retain schema-2 only by explicit baseline choice."""
+    baseline = args.baseline.resolve()
+    restart_receipt = getattr(args, "restart_receipt", None)
+    if baseline == _default_active_baseline() and restart_receipt is None:
+        raise ReceiptError("RESTART_RECEIPT_REQUIRED")
+    if baseline != _default_active_baseline() and restart_receipt == _default_active_restart_receipt():
+        # argparse supplies the active default; an explicit historical baseline opts into
+        # schema-2 compatibility unless the caller also supplies a restart authority.
+        return None
+    if restart_receipt is None:
+        return None
+    return validate_boundary_restart(
+        baseline,
+        _active_v5_previous_baseline(),
+        _active_v5_allowlist(),
+        restart_receipt,
+    )
+
+
 def _write_local_mvp_receipt(
     args: argparse.Namespace,
     decision: dict[str, object],
     decision_raw: bytes,
     identity: dict[str, object],
+    restart_lineage: dict[str, object] | None,
 ) -> dict[str, object]:
     repository = _repository_root(Path.cwd())
     baseline = args.baseline if args.baseline.is_absolute() else Path.cwd() / args.baseline
@@ -420,27 +459,15 @@ def _write_local_mvp_receipt(
     boundary = check_boundary(repository, baseline)
     approved_generation = decision["approved_generation"]
     assert isinstance(approved_generation, dict)
-    basis = local_receipt_basis_sha256(
-        boundary.baseline_sha256,
-        sha256_bytes(environment.read_bytes()),
-        approved_generation,
-        boundary.classifications,
-    )
-    restart_lineage = None
-    if getattr(args, "restart_receipt", None) is not None:
-        restart_lineage = validate_boundary_restart(
-            args.baseline,
-            Path("baselines/phase-start-v2.json"),
-            Path("config/boundary_allowlist-v5-gap-closure.json"),
-            args.restart_receipt,
-        )
+    reviewed_basis = decision["reviewed_receipt_basis_sha256"]
+    assert isinstance(reviewed_basis, str)
     receipt = build_local_mvp_receipt(
         boundary.baseline_sha256,
         sha256_bytes(environment.read_bytes()),
         approved_generation,
         boundary.classifications,
         sha256_bytes(decision_raw),
-        basis,
+        reviewed_basis,
         restart_lineage=restart_lineage,
     )
     result = write_receipt_package(receipt, args.receipt, args.markdown)
@@ -451,6 +478,8 @@ def command_write_local_mvp_receipt(args: argparse.Namespace) -> int:
     """Finalize review artifacts for an already-created exact local accepted copy only."""
     decision_raw = args.decision.read_bytes()
     decision = _load_canonical_local_acceptance_decision(args.decision)
+    restart_lineage = _restart_lineage_for_local_mvp_receipt(args)
+    _validate_local_mvp_receipt_basis(args, decision)
     generation = decision["approved_generation"]["generation"]
     assert isinstance(generation, str)
     identity = verify_candidate(args.accepted_directory / generation)
@@ -460,7 +489,7 @@ def command_write_local_mvp_receipt(args: argparse.Namespace) -> int:
     require_local_accepted_generation_authorization(
         decision, identity, final["snapshot_manifest_sha256"]
     )
-    result = _write_local_mvp_receipt(args, decision, decision_raw, identity)
+    result = _write_local_mvp_receipt(args, decision, decision_raw, identity, restart_lineage)
     _print_json({**identity, "outcome": result["outcome"], "receipt_sha256": result["receipt_sha256"]})
     return 0 if result["outcome"] == "pass" and result["reviewer_package_complete"] else 2
 
@@ -525,6 +554,8 @@ def command_finalize_review(args: argparse.Namespace) -> int:
             raise ReceiptError("REVIEW_DECISION_HASH_MISMATCH")
         if source.get("generation") != local_decision["approved_generation"]["generation"]:
             raise ReceiptError("REVIEW_DECISION_IDENTITY_MISMATCH")
+        if receipt.get("receipt_basis_sha256") != local_decision["reviewed_receipt_basis_sha256"]:
+            raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
     elif not isinstance(decision, dict) or decision.get("disposition") != "approved":
         raise ReceiptError("REVIEW_NOT_APPROVED")
     if receipt["outcome"] != "pass" or not receipt["reviewer_package_complete"]:
@@ -642,6 +673,7 @@ def build_parser() -> argparse.ArgumentParser:
     local_accept.add_argument("--environment-decision", type=Path, default=Path("receipts/environment-decision.json"))
     local_accept.add_argument("--receipt", type=Path, default=Path("receipts/integrity-receipt.json"))
     local_accept.add_argument("--markdown", type=Path, default=Path("receipts/integrity-receipt.md"))
+    local_accept.add_argument("--restart-receipt", type=Path, default=_default_active_restart_receipt())
     local_accept.set_defaults(handler=command_accept_local_mvp)
     local_receipt = commands.add_parser("write-local-mvp-receipt")
     local_receipt.add_argument("--decision", type=Path, required=True)
@@ -650,7 +682,7 @@ def build_parser() -> argparse.ArgumentParser:
     local_receipt.add_argument("--environment-decision", type=Path, default=Path("receipts/environment-decision.json"))
     local_receipt.add_argument("--receipt", type=Path, default=Path("receipts/integrity-receipt.json"))
     local_receipt.add_argument("--markdown", type=Path, default=Path("receipts/integrity-receipt.md"))
-    local_receipt.add_argument("--restart-receipt", type=Path)
+    local_receipt.add_argument("--restart-receipt", type=Path, default=_default_active_restart_receipt())
     local_receipt.set_defaults(handler=command_write_local_mvp_receipt)
     integrity = commands.add_parser("write-integrity-receipt")
     integrity.add_argument("--baseline", type=Path, default=_default_active_baseline())

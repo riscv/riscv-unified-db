@@ -5,10 +5,11 @@ import tempfile
 import unittest
 import json
 import shutil
+import os
 from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
-from specchoice_evidence.cli import build_parser
+from specchoice_evidence.cli import _restart_lineage_for_local_mvp_receipt, build_parser
 from specchoice_evidence.receipt import (
     ReceiptError,
     build_local_mvp_receipt,
@@ -186,6 +187,79 @@ class IntegrityReceiptTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(ReceiptError, "RESTART_LINEAGE_PROJECTION_MISMATCH"):
                 arguments.handler(arguments)
+
+    def test_active_defaults_are_v5_from_experiment_and_repository_roots(self) -> None:
+        experiment_root = Path(__file__).resolve().parents[1]
+        repository_root = experiment_root.parents[1]
+        expected_baseline = experiment_root / "baselines/phase-start-v5-gap-closure.json"
+        expected_restart = experiment_root / "receipts/boundary-restart-v5.json"
+        original_cwd = Path.cwd()
+        try:
+            for cwd in (experiment_root, repository_root):
+                os.chdir(cwd)
+                parser = build_parser()
+                boundary = parser.parse_args(["check-boundary"])
+                receipt = parser.parse_args(["write-local-mvp-receipt", "--decision", "decision.json"])
+                self.assertEqual(boundary.baseline, expected_baseline)
+                self.assertEqual(receipt.baseline, expected_baseline)
+                self.assertEqual(receipt.restart_receipt, expected_restart)
+                self.assertEqual(boundary.handler(boundary), 0)
+        finally:
+            os.chdir(original_cwd)
+
+    def test_v5_write_without_restart_fails_closed_before_receipt_issuance(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        arguments = build_parser().parse_args(
+            [
+                "write-local-mvp-receipt",
+                "--decision", str(root / "receipts/reviewer-boundary-decision.json"),
+                "--baseline", str(root / "baselines/phase-start-v5-gap-closure.json"),
+            ]
+        )
+        arguments.restart_receipt = None
+        with self.assertRaisesRegex(ReceiptError, "RESTART_RECEIPT_REQUIRED"):
+            arguments.handler(arguments)
+
+    def test_explicit_historical_baseline_uses_schema_two_compatibility_without_restart(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        arguments = build_parser().parse_args(
+            [
+                "write-local-mvp-receipt",
+                "--decision", str(root / "receipts/reviewer-boundary-decision.json"),
+                "--baseline", str(root / "baselines/phase-start-v2.json"),
+            ]
+        )
+        self.assertIsNone(_restart_lineage_for_local_mvp_receipt(arguments))
+
+    def test_write_command_rejects_recomputed_basis_that_differs_from_decision(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        arguments = build_parser().parse_args(
+            [
+                "write-local-mvp-receipt",
+                "--decision", str(root / "receipts/reviewer-boundary-decision.json"),
+                "--accepted-directory", str(root / "bundles/accepted"),
+                "--baseline", str(root / "baselines/phase-start-v5-gap-closure.json"),
+                "--environment-decision", str(root / "receipts/environment-decision.json"),
+                "--receipt", str(root / "receipts/should-not-write.json"),
+                "--markdown", str(root / "receipts/should-not-write.md"),
+                "--restart-receipt", str(root / "receipts/boundary-restart-v5.json"),
+            ]
+        )
+        with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_BASIS_MISMATCH"):
+            arguments.handler(arguments)
+
+    def test_current_v5_receipt_cannot_finalize_against_old_reviewed_basis(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        arguments = build_parser().parse_args(
+            [
+                "finalize-review",
+                "--decision", str(root / "receipts/reviewer-boundary-decision.json"),
+                "--receipt", str(root / "receipts/integrity-receipt-v5.json"),
+                "--markdown", str(root / "receipts/integrity-receipt-v5.md"),
+            ]
+        )
+        with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_BASIS_MISMATCH"):
+            arguments.handler(arguments)
 
 
 if __name__ == "__main__":
