@@ -468,6 +468,45 @@ def command_write_local_mvp_receipt(args: argparse.Namespace) -> int:
 def command_finalize_review(args: argparse.Namespace) -> int:
     """Refuse to finalize unless a reviewer decision and already-passing receipt exist."""
     receipt = validate_receipt(args.receipt)
+    if receipt.get("schema_version") == "3":
+        experiment_root = args.receipt.resolve().parent.parent
+        expected_paths = {
+            "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
+            "baseline": "baselines/phase-start-v5-gap-closure.json",
+            "incident_receipt": "receipts/boundary-restart-v5.json",
+            "previous_baseline": "baselines/phase-start-v2.json",
+        }
+        lineage = receipt["restart_lineage"]
+        assert isinstance(lineage, dict)
+        if any(lineage[name].get("path") != path for name, path in expected_paths.items()):
+            raise ReceiptError("RESTART_LINEAGE_PROJECTION_MISMATCH")
+        projection = validate_boundary_restart(
+            experiment_root / expected_paths["baseline"],
+            experiment_root / expected_paths["previous_baseline"],
+            experiment_root / expected_paths["allowlist"],
+            experiment_root / expected_paths["incident_receipt"],
+        )
+        expected_lineage = {
+            name: {"path": path, "sha256": projection[name]["sha256"]}
+            for name, path in expected_paths.items()
+        }
+        expected_lineage.update(
+            {
+                "reason_code": projection["reason_code"],
+                "reviewed_revision": projection["reviewed_revision"],
+                "scope": projection["scope"],
+            }
+        )
+        if lineage != expected_lineage:
+            raise ReceiptError("RESTART_LINEAGE_PROJECTION_MISMATCH")
+        repository = _repository_root(experiment_root)
+        boundary = check_boundary(
+            repository,
+            experiment_root / expected_paths["baseline"],
+            reviewed_revision=str(projection["reviewed_revision"]),
+        )
+        if boundary.blocking_violations:
+            raise ReceiptError("RESTART_BOUNDARY_BLOCKING")
     if not args.decision.is_file():
         raise ReceiptError("REVIEW_DECISION_MISSING")
     decision_raw = args.decision.read_bytes()

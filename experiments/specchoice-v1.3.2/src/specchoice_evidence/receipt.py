@@ -172,6 +172,8 @@ def validate_receipt(source: dict[str, Any] | Path) -> dict[str, Any]:
             if not isinstance(lineage[name], dict) or not isinstance(lineage[name].get("path"), str):
                 raise ReceiptError("RESTART_LINEAGE_INVALID")
             _require_digest(lineage[name].get("sha256"), "RESTART_LINEAGE_INVALID")
+        if lineage["baseline"]["sha256"] != receipt["phase_start_baseline_sha256"]:
+            raise ReceiptError("RESTART_LINEAGE_BASELINE_MISMATCH")
     return receipt
 
 
@@ -220,7 +222,7 @@ def build_local_mvp_receipt(
     if any(record["blocking"] for record in records):
         raise ReceiptError("LOCAL_MVP_BOUNDARY_BLOCKING")
     basis = local_receipt_basis_sha256(baseline_sha256, environment_sha256, source_identity, records)
-    if restart_lineage is None and reviewed_receipt_basis_sha256 != basis:
+    if reviewed_receipt_basis_sha256 != basis:
         raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
     receipt: dict[str, Any] = {
         "blocking_diagnostics": [],

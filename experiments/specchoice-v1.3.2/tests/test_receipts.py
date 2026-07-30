@@ -4,9 +4,11 @@ from __future__ import annotations
 import tempfile
 import unittest
 import json
+import shutil
 from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence.cli import build_parser
 from specchoice_evidence.receipt import (
     ReceiptError,
     build_local_mvp_receipt,
@@ -19,6 +21,35 @@ from specchoice_evidence.receipt import (
 
 
 class IntegrityReceiptTests(unittest.TestCase):
+    @staticmethod
+    def _identity() -> dict[str, object]:
+        return {
+            "candidate_relative_path": "bundles/candidates/fixture",
+            "core_sha256": "c" * 64,
+            "generation": "fixture",
+            "root_sha256": "d" * 64,
+            "snapshot_manifest_sha256": "e" * 64,
+        }
+
+    @staticmethod
+    def _classifications() -> list[dict[str, object]]:
+        return [{
+            "path": ".DS_Store", "status": "preexisting_unrelated", "attributed_to_phase": False,
+            "blocking": False, "diagnostic": "DS_STORE_IGNORED_OS_METADATA",
+        }]
+
+    @staticmethod
+    def _restart_lineage(baseline_sha256: str) -> dict[str, object]:
+        return {
+            "allowlist": {"path": "config/allowlist.json", "sha256": "b" * 64},
+            "baseline": {"path": "baselines/phase-start.json", "sha256": baseline_sha256},
+            "incident_receipt": {"path": "receipts/restart.json", "sha256": "c" * 64},
+            "previous_baseline": {"path": "baselines/phase-start-v1.json", "sha256": "d" * 64},
+            "reason_code": "D15_RESTART_COMMITTED_HISTORY_BLIND_SPOT",
+            "reviewed_revision": "a" * 40,
+            "scope": "gap_closure_only",
+        }
+
     def test_v5_integrity_receipt_binds_restart_and_preserves_accepted_bundle_identity(self) -> None:
         """The v5 receipt is local-only and derives its Markdown solely from canonical JSON."""
         root = Path(__file__).resolve().parents[1]
@@ -71,17 +102,8 @@ class IntegrityReceiptTests(unittest.TestCase):
             validate_receipt(broken)
 
     def test_local_mvp_receipt_is_pass_only_for_local_identity_with_external_publication_false(self) -> None:
-        identity = {
-            "candidate_relative_path": "bundles/candidates/fixture",
-            "core_sha256": "c" * 64,
-            "generation": "fixture",
-            "root_sha256": "d" * 64,
-            "snapshot_manifest_sha256": "e" * 64,
-        }
-        classifications = [{
-            "path": ".DS_Store", "status": "preexisting_unrelated", "attributed_to_phase": False,
-            "blocking": False, "diagnostic": "DS_STORE_IGNORED_OS_METADATA",
-        }]
+        identity = self._identity()
+        classifications = self._classifications()
         basis = local_receipt_basis_sha256("a" * 64, "b" * 64, identity, classifications)
         receipt = build_local_mvp_receipt(
             "a" * 64, "b" * 64, identity, classifications, "f" * 64, basis
@@ -90,6 +112,80 @@ class IntegrityReceiptTests(unittest.TestCase):
         self.assertEqual(receipt["source_identity"]["kind"], "local_accepted_generation")
         self.assertFalse(receipt["source_identity"]["external_publication_authorized"])
         self.assertEqual(render_markdown(receipt), render_markdown(receipt))
+
+    def test_local_receipt_basis_mismatch_rejects_schema_two_and_three_construction(self) -> None:
+        identity = self._identity()
+        classifications = self._classifications()
+        for restart_lineage in (None, self._restart_lineage("a" * 64)):
+            with self.subTest(schema="3" if restart_lineage else "2"):
+                with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_BASIS_MISMATCH"):
+                    build_local_mvp_receipt(
+                        "a" * 64,
+                        "b" * 64,
+                        identity,
+                        classifications,
+                        "f" * 64,
+                        "0" * 64,
+                        restart_lineage=restart_lineage,
+                    )
+
+    def test_schema_three_lineage_baseline_mismatch_rejects_validation_and_finalization(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        receipt = json.loads((root / "receipts/integrity-receipt-v5.json").read_text(encoding="utf-8"))
+        receipt["phase_start_baseline_sha256"] = "0" * 64
+        projected = dict(receipt)
+        projected.pop("receipt_sha256")
+        receipt["receipt_sha256"] = sha256_bytes(canonical_json_bytes(projected))
+        with self.assertRaisesRegex(ReceiptError, "RESTART_LINEAGE_BASELINE_MISMATCH"):
+            validate_receipt(receipt)
+        with tempfile.TemporaryDirectory() as directory:
+            receipt_path = Path(directory) / "integrity-receipt.json"
+            markdown_path = Path(directory) / "integrity-receipt.md"
+            receipt_path.write_bytes(canonical_json_bytes(receipt))
+            markdown_path.write_text("not reached\n", encoding="utf-8")
+            arguments = build_parser().parse_args(
+                [
+                    "finalize-review",
+                    "--decision", str(root / "receipts/reviewer-boundary-decision.json"),
+                    "--receipt", str(receipt_path),
+                    "--markdown", str(markdown_path),
+                ]
+            )
+            with self.assertRaisesRegex(ReceiptError, "RESTART_LINEAGE_BASELINE_MISMATCH"):
+                arguments.handler(arguments)
+
+    def test_finalization_requires_the_exact_restart_projection(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        receipt = json.loads((root / "receipts/integrity-receipt-v5.json").read_text(encoding="utf-8"))
+        receipt["restart_lineage"]["reviewed_revision"] = "0" * 40
+        projected = dict(receipt)
+        projected.pop("receipt_sha256")
+        receipt["receipt_sha256"] = sha256_bytes(canonical_json_bytes(projected))
+        with tempfile.TemporaryDirectory() as directory:
+            fixture_root = Path(directory)
+            for relative_path in (
+                "baselines/phase-start-v5-gap-closure.json",
+                "baselines/phase-start-v2.json",
+                "config/boundary_allowlist-v5-gap-closure.json",
+                "receipts/boundary-restart-v5.json",
+            ):
+                destination = fixture_root / relative_path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(root / relative_path, destination)
+            receipt_path = fixture_root / "receipts/integrity-receipt.json"
+            markdown_path = fixture_root / "receipts/integrity-receipt.md"
+            receipt_path.write_bytes(canonical_json_bytes(receipt))
+            markdown_path.write_text("not reached\n", encoding="utf-8")
+            arguments = build_parser().parse_args(
+                [
+                    "finalize-review",
+                    "--decision", str(root / "receipts/reviewer-boundary-decision.json"),
+                    "--receipt", str(receipt_path),
+                    "--markdown", str(markdown_path),
+                ]
+            )
+            with self.assertRaisesRegex(ReceiptError, "RESTART_LINEAGE_PROJECTION_MISMATCH"):
+                arguments.handler(arguments)
 
 
 if __name__ == "__main__":
