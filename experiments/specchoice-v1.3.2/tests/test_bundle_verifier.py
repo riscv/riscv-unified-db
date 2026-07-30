@@ -207,11 +207,16 @@ class CandidateBundleTests(unittest.TestCase):
         shim = self.root / "no-git"
         shim.mkdir()
         (shim / "git").write_text("#!/bin/sh\nexit 97\n", encoding="utf-8")
+        (shim / "sitecustomize.py").write_text(
+            "import socket\n"
+            "def blocked(*args, **kwargs):\n    raise RuntimeError('network blocked')\n"
+            "socket.socket = blocked\n",
+            encoding="utf-8",
+        )
         os.chmod(shim / "git", 0o755)
         environment = {
             "PATH": f"{shim}{os.pathsep}{os.environ.get('PATH', '')}",
-            "PYTHONPATH": "",
-            "SPECHOICE_BLOCK_NETWORK": "1",
+            "PYTHONPATH": shim.as_posix(),
         }
         completed = subprocess.run(
             [sys.executable, "verify_bundle.py"],
