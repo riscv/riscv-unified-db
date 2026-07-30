@@ -1,6 +1,6 @@
 # Phase 1 Integrity Receipt
 
-- Authoritative SHA-256: `03c67b7db14594d7cd727ecad95169fec6f4326c331a613cc410e9dc28bb4955`
+- Authoritative SHA-256: `de81c088eab230967f60b536598b77ddf154e34659b79aac9375543b7ac7d2f8`
 - Generator version: `1`
 - Outcome: `fail`
 - Reviewer package complete: `true`
@@ -17,8 +17,6 @@
 - `backends/.DS_Store` — `preexisting_unrelated`, blocking=false, attributed_to_phase=false
 - `doc/.DS_Store` — `preexisting_unrelated`, blocking=false, attributed_to_phase=false
 - `experiments/.DS_Store` — `new_out_of_boundary`, blocking=false, attributed_to_phase=false
-- `experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py` — `allowed_phase_change`, blocking=false, attributed_to_phase=true
-- `experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py` — `allowed_phase_change`, blocking=false, attributed_to_phase=true
 - `ext/.DS_Store` — `preexisting_unrelated`, blocking=false, attributed_to_phase=false
 - `sorbet/.DS_Store` — `preexisting_unrelated`, blocking=false, attributed_to_phase=false
 - `spec/.DS_Store` — `preexisting_unrelated`, blocking=false, attributed_to_phase=false
