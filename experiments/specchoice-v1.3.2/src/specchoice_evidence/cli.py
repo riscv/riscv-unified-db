@@ -19,6 +19,11 @@ from .baseline import (
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
+from .source_contract import (
+    SourceContractProposalError,
+    validate_source_contract_proposal,
+    verify_source_contract_proposal_git,
+)
 
 
 def _default_capture_baseline() -> Path:
@@ -218,6 +223,39 @@ def command_validate_source_request(args: argparse.Namespace) -> int:
     return 0
 
 
+def _load_canonical_source_contract_proposal(path: Path) -> object:
+    raw = path.read_bytes()
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SourceContractProposalError("INVALID_SOURCE_CONTRACT_PROPOSAL_JSON") from error
+    if canonical_json_bytes(payload) != raw:
+        raise SourceContractProposalError("SOURCE_CONTRACT_PROPOSAL_NOT_CANONICAL")
+    return payload
+
+
+def command_validate_source_contract_proposal(args: argparse.Namespace) -> int:
+    """Validate a pending proposal without treating it as a source decision."""
+    payload = _load_canonical_source_contract_proposal(args.proposal)
+    normalized = validate_source_contract_proposal(payload)
+    _print_json(
+        {
+            "consumed_file_count": len(normalized["consumed_files"]),
+            "snapshot_count": len(normalized["snapshots"]),
+            "status": "pending_reviewer_approval",
+        }
+    )
+    return 0
+
+
+def command_verify_source_contract_proposal_git(args: argparse.Namespace) -> int:
+    """Locally prove a pending proposal's exact Git objects and raw bytes."""
+    payload = _load_canonical_source_contract_proposal(args.proposal)
+    verify_source_contract_proposal_git(payload, args.git_repository)
+    _print_json({"status": "git_proof_passed"})
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-evidence")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -271,6 +309,23 @@ def build_parser() -> argparse.ArgumentParser:
         "--config", type=Path, default=Path("config/source_snapshots.json")
     )
     source_request.set_defaults(handler=command_validate_source_request)
+    proposal = commands.add_parser("validate-source-contract-proposal")
+    proposal.add_argument(
+        "proposal",
+        type=Path,
+        nargs="?",
+        default=Path("receipts/source-contract-correction-proposal-v2.json"),
+    )
+    proposal.set_defaults(handler=command_validate_source_contract_proposal)
+    proposal_git = commands.add_parser("verify-source-contract-proposal-git")
+    proposal_git.add_argument(
+        "proposal",
+        type=Path,
+        nargs="?",
+        default=Path("receipts/source-contract-correction-proposal-v2.json"),
+    )
+    proposal_git.add_argument("--git-repository", type=Path, required=True)
+    proposal_git.set_defaults(handler=command_verify_source_contract_proposal_git)
     return parser
 
 
@@ -278,7 +333,7 @@ def main() -> int:
     args = build_parser().parse_args()
     try:
         return args.handler(args)
-    except (BaselineError, GitProofError, ValueError, OSError) as error:
+    except (BaselineError, GitProofError, SourceContractProposalError, ValueError, OSError) as error:
         print(str(error), file=sys.stderr)
         return 2
 
