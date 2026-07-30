@@ -145,6 +145,39 @@ class CandidateBundleTests(unittest.TestCase):
         with self.assertRaisesRegex(BundleError, "SNAPSHOT_BINDING_MISMATCH"):
             verify_candidate(candidate)
 
+        construct_candidate(self.decision, self.proposal, self.audit, self.candidates / "third")
+        candidate = self.candidates / "third" / "candidate-v2"
+        manifest_path = candidate / "snapshot-manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["manifest_sha256"] = "0" * 64
+        without_self = dict(manifest)
+        without_self.pop("snapshot_manifest_sha256")
+        manifest["snapshot_manifest_sha256"] = sha256_bytes(canonical_json_bytes(without_self))
+        manifest_path.write_bytes(canonical_json_bytes(manifest))
+        with self.assertRaisesRegex(BundleError, "MANIFEST_SHA256_MISMATCH"):
+            verify_candidate(candidate)
+
+        construct_candidate(self.decision, self.proposal, self.audit, self.candidates / "fourth")
+        candidate = self.candidates / "fourth" / "candidate-v2"
+        manifest_path = candidate / "snapshot-manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["snapshots"][0]["repository"] = "tampered/repository"
+        without_self = dict(manifest)
+        without_self.pop("snapshot_manifest_sha256")
+        manifest["snapshot_manifest_sha256"] = sha256_bytes(canonical_json_bytes(without_self))
+        manifest_path.write_bytes(canonical_json_bytes(manifest))
+        with self.assertRaisesRegex(BundleError, "SNAPSHOT_CORE_PROJECTION_MISMATCH"):
+            verify_candidate(candidate)
+
+        construct_candidate(self.decision, self.proposal, self.audit, self.candidates / "fifth")
+        candidate = self.candidates / "fifth" / "candidate-v2"
+        manifest_path = candidate / "snapshot-manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["snapshot_manifest_sha256"] = "0" * 64
+        manifest_path.write_bytes(canonical_json_bytes(manifest))
+        with self.assertRaisesRegex(BundleError, "SNAPSHOT_MANIFEST_SELF_DIGEST_MISMATCH"):
+            verify_candidate(candidate)
+
         construct_candidate(self.decision, self.proposal, self.audit, self.candidates / "second")
         candidate = self.candidates / "second" / "candidate-v2"
         manifest_path = candidate / "snapshot-manifest.json"
