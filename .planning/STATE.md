@@ -4,15 +4,15 @@ milestone: v1.3.2
 milestone_name: milestone
 current_phase: 01
 current_phase_name: Isolated Evidence Boundary and Source Integrity
-status: verifying
-stopped_at: Completed 01-04-PLAN.md locally; no external publication authorized
-last_updated: "2026-07-30T15:52:51.026Z"
+status: executing
+stopped_at: Planned 01-05-PLAN.md gap closure; ready for local execution
+last_updated: "2026-07-30T16:46:25.067Z"
 last_activity: 2026-07-30
-last_activity_desc: Completed 01-04 local-only MVP acceptance; external publication remains prohibited
+last_activity_desc: Planned 01-05 D-15 boundary recovery; external publication remains prohibited
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 4
+  total_plans: 5
   completed_plans: 4
   percent: 14
 ---
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 01 (Isolated Evidence Boundary and Source Integrity) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
-Last activity: 2026-07-30 — Completed 01-03 candidate source construction with accepted publication closed
+Plan: 4 of 5
+Status: Ready to execute gap-closure plan 01-05
+Last activity: 2026-07-30 — Planned 01-05 D-15 boundary recovery; external publication remains prohibited
 
-Progress: [██████████] 100%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 

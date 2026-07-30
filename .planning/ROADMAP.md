@@ -38,7 +38,7 @@ SpecChoice v1.3.2 proceeds through seven strict, dependency-ordered increments: 
   2. The reviewer can verify every named PR snapshot against its frozen commit and reproduce the stable hash of every consumed source file.
   3. The operator can reproduce the recorded environment decision and, if full setup exceeded the frozen limit, use the documented dependency-light fallback without weakening source verification.
 
-**Plans:** 4/4 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 
@@ -46,6 +46,7 @@ Plans:
 - [x] 01-02-PLAN.md
 - [x] 01-03-PLAN.md
 - [x] 01-04-PLAN.md
+- [ ] 01-05-PLAN.md
 
 **Wave 1**
 
@@ -61,7 +62,11 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 01-04: Verify the bundle offline and gate boundary/source integrity through canonical receipts and reviewer approval.
+- [x] 01-04: Verify the bundle offline and gate boundary/source integrity through canonical receipts and reviewer approval.
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 01-05: Preserve the v2 incident, create the D-15 gap-restart lineage, and make committed post-baseline changes fail closed.
 
 ### Phase 2: Deterministic Measurement Spine
 
