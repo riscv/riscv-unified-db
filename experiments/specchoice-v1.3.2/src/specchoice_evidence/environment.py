@@ -44,6 +44,7 @@ class IncidentSnapshot:
 _GIT_VERSION_RE = re.compile(r"^git version ([0-9]+(?:\.[0-9]+)+(?:[A-Za-z0-9.+-]*)?)$")
 _SENSITIVE_KEY_RE = re.compile(r"(?:credential|password|secret|token)", re.IGNORECASE)
 _SENSITIVE_ARGUMENT_RE = re.compile(r"(?i)(--(?:credential|password|secret|token)(?:=|\s+))\S+")
+_ABSOLUTE_PATH_RE = re.compile(r"(?<!\S)/(?:[^\s/]+/)*[^\s]+")
 _ERROR_CODE_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 
 
@@ -228,7 +229,9 @@ def build_default_decision(observation: EnvironmentObservation | None = None) ->
 def _sanitize_audit_value(value: Any) -> Any:
     if isinstance(value, str):
         sanitized = _SENSITIVE_ARGUMENT_RE.sub(r"\1<redacted>", value)
-        return "<absolute-path>" if os.path.isabs(sanitized) else sanitized
+        if os.path.isabs(sanitized):
+            return "<absolute-path>"
+        return _ABSOLUTE_PATH_RE.sub("<absolute-path>", sanitized)
     if isinstance(value, list):
         return [_sanitize_audit_value(item) for item in value]
     if isinstance(value, dict):

@@ -65,7 +65,7 @@ class EnvironmentDecisionTests(unittest.TestCase):
                 audit_path,
                 observation,
                 audit_metadata={
-                    "command": "python3 -m specchoice_evidence.cli record-environment --token secret",
+                    "command": "python3 /private/tmp/specchoice/record.py --token secret",
                     "hostname": "build-host",
                     "timestamp": "2026-07-30T14:30:00Z",
                     "working_directory": "/private/tmp/specchoice",
@@ -79,6 +79,7 @@ class EnvironmentDecisionTests(unittest.TestCase):
         self.assertNotIn("audit", json.loads(decision_bytes.decode("utf-8")))
         self.assertNotIn(b"build-host", decision_bytes)
         self.assertNotIn(b"secret", receipt_bytes)
+        self.assertNotIn(b"/private/tmp/specchoice", receipt_bytes)
 
     def test_audit_only_metadata_cannot_change_canonical_decision_bytes(self) -> None:
         observation = self.observation
