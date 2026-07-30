@@ -12,6 +12,8 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import subprocess
+import sys
 import tempfile
 from collections.abc import Mapping
 from pathlib import Path, PurePosixPath
@@ -27,7 +29,7 @@ from .source_contract import (
     require_source_extraction_authorization,
     validate_source_publication_decision,
 )
-from .verify import _bundle_artifacts, embed_verifier_artifacts
+from .verify import _bundle_artifacts, _raw_artifacts, embed_verifier_artifacts, verify_candidate_bundle
 
 
 class BundleError(ValueError):
@@ -269,13 +271,92 @@ def construct_candidate(decision: object, proposal: object, git_repository: Path
     return {"generation": generation, "manifest_sha256": manifest_sha256, "root_sha256": root_sha256, "status": "candidate"}
 
 
+def _replace_exact(path: Path, content: bytes) -> None:
+    """Replace a generated manifest atomically after recomputing all bound fields."""
+    temporary = path.with_name(f".{path.name}.tmp")
+    with temporary.open("xb") as stream:
+        stream.write(content)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+
+
+def _run_embedded_verifier(bundle: Path) -> None:
+    completed = subprocess.run(
+        [sys.executable, "verify_bundle.py"], cwd=bundle, check=False, capture_output=True, text=True
+    )
+    if completed.returncode != 0:
+        raise BundleError("EMBEDDED_VERIFIER_FAILED")
+
+
+def construct_verifier_rooted_candidate(
+    source_candidate: Path, candidates_root: Path, generation: str
+) -> dict[str, object]:
+    """Derive a fresh non-accepted identity with the verifier bytes in its logical root.
+
+    The historical source candidate is recomputed before copying.  This keeps its exact
+    seven approved raw blobs intact and never creates, renames, or writes an accepted path.
+    """
+    if not generation or "/" in generation or "\\" in generation:
+        raise BundleError("CANDIDATE_GENERATION_INVALID")
+    source_identity = verify_candidate(source_candidate)
+    if source_identity.get("status") != "candidate":
+        raise BundleError("SOURCE_CANDIDATE_NOT_ELIGIBLE")
+    target = candidates_root / generation
+    if target.exists() or target.is_symlink():
+        raise BundleError("CANDIDATE_TARGET_EXISTS")
+    candidates_root.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix=f".{generation}.staging-", dir=candidates_root))
+    try:
+        shutil.rmtree(temporary)
+        shutil.copytree(source_candidate, temporary)
+        (temporary / "content-manifest-core.json").unlink()
+        (temporary / "snapshot-manifest.json").unlink()
+        core = _canonical_load(source_candidate / "content-manifest-core.json", "CONTENT_MANIFEST_CORE_INVALID")
+        if "bundle_artifacts" in core:
+            raise BundleError("SOURCE_CANDIDATE_ALREADY_ROOTED")
+        core["bundle_artifacts"] = embed_verifier_artifacts(temporary)
+        core_bytes = canonical_json_bytes(core)
+        manifest_sha256 = sha256_bytes(core_bytes)
+        artifacts = _raw_artifacts(core, temporary) + _bundle_artifacts(core, temporary)
+        root_sha256 = _root_digest(manifest_sha256, artifacts)
+        _write_exact(temporary / "content-manifest-core.json", core_bytes)
+        final = _snapshot_manifest(core, generation, manifest_sha256, root_sha256)
+        _write_exact(temporary / "snapshot-manifest.json", canonical_json_bytes(final))
+        verify_candidate_bundle(temporary)
+        _run_embedded_verifier(temporary)
+        final["offline_replay_proven"] = True
+        final["snapshot_manifest_sha256"] = sha256_bytes(canonical_json_bytes({
+            key: value for key, value in final.items() if key != "snapshot_manifest_sha256"
+        }))
+        _replace_exact(temporary / "snapshot-manifest.json", canonical_json_bytes(final))
+        verify_candidate_bundle(temporary)
+        _run_embedded_verifier(temporary)
+        _sync_directory(temporary)
+        _sync_directory(candidates_root)
+        if target.exists() or target.is_symlink():
+            raise BundleError("CANDIDATE_TARGET_EXISTS")
+        os.replace(temporary, target)
+        _sync_directory(candidates_root)
+    except Exception:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        raise
+    return {
+        "generation": generation,
+        "manifest_sha256": manifest_sha256,
+        "root_sha256": root_sha256,
+        "status": "candidate",
+    }
+
+
 def verify_candidate(candidate: Path) -> dict[str, object]:
     """Offline recomputation of raw custody, core/root, and final non-cyclic binding."""
     core_path = candidate / "content-manifest-core.json"
     final_path = candidate / "snapshot-manifest.json"
     core = _canonical_load(core_path, "CONTENT_MANIFEST_CORE_INVALID")
     final = _canonical_load(final_path, "SNAPSHOT_MANIFEST_INVALID")
-    if final.get("status") != "candidate" or final.get("downstream_eligible") is not False or final.get("accepted_publication_authorized") is not False or final.get("offline_replay_proven") is not False:
+    if final.get("status") != "candidate" or final.get("downstream_eligible") is not False or final.get("accepted_publication_authorized") is not False or not isinstance(final.get("offline_replay_proven"), bool):
         raise BundleError("CANDIDATE_ACCEPTED_STATE_FORBIDDEN")
     actual_manifest = sha256_bytes(core_path.read_bytes())
     if final.get("manifest_sha256") != actual_manifest:

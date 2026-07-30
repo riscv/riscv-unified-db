@@ -14,7 +14,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from specchoice_evidence.bundle import BundleError, construct_candidate, publish_accepted, verify_candidate
+from specchoice_evidence.bundle import (
+    BundleError,
+    construct_candidate,
+    construct_verifier_rooted_candidate,
+    publish_accepted,
+    verify_candidate,
+)
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.source_contract import (
     SourceContractProposalError,
@@ -266,6 +272,61 @@ class CandidateBundleTests(unittest.TestCase):
             [sys.executable, "verify_bundle.py"], cwd=copied, env=environment, check=False
         )
         self.assertNotEqual(completed.returncode, 0)
+
+
+class VerifierRootedCandidateTests(unittest.TestCase):
+    def test_real_candidate_is_re_rooted_and_replays_away_from_repository(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        source = experiment / "bundles/candidates/source-contract-v2-pr2192-86a0021b"
+        source_identity = verify_candidate(source)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            candidates = root / "bundles/candidates"
+            generation = "source-contract-v2-pr2192-86a0021b-verifier-rooted"
+            identity = construct_verifier_rooted_candidate(source, candidates, generation)
+            candidate = candidates / generation
+            self.assertEqual(identity["status"], "candidate")
+            self.assertNotEqual(identity["root_sha256"], source_identity["root_sha256"])
+            self.assertTrue((candidate / "verify_bundle.py").is_file())
+            self.assertEqual(verify_candidate(candidate)["root_sha256"], identity["root_sha256"])
+            self.assertFalse((root / "bundles/accepted").exists())
+
+            copied = root / "copied-away"
+            shutil.copytree(candidate, copied)
+            shim = root / "no-git"
+            shim.mkdir()
+            (shim / "git").write_text("#!/bin/sh\nexit 97\n", encoding="utf-8")
+            (shim / "sitecustomize.py").write_text(
+                "import socket\n"
+                "def blocked(*args, **kwargs):\n    raise RuntimeError('network blocked')\n"
+                "socket.socket = blocked\n",
+                encoding="utf-8",
+            )
+            os.chmod(shim / "git", 0o755)
+            environment = {
+                "PATH": f"{shim}{os.pathsep}{os.environ.get('PATH', '')}",
+                "PYTHONPATH": shim.as_posix(),
+            }
+            completed = subprocess.run(
+                [sys.executable, "verify_bundle.py"], cwd=copied, env=environment,
+                check=False, capture_output=True, text=True,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            for path in (
+                "raw/parameter_emitter/param_emitter.py",
+                "content-manifest-core.json",
+                "snapshot-manifest.json",
+                "verifier/specchoice_evidence/verify.py",
+            ):
+                target = copied / path
+                target.write_bytes(target.read_bytes() + b"# tampered\n")
+                completed = subprocess.run(
+                    [sys.executable, "verify_bundle.py"], cwd=copied, env=environment,
+                    check=False, capture_output=True, text=True,
+                )
+                self.assertNotEqual(completed.returncode, 0, path)
+                shutil.rmtree(copied)
+                shutil.copytree(candidate, copied)
 
 
 if __name__ == "__main__":
