@@ -22,4 +22,30 @@ definedBy:
           - name: Smmpm
           - name: Zicfilp
           - name: Smepmp
-fields: {}
+fields:
+  USEED:
+    location: 8
+    description: |
+      Controls access to the `seed` CSR from U-mode.
+    definedBy:
+      extension:
+        name: Zkr
+    type(): |
+      return (implemented?(ExtensionName::U)) ? CsrFieldType::RW : CsrFieldType::RO;
+    reset_value(): |
+      return (implemented?(ExtensionName::U)) ? UNDEFINED_LEGAL : 0;
+    sw_write(csr_value): |
+      return (implemented?(ExtensionName::U)) ? csr_value.USEED : 0;
+  SSEED:
+    location: 9
+    description: |
+      Controls access to the `seed` CSR from S-mode and VS-mode.
+    definedBy:
+      extension:
+        name: Zkr
+    type(): |
+      return (implemented?(ExtensionName::S)) ? CsrFieldType::RW : CsrFieldType::RO;
+    reset_value(): |
+      return (implemented?(ExtensionName::S)) ? UNDEFINED_LEGAL : 0;
+    sw_write(csr_value): |
+      return (implemented?(ExtensionName::S)) ? csr_value.SSEED : 0;
