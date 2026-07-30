@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import json
 from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
@@ -18,6 +19,24 @@ from specchoice_evidence.receipt import (
 
 
 class IntegrityReceiptTests(unittest.TestCase):
+    def test_v5_integrity_receipt_binds_restart_and_preserves_accepted_bundle_identity(self) -> None:
+        """The v5 receipt is local-only and derives its Markdown solely from canonical JSON."""
+        root = Path(__file__).resolve().parents[1]
+        receipt_path = root / "receipts/integrity-receipt-v5.json"
+        receipt = validate_receipt(receipt_path)
+        self.assertEqual(receipt["schema_version"], "3")
+        self.assertEqual(receipt["source_identity"]["generation"], "source-contract-v2-pr2192-86a0021b-verifier-rooted-v1")
+        self.assertEqual(receipt["source_identity"]["core_sha256"], "6ca1f176c84464d499d6c0e81d03ba3f23fdcdd1b5bd43bc28d9b2153a797495")
+        self.assertEqual(receipt["source_identity"]["root_sha256"], "aacdda8218e3779747ae2dec45f9da81822f615ec4b257e55b0766baf8317d5a")
+        self.assertEqual(receipt["source_identity"]["snapshot_manifest_sha256"], "1c81f84cf4894a7ecfde4b72e17d6e479a91cb0cfa408258611b00bdf5e2e397")
+        self.assertFalse(receipt["source_identity"]["external_publication_authorized"])
+        restart = receipt["restart_lineage"]
+        self.assertEqual(restart["baseline"]["sha256"], "a0b9f9fdddb42f042bd6dfa8753b012c4514adbb4d8be4ea6faefdcafc402e40")
+        self.assertEqual(restart["allowlist"]["sha256"], "8008c839c32f91b2f973f4799ebb27e58e010569057f3f7a4d96c9bcec6d9903")
+        self.assertEqual(restart["incident_receipt"]["sha256"], "80b54ba1e45a00d391614cea7e2ffaf53b05ea966a52c1c26f8e0f8bb6ba42fd")
+        self.assertEqual(render_markdown(receipt), (root / "receipts/integrity-receipt-v5.md").read_text(encoding="utf-8"))
+        self.assertEqual(render_markdown(json.loads(receipt_path.read_text(encoding="utf-8"))), render_markdown(receipt))
+
     def test_rejected_source_receipt_is_canonical_and_markdown_is_json_only(self) -> None:
         receipt = build_blocked_receipt(
             baseline_sha256="a" * 64,
