@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import stat
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -29,6 +30,36 @@ from specchoice_evidence.cli import build_parser
 
 
 class FilesystemBoundaryTests(unittest.TestCase):
+    def test_committed_out_of_allowlist_path_is_blocking(self) -> None:
+        """A clean live worktree must not hide a post-baseline committed violation."""
+        payload = {
+            "allowlist": {"exact_files": [], "roots": ["experiments/specchoice-v1.3.2/"]},
+            "file_kind_policy": {"allowed": ["directory", "regular_file"], "rejected": []},
+            "index": {"staged_paths": []},
+            "repository": {"head_commit": "", "path_basis": "repository_relative_posix"},
+            "schema_version": "1",
+            "worktree": {"ignored_paths_in_scope": [], "tracked_changes": [], "untracked_files": []},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def git(*args: str) -> None:
+                subprocess.run(["git", "-C", os.fspath(root), *args], check=True, stdout=subprocess.PIPE)
+            git("init")
+            (root / "inside.txt").write_text("baseline", encoding="utf-8")
+            git("add", "inside.txt")
+            git("-c", "user.email=test@example.invalid", "-c", "user.name=SpecChoice Test", "commit", "-m", "baseline")
+            payload["repository"]["head_commit"] = subprocess.run(
+                ["git", "-C", os.fspath(root), "rev-parse", "HEAD"], check=True, stdout=subprocess.PIPE, text=True
+            ).stdout.strip()
+            baseline = root / "baseline.json"
+            capture_baseline(baseline, payload)
+            (root / "outside.txt").write_text("committed violation", encoding="utf-8")
+            git("add", "outside.txt")
+            git("-c", "user.email=test@example.invalid", "-c", "user.name=SpecChoice Test", "commit", "-m", "outside")
+            result = check_boundary(root, baseline)
+        self.assertEqual(result.blocking_violations, 1)
+        self.assertEqual(result.classifications[0]["path"], "outside.txt")
+
     def test_control_decision_binds_active_artifacts_and_requires_approval(self) -> None:
         experiment_root = Path(__file__).resolve().parents[1]
         baseline = experiment_root / "baselines/phase-start-v2.json"
