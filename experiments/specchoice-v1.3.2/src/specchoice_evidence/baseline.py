@@ -193,15 +193,32 @@ def capture_committed_history(root: Path, start_commit: str, reviewed_revision: 
     if subprocess.run(["git", "-C", os.fspath(root), "merge-base", "--is-ancestor", start, reviewed]).returncode:
         raise BaselineError("BOUNDARY_HISTORY_NOT_DESCENDANT")
     try:
-        raw = subprocess.run(["git", "-C", os.fspath(root), "diff", "--raw", "-z", "--no-renames", "--diff-filter=AMDT", start, reviewed], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.split(b"\0")
+        raw = subprocess.run(
+            [
+                "git", "-C", os.fspath(root), "diff", "--raw", "-z", "--no-renames",
+                "--diff-filter=AMDT", start, reviewed,
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        ).stdout
     except subprocess.CalledProcessError as error:
         raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR") from error
+    raw_fields = raw[:-1].split(b"\0") if raw.endswith(b"\0") else []
+    if raw and (not raw_fields or len(raw_fields) % 2):
+        raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR")
     records: list[CommittedPathChange] = []
-    for header, raw_path in zip(raw[0::2], raw[1::2]):
-        if not header or not raw_path: continue
-        try: fields = header.decode("ascii").split(); path = _relative(raw_path.decode("utf-8", "surrogateescape"))
-        except UnicodeDecodeError as error: raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR") from error
-        if len(fields) != 5 or not fields[0].startswith(":") or fields[4] not in {"A", "M", "D", "T"}: raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR")
+    for index in range(0, len(raw_fields), 2):
+        header, raw_path = raw_fields[index:index + 2]
+        if not header or not raw_path:
+            raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR")
+        try:
+            fields = header.decode("ascii").split()
+            path = _relative(raw_path.decode("utf-8", "surrogateescape"))
+        except UnicodeDecodeError as error:
+            raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR") from error
+        if len(fields) != 5 or not fields[0].startswith(":") or fields[4] not in {"A", "M", "D", "T"}:
+            raise BaselineError("BOUNDARY_HISTORY_PARSE_ERROR")
         old_mode, new_mode, old_object, new_object = fields[0][1:], fields[1], fields[2], fields[3]
         records.append(CommittedPathChange(path, {"A":"added","M":"modified","D":"deleted","T":"type_changed"}[fields[4]], old_mode, new_mode, old_object, new_object))
     return records
@@ -305,12 +322,16 @@ def check_boundary(root: Path, baseline_path: Path, *, reviewed_revision: str = 
     classifications: list[dict[str, object]] = []
     for path in sorted(prior_paths):
         current = _current_fingerprint(root, path)
-        if current is not None and _matches_baseline(prior_paths[path], current):
-            classifications.append(_classification(path, "preexisting_unrelated", allowed=False))
+        evidence = merged.get(path)
+        if evidence is None and current is not None and _matches_baseline(prior_paths[path], current):
+            record = _classification(path, "preexisting_unrelated", allowed=False)
         else:
             allowed = path_is_allowed(path, baseline["allowlist"])
             status = "deleted_out_of_boundary" if current is None else "modified_out_of_boundary"
-            classifications.append(_classification(path, status, allowed=allowed))
+            record = _classification(path, status, allowed=allowed)
+        if evidence is not None:
+            record.update(evidence)
+        classifications.append(record)
     for path in sorted(current_paths - set(prior_paths)):
         allowed = path_is_allowed(path, baseline["allowlist"])
         record = _classification(path, "new_out_of_boundary", allowed=allowed); record.update(merged[path]); classifications.append(record)

@@ -14,6 +14,7 @@ from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.baseline import (
     BaselineError,
     capture_baseline,
+    capture_committed_history,
     check_boundary,
     create_restart_baseline,
     load_baseline,
@@ -30,6 +31,27 @@ from specchoice_evidence.cli import build_parser
 
 
 class FilesystemBoundaryTests(unittest.TestCase):
+    def _git(self, root: Path, *args: str) -> None:
+        subprocess.run(["git", "-C", os.fspath(root), *args], check=True, stdout=subprocess.PIPE)
+
+    def _commit(self, root: Path, message: str) -> str:
+        self._git(
+            root,
+            "-c",
+            "user.email=test@example.invalid",
+            "-c",
+            "user.name=SpecChoice Test",
+            "commit",
+            "-m",
+            message,
+        )
+        return subprocess.run(
+            ["git", "-C", os.fspath(root), "rev-parse", "HEAD"],
+            check=True,
+            stdout=subprocess.PIPE,
+            text=True,
+        ).stdout.strip()
+
     def test_committed_out_of_allowlist_path_is_blocking(self) -> None:
         """A clean live worktree must not hide a post-baseline committed violation."""
         payload = {
@@ -59,6 +81,118 @@ class FilesystemBoundaryTests(unittest.TestCase):
             result = check_boundary(root, baseline)
         self.assertEqual(result.blocking_violations, 1)
         self.assertEqual(result.classifications[0]["path"], "outside.txt")
+
+    def test_committed_history_collects_all_change_kinds_and_rejects_raw_record_damage(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._git(root, "init")
+            for name in ("modified.txt", "deleted.txt", "type-change.txt"):
+                (root / name).write_text("baseline", encoding="utf-8")
+            self._git(root, "add", ".")
+            baseline_commit = self._commit(root, "baseline")
+            (root / "added.txt").write_text("added", encoding="utf-8")
+            (root / "modified.txt").write_text("modified", encoding="utf-8")
+            self._git(root, "rm", "deleted.txt")
+            (root / "type-change.txt").unlink()
+            os.symlink("modified.txt", root / "type-change.txt")
+            self._git(root, "add", "-A")
+            reviewed_commit = self._commit(root, "all changes")
+            changes = capture_committed_history(root, baseline_commit, reviewed_commit)
+
+        self.assertEqual(
+            {(change.path, change.change_kind) for change in changes},
+            {
+                ("added.txt", "added"),
+                ("modified.txt", "modified"),
+                ("deleted.txt", "deleted"),
+                ("type-change.txt", "type_changed"),
+            },
+        )
+
+        def malformed_git(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+            command = _args[0]
+            assert isinstance(command, list)
+            if "merge-base" in command:
+                return subprocess.CompletedProcess(command, 0)
+            if "diff" in command:
+                return subprocess.CompletedProcess(command, 0, stdout=b":100644 100644 a b M\0")
+            return subprocess.CompletedProcess(command, 0, stdout=(b"a" * 40) + b"\n")
+
+        with patch("specchoice_evidence.baseline.subprocess.run", side_effect=malformed_git):
+            with self.assertRaisesRegex(BaselineError, "BOUNDARY_HISTORY_PARSE_ERROR"):
+                capture_committed_history(Path("fixture"), "start", "reviewed")
+
+    def test_reviewed_revision_must_exist_and_descend_from_the_baseline_commit(self) -> None:
+        payload = {
+            "allowlist": {"exact_files": [], "roots": []},
+            "repository": {"head_commit": "", "path_basis": "repository_relative_posix"},
+            "schema_version": "1",
+            "worktree": {"ignored_paths_in_scope": [], "tracked_changes": [], "untracked_files": []},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._git(root, "init")
+            (root / "shared.txt").write_text("initial", encoding="utf-8")
+            self._git(root, "add", "shared.txt")
+            initial = self._commit(root, "initial")
+            (root / "main.txt").write_text("main", encoding="utf-8")
+            self._git(root, "add", "main.txt")
+            baseline_commit = self._commit(root, "baseline")
+            payload["repository"]["head_commit"] = baseline_commit
+            baseline = root / "baseline.json"
+            capture_baseline(baseline, payload)
+            self._git(root, "checkout", "-b", "other", initial)
+            (root / "other.txt").write_text("other", encoding="utf-8")
+            self._git(root, "add", "other.txt")
+            other = self._commit(root, "other")
+            with self.assertRaisesRegex(BaselineError, "BOUNDARY_HISTORY_REVISION_INVALID"):
+                check_boundary(root, baseline, reviewed_revision="missing")
+            with self.assertRaisesRegex(BaselineError, "BOUNDARY_HISTORY_NOT_DESCENDANT"):
+                check_boundary(root, baseline, reviewed_revision=other)
+
+    def test_preexisting_inventory_path_preserves_committed_and_live_provenance_once(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._git(root, "init")
+            path = root / "preexisting.txt"
+            path.write_text("baseline", encoding="utf-8")
+            self._git(root, "add", "preexisting.txt")
+            baseline_commit = self._commit(root, "baseline")
+            baseline = root / "baseline.json"
+            capture_baseline(
+                baseline,
+                {
+                    "allowlist": {"exact_files": [], "roots": []},
+                    "repository": {"head_commit": baseline_commit, "path_basis": "repository_relative_posix"},
+                    "schema_version": "1",
+                    "worktree": {
+                        "ignored_paths_in_scope": [],
+                        "tracked_changes": [
+                            {
+                                "path": "preexisting.txt",
+                                "file_kind": "regular_file",
+                                "byte_length": len(b"baseline"),
+                                "sha256": sha256_bytes(b"baseline"),
+                            }
+                        ],
+                        "untracked_files": [],
+                    },
+                },
+            )
+            path.write_text("committed", encoding="utf-8")
+            self._git(root, "add", "preexisting.txt")
+            self._commit(root, "committed change")
+            path.write_text("staged", encoding="utf-8")
+            self._git(root, "add", "preexisting.txt")
+            path.write_text("worktree", encoding="utf-8")
+            result = check_boundary(root, baseline)
+
+        self.assertEqual(len(result.classifications), 1)
+        record = result.classifications[0]
+        self.assertEqual(record["path"], "preexisting.txt")
+        self.assertEqual(record["change_sources"], ["committed_history", "staged", "worktree"])
+        self.assertEqual(record["committed_change"]["change_kind"], "modified")
+        self.assertEqual(record["live_changes"], [{"source": "staged"}, {"source": "worktree"}])
 
     def test_control_decision_binds_active_artifacts_and_requires_approval(self) -> None:
         experiment_root = Path(__file__).resolve().parents[1]
