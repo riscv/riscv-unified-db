@@ -48,6 +48,42 @@ def _validate_classifications(value: object) -> list[dict[str, object]]:
     return sorted(records, key=lambda record: str(record["path"]))
 
 
+def _local_source_identity(approved_generation: dict[str, object]) -> dict[str, object]:
+    return {
+        "candidate_relative_path": approved_generation.get("candidate_relative_path"),
+        "core_sha256": approved_generation.get("core_sha256"),
+        "external_publication_authorized": False,
+        "generation": approved_generation.get("generation"),
+        "kind": "local_accepted_generation",
+        "local_accepted_generation_authorized": True,
+        "root_sha256": approved_generation.get("root_sha256"),
+        "snapshot_manifest_sha256": approved_generation.get("snapshot_manifest_sha256"),
+    }
+
+
+def local_receipt_basis_sha256(
+    baseline_sha256: str,
+    environment_sha256: str,
+    local_identity: dict[str, object],
+    boundary_classifications: list[dict[str, object]],
+) -> str:
+    """Hash the reviewer-visible local facts without creating a receipt/decision cycle."""
+    return sha256_bytes(
+        canonical_json_bytes(
+            {
+                "boundary_classifications": _validate_classifications(boundary_classifications),
+                "environment_decision_sha256": _require_digest(
+                    environment_sha256, "RECEIPT_DIGEST_INVALID"
+                ),
+                "phase_start_baseline_sha256": _require_digest(
+                    baseline_sha256, "RECEIPT_DIGEST_INVALID"
+                ),
+                "source_identity": _local_source_identity(local_identity),
+            }
+        )
+    )
+
+
 def validate_receipt(source: dict[str, Any] | Path) -> dict[str, Any]:
     """Validate canonical receipt bytes and the non-cyclic receipt digest."""
     if isinstance(source, Path):
@@ -60,9 +96,9 @@ def validate_receipt(source: dict[str, Any] | Path) -> dict[str, Any]:
             raise ReceiptError("RECEIPT_NOT_CANONICAL")
     else:
         receipt = source
-    if not isinstance(receipt, dict) or receipt.get("schema_version") != "1":
+    if not isinstance(receipt, dict) or receipt.get("schema_version") not in {"1", "2"}:
         raise ReceiptError("RECEIPT_SCHEMA_INVALID")
-    if receipt.get("generator_version") != "1":
+    if receipt.get("generator_version") not in {"1", "2"}:
         raise ReceiptError("RECEIPT_GENERATOR_INVALID")
     for key in ("phase_start_baseline_sha256", "environment_decision_sha256", "receipt_sha256"):
         _require_digest(receipt.get(key), "RECEIPT_DIGEST_INVALID")
@@ -84,6 +120,32 @@ def validate_receipt(source: dict[str, Any] | Path) -> dict[str, Any]:
         _require_digest(source_identity.get("rejected_attempt_sha256"), "SOURCE_IDENTITY_INVALID")
         if any(key in source_identity for key in ("generation", "root_sha256", "manifest_sha256")):
             raise ReceiptError("SOURCE_IDENTITY_AMBIGUOUS")
+    elif kind == "local_accepted_generation":
+        expected_fields = {
+            "candidate_relative_path",
+            "core_sha256",
+            "external_publication_authorized",
+            "generation",
+            "kind",
+            "local_accepted_generation_authorized",
+            "root_sha256",
+            "snapshot_manifest_sha256",
+        }
+        if set(source_identity) != expected_fields:
+            raise ReceiptError("SOURCE_IDENTITY_INVALID")
+        if (
+            not isinstance(source_identity.get("candidate_relative_path"), str)
+            or not source_identity["candidate_relative_path"]
+            or not isinstance(source_identity.get("generation"), str)
+            or not source_identity["generation"]
+            or source_identity.get("external_publication_authorized") is not False
+            or source_identity.get("local_accepted_generation_authorized") is not True
+        ):
+            raise ReceiptError("SOURCE_IDENTITY_INVALID")
+        for key in ("core_sha256", "root_sha256", "snapshot_manifest_sha256"):
+            _require_digest(source_identity.get(key), "SOURCE_IDENTITY_INVALID")
+        for key in ("reviewer_decision_sha256", "receipt_basis_sha256"):
+            _require_digest(receipt.get(key), "RECEIPT_DIGEST_INVALID")
     else:
         raise ReceiptError("SOURCE_IDENTITY_INVALID")
     _validate_classifications(receipt.get("boundary_classifications"))
@@ -96,6 +158,10 @@ def validate_receipt(source: dict[str, Any] | Path) -> dict[str, Any]:
         raise ReceiptError("RECEIPT_SELF_HASH_MISMATCH")
     if kind == "rejected_attempt" and receipt.get("outcome") != "fail":
         raise ReceiptError("REJECTED_SOURCE_CANNOT_PASS")
+    if kind == "local_accepted_generation" and (
+        receipt.get("outcome") != "pass" or receipt.get("blocking_diagnostics") != []
+    ):
+        raise ReceiptError("LOCAL_SOURCE_CANNOT_BE_BLOCKED_PASS")
     return receipt
 
 
@@ -129,6 +195,39 @@ def build_blocked_receipt(
     return validate_receipt(_hashed(receipt))
 
 
+def build_local_mvp_receipt(
+    baseline_sha256: str,
+    environment_sha256: str,
+    approved_generation: dict[str, object],
+    boundary_classifications: list[dict[str, object]],
+    reviewer_decision_sha256: str,
+    reviewed_receipt_basis_sha256: str,
+) -> dict[str, Any]:
+    """Build a pass receipt for a local-only accepted identity after all machine gates pass."""
+    source_identity = _local_source_identity(approved_generation)
+    records = _validate_classifications(boundary_classifications)
+    if any(record["blocking"] for record in records):
+        raise ReceiptError("LOCAL_MVP_BOUNDARY_BLOCKING")
+    basis = local_receipt_basis_sha256(baseline_sha256, environment_sha256, source_identity, records)
+    if reviewed_receipt_basis_sha256 != basis:
+        raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
+    receipt: dict[str, Any] = {
+        "blocking_diagnostics": [],
+        "boundary_classifications": records,
+        "environment_decision_sha256": _require_digest(environment_sha256, "RECEIPT_DIGEST_INVALID"),
+        "generator_version": "2",
+        "nonblocking_diagnostics": ["LOCAL_MVP_ONLY_EXTERNAL_PUBLICATION_PROHIBITED"],
+        "outcome": "pass",
+        "phase_start_baseline_sha256": _require_digest(baseline_sha256, "RECEIPT_DIGEST_INVALID"),
+        "receipt_basis_sha256": _require_digest(basis, "RECEIPT_DIGEST_INVALID"),
+        "reviewer_decision_sha256": _require_digest(reviewer_decision_sha256, "RECEIPT_DIGEST_INVALID"),
+        "reviewer_package_complete": False,
+        "schema_version": "2",
+        "source_identity": source_identity,
+    }
+    return validate_receipt(_hashed(receipt))
+
+
 def render_markdown(receipt: dict[str, Any]) -> str:
     """Render only validated JSON values; no file, Git, boundary, or hash lookups occur here."""
     value = validate_receipt(receipt)
@@ -147,6 +246,16 @@ def render_markdown(receipt: dict[str, Any]) -> str:
         "## Boundary classifications",
         "",
     ]
+    if source["kind"] == "local_accepted_generation":
+        lines.extend(
+            [
+                f"- Local accepted generation: `{source['generation']}`",
+                f"- Core SHA-256: `{source['core_sha256']}`",
+                f"- Logical root SHA-256: `{source['root_sha256']}`",
+                f"- Snapshot manifest SHA-256: `{source['snapshot_manifest_sha256']}`",
+                "- External publication authorized: `false`",
+            ]
+        )
     for record in value["boundary_classifications"]:
         lines.append(
             f"- `{record['path']}` — `{record['status']}`, blocking={str(record['blocking']).lower()}, "

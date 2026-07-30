@@ -16,14 +16,24 @@ from .baseline import (
     load_baseline,
     validate_restart_lineage,
 )
-from .receipt import ReceiptError, build_blocked_receipt, validate_receipt, write_receipt_package
-from .bundle import construct_candidate, publish_accepted, verify_candidate
+from .receipt import (
+    ReceiptError,
+    build_blocked_receipt,
+    build_local_mvp_receipt,
+    local_receipt_basis_sha256,
+    render_markdown,
+    validate_receipt,
+    write_receipt_package,
+)
+from .bundle import accept_local_candidate, construct_candidate, publish_accepted, verify_candidate
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
 from .source_contract import (
     SourceContractProposalError,
     validate_source_contract_proposal,
+    require_local_accepted_generation_authorization,
+    validate_local_accepted_generation_decision,
     validate_source_publication_decision,
     verify_source_contract_proposal_git,
 )
@@ -342,17 +352,127 @@ def command_write_integrity_receipt(args: argparse.Namespace) -> int:
     return 0 if result["outcome"] == "pass" and result["reviewer_package_complete"] else 2
 
 
+def _load_canonical_local_acceptance_decision(path: Path) -> dict[str, object]:
+    raw = path.read_bytes()
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SourceContractProposalError("INVALID_LOCAL_ACCEPTANCE_DECISION_JSON") from error
+    if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_NOT_CANONICAL")
+    return validate_local_accepted_generation_decision(payload)
+
+
+def command_accept_local_mvp(args: argparse.Namespace) -> int:
+    """Create the exact immutable local accepted copy and canonical local-only receipt."""
+    decision_raw = args.decision.read_bytes()
+    decision = _load_canonical_local_acceptance_decision(args.decision)
+    _validate_local_mvp_receipt_basis(args, decision)
+    identity = accept_local_candidate(decision, args.candidate_directory, args.accepted_directory)
+    result = _write_local_mvp_receipt(args, decision, decision_raw, identity)
+    _print_json({**identity, "outcome": result["outcome"], "receipt_sha256": result["receipt_sha256"]})
+    return 0 if result["outcome"] == "pass" and result["reviewer_package_complete"] else 2
+
+
+def _validate_local_mvp_receipt_basis(args: argparse.Namespace, decision: dict[str, object]) -> None:
+    repository = _repository_root(Path.cwd())
+    baseline = args.baseline if args.baseline.is_absolute() else Path.cwd() / args.baseline
+    environment = (
+        args.environment_decision
+        if args.environment_decision.is_absolute()
+        else Path.cwd() / args.environment_decision
+    )
+    boundary = check_boundary(repository, baseline)
+    approved_generation = decision["approved_generation"]
+    assert isinstance(approved_generation, dict)
+    basis = local_receipt_basis_sha256(
+        boundary.baseline_sha256,
+        sha256_bytes(environment.read_bytes()),
+        approved_generation,
+        boundary.classifications,
+    )
+    if decision["reviewed_receipt_basis_sha256"] != basis:
+        raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
+
+
+def _write_local_mvp_receipt(
+    args: argparse.Namespace,
+    decision: dict[str, object],
+    decision_raw: bytes,
+    identity: dict[str, object],
+) -> dict[str, object]:
+    repository = _repository_root(Path.cwd())
+    baseline = args.baseline if args.baseline.is_absolute() else Path.cwd() / args.baseline
+    environment = (
+        args.environment_decision
+        if args.environment_decision.is_absolute()
+        else Path.cwd() / args.environment_decision
+    )
+    boundary = check_boundary(repository, baseline)
+    approved_generation = decision["approved_generation"]
+    assert isinstance(approved_generation, dict)
+    basis = local_receipt_basis_sha256(
+        boundary.baseline_sha256,
+        sha256_bytes(environment.read_bytes()),
+        approved_generation,
+        boundary.classifications,
+    )
+    receipt = build_local_mvp_receipt(
+        boundary.baseline_sha256,
+        sha256_bytes(environment.read_bytes()),
+        approved_generation,
+        boundary.classifications,
+        sha256_bytes(decision_raw),
+        basis,
+    )
+    result = write_receipt_package(receipt, args.receipt, args.markdown)
+    return result
+
+
+def command_write_local_mvp_receipt(args: argparse.Namespace) -> int:
+    """Finalize review artifacts for an already-created exact local accepted copy only."""
+    decision_raw = args.decision.read_bytes()
+    decision = _load_canonical_local_acceptance_decision(args.decision)
+    generation = decision["approved_generation"]["generation"]
+    assert isinstance(generation, str)
+    identity = verify_candidate(args.accepted_directory / generation)
+    final = json.loads((args.accepted_directory / generation / "snapshot-manifest.json").read_text(encoding="utf-8"))
+    if not isinstance(final, dict) or not isinstance(final.get("snapshot_manifest_sha256"), str):
+        raise ReceiptError("SNAPSHOT_MANIFEST_INVALID")
+    require_local_accepted_generation_authorization(
+        decision, identity, final["snapshot_manifest_sha256"]
+    )
+    result = _write_local_mvp_receipt(args, decision, decision_raw, identity)
+    _print_json({**identity, "outcome": result["outcome"], "receipt_sha256": result["receipt_sha256"]})
+    return 0 if result["outcome"] == "pass" and result["reviewer_package_complete"] else 2
+
+
 def command_finalize_review(args: argparse.Namespace) -> int:
     """Refuse to finalize unless a reviewer decision and already-passing receipt exist."""
     receipt = validate_receipt(args.receipt)
     if not args.decision.is_file():
         raise ReceiptError("REVIEW_DECISION_MISSING")
-    decision = json.loads(args.decision.read_text(encoding="utf-8"))
-    if not isinstance(decision, dict) or decision.get("disposition") != "approved":
+    decision_raw = args.decision.read_bytes()
+    decision = json.loads(decision_raw.decode("utf-8"))
+    source = receipt["source_identity"]
+    if source["kind"] == "local_accepted_generation":
+        if canonical_json_bytes(decision) != decision_raw:
+            raise ReceiptError("LOCAL_ACCEPTANCE_DECISION_NOT_CANONICAL")
+        try:
+            local_decision = validate_local_accepted_generation_decision(decision)
+        except SourceContractProposalError as error:
+            raise ReceiptError(str(error)) from error
+        if source.get("external_publication_authorized") is not False:
+            raise ReceiptError("EXTERNAL_PUBLICATION_NOT_AUTHORIZED")
+        if receipt.get("reviewer_decision_sha256") != sha256_bytes(decision_raw):
+            raise ReceiptError("REVIEW_DECISION_HASH_MISMATCH")
+        if source.get("generation") != local_decision["approved_generation"]["generation"]:
+            raise ReceiptError("REVIEW_DECISION_IDENTITY_MISMATCH")
+    elif not isinstance(decision, dict) or decision.get("disposition") != "approved":
         raise ReceiptError("REVIEW_NOT_APPROVED")
     if receipt["outcome"] != "pass" or not receipt["reviewer_package_complete"]:
         raise ReceiptError("REVIEW_MACHINE_GATE_NOT_ELIGIBLE")
-    if args.markdown.read_text(encoding="utf-8") != __import__("specchoice_evidence.receipt", fromlist=["render_markdown"]).render_markdown(receipt):
+    if args.markdown.read_text(encoding="utf-8") != render_markdown(receipt):
         raise ReceiptError("REVIEW_MARKDOWN_MISMATCH")
     _print_json({"outcome": "pass", "receipt_sha256": receipt["receipt_sha256"]})
     return 0
@@ -450,6 +570,23 @@ def build_parser() -> argparse.ArgumentParser:
     publish = commands.add_parser("publish-accepted")
     publish.add_argument("--decision", type=Path, default=Path("receipts/source-publication-decision.json"))
     publish.set_defaults(handler=command_publish_accepted)
+    local_accept = commands.add_parser("accept-local-mvp")
+    local_accept.add_argument("--decision", type=Path, required=True)
+    local_accept.add_argument("--candidate-directory", type=Path, required=True)
+    local_accept.add_argument("--accepted-directory", type=Path, default=Path("bundles/accepted"))
+    local_accept.add_argument("--baseline", type=Path, default=_default_active_baseline())
+    local_accept.add_argument("--environment-decision", type=Path, default=Path("receipts/environment-decision.json"))
+    local_accept.add_argument("--receipt", type=Path, default=Path("receipts/integrity-receipt.json"))
+    local_accept.add_argument("--markdown", type=Path, default=Path("receipts/integrity-receipt.md"))
+    local_accept.set_defaults(handler=command_accept_local_mvp)
+    local_receipt = commands.add_parser("write-local-mvp-receipt")
+    local_receipt.add_argument("--decision", type=Path, required=True)
+    local_receipt.add_argument("--accepted-directory", type=Path, default=Path("bundles/accepted"))
+    local_receipt.add_argument("--baseline", type=Path, default=_default_active_baseline())
+    local_receipt.add_argument("--environment-decision", type=Path, default=Path("receipts/environment-decision.json"))
+    local_receipt.add_argument("--receipt", type=Path, default=Path("receipts/integrity-receipt.json"))
+    local_receipt.add_argument("--markdown", type=Path, default=Path("receipts/integrity-receipt.md"))
+    local_receipt.set_defaults(handler=command_write_local_mvp_receipt)
     integrity = commands.add_parser("write-integrity-receipt")
     integrity.add_argument("--baseline", type=Path, default=_default_active_baseline())
     integrity.add_argument("--environment-decision", type=Path, default=Path("receipts/environment-decision.json"))

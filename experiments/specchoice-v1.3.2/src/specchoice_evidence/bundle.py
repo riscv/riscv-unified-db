@@ -26,6 +26,7 @@ from .source_contract import (
     SourceContractProposalError,
     require_accepted_publication_authorization,
     require_candidate_construction_authorization,
+    require_local_accepted_generation_authorization,
     require_source_extraction_authorization,
     validate_source_publication_decision,
 )
@@ -410,3 +411,55 @@ def publish_accepted(decision: object) -> None:
     except SourceContractProposalError as error:
         raise BundleError(str(error)) from error
     raise BundleError("OFFLINE_REPLAY_PROOF_REQUIRED")
+
+
+def accept_local_candidate(
+    decision: object, candidate: Path, accepted_root: Path
+) -> dict[str, object]:
+    """Atomically pin one already-rooted candidate for local MVP use only.
+
+    The copied directory retains the candidate's bytes and its non-external manifest state.
+    Local acceptability is therefore represented only by the separately hash-bound decision;
+    no external publication state is synthesized or implied.
+    """
+    identity = verify_candidate(candidate)
+    final = _canonical_load(candidate / "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    snapshot_sha256 = final.get("snapshot_manifest_sha256")
+    if not isinstance(snapshot_sha256, str):
+        raise BundleError("SNAPSHOT_MANIFEST_SELF_DIGEST_MISMATCH")
+    try:
+        require_local_accepted_generation_authorization(
+            _mapping(decision, "INVALID_LOCAL_ACCEPTANCE_DECISION"), identity, snapshot_sha256
+        )
+    except SourceContractProposalError as error:
+        raise BundleError(str(error)) from error
+    generation = identity["generation"]
+    assert isinstance(generation, str)
+    target = accepted_root / generation
+    if target.exists() or target.is_symlink():
+        raise BundleError("LOCAL_ACCEPTED_TARGET_EXISTS")
+    accepted_root.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix=f".{generation}.staging-", dir=accepted_root))
+    try:
+        shutil.rmtree(temporary)
+        shutil.copytree(candidate, temporary)
+        if (temporary / "content-manifest-core.json").read_bytes() != (
+            candidate / "content-manifest-core.json"
+        ).read_bytes() or (temporary / "snapshot-manifest.json").read_bytes() != (
+            candidate / "snapshot-manifest.json"
+        ).read_bytes():
+            raise BundleError("LOCAL_ACCEPTED_COPY_IDENTITY_MISMATCH")
+        if verify_candidate(temporary) != identity:
+            raise BundleError("LOCAL_ACCEPTED_COPY_IDENTITY_MISMATCH")
+        _run_embedded_verifier(temporary)
+        _sync_directory(temporary)
+        _sync_directory(accepted_root)
+        if target.exists() or target.is_symlink():
+            raise BundleError("LOCAL_ACCEPTED_TARGET_EXISTS")
+        os.replace(temporary, target)
+        _sync_directory(accepted_root)
+    except Exception:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        raise
+    return identity

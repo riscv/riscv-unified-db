@@ -16,6 +16,7 @@ from pathlib import Path
 
 from specchoice_evidence.bundle import (
     BundleError,
+    accept_local_candidate,
     construct_candidate,
     construct_verifier_rooted_candidate,
     publish_accepted,
@@ -25,6 +26,8 @@ from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.source_contract import (
     SourceContractProposalError,
     require_accepted_publication_authorization,
+    require_local_accepted_generation_authorization,
+    validate_local_accepted_generation_decision,
     validate_source_publication_decision,
 )
 from specchoice_evidence.verify import create_synthetic_accepted_bundle, verify_accepted_bundle
@@ -327,6 +330,83 @@ class VerifierRootedCandidateTests(unittest.TestCase):
                 self.assertNotEqual(completed.returncode, 0, path)
                 shutil.rmtree(copied)
                 shutil.copytree(candidate, copied)
+
+
+class LocalAcceptanceTests(unittest.TestCase):
+    def test_local_acceptance_is_exactly_bound_immutable_and_not_external_publication(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v2-pr2192-86a0021b-verifier-rooted-v1"
+        core = candidate / "content-manifest-core.json"
+        snapshot = candidate / "snapshot-manifest.json"
+        identity = verify_candidate(candidate)
+        decision = {
+            "approval_scope": "local_accepted_generation_only",
+            "approved_generation": {
+                "candidate_relative_path": "bundles/candidates/source-contract-v2-pr2192-86a0021b-verifier-rooted-v1",
+                "core_sha256": sha256_bytes(core.read_bytes()),
+                "generation": identity["generation"],
+                "root_sha256": identity["root_sha256"],
+                "snapshot_manifest_sha256": json.loads(snapshot.read_text(encoding="utf-8"))["snapshot_manifest_sha256"],
+            },
+            "authorization": {
+                "external_publication_authorized": False,
+                "local_accepted_generation_authorized": True,
+            },
+            "reviewed_receipt_basis_sha256": "f" * 64,
+            "reviewer": {"disposition": "approved_local_only"},
+            "schema_version": "2",
+            "state": "local_accepted_generation_authorized",
+        }
+        validated = validate_local_accepted_generation_decision(decision)
+        require_local_accepted_generation_authorization(
+            validated, identity, json.loads(snapshot.read_text(encoding="utf-8"))["snapshot_manifest_sha256"]
+        )
+        with self.assertRaisesRegex(SourceContractProposalError, "EXTERNAL_PUBLICATION_NOT_AUTHORIZED"):
+            require_accepted_publication_authorization(validated)
+
+        with tempfile.TemporaryDirectory() as directory:
+            accepted_root = Path(directory) / "bundles/accepted"
+            accepted = accept_local_candidate(validated, candidate, accepted_root)
+            accepted_path = accepted_root / identity["generation"]
+            self.assertEqual(accepted, identity)
+            self.assertEqual((accepted_path / "content-manifest-core.json").read_bytes(), core.read_bytes())
+            self.assertEqual((accepted_path / "snapshot-manifest.json").read_bytes(), snapshot.read_bytes())
+            self.assertEqual(verify_candidate(accepted_path), identity)
+            self.assertFalse((accepted_path / ".git").exists())
+            copied = Path(directory) / "copied-away"
+            shutil.copytree(accepted_path, copied)
+            shim = Path(directory) / "no-git"
+            shim.mkdir()
+            (shim / "git").write_text("#!/bin/sh\nexit 97\n", encoding="utf-8")
+            (shim / "sitecustomize.py").write_text(
+                "import socket\n"
+                "def blocked(*args, **kwargs):\n    raise RuntimeError('network blocked')\n"
+                "socket.socket = blocked\n",
+                encoding="utf-8",
+            )
+            os.chmod(shim / "git", 0o755)
+            replay = subprocess.run(
+                [sys.executable, "verify_bundle.py"],
+                cwd=copied,
+                env={"PATH": f"{shim}{os.pathsep}{os.environ.get('PATH', '')}", "PYTHONPATH": shim.as_posix()},
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(replay.returncode, 0, replay.stderr)
+            for relative in ("raw/parameter_emitter/param_emitter.py", "content-manifest-core.json", "snapshot-manifest.json", "verifier/specchoice_evidence/verify.py"):
+                target = copied / relative
+                target.write_bytes(target.read_bytes() + b"# tampered\n")
+                replay = subprocess.run(
+                    [sys.executable, "verify_bundle.py"], cwd=copied,
+                    env={"PATH": f"{shim}{os.pathsep}{os.environ.get('PATH', '')}", "PYTHONPATH": shim.as_posix()},
+                    check=False, capture_output=True, text=True,
+                )
+                self.assertNotEqual(replay.returncode, 0, relative)
+                shutil.rmtree(copied)
+                shutil.copytree(accepted_path, copied)
+            with self.assertRaisesRegex(BundleError, "LOCAL_ACCEPTED_TARGET_EXISTS"):
+                accept_local_candidate(validated, candidate, accepted_root)
 
 
 if __name__ == "__main__":

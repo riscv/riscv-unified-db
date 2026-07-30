@@ -285,8 +285,78 @@ def require_accepted_publication_authorization(decision: Mapping[str, object]) -
     authorization = _require_mapping(
         decision.get("authorization"), "SOURCE_DECISION_AUTHORIZATION_MISSING"
     )
+    if "external_publication_authorized" in authorization:
+        if authorization.get("external_publication_authorized") is not True:
+            raise SourceContractProposalError("EXTERNAL_PUBLICATION_NOT_AUTHORIZED")
+        return
     if authorization.get("accepted_publication_authorized") is not True:
         raise SourceContractProposalError("ACCEPTED_PUBLICATION_NOT_AUTHORIZED")
+
+
+def validate_local_accepted_generation_decision(decision: object) -> dict[str, object]:
+    """Validate the local-only reviewer disposition without granting publication authority."""
+    payload = _require_mapping(decision, "INVALID_LOCAL_ACCEPTANCE_DECISION")
+    expected_fields = {
+        "approval_scope",
+        "approved_generation",
+        "authorization",
+        "reviewed_receipt_basis_sha256",
+        "reviewer",
+        "schema_version",
+        "state",
+    }
+    if set(payload) != expected_fields:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_FIELDS_INVALID")
+    if payload.get("schema_version") != "2":
+        raise SourceContractProposalError("UNSUPPORTED_LOCAL_ACCEPTANCE_DECISION_SCHEMA")
+    if payload.get("approval_scope") != "local_accepted_generation_only":
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_SCOPE_INVALID")
+    if payload.get("state") != "local_accepted_generation_authorized":
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_STATE_INVALID")
+    reviewer = _require_mapping(payload.get("reviewer"), "LOCAL_ACCEPTANCE_REVIEWER_MISSING")
+    if dict(reviewer) != {"disposition": "approved_local_only"}:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_REVIEWER_INVALID")
+    authorization = _require_mapping(payload.get("authorization"), "LOCAL_ACCEPTANCE_AUTHORIZATION_MISSING")
+    if dict(authorization) != {
+        "external_publication_authorized": False,
+        "local_accepted_generation_authorized": True,
+    }:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_AUTHORIZATION_INVALID")
+    binding = _require_mapping(payload.get("approved_generation"), "LOCAL_ACCEPTANCE_BINDING_MISSING")
+    if set(binding) != {
+        "candidate_relative_path",
+        "core_sha256",
+        "generation",
+        "root_sha256",
+        "snapshot_manifest_sha256",
+    }:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_BINDING_INVALID")
+    _normalized_path(binding.get("candidate_relative_path"), "candidate_relative_path")
+    _require_string(binding, "generation")
+    for field in ("core_sha256", "root_sha256", "snapshot_manifest_sha256"):
+        try:
+            require_sha256(binding.get(field))
+        except ValueError as error:
+            raise SourceContractProposalError("LOCAL_ACCEPTANCE_BINDING_INVALID") from error
+    try:
+        require_sha256(payload.get("reviewed_receipt_basis_sha256"))
+    except ValueError as error:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_RECEIPT_BASIS_INVALID") from error
+    return dict(payload)
+
+
+def require_local_accepted_generation_authorization(
+    decision: Mapping[str, object], identity: Mapping[str, object], snapshot_manifest_sha256: str
+) -> None:
+    """Require exact local-only authority for one already-verified candidate identity."""
+    validated = validate_local_accepted_generation_decision(decision)
+    binding = _require_mapping(validated["approved_generation"], "LOCAL_ACCEPTANCE_BINDING_MISSING")
+    for field in ("generation", "root_sha256", "manifest_sha256"):
+        expected_field = "core_sha256" if field == "manifest_sha256" else field
+        if binding.get(expected_field) != identity.get(field):
+            raise SourceContractProposalError("LOCAL_ACCEPTANCE_IDENTITY_MISMATCH")
+    if binding.get("snapshot_manifest_sha256") != snapshot_manifest_sha256:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_SNAPSHOT_MISMATCH")
 
 
 def _run_git(repository: Path, *arguments: str) -> subprocess.CompletedProcess[bytes]:

@@ -208,7 +208,12 @@ class SourceContractProposalTests(unittest.TestCase):
         self.assertFalse(validated["authorization"]["accepted_publication_authorized"])
         self.assertNotIn("generation", validated)
         self.assertNotIn("root_sha256", validated)
-        self.assertEqual(list((experiment_root / "bundles/accepted").glob("*")), [])
+        local_manifest = experiment_root / "bundles/accepted/source-contract-v2-pr2192-86a0021b-verifier-rooted-v1/snapshot-manifest.json"
+        self.assertTrue(local_manifest.is_file())
+        local_state = json.loads(local_manifest.read_text(encoding="utf-8"))
+        self.assertEqual(local_state["status"], "candidate")
+        self.assertFalse(local_state["downstream_eligible"])
+        self.assertFalse(local_state["accepted_publication_authorized"])
 
 
 if __name__ == "__main__":
