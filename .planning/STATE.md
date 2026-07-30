@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: Isolated Evidence Boundary and Source Integrity
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-07-30T14:13:14.374Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-07-30T15:05:19.818Z"
 last_activity: 2026-07-30
-last_activity_desc: Completed 01-02 standalone environment identity and cumulative incident policy
+last_activity_desc: Completed 01-03 candidate source construction with accepted publication closed
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
-  percent: 50
+  completed_plans: 3
+  percent: 75
 ---
 
 # Project State
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 01 (Isolated Evidence Boundary and Source Integrity) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
-Last activity: 2026-07-30 — Completed 01-02 standalone environment identity and cumulative incident policy
+Last activity: 2026-07-30 — Completed 01-03 candidate source construction with accepted publication closed
 
-Progress: [█████░░░░░] 50%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [█████░░░░░] 50%
 |------|----------|-------|-------|
 | Phase 01 P01 | 10min | 3 tasks | 14 files |
 | Phase 01 P02 | 7min | 2 tasks | 7 files |
+| Phase 01 P03 | 49min | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Standalone-first remains the primary route; full UDB setup was neither required nor attempted.
 - [Phase 01]: Canonical environment identity contains stable fields only; audit evidence references it one-way by SHA-256.
 - [Phase 01]: Unexpected dependency incidents use a cumulative 90-minute clock whose retries and waits never reset or pause it.
+- [Phase 01]: Candidate construction is authorized only for the exact proposal hash and seven-file inventory; accepted publication remains false.
+- [Phase 01]: Candidate core/root binding is deterministic and non-cyclic; Plan 04 must prove offline replay before accepted publication.
 
 ### Pending Todos
 
@@ -98,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-30T14:13:14.362Z
-Stopped at: Completed 01-02-PLAN.md
-Resume file: .planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-03-PLAN.md
+Last session: 2026-07-30T15:05:19.797Z
+Stopped at: Completed 01-03-PLAN.md
+Resume file: .planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-04-PLAN.md

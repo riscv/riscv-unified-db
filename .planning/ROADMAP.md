@@ -38,13 +38,13 @@ SpecChoice v1.3.2 proceeds through seven strict, dependency-ordered increments: 
   2. The reviewer can verify every named PR snapshot against its frozen commit and reproduce the stable hash of every consumed source file.
   3. The operator can reproduce the recorded environment decision and, if full setup exceeded the frozen limit, use the documented dependency-light fallback without weakening source verification.
 
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 
 - [x] 01-01-PLAN.md
 - [x] 01-02-PLAN.md
-- [ ] 01-03-PLAN.md
+- [x] 01-03-PLAN.md
 - [ ] 01-04-PLAN.md
 
 **Wave 1**
@@ -53,11 +53,11 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02: Record standalone-first environment identity and the cumulative dependency-incident policy.
+- [x] 01-02: Record standalone-first environment identity and the cumulative dependency-incident policy.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03: Prove pinned PR identities, preserve the #2192 rejection, and stage immutable raw/derived bundle content.
+- [x] 01-03: Prove pinned PR identities, preserve the #2192 rejection, and stage immutable raw/derived bundle content.
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -242,7 +242,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Isolated Evidence Boundary and Source Integrity | 2/4 | In Progress|  |
+| 1. Isolated Evidence Boundary and Source Integrity | 3/4 | In Progress|  |
 | 2. Deterministic Measurement Spine | 0/4 | Not started | - |
 | 3. Human-Reviewed Data Preregistration | 0/4 | Not started | - |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |
