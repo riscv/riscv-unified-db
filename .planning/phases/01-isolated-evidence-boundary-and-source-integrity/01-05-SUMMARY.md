@@ -47,12 +47,15 @@ Canonical v5 recovery evidence now detects committed post-baseline changes while
 - `e5a97340` made issuance and finalization share the same local boundary gate and selected v5 as the active default.
 - `35302680` froze receipt authority to an explicit reviewed revision, canonical committed projection, and receipt basis while retaining a separate current-state gate.
 - `e780289b` added regression coverage for revision pinning, old-decision rejection, provenance, and current-state enforcement.
+- `b1709931` prohibited active finalization of historical schema-2/schema-3 receipts; only a schema-4 receipt with a schema-3 revision-pinned decision can reach active pass.
+- `7fb9d18f` replaced net-tree committed-history comparison with deterministic per-commit A/M/D/T events, preserving an out-of-boundary add even when a later commit deletes the path.
 
 ## Verification
 
-- Full stdlib suite: 68 tests passed using `PYTHONDONTWRITEBYTECODE=1`.
+- Full stdlib suite: 70 tests passed using `PYTHONDONTWRITEBYTECODE=1`.
 - v5 restart validation and the current combined `check-boundary` gate pass with zero blockers; `.DS_Store` entries retain `DS_STORE_IGNORED_OS_METADATA` and are not attributed.
-- The historical v5 decision and receipt now fail finalization with `LOCAL_RECEIPT_BASIS_MISMATCH`, as required: they predate revision-pinned authority and cannot authorize themselves.
+- Historical schema-2 and schema-3 receipts now fail active finalization with `HISTORICAL_RECEIPT_NOT_FINALIZABLE`; they cannot bypass the revision-pinned authorization route.
+- The add-then-delete regression proves a clean final tree cannot erase a committed out-of-boundary history event from either the frozen projection or current gate.
 - Copied accepted bundle verified with Git unavailable; before/after SHA-256 inventories were identical.
 - Accepted identity is unchanged: generation `source-contract-v2-pr2192-86a0021b-verifier-rooted-v1`, core `6ca1f176c84464d499d6c0e81d03ba3f23fdcdd1b5bd43bc28d9b2153a797495`, root `aacdda8218e3779747ae2dec45f9da81822f615ec4b257e55b0766baf8317d5a`, snapshot `1c81f84cf4894a7ecfde4b72e17d6e479a91cb0cfa408258611b00bdf5e2e397`, publication false.
 
