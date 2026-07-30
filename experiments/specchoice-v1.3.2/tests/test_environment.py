@@ -86,6 +86,32 @@ class EnvironmentDecisionTests(unittest.TestCase):
         self.assertNotIn(b"build-host", decision_bytes)
         self.assertNotIn(b"secret", receipt_bytes)
 
+    def test_audit_only_metadata_cannot_change_canonical_decision_bytes(self) -> None:
+        observation = EnvironmentObservation(
+            python_implementation="CPython",
+            python_version="3.14.0",
+            git_implementation="git",
+            git_version="2.50.1",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first_decision = root / "first-decision.json"
+            second_decision = root / "second-decision.json"
+            first_digest = write_environment_artifacts(
+                first_decision,
+                root / "first-audit.json",
+                observation,
+                audit_metadata={"hostname": "first-host", "timestamp": "2026-07-30T00:00:00Z"},
+            )
+            second_digest = write_environment_artifacts(
+                second_decision,
+                root / "second-audit.json",
+                observation,
+                audit_metadata={"hostname": "second-host", "timestamp": "2026-07-31T00:00:00Z"},
+            )
+            self.assertEqual(first_decision.read_bytes(), second_decision.read_bytes())
+        self.assertEqual(first_digest, second_digest)
+
 
 if __name__ == "__main__":
     unittest.main()

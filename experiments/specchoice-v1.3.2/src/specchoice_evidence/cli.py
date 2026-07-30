@@ -17,6 +17,7 @@ from .baseline import (
     validate_restart_lineage,
 )
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
+from .environment import default_audit_metadata, write_environment_artifacts
 
 
 def _default_capture_baseline() -> Path:
@@ -170,6 +171,24 @@ def command_validate_control_decision(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_record_environment(args: argparse.Namespace) -> int:
+    """Emit the local standalone-first decision and its separate audit evidence."""
+    digest = write_environment_artifacts(
+        args.decision,
+        args.audit_receipt,
+        audit_metadata=default_audit_metadata("python3 " + " ".join(sys.argv[1:])),
+    )
+    _print_json(
+        {
+            "audit_receipt": args.audit_receipt.as_posix(),
+            "canonical_environment_decision_sha256": digest,
+            "decision": args.decision.as_posix(),
+            "status": "recorded",
+        }
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-evidence")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -204,6 +223,14 @@ def build_parser() -> argparse.ArgumentParser:
     control_decision.add_argument("--allowlist", type=Path, default=_default_allowlist())
     control_decision.add_argument("--policy-override", type=Path, default=_default_policy_override())
     control_decision.set_defaults(handler=command_validate_control_decision)
+    environment = commands.add_parser("record-environment")
+    environment.add_argument("--decision", type=Path, default=Path("receipts/environment-decision.json"))
+    environment.add_argument(
+        "--audit-receipt",
+        type=Path,
+        default=Path("audit/environment/environment-receipt-phase-start-001.json"),
+    )
+    environment.set_defaults(handler=command_record_environment)
     return parser
 
 
