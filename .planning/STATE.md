@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.3.2
 milestone_name: milestone
-current_phase: 1
+current_phase: 01
 current_phase_name: Isolated Evidence Boundary and Source Integrity
 status: executing
-stopped_at: Phase 1 planned (4 plans)
-last_updated: "2026-07-30T10:50:32.192Z"
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-07-30T14:00:24.496Z"
 last_activity: 2026-07-30
-last_activity_desc: Phase 1 planned and independently verified across four execution waves.
+last_activity_desc: Completed 01-01 boundary baseline and approved control decision
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 4
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 25
 ---
 
 # Project State
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-30)
 
 **Core value:** Produce a reproducible, leakage-safe, falsifiable A/B/C result—positive, negative, or Red-path infeasible—without weakening gold semantics, deterministic measurement, or human control of RISC-V judgments.
-**Current focus:** Phase 1 — Isolated Evidence Boundary and Source Integrity
+**Current focus:** Phase 01 — Isolated Evidence Boundary and Source Integrity
 
 ## Current Position
 
-Phase: 1 of 7 (Isolated Evidence Boundary and Source Integrity)
-Plan: 0 of 4 in current phase
-Status: Ready to execute
-Last activity: 2026-07-30 — Phase 1 planned and independently verified across four execution waves.
+Phase: 01 (Isolated Evidence Boundary and Source Integrity) — EXECUTING
+Plan: 2 of 4
+Status: Executing Phase 01
+Last activity: 2026-07-30 — Completed 01-01 boundary baseline and approved control decision
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -55,6 +55,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: No execution data
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 10min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -68,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase 4]: Human-reviewed preregistration and a verified freeze root precede production retrieval and model calls.
 - [Path contract]: Red is a valid no-model feasibility path; G/Y requirements close N/A only after Red success is independently verified.
 - [Evaluation]: Strict, auxiliary, metamorphic, and discovery evidence may not be pooled.
+- [Phase 01]: Active Phase 1 baseline is phase-start-v2.json (e8f7e153...) while v1 remains historical evidence.
+- [Phase 01]: Phase 1 .DS_Store handling is a scoped visible/non-attributed policy override, not a general boundary exception.
 
 ### Pending Todos
 
@@ -87,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-30T08:55:36.319Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-CONTEXT.md
+Last session: 2026-07-30T14:00:24.487Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: .planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-02-PLAN.md

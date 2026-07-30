@@ -24,7 +24,7 @@ Requirements for the frozen SpecChoice v1.3.2 execution baseline. Each maps to e
 
 ### Experimental Foundation and Controls
 
-- [ ] **TS-01** `[ALL]`: The operator can work entirely within a dependency-light `experiments/specchoice-v1.3.2/` boundary containing the prototype's code, configuration, data, prompts, tests, runs, reports, and notes, without modifying core UDB schemas or generated data.
+- [x] **TS-01** `[ALL]`: The operator can work entirely within a dependency-light `experiments/specchoice-v1.3.2/` boundary containing the prototype's code, configuration, data, prompts, tests, runs, reports, and notes, without modifying core UDB schemas or generated data.
 - [ ] **TS-02** `[ALL]`: The operator can verify a source manifest that pins every named public PR snapshot to its frozen commit and records stable hashes for every consumed source file.
 - [ ] **TS-03** `[ALL]`: The operator can run a versioned PR #2164 adapter and deterministic measurement runner that scores golden predictions for all 11 pinned fixtures, including surfacing and then classifying out the candidate fixture.
 - [ ] **TS-04** `[ALL]`: The operator receives strict validation of the canonical adjudication schema, including the unique nullable `surfaced=false` representation, rejection of `parameter_status:not_surfaced`, unknown-key rejection, enum enforcement, and no silent repair.
@@ -130,7 +130,7 @@ Roadmap creation maps every v1 requirement to exactly one phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TS-01 | Phase 1 | Pending |
+| TS-01 | Phase 1 | Complete |
 | TS-02 | Phase 1 | Pending |
 | TS-03 | Phase 2 | Pending |
 | TS-04 | Phase 2 | Pending |
@@ -155,6 +155,7 @@ Roadmap creation maps every v1 requirement to exactly one phase.
 | H2-04 | Phase 6 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 23 total
 - Mapped to phases: 23
 - Unmapped: 0 ✓
