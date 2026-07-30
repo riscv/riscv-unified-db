@@ -29,23 +29,23 @@ fields:
       Controls access to the `seed` CSR from U-mode.
     definedBy:
       extension:
-        name: Zkr
+        allOf:
+          - name: Zkr
+          - name: U
     type(): |
-      return (implemented?(ExtensionName::U)) ? CsrFieldType::RW : CsrFieldType::RO;
+      return USEED_READ_ONLY_ZERO ? CsrFieldType::RO : CsrFieldType::RW;
     reset_value(): |
-      return (implemented?(ExtensionName::U)) ? UNDEFINED_LEGAL : 0;
-    sw_write(csr_value): |
-      return (implemented?(ExtensionName::U)) ? csr_value.USEED : 0;
+      return USEED_READ_ONLY_ZERO ? 0 : UNDEFINED_LEGAL;
   SSEED:
     location: 9
     description: |
       Controls access to the `seed` CSR from S-mode and VS-mode.
     definedBy:
       extension:
-        name: Zkr
+        allOf:
+          - name: Zkr
+          - name: S
     type(): |
-      return (implemented?(ExtensionName::S)) ? CsrFieldType::RW : CsrFieldType::RO;
+      return SSEED_READ_ONLY_ZERO ? CsrFieldType::RO : CsrFieldType::RW;
     reset_value(): |
-      return (implemented?(ExtensionName::S)) ? UNDEFINED_LEGAL : 0;
-    sw_write(csr_value): |
-      return (implemented?(ExtensionName::S)) ? csr_value.SSEED : 0;
+      return SSEED_READ_ONLY_ZERO ? 0 : UNDEFINED_LEGAL;
