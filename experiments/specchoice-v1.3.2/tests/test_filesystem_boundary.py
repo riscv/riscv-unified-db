@@ -44,6 +44,11 @@ class FilesystemBoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(FilesystemPolicyError, "SYMLINK_REJECTED"):
                 inspect_authoritative_path(root, "link.txt")
 
+    def test_relative_posix_path_rejects_normalized_escape_syntax(self) -> None:
+        for invalid in ("safe/.", "safe//child", "./safe", "safe/../outside"):
+            with self.assertRaisesRegex(FilesystemPolicyError, "PATH_ESCAPE_DETECTED"):
+                require_relative_posix_path(invalid)
+
     def test_regular_file_is_independent_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -72,6 +77,25 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 capture_baseline(baseline, payload)
             baseline.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(BaselineError, "BASELINE_NOT_CANONICAL"):
+                load_baseline(baseline)
+
+    def test_baseline_entries_require_stable_path_ordering(self) -> None:
+        payload = {
+            "schema_version": "1",
+            "allowlist": {"roots": ["experiments/specchoice-v1.3.2/"], "exact_files": []},
+            "worktree": {
+                "tracked_changes": [],
+                "untracked_files": [
+                    {"path": "z.txt", "file_kind": "regular_file", "byte_length": 1, "sha256": "a" * 64},
+                    {"path": "a.txt", "file_kind": "regular_file", "byte_length": 1, "sha256": "a" * 64},
+                ],
+                "ignored_paths_in_scope": [],
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline.json"
+            baseline.write_bytes(canonical_json_bytes(payload))
+            with self.assertRaisesRegex(BaselineError, "BASELINE_PATHS_NOT_SORTED"):
                 load_baseline(baseline)
 
     def test_new_outside_allowlist_is_blocking(self) -> None:
