@@ -42,7 +42,7 @@ Canonical v5 recovery evidence now detects committed post-baseline changes while
 
 ## Verification
 
-- Full stdlib suite: 52 tests passed using `PYTHONDONTWRITEBYTECODE=1`.
+- Full stdlib suite: 53 tests passed using `PYTHONDONTWRITEBYTECODE=1`.
 - v5 restart validation, exact-HEAD `check-boundary`, and receipt finalization passed with zero blockers; `.DS_Store` entries retain `DS_STORE_IGNORED_OS_METADATA` and are not attributed.
 - Copied accepted bundle verified with Git unavailable; before/after SHA-256 inventories were identical.
 - Accepted identity is unchanged: generation `source-contract-v2-pr2192-86a0021b-verifier-rooted-v1`, core `6ca1f176c84464d499d6c0e81d03ba3f23fdcdd1b5bd43bc28d9b2153a797495`, root `aacdda8218e3779747ae2dec45f9da81822f615ec4b257e55b0766baf8317d5a`, snapshot `1c81f84cf4894a7ecfde4b72e17d6e479a91cb0cfa408258611b00bdf5e2e397`, publication false.
