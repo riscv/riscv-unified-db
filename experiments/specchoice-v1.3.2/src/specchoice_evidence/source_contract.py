@@ -188,7 +188,7 @@ def validate_source_publication_decision(
     proposal_path: str,
     proposal_sha256: str,
 ) -> dict[str, object]:
-    """Validate a narrow proposal-only approval without authorizing custody actions."""
+    """Validate a hash-bound approval with explicit, non-escalating authority."""
     validate_source_contract_proposal(proposal)
     proposal_payload = _require_mapping(proposal, "INVALID_SOURCE_CONTRACT_PROPOSAL")
     payload = _require_mapping(decision, "INVALID_SOURCE_PUBLICATION_DECISION")
@@ -205,10 +205,16 @@ def validate_source_publication_decision(
         raise SourceContractProposalError("SOURCE_DECISION_FIELDS_INVALID")
     if payload.get("schema_version") != "1":
         raise SourceContractProposalError("UNSUPPORTED_SOURCE_DECISION_SCHEMA")
-    if payload.get("state") != "contract_approved":
-        raise SourceContractProposalError("SOURCE_DECISION_NOT_CONTRACT_APPROVED")
-    if payload.get("approval_scope") != "proposal_only":
+    approval_scope = payload.get("approval_scope")
+    state = payload.get("state")
+    if approval_scope not in {"proposal_only", "candidate_construction_only"}:
         raise SourceContractProposalError("SOURCE_DECISION_SCOPE_INVALID")
+    expected_state = {
+        "proposal_only": "contract_approved",
+        "candidate_construction_only": "candidate_construction_authorized",
+    }[approval_scope]
+    if state != expected_state:
+        raise SourceContractProposalError("SOURCE_DECISION_STATE_INVALID")
 
     proposal_binding = _require_mapping(payload.get("proposal"), "SOURCE_DECISION_PROPOSAL_MISSING")
     if set(proposal_binding) != {"path", "sha256"}:
@@ -228,16 +234,29 @@ def validate_source_publication_decision(
     if dict(approved_contract) != _approved_contract(proposal_payload):
         raise SourceContractProposalError("SOURCE_DECISION_CONTRACT_MISMATCH")
     reviewer = _require_mapping(payload.get("reviewer"), "SOURCE_DECISION_REVIEWER_MISSING")
-    if reviewer != {"approval_token": "approve-proposal-only"}:
+    expected_reviewer = {
+        "proposal_only": {"approval_token": "approve-proposal-only"},
+        "candidate_construction_only": {
+            "approval_token": "authorize-candidate-construction-only"
+        },
+    }[approval_scope]
+    if reviewer != expected_reviewer:
         raise SourceContractProposalError("SOURCE_DECISION_REVIEWER_APPROVAL_INVALID")
     authorization = _require_mapping(
         payload.get("authorization"), "SOURCE_DECISION_AUTHORIZATION_MISSING"
     )
     expected_authorization = {
-        "accepted_publication_authorized": False,
-        "candidate_construction_authorized": False,
-        "source_extraction_authorized": False,
-    }
+        "proposal_only": {
+            "accepted_publication_authorized": False,
+            "candidate_construction_authorized": False,
+            "source_extraction_authorized": False,
+        },
+        "candidate_construction_only": {
+            "accepted_publication_authorized": False,
+            "candidate_construction_authorized": True,
+            "source_extraction_authorized": True,
+        },
+    }[approval_scope]
     if dict(authorization) != expected_authorization:
         raise SourceContractProposalError("SOURCE_DECISION_AUTHORIZATION_INVALID")
     return dict(payload)

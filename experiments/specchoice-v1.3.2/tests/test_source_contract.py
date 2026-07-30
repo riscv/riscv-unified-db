@@ -188,7 +188,7 @@ class SourceContractProposalTests(unittest.TestCase):
                 proposal_sha256=sha256_bytes(canonical_json_bytes(self.proposal)),
             )
 
-    def test_repository_decision_binds_v2_without_accepted_generation(self) -> None:
+    def test_repository_decision_binds_v2_candidate_authority_without_accepted_generation(self) -> None:
         experiment_root = Path(__file__).parents[1]
         proposal_raw = (experiment_root / "receipts/source-contract-correction-proposal-v2.json").read_bytes()
         decision_raw = (experiment_root / "receipts/source-publication-decision.json").read_bytes()
@@ -201,7 +201,11 @@ class SourceContractProposalTests(unittest.TestCase):
             proposal_sha256=sha256_bytes(proposal_raw),
         )
 
-        self.assertEqual(validated["state"], "contract_approved")
+        self.assertEqual(validated["state"], "candidate_construction_authorized")
+        self.assertEqual(validated["approval_scope"], "candidate_construction_only")
+        self.assertTrue(validated["authorization"]["source_extraction_authorized"])
+        self.assertTrue(validated["authorization"]["candidate_construction_authorized"])
+        self.assertFalse(validated["authorization"]["accepted_publication_authorized"])
         self.assertNotIn("generation", validated)
         self.assertNotIn("root_sha256", validated)
         self.assertEqual(list((experiment_root / "bundles/accepted").glob("*")), [])

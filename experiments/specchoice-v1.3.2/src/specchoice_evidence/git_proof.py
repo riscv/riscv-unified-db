@@ -168,6 +168,31 @@ def read_pinned_path(
     return result.stdout
 
 
+def read_pinned_blob(
+    repository: Path,
+    pinned_commit_sha: str,
+    upstream_path: str,
+    *,
+    runner: GitRunner = run_git,
+) -> bytes:
+    """Return exact bytes only when ``pin:path`` is a verified Git blob."""
+    pinned = _require_hex_sha(pinned_commit_sha, "INVALID_PINNED_COMMIT_SHA")
+    try:
+        relative = require_relative_posix_path(upstream_path).as_posix()
+    except FilesystemPolicyError as error:
+        raise GitProofError(str(error)) from error
+    object_ref = f"{pinned}:{relative}"
+    object_type = _execute(_git_at(repository, "cat-file", "-t", object_ref), runner)
+    if object_type.returncode != 0:
+        raise GitProofError("REQUESTED_PATH_MISSING")
+    if object_type.stdout.decode("ascii", "strict").strip() != "blob":
+        raise GitProofError("REQUESTED_PATH_NOT_REGULAR_FILE")
+    result = _execute(_git_at(repository, "show", object_ref), runner)
+    if result.returncode != 0:
+        raise GitProofError("REQUESTED_PATH_MISSING")
+    return result.stdout
+
+
 def validate_consumed_file_request(request: object) -> list[dict[str, object]]:
     """Require an explicit reviewer-owned inventory; never infer a whole tree."""
     if not isinstance(request, dict) or request.get("schema_version") != "1":

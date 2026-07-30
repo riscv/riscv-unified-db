@@ -16,6 +16,7 @@ from .baseline import (
     load_baseline,
     validate_restart_lineage,
 )
+from .bundle import construct_candidate, publish_accepted, verify_candidate
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
@@ -258,7 +259,7 @@ def command_verify_source_contract_proposal_git(args: argparse.Namespace) -> int
 
 
 def command_validate_source_decision(args: argparse.Namespace) -> int:
-    """Validate a hash-bound approval without treating it as construction authority."""
+    """Validate a hash-bound decision and report its exact limited authority."""
     raw = args.decision.read_bytes()
     try:
         decision = json.loads(raw.decode("utf-8"))
@@ -280,17 +281,41 @@ def command_validate_source_decision(args: argparse.Namespace) -> int:
     snapshots = contract["snapshots"]
     assert isinstance(consumed_files, list)
     assert isinstance(snapshots, list)
+    authorization = validated["authorization"]
+    assert isinstance(authorization, dict)
     _print_json(
         {
-            "accepted_publication_authorized": False,
-            "candidate_construction_authorized": False,
+            "accepted_publication_authorized": authorization["accepted_publication_authorized"],
+            "candidate_construction_authorized": authorization["candidate_construction_authorized"],
             "consumed_file_count": len(consumed_files),
             "proposal_sha256": sha256_bytes(proposal_raw),
             "snapshot_count": len(snapshots),
-            "source_extraction_authorized": False,
-            "state": "contract_approved",
+            "source_extraction_authorized": authorization["source_extraction_authorized"],
+            "state": validated["state"],
         }
     )
+    return 0
+
+
+def command_build_candidate(args: argparse.Namespace) -> int:
+    """Build only a non-accepted candidate from exact approved Git blobs."""
+    decision = json.loads(args.decision.read_bytes().decode("utf-8"))
+    proposal = _load_canonical_source_contract_proposal(args.proposal)
+    result = construct_candidate(decision, proposal, args.git_repository, args.candidates_directory)
+    _print_json(result)
+    return 0
+
+
+def command_verify_candidate(args: argparse.Namespace) -> int:
+    """Verify an existing non-accepted candidate without network access."""
+    _print_json(verify_candidate(args.candidate_directory))
+    return 0
+
+
+def command_publish_accepted(args: argparse.Namespace) -> int:
+    """Reject accepted publication until a later, offline-proven Plan 04 gate exists."""
+    decision = json.loads(args.decision.read_bytes().decode("utf-8"))
+    publish_accepted(decision)
     return 0
 
 
@@ -374,6 +399,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("receipts/source-contract-correction-proposal-v2.json"),
     )
     source_decision.set_defaults(handler=command_validate_source_decision)
+    candidate = commands.add_parser("build-candidate")
+    candidate.add_argument("--decision", type=Path, default=Path("receipts/source-publication-decision.json"))
+    candidate.add_argument("--proposal", type=Path, default=Path("receipts/source-contract-correction-proposal-v2.json"))
+    candidate.add_argument("--git-repository", type=Path, required=True)
+    candidate.add_argument("--candidates-directory", type=Path, default=Path("bundles/candidates"))
+    candidate.set_defaults(handler=command_build_candidate)
+    verify_candidate_parser = commands.add_parser("verify-candidate")
+    verify_candidate_parser.add_argument("candidate_directory", type=Path)
+    verify_candidate_parser.set_defaults(handler=command_verify_candidate)
+    publish = commands.add_parser("publish-accepted")
+    publish.add_argument("--decision", type=Path, default=Path("receipts/source-publication-decision.json"))
+    publish.set_defaults(handler=command_publish_accepted)
     return parser
 
 
