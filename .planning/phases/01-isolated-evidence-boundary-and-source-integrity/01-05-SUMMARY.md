@@ -16,16 +16,20 @@ key-files:
     - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v5.md
   modified:
     - experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py
+    - experiments/specchoice-v1.3.2/src/specchoice_evidence/bundle.py
     - experiments/specchoice-v1.3.2/src/specchoice_evidence/receipt.py
     - experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py
+    - experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py
+    - experiments/specchoice-v1.3.2/tests/test_bundle_verifier.py
     - experiments/specchoice-v1.3.2/tests/test_filesystem_boundary.py
     - experiments/specchoice-v1.3.2/tests/test_receipts.py
 decisions:
   - v3 and v4 remain preserved, non-accepted evidence; v5 is the active recovery lineage.
   - Accepted bundle remains local-only with external publication prohibited.
+  - A local MVP receipt decision is valid only for one immutable reviewed Git revision and its canonical committed-change projection.
 metrics:
   tasks: 3
-status: complete
+status: human_gate_pending
 ---
 
 # Phase 01 Plan 05: v5 history-aware boundary recovery Summary
@@ -39,11 +43,16 @@ Canonical v5 recovery evidence now detects committed post-baseline changes while
 - `6dba9ed` supplied fresh RED; its clean-worktree committed violation failed with `0 != 1` before implementation.
 - `80fe1ffb` added committed A/M/D/T collection, live-layer merge and one-path classification with `.DS_Store` visible/nonblocking handling.
 - `2e397d43` issued schema-3 v5 integrity JSON/Markdown and its behavior-level regression.
+- `2b878a2c` and `20226897` bound schema-3 receipt lineage and preserved committed/live provenance.
+- `e5a97340` made issuance and finalization share the same local boundary gate and selected v5 as the active default.
+- `35302680` froze receipt authority to an explicit reviewed revision, canonical committed projection, and receipt basis while retaining a separate current-state gate.
+- `e780289b` added regression coverage for revision pinning, old-decision rejection, provenance, and current-state enforcement.
 
 ## Verification
 
-- Full stdlib suite: 53 tests passed using `PYTHONDONTWRITEBYTECODE=1`.
-- v5 restart validation, exact-HEAD `check-boundary`, and receipt finalization passed with zero blockers; `.DS_Store` entries retain `DS_STORE_IGNORED_OS_METADATA` and are not attributed.
+- Full stdlib suite: 68 tests passed using `PYTHONDONTWRITEBYTECODE=1`.
+- v5 restart validation and the current combined `check-boundary` gate pass with zero blockers; `.DS_Store` entries retain `DS_STORE_IGNORED_OS_METADATA` and are not attributed.
+- The historical v5 decision and receipt now fail finalization with `LOCAL_RECEIPT_BASIS_MISMATCH`, as required: they predate revision-pinned authority and cannot authorize themselves.
 - Copied accepted bundle verified with Git unavailable; before/after SHA-256 inventories were identical.
 - Accepted identity is unchanged: generation `source-contract-v2-pr2192-86a0021b-verifier-rooted-v1`, core `6ca1f176c84464d499d6c0e81d03ba3f23fdcdd1b5bd43bc28d9b2153a797495`, root `aacdda8218e3779747ae2dec45f9da81822f615ec4b257e55b0766baf8317d5a`, snapshot `1c81f84cf4894a7ecfde4b72e17d6e479a91cb0cfa408258611b00bdf5e2e397`, publication false.
 
@@ -51,8 +60,9 @@ Canonical v5 recovery evidence now detects committed post-baseline changes while
 
 - [Rule 1 - Bug] Non-repository fixture compatibility was restored for legacy patched live-path tests.
 - Recovery sequencing required the v5 receipt regression to be added after local implementation assembly but before the Task 2 commit; no RED claim is made for that test.
+- Review exposed three authority gaps after the initial v5 implementation. Each finding and fix remains in immutable Git history; no failed receipt generation was overwritten.
 - CR-01, CR-02, WR-01, and WR-02 remain out-of-scope hardening debt.
 
 ## Self-Check: PASSED
 
-All v5 artifacts exist, are canonical, and the recorded task commits exist. Phase advancement remains owned by downstream code/security/verification gates.
+All v5 artifacts exist, are canonical, and the recorded task commits exist. A new local receipt can be issued only after independent review freezes one exact revision and the user authorizes its computed proposal-only basis. No external publication is authorized.
