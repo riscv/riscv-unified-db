@@ -16,6 +16,10 @@ from specchoice_evidence.baseline import (
     capture_baseline,
     capture_committed_history,
     check_boundary,
+    check_current_boundary,
+    check_live_boundary,
+    committed_boundary_projection,
+    committed_boundary_projection_sha256,
     create_restart_baseline,
     load_baseline,
     path_is_allowed,
@@ -149,6 +153,57 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 check_boundary(root, baseline, reviewed_revision="missing")
             with self.assertRaisesRegex(BaselineError, "BOUNDARY_HISTORY_NOT_DESCENDANT"):
                 check_boundary(root, baseline, reviewed_revision=other)
+
+    def test_committed_projection_is_frozen_at_revision_and_live_gate_is_separate(self) -> None:
+        """Later decision/receipt commits and live dirt cannot alter an already reviewed basis."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._git(root, "init")
+            (root / "initial.txt").write_text("baseline", encoding="utf-8")
+            self._git(root, "add", "initial.txt")
+            baseline_commit = self._commit(root, "baseline")
+            baseline = root / "baseline.json"
+            capture_baseline(
+                baseline,
+                {
+                    "allowlist": {"exact_files": [], "roots": ["experiments/"]},
+                    "repository": {"head_commit": baseline_commit, "path_basis": "repository_relative_posix"},
+                    "schema_version": "1",
+                    "worktree": {"ignored_paths_in_scope": [], "tracked_changes": [], "untracked_files": []},
+                },
+            )
+            (root / "experiments").mkdir()
+            (root / "experiments" / "implementation.txt").write_text("reviewed", encoding="utf-8")
+            self._git(root, "add", "experiments/implementation.txt")
+            reviewed = self._commit(root, "reviewed implementation")
+            frozen = committed_boundary_projection(root, baseline, reviewed_revision=reviewed)
+            frozen_digest = committed_boundary_projection_sha256(frozen)
+            (root / "experiments" / "decision.json").write_text("later", encoding="utf-8")
+            (root / "experiments" / "receipt.json").write_text("later", encoding="utf-8")
+            self._git(root, "add", "experiments")
+            self._commit(root, "later reviewer files")
+            self.assertEqual(committed_boundary_projection(root, baseline, reviewed_revision=reviewed), frozen)
+            self.assertEqual(committed_boundary_projection_sha256(frozen), frozen_digest)
+            self.assertEqual(check_current_boundary(root, baseline).blocking_violations, 0)
+            (root / "outside-committed.txt").write_text("block", encoding="utf-8")
+            self._git(root, "add", "outside-committed.txt")
+            self._commit(root, "post-review out of boundary")
+            # The frozen proposal stays exactly at R, while the current issuance/finalize
+            # gate sees the clean-worktree committed violation.
+            self.assertEqual(committed_boundary_projection(root, baseline, reviewed_revision=reviewed), frozen)
+            current = check_current_boundary(root, baseline)
+            self.assertEqual(current.blocking_violations, 1)
+            self.assertTrue({item["path"]: item for item in current.classifications}["outside-committed.txt"]["blocking"])
+            with self.assertRaisesRegex(BaselineError, "BOUNDARY_REVIEWED_REVISION_NOT_FULL"):
+                committed_boundary_projection(root, baseline, reviewed_revision="HEAD")
+            (root / "outside-live.txt").write_text("block", encoding="utf-8")
+            (root / ".DS_Store").write_text("visible", encoding="utf-8")
+            live = check_live_boundary(root, baseline)
+            self.assertEqual(live.blocking_violations, 1)
+            by_path = {item["path"]: item for item in live.classifications}
+            self.assertTrue(by_path["outside-live.txt"]["blocking"])
+            self.assertFalse(by_path[".DS_Store"]["blocking"])
+            self.assertEqual(by_path[".DS_Store"]["diagnostic"], "DS_STORE_IGNORED_OS_METADATA")
 
     def test_preexisting_inventory_path_preserves_committed_and_live_provenance_once(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

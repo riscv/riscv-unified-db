@@ -6,10 +6,18 @@ import unittest
 import json
 import shutil
 import os
+import subprocess
+import sys
 from pathlib import Path
+from unittest.mock import patch
 
+from specchoice_evidence.baseline import BoundaryResult
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
-from specchoice_evidence.cli import _restart_lineage_for_local_mvp_receipt, build_parser
+from specchoice_evidence.cli import (
+    _require_current_boundary_clean,
+    _restart_lineage_for_local_mvp_receipt,
+    build_parser,
+)
 from specchoice_evidence.receipt import (
     ReceiptError,
     build_local_mvp_receipt,
@@ -18,6 +26,10 @@ from specchoice_evidence.receipt import (
     render_markdown,
     validate_receipt,
     write_receipt_package,
+)
+from specchoice_evidence.source_contract import (
+    SourceContractProposalError,
+    validate_local_accepted_generation_decision,
 )
 
 
@@ -113,6 +125,86 @@ class IntegrityReceiptTests(unittest.TestCase):
         self.assertEqual(receipt["source_identity"]["kind"], "local_accepted_generation")
         self.assertFalse(receipt["source_identity"]["external_publication_authorized"])
         self.assertEqual(render_markdown(receipt), render_markdown(receipt))
+
+    def test_revision_bound_receipt_and_decision_require_projection_binding(self) -> None:
+        identity = self._identity()
+        classifications = self._classifications()
+        revision = "a" * 40
+        projection = "b" * 64
+        basis = local_receipt_basis_sha256(
+            "a" * 64,
+            "b" * 64,
+            identity,
+            classifications,
+            reviewed_revision=revision,
+            committed_boundary_projection_sha256=projection,
+        )
+        receipt = build_local_mvp_receipt(
+            "a" * 64,
+            "b" * 64,
+            identity,
+            classifications,
+            "f" * 64,
+            basis,
+            restart_lineage=self._restart_lineage("a" * 64),
+            reviewed_revision=revision,
+            committed_boundary_projection_sha256=projection,
+        )
+        self.assertEqual(receipt["schema_version"], "4")
+        self.assertEqual(receipt["reviewed_revision"], revision)
+        self.assertEqual(receipt["committed_boundary_projection_sha256"], projection)
+        decision = {
+            "approval_scope": "local_accepted_generation_only",
+            "approved_generation": identity,
+            "authorization": {
+                "external_publication_authorized": False,
+                "local_accepted_generation_authorized": True,
+            },
+            "committed_boundary_projection_sha256": projection,
+            "phase_start_baseline_sha256": "a" * 64,
+            "reviewed_receipt_basis_sha256": basis,
+            "reviewed_revision": revision,
+            "reviewer": {"disposition": "approved_local_only"},
+            "schema_version": "3",
+            "state": "local_accepted_generation_authorized",
+        }
+        self.assertEqual(validate_local_accepted_generation_decision(decision)["schema_version"], "3")
+        decision["reviewed_revision"] = "HEAD"
+        with self.assertRaisesRegex(SourceContractProposalError, "LOCAL_ACCEPTANCE_REVIEWED_REVISION_INVALID"):
+            validate_local_accepted_generation_decision(decision)
+
+    def test_shared_issuance_and_finalization_gate_rejects_current_boundary_violation(self) -> None:
+        result = BoundaryResult("a" * 64, [], 1)
+        with patch("specchoice_evidence.cli.check_current_boundary", return_value=result):
+            with self.assertRaisesRegex(ReceiptError, "LOCAL_MVP_CURRENT_BOUNDARY_BLOCKING"):
+                _require_current_boundary_clean(Path("repository"), Path("baseline.json"))
+
+    def test_compute_basis_cli_is_canonical_from_experiment_and_repository_cwds(self) -> None:
+        experiment_root = Path(__file__).resolve().parents[1]
+        repository_root = experiment_root.parents[1]
+        revision = subprocess.run(
+            ["git", "-C", os.fspath(repository_root), "rev-parse", "HEAD"],
+            check=True, capture_output=True, text=True,
+        ).stdout.strip()
+        command = [
+            sys.executable, "-m", "specchoice_evidence.cli", "compute-local-mvp-receipt-basis",
+            "--environment-decision", os.fspath(experiment_root / "receipts/environment-decision.json"),
+            "--accepted-directory", os.fspath(experiment_root / "bundles/accepted"),
+            "--approved-generation", "source-contract-v2-pr2192-86a0021b-verifier-rooted-v1",
+            "--candidate-relative-path", "bundles/candidates/source-contract-v2-pr2192-86a0021b-verifier-rooted-v1",
+            "--reviewed-revision", revision,
+        ]
+        environment = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONPATH": os.fspath(experiment_root / "src")}
+        outputs = [
+            subprocess.run(command, cwd=cwd, env=environment, check=True, capture_output=True).stdout
+            for cwd in (experiment_root, repository_root)
+        ]
+        self.assertEqual(outputs[0], outputs[1])
+        proposal = json.loads(outputs[0])
+        self.assertTrue(proposal["proposal_only"])
+        self.assertEqual(proposal["status"], "proposal_only")
+        self.assertEqual(proposal["reviewed_revision"], revision)
+        self.assertEqual(proposal["source_identity"]["candidate_relative_path"], "bundles/candidates/source-contract-v2-pr2192-86a0021b-verifier-rooted-v1")
 
     def test_local_receipt_basis_mismatch_rejects_schema_two_and_three_construction(self) -> None:
         identity = self._identity()

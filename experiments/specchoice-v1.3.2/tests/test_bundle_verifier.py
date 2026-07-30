@@ -357,16 +357,19 @@ class LocalAcceptanceTests(unittest.TestCase):
             "schema_version": "2",
             "state": "local_accepted_generation_authorized",
         }
-        validated = validate_local_accepted_generation_decision(decision)
+        validated = validate_local_accepted_generation_decision(decision, allow_historical=True)
         require_local_accepted_generation_authorization(
-            validated, identity, json.loads(snapshot.read_text(encoding="utf-8"))["snapshot_manifest_sha256"]
+            validated,
+            identity,
+            json.loads(snapshot.read_text(encoding="utf-8"))["snapshot_manifest_sha256"],
+            allow_historical=True,
         )
         with self.assertRaisesRegex(SourceContractProposalError, "EXTERNAL_PUBLICATION_NOT_AUTHORIZED"):
             require_accepted_publication_authorization(validated)
 
         with tempfile.TemporaryDirectory() as directory:
             accepted_root = Path(directory) / "bundles/accepted"
-            accepted = accept_local_candidate(validated, candidate, accepted_root)
+            accepted = accept_local_candidate(validated, candidate, accepted_root, allow_historical=True)
             accepted_path = accepted_root / identity["generation"]
             self.assertEqual(accepted, identity)
             self.assertEqual((accepted_path / "content-manifest-core.json").read_bytes(), core.read_bytes())
@@ -406,7 +409,7 @@ class LocalAcceptanceTests(unittest.TestCase):
                 shutil.rmtree(copied)
                 shutil.copytree(accepted_path, copied)
             with self.assertRaisesRegex(BundleError, "LOCAL_ACCEPTED_TARGET_EXISTS"):
-                accept_local_candidate(validated, candidate, accepted_root)
+                accept_local_candidate(validated, candidate, accepted_root, allow_historical=True)
 
 
 if __name__ == "__main__":
