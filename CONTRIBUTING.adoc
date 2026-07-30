@@ -67,7 +67,7 @@ The `DCO Check` GitHub workflow runs on every Pull Request and fails if any comm
 Commits authored by bots (for example, `autofix-ci[bot]` or Renovate) are exempt.
 
 ....
-Developer's Certificate of Origin 1.1
+Developer Certificate of Origin 1.1
 
 By making a contribution to this project, I certify that:
 
