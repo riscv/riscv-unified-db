@@ -277,7 +277,7 @@ class IntegrityReceiptTests(unittest.TestCase):
                     "--markdown", str(markdown_path),
                 ]
             )
-            with self.assertRaisesRegex(ReceiptError, "RESTART_LINEAGE_PROJECTION_MISMATCH"):
+            with self.assertRaisesRegex(ReceiptError, "HISTORICAL_RECEIPT_NOT_FINALIZABLE"):
                 arguments.handler(arguments)
 
     def test_active_defaults_are_v5_from_experiment_and_repository_roots(self) -> None:
@@ -340,7 +340,7 @@ class IntegrityReceiptTests(unittest.TestCase):
         with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_BASIS_MISMATCH"):
             arguments.handler(arguments)
 
-    def test_current_v5_receipt_cannot_finalize_against_old_reviewed_basis(self) -> None:
+    def test_historical_schema_three_receipt_cannot_finalize(self) -> None:
         root = Path(__file__).resolve().parents[1]
         arguments = build_parser().parse_args(
             [
@@ -350,7 +350,20 @@ class IntegrityReceiptTests(unittest.TestCase):
                 "--markdown", str(root / "receipts/integrity-receipt-v5.md"),
             ]
         )
-        with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_BASIS_MISMATCH"):
+        with self.assertRaisesRegex(ReceiptError, "HISTORICAL_RECEIPT_NOT_FINALIZABLE"):
+            arguments.handler(arguments)
+
+    def test_historical_schema_two_receipt_cannot_finalize(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        arguments = build_parser().parse_args(
+            [
+                "finalize-review",
+                "--decision", str(root / "receipts/reviewer-boundary-decision.json"),
+                "--receipt", str(root / "receipts/integrity-receipt.json"),
+                "--markdown", str(root / "receipts/integrity-receipt.md"),
+            ]
+        )
+        with self.assertRaisesRegex(ReceiptError, "HISTORICAL_RECEIPT_NOT_FINALIZABLE"):
             arguments.handler(arguments)
 
 

@@ -606,82 +606,80 @@ def command_write_local_mvp_receipt(args: argparse.Namespace) -> int:
 
 
 def command_finalize_review(args: argparse.Namespace) -> int:
-    """Refuse to finalize unless a reviewer decision and already-passing receipt exist."""
+    """Finalize only the current, revision-pinned local receipt and decision schemas."""
     receipt = validate_receipt(args.receipt)
-    if receipt.get("schema_version") in {"3", "4"}:
-        experiment_root = args.receipt.resolve().parent.parent
-        expected_paths = {
-            "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
-            "baseline": "baselines/phase-start-v5-gap-closure.json",
-            "incident_receipt": "receipts/boundary-restart-v5.json",
-            "previous_baseline": "baselines/phase-start-v2.json",
+    if receipt.get("schema_version") != "4":
+        raise ReceiptError("HISTORICAL_RECEIPT_NOT_FINALIZABLE")
+    experiment_root = args.receipt.resolve().parent.parent
+    expected_paths = {
+        "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
+        "baseline": "baselines/phase-start-v5-gap-closure.json",
+        "incident_receipt": "receipts/boundary-restart-v5.json",
+        "previous_baseline": "baselines/phase-start-v2.json",
+    }
+    lineage = receipt["restart_lineage"]
+    assert isinstance(lineage, dict)
+    if any(lineage[name].get("path") != path for name, path in expected_paths.items()):
+        raise ReceiptError("RESTART_LINEAGE_PROJECTION_MISMATCH")
+    projection = validate_boundary_restart(
+        experiment_root / expected_paths["baseline"],
+        experiment_root / expected_paths["previous_baseline"],
+        experiment_root / expected_paths["allowlist"],
+        experiment_root / expected_paths["incident_receipt"],
+    )
+    expected_lineage = {
+        name: {"path": path, "sha256": projection[name]["sha256"]}
+        for name, path in expected_paths.items()
+    }
+    expected_lineage.update(
+        {
+            "reason_code": projection["reason_code"],
+            "reviewed_revision": projection["reviewed_revision"],
+            "scope": projection["scope"],
         }
-        lineage = receipt["restart_lineage"]
-        assert isinstance(lineage, dict)
-        if any(lineage[name].get("path") != path for name, path in expected_paths.items()):
-            raise ReceiptError("RESTART_LINEAGE_PROJECTION_MISMATCH")
-        projection = validate_boundary_restart(
-            experiment_root / expected_paths["baseline"],
-            experiment_root / expected_paths["previous_baseline"],
-            experiment_root / expected_paths["allowlist"],
-            experiment_root / expected_paths["incident_receipt"],
-        )
-        expected_lineage = {
-            name: {"path": path, "sha256": projection[name]["sha256"]}
-            for name, path in expected_paths.items()
-        }
-        expected_lineage.update(
-            {
-                "reason_code": projection["reason_code"],
-                "reviewed_revision": projection["reviewed_revision"],
-                "scope": projection["scope"],
-            }
-        )
-        if lineage != expected_lineage:
-            raise ReceiptError("RESTART_LINEAGE_PROJECTION_MISMATCH")
-        repository = _repository_root(experiment_root)
-        _require_current_boundary_clean(repository, experiment_root / expected_paths["baseline"])
+    )
+    if lineage != expected_lineage:
+        raise ReceiptError("RESTART_LINEAGE_PROJECTION_MISMATCH")
+    repository = _repository_root(experiment_root)
+    _require_current_boundary_clean(repository, experiment_root / expected_paths["baseline"])
     if not args.decision.is_file():
         raise ReceiptError("REVIEW_DECISION_MISSING")
     decision_raw = args.decision.read_bytes()
     decision = json.loads(decision_raw.decode("utf-8"))
     source = receipt["source_identity"]
-    if source["kind"] == "local_accepted_generation":
-        if canonical_json_bytes(decision) != decision_raw:
-            raise ReceiptError("LOCAL_ACCEPTANCE_DECISION_NOT_CANONICAL")
-        try:
-            local_decision = validate_local_accepted_generation_decision(decision, allow_historical=True)
-        except SourceContractProposalError as error:
-            raise ReceiptError(str(error)) from error
-        if source.get("external_publication_authorized") is not False:
-            raise ReceiptError("EXTERNAL_PUBLICATION_NOT_AUTHORIZED")
-        if receipt.get("reviewer_decision_sha256") != sha256_bytes(decision_raw):
-            raise ReceiptError("REVIEW_DECISION_HASH_MISMATCH")
-        if source.get("generation") != local_decision["approved_generation"]["generation"]:
-            raise ReceiptError("REVIEW_DECISION_IDENTITY_MISMATCH")
-        if receipt.get("receipt_basis_sha256") != local_decision["reviewed_receipt_basis_sha256"]:
-            raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
-        if receipt.get("schema_version") == "4":
-            if local_decision.get("schema_version") != "3":
-                raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
-            repository = _repository_root(args.receipt.resolve().parent.parent)
-            material = _committed_basis_material(
-                root=repository,
-                baseline=args.receipt.resolve().parent.parent / "baselines/phase-start-v5-gap-closure.json",
-                environment=args.receipt.resolve().parent.parent / "receipts/environment-decision.json",
-                approved_generation=local_decision["approved_generation"],
-                reviewed_revision=local_decision.get("reviewed_revision"),
-            )
-            if receipt.get("reviewed_revision") != material["reviewed_revision"]:
-                raise ReceiptError("LOCAL_REVIEWED_REVISION_MISMATCH")
-            if receipt.get("phase_start_baseline_sha256") != material["phase_start_baseline_sha256"]:
-                raise ReceiptError("LOCAL_RECEIPT_BASELINE_MISMATCH")
-            if receipt.get("committed_boundary_projection_sha256") != material["committed_boundary_projection_sha256"]:
-                raise ReceiptError("LOCAL_RECEIPT_PROJECTION_MISMATCH")
-            if receipt.get("receipt_basis_sha256") != material["receipt_basis_sha256"]:
-                raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
-    elif not isinstance(decision, dict) or decision.get("disposition") != "approved":
-        raise ReceiptError("REVIEW_NOT_APPROVED")
+    if source["kind"] != "local_accepted_generation":
+        raise ReceiptError("HISTORICAL_RECEIPT_NOT_FINALIZABLE")
+    if canonical_json_bytes(decision) != decision_raw:
+        raise ReceiptError("LOCAL_ACCEPTANCE_DECISION_NOT_CANONICAL")
+    try:
+        local_decision = validate_local_accepted_generation_decision(decision, allow_historical=True)
+    except SourceContractProposalError as error:
+        raise ReceiptError(str(error)) from error
+    if local_decision.get("schema_version") != "3":
+        raise ReceiptError("HISTORICAL_RECEIPT_NOT_FINALIZABLE")
+    if source.get("external_publication_authorized") is not False:
+        raise ReceiptError("EXTERNAL_PUBLICATION_NOT_AUTHORIZED")
+    if receipt.get("reviewer_decision_sha256") != sha256_bytes(decision_raw):
+        raise ReceiptError("REVIEW_DECISION_HASH_MISMATCH")
+    if source.get("generation") != local_decision["approved_generation"]["generation"]:
+        raise ReceiptError("REVIEW_DECISION_IDENTITY_MISMATCH")
+    if receipt.get("receipt_basis_sha256") != local_decision["reviewed_receipt_basis_sha256"]:
+        raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
+    material = _committed_basis_material(
+        root=repository,
+        baseline=experiment_root / "baselines/phase-start-v5-gap-closure.json",
+        environment=experiment_root / "receipts/environment-decision.json",
+        approved_generation=local_decision["approved_generation"],
+        reviewed_revision=local_decision.get("reviewed_revision"),
+    )
+    if receipt.get("reviewed_revision") != material["reviewed_revision"]:
+        raise ReceiptError("LOCAL_REVIEWED_REVISION_MISMATCH")
+    if receipt.get("phase_start_baseline_sha256") != material["phase_start_baseline_sha256"]:
+        raise ReceiptError("LOCAL_RECEIPT_BASELINE_MISMATCH")
+    if receipt.get("committed_boundary_projection_sha256") != material["committed_boundary_projection_sha256"]:
+        raise ReceiptError("LOCAL_RECEIPT_PROJECTION_MISMATCH")
+    if receipt.get("receipt_basis_sha256") != material["receipt_basis_sha256"]:
+        raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
     if receipt["outcome"] != "pass" or not receipt["reviewer_package_complete"]:
         raise ReceiptError("REVIEW_MACHINE_GATE_NOT_ELIGIBLE")
     if args.markdown.read_text(encoding="utf-8") != render_markdown(receipt):
