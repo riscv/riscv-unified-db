@@ -289,8 +289,7 @@ def check_boundary(root: Path, baseline_path: Path, *, reviewed_revision: str = 
     prior_paths = {str(item["path"]): item for item in prior_entries}
     start = baseline.get("repository", {}).get("head_commit") if isinstance(baseline.get("repository"), dict) else None
     reviewed = _commit(root, reviewed_revision) if start else None
-    live = capture_live_state(root) if start else {path: [{"source": "legacy_live"}] for path in capture_current_paths(root)}
-    merged = merge_boundary_changes(capture_committed_history(root, str(start), str(reviewed)) if start else [], live)
+    merged = merge_boundary_changes(capture_committed_history(root, str(start), str(reviewed)) if start else [], capture_live_state(root))
     current_paths = set(merged)
     try: current_paths.discard(baseline_path.relative_to(root).as_posix()); merged.pop(baseline_path.relative_to(root).as_posix(), None)
     except ValueError: pass
