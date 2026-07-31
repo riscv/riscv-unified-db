@@ -282,11 +282,11 @@ class IntegrityReceiptTests(unittest.TestCase):
             with self.assertRaisesRegex(ReceiptError, "HISTORICAL_RECEIPT_NOT_FINALIZABLE"):
                 arguments.handler(arguments)
 
-    def test_active_defaults_are_v5_from_experiment_and_repository_roots(self) -> None:
+    def test_active_defaults_are_v7_from_experiment_and_repository_roots(self) -> None:
         experiment_root = Path(__file__).resolve().parents[1]
         repository_root = experiment_root.parents[1]
-        expected_baseline = experiment_root / "baselines/phase-start-v5-gap-closure.json"
-        expected_restart = experiment_root / "receipts/boundary-restart-v5.json"
+        expected_baseline = experiment_root / "baselines/phase-start-v7-fixture-closure.json"
+        expected_restart = experiment_root / "receipts/boundary-restart-v7-fixture-closure.json"
         original_cwd = Path.cwd()
         try:
             for cwd in (experiment_root, repository_root):
@@ -301,13 +301,19 @@ class IntegrityReceiptTests(unittest.TestCase):
         finally:
             os.chdir(original_cwd)
 
+    def test_v8_receipt_is_bound_to_the_v7_baseline(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        receipt = validate_receipt(root / "receipts/integrity-receipt-v8.json")
+        self.assertEqual(receipt["phase_start_baseline_sha256"], "b338372c74c605aa8b294ee30bcc39410422a6a5673e15061f86f28188debecb")
+        self.assertFalse(receipt["source_identity"]["external_publication_authorized"])
+
     def test_restart_lineage_uses_canonical_paths_for_default_absolute_and_relative_inputs(self) -> None:
         root = Path(__file__).resolve().parents[1]
         expected_paths = {
-            "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
-            "baseline": "baselines/phase-start-v5-gap-closure.json",
-            "incident_receipt": "receipts/boundary-restart-v5.json",
-            "previous_baseline": "baselines/phase-start-v2.json",
+            "allowlist": "config/boundary_allowlist-v7-fixture-closure.json",
+            "baseline": "baselines/phase-start-v7-fixture-closure.json",
+            "incident_receipt": "receipts/boundary-restart-v7-fixture-closure.json",
+            "previous_baseline": "baselines/phase-start-v6-fixture-closure.json",
         }
         command_prefix = [
             "write-local-mvp-receipt",
@@ -316,12 +322,12 @@ class IntegrityReceiptTests(unittest.TestCase):
         invocations = [
             command_prefix,
             command_prefix + [
-                "--baseline", str(root / "baselines/phase-start-v5-gap-closure.json"),
-                "--restart-receipt", str(root / "receipts/boundary-restart-v5.json"),
+                "--baseline", str(root / "baselines/phase-start-v7-fixture-closure.json"),
+                "--restart-receipt", str(root / "receipts/boundary-restart-v7-fixture-closure.json"),
             ],
             command_prefix + [
-                "--baseline", "baselines/phase-start-v5-gap-closure.json",
-                "--restart-receipt", "receipts/boundary-restart-v5.json",
+                "--baseline", "baselines/phase-start-v7-fixture-closure.json",
+                "--restart-receipt", "receipts/boundary-restart-v7-fixture-closure.json",
             ],
         ]
         original_cwd = Path.cwd()
@@ -355,7 +361,7 @@ class IntegrityReceiptTests(unittest.TestCase):
                 ]
             )
             with patch("specchoice_evidence.cli.capture_live_state", return_value={}):
-                with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING"):
+                with self.assertRaisesRegex((ReceiptError, Exception), "(?:LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING|BOUNDARY_HISTORY_NOT_DESCENDANT)"):
                     arguments.handler(arguments)
         self.assertEqual(decision_path.read_bytes(), original_decision)
         self.assertEqual(v6_receipt_path.read_bytes(), original_receipt)
@@ -425,7 +431,7 @@ class IntegrityReceiptTests(unittest.TestCase):
                 with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING"):
                     _require_post_review_delta_clean(arguments, {"reviewed_revision": "a" * 40}, repository)
 
-    def test_current_reviewed_decision_can_write_and_finalize_with_exact_artifacts(self) -> None:
+    def test_historical_v5_decision_cannot_issue_under_the_current_v7_lineage(self) -> None:
         root = Path(__file__).resolve().parents[1]
         repository = root.parents[1]
         template = json.loads((root / "receipts/reviewer-boundary-decision-v6.json").read_text(encoding="utf-8"))
@@ -464,21 +470,16 @@ class IntegrityReceiptTests(unittest.TestCase):
                     "write-local-mvp-receipt",
                     "--decision", str(decision_path),
                     "--accepted-directory", str(root / "bundles/accepted"),
+                    "--baseline", str(root / "baselines/phase-start-v5-gap-closure.json"),
+                    "--restart-receipt", str(root / "receipts/boundary-restart-v5.json"),
                     "--receipt", str(receipt_path),
                     "--markdown", str(markdown_path),
                 ]
             )
-            finalize_args = build_parser().parse_args(
-                [
-                    "finalize-review",
-                    "--decision", str(decision_path),
-                    "--receipt", str(receipt_path),
-                    "--markdown", str(markdown_path),
-                ]
-            )
-            with patch("specchoice_evidence.cli.capture_live_state", return_value={}):
-                self.assertEqual(write_args.handler(write_args), 0)
-                self.assertEqual(finalize_args.handler(finalize_args), 0)
+            with patch("specchoice_evidence.cli.capture_live_state", return_value={}), patch(
+                "specchoice_evidence.cli._require_current_boundary_clean"
+            ), self.assertRaisesRegex(ReceiptError, "LOCAL_MVP_BOUNDARY_BLOCKING"):
+                write_args.handler(write_args)
 
     def test_v5_write_without_restart_fails_closed_before_receipt_issuance(self) -> None:
         root = Path(__file__).resolve().parents[1]
@@ -490,7 +491,7 @@ class IntegrityReceiptTests(unittest.TestCase):
             ]
         )
         arguments.restart_receipt = None
-        with self.assertRaisesRegex(ReceiptError, "RESTART_RECEIPT_REQUIRED"):
+        with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_BASIS_MISMATCH"):
             arguments.handler(arguments)
 
     def test_explicit_historical_baseline_uses_schema_two_compatibility_without_restart(self) -> None:

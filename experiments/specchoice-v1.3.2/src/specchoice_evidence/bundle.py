@@ -35,7 +35,13 @@ from .source_contract import (
     validate_fixture_closure_proposal,
     verify_fixture_registry_git,
 )
-from .verify import _bundle_artifacts, _raw_artifacts, embed_verifier_artifacts, verify_candidate_bundle
+from .verify import (
+    _bundle_artifacts,
+    _raw_artifacts,
+    embed_verifier_artifacts,
+    verify_accepted_bundle,
+    verify_candidate_bundle,
+)
 
 
 class BundleError(ValueError):
@@ -654,3 +660,74 @@ def accept_local_candidate(
             shutil.rmtree(temporary)
         raise
     return identity
+
+
+def accept_fixture_closure_candidate(candidate: Path, accepted_root: Path) -> dict[str, object]:
+    """Promote only the complete v3 candidate into a fresh local accepted tree.
+
+    This is a local lifecycle transition, not an external publication operation.  The
+    candidate is verified before copying and never changed.  The accepted tree gets a
+    freshly rooted core/manifest because its embedded verifier and lifecycle state are
+    part of its own content address.
+    """
+    identity = verify_candidate(candidate)
+    generation = identity.get("generation")
+    if generation != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1":
+        raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_GENERATION_INVALID")
+    target = accepted_root / generation
+    if target.exists() or target.is_symlink():
+        raise BundleError("LOCAL_ACCEPTED_TARGET_EXISTS")
+    accepted_root.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix=f".{generation}.staging-", dir=accepted_root))
+    try:
+        shutil.rmtree(temporary)
+        shutil.copytree(candidate, temporary)
+        (temporary / "content-manifest-core.json").unlink()
+        (temporary / "snapshot-manifest.json").unlink()
+        core = _canonical_load(candidate / "content-manifest-core.json", "CONTENT_MANIFEST_CORE_INVALID")
+        closure = core.get("fixture_closure")
+        if not isinstance(closure, dict) or closure.get("fixture_count") != 11 or closure.get("raw_file_count") != 28:
+            raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_INCOMPLETE")
+        registry_artifacts = [
+            artifact for artifact in core.get("bundle_artifacts", [])
+            if isinstance(artifact, dict) and artifact.get("kind") == "fixture_registry"
+        ]
+        if len(registry_artifacts) != 1:
+            raise BundleError("FIXTURE_CLOSURE_REGISTRY_ARTIFACT_MISSING")
+        core["bundle_artifacts"] = embed_verifier_artifacts(temporary) + registry_artifacts
+        core_bytes = canonical_json_bytes(core)
+        manifest_sha256 = sha256_bytes(core_bytes)
+        _write_exact(temporary / "content-manifest-core.json", core_bytes)
+        artifacts = _raw_artifacts(core, temporary) + _bundle_artifacts(core, temporary)
+        root_sha256 = _root_digest(manifest_sha256, artifacts)
+        snapshots = [
+            {**snapshot, "generation": generation, "manifest_sha256": manifest_sha256, "root_sha256": root_sha256}
+            for snapshot in core["snapshots"]
+        ]
+        final: dict[str, object] = {
+            "accepted_publication_authorized": False,
+            "content_manifest_core": core,
+            "downstream_eligible": True,
+            "external_publication_authorized": False,
+            "generation": generation,
+            "manifest_sha256": manifest_sha256,
+            "offline_replay_proven": True,
+            "root_sha256": root_sha256,
+            "schema_version": "1",
+            "snapshots": snapshots,
+            "status": "accepted",
+        }
+        final["snapshot_manifest_sha256"] = sha256_bytes(canonical_json_bytes(final))
+        _write_exact(temporary / "snapshot-manifest.json", canonical_json_bytes(final))
+        verified = verify_accepted_bundle(temporary)
+        _sync_directory(temporary)
+        _sync_directory(accepted_root)
+        if target.exists() or target.is_symlink():
+            raise BundleError("LOCAL_ACCEPTED_TARGET_EXISTS")
+        os.replace(temporary, target)
+        _sync_directory(accepted_root)
+        return verified
+    except Exception:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        raise

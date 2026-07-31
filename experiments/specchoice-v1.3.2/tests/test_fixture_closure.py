@@ -6,11 +6,14 @@ from __future__ import annotations
 import copy
 import json
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from specchoice_evidence.bundle import BundleError, verify_candidate
+from specchoice_evidence.verify import verify_accepted_bundle
 from specchoice_evidence.source_contract import (
     FixtureRegistryError,
     validate_fixture_registry,
@@ -87,6 +90,36 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             (copied / "raw/evaluation_fixtures/POS_WARL_MTVEC_MODES/gold.yaml").unlink()
             with self.assertRaisesRegex(BundleError, "STAGED_RAW_CUSTODY_MISMATCH"):
                 verify_candidate(copied)
+
+    def test_accepted_v3_is_distinct_and_downstream_eligible(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1"
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1"
+        self.assertEqual(verify_candidate(candidate)["status"], "candidate")
+        verified = verify_accepted_bundle(accepted)
+        self.assertEqual(verified["status"], "accepted")
+        manifest = json.loads((accepted / "snapshot-manifest.json").read_text(encoding="utf-8"))
+        self.assertTrue(manifest["downstream_eligible"])
+        self.assertTrue(manifest["offline_replay_proven"])
+        self.assertFalse(manifest["external_publication_authorized"])
+
+    def test_phase2_authority_requires_the_accepted_registry_digest(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1"
+        command = [
+            sys.executable, "-m", "specchoice_evidence.cli", "validate-phase2-source-authority",
+            "--authority", "phase2/source-authority.json", "--bundle", str(accepted),
+        ]
+        result = subprocess.run(command, cwd=experiment, check=False, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        authority = json.loads((experiment / "phase2/source-authority.json").read_text(encoding="utf-8"))
+        authority["registry_sha256"] = "0" * 64
+        with tempfile.TemporaryDirectory() as directory:
+            invalid = Path(directory) / "source-authority.json"
+            invalid.write_text(json.dumps(authority, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+            command[command.index("phase2/source-authority.json")] = str(invalid)
+            result = subprocess.run(command, cwd=experiment, check=False, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
 
 
 if __name__ == "__main__":

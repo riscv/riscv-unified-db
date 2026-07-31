@@ -33,11 +33,13 @@ from .receipt import (
 )
 from .bundle import (
     accept_local_candidate,
+    accept_fixture_closure_candidate,
     construct_candidate,
     construct_fixture_closure_candidate,
     publish_accepted,
     verify_candidate,
 )
+from .verify import verify_accepted_bundle
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
@@ -56,8 +58,8 @@ def _default_capture_baseline() -> Path:
 
 
 def _default_active_baseline() -> Path:
-    """Return the active v5 baseline without depending on the caller's cwd."""
-    return _experiment_root() / "baselines/phase-start-v5-gap-closure.json"
+    """Return the immutable v7 fixture-closure baseline."""
+    return _experiment_root() / "baselines/phase-start-v7-fixture-closure.json"
 
 
 def _experiment_root() -> Path:
@@ -66,25 +68,25 @@ def _experiment_root() -> Path:
 
 
 def _default_active_restart_receipt() -> Path:
-    """Return the restart authority bound to the active v5 baseline."""
-    return _experiment_root() / "receipts/boundary-restart-v5.json"
+    """Return the restart authority bound to the active v7 baseline."""
+    return _experiment_root() / "receipts/boundary-restart-v7-fixture-closure.json"
 
 
-def _active_v5_previous_baseline() -> Path:
-    return _experiment_root() / "baselines/phase-start-v2.json"
+def _active_previous_baseline() -> Path:
+    return _experiment_root() / "baselines/phase-start-v6-fixture-closure.json"
 
 
-def _active_v5_allowlist() -> Path:
-    return _experiment_root() / "config/boundary_allowlist-v5-gap-closure.json"
+def _active_allowlist() -> Path:
+    return _experiment_root() / "config/boundary_allowlist-v7-fixture-closure.json"
 
 
 def _active_restart_lineage_paths() -> dict[str, str]:
     """Return the immutable experiment-relative paths serialized into schema-4 receipts."""
     return {
-        "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
-        "baseline": "baselines/phase-start-v5-gap-closure.json",
-        "incident_receipt": "receipts/boundary-restart-v5.json",
-        "previous_baseline": "baselines/phase-start-v2.json",
+        "allowlist": "config/boundary_allowlist-v7-fixture-closure.json",
+        "baseline": "baselines/phase-start-v7-fixture-closure.json",
+        "incident_receipt": "receipts/boundary-restart-v7-fixture-closure.json",
+        "previous_baseline": "baselines/phase-start-v6-fixture-closure.json",
     }
 
 
@@ -577,6 +579,68 @@ def command_publish_accepted(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_accept_fixture_closure_local(args: argparse.Namespace) -> int:
+    """Perform the explicit local-only transition for the complete v3 candidate."""
+    _print_json(accept_fixture_closure_candidate(args.candidate_directory, args.accepted_directory))
+    return 0
+
+
+def command_verify_accepted(args: argparse.Namespace) -> int:
+    _print_json(verify_accepted_bundle(args.bundle))
+    return 0
+
+
+def command_validate_phase2_source_authority(args: argparse.Namespace) -> int:
+    """Fail closed unless the Phase 2 pin matches the accepted v3 registry exactly."""
+    raw = args.authority.read_bytes()
+    authority = json.loads(raw.decode("utf-8"))
+    if not isinstance(authority, dict) or canonical_json_bytes(authority) != raw:
+        raise ReceiptError("PHASE2_SOURCE_AUTHORITY_NOT_CANONICAL")
+    bundle = args.bundle
+    verified = verify_accepted_bundle(bundle)
+    manifest = json.loads((bundle / "snapshot-manifest.json").read_text(encoding="utf-8"))
+    registry = bundle / "fixture-registry-pr2164-v1.json"
+    registry_sha256 = sha256_bytes(registry.read_bytes())
+    snapshot = manifest["content_manifest_core"]["snapshots"][0]
+    expected = {
+        "fixture_count": 11, "generation": verified["generation"], "manifest_sha256": manifest["snapshot_manifest_sha256"],
+        "pinned_commit_sha": snapshot["pinned_commit_sha"], "pinned_tree_sha": snapshot["pinned_tree_sha"],
+        "raw_file_count": 28, "registry_sha256": registry_sha256, "root_sha256": verified["root_sha256"],
+    }
+    if authority.get("schema_version") != "1" or authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()):
+        raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
+    _print_json({"status": "valid", **expected})
+    return 0
+
+
+def command_write_fixture_closure_receipt(args: argparse.Namespace) -> int:
+    """Write the v7-bound JSON-first local closure receipt for accepted v3."""
+    decision_raw = args.decision.read_bytes()
+    decision = json.loads(decision_raw.decode("utf-8"))
+    if not isinstance(decision, dict) or canonical_json_bytes(decision) != decision_raw:
+        raise ReceiptError("LOCAL_ACCEPTANCE_DECISION_NOT_CANONICAL")
+    verified = verify_accepted_bundle(args.bundle)
+    final = json.loads((args.bundle / "snapshot-manifest.json").read_text(encoding="utf-8"))
+    repository = _repository_root(_experiment_root())
+    boundary = check_boundary(repository, _default_active_baseline())
+    if boundary.blocking_violations:
+        raise ReceiptError("LOCAL_MVP_CURRENT_BOUNDARY_BLOCKING")
+    identity = {
+        "candidate_relative_path": "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1",
+        "core_sha256": verified["manifest_sha256"], "generation": verified["generation"],
+        "root_sha256": verified["root_sha256"], "snapshot_manifest_sha256": final["snapshot_manifest_sha256"],
+    }
+    environment_sha = _canonical_environment_sha256(_experiment_root() / "receipts/environment-decision.json")
+    basis = local_receipt_basis_sha256(boundary.baseline_sha256, environment_sha, identity, boundary.classifications)
+    receipt = build_local_mvp_receipt(
+        boundary.baseline_sha256, environment_sha, identity, boundary.classifications,
+        sha256_bytes(decision_raw), basis,
+    )
+    result = write_receipt_package(receipt, args.receipt, args.markdown)
+    _print_json(result)
+    return 0
+
+
 def command_write_integrity_receipt(args: argparse.Namespace) -> int:
     """Write the canonical fail-closed receipt for the currently rejected source route."""
     repository = _repository_root(Path.cwd())
@@ -654,7 +718,7 @@ def _validate_local_mvp_receipt_basis(args: argparse.Namespace, decision: dict[s
 
 
 def _restart_lineage_for_local_mvp_receipt(args: argparse.Namespace) -> dict[str, object] | None:
-    """Require the v5 restart authority; retain schema-2 only by explicit baseline choice."""
+    """Validate the selected immutable restart generation without reinterpreting legacy paths."""
     baseline = _resolve_experiment_path(args.baseline).resolve()
     restart_receipt = getattr(args, "restart_receipt", None)
     if restart_receipt is not None:
@@ -669,13 +733,26 @@ def _restart_lineage_for_local_mvp_receipt(args: argparse.Namespace) -> dict[str
         return None
     if restart_receipt is None:
         return None
+    if baseline == active_baseline:
+        previous, allowlist = _active_previous_baseline(), _active_allowlist()
+    elif baseline == (_experiment_root() / "baselines/phase-start-v5-gap-closure.json").resolve():
+        previous = _experiment_root() / "baselines/phase-start-v2.json"
+        allowlist = _experiment_root() / "config/boundary_allowlist-v5-gap-closure.json"
+    else:
+        raise ReceiptError("RESTART_LINEAGE_UNSUPPORTED")
     projection = validate_boundary_restart(
         baseline,
-        _active_v5_previous_baseline(),
-        _active_v5_allowlist(),
+        previous,
+        allowlist,
         restart_receipt,
     )
-    return _canonical_active_restart_lineage(projection)
+    if baseline == active_baseline:
+        return _canonical_active_restart_lineage(projection)
+    return {
+        name: {"path": value["path"], "sha256": value["sha256"]}
+        for name, value in projection.items()
+        if name in {"allowlist", "baseline", "incident_receipt", "previous_baseline"}
+    } | {name: projection[name] for name in ("reason_code", "reviewed_revision", "scope")}
 
 
 def _write_local_mvp_receipt(
@@ -773,7 +850,7 @@ def command_finalize_review(args: argparse.Namespace) -> int:
         raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
     material = _committed_basis_material(
         root=repository,
-        baseline=experiment_root / "baselines/phase-start-v5-gap-closure.json",
+        baseline=experiment_root / "baselines/phase-start-v7-fixture-closure.json",
         environment=experiment_root / "receipts/environment-decision.json",
         approved_generation=local_decision["approved_generation"],
         reviewed_revision=local_decision.get("reviewed_revision"),
@@ -907,6 +984,23 @@ def build_parser() -> argparse.ArgumentParser:
     verify_candidate_parser = commands.add_parser("verify-candidate")
     verify_candidate_parser.add_argument("candidate_directory", type=Path)
     verify_candidate_parser.set_defaults(handler=command_verify_candidate)
+    verify_accepted_parser = commands.add_parser("verify-accepted")
+    verify_accepted_parser.add_argument("--bundle", type=Path, required=True)
+    verify_accepted_parser.set_defaults(handler=command_verify_accepted)
+    fixture_accept = commands.add_parser("accept-fixture-closure-local")
+    fixture_accept.add_argument("--candidate-directory", type=Path, required=True)
+    fixture_accept.add_argument("--accepted-directory", type=Path, default=Path("bundles/accepted"))
+    fixture_accept.set_defaults(handler=command_accept_fixture_closure_local)
+    authority = commands.add_parser("validate-phase2-source-authority")
+    authority.add_argument("--authority", type=Path, required=True)
+    authority.add_argument("--bundle", type=Path, required=True)
+    authority.set_defaults(handler=command_validate_phase2_source_authority)
+    closure_receipt = commands.add_parser("write-fixture-closure-receipt")
+    closure_receipt.add_argument("--decision", type=Path, required=True)
+    closure_receipt.add_argument("--bundle", type=Path, required=True)
+    closure_receipt.add_argument("--receipt", type=Path, required=True)
+    closure_receipt.add_argument("--markdown", type=Path, required=True)
+    closure_receipt.set_defaults(handler=command_write_fixture_closure_receipt)
     publish = commands.add_parser("publish-accepted")
     publish.add_argument("--decision", type=Path, default=Path("receipts/source-publication-decision.json"))
     publish.set_defaults(handler=command_publish_accepted)
