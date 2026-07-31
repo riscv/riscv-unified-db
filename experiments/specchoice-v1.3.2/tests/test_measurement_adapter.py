@@ -10,8 +10,8 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 
-from specchoice_evidence.canonical import sha256_bytes
-from specchoice_measurement.adapter import build_pr2164_adapter_batch, validate_complete_adapter_batch
+from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch, validate_complete_adapter_batch
 
 
 class MeasurementAdapterTests(unittest.TestCase):
@@ -108,14 +108,37 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual(rejected.records, ())
         self.assertEqual(rejected.diagnostics[0].code, "PHASE2_SOURCE_AUTHORITY_INVALID")
 
-    def test_rules_require_a_versioned_identifier_and_positive_evidence_requirement(self) -> None:
+    def test_rules_require_a_versioned_identifier(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "rules.json"
             rules = json.loads(self.rules.read_text(encoding="utf-8"))
             rules["adapter_version"] = "pr2164-adapter-v0"
-            path.write_bytes(__import__("specchoice_evidence.canonical", fromlist=["canonical_json_bytes"]).canonical_json_bytes(rules))
-            with self.assertRaisesRegex(Exception, "ADAPTER_RULES_INVALID"):
+            path.write_bytes(canonical_json_bytes(rules))
+            with self.assertRaisesRegex(AdapterError, "ADAPTER_RULES_INVALID"):
                 build_pr2164_adapter_batch(authority_path=self.authority, bundle_root=self.bundle, rules_path=path)
+
+    def test_rules_require_the_exact_expected_fields_mapping(self) -> None:
+        required = {
+            "candidate_or_negative": ["expect_extract", "expect_params", "id"],
+            "positive": ["class", "expect_extract", "expect_status", "gold_name", "id", "must_have_excerpt"],
+        }
+        variants = {
+            "empty": {"candidate_or_negative": [], "positive": []},
+            "missing": {"positive": required["positive"]},
+            "reordered": {"candidate_or_negative": list(reversed(required["candidate_or_negative"])), "positive": required["positive"]},
+            "non-string": {"candidate_or_negative": ["expect_extract", 1, "id"], "positive": required["positive"]},
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "rules.json"
+            for variant, expected_fields in variants.items():
+                with self.subTest(variant=variant):
+                    rules = json.loads(self.rules.read_text(encoding="utf-8"))
+                    rules["expected_fields"] = expected_fields
+                    path.write_bytes(canonical_json_bytes(rules))
+                    with self.assertRaisesRegex(AdapterError, "ADAPTER_RULES_INVALID"):
+                        build_pr2164_adapter_batch(
+                            authority_path=self.authority, bundle_root=self.bundle, rules_path=path
+                        )
 
     def test_adapter_preserves_authoritative_bytes_and_refuses_output_overwrite(self) -> None:
         raw_before = {

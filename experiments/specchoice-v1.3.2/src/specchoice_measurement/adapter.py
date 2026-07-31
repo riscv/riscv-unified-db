@@ -21,6 +21,12 @@ class AdapterError(ValueError):
     """Stable error for bounded score-bearing fixture syntax."""
 
 
+EXPECTED_FIELDS = {
+    "candidate_or_negative": ["expect_extract", "expect_params", "id"],
+    "positive": ["class", "expect_extract", "expect_status", "gold_name", "id", "must_have_excerpt"],
+}
+
+
 def _load_canonical_json(path: Path, code: str) -> tuple[dict[str, Any], bytes]:
     raw = path.read_bytes()
     try:
@@ -304,7 +310,7 @@ def build_pr2164_adapter_batch(*, authority_path: Path, bundle_root: Path, rules
     required_rule_keys = {"adapter_version", "category_derivation", "expected_fields", "fixture_count", "fixture_id_sort", "gold_fields", "raw_file_count", "schema_version", "score_bearing_allowlist"}
     if set(rules) != required_rule_keys or rules.get("schema_version") != "1" or not isinstance(rules.get("adapter_version"), str) or not re.fullmatch(r"pr2164-adapter-v[1-9][0-9]*", rules["adapter_version"]):
         raise AdapterError("ADAPTER_RULES_INVALID")
-    if rules.get("fixture_count") != 11 or rules.get("raw_file_count") != 28 or rules.get("fixture_id_sort") != "ascending_unicode" or rules.get("score_bearing_allowlist") != ["fixture_id", "category", "expect_extract", "expected_parameter_count", "expected_parameter_names", "evidence_required"] or rules.get("category_derivation") != {"candidate": "candidate", "negative": "negative", "positive": "positive"} or rules.get("gold_fields") != {"positive": ["name"]} or not isinstance(rules.get("expected_fields"), dict) or set(rules["expected_fields"]) != {"positive", "candidate_or_negative"}:
+    if rules.get("fixture_count") != 11 or rules.get("raw_file_count") != 28 or rules.get("fixture_id_sort") != "ascending_unicode" or rules.get("score_bearing_allowlist") != ["fixture_id", "category", "expect_extract", "expected_parameter_count", "expected_parameter_names", "evidence_required"] or rules.get("category_derivation") != {"candidate": "candidate", "negative": "negative", "positive": "positive"} or rules.get("gold_fields") != {"positive": ["name"]} or rules.get("expected_fields") != EXPECTED_FIELDS:
         raise AdapterError("ADAPTER_RULES_INVALID")
     adapter_version = rules["adapter_version"]
     rule_sha256 = sha256_bytes(rules_raw)
