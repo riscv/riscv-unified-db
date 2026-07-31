@@ -455,7 +455,7 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add tests/golden/all_instructions.golden.adoc
             git commit -s -m "Update instruction appendix golden file"
-            git push
+            git push origin HEAD:${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}
             exit 1
           fi
 
@@ -1037,7 +1037,7 @@ jobs:
           python3 - <<'PY'
           import json, os, sys
           needs = json.loads(os.environ["NEEDS_JSON"])
-          bad = {k: v["result"] for k, v in needs.items() if v["result"] != "success"}
+          bad = {k: v["result"] for k, v in needs.items() if v["result"] not in ("success", "skipped")}
           if bad:
               print("Blocking jobs:")
               for k, r in bad.items():

@@ -118,7 +118,7 @@ def main() -> None:
                     "python3 - <<'PY'\n"
                     "import json, os, sys\n"
                     'needs = json.loads(os.environ["NEEDS_JSON"])\n'
-                    'bad = {k: v["result"] for k, v in needs.items() if v["result"] != "success"}\n'
+                    'bad = {k: v["result"] for k, v in needs.items() if v["result"] not in ("success", "skipped")}\n'
                     "if bad:\n"
                     '    print("Blocking jobs:")\n'
                     "    for k, r in bad.items():\n"
