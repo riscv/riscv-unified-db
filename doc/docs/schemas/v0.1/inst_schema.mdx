@@ -106,7 +106,7 @@ Decode field
 | `encoding` | One of: [`old_encoding`](#old-encoding) \| `object` |  | Instruction encoding and decode variables |
 | `format` | `object` |  |  |
 | `pseudoinstructions` | Array&lt;\{`when`, `to`\}&gt; [↓&nbsp;schema](#pseudoinstructions-schema) |  | Variations of this instruction that form a pseudoinstruction |
-| `data_independent_timing` | One of: `boolean` \| `string` |  | Whether the instruction always has data-independent timing (true), never does (false), or does when a specific extension is implemented (e.g., 'Zkt' or 'Zvkt') |
+| `data_independent_timing` | `boolean` |  | Whether or not the instruction must execute with data-independent timing when the Zkt extension is supported |
 | `cert_normative_rules` | Architecturally visible behaviors requiring validation by certification tests |  |  |
 | `sail()` | `string` |  | Functional description of the instruction using Sail |
 | `operation_ast` | `object` |  |  |
