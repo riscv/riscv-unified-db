@@ -83,12 +83,19 @@ Plans:
   3. The reviewer can trace every failed or warning outcome to a stable diagnostic code and structured fields; a missing accepted name remains an identity warning and never rewrites disposition.
   4. The human reviewer can approve or dispute the frozen gold interpretation from the adapter audit without any model output being used to compensate for disputed semantics.
 
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
+
+- [x] 02-01-PLAN.md
+- [ ] 02-02-PLAN.md
+- [ ] 02-03-PLAN.md
+- [ ] 02-04-PLAN.md
+- [ ] 02-05-PLAN.md
+
 **Wave 1**
 
-- [ ] 02-01: Implement the versioned PR #2164 adapter and canonical adjudication domain model.
+- [x] 02-01: Implement the versioned PR #2164 adapter and canonical adjudication domain model.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -262,7 +269,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Isolated Evidence Boundary and Source Integrity | 7/7 | Complete    | 2026-07-31 |
-| 2. Deterministic Measurement Spine | 0/4 | Not started | - |
+| 2. Deterministic Measurement Spine | 1/5 | In Progress|  |
 | 3. Human-Reviewed Data Preregistration | 0/4 | Not started | - |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |
 | 5. Authorized Execution and Immutable Evidence | 0/3 | Not started | - |
