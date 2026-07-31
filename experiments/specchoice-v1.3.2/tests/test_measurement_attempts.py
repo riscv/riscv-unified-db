@@ -205,6 +205,8 @@ class MeasurementAttemptTests(unittest.TestCase):
             self.assertEqual(payload["status"], "diagnostic_only")
             self.assertEqual(len(payload["cases"]), 12)
             self.assertTrue(all(case["role"] == "diagnostic_only" and case["matched"] for case in payload["cases"]))
+            attempt_root = root / "adversarial-attempts"
+            self.assertTrue(all((attempt_root / case["attempt_id"] / "attempt.json").is_file() for case in payload["cases"]))
             self.assertNotIn("metrics", payload)
             with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
                 report.write_bytes(canonical_json_bytes({"status": "formal"}))
