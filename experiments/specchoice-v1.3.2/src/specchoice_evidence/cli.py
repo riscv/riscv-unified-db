@@ -70,6 +70,33 @@ def _active_v5_allowlist() -> Path:
     return _experiment_root() / "config/boundary_allowlist-v5-gap-closure.json"
 
 
+def _active_restart_lineage_paths() -> dict[str, str]:
+    """Return the immutable experiment-relative paths serialized into schema-4 receipts."""
+    return {
+        "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
+        "baseline": "baselines/phase-start-v5-gap-closure.json",
+        "incident_receipt": "receipts/boundary-restart-v5.json",
+        "previous_baseline": "baselines/phase-start-v2.json",
+    }
+
+
+def _canonical_active_restart_lineage(projection: dict[str, object]) -> dict[str, object]:
+    """Bind validated restart digests to portable, experiment-relative path spellings."""
+    lineage_paths = _active_restart_lineage_paths()
+    lineage = {
+        name: {"path": path, "sha256": projection[name]["sha256"]}
+        for name, path in lineage_paths.items()
+    }
+    lineage.update(
+        {
+            "reason_code": projection["reason_code"],
+            "reviewed_revision": projection["reviewed_revision"],
+            "scope": projection["scope"],
+        }
+    )
+    return lineage
+
+
 def _default_policy_override() -> Path:
     return Path("baselines/ds-store-policy-override-v1.json")
 
@@ -540,22 +567,27 @@ def _validate_local_mvp_receipt_basis(args: argparse.Namespace, decision: dict[s
 
 def _restart_lineage_for_local_mvp_receipt(args: argparse.Namespace) -> dict[str, object] | None:
     """Require the v5 restart authority; retain schema-2 only by explicit baseline choice."""
-    baseline = args.baseline.resolve()
+    baseline = _resolve_experiment_path(args.baseline).resolve()
     restart_receipt = getattr(args, "restart_receipt", None)
-    if baseline == _default_active_baseline() and restart_receipt is None:
+    if restart_receipt is not None:
+        restart_receipt = _resolve_experiment_path(restart_receipt).resolve()
+    active_baseline = _default_active_baseline().resolve()
+    active_restart_receipt = _default_active_restart_receipt().resolve()
+    if baseline == active_baseline and restart_receipt is None:
         raise ReceiptError("RESTART_RECEIPT_REQUIRED")
-    if baseline != _default_active_baseline() and restart_receipt == _default_active_restart_receipt():
+    if baseline != active_baseline and restart_receipt == active_restart_receipt:
         # argparse supplies the active default; an explicit historical baseline opts into
         # schema-2 compatibility unless the caller also supplies a restart authority.
         return None
     if restart_receipt is None:
         return None
-    return validate_boundary_restart(
+    projection = validate_boundary_restart(
         baseline,
         _active_v5_previous_baseline(),
         _active_v5_allowlist(),
         restart_receipt,
     )
+    return _canonical_active_restart_lineage(projection)
 
 
 def _write_local_mvp_receipt(
@@ -610,13 +642,8 @@ def command_finalize_review(args: argparse.Namespace) -> int:
     receipt = validate_receipt(args.receipt)
     if receipt.get("schema_version") != "4":
         raise ReceiptError("HISTORICAL_RECEIPT_NOT_FINALIZABLE")
-    experiment_root = args.receipt.resolve().parent.parent
-    expected_paths = {
-        "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
-        "baseline": "baselines/phase-start-v5-gap-closure.json",
-        "incident_receipt": "receipts/boundary-restart-v5.json",
-        "previous_baseline": "baselines/phase-start-v2.json",
-    }
+    experiment_root = _experiment_root()
+    expected_paths = _active_restart_lineage_paths()
     lineage = receipt["restart_lineage"]
     assert isinstance(lineage, dict)
     if any(lineage[name].get("path") != path for name, path in expected_paths.items()):
@@ -627,17 +654,7 @@ def command_finalize_review(args: argparse.Namespace) -> int:
         experiment_root / expected_paths["allowlist"],
         experiment_root / expected_paths["incident_receipt"],
     )
-    expected_lineage = {
-        name: {"path": path, "sha256": projection[name]["sha256"]}
-        for name, path in expected_paths.items()
-    }
-    expected_lineage.update(
-        {
-            "reason_code": projection["reason_code"],
-            "reviewed_revision": projection["reviewed_revision"],
-            "scope": projection["scope"],
-        }
-    )
+    expected_lineage = _canonical_active_restart_lineage(projection)
     if lineage != expected_lineage:
         raise ReceiptError("RESTART_LINEAGE_PROJECTION_MISMATCH")
     repository = _repository_root(experiment_root)

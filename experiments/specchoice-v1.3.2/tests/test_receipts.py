@@ -299,6 +299,72 @@ class IntegrityReceiptTests(unittest.TestCase):
         finally:
             os.chdir(original_cwd)
 
+    def test_restart_lineage_uses_canonical_paths_for_default_absolute_and_relative_inputs(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        expected_paths = {
+            "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
+            "baseline": "baselines/phase-start-v5-gap-closure.json",
+            "incident_receipt": "receipts/boundary-restart-v5.json",
+            "previous_baseline": "baselines/phase-start-v2.json",
+        }
+        command_prefix = [
+            "write-local-mvp-receipt",
+            "--decision", str(root / "receipts/reviewer-boundary-decision-v6.json"),
+        ]
+        invocations = [
+            command_prefix,
+            command_prefix + [
+                "--baseline", str(root / "baselines/phase-start-v5-gap-closure.json"),
+                "--restart-receipt", str(root / "receipts/boundary-restart-v5.json"),
+            ],
+            command_prefix + [
+                "--baseline", "baselines/phase-start-v5-gap-closure.json",
+                "--restart-receipt", "receipts/boundary-restart-v5.json",
+            ],
+        ]
+        original_cwd = Path.cwd()
+        try:
+            os.chdir(root)
+            for invocation in invocations:
+                with self.subTest(invocation=invocation):
+                    args = build_parser().parse_args(invocation)
+                    lineage = _restart_lineage_for_local_mvp_receipt(args)
+                    assert lineage is not None
+                    self.assertEqual(
+                        {name: lineage[name]["path"] for name in expected_paths}, expected_paths
+                    )
+        finally:
+            os.chdir(original_cwd)
+
+    def test_canonicalized_v6_receipt_finalizes(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        receipt = json.loads((root / "receipts/integrity-receipt-v6.json").read_text(encoding="utf-8"))
+        expected_paths = {
+            "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
+            "baseline": "baselines/phase-start-v5-gap-closure.json",
+            "incident_receipt": "receipts/boundary-restart-v5.json",
+            "previous_baseline": "baselines/phase-start-v2.json",
+        }
+        for name, path in expected_paths.items():
+            receipt["restart_lineage"][name]["path"] = path
+        projected = dict(receipt)
+        projected.pop("receipt_sha256")
+        receipt["receipt_sha256"] = sha256_bytes(canonical_json_bytes(projected))
+        with tempfile.TemporaryDirectory() as directory:
+            receipt_path = Path(directory) / "integrity-receipt.json"
+            markdown_path = Path(directory) / "integrity-receipt.md"
+            receipt_path.write_bytes(canonical_json_bytes(receipt))
+            markdown_path.write_text(render_markdown(receipt), encoding="utf-8")
+            arguments = build_parser().parse_args(
+                [
+                    "finalize-review",
+                    "--decision", str(root / "receipts/reviewer-boundary-decision-v6.json"),
+                    "--receipt", str(receipt_path),
+                    "--markdown", str(markdown_path),
+                ]
+            )
+            self.assertEqual(arguments.handler(arguments), 0)
+
     def test_v5_write_without_restart_fails_closed_before_receipt_issuance(self) -> None:
         root = Path(__file__).resolve().parents[1]
         arguments = build_parser().parse_args(
