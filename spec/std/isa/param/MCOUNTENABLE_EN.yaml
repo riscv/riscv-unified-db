@@ -37,4 +37,4 @@ requirements:
   reason: |
     Counters 0-2 are defined by Zicntr
     Counters 3..31 are defined by Zihpm
-    When mhpmcounter[i] does not exist, it cannot be enabled.
+    When mhpmcounter[i] is not implemented, it cannot be enabled.
