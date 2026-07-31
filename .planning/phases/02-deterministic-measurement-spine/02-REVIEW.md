@@ -1,7 +1,7 @@
 ---
 phase: 02-deterministic-measurement-spine
-reviewed: 2026-07-31T21:07:22Z
-depth: standard
+reviewed: 2026-07-31T21:18:09Z
+depth: deep
 files_reviewed: 69
 files_reviewed_list:
   - experiments/specchoice-v1.3.2/config/measurement/canonical-adjudication-schema-v1.json
@@ -74,8 +74,8 @@ files_reviewed_list:
   - experiments/specchoice-v1.3.2/tests/test_measurement_parsing.py
   - experiments/specchoice-v1.3.2/tests/test_measurement_scoring.py
 findings:
-  critical: 0
-  warning: 1
+  critical: 1
+  warning: 0
   info: 0
   total: 1
 status: issues_found
@@ -83,44 +83,43 @@ status: issues_found
 
 # Phase 02: Code Review Report
 
-**Reviewed:** 2026-07-31T21:07:22Z
-**Depth:** standard
+**Reviewed:** 2026-07-31T21:18:09Z
+**Depth:** deep
 **Files Reviewed:** 69
 **Status:** issues_found
 
 ## Summary
 
-The two latest fixes resolve the prior scoring-suite regression and enforce the exact `expected_fields` contract. The full five-module Phase 02 suite passes (35 tests), and the Phase 2 source-authority, v2 adversarial-report, and v2 H1 JSON/Markdown validators all pass. The current H1 v2 packet has 11 blank signature slots, no v2 decision artifact, and `external_publication_authorized: false`; its deliberate manual gate remains intact.
+This convergence review replayed the Phase 2 authority, measurement, adversarial, and H1 validation chain and examined the original review at `7cd40a81`, the three fix iterations, and `29798a2a`. CR-01, CR-02, CR-04, WR-01 through WR-03, and the report-level absolute-path and `..` traversal cases are closed. The report-owned attempt directory is also rejected when it is itself a symbolic link.
 
-The original CR-01 through CR-04 and WR-01 through WR-03 are otherwise closed: attempts are replay-derived, evidence spans are fixture-scoped, all twelve current oracle attempts are retained, adapter and packet publication are no-replace/atomic, and a machine-created `approved` H1 decision is rejected with `H1_MANUAL_AUTHORIZATION_REQUIRED`. One report-custody path boundary remains open.
+The latest fix is incomplete, however: an owned `oracle-NN` directory can contain symbolic links for its manifest or artifacts, and the validator follows them. This lets an H1-bound adversarial report validate using evidence stored outside its declared report-owned custody root. The v2 H1 packet is correctly unsigned (all 11 signature slots are null), has no corresponding v2 decision file, remains manually gated, and sets `external_publication_authorized: false`; this finding does not change those states.
+
+Validation run successfully:
+
+- The full five-module Phase 2 `unittest` suite.
+- `validate-phase2-source-authority` against the active accepted v2 fixture generation.
+- Formal attempt, v2 adversarial-report, and v2 H1 JSON/Markdown validators.
 
 ## Narrative Findings (AI reviewer)
 
-## Warnings
+## Critical Issues
 
-### WR-01: Adversarial-report validation accepts attempts outside its owned custody directory
+### CR-01: Report-owned attempts may delegate their manifest or artifacts through symbolic links
 
-**Classification:** WARNING
+**Classification:** BLOCKER
 
-**File:** `experiments/specchoice-v1.3.2/src/specchoice_measurement/cli.py:271-281`
+**File:** `experiments/specchoice-v1.3.2/src/specchoice_measurement/attempts.py:178-185, 213-215, 246-255`; `experiments/specchoice-v1.3.2/src/specchoice_measurement/cli.py:271-285`
 
-**Issue:** The report is meant to retain each oracle attempt under `{report.stem}-attempts`, but `case["attempt_id"]` is only checked as a string before it is appended to that root. A `Path` join with an absolute string discards `attempt_root`, while `..` components can escape it. The validator therefore accepts a canonical report whose 12 cases reference valid diagnostic attempts elsewhere on disk. This weakens the report-owned immutable-custody guarantee that closed CR-03 and makes validation depend on external paths rather than only the report packet.
+**Issue:** Commit `29798a2a` constrains every case to its generated `oracle-NN` name and rejects a symlinked attempt directory, which closes the absolute-ID, `..`, and directory-symlink variants. But `validate_measurement_attempt()` reads `attempt.json` and each declared artifact with `Path.read_bytes()` without requiring those entries to be regular non-symlink files. `validate_adversarial_report()` therefore accepts a regular report-owned `oracle-01` directory whose `attempt.json` is a link to an otherwise valid attempt outside `{report.stem}-attempts`.
 
-**Reproduction:** Replacing every v2 case `attempt_id` with the absolute path to its existing `oracle-NN` directory, while leaving a present empty `{report.stem}-attempts` directory, is accepted by `validate_adversarial_report()`.
+**Reproduction:** In a temporary copy of `adversarial-oracle-results-v2.json` and its `-attempts` directory, copy `oracle-01/attempt.json` outside the attempt root, replace the in-root file with a symbolic link to that external copy, then call `validate_adversarial_report()`. It returns `diagnostic_only`.
 
-**Fix:** Require the generated, path-safe identifier for each position and resolve/check the path before reading it. For example:
+This reopens the immutable-custody boundary from original CR-03: the report JSON can be H1-bound while its supposedly retained attempt evidence is not owned by the report packet.
 
-```python
-expected_id = f"oracle-{index:02d}"
-if case.get("attempt_id") != expected_id:
-    raise AttemptError("ADVERSARIAL_REPORT_INVALID")
-attempt_path = attempt_root / expected_id
-```
-
-Also add regressions for absolute paths, `..`, and a valid attempt stored outside the report-owned root.
+**Fix:** Make attempt validation enforce the same fail-closed filesystem policy for the attempt root, `attempt.json`, and every manifest-declared artifact before reading it. Reuse the project filesystem primitive (or an equivalent `lstat`-based regular-file check that rejects links and special files) and add regressions for an external `attempt.json`, `diagnostics.json`, and `parsed-predictions.json` reached through links inside a regular `oracle-NN` directory. The report validator should surface the same `ADVERSARIAL_REPORT_INVALID` result for each case.
 
 ---
 
-_Reviewed: 2026-07-31T21:07:22Z_
+_Reviewed: 2026-07-31T21:18:09Z_
 _Reviewer: the agent (gsd-code-reviewer)_
-_Depth: standard_
+_Depth: deep_
