@@ -16,7 +16,11 @@ from unittest.mock import patch
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_measurement.adapter import build_pr2164_adapter_batch
 from specchoice_measurement.attempts import AttemptError, run_measurement_attempt, validate_measurement_attempt
-from specchoice_measurement.cli import command_run_formal_measurement
+from specchoice_measurement.cli import (
+    command_run_adversarial_oracles,
+    command_run_formal_measurement,
+    validate_adversarial_report,
+)
 from specchoice_measurement.preflight import preflight_prediction_batch
 from specchoice_measurement.scoring import score_prediction_batch
 
@@ -151,6 +155,40 @@ class MeasurementAttemptTests(unittest.TestCase):
             with self.assertRaisesRegex(AttemptError, "ATTEMPT_TARGET_EXISTS"):
                 command_run_formal_measurement(args)
             self.assertEqual((target / "attempt.json").read_bytes(), original)
+
+    def test_adversarial_cli_is_diagnostic_only_and_matches_every_frozen_oracle(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            formal_args = SimpleNamespace(
+                authority=self.experiment_root / "phase2/source-authority.json",
+                bundle=self.bundle,
+                rules=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
+                schema=self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json",
+                predictions=self.experiment_root / "fixtures/measurement/golden-predictions-v1.json",
+                attempt_root=root / "attempts",
+                attempt_id="formal",
+            )
+            self.assertEqual(command_run_formal_measurement(formal_args), 0)
+            report = root / "adversarial.json"
+            args = SimpleNamespace(
+                authority=formal_args.authority,
+                bundle=formal_args.bundle,
+                rules=formal_args.rules,
+                schema=formal_args.schema,
+                predictions=formal_args.predictions,
+                oracle=self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json",
+                formal_attempt=root / "attempts/formal",
+                report=report,
+            )
+            self.assertEqual(command_run_adversarial_oracles(args), 0)
+            payload = validate_adversarial_report(report_path=report)
+            self.assertEqual(payload["status"], "diagnostic_only")
+            self.assertEqual(len(payload["cases"]), 12)
+            self.assertTrue(all(case["role"] == "diagnostic_only" and case["matched"] for case in payload["cases"]))
+            self.assertNotIn("metrics", payload)
+            with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
+                report.write_bytes(canonical_json_bytes({"status": "formal"}))
+                validate_adversarial_report(report_path=report)
 
 
 if __name__ == "__main__":
