@@ -10,8 +10,10 @@ from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes
 from specchoice_measurement.adapter import build_pr2164_adapter_batch
+from specchoice_measurement.diagnostics import Diagnostic
 from specchoice_measurement.preflight import preflight_prediction_batch
 from specchoice_measurement.scoring import score_prediction_batch
+from specchoice_measurement.strict_json import _validate_span
 
 
 class MeasurementScoringTests(unittest.TestCase):
@@ -43,6 +45,42 @@ class MeasurementScoringTests(unittest.TestCase):
         return preflight_prediction_batch(
             raw=canonical_json_bytes(payload), adapter_batch=self.batch, ingress="current-v1"
         )
+
+    def mutate_for_oracle(self, payload: dict[str, object], oracle_id: str) -> None:
+        by_fixture = {item["fixture_id"]: item for item in payload["predictions"]}
+        positive = by_fixture["POS_CSR_RW_MTVEC_ACCESS"]
+        candidate = by_fixture["CAND_WARL_FIXED_LEGAL_SET"]
+        negative = by_fixture["NEG_EXT_GATED_PBMTE"]
+        target_span = positive["adjudication"]["evidence_spans"][0]
+        mutations = {
+            "accepted-parameter-name-missing": lambda: positive["adjudication"].update(proposed_name=None),
+            "candidate-not-surfaced": lambda: candidate["adjudication"].update(
+                surfaced=False, parameter_status=None, evidence_spans=[]
+            ),
+            "candidate-accepted": lambda: candidate["adjudication"].update(parameter_status="accept"),
+            "candidate-review": lambda: candidate["adjudication"].update(parameter_status="review"),
+            "positive-not-surfaced": lambda: positive["adjudication"].update(
+                surfaced=False, parameter_status=None, proposed_name=None, evidence_spans=[]
+            ),
+            "positive-classified-out": lambda: positive["adjudication"].update(parameter_status="classify_out"),
+            "negative-accepted": lambda: negative["adjudication"].update(
+                surfaced=True,
+                parameter_status="accept",
+                proposed_name="PBMTE",
+                evidence_spans=[deepcopy(target_span)],
+            ),
+            "negative-review": lambda: negative["adjudication"].update(
+                surfaced=True,
+                parameter_status="review",
+                proposed_name=None,
+                evidence_spans=[deepcopy(target_span)],
+            ),
+            "evidence-empty": lambda: positive["adjudication"].update(evidence_spans=[]),
+            "evidence-source-changed": lambda: target_span.update(source_sha256="0" * 64),
+            "evidence-empty-range": lambda: target_span.update(end_byte=0),
+            "evidence-text-mismatch": lambda: target_span.update(text="changed"),
+        }
+        mutations[oracle_id]()
 
     def test_exact_all_eleven_golden_outcomes_keep_dimensions_independent(self) -> None:
         preflight = self.preflight(self.golden_payload())
@@ -114,6 +152,20 @@ class MeasurementScoringTests(unittest.TestCase):
         self.assertEqual(result.metrics.as_dict()["disposition"], {"numerator": 7, "denominator": 7})
         self.assertEqual([item.as_dict() for item in result.diagnostics], oracle["expected_diagnostics"])
 
+    def test_every_required_diagnostic_oracle_is_complete_and_exact(self) -> None:
+        required_fields = {
+            "code", "severity", "fixture_id", "finding_id", "field", "occurrence", "expected", "observed", "source_sha256"
+        }
+        for oracle in self.required_diagnostic_oracles()["oracles"]:
+            with self.subTest(oracle=oracle["id"]):
+                self.assertEqual(set(oracle["expected_diagnostics"][0]), required_fields)
+                payload = self.golden_payload()
+                self.mutate_for_oracle(payload, oracle["id"])
+                result = score_prediction_batch(adapter_batch=self.batch, preflight=self.preflight(payload), mode="formal")
+                expected = oracle["expected_diagnostics"][0]
+                observed = next(item.as_dict() for item in result.diagnostics if item.code == expected["code"])
+                self.assertEqual(observed, expected)
+
     def test_exact_duplicate_and_adjacent_spans_remain_distinct(self) -> None:
         payload = self.golden_payload()
         positive = next(item for item in payload["predictions"] if item["fixture_id"] == "POS_CSR_RW_MTVEC_ACCESS")
@@ -141,6 +193,44 @@ class MeasurementScoringTests(unittest.TestCase):
         self.assertEqual(preflight.parsed_predictions[5]["adjudication"]["evidence_spans"], [span, span, adjacent])
         self.assertEqual(result.status, "completed")
         self.assertTrue(next(item for item in result.case_outcomes if item.fixture_id == "POS_CSR_RW_MTVEC_ACCESS").evidence_integrity)
+
+    def test_invalid_utf8_boundary_is_rejected_without_repair(self) -> None:
+        record = next(item for item in self.batch.records if item.fixture_id == "POS_DIRECT_CACHE_BLOCK")
+        source = next(
+            raw_file
+            for raw_file in record.raw_files
+            if any(byte >= 128 for byte in (self.bundle / raw_file.path).read_bytes())
+        )
+        raw = (self.bundle / source.path).read_bytes()
+        boundary = next(index for index, byte in enumerate(raw) if byte >= 128)
+        diagnostics: list[Diagnostic] = []
+        parsed = _validate_span(
+            {
+            "source_sha256": source.sha256,
+            "start_byte": boundary + 1,
+            "end_byte": boundary + 3,
+            "text": "--",
+            },
+            fixture_id=record.fixture_id,
+            field="adjudication.evidence_spans[0]",
+            source_by_sha256={source.sha256: raw},
+            diagnostics=diagnostics,
+        )
+
+        self.assertIsNone(parsed)
+        self.assertEqual([item.code for item in diagnostics], ["EVIDENCE_TEXT_NOT_UTF8"])
+
+    def test_case_and_warning_diagnostic_order_are_input_order_independent(self) -> None:
+        payload = self.golden_payload()
+        for fixture_id in ("POS_CSR_RW_MTVEC_ACCESS", "POS_DIRECT_CACHE_BLOCK"):
+            next(item for item in payload["predictions"] if item["fixture_id"] == fixture_id)["adjudication"]["proposed_name"] = None
+        reversed_payload = deepcopy(payload)
+        reversed_payload["predictions"].reverse()
+
+        left = score_prediction_batch(adapter_batch=self.batch, preflight=self.preflight(payload), mode="formal")
+        right = score_prediction_batch(adapter_batch=self.batch, preflight=self.preflight(reversed_payload), mode="formal")
+
+        self.assertEqual(left.as_dict(), right.as_dict())
 
 
 if __name__ == "__main__":

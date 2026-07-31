@@ -18,6 +18,7 @@ class Diagnostic:
     severity: str
     fixture_id: str | None = None
     field: str = ""
+    finding_id: str | None = None
     occurrence: int = 0
     expected: object | None = None
     observed: object | None = None

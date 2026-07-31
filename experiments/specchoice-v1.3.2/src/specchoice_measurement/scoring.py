@@ -163,6 +163,7 @@ def _outcome_for(
     assert isinstance(surfaced, bool)
     assert status is None or isinstance(status, str)
     assert name is None or isinstance(name, str)
+    finding_id = str(prediction["finding_id"])
     evidence_integrity = _evidence_integrity(
         prediction=prediction, fixture_id=fixture_id, source_bytes_by_sha256=source_bytes_by_sha256, diagnostics=diagnostics
     )
@@ -172,17 +173,27 @@ def _outcome_for(
 
     if category == "positive":
         if not surfaced:
-            diagnostics.append(Diagnostic("MISSING_EXPECTED_PARAMETER", "blocker", fixture_id, "adjudication.surfaced", expected=True, observed=False))
+            diagnostics.append(Diagnostic("MISSING_EXPECTED_PARAMETER", "blocker", fixture_id, "adjudication.surfaced", finding_id=finding_id, expected=True, observed=False))
         elif status == "classify_out":
-            diagnostics.append(Diagnostic("POSITIVE_CLASSIFIED_OUT", "blocker", fixture_id, "adjudication.parameter_status", expected="accept", observed=status))
+            diagnostics.append(Diagnostic("POSITIVE_CLASSIFIED_OUT", "blocker", fixture_id, "adjudication.parameter_status", finding_id=finding_id, expected="accept", observed=status))
         elif status != "accept":
-            diagnostics.append(Diagnostic("MISSING_EXPECTED_PARAMETER", "blocker", fixture_id, "adjudication.parameter_status", expected="accept", observed=status))
+            diagnostics.append(Diagnostic("MISSING_EXPECTED_PARAMETER", "blocker", fixture_id, "adjudication.parameter_status", finding_id=finding_id, expected="accept", observed=status))
         else:
             disposition_correct = True
             expected_name = getattr(record, "expected_parameter_names")[0]
             if name is None:
                 identity_outcome = "missing"
-                diagnostics.append(Diagnostic("ACCEPTED_PARAMETER_NAME_MISSING", "warning", fixture_id, "adjudication.proposed_name", expected=expected_name, observed=None))
+                diagnostics.append(
+                    Diagnostic(
+                        "ACCEPTED_PARAMETER_NAME_MISSING",
+                        "warning",
+                        fixture_id,
+                        "adjudication.proposed_name",
+                        finding_id=str(prediction["finding_id"]),
+                        expected=expected_name,
+                        observed=None,
+                    )
+                )
             elif name == expected_name:
                 identity_outcome = "exact"
             else:
@@ -190,20 +201,20 @@ def _outcome_for(
     elif category == "negative":
         if surfaced:
             code = "UNEXPECTED_ACCEPTED_PARAMETER" if status == "accept" else "NEGATIVE_UNNECESSARILY_SURFACED"
-            diagnostics.append(Diagnostic(code, "blocker", fixture_id, "adjudication.parameter_status", expected=None, observed=status))
+            diagnostics.append(Diagnostic(code, "blocker", fixture_id, "adjudication.parameter_status", finding_id=finding_id, expected=None, observed=status))
         else:
             disposition_correct = True
     else:
         if not surfaced:
-            diagnostics.append(Diagnostic("CANDIDATE_NOT_SURFACED", "blocker", fixture_id, "adjudication.surfaced", expected=True, observed=False))
+            diagnostics.append(Diagnostic("CANDIDATE_NOT_SURFACED", "blocker", fixture_id, "adjudication.surfaced", finding_id=finding_id, expected=True, observed=False))
         elif status == "accept":
-            diagnostics.append(Diagnostic("CANDIDATE_ACCEPTED_AS_PARAMETER", "blocker", fixture_id, "adjudication.parameter_status", expected="classify_out", observed=status))
+            diagnostics.append(Diagnostic("CANDIDATE_ACCEPTED_AS_PARAMETER", "blocker", fixture_id, "adjudication.parameter_status", finding_id=finding_id, expected="classify_out", observed=status))
         elif status == "review":
-            diagnostics.append(Diagnostic("CANDIDATE_LEFT_UNRESOLVED", "blocker", fixture_id, "adjudication.parameter_status", expected="classify_out", observed=status))
+            diagnostics.append(Diagnostic("CANDIDATE_LEFT_UNRESOLVED", "blocker", fixture_id, "adjudication.parameter_status", finding_id=finding_id, expected="classify_out", observed=status))
         elif status == "classify_out":
             disposition_correct = True
         else:
-            diagnostics.append(Diagnostic("CANDIDATE_LEFT_UNRESOLVED", "blocker", fixture_id, "adjudication.parameter_status", expected="classify_out", observed=status))
+            diagnostics.append(Diagnostic("CANDIDATE_LEFT_UNRESOLVED", "blocker", fixture_id, "adjudication.parameter_status", finding_id=finding_id, expected="classify_out", observed=status))
     return CaseOutcome(
         fixture_id=fixture_id,
         finding_id=str(prediction["finding_id"]),
