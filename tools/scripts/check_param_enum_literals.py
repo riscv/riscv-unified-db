@@ -31,9 +31,7 @@ SCAN_ROOTS = [
 SCAN_SUFFIXES = {".yaml", ".yml", ".isa", ".idl"}
 
 # PARAM == "literal" or PARAM != "literal" (double or single quotes)
-COMPARE_RE = re.compile(
-    r"""\b([A-Z][A-Z0-9_]*)\s*(==|!=)\s*(?:"([^"]*)"|'([^']*)')"""
-)
+COMPARE_RE = re.compile(r"""\b([A-Z][A-Z0-9_]*)\s*(==|!=)\s*(?:"([^"]*)"|'([^']*)')""")
 
 
 def load_param_string_enums(param_dir: Path) -> dict[str, set[str]]:
