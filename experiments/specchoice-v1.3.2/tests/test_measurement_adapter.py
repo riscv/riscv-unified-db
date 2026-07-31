@@ -108,6 +108,38 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual(rejected.records, ())
         self.assertEqual(rejected.diagnostics[0].code, "PHASE2_SOURCE_AUTHORITY_INVALID")
 
+    def test_adapter_preserves_authoritative_bytes_and_refuses_output_overwrite(self) -> None:
+        raw_before = {
+            path.relative_to(self.bundle).as_posix(): sha256_bytes(path.read_bytes())
+            for path in sorted((self.bundle / "raw").rglob("*"))
+            if path.is_file()
+        }
+        self.build()
+        raw_after = {
+            path.relative_to(self.bundle).as_posix(): sha256_bytes(path.read_bytes())
+            for path in sorted((self.bundle / "raw").rglob("*"))
+            if path.is_file()
+        }
+        self.assertEqual(raw_after, raw_before)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "immutable.json"
+            output.write_text("preserve me", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    "python3", "-m", "specchoice_measurement.cli", "adapt-pr2164",
+                    "--authority", self.authority.as_posix(), "--bundle", self.bundle.as_posix(),
+                    "--rules", self.rules.as_posix(), "--output", output.as_posix(),
+                ],
+                cwd=self.experiment_root,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("ADAPTER_OUTPUT_ALREADY_EXISTS", result.stderr)
+            self.assertEqual(output.read_text(encoding="utf-8"), "preserve me")
+
 
 if __name__ == "__main__":
     unittest.main()

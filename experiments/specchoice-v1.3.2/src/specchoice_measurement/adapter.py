@@ -187,34 +187,148 @@ def _record_from_fixture(
     )
 
 
+def validate_complete_adapter_batch(
+    *,
+    records: tuple[CanonicalFixtureRecord, ...],
+    expected_fixture_ids: tuple[str, ...],
+    expected_raw_file_count: int,
+    adapter_version: str,
+    rule_sha256: str,
+    source_identity: dict[str, str],
+) -> AdapterBatch:
+    """Make score eligibility an explicit finite-set and identity gate.
+
+    The function deliberately does not repair, sort, or retain an invalid record set:
+    diagnostics are audit material only, while records remain unavailable to a scorer.
+    """
+    diagnostics: list[Diagnostic] = []
+    actual_ids = tuple(record.fixture_id for record in records)
+    if actual_ids != tuple(sorted(actual_ids)):
+        diagnostics.append(Diagnostic(code="ADAPTER_ORDER_NONCANONICAL", severity="blocker"))
+    if set(actual_ids) != set(expected_fixture_ids) or len(actual_ids) != len(expected_fixture_ids):
+        diagnostics.append(
+            Diagnostic(
+                code="ADAPTER_FIXTURE_SET_MISMATCH",
+                severity="blocker",
+                expected=list(expected_fixture_ids),
+                observed=list(actual_ids),
+            )
+        )
+    for occurrence, fixture_id in enumerate(actual_ids):
+        if actual_ids.count(fixture_id) > 1:
+            diagnostics.append(
+                Diagnostic(
+                    code="ADAPTER_FIXTURE_DUPLICATE",
+                    severity="blocker",
+                    fixture_id=fixture_id,
+                    occurrence=occurrence + 1,
+                )
+            )
+    raw_file_count = sum(len(record.raw_files) for record in records)
+    if raw_file_count != expected_raw_file_count:
+        diagnostics.append(
+            Diagnostic(
+                code="ADAPTER_RAW_FILE_COUNT_MISMATCH",
+                severity="blocker",
+                expected=expected_raw_file_count,
+                observed=raw_file_count,
+            )
+        )
+    for occurrence, record in enumerate(records, start=1):
+        if record.adapter_version != adapter_version:
+            diagnostics.append(
+                Diagnostic(
+                    code="ADAPTER_VERSION_MIXED",
+                    severity="blocker",
+                    fixture_id=record.fixture_id,
+                    field="adapter_version",
+                    occurrence=occurrence,
+                    expected=adapter_version,
+                    observed=record.adapter_version,
+                )
+            )
+        if record.rule_sha256 != rule_sha256:
+            diagnostics.append(
+                Diagnostic(
+                    code="ADAPTER_RULE_HASH_MIXED",
+                    severity="blocker",
+                    fixture_id=record.fixture_id,
+                    field="rule_sha256",
+                    occurrence=occurrence,
+                    expected=rule_sha256,
+                    observed=record.rule_sha256,
+                )
+            )
+        if record.source_identity != source_identity:
+            diagnostics.append(
+                Diagnostic(
+                    code="ADAPTER_SOURCE_IDENTITY_MIXED",
+                    severity="blocker",
+                    fixture_id=record.fixture_id,
+                    occurrence=occurrence,
+                )
+            )
+    invalid = any(item.severity == "blocker" for item in diagnostics)
+    return AdapterBatch.from_parts(
+        adapter_version=adapter_version,
+        rule_sha256=rule_sha256,
+        source_identity=source_identity,
+        records=() if invalid else records,
+        diagnostics=tuple(diagnostics),
+    )
+
+
+def _invalid_batch(
+    *, adapter_version: str, rule_sha256: str, source_identity: dict[str, str], code: str
+) -> AdapterBatch:
+    return AdapterBatch.from_parts(
+        adapter_version=adapter_version,
+        rule_sha256=rule_sha256,
+        source_identity=source_identity,
+        records=(),
+        diagnostics=(Diagnostic(code=code, severity="blocker"),),
+    )
+
+
 def build_pr2164_adapter_batch(*, authority_path: Path, bundle_root: Path, rules_path: Path) -> AdapterBatch:
     """Build the sole score-eligible adapter batch from the active accepted v2 source."""
-    _validate_phase2_authority(authority_path, bundle_root)
-    authority, _ = _load_canonical_json(authority_path, "PHASE2_SOURCE_AUTHORITY_INVALID")
-    verified = verify_accepted_bundle(bundle_root)
-    source_identity = _source_identity(authority, verified)
     rules, rules_raw = _load_canonical_json(rules_path, "ADAPTER_RULES_NOT_CANONICAL")
     if rules.get("schema_version") != "1" or rules.get("adapter_version") != "pr2164-adapter-v1":
         raise AdapterError("ADAPTER_RULES_INVALID")
+    adapter_version = rules["adapter_version"]
     rule_sha256 = sha256_bytes(rules_raw)
-    registry_path = bundle_root / "fixture-registry-pr2164-v1.json"
-    registry, registry_raw = _load_canonical_json(registry_path, "FIXTURE_REGISTRY_NOT_CANONICAL")
-    if sha256_bytes(registry_raw) != source_identity["registry_sha256"]:
-        raise AdapterError("FIXTURE_REGISTRY_SHA256_MISMATCH")
-    fixtures = registry.get("fixtures")
-    if not isinstance(fixtures, list) or registry.get("fixture_count") != 11 or registry.get("raw_file_count") != 28:
-        raise AdapterError("FIXTURE_REGISTRY_COUNTS_INVALID")
-    records = tuple(
-        _record_from_fixture(
-            fixture, bundle_root=bundle_root, source_identity=source_identity,
-            adapter_version=rules["adapter_version"], rule_sha256=rule_sha256,
+    try:
+        _validate_phase2_authority(authority_path, bundle_root)
+        authority, _ = _load_canonical_json(authority_path, "PHASE2_SOURCE_AUTHORITY_INVALID")
+        verified = verify_accepted_bundle(bundle_root)
+        source_identity = _source_identity(authority, verified)
+        registry_path = bundle_root / "fixture-registry-pr2164-v1.json"
+        registry, registry_raw = _load_canonical_json(registry_path, "FIXTURE_REGISTRY_NOT_CANONICAL")
+        if sha256_bytes(registry_raw) != source_identity["registry_sha256"]:
+            raise AdapterError("FIXTURE_REGISTRY_SHA256_MISMATCH")
+        fixtures = registry.get("fixtures")
+        if not isinstance(fixtures, list) or registry.get("fixture_count") != 11 or registry.get("raw_file_count") != 28:
+            raise AdapterError("FIXTURE_REGISTRY_COUNTS_INVALID")
+        records = tuple(
+            _record_from_fixture(
+                fixture, bundle_root=bundle_root, source_identity=source_identity,
+                adapter_version=adapter_version, rule_sha256=rule_sha256,
+            )
+            for fixture in fixtures
+            if isinstance(fixture, dict)
         )
-        for fixture in fixtures
-        if isinstance(fixture, dict)
-    )
-    if len(records) != 11 or len({record.fixture_id for record in records}) != 11 or sum(len(record.raw_files) for record in records) != 28:
-        raise AdapterError("ADAPTER_COMPLETE_BATCH_REQUIRED")
-    return AdapterBatch.from_parts(
-        adapter_version=rules["adapter_version"], rule_sha256=rule_sha256, source_identity=source_identity,
-        records=records, diagnostics=(),
+    except (AdapterError, OSError, ValueError) as error:
+        return _invalid_batch(
+            adapter_version=adapter_version,
+            rule_sha256=rule_sha256,
+            source_identity={},
+            code=str(error).split(":", 1)[0],
+        )
+    return validate_complete_adapter_batch(
+        records=records,
+        expected_fixture_ids=tuple(str(fixture["fixture_id"]) for fixture in fixtures if isinstance(fixture, dict)),
+        expected_raw_file_count=28,
+        adapter_version=adapter_version,
+        rule_sha256=rule_sha256,
+        source_identity=source_identity,
     )
