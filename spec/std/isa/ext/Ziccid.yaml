@@ -23,7 +23,7 @@ type: unprivileged
 versions:
   - version: "1.0.0"
     state: ratified
-    ratification_date: unknown
+    ratification_date: 2026-06
 requirements:
   extension:
     name: Ziccif
