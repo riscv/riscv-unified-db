@@ -9,7 +9,10 @@
 kind: architecture configuration
 type: partially configured
 name: RVA20S64
-description: The RVA20S64 profile specifies the ISA features available to a supervisor-mode execution environment in 64-bit applications processors.  RVA20S64 is based on privileged architecture version 1.11.
+description: |
+  The RVA20S64 profile specifies the ISA features available to a
+  supervisor-mode execution environment in 64-bit applications
+  processors.  RVA20S64 is based on privileged architecture version 1.11.
 params: {}
 mandatory_extensions:
 - name: A

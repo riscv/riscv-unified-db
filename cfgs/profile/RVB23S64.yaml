@@ -9,7 +9,11 @@
 kind: architecture configuration
 type: partially configured
 name: RVB23S64
-description: The RVB23S64 profile specifies the ISA features available to supervisor-mode execution environments in 64-bit applications processors. An ECALL in user mode causes a contained trap to supervisor mode. An ECALL in supervisor mode causes a requested trap to the execution environment.
+description: |
+  The RVB23S64 profile specifies the ISA features available to supervisor-mode
+  execution environments in 64-bit applications processors.
+  An ECALL in user mode causes a contained trap to supervisor mode.
+  An ECALL in supervisor mode causes a requested trap to the execution environment.
 params: {}
 mandatory_extensions:
 - name: A

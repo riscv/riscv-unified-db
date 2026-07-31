@@ -9,7 +9,9 @@
 kind: architecture configuration
 type: partially configured
 name: RVI20U64
-description: U-mode extensions for version 20 of a 64-bit processor
+description: |
+  This profile specifies the ISA features available to generic unprivileged
+  execution environments.
 params: {}
 mandatory_extensions:
 - name: I

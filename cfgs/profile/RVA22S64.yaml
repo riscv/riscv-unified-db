@@ -9,7 +9,11 @@
 kind: architecture configuration
 type: partially configured
 name: RVA22S64
-description: The RVA22S64 profile specifies the ISA features available to a supervisor-mode execution environment in 64-bit applications processors.  RVA22S64 is based on privileged architecture version 1.12.
+description: |
+  The RVA22S64 profile specifies the ISA features available to a
+  supervisor-mode execution environment in 64-bit applications
+  processors.  RVA22S64 is based on privileged architecture version
+  1.12.
 params: {}
 mandatory_extensions:
 - name: A

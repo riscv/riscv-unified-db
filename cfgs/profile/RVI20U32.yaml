@@ -9,7 +9,9 @@
 kind: architecture configuration
 type: partially configured
 name: RVI20U32
-description: This profile specifies the ISA features available to generic unprivileged execution environments.
+description: |
+  This profile specifies the ISA features available to generic unprivileged
+  execution environments.
 params: {}
 mandatory_extensions:
 - name: I
