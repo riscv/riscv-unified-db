@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from copy import deepcopy
 from pathlib import Path
 
 from specchoice_measurement.adapter import build_pr2164_adapter_batch
@@ -140,6 +141,40 @@ class MeasurementParsingTests(unittest.TestCase):
         span["end_byte"] = span["start_byte"]
         invalid = self.preflight(payload)
         self.assertIn("EVIDENCE_RANGE_INVALID", {item.code for item in invalid.diagnostics})
+
+    def test_only_named_legacy_ingress_normalizes_reject_with_raw_trace(self) -> None:
+        payload = self.payload()
+        candidate = next(item for item in payload["predictions"] if item["fixture_id"].startswith("CAND_"))
+        candidate["adjudication"]["parameter_status"] = "reject"
+        raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+
+        legacy = preflight_prediction_batch(raw=raw, adapter_batch=self.batch, ingress="legacy-pr2164-v1")
+        current = preflight_prediction_batch(raw=raw, adapter_batch=self.batch, ingress="current-v1")
+
+        self.assertEqual(legacy.status, "completed_with_warnings")
+        self.assertEqual(legacy.raw_prediction_sha256, __import__("hashlib").sha256(raw).hexdigest())
+        normalized = next(item for item in legacy.parsed_predictions if item["fixture_id"].startswith("CAND_"))
+        self.assertEqual(normalized["adjudication"]["parameter_status"], "classify_out")
+        normalization = next(item for item in legacy.diagnostics if item.code == "LEGACY_PARAMETER_STATUS_NORMALIZED")
+        self.assertEqual((normalization.observed, normalization.expected), ("reject", "classify_out"))
+        self.assertIn("PARAMETER_STATUS_INVALID", {item.code for item in current.diagnostics})
+
+    def test_equivalent_blockers_have_byte_identical_total_diagnostic_ordering(self) -> None:
+        first = self.payload()
+        duplicate = deepcopy(first["predictions"][0])
+        first["predictions"].append(duplicate)
+        second = deepcopy(first)
+        second["predictions"] = list(reversed(second["predictions"]))
+        second["predictions"] = second["predictions"][-1:] + second["predictions"][:-1]
+
+        left = self.preflight(first)
+        right = self.preflight(second)
+
+        self.assertEqual(left.status, "invalid_preflight")
+        self.assertEqual(
+            json.dumps([item.as_dict() for item in left.diagnostics], sort_keys=True, separators=(",", ":")),
+            json.dumps([item.as_dict() for item in right.diagnostics], sort_keys=True, separators=(",", ":")),
+        )
 
 
 if __name__ == "__main__":
