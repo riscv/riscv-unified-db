@@ -271,12 +271,17 @@ def validate_adversarial_report(*, report_path: Path) -> dict[str, object]:
     attempt_root = report_path.parent / f"{report_path.stem}-attempts"
     if not attempt_root.is_dir() or attempt_root.is_symlink():
         raise AttemptError("ADVERSARIAL_REPORT_INVALID")
-    for entry, case in zip(expected_entries, cases, strict=True):
+    for index, (entry, case) in enumerate(zip(expected_entries, cases, strict=True), start=1):
         if not isinstance(entry, dict) or not isinstance(case, dict) or set(case) != {
             "attempt_id", "attempt_sha256", "expected_diagnostics", "id", "matched", "observed_diagnostics", "raw_predictions_sha256", "role", "status"
         } or case.get("id") != entry.get("id") or case.get("expected_diagnostics") != entry.get("expected_diagnostics") or case.get("observed_diagnostics") != entry.get("expected_diagnostics") or case.get("matched") is not True or (case.get("role"), case.get("status")) != ("diagnostic_only", "diagnostic_only") or not isinstance(case.get("attempt_id"), str) or not isinstance(case.get("attempt_sha256"), str) or len(case["attempt_sha256"]) != 64 or not isinstance(case.get("raw_predictions_sha256"), str) or len(case["raw_predictions_sha256"]) != 64:
             raise AttemptError("ADVERSARIAL_REPORT_INVALID")
-        attempt_path = attempt_root / case["attempt_id"]
+        expected_attempt_id = f"oracle-{index:02d}"
+        if case["attempt_id"] != expected_attempt_id:
+            raise AttemptError("ADVERSARIAL_REPORT_INVALID")
+        attempt_path = attempt_root / expected_attempt_id
+        if not attempt_path.is_dir() or attempt_path.is_symlink():
+            raise AttemptError("ADVERSARIAL_REPORT_INVALID")
         validated = validate_measurement_attempt(attempt_root=attempt_path)
         if validated != {"attempt_sha256": case["attempt_sha256"], "role": "diagnostic_only", "status": "diagnostic_only"}:
             raise AttemptError("ADVERSARIAL_REPORT_INVALID")

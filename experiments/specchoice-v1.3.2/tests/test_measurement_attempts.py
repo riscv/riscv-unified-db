@@ -6,6 +6,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import shutil
 import tempfile
 import unittest
 from copy import deepcopy
@@ -208,6 +209,27 @@ class MeasurementAttemptTests(unittest.TestCase):
             attempt_root = root / "adversarial-attempts"
             self.assertTrue(all((attempt_root / case["attempt_id"] / "attempt.json").is_file() for case in payload["cases"]))
             self.assertNotIn("metrics", payload)
+            original_payload = deepcopy(payload)
+
+            def assert_invalid_attempt_id(attempt_id: str) -> None:
+                tampered = deepcopy(original_payload)
+                tampered["cases"][0]["attempt_id"] = attempt_id
+                report.write_bytes(canonical_json_bytes(tampered))
+                with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
+                    validate_adversarial_report(report_path=report)
+
+            assert_invalid_attempt_id(str((attempt_root / "oracle-01").resolve()))
+
+            outside = root / "outside"
+            shutil.copytree(attempt_root / "oracle-01", outside / "oracle-01")
+            assert_invalid_attempt_id("../outside/oracle-01")
+
+            shutil.rmtree(attempt_root / "oracle-01")
+            (attempt_root / "oracle-01").symlink_to(outside / "oracle-01", target_is_directory=True)
+            report.write_bytes(canonical_json_bytes(original_payload))
+            with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
+                validate_adversarial_report(report_path=report)
+
             with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
                 report.write_bytes(canonical_json_bytes({"status": "formal"}))
                 validate_adversarial_report(report_path=report)
