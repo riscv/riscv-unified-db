@@ -139,6 +139,14 @@ class MeasurementAdapterTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("ADAPTER_OUTPUT_ALREADY_EXISTS", result.stderr)
             self.assertEqual(output.read_text(encoding="utf-8"), "preserve me")
+            broken = Path(temporary) / "broken.json"
+            broken.symlink_to(Path(temporary) / "missing-target")
+            result = subprocess.run(
+                [*result.args[:-1], broken.as_posix()], cwd=self.experiment_root,
+                check=False, capture_output=True, text=True,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertTrue(broken.is_symlink())
 
 
 if __name__ == "__main__":

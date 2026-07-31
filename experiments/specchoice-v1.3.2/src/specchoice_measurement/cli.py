@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import os
 import sys
 import tempfile
 from copy import deepcopy
@@ -22,7 +23,14 @@ from .scoring import score_prediction_batch
 
 
 def command_adapt_pr2164(args: argparse.Namespace) -> int:
-    if args.output.exists():
+    try:
+        parent = os.lstat(args.output.parent)
+        target = os.lstat(args.output)
+    except FileNotFoundError:
+        target = None
+    except OSError as error:
+        raise AdapterError("ADAPTER_OUTPUT_PATH_INVALID") from error
+    if not args.output.parent.is_dir() or args.output.parent.is_symlink() or target is not None:
         raise AdapterError("ADAPTER_OUTPUT_ALREADY_EXISTS")
     batch = build_pr2164_adapter_batch(
         authority_path=args.authority,
@@ -31,8 +39,11 @@ def command_adapt_pr2164(args: argparse.Namespace) -> int:
     )
     if not batch.valid:
         raise AdapterError("ADAPTER_BATCH_NOT_SCORE_ELIGIBLE")
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_bytes(canonical_json_bytes(batch.as_dict()))
+    try:
+        _write_exact(args.output, canonical_json_bytes(batch.as_dict()))
+        _sync_directory(args.output.parent)
+    except FileExistsError as error:
+        raise AdapterError("ADAPTER_OUTPUT_ALREADY_EXISTS") from error
     sys.stdout.buffer.write(canonical_json_bytes({"adapter_batch_sha256": batch.adapter_batch_sha256, "status": "written"}))
     return 0
 
