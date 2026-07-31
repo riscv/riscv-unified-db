@@ -293,11 +293,18 @@ def validate_h1_decision(*, packet: Path, decision: Path) -> dict[str, Any]:
         raise H1Error("H1_DECISION_REVIEW_SET_INVALID")
     disputed = False
     for expected_review, review in zip(expected_reviews, reviews, strict=True):
-        if not isinstance(review, dict) or set(review) != {"disposition", "fixture_id", "reviewed_semantics", "reviewer", "signature"}:
+        if not isinstance(review, dict):
             raise H1Error("H1_DECISION_REVIEW_INVALID")
-        if review.get("fixture_id") != expected_review["fixture_id"] or review.get("reviewed_semantics") != {
-            key: item for key, item in expected_review.items() if key != "signature_slot"
-        } or not isinstance(review.get("reviewer"), str) or not review["reviewer"] or not isinstance(review.get("signature"), str) or not review["signature"]:
+        expected_semantics = {key: item for key, item in expected_review.items() if key != "signature_slot"}
+        full_fields = {"disposition", "fixture_id", "reviewed_semantics", "reviewer", "signature"}
+        hashed_fields = {"disposition", "fixture_id", "reviewed_semantics_sha256", "reviewer", "signature"}
+        if set(review) == full_fields:
+            semantics_valid = review.get("reviewed_semantics") == expected_semantics
+        elif set(review) == hashed_fields:
+            semantics_valid = review.get("reviewed_semantics_sha256") == sha256_bytes(canonical_json_bytes(expected_semantics))
+        else:
+            semantics_valid = False
+        if review.get("fixture_id") != expected_review["fixture_id"] or not semantics_valid or not isinstance(review.get("reviewer"), str) or not review["reviewer"] or not isinstance(review.get("signature"), str) or not review["signature"]:
             raise H1Error("H1_DECISION_REVIEW_INVALID")
         if review.get("disposition") not in {"approved", "disputed", "incomplete"}:
             raise H1Error("H1_DECISION_REVIEW_INVALID")

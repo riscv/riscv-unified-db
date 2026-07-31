@@ -124,6 +124,22 @@ class H1PacketTests(unittest.TestCase):
             with self.assertRaisesRegex(H1Error, "H1_DISPUTE_AGGREGATION_INVALID"):
                 validate_h1_decision(packet=packet_path, decision=decision_path)
 
+    def test_human_can_sign_each_exact_packet_semantics_hash(self) -> None:
+        with tempfile.TemporaryDirectory(dir=self.root) as directory:
+            root = Path(directory)
+            packet_path, _, packet = self._build(root)
+            decision_path = root / "decision.json"
+            decision = self._decision(packet)
+            reviews = decision["fixture_reviews"]
+            assert isinstance(reviews, list)
+            for review in reviews:
+                assert isinstance(review, dict)
+                semantics = review.pop("reviewed_semantics")
+                review["reviewed_semantics_sha256"] = sha256_bytes(canonical_json_bytes(semantics))
+            decision["decision_sha256"] = sha256_bytes(canonical_json_bytes({key: value for key, value in decision.items() if key != "decision_sha256"}))
+            decision_path.write_bytes(canonical_json_bytes(decision))
+            self.assertEqual(validate_h1_decision(packet=packet_path, decision=decision_path), decision)
+
 
 if __name__ == "__main__":
     unittest.main()
