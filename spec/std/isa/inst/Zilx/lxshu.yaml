@@ -30,6 +30,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  XReg virtual_address = X[xs2] + (X[xs1] << 1);
+  XReg virtual_address = X[xs2] + (X[xs1] `<< 1);
 
   X[xd] = read_memory(16, virtual_address, $encoding);
