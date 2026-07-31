@@ -17,6 +17,9 @@ key-files:
     - experiments/specchoice-v1.3.2/receipts/reviewer-boundary-decision-v6.json
     - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v6.json
     - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v6.md
+    - experiments/specchoice-v1.3.2/receipts/reviewer-boundary-decision-v7.json
+    - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v7.json
+    - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v7.md
   modified:
     - experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py
     - experiments/specchoice-v1.3.2/src/specchoice_evidence/bundle.py
@@ -33,7 +36,7 @@ decisions:
   - A local MVP receipt decision is valid only for one immutable reviewed Git revision and its canonical committed-change projection.
 metrics:
   tasks: 3
-status: human_gate_pending
+status: verification_pending
 ---
 
 # Phase 01 Plan 05: v5 history-aware boundary recovery Summary
@@ -56,6 +59,7 @@ Canonical v5 recovery evidence now detects committed post-baseline changes while
 - `2ae36b46` preserved the authorized v6 decision and schema-4 receipt unchanged after active finalization rejected absolute restart-lineage paths with `RESTART_LINEAGE_PROJECTION_MISMATCH`.
 - `b86ad102` made writer and finalizer share one canonical experiment-relative lineage mapping and added path-mode plus finalization-roundtrip regressions.
 - `b39bbc9b` added an exact post-review delta gate: after the decision's reviewed revision, only the named decision/receipt/Markdown, canonical future-control files, and `.DS_Store` may change.
+- `206d68ea` preserved the authorized v7 decision and finalized schema-4 receipt/Markdown bound to reviewed revision `39d70ca978ffb6798f4070904d1c66643b3e7711`.
 
 ## Verification
 
@@ -65,6 +69,8 @@ Canonical v5 recovery evidence now detects committed post-baseline changes while
 - The add-then-delete regression proves a clean final tree cannot erase a committed out-of-boundary history event from either the frozen projection or current gate.
 - The canonical-path roundtrip exposed stale-decision replay before the post-review gate was added; the committed v6 attempt remains intentionally unchanged and non-finalizable.
 - Reusing the stale v6 decision after the portability repair now fails before writing with `LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING`; no replacement files are created.
+- v7 active finalization passes before and after its artifact commit with receipt self-hash `4b02a68d2cd9207e81a1b17ac7e06e81693088c4f43138eaac6d134e28144900`; canonical JSON file SHA-256 is `e9736da91b5728952cd4a03081f7c3855cd9e2b9c046f939696dc66243ce2d8a`.
+- v7 binds projection `6ca959fdf8bb48fbcef5a7c3ca035e0374973e3461c95bb4e4157c7c0c0b88e9` and basis `bedd658c8b52ee41c7f780a5e6a455a9e47d1ff9409c27b1225e7d04d45935f3`; external publication remains false.
 - Copied accepted bundle verified with Git unavailable; before/after SHA-256 inventories were identical.
 - Accepted identity is unchanged: generation `source-contract-v2-pr2192-86a0021b-verifier-rooted-v1`, core `6ca1f176c84464d499d6c0e81d03ba3f23fdcdd1b5bd43bc28d9b2153a797495`, root `aacdda8218e3779747ae2dec45f9da81822f615ec4b257e55b0766baf8317d5a`, snapshot `1c81f84cf4894a7ecfde4b72e17d6e479a91cb0cfa408258611b00bdf5e2e397`, publication false.
 
@@ -79,4 +85,4 @@ Canonical v5 recovery evidence now detects committed post-baseline changes while
 
 ## Self-Check: PASSED
 
-All v5 artifacts exist, are canonical, and the recorded task commits exist. A new local receipt can be issued only after independent review freezes one exact revision and the user authorizes its computed proposal-only basis. No external publication is authorized.
+All v5-v7 artifacts and recorded task commits exist. The authorized v7 receipt passes the active machine gate and offline bundle replay; only the downstream security and independent phase-verification gates remain. No external publication is authorized.
