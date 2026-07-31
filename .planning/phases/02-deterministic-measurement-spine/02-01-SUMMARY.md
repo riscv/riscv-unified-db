@@ -21,6 +21,30 @@ key-files:
 decisions:
   - Adapter authority is delegated to the existing Phase 1 source-authority CLI and accepted-bundle verifier; Phase 2 does not duplicate custody policy.
   - Score eligibility is one finite, ordered 11-fixture and 28-raw-file batch with one adapter version and rule SHA-256; invalid batches expose diagnostics but no records.
+requirements-completed: [TS-03]
+coverage:
+  - id: D1
+    description: "Accepted-v2-only versioned PR #2164 adapter, domain records, canonical rules, and adapt-pr2164 CLI tracer."
+    requirement: TS-03
+    verification:
+      - kind: unit
+        ref: "experiments/specchoice-v1.3.2/tests/test_measurement_adapter.py#test_accepted_v2_builds_the_complete_canonical_partition"
+        status: pass
+      - kind: integration
+        ref: "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m specchoice_evidence.cli validate-phase2-source-authority --authority phase2/source-authority.json --bundle bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        status: pass
+    human_judgment: false
+  - id: D2
+    description: "Fail-closed complete-batch closure diagnostics, source rejection, and no-replace canonical output policy."
+    requirement: TS-03
+    verification:
+      - kind: unit
+        ref: "experiments/specchoice-v1.3.2/tests/test_measurement_adapter.py#test_incomplete_duplicate_reordered_and_mixed_batches_have_all_blockers_and_no_records"
+        status: pass
+      - kind: unit
+        ref: "experiments/specchoice-v1.3.2/tests/test_measurement_adapter.py#test_adapter_preserves_authoritative_bytes_and_refuses_output_overwrite"
+        status: pass
+    human_judgment: false
 metrics:
   duration: 7m
   tasks_completed: 2
