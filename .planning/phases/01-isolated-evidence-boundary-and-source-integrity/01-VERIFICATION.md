@@ -1,16 +1,16 @@
 ---
 phase: 01-isolated-evidence-boundary-and-source-integrity
-verified: 2026-07-31T08:53:22Z
-status: passed
-score: 9/9 must-haves verified
+verified: 2026-07-31T09:52:58Z
+status: gaps_found
+score: 9/10 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
-  previous_status: gaps_found
-  previous_score: 8/9
-  gaps_closed:
-    - "Only experiments/specchoice-v1.3.2/ and the exact control-file allowlist are attributable Phase 1 changes; every other out-of-boundary delta fails closed."
-  gaps_remaining: []
+  previous_status: passed
+  previous_score: 9/9
+  gaps_closed: []
+  gaps_remaining:
+    - "The source bundle consumed by Phase 2 must contain all raw inputs required to score the 11 pinned PR #2164 fixtures offline; the current generation contains only two gold.yaml files and is explicitly downstream_eligible:false."
   regressions: []
 ---
 
@@ -18,11 +18,11 @@ re_verification:
 
 **Phase Goal:** The operator and reviewer can work from a self-contained experiment boundary whose public source identity is independently verifiable.
 
-**Verified:** 2026-07-31T08:53:22Z
+**Verified:** 2026-07-31T09:52:58Z
 
-**Status:** passed
+**Status:** gaps_found
 
-**Re-verification:** Yes — after committed-history gap closure and authorized v7 local receipt.
+**Re-verification:** Yes — post-close cross-phase input-completeness audit before Phase 2 planning.
 
 ## Goal Achievement
 
@@ -39,8 +39,9 @@ re_verification:
 | 7 | Canonical JSON receipt is authoritative, Markdown is its deterministic JSON-only projection, and rejected #2192 evidence cannot pass. | ✓ VERIFIED | `receipt.py` validates canonical receipt bytes and self-hash before `render_markdown`; the full suite passed Markdown-failure and rejected-source tests. The frozen #2192 test asserts `PR_PIN_NOT_REACHABLE` has no accepted identity. |
 | 8 | Local acceptance binds exactly one verifier-rooted accepted generation, uses reviewed revision `39d70ca978ffb6798f4070904d1c66643b3e7711`, and forbids external publication. | ✓ VERIFIED | `reviewer-boundary-decision-v7.json` and `integrity-receipt-v7.json` bind projection `6ca959fdf8bb48fbcef5a7c3ca035e0374973e3461c95bb4e4157c7c0c0b88e9`, basis `bedd658c8b52ee41c7f780a5e6a455a9e47d1ff9409c27b1225e7d04d45935f3`, and receipt self-hash `4b02a68d2cd9207e81a1b17ac7e06e81693088c4f43138eaac6d134e28144900`. `finalize-review` returned pass; its code requires the exact decision hash, identity, revision-bound projection, basis, Markdown projection, clean current boundary, and `external_publication_authorized:false`. |
 | 9 | A stale v6 authority cannot authorize the current receipt after post-review changes, while the accepted generation identity remains unchanged. | ✓ VERIFIED | Finalizing v6 explicitly returned `RESTART_LINEAGE_PROJECTION_MISMATCH` / exit 2. The 76-test suite passed `test_v6_decision_cannot_rebuild_a_receipt_after_post_review_code_changes`, historical-receipt finalization rejection, and post-review delta tests. v7 retains generation `source-contract-v2-pr2192-86a0021b-verifier-rooted-v1`, core `6ca1f176c84464d499d6c0e81d03ba3f23fdcdd1b5bd43bc28d9b2153a797495`, root `aacdda8218e3779747ae2dec45f9da81822f615ec4b257e55b0766baf8317d5a`, and snapshot manifest `1c81f84cf4894a7ecfde4b72e17d6e479a91cb0cfa408258611b00bdf5e2e397`. |
+| 10 | The bundle pinned for Phase 2 is self-sufficient for offline golden scoring of all 11 PR #2164 fixtures, with a machine-checked exact fixture-ID closure. | ✗ FAILED — BLOCKER | The accepted directory contains only `POS_CSR_RW_MTVEC_ACCESS/gold.yaml` and `POS_WARL_MTVEC_MODES/gold.yaml`. Its manifest is `status:candidate` and `downstream_eligible:false`; the source proposal explicitly froze only those two paths. `git cat-file -e 22e84458...^{commit}` fails locally, so the other fixture materials cannot be reconstructed from current offline state. |
 
-**Score:** 9/9 truths verified (0 present-but-behavior-unverified).
+**Score:** 9/10 truths verified (0 present-but-behavior-unverified).
 
 ### Required Artifacts
 
@@ -53,6 +54,7 @@ re_verification:
 | `git_proof.py`, `bundle.py`, source contract, rejected receipt, and accepted manifests | Frozen source proof, raw-byte custody, immutable accepted generation | ✓ VERIFIED | Construction proof and accepted bundle verification are substantive and exercised by the suite, including raw/derived/tamper/concurrency cases. |
 | Accepted bundle `verify_bundle.py` and embedded verifier | Bundle-local offline verification entry point | ✓ VERIFIED | Copied-bundle replay passed without repository metadata or a usable command path. |
 | `integrity-receipt-v7.json`, `integrity-receipt-v7.md`, and v7 decision | Revision-bound local-only completion gate | ✓ VERIFIED | JSON self-hash recomputed exactly; Markdown equals `render_markdown(receipt)`; v7 finalization succeeds only under the authorized local-only decision. |
+| A new immutable source generation containing the complete PR #2164 measurement input closure | Offline Phase 2 source authority for all 11 fixtures | ✗ MISSING — BLOCKER | No generation inventories all 11 expected fixture IDs and every raw file required by the adapter. Existing generations must remain unchanged; remediation must create a new root hash. |
 
 ### Key Link Verification
 
@@ -63,6 +65,7 @@ re_verification:
 | Source decision/request inventory | Git proof → candidate/accepted bundle | exact PR ref, commit/tree/ancestry, raw Git bytes, canonical manifest/root binding | ✓ WIRED | Source, bundle, and verifier tests pass; copied accepted generation recomputes independently. |
 | Accepted bundle entry point | embedded verifier and local bundle bytes | bundle-relative `verify_bundle.py` | ✓ WIRED | Direct copied replay succeeded with no `.git` and empty `PATH`. |
 | v7 decision | v7 receipt and Markdown | decision hash, revision/projection/basis, `render_markdown(validate_receipt(...))` | ✓ WIRED | v7 finalization returned the expected receipt self-hash; stale v6 failed before finalization. |
+| Phase 2 TS-03 fixture registry | accepted source generation | exact expected fixture-ID set, per-file raw hashes, offline verifier | ✗ NOT WIRED | The source contract has no expected-set equality check and binds only two PR #2164 fixture paths, while TS-03 requires 11 fixtures. |
 
 ### Data-Flow Trace (Level 4)
 
@@ -71,6 +74,7 @@ re_verification:
 | `baseline.py` | `committed_changes` plus `live_changes` | immutable Git `start..reviewed` walk plus index/worktree/untracked capture | Per-commit records, including add/delete/revert history, classified under the exact allowlist | ✓ FLOWING |
 | accepted bundle verifier | core/root/snapshot bindings and raw hashes | bundle-local raw content, manifests, and embedded verifier modules | Independent recomputation succeeds after copying out of the repository | ✓ FLOWING |
 | v7 receipt/Markdown | canonical receipt fields | canonical decision, frozen boundary projection, environment digest, accepted identity | Self-hash and deterministic Markdown projection recompute exactly | ✓ FLOWING |
+| Phase 2 fixture adapter input | all 11 pinned fixture IDs and raw materials | a downstream-eligible immutable generation | Only two `gold.yaml` inputs exist; nine fixture inputs and the exact-set closure proof are absent | ✗ BLOCKED |
 
 ### Behavioral Spot-Checks
 
@@ -81,6 +85,7 @@ re_verification:
 | Authorized v7 local receipt | `finalize-review --decision reviewer-boundary-decision-v7.json --receipt integrity-receipt-v7.json --markdown integrity-receipt-v7.md` | `{"outcome":"pass","receipt_sha256":"4b02a68d…"}`. | ✓ PASS |
 | Stale v6 authority rejection | same finalizer with v6 decision/receipt/Markdown | `RESTART_LINEAGE_PROJECTION_MISMATCH`, exit 2. | ✓ PASS (negative check) |
 | Offline accepted-bundle replay | copy bundle; `PATH=/nonexistent /opt/homebrew/bin/python3 verify_bundle.py` | No copied `.git`; `bundle verified`, exit 0. | ✓ PASS |
+| Downstream fixture closure | compare TS-03's expected 11 fixture IDs with the accepted generation inventory | Expected 11; observed 2; manifest `downstream_eligible:false`. | ✗ FAIL |
 
 ### Probe Execution
 
@@ -91,7 +96,7 @@ Step 7c: SKIPPED — Phase 1 declares no `probe-*.sh` contract. The full stdlib 
 | Requirement | Source Plans | Description | Status | Evidence |
 | --- | --- | --- | --- | --- |
 | TS-01 | 01-01, 01-02, 01-04, 01-05 | Dependency-light isolated experiment with no core schema/generated-data modification. | ✓ SATISFIED | No core/root dependency changes; exact v5 restart allowlist; history plus live boundary gate; path-policy tests; standalone-first environment evidence; local-only receipt. |
-| TS-02 | 01-03, 01-04 | Frozen public snapshot pinning and stable hashes for every consumed file. | ✓ SATISFIED | Git proof, rejected #2192 path, versioned correction/accepted generation, raw byte hashes, non-cyclic manifests, and offline bundle replay all pass. |
+| TS-02 | 01-03, 01-04 | Frozen public snapshot pinning and stable hashes for every consumed file. | ⚠ PARTIAL — BLOCKED FOR DOWNSTREAM USE | The seven frozen consumed files are authentic and replayable, but the consumed-file request omitted nine of the 11 fixture inputs required by the already-frozen TS-03 downstream contract. |
 
 No Phase 1 requirement is orphaned: plans declare both TS-01 and TS-02, which are the only IDs ROADMAP and REQUIREMENTS assign to this phase.
 
@@ -107,10 +112,12 @@ This is a local acceptance of one immutable generation, not publication approval
 
 ## Gaps Summary
 
-None. The prior blocker is closed by a new immutable v5 restart lineage, an exact restart-only allowlist, full per-commit history plus live-state boundary classification, and revision-pinned v7 authority. The active boundary, authorized finalization, stale-v6 rejection, and offline bundle replay all passed independently.
+One blocking cross-phase source-closure gap remains. Phase 1 froze and verified a seven-file custody inventory, but that inventory contains only two of the 11 PR #2164 fixtures required by Phase 2. The verifier proved authenticity of the selected files, not completeness of the selection against TS-03. The current manifest itself remains honest (`downstream_eligible:false`) and must not be modified.
+
+Gap closure must preserve every existing generation and create a new immutable generation from pinned commit `22e84458c87a7ccf4c07034de1eb6d0bf9764144` containing every raw input required to score the exact 11-fixture set. Construction must add a machine-enforced equality check between the expected fixture registry and bundled fixture inventory, then prove copied-bundle replay with no network or local Git objects. Phase 2 planning remains blocked until that new generation passes and is explicitly pinned as its source authority.
 
 ---
 
-_Verified: 2026-07-31T08:53:22Z_
+_Verified: 2026-07-31T09:52:58Z_
 
 _Verifier: the agent (gsd-verifier)_
