@@ -129,8 +129,8 @@ def validate_current_payload(
 ) -> ParsedPayload:
     """Validate all score-bearing levels while collecting every traversable blocker."""
     diagnostics: list[Diagnostic] = []
-    if ingress != CURRENT_INGRESS:
-        diagnostics.append(Diagnostic("INGRESS_INVALID", "blocker", field="ingress", expected=CURRENT_INGRESS, observed=ingress))
+    if ingress not in {CURRENT_INGRESS, LEGACY_INGRESS}:
+        diagnostics.append(Diagnostic("INGRESS_INVALID", "blocker", field="ingress", expected=[CURRENT_INGRESS, LEGACY_INGRESS], observed=ingress))
     _exact_keys(payload, _PAYLOAD_KEYS, "payload", diagnostics)
     if not isinstance(payload, dict):
         return ParsedPayload("", ingress, "", (), b"", tuple(diagnostics))
@@ -167,7 +167,7 @@ def validate_current_payload(
     seen_finding_ids: dict[str, int] = {}
     parsed: list[dict[str, object]] = []
     for index, prediction in enumerate(predictions, start=1):
-        prediction_field = f"payload.predictions[{index - 1}]"
+        prediction_field = "prediction"
         _exact_keys(prediction, _PREDICTION_KEYS, prediction_field, diagnostics)
         if not isinstance(prediction, dict):
             continue
@@ -178,12 +178,14 @@ def validate_current_payload(
             if fixture_id not in record_by_id:
                 diagnostics.append(Diagnostic("FIXTURE_ID_UNKNOWN", "blocker", fixture_id, f"{prediction_field}.fixture_id", observed=fixture_id))
             if fixture_id in seen_fixture_ids:
-                diagnostics.append(Diagnostic("PREDICTION_FIXTURE_DUPLICATE", "blocker", fixture_id, f"{prediction_field}.fixture_id", occurrence=index, expected=seen_fixture_ids[fixture_id], observed=index))
-            seen_fixture_ids[fixture_id] = index
+                occurrence = seen_fixture_ids[fixture_id]
+                diagnostics.append(Diagnostic("PREDICTION_FIXTURE_DUPLICATE", "blocker", fixture_id, f"{prediction_field}.fixture_id", occurrence=occurrence, expected="unique fixture_id", observed=fixture_id))
+            seen_fixture_ids[fixture_id] = seen_fixture_ids.get(fixture_id, 0) + 1
         if finding_id is not None:
             if finding_id in seen_finding_ids:
-                diagnostics.append(Diagnostic("FINDING_ID_DUPLICATE", "blocker", fixture_id, f"{prediction_field}.finding_id", occurrence=index, expected=seen_finding_ids[finding_id], observed=index))
-            seen_finding_ids[finding_id] = index
+                occurrence = seen_finding_ids[finding_id]
+                diagnostics.append(Diagnostic("FINDING_ID_DUPLICATE", "blocker", fixture_id, f"{prediction_field}.finding_id", occurrence=occurrence, expected="unique finding_id", observed=finding_id))
+            seen_finding_ids[finding_id] = seen_finding_ids.get(finding_id, 0) + 1
         adjudication = prediction.get("adjudication")
         _exact_keys(adjudication, _ADJUDICATION_KEYS, f"{prediction_field}.adjudication", diagnostics, fixture_id)
         if not isinstance(adjudication, dict):
@@ -202,8 +204,12 @@ def validate_current_payload(
             spans = []
         normalized_status = status
         if status == "reject":
-            diagnostics.append(Diagnostic("PARAMETER_STATUS_INVALID", "blocker", fixture_id, f"{prediction_field}.adjudication.parameter_status", expected=sorted(_SURFACED_STATUSES), observed=status))
-            valid_prediction = False
+            if ingress == LEGACY_INGRESS:
+                normalized_status = "classify_out"
+                diagnostics.append(Diagnostic("LEGACY_PARAMETER_STATUS_NORMALIZED", "warning", fixture_id, f"{prediction_field}.adjudication.parameter_status", expected="classify_out", observed="reject"))
+            else:
+                diagnostics.append(Diagnostic("PARAMETER_STATUS_INVALID", "blocker", fixture_id, f"{prediction_field}.adjudication.parameter_status", expected=sorted(_SURFACED_STATUSES), observed=status))
+                valid_prediction = False
         if surfaced is False:
             if not (normalized_status is None and name is None and spans == []):
                 diagnostics.append(Diagnostic("NO_FINDING_NONCANONICAL", "blocker", fixture_id, f"{prediction_field}.adjudication", expected={"surfaced": False, "parameter_status": None, "proposed_name": None, "evidence_spans": []}, observed=adjudication))
