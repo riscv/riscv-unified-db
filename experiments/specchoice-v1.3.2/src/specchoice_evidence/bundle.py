@@ -9,6 +9,7 @@ separate accepted-state transition can exist.
 
 from __future__ import annotations
 
+import errno
 import json
 import os
 import shutil
@@ -333,9 +334,7 @@ def construct_candidate(
         verify_candidate(temporary)
         _sync_directory(temporary)
         _sync_directory(candidates_root)
-        if target.exists() or target.is_symlink():
-            raise BundleError("CANDIDATE_TARGET_EXISTS")
-        os.replace(temporary, target)
+        _publish_directory_no_replace(temporary, target, "CANDIDATE_TARGET_EXISTS")
         _sync_directory(candidates_root)
     except Exception:
         if temporary.exists():
@@ -458,6 +457,70 @@ def _replace_exact(path: Path, content: bytes) -> None:
     os.replace(temporary, path)
 
 
+def _native_publish_no_replace(source: Path, target: Path) -> None:
+    """Atomically rename a staged directory only when its target does not exist.
+
+    This intentionally has no `os.replace` fallback: replacing an attacker-created
+    directory would undermine the immutable-generation namespace.
+    """
+    import ctypes
+    import sys
+
+    if sys.platform == "darwin":
+        libc = ctypes.CDLL(None, use_errno=True)
+        rename = getattr(libc, "renameatx_np", None)
+        if rename is None:
+            raise NotImplementedError
+        rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+        rename.restype = ctypes.c_int
+        result = rename(-2, os.fsencode(source), -2, os.fsencode(target), 0x00000004)  # RENAME_EXCL
+        if result == 0:
+            return
+        number = ctypes.get_errno()
+        if number in {errno.EEXIST, errno.ENOTEMPTY}:
+            raise FileExistsError(number, os.strerror(number), os.fspath(target))
+        raise OSError(number, os.strerror(number), os.fspath(target))
+    if sys.platform.startswith("linux"):
+        libc = ctypes.CDLL(None, use_errno=True)
+        rename = getattr(libc, "renameat2", None)
+        if rename is None:
+            raise NotImplementedError
+        rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+        rename.restype = ctypes.c_int
+        result = rename(-100, os.fsencode(source), -100, os.fsencode(target), 1)  # RENAME_NOREPLACE
+        if result == 0:
+            return
+        number = ctypes.get_errno()
+        if number in {errno.EEXIST, errno.ENOTEMPTY}:
+            raise FileExistsError(number, os.strerror(number), os.fspath(target))
+        if number in {errno.ENOSYS, errno.EINVAL}:
+            raise NotImplementedError
+        raise OSError(number, os.strerror(number), os.fspath(target))
+    if os.name == "nt":
+        move = ctypes.windll.kernel32.MoveFileExW
+        move.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint]
+        move.restype = ctypes.c_int
+        if move(os.fspath(source), os.fspath(target), 0):
+            return
+        number = ctypes.get_last_error()
+        if number in {80, 183}:  # ERROR_FILE_EXISTS / ERROR_ALREADY_EXISTS
+            raise FileExistsError(number, "target exists", os.fspath(target))
+        raise OSError(number, "MoveFileExW failed", os.fspath(target))
+    raise NotImplementedError
+
+
+def _publish_directory_no_replace(source: Path, target: Path, collision_code: str) -> None:
+    """Publish a completed generation without a check-then-replace race."""
+    try:
+        _native_publish_no_replace(source, target)
+    except FileExistsError as error:
+        raise BundleError(collision_code) from error
+    except NotImplementedError as error:
+        raise BundleError("ATOMIC_NO_REPLACE_UNAVAILABLE") from error
+    except OSError as error:
+        raise BundleError("ATOMIC_NO_REPLACE_FAILED") from error
+
+
 def _run_embedded_verifier(bundle: Path) -> None:
     completed = subprocess.run(
         [sys.executable, "verify_bundle.py"], cwd=bundle, check=False, capture_output=True, text=True
@@ -511,9 +574,7 @@ def construct_verifier_rooted_candidate(
         _run_embedded_verifier(temporary)
         _sync_directory(temporary)
         _sync_directory(candidates_root)
-        if target.exists() or target.is_symlink():
-            raise BundleError("CANDIDATE_TARGET_EXISTS")
-        os.replace(temporary, target)
+        _publish_directory_no_replace(temporary, target, "CANDIDATE_TARGET_EXISTS")
         _sync_directory(candidates_root)
     except Exception:
         if temporary.exists():
@@ -661,9 +722,7 @@ def accept_local_candidate(
         _run_embedded_verifier(temporary)
         _sync_directory(temporary)
         _sync_directory(accepted_root)
-        if target.exists() or target.is_symlink():
-            raise BundleError("LOCAL_ACCEPTED_TARGET_EXISTS")
-        os.replace(temporary, target)
+        _publish_directory_no_replace(temporary, target, "LOCAL_ACCEPTED_TARGET_EXISTS")
         _sync_directory(accepted_root)
     except Exception:
         if temporary.exists():
@@ -784,9 +843,7 @@ def accept_fixture_closure_candidate(
         _run_embedded_verifier(temporary)
         _sync_directory(temporary)
         _sync_directory(accepted_root)
-        if target.exists() or target.is_symlink():
-            raise BundleError("LOCAL_ACCEPTED_TARGET_EXISTS")
-        os.replace(temporary, target)
+        _publish_directory_no_replace(temporary, target, "LOCAL_ACCEPTED_TARGET_EXISTS")
         _sync_directory(accepted_root)
         return verified
     except Exception:

@@ -10,11 +10,13 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from specchoice_evidence.bundle import (
     BundleError,
     accept_fixture_closure_candidate,
+    construct_fixture_closure_candidate,
     verify_candidate,
 )
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
@@ -72,6 +74,85 @@ class FixtureClosureTests(unittest.TestCase):
 
 
 class FixtureClosureCandidateTests(unittest.TestCase):
+
+    def test_fixture_candidate_publish_rejects_racing_empty_target_without_overwrite(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        original = __import__("specchoice_evidence.bundle", fromlist=["_native_publish_no_replace"])._native_publish_no_replace
+
+        def attacker(source: Path, target: Path) -> None:
+            target.mkdir()
+            original(source, target)
+
+        with tempfile.TemporaryDirectory() as directory:
+            candidates = Path(directory) / "candidates"
+            target = candidates / "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+            with mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=attacker):
+                with self.assertRaisesRegex(BundleError, "CANDIDATE_TARGET_EXISTS"):
+                    construct_fixture_closure_candidate(
+                        json.loads((experiment / "receipts/source-contract-decision-v3-pr2164-fixture-closure-v2.json").read_text()),
+                        json.loads((experiment / "receipts/source-contract-proposal-v3-pr2164-fixture-closure-v2.json").read_text()),
+                        experiment / "config/fixture-registry-pr2164-v1.json",
+                        experiment.parents[1],
+                        candidates,
+                    )
+            self.assertTrue(target.is_dir())
+            self.assertEqual(list(target.iterdir()), [])
+
+    def test_fixture_accept_publish_rejects_racing_empty_target_without_overwrite(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        original = __import__("specchoice_evidence.bundle", fromlist=["_native_publish_no_replace"])._native_publish_no_replace
+
+        def attacker(source: Path, target: Path) -> None:
+            target.mkdir()
+            original(source, target)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            decision = self._write_fixture_acceptance_decision(
+                root / "decision.json", self._current_fixture_acceptance_decision(experiment)
+            )
+            target = root / "accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+            with mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=attacker):
+                with self.assertRaisesRegex(BundleError, "LOCAL_ACCEPTED_TARGET_EXISTS"):
+                    accept_fixture_closure_candidate(candidate, root / "accepted", decision)
+            self.assertTrue(target.is_dir())
+            self.assertEqual(list(target.iterdir()), [])
+
+    def test_fixture_candidate_publish_preserves_racing_nonempty_target(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        original = __import__("specchoice_evidence.bundle", fromlist=["_native_publish_no_replace"])._native_publish_no_replace
+
+        def attacker(source: Path, target: Path) -> None:
+            target.mkdir()
+            (target / "attacker.txt").write_text("do not overwrite", encoding="utf-8")
+            original(source, target)
+
+        with tempfile.TemporaryDirectory() as directory:
+            candidates = Path(directory) / "candidates"
+            target = candidates / "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+            with mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=attacker):
+                with self.assertRaisesRegex(BundleError, "CANDIDATE_TARGET_EXISTS"):
+                    construct_fixture_closure_candidate(
+                        json.loads((experiment / "receipts/source-contract-decision-v3-pr2164-fixture-closure-v2.json").read_text()),
+                        json.loads((experiment / "receipts/source-contract-proposal-v3-pr2164-fixture-closure-v2.json").read_text()),
+                        experiment / "config/fixture-registry-pr2164-v1.json",
+                        experiment.parents[1],
+                        candidates,
+                    )
+            self.assertEqual((target / "attacker.txt").read_text(encoding="utf-8"), "do not overwrite")
+
+    def test_fixture_publish_fails_closed_when_no_replace_primitive_is_unavailable(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            decision = self._write_fixture_acceptance_decision(
+                root / "decision.json", self._current_fixture_acceptance_decision(experiment)
+            )
+            with mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=NotImplementedError):
+                with self.assertRaisesRegex(BundleError, "ATOMIC_NO_REPLACE_UNAVAILABLE"):
+                    accept_fixture_closure_candidate(candidate, root / "accepted", decision)
 
     def _current_fixture_acceptance_decision(self, experiment: Path) -> dict[str, object]:
         decision = json.loads((experiment / "receipts/local-acceptance-v9.json").read_text(encoding="utf-8"))
