@@ -152,9 +152,12 @@ Both `read_memory` and `write_memory` may raise exceptions (access fault, page f
 
 ### `sext(value, first_extended_bit)`
 
-Sign-extends `value` (an `XReg`) by replicating bit `first_extended_bit - 1` into bits `[MXLEN-1:first_extended_bit]` of the result.
+Sign-extends `value` (an `XReg`) by replicating bit `first_extended_bit - 1` into bits `[MXLEN-1:first_extended_bit]` of the result. Returns an `XReg`.
 
 ```idl
+# Sign extend a 32-bit quantity to a full XReg width.
+XReg operand1 = sext(X[xs1], 32);
+
 # Load word (sign-extended via sext helper)
 X[xd] = sext(read_memory(32, virtual_address, $encoding), 32);
 ```
