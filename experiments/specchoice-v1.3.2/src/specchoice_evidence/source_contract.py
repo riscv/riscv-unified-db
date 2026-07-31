@@ -22,6 +22,156 @@ class SourceContractProposalError(ValueError):
     """A stable diagnostic for incomplete or unverifiable correction proposals."""
 
 
+class FixtureRegistryError(ValueError):
+    """Stable diagnostic for PR #2164 finite-set fixture custody failures."""
+
+
+_FIXTURE_BASE = "tools/python/param-extraction-eval/cases"
+_EXPECTED_FIXTURES = {
+    "CAND_WARL_FIXED_LEGAL_SET": ("candidate", "candidates", ("expected.yaml", "source.txt")),
+    "NEG_EXT_GATED_PBMTE": ("negative", "negatives", ("expected.yaml", "source.txt")),
+    "NEG_FIXED_ENCODING": ("negative", "negatives", ("expected.yaml", "source.txt")),
+    "NEG_SHALL_NO_DELEGATION": ("negative", "negatives", ("expected.yaml", "source.txt")),
+    "NEG_SOFTWARE_ADVICE": ("negative", "negatives", ("expected.yaml", "source.txt")),
+    "POS_CSR_RW_MTVEC_ACCESS": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_DIRECT_CACHE_BLOCK": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_DIRECT_NUM_PMP": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_RECALL_COUNT_GEILEN": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_WARL_ASID_WIDTH": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_WARL_MTVEC_MODES": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+}
+_FIXTURE_ROLES = {
+    "expected.yaml": "fixture_expected",
+    "gold.yaml": "fixture_gold",
+    "source.txt": "fixture_source",
+}
+_FIXTURE_COMMIT = "22e84458c87a7ccf4c07034de1eb6d0bf9764144"
+_FIXTURE_TREE = "af003b427c66bd8ac9803a91b3bf363a1b1304d9"
+
+
+def _fixture_path(value: object) -> str:
+    if not isinstance(value, str) or not value:
+        raise FixtureRegistryError("FIXTURE_PATH_INVALID")
+    try:
+        return require_relative_posix_path(value).as_posix()
+    except FilesystemPolicyError as error:
+        raise FixtureRegistryError(str(error)) from error
+
+
+def validate_fixture_registry(registry: object) -> dict[str, object]:
+    """Validate the finite named PR #2164 set before it can reach construction."""
+    if not isinstance(registry, Mapping) or set(registry) != {
+        "fixture_count", "fixtures", "pinned_commit_sha", "pinned_tree_sha", "pull_request",
+        "raw_file_count", "repository", "schema_version", "snapshot_id",
+    }:
+        raise FixtureRegistryError("FIXTURE_REGISTRY_INVALID")
+    if registry.get("schema_version") != "1" or registry.get("repository") != "riscv/riscv-unified-db":
+        raise FixtureRegistryError("FIXTURE_REGISTRY_INVALID")
+    if registry.get("snapshot_id") != "evaluation_fixtures" or registry.get("pull_request") != 2164:
+        raise FixtureRegistryError("FIXTURE_REGISTRY_IDENTITY_MISMATCH")
+    if registry.get("pinned_commit_sha") != _FIXTURE_COMMIT or registry.get("pinned_tree_sha") != _FIXTURE_TREE:
+        raise FixtureRegistryError("FIXTURE_REGISTRY_PIN_MISMATCH")
+    fixtures = registry.get("fixtures")
+    if not isinstance(fixtures, list):
+        raise FixtureRegistryError("FIXTURE_REGISTRY_INVALID")
+    if not fixtures:
+        raise FixtureRegistryError("FIXTURE_REGISTRY_EMPTY")
+    normalized: list[dict[str, object]] = []
+    seen_ids: set[str] = set()
+    total = 0
+    for fixture in fixtures:
+        if not isinstance(fixture, Mapping) or set(fixture) != {"fixture_class", "fixture_id", "files"}:
+            raise FixtureRegistryError("FIXTURE_ENTRY_INVALID")
+        fixture_id = fixture.get("fixture_id")
+        fixture_class = fixture.get("fixture_class")
+        if not isinstance(fixture_id, str) or not fixture_id:
+            raise FixtureRegistryError("FIXTURE_ID_INVALID")
+        if fixture_id in seen_ids:
+            raise FixtureRegistryError("FIXTURE_DUPLICATE")
+        seen_ids.add(fixture_id)
+        expected = _EXPECTED_FIXTURES.get(fixture_id)
+        if expected is None:
+            raise FixtureRegistryError("FIXTURE_SET_MISMATCH")
+        expected_class, directory, expected_names = expected
+        if fixture_class != expected_class:
+            raise FixtureRegistryError("FIXTURE_CLASS_MISMATCH")
+        files = fixture.get("files")
+        if not isinstance(files, list) or not files:
+            raise FixtureRegistryError("FIXTURE_FILE_SET_MISMATCH")
+        seen_names: set[str] = set()
+        normalized_files: list[dict[str, object]] = []
+        for file in files:
+            if not isinstance(file, Mapping) or set(file) != {
+                "filename", "local_bundle_path", "raw_byte_length", "raw_sha256", "role", "upstream_path",
+            }:
+                raise FixtureRegistryError("FIXTURE_FILE_INVALID")
+            filename = file.get("filename")
+            if not isinstance(filename, str) or filename in seen_names:
+                raise FixtureRegistryError("FIXTURE_FILE_DUPLICATE")
+            seen_names.add(filename)
+            if filename not in expected_names:
+                raise FixtureRegistryError("FIXTURE_FILE_SET_MISMATCH")
+            if file.get("role") != _FIXTURE_ROLES[filename]:
+                raise FixtureRegistryError("FIXTURE_ROLE_MISMATCH")
+            upstream = _fixture_path(file.get("upstream_path"))
+            local = _fixture_path(file.get("local_bundle_path"))
+            if upstream != f"{_FIXTURE_BASE}/{directory}/{fixture_id}/{filename}" or local != f"raw/evaluation_fixtures/{fixture_id}/{filename}":
+                raise FixtureRegistryError("FIXTURE_PATH_MISMATCH")
+            try:
+                length = require_byte_length(file.get("raw_byte_length"))
+                digest = require_sha256(file.get("raw_sha256"))
+            except ValueError as error:
+                raise FixtureRegistryError("FIXTURE_DIGEST_OR_LENGTH_INVALID") from error
+            normalized_files.append({
+                "filename": filename, "local_bundle_path": local, "raw_byte_length": length,
+                "raw_sha256": digest, "role": _FIXTURE_ROLES[filename], "upstream_path": upstream,
+            })
+        if set(seen_names) != set(expected_names):
+            raise FixtureRegistryError("FIXTURE_FILE_SET_MISMATCH")
+        if [item["filename"] for item in normalized_files] != sorted(expected_names):
+            raise FixtureRegistryError("FIXTURE_FILE_ORDER_NONDETERMINISTIC")
+        normalized.append({"fixture_class": expected_class, "fixture_id": fixture_id, "files": normalized_files})
+        total += len(normalized_files)
+    if seen_ids != set(_EXPECTED_FIXTURES):
+        raise FixtureRegistryError("FIXTURE_SET_MISMATCH")
+    if [item["fixture_id"] for item in normalized] != sorted(_EXPECTED_FIXTURES):
+        raise FixtureRegistryError("FIXTURE_ORDER_NONDETERMINISTIC")
+    if registry.get("fixture_count") != len(_EXPECTED_FIXTURES) or registry.get("raw_file_count") != total or total != 28:
+        raise FixtureRegistryError("FIXTURE_COUNT_MISMATCH")
+    return {"fixture_count": len(_EXPECTED_FIXTURES), "fixtures": normalized, "raw_file_count": total}
+
+
+def verify_fixture_registry_git(registry: object, repository: Path) -> None:
+    """Prove the exact registry against the cached Git PR ref and pinned blobs."""
+    normalized = validate_fixture_registry(registry)
+    def git_stdout(*arguments: str) -> bytes:
+        result = _run_git(repository, *arguments)
+        if result.returncode != 0:
+            raise FixtureRegistryError("FIXTURE_GIT_OBJECT_UNAVAILABLE")
+        return result.stdout
+    head = git_stdout("rev-parse", "refs/specchoice/pr-2164-head").decode("ascii", "strict").strip()
+    if head != _FIXTURE_COMMIT:
+        raise FixtureRegistryError("FIXTURE_PR_HEAD_MISMATCH")
+    tree = git_stdout("rev-parse", f"{_FIXTURE_COMMIT}^{{tree}}").decode("ascii", "strict").strip()
+    if tree != _FIXTURE_TREE:
+        raise FixtureRegistryError("FIXTURE_TREE_MISMATCH")
+    ancestry = _run_git(repository, "merge-base", "--is-ancestor", _FIXTURE_COMMIT, head)
+    if ancestry.returncode != 0:
+        raise FixtureRegistryError("FIXTURE_PIN_NOT_REACHABLE")
+    for fixture in normalized["fixtures"]:
+        assert isinstance(fixture, dict)
+        for file in fixture["files"]:
+            assert isinstance(file, dict)
+            object_ref = f"{_FIXTURE_COMMIT}:{file['upstream_path']}"
+            if git_stdout("cat-file", "-t", object_ref).decode("ascii", "strict").strip() != "blob":
+                raise FixtureRegistryError("FIXTURE_NON_REGULAR_FILE")
+            raw = git_stdout("show", object_ref)
+            if len(raw) != file["raw_byte_length"]:
+                raise FixtureRegistryError("FIXTURE_RAW_BYTE_LENGTH_MISMATCH")
+            if hashlib.sha256(raw).hexdigest() != file["raw_sha256"]:
+                raise FixtureRegistryError("FIXTURE_RAW_SHA256_MISMATCH")
+
+
 def _require_string(mapping: Mapping[str, object], field: str) -> str:
     value = mapping.get(field)
     if not isinstance(value, str) or not value:
