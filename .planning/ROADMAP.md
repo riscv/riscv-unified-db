@@ -83,14 +83,28 @@ Plans:
   3. The reviewer can trace every failed or warning outcome to a stable diagnostic code and structured fields; a missing accepted name remains an identity warning and never rewrites disposition.
   4. The human reviewer can approve or dispute the frozen gold interpretation from the adapter audit without any model output being used to compensate for disputed semantics.
 
-**Plans:** 4 plans
+**Plans:** 5 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 02-01: Implement the versioned PR #2164 adapter and canonical adjudication domain model.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 02-02: Implement strict schema parsing, no-finding invariants, and stable diagnostics.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 02-03: Implement golden fixture scoring, candidate behavior, identity-warning separation, and evidence checks.
-- [ ] 02-04: Run golden/adversarial measurement verification and produce the H1 source/gold review packet.
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 02-04: Persist immutable formal and adversarial attempts with deterministic measurement artifacts.
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 02-05: Produce the hash-bound H1 source/gold review packet and validate the human decision gate.
 
 ### Phase 3: Human-Reviewed Data Preregistration
 

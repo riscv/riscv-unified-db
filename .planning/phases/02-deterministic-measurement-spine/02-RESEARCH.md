@@ -107,7 +107,7 @@ The existing `specchoice_evidence` package already supplies canonical UTF-8 JSON
 
 | Instead of | Could Use | Tradeoff |
 |------------|-----------|----------|
-| JSON-only canonical prediction input | General YAML prediction ingestion | Python has no YAML parser in its standard library; a generic YAML dependency or parser expands the trusted surface without helping the frozen Phase 2 contract. Keep YAML only as adapter source material and emit canonical JSON. [VERIFIED: frozen execution baseline §11.3; ASSUMED] |
+| JSON-only canonical prediction input | General YAML prediction ingestion | Python has no YAML parser in its standard library; a generic YAML dependency or parser expands the trusted surface without helping the frozen Phase 2 contract. Formal canonical prediction input is JSON-only; any compatibility route is a separately declared legacy ingress and never an implicit canonical parser feature. [RESOLVED: D-05, D-06, D-09; final Plan 02] |
 | Explicit closed-schema validator | JSON Schema framework | A framework adds an unneeded package and does not remove the need to define D-05/D-07 semantic cross-field invariants or stable diagnostics. [VERIFIED: 02-CONTEXT.md; ASSUMED] |
 | Sibling `specchoice_measurement` package | Adding domain logic to Phase 1 custody modules | Separation keeps Phase 1's accepted-bundle verifier stable while allowing normal imports of its primitives. [VERIFIED: codebase grep; 02-CONTEXT.md] |
 
@@ -202,7 +202,7 @@ Keep Phase 2 outputs beneath the existing experiment boundary. Treat an adapter 
 - The top-level prediction payload, each prediction, `adjudication`, and each evidence-span object have exact permitted key sets; reject unknown, omitted, and duplicate keys. [VERIFIED: 02-CONTEXT.md]
 - `surfaced:false` must explicitly carry `parameter_status:null`, `proposed_name:null`, and `evidence_spans:[]`; `not_surfaced` is only a derived result, never an input enum. [VERIFIED: 02-CONTEXT.md]
 - `surfaced:true` requires `parameter_status` in `accept|classify_out|review`, an explicit `proposed_name` field, and a non-empty evidence-span list. `proposed_name:null` is valid for a surfaced classify-out/review case; only `accept` plus null produces the accepted-name identity warning. [VERIFIED: frozen execution baseline §§6.2, 11.3; 02-CONTEXT.md]
-- Validate evidence against raw source bytes before any Unicode normalization: `{source_sha256,start_byte,end_byte,text}` should be closed and must identify an in-range UTF-8 byte slice whose decoded text equals `text`. This is the recommended concrete field shape under planner discretion. [VERIFIED: 02-CONTEXT.md; ASSUMED]
+- Validate evidence against raw source bytes before any Unicode normalization. The closed record is exactly `{source_sha256,start_byte,end_byte,text}`; `[start_byte,end_byte)` is a non-empty half-open byte range within the named raw source, each span is validated independently, adjacent or duplicate spans are never implicitly merged, and the decoded raw slice must equal `text`. [RESOLVED: D-06, D-08; final Plans 02-03]
 
 ### Pattern 3: Collect-then-decide preflight
 
@@ -368,26 +368,23 @@ Do not trim, NFC-normalize, or fuzzy-search either side of this check. [VERIFIED
 
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
-| A1 | JSON-only is a sufficient canonical Phase 2 prediction format even though the frozen baseline permits machine-readable YAML or JSON. | Standard Stack; Pattern 2 | If the human contract requires YAML ingestion, an explicitly scoped parser/dependency decision is needed before implementation. |
+| A1 | RESOLVED — Formal canonical Phase 2 prediction input is JSON-only. Legacy compatibility is a separately named ingress and cannot make YAML or aliases part of the canonical schema. | Standard Stack; Pattern 2 | Locked by D-05, D-06, and D-09 and implemented by final Plan 02. |
 | A2 | A bounded field reader is preferable to a generic YAML parser for adapter source material. | Pattern 1; Don't Hand-Roll | If raw fixture syntax changes within the pinned generation, the adapter reader must be expanded under a new rule version. |
-| A3 | Evidence spans should use `{source_sha256,start_byte,end_byte,text}`. | Pattern 2; Code Examples | The final H1 schema may need a different but equally exact closed representation; decide before golden fixtures are authored. |
+| A3 | RESOLVED — Evidence spans use exactly `{source_sha256,start_byte,end_byte,text}` with a non-empty half-open byte range `[start_byte,end_byte)`, per-span independent raw-byte validation, and no implicit merging. | Pattern 2; Code Examples | Locked by D-06 and D-08 and implemented by final Plans 02-03. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Canonical input format scope**
    - What we know: The frozen baseline permits machine-readable YAML or JSON, while Python stdlib and Phase 2's no-dependency direction favor JSON. [VERIFIED: frozen execution baseline §11.3; local environment]
-   - What's unclear: Whether formal Phase 2 must accept YAML prediction files rather than merely specify one allowed machine-readable format. [ASSUMED]
-   - Recommendation: Lock canonical formal input to JSON for Phase 2; if YAML compatibility is required, make it a separately declared and tested ingress rather than an implicit parser feature. [ASSUMED]
+   - Resolution: Formal canonical Phase 2 prediction input is JSON-only. Any compatibility input is handled only by a separately declared legacy ingress, preserves raw bytes plus explicit normalization diagnostics, and must pass the current closed canonical schema after that ingress. YAML is not a formal canonical prediction input. [RESOLVED: D-05, D-06, D-09; final Plan 02]
 
 2. **Evidence-span record fields**
    - What we know: Evidence spans must be closed, non-empty when surfaced, and exactly match authoritative raw source text. [VERIFIED: 02-CONTEXT.md; frozen execution baseline §11.3]
-   - What's unclear: The exact serialized span field names and whether a byte range is mandatory. [ASSUMED]
-   - Recommendation: Decide the byte-offset-plus-literal-text schema in the first plan before any golden prediction fixture is created. [ASSUMED]
+   - Resolution: The exact closed record is `{source_sha256,start_byte,end_byte,text}`. The range is mandatory, half-open `[start_byte,end_byte)`, within bounds, non-empty, and UTF-8-decodable; its raw slice must equal `text`. Each span is retained and validated independently, including adjacent or duplicate spans, with no implicit merge, trimming, normalization, deduplication, or fuzzy lookup. [RESOLVED: D-06, D-08; final Plans 02-03]
 
 3. **Phase 1 boundary test coexistence**
    - What we know: Running the current all-tests discovery after committed Phase 2 planning artifacts produces Phase 1 boundary blockers; the focused canonical test and Phase 2 authority command pass. [VERIFIED: local test execution]
-   - What's unclear: Whether later maintenance will rebase Phase 1's "current boundary" assertion or keep it as historical verification evidence only. [ASSUMED]
-   - Recommendation: Do not modify Phase 1 custody code in this phase; define Phase 2's own focused test gate and record the existing full-discovery limitation explicitly in plan verification. [ASSUMED]
+   - Resolution: Phase 2 uses its focused suite plus the exact source-authority validator. It must not rebase, relax, suppress, or otherwise weaken any Phase 1 custody or live-boundary check to make repository-wide discovery green; Phase 1 failures caused by later planning artifacts remain preserved boundary evidence, not Phase 2 test failures to repair. [RESOLVED: D-09 and the Phase 1 non-weakening constraint; final Plans 01-05]
 
 ## Environment Availability
 
@@ -410,16 +407,16 @@ Do not trim, NFC-normalize, or fuzzy-search either side of this check. [VERIFIED
 |----------|-------|
 | Framework | Python `unittest` (existing) [VERIFIED: codebase tests] |
 | Config file | none — standard discovery with `PYTHONPATH=src` [VERIFIED: codebase tests] |
-| Quick run command | `cd experiments/specchoice-v1.3.2 && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests.test_measurement_adapter tests.test_measurement_parsing tests.test_measurement_scoring -q` [ASSUMED] |
-| Full Phase 2 suite command | `cd experiments/specchoice-v1.3.2 && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests.test_measurement_adapter tests.test_measurement_parsing tests.test_measurement_scoring tests.test_measurement_attempts tests.test_measurement_h1 -q` [ASSUMED] |
+| Quick run command | `cd experiments/specchoice-v1.3.2 && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests.test_measurement_adapter tests.test_measurement_parsing tests.test_measurement_scoring -q` [RESOLVED: final Plans 01-03] |
+| Full Phase 2 suite command | `cd experiments/specchoice-v1.3.2 && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests.test_measurement_adapter tests.test_measurement_parsing tests.test_measurement_scoring tests.test_measurement_attempts tests.test_measurement_h1 -q` [RESOLVED: final Plan 05] |
 
 ### Phase Requirements → Test Map
 
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
-| TS-03 | Adapter verifies v2 authority and builds all 11 canonical records; golden run accepts six positives, rejects four negatives, and surfaces/classifies out candidate. | unit + integration | `python3 -m unittest tests.test_measurement_adapter tests.test_measurement_scoring -q` | ❌ Wave 0 |
-| TS-04 | Closed objects reject unknown/missing/duplicate keys, invalid enum, `not_surfaced`, all noncanonical no-finding forms, and unscoped legacy aliases. | unit/adversarial | `python3 -m unittest tests.test_measurement_parsing -q` | ❌ Wave 0 |
-| TS-05 | Every required stable code has exact structured fields; unnamed accepted parameter is warning-only and expected adversarial failures do not make formal golden invalid. | unit + integration | `python3 -m unittest tests.test_measurement_scoring tests.test_measurement_attempts tests.test_measurement_h1 -q` | ❌ Wave 0 |
+| TS-03 | Adapter verifies accepted verifier-rooted source authority and builds all 11 canonical records; golden run accepts six positives, rejects four negatives, and surfaces/classifies out candidate. | unit + integration | `python3 -m unittest tests.test_measurement_adapter tests.test_measurement_scoring -q` | ❌ owning tasks create first |
+| TS-04 | Closed objects reject unknown/missing/duplicate keys, invalid enum, `not_surfaced`, all noncanonical no-finding forms, and unscoped legacy aliases. | unit/adversarial | `python3 -m unittest tests.test_measurement_parsing -q` | ❌ owning task creates first |
+| TS-05 | Every required stable code has exact structured fields; unnamed accepted parameter is warning-only and expected adversarial failures do not make formal golden invalid. | unit + integration | `python3 -m unittest tests.test_measurement_scoring tests.test_measurement_attempts tests.test_measurement_h1 -q` | ❌ owning tasks create first |
 
 ### Required Test Matrix
 
@@ -431,18 +428,18 @@ Do not trim, NFC-normalize, or fuzzy-search either side of this check. [VERIFIED
 
 ### Sampling Rate
 
-- **Per task commit:** Run the focused tests owned by that task plus `validate-phase2-source-authority`. [VERIFIED: local authority command; ASSUMED]
-- **Per wave merge:** Run the full Phase 2 suite above and one golden formal CLI invocation in a temporary attempt root. [ASSUMED]
+- **Per task commit:** Run the focused tests created first and owned by that task plus `validate-phase2-source-authority`. [RESOLVED: final Plans 01-05]
+- **Per plan wave:** Plans 01-03 run their accumulated focused modules; Plan 04 runs the four-module pre-H1 suite and formal/adversarial validators; Plan 05 adds `test_measurement_h1` and runs the final five-module suite. No independent global test-scaffolding wave exists. [RESOLVED: final Plans 01-05]
 - **Phase gate:** Full Phase 2 suite green, golden H1 packet has no unexpected diagnostic, and human H1 decision is recorded before Phase 3 planning/execution. [VERIFIED: 02-CONTEXT.md]
 
-### Wave 0 Gaps
+### Per-Plan TDD Prerequisites (No Independent Wave 0)
 
-- [ ] `tests/test_measurement_adapter.py` — TS-03 adapter and v2-only source-contract matrix.
-- [ ] `tests/test_measurement_parsing.py` — TS-04 strict JSON and legacy ingress matrix.
-- [ ] `tests/test_measurement_scoring.py` — TS-03/TS-05 golden/adversarial outcomes and metric independence.
-- [ ] `tests/test_measurement_attempts.py` — D-09–D-12 immutable attempts and preflight exits.
-- [ ] `tests/test_measurement_h1.py` — D-13–D-16 human-decision binding/invalidation checks.
-- [ ] Focused Phase 2 test target — the current `unittest discover` suite includes Phase 1 live-boundary assertions that correctly fail after subsequent Phase artifacts exist, so it is not currently a green Phase 2 gate. [VERIFIED: local test execution]
+- [ ] Plan 01 Task 02-01-01 creates `tests/test_measurement_adapter.py` before adapter production code.
+- [ ] Plan 02 Task 02-02-01 creates `tests/test_measurement_parsing.py` before parser/preflight production code.
+- [ ] Plan 03 Task 02-03-01 creates `tests/test_measurement_scoring.py` before scorer production code.
+- [ ] Plan 04 Task 02-04-01 creates `tests/test_measurement_attempts.py` before attempt-custody production code.
+- [ ] Plan 05 Task 02-05-01 creates `tests/test_measurement_h1.py` before H1 packet/decision production code.
+- [ ] The focused Phase 2 target grows monotonically from those owning tasks. Repository-wide discovery is not a Phase 2 gate, and Phase 1 custody/live-boundary assertions remain unchanged. [RESOLVED: final Plans 01-05]
 
 ## Security Domain
 
@@ -485,7 +482,7 @@ Do not trim, NFC-normalize, or fuzzy-search either side of this check. [VERIFIED
 
 ### Tertiary (LOW confidence)
 
-- No web-only source is used for a locked decision. The three implementation assumptions are listed explicitly above. [ASSUMED]
+- No web-only source is used for a locked decision. A1 and A3 are resolved by D-05/D-06/D-08/D-09 and the final plan set; only the bounded pinned-fixture reader remains an implementation assumption under the agent's discretion. [VERIFIED: 02-CONTEXT.md; final Plans 01-05]
 
 ## Metadata
 
