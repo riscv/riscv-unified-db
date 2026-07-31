@@ -13,9 +13,12 @@ import unittest
 from pathlib import Path
 
 from specchoice_evidence.bundle import BundleError, verify_candidate
-from specchoice_evidence.verify import verify_accepted_bundle
+from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence.verify import _bundle_artifacts, _raw_artifacts, _root_digest, verify_accepted_bundle
 from specchoice_evidence.source_contract import (
     FixtureRegistryError,
+    SourceContractProposalError,
+    require_fixture_closure_local_acceptance_authorization,
     validate_fixture_registry,
     verify_fixture_registry_git,
 )
@@ -65,6 +68,89 @@ class FixtureClosureTests(unittest.TestCase):
 
 
 class FixtureClosureCandidateTests(unittest.TestCase):
+
+    def test_local_acceptance_authority_is_bound_to_identity_registry_and_v7_basis(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1"
+        identity = verify_candidate(candidate)
+        final = json.loads((candidate / "snapshot-manifest.json").read_text(encoding="utf-8"))
+        registry_sha256 = sha256_bytes((candidate / "fixture-registry-pr2164-v1.json").read_bytes())
+        v7_basis = {
+            "allowlist_sha256": "a" * 64,
+            "baseline_sha256": "b" * 64,
+            "restart_receipt_sha256": "c" * 64,
+            "reviewed_revision": "d" * 40,
+        }
+        decision = {
+            "approval_scope": "fixture_closure_local_acceptance_only",
+            "approved_generation": {
+                "candidate_relative_path": "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1",
+                "core_sha256": identity["manifest_sha256"],
+                "generation": identity["generation"],
+                "root_sha256": identity["root_sha256"],
+                "snapshot_manifest_sha256": final["snapshot_manifest_sha256"],
+            },
+            "authorization": {
+                "external_publication_authorized": False,
+                "fixture_closure_local_acceptance_authorized": True,
+            },
+            "fixture_registry_sha256": registry_sha256,
+            "reviewer": {"disposition": "approved_local_only"},
+            "schema_version": "1",
+            "state": "fixture_closure_local_acceptance_authorized",
+            "v7_basis": v7_basis,
+        }
+        require_fixture_closure_local_acceptance_authorization(
+            decision, identity, final["snapshot_manifest_sha256"], registry_sha256, v7_basis
+        )
+        for changed, code in (
+            (None, "FIXTURE_CLOSURE_ACCEPTANCE_DECISION_INVALID"),
+            ({**decision, "fixture_registry_sha256": "0" * 64}, "FIXTURE_CLOSURE_ACCEPTANCE_REGISTRY_MISMATCH"),
+            ({**decision, "v7_basis": {**v7_basis, "reviewed_revision": "e" * 40}}, "FIXTURE_CLOSURE_ACCEPTANCE_BASIS_MISMATCH"),
+        ):
+            with self.subTest(code=code), self.assertRaisesRegex(SourceContractProposalError, code):
+                require_fixture_closure_local_acceptance_authorization(
+                    changed, identity, final["snapshot_manifest_sha256"], registry_sha256, v7_basis
+                )
+
+    def test_recanonicalized_subset_fails_embedded_fixture_closure(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1"
+        with tempfile.TemporaryDirectory() as directory:
+            copied = Path(directory) / "accepted"
+            shutil.copytree(accepted, copied)
+            core_path = copied / "content-manifest-core.json"
+            core = json.loads(core_path.read_text(encoding="utf-8"))
+            files = core["snapshots"][0]["consumed_files"]
+            keep = files[:1]
+            for entry in files[1:]:
+                (copied / entry["local_bundle_path"]).unlink()
+            core["snapshots"][0]["consumed_files"] = keep
+            core_bytes = canonical_json_bytes(core)
+            core_path.write_bytes(core_bytes)
+            manifest_sha256 = sha256_bytes(core_bytes)
+            artifacts = _raw_artifacts(core, copied) + _bundle_artifacts(core, copied)
+            root_sha256 = _root_digest(manifest_sha256, artifacts)
+            final_path = copied / "snapshot-manifest.json"
+            final = json.loads(final_path.read_text(encoding="utf-8"))
+            final["content_manifest_core"] = core
+            final["manifest_sha256"] = manifest_sha256
+            final["root_sha256"] = root_sha256
+            final["snapshots"] = [
+                {
+                    **snapshot,
+                    "generation": final["generation"],
+                    "manifest_sha256": manifest_sha256,
+                    "root_sha256": root_sha256,
+                }
+                for snapshot in core["snapshots"]
+            ]
+            final.pop("snapshot_manifest_sha256")
+            final["snapshot_manifest_sha256"] = sha256_bytes(canonical_json_bytes(final))
+            final_path.write_bytes(canonical_json_bytes(final))
+            with self.assertRaisesRegex(Exception, "FIXTURE_CLOSURE_CORE_REGISTRY_MISMATCH"):
+                verify_accepted_bundle(copied)
+
     def test_complete_candidate_is_ineligible_and_rejects_extra_or_missing_files(self) -> None:
         experiment = Path(__file__).resolve().parents[1]
         candidate = experiment / (

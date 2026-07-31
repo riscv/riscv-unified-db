@@ -181,7 +181,7 @@ def validate_fixture_closure_proposal(proposal: object) -> dict[str, object]:
         raise SourceContractProposalError("FIXTURE_CLOSURE_PROPOSAL_INVALID")
     if proposal.get("schema_version") != "1" or proposal.get("status") != "pending_reviewer_approval":
         raise SourceContractProposalError("FIXTURE_CLOSURE_PROPOSAL_INVALID")
-    if proposal.get("generation") != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1":
+    if proposal.get("generation") != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2":
         raise SourceContractProposalError("FIXTURE_CLOSURE_GENERATION_INVALID")
     if proposal.get("pinned_commit_sha") != _FIXTURE_COMMIT or proposal.get("pinned_tree_sha") != _FIXTURE_TREE:
         raise SourceContractProposalError("FIXTURE_CLOSURE_PIN_INVALID")
@@ -591,6 +591,74 @@ def require_local_accepted_generation_authorization(
             raise SourceContractProposalError("LOCAL_ACCEPTANCE_IDENTITY_MISMATCH")
     if binding.get("snapshot_manifest_sha256") != snapshot_manifest_sha256:
         raise SourceContractProposalError("LOCAL_ACCEPTANCE_SNAPSHOT_MISMATCH")
+
+
+def validate_fixture_closure_local_acceptance_decision(decision: object) -> dict[str, object]:
+    """Validate the v3 fixture-only local acceptance authority.
+
+    This deliberately has a separate schema from the historical generic local
+    acceptance decision.  It binds the registry and immutable v7 restart lineage,
+    which are material to downstream fixture completeness.
+    """
+    payload = _require_mapping(decision, "FIXTURE_CLOSURE_ACCEPTANCE_DECISION_INVALID")
+    if set(payload) != {
+        "approval_scope", "approved_generation", "authorization", "fixture_registry_sha256",
+        "reviewer", "schema_version", "state", "v7_basis",
+    }:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_DECISION_FIELDS_INVALID")
+    if payload.get("schema_version") != "1" or payload.get("approval_scope") != "fixture_closure_local_acceptance_only" or payload.get("state") != "fixture_closure_local_acceptance_authorized":
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_DECISION_INVALID")
+    if _require_mapping(payload.get("reviewer"), "FIXTURE_CLOSURE_ACCEPTANCE_REVIEWER_INVALID") != {"disposition": "approved_local_only"}:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_REVIEWER_INVALID")
+    if _require_mapping(payload.get("authorization"), "FIXTURE_CLOSURE_ACCEPTANCE_AUTHORIZATION_INVALID") != {
+        "external_publication_authorized": False,
+        "fixture_closure_local_acceptance_authorized": True,
+    }:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_AUTHORIZATION_INVALID")
+    binding = _require_mapping(payload.get("approved_generation"), "FIXTURE_CLOSURE_ACCEPTANCE_BINDING_INVALID")
+    if set(binding) != {"candidate_relative_path", "core_sha256", "generation", "root_sha256", "snapshot_manifest_sha256"}:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_BINDING_INVALID")
+    _normalized_path(binding.get("candidate_relative_path"), "fixture_closure_candidate_relative_path")
+    _require_string(binding, "generation")
+    for field in ("core_sha256", "root_sha256", "snapshot_manifest_sha256"):
+        try:
+            require_sha256(binding.get(field))
+        except ValueError as error:
+            raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_BINDING_INVALID") from error
+    try:
+        require_sha256(payload.get("fixture_registry_sha256"))
+    except ValueError as error:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_REGISTRY_INVALID") from error
+    basis = _require_mapping(payload.get("v7_basis"), "FIXTURE_CLOSURE_ACCEPTANCE_BASIS_INVALID")
+    if set(basis) != {"allowlist_sha256", "baseline_sha256", "restart_receipt_sha256", "reviewed_revision"}:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_BASIS_INVALID")
+    revision = basis.get("reviewed_revision")
+    if not isinstance(revision, str) or len(revision) != 40 or any(char not in "0123456789abcdef" for char in revision):
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_BASIS_INVALID")
+    for field in ("allowlist_sha256", "baseline_sha256", "restart_receipt_sha256"):
+        try:
+            require_sha256(basis.get(field))
+        except ValueError as error:
+            raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_BASIS_INVALID") from error
+    return dict(payload)
+
+
+def require_fixture_closure_local_acceptance_authorization(
+    decision: object, identity: Mapping[str, object], snapshot_manifest_sha256: str,
+    registry_sha256: str, v7_basis: Mapping[str, object],
+) -> None:
+    """Require exact authority for a current, complete fixture candidate."""
+    payload = validate_fixture_closure_local_acceptance_decision(decision)
+    binding = _require_mapping(payload["approved_generation"], "FIXTURE_CLOSURE_ACCEPTANCE_BINDING_INVALID")
+    for actual, bound in (("generation", "generation"), ("manifest_sha256", "core_sha256"), ("root_sha256", "root_sha256")):
+        if binding.get(bound) != identity.get(actual):
+            raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_IDENTITY_MISMATCH")
+    if binding.get("snapshot_manifest_sha256") != snapshot_manifest_sha256:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_SNAPSHOT_MISMATCH")
+    if payload.get("fixture_registry_sha256") != registry_sha256:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_REGISTRY_MISMATCH")
+    if payload.get("v7_basis") != dict(v7_basis):
+        raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_BASIS_MISMATCH")
 
 
 def _run_git(repository: Path, *arguments: str) -> subprocess.CompletedProcess[bytes]:

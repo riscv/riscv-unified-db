@@ -21,6 +21,32 @@ class BundleVerificationError(ValueError):
     """Stable failure emitted before accepted contents are exposed."""
 
 
+# This is intentionally duplicated into the standalone verifier rather than imported
+# from the construction package.  A copied accepted bundle must prove the finite PR
+# fixture universe without repository modules, Git objects, or network access.
+_FIXTURE_BASE = "tools/python/param-extraction-eval/cases"
+_FIXTURE_COMMIT = "22e84458c87a7ccf4c07034de1eb6d0bf9764144"
+_FIXTURE_TREE = "af003b427c66bd8ac9803a91b3bf363a1b1304d9"
+_FIXTURE_SET = {
+    "CAND_WARL_FIXED_LEGAL_SET": ("candidate", "candidates", ("expected.yaml", "source.txt")),
+    "NEG_EXT_GATED_PBMTE": ("negative", "negatives", ("expected.yaml", "source.txt")),
+    "NEG_FIXED_ENCODING": ("negative", "negatives", ("expected.yaml", "source.txt")),
+    "NEG_SHALL_NO_DELEGATION": ("negative", "negatives", ("expected.yaml", "source.txt")),
+    "NEG_SOFTWARE_ADVICE": ("negative", "negatives", ("expected.yaml", "source.txt")),
+    "POS_CSR_RW_MTVEC_ACCESS": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_DIRECT_CACHE_BLOCK": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_DIRECT_NUM_PMP": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_RECALL_COUNT_GEILEN": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_WARL_ASID_WIDTH": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+    "POS_WARL_MTVEC_MODES": ("positive", "positives", ("expected.yaml", "gold.yaml", "source.txt")),
+}
+_FIXTURE_ROLES = {
+    "expected.yaml": "fixture_expected",
+    "gold.yaml": "fixture_gold",
+    "source.txt": "fixture_source",
+}
+
+
 def _load_canonical(root: Path, relative_path: str, code: str) -> tuple[dict[str, Any], bytes]:
     try:
         evidence = inspect_authoritative_path(root, relative_path)
@@ -109,6 +135,115 @@ def _bundle_artifacts(core: dict[str, Any], root: Path) -> list[dict[str, object
             }
         )
     return artifacts
+
+
+def _fixture_tuple(entry: dict[str, Any], *, registry: bool) -> tuple[str, str, str, int, str]:
+    """Normalize a raw tuple from either the registry or manifest inventory."""
+    try:
+        upstream = require_relative_posix_path(str(entry.get("upstream_path"))).as_posix()
+        local = require_relative_posix_path(str(entry.get("local_bundle_path"))).as_posix()
+        length = require_byte_length(entry.get("raw_byte_length"))
+        digest = require_sha256(entry.get("raw_sha256"))
+    except (FilesystemPolicyError, ValueError) as error:
+        raise BundleVerificationError("FIXTURE_CLOSURE_TUPLE_INVALID") from error
+    role_key = "role" if registry else "experimental_role"
+    role = entry.get(role_key)
+    if not isinstance(role, str):
+        raise BundleVerificationError("FIXTURE_CLOSURE_TUPLE_INVALID")
+    return (upstream, local, role, length, digest)
+
+
+def _verify_fixture_closure(core: dict[str, Any], root: Path) -> None:
+    """Prove a v3 fixture bundle has exactly the frozen 11/28 raw universe."""
+    closure = core.get("fixture_closure")
+    if closure is None:
+        return
+    if not isinstance(closure, dict) or set(closure) != {
+        "fixture_count", "raw_file_count", "registry_path", "registry_sha256"
+    }:
+        raise BundleVerificationError("FIXTURE_CLOSURE_INVALID")
+    if closure.get("fixture_count") != 11 or closure.get("raw_file_count") != 28:
+        raise BundleVerificationError("FIXTURE_CLOSURE_COUNT_MISMATCH")
+    if closure.get("registry_path") != "fixture-registry-pr2164-v1.json":
+        raise BundleVerificationError("FIXTURE_CLOSURE_REGISTRY_PATH_MISMATCH")
+    try:
+        registry_digest = require_sha256(closure.get("registry_sha256"))
+    except ValueError as error:
+        raise BundleVerificationError("FIXTURE_CLOSURE_REGISTRY_DIGEST_INVALID") from error
+    registry, registry_raw = _load_canonical(root, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+    if sha256_bytes(registry_raw) != registry_digest:
+        raise BundleVerificationError("FIXTURE_CLOSURE_REGISTRY_DIGEST_MISMATCH")
+    if (
+        set(registry) != {"fixture_count", "fixtures", "pinned_commit_sha", "pinned_tree_sha", "pull_request", "raw_file_count", "repository", "schema_version", "snapshot_id"}
+        or registry.get("schema_version") != "1"
+        or registry.get("repository") != "riscv/riscv-unified-db"
+        or registry.get("snapshot_id") != "evaluation_fixtures"
+        or registry.get("pull_request") != 2164
+        or registry.get("pinned_commit_sha") != _FIXTURE_COMMIT
+        or registry.get("pinned_tree_sha") != _FIXTURE_TREE
+        or registry.get("fixture_count") != 11
+        or registry.get("raw_file_count") != 28
+    ):
+        raise BundleVerificationError("FIXTURE_REGISTRY_IDENTITY_MISMATCH")
+    artifacts = [
+        item for item in core.get("bundle_artifacts", [])
+        if isinstance(item, dict) and item.get("kind") == "fixture_registry"
+    ]
+    if len(artifacts) != 1 or artifacts[0].get("local_bundle_path") != "fixture-registry-pr2164-v1.json" or artifacts[0].get("sha256") != registry_digest:
+        raise BundleVerificationError("FIXTURE_CLOSURE_REGISTRY_ARTIFACT_MISMATCH")
+    fixtures = registry.get("fixtures")
+    if not isinstance(fixtures, list) or len(fixtures) != 11:
+        raise BundleVerificationError("FIXTURE_REGISTRY_SET_MISMATCH")
+    registry_tuples: set[tuple[str, str, str, int, str]] = set()
+    fixture_ids: set[str] = set()
+    for fixture in fixtures:
+        if not isinstance(fixture, dict) or set(fixture) != {"fixture_class", "fixture_id", "files"}:
+            raise BundleVerificationError("FIXTURE_REGISTRY_ENTRY_INVALID")
+        fixture_id = fixture.get("fixture_id")
+        if not isinstance(fixture_id, str) or fixture_id in fixture_ids or fixture_id not in _FIXTURE_SET:
+            raise BundleVerificationError("FIXTURE_REGISTRY_SET_MISMATCH")
+        fixture_ids.add(fixture_id)
+        expected_class, directory, names = _FIXTURE_SET[fixture_id]
+        files = fixture.get("files")
+        if fixture.get("fixture_class") != expected_class or not isinstance(files, list) or len(files) != len(names):
+            raise BundleVerificationError("FIXTURE_REGISTRY_ENTRY_INVALID")
+        seen_names: set[str] = set()
+        for file in files:
+            if not isinstance(file, dict) or set(file) != {"filename", "local_bundle_path", "raw_byte_length", "raw_sha256", "role", "upstream_path"}:
+                raise BundleVerificationError("FIXTURE_REGISTRY_ENTRY_INVALID")
+            filename = file.get("filename")
+            if not isinstance(filename, str) or filename in seen_names or filename not in names:
+                raise BundleVerificationError("FIXTURE_REGISTRY_ENTRY_INVALID")
+            seen_names.add(filename)
+            if file.get("role") != _FIXTURE_ROLES[filename]:
+                raise BundleVerificationError("FIXTURE_REGISTRY_ROLE_MISMATCH")
+            expected_upstream = f"{_FIXTURE_BASE}/{directory}/{fixture_id}/{filename}"
+            expected_local = f"raw/evaluation_fixtures/{fixture_id}/{filename}"
+            if file.get("upstream_path") != expected_upstream or file.get("local_bundle_path") != expected_local:
+                raise BundleVerificationError("FIXTURE_REGISTRY_PATH_MISMATCH")
+            record = _fixture_tuple(file, registry=True)
+            if record in registry_tuples:
+                raise BundleVerificationError("FIXTURE_REGISTRY_DUPLICATE")
+            registry_tuples.add(record)
+        if seen_names != set(names):
+            raise BundleVerificationError("FIXTURE_REGISTRY_ENTRY_INVALID")
+    if fixture_ids != set(_FIXTURE_SET) or len(registry_tuples) != 28:
+        raise BundleVerificationError("FIXTURE_REGISTRY_SET_MISMATCH")
+    snapshots = core.get("snapshots")
+    if not isinstance(snapshots, list) or len(snapshots) != 1 or not isinstance(snapshots[0], dict):
+        raise BundleVerificationError("FIXTURE_CLOSURE_CORE_MISMATCH")
+    snapshot = snapshots[0]
+    if any(snapshot.get(key) != value for key, value in {
+        "repository": "riscv/riscv-unified-db", "snapshot_id": "evaluation_fixtures",
+        "pull_request": 2164, "pinned_commit_sha": _FIXTURE_COMMIT, "pinned_tree_sha": _FIXTURE_TREE,
+    }.items()):
+        raise BundleVerificationError("FIXTURE_CLOSURE_CORE_MISMATCH")
+    files = snapshot.get("consumed_files")
+    if not isinstance(files, list):
+        raise BundleVerificationError("FIXTURE_CLOSURE_CORE_MISMATCH")
+    core_tuples = {_fixture_tuple(entry, registry=False) for entry in files if isinstance(entry, dict)}
+    if len(core_tuples) != len(files) or core_tuples != registry_tuples:
+        raise BundleVerificationError("FIXTURE_CLOSURE_CORE_REGISTRY_MISMATCH")
 
 
 def _root_digest(manifest_sha256: str, artifacts: list[dict[str, object]]) -> str:
@@ -211,6 +346,7 @@ def verify_bundle(bundle_root: Path, expected_status: str | None = None) -> dict
     projected_final.pop("snapshot_manifest_sha256", None)
     if supplied_self != sha256_bytes(canonical_json_bytes(projected_final)):
         raise BundleVerificationError("SNAPSHOT_MANIFEST_SELF_DIGEST_MISMATCH")
+    _verify_fixture_closure(core, bundle_root)
     artifacts = _raw_artifacts(core, bundle_root) + _bundle_artifacts(core, bundle_root)
     _verify_tree_closure(bundle_root, artifacts)
     recomputed_root = _root_digest(manifest_sha256, artifacts)

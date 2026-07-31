@@ -27,6 +27,7 @@ from .source_contract import (
     SourceContractProposalError,
     require_accepted_publication_authorization,
     require_candidate_construction_authorization,
+    require_fixture_closure_local_acceptance_authorization,
     require_local_accepted_generation_authorization,
     require_source_extraction_authorization,
     validate_source_publication_decision,
@@ -354,7 +355,7 @@ def construct_fixture_closure_candidate(
         validate_fixture_closure_decision(
             decision,
             proposal,
-            proposal_path="receipts/source-contract-proposal-v3-pr2164-fixture-closure.json",
+            proposal_path="receipts/source-contract-proposal-v3-pr2164-fixture-closure-v2.json",
             proposal_sha256=sha256_bytes(proposal_raw),
         )
         bindings = validate_fixture_closure_proposal(proposal)
@@ -429,7 +430,7 @@ def construct_fixture_closure_candidate(
             "source_extraction_authorized": True,
         },
         "proposal": {
-            "path": "receipts/source-contract-proposal-v3-pr2164-fixture-closure.json",
+            "path": "receipts/source-contract-proposal-v3-pr2164-fixture-closure-v2.json",
             "sha256": sha256_bytes(canonical_json_bytes(generic_proposal)),
         },
         "reviewer": {"approval_token": "authorize-candidate-construction-only"},
@@ -595,6 +596,12 @@ def verify_candidate(candidate: Path) -> dict[str, object]:
     recomputed = _root_digest(actual_manifest, sorted(artifacts, key=lambda item: item["local_bundle_path"]))
     if recomputed != root_sha256:
         raise BundleError("ROOT_SHA256_MISMATCH")
+    # Keep candidate and embedded accepted verification on the same finite-set
+    # closure rule.  The embedded verifier is copied into accepted generations.
+    try:
+        verify_candidate_bundle(candidate)
+    except BundleVerificationError as error:
+        raise BundleError(str(error)) from error
     return {"generation": generation, "manifest_sha256": actual_manifest, "root_sha256": root_sha256, "status": "candidate"}
 
 
@@ -662,7 +669,9 @@ def accept_local_candidate(
     return identity
 
 
-def accept_fixture_closure_candidate(candidate: Path, accepted_root: Path) -> dict[str, object]:
+def accept_fixture_closure_candidate(
+    candidate: Path, accepted_root: Path, decision: object, v7_basis: Mapping[str, object]
+) -> dict[str, object]:
     """Promote only the complete v3 candidate into a fresh local accepted tree.
 
     This is a local lifecycle transition, not an external publication operation.  The
@@ -672,8 +681,20 @@ def accept_fixture_closure_candidate(candidate: Path, accepted_root: Path) -> di
     """
     identity = verify_candidate(candidate)
     generation = identity.get("generation")
-    if generation != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1":
+    if generation != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2":
         raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_GENERATION_INVALID")
+    final_candidate = _canonical_load(candidate / "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    snapshot_sha256 = final_candidate.get("snapshot_manifest_sha256")
+    if not isinstance(snapshot_sha256, str):
+        raise BundleError("SNAPSHOT_MANIFEST_SELF_DIGEST_MISMATCH")
+    registry = candidate / "fixture-registry-pr2164-v1.json"
+    try:
+        registry_sha256 = sha256_bytes(registry.read_bytes())
+        require_fixture_closure_local_acceptance_authorization(
+            decision, identity, snapshot_sha256, registry_sha256, v7_basis
+        )
+    except (OSError, SourceContractProposalError) as error:
+        raise BundleError(str(error)) from error
     target = accepted_root / generation
     if target.exists() or target.is_symlink():
         raise BundleError("LOCAL_ACCEPTED_TARGET_EXISTS")
@@ -719,7 +740,10 @@ def accept_fixture_closure_candidate(candidate: Path, accepted_root: Path) -> di
         }
         final["snapshot_manifest_sha256"] = sha256_bytes(canonical_json_bytes(final))
         _write_exact(temporary / "snapshot-manifest.json", canonical_json_bytes(final))
+        # The embedded verifier re-parses the frozen registry and proves its
+        # bidirectional equality with the raw manifest inventory before acceptance.
         verified = verify_accepted_bundle(temporary)
+        _run_embedded_verifier(temporary)
         _sync_directory(temporary)
         _sync_directory(accepted_root)
         if target.exists() or target.is_symlink():
