@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 1
+open_count: 0
 waived_count: 0
-fixed_count: 0
+fixed_count: 1
 total_count: 1
-last_updated: 2026-07-31T15:18:50.933Z
+last_updated: 2026-07-31T15:20:40.686Z
 ---
 
 # Broken Windows Ledger
@@ -15,7 +15,7 @@ last_updated: 2026-07-31T15:18:50.933Z
 
 | id | phase | kind | file | line | description | status | reason | recorded_at | resolved_at |
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
-| 1 | 02 | deviation | experiments/specchoice-v1.3.2/config/measurement/canonical-adjudication-schema-v1.json |  | Canonical schema bytes and accepted-path validation were corrected during 02-02 verification. | open |  | 2026-07-31T15:18:50.933Z |  |
+| 1 | 02 | deviation | experiments/specchoice-v1.3.2/config/measurement/canonical-adjudication-schema-v1.json |  | Canonical schema bytes and accepted-path validation were corrected during 02-02 verification. | fixed |  | 2026-07-31T15:18:50.933Z | 2026-07-31T15:20:40.686Z |
 
 ````json
 [
@@ -26,10 +26,10 @@ last_updated: 2026-07-31T15:18:50.933Z
     "file": "experiments/specchoice-v1.3.2/config/measurement/canonical-adjudication-schema-v1.json",
     "line": null,
     "description": "Canonical schema bytes and accepted-path validation were corrected during 02-02 verification.",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-07-31T15:18:50.933Z",
-    "resolved_at": null
+    "resolved_at": "2026-07-31T15:20:40.686Z"
   }
 ]
 ````
