@@ -11,6 +11,8 @@ from pathlib import Path
 from .baseline import (
     BaselineError,
     capture_baseline,
+    capture_committed_history,
+    capture_live_state,
     check_boundary,
     check_current_boundary,
     committed_boundary_projection,
@@ -194,6 +196,64 @@ def _require_current_boundary_clean(repository: Path, baseline: Path) -> None:
     current = check_current_boundary(repository, baseline)
     if current.blocking_violations:
         raise ReceiptError("LOCAL_MVP_CURRENT_BOUNDARY_BLOCKING")
+
+
+def _repository_relative_posix(repository: Path, path: Path) -> str:
+    """Resolve an issuance artifact to one exact repository-relative POSIX path."""
+    try:
+        relative = path.resolve().relative_to(repository.resolve())
+    except ValueError as error:
+        raise ReceiptError("LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING") from error
+    if not relative.parts:
+        raise ReceiptError("LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING")
+    return relative.as_posix()
+
+
+def _post_review_allowed_paths(args: argparse.Namespace, repository: Path) -> set[str]:
+    """List the only mutable paths compatible with one active receipt issuance."""
+    try:
+        issuance_paths = {
+            _repository_relative_posix(repository, getattr(args, name))
+            for name in ("decision", "receipt", "markdown")
+        }
+    except (AttributeError, TypeError) as error:
+        raise ReceiptError("LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING") from error
+    receipts_root = _repository_relative_posix(repository, _experiment_root() / "receipts") + "/"
+    if any(not path.startswith(receipts_root) for path in issuance_paths):
+        raise ReceiptError("LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING")
+    baseline, _ = load_baseline(_default_active_baseline())
+    future_controls = baseline.get("future_control_exact_files")
+    if not isinstance(future_controls, list) or not all(isinstance(path, str) for path in future_controls):
+        raise ReceiptError("LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING")
+    return issuance_paths | set(future_controls)
+
+
+def _require_post_review_delta_clean(
+    args: argparse.Namespace, decision: dict[str, object], repository: Path
+) -> None:
+    """Reject any non-control mutation after the decision's reviewed revision.
+
+    A revision-pinned decision proves its frozen basis only at ``reviewed_revision``.
+    Active issuance and finalization therefore permit after-review changes solely for
+    the exact invocation artifacts and the baseline's enumerated control files.
+    """
+    reviewed_revision = decision.get("reviewed_revision")
+    if not isinstance(reviewed_revision, str):
+        raise ReceiptError("LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING")
+    try:
+        committed_paths = {
+            change.path for change in capture_committed_history(repository, reviewed_revision, "HEAD")
+        }
+    except BaselineError as error:
+        raise ReceiptError("LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING") from error
+    changed_paths = committed_paths | set(capture_live_state(repository))
+    allowed_paths = _post_review_allowed_paths(args, repository)
+    blocking_paths = {
+        path for path in changed_paths
+        if path.rsplit("/", 1)[-1] != ".DS_Store" and path not in allowed_paths
+    }
+    if blocking_paths:
+        raise ReceiptError("LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING")
 
 
 def command_capture(args: argparse.Namespace) -> int:
@@ -561,6 +621,7 @@ def _validate_local_mvp_receipt_basis(args: argparse.Namespace, decision: dict[s
         raise ReceiptError("LOCAL_RECEIPT_PROJECTION_MISMATCH")
     if decision.get("reviewed_receipt_basis_sha256") != material["receipt_basis_sha256"]:
         raise ReceiptError("LOCAL_RECEIPT_BASIS_MISMATCH")
+    _require_post_review_delta_clean(args, decision, repository)
     _require_current_boundary_clean(repository, baseline)
     return material
 
@@ -658,7 +719,6 @@ def command_finalize_review(args: argparse.Namespace) -> int:
     if lineage != expected_lineage:
         raise ReceiptError("RESTART_LINEAGE_PROJECTION_MISMATCH")
     repository = _repository_root(experiment_root)
-    _require_current_boundary_clean(repository, experiment_root / expected_paths["baseline"])
     if not args.decision.is_file():
         raise ReceiptError("REVIEW_DECISION_MISSING")
     decision_raw = args.decision.read_bytes()
@@ -674,6 +734,8 @@ def command_finalize_review(args: argparse.Namespace) -> int:
         raise ReceiptError(str(error)) from error
     if local_decision.get("schema_version") != "3":
         raise ReceiptError("HISTORICAL_RECEIPT_NOT_FINALIZABLE")
+    _require_post_review_delta_clean(args, local_decision, repository)
+    _require_current_boundary_clean(repository, experiment_root / expected_paths["baseline"])
     if source.get("external_publication_authorized") is not False:
         raise ReceiptError("EXTERNAL_PUBLICATION_NOT_AUTHORIZED")
     if receipt.get("reviewer_decision_sha256") != sha256_bytes(decision_raw):

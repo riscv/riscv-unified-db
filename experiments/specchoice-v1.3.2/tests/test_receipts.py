@@ -11,10 +11,12 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-from specchoice_evidence.baseline import BoundaryResult
+from specchoice_evidence.baseline import BoundaryResult, CommittedPathChange
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.cli import (
+    _committed_basis_material,
     _require_current_boundary_clean,
+    _require_post_review_delta_clean,
     _restart_lineage_for_local_mvp_receipt,
     build_parser,
 )
@@ -336,34 +338,147 @@ class IntegrityReceiptTests(unittest.TestCase):
         finally:
             os.chdir(original_cwd)
 
-    def test_canonicalized_v6_receipt_finalizes(self) -> None:
+    def test_v6_decision_cannot_rebuild_a_receipt_after_post_review_code_changes(self) -> None:
         root = Path(__file__).resolve().parents[1]
-        receipt = json.loads((root / "receipts/integrity-receipt-v6.json").read_text(encoding="utf-8"))
-        expected_paths = {
-            "allowlist": "config/boundary_allowlist-v5-gap-closure.json",
-            "baseline": "baselines/phase-start-v5-gap-closure.json",
-            "incident_receipt": "receipts/boundary-restart-v5.json",
-            "previous_baseline": "baselines/phase-start-v2.json",
-        }
-        for name, path in expected_paths.items():
-            receipt["restart_lineage"][name]["path"] = path
-        projected = dict(receipt)
-        projected.pop("receipt_sha256")
-        receipt["receipt_sha256"] = sha256_bytes(canonical_json_bytes(projected))
-        with tempfile.TemporaryDirectory() as directory:
-            receipt_path = Path(directory) / "integrity-receipt.json"
-            markdown_path = Path(directory) / "integrity-receipt.md"
-            receipt_path.write_bytes(canonical_json_bytes(receipt))
-            markdown_path.write_text(render_markdown(receipt), encoding="utf-8")
+        decision_path = root / "receipts/reviewer-boundary-decision-v6.json"
+        v6_receipt_path = root / "receipts/integrity-receipt-v6.json"
+        original_decision, original_receipt = decision_path.read_bytes(), v6_receipt_path.read_bytes()
+        with tempfile.TemporaryDirectory(dir=root / "receipts") as directory:
+            output_root = Path(directory)
             arguments = build_parser().parse_args(
                 [
-                    "finalize-review",
-                    "--decision", str(root / "receipts/reviewer-boundary-decision-v6.json"),
+                    "write-local-mvp-receipt",
+                    "--decision", str(decision_path),
+                    "--accepted-directory", str(root / "bundles/accepted"),
+                    "--receipt", str(output_root / "replacement.json"),
+                    "--markdown", str(output_root / "replacement.md"),
+                ]
+            )
+            with patch("specchoice_evidence.cli.capture_live_state", return_value={}):
+                with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING"):
+                    arguments.handler(arguments)
+        self.assertEqual(decision_path.read_bytes(), original_decision)
+        self.assertEqual(v6_receipt_path.read_bytes(), original_receipt)
+
+    def test_post_review_gate_allows_exact_artifacts_and_future_controls_only(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        repository = root.parents[1]
+        arguments = build_parser().parse_args(
+            [
+                "finalize-review",
+                "--decision", str(root / "receipts/reviewer-boundary-decision-v6.json"),
+                "--receipt", str(root / "receipts/integrity-receipt-v6.json"),
+                "--markdown", str(root / "receipts/integrity-receipt-v6.md"),
+            ]
+        )
+        decision = {"reviewed_revision": "a" * 40}
+        allowed_live = {
+            "experiments/specchoice-v1.3.2/receipts/reviewer-boundary-decision-v6.json": [{"source": "untracked"}],
+            "experiments/specchoice-v1.3.2/receipts/integrity-receipt-v6.json": [{"source": "untracked"}],
+            "experiments/specchoice-v1.3.2/receipts/integrity-receipt-v6.md": [{"source": "untracked"}],
+            ".planning/STATE.md": [{"source": "worktree"}],
+            ".DS_Store": [{"source": "untracked"}],
+        }
+        with patch("specchoice_evidence.cli.capture_committed_history", return_value=[]), patch(
+            "specchoice_evidence.cli.capture_live_state", return_value=allowed_live
+        ):
+            _require_post_review_delta_clean(arguments, decision, repository)
+
+    def test_post_review_gate_blocks_clean_final_tree_code_history(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        repository = root.parents[1]
+        arguments = build_parser().parse_args(
+            [
+                "finalize-review",
+                "--decision", str(root / "receipts/reviewer-boundary-decision-v6.json"),
+                "--receipt", str(root / "receipts/integrity-receipt-v6.json"),
+                "--markdown", str(root / "receipts/integrity-receipt-v6.md"),
+            ]
+        )
+        transient_path = "experiments/specchoice-v1.3.2/src/specchoice_evidence/transient.py"
+        history = [
+            CommittedPathChange(transient_path, "added", "000000", "100644", "0" * 8, "1" * 8, "a" * 40),
+            CommittedPathChange(transient_path, "deleted", "100644", "000000", "1" * 8, "0" * 8, "b" * 40),
+        ]
+        with patch("specchoice_evidence.cli.capture_committed_history", return_value=history), patch(
+            "specchoice_evidence.cli.capture_live_state", return_value={}
+        ):
+            with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING"):
+                _require_post_review_delta_clean(arguments, {"reviewed_revision": "a" * 40}, repository)
+
+    def test_post_review_gate_blocks_staged_worktree_and_untracked_code(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        repository = root.parents[1]
+        arguments = build_parser().parse_args(
+            [
+                "finalize-review",
+                "--decision", str(root / "receipts/reviewer-boundary-decision-v6.json"),
+                "--receipt", str(root / "receipts/integrity-receipt-v6.json"),
+                "--markdown", str(root / "receipts/integrity-receipt-v6.md"),
+            ]
+        )
+        code_path = "experiments/specchoice-v1.3.2/src/specchoice_evidence/changed.py"
+        for source in ("staged", "worktree", "untracked"):
+            with self.subTest(source=source), patch(
+                "specchoice_evidence.cli.capture_committed_history", return_value=[]
+            ), patch("specchoice_evidence.cli.capture_live_state", return_value={code_path: [{"source": source}]}):
+                with self.assertRaisesRegex(ReceiptError, "LOCAL_RECEIPT_POST_REVIEW_DELTA_BLOCKING"):
+                    _require_post_review_delta_clean(arguments, {"reviewed_revision": "a" * 40}, repository)
+
+    def test_current_reviewed_decision_can_write_and_finalize_with_exact_artifacts(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        repository = root.parents[1]
+        template = json.loads((root / "receipts/reviewer-boundary-decision-v6.json").read_text(encoding="utf-8"))
+        revision = subprocess.run(
+            ["git", "-C", os.fspath(repository), "rev-parse", "HEAD"],
+            check=True,
+            stdout=subprocess.PIPE,
+            text=True,
+        ).stdout.strip()
+        approved_generation = template["approved_generation"]
+        assert isinstance(approved_generation, dict)
+        material = _committed_basis_material(
+            root=repository,
+            baseline=root / "baselines/phase-start-v5-gap-closure.json",
+            environment=root / "receipts/environment-decision.json",
+            approved_generation=approved_generation,
+            reviewed_revision=revision,
+        )
+        decision = dict(template)
+        decision.update(
+            {
+                "committed_boundary_projection_sha256": material["committed_boundary_projection_sha256"],
+                "phase_start_baseline_sha256": material["phase_start_baseline_sha256"],
+                "reviewed_receipt_basis_sha256": material["receipt_basis_sha256"],
+                "reviewed_revision": material["reviewed_revision"],
+            }
+        )
+        with tempfile.TemporaryDirectory(dir=root / "receipts") as directory:
+            output_root = Path(directory)
+            decision_path = output_root / "reviewer-decision.json"
+            receipt_path = output_root / "integrity-receipt.json"
+            markdown_path = output_root / "integrity-receipt.md"
+            decision_path.write_bytes(canonical_json_bytes(decision))
+            write_args = build_parser().parse_args(
+                [
+                    "write-local-mvp-receipt",
+                    "--decision", str(decision_path),
+                    "--accepted-directory", str(root / "bundles/accepted"),
                     "--receipt", str(receipt_path),
                     "--markdown", str(markdown_path),
                 ]
             )
-            self.assertEqual(arguments.handler(arguments), 0)
+            finalize_args = build_parser().parse_args(
+                [
+                    "finalize-review",
+                    "--decision", str(decision_path),
+                    "--receipt", str(receipt_path),
+                    "--markdown", str(markdown_path),
+                ]
+            )
+            with patch("specchoice_evidence.cli.capture_live_state", return_value={}):
+                self.assertEqual(write_args.handler(write_args), 0)
+                self.assertEqual(finalize_args.handler(finalize_args), 0)
 
     def test_v5_write_without_restart_fails_closed_before_receipt_issuance(self) -> None:
         root = Path(__file__).resolve().parents[1]
