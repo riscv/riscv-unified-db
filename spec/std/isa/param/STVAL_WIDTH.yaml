@@ -10,7 +10,7 @@ description: |
   The number of implemented bits in `stval`.
 
   Must be greater than or equal to _max_(`PHYS_ADDR_WIDTH`, `VA_SIZE`)
-long_name: `stval` implemented bits
+long_name: "`stval` implemented bits"
 schema:
   type: integer
   minimum: 0
