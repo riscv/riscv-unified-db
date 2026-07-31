@@ -10,6 +10,7 @@ from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes
 from specchoice_measurement.adapter import build_pr2164_adapter_batch
+from specchoice_measurement.cli import _fixture_span
 from specchoice_measurement.diagnostics import Diagnostic
 from specchoice_measurement.preflight import preflight_prediction_batch
 from specchoice_measurement.scoring import score_prediction_batch
@@ -52,6 +53,7 @@ class MeasurementScoringTests(unittest.TestCase):
         candidate = by_fixture["CAND_WARL_FIXED_LEGAL_SET"]
         negative = by_fixture["NEG_EXT_GATED_PBMTE"]
         target_span = positive["adjudication"]["evidence_spans"][0]
+        negative_span = _fixture_span(self.batch, "NEG_EXT_GATED_PBMTE")
         mutations = {
             "accepted-parameter-name-missing": lambda: positive["adjudication"].update(proposed_name=None),
             "candidate-not-surfaced": lambda: candidate["adjudication"].update(
@@ -67,13 +69,13 @@ class MeasurementScoringTests(unittest.TestCase):
                 surfaced=True,
                 parameter_status="accept",
                 proposed_name="PBMTE",
-                evidence_spans=[deepcopy(target_span)],
+                evidence_spans=[deepcopy(negative_span)],
             ),
             "negative-review": lambda: negative["adjudication"].update(
                 surfaced=True,
                 parameter_status="review",
                 proposed_name=None,
-                evidence_spans=[deepcopy(target_span)],
+                evidence_spans=[deepcopy(negative_span)],
             ),
             "evidence-empty": lambda: positive["adjudication"].update(evidence_spans=[]),
             "evidence-source-changed": lambda: target_span.update(source_sha256="0" * 64),
