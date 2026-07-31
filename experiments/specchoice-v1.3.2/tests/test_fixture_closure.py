@@ -115,7 +115,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
 
     def test_recanonicalized_subset_fails_embedded_fixture_closure(self) -> None:
         experiment = Path(__file__).resolve().parents[1]
-        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1"
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
         with tempfile.TemporaryDirectory() as directory:
             copied = Path(directory) / "accepted"
             shutil.copytree(accepted, copied)
@@ -191,7 +191,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
 
     def test_phase2_authority_requires_the_accepted_registry_digest(self) -> None:
         experiment = Path(__file__).resolve().parents[1]
-        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1"
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
         command = [
             sys.executable, "-m", "specchoice_evidence.cli", "validate-phase2-source-authority",
             "--authority", "phase2/source-authority.json", "--bundle", str(accepted),

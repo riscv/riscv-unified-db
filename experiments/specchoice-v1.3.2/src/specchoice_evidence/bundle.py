@@ -37,6 +37,7 @@ from .source_contract import (
     verify_fixture_registry_git,
 )
 from .verify import (
+    BundleVerificationError,
     _bundle_artifacts,
     _raw_artifacts,
     embed_verifier_artifacts,
@@ -596,12 +597,13 @@ def verify_candidate(candidate: Path) -> dict[str, object]:
     recomputed = _root_digest(actual_manifest, sorted(artifacts, key=lambda item: item["local_bundle_path"]))
     if recomputed != root_sha256:
         raise BundleError("ROOT_SHA256_MISMATCH")
-    # Keep candidate and embedded accepted verification on the same finite-set
-    # closure rule.  The embedded verifier is copied into accepted generations.
-    try:
-        verify_candidate_bundle(candidate)
-    except BundleVerificationError as error:
-        raise BundleError(str(error)) from error
+    # Keep fixture-closure candidates and embedded accepted verification on the
+    # same finite-set rule. Generic historical candidates need no bundled verifier.
+    if "fixture_closure" in core:
+        try:
+            verify_candidate_bundle(candidate)
+        except BundleVerificationError as error:
+            raise BundleError(str(error)) from error
     return {"generation": generation, "manifest_sha256": actual_manifest, "root_sha256": root_sha256, "status": "candidate"}
 
 
