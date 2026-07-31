@@ -1,6 +1,6 @@
 = Instruction Appendix
 :doctype: book
-:wavedrom: /home/jcarlin/riscv-projects/riscv-unified-db/node_modules/.bin/wavedrom-cli
+:wavedrom: /home/jcarlin/riscv-projects/riscv-unified-db/bin/wavedrom
 // Now the document header is complete and the wavedrom attribute is active.
 
 
@@ -14984,8 +14984,6 @@ Included in::
 
 | *Zcb*
 | any
-| *Zbb*
-| any
 |===
 
 
@@ -15091,7 +15089,7 @@ Included in::
 
 | *Zcb*
 | any
-| *Zbb*
+| *Zba*
 | any
 |===
 
@@ -17581,13 +17579,13 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fclass_q.adoc#udb:doc:inst:fclass_q[fclass.q] instruction examines the value in floating-point register `rs1` and writes to integer
-register `rd` a 10-bit mask that indicates the class of the floating-point number.
+The xref:insts:fclass_q.adoc#udb:doc:inst:fclass_q[fclass.q] instruction examines the value in floating-point register `fs1` and writes to integer
+register `xd` a 10-bit mask that indicates the class of the floating-point number.
 
-The format of the mask is described in table given below. The corresponding bit in `rd`
-will be set if the property is true and clear otherwise. All other bits in `rd` are cleared.
+The format of the mask is described in table given below. The corresponding bit in `xd`
+will be set if the property is true and clear otherwise. All other bits in `xd` are cleared.
 
-Note that exactly one bit in `rd` will be set. xref:insts:fclass_q.adoc#udb:doc:inst:fclass_q[fclass.q] does not set the floating-point
+Note that exactly one bit in `xd` will be set. xref:insts:fclass_q.adoc#udb:doc:inst:fclass_q[fclass.q] does not set the floating-point
 exception flags.
 
 .Format of result of `fclass` instruction.
@@ -20940,7 +20938,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |$encoding[31:20]
+|imm |sext($encoding[31:20], 12)
 |xs1 |$encoding[19:15]
 |fd |$encoding[11:7]
 |===
@@ -21431,15 +21429,10 @@ Decode Variables::
 Included in::
 
 
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
+This instruction requires the following:
 
-| *Zfhmin*
-| any
-|===
-
-
+xref:exts:Zfhmin.adoc#udb:doc:ext:Zfhmin[Zfhmin]
+xref:exts:Zfbfmin.adoc#udb:doc:ext:Zfbfmin[Zfbfmin]
 
 
 [#udb:doc:inst:fli_d]
@@ -21576,7 +21569,7 @@ Encoding::
 
 Description::
 The xref:insts:fli_q.adoc#udb:doc:inst:fli_q[fli.q] instruction loads one of 32 quad-precision floating-point constants, encoded in the `xs1`
-field, into floating-point register `rd`.
+field, into floating-point register `fd`.
 xref:insts:fli_q.adoc#udb:doc:inst:fli_q[fli.q] is encoded like xref:insts:fmv_w_x.adoc#udb:doc:inst:fmv_w_x[fmv.w.x], but with _fmt_ = Q.
 
 
@@ -21693,7 +21686,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |$encoding[31:20]
+|imm |sext($encoding[31:20], 12)
 |xs1 |$encoding[19:15]
 |fd |$encoding[11:7]
 |===
@@ -23783,15 +23776,10 @@ Decode Variables::
 Included in::
 
 
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
+This instruction requires the following:
 
-| *Zfhmin*
-| any
-|===
-
-
+xref:exts:Zfhmin.adoc#udb:doc:ext:Zfhmin[Zfhmin]
+xref:exts:Zfbfmin.adoc#udb:doc:ext:Zfbfmin[Zfbfmin]
 
 
 [#udb:doc:inst:fmv_w_x]
@@ -23949,15 +23937,10 @@ Decode Variables::
 Included in::
 
 
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
+This instruction requires the following:
 
-| *Zfhmin*
-| any
-|===
-
-
+xref:exts:Zfhmin.adoc#udb:doc:ext:Zfhmin[Zfhmin]
+xref:exts:Zfbfmin.adoc#udb:doc:ext:Zfbfmin[Zfbfmin]
 
 
 [#udb:doc:inst:fmv_x_w]
@@ -25153,7 +25136,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[31:25], $encoding[11:7]}
+|imm |sext({$encoding[31:25], $encoding[11:7]}, 12)
 |fs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
@@ -25838,15 +25821,10 @@ Decode Variables::
 Included in::
 
 
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
+This instruction requires the following:
 
-| *Zfhmin*
-| any
-|===
-
-
+xref:exts:Zfhmin.adoc#udb:doc:ext:Zfhmin[Zfhmin]
+xref:exts:Zfbfmin.adoc#udb:doc:ext:Zfbfmin[Zfbfmin]
 
 
 [#udb:doc:inst:fsq]
@@ -25887,7 +25865,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |{$encoding[31:25], $encoding[11:7]}
+|imm |sext({$encoding[31:25], $encoding[11:7]}, 12)
 |fs2 |$encoding[24:20]
 |xs1 |$encoding[19:15]
 |===
@@ -38832,6 +38810,174 @@ Included in::
 | Extension | Version
 
 | *Zvl32b*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vabd_vv]
+== vabd.vv
+
+Synopsis::
+Vector Single-Width Signed Integer Absolute Difference
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vabd.vv vd, vs2, vs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x11,"type":2}]}
+....
+
+Description::
+Computes the element-wise absolute difference of two signed integer SEW-bit
+source operands vs1 and vs2 and writes the result to vd according to mask vm.
+
+Reserved when SEW is neither 8 nor 16.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvabd*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vabdu_vv]
+== vabdu.vv
+
+Synopsis::
+Vector Single-Width Unsigned Integer Absolute Difference
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vabdu.vv vd, vs2, vs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x13,"type":2}]}
+....
+
+Description::
+Computes the element-wise absolute difference of two unsigned integer SEW-bit
+source operands vs1 and vs2 and writes the result to vd according to mask vm.
+
+Reserved when SEW is neither 8 nor 16.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvabd*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vabs_v]
+== vabs.v
+
+Synopsis::
+Vector Single-Width Signed Integer Absolute
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vabs.v vd, vs2, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":8,"name": 0x82,"type":2},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x12,"type":2}]}
+....
+
+Description::
+An absolute value operation is performed on each element of vs2, storing the
+result in vector register vd according to mask vm.
+
+vabs.v supports SEW of 8, 16, and 32 when Zve32x is implemented.
+When Zve64x is implemented, vabs.v also supports SEW of 64.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvabd*
 | any
 |===
 
@@ -59407,7 +59553,7 @@ Decode Variables::
 [width="100%", cols="1,2", options="header"]
 |===
 |Variable Name |Location
-|imm |$encoding[19:15]
+|imm |sext($encoding[19:15], 5)
 |vd |$encoding[11:7]
 |===
 
@@ -71852,6 +71998,120 @@ Included in::
 | Extension | Version
 
 | *Zvl32b*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vwabda_vv]
+== vwabda.vv
+
+Synopsis::
+Vector Widening Signed Integer Absolute Difference and Accumulate, Overwrite Addend
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vwabda.vv vd, vs2, vs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x15,"type":2}]}
+....
+
+Description::
+Computes the element-wise absolute difference of two signed integer SEW-bit
+source operands vs1 and vs2, and accumulates the results into the elements of
+a 2*SEW-bit operand vd.
+
+Reserved when SEW is neither 8 nor 16.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvabd*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vwabdau_vv]
+== vwabdau.vv
+
+Synopsis::
+Vector Widening Unsigned Integer Absolute Difference and Accumulate, Overwrite Addend
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vwabdau.vv vd, vs2, vs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x16,"type":2}]}
+....
+
+Description::
+Computes the element-wise absolute difference of two unsigned integer SEW-bit
+source operands vs1 and vs2, and accumulates the results into the elements of
+a 2*SEW-bit operand vd.
+
+Reserved when SEW is neither 8 nor 16.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvabd*
 | any
 |===
 

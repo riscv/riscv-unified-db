@@ -8,7 +8,7 @@ title: Functions
 Functions are called using standard call syntax. Arguments are passed positionally.
 
 ```idl
-jump(PC + $signed(imm));          # void function call
+jump($pc + $signed(imm));          # void function call
 Bits<32> val = read_memory(32, vaddr, $encoding); # call with return value
 ```
 
@@ -47,7 +47,7 @@ function maybe_set_flag {
 }
 ```
 
-For functions that return multiple values, list the values after `return`:
+For functions that return multiple values, provide a comma-separated list of values after `return`:
 
 ```idl
 function divmod {
@@ -82,7 +82,7 @@ function NAME {
 
 1. Optionally declare return type(s). May be omitted for void functions. May be a list for multiple return values.
 2. Optionally declare argument(s). May be omitted for zero-argument functions. May be a list for multiple arguments.
-3. A description of the function. Required — IDL is intended as executable documentation. May contain any character except `}`, including newlines.
+3. A description of the function. Required — IDL is intended as executable documentation. May contain any character except `}`, including newlines. ERB escape sequences are also not permitted.
 4. The executable statements of the function.
 
 ### Rules and rationale

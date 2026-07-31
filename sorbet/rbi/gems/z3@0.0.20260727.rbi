@@ -44,11 +44,14 @@ module Z3
 
   def Add(*args); end
   def And(*args); end
+  def AtLeast(args, k); end
+  def AtMost(args, k); end
   def Bitvec(v, n); end
   def Bool(v); end
   def Const(v); end
   def Distinct(*args); end
   def Eq(*args); end
+  def Exactly(args, k); end
   def False; end
   def IfThenElse(a, b, c); end
   def Implies(a, b); end
@@ -268,11 +271,18 @@ class Z3::BoolExpr < ::Z3::Expr
   def ~; end
 
   class << self
+    def AtLeast(args, k); end
+    def AtMost(args, k); end
+    def Exactly(args, k); end
     def IfThenElse(a, b, c); end
     def Iff(a, b); end
     def Implies(a, b); end
     def coerce_to_same_bool_sort(*args); end
     def new(*_arg0); end
+
+    private
+
+    def cardinality_args(args, k); end
   end
 end
 
@@ -401,8 +411,11 @@ class Z3::FuncDecl < ::Z3::AST
 
   def arity; end
   def domain(i); end
+  def func_decl_parameter(i); end
   def inspect; end
   def name; end
+  def num_parameters; end
+  def parameter_kind(i); end
   def range; end
   def to_s; end
 
@@ -411,7 +424,11 @@ class Z3::FuncDecl < ::Z3::AST
   end
 end
 
+Z3::FuncDecl::PARAMETER_KINDS = T.let(T.unsafe(nil), Hash)
+
 class Z3::Goal
+  include ::Z3::ReferenceCounted
+
   def initialize(_goal); end
 
   def _goal; end
@@ -425,6 +442,7 @@ class Z3::Goal
   def precision; end
   def reset; end
   def size; end
+  def to_dimacs(include_names = T.unsafe(nil)); end
   def to_s; end
 
   class << self
@@ -509,6 +527,7 @@ module Z3::LowLevel
     def constructor_num_fields(constructor); end
     def datatype_update_field(func_decl, ast1, ast2); end
     def dec_ref(ast); end
+    def dec_ref_pointer(kind, pointer); end
     def del_config(config); end
     def del_constructor(constructor); end
     def del_constructor_list(constructor_list); end
@@ -551,6 +570,7 @@ module Z3::LowLevel
     def fpa_get_numeral_significand_bv(ast); end
     def fpa_get_numeral_significand_string(ast); end
     def fpa_get_sbits(sort); end
+    def fpa_is_numeral(ast); end
     def fpa_is_numeral_inf(ast); end
     def fpa_is_numeral_nan(ast); end
     def fpa_is_numeral_negative(ast); end
@@ -671,6 +691,7 @@ module Z3::LowLevel
     def goal_to_string(goal); end
     def goal_translate(goal, context); end
     def inc_ref(ast); end
+    def inc_ref_pointer(kind, pointer); end
     def interrupt; end
     def is_algebraic_number(ast); end
     def is_app(ast); end
@@ -694,6 +715,8 @@ module Z3::LowLevel
     def mk_as_array(func_decl); end
     def mk_ast_map; end
     def mk_ast_vector; end
+    def mk_atleast(asts, k); end
+    def mk_atmost(asts, k); end
     def mk_bit2bool(num, ast); end
     def mk_bool_sort; end
     def mk_bound(num, sort); end
@@ -749,7 +772,6 @@ module Z3::LowLevel
     def mk_const_array(sort, ast); end
     def mk_context; end
     def mk_context_rc(config); end
-    def mk_datatype_sort(sym); end
     def mk_distinct(asts); end
     def mk_div(ast1, ast2); end
     def mk_divides(ast1, ast2); end
@@ -847,6 +869,7 @@ module Z3::LowLevel
     def mk_or(asts); end
     def mk_params; end
     def mk_partial_order(sort, num); end
+    def mk_pbeq(asts, coeffs, k); end
     def mk_piecewise_linear_order(sort, num); end
     def mk_power(ast1, ast2); end
     def mk_probe(str); end
@@ -874,11 +897,13 @@ module Z3::LowLevel
     def mk_seq_map(ast1, ast2); end
     def mk_seq_mapi(ast1, ast2, ast3); end
     def mk_seq_nth(ast1, ast2); end
+    def mk_seq_replace_all(ast1, ast2, ast3); end
+    def mk_seq_replace_re(ast1, ast2, ast3); end
+    def mk_seq_replace_re_all(ast1, ast2, ast3); end
     def mk_set_add(ast1, ast2); end
     def mk_set_complement(ast); end
     def mk_set_del(ast1, ast2); end
     def mk_set_difference(ast1, ast2); end
-    def mk_set_has_size(ast1, ast2); end
     def mk_set_intersect(asts); end
     def mk_set_member(ast1, ast2); end
     def mk_set_sort(sort); end
@@ -952,6 +977,7 @@ module Z3::LowLevel
     def optimize_set_initial_value(optimize, ast1, ast2); end
     def optimize_set_params(optimize, params); end
     def optimize_to_string(optimize); end
+    def optimize_translate(optimize, context); end
     def param_descrs_dec_ref(param_descrs); end
     def param_descrs_get_kind(param_descrs, sym); end
     def param_descrs_get_name(param_descrs, num); end
@@ -1096,11 +1122,13 @@ module Z3::LowLevel
     private
 
     def asts_vector(args); end
+    def ints_vector(args); end
   end
 end
 
 class Z3::Model
   include ::Enumerable
+  include ::Z3::ReferenceCounted
 
   def initialize(_model); end
 
@@ -1118,28 +1146,70 @@ class Z3::Model
 end
 
 class Z3::Optimize
-  def initialize; end
+  include ::Z3::ReferenceCounted
+
+  def initialize(params = T.unsafe(nil)); end
 
   def _optimize; end
   def assert(ast); end
+  def assert_and_track(ast, tracker); end
   def assert_soft(ast, weight = T.unsafe(nil), id = T.unsafe(nil)); end
   def assertions; end
   def check(*args); end
+  def help; end
   def maximize(ast); end
   def minimize(ast); end
   def model; end
+  def param_descrs; end
   def pop; end
   def prove!(ast); end
   def push; end
   def reason_unknown; end
   def satisfiable?; end
+  def set_params(params); end
   def statistics; end
+  def to_s; end
+  def unsat_core; end
   def unsatisfiable?; end
 
   private
 
   def check_sat_results(r); end
   def reset_model!; end
+end
+
+class Z3::ParamDescrs
+  include ::Z3::ReferenceCounted
+
+  def initialize(_param_descrs); end
+
+  def _param_descrs; end
+  def include?(name); end
+  def inspect; end
+  def kind(name); end
+  def names; end
+  def size; end
+  def to_s; end
+end
+
+Z3::ParamDescrs::KINDS = T.let(T.unsafe(nil), Hash)
+
+class Z3::Params
+  include ::Z3::ReferenceCounted
+
+  def initialize(values = T.unsafe(nil), descrs = T.unsafe(nil)); end
+
+  def []=(name, value); end
+  def _params; end
+  def descrs; end
+  def to_s; end
+
+  private
+
+  def declared_kind(name); end
+  def inferred_kind(name, value); end
+  def kind_for(name, value); end
+  def valid_value?(kind, value); end
 end
 
 class Z3::Printer
@@ -1161,6 +1231,8 @@ class Z3::Printer::PrintedExpr
 end
 
 class Z3::Probe
+  include ::Z3::ReferenceCounted
+
   def initialize(_probe); end
 
   def !; end
@@ -1177,6 +1249,7 @@ class Z3::Probe
 
   class << self
     def const(num); end
+    def description(name); end
     def named(str); end
     def names; end
   end
@@ -1198,6 +1271,16 @@ class Z3::RealSort < ::Z3::Sort
 
   class << self
     def new(*_arg0); end
+  end
+end
+
+module Z3::ReferenceCounted
+  private
+
+  def inc_ref!(kind, pointer); end
+
+  class << self
+    def finalizer(kind, pointer); end
   end
 end
 
@@ -1260,19 +1343,30 @@ class Z3::SetSort < ::Z3::Sort
 end
 
 class Z3::Solver
-  def initialize; end
+  include ::Z3::ReferenceCounted
+
+  def initialize(params = T.unsafe(nil)); end
 
   def _solver; end
   def assert(ast); end
+  def assert_and_track(ast, tracker); end
   def assertions; end
   def check; end
+  def help; end
   def model; end
+  def num_scopes; end
+  def param_descrs; end
   def pop(n = T.unsafe(nil)); end
   def prove!(ast); end
   def push; end
+  def reason_unknown; end
   def reset; end
   def satisfiable?; end
+  def set_params(params); end
   def statistics; end
+  def to_dimacs(include_names = T.unsafe(nil)); end
+  def to_s; end
+  def unsat_core; end
   def unsatisfiable?; end
 
   private
@@ -1308,18 +1402,21 @@ class Z3::Sort < ::Z3::AST
 end
 
 class Z3::Tactic
+  include ::Z3::ReferenceCounted
+
   def initialize(_tactic); end
 
+  def _tactic; end
   def and_then(other); end
   def help; end
   def or_else(other); end
   def parallel_and_then(other); end
   def repeat(num); end
-  def tactic; end
   def try_for(time_ms); end
 
   class << self
     def cond(probe, tactic1, tactic2); end
+    def description(name); end
     def fail; end
     def fail_if(probe); end
     def fail_if_not_decided; end
@@ -1422,6 +1519,7 @@ module Z3::VeryLowLevel
   def Z3_fpa_get_numeral_significand_bv(*_arg0); end
   def Z3_fpa_get_numeral_significand_string(*_arg0); end
   def Z3_fpa_get_sbits(*_arg0); end
+  def Z3_fpa_is_numeral(*_arg0); end
   def Z3_fpa_is_numeral_inf(*_arg0); end
   def Z3_fpa_is_numeral_nan(*_arg0); end
   def Z3_fpa_is_numeral_negative(*_arg0); end
@@ -1565,6 +1663,8 @@ module Z3::VeryLowLevel
   def Z3_mk_as_array(*_arg0); end
   def Z3_mk_ast_map(*_arg0); end
   def Z3_mk_ast_vector(*_arg0); end
+  def Z3_mk_atleast(*_arg0); end
+  def Z3_mk_atmost(*_arg0); end
   def Z3_mk_bit2bool(*_arg0); end
   def Z3_mk_bool_sort(*_arg0); end
   def Z3_mk_bound(*_arg0); end
@@ -1620,7 +1720,6 @@ module Z3::VeryLowLevel
   def Z3_mk_const_array(*_arg0); end
   def Z3_mk_context(*_arg0); end
   def Z3_mk_context_rc(*_arg0); end
-  def Z3_mk_datatype_sort(*_arg0); end
   def Z3_mk_distinct(*_arg0); end
   def Z3_mk_div(*_arg0); end
   def Z3_mk_divides(*_arg0); end
@@ -1718,6 +1817,7 @@ module Z3::VeryLowLevel
   def Z3_mk_or(*_arg0); end
   def Z3_mk_params(*_arg0); end
   def Z3_mk_partial_order(*_arg0); end
+  def Z3_mk_pbeq(*_arg0); end
   def Z3_mk_piecewise_linear_order(*_arg0); end
   def Z3_mk_power(*_arg0); end
   def Z3_mk_probe(*_arg0); end
@@ -1745,6 +1845,9 @@ module Z3::VeryLowLevel
   def Z3_mk_seq_map(*_arg0); end
   def Z3_mk_seq_mapi(*_arg0); end
   def Z3_mk_seq_nth(*_arg0); end
+  def Z3_mk_seq_replace_all(*_arg0); end
+  def Z3_mk_seq_replace_re(*_arg0); end
+  def Z3_mk_seq_replace_re_all(*_arg0); end
   def Z3_mk_set_add(*_arg0); end
   def Z3_mk_set_complement(*_arg0); end
   def Z3_mk_set_del(*_arg0); end
@@ -1822,6 +1925,7 @@ module Z3::VeryLowLevel
   def Z3_optimize_set_initial_value(*_arg0); end
   def Z3_optimize_set_params(*_arg0); end
   def Z3_optimize_to_string(*_arg0); end
+  def Z3_optimize_translate(*_arg0); end
   def Z3_param_descrs_dec_ref(*_arg0); end
   def Z3_param_descrs_get_kind(*_arg0); end
   def Z3_param_descrs_get_name(*_arg0); end
@@ -2053,6 +2157,7 @@ module Z3::VeryLowLevel
     def Z3_fpa_get_numeral_significand_bv(*_arg0); end
     def Z3_fpa_get_numeral_significand_string(*_arg0); end
     def Z3_fpa_get_sbits(*_arg0); end
+    def Z3_fpa_is_numeral(*_arg0); end
     def Z3_fpa_is_numeral_inf(*_arg0); end
     def Z3_fpa_is_numeral_nan(*_arg0); end
     def Z3_fpa_is_numeral_negative(*_arg0); end
@@ -2196,6 +2301,8 @@ module Z3::VeryLowLevel
     def Z3_mk_as_array(*_arg0); end
     def Z3_mk_ast_map(*_arg0); end
     def Z3_mk_ast_vector(*_arg0); end
+    def Z3_mk_atleast(*_arg0); end
+    def Z3_mk_atmost(*_arg0); end
     def Z3_mk_bit2bool(*_arg0); end
     def Z3_mk_bool_sort(*_arg0); end
     def Z3_mk_bound(*_arg0); end
@@ -2251,7 +2358,6 @@ module Z3::VeryLowLevel
     def Z3_mk_const_array(*_arg0); end
     def Z3_mk_context(*_arg0); end
     def Z3_mk_context_rc(*_arg0); end
-    def Z3_mk_datatype_sort(*_arg0); end
     def Z3_mk_distinct(*_arg0); end
     def Z3_mk_div(*_arg0); end
     def Z3_mk_divides(*_arg0); end
@@ -2349,6 +2455,7 @@ module Z3::VeryLowLevel
     def Z3_mk_or(*_arg0); end
     def Z3_mk_params(*_arg0); end
     def Z3_mk_partial_order(*_arg0); end
+    def Z3_mk_pbeq(*_arg0); end
     def Z3_mk_piecewise_linear_order(*_arg0); end
     def Z3_mk_power(*_arg0); end
     def Z3_mk_probe(*_arg0); end
@@ -2376,11 +2483,13 @@ module Z3::VeryLowLevel
     def Z3_mk_seq_map(*_arg0); end
     def Z3_mk_seq_mapi(*_arg0); end
     def Z3_mk_seq_nth(*_arg0); end
+    def Z3_mk_seq_replace_all(*_arg0); end
+    def Z3_mk_seq_replace_re(*_arg0); end
+    def Z3_mk_seq_replace_re_all(*_arg0); end
     def Z3_mk_set_add(*_arg0); end
     def Z3_mk_set_complement(*_arg0); end
     def Z3_mk_set_del(*_arg0); end
     def Z3_mk_set_difference(*_arg0); end
-    def Z3_mk_set_has_size(*args); end
     def Z3_mk_set_intersect(*_arg0); end
     def Z3_mk_set_member(*_arg0); end
     def Z3_mk_set_sort(*_arg0); end
@@ -2454,6 +2563,7 @@ module Z3::VeryLowLevel
     def Z3_optimize_set_initial_value(*_arg0); end
     def Z3_optimize_set_params(*_arg0); end
     def Z3_optimize_to_string(*_arg0); end
+    def Z3_optimize_translate(*_arg0); end
     def Z3_param_descrs_dec_ref(*_arg0); end
     def Z3_param_descrs_get_kind(*_arg0); end
     def Z3_param_descrs_get_name(*_arg0); end
