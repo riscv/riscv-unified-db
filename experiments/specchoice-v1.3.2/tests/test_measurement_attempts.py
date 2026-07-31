@@ -16,6 +16,7 @@ from unittest.mock import patch
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_measurement.adapter import build_pr2164_adapter_batch
 from specchoice_measurement.attempts import AttemptError, run_measurement_attempt, validate_measurement_attempt
+from specchoice_measurement.cli import command_run_formal_measurement
 from specchoice_measurement.preflight import preflight_prediction_batch
 from specchoice_measurement.scoring import score_prediction_batch
 
@@ -120,6 +121,36 @@ class MeasurementAttemptTests(unittest.TestCase):
             (root / "tamper" / "metrics.json").write_bytes(b"{}\n")
             with self.assertRaisesRegex(AttemptError, "ATTEMPT_ARTIFACT_HASH_MISMATCH"):
                 validate_measurement_attempt(attempt_root=root / "tamper")
+
+    def test_formal_cli_writes_one_clean_all_eleven_attempt_and_refuses_regeneration(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            args = SimpleNamespace(
+                authority=self.experiment_root / "phase2/source-authority.json",
+                bundle=self.bundle,
+                rules=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
+                schema=self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json",
+                predictions=self.experiment_root / "fixtures/measurement/golden-predictions-v1.json",
+                attempt_root=root,
+                attempt_id="formal-golden",
+            )
+            self.assertEqual(command_run_formal_measurement(args), 0)
+            target = root / "formal-golden"
+            manifest = json.loads((target / "attempt.json").read_text(encoding="utf-8"))
+            self.assertEqual((manifest["role"], manifest["status"]), ("formal", "completed"))
+            self.assertEqual(json.loads((target / "diagnostics.json").read_text(encoding="utf-8")), [])
+            self.assertEqual(len(json.loads((target / "case-outcomes.json").read_text(encoding="utf-8"))), 11)
+            self.assertEqual(
+                json.loads((target / "metrics.json").read_text(encoding="utf-8")),
+                {"disposition": {"denominator": 7, "numerator": 7}, "evidence_integrity": {"denominator": 7, "numerator": 7}, "identity": {"denominator": 6, "numerator": 6}, "surfacing": {"denominator": 7, "numerator": 7}},
+            )
+            for name in manifest["artifacts"]:
+                content = (target / name).read_bytes()
+                self.assertEqual(manifest["artifacts"][name], {"byte_length": len(content), "sha256": sha256_bytes(content)})
+            original = (target / "attempt.json").read_bytes()
+            with self.assertRaisesRegex(AttemptError, "ATTEMPT_TARGET_EXISTS"):
+                command_run_formal_measurement(args)
+            self.assertEqual((target / "attempt.json").read_bytes(), original)
 
 
 if __name__ == "__main__":
