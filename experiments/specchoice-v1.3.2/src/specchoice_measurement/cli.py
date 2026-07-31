@@ -16,7 +16,7 @@ from specchoice_evidence.bundle import _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 
 from .adapter import AdapterError, build_pr2164_adapter_batch
-from .attempts import AttemptError, run_measurement_attempt, validate_measurement_attempt
+from .attempts import AttemptError, load_measurement_attempt_manifest, run_measurement_attempt, validate_measurement_attempt
 from .h1 import H1Error, build_h1_packet, validate_h1_decision, validate_h1_packet
 from .preflight import _source_bytes_by_fixture, preflight_prediction_batch
 from .scoring import score_prediction_batch
@@ -282,10 +282,13 @@ def validate_adversarial_report(*, report_path: Path) -> dict[str, object]:
         attempt_path = attempt_root / expected_attempt_id
         if not attempt_path.is_dir() or attempt_path.is_symlink():
             raise AttemptError("ADVERSARIAL_REPORT_INVALID")
-        validated = validate_measurement_attempt(attempt_root=attempt_path)
+        try:
+            validated = validate_measurement_attempt(attempt_root=attempt_path)
+            manifest = load_measurement_attempt_manifest(attempt_root=attempt_path)
+        except AttemptError as error:
+            raise AttemptError("ADVERSARIAL_REPORT_INVALID") from error
         if validated != {"attempt_sha256": case["attempt_sha256"], "role": "diagnostic_only", "status": "diagnostic_only"}:
             raise AttemptError("ADVERSARIAL_REPORT_INVALID")
-        manifest, _ = _canonical_object(attempt_path / "attempt.json", "ADVERSARIAL_REPORT_INVALID")
         try:
             raw = base64.b64decode(manifest["raw_predictions_base64"], validate=True)
         except (KeyError, TypeError, ValueError) as error:

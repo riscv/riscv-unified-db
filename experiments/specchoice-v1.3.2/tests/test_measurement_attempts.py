@@ -147,6 +147,27 @@ class MeasurementAttemptTests(unittest.TestCase):
             with self.assertRaisesRegex(AttemptError, "ATTEMPT_REPLAY_ARTIFACT_MISMATCH"):
                 validate_measurement_attempt(attempt_root=target)
 
+    def test_attempt_validation_rejects_symlinked_manifest_and_all_retained_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            run_measurement_attempt(mode="formal", attempt_id="linked", attempt_root=root, inputs=self._inputs())
+            target = root / "linked"
+            manifest = json.loads((target / "attempt.json").read_text(encoding="utf-8"))
+            outside = root / "outside"
+            outside.mkdir()
+
+            for name in ("attempt.json", *manifest["artifacts"]):
+                owned = target / name
+                external = outside / name
+                shutil.copy2(owned, external)
+                owned.unlink()
+                owned.symlink_to(external)
+                code = "ATTEMPT_MANIFEST_INVALID" if name == "attempt.json" else "ATTEMPT_ARTIFACT_INVALID"
+                with self.assertRaisesRegex(AttemptError, code):
+                    validate_measurement_attempt(attempt_root=target)
+                owned.unlink()
+                shutil.copy2(external, owned)
+
     def test_formal_cli_writes_one_clean_all_eleven_attempt_and_refuses_regeneration(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -221,8 +242,21 @@ class MeasurementAttemptTests(unittest.TestCase):
             assert_invalid_attempt_id(str((attempt_root / "oracle-01").resolve()))
 
             outside = root / "outside"
+            outside.mkdir()
             shutil.copytree(attempt_root / "oracle-01", outside / "oracle-01")
             assert_invalid_attempt_id("../outside/oracle-01")
+
+            for name in ("attempt.json", "diagnostics.json", "parsed-predictions.json"):
+                owned = attempt_root / "oracle-01" / name
+                external = outside / name
+                shutil.copy2(owned, external)
+                owned.unlink()
+                owned.symlink_to(external)
+                report.write_bytes(canonical_json_bytes(original_payload))
+                with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
+                    validate_adversarial_report(report_path=report)
+                owned.unlink()
+                shutil.copy2(external, owned)
 
             shutil.rmtree(attempt_root / "oracle-01")
             (attempt_root / "oracle-01").symlink_to(outside / "oracle-01", target_is_directory=True)

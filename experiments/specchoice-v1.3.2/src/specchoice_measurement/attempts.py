@@ -13,6 +13,7 @@ from typing import Any
 
 from specchoice_evidence.bundle import BundleError, _publish_directory_no_replace, _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence.filesystem import FilesystemPolicyError, inspect_authoritative_path
 
 from .adapter import build_pr2164_adapter_batch
 from .preflight import preflight_prediction_batch
@@ -175,18 +176,32 @@ def run_measurement_attempt(*, mode: str, attempt_id: str, attempt_root: Path, i
     return {"attempt_sha256": manifest["attempt_sha256"], "role": role, "status": status}
 
 
-def _canonical_manifest(path: Path) -> dict[str, object]:
+def _read_attempt_file(*, attempt_root: Path, name: str, code: str) -> bytes:
+    """Read one report-owned attempt leaf after Phase 1 custody validation."""
     try:
-        raw = path.read_bytes()
+        evidence = inspect_authoritative_path(attempt_root, name)
+        if evidence.file_kind != "regular_file":
+            raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+        return (attempt_root / name).read_bytes()
+    except (OSError, FilesystemPolicyError) as error:
+        raise AttemptError(code) from error
+
+
+def load_measurement_attempt_manifest(*, attempt_root: Path) -> dict[str, object]:
+    """Load a canonical attempt manifest only from its report-owned directory."""
+    try:
+        raw = _read_attempt_file(
+            attempt_root=attempt_root, name="attempt.json", code="ATTEMPT_MANIFEST_INVALID"
+        )
         manifest = json.loads(raw.decode("utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise AttemptError("ATTEMPT_MANIFEST_INVALID") from error
     if not isinstance(manifest, dict) or canonical_json_bytes(manifest) != raw or set(manifest) != _ATTEMPT_KEYS:
         raise AttemptError("ATTEMPT_MANIFEST_INVALID")
     return manifest
 
 
-def _verify_replay(*, manifest: dict[str, object], attempt_root: Path, raw: bytes) -> None:
+def _verify_replay(*, manifest: dict[str, object], artifact_bytes: Mapping[str, bytes], raw: bytes) -> None:
     """Derive every terminal artifact from the bound raw input and current custody roots."""
     batch = build_pr2164_adapter_batch(authority_path=_AUTHORITY, bundle_root=_BUNDLE, rules_path=_RULES)
     if not batch.valid:
@@ -211,13 +226,13 @@ def _verify_replay(*, manifest: dict[str, object], attempt_root: Path, raw: byte
         inputs={"preflight": preflight, "score_result": score}, role=role, status=status
     )
     for name, payload in expected_payloads.items():
-        if (attempt_root / name).read_bytes() != canonical_json_bytes(payload):
+        if artifact_bytes[name] != canonical_json_bytes(payload):
             raise AttemptError("ATTEMPT_REPLAY_ARTIFACT_MISMATCH")
 
 
 def validate_measurement_attempt(*, attempt_root: Path) -> dict[str, object]:
     """Validate raw-byte recovery, non-cyclic manifest digest, and every sibling binding."""
-    manifest = _canonical_manifest(attempt_root / "attempt.json")
+    manifest = load_measurement_attempt_manifest(attempt_root=attempt_root)
     role, status = manifest.get("role"), manifest.get("status")
     if role not in _VALID_ROLES or not isinstance(status, str):
         raise AttemptError("ATTEMPT_ROLE_INVALID")
@@ -243,15 +258,19 @@ def validate_measurement_attempt(*, attempt_root: Path) -> dict[str, object]:
         expected.update(_SCORE_ARTIFACTS)
     if set(artifacts) != expected:
         raise AttemptError("ATTEMPT_ARTIFACT_SET_INVALID")
+    artifact_bytes: dict[str, bytes] = {}
     for name, identity in artifacts.items():
         if not isinstance(identity, dict) or set(identity) != {"sha256", "byte_length"}:
             raise AttemptError("ATTEMPT_ARTIFACTS_INVALID")
         try:
-            content = (attempt_root / name).read_bytes()
+            content = _read_attempt_file(
+                attempt_root=attempt_root, name=name, code="ATTEMPT_ARTIFACT_INVALID"
+            )
             parsed = json.loads(content.decode("utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
             raise AttemptError("ATTEMPT_ARTIFACT_INVALID") from error
         if canonical_json_bytes(parsed) != content or identity.get("sha256") != sha256_bytes(content) or identity.get("byte_length") != len(content):
             raise AttemptError("ATTEMPT_ARTIFACT_HASH_MISMATCH")
-    _verify_replay(manifest=manifest, attempt_root=attempt_root, raw=raw)
+        artifact_bytes[name] = content
+    _verify_replay(manifest=manifest, artifact_bytes=artifact_bytes, raw=raw)
     return {"attempt_sha256": manifest["attempt_sha256"], "role": role, "status": status}
