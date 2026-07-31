@@ -142,6 +142,25 @@ class MeasurementParsingTests(unittest.TestCase):
         invalid = self.preflight(payload)
         self.assertIn("EVIDENCE_RANGE_INVALID", {item.code for item in invalid.diagnostics})
 
+    def test_evidence_span_from_another_fixture_is_rejected(self) -> None:
+        payload = self.payload()
+        target = next(item for item in payload["predictions"] if item["fixture_id"] == "POS_CSR_RW_MTVEC_ACCESS")
+        other = next(
+            item for item in payload["predictions"]
+            if item["fixture_id"] == "POS_DIRECT_CACHE_BLOCK"
+        )
+        target["adjudication"]["evidence_spans"] = [
+            deepcopy(other["adjudication"]["evidence_spans"][0])
+        ]
+
+        result = self.preflight(payload)
+
+        self.assertEqual(result.status, "invalid_preflight")
+        self.assertIn(
+            "EVIDENCE_SOURCE_NOT_DECLARED_FOR_FIXTURE",
+            {item.code for item in result.diagnostics},
+        )
+
     def test_only_named_legacy_ingress_normalizes_reject_with_raw_trace(self) -> None:
         payload = self.payload()
         candidate = next(item for item in payload["predictions"] if item["fixture_id"].startswith("CAND_"))

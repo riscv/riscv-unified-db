@@ -85,6 +85,7 @@ def _validate_span(
     fixture_id: str | None,
     field: str,
     source_by_sha256: dict[str, bytes],
+    allowed_source_sha256: frozenset[str],
     diagnostics: list[Diagnostic],
 ) -> dict[str, object] | None:
     valid = _exact_keys(value, _SPAN_KEYS, field, diagnostics, fixture_id)
@@ -96,6 +97,9 @@ def _validate_span(
     text = value.get("text")
     if not isinstance(source_sha256, str) or source_sha256 not in source_by_sha256:
         diagnostics.append(Diagnostic("EVIDENCE_SOURCE_UNKNOWN", "blocker", fixture_id, f"{field}.source_sha256", source_sha256=source_sha256 if isinstance(source_sha256, str) else None))
+        valid = False
+    elif source_sha256 not in allowed_source_sha256:
+        diagnostics.append(Diagnostic("EVIDENCE_SOURCE_NOT_DECLARED_FOR_FIXTURE", "blocker", fixture_id, f"{field}.source_sha256", source_sha256=source_sha256))
         valid = False
     if not _is_int(start) or not _is_int(end):
         diagnostics.append(Diagnostic("EVIDENCE_RANGE_TYPE_INVALID", "blocker", fixture_id, field, expected="integer byte offsets", observed=[start, end]))
@@ -153,6 +157,9 @@ def validate_current_payload(
     source_by_sha256 = getattr(adapter_batch, "source_bytes_by_sha256", {})
     if not isinstance(source_by_sha256, dict):
         source_by_sha256 = {}
+    source_by_fixture = getattr(adapter_batch, "source_bytes_by_fixture", {})
+    if not isinstance(source_by_fixture, dict):
+        source_by_fixture = {}
 
     seen_fixture_ids: dict[str, int] = {}
     seen_finding_ids: dict[str, int] = {}
@@ -219,7 +226,15 @@ def validate_current_payload(
             valid_prediction = False
         parsed_spans: list[dict[str, object]] = []
         for span_index, span in enumerate(spans):
-            parsed_span = _validate_span(span, fixture_id=fixture_id, field=f"{prediction_field}.adjudication.evidence_spans[{span_index}]", source_by_sha256=source_by_sha256, diagnostics=diagnostics)
+            allowed = source_by_fixture.get(fixture_id, {}) if fixture_id is not None else {}
+            parsed_span = _validate_span(
+                span,
+                fixture_id=fixture_id,
+                field=f"{prediction_field}.adjudication.evidence_spans[{span_index}]",
+                source_by_sha256=source_by_sha256,
+                allowed_source_sha256=frozenset(allowed) if isinstance(allowed, dict) else frozenset(),
+                diagnostics=diagnostics,
+            )
             if parsed_span is None:
                 valid_prediction = False
             else:

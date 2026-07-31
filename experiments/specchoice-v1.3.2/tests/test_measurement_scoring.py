@@ -214,6 +214,7 @@ class MeasurementScoringTests(unittest.TestCase):
             fixture_id=record.fixture_id,
             field="adjudication.evidence_spans[0]",
             source_by_sha256={source.sha256: raw},
+            allowed_source_sha256=frozenset({source.sha256}),
             diagnostics=diagnostics,
         )
 

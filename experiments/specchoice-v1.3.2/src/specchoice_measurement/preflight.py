@@ -34,14 +34,14 @@ class PreflightResult:
         return value
 
 
-def _source_bytes_by_sha256(adapter_batch: object) -> dict[str, bytes]:
+def _source_bytes_by_fixture(adapter_batch: object) -> dict[str, dict[str, bytes]]:
     """Read only adapter-declared fixture source files through bounded relative paths."""
     source_identity = getattr(adapter_batch, "source_identity", {})
     generation = source_identity.get("generation") if isinstance(source_identity, dict) else None
     if not isinstance(generation, str) or not generation or "/" in generation or "\\" in generation:
         return {}
     root = Path(__file__).parents[2] / "bundles" / "accepted" / generation
-    values: dict[str, bytes] = {}
+    values: dict[str, dict[str, bytes]] = {}
     for record in getattr(adapter_batch, "records", ()):
         for raw_file in record.raw_files:
             if raw_file.role != "fixture_source":
@@ -55,7 +55,7 @@ def _source_bytes_by_sha256(adapter_batch: object) -> dict[str, bytes]:
             except (FilesystemPolicyError, OSError, ValueError):
                 continue
             if sha256_bytes(raw) == raw_file.sha256:
-                values[raw_file.sha256] = raw
+                values.setdefault(record.fixture_id, {})[raw_file.sha256] = raw
     return values
 
 
@@ -76,7 +76,12 @@ def preflight_prediction_batch(*, raw: bytes, adapter_batch: object, ingress: st
         return PreflightResult("invalid_preflight", raw_sha256, (), diagnostics)
 
     # Attach immutable byte views only for this pure validation call; no artifact is written.
-    source_bytes = _source_bytes_by_sha256(adapter_batch)
+    source_bytes_by_fixture = _source_bytes_by_fixture(adapter_batch)
+    source_bytes = {
+        digest: raw
+        for values in source_bytes_by_fixture.values()
+        for digest, raw in values.items()
+    }
     object.__setattr__(adapter_batch, "source_bytes_by_sha256", source_bytes) if False else None
     # Keep the adapter immutable: a narrow proxy supplies the verified source-byte index.
     class _BatchView:
@@ -85,6 +90,7 @@ def preflight_prediction_batch(*, raw: bytes, adapter_batch: object, ingress: st
             self.valid = getattr(adapter_batch, "valid", False)
             self.records = getattr(adapter_batch, "records", ())
             self.source_bytes_by_sha256 = source_bytes
+            self.source_bytes_by_fixture = source_bytes_by_fixture
 
     parsed = validate_current_payload(payload, adapter_batch=_BatchView(), ingress=ingress)
     diagnostics = ordered_diagnostics(parsed.diagnostics)
