@@ -24,8 +24,8 @@ Requirements for the frozen SpecChoice v1.3.2 execution baseline. Each maps to e
 
 ### Experimental Foundation and Controls
 
-- [ ] **TS-01** `[ALL]`: The operator can work entirely within a dependency-light `experiments/specchoice-v1.3.2/` boundary containing the prototype's code, configuration, data, prompts, tests, runs, reports, and notes, without modifying core UDB schemas or generated data.
-- [ ] **TS-02** `[ALL]`: The operator can verify a source manifest that pins every named public PR snapshot to its frozen commit and records stable hashes for every consumed source file.
+- [x] **TS-01** `[ALL]`: The operator can work entirely within a dependency-light `experiments/specchoice-v1.3.2/` boundary containing the prototype's code, configuration, data, prompts, tests, runs, reports, and notes, without modifying core UDB schemas or generated data.
+- [x] **TS-02** `[ALL]`: The operator can verify a source manifest that pins every named public PR snapshot to its frozen commit and records stable hashes for every consumed source file.
 - [ ] **TS-03** `[ALL]`: The operator can run a versioned PR #2164 adapter and deterministic measurement runner that scores golden predictions for all 11 pinned fixtures, including surfacing and then classifying out the candidate fixture.
 - [ ] **TS-04** `[ALL]`: The operator receives strict validation of the canonical adjudication schema, including the unique nullable `surfaced=false` representation, rejection of `parameter_status:not_surfaced`, unknown-key rejection, enum enforcement, and no silent repair.
 - [ ] **TS-05** `[ALL]`: Tests and reports expose every required stable diagnostic code with structured fields, while `ACCEPTED_PARAMETER_NAME_MISSING` remains an identity warning that cannot change disposition correctness.
@@ -130,8 +130,8 @@ Roadmap creation maps every v1 requirement to exactly one phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TS-01 | Phase 1 | Gaps Found |
-| TS-02 | Phase 1 | Gaps Found |
+| TS-01 | Phase 1 | Complete |
+| TS-02 | Phase 1 | Complete |
 | TS-03 | Phase 2 | Pending |
 | TS-04 | Phase 2 | Pending |
 | TS-05 | Phase 2 | Pending |
@@ -162,4 +162,4 @@ Roadmap creation maps every v1 requirement to exactly one phase.
 
 ---
 *Requirements defined: 2026-07-30*  
-*Last updated: 2026-07-30 after roadmap creation*
+*Last updated: 2026-07-31 after Phase 1 verification*

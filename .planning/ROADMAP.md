@@ -14,7 +14,7 @@ SpecChoice v1.3.2 proceeds through seven strict, dependency-ordered increments: 
 
 ## Phases
 
-- [ ] **Phase 1: Isolated Evidence Boundary and Source Integrity** - Establish a dependency-light experiment boundary and independently verifiable public inputs.
+- [x] **Phase 1: Isolated Evidence Boundary and Source Integrity** - Establish a dependency-light experiment boundary and independently verifiable public inputs. (completed 2026-07-31)
 - [ ] **Phase 2: Deterministic Measurement Spine** - Prove the frozen adjudication and diagnostic contract on all 11 fixtures before innovation.
 - [ ] **Phase 3: Human-Reviewed Data Preregistration** - Produce leakage-safe, provenance-rich data whose semantic decisions are explicitly human-approved.
 - [ ] **Phase 4: Offline Treatments, Retrieval, and Branch Freeze** - Make the controlled treatments inspectable offline, freeze them, and select exactly one fail-closed branch.
@@ -38,7 +38,7 @@ SpecChoice v1.3.2 proceeds through seven strict, dependency-ordered increments: 
   2. The reviewer can verify every named PR snapshot against its frozen commit and reproduce the stable hash of every consumed source file.
   3. The operator can reproduce the recorded environment decision and, if full setup exceeded the frozen limit, use the documented dependency-light fallback without weakening source verification.
 
-**Plans:** 5/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 
@@ -66,7 +66,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 01-05: Preserve the v2 incident, create the D-15 gap-restart lineage, and make committed post-baseline changes fail closed.
+- [x] 01-05: Preserve the v2 incident, create the D-15 gap-restart lineage, and make committed post-baseline changes fail closed.
 
 ### Phase 2: Deterministic Measurement Spine
 
@@ -247,7 +247,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Isolated Evidence Boundary and Source Integrity | 5/5 | In Progress|  |
+| 1. Isolated Evidence Boundary and Source Integrity | 5/5 | Complete    | 2026-07-31 |
 | 2. Deterministic Measurement Spine | 0/4 | Not started | - |
 | 3. Human-Reviewed Data Preregistration | 0/4 | Not started | - |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |
