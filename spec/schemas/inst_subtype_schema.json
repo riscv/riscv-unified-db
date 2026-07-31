@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "v0.1",
+  "$id": "v0.2",
   "title": "Instruction Subtype Schema",
   "description": "Schema for instruction subtype definitions",
   "type": "object",

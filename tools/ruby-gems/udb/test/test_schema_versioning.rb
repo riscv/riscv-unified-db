@@ -39,6 +39,12 @@ class TestSchemaVersioning < Minitest::Test
 
   # ── helpers ──────────────────────────────────────────────────────────────────
 
+  # The version ($id) of a schema in the real schemas dir. Derived at runtime so
+  # these tests keep working when a schema's $id is bumped.
+  def schema_version(schema_name)
+    JSON.parse((SCHEMAS_PATH / schema_name).read).fetch("$id")
+  end
+
   def make_resolver(gen_path)
     Udb::Resolver.new(
       schemas_path_override: SCHEMAS_PATH,
@@ -103,11 +109,12 @@ class TestSchemaVersioning < Minitest::Test
       resolver = make_resolver(gen_path)
       resolver.resolve_schemas
 
-      out = gen_path / "schemas" / "ext_schema.json" / "v0.1" / "ext_schema.json"
+      ext_version = schema_version("ext_schema.json")
+      out = gen_path / "schemas" / "ext_schema.json" / ext_version / "ext_schema.json"
       assert out.exist?
       resolved = JSON.parse(out.read)
       assert_equal(
-        "#{Udb::Resolver::SCHEMAS_BASE_URL}/ext_schema.json/v0.1/ext_schema.json",
+        "#{Udb::Resolver::SCHEMAS_BASE_URL}/ext_schema.json/#{ext_version}/ext_schema.json",
         resolved["$id"]
       )
     end
@@ -156,11 +163,98 @@ class TestSchemaVersioning < Minitest::Test
       resolver.resolve_schemas
 
       src = JSON.parse((SCHEMAS_PATH / "ext_schema.json").read)
-      out = JSON.parse((gen_path / "schemas" / "ext_schema.json" / "v0.1" / "ext_schema.json").read)
+      out = JSON.parse((gen_path / "schemas" / "ext_schema.json" / schema_version("ext_schema.json") / "ext_schema.json").read)
 
-      # All keys except $id should be preserved
-      (src.keys - ["$id"]).each do |key|
+      # All keys except $id and cross-file $ref values should be preserved. The
+      # $ref values are intentionally rewritten to absolute published URLs (see
+      # test_resolve_schemas_rewrites_cross_file_refs_to_published_urls), so
+      # compare the parts of the schema that do not contain them.
+      (src.keys - ["$id", "properties", "$defs", "definitions", "allOf", "anyOf", "oneOf", "items"]).each do |key|
         assert_equal src[key], out[key], "Field '#{key}' should be preserved in resolved schema"
+      end
+    end
+  end
+
+  # A published schema's internal cross-file $ref values (e.g. "schema_defs.json#/...")
+  # must be rewritten to absolute published URLs. Otherwise a consumer pointing an
+  # editor at the published top-level schema gets a 404 on the ref target, because
+  # each schema is published under its own <name>/<version>/ directory.
+  def collect_refs(node, acc = [])
+    case node
+    when Hash
+      node.each { |k, v| k == "$ref" && v.is_a?(String) ? acc << v : collect_refs(v, acc) }
+    when Array
+      node.each { |v| collect_refs(v, acc) }
+    end
+    acc
+  end
+
+  def test_resolve_schemas_rewrites_cross_file_refs_to_published_urls
+    Dir.mktmpdir do |tmpdir|
+      gen_path = Pathname.new(tmpdir)
+      resolver = make_resolver(gen_path)
+      resolver.resolve_schemas
+
+      out = JSON.parse((gen_path / "schemas" / "ext_schema.json" / schema_version("ext_schema.json") / "ext_schema.json").read)
+      refs = collect_refs(out)
+      base = Udb::Resolver::SCHEMAS_BASE_URL
+      defs_version = schema_version("schema_defs.json")
+
+      cross_file = refs.reject { |r| r.start_with?("#") }
+      refute_empty cross_file, "expected ext_schema.json to have cross-file $refs"
+
+      # No cross-file $ref should remain a bare relative path.
+      schema_defs_refs = cross_file.select { |r| r.include?("schema_defs.json") }
+      refute_empty schema_defs_refs, "expected ext_schema.json to reference schema_defs.json"
+      schema_defs_refs.each do |ref|
+        # schema_defs.json is published at its OWN version (which may differ from
+        # ext_schema's), so the rewritten URL must use schema_defs's version.
+        assert ref.start_with?("#{base}/schema_defs.json/#{defs_version}/schema_defs.json#"),
+               "cross-file $ref should be an absolute published URL, got: #{ref}"
+      end
+    end
+  end
+
+  # A schema that references itself across files (schema_defs.json contains
+  # "schema_defs.json#/...") should have those refs rewritten to its own absolute
+  # published URL rather than left relative.
+  def test_resolve_schemas_rewrites_self_referencing_refs
+    Dir.mktmpdir do |tmpdir|
+      gen_path = Pathname.new(tmpdir)
+      resolver = make_resolver(gen_path)
+      resolver.resolve_schemas
+
+      defs_version = schema_version("schema_defs.json")
+      out = JSON.parse((gen_path / "schemas" / "schema_defs.json" / defs_version / "schema_defs.json").read)
+      base = Udb::Resolver::SCHEMAS_BASE_URL
+
+      self_refs = collect_refs(out).select { |r| r.include?("schema_defs.json") }
+      refute_empty self_refs, "expected schema_defs.json to contain self-references"
+      self_refs.each do |ref|
+        assert ref.start_with?("#{base}/schema_defs.json/#{defs_version}/schema_defs.json#"),
+               "self-reference should be rewritten to the absolute published URL, got: #{ref}"
+      end
+    end
+  end
+
+  # References to the draft-07 meta-schema are NOT published under our base URL, so
+  # they must point at the canonical json-schema.org URL, not a would-be 404 under
+  # riscv.github.io.
+  def test_resolve_schemas_rewrites_draft07_ref_to_canonical_url
+    Dir.mktmpdir do |tmpdir|
+      gen_path = Pathname.new(tmpdir)
+      resolver = make_resolver(gen_path)
+      resolver.resolve_schemas
+
+      out = JSON.parse((gen_path / "schemas" / "schema_defs.json" / schema_version("schema_defs.json") / "schema_defs.json").read)
+      base = Udb::Resolver::SCHEMAS_BASE_URL
+
+      draft_refs = collect_refs(out).select { |r| r.include?("json-schema-draft-07.json") }
+      draft_refs.each do |ref|
+        refute ref.start_with?(base),
+               "draft-07 ref must not point under the (unpublished) UDB base URL: #{ref}"
+        assert_match %r{\Ahttps://json-schema\.org/draft-07/schema}, ref,
+                     "draft-07 ref should point at the canonical json-schema.org URL, got: #{ref}"
       end
     end
   end

@@ -467,9 +467,12 @@ class TestYamlResolver < Minitest::Test
 
     resolver = Udb::Yaml::Resolver.new(quiet: true, schemas_path: gem_schemas)
 
-    # Bare ref should get the version prefix
-    assert_equal "v0.1/ext_schema.json#", resolver.versioned_schema_uri("ext_schema.json#")
-    assert_equal "v0.2/csr_schema.json#", resolver.versioned_schema_uri("csr_schema.json#")
+    # Bare ref should get the version prefix. Derive the expected version from the
+    # schema's own $id so this keeps working when the $id is bumped.
+    ext_version = JSON.parse((gem_schemas / "ext_schema.json").read).fetch("$id")
+    csr_version = JSON.parse((gem_schemas / "csr_schema.json").read).fetch("$id")
+    assert_equal "#{ext_version}/ext_schema.json#", resolver.versioned_schema_uri("ext_schema.json#")
+    assert_equal "#{csr_version}/csr_schema.json#", resolver.versioned_schema_uri("csr_schema.json#")
   end
 
   # Test that versioned_schema_uri leaves already-versioned URIs unchanged
@@ -526,8 +529,10 @@ class TestYamlResolver < Minitest::Test
     resolver.resolve_files(input_dir, output_dir, no_checks: true)
 
     resolved_content = File.read(output_dir / "Xtest.yaml")
-    # $schema should be rewritten to include the version prefix
-    assert_includes resolved_content, "$schema: v0.1/ext_schema.json#",
+    # $schema should be rewritten to include the version prefix. Derive the
+    # version from the schema's own $id so this keeps working after a bump.
+    ext_version = JSON.parse((gem_schemas / "ext_schema.json").read).fetch("$id")
+    assert_includes resolved_content, "$schema: #{ext_version}/ext_schema.json#",
       "Resolved file should contain versioned $schema"
     refute_includes resolved_content, "$schema: ext_schema.json#",
       "Resolved file should not contain bare (unversioned) $schema"
