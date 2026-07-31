@@ -59,17 +59,24 @@ def _lstat_components(root: Path, relative: PurePosixPath) -> tuple[Path, os.sta
     return current, details, accepted_device
 
 
-def inspect_authoritative_path(root: Path, relative_path: str) -> FileEvidence:
-    """Classify one contained regular file/directory without following links."""
-    relative = require_relative_posix_path(relative_path)
-    path, details, _ = _lstat_components(root, relative)
-    if stat.S_ISDIR(details.st_mode):
-        return FileEvidence(path=relative.as_posix(), file_kind="directory")
-    # Opening only happens after every path component was lstat and accepted.
-    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+def _read_authoritative_regular_file(root: Path, relative: PurePosixPath) -> tuple[FileEvidence, bytes]:
+    """Read a checked regular leaf from the descriptor that passed custody checks."""
+    path, details, accepted_device = _lstat_components(root, relative)
+    if not stat.S_ISREG(details.st_mode):
+        raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    if not isinstance(nofollow, int) or nofollow == 0:
+        raise FilesystemPolicyError("NOFOLLOW_UNAVAILABLE")
+    # The final component must be opened exactly once without following links.
+    descriptor = os.open(path, os.O_RDONLY | nofollow)
     try:
         opened = os.fstat(descriptor)
-        if not stat.S_ISREG(opened.st_mode) or opened.st_dev != details.st_dev or opened.st_ino != details.st_ino:
+        if (
+            not stat.S_ISREG(opened.st_mode)
+            or opened.st_dev != accepted_device
+            or opened.st_dev != details.st_dev
+            or opened.st_ino != details.st_ino
+        ):
             raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
         chunks: list[bytes] = []
         while True:
@@ -80,13 +87,31 @@ def inspect_authoritative_path(root: Path, relative_path: str) -> FileEvidence:
     finally:
         os.close(descriptor)
     content = b"".join(chunks)
-    return FileEvidence(
-        path=relative.as_posix(),
-        file_kind="regular_file",
-        byte_length=len(content),
-        sha256=sha256_bytes(content),
-        hardlink_count=opened.st_nlink,
+    return (
+        FileEvidence(
+            path=relative.as_posix(),
+            file_kind="regular_file",
+            byte_length=len(content),
+            sha256=sha256_bytes(content),
+            hardlink_count=opened.st_nlink,
+        ),
+        content,
     )
+
+
+def read_authoritative_file(root: Path, relative_path: str) -> tuple[FileEvidence, bytes]:
+    """Return regular-file evidence and bytes from one no-follow descriptor read."""
+    return _read_authoritative_regular_file(root, require_relative_posix_path(relative_path))
+
+
+def inspect_authoritative_path(root: Path, relative_path: str) -> FileEvidence:
+    """Classify one contained regular file/directory without following links."""
+    relative = require_relative_posix_path(relative_path)
+    path, details, _ = _lstat_components(root, relative)
+    if stat.S_ISDIR(details.st_mode):
+        return FileEvidence(path=relative.as_posix(), file_kind="directory")
+    evidence, _ = _read_authoritative_regular_file(root, relative)
+    return evidence
 
 
 def reject_hardlink_dependency(declared_shared_inode: bool) -> None:

@@ -13,7 +13,7 @@ from typing import Any
 
 from specchoice_evidence.bundle import BundleError, _publish_directory_no_replace, _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
-from specchoice_evidence.filesystem import FilesystemPolicyError, inspect_authoritative_path
+from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 
 from .adapter import build_pr2164_adapter_batch
 from .preflight import preflight_prediction_batch
@@ -177,12 +177,12 @@ def run_measurement_attempt(*, mode: str, attempt_id: str, attempt_root: Path, i
 
 
 def _read_attempt_file(*, attempt_root: Path, name: str, code: str) -> bytes:
-    """Read one report-owned attempt leaf after Phase 1 custody validation."""
+    """Read one report-owned attempt leaf from its checked no-follow descriptor."""
     try:
-        evidence = inspect_authoritative_path(attempt_root, name)
+        evidence, content = read_authoritative_file(attempt_root, name)
         if evidence.file_kind != "regular_file":
             raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
-        return (attempt_root / name).read_bytes()
+        return content
     except (OSError, FilesystemPolicyError) as error:
         raise AttemptError(code) from error
 

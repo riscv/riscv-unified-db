@@ -14,6 +14,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from specchoice_evidence import filesystem
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_measurement.adapter import build_pr2164_adapter_batch
 from specchoice_measurement.attempts import AttemptError, run_measurement_attempt, validate_measurement_attempt
@@ -165,6 +166,36 @@ class MeasurementAttemptTests(unittest.TestCase):
                 code = "ATTEMPT_MANIFEST_INVALID" if name == "attempt.json" else "ATTEMPT_ARTIFACT_INVALID"
                 with self.assertRaisesRegex(AttemptError, code):
                     validate_measurement_attempt(attempt_root=target)
+                owned.unlink()
+                shutil.copy2(external, owned)
+
+    def test_attempt_validation_rejects_leaf_swaps_before_no_follow_open(self) -> None:
+        """A leaf changed after lstat cannot redirect the descriptor-backed read."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            run_measurement_attempt(mode="formal", attempt_id="swapped", attempt_root=root, inputs=self._inputs())
+            target = root / "swapped"
+            manifest = json.loads((target / "attempt.json").read_text(encoding="utf-8"))
+            outside = root / "outside"
+            outside.mkdir()
+
+            for name in ("attempt.json", "diagnostics.json"):
+                owned = target / name
+                external = outside / name
+                shutil.copy2(owned, external)
+                original_open = filesystem.os.open
+
+                def swap_before_open(path: Path | str, flags: int, *args: object) -> int:
+                    if Path(path) == owned:
+                        owned.unlink()
+                        owned.symlink_to(external)
+                    return original_open(path, flags, *args)
+
+                code = "ATTEMPT_MANIFEST_INVALID" if name == "attempt.json" else "ATTEMPT_ARTIFACT_INVALID"
+                with patch("specchoice_evidence.filesystem.os.open", side_effect=swap_before_open):
+                    with self.assertRaisesRegex(AttemptError, code):
+                        validate_measurement_attempt(attempt_root=target)
+                self.assertTrue(owned.is_symlink())
                 owned.unlink()
                 shutil.copy2(external, owned)
 

@@ -28,6 +28,7 @@ from specchoice_evidence.baseline import (
 from specchoice_evidence.filesystem import (
     FilesystemPolicyError,
     inspect_authoritative_path,
+    read_authoritative_file,
     reject_hardlink_dependency,
     require_relative_posix_path,
 )
@@ -358,6 +359,17 @@ class FilesystemBoundaryTests(unittest.TestCase):
             self.assertEqual(evidence.file_kind, "regular_file")
             self.assertEqual(evidence.byte_length, 10)
             self.assertEqual(evidence.hardlink_count, 1)
+
+    def test_descriptor_backed_read_requires_no_follow_support(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "sample.txt").write_bytes(b"raw\r\nbytes")
+            evidence, content = read_authoritative_file(root, "sample.txt")
+            self.assertEqual(evidence.sha256, sha256_bytes(content))
+            self.assertEqual(content, b"raw\r\nbytes")
+            with patch("specchoice_evidence.filesystem.os.O_NOFOLLOW", 0):
+                with self.assertRaisesRegex(FilesystemPolicyError, "NOFOLLOW_UNAVAILABLE"):
+                    read_authoritative_file(root, "sample.txt")
 
     def test_hardlink_dependency_is_rejected_without_rejecting_independent_bytes(self) -> None:
         with self.assertRaisesRegex(FilesystemPolicyError, "HARDLINK_DEPENDENCY_REJECTED"):
