@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import LiteralScalarString
 
 # Paths
 ROOT = Path(__file__).resolve().parents[2]
@@ -113,18 +114,18 @@ def main() -> None:
             {
                 "name": "Fail if any required job failed or was cancelled",
                 "env": {"NEEDS_JSON": "${{ toJson(needs) }}"},
-                "run": (
+                "run": LiteralScalarString(
                     "python3 - <<'PY'\n"
                     "import json, os, sys\n"
                     'needs = json.loads(os.environ["NEEDS_JSON"])\n'
-                    'bad = {k:v["result"] for k,v in needs.items() if v["result"] != "success"}\n'
+                    'bad = {k: v["result"] for k, v in needs.items() if v["result"] != "success"}\n'
                     "if bad:\n"
                     '    print("Blocking jobs:")\n'
-                    "    for k,r in bad.items():\n"
+                    "    for k, r in bad.items():\n"
                     '        print(f" - {k}: {r}")\n'
                     "    sys.exit(1)\n"
                     'print("All required jobs succeeded.")\n'
-                    "PY"
+                    "PY\n"
                 ),
             },
         ],
