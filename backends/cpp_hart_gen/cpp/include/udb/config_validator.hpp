@@ -19,21 +19,29 @@ namespace udb {
       }
       fmt::print("{}\n", json.dump());
       std::smatch m;
-      std::regex re("^https://riscv.org/udb/schemas/(.*\\.json)");
+      std::regex re("^(?:https://riscv\\.org/udb/schemas/)?(.*\\.json)#?$");
       std::string schema_path = json["$schema"].template get<std::string>();
       if (!std::regex_match(schema_path, m, re)) {
         throw std::runtime_error("Invalid $schema in config file");
       }
       auto schema = m[1];
 
-      if (schema == "config-0.1.0.json") {
+      if (schema == "config-0.1.0.json" || schema == "config_schema-0.1.0.json" || schema == "config_schema.json") {
         auto loader = [](const nlohmann::json_uri& uri, nlohmann::json& value) {
-          value = nlohmann::json::parse(DbData::SCHEMAS[uri.path().substr(1)]);
+          std::string path = uri.path();
+          if (!path.empty() && path[0] == '/') {
+            path = path.substr(1);
+          }
+          if (DbData::SCHEMAS.find(path) != DbData::SCHEMAS.end()) {
+            value = nlohmann::json::parse(DbData::SCHEMAS[path]);
+          } else {
+            value = nlohmann::json::parse(DbData::SCHEMAS["config_schema.json"]);
+          }
         };
         nlohmann::json_schema::json_validator validator(loader);
         try {
           validator.set_root_schema(
-              nlohmann::json::parse(DbData::SCHEMAS[schema]));
+              nlohmann::json::parse(DbData::SCHEMAS["config_schema.json"]));
         } catch (const std::exception* e) {
           throw std::runtime_error(
               "Validation of schema config-0.1.0 failed: " +
