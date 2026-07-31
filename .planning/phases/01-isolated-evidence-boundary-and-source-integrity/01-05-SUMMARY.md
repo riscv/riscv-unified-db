@@ -14,6 +14,9 @@ key-files:
     - experiments/specchoice-v1.3.2/baselines/phase-start-v5-gap-closure.json
     - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v5.json
     - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v5.md
+    - experiments/specchoice-v1.3.2/receipts/reviewer-boundary-decision-v6.json
+    - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v6.json
+    - experiments/specchoice-v1.3.2/receipts/integrity-receipt-v6.md
   modified:
     - experiments/specchoice-v1.3.2/src/specchoice_evidence/baseline.py
     - experiments/specchoice-v1.3.2/src/specchoice_evidence/bundle.py
@@ -25,6 +28,7 @@ key-files:
     - experiments/specchoice-v1.3.2/tests/test_receipts.py
 decisions:
   - v3 and v4 remain preserved, non-accepted evidence; v5 is the active recovery lineage.
+  - v6 remains preserved as an authorized but non-finalizable receipt attempt because its restart-lineage paths were not portable.
   - Accepted bundle remains local-only with external publication prohibited.
   - A local MVP receipt decision is valid only for one immutable reviewed Git revision and its canonical committed-change projection.
 metrics:
@@ -49,13 +53,16 @@ Canonical v5 recovery evidence now detects committed post-baseline changes while
 - `e780289b` added regression coverage for revision pinning, old-decision rejection, provenance, and current-state enforcement.
 - `b1709931` prohibited active finalization of historical schema-2/schema-3 receipts; only a schema-4 receipt with a schema-3 revision-pinned decision can reach active pass.
 - `7fb9d18f` replaced net-tree committed-history comparison with deterministic per-commit A/M/D/T events, preserving an out-of-boundary add even when a later commit deletes the path.
+- `2ae36b46` preserved the authorized v6 decision and schema-4 receipt unchanged after active finalization rejected absolute restart-lineage paths with `RESTART_LINEAGE_PROJECTION_MISMATCH`.
+- `b86ad102` made writer and finalizer share one canonical experiment-relative lineage mapping and added path-mode plus finalization-roundtrip regressions.
 
 ## Verification
 
-- Full stdlib suite: 70 tests passed using `PYTHONDONTWRITEBYTECODE=1`.
+- Full stdlib suite: 72 tests passed using `PYTHONDONTWRITEBYTECODE=1`.
 - v5 restart validation and the current combined `check-boundary` gate pass with zero blockers; `.DS_Store` entries retain `DS_STORE_IGNORED_OS_METADATA` and are not attributed.
 - Historical schema-2 and schema-3 receipts now fail active finalization with `HISTORICAL_RECEIPT_NOT_FINALIZABLE`; they cannot bypass the revision-pinned authorization route.
 - The add-then-delete regression proves a clean final tree cannot erase a committed out-of-boundary history event from either the frozen projection or current gate.
+- A temporary schema-4 receipt with canonicalized v6 lineage passes active finalization; the committed v6 attempt remains intentionally unchanged and non-finalizable.
 - Copied accepted bundle verified with Git unavailable; before/after SHA-256 inventories were identical.
 - Accepted identity is unchanged: generation `source-contract-v2-pr2192-86a0021b-verifier-rooted-v1`, core `6ca1f176c84464d499d6c0e81d03ba3f23fdcdd1b5bd43bc28d9b2153a797495`, root `aacdda8218e3779747ae2dec45f9da81822f615ec4b257e55b0766baf8317d5a`, snapshot `1c81f84cf4894a7ecfde4b72e17d6e479a91cb0cfa408258611b00bdf5e2e397`, publication false.
 
@@ -64,6 +71,7 @@ Canonical v5 recovery evidence now detects committed post-baseline changes while
 - [Rule 1 - Bug] Non-repository fixture compatibility was restored for legacy patched live-path tests.
 - Recovery sequencing required the v5 receipt regression to be added after local implementation assembly but before the Task 2 commit; no RED claim is made for that test.
 - Review exposed three authority gaps after the initial v5 implementation. Each finding and fix remains in immutable Git history; no failed receipt generation was overwritten.
+- The first authorized schema-4 attempt exposed a writer/finalizer path-basis mismatch. The failed v6 files were committed before the generator was repaired, so v7 requires a new reviewed revision, basis, and explicit authorization.
 - CR-01, CR-02, WR-01, and WR-02 remain out-of-scope hardening debt.
 
 ## Self-Check: PASSED
