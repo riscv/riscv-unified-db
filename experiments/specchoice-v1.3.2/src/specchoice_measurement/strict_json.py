@@ -150,15 +150,6 @@ def validate_current_payload(
 
     records = tuple(getattr(adapter_batch, "records", ()))
     record_by_id = {record.fixture_id: record for record in records}
-    source_by_sha256: dict[str, bytes] = {}
-    for record in records:
-        for raw_file in record.raw_files:
-            if raw_file.role == "fixture_source":
-                # The adapter already proved the source identity; this read is validation only.
-                source_path = None
-                for root in ():  # The adapter intentionally owns paths; preload below if supplied.
-                    source_path = root
-                # Source bytes are attached by preflight before this validator is called.
     source_by_sha256 = getattr(adapter_batch, "source_bytes_by_sha256", {})
     if not isinstance(source_by_sha256, dict):
         source_by_sha256 = {}

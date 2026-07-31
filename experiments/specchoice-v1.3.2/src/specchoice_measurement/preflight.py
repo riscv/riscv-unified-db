@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from specchoice_evidence.canonical import sha256_bytes
+from specchoice_evidence.filesystem import FilesystemPolicyError, inspect_authoritative_path, require_relative_posix_path
 
 from .diagnostics import Diagnostic, ordered_diagnostics
 from .strict_json import DuplicateKeyError, decode_strict_json, validate_current_payload
@@ -37,7 +38,7 @@ def _source_bytes_by_sha256(adapter_batch: object) -> dict[str, bytes]:
     """Read only adapter-declared fixture source files through bounded relative paths."""
     source_identity = getattr(adapter_batch, "source_identity", {})
     generation = source_identity.get("generation") if isinstance(source_identity, dict) else None
-    if not isinstance(generation, str):
+    if not isinstance(generation, str) or not generation or "/" in generation or "\\" in generation:
         return {}
     root = Path(__file__).parents[2] / "bundles" / "accepted" / generation
     values: dict[str, bytes] = {}
@@ -45,10 +46,13 @@ def _source_bytes_by_sha256(adapter_batch: object) -> dict[str, bytes]:
         for raw_file in record.raw_files:
             if raw_file.role != "fixture_source":
                 continue
-            path = root / raw_file.path
             try:
-                raw = path.read_bytes()
-            except OSError:
+                relative = require_relative_posix_path(raw_file.path)
+                evidence = inspect_authoritative_path(root, relative.as_posix())
+                if evidence.file_kind != "regular_file" or evidence.sha256 != raw_file.sha256:
+                    continue
+                raw = (root / relative).read_bytes()
+            except (FilesystemPolicyError, OSError, ValueError):
                 continue
             if sha256_bytes(raw) == raw_file.sha256:
                 values[raw_file.sha256] = raw
