@@ -111,14 +111,21 @@ def main() -> None:
         "if": "always()",
         "steps": [
             {
-                "name": "exit failure",
-                "if": "contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')",
-                "run": "exit 1",
-            },
-            {
-                "name": "exit success",
-                "if": "!contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')",
-                "run": "exit 0",
+                "name": "Fail if any required job failed or was cancelled",
+                "env": {"NEEDS_JSON": "${{ toJson(needs) }}"},
+                "run": (
+                    "python3 - <<'PY'\n"
+                    "import json, os, sys\n"
+                    'needs = json.loads(os.environ["NEEDS_JSON"])\n'
+                    'bad = {k:v["result"] for k,v in needs.items() if v["result"] != "success"}\n'
+                    "if bad:\n"
+                    '    print("Blocking jobs:")\n'
+                    "    for k,r in bad.items():\n"
+                    '        print(f" - {k}: {r}")\n'
+                    "    sys.exit(1)\n"
+                    'print("All required jobs succeeded.")\n'
+                    "PY"
+                ),
             },
         ],
     }
