@@ -15,6 +15,7 @@ from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 
 from .adapter import AdapterError, build_pr2164_adapter_batch
 from .attempts import AttemptError, run_measurement_attempt, validate_measurement_attempt
+from .h1 import H1Error, build_h1_packet, validate_h1_decision, validate_h1_packet
 from .preflight import preflight_prediction_batch
 from .scoring import score_prediction_batch
 
@@ -253,6 +254,27 @@ def command_validate_adversarial_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_build_h1_packet(args: argparse.Namespace) -> int:
+    packet = build_h1_packet(
+        formal_attempt=args.formal_attempt,
+        adversarial_report=args.adversarial_report,
+        output_json=args.output,
+        output_markdown=args.markdown,
+    )
+    sys.stdout.buffer.write(canonical_json_bytes({"packet_sha256": packet["packet_sha256"], "status": "written"}))
+    return 0
+
+
+def command_validate_h1_packet(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_packet(packet=args.packet, markdown=args.markdown)))
+    return 0
+
+
+def command_validate_h1_decision(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_decision(packet=args.packet, decision=args.decision)))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-measurement")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -287,6 +309,20 @@ def build_parser() -> argparse.ArgumentParser:
     validate_adversarial = commands.add_parser("validate-adversarial-report")
     validate_adversarial.add_argument("--report", type=Path, required=True)
     validate_adversarial.set_defaults(handler=command_validate_adversarial_report)
+    h1_build = commands.add_parser("build-h1-packet")
+    h1_build.add_argument("--formal-attempt", type=Path, required=True)
+    h1_build.add_argument("--adversarial-report", type=Path, required=True)
+    h1_build.add_argument("--output", type=Path, required=True)
+    h1_build.add_argument("--markdown", type=Path, required=True)
+    h1_build.set_defaults(handler=command_build_h1_packet)
+    h1_packet = commands.add_parser("validate-h1-packet")
+    h1_packet.add_argument("--packet", type=Path, required=True)
+    h1_packet.add_argument("--markdown", type=Path, required=True)
+    h1_packet.set_defaults(handler=command_validate_h1_packet)
+    h1_decision = commands.add_parser("validate-h1-decision")
+    h1_decision.add_argument("--packet", type=Path, required=True)
+    h1_decision.add_argument("--decision", type=Path, required=True)
+    h1_decision.set_defaults(handler=command_validate_h1_decision)
     return parser
 
 
@@ -294,7 +330,7 @@ def main() -> int:
     args = build_parser().parse_args()
     try:
         return args.handler(args)
-    except (AdapterError, AttemptError, OSError, ValueError) as error:
+    except (AdapterError, AttemptError, H1Error, OSError, ValueError) as error:
         print(str(error), file=sys.stderr)
         return 2
 
