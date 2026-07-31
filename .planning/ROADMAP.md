@@ -38,7 +38,7 @@ SpecChoice v1.3.2 proceeds through seven strict, dependency-ordered increments: 
   2. The reviewer can verify every named PR snapshot against its frozen commit and reproduce the stable hash of every consumed source file.
   3. The operator can reproduce the recorded environment decision and, if full setup exceeded the frozen limit, use the documented dependency-light fallback without weakening source verification.
 
-**Plans:** 5/5 plans complete
+**Plans:** 7/7 plans complete
 
 Plans:
 
@@ -247,7 +247,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Isolated Evidence Boundary and Source Integrity | 5/5 | Complete    | 2026-07-31 |
+| 1. Isolated Evidence Boundary and Source Integrity | 7/7 | Complete    | 2026-07-31 |
 | 2. Deterministic Measurement Spine | 0/4 | Not started | - |
 | 3. Human-Reviewed Data Preregistration | 0/4 | Not started | - |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |

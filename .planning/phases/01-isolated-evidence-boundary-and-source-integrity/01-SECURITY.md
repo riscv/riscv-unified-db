@@ -78,6 +78,29 @@ created: 2026-07-31
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-07-31 | 27 | 27 | 0 | Codex / GSD ASVS L1 |
+| 2026-07-31 | 10 gap-closure controls | 10 | 0 | Codex / GSD ASVS L1 re-audit |
+
+### Plans 01-06/01-07 gap-closure re-audit
+
+**Verdict:** SECURED. **ASVS level:** 1. **Threats open:** 0.
+
+| Control | Independent evidence | Status |
+|---|---|---|
+| Exact fixture-set drift | Fixed registry and embedded bidirectional registry/core/raw comparison require exactly 11 fixtures and 28 raw files. | closed |
+| Raw-byte substitution | Pinned Git blob length/SHA checks and standalone raw-custody hashing reject drift. | closed |
+| Path escape / special files | POSIX containment, no-follow reads, and regular-file policy remain enforced. | closed |
+| Concurrent overwrite | Candidate and accepted publication use native atomic no-replace operations; injected empty/nonempty targets are rejected and preserved; unavailable primitives fail `ATOMIC_NO_REPLACE_UNAVAILABLE` without fallback or staging leak. | closed |
+| Stale/fake acceptance authority | Public API loads canonical v7 lineage internally and checks the current boundary through resolved `HEAD`; fake basis and committed/live delta bypasses reject before target creation. | closed |
+| Candidate/accepted confusion | Candidate stays ineligible; accepted verifier requires accepted status, downstream eligibility, offline replay proof, and publication false. | closed |
+| Registry-pin substitution | Active Phase 2 authority binds the v2 generation/root/manifest/registry/commit/tree and exact 11/28 counts. | closed |
+| Local versus external publication | Decisions, manifests, receipts, revocation, and authority retain `external_publication_authorized:false`. | closed |
+| Offline verifier dependency | Copied v2 accepted bundle verifies using the canonical CPython with Git unavailable and no repository modules. | closed |
+| Historical mutation | The no-replace fix changes no generation or receipt bytes; prior v1/v8 and historical v2 manifest hashes remain intact. | closed |
+
+Re-audit validation: 92 stdlib tests passed; deterministic candidate and accepted race
+probes rejected; target-specific `os.replace` guard observed zero calls; v7 boundary reported
+zero blockers; active v2 authority validated; copied v2 replay passed with
+`PATH=/nonexistent`.
 
 ---
 

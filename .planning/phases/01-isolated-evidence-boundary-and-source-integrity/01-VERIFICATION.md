@@ -1,16 +1,17 @@
 ---
 phase: 01-isolated-evidence-boundary-and-source-integrity
-verified: 2026-07-31T09:52:58Z
-status: gaps_found
-score: 9/10 must-haves verified
+verified: 2026-07-31T12:31:45Z
+status: passed
+score: 12/12 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
-  previous_status: passed
-  previous_score: 9/9
-  gaps_closed: []
-  gaps_remaining:
-    - "The source bundle consumed by Phase 2 must contain all raw inputs required to score the 11 pinned PR #2164 fixtures offline; the current generation contains only two gold.yaml files and is explicitly downstream_eligible:false."
+  previous_status: gaps_found
+  previous_score: 9/10
+  gaps_closed:
+    - "The downstream source bundle contains the complete, exact PR #2164 fixture input: 11 fixture directories and 28 authoritative raw files."
+    - "The accepted bundle independently enforces bidirectional registry/core/raw closure and cannot be accepted without the current v7 boundary gate."
+  gaps_remaining: []
   regressions: []
 ---
 
@@ -18,11 +19,9 @@ re_verification:
 
 **Phase Goal:** The operator and reviewer can work from a self-contained experiment boundary whose public source identity is independently verifiable.
 
-**Verified:** 2026-07-31T09:52:58Z
-
-**Status:** gaps_found
-
-**Re-verification:** Yes — post-close cross-phase input-completeness audit before Phase 2 planning.
+**Verified:** 2026-07-31T12:31:45Z
+**Status:** passed
+**Re-verification:** Yes — after complete PR #2164 fixture-closure and acceptance-gate repair.
 
 ## Goal Achievement
 
@@ -30,94 +29,70 @@ re_verification:
 
 | # | Truth | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | Operator can create, test, and inspect all prototype artifacts under `experiments/specchoice-v1.3.2/` without changing core UDB schemas, generated architecture data, or root dependency state. | ✓ VERIFIED | `git diff --name-only 93024b81^..HEAD` found no changes under `spec/`, `cfgs/`, `gen/`, `backends/`, `tools/`, or root dependency manifests. The runnable prototype and all tests remain under the isolated experiment root. |
-| 2 | Reviewer can verify every named PR snapshot against its frozen commit and reproduce the stable hash of every consumed source file. | ✓ VERIFIED | The 76-test suite passed source-contract and bundle-verifier cases, including exact Git blobs, six frozen snapshots, seven consumed files, non-cyclic core/root/snapshot binding, and tamper rejection. The accepted bundle replay independently verified its rooted raw content. |
-| 3 | Operator can reproduce the recorded environment decision and use the dependency-light fallback policy without weakening source verification. | ✓ VERIFIED | `environment.py` constructs the stable `standalone_first` projection (`full_udb_setup.required:false`, `attempted:false`) and its cumulative 90-minute incident policy. The full suite passed all nine environment transition/one-way audit tests. |
-| 4 | Only the experiment root and exact control-file allowlist are attributable; every other non-`.DS_Store` committed or live delta fails closed. | ✓ VERIFIED | Active v5 `check-boundary --reviewed-revision 39d70ca978ffb6798f4070904d1c66643b3e7711` returned `blocking_violations:0`, with `history_start_commit:54cda4f5…`, 31 classified paths, and all post-baseline committed events retained. `baseline.py` walks `start..reviewed` with NUL-safe per-commit A/M/D/T events, then merges staged/worktree/untracked state. Full-suite add→delete, committed violation, and current-vs-frozen-projection tests passed. |
-| 5 | Authoritative paths reject escapes, links, special files, mount uncertainty, hardlink-dependent layouts, prefix collisions, and malformed length/digest values. | ✓ VERIFIED | `filesystem.py` is wired through baseline capture/classification; `test_filesystem_boundary` and `test_canonical` passed path-escape, symlink, FIFO, mount, hardlink, exact-allowlist, overwrite, integer-length, and lowercase-SHA-256 cases. |
-| 6 | The accepted generation replays from bundle-relative Python stdlib code with no local Git object or network dependency. | ✓ VERIFIED | The full suite passed its copied-bundle Git/socket-blocked test. Independently, I copied `bundles/accepted/source-contract-v2-pr2192-86a0021b-verifier-rooted-v1` to `/private/tmp`, confirmed zero `.git` directories, set `PATH=/nonexistent`, invoked `/opt/homebrew/bin/python3` (Python 3.14.5) directly, and received `bundle verified` / exit 0. |
-| 7 | Canonical JSON receipt is authoritative, Markdown is its deterministic JSON-only projection, and rejected #2192 evidence cannot pass. | ✓ VERIFIED | `receipt.py` validates canonical receipt bytes and self-hash before `render_markdown`; the full suite passed Markdown-failure and rejected-source tests. The frozen #2192 test asserts `PR_PIN_NOT_REACHABLE` has no accepted identity. |
-| 8 | Local acceptance binds exactly one verifier-rooted accepted generation, uses reviewed revision `39d70ca978ffb6798f4070904d1c66643b3e7711`, and forbids external publication. | ✓ VERIFIED | `reviewer-boundary-decision-v7.json` and `integrity-receipt-v7.json` bind projection `6ca959fdf8bb48fbcef5a7c3ca035e0374973e3461c95bb4e4157c7c0c0b88e9`, basis `bedd658c8b52ee41c7f780a5e6a455a9e47d1ff9409c27b1225e7d04d45935f3`, and receipt self-hash `4b02a68d2cd9207e81a1b17ac7e06e81693088c4f43138eaac6d134e28144900`. `finalize-review` returned pass; its code requires the exact decision hash, identity, revision-bound projection, basis, Markdown projection, clean current boundary, and `external_publication_authorized:false`. |
-| 9 | A stale v6 authority cannot authorize the current receipt after post-review changes, while the accepted generation identity remains unchanged. | ✓ VERIFIED | Finalizing v6 explicitly returned `RESTART_LINEAGE_PROJECTION_MISMATCH` / exit 2. The 76-test suite passed `test_v6_decision_cannot_rebuild_a_receipt_after_post_review_code_changes`, historical-receipt finalization rejection, and post-review delta tests. v7 retains generation `source-contract-v2-pr2192-86a0021b-verifier-rooted-v1`, core `6ca1f176c84464d499d6c0e81d03ba3f23fdcdd1b5bd43bc28d9b2153a797495`, root `aacdda8218e3779747ae2dec45f9da81822f615ec4b257e55b0766baf8317d5a`, and snapshot manifest `1c81f84cf4894a7ecfde4b72e17d6e479a91cb0cfa408258611b00bdf5e2e397`. |
-| 10 | The bundle pinned for Phase 2 is self-sufficient for offline golden scoring of all 11 PR #2164 fixtures, with a machine-checked exact fixture-ID closure. | ✗ FAILED — BLOCKER | The accepted directory contains only `POS_CSR_RW_MTVEC_ACCESS/gold.yaml` and `POS_WARL_MTVEC_MODES/gold.yaml`. Its manifest is `status:candidate` and `downstream_eligible:false`; the source proposal explicitly froze only those two paths. At gap discovery, `git cat-file -e 22e84458...^{commit}` failed locally. The subsequently authorized construction fetch recovered the Git object and confirmed 11 fixture directories / 28 source files, but those bytes are not yet present in any immutable offline generation. |
+| 1 | Prototype work remains isolated to `experiments/specchoice-v1.3.2/` plus the narrow Phase 1 control files. | ✓ VERIFIED | `git diff --name-only 54cda4f5..07210440` outside the experiment and `.planning/` controls returned zero paths. `git diff --check` is clean. |
+| 2 | The frozen PR #2164 identity is locally provable. | ✓ VERIFIED | Local commit `22e84458c87a7ccf4c07034de1eb6d0bf9764144`, tree `af003b427c66bd8ac9803a91b3bf363a1b1304d9`, and `refs/specchoice/pr-2164-head` were present and equal/reachable; the registry test also verifies Git blob identity. |
+| 3 | The exact downstream fixture source is the finite 11-directory/28-raw-file PR #2164 universe. | ✓ VERIFIED | `fixture-registry-pr2164-v1.json` declares 11 sorted IDs and 28 files. Independent replay compared every accepted-v2 raw file to its pinned Git blob, length, and SHA-256: `checked_raw_files:28`, `all_git_bytes_match_accepted:true`. |
+| 4 | Missing, extra, malformed, path-escaping, special, or re-canonicalized subset fixtures fail closed. | ✓ VERIFIED | The embedded verifier's `_verify_fixture_closure` enforces the fixed fixture names/classes/roles and bidirectional registry/core tuple equality; the 92-test suite includes empty/missing/extra/duplicate/role/path/hash tests and `test_recanonicalized_subset_fails_embedded_fixture_closure`. |
+| 5 | Candidate and accepted states are distinct; only the active accepted v2 generation is downstream eligible. | ✓ VERIFIED | Candidate v2 verifies as `status:candidate`; accepted `source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2` verifies as `status:accepted`, `downstream_eligible:true`, `external_publication_authorized:false`. Historical v1 is preserved but explicitly revoked from downstream authority by `fixture-closure-revocation-v1.json`. |
+| 6 | Local acceptance cannot bypass canonical authority or the live v7 zero-blocker boundary. | ✓ VERIFIED | `accept_fixture_closure_candidate()` internally resolves and validates v7 lineage, calls `check_current_boundary()`, validates the canonical decision against candidate identity/registry/basis, then stages and verifies before publication. Negative tests cover missing, mismatched, stale, and boundary-violating authority. Current v7 gate returned `blocking_violations:0`. |
+| 7 | Generation publication never overwrites an existing target, including a race-created target. | ✓ VERIFIED | `_publish_directory_no_replace()` has only native no-replace operations (`renameatx_np(RENAME_EXCL)`, `renameat2(RENAME_NOREPLACE)`, or non-replacing `MoveFileExW`); unavailable primitives fail closed. The fixture-closure suite tests empty/nonempty target races and target preservation. |
+| 8 | Accepted-bundle verification is standalone and needs no Git, network, repository module, or `PYTHONPATH`. | ✓ VERIFIED | A copied v2 accepted bundle, outside the repository, ran `verify_bundle.py` using only `/opt/homebrew/bin/python3` with `env -i PATH=/nonexistent`; it returned `bundle verified` / exit 0. |
+| 9 | Existing generations and prior receipts remain immutable. | ✓ VERIFIED | The historical PR #2192 accepted manifest still hashes to `be220c0a858ac6d018dd48015a39e5ea1b68f75af21ad91ca13335eab3e6bebd`. `git diff --exit-code da9d8fb2..07210440` found no changes to v1 candidate/accepted trees or v8 receipts. |
+| 10 | The current Phase 2 source authority is an exact, local-only pin. | ✓ VERIFIED | `phase2/source-authority.json` validates against accepted v2 and binds generation, root `6a682538…`, manifest `73b25a28…`, registry `ddda6f6c…`, commit/tree, and 11/28 counts; its `local_only:true` and `external_publication_authorized:false` fields are enforced. |
+| 11 | The standalone-first environment and 90-minute fallback policy remain reproducible without probing the UDB toolchain. | ✓ VERIFIED | Canonical environment decision/receipt controls are exercised by nine environment tests; the final v9 integrity receipt records `environment:standalone_first` and no external publication authority. |
+| 12 | The current boundary remains auditable without attributing or blocking pre-existing OS metadata. | ✓ VERIFIED | v7 boundary result has 0 blockers. All twelve `.DS_Store` paths remain visible as `new_out_of_boundary`, `attributed_to_phase:false`, `blocking:false`, with `DS_STORE_IGNORED_OS_METADATA`; ordinary out-of-boundary paths remain blocking in tests. |
 
-**Score:** 9/10 truths verified (0 present-but-behavior-unverified).
+**Score:** 12/12 truths verified (0 present-but-behavior-unverified).
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | --- | --- | --- | --- |
-| `baselines/phase-start-v5-gap-closure.json` and `receipts/boundary-restart-v5.json` | Immutable D-15 restart generation and historic v2 incident record | ✓ VERIFIED | Canonical v5 baseline SHA is `a0b9f9f…`; restart lineage is bound to the v2 baseline, v5 allowlist, incident receipt, reason `D15_RESTART_COMMITTED_HISTORY_BLIND_SPOT`, and reviewed revision. Historical v2/v6 evidence remains present rather than rewritten. |
-| `config/boundary_allowlist-v5-gap-closure.json` and `baseline.py` | Exact boundary enforcement, including history | ✓ VERIFIED | One root (`experiments/specchoice-v1.3.2/`) plus nine exact control files, including `01-REVIEW.md`, `01-SECURITY.md`, and this report. The code uses full immutable commits, per-commit A/M/D/T capture, and live-state merge; no net-diff shortcut exists. |
-| `canonical.py` and `filesystem.py` | Canonical bytes and fail-closed authoritative path policy | ✓ VERIFIED | Both have substantive validators and are called by baseline, bundle, receipt, and verifier paths; 76 focused stdlib tests pass. |
-| `environment.py`, canonical environment decision, and audit receipt | Standalone-first stable identity and one-way audit record | ✓ VERIFIED | Canonical decision contains only stable fields; audit receipt has one-way `canonical_environment_decision_sha256` reference. |
-| `git_proof.py`, `bundle.py`, source contract, rejected receipt, and accepted manifests | Frozen source proof, raw-byte custody, immutable accepted generation | ✓ VERIFIED | Construction proof and accepted bundle verification are substantive and exercised by the suite, including raw/derived/tamper/concurrency cases. |
-| Accepted bundle `verify_bundle.py` and embedded verifier | Bundle-local offline verification entry point | ✓ VERIFIED | Copied-bundle replay passed without repository metadata or a usable command path. |
-| `integrity-receipt-v7.json`, `integrity-receipt-v7.md`, and v7 decision | Revision-bound local-only completion gate | ✓ VERIFIED | JSON self-hash recomputed exactly; Markdown equals `render_markdown(receipt)`; v7 finalization succeeds only under the authorized local-only decision. |
-| A new immutable source generation containing the complete PR #2164 measurement input closure | Offline Phase 2 source authority for all 11 fixtures | ✗ MISSING — BLOCKER | No generation inventories all 11 expected fixture IDs and every raw file required by the adapter. Existing generations must remain unchanged; remediation must create a new root hash. |
+| `config/fixture-registry-pr2164-v1.json` | Exact PR #2164 source inventory | ✓ VERIFIED | Canonical 11-fixture/28-raw registry with pinned commit/tree and per-file path, role, length, and SHA-256. |
+| `bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2/` | Self-sufficient downstream source generation | ✓ VERIFIED | 28 independently readable raw files, canonical manifests, registry, and rooted stdlib verifier. Root SHA-256: `6a682538c35d678b15852963e4f8f5316ee84d184f6a96a7996133be3de02f6d`. |
+| `baselines/phase-start-v7-fixture-closure.json` | Immutable current boundary baseline | ✓ VERIFIED | SHA-256 `b338372c74c605aa8b294ee30bcc39410422a6a5673e15061f86f28188debecb`; validated with its exact allowlist/restart lineage. |
+| `receipts/local-acceptance-v9.json` and `integrity-receipt-v9.json` | Local-only acceptance and authoritative closure receipt | ✓ VERIFIED | Decision binds candidate identity/registry/v7 basis; v9 JSON receipt is `outcome:pass`, self-hash `e5ec85a81b10ea0c8b466adaa88e44c6b3143b3aa5cb605c85c5ce8dd6364453`, publication false. |
+| `phase2/source-authority.json` | Phase 2 input pin, not Phase 2 implementation | ✓ VERIFIED | Only source authority artifacts exist under `phase2/`; no evaluator, scoring, model, or Phase 2 planning work was started. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 | --- | --- | --- | --- |
-| v5 baseline | Boundary check and frozen receipt basis | `phase_start_baseline_sha256`, baseline commit through exact reviewed revision | ✓ WIRED | `check_boundary()` resolves immutable full commits, calls `capture_committed_history()` and `capture_live_state()`, and keeps every event in `committed_changes`; active review projection is clean. |
-| Boundary restart artifacts | v5 lineage and v7 receipt | path/SHA-256 bindings and canonical active-lineage projection | ✓ WIRED | Finalizer calls `validate_boundary_restart()` and rejects a lineage/path/projection mismatch before accepting the receipt. |
-| Source decision/request inventory | Git proof → candidate/accepted bundle | exact PR ref, commit/tree/ancestry, raw Git bytes, canonical manifest/root binding | ✓ WIRED | Source, bundle, and verifier tests pass; copied accepted generation recomputes independently. |
-| Accepted bundle entry point | embedded verifier and local bundle bytes | bundle-relative `verify_bundle.py` | ✓ WIRED | Direct copied replay succeeded with no `.git` and empty `PATH`. |
-| v7 decision | v7 receipt and Markdown | decision hash, revision/projection/basis, `render_markdown(validate_receipt(...))` | ✓ WIRED | v7 finalization returned the expected receipt self-hash; stale v6 failed before finalization. |
-| Phase 2 TS-03 fixture registry | accepted source generation | exact expected fixture-ID set, per-file raw hashes, offline verifier | ✗ NOT WIRED | The source contract has no expected-set equality check and binds only two PR #2164 fixture paths, while TS-03 requires 11 fixtures. |
-
-### Data-Flow Trace (Level 4)
-
-| Artifact | Data Variable | Source | Produces Real Data | Status |
-| --- | --- | --- | --- | --- |
-| `baseline.py` | `committed_changes` plus `live_changes` | immutable Git `start..reviewed` walk plus index/worktree/untracked capture | Per-commit records, including add/delete/revert history, classified under the exact allowlist | ✓ FLOWING |
-| accepted bundle verifier | core/root/snapshot bindings and raw hashes | bundle-local raw content, manifests, and embedded verifier modules | Independent recomputation succeeds after copying out of the repository | ✓ FLOWING |
-| v7 receipt/Markdown | canonical receipt fields | canonical decision, frozen boundary projection, environment digest, accepted identity | Self-hash and deterministic Markdown projection recompute exactly | ✓ FLOWING |
-| Phase 2 fixture adapter input | all 11 pinned fixture IDs and raw materials | a downstream-eligible immutable generation | Only two `gold.yaml` inputs exist; nine fixture inputs and the exact-set closure proof are absent | ✗ BLOCKED |
+| Registry | Accepted bundle raw tree | Embedded verifier | ✓ WIRED | Registry parses the exact finite set and must equal the manifest inventory; every tuple is rehashed from accepted bytes. |
+| Acceptance decision | Candidate and current boundary | `accept_fixture_closure_candidate()` | ✓ WIRED | Canonical identity/basis/registry match and `check_current_boundary()` precede staging or target publication. |
+| Accepted bundle | Phase 2 source authority | `validate-phase2-source-authority` | ✓ WIRED | Command passed with exact generation/root/manifest/registry/commit/tree/counts and local-only flags. |
+| Candidate/accepted staging tree | Immutable generation path | `_publish_directory_no_replace()` | ✓ WIRED | Native exclusive rename is the only completed-generation publication path; collision and unavailable-primitive paths reject. |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | --- | --- | --- | --- |
-| Full Phase 1 stdlib contract | `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -v` | 76 tests passed in 11.834s. | ✓ PASS |
-| Frozen history-aware boundary | `check-boundary --baseline baselines/phase-start-v5-gap-closure.json --reviewed-revision 39d70ca…` | `blocking_violations:0`; full post-baseline committed record retained; `.DS_Store` records are visible/non-attributed/nonblocking. | ✓ PASS |
-| Authorized v7 local receipt | `finalize-review --decision reviewer-boundary-decision-v7.json --receipt integrity-receipt-v7.json --markdown integrity-receipt-v7.md` | `{"outcome":"pass","receipt_sha256":"4b02a68d…"}`. | ✓ PASS |
-| Stale v6 authority rejection | same finalizer with v6 decision/receipt/Markdown | `RESTART_LINEAGE_PROJECTION_MISMATCH`, exit 2. | ✓ PASS (negative check) |
-| Offline accepted-bundle replay | copy bundle; `PATH=/nonexistent /opt/homebrew/bin/python3 verify_bundle.py` | No copied `.git`; `bundle verified`, exit 0. | ✓ PASS |
-| Downstream fixture closure | compare TS-03's expected 11 fixture IDs with the accepted generation inventory | Expected 11; observed 2; manifest `downstream_eligible:false`. | ✗ FAIL |
-
-### Probe Execution
-
-Step 7c: SKIPPED — Phase 1 declares no `probe-*.sh` contract. The full stdlib suite, active boundary gate, finalization gate, and copied-bundle replay are its executable verification contract.
+| Full custody implementation | `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v` | 92 tests passed | ✓ PASS |
+| Current boundary | `check-boundary --baseline phase-start-v7-fixture-closure.json --reviewed-revision HEAD` | 0 blockers; `.DS_Store` visible/non-attributed/nonblocking | ✓ PASS |
+| Active accepted generation | `verify-accepted --bundle …-v2` | Accepted identity/root verified | ✓ PASS |
+| Phase 2 source pin | `validate-phase2-source-authority --authority phase2/source-authority.json --bundle …-v2` | Exact 11/28, commit/tree, manifest/root/registry binding valid | ✓ PASS |
+| Offline copied replay | `env -i PATH=/nonexistent python3 verify_bundle.py` | `bundle verified`, exit 0 | ✓ PASS |
 
 ### Requirements Coverage
 
-| Requirement | Source Plans | Description | Status | Evidence |
-| --- | --- | --- | --- | --- |
-| TS-01 | 01-01, 01-02, 01-04, 01-05 | Dependency-light isolated experiment with no core schema/generated-data modification. | ✓ SATISFIED | No core/root dependency changes; exact v5 restart allowlist; history plus live boundary gate; path-policy tests; standalone-first environment evidence; local-only receipt. |
-| TS-02 | 01-03, 01-04 | Frozen public snapshot pinning and stable hashes for every consumed file. | ⚠ PARTIAL — BLOCKED FOR DOWNSTREAM USE | The seven frozen consumed files are authentic and replayable, but the consumed-file request omitted nine of the 11 fixture inputs required by the already-frozen TS-03 downstream contract. |
-
-No Phase 1 requirement is orphaned: plans declare both TS-01 and TS-02, which are the only IDs ROADMAP and REQUIREMENTS assign to this phase.
+| Requirement | Description | Status | Evidence |
+| --- | --- | --- | --- |
+| TS-01 | Isolated experiment boundary with provenance and integrity controls | ✓ SATISFIED | v7 baseline/allowlist, regular-file policy, standalone environment, immutable receipts, and zero-blocker current boundary. |
+| TS-02 | Independently verifiable frozen public source inputs | ✓ SATISFIED | Pinned PR proof, per-byte 11/28 registry closure, immutable accepted v2 generation, and no-Git/no-network copied replay. |
 
 ### Anti-Patterns Found
 
-| File | Line | Pattern | Severity | Impact |
-| --- | --- | --- | --- | --- |
-| Phase 1 implementation, tests, and current v5/v7 custody artifacts | — | No unreferenced `TBD`, `FIXME`, or `XXX`; no user-visible placeholder or empty implementation found. | ℹ️ Info | No blocker. The prior committed-history blind spot is specifically covered by code and behavioral tests. |
+None. The final changed implementation/test paths had no `TBD`, `FIXME`, `XXX`, placeholder, or unimplemented markers; `git diff --check` is clean.
 
-## Local-Only Boundary
+### Probe Execution
 
-This is a local acceptance of one immutable generation, not publication approval. Both v7 decision and receipt require `external_publication_authorized:false`; no push, PR, upload, or other external publication is authorized by this result.
+No separate shell probe is declared for this phase. The custody CLI verification commands and the standalone copied-bundle verifier above are the runnable Phase 1 probes and were executed independently.
 
 ## Gaps Summary
 
-One blocking cross-phase source-closure gap remains. Phase 1 froze and verified a seven-file custody inventory, but that inventory contains only two of the 11 PR #2164 fixtures required by Phase 2. The verifier proved authenticity of the selected files, not completeness of the selection against TS-03. The current manifest itself remains honest (`downstream_eligible:false`) and must not be modified.
-
-Gap closure must preserve every existing generation and create a new immutable generation from pinned commit `22e84458c87a7ccf4c07034de1eb6d0bf9764144` containing every raw input required to score the exact 11-fixture set. Construction must add a machine-enforced equality check between the expected fixture registry and bundled fixture inventory, then prove copied-bundle replay with no network or local Git objects. Phase 2 planning remains blocked until that new generation passes and is explicitly pinned as its source authority.
+No blocking gaps remain. The previous Phase 2 input-completeness blocker is closed by the immutable accepted v2 generation. Phase 2 may consume only the pinned `phase2/source-authority.json` generation; this verification does not authorize Phase 2 execution, external publication, push, PR creation, or model calls.
 
 ---
 
-_Verified: 2026-07-31T09:52:58Z_
-
+_Verified: 2026-07-31T12:31:45Z_
 _Verifier: the agent (gsd-verifier)_
