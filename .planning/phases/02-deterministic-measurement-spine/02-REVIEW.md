@@ -1,10 +1,15 @@
 ---
 phase: 02-deterministic-measurement-spine
-reviewed: 2026-07-31T20:56:26Z
+reviewed: 2026-07-31T21:07:22Z
 depth: standard
-files_reviewed: 49
+files_reviewed: 69
 files_reviewed_list:
+  - experiments/specchoice-v1.3.2/config/measurement/canonical-adjudication-schema-v1.json
+  - experiments/specchoice-v1.3.2/config/measurement/h1-review-schema-v1.json
   - experiments/specchoice-v1.3.2/config/measurement/pr2164-adapter-rules-v1.json
+  - experiments/specchoice-v1.3.2/fixtures/measurement/adversarial/required-diagnostics-v1.json
+  - experiments/specchoice-v1.3.2/fixtures/measurement/golden-predictions-v1.json
+  - experiments/specchoice-v1.3.2/reports/h1/adversarial-oracle-results-v1.json
   - experiments/specchoice-v1.3.2/reports/h1/adversarial-oracle-results-v2-attempts/oracle-01/attempt.json
   - experiments/specchoice-v1.3.2/reports/h1/adversarial-oracle-results-v2-attempts/oracle-01/diagnostics.json
   - experiments/specchoice-v1.3.2/reports/h1/adversarial-oracle-results-v2-attempts/oracle-01/parsed-predictions.json
@@ -42,73 +47,80 @@ files_reviewed_list:
   - experiments/specchoice-v1.3.2/reports/h1/adversarial-oracle-results-v2-attempts/oracle-12/diagnostics.json
   - experiments/specchoice-v1.3.2/reports/h1/adversarial-oracle-results-v2-attempts/oracle-12/parsed-predictions.json
   - experiments/specchoice-v1.3.2/reports/h1/adversarial-oracle-results-v2.json
+  - experiments/specchoice-v1.3.2/reports/h1/h1-source-gold-review-v1.json
+  - experiments/specchoice-v1.3.2/reports/h1/h1-source-gold-review-v1.md
   - experiments/specchoice-v1.3.2/reports/h1/h1-source-gold-review-v2/h1-source-gold-review-v2.json
   - experiments/specchoice-v1.3.2/reports/h1/h1-source-gold-review-v2/h1-source-gold-review-v2.md
+  - experiments/specchoice-v1.3.2/reviews/h1-source-gold-decision-v1.json
+  - experiments/specchoice-v1.3.2/runs/measurement-attempts/formal-golden-pr2164-v1/attempt.json
+  - experiments/specchoice-v1.3.2/runs/measurement-attempts/formal-golden-pr2164-v1/case-outcomes.json
+  - experiments/specchoice-v1.3.2/runs/measurement-attempts/formal-golden-pr2164-v1/diagnostics.json
+  - experiments/specchoice-v1.3.2/runs/measurement-attempts/formal-golden-pr2164-v1/metrics.json
+  - experiments/specchoice-v1.3.2/runs/measurement-attempts/formal-golden-pr2164-v1/parsed-predictions.json
+  - experiments/specchoice-v1.3.2/runs/measurement-attempts/formal-golden-pr2164-v1/report.json
+  - experiments/specchoice-v1.3.2/src/specchoice_measurement/__init__.py
   - experiments/specchoice-v1.3.2/src/specchoice_measurement/adapter.py
   - experiments/specchoice-v1.3.2/src/specchoice_measurement/attempts.py
   - experiments/specchoice-v1.3.2/src/specchoice_measurement/cli.py
+  - experiments/specchoice-v1.3.2/src/specchoice_measurement/diagnostics.py
+  - experiments/specchoice-v1.3.2/src/specchoice_measurement/domain.py
   - experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py
   - experiments/specchoice-v1.3.2/src/specchoice_measurement/preflight.py
+  - experiments/specchoice-v1.3.2/src/specchoice_measurement/scoring.py
+  - experiments/specchoice-v1.3.2/src/specchoice_measurement/strict_json.py
   - experiments/specchoice-v1.3.2/tests/test_measurement_adapter.py
   - experiments/specchoice-v1.3.2/tests/test_measurement_attempts.py
   - experiments/specchoice-v1.3.2/tests/test_measurement_h1.py
+  - experiments/specchoice-v1.3.2/tests/test_measurement_parsing.py
   - experiments/specchoice-v1.3.2/tests/test_measurement_scoring.py
 findings:
   critical: 0
-  warning: 2
+  warning: 1
   info: 0
-  total: 2
+  total: 1
 status: issues_found
 ---
 
 # Phase 02: Code Review Report
 
-**Reviewed:** 2026-07-31T20:56:26Z
+**Reviewed:** 2026-07-31T21:07:22Z
 **Depth:** standard
-**Files Reviewed:** 49
+**Files Reviewed:** 69
 **Status:** issues_found
 
 ## Summary
 
-Re-reviewed the five fix commits (`f51b73c8` through `e8ea1df3`), Phase 02 plans/context/research, the v2 H1 packet, and all 12 persisted adversarial attempts. CR-01 through CR-04 are closed: attempts replay the bound raw predictions and terminal artifacts; evidence hashes are fixture-scoped; every oracle attempt is retained and replayed; and the v2 packet is unsigned, decision-free, and keeps `external_publication_authorized: false`. WR-01 and WR-03 are also closed through exclusive/atomic publication. WR-02 is only partially closed, and the full focused suite is presently red.
+The two latest fixes resolve the prior scoring-suite regression and enforce the exact `expected_fields` contract. The full five-module Phase 02 suite passes (35 tests), and the Phase 2 source-authority, v2 adversarial-report, and v2 H1 JSON/Markdown validators all pass. The current H1 v2 packet has 11 blank signature slots, no v2 decision artifact, and `external_publication_authorized: false`; its deliberate manual gate remains intact.
 
-The v2 report validator replayed all 12 custodial attempts successfully, the v2 H1 packet and Markdown projection validated, and source-authority validation passed. The four unaffected focused modules pass (26 tests). The advertised five-module suite fails two scoring oracle cases.
+The original CR-01 through CR-04 and WR-01 through WR-03 are otherwise closed: attempts are replay-derived, evidence spans are fixture-scoped, all twelve current oracle attempts are retained, adapter and packet publication are no-replace/atomic, and a machine-created `approved` H1 decision is rejected with `H1_MANUAL_AUTHORIZATION_REQUIRED`. One report-custody path boundary remains open.
 
 ## Narrative Findings (AI reviewer)
 
 ## Warnings
 
-### WR-01: Fixture-scoping fix leaves the required scoring-oracle test suite red
+### WR-01: Adversarial-report validation accepts attempts outside its owned custody directory
 
 **Classification:** WARNING
 
-**File:** `experiments/specchoice-v1.3.2/tests/test_measurement_scoring.py:49-83`
+**File:** `experiments/specchoice-v1.3.2/src/specchoice_measurement/cli.py:271-281`
 
-**Issue:** `mutate_for_oracle()` takes the evidence span from `POS_CSR_RW_MTVEC_ACCESS` (`target_span`) and reuses it for the `NEG_EXT_GATED_PBMTE` mutations. The repaired preflight correctly rejects that foreign source with `EVIDENCE_SOURCE_NOT_DECLARED_FOR_FIXTURE`, so the test cannot find the expected `UNEXPECTED_ACCEPTED_PARAMETER` or `NEGATIVE_UNNECESSARILY_SURFACED` diagnostic. The mandated five-module Phase 2 gate therefore fails with two errors, and this test no longer proves those two frozen diagnostics.
+**Issue:** The report is meant to retain each oracle attempt under `{report.stem}-attempts`, but `case["attempt_id"]` is only checked as a string before it is appended to that root. A `Path` join with an absolute string discards `attempt_root`, while `..` components can escape it. The validator therefore accepts a canonical report whose 12 cases reference valid diagnostic attempts elsewhere on disk. This weakens the report-owned immutable-custody guarantee that closed CR-03 and makes validation depend on external paths rather than only the report packet.
 
-**Fix:** Derive a valid span from `NEG_EXT_GATED_PBMTE` for `negative-accepted` and `negative-review`, matching `cli._fixture_span()`, then assert that the only expected diagnostic is the scoring diagnostic. Keep a separate negative test for cross-fixture spans.
+**Reproduction:** Replacing every v2 case `attempt_id` with the absolute path to its existing `oracle-NN` directory, while leaving a present empty `{report.stem}-attempts` directory, is accepted by `validate_adversarial_report()`.
 
-### WR-02: Versioned rule validation still accepts an empty mandatory-field contract
-
-**Classification:** WARNING
-
-**File:** `experiments/specchoice-v1.3.2/src/specchoice_measurement/adapter.py:301-308`
-
-**Issue:** The new validation checks only that `expected_fields` is a dictionary with the two expected keys; it never validates either list's exact required fields or even list type. A canonical rules file with both lists set to `[]` is accepted and produces a valid 11-record adapter batch. That leaves a score-bearing portion of the purportedly versioned adapter contract decorative and does not fully close the prior WR-02 requirement that every declared rule field be enforced.
-
-**Fix:** Require the exact immutable mapping below (and add a negative regression test for empty, missing, reordered, or non-string fields):
+**Fix:** Require the generated, path-safe identifier for each position and resolve/check the path before reading it. For example:
 
 ```python
-EXPECTED_FIELDS = {
-    "candidate_or_negative": ["expect_extract", "expect_params", "id"],
-    "positive": ["class", "expect_extract", "expect_status", "gold_name", "id", "must_have_excerpt"],
-}
-if rules["expected_fields"] != EXPECTED_FIELDS:
-    raise AdapterError("ADAPTER_RULES_INVALID")
+expected_id = f"oracle-{index:02d}"
+if case.get("attempt_id") != expected_id:
+    raise AttemptError("ADVERSARIAL_REPORT_INVALID")
+attempt_path = attempt_root / expected_id
 ```
+
+Also add regressions for absolute paths, `..`, and a valid attempt stored outside the report-owned root.
 
 ---
 
-_Reviewed: 2026-07-31T20:56:26Z_
+_Reviewed: 2026-07-31T21:07:22Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
