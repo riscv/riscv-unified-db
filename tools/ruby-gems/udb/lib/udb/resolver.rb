@@ -375,20 +375,93 @@ module Udb
 
     SCHEMAS_BASE_URL = "https://riscv.github.io/riscv-unified-db/schemas"
 
-    # Resolve schema files by rewriting their $id to the full published URL and
-    # writing the result to gen/schemas/SCHEMA_NAME/VERSION/SCHEMA_FILENAME.
+    # Canonical URL of the JSON Schema draft-07 meta-schema. Referenced by many
+    # schemas but not published under SCHEMAS_BASE_URL, so refs to it are pointed
+    # at json-schema.org rather than a would-be-404 published URL.
+    DRAFT07_META_SCHEMA_URL = "https://json-schema.org/draft-07/schema"
+
+    DRAFT07_SCHEMA_FILENAME = "json-schema-draft-07.json"
+
+    # Rewrite a single cross-file $ref value (e.g. "schema_defs.json#/$defs/foo")
+    # to the full published URL, using the referenced schema's own version.
+    #
+    # Intra-file refs ("#/...") are returned unchanged. Refs to the draft-07
+    # meta-schema are pointed at its canonical json-schema.org URL, since that
+    # file is not published under SCHEMAS_BASE_URL.
+    sig { params(ref: String, versions: T::Hash[String, String]).returns(String) }
+    def rewrite_ref(ref, versions)
+      return ref if ref.start_with?("#")
+
+      # partition returns [before, separator, after]; separator is "#" when a
+      # fragment is present and "" otherwise, so `separator + after` reconstructs
+      # the "#..." fragment (or "" when there is none). All three are non-nil.
+      filename, separator, after = ref.partition("#")
+      fragment = "#{separator}#{after}"
+
+      if filename == DRAFT07_SCHEMA_FILENAME
+        return "#{DRAFT07_META_SCHEMA_URL}#{fragment}"
+      end
+
+      target_version = versions[filename]
+      # Leave unknown targets (no known version) untouched rather than invent a URL.
+      return ref if target_version.nil?
+
+      "#{SCHEMAS_BASE_URL}/#{filename}/#{target_version}/#{filename}#{fragment}"
+    end
+
+    # Recursively rewrite every cross-file "$ref" in a parsed schema document.
+    sig { params(node: T.untyped, versions: T::Hash[String, String]).returns(T.untyped) }
+    def rewrite_refs(node, versions)
+      case node
+      when Hash
+        node.each_with_object({}) do |(key, value), out|
+          out[key] =
+            if key == "$ref" && value.is_a?(String)
+              rewrite_ref(value, versions)
+            else
+              rewrite_refs(value, versions)
+            end
+        end
+      when Array
+        node.map { |element| rewrite_refs(element, versions) }
+      else
+        node
+      end
+    end
+
+    # Resolve schema files by rewriting their $id and internal $ref values to the
+    # full published URLs and writing the result to
+    # gen/schemas/SCHEMA_NAME/VERSION/SCHEMA_FILENAME.
     #
     # Each schema file has its own independent version (the $id field, e.g. "v0.1").
     # The resolved file is written to gen/schemas/<schema_name>/<version>/<schema_name>
     # with $id set to
     # https://riscv.github.io/riscv-unified-db/schemas/<schema_name>/<version>/<schema_name>.
+    #
+    # Cross-file $ref values (e.g. "schema_defs.json#/$defs/foo") are rewritten to
+    # the referenced schema's published URL (using that schema's own version) so
+    # that the published schemas resolve without a local checkout. Without this,
+    # a consumer pointing an editor at the published top-level schema gets a 404
+    # on every relative $ref, because each schema is published under its own
+    # <name>/<version>/ directory.
     sig { void }
     def resolve_schemas
       require "json"
 
-      schemas_path.glob("*.json").each do |schema_file|
-        next if schema_file.basename.to_s == "json-schema-draft-07.json"
+      schema_files = schemas_path.glob("*.json").reject do |schema_file|
+        schema_file.basename.to_s == DRAFT07_SCHEMA_FILENAME
+      end
 
+      # First pass: map each publishable schema filename to its own version, so a
+      # $ref to it can be rewritten with the correct (possibly different) version.
+      versions = {}
+      schema_files.each do |schema_file|
+        version = JSON.parse(schema_file.read)["$id"]
+        versions[schema_file.basename.to_s] = version unless version.nil?
+      end
+
+      # Second pass: rewrite $id and $ref values, then write the resolved schema.
+      schema_files.each do |schema_file|
         schema_data = JSON.parse(schema_file.read)
         version = schema_data["$id"]
         next if version.nil?
@@ -396,7 +469,7 @@ module Udb
         schema_name = schema_file.basename.to_s
         resolved_id = "#{SCHEMAS_BASE_URL}/#{schema_name}/#{version}/#{schema_name}"
 
-        resolved_schema = schema_data.merge("$id" => resolved_id)
+        resolved_schema = rewrite_refs(schema_data, versions).merge("$id" => resolved_id)
 
         out_dir = gen_path / "schemas" / schema_name / version
         out_dir.mkpath
