@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -124,11 +125,11 @@ def _raw_identity(bundle_root: Path, declared: dict[str, Any]) -> tuple[RawFileI
 
 
 def _record_from_fixture(
-    fixture: dict[str, Any], *, bundle_root: Path, source_identity: dict[str, str], adapter_version: str, rule_sha256: str
+    fixture: dict[str, Any], *, bundle_root: Path, source_identity: dict[str, str], adapter_version: str, rule_sha256: str, rules: dict[str, Any]
 ) -> CanonicalFixtureRecord:
     fixture_id = fixture.get("fixture_id")
     category = fixture.get("fixture_class")
-    if not isinstance(fixture_id, str) or category not in {"positive", "negative", "candidate"}:
+    if not isinstance(fixture_id, str) or category not in {"positive", "negative", "candidate"} or rules["category_derivation"].get(category) != category:
         raise AdapterError("FIXTURE_DECLARATION_INVALID")
     raw_files: list[RawFileIdentity] = []
     contents: dict[str, bytes] = {}
@@ -144,6 +145,9 @@ def _record_from_fixture(
     if expected_raw is None:
         raise AdapterError("EXPECTED_FILE_MISSING")
     expected = _bounded_yaml_fields(expected_raw, source=f"{fixture_id}:expected")
+    required_fields = rules["expected_fields"]["positive" if category == "positive" else "candidate_or_negative"]
+    if any(field not in expected for field in required_fields):
+        raise AdapterError("EXPECTED_SCORE_FIELDS_INVALID")
     if expected.get("id") != fixture_id or not isinstance(expected.get("expect_extract"), bool):
         raise AdapterError("EXPECTED_SCORE_FIELDS_INVALID")
     expect_extract = expected["expect_extract"]
@@ -152,7 +156,11 @@ def _record_from_fixture(
         raise AdapterError("EXPECTED_SCORE_FIELDS_INVALID")
     if expected_count < 0:
         raise AdapterError("EXPECTED_PARAMETER_COUNT_INVALID")
-    evidence_required = expected.get("must_have_excerpt") is True
+    evidence_required = expected.get("must_have_excerpt")
+    if category == "positive" and not isinstance(evidence_required, bool):
+        raise AdapterError("EVIDENCE_REQUIREMENT_INVALID")
+    if category != "positive":
+        evidence_required = False
     names: tuple[str, ...] = ()
     score_fields: dict[str, object] = {
         "id": expected["id"], "expect_extract": expect_extract, "expect_params": expected_count,
@@ -293,7 +301,10 @@ def _invalid_batch(
 def build_pr2164_adapter_batch(*, authority_path: Path, bundle_root: Path, rules_path: Path) -> AdapterBatch:
     """Build the sole score-eligible adapter batch from the active accepted v2 source."""
     rules, rules_raw = _load_canonical_json(rules_path, "ADAPTER_RULES_NOT_CANONICAL")
-    if rules.get("schema_version") != "1" or rules.get("adapter_version") != "pr2164-adapter-v1":
+    required_rule_keys = {"adapter_version", "category_derivation", "expected_fields", "fixture_count", "fixture_id_sort", "gold_fields", "raw_file_count", "schema_version", "score_bearing_allowlist"}
+    if set(rules) != required_rule_keys or rules.get("schema_version") != "1" or not isinstance(rules.get("adapter_version"), str) or not re.fullmatch(r"pr2164-adapter-v[1-9][0-9]*", rules["adapter_version"]):
+        raise AdapterError("ADAPTER_RULES_INVALID")
+    if rules.get("fixture_count") != 11 or rules.get("raw_file_count") != 28 or rules.get("fixture_id_sort") != "ascending_unicode" or rules.get("score_bearing_allowlist") != ["fixture_id", "category", "expect_extract", "expected_parameter_count", "expected_parameter_names", "evidence_required"] or rules.get("category_derivation") != {"candidate": "candidate", "negative": "negative", "positive": "positive"} or rules.get("gold_fields") != {"positive": ["name"]} or not isinstance(rules.get("expected_fields"), dict) or set(rules["expected_fields"]) != {"positive", "candidate_or_negative"}:
         raise AdapterError("ADAPTER_RULES_INVALID")
     adapter_version = rules["adapter_version"]
     rule_sha256 = sha256_bytes(rules_raw)
@@ -312,7 +323,7 @@ def build_pr2164_adapter_batch(*, authority_path: Path, bundle_root: Path, rules
         records = tuple(
             _record_from_fixture(
                 fixture, bundle_root=bundle_root, source_identity=source_identity,
-                adapter_version=adapter_version, rule_sha256=rule_sha256,
+                adapter_version=adapter_version, rule_sha256=rule_sha256, rules=rules,
             )
             for fixture in fixtures
             if isinstance(fixture, dict)

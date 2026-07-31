@@ -108,6 +108,15 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual(rejected.records, ())
         self.assertEqual(rejected.diagnostics[0].code, "PHASE2_SOURCE_AUTHORITY_INVALID")
 
+    def test_rules_require_a_versioned_identifier_and_positive_evidence_requirement(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "rules.json"
+            rules = json.loads(self.rules.read_text(encoding="utf-8"))
+            rules["adapter_version"] = "pr2164-adapter-v0"
+            path.write_bytes(__import__("specchoice_evidence.canonical", fromlist=["canonical_json_bytes"]).canonical_json_bytes(rules))
+            with self.assertRaisesRegex(Exception, "ADAPTER_RULES_INVALID"):
+                build_pr2164_adapter_batch(authority_path=self.authority, bundle_root=self.bundle, rules_path=path)
+
     def test_adapter_preserves_authoritative_bytes_and_refuses_output_overwrite(self) -> None:
         raw_before = {
             path.relative_to(self.bundle).as_posix(): sha256_bytes(path.read_bytes())
