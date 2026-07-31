@@ -31,7 +31,13 @@ from .receipt import (
     validate_receipt,
     write_receipt_package,
 )
-from .bundle import accept_local_candidate, construct_candidate, publish_accepted, verify_candidate
+from .bundle import (
+    accept_local_candidate,
+    construct_candidate,
+    construct_fixture_closure_candidate,
+    publish_accepted,
+    verify_candidate,
+)
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
@@ -532,7 +538,13 @@ def command_build_candidate(args: argparse.Namespace) -> int:
     """Build only a non-accepted candidate from exact approved Git blobs."""
     decision = json.loads(args.decision.read_bytes().decode("utf-8"))
     proposal = _load_canonical_source_contract_proposal(args.proposal)
-    result = construct_candidate(decision, proposal, args.git_repository, args.candidates_directory)
+    result = construct_candidate(
+        decision,
+        proposal,
+        args.git_repository,
+        args.candidates_directory,
+        fixture_registry_path=args.fixture_registry,
+    )
     _print_json(result)
     return 0
 
@@ -540,6 +552,21 @@ def command_build_candidate(args: argparse.Namespace) -> int:
 def command_verify_candidate(args: argparse.Namespace) -> int:
     """Verify an existing non-accepted candidate without network access."""
     _print_json(verify_candidate(args.candidate_directory))
+    return 0
+
+
+def command_build_fixture_closure_candidate(args: argparse.Namespace) -> int:
+    """Build the finite PR #2164 candidate from local cached Git objects only."""
+    proposal = _load_canonical_source_contract_proposal(args.proposal)
+    decision = json.loads(args.decision.read_bytes().decode("utf-8"))
+    result = construct_fixture_closure_candidate(
+        decision,
+        proposal,
+        args.fixture_registry,
+        args.git_repository,
+        args.candidates_directory,
+    )
+    _print_json(result)
     return 0
 
 
@@ -868,7 +895,15 @@ def build_parser() -> argparse.ArgumentParser:
     candidate.add_argument("--proposal", type=Path, default=Path("receipts/source-contract-correction-proposal-v2.json"))
     candidate.add_argument("--git-repository", type=Path, required=True)
     candidate.add_argument("--candidates-directory", type=Path, default=Path("bundles/candidates"))
+    candidate.add_argument("--fixture-registry", type=Path)
     candidate.set_defaults(handler=command_build_candidate)
+    fixture_candidate = commands.add_parser("build-fixture-closure-candidate")
+    fixture_candidate.add_argument("--decision", type=Path, required=True)
+    fixture_candidate.add_argument("--proposal", type=Path, required=True)
+    fixture_candidate.add_argument("--fixture-registry", type=Path, required=True)
+    fixture_candidate.add_argument("--git-repository", type=Path, required=True)
+    fixture_candidate.add_argument("--candidates-directory", type=Path, default=Path("bundles/candidates"))
+    fixture_candidate.set_defaults(handler=command_build_fixture_closure_candidate)
     verify_candidate_parser = commands.add_parser("verify-candidate")
     verify_candidate_parser.add_argument("candidate_directory", type=Path)
     verify_candidate_parser.set_defaults(handler=command_verify_candidate)

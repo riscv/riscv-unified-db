@@ -172,6 +172,69 @@ def verify_fixture_registry_git(registry: object, repository: Path) -> None:
                 raise FixtureRegistryError("FIXTURE_RAW_SHA256_MISMATCH")
 
 
+def validate_fixture_closure_proposal(proposal: object) -> dict[str, object]:
+    """Validate the compact v3 proposal that binds the full registry by digest."""
+    if not isinstance(proposal, Mapping) or set(proposal) != {
+        "base_source_snapshots", "fixture_registry", "generation", "pinned_commit_sha",
+        "pinned_tree_sha", "schema_version", "status",
+    }:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_PROPOSAL_INVALID")
+    if proposal.get("schema_version") != "1" or proposal.get("status") != "pending_reviewer_approval":
+        raise SourceContractProposalError("FIXTURE_CLOSURE_PROPOSAL_INVALID")
+    if proposal.get("generation") != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1":
+        raise SourceContractProposalError("FIXTURE_CLOSURE_GENERATION_INVALID")
+    if proposal.get("pinned_commit_sha") != _FIXTURE_COMMIT or proposal.get("pinned_tree_sha") != _FIXTURE_TREE:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_PIN_INVALID")
+    normalized: dict[str, object] = {}
+    for field, expected_path in (
+        ("base_source_snapshots", "config/source_snapshots.json"),
+        ("fixture_registry", "config/fixture-registry-pr2164-v1.json"),
+    ):
+        binding = proposal.get(field)
+        if not isinstance(binding, Mapping) or set(binding) != {"path", "sha256"}:
+            raise SourceContractProposalError("FIXTURE_CLOSURE_BINDING_INVALID")
+        if _normalized_path(binding.get("path"), f"{field}_path") != expected_path:
+            raise SourceContractProposalError("FIXTURE_CLOSURE_BINDING_INVALID")
+        try:
+            normalized[field] = {"path": expected_path, "sha256": require_sha256(binding.get("sha256"))}
+        except ValueError as error:
+            raise SourceContractProposalError("FIXTURE_CLOSURE_BINDING_INVALID") from error
+    return normalized
+
+
+def validate_fixture_closure_decision(
+    decision: object, proposal: object, *, proposal_path: str, proposal_sha256: str
+) -> dict[str, object]:
+    """Allow local candidate construction only; never authorise acceptance or publication."""
+    validate_fixture_closure_proposal(proposal)
+    if not isinstance(decision, Mapping) or set(decision) != {
+        "approval_scope", "authorization", "proposal", "reviewer", "schema_version", "state",
+    }:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_DECISION_INVALID")
+    if decision.get("schema_version") != "1" or decision.get("approval_scope") != "local_candidate_construction_only" or decision.get("state") != "candidate_construction_authorized":
+        raise SourceContractProposalError("FIXTURE_CLOSURE_DECISION_INVALID")
+    if decision.get("authorization") != {
+        "candidate_construction_authorized": True,
+        "downstream_eligible": False,
+        "external_publication_authorized": False,
+    }:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_AUTHORIZATION_INVALID")
+    if decision.get("reviewer") != {"approval_token": "authorize-v7-local-receipt-basis-only"}:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_REVIEWER_INVALID")
+    binding = decision.get("proposal")
+    if not isinstance(binding, Mapping) or set(binding) != {"path", "sha256"}:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_DECISION_INVALID")
+    if _normalized_path(binding.get("path"), "fixture_closure_proposal_path") != proposal_path:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_PROPOSAL_MISMATCH")
+    try:
+        digest = require_sha256(binding.get("sha256"))
+    except ValueError as error:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_PROPOSAL_MISMATCH") from error
+    if digest != proposal_sha256:
+        raise SourceContractProposalError("FIXTURE_CLOSURE_PROPOSAL_MISMATCH")
+    return dict(decision)
+
+
 def _require_string(mapping: Mapping[str, object], field: str) -> str:
     value = mapping.get(field)
     if not isinstance(value, str) or not value:
@@ -233,7 +296,7 @@ def validate_source_contract_proposal(proposal: object) -> dict[str, object]:
         raise SourceContractProposalError("UNSUPPORTED_SOURCE_CONTRACT_PROPOSAL_SCHEMA")
     if payload.get("status") != "pending_reviewer_approval":
         raise SourceContractProposalError("SOURCE_CONTRACT_PROPOSAL_NOT_PENDING")
-    if payload.get("proposed_contract_version") != "2":
+    if payload.get("proposed_contract_version") not in {"2", "3"}:
         raise SourceContractProposalError("INVALID_PROPOSED_CONTRACT_VERSION")
     _require_string(payload, "requested_generation_label")
     base_contract = _require_mapping(payload.get("base_frozen_contract"), "BASE_CONTRACT_MISSING")

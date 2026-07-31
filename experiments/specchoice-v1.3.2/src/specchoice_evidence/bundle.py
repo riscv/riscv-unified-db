@@ -23,12 +23,17 @@ from .canonical import canonical_json_bytes, require_byte_length, require_sha256
 from .filesystem import FilesystemPolicyError, inspect_authoritative_path, require_relative_posix_path
 from .git_proof import GitProofError, read_pinned_blob
 from .source_contract import (
+    FixtureRegistryError,
     SourceContractProposalError,
     require_accepted_publication_authorization,
     require_candidate_construction_authorization,
     require_local_accepted_generation_authorization,
     require_source_extraction_authorization,
     validate_source_publication_decision,
+    validate_fixture_registry,
+    validate_fixture_closure_decision,
+    validate_fixture_closure_proposal,
+    verify_fixture_registry_git,
 )
 from .verify import _bundle_artifacts, _raw_artifacts, embed_verifier_artifacts, verify_candidate_bundle
 
@@ -84,10 +89,13 @@ def _approved_inventory(
     decision: object, proposal: object
 ) -> tuple[dict[str, object], dict[str, dict[str, object]], list[dict[str, object]]]:
     try:
+        decision_mapping = _mapping(decision, "INVALID_SOURCE_DECISION")
+        proposal_binding = _mapping(decision_mapping.get("proposal"), "SOURCE_DECISION_PROPOSAL_MISSING")
+        proposal_path = _relative(proposal_binding.get("path"), "SOURCE_DECISION_PROPOSAL_BINDING_INVALID")
         validated = validate_source_publication_decision(
             decision,
             proposal,
-            proposal_path="receipts/source-contract-correction-proposal-v2.json",
+            proposal_path=proposal_path,
             proposal_sha256=sha256_bytes(canonical_json_bytes(proposal)),
         )
         require_source_extraction_authorization(validated)
@@ -210,7 +218,9 @@ def _core_and_artifacts(
 
 def _root_digest(manifest_sha256: str, artifacts: list[dict[str, object]]) -> str:
     return sha256_bytes(canonical_json_bytes({
-        "artifacts": artifacts, "manifest_sha256": manifest_sha256, "root_schema_version": "1"
+        "artifacts": sorted(artifacts, key=lambda item: str(item["local_bundle_path"])),
+        "manifest_sha256": manifest_sha256,
+        "root_schema_version": "1",
     }))
 
 
@@ -229,16 +239,50 @@ def _snapshot_manifest(core: dict[str, object], generation: str, manifest_sha256
         "manifest_sha256": manifest_sha256, "root_sha256": root_sha256,
         "schema_version": "1", "snapshots": snapshots, "status": "candidate",
         "downstream_eligible": False, "accepted_publication_authorized": False,
+        "external_publication_authorized": False,
         "offline_replay_proven": False,
     }
     manifest["snapshot_manifest_sha256"] = sha256_bytes(canonical_json_bytes(manifest))
     return manifest
 
 
-def construct_candidate(decision: object, proposal: object, git_repository: Path, candidates_root: Path) -> dict[str, object]:
+def construct_candidate(
+    decision: object,
+    proposal: object,
+    git_repository: Path,
+    candidates_root: Path,
+    *,
+    fixture_registry_path: Path | None = None,
+) -> dict[str, object]:
     """Extract exact approved blobs into a deterministic, explicitly non-accepted candidate."""
     validated, snapshots, files = _approved_inventory(decision, proposal)
     del validated
+    registry_bytes: bytes | None = None
+    if fixture_registry_path is not None:
+        try:
+            registry_bytes = fixture_registry_path.read_bytes()
+            registry = json.loads(registry_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise BundleError("FIXTURE_REGISTRY_INVALID") from error
+        if canonical_json_bytes(registry) != registry_bytes:
+            raise BundleError("FIXTURE_REGISTRY_NOT_CANONICAL")
+        try:
+            normalized = validate_fixture_registry(registry)
+            verify_fixture_registry_git(registry, git_repository)
+        except FixtureRegistryError as error:
+            raise BundleError(str(error)) from error
+        registry_files = {
+            (file["upstream_path"], file["local_bundle_path"], file["raw_byte_length"], file["raw_sha256"], file["role"])
+            for fixture in normalized["fixtures"]
+            for file in fixture["files"]
+            if isinstance(fixture, dict) and isinstance(file, dict)
+        }
+        proposal_files = {
+            (entry["upstream_path"], entry["local_bundle_path"], entry["raw_byte_length"], entry["raw_sha256"], entry["experimental_role"])
+            for entry in files
+        }
+        if registry_files != proposal_files:
+            raise BundleError("FIXTURE_REGISTRY_PROPOSAL_MISMATCH")
     contract = _mapping(_mapping(decision, "INVALID_SOURCE_DECISION").get("approved_contract"), "CANDIDATE_CONTRACT_MISSING")
     generation = contract.get("requested_generation_label")
     if not isinstance(generation, str) or not generation or "/" in generation or "\\" in generation:
@@ -250,7 +294,26 @@ def construct_candidate(decision: object, proposal: object, git_repository: Path
     temporary = Path(tempfile.mkdtemp(prefix=f".{generation}.staging-", dir=candidates_root))
     try:
         core, artifacts = _core_and_artifacts(snapshots, files, temporary, git_repository)
+        if registry_bytes is not None:
+            _write_exact(temporary / "fixture-registry-pr2164-v1.json", registry_bytes)
+            core["fixture_closure"] = {
+                "fixture_count": 11,
+                "raw_file_count": 28,
+                "registry_path": "fixture-registry-pr2164-v1.json",
+                "registry_sha256": sha256_bytes(registry_bytes),
+            }
+            fixture_registry_artifact = {
+                "byte_length": len(registry_bytes),
+                "kind": "fixture_registry",
+                "local_bundle_path": "fixture-registry-pr2164-v1.json",
+                "relationship": "fixture_registry",
+                "sha256": sha256_bytes(registry_bytes),
+            }
+        else:
+            fixture_registry_artifact = None
         core["bundle_artifacts"] = embed_verifier_artifacts(temporary)
+        if fixture_registry_artifact is not None:
+            core["bundle_artifacts"].append(fixture_registry_artifact)
         artifacts.extend(_bundle_artifacts(core, temporary))
         core_bytes = canonical_json_bytes(core)
         manifest_sha256 = sha256_bytes(core_bytes)
@@ -270,6 +333,110 @@ def construct_candidate(decision: object, proposal: object, git_repository: Path
             shutil.rmtree(temporary)
         raise
     return {"generation": generation, "manifest_sha256": manifest_sha256, "root_sha256": root_sha256, "status": "candidate"}
+
+
+def construct_fixture_closure_candidate(
+    decision: object,
+    proposal: object,
+    fixture_registry_path: Path,
+    git_repository: Path,
+    candidates_root: Path,
+) -> dict[str, object]:
+    """Build the v3 finite-set candidate from a compact digest-bound proposal."""
+    try:
+        proposal_raw = canonical_json_bytes(proposal)
+        validate_fixture_closure_decision(
+            decision,
+            proposal,
+            proposal_path="receipts/source-contract-proposal-v3-pr2164-fixture-closure.json",
+            proposal_sha256=sha256_bytes(proposal_raw),
+        )
+        bindings = validate_fixture_closure_proposal(proposal)
+        registry_raw = fixture_registry_path.read_bytes()
+        registry = json.loads(registry_raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, SourceContractProposalError) as error:
+        raise BundleError("FIXTURE_CLOSURE_PROPOSAL_INVALID") from error
+    if canonical_json_bytes(registry) != registry_raw:
+        raise BundleError("FIXTURE_REGISTRY_NOT_CANONICAL")
+    registry_binding = bindings["fixture_registry"]
+    source_binding = bindings["base_source_snapshots"]
+    assert isinstance(registry_binding, dict) and isinstance(source_binding, dict)
+    if sha256_bytes(registry_raw) != registry_binding["sha256"]:
+        raise BundleError("FIXTURE_REGISTRY_BINDING_MISMATCH")
+    source_snapshots = fixture_registry_path.with_name("source_snapshots.json")
+    try:
+        source_raw = source_snapshots.read_bytes()
+        source_payload = json.loads(source_raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise BundleError("SOURCE_SNAPSHOTS_BINDING_MISMATCH") from error
+    if canonical_json_bytes(source_payload) != source_raw or sha256_bytes(source_raw) != source_binding["sha256"]:
+        raise BundleError("SOURCE_SNAPSHOTS_BINDING_MISMATCH")
+    try:
+        normalized = validate_fixture_registry(registry)
+        verify_fixture_registry_git(registry, git_repository)
+    except FixtureRegistryError as error:
+        raise BundleError(str(error)) from error
+    consumed_files = []
+    for fixture in normalized["fixtures"]:
+        assert isinstance(fixture, dict)
+        for file in fixture["files"]:
+            assert isinstance(file, dict)
+            consumed_files.append({
+                "declared_transforms": [],
+                "experimental_role": file["role"],
+                "local_bundle_path": file["local_bundle_path"],
+                "raw_authoritative": True,
+                "raw_byte_length": file["raw_byte_length"],
+                "raw_sha256": file["raw_sha256"],
+                "snapshot_id": "evaluation_fixtures",
+                "upstream_path": file["upstream_path"],
+                "why_consumed": "Frozen PR #2164 finite-set fixture custody input.",
+            })
+    generic_proposal = {
+        "base_frozen_contract": {"path": "config/source_snapshots.json", "sha256": source_binding["sha256"]},
+        "consumed_files": sorted(consumed_files, key=lambda item: (item["snapshot_id"], item["upstream_path"], item["local_bundle_path"])),
+        "historical_rejected_receipt": {"path": "bundles/rejected/pr-2192-current-head/attempt-receipt.json", "sha256": "0" * 64},
+        "proposed_contract_version": "3",
+        "requested_generation_label": proposal["generation"],
+        "schema_version": "1",
+        "snapshots": [{
+            "canonical_pr_head_sha": "22e84458c87a7ccf4c07034de1eb6d0bf9764144",
+            "change_control": "versioned_correction",
+            "pinned_commit_sha": "22e84458c87a7ccf4c07034de1eb6d0bf9764144",
+            "pinned_tree_sha": "af003b427c66bd8ac9803a91b3bf363a1b1304d9",
+            "pull_request": 2164,
+            "reachability": "equal_head",
+            "repository": "riscv/riscv-unified-db",
+            "snapshot_id": "evaluation_fixtures",
+        }],
+        "status": "pending_reviewer_approval",
+    }
+    generic_decision = {
+        "approval_scope": "candidate_construction_only",
+        "approved_contract": {
+            key: generic_proposal[key]
+            for key in ("base_frozen_contract", "consumed_files", "historical_rejected_receipt", "proposed_contract_version", "requested_generation_label", "snapshots")
+        },
+        "authorization": {
+            "accepted_publication_authorized": False,
+            "candidate_construction_authorized": True,
+            "source_extraction_authorized": True,
+        },
+        "proposal": {
+            "path": "receipts/source-contract-proposal-v3-pr2164-fixture-closure.json",
+            "sha256": sha256_bytes(canonical_json_bytes(generic_proposal)),
+        },
+        "reviewer": {"approval_token": "authorize-candidate-construction-only"},
+        "schema_version": "1",
+        "state": "candidate_construction_authorized",
+    }
+    return construct_candidate(
+        generic_decision,
+        generic_proposal,
+        git_repository,
+        candidates_root,
+        fixture_registry_path=fixture_registry_path,
+    )
 
 
 def _replace_exact(path: Path, content: bytes) -> None:
@@ -357,7 +524,7 @@ def verify_candidate(candidate: Path) -> dict[str, object]:
     final_path = candidate / "snapshot-manifest.json"
     core = _canonical_load(core_path, "CONTENT_MANIFEST_CORE_INVALID")
     final = _canonical_load(final_path, "SNAPSHOT_MANIFEST_INVALID")
-    if final.get("status") != "candidate" or final.get("downstream_eligible") is not False or final.get("accepted_publication_authorized") is not False or not isinstance(final.get("offline_replay_proven"), bool):
+    if final.get("status") != "candidate" or final.get("downstream_eligible") is not False or final.get("accepted_publication_authorized") is not False or final.get("external_publication_authorized", False) is not False or not isinstance(final.get("offline_replay_proven"), bool):
         raise BundleError("CANDIDATE_ACCEPTED_STATE_FORBIDDEN")
     actual_manifest = sha256_bytes(core_path.read_bytes())
     if final.get("manifest_sha256") != actual_manifest:
@@ -390,6 +557,8 @@ def verify_candidate(candidate: Path) -> dict[str, object]:
                 evidence = inspect_authoritative_path(candidate, local)
             except FilesystemPolicyError as error:
                 raise BundleError(str(error)) from error
+            except OSError as error:
+                raise BundleError("STAGED_RAW_CUSTODY_MISMATCH") from error
             if evidence.file_kind != "regular_file" or evidence.byte_length != file.get("raw_byte_length") or evidence.sha256 != file.get("raw_sha256"):
                 raise BundleError("STAGED_RAW_CUSTODY_MISMATCH")
             artifacts.append({"byte_length": evidence.byte_length, "kind": "raw", "local_bundle_path": local, "raw_sha256": evidence.sha256, "relationship": "authoritative_raw"})
@@ -398,6 +567,25 @@ def verify_candidate(candidate: Path) -> dict[str, object]:
             artifacts.extend(_bundle_artifacts(core, candidate))
         except Exception as error:
             raise BundleError(str(error)) from error
+    expected = {"content-manifest-core.json", "snapshot-manifest.json"}
+    expected.update(str(item["local_bundle_path"]) for item in artifacts)
+    actual: set[str] = set()
+    for directory, names, entries in os.walk(candidate, topdown=True, followlinks=False):
+        current = Path(directory)
+        for name in [*names, *entries]:
+            relative = (current / name).relative_to(candidate).as_posix()
+            if "__pycache__" in relative.split("/") or relative.endswith(".pyc"):
+                continue
+            try:
+                evidence = inspect_authoritative_path(candidate, relative)
+            except FilesystemPolicyError as error:
+                raise BundleError(str(error)) from error
+            if evidence.file_kind == "regular_file":
+                actual.add(relative)
+    if expected - actual:
+        raise BundleError("BUNDLE_MISSING_FILE")
+    if actual - expected:
+        raise BundleError("BUNDLE_EXTRA_FILE")
     recomputed = _root_digest(actual_manifest, sorted(artifacts, key=lambda item: item["local_bundle_path"]))
     if recomputed != root_sha256:
         raise BundleError("ROOT_SHA256_MISMATCH")

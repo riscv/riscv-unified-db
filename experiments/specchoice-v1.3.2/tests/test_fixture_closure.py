@@ -5,9 +5,12 @@ from __future__ import annotations
 
 import copy
 import json
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
+from specchoice_evidence.bundle import BundleError, verify_candidate
 from specchoice_evidence.source_contract import (
     FixtureRegistryError,
     validate_fixture_registry,
@@ -56,6 +59,34 @@ class FixtureClosureTests(unittest.TestCase):
         invalid["fixtures"][0]["files"][0]["raw_sha256"] = "0" * 64
         with self.assertRaisesRegex(FixtureRegistryError, "FIXTURE_RAW_SHA256_MISMATCH"):
             verify_fixture_registry_git(invalid, self.repository)
+
+
+class FixtureClosureCandidateTests(unittest.TestCase):
+    def test_complete_candidate_is_ineligible_and_rejects_extra_or_missing_files(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / (
+            "bundles/candidates/source-contract-v3-pr2164-fixture-closure-"
+            "22e84458-verifier-rooted-v1"
+        )
+        identity = verify_candidate(candidate)
+        self.assertEqual(identity["status"], "candidate")
+        manifest = json.loads((candidate / "snapshot-manifest.json").read_text(encoding="utf-8"))
+        self.assertFalse(manifest["downstream_eligible"])
+        self.assertFalse(manifest["external_publication_authorized"])
+        self.assertEqual(
+            sum(len(snapshot["consumed_files"]) for snapshot in manifest["snapshots"]), 28
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            copied = Path(directory) / "candidate"
+            shutil.copytree(candidate, copied)
+            (copied / "raw/evaluation_fixtures/unexpected.txt").write_text("extra", encoding="utf-8")
+            with self.assertRaisesRegex(BundleError, "BUNDLE_EXTRA_FILE"):
+                verify_candidate(copied)
+            (copied / "raw/evaluation_fixtures/unexpected.txt").unlink()
+            (copied / "raw/evaluation_fixtures/POS_WARL_MTVEC_MODES/gold.yaml").unlink()
+            with self.assertRaisesRegex(BundleError, "STAGED_RAW_CUSTODY_MISMATCH"):
+                verify_candidate(copied)
 
 
 if __name__ == "__main__":

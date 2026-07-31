@@ -133,8 +133,6 @@ def _verify_tree_closure(root: Path, artifacts: list[dict[str, object]]) -> None
         for name in [*names, *files]:
             path = current / name
             relative = path.relative_to(root).as_posix()
-            if "__pycache__" in relative.split("/") or relative.endswith(".pyc"):
-                continue
             try:
                 evidence = inspect_authoritative_path(root, relative)
             except FilesystemPolicyError as error:
@@ -234,7 +232,7 @@ def embed_verifier_artifacts(destination: Path) -> list[dict[str, object]]:
         shutil.copy2(source_package / name, package / name)
     entry = destination / "verify_bundle.py"
     entry.write_text(
-        "from pathlib import Path\nimport sys\nsys.dont_write_bytecode = True\n"
+        "from pathlib import Path\nimport sys\n"
         "sys.path.insert(0, str(Path(__file__).parent / 'verifier'))\n"
         "from specchoice_evidence.verify import BundleVerificationError, verify_bundle\n"
         "try:\n    verify_bundle(Path(__file__).parent)\n"
