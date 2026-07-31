@@ -32,6 +32,13 @@ class MeasurementScoringTests(unittest.TestCase):
         self.assertEqual(raw, canonical_json_bytes(payload))
         return payload
 
+    def required_diagnostic_oracles(self) -> dict[str, object]:
+        path = self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json"
+        raw = path.read_bytes()
+        payload = json.loads(raw.decode("utf-8"))
+        self.assertEqual(raw, canonical_json_bytes(payload))
+        return payload
+
     def preflight(self, payload: object):
         return preflight_prediction_batch(
             raw=canonical_json_bytes(payload), adapter_batch=self.batch, ingress="current-v1"
@@ -88,6 +95,52 @@ class MeasurementScoringTests(unittest.TestCase):
 
         self.assertEqual((invalid.status, invalid.metrics), ("invalid_preflight", None))
         self.assertEqual((diagnostic.status, diagnostic.metrics), ("diagnostic_only", None))
+
+    def test_name_warning_preserves_semantics_and_matches_structured_oracle(self) -> None:
+        payload = self.golden_payload()
+        positive = next(item for item in payload["predictions"] if item["fixture_id"] == "POS_CSR_RW_MTVEC_ACCESS")
+        positive["adjudication"]["proposed_name"] = None
+
+        result = score_prediction_batch(adapter_batch=self.batch, preflight=self.preflight(payload), mode="formal")
+        oracle = next(
+            item
+            for item in self.required_diagnostic_oracles()["oracles"]
+            if item["id"] == "accepted-parameter-name-missing"
+        )
+
+        self.assertEqual(result.status, "completed_with_warnings")
+        self.assertEqual(result.metrics.as_dict()["identity"], {"numerator": 5, "denominator": 6})
+        self.assertEqual(result.metrics.as_dict()["surfacing"], {"numerator": 7, "denominator": 7})
+        self.assertEqual(result.metrics.as_dict()["disposition"], {"numerator": 7, "denominator": 7})
+        self.assertEqual([item.as_dict() for item in result.diagnostics], oracle["expected_diagnostics"])
+
+    def test_exact_duplicate_and_adjacent_spans_remain_distinct(self) -> None:
+        payload = self.golden_payload()
+        positive = next(item for item in payload["predictions"] if item["fixture_id"] == "POS_CSR_RW_MTVEC_ACCESS")
+        span = positive["adjudication"]["evidence_spans"][0]
+        source = next(
+            raw_file
+            for record in self.batch.records
+            if record.fixture_id == "POS_CSR_RW_MTVEC_ACCESS"
+            for raw_file in record.raw_files
+            if raw_file.role == "fixture_source" and raw_file.sha256 == span["source_sha256"]
+        )
+        raw = (self.bundle / source.path).read_bytes()
+        adjacent = {
+            "source_sha256": source.sha256,
+            "start_byte": span["end_byte"],
+            "end_byte": span["end_byte"] + 1,
+            "text": raw[span["end_byte"] : span["end_byte"] + 1].decode("utf-8"),
+        }
+        positive["adjudication"]["evidence_spans"] = [deepcopy(span), deepcopy(span), adjacent]
+
+        preflight = self.preflight(payload)
+        result = score_prediction_batch(adapter_batch=self.batch, preflight=preflight, mode="formal")
+
+        self.assertEqual(preflight.diagnostics, ())
+        self.assertEqual(preflight.parsed_predictions[5]["adjudication"]["evidence_spans"], [span, span, adjacent])
+        self.assertEqual(result.status, "completed")
+        self.assertTrue(next(item for item in result.case_outcomes if item.fixture_id == "POS_CSR_RW_MTVEC_ACCESS").evidence_integrity)
 
 
 if __name__ == "__main__":
