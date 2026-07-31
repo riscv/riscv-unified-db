@@ -12,7 +12,11 @@
 
 <%- if inst.data_independent_timing? -%>
 [IMPORTANT]
-This instruction must have data-independent timing when extension `Zkt` is enabled.
+<%- if inst.data_independent_timing.is_a?(String) -%>
+This instruction must have data-independent timing when extension `<%= inst.data_independent_timing %>` is enabled.
+<%- else -%>
+This instruction must always have data-independent timing.
+<%- end -%>
 <%- end -%>
 
 == Assembly format

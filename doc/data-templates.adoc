@@ -96,7 +96,7 @@ access:
   u: always    # U-mode access
   vs: always   # VS-mode access
   vu: always   # VU-mode access
-data_independent_timing: true  # For cryptographic extensions
+data_independent_timing: true  # true if always, false if never, or extension name ('Zkt', 'Zvkt')
 operation(): |
   # IDL code implementing the instruction
   X[xd] = X[xs1] + $signed(imm);

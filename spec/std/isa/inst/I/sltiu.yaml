@@ -33,7 +33,7 @@ access:
   u: always
   vs: always
   vu: always
-data_independent_timing: true
+data_independent_timing: Zkt
 pseudoinstructions:
   - when: imm == 1
     to: seqz xd, xs1

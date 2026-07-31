@@ -398,8 +398,13 @@ module Udb
         end
     end
 
-    # @return [Boolean] Whether or not the instruction must have data-independent timing when Zkt is enabled.
-    def data_independent_timing? = @data["data_independent_timing"]
+    # @return [Boolean, String, nil] Whether the instruction always has data-independent timing (true), never does (false/nil), or does when a specific extension is implemented (String).
+    sig { returns(T.nilable(T.any(T::Boolean, String))) }
+    def data_independent_timing = @data["data_independent_timing"]
+
+    # @return [Boolean] Whether the instruction has data-independent timing (always or under an extension).
+    sig { returns(T::Boolean) }
+    def data_independent_timing? = !!@data["data_independent_timing"]
 
     # @param xlen [Integer] 32 or 64, the target xlen
     # @return [Boolean] whethen or not instruction is defined in base +xlen+

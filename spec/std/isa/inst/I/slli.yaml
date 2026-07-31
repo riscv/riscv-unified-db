@@ -36,7 +36,7 @@ access:
   u: always
   vs: always
   vu: always
-data_independent_timing: true
+data_independent_timing: Zkt
 operation(): |
   # shamt is between 0-(XLEN-1)
   X[xd] = X[xs1] << shamt;

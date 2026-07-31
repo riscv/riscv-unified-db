@@ -1,5 +1,5 @@
 ---
-title: Inst Schema (v0.1)
+title: Inst Schema (v0.3)
 sidebar_label: Inst Schema
 custom_edit_url: null
 # This file is auto-generated from inst_schema.json
@@ -13,7 +13,7 @@ import AnchorOpenDetails from '@site/src/components/AnchorOpenDetails';
 
 # Inst Schema
 
-<span class="badge badge--secondary">v0.1</span>
+<span class="badge badge--secondary">v0.3</span>
 
 <br />
 
@@ -107,8 +107,6 @@ Decode field
 | `format` | `object` |  |  |
 | `pseudoinstructions` | Array&lt;\{`when`, `to`\}&gt; [↓&nbsp;schema](#pseudoinstructions-schema) |  | Variations of this instruction that form a pseudoinstruction |
 | `data_independent_timing` | One of: `boolean` \| `string` |  | Whether the instruction always has data-independent timing (true), never does (false), or does when a specific extension is implemented (e.g., 'Zkt' or 'Zvkt') |
-| `cert_normative_rules` | Architecturally visible behaviors requiring validation by certification tests |  |  |
-| `sail()` | `string` |  | Functional description of the instruction using Sail |
 | `operation_ast` | `object` |  |  |
 | `operation()` | `string` |  | Functional description of the instruction using IDL language |
 | `access_detail` | `string` |  | Extra detail about access when at least one mode is 'sometimes' |
@@ -143,5 +141,5 @@ Decode field
 
 | Property | Value |
 |----------|-------|
-| Version | `v0.1` |
+| Version | `v0.3` |
 | JSON Schema Version | [Draft 07](https://json-schema.org/draft-07) |

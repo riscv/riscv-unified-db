@@ -61,4 +61,28 @@ class TestInstruction < Minitest::Test
     extracted = rs1_var.extract
     refute_match(/sext/, extracted, "non-signed decode variable should not use sext")
   end
+
+  def test_data_independent_timing
+    db = @cfg_arch
+
+    add_inst = db.instructions.find { |i| i.name == "add" }
+    refute_nil add_inst, "ADD instruction should be found"
+    assert_equal "Zkt", add_inst.data_independent_timing
+    assert_equal true, add_inst.data_independent_timing?
+
+    sha_inst = db.instructions.find { |i| i.name == "sha256sig0" }
+    refute_nil sha_inst, "SHA256SIG0 instruction should be found"
+    assert_equal true, sha_inst.data_independent_timing
+    assert_equal true, sha_inst.data_independent_timing?
+
+    vadd_inst = db.instructions.find { |i| i.name == "vadd.vv" }
+    refute_nil vadd_inst, "VADD.VV instruction should be found"
+    assert_equal "Zvkt", vadd_inst.data_independent_timing
+    assert_equal true, vadd_inst.data_independent_timing?
+
+    fld_inst = db.instructions.find { |i| i.name == "fld" }
+    refute_nil fld_inst, "FLD instruction should be found"
+    assert_equal false, fld_inst.data_independent_timing
+    assert_equal false, fld_inst.data_independent_timing?
+  end
 end
