@@ -74,7 +74,7 @@ module Udb
     def introduction = @data["introduction"]
 
     # @return [String] Large enough to need its own heading (generally one level deeper than the "introduction").
-    def description = @data["description"]
+    def description = @data["description"] || introduction || long_name
 
     # Returns true if other is the same class (not a derived class) and has the same name.
     def eql?(other)

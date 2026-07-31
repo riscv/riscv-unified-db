@@ -240,6 +240,23 @@ namespace :test do
   task :schema do
     puts "Checking arch files against schema.."
     $resolver.cfg_arch_for("_").validate($resolver, show_progress: true)
+
+    puts "Checking cfgs/ files against config_schema.json.."
+    require "json_schemer"
+    config_schemer = JSONSchemer.schema(
+      JSON.parse(File.read($root / "spec" / "schemas" / "config_schema.json")),
+      ref_resolver: proc { |uri|
+        data = JSON.parse(File.read($root / "spec" / "schemas" / File.basename(uri.path)))
+        data["definitions"] = data["$defs"] if data["$defs"] && !data.key?("definitions")
+        data
+      }
+    )
+    Dir.glob($root / "cfgs" / "**" / "*.yaml").each do |cfg_file|
+      data = YAML.load_file(cfg_file)
+      errors = config_schemer.validate(data).to_a
+      raise "Validation failed for #{cfg_file}: #{errors.inspect}" unless errors.empty?
+    end
+
     puts "All files validate against their schema"
   end
 

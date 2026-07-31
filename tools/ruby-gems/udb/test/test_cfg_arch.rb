@@ -823,4 +823,15 @@ class TestCfgArch < Minitest::Test
       end
     end
   end
+
+  def test_all_cfgs_against_schema
+    cfg_files = Dir.glob("#{Udb.repo_root}/cfgs/**/*.yaml")
+    assert_operator cfg_files.size, :>, 0, "Should find config files in cfgs/"
+
+    cfg_files.each do |cfg_file|
+      data = YAML.load_file(cfg_file)
+      errors = @config_schemer.validate(data).to_a
+      assert_empty errors, "Validation failed for #{cfg_file}: #{errors.map { |e| e['error'] }.join(', ')}"
+    end
+  end
 end
