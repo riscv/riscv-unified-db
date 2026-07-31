@@ -476,6 +476,7 @@ async def search_instructions(args: dict[str, Any]):
 
         defined_by = _extract_defined_by(data)
         ext_from_path = _extension_in_path(
+            # pyrefly: ignore [bad-argument-type]
             rel.relative_to(GEN_DIR).parts if rel.is_relative_to(GEN_DIR) else rel.parts
         )
 
@@ -820,11 +821,13 @@ async def search_all(args: dict[str, Any]):
 
         # Sort by fuzzy score if applicable
         if fuzzy:
+            # pyrefly: ignore [missing-attribute]
             ext_results["results"].sort(key=lambda x: x.get("fuzzy_score", 0), reverse=True)
 
         results["extensions"] = ext_results
 
     # Calculate total matches
+    # pyrefly: ignore [no-matching-overload]
     total_count = sum(r.get("count", 0) for r in results.values())
 
     return {
@@ -1130,10 +1133,12 @@ async def find_function_usages(args: dict[str, Any]):
 async def main() -> None:
     server = Server("riscv-udb-mcp")
 
+    # pyrefly: ignore [missing-attribute]
     @server.list_tools()
     async def _list_tools() -> list[Tool]:
         return [
             # ===== Low-Level YAML Access =====
+            # pyrefly: ignore [missing-argument]
             Tool(
                 name="list_gen_yaml",
                 description="List all YAML files under gen/ as repo-relative paths",
@@ -1142,6 +1147,7 @@ async def main() -> None:
                     "properties": {},
                 },
             ),
+            # pyrefly: ignore [missing-argument]
             Tool(
                 name="read_gen_yaml",
                 description="Read and parse a YAML file under gen/; returns JSON",
@@ -1157,6 +1163,7 @@ async def main() -> None:
                 },
             ),
             # ===== Instruction Tools =====
+            # pyrefly: ignore [missing-argument]
             Tool(
                 name="search_instructions",
                 description="Search instruction YAMLs with advanced filtering (regex, fuzzy matching, field-specific, XLEN)",
@@ -1213,6 +1220,7 @@ async def main() -> None:
                 },
             ),
             # ===== CSR Tools =====
+            # pyrefly: ignore [missing-argument]
             Tool(
                 name="search_csrs",
                 description="Search CSR YAMLs with advanced filtering (regex, fuzzy matching, field-specific, XLEN)",
@@ -1269,6 +1277,7 @@ async def main() -> None:
                 },
             ),
             # ===== Extension Tools (Consolidated) =====
+            # pyrefly: ignore [missing-argument]
             Tool(
                 name="search_extensions",
                 description=(
@@ -1303,6 +1312,7 @@ async def main() -> None:
                 },
             ),
             # ===== Multi-Domain Search =====
+            # pyrefly: ignore [missing-argument]
             Tool(
                 name="search_all",
                 description=(
@@ -1363,6 +1373,7 @@ async def main() -> None:
                 },
             ),
             # ===== Function/IDL Tools =====
+            # pyrefly: ignore [missing-argument]
             Tool(
                 name="search_functions",
                 description="Search IDL functions by term (omit term to list all functions)",
@@ -1382,6 +1393,7 @@ async def main() -> None:
                     },
                 },
             ),
+            # pyrefly: ignore [missing-argument]
             Tool(
                 name="read_function_doc",
                 description="Read complete documentation for a specific function by name",
@@ -1391,6 +1403,7 @@ async def main() -> None:
                     "required": ["name"],
                 },
             ),
+            # pyrefly: ignore [missing-argument]
             Tool(
                 name="find_function_usages",
                 description="Find instruction YAMLs whose operation() code references the function",
@@ -1410,6 +1423,7 @@ async def main() -> None:
             ),
         ]
 
+    # pyrefly: ignore [missing-attribute]
     @server.call_tool()
     async def _call_tool(name: str, arguments: dict[str, Any] | None):
         args = arguments or {}
@@ -1433,8 +1447,10 @@ async def main() -> None:
 
         # Call handler (pass args only if function expects them)
         if name == "list_gen_yaml":
+            # pyrefly: ignore [missing-argument]
             result = await handler()
         else:
+            # pyrefly: ignore [bad-argument-count]
             result = await handler(args)
 
         # Return properly formatted MCP response

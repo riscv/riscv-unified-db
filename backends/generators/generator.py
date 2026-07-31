@@ -466,6 +466,7 @@ def load_csrs(csr_root, enabled_extensions, include_all=False, target_arch="RV64
 
                 csrs[addr_int] = name.upper()
             except Exception as e:
+                # pyrefly: ignore [unbound-name]
                 logging.error(f"Error parsing address {addr_to_use} in {path}: {e}")
                 address_errors += 1
                 continue

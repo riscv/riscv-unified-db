@@ -10,6 +10,7 @@ dependencies = [
     "deepmerge>=2.1.0",
     "jsonschema>=4.26.0",
     "pycobertura>=4.1.0",
+    "pyrefly>=0.64.1",
     "pytest>=9.0.2",
     "reuse>=6.2.0",
     "ruamel-yaml>=0.19.1",
@@ -43,4 +44,12 @@ ignore = [
     "SIM108", # ternary operator (readability preference)
     "SIM118", # use key in dict instead of key in dict.keys()
     "RUF005", # consider list unpacking instead of concatenation
+]
+[tool.pyrefly]
+project-excludes = ["ext/**"]
+python-interpreter-path = "C:/Users/Lenovo/AppData/Local/Programs/Python/Python313/python.exe"
+search-path = [
+    "tools/python",
+    "tools/python/auto-inst",
+    "backends/generators",
 ]

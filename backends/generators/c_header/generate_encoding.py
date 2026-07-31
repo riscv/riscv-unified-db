@@ -136,6 +136,7 @@ def extract_instruction_fields(instructions):
                 try:
                     high, low = map(int, location.split("-"))
                     mask = ((1 << (high - low + 1)) - 1) << low
+                    # pyrefly: ignore [unsupported-operation]
                     field_dict[std_field_name] = {
                         "location": f"{high}-{low}",
                         "mask": f"0x{mask:x}",
@@ -152,6 +153,7 @@ def extract_instruction_fields(instructions):
                 try:
                     pos = int(location)
                     mask = 1 << pos
+                    # pyrefly: ignore [unsupported-operation]
                     field_dict[std_field_name] = {
                         "location": str(pos),
                         "mask": f"0x{mask:x}",
@@ -288,6 +290,7 @@ def main():
 
     causes_str = ""
     declare_cause_str = ""
+    # pyrefly: ignore [not-iterable]
     for num, name in causes:
         sanitized_name = name.upper()
         causes_str += f"#define CAUSE_{sanitized_name} 0x{num:x}\n"

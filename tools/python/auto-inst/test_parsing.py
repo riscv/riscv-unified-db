@@ -67,6 +67,7 @@ class TestInstructionEncoding:
         hint_map = {}
         for parent_name, data in cls.yaml_instructions.items():
             hints = data.get("hints", [])
+            # pyrefly: ignore [not-iterable]
             for hint in hints:
                 ref = hint.get("$ref", "")
                 if ref:

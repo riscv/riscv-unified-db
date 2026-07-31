@@ -40,6 +40,7 @@ UDB_ROOT = (
     else os.getenv("UDB_ROOT")
 )
 
+# pyrefly: ignore [no-matching-overload]
 SCHEMAS_PATH = Path(os.path.join(UDB_ROOT, "spec", "schemas"))
 
 
@@ -91,6 +92,7 @@ def retrieve_from_filesystem(uri: str):
     return Resource.from_contents(contents)
 
 
+# pyrefly: ignore [unexpected-keyword]
 registry = Registry(retrieve=retrieve_from_filesystem)
 
 
@@ -155,16 +157,19 @@ def _merge_patch(base: dict, patch: dict, path_so_far=None) -> None:
         path_so_far = []
 
     patch_obj = patch if len(path_so_far) == 0 else dig(patch, *path_so_far)
+    # pyrefly: ignore [missing-attribute]
     for key, patch_value in patch_obj.items():
         if isinstance(patch_value, dict):
             # continue to dig
             _merge_patch(base, patch, (path_so_far + [key]))
         else:
             base_ptr = dig(base, *path_so_far)
+            # pyrefly: ignore [bad-argument-type]
             base_value = dig(base_ptr, key)
             if patch_value == None:
                 # remove from base, if it exists
                 if base_value != None:
+                    # pyrefly: ignore [missing-attribute]
                     base_ptr.pop(key)
             else:
                 if base_ptr == None:
@@ -175,6 +180,7 @@ def _merge_patch(base: dict, patch: dict, path_so_far=None) -> None:
                             base_ptr[k] = {}
                         base_ptr = base_ptr[k]
                     base_ptr = dig(base, *path_so_far)
+                # pyrefly: ignore [unsupported-operation]
                 base_ptr[key] = patch_value
 
 
@@ -312,6 +318,7 @@ def resolve(
                 file=sys.stderr,
             )
             exit(1)
+        # pyrefly: ignore [unsupported-operation]
         resolved_objs[str(rel_path)] = _resolve(
             unresolved_arch_data,
             [],
@@ -396,20 +403,30 @@ def _resolve(obj, obj_path, obj_file_path, doc_obj, arch_root, do_checks, compil
             for key in ref_obj:
                 if key == "$parent_of" or key == "$child_of":
                     continue  # we don't propagate $parent_of / $child_of
+<<<<<<< HEAD
                 if isinstance(parent_obj.get(key), dict) and isinstance(ref_obj[key], dict):
                     _REPLACE_MERGER.merge(parent_obj[key], deepcopy(ref_obj[key]))
+=======
+                if isinstance(parent_obj.get(key), dict):
+                    # pyrefly: ignore [bad-index]
+                    merge(parent_obj[key], ref_obj[key], strategy=Strategy.REPLACE)
+>>>>>>> 65f47cde (Add pyrefly type checker alongside Ruff)
                 else:
+                    # pyrefly: ignore [bad-index]
                     parent_obj[key] = deepcopy(ref_obj[key])
 
             if "$parent_of" in ref_obj:
+                # pyrefly: ignore [bad-index]
                 if isinstance(ref_obj["$parent_of"], list):
                     ref_obj["$parent_of"].append(f"{obj_file_path}#/{'/'.join(obj_path)}")
                 else:
+                    # pyrefly: ignore [unsupported-operation]
                     ref_obj["$parent_of"] = [
                         ref_obj["$parent_of"],
                         f"{obj_file_path}#/{'/'.join(obj_path)}",
                     ]
             else:
+                # pyrefly: ignore [unsupported-operation]
                 ref_obj["$parent_of"] = f"{obj_file_path}#/{'/'.join(obj_path)}"
 
         # now parent_obj is the child and obj is the parent
@@ -436,6 +453,7 @@ def _resolve(obj, obj_path, obj_file_path, doc_obj, arch_root, do_checks, compil
                     compile_idl,
                 )
             else:
+<<<<<<< HEAD
                 resolved_child_value = _resolve(
                     obj[key],
                     obj_path + [key],
@@ -448,6 +466,24 @@ def _resolve(obj, obj_path, obj_file_path, doc_obj, arch_root, do_checks, compil
                 if isinstance(parent_obj[key], dict) and isinstance(resolved_child_value, dict):
                     final_obj[key] = deepcopy(parent_obj[key])
                     _REPLACE_MERGER.merge(final_obj[key], deepcopy(resolved_child_value))
+=======
+                if isinstance(parent_obj[key], dict):
+                    final_obj[key] = merge(
+                        yaml.load("{}"),
+                        parent_obj[key],
+                        # pyrefly: ignore [bad-argument-type]
+                        _resolve(
+                            obj[key],
+                            obj_path + [key],
+                            obj_file_path,
+                            doc_obj,
+                            arch_root,
+                            do_checks,
+                            compile_idl,
+                        ),
+                        strategy=Strategy.REPLACE,
+                    )
+>>>>>>> 65f47cde (Add pyrefly type checker alongside Ruff)
                 else:
                     final_obj[key] = resolved_child_value
 
@@ -547,12 +583,14 @@ def merge_file(
     if not os.path.exists(arch_path) and (overlay_path == None or not os.path.exists(overlay_path)):
         # neither exist
         if not os.path.exists(merge_path):
+            # pyrefly: ignore [bad-raise]
             raise "Script error: no path exists"
 
         # remove the merged file
         os.remove(merge_path)
     elif overlay_path == None or not os.path.exists(overlay_path):
         if arch_path == None:
+            # pyrefly: ignore [bad-raise]
             raise "Must supply with arch_path or overlay_path"
 
         # no overlay, just copy arch
@@ -562,12 +600,14 @@ def merge_file(
             shutil.copyfile(os.path.join(arch_dir, rel_path), merge_path)
     elif not os.path.exists(arch_path):
         if overlay_path == None or not os.path.exists(overlay_path):
+            # pyrefly: ignore [bad-raise]
             raise "Must supply with arch_path or overlay_path"
 
         # no arch, just copy overlay
         if not os.path.exists(merge_path) or (
             os.path.getmtime(overlay_path) > os.path.getmtime(merge_path)
         ):
+            # pyrefly: ignore [no-matching-overload]
             shutil.copyfile(os.path.join(overlay_dir, rel_path), merge_path)
     else:
         # both exist, merge
@@ -577,6 +617,7 @@ def merge_file(
             or (os.path.getmtime(arch_path) > os.path.getmtime(merge_path))
         ):
             arch_obj = read_yaml(os.path.join(arch_dir, rel_path))
+            # pyrefly: ignore [no-matching-overload]
             overlay_obj = read_yaml(os.path.join(overlay_dir, rel_path))
 
             write_yaml(

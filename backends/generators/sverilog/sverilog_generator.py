@@ -126,6 +126,7 @@ def generate_sverilog(instructions, csrs, causes, output_file):
             else:
                 logging.error(f"No match field for instruction {name}.")
 
+            # pyrefly: ignore [unbound-name]
             sv_bits = match_to_sverilog_bits(match)
             f.write(f"  localparam logic [31:0] {padded_name} = {sv_bits};\n")
 
@@ -183,6 +184,7 @@ def main():
         include_all=args.include_all,
         resolved_codes_file=args.resolved_codes,
     )
+    # pyrefly: ignore [bad-argument-type]
     logging.info(f"Loaded {len(causes)} exception codes")
 
     # Generate the SystemVerilog file

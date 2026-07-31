@@ -128,6 +128,7 @@ def load_yaml_encoding(instr_name):
     for cand in candidates:
         if cand in yaml_instructions:
             yaml_category = yaml_instructions[cand]
+            # pyrefly: ignore [no-matching-overload]
             yaml_file_path = os.path.join(REPO_DIRECTORY, yaml_category, cand + ".yaml")
             if os.path.isfile(yaml_file_path):
                 break
