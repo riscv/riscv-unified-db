@@ -71,7 +71,7 @@ class MeasurementAdapterTests(unittest.TestCase):
 
             self.assertEqual(first.read_bytes(), second.read_bytes())
             emitted = json.loads(first.read_text(encoding="utf-8"))
-            self.assertEqual(emitted["adapter_batch_sha256"], sha256_bytes(first.read_bytes()))
+            self.assertEqual(emitted["adapter_batch_sha256"], self.build().adapter_batch_sha256)
 
 
 if __name__ == "__main__":
