@@ -580,42 +580,9 @@ def command_publish_accepted(args: argparse.Namespace) -> int:
 
 
 def command_accept_fixture_closure_local(args: argparse.Namespace) -> int:
-    """Accept a complete v3 candidate only under current v7 local authority."""
-    raw = args.decision.read_bytes()
-    try:
-        decision = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise ReceiptError("FIXTURE_CLOSURE_ACCEPTANCE_DECISION_INVALID") from error
-    if not isinstance(decision, dict) or canonical_json_bytes(decision) != raw:
-        raise ReceiptError("FIXTURE_CLOSURE_ACCEPTANCE_DECISION_NOT_CANONICAL")
-    experiment = _experiment_root()
-    baseline = _resolve_experiment_path(args.baseline).resolve()
-    allowlist = _resolve_experiment_path(args.allowlist).resolve()
-    restart = _resolve_experiment_path(args.restart_receipt).resolve()
-    if (baseline, allowlist, restart) != (
-        _default_active_baseline().resolve(), _active_allowlist().resolve(), _default_active_restart_receipt().resolve()
-    ):
-        raise ReceiptError("FIXTURE_CLOSURE_ACCEPTANCE_V7_BASIS_REQUIRED")
-    try:
-        projection = validate_boundary_restart(
-            baseline, _active_previous_baseline().resolve(), allowlist, restart
-        )
-    except BaselineError as error:
-        raise ReceiptError(str(error)) from error
-    repository = _repository_root(experiment)
-    boundary = check_boundary(repository, baseline, reviewed_revision=args.reviewed_revision)
-    if boundary.blocking_violations:
-        raise ReceiptError("FIXTURE_CLOSURE_ACCEPTANCE_BOUNDARY_BLOCKING")
-    if not boundary.reviewed_revision:
-        raise ReceiptError("FIXTURE_CLOSURE_ACCEPTANCE_REVIEWED_REVISION_INVALID")
-    v7_basis = {
-        "allowlist_sha256": projection["allowlist"]["sha256"],
-        "baseline_sha256": boundary.baseline_sha256,
-        "restart_receipt_sha256": projection["incident_receipt"]["sha256"],
-        "reviewed_revision": boundary.reviewed_revision,
-    }
+    """Accept only through the library's canonical current-v7 gate."""
     _print_json(accept_fixture_closure_candidate(
-        args.candidate_directory, args.accepted_directory, decision, v7_basis
+        args.candidate_directory, args.accepted_directory, args.decision
     ))
     return 0
 
@@ -1026,10 +993,6 @@ def build_parser() -> argparse.ArgumentParser:
     fixture_accept.add_argument("--decision", type=Path, required=True)
     fixture_accept.add_argument("--candidate-directory", type=Path, required=True)
     fixture_accept.add_argument("--accepted-directory", type=Path, default=Path("bundles/accepted"))
-    fixture_accept.add_argument("--baseline", type=Path, default=_default_active_baseline())
-    fixture_accept.add_argument("--allowlist", type=Path, default=_active_allowlist())
-    fixture_accept.add_argument("--restart-receipt", type=Path, default=_default_active_restart_receipt())
-    fixture_accept.add_argument("--reviewed-revision", default="HEAD")
     fixture_accept.set_defaults(handler=command_accept_fixture_closure_local)
     authority = commands.add_parser("validate-phase2-source-authority")
     authority.add_argument("--authority", type=Path, required=True)

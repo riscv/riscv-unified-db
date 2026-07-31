@@ -20,6 +20,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
+from .baseline import BaselineError, check_current_boundary, validate_boundary_restart
 from .filesystem import FilesystemPolicyError, inspect_authoritative_path, require_relative_posix_path
 from .git_proof import GitProofError, read_pinned_blob
 from .source_contract import (
@@ -671,8 +672,33 @@ def accept_local_candidate(
     return identity
 
 
+def _fixture_closure_current_v7_basis() -> dict[str, object]:
+    """Resolve the only valid lineage and live boundary from this implementation."""
+    experiment = Path(__file__).resolve().parents[2]
+    repository = experiment.parents[1]
+    baseline = experiment / "baselines/phase-start-v7-fixture-closure.json"
+    allowlist = experiment / "config/boundary_allowlist-v7-fixture-closure.json"
+    restart = experiment / "receipts/boundary-restart-v7-fixture-closure.json"
+    previous = experiment / "baselines/phase-start-v6-fixture-closure.json"
+    try:
+        projection = validate_boundary_restart(baseline, previous, allowlist, restart)
+        boundary = check_current_boundary(repository, baseline)
+    except (BaselineError, OSError) as error:
+        raise BundleError(str(error)) from error
+    if boundary.blocking_violations:
+        raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_BOUNDARY_BLOCKING")
+    if not boundary.reviewed_revision:
+        raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_REVIEWED_REVISION_INVALID")
+    return {
+        "allowlist_sha256": projection["allowlist"]["sha256"],
+        "baseline_sha256": boundary.baseline_sha256,
+        "restart_receipt_sha256": projection["incident_receipt"]["sha256"],
+        "reviewed_revision": boundary.reviewed_revision,
+    }
+
+
 def accept_fixture_closure_candidate(
-    candidate: Path, accepted_root: Path, decision: object, v7_basis: Mapping[str, object]
+    candidate: Path, accepted_root: Path, decision_path: Path
 ) -> dict[str, object]:
     """Promote only the complete v3 candidate into a fresh local accepted tree.
 
@@ -681,6 +707,16 @@ def accept_fixture_closure_candidate(
     freshly rooted core/manifest because its embedded verifier and lifecycle state are
     part of its own content address.
     """
+    if not isinstance(decision_path, Path):
+        raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_DECISION_INVALID")
+    try:
+        decision_raw = decision_path.read_bytes()
+        decision = json.loads(decision_raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_DECISION_INVALID") from error
+    if not isinstance(decision, dict) or canonical_json_bytes(decision) != decision_raw:
+        raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_DECISION_NOT_CANONICAL")
+    v7_basis = _fixture_closure_current_v7_basis()
     identity = verify_candidate(candidate)
     generation = identity.get("generation")
     if generation != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2":

@@ -12,7 +12,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from specchoice_evidence.bundle import BundleError, verify_candidate
+from specchoice_evidence.bundle import (
+    BundleError,
+    accept_fixture_closure_candidate,
+    verify_candidate,
+)
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.verify import _bundle_artifacts, _raw_artifacts, _root_digest, verify_accepted_bundle
 from specchoice_evidence.source_contract import (
@@ -68,6 +72,67 @@ class FixtureClosureTests(unittest.TestCase):
 
 
 class FixtureClosureCandidateTests(unittest.TestCase):
+
+    def _current_fixture_acceptance_decision(self, experiment: Path) -> dict[str, object]:
+        decision = json.loads((experiment / "receipts/local-acceptance-v9.json").read_text(encoding="utf-8"))
+        decision["v7_basis"]["reviewed_revision"] = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=experiment.parents[1], check=True,
+            capture_output=True, text=True,
+        ).stdout.strip()
+        return decision
+
+    def _write_fixture_acceptance_decision(self, path: Path, decision: dict[str, object]) -> Path:
+        path.write_bytes(canonical_json_bytes(decision))
+        return path
+
+    def test_public_fixture_acceptance_resolves_its_own_current_v7_basis(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        decision = self._current_fixture_acceptance_decision(experiment)
+        with tempfile.TemporaryDirectory() as directory:
+            accepted_root = Path(directory) / "accepted"
+            decision_path = self._write_fixture_acceptance_decision(Path(directory) / "decision.json", decision)
+            result = accept_fixture_closure_candidate(candidate, accepted_root, decision_path)
+            self.assertEqual(result["status"], "accepted")
+            self.assertTrue((accepted_root / result["generation"]).is_dir())
+
+    def test_public_fixture_acceptance_rejects_missing_mismatched_and_stale_authority(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        decision = self._current_fixture_acceptance_decision(experiment)
+        variants = (
+            (None, "FIXTURE_CLOSURE_ACCEPTANCE_DECISION_INVALID"),
+            ({**decision, "fixture_registry_sha256": "0" * 64}, "FIXTURE_CLOSURE_ACCEPTANCE_REGISTRY_MISMATCH"),
+            ({**decision, "v7_basis": {**decision["v7_basis"], "reviewed_revision": "0" * 40}}, "FIXTURE_CLOSURE_ACCEPTANCE_BASIS_MISMATCH"),
+        )
+        for authority, code in variants:
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as directory:
+                accepted_root = Path(directory) / "accepted"
+                decision_path = (
+                    None if authority is None
+                    else self._write_fixture_acceptance_decision(Path(directory) / "decision.json", authority)
+                )
+                with self.assertRaisesRegex(BundleError, code):
+                    accept_fixture_closure_candidate(candidate, accepted_root, decision_path)
+                self.assertFalse(accepted_root.exists())
+
+    def test_public_fixture_acceptance_rejects_current_boundary_violation(self) -> None:
+        experiment = Path(__file__).resolve().parents[1]
+        repository = experiment.parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        violation = repository / "fixture-closure-boundary-violation.tmp"
+        violation.write_text("must block acceptance", encoding="utf-8")
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                decision_path = self._write_fixture_acceptance_decision(
+                    Path(directory) / "decision.json", self._current_fixture_acceptance_decision(experiment)
+                )
+                with self.assertRaisesRegex(BundleError, "FIXTURE_CLOSURE_ACCEPTANCE_BOUNDARY_BLOCKING"):
+                    accept_fixture_closure_candidate(
+                        candidate, Path(directory) / "accepted", decision_path
+                    )
+        finally:
+            violation.unlink()
 
     def test_local_acceptance_authority_is_bound_to_identity_registry_and_v7_basis(self) -> None:
         experiment = Path(__file__).resolve().parents[1]
