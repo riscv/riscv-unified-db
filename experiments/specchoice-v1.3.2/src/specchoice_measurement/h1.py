@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import json
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Any
 
-from specchoice_evidence.bundle import _sync_directory, _write_exact
+from specchoice_evidence.bundle import BundleError, _publish_directory_no_replace, _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, require_sha256, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, inspect_authoritative_path
 
@@ -26,6 +28,7 @@ _RULES = _ROOT / "config/measurement/pr2164-adapter-rules-v1.json"
 _SCHEMA = _ROOT / "config/measurement/canonical-adjudication-schema-v1.json"
 _H1_SCHEMA = _ROOT / "config/measurement/h1-review-schema-v1.json"
 _GOLDEN = _ROOT / "fixtures/measurement/golden-predictions-v1.json"
+_ADVERSARIAL = _ROOT / "reports/h1/adversarial-oracle-results-v2.json"
 
 
 def _relative(path: Path, code: str) -> str:
@@ -220,18 +223,27 @@ def render_h1_markdown(packet: object) -> str:
     return "\n".join(lines)
 
 
-def _write_new(path: Path, data: bytes) -> None:
-    parent_relative = _relative(path.parent, "H1_OUTPUT_PATH_INVALID")
+def _publish_packet_pair(*, output_json: Path, output_markdown: Path, json_bytes: bytes, markdown_bytes: bytes) -> None:
+    if output_json == output_markdown or output_json.parent != output_markdown.parent:
+        raise H1Error("H1_OUTPUT_PATH_INVALID")
+    target = output_json.parent
+    parent = target.parent
     try:
-        parent = inspect_authoritative_path(_ROOT, parent_relative)
+        evidence = inspect_authoritative_path(_ROOT, _relative(parent, "H1_OUTPUT_PATH_INVALID"))
     except FilesystemPolicyError as error:
         raise H1Error("H1_OUTPUT_PATH_INVALID") from error
-    if parent.file_kind != "directory" or path.exists() or path.is_symlink():
+    if evidence.file_kind != "directory" or target.exists() or target.is_symlink():
         raise H1Error("H1_OUTPUT_EXISTS")
+    staging = Path(tempfile.mkdtemp(prefix=f".{target.name}.staging-", dir=parent))
     try:
-        _write_exact(path, data)
-        _sync_directory(path.parent)
-    except (FileExistsError, OSError) as error:
+        _write_exact(staging / output_json.name, json_bytes)
+        _write_exact(staging / output_markdown.name, markdown_bytes)
+        _sync_directory(staging)
+        _publish_directory_no_replace(staging, target, "H1_OUTPUT_EXISTS")
+        _sync_directory(parent)
+    except (BundleError, FileExistsError, OSError) as error:
+        if staging.exists():
+            shutil.rmtree(staging)
         raise H1Error("H1_OUTPUT_EXISTS") from error
 
 
@@ -246,8 +258,12 @@ def build_h1_packet(*, formal_attempt: Path, adversarial_report: Path, output_js
     }
     packet["packet_sha256"] = sha256_bytes(canonical_json_bytes(packet))
     _validate_packet_value(packet, expected=expected)
-    _write_new(output_json, canonical_json_bytes(packet))
-    _write_new(output_markdown, render_h1_markdown(packet).encode("utf-8"))
+    _publish_packet_pair(
+        output_json=output_json,
+        output_markdown=output_markdown,
+        json_bytes=canonical_json_bytes(packet),
+        markdown_bytes=render_h1_markdown(packet).encode("utf-8"),
+    )
     return packet
 
 
@@ -256,7 +272,7 @@ def validate_h1_packet(*, packet: Path, markdown: Path) -> dict[str, Any]:
     value, _ = _read_canonical(packet, "H1_PACKET_INVALID")
     expected = _expected_bindings(
         formal_attempt=_ROOT / "runs/measurement-attempts/formal-golden-pr2164-v1",
-        adversarial_report=_ROOT / "reports/h1/adversarial-oracle-results-v1.json",
+        adversarial_report=_ADVERSARIAL,
     )
     value = _validate_packet_value(value, expected=expected)
     if value.get("fixture_reviews") != _review_items(_batch()):
@@ -313,4 +329,6 @@ def validate_h1_decision(*, packet: Path, decision: Path) -> dict[str, Any]:
         raise H1Error("H1_DISPUTE_AGGREGATION_INVALID")
     if disposition == "approved" and any(review["disposition"] != "approved" for review in reviews):
         raise H1Error("H1_APPROVAL_REQUIRES_ALL_ITEMS")
+    if disposition == "approved":
+        raise H1Error("H1_MANUAL_AUTHORIZATION_REQUIRED")
     return value

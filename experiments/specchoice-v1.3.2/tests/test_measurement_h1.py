@@ -29,11 +29,11 @@ class H1PacketTests(unittest.TestCase):
     def setUp(self) -> None:
         self.root = Path(__file__).parents[1]
         self.formal = self.root / "runs/measurement-attempts/formal-golden-pr2164-v1"
-        self.adversarial = self.root / "reports/h1/adversarial-oracle-results-v1.json"
+        self.adversarial = self.root / "reports/h1/adversarial-oracle-results-v2.json"
 
     def _build(self, directory: Path) -> tuple[Path, Path, dict[str, object]]:
-        packet_path = directory / "packet.json"
-        markdown_path = directory / "packet.md"
+        packet_path = directory / "packet" / "packet.json"
+        markdown_path = directory / "packet" / "packet.md"
         packet = build_h1_packet(
             formal_attempt=self.formal,
             adversarial_report=self.adversarial,
@@ -99,7 +99,8 @@ class H1PacketTests(unittest.TestCase):
             decision_path = root / "decision.json"
             decision = self._decision(packet)
             decision_path.write_bytes(canonical_json_bytes(decision))
-            self.assertEqual(validate_h1_decision(packet=packet_path, decision=decision_path), decision)
+            with self.assertRaisesRegex(H1Error, "H1_MANUAL_AUTHORIZATION_REQUIRED"):
+                validate_h1_decision(packet=packet_path, decision=decision_path)
 
             changed = deepcopy(decision)
             assert isinstance(changed["fixture_reviews"], list)
@@ -138,7 +139,8 @@ class H1PacketTests(unittest.TestCase):
                 review["reviewed_semantics_sha256"] = sha256_bytes(canonical_json_bytes(semantics))
             decision["decision_sha256"] = sha256_bytes(canonical_json_bytes({key: value for key, value in decision.items() if key != "decision_sha256"}))
             decision_path.write_bytes(canonical_json_bytes(decision))
-            self.assertEqual(validate_h1_decision(packet=packet_path, decision=decision_path), decision)
+            with self.assertRaisesRegex(H1Error, "H1_MANUAL_AUTHORIZATION_REQUIRED"):
+                validate_h1_decision(packet=packet_path, decision=decision_path)
 
 
 if __name__ == "__main__":
