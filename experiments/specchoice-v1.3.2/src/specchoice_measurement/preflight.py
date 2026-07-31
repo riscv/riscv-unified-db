@@ -59,6 +59,15 @@ def _source_bytes_by_fixture(adapter_batch: object) -> dict[str, dict[str, bytes
     return values
 
 
+def _source_bytes_by_sha256(adapter_batch: object) -> dict[str, bytes]:
+    """Compatibility view for scoring; preflight keeps fixture ownership separately."""
+    return {
+        digest: raw
+        for values in _source_bytes_by_fixture(adapter_batch).values()
+        for digest, raw in values.items()
+    }
+
+
 def preflight_prediction_batch(*, raw: bytes, adapter_batch: object, ingress: str) -> PreflightResult:
     """Collect all available blockers and make the one terminal score-eligibility decision."""
     raw_sha256 = sha256_bytes(raw)
@@ -77,11 +86,7 @@ def preflight_prediction_batch(*, raw: bytes, adapter_batch: object, ingress: st
 
     # Attach immutable byte views only for this pure validation call; no artifact is written.
     source_bytes_by_fixture = _source_bytes_by_fixture(adapter_batch)
-    source_bytes = {
-        digest: raw
-        for values in source_bytes_by_fixture.values()
-        for digest, raw in values.items()
-    }
+    source_bytes = _source_bytes_by_sha256(adapter_batch)
     object.__setattr__(adapter_batch, "source_bytes_by_sha256", source_bytes) if False else None
     # Keep the adapter immutable: a narrow proxy supplies the verified source-byte index.
     class _BatchView:

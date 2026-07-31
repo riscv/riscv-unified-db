@@ -126,6 +126,26 @@ class MeasurementAttemptTests(unittest.TestCase):
             with self.assertRaisesRegex(AttemptError, "ATTEMPT_ARTIFACT_HASH_MISMATCH"):
                 validate_measurement_attempt(attempt_root=root / "tamper")
 
+    def test_self_consistent_forged_derived_artifacts_fail_replay(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            run_measurement_attempt(mode="formal", attempt_id="forged", attempt_root=root, inputs=self._inputs())
+            target = root / "forged"
+            forged = {"disposition": {"denominator": 7, "numerator": 0}}
+            forged_raw = canonical_json_bytes(forged)
+            (target / "metrics.json").write_bytes(forged_raw)
+            manifest = json.loads((target / "attempt.json").read_text(encoding="utf-8"))
+            manifest["artifacts"]["metrics.json"] = {
+                "byte_length": len(forged_raw), "sha256": sha256_bytes(forged_raw)
+            }
+            manifest["attempt_sha256"] = sha256_bytes(canonical_json_bytes({
+                key: value for key, value in manifest.items() if key != "attempt_sha256"
+            }))
+            (target / "attempt.json").write_bytes(canonical_json_bytes(manifest))
+
+            with self.assertRaisesRegex(AttemptError, "ATTEMPT_REPLAY_ARTIFACT_MISMATCH"):
+                validate_measurement_attempt(attempt_root=target)
+
     def test_formal_cli_writes_one_clean_all_eleven_attempt_and_refuses_regeneration(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

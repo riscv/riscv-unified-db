@@ -14,6 +14,10 @@ from typing import Any
 from specchoice_evidence.bundle import BundleError, _publish_directory_no_replace, _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 
+from .adapter import build_pr2164_adapter_batch
+from .preflight import preflight_prediction_batch
+from .scoring import score_prediction_batch
+
 
 class AttemptError(ValueError):
     """Stable custody or validation diagnostic for a terminal attempt."""
@@ -26,6 +30,11 @@ _ATTEMPT_KEYS = frozenset({
 _SCORE_ARTIFACTS = ("case-outcomes.json", "metrics.json", "report.json")
 _BASE_ARTIFACTS = ("diagnostics.json", "parsed-predictions.json")
 _VALID_ROLES = frozenset({"formal", "diagnostic_only", "invalid_preflight", "completed_with_warnings"})
+_ROOT = Path(__file__).parents[2]
+_BUNDLE = _ROOT / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+_AUTHORITY = _ROOT / "phase2/source-authority.json"
+_RULES = _ROOT / "config/measurement/pr2164-adapter-rules-v1.json"
+_SCHEMA = _ROOT / "config/measurement/canonical-adjudication-schema-v1.json"
 
 
 def _attempt_target(attempt_root: Path, attempt_id: str) -> Path:
@@ -177,6 +186,35 @@ def _canonical_manifest(path: Path) -> dict[str, object]:
     return manifest
 
 
+def _verify_replay(*, manifest: dict[str, object], attempt_root: Path, raw: bytes) -> None:
+    """Derive every terminal artifact from the bound raw input and current custody roots."""
+    batch = build_pr2164_adapter_batch(authority_path=_AUTHORITY, bundle_root=_BUNDLE, rules_path=_RULES)
+    if not batch.valid:
+        raise AttemptError("ATTEMPT_REPLAY_ADAPTER_INVALID")
+    bindings = manifest["bindings"]
+    assert isinstance(bindings, dict)
+    ingress = bindings.get("ingress")
+    if not isinstance(ingress, str):
+        raise AttemptError("ATTEMPT_BINDINGS_INVALID")
+    expected_bindings = _bindings(
+        {"adapter_batch": batch, "schema_path": _SCHEMA, "ingress": ingress}, raw
+    )
+    if bindings != expected_bindings:
+        raise AttemptError("ATTEMPT_BINDINGS_INVALID")
+    preflight = preflight_prediction_batch(raw=raw, adapter_batch=batch, ingress=ingress)
+    score = score_prediction_batch(adapter_batch=batch, preflight=preflight, mode="formal")
+    mode = "diagnostic_only" if manifest["role"] == "diagnostic_only" else "formal"
+    role, status = _terminal_role(mode=mode, score=score)
+    if (role, status) != (manifest["role"], manifest["status"]):
+        raise AttemptError("ATTEMPT_REPLAY_TERMINAL_MISMATCH")
+    expected_payloads = _artifact_payloads(
+        inputs={"preflight": preflight, "score_result": score}, role=role, status=status
+    )
+    for name, payload in expected_payloads.items():
+        if (attempt_root / name).read_bytes() != canonical_json_bytes(payload):
+            raise AttemptError("ATTEMPT_REPLAY_ARTIFACT_MISMATCH")
+
+
 def validate_measurement_attempt(*, attempt_root: Path) -> dict[str, object]:
     """Validate raw-byte recovery, non-cyclic manifest digest, and every sibling binding."""
     manifest = _canonical_manifest(attempt_root / "attempt.json")
@@ -215,4 +253,5 @@ def validate_measurement_attempt(*, attempt_root: Path) -> dict[str, object]:
             raise AttemptError("ATTEMPT_ARTIFACT_INVALID") from error
         if canonical_json_bytes(parsed) != content or identity.get("sha256") != sha256_bytes(content) or identity.get("byte_length") != len(content):
             raise AttemptError("ATTEMPT_ARTIFACT_HASH_MISMATCH")
+    _verify_replay(manifest=manifest, attempt_root=attempt_root, raw=raw)
     return {"attempt_sha256": manifest["attempt_sha256"], "role": role, "status": status}
