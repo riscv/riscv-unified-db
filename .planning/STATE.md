@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: Deterministic Measurement Spine
 status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-07-31T17:28:21.093Z"
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-07-31T18:03:44.273Z"
 last_activity: 2026-07-31
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 02 (Deterministic Measurement Spine) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-07-31 — Phase 02 execution started
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [████████░░] 83%
 | Phase 02 P01 | 7m | 2 tasks | 6 files |
 | Phase 02 P02 | 6min | 2 tasks | 5 files |
 | Phase 02 P03 | 7m | 2 tasks | 5 files |
+| Phase 02 P04 | 29min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Invalid preflight exposes sorted diagnostics and raw hash only; score-bearing parsed predictions are withheld.
 - [Phase ?]: Formal metrics require one exact all-11 preflight identity; partial and diagnostic-only results publish no metrics.
 - [Phase ?]: Every frozen adversarial mutation asserts complete stable diagnostics including a finding identity when a scoring finding exists.
+- [Phase ?]: Formal measurement authority is limited to a clean accepted-v2 all-11 attempt; warning, invalid, and diagnostic-only material cannot be promoted.
+- [Phase ?]: The adversarial report records only exact frozen diagnostics and diagnostic-only custody hashes; it emits neither metrics nor H1 disposition.
 
 ### Pending Todos
 
@@ -114,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-31T17:28:21.084Z
-Stopped at: Completed 02-03-PLAN.md
-Resume file: .planning/phases/02-deterministic-measurement-spine/02-04-PLAN.md
+Last session: 2026-07-31T18:03:44.264Z
+Stopped at: Completed 02-04-PLAN.md
+Resume file: None
