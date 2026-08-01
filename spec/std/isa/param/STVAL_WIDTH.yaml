@@ -10,10 +10,11 @@ description: |
   The number of implemented bits in `stval`.
 
   Must be greater than or equal to _max_(`PHYS_ADDR_WIDTH`, `VA_SIZE`)
-long_name: TODO
+long_name: "`stval` implemented bits"
 schema:
   type: integer
-  maximum: 18446744073709551615
+  minimum: 0
+  maximum: 64
 definedBy:
   extension:
     name: S

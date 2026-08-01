@@ -80,6 +80,9 @@ version should be released.  Follow these steps:
 . The CI `schema-release` workflow will automatically publish the new version
   as a GitHub release under the tag `schemas/<schema_name>/<version>` when the
   changes are merged to `main`.
+. Published schema version assets are immutable. If a release already exists
+  with different content, the publish workflow fails; bump the schema `$id`
+  instead of overwriting an existing version.
 . Previous schema versions remain available via their GitHub release tags and
   at `https://riscv.github.io/riscv-unified-db/schemas/<schema_name>/<old-version>/<schema_name>`.
 
