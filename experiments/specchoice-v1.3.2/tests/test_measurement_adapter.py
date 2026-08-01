@@ -5,12 +5,15 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from dataclasses import replace
 from pathlib import Path
+from unittest import mock
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_measurement import adapter
 from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch, validate_complete_adapter_batch
 
 
@@ -62,7 +65,7 @@ class MeasurementAdapterTests(unittest.TestCase):
             first = root / "first.json"
             second = root / "second.json"
             command = [
-                "python3", "-m", "specchoice_measurement.cli", "adapt-pr2164",
+                sys.executable, "-m", "specchoice_measurement.cli", "adapt-pr2164",
                 "--authority", self.authority.as_posix(),
                 "--bundle", self.bundle.as_posix(),
                 "--rules", self.rules.as_posix(),
@@ -159,7 +162,7 @@ class MeasurementAdapterTests(unittest.TestCase):
             output.write_text("preserve me", encoding="utf-8")
             result = subprocess.run(
                 [
-                    "python3", "-m", "specchoice_measurement.cli", "adapt-pr2164",
+                    sys.executable, "-m", "specchoice_measurement.cli", "adapt-pr2164",
                     "--authority", self.authority.as_posix(), "--bundle", self.bundle.as_posix(),
                     "--rules", self.rules.as_posix(), "--output", output.as_posix(),
                 ],
@@ -179,6 +182,41 @@ class MeasurementAdapterTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertTrue(broken.is_symlink())
+
+    def test_public_builder_preserves_conflict_provenance(self) -> None:
+        valid = self.build()
+        record = next(item for item in valid.records if item.fixture_id == "POS_CSR_RW_MTVEC_ACCESS")
+        hashes = {
+            item.role: item.sha256
+            for item in record.raw_files
+            if item.role in {"fixture_expected", "fixture_gold"}
+        }
+        original = adapter._bounded_yaml_fields
+
+        def conflicting_gold(raw: bytes, *, source: str) -> dict[str, object]:
+            fields = original(raw, source=source)
+            if source == "POS_CSR_RW_MTVEC_ACCESS:gold":
+                return {**fields, "name": "FORGED_MTVEC_ACCESS"}
+            return fields
+
+        with mock.patch("specchoice_measurement.adapter._bounded_yaml_fields", side_effect=conflicting_gold):
+            invalid = self.build()
+
+        self.assertFalse(invalid.valid)
+        self.assertEqual(invalid.records, ())
+        self.assertEqual(invalid.source_identity, valid.source_identity)
+        self.assertEqual(
+            invalid.diagnostics[0].as_dict(),
+            {
+                "code": "GOLD_NAME_MISMATCH",
+                "expected": record.original_score_bearing["gold_name"],
+                "field": "gold_name",
+                "fixture_id": "POS_CSR_RW_MTVEC_ACCESS",
+                "observed": "FORGED_MTVEC_ACCESS",
+                "severity": "blocker",
+                "source_hashes": hashes,
+            },
+        )
 
 
 if __name__ == "__main__":

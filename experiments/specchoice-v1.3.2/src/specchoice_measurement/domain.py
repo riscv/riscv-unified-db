@@ -19,6 +19,7 @@ class Diagnostic:
     expected: object | None = None
     observed: object | None = None
     source_sha256: str | None = None
+    source_hashes: dict[str, str] | None = None
 
     def sort_key(self) -> tuple[int, str, str, str, int]:
         return ({"blocker": 0, "warning": 1}[self.severity], self.code, self.fixture_id, self.field, self.occurrence)

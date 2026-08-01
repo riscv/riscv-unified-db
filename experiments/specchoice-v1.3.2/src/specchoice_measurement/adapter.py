@@ -20,6 +20,10 @@ from .domain import AdapterBatch, CanonicalFixtureRecord, Diagnostic, RawFileIde
 class AdapterError(ValueError):
     """Stable error for bounded score-bearing fixture syntax."""
 
+    def __init__(self, code: str, *, diagnostic: Diagnostic | None = None) -> None:
+        super().__init__(code)
+        self.diagnostic = diagnostic
+
 
 EXPECTED_FIELDS = {
     "candidate_or_negative": ["expect_extract", "expect_params", "id"],
@@ -177,7 +181,21 @@ def _record_from_fixture(
             raise AdapterError("POSITIVE_SCORE_FIELDS_INVALID")
         gold = _bounded_yaml_fields(gold_raw, source=f"{fixture_id}:gold")
         if gold.get("name") != expected["gold_name"]:
-            raise AdapterError("GOLD_NAME_MISMATCH")
+            raise AdapterError(
+                "GOLD_NAME_MISMATCH",
+                diagnostic=Diagnostic(
+                    code="GOLD_NAME_MISMATCH",
+                    severity="blocker",
+                    fixture_id=fixture_id,
+                    field="gold_name",
+                    expected=expected["gold_name"],
+                    observed=gold.get("name"),
+                    source_hashes={
+                        "fixture_expected": next(item.sha256 for item in raw_files if item.role == "fixture_expected"),
+                        "fixture_gold": next(item.sha256 for item in raw_files if item.role == "fixture_gold"),
+                    },
+                ),
+            )
         names = (str(gold["name"]),)
         score_fields.update({"gold_name": expected["gold_name"], "gold_name_verified": gold["name"], "must_have_excerpt": evidence_required})
     elif "fixture_gold" in contents or expected_count != 0:
@@ -293,14 +311,14 @@ def validate_complete_adapter_batch(
 
 
 def _invalid_batch(
-    *, adapter_version: str, rule_sha256: str, source_identity: dict[str, str], code: str
+    *, adapter_version: str, rule_sha256: str, source_identity: dict[str, str], code: str, diagnostic: Diagnostic | None = None
 ) -> AdapterBatch:
     return AdapterBatch.from_parts(
         adapter_version=adapter_version,
         rule_sha256=rule_sha256,
         source_identity=source_identity,
         records=(),
-        diagnostics=(Diagnostic(code=code, severity="blocker"),),
+        diagnostics=(diagnostic or Diagnostic(code=code, severity="blocker"),),
     )
 
 
@@ -314,6 +332,7 @@ def build_pr2164_adapter_batch(*, authority_path: Path, bundle_root: Path, rules
         raise AdapterError("ADAPTER_RULES_INVALID")
     adapter_version = rules["adapter_version"]
     rule_sha256 = sha256_bytes(rules_raw)
+    source_identity: dict[str, str] = {}
     try:
         _validate_phase2_authority(authority_path, bundle_root)
         authority, _ = _load_canonical_json(authority_path, "PHASE2_SOURCE_AUTHORITY_INVALID")
@@ -338,8 +357,9 @@ def build_pr2164_adapter_batch(*, authority_path: Path, bundle_root: Path, rules
         return _invalid_batch(
             adapter_version=adapter_version,
             rule_sha256=rule_sha256,
-            source_identity={},
+            source_identity=source_identity,
             code=str(error).split(":", 1)[0],
+            diagnostic=error.diagnostic if isinstance(error, AdapterError) else None,
         )
     return validate_complete_adapter_batch(
         records=records,
