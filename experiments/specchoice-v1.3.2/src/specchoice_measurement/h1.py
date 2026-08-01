@@ -111,7 +111,7 @@ def _expected_bindings(*, formal_attempt: Path, adversarial_report: Path) -> dic
     try:
         formal_summary = validate_measurement_attempt(attempt_root=formal_attempt)
         formal, _ = _read_canonical(formal_attempt / "attempt.json", "H1_FORMAL_ATTEMPT_INVALID")
-        adversarial = validate_adversarial_report(report_path=adversarial_report)
+        adversarial = validate_adversarial_report(report_path=adversarial_report, formal_attempt=formal_attempt)
     except (AttemptError, ValueError, OSError) as error:
         raise H1Error("H1_EVIDENCE_INVALID") from error
     if (formal_summary.get("role"), formal_summary.get("status")) != ("formal", "completed") or (

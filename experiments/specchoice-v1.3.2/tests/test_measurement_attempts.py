@@ -254,7 +254,7 @@ class MeasurementAttemptTests(unittest.TestCase):
                 report=report,
             )
             self.assertEqual(command_run_adversarial_oracles(args), 0)
-            payload = validate_adversarial_report(report_path=report)
+            payload = validate_adversarial_report(report_path=report, formal_attempt=args.formal_attempt)
             self.assertEqual(payload["status"], "diagnostic_only")
             self.assertEqual(len(payload["cases"]), 12)
             self.assertTrue(all(case["role"] == "diagnostic_only" and case["matched"] for case in payload["cases"]))
@@ -268,7 +268,7 @@ class MeasurementAttemptTests(unittest.TestCase):
                 tampered["cases"][0]["attempt_id"] = attempt_id
                 report.write_bytes(canonical_json_bytes(tampered))
                 with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
-                    validate_adversarial_report(report_path=report)
+                    validate_adversarial_report(report_path=report, formal_attempt=args.formal_attempt)
 
             assert_invalid_attempt_id(str((attempt_root / "oracle-01").resolve()))
 
@@ -285,7 +285,7 @@ class MeasurementAttemptTests(unittest.TestCase):
                 owned.symlink_to(external)
                 report.write_bytes(canonical_json_bytes(original_payload))
                 with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
-                    validate_adversarial_report(report_path=report)
+                    validate_adversarial_report(report_path=report, formal_attempt=args.formal_attempt)
                 owned.unlink()
                 shutil.copy2(external, owned)
 
@@ -293,11 +293,31 @@ class MeasurementAttemptTests(unittest.TestCase):
             (attempt_root / "oracle-01").symlink_to(outside / "oracle-01", target_is_directory=True)
             report.write_bytes(canonical_json_bytes(original_payload))
             with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
-                validate_adversarial_report(report_path=report)
+                validate_adversarial_report(report_path=report, formal_attempt=args.formal_attempt)
 
             with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
                 report.write_bytes(canonical_json_bytes({"status": "formal"}))
-                validate_adversarial_report(report_path=report)
+                validate_adversarial_report(report_path=report, formal_attempt=args.formal_attempt)
+
+    def test_adversarial_report_rejects_forged_formal_attempt_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "adversarial-oracle-results-v2.json"
+            source = self.experiment_root / "reports/h1/adversarial-oracle-results-v2.json"
+            shutil.copy2(source, report)
+            shutil.copytree(
+                source.parent / "adversarial-oracle-results-v2-attempts",
+                root / "adversarial-oracle-results-v2-attempts",
+            )
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            payload["bindings"]["formal_attempt_sha256"] = "0" * 64
+            report.write_bytes(canonical_json_bytes(payload))
+
+            with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
+                validate_adversarial_report(
+                    report_path=report,
+                    formal_attempt=self.experiment_root / "runs/measurement-attempts/formal-golden-pr2164-v1",
+                )
 
 
 if __name__ == "__main__":

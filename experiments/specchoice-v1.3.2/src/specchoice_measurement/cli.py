@@ -236,13 +236,19 @@ def command_run_adversarial_oracles(args: argparse.Namespace) -> int:
         _sync_directory(args.report.parent)
     except FileExistsError as error:
         raise AttemptError("ADVERSARIAL_REPORT_EXISTS") from error
-    validate_adversarial_report(report_path=args.report)
+    validate_adversarial_report(report_path=args.report, formal_attempt=args.formal_attempt)
     sys.stdout.buffer.write(canonical_json_bytes({"oracle_sha256": report["oracle_sha256"], "status": report["status"]}))
     return 0
 
 
-def validate_adversarial_report(*, report_path: Path) -> dict[str, object]:
+def validate_adversarial_report(*, report_path: Path, formal_attempt: Path) -> dict[str, object]:
     """Validate the closed, canonical diagnostic-only report against the frozen oracle."""
+    try:
+        formal = validate_measurement_attempt(attempt_root=formal_attempt)
+    except (AttemptError, OSError, ValueError) as error:
+        raise AttemptError("ADVERSARIAL_REPORT_INVALID") from error
+    if (formal.get("role"), formal.get("status")) != ("formal", "completed"):
+        raise AttemptError("ADVERSARIAL_REPORT_INVALID")
     report, _ = _canonical_object(report_path, "ADVERSARIAL_REPORT_INVALID")
     expected_keys = {"bindings", "cases", "oracle_sha256", "schema_version", "status"}
     if set(report) != expected_keys or report.get("schema_version") != "adversarial-oracle-results-v2" or report.get("status") != "diagnostic_only":
@@ -261,7 +267,7 @@ def validate_adversarial_report(*, report_path: Path) -> dict[str, object]:
     )
     bindings = report.get("bindings")
     if not batch.valid or not isinstance(bindings, dict) or bindings != _adversarial_bindings(
-        batch=batch, schema=schema_path, golden_raw=golden_raw, formal_attempt_sha256=str(bindings.get("formal_attempt_sha256"))
+        batch=batch, schema=schema_path, golden_raw=golden_raw, formal_attempt_sha256=str(formal["attempt_sha256"])
     ):
         raise AttemptError("ADVERSARIAL_REPORT_INVALID")
     expected_entries = oracle.get("oracles")
@@ -306,7 +312,9 @@ def validate_adversarial_report(*, report_path: Path) -> dict[str, object]:
 
 
 def command_validate_adversarial_report(args: argparse.Namespace) -> int:
-    sys.stdout.buffer.write(canonical_json_bytes(validate_adversarial_report(report_path=args.report)))
+    sys.stdout.buffer.write(
+        canonical_json_bytes(validate_adversarial_report(report_path=args.report, formal_attempt=args.formal_attempt))
+    )
     return 0
 
 
@@ -364,6 +372,7 @@ def build_parser() -> argparse.ArgumentParser:
     adversarial.set_defaults(handler=command_run_adversarial_oracles)
     validate_adversarial = commands.add_parser("validate-adversarial-report")
     validate_adversarial.add_argument("--report", type=Path, required=True)
+    validate_adversarial.add_argument("--formal-attempt", type=Path, required=True)
     validate_adversarial.set_defaults(handler=command_validate_adversarial_report)
     h1_build = commands.add_parser("build-h1-packet")
     h1_build.add_argument("--formal-attempt", type=Path, required=True)
