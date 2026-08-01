@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from specchoice_evidence.canonical import sha256_bytes
-from specchoice_evidence.filesystem import FilesystemPolicyError, inspect_authoritative_path, require_relative_posix_path
+from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file, require_relative_posix_path
 
 from .diagnostics import Diagnostic, ordered_diagnostics
 from .strict_json import DuplicateKeyError, decode_strict_json, validate_current_payload
@@ -48,10 +48,9 @@ def _source_bytes_by_fixture(adapter_batch: object) -> dict[str, dict[str, bytes
                 continue
             try:
                 relative = require_relative_posix_path(raw_file.path)
-                evidence = inspect_authoritative_path(root, relative.as_posix())
+                evidence, raw = read_authoritative_file(root, relative.as_posix())
                 if evidence.file_kind != "regular_file" or evidence.sha256 != raw_file.sha256:
                     continue
-                raw = (root / relative).read_bytes()
             except (FilesystemPolicyError, OSError, ValueError):
                 continue
             if sha256_bytes(raw) == raw_file.sha256:

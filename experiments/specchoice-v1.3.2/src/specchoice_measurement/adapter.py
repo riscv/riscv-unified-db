@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from specchoice_evidence.canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
-from specchoice_evidence.filesystem import FilesystemPolicyError, inspect_authoritative_path, require_relative_posix_path
+from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file, require_relative_posix_path
 from specchoice_evidence.verify import verify_accepted_bundle
 
 from .domain import AdapterBatch, CanonicalFixtureRecord, Diagnostic, RawFileIdentity
@@ -121,14 +121,13 @@ def _raw_identity(bundle_root: Path, declared: dict[str, Any]) -> tuple[RawFileI
     path = declared.get("local_bundle_path")
     try:
         require_relative_posix_path(path)
-        evidence = inspect_authoritative_path(bundle_root, path)
+        evidence, raw = read_authoritative_file(bundle_root, path)
         expected_length = require_byte_length(declared.get("raw_byte_length"))
         expected_hash = require_sha256(declared.get("raw_sha256"))
-    except (FilesystemPolicyError, ValueError, TypeError) as error:
+    except (FilesystemPolicyError, OSError, ValueError, TypeError) as error:
         raise AdapterError("RAW_PATH_OR_IDENTITY_INVALID") from error
     if evidence.file_kind != "regular_file" or evidence.byte_length != expected_length or evidence.sha256 != expected_hash:
         raise AdapterError("RAW_IDENTITY_MISMATCH")
-    raw = (bundle_root / path).read_bytes()
     if len(raw) != expected_length or sha256_bytes(raw) != expected_hash:
         raise AdapterError("RAW_IDENTITY_CHANGED_DURING_READ")
     return RawFileIdentity(path=path, role=str(declared["role"]), byte_length=expected_length, sha256=expected_hash), raw

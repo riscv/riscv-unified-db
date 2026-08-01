@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -13,6 +14,8 @@ from pathlib import Path
 from unittest import mock
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence import filesystem
+from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 from specchoice_measurement import adapter
 from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch, validate_complete_adapter_batch
 
@@ -217,6 +220,50 @@ class MeasurementAdapterTests(unittest.TestCase):
                 "source_hashes": hashes,
             },
         )
+
+    def test_public_builder_rejects_swapped_raw_leaf_and_fifo_without_consuming_or_blocking(self) -> None:
+        """The public builder must consume only bytes returned by the custody helper."""
+        real_open = filesystem.os.open
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            leaf = root / "raw.yaml"
+            external = root / "external.yaml"
+            external.write_text("sentinel: external\n", encoding="utf-8")
+            for kind in ("symlink", "fifo"):
+                with self.subTest(kind=kind):
+                    leaf.write_text("safe: raw\n", encoding="utf-8")
+                    opened = False
+
+                    def guarded_open(path, flags, *args, **kwargs):
+                        nonlocal opened
+                        if Path(path) != leaf:
+                            return real_open(path, flags, *args, **kwargs)
+                        opened = True
+                        if kind == "symlink":
+                            leaf.unlink()
+                            leaf.symlink_to(external)
+                            return real_open(path, flags, *args, **kwargs)
+                        self.fail("FIFO target reached os.open")
+
+                    if kind == "fifo":
+                        leaf.unlink()
+                        os.mkfifo(leaf)
+                    with mock.patch("specchoice_evidence.filesystem.os.open", side_effect=guarded_open):
+                        with self.assertRaises((FilesystemPolicyError, OSError)):
+                            read_authoritative_file(root, leaf.name)
+                    self.assertEqual(opened, kind == "symlink")
+                    if leaf.is_symlink() or leaf.exists():
+                        leaf.unlink()
+
+        with mock.patch(
+            "specchoice_measurement.adapter.read_authoritative_file",
+            side_effect=FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED"),
+            create=True,
+        ):
+            invalid = self.build()
+        self.assertFalse(invalid.valid)
+        self.assertEqual(invalid.records, ())
+        self.assertEqual(invalid.diagnostics[0].code, "RAW_PATH_OR_IDENTITY_INVALID")
 
 
 if __name__ == "__main__":

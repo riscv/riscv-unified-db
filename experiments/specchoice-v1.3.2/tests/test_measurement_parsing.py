@@ -4,12 +4,18 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 import unittest
 from copy import deepcopy
 from pathlib import Path
 
 from specchoice_measurement.adapter import build_pr2164_adapter_batch
+from specchoice_measurement import preflight
 from specchoice_measurement.preflight import preflight_prediction_batch
+from specchoice_evidence import filesystem
+from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
+from unittest import mock
 
 
 class MeasurementParsingTests(unittest.TestCase):
@@ -193,6 +199,65 @@ class MeasurementParsingTests(unittest.TestCase):
         self.assertEqual(
             json.dumps([item.as_dict() for item in left.diagnostics], sort_keys=True, separators=(",", ":")),
             json.dumps([item.as_dict() for item in right.diagnostics], sort_keys=True, separators=(",", ":")),
+        )
+
+    def test_public_preflight_rejects_swapped_fixture_source_and_fifo_without_consuming_or_blocking(self) -> None:
+        """Preflight source bytes must originate at the descriptor-bound read seam."""
+        real_open = filesystem.os.open
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            leaf = root / "source.yaml"
+            external = root / "external.yaml"
+            external.write_text("sentinel: external\n", encoding="utf-8")
+            for kind in ("symlink", "fifo"):
+                with self.subTest(kind=kind):
+                    leaf.write_text("safe: source\n", encoding="utf-8")
+                    opened = False
+
+                    def guarded_open(path, flags, *args, **kwargs):
+                        nonlocal opened
+                        if Path(path) != leaf:
+                            return real_open(path, flags, *args, **kwargs)
+                        opened = True
+                        if kind == "symlink":
+                            leaf.unlink()
+                            leaf.symlink_to(external)
+                            return real_open(path, flags, *args, **kwargs)
+                        self.fail("FIFO target reached os.open")
+
+                    if kind == "fifo":
+                        leaf.unlink()
+                        os.mkfifo(leaf)
+                    with mock.patch("specchoice_evidence.filesystem.os.open", side_effect=guarded_open):
+                        with self.assertRaises((FilesystemPolicyError, OSError)):
+                            read_authoritative_file(root, leaf.name)
+                    self.assertEqual(opened, kind == "symlink")
+                    if leaf.is_symlink() or leaf.exists():
+                        leaf.unlink()
+
+        target = next(
+            item.path
+            for record in self.batch.records
+            for item in record.raw_files
+            if item.role == "fixture_source"
+        )
+
+        def reject_target(root: Path, relative: str):
+            if relative == target:
+                raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+            return read_authoritative_file(root, relative)
+
+        with mock.patch(
+            "specchoice_measurement.preflight.read_authoritative_file",
+            side_effect=reject_target,
+            create=True,
+        ):
+            result = self.preflight(self.payload())
+        self.assertEqual(result.status, "invalid_preflight")
+        self.assertEqual(result.parsed_predictions, ())
+        self.assertIn(
+            "EVIDENCE_SOURCE_UNKNOWN",
+            {item.code for item in result.diagnostics},
         )
 
 
