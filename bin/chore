@@ -112,7 +112,7 @@ gen_subcmd_usage() {
   echo "  regress:       Generate .github/workflows/regress.yml"
   echo "  ruby-type-def: Generate Ruby type signatutres"
   echo "  schema-docs:   Generate schema documentation from JSON Schema files"
-  echo "  cfg-headers:   Generate golden cfg header files for regression testing"
+  echo "  cfg-headers:   Generate golden cfg files (C/SV headers, GDB target description)"
   echo "  xqci           Generate Xqci spec used for Golden regressions"
   echo "  udb-gen:       Generate test case fixtures for udb-gen"
   echo ""
@@ -435,7 +435,8 @@ do_gen_xqci_golden() {
 }
 
 #
-# Generate golden cfg header files (C and SystemVerilog) for regression testing
+# Generate golden per-config files (C header, SystemVerilog header, GDB target
+# description) for regression testing
 # Returns: 0 on success, 1 if files changed (when fail_on_change=1)
 #
 do_gen_cfg_headers_golden() {
@@ -447,19 +448,21 @@ do_gen_cfg_headers_golden() {
   # Capture the state before generation
   local before_hash=""
   if [ -d "$golden_dir" ]; then
-    before_hash=$(find "$golden_dir" -type f \( -name "${cfg}.golden.h" -o -name "${cfg}.golden.svh" \) -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+    before_hash=$(find "$golden_dir" -type f \( -name "${cfg}.golden.h" -o -name "${cfg}.golden.svh" -o -name "${cfg}.golden.xml" \) -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
   fi
 
   mkdir -p "$gen_dir" "$golden_dir"
   "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-c-header -c "$cfg" -o "${gen_dir}/${cfg}.h"
   "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-svh-header -c "$cfg" -o "${gen_dir}/${cfg}.svh"
+  "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-gdb-xml -c "$cfg" -o "${gen_dir}/${cfg}.xml"
   cp "${gen_dir}/${cfg}.h" "${golden_dir}/${cfg}.golden.h"
   cp "${gen_dir}/${cfg}.svh" "${golden_dir}/${cfg}.golden.svh"
+  cp "${gen_dir}/${cfg}.xml" "${golden_dir}/${cfg}.golden.xml"
 
   if [ $fail_on_change -eq 1 ]; then
     local after_hash=""
     if [ -d "$golden_dir" ]; then
-      after_hash=$(find "$golden_dir" -type f \( -name "${cfg}.golden.h" -o -name "${cfg}.golden.svh" \) -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
+      after_hash=$(find "$golden_dir" -type f \( -name "${cfg}.golden.h" -o -name "${cfg}.golden.svh" -o -name "${cfg}.golden.xml" \) -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
     fi
 
     if [ "$before_hash" != "$after_hash" ]; then
