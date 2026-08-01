@@ -6,7 +6,7 @@
 $schema: "csr_schema.json#"
 kind: csr
 name: vstvec
-long_name: Supervisor Trap Vector
+long_name: Virtual Supervisor Trap Vector
 address: 0x205
 writable: true
 virtual_address: 0x105
@@ -20,10 +20,10 @@ fields:
   BASE:
     location: 63-2
     description: |
-      <%- va_size = ext?(:Sv57) ? 57 : (ext?(:Sv48) ? 49 :39) -%>
-      Bit 63:0 of the virtual address of the exception vector for any trap taken into VS-mode.
+      <%- va_size = ext?(:Sv57) ? 57 : (ext?(:Sv48) ? 48 : 39) -%>
+      Bits 63:2 of the virtual address of the exception vector for any trap taken into VS-mode.
 
-      If the base address is written with a non-cannonical address (_i.e._, bits 63:<%= va_size %> do not match bit <%= va_size-1 %>),
+      If the base address is written with a non-canonical address (_i.e._, bits 63:<%= va_size %> do not match bit <%= va_size-1 %>),
       the write should be ignored.
 
     type: RW-R

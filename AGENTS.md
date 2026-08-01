@@ -101,7 +101,7 @@ The `Udb::Resolver` class is the entry point: `resolver.cfg_arch_for("rv64")` re
 
 ### ISA Description Language (IDL)
 
-IDL is a domain-specific language (C/Verilog-like syntax) used to formally describe instruction behavior and CSR semantics. IDL code appears in `operation():` fields of instruction YAML files and in CSR YAML files.
+IDL is a domain-specific language with a C/Verilog-like syntax used to formally describe instruction behavior, CSR semantics, and other semantics difficult to express solely in YAML. The IDL language documentation is in `doc/docs/idl`. IDL code appears primarily in `operation():` fields of instruction YAML files and other fields with tags that end in "()".
 
 IDL is compiled by the `idlc` gem. The compiler performs type checking and can generate AsciiDoc documentation, option analysis, and other passes. Key types: `Bits<N>`, `XReg` (alias for `Bits<MXLEN>`), `Boolean`, enums, bitfields, structs.
 

@@ -111,7 +111,11 @@ fields:
     long_name: Guest Virtual Address
     description: |
       When a trap is taken and a guest virtual address is written into mtval, GVA is set.
-      When a trap is taken and a guest virtual address is written into mtval, GVA is cleared.
+      GVA is written by the implementation whenever a trap is taken into
+      HS mode. For any trap (breakpoint, address misaligned, access fault,
+      page fault, or guest-page fault) that writes a guest virtual address to
+      `stval`, GVA is set to 1. For any other trap into HS-mode,
+      GVA is set to 0.
     type: RW-H
     reset_value: 0
     definedBy:
