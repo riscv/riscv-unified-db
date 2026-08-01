@@ -7,6 +7,19 @@ next_command: "/gsd:plan-phase 02 --gaps"
 score: "32/35 must-haves verified"
 behavior_unverified: 0
 overrides_applied: 0
+overrides:
+  - must_have: "No Phase 1 custody module, accepted bundle byte, registry byte, source-authority byte, core UDB schema, generated data, model, external API, publication state, or remote repository is modified."
+    reason: "Accepted only for commit 9d641ec8 in experiments/specchoice-v1.3.2/src/specchoice_evidence/filesystem.py: its descriptor-bound read_authoritative_file() single-descriptor leaf-read TOCTOU hardening. No other Phase 1 file, custody weakening, semantic rewrite, evidence mutation, authority expansion, remote/publication action, modification, or exception is accepted."
+    accepted_by: "developer"
+    accepted_at: "2026-08-01T07:25:55.903Z"
+  - must_have: "The focused four-module pre-H1 suite passes without modifying or weakening any Phase 1 custody module, accepted byte, source-authority record, or live-boundary assertion."
+    reason: "Accepted only for commit 9d641ec8 in experiments/specchoice-v1.3.2/src/specchoice_evidence/filesystem.py: its descriptor-bound read_authoritative_file() single-descriptor leaf-read TOCTOU hardening. No other Phase 1 file, custody weakening, semantic rewrite, evidence mutation, authority expansion, remote/publication action, modification, or exception is accepted."
+    accepted_by: "developer"
+    accepted_at: "2026-08-01T07:25:55.903Z"
+  - must_have: "The final five-module focused Phase 2 suite passes without modifying or weakening any Phase 1 custody module, accepted byte, source-authority record, or live-boundary assertion."
+    reason: "Accepted only for commit 9d641ec8 in experiments/specchoice-v1.3.2/src/specchoice_evidence/filesystem.py: its descriptor-bound read_authoritative_file() single-descriptor leaf-read TOCTOU hardening. No other Phase 1 file, custody weakening, semantic rewrite, evidence mutation, authority expansion, remote/publication action, modification, or exception is accepted."
+    accepted_by: "developer"
+    accepted_at: "2026-08-01T07:25:55.903Z"
 gaps:
   - truth: "Phase 2 does not modify any Phase 1 custody module."
     status: failed
