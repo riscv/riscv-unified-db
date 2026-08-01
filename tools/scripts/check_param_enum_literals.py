@@ -42,6 +42,19 @@ SPEC_ROOT = ROOT / "spec"
 # Safe loader shared with other UDB Python tooling (see tools/python/udb.py).
 YAML_SAFE = YAML(typ="safe")
 
+
+def repo_paths(root: Path) -> tuple[Path, Path]:
+    """Return (param_dir, spec_root) for a repository root.
+
+    Uses module globals PARAM_DIR / SPEC_ROOT when ``root`` is this checkout,
+    so the default path is not re-derived by string concatenation in main().
+    """
+    root = root.resolve()
+    if root == ROOT:
+        return PARAM_DIR, SPEC_ROOT
+    return root / "spec" / "std" / "isa" / "param", root / "spec"
+
+
 # PARAM == "literal" or PARAM != 'literal'
 # group(1) = parameter name
 # group(2) = operator (== or !=)
@@ -146,8 +159,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root: Path = args.root.resolve()
 
-    param_dir = root / "spec" / "std" / "isa" / "param"
-    spec_root = root / "spec"
+    param_dir, spec_root = repo_paths(root)
 
     if not param_dir.is_dir():
         print(f"ERROR: param directory not found: {param_dir}", file=sys.stderr)

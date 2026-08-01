@@ -183,6 +183,11 @@ class TestCheckParamEnumLiterals(unittest.TestCase):
             # param path missing too → still 2 (param checked first)
             self.assertEqual(self.mod.main(["--root", str(root)]), 2)
 
+    def test_repo_paths_uses_globals_for_default_root(self):
+        param_dir, spec_root = self.mod.repo_paths(self.mod.ROOT)
+        self.assertEqual(param_dir, self.mod.PARAM_DIR)
+        self.assertEqual(spec_root, self.mod.SPEC_ROOT)
+
 
 if __name__ == "__main__":
     unittest.main()
