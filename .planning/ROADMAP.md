@@ -70,7 +70,7 @@ Plans:
 
 ### Phase 2: Deterministic Measurement Spine
 
-**Goal:** The reviewer can trust the experiment's adjudication semantics and diagnostics before any frame, retrieval, or model result is considered.
+**Goal:** As a human RISC-V reviewer, I want to trust the experiment's adjudication semantics and diagnostics, so that I can review the measurement spine before any frame, retrieval, or model result is considered.
 **Mode:** mvp
 **Depends on:** Phase 1
 **Requirements:** TS-03, TS-04, TS-05
