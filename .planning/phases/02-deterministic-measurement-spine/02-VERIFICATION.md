@@ -1,21 +1,21 @@
 ---
 phase: 02-deterministic-measurement-spine
-verified: 2026-08-01T17:39:10.535Z
+verified: 2026-08-01T21:09:50Z
 status: gaps_found
-next_action: "Critical implementation gaps found. Plan and implement the fixes, then re-run verification."
+next_action: "Critical custody gaps found. Plan and implement the fixes, then re-run verification."
 next_command: "/gsd:plan-phase 02 --gaps"
-score: "33/35 must-haves verified"
+score: "31/35 must-haves verified"
 behavior_unverified: 0
 overrides_applied: 3
 re_verification:
   previous_status: gaps_found
-  previous_score: "32/35"
+  previous_score: "33/35"
   gaps_closed:
-    - "Phase 2 does not modify any Phase 1 custody module."
-    - "The Phase 2 MVP goal is a valid User Story that can be verified under MVP-mode rules."
+    - "CR-01: adversarial-report formal-attempt lineage now derives from the supplied replay-validated formal/completed attempt."
+    - "CR-02: post-authority adapter source/gold conflicts retain source identity and complete typed provenance."
+    - "WR-01: adapter subprocess tests use sys.executable."
   gaps_remaining:
-    - "An adversarial report must validate its formal-attempt lineage instead of trusting a self-declared digest."
-    - "An adapter source/gold conflict must retain auditable structured provenance and field/value diagnostics."
+    - "Authoritative leaf paths are inspected and then reopened by pathname in H1, preflight, and the adapter."
   regressions: []
 overrides:
   - must_have: "No Phase 1 custody module, accepted bundle byte, registry byte, source-authority byte, core UDB schema, generated data, model, external API, publication state, or remote repository is modified."
@@ -31,54 +31,49 @@ overrides:
     accepted_by: "developer"
     accepted_at: "2026-08-01T07:25:55.903Z"
 gaps:
-  - truth: "A separately validated adversarial report has a verified binding to one completed formal attempt rather than trusting a digest declared by that report."
+  - truth: "Phase 2 consumes only accepted-v2 authoritative bytes through the no-follow custody boundary; a substituted leaf is rejected before any semantic, H1, or evidence-span use."
     status: failed
-    reason: "validate_adversarial_report() reconstructs expected bindings using bindings.formal_attempt_sha256 from the untrusted report itself. It never validates the formal attempt or compares the declared digest with a verified completed formal attempt."
+    reason: "Three consumers inspect a path and then reopen it with Path.read_bytes(). A replacement between those operations can make them consume an external symlink target or block on a FIFO. The existing descriptor-bound read_authoritative_file() is not used on these paths."
     artifacts:
-      - path: "experiments/specchoice-v1.3.2/src/specchoice_measurement/cli.py"
-        issue: "Lines 263-265 self-derive the expected formal digest from report bindings. A canonical temporary v2 report with that value replaced by 64 zeroes still validated successfully."
-      - path: "experiments/specchoice-v1.3.2/tests/test_measurement_attempts.py"
-        issue: "The adversarial-report tests cover case/attempt tampering but contain no formal_attempt_sha256 lineage-tamper regression."
-    missing:
-      - "Validate the one bound formal attempt (or take its path explicitly), require role=formal and status=completed, and derive the expected digest from that verified attempt."
-      - "Add a fail-first regression that changes only formal_attempt_sha256 and requires ADVERSARIAL_REPORT_INVALID."
-  - truth: "A rejected adapter source/gold/expected conflict remains auditable through stable diagnostics containing fixture identity, field, expected/observed values, source hashes, and already-verified source identity."
-    status: failed
-    reason: "The adapter catch-all replaces a record-level AdapterError with _invalid_batch(... source_identity={}, code=...), and _invalid_batch emits only code and severity. The mandated conflict provenance is discarded."
-    artifacts:
+      - path: "experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py"
+        issue: "_read_canonical() (lines 41-52) and validate_h1_packet() (lines 270-287) call inspect_authoritative_path() followed by Path.read_bytes()."
+      - path: "experiments/specchoice-v1.3.2/src/specchoice_measurement/preflight.py"
+        issue: "_source_bytes_by_fixture() (lines 37-59) inspects each fixture source and then reopens it by pathname."
       - path: "experiments/specchoice-v1.3.2/src/specchoice_measurement/adapter.py"
-        issue: "Lines 295-304 construct a diagnostic without fixture_id, field, expected, observed, or source hashes; lines 337-343 replace verified source identity with {}."
-      - path: "experiments/specchoice-v1.3.2/tests/test_measurement_adapter.py"
-        issue: "No regression asserts that a source/gold disagreement preserves full diagnostic provenance."
+        issue: "_raw_identity() (lines 120-134) has the same inspect-then-read sequence for every score-bearing raw file."
     missing:
-      - "Carry a typed conflict diagnostic through AdapterError and retain the verified source identity when publishing the invalid zero-record batch."
-      - "Add a regression for a real source/gold/expected conflict that asserts every required diagnostic field and source hash."
+      - "Replace each authoritative regular-file inspect-then-read sequence with read_authoritative_file(root, relative_path), and parse/use only its returned bytes."
+      - "Add deterministic race regressions that swap a checked H1 packet, Markdown projection, decision, adapter raw leaf, and preflight fixture source immediately before os.open; each must fail closed without consuming external bytes or blocking on a special file."
+human_verification:
+  - test: "Confirm the separately recorded H1 reviewer approval for packet 4482bfe4c28a825e86365420c071ed267afc3d0370ce333e4cdd16916b58c81c."
+    expected: "The approval is an explicit human act for all 11 semantics, is local-Phase-3-only, and does not authorize publication."
+    why_human: "Code proves that an approved JSON decision raises H1_MANUAL_AUTHORIZATION_REQUIRED and that publication is false; it cannot prove who authored an external/manual approval."
 ---
 
 # Phase 2: Deterministic Measurement Spine Verification Report
 
 **Phase Goal:** As a human RISC-V reviewer, I want to trust the experiment's adjudication semantics and diagnostics, so that I can review the measurement spine before any frame, retrieval, or model result is considered.
 
-**Verified:** 2026-08-01T17:39:10.535Z
+**Verified:** 2026-08-01T21:09:50Z
 **Status:** gaps_found  
-**Re-verification:** Yes — after Plan 02-06 governance-gap closure
+**Re-verification:** Yes — after Plans 02-06 and 02-07
 
 ## Escalation Gate
 
-Plan 02-06 genuinely closes the two prior *governance* causes of the `gaps_found` verdict: the three exact custody exceptions are developer-accepted overrides limited to commit `9d641ec8` and `src/specchoice_evidence/filesystem.py`, and the stored MVP goal now passes the centralized user-story validator. Its two task commits modify only the verification report and ROADMAP goal; neither changes `cli.py`, `adapter.py`, or their tests.
+The phase cannot pass. Plan 02-07 genuinely closes the two earlier implementation blockers: the forged formal-attempt digest is rejected when validation receives a real replay-validated formal attempt, and an adapter source/gold conflict keeps the verified source identity and typed provenance while exposing zero records. The focused suite and all stored normal-path artifacts therefore pass.
 
-The current canonical code review is nevertheless `issues_found` with CR-01 and CR-02. Both findings are reproduced below. They prevent a reviewer from trusting diagnostic provenance and an adversarial report's asserted formal lineage. This is an implementation revision gate, not a new authority decision: an H1 approval, a broader override, or a human acknowledgement cannot repair either defect.
+That evidence does not establish the required custody boundary. `read_authoritative_file()` was created to bind path inspection and byte consumption to one `O_NOFOLLOW` descriptor, but Phase 2 still performs inspection and a later path-based read in H1, preflight, and the adapter. A minimal isolated reproduction inspected a regular file, replaced it with a symlink, then read external bytes successfully (`inspect_then_Path.read_bytes=EXTERNAL_BYTES`). This is an observable TOCTOU defect, not an uncertain or cosmetic review concern.
 
 ## User Flow Coverage
 
 | Step | Expected | Evidence in codebase | Status |
 | --- | --- | --- | --- |
-| Inspect frozen source/gold semantics | One active accepted-v2 11-fixture/28-raw interpretation is available. | `validate-phase2-source-authority` returned `status: valid`, `fixture_count: 11`, `raw_file_count: 28`. | ✓ VERIFIED |
-| Inspect deterministic prediction validation | Unknown keys, invalid forms, duplicate conflicts, and noncanonical no-finding forms reject without repair. | `strict_json.py`/preflight/scoring coverage is included in the 59-test focused run. | ✓ VERIFIED |
-| Trace a rejected source/gold conflict | The reviewer receives enough structured diagnostic provenance to identify and reproduce the conflicting evidence. | `adapter.py` intentionally zeroes records, but also discards the field/value/raw-hash and source-identity evidence on this path. | ✗ FAILED — BLOCKER |
-| Inspect adversarial diagnostics | The diagnostic-only report can be independently verified as bound to a completed formal attempt. | A copied canonical v2 report with only `formal_attempt_sha256` changed to 64 zeroes exited 0 from `validate-adversarial-report`. | ✗ FAILED — BLOCKER |
-| Review H1 boundary | H1 remains human-authored, local-only, and cannot authorize publication. | v2 packet validator passed; packet and schema require `external_publication_authorized: false`; focused H1 tests passed. | ✓ VERIFIED |
-| Outcome | Trust the adjudication semantics and diagnostics before later measurement work. | Critical audit/lineage defects above leave two adversarial/error paths untrustworthy. | ✗ FAILED — BLOCKER |
+| Inspect frozen source/gold semantics | One accepted-v2 11-fixture/28-raw interpretation is active. | Source-authority validator returned `status: valid`, `fixture_count: 11`, and `raw_file_count: 28`. | ✓ VERIFIED |
+| Score the canonical golden input | Six positives accept, four negatives remain unsurfaced, and the candidate is surfaced then `classify_out`. | The 61-test focused suite, including scoring tests, passed. | ✓ VERIFIED |
+| Reject malformed canonical input | Unknown keys, invalid enums, duplicate/conflicting inputs, and noncanonical no-findings reject without repair. | Parsing/preflight tests passed; the current schema and named legacy ingress are substantive and wired. | ✓ VERIFIED |
+| Trace diagnostics and evidence | Rejected or warning outcomes are attributable to stable structured fields and accepted source bytes. | Stable diagnostics work on the normal path, but the adapter/preflight can reopen a post-inspection substituted source leaf. | ✗ FAILED — BLOCKER |
+| Review H1 | Packet is hash-bound, local-only, and cannot authorize publication or machine approval. | Packet validation passed and requires `external_publication_authorized: false`; approved JSON decisions deliberately raise `H1_MANUAL_AUTHORIZATION_REQUIRED`. H1 itself can still reopen a substituted packet/Markdown/decision leaf. | ✗ FAILED — BLOCKER |
+| Outcome | Reviewer can trust the spine before later work. | The custody policy is bypassable on critical source and H1 read paths. | ✗ FAILED — BLOCKER |
 
 ## Goal Achievement
 
@@ -86,107 +81,118 @@ The current canonical code review is nevertheless `issues_found` with CR-01 and 
 
 | # | Truth | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | Golden predictions score all 11 pinned fixtures, including surfaced-then-`classify_out` candidate behavior. | ✓ VERIFIED | The focused six-module run passed 59 tests; the active source authority validates 11 fixtures/28 raw files. |
-| 2 | Unknown keys, invalid enums, duplicate/conflicting predictions, and every noncanonical no-finding form reject without silent repair. | ✓ VERIFIED | The strict parser, preflight, and scorer tests passed in the focused suite; no repair/default path was found in the canonical ingress. |
-| 3 | Every failed or warning outcome is traceable to a stable diagnostic code and structured fields; missing accepted name stays warning-only without changing disposition. | ✗ FAILED — BLOCKER | CR-02: a source/gold conflict retains only `GOLD_NAME_MISMATCH` and `severity`; fixture, field, expected, observed, hashes, and source identity are absent. |
-| 4 | A human can approve or dispute frozen gold interpretation without model output compensating for disputed semantics. | ✓ VERIFIED | H1 v2 packet validates, has 11 human signature slots, and keeps `external_publication_authorized: false`; no machine decision writer exists. |
-| 5 | The adversarial diagnostic artifact is cryptographically and semantically bound to verified formal measurement lineage. | ✗ FAILED — BLOCKER | CR-01 reproduction accepted a self-declared all-zero formal attempt digest. |
-| 6 | The three stale no-Phase-1-modification claims are accepted only as the precise tested TOCTOU exception. | ✓ PASSED (override) | Three exact overrides name only `9d641ec8`, `filesystem.py`, the descriptor-bound leaf-read hardening, developer acceptance, and one UTC timestamp. |
+| 1 | TS-03 golden scoring covers the exact 11 accepted-v2 fixtures, including surfaced-then-`classify_out` candidate semantics. | ✓ VERIFIED | Focused 61-test run passed; formal attempt validates as `formal/completed`; source authority validates 11/28. |
+| 2 | TS-04 canonical ingress strictly rejects unknown, invalid, duplicate, and noncanonical no-finding inputs without repair. | ✓ VERIFIED | `strict_json.py` plus `preflight.py` are exercised by the focused parsing tests. |
+| 3 | TS-05 preserves stable structured diagnostics and keeps `ACCEPTED_PARAMETER_NAME_MISSING` warning-only. | ✓ VERIFIED | Scoring/adversarial-oracle tests and the v2 report validator passed; CR-02 regression passes. |
+| 4 | CR-01 ties adversarial-report validation to an independently verified `formal/completed` attempt rather than a report-declared digest. | ✓ VERIFIED | `validate_adversarial_report()` validates the supplied path first; the named forged-digest regression passes. |
+| 5 | CR-02 preserves verified source identity and complete source/gold conflict provenance while returning no score-eligible records. | ✓ VERIFIED | The named public-builder provenance regression passes. |
+| 6 | D-01/D-02/D-06/D-08 authoritative paths are consumed under the Phase 1 no-follow custody policy. | ✗ FAILED — BLOCKER | Adapter, preflight, and H1 inspect first, then call `Path.read_bytes()` on the same pathname. |
+| 7 | D-09/D-10/D-11/D-12 maintain complete preflight, warning separation, immutable attempts, and formal/diagnostic-only separation. | ✓ VERIFIED | Focused tests pass; the stored formal attempt and adversarial report validate without regeneration. |
+| 8 | D-13/D-14 machine-created approval remains impossible and actual reviewer approval remains a separate human checkpoint. | ⚠️ HUMAN CHECK REQUIRED | `h1.py` rejects any approved JSON decision with `H1_MANUAL_AUTHORIZATION_REQUIRED`; authorship of a manual approval is not programmatically provable. |
+| 9 | D-15/D-16 H1 binds only verified, contained local artifacts and remains local-only/non-public. | ✗ FAILED — BLOCKER | Publication flag is correctly false, but packet, Markdown, decision, and supporting canonical values can be reopened after inspection. |
+| 10 | Frozen accepted-v2 evidence, source-authority, Phase 1 v7 artifacts, and core UDB remain unchanged, apart from the accepted `filesystem.py` hardening override. | ✓ PASSED (override) | `git diff a650945d..HEAD` shows no changes under accepted bundle, source-authority, v7 baseline, v9 receipts, or Phase 1 planning; the sole Phase 1 code path changed is the three-times-scoped `filesystem.py` override. |
+| 11 | The repository retains the specified focused and phase-aware regression partition. | ✓ VERIFIED | 61/61 focused tests passed. Discovery found 132 methods: 127 green plus the exact five expected-red methods, producing five failures and one error. |
 
-**Score:** 33/35 de-duplicated plan must-haves verified (0 present-but-behavior-unverified). The three historical custody must-haves count as `PASSED (override)`; CR-01 and CR-02 each fail a separate existing audit/lineage must-have.
+**Score:** 31/35 de-duplicated plan must-haves verified. The three accepted custody-scope statements count as `PASSED (override)`; the four affected D-01/D-02/D-06/D-08/D-15/D-16 custody truths are not verified.
 
-### Plan 02-06 Closure Check
+### D-01 through D-16 Contract Coverage
 
-| Prior gap / Plan 02-06 truth | Result | Evidence |
+| Contract | Status | Evidence |
 | --- | --- | --- |
-| Three exact custody overrides exist and are tightly scoped. | ✓ CLOSED | Frontmatter schema validates and contains exactly three overrides; `685fe846` changes only this report. |
-| The pre-refresh historical report was preserved for verifier ownership. | ✓ CLOSED | Plan receipt and history show the executor only inserted override frontmatter before normal refresh. |
-| MVP goal is centrally valid without scope drift. | ✓ CLOSED | `user-story.validate` returned `valid: true` with role, capability, and outcome; `5c384db4` changes only the ROADMAP goal line. |
-| Local-only H1 / no-publication boundary remains unchanged. | ✓ VERIFIED | H1 schema and validated v2 packet retain `external_publication_authorized: false`; no model, remote, or publication capability is introduced. |
-| Seven flagged spec-less probe assumptions remain explicit rather than silently promoted. | ✓ VERIFIED (governance) | Plan 02-06 records adjacency, empty, ordering, TS-04, and TS-05 assumptions as unresolved; this re-verification does not treat them as new positive evidence. |
+| D-01, D-02 | ✗ FAILED | Accepted authority validates, but adapter `_raw_identity()` reopens checked raw leaves by pathname. |
+| D-03, D-04 | ✓ VERIFIED | One versioned 11/28 batch, bounded fields, deterministic rule hash, and no mixed batch are exercised by tests. |
+| D-05, D-07 | ✓ VERIFIED | Closed current schema and explicit legacy-only `reject` normalization are covered. |
+| D-06, D-08 | ✗ FAILED | Preflight source evidence uses inspect-then-read, so exact bytes can be consumed outside the protected descriptor boundary. |
+| D-09, D-10 | ✓ VERIFIED | Complete preflight and warning-only accepted-name handling are covered by focused tests. |
+| D-11, D-12 | ✓ VERIFIED | Formal and diagnostic-only attempts validate separately with immutable no-replace artifacts. |
+| D-13, D-14 | ⚠️ HUMAN CHECK REQUIRED | Code enforces the three-state machine/no-machine-approval guard; human authorship remains a manual fact. |
+| D-15, D-16 | ✗ FAILED | Normal H1 bindings validate, but H1 canonical/Markdown reads do not retain the checked descriptor. |
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | --- | --- | --- | --- |
-| `phase2/source-authority.json` and accepted v2 bundle | Active finite 11/28 source authority | ✓ VERIFIED | CLI returned the exact active generation, 11 fixtures, and 28 raw files. |
-| `src/specchoice_measurement/{strict_json.py,preflight.py,scoring.py,diagnostics.py}` | Closed parsing, deterministic scoring, stable diagnostics | ✓ VERIFIED | Substantive, wired modules exercised by the 59-test focused run. |
-| `src/specchoice_measurement/adapter.py` | Fail-closed adapter that preserves complete conflict audit evidence | ✗ FAILED | Invalid batch is zero-record/fail-closed, but CR-02 discards required diagnostics and identity. |
-| `src/specchoice_measurement/attempts.py` and formal attempt | Immutable, replayable formal measurement | ✓ VERIFIED | Focused attempt tests pass; H1 v2 packet validator recomputed bindings successfully. |
-| `reports/h1/adversarial-oracle-results-v2.json` | Independently validated diagnostic-only report with verified formal lineage | ✗ FAILED | CR-01 shows the report's claimed formal digest is trusted rather than verified. |
-| `src/specchoice_measurement/h1.py` and v2 packet/Markdown | Human-only H1 packet bound to current local evidence | ✓ VERIFIED | `validate-h1-packet` passed with packet SHA `4482bfe4…`; external publication is false. |
-| `.planning/ROADMAP.md` | Valid Phase 2 MVP user story | ✓ VERIFIED | Central validator returned valid role/capability/outcome slots. |
+| `phase2/source-authority.json` and accepted-v2 bundle | Finite 11/28 authority | ✓ VERIFIED | Validator returned the pinned generation, commit/tree, hashes, and local-only state. |
+| `src/specchoice_measurement/{strict_json.py,diagnostics.py,scoring.py,attempts.py}` | Strict deterministic measurement and immutable attempt boundary | ✓ VERIFIED | Substantive, wired, and exercised by the 61-test focused run. |
+| `src/specchoice_measurement/adapter.py` | Accepted-only adapter with custody-bound raw reads | ✗ FAILED | Substantive and normally wired, but `_raw_identity()` reopens a checked leaf. |
+| `src/specchoice_measurement/preflight.py` | Exact authoritative evidence-span input | ✗ FAILED | `_source_bytes_by_fixture()` reopens a checked fixture source. |
+| `src/specchoice_measurement/h1.py` and H1 v2 packet | Contained hash-bound local review evidence | ✗ FAILED | `_read_canonical()` and Markdown validation reopen checked leaves. |
+| `src/specchoice_measurement/cli.py`, `domain.py`, and Plan 02-07 tests | CR-01/CR-02/WR-01 repair | ✓ VERIFIED | Explicit formal-attempt CLI propagation, typed provenance, and both named tests pass. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 | --- | --- | --- | --- | --- |
-| Active accepted-v2 authority | Adapter batch | Phase-1 authority CLI and bounded adapter | ✓ WIRED | Source-authority CLI validates the finite source and adapter/scoring tests consume it. |
-| Source/gold/expected files | Invalid adapter batch diagnostic | Typed conflict preservation | ✗ NOT WIRED — BLOCKER | Catch block rebuilds a diagnostic with only code/severity and replaces `source_identity` with `{}`. |
-| Formal attempt | Adversarial oracle report | Verified formal attempt digest | ✗ NOT WIRED — BLOCKER | The validator compares report bindings to bindings reconstructed from the report's own digest. |
-| Preflight | Scorer | Complete, zero-blocker all-11 gate | ✓ WIRED | Focused parser/scoring/attempt tests pass; invalid inputs have no formal metrics. |
-| Formal attempt + adversarial report | H1 v2 packet | Recomputed current bindings and pure Markdown projection | ✓ WIRED | Current H1 packet validator passed; it additionally compares its formal attempt to the report binding. |
+| Accepted-v2 authority | Adapter batch | Authority CLI + accepted-bundle verifier | ⚠️ PARTIAL — BLOCKER | Authority itself validates, but adapter raw-byte consumption is not descriptor-bound. |
+| Adapter batch | Preflight/scorer | Valid all-11 complete batch only | ✓ WIRED | Focused tests cover score eligibility and no formal metrics on invalid input. |
+| Fixture source bytes | Evidence-span validation | SHA-256 plus exact byte range/text | ✗ NOT WIRED — BLOCKER | Preflight reopens after inspection, so the checked leaf is not necessarily the consumed leaf. |
+| Verified formal attempt | Adversarial report | Explicit `--formal-attempt` and replay validation | ✓ WIRED | CR-01 targeted regression passed. |
+| Verified formal/adversarial evidence | H1 packet/Markdown/decision | Recomputed bindings and canonical projection | ✗ PARTIAL — BLOCKER | Normal hashes validate, but H1 reads are still path-reopenable. |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 | --- | --- | --- | --- | --- |
-| Adapter batch | 11 canonical records / 28 raw identities | Accepted-v2 bundle plus phase2 authority | Yes on the happy path; source authority validator passed. | ✓ FLOWING |
-| Invalid adapter batch | Conflict provenance | Source/gold/expected disagreement | No: only code/severity survive; verified source identity is erased. | ✗ HOLLOW — BLOCKER |
-| Adversarial report | `bindings.formal_attempt_sha256` | Report JSON itself rather than a verified formal attempt | No trusted upstream verification in standalone validation. | ✗ HOLLOW — BLOCKER |
-| H1 v2 packet | Formal/adversarial/source bindings | Recomputed packet validation | Yes for the current packet; does not cure the standalone adversarial validator. | ✓ FLOWING |
+| Adapter batch | 11 records / 28 raw identities | Active accepted-v2 authority | Yes on ordinary execution; source authority is valid. | ⚠️ UNSAFE FLOW |
+| Preflight source map | Raw fixture source bytes | Adapter-declared accepted bundle paths | Bytes are hash-compared, but originate from a second pathname open. | ✗ HOLLOW CUSTODY |
+| H1 canonical values | Packet, decision, Markdown, formal diagnostics | Repository-contained paths | Normal H1 validation succeeds, but checked identity and consumed bytes are split. | ✗ HOLLOW CUSTODY |
+| Adversarial report lineage | `formal_attempt_sha256` | Supplied replay-validated formal attempt | Yes. | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | --- | --- | --- | --- |
-| Phase 2 measurement modules and filesystem boundary | `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests.test_measurement_adapter tests.test_measurement_parsing tests.test_measurement_scoring tests.test_measurement_attempts tests.test_measurement_h1 tests.test_filesystem_boundary -q` | 59 tests passed. | ✓ PASS |
-| Active accepted-v2 source authority | `python3 -m specchoice_evidence.cli validate-phase2-source-authority ...` | `status: valid`, 11 fixtures, 28 raw files. | ✓ PASS |
-| Tampered formal lineage must reject | `python3 -m specchoice_measurement.cli validate-adversarial-report --report /tmp/phase2-cr1.BkDhEo/adversarial-oracle-results-v2.json` | Exit 0 after changing only the report's formal digest to 64 zeroes. | ✗ FAIL — CR-01 reproduced |
-| Adapter conflict must retain audit provenance | Controlled in-memory record-conflict injection through `build_pr2164_adapter_batch()` | `valid=False`, `records=0`, `source_identity={}`, diagnostic only `{code: GOLD_NAME_MISMATCH, severity: blocker}`. | ✗ FAIL — CR-02 reproduced |
-| Current local H1 packet | `python3 -m specchoice_measurement.cli validate-h1-packet --packet ...v2.json --markdown ...v2.md` | Exit 0; current packet is hash-bound and publication flag is false. | ✓ PASS |
-| Repository-wide discovery classification | `python3 -m unittest discover -q` | The preserved phase-aware classification is 130 discovered, with exactly 5 documented Phase-1 live-boundary expected failures and 1 related error; excluding only those five top-level methods gives 125/125 green. | ℹ️ EXPECTED BOUNDARY — not permission to weaken v7 |
-
-The passing 59-test suite is not evidence against either Critical: it contains no `formal_attempt_sha256` tamper test and no source/gold-conflict provenance assertion. WR-01 remains a warning: `test_measurement_adapter.py` invokes literal `python3` in subprocesses, allowing interpreter/package drift outside the exact `PYTHONPATH=src python3` command used here.
+| CR-01 forged formal digest rejects | `python3 -m unittest tests.test_measurement_attempts.MeasurementAttemptTests.test_adversarial_report_rejects_forged_formal_attempt_binding -q` | 1 passed | ✓ PASS |
+| CR-02 public conflict retains provenance | `python3 -m unittest tests.test_measurement_adapter.MeasurementAdapterTests.test_public_builder_preserves_conflict_provenance -q` | 1 passed | ✓ PASS |
+| Focused Phase 2 + filesystem suite | `python3 -m unittest tests.test_measurement_adapter tests.test_measurement_parsing tests.test_measurement_scoring tests.test_measurement_attempts tests.test_measurement_h1 tests.test_filesystem_boundary -q` | 61 passed | ✓ PASS |
+| Accepted-v2 authority | `python3 -m specchoice_evidence.cli validate-phase2-source-authority ...` | `status: valid`, 11 fixtures, 28 raw files | ✓ PASS |
+| Stored formal/adversarial/H1 evidence | `validate-attempt`; `validate-adversarial-report --formal-attempt`; `validate-h1-packet` | All exit 0 | ✓ PASS |
+| Inspect/read race | Isolated temp-root reproduction: inspect regular leaf, replace with symlink, then `Path.read_bytes()` | `inspect_then_Path.read_bytes=EXTERNAL_BYTES` | ✗ FAIL — BLOCKER |
+| Discovery partition | `unittest.defaultTestLoader.discover("tests")` partitioned by runtime IDs | 132 total; 127 green; exact five expected-red produce 5 failures and 1 error | ✓ PASS |
 
 ### Probe Execution
 
-No declared or conventional `scripts/*/tests/probe-*.sh` probe exists for this phase. **SKIPPED (no phase probe entry points).**
+No declared or conventional `scripts/*/tests/probe-*.sh` probe exists for this phase. **SKIPPED (no phase probe entry points).** The seven spec-less assumptions remain explicit and were not promoted to evidence.
 
 ### Requirements Coverage
 
 | Requirement | Source Plans | Description | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| TS-03 | 02-01, 02-03, 02-04, 02-05 | Versioned PR #2164 adapter and all-11 deterministic golden runner, including candidate classify-out. | ✓ SATISFIED | Active 11/28 authority and focused adapter/scoring/attempt tests pass. |
-| TS-04 | 02-02, 02-04, 02-05 | Closed schema, unique no-finding form, legacy restriction, and no silent repair. | ✓ SATISFIED | Focused parsing/preflight regression passes. |
-| TS-05 | 02-02 through 02-05 | Required stable diagnostic codes/fields and warning-only missing accepted name. | ✗ BLOCKED | CR-02 leaves a required source/gold conflict without structured diagnostic fields/provenance; CR-01 leaves an adversarial report's lineage diagnostic trustable only by self-assertion. |
+| TS-03 | 02-01, 02-03, 02-04, 02-05, 02-07 | Versioned adapter and deterministic all-11 golden runner | ✗ BLOCKED | Normal scoring works, but score-bearing raw-file reads can escape the accepted custody boundary. |
+| TS-04 | 02-02, 02-04, 02-05, 02-07 | Closed canonical adjudication schema/no silent repair | ✓ SATISFIED | Focused parsing/preflight tests pass. |
+| TS-05 | 02-02 through 02-07 | Stable structured diagnostics and warning-only identity absence | ✗ BLOCKED | Diagnostics are stable on normal input, but evidence/H1 diagnostic provenance can consume a substituted leaf. |
 
-No orphaned Phase 2 requirement was found: `REQUIREMENTS.md` maps TS-03, TS-04, and TS-05 to Phase 2 and each is declared by Phase 2 plans.
+No orphaned Phase 2 requirement was found. The later milestone phases do not explicitly schedule repair of this no-follow custody regression, so it is not deferred.
 
 ### Anti-Patterns Found
 
-| File | Line / evidence | Pattern | Severity | Impact |
+| File | Line | Pattern | Severity | Impact |
 | --- | --- | --- | --- | --- |
-| `src/specchoice_measurement/cli.py` | 263-265 | Self-referential evidence validation | 🛑 BLOCKER | A report can falsely claim formal-attempt lineage. |
-| `src/specchoice_measurement/adapter.py` | 295-304, 337-343 | Error-path provenance discard | 🛑 BLOCKER | A reviewer cannot identify or reproduce the rejected source/gold conflict. |
-| `tests/test_measurement_adapter.py` | 65, 162 | Literal `python3` subprocess interpreter | ⚠️ WARNING | Test child can use a different interpreter/package than the test runner. |
+| `src/specchoice_measurement/h1.py` | 43-46, 281-282 | Inspect then reopen authoritative leaf | 🛑 BLOCKER | Packet, decision, canonical artifacts, and Markdown can cross the path boundary after inspection. |
+| `src/specchoice_measurement/preflight.py` | 51-54 | Inspect then reopen fixture source | 🛑 BLOCKER | Evidence validation can consume a substituted source leaf. |
+| `src/specchoice_measurement/adapter.py` | 124-131 | Inspect then reopen score-bearing raw leaf | 🛑 BLOCKER | Adapter can consume external bytes despite accepted-v2-only policy. |
 
-No Phase 2 `TBD`, `FIXME`, `XXX`, `HACK`, placeholder, empty-render, or console-only implementation marker was found. The known ambient `.DS_Store` files and excluded untracked `02-REVIEW-FIX 2.md` were not read, used, or modified.
+No Phase 2 `TBD`, `FIXME`, `XXX`, `TODO`, `HACK`, placeholder, or empty implementation marker was found. The ambient `.DS_Store` files and the excluded untracked `02-REVIEW-FIX 2.md` were not read, used, or modified.
 
-### Prohibition Assessment
+### Human Verification Required
 
-The implementation continues to show local-only, human-authored H1 authority: packet/decision schemas require `external_publication_authorized: false`, H1 validation rejects machine-created approvals, and no model/remote/publication expansion was found. The three developer overrides do not widen that authority. These are non-authoritative automated checks for the plans' judgment-tier prohibitions; neither they nor the existing human H1 checkpoint can waive CR-01 or CR-02.
+### 1. H1 independent approval record
+
+**Test:** Inspect the separately recorded approval for packet `4482bfe4c28a825e86365420c071ed267afc3d0370ce333e4cdd16916b58c81c` and all 11 review semantics.
+
+**Expected:** It is an explicit human, local-Phase-3-only decision; `external_publication_authorized` remains `false`.
+
+**Why human:** Code intentionally refuses to treat any approved JSON file as authority. It cannot attest who made a manual approval. This check cannot waive the custody blocker.
 
 ### Gaps Summary
 
-Plan 02-06 correctly closed the earlier override and MVP-goal paperwork gaps, and the happy-path measurement spine remains substantive, wired, data-bearing, and regression-tested. It did not close the current Critical code-review findings:
+Plan 02-07 closed the preceding formal-lineage and conflict-provenance defects, and its 61-test / 132-discovery regression claims are reproducible. The phase nevertheless fails its central trust promise because three active consumers ignore the descriptor-bound reader that Phase 1 now provides:
 
-1. **CR-01:** standalone adversarial-report validation accepts a false formal-attempt digest.
-2. **CR-02:** adapter conflicts fail closed but discard the audit diagnostics that the reviewer must inspect.
+1. **Authoritative leaf reads are not atomic with their custody checks.** Replace the H1, preflight, and adapter inspect-then-read flows with `read_authoritative_file()` and add race/special-file regressions at every affected public boundary.
 
-Both are direct failures of the phase's trust/diagnostics goal and TS-05. Keep the phase at `gaps_found` until code and targeted fail-first regressions close them. WR-01 should be fixed in the same repair if practical, but it is not the gate's root cause.
+This is one root-cause gap with three production call sites. It is not addressed by a later phase and cannot be accepted by the existing narrow `filesystem.py` override, because the override added the safe primitive rather than waiving its use.
 
 ---
 
-_Verified: 2026-08-01T17:39:10.535Z_
+_Verified: 2026-08-01T21:09:50Z_
 _Verifier: the agent (gsd-verifier)_
