@@ -11,7 +11,7 @@ from typing import Any
 
 from specchoice_evidence.bundle import BundleError, _publish_directory_no_replace, _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, require_sha256, sha256_bytes
-from specchoice_evidence.filesystem import FilesystemPolicyError, inspect_authoritative_path
+from specchoice_evidence.filesystem import FilesystemPolicyError, inspect_authoritative_path, read_authoritative_file
 
 from .adapter import build_pr2164_adapter_batch
 from .attempts import AttemptError, validate_measurement_attempt
@@ -40,10 +40,9 @@ def _relative(path: Path, code: str) -> str:
 
 def _read_canonical_value(path: Path, code: str) -> tuple[Any, bytes]:
     try:
-        evidence = inspect_authoritative_path(_ROOT, _relative(path, code))
+        evidence, raw = read_authoritative_file(_ROOT, _relative(path, code))
         if evidence.file_kind != "regular_file":
             raise H1Error(code)
-        raw = path.read_bytes()
         value = json.loads(raw.decode("utf-8"))
     except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise H1Error(code) from error
@@ -134,17 +133,24 @@ def _expected_bindings(*, formal_attempt: Path, adversarial_report: Path) -> dic
     batch = _batch()
     adversarial_bindings = adversarial.get("bindings")
     expected_source = getattr(batch, "source_identity")
+    try:
+        _, schema_raw = read_authoritative_file(_ROOT, _relative(_SCHEMA, "H1_BINDINGS_INVALID"))
+        _, h1_schema_raw = read_authoritative_file(_ROOT, _relative(_H1_SCHEMA, "H1_BINDINGS_INVALID"))
+    except (FilesystemPolicyError, OSError) as error:
+        raise H1Error("H1_BINDINGS_INVALID") from error
+    schema_sha256 = sha256_bytes(schema_raw)
+    h1_schema_sha256 = sha256_bytes(h1_schema_raw)
     if (
         not isinstance(adversarial_bindings, dict)
         or bindings.get("adapter_batch_sha256") != getattr(batch, "adapter_batch_sha256")
         or bindings.get("adapter_version") != getattr(batch, "adapter_version")
         or bindings.get("rule_sha256") != getattr(batch, "rule_sha256")
-        or bindings.get("schema_sha256") != sha256_bytes(_SCHEMA.read_bytes())
+        or bindings.get("schema_sha256") != schema_sha256
         or bindings.get("source_identity") != expected_source
         or adversarial_bindings.get("formal_attempt_sha256") != formal.get("attempt_sha256")
         or adversarial_bindings.get("adapter_batch_sha256") != getattr(batch, "adapter_batch_sha256")
         or adversarial_bindings.get("rule_sha256") != getattr(batch, "rule_sha256")
-        or adversarial_bindings.get("schema_sha256") != sha256_bytes(_SCHEMA.read_bytes())
+        or adversarial_bindings.get("schema_sha256") != schema_sha256
         or adversarial_bindings.get("golden_predictions_sha256") != bindings.get("raw_predictions_sha256")
         or adversarial_bindings.get("source_identity") != expected_source
     ):
@@ -157,9 +163,9 @@ def _expected_bindings(*, formal_attempt: Path, adversarial_report: Path) -> dic
         "formal_attempt_sha256": formal.get("attempt_sha256"),
         "formal_diagnostics_sha256": sha256_bytes(diagnostics_raw),
         "golden_predictions_sha256": bindings.get("raw_predictions_sha256"),
-        "h1_review_schema_sha256": sha256_bytes(_H1_SCHEMA.read_bytes()),
+        "h1_review_schema_sha256": h1_schema_sha256,
         "rule_sha256": getattr(batch, "rule_sha256"),
-        "schema_sha256": sha256_bytes(_SCHEMA.read_bytes()),
+        "schema_sha256": schema_sha256,
         "source_identity": expected_source,
     }
 
@@ -278,8 +284,7 @@ def validate_h1_packet(*, packet: Path, markdown: Path) -> dict[str, Any]:
     if value.get("fixture_reviews") != _review_items(_batch()):
         raise H1Error("H1_REVIEW_ITEM_INVALID")
     try:
-        inspect_authoritative_path(_ROOT, _relative(markdown, "H1_MARKDOWN_INVALID"))
-        markdown_bytes = markdown.read_bytes()
+        _, markdown_bytes = read_authoritative_file(_ROOT, _relative(markdown, "H1_MARKDOWN_INVALID"))
     except (FilesystemPolicyError, OSError) as error:
         raise H1Error("H1_MARKDOWN_INVALID") from error
     if markdown_bytes != render_h1_markdown(value).encode("utf-8"):

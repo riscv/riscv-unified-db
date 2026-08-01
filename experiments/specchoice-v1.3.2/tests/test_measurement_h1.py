@@ -1,12 +1,17 @@
 """H1 packet and human-decision boundary tests."""
 
 import json
+import os
 import tempfile
 import unittest
 from copy import deepcopy
 from pathlib import Path
+from unittest import mock
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence import filesystem
+from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
+from specchoice_measurement import h1
 from specchoice_measurement.h1 import H1Error, build_h1_packet, render_h1_markdown, validate_h1_decision, validate_h1_packet
 
 
@@ -141,6 +146,69 @@ class H1PacketTests(unittest.TestCase):
             decision_path.write_bytes(canonical_json_bytes(decision))
             with self.assertRaisesRegex(H1Error, "H1_MANUAL_AUTHORIZATION_REQUIRED"):
                 validate_h1_decision(packet=packet_path, decision=decision_path)
+
+    def test_public_h1_validators_reject_swapped_packet_markdown_and_decision_leaves_and_fifos_without_consuming_or_blocking(self) -> None:
+        """All public H1 authority leaves must pass through the descriptor-bound seam."""
+        real_open = filesystem.os.open
+        with tempfile.TemporaryDirectory(dir=self.root) as directory:
+            root = Path(directory)
+            packet_path, markdown_path, packet = self._build(root)
+            decision_path = root / "decision.json"
+            decision_path.write_bytes(canonical_json_bytes(self._decision(packet)))
+            schema = root / "canonical-adjudication-v1.json"
+            h1_schema = root / "h1-source-gold-review-v1.json"
+            schema.write_bytes(h1._SCHEMA.read_bytes())
+            h1_schema.write_bytes(h1._H1_SCHEMA.read_bytes())
+            external = root / "external.json"
+            external.write_text('{"sentinel":"external"}\n', encoding="utf-8")
+
+            for leaf, code, validator in (
+                (packet_path, "H1_PACKET_INVALID", lambda: validate_h1_packet(packet=packet_path, markdown=markdown_path)),
+                (markdown_path, "H1_MARKDOWN_INVALID", lambda: validate_h1_packet(packet=packet_path, markdown=markdown_path)),
+                (decision_path, "H1_DECISION_INVALID", lambda: validate_h1_decision(packet=packet_path, decision=decision_path)),
+                (schema, "H1_BINDINGS_INVALID", lambda: validate_h1_packet(packet=packet_path, markdown=markdown_path)),
+                (h1_schema, "H1_BINDINGS_INVALID", lambda: validate_h1_packet(packet=packet_path, markdown=markdown_path)),
+            ):
+                with self.subTest(leaf=leaf.name):
+                    relative = leaf.relative_to(self.root).as_posix()
+
+                    def reject_target(root: Path, candidate: str):
+                        if candidate == relative:
+                            raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+                        return read_authoritative_file(root, candidate)
+
+                    with mock.patch.object(h1, "_SCHEMA", schema), mock.patch.object(h1, "_H1_SCHEMA", h1_schema), mock.patch(
+                        "specchoice_measurement.h1.read_authoritative_file", side_effect=reject_target, create=True
+                    ):
+                        with self.assertRaisesRegex(H1Error, code):
+                            validator()
+
+            leaf = root / "race-leaf.json"
+            for kind in ("symlink", "fifo"):
+                with self.subTest(kind=kind):
+                    leaf.write_bytes(b"{}")
+                    opened = False
+
+                    def guarded_open(path, flags, *args, **kwargs):
+                        nonlocal opened
+                        if Path(path) != leaf:
+                            return real_open(path, flags, *args, **kwargs)
+                        opened = True
+                        if kind == "symlink":
+                            leaf.unlink()
+                            leaf.symlink_to(external)
+                            return real_open(path, flags, *args, **kwargs)
+                        self.fail("FIFO target reached os.open")
+
+                    if kind == "fifo":
+                        leaf.unlink()
+                        os.mkfifo(leaf)
+                    with mock.patch("specchoice_evidence.filesystem.os.open", side_effect=guarded_open):
+                        with self.assertRaises((FilesystemPolicyError, OSError)):
+                            read_authoritative_file(root, leaf.name)
+                    self.assertEqual(opened, kind == "symlink")
+                    if leaf.is_symlink() or leaf.exists():
+                        leaf.unlink()
 
 
 if __name__ == "__main__":
