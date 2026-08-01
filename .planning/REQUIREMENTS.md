@@ -26,9 +26,9 @@ Requirements for the frozen SpecChoice v1.3.2 execution baseline. Each maps to e
 
 - [x] **TS-01** `[ALL]`: The operator can work entirely within a dependency-light `experiments/specchoice-v1.3.2/` boundary containing the prototype's code, configuration, data, prompts, tests, runs, reports, and notes, without modifying core UDB schemas or generated data.
 - [x] **TS-02** `[ALL]`: The operator can verify a source manifest that pins every named public PR snapshot to its frozen commit and records stable hashes for every consumed source file.
-- [x] **TS-03** `[ALL]`: The operator can run a versioned PR #2164 adapter and deterministic measurement runner that scores golden predictions for all 11 pinned fixtures, including surfacing and then classifying out the candidate fixture.
-- [x] **TS-04** `[ALL]`: The operator receives strict validation of the canonical adjudication schema, including the unique nullable `surfaced=false` representation, rejection of `parameter_status:not_surfaced`, unknown-key rejection, enum enforcement, and no silent repair.
-- [x] **TS-05** `[ALL]`: Tests and reports expose every required stable diagnostic code with structured fields, while `ACCEPTED_PARAMETER_NAME_MISSING` remains an identity warning that cannot change disposition correctness.
+- [ ] **TS-03** `[ALL]`: The operator can run a versioned PR #2164 adapter and deterministic measurement runner that scores golden predictions for all 11 pinned fixtures, including surfacing and then classifying out the candidate fixture.
+- [ ] **TS-04** `[ALL]`: The operator receives strict validation of the canonical adjudication schema, including the unique nullable `surfaced=false` representation, rejection of `parameter_status:not_surfaced`, unknown-key rejection, enum enforcement, and no silent repair.
+- [ ] **TS-05** `[ALL]`: Tests and reports expose every required stable diagnostic code with structured fields, while `ACCEPTED_PARAMETER_NAME_MISSING` remains an identity warning that cannot change disposition correctness.
 - [ ] **TS-06** `[ALL]`: The reviewer receives independently calculated surfacing, disposition, exact/incorrect/missing identity, classify-out, and evidence-integrity outcomes; Green/Yellow additionally reports each frame axis and retrieval quality separately.
 - [ ] **TS-07** `[ALL]`: The reviewer can audit at least one non-empty verbatim evidence span for every surfaced finding and can inspect immutable raw outputs, parsed outputs, and parser diagnostics as separate artifacts.
 - [ ] **TS-08** `[ALL]`: Automated validation proves provenance for every data item, zero prototype/held-out example overlap, zero prototype/strict-core primary-family overlap, registered primary families, compatible registry versions, and no held-out passage in prompt demonstrations.
@@ -132,9 +132,9 @@ Roadmap creation maps every v1 requirement to exactly one phase.
 |-------------|-------|--------|
 | TS-01 | Phase 1 | Complete |
 | TS-02 | Phase 1 | Complete |
-| TS-03 | Phase 2 | Complete |
-| TS-04 | Phase 2 | Complete |
-| TS-05 | Phase 2 | Complete |
+| TS-03 | Phase 2 | Gaps Found |
+| TS-04 | Phase 2 | Gaps Found |
+| TS-05 | Phase 2 | Gaps Found |
 | TS-06 | Phase 6 | Pending |
 | TS-07 | Phase 5 | Pending |
 | TS-08 | Phase 3 | Pending |
