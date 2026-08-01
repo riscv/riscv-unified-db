@@ -1,6 +1,6 @@
 ---
 phase: 02-deterministic-measurement-spine
-reviewed: 2026-08-01T17:09:14Z
+reviewed: 2026-08-01T21:02:01Z
 depth: standard
 files_reviewed: 32
 files_reviewed_list:
@@ -37,50 +37,48 @@ files_reviewed_list:
   - experiments/specchoice-v1.3.2/tests/test_measurement_parsing.py
   - experiments/specchoice-v1.3.2/tests/test_measurement_scoring.py
 findings:
-  critical: 2
-  warning: 1
+  critical: 1
+  warning: 0
   info: 0
-  total: 3
+  total: 1
 status: issues_found
 ---
 
 # Phase 02: Code Review Report
 
-**Reviewed:** 2026-08-01T17:09:14Z
+**Reviewed:** 2026-08-01T21:02:01Z
 **Depth:** standard
 **Files Reviewed:** 32
 **Status:** issues_found
 
 ## Summary
 
-The canonical adapter, closed prediction parsing, scoring, immutable-attempt replay, H1 packet projection, and supplied v1/v2 evidence artifacts were reviewed. The local-only H1 boundary and `external_publication_authorized: false` remain intact. However, two validator paths incorrectly attest to incomplete or false evidence lineage. The focused 37-test measurement suite passes when run with the same absolute source path used by the current interpreter; the test suite itself has one interpreter-selection defect.
+All listed source, test, and evidence artifacts were reviewed at standard depth, including the call sites affected by the 02-07 repair. Prior CR-01 is closed: standalone adversarial validation now derives its required formal-attempt digest from a supplied, verified `formal/completed` attempt. Prior CR-02 is closed: a source/gold disagreement retains the fixture, field, expected/observed values, relevant raw hashes, and verified source identity. The former `python3` subprocess warning is also closed by using `sys.executable`.
+
+The H1 packet, formal attempt, and v2 adversarial report validate against the active accepted-v2 authority, and the focused suite passes 39 tests. However, two remaining read paths still split custody inspection from the path-based read, leaving a documented no-follow boundary vulnerable to a time-of-check/time-of-use swap.
 
 ## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: Adversarial-report validation trusts the report's claimed formal-attempt hash
+### CR-01: H1 and evidence-span readers reopen checked leaves by pathname
 
-**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_measurement/cli.py:263`
-**Issue:** `validate_adversarial_report()` builds its expected bindings using `str(bindings.get("formal_attempt_sha256"))`, i.e. the untrusted value it is meant to validate. It validates each diagnostic-only case but never validates the formal attempt or compares the claimed digest with it. A canonical copied v2 report with only that hash replaced by 64 zeroes returns success, so a report can be declared valid while falsely claiming its prerequisite formal-measurement lineage.
-**Fix:** Validate the one bound formal attempt (or accept its path as an explicit argument), obtain its verified `attempt_sha256`, require `role == "formal"` and `status == "completed"`, and use that verified digest when constructing `_adversarial_bindings` rather than the report's value.
+**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py:43-46`; `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py:281-282`; `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_measurement/preflight.py:51-54`
+**Issue:** These paths call `inspect_authoritative_path()` and then consume the same leaf using `Path.read_bytes()`. A concurrent local writer can replace the verified regular file with a symlink, FIFO, or external file after the inspection and before the second open. This bypasses the Phase 1 custody policy even though `read_authoritative_file()` was introduced precisely to keep the checked identity and consumed bytes on one `O_NOFOLLOW` descriptor. H1 validation can therefore read a decision, packet, or Markdown projection from outside the experiment boundary; preflight can likewise consume a substituted source leaf. The retained hash comparisons catch many changed-byte cases, but they do not enforce the required source-ownership and special-file rejection boundary, and a FIFO can also turn validation into an unbounded blocking read.
+**Fix:** Replace every inspect-then-read leaf flow with `read_authoritative_file()` and parse/use the returned bytes. For example:
 
-### CR-02: Adapter failure handling discards the conflict evidence required for audit
+```python
+from specchoice_evidence.filesystem import read_authoritative_file
 
-**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/src/specchoice_measurement/adapter.py:337`
-**Issue:** A record-level source/gold/expected disagreement raises an `AdapterError`, but the catch block replaces it with an `_invalid_batch()` containing only a code and an empty `source_identity` (lines 338-343). `_invalid_batch()` itself constructs a diagnostic with no fixture ID, field, expected value, observed value, or source hashes (lines 295-304). This violates the locked failure-audit contract: a rejected adapter is fail-closed, but reviewers cannot determine which evidence conflicted or reproduce the diagnosis from the emitted batch.
-**Fix:** Carry a structured diagnostic (including fixture ID, field, expected/observed values, and both source hashes) in a typed adapter failure; preserve the already-verified source identity; then emit that diagnostic in the invalid batch/immutable failed-adaptation artifact while retaining zero score-eligible records.
+relative = _relative(path, code)
+_, raw = read_authoritative_file(_ROOT, relative)
+value = json.loads(raw.decode("utf-8"))
+```
 
-## Warnings
-
-### WR-01: CLI tests can execute a different, unconfigured Python interpreter
-
-**File:** `/Users/zhdeng/Documents/LFX_RISCV_SpecChoice/experiments/specchoice-v1.3.2/tests/test_measurement_adapter.py:65`
-**Issue:** The subprocess tests invoke literal `python3` rather than the interpreter running the tests. In this checkout, the test interpreter has the source package available while `python3` resolves to a different Python 3.14 installation and fails with `ModuleNotFoundError`, producing false failures or testing the wrong installed package.
-**Fix:** Import `sys` and construct both subprocess commands with `sys.executable` (and, if needed, an explicit absolute source environment) so the child uses the same tested package and interpreter.
+Apply the same pattern to the H1 Markdown read and `_source_bytes_by_fixture()`, retaining the existing digest checks against the returned `FileEvidence`. Add deterministic race regressions that replace `packet.json`, the Markdown file, and a declared fixture source with an external symlink immediately before `os.open`; each must fail closed and must not consume the external bytes.
 
 ---
 
-_Reviewed: 2026-08-01T17:09:14Z_
+_Reviewed: 2026-08-01T21:02:01Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
