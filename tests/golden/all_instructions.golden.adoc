@@ -21406,7 +21406,7 @@ and writes 1 to integer register `xd` if the condition holds, and 0 otherwise.
 
 xref:insts:fleq_q.adoc#udb:doc:inst:fleq_q[fleq.q] is defined like xref:insts:fle_q.adoc#udb:doc:inst:fle_q[fle.q], except that quiet _NaN_ inputs do not cause the invalid
 operation exception flag to be set.
-This instruction is encoded like its `flt` counterpart, but with instruction bit 14 set to 1.
+This instruction is encoded like its xref:insts:fle_q.adoc#udb:doc:inst:fle_q[fle.q] counterpart, but with instruction bit 14 set to 1.
 
 
 Decode Variables::
@@ -22155,7 +22155,7 @@ and writes 1 to integer register `xd` if the condition holds, and 0 otherwise.
 
 xref:insts:fltq_q.adoc#udb:doc:inst:fltq_q[fltq.q] is defined like xref:insts:flt_q.adoc#udb:doc:inst:flt_q[flt.q], except that quiet _NaN_ inputs do not cause the invalid
 operation exception flag to be set.
-This instruction is encoded like its `fle` counterpart, but with instruction bit 14 set to 1.
+This instruction is encoded like its xref:insts:flt_q.adoc#udb:doc:inst:flt_q[flt.q] counterpart, but with instruction bit 14 set to 1.
 
 
 Decode Variables::
@@ -22854,7 +22854,7 @@ The value `-0.0` is considered to be less than the value `+0.0`.
 If both inputs are _NaN_s, the result is the canonical _NaN_.
 If either input is _NaN_, the result is the canonical _NaN_.
 Signaling _NaN_ inputs set the invalid operation exception flag, even when the result is not _NaN_.
-This instruction is encoded like its xref:insts:fminm_q.adoc#udb:doc:inst:fminm_q[fminm.q] counterpart, but with instruction bit 14 set to 1.
+This instruction is encoded like its xref:insts:fmax_q.adoc#udb:doc:inst:fmax_q[fmax.q] counterpart, but with instruction bit 13 set to 1.
 
 
 Decode Variables::
@@ -23289,7 +23289,7 @@ The value `-0.0` is considered to be less than the value `+0.0`.
 If both inputs are _NaN_s, the result is the canonical _NaN_.
 If either input is _NaN_, the result is the canonical _NaN_.
 Signaling _NaN_ inputs set the invalid operation exception flag, even when the result is not _NaN_.
-This instruction is encoded like its xref:insts:fminm_q.adoc#udb:doc:inst:fminm_q[fminm.q] counterpart, but with instruction bit 14 set to 1.
+This instruction is encoded like its xref:insts:fmin_q.adoc#udb:doc:inst:fmin_q[fmin.q] counterpart, but with instruction bit 13 set to 1.
 
 
 Decode Variables::
