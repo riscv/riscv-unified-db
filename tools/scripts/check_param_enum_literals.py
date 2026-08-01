@@ -70,6 +70,10 @@ def load_param_string_enums(param_dir: Path) -> dict[str, set[str]]:
         if not isinstance(doc, dict):
             continue
 
+        # Only true parameter objects (defensive; param/ should be all kind: parameter).
+        if doc.get("kind") != "parameter":
+            continue
+
         name = doc.get("name")
         schema = doc.get("schema")
         if not isinstance(name, str) or not isinstance(schema, dict):
@@ -80,6 +84,7 @@ def load_param_string_enums(param_dir: Path) -> dict[str, set[str]]:
             continue
 
         # Only string members matter for string-literal compares in IDL.
+        # Include even when schema.type is missing (some params only set enum).
         values = {v for v in enum_vals if isinstance(v, str)}
         if values:
             enums[name] = values
