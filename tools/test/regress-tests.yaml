@@ -418,10 +418,10 @@ tests:
     tags:
       - smoke
     test:
-      - name: Check parameter enum string literals in IDL comparisons
-        run: ./bin/python tools/scripts/check_param_enum_literals.py
       - name: Unit test parameter enum literal checker
         run: ./bin/python -m unittest tools.scripts.test.test_check_param_enum_literals
+      - name: Check parameter enum string literals in IDL comparisons
+        run: ./bin/python tools/scripts/check_param_enum_literals.py
 
   regress-schema-docs:
     ci_stage: pr

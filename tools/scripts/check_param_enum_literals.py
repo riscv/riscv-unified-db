@@ -11,6 +11,18 @@ enum only lists "always zero" is silently wrong: the comparison is always true
 or always false and no schema check catches it.
 
 See https://github.com/riscv/riscv-unified-db/issues/2285
+
+Scope and known limits
+----------------------
+* Parameter enums are loaded with ruamel YAML (typ=safe) from
+  ``spec/std/isa/param/*.yaml``.
+* Call sites are scanned under the entire ``spec/`` tree, restricted to ordinary
+  files whose names contain a dot (e.g. ``foo.yaml``), so extension-less junk is
+  skipped.
+* Comparisons are matched only in the form ``PARAM op "literal"`` or
+  ``PARAM op 'literal'`` (parameter name on the left). The reverse form
+  ``"literal" op PARAM`` is legal IDL but is not checked; it is expected to be
+  rare or absent in this tree. Extend COMPARE_RE if that form appears.
 """
 
 from __future__ import annotations
@@ -20,63 +32,74 @@ import re
 import sys
 from pathlib import Path
 
+from ruamel.yaml import YAML
+from ruamel.yaml.error import YAMLError
+
 ROOT = Path(__file__).resolve().parents[2]
 PARAM_DIR = ROOT / "spec" / "std" / "isa" / "param"
-SCAN_ROOTS = [
-    ROOT / "spec" / "std" / "isa" / "csr",
-    ROOT / "spec" / "std" / "isa" / "isa",
-    ROOT / "spec" / "std" / "isa" / "inst",
-    ROOT / "spec" / "std" / "isa" / "param",
-]
-SCAN_SUFFIXES = {".yaml", ".yml", ".isa", ".idl"}
+SPEC_ROOT = ROOT / "spec"
 
-# PARAM == "literal" or PARAM != "literal" (double or single quotes)
+# Safe loader shared with other UDB Python tooling (see tools/python/udb.py).
+YAML_SAFE = YAML(typ="safe")
+
+# PARAM == "literal" or PARAM != 'literal'
+# group(1) = parameter name
+# group(2) = operator (== or !=)
+# group(3) = literal when double-quoted
+# group(4) = literal when single-quoted
+# (Only one of group(3)/group(4) is set per match.)
+#
+# Robustness: does not match "literal" == PARAM (parameter on the right).
 COMPARE_RE = re.compile(r"""\b([A-Z][A-Z0-9_]*)\s*(==|!=)\s*(?:"([^"]*)"|'([^']*)')""")
 
 
 def load_param_string_enums(param_dir: Path) -> dict[str, set[str]]:
-    """Map parameter name -> set of schema.enum string values."""
+    """Map parameter name -> set of schema.enum string values (ruamel YAML)."""
     enums: dict[str, set[str]] = {}
+    if not param_dir.is_dir():
+        return enums
+
     for path in sorted(param_dir.glob("*.yaml")):
-        text = path.read_text(encoding="utf-8")
-        name_m = re.search(r"(?m)^name:\s*(\S+)", text)
-        if not name_m:
-            continue
-        name = name_m.group(1)
-
-        schema_m = re.search(r"(?m)^schema:\n((?:  .*\n)*)", text)
-        if not schema_m:
-            continue
-        schema = schema_m.group(1)
-        enum_m = re.search(r"(?m)^\s+enum:\n((?:\s+-\s+.+\n)+)", schema)
-        if not enum_m:
+        try:
+            with path.open(encoding="utf-8") as handle:
+                doc = YAML_SAFE.load(handle)
+        except (OSError, YAMLError) as exc:
+            print(f"ERROR: could not load {path}: {exc}", file=sys.stderr)
             continue
 
-        values: set[str] = set()
-        for line in enum_m.group(1).splitlines():
-            item_m = re.match(r"\s+-\s+(.+)$", line)
-            if not item_m:
-                continue
-            raw = item_m.group(1).strip()
-            if (raw.startswith('"') and raw.endswith('"')) or (
-                raw.startswith("'") and raw.endswith("'")
-            ):
-                raw = raw[1:-1]
-            values.add(raw)
+        if not isinstance(doc, dict):
+            continue
 
+        name = doc.get("name")
+        schema = doc.get("schema")
+        if not isinstance(name, str) or not isinstance(schema, dict):
+            continue
+
+        enum_vals = schema.get("enum")
+        if not isinstance(enum_vals, list):
+            continue
+
+        # Only string members matter for string-literal compares in IDL.
+        values = {v for v in enum_vals if isinstance(v, str)}
         if values:
             enums[name] = values
+
     return enums
 
 
-def iter_scan_files(roots: list[Path]) -> list[Path]:
+def iter_scan_files(spec_root: Path) -> list[Path]:
+    """All files under spec/ whose basename contains a '.' (has an extension)."""
     files: list[Path] = []
-    for root in roots:
-        if not root.is_dir():
+    if not spec_root.is_dir():
+        return files
+
+    for path in spec_root.rglob("*"):
+        if not path.is_file():
             continue
-        for path in root.rglob("*"):
-            if path.is_file() and path.suffix in SCAN_SUFFIXES:
-                files.append(path)
+        # ?*.?* style: require a dot in the filename so we skip extension-less paths.
+        if "." not in path.name:
+            continue
+        files.append(path)
     return sorted(files)
 
 
@@ -88,8 +111,9 @@ def find_invalid_compares(
     for path in files:
         try:
             text = path.read_text(encoding="utf-8")
-        except OSError as exc:
-            print(f"ERROR: could not read {path}: {exc}", file=sys.stderr)
+        except (OSError, UnicodeDecodeError) as exc:
+            # Skip unreadable / binary-ish files under spec/.
+            print(f"WARNING: could not read {path}: {exc}", file=sys.stderr)
             continue
         for line_no, line in enumerate(text.splitlines(), 1):
             for match in COMPARE_RE.finditer(line):
@@ -97,7 +121,9 @@ def find_invalid_compares(
                 if param not in enums:
                     continue
                 op = match.group(2)
+                # group(3) = double-quoted literal; group(4) = single-quoted.
                 literal = match.group(3) if match.group(3) is not None else match.group(4)
+                assert literal is not None
                 if literal in enums[param]:
                     continue
                 bad.append((path, line_no, param, op, literal, line.strip()))
@@ -116,23 +142,23 @@ def main(argv: list[str] | None = None) -> int:
     root: Path = args.root.resolve()
 
     param_dir = root / "spec" / "std" / "isa" / "param"
+    spec_root = root / "spec"
+
     if not param_dir.is_dir():
         print(f"ERROR: param directory not found: {param_dir}", file=sys.stderr)
         return 2
 
+    if not spec_root.is_dir():
+        print(f"ERROR: spec directory not found: {spec_root}", file=sys.stderr)
+        return 2
+
     enums = load_param_string_enums(param_dir)
-    scan_roots = [
-        root / "spec" / "std" / "isa" / "csr",
-        root / "spec" / "std" / "isa" / "isa",
-        root / "spec" / "std" / "isa" / "inst",
-        root / "spec" / "std" / "isa" / "param",
-    ]
-    files = iter_scan_files(scan_roots)
+    files = iter_scan_files(spec_root)
     bad = find_invalid_compares(enums, files)
 
     print(
-        f"Checked {len(enums)} string-enum parameters across {len(files)} files; "
-        f"found {len(bad)} invalid literal comparison(s)."
+        f"Checked {len(enums)} string-enum parameters across {len(files)} files under "
+        f"spec/; found {len(bad)} invalid literal comparison(s)."
     )
 
     if not bad:
@@ -141,7 +167,10 @@ def main(argv: list[str] | None = None) -> int:
 
     print("ERROR: string literal is not in the parameter's schema.enum:", file=sys.stderr)
     for path, line_no, param, op, literal, line in bad:
-        rel = path.relative_to(root) if path.is_relative_to(root) else path
+        try:
+            rel = path.relative_to(root)
+        except ValueError:
+            rel = path
         allowed = ", ".join(repr(v) for v in sorted(enums[param]))
         print(f"  {rel}:{line_no}: {param} {op} {literal!r}", file=sys.stderr)
         print(f"    allowed: [{allowed}]", file=sys.stderr)

@@ -871,10 +871,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
-      - name: Check parameter enum string literals in IDL comparisons
-        run: ./bin/python tools/scripts/check_param_enum_literals.py
       - name: Unit test parameter enum literal checker
         run: ./bin/python -m unittest tools.scripts.test.test_check_param_enum_literals
+      - name: Check parameter enum string literals in IDL comparisons
+        run: ./bin/python tools/scripts/check_param_enum_literals.py
 
   regress-schema-docs:
     runs-on: ubuntu-latest
