@@ -82,9 +82,9 @@ _V4_CACHE_REPAIRS = {
     },
 }
 _V4_PBMTE_EFFECTS = {
-    "excluded_from_discovery": {"fixture_class": "negative", "gold": False},
-    "surfaced_classified_out": {"fixture_class": "candidate", "gold": True},
-    "included_capability_parameter": {"fixture_class": "positive", "gold": True},
+    "excluded_from_discovery": {"fixture_class": "absent", "gold": False, "classify_out": False, "surfaced": False},
+    "surfaced_classified_out": {"fixture_class": "candidate", "gold": True, "classify_out": True, "surfaced": True},
+    "included_capability_parameter": {"fixture_class": "positive", "gold": True, "classify_out": False, "surfaced": True},
 }
 
 
@@ -93,7 +93,9 @@ def validate_fixture_construction_proposal_v4(
     predecessor_identity: Mapping[str, str], predecessor_manifest_sha256: str,
     predecessor_registry_sha256: str, predecessor_files: Mapping[str, Mapping[str, object]],
     predecessor_classes: Mapping[str, str], authority_sha256: str, revocation_sha256: str,
-    repair_payloads: Mapping[str, bytes], repository_root: Path,
+    repair_payloads: Mapping[str, bytes], supersession: object, supersession_sha256: str,
+    legacy_proposal_sha256: str, legacy_manifest_sha256: str, legacy_registry_sha256: str,
+    repository_root: Path,
 ) -> dict[str, object]:
     """Validate the decision-bound, append-only semantic-gold construction request."""
     if not isinstance(proposal, Mapping) or set(proposal) != {
@@ -141,8 +143,12 @@ def validate_fixture_construction_proposal_v4(
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
     manifest_sha256 = sha256_bytes(canonical_json_bytes(repair_manifest))
     registry_sha256 = sha256_bytes(canonical_json_bytes(registry))
-    _require_v4_binding(proposal.get("repair_manifest"), "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json", manifest_sha256)
-    _require_v4_binding(proposal.get("registry"), "config/fixture-registry-pr2164-v2.json", registry_sha256)
+    _require_v4_binding(proposal.get("repair_manifest"), "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json", manifest_sha256)
+    _require_v4_binding(proposal.get("registry"), "config/fixture-registry-pr2164-v3.json", registry_sha256)
+    _validate_v4_supersession(
+        supersession, supersession_sha256, legacy_proposal_sha256, legacy_manifest_sha256,
+        legacy_registry_sha256, sha256_bytes(canonical_json_bytes(proposal)), manifest_sha256, registry_sha256,
+    )
     if proposal.get("replacements") != repair_manifest["repairs"]:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_CLOSURE_INVALID")
     if proposal.get("selected_policy") != {"cache": cache, "pbmte": pbmte}:
@@ -156,6 +162,46 @@ def _require_v4_binding(value: object, path: str, digest: str) -> None:
     binding = _require_mapping(value, "FIXTURE_CONSTRUCTION_V4_BINDING_INVALID")
     if binding != {"path": path, "sha256": digest}:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_BINDING_INVALID")
+
+
+def _validate_v4_supersession(
+    receipt: object, receipt_sha256: str, legacy_proposal_sha256: str, legacy_manifest_sha256: str,
+    legacy_registry_sha256: str, proposal_sha256: str, manifest_sha256: str, registry_sha256: str,
+) -> None:
+    if not isinstance(receipt, Mapping) or set(receipt) != {
+        "construction_authorized", "legacy", "replacement_reason", "schema_version", "status", "successor",
+    } or receipt.get("schema_version") != "source-contract-construction-proposal-supersession-v1" or (
+        receipt.get("status") != "legacy_semantic_proposal_superseded"
+    ) or receipt.get("construction_authorized") is not False or not isinstance(receipt.get("replacement_reason"), str) or (
+        not receipt["replacement_reason"].strip()
+    ):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    _require_v4_binding(
+        receipt.get("legacy", {}).get("proposal") if isinstance(receipt.get("legacy"), Mapping) else None,
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json", legacy_proposal_sha256,
+    )
+    _require_v4_binding(
+        receipt.get("legacy", {}).get("repair_manifest") if isinstance(receipt.get("legacy"), Mapping) else None,
+        "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json", legacy_manifest_sha256,
+    )
+    _require_v4_binding(
+        receipt.get("legacy", {}).get("registry") if isinstance(receipt.get("legacy"), Mapping) else None,
+        "config/fixture-registry-pr2164-v2.json", legacy_registry_sha256,
+    )
+    _require_v4_binding(
+        receipt.get("successor", {}).get("proposal") if isinstance(receipt.get("successor"), Mapping) else None,
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json", proposal_sha256,
+    )
+    _require_v4_binding(
+        receipt.get("successor", {}).get("repair_manifest") if isinstance(receipt.get("successor"), Mapping) else None,
+        "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json", manifest_sha256,
+    )
+    _require_v4_binding(
+        receipt.get("successor", {}).get("registry") if isinstance(receipt.get("successor"), Mapping) else None,
+        "config/fixture-registry-pr2164-v3.json", registry_sha256,
+    )
+    if receipt_sha256 != sha256_bytes(canonical_json_bytes(receipt)):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
 
 
 def _require_v4_git_commit(value: object, repository_root: Path) -> None:
@@ -186,9 +232,9 @@ def _require_v4_git_commit(value: object, repository_root: Path) -> None:
 
 def _v4_allowed_repairs(cache: str, pbmte: str) -> set[str]:
     effect = _V4_PBMTE_EFFECTS[pbmte]
-    result = set(_V4_SEMANTIC_REPAIRS) | set(_V4_CACHE_REPAIRS[cache]) | {
-        "raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/expected.yaml",
-    }
+    result = set(_V4_SEMANTIC_REPAIRS) | set(_V4_CACHE_REPAIRS[cache])
+    if effect["surfaced"]:
+        result.add("raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/expected.yaml")
     if effect["gold"]:
         result.add("raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/gold.yaml")
     return result
@@ -217,7 +263,7 @@ def _validate_v4_repair_manifest(
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
         target = _normalized_path(repair.get("target_path"), "fixture_construction_v4_target_path")
         payload = _normalized_path(repair.get("payload_path"), "fixture_construction_v4_payload_path")
-        expected_payload = "config/fixture-repairs/pr2164-semantic-gold-v1/" + "/".join(target.split("/")[2:])
+        expected_payload = "config/fixture-repairs/pr2164-semantic-gold-v2/" + "/".join(target.split("/")[2:])
         if target in seen or target not in allowed_repairs or payload != expected_payload:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
         seen.add(target)
@@ -265,14 +311,30 @@ def _validate_v4_repair_manifest(
         line.split(":", 1)[0] for line in asid_text.splitlines()
         if line and not line.startswith((" ", "#")) and ":" in line
     }
-    if "uniform throughout" in cache_text or "implementation-specific" not in cache_text or cache_domain != {1 << shift for shift in range(64)} or (
+    cache_projection_invalid = (
+        cache == "unified_cache_block_identity" and "name: CACHE_BLOCK_SIZE" not in cache_text
+    ) or (
+        cache == "scoped_cache_block_identities" and (
+            "name: CACHE_BLOCK_SIZE.management_prefetch" not in cache_text or
+            "CACHE_BLOCK_SIZE.zero_block" not in cache_text
+        )
+    )
+    pbmte_projection_invalid = (
+        _V4_PBMTE_EFFECTS[pbmte]["classify_out"] and (
+            "final_disposition: classify_out" not in pbmte_text or
+            "classify_out_reason: surfaced_classified_out" not in pbmte_text
+        )
+    ) or (
+        not _V4_PBMTE_EFFECTS[pbmte]["classify_out"] and "final_disposition: classify_out" in pbmte_text
+    )
+    if cache_projection_invalid or "uniform throughout" in cache_text or "implementation-specific" not in cache_text or cache_domain != {1 << shift for shift in range(64)} or (
         pmp_domain != {0, 16, 64} or "minimum: 0" not in geilen_text or
         "direct targets" not in geilen_text or "gold_name: NUM_EXTERNAL_GUEST_INTERRUPTS" not in geilen_expected or
         "existing_alias" not in geilen_expected or "ASIDLEN" not in asid_text or "ASID_WIDTH" not in asid_expected or
         "existing_alias" not in asid_expected or "versioned_aliases" in asid_text or asid_top_level != {
             "$schema", "kind", "name", "description", "long_name", "schema", "definedBy", "requirements",
         } or f"fixture_class: {_V4_PBMTE_EFFECTS[pbmte]['fixture_class']}" not in pbmte_text or
-        "final_disposition: classify_out" not in pbmte_text or "classify_out_reason: isa_fixed_singleton_legal_set" not in cand_text
+        pbmte_projection_invalid or "classify_out_reason: isa_fixed_singleton_legal_set" not in cand_text
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID")
 
@@ -293,7 +355,10 @@ def _v4_inventory(
     predecessor_files: Mapping[str, Mapping[str, object]], predecessor_classes: Mapping[str, str], pbmte: str, manifest: Mapping[str, object],
 ) -> dict[str, object]:
     classes = dict(predecessor_classes)
-    classes["NEG_EXT_GATED_PBMTE"] = str(_V4_PBMTE_EFFECTS[pbmte]["fixture_class"])
+    if _V4_PBMTE_EFFECTS[pbmte]["fixture_class"] == "absent":
+        classes.pop("NEG_EXT_GATED_PBMTE")
+    else:
+        classes["NEG_EXT_GATED_PBMTE"] = str(_V4_PBMTE_EFFECTS[pbmte]["fixture_class"])
     partition = {kind: list(classes.values()).count(kind) for kind in ("candidate", "negative", "positive")}
     repairs = manifest["repairs"]
     assert isinstance(repairs, list)
@@ -323,7 +388,10 @@ def _validate_v4_registry(
     actual_paths: set[str] = set()
     registry_repairs: set[str] = set()
     classes = dict(predecessor_classes)
-    classes["NEG_EXT_GATED_PBMTE"] = str(_V4_PBMTE_EFFECTS[pbmte]["fixture_class"])
+    if _V4_PBMTE_EFFECTS[pbmte]["fixture_class"] == "absent":
+        classes.pop("NEG_EXT_GATED_PBMTE")
+    else:
+        classes["NEG_EXT_GATED_PBMTE"] = str(_V4_PBMTE_EFFECTS[pbmte]["fixture_class"])
     for fixture in fixtures:
         if not isinstance(fixture, Mapping) or set(fixture) != {"files", "fixture_class", "fixture_id"}:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")

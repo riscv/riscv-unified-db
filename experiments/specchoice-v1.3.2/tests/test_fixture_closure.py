@@ -729,9 +729,10 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 verify_candidate(copied)
 
         with self.subTest("semantic_gold_v4_proposal_is_closed_over_repairs_and_registry"):
-            proposal_v4 = experiment / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json"
-            repair_manifest = experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json"
-            registry_v2 = experiment / "config/fixture-registry-pr2164-v2.json"
+            proposal_v4 = experiment / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json"
+            repair_manifest = experiment / "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json"
+            registry_v2 = experiment / "config/fixture-registry-pr2164-v3.json"
+            supersession = experiment / "receipts/source-contract-construction-proposal-v4-supersession-v1.json"
             predecessor_v3 = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
             result = subprocess.run(
                 [
@@ -739,9 +740,11 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     "--proposal", str(proposal_v4),
                     "--predecessor", str(predecessor_v3),
                     "--active-authority", str(experiment / "phase2/source-authority.json"),
+                    "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"),
                     "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"),
                     "--ontology-decision", str(experiment / "reviews/h1-source-gold-ontology-decision-v1.json"),
                     "--repair-manifest", str(repair_manifest), "--registry", str(registry_v2),
+                    "--supersession", str(supersession),
                 ],
                 cwd=experiment,
                 check=False,
@@ -750,15 +753,16 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             proposal_payload = json.loads(proposal_v4.read_text(encoding="utf-8"))
+            supersession_payload = json.loads(supersession.read_text(encoding="utf-8"))
             self.assertEqual(proposal_payload["status"], "awaiting_human_construction_authorization")
             self.assertEqual(proposal_payload["selected_policy"]["pbmte"], "surfaced_classified_out")
             self.assertEqual(proposal_payload["selected_policy"]["cache"], "unified_cache_block_identity")
 
-            cache_gold = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_DIRECT_CACHE_BLOCK/gold.yaml").read_text(encoding="utf-8")
-            pmp_gold = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_DIRECT_NUM_PMP/gold.yaml").read_text(encoding="utf-8")
-            geilen_expected = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_RECALL_COUNT_GEILEN/expected.yaml").read_text(encoding="utf-8")
-            asid_gold = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_WARL_ASID_WIDTH/gold.yaml").read_text(encoding="utf-8")
-            asid_expected = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_WARL_ASID_WIDTH/expected.yaml").read_text(encoding="utf-8")
+            cache_gold = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v2/POS_DIRECT_CACHE_BLOCK/gold.yaml").read_text(encoding="utf-8")
+            pmp_gold = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v2/POS_DIRECT_NUM_PMP/gold.yaml").read_text(encoding="utf-8")
+            geilen_expected = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v2/POS_RECALL_COUNT_GEILEN/expected.yaml").read_text(encoding="utf-8")
+            asid_gold = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v2/POS_WARL_ASID_WIDTH/gold.yaml").read_text(encoding="utf-8")
+            asid_expected = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v2/POS_WARL_ASID_WIDTH/expected.yaml").read_text(encoding="utf-8")
             self.assertIn("enum:", cache_gold)
             self.assertIn("0x4", cache_gold)
             self.assertNotIn("uniform throughout", cache_gold)
@@ -768,16 +772,24 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             self.assertIn("existing_alias", geilen_expected)
             self.assertNotIn("versioned_aliases", asid_gold)
             self.assertIn("versioned_aliases", asid_expected)
+            legacy_proposal = experiment / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json"
+            legacy_manifest = experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json"
+            legacy_registry = experiment / "config/fixture-registry-pr2164-v2.json"
+            self.assertEqual(supersession_payload["legacy"]["proposal"]["sha256"], sha256_bytes(legacy_proposal.read_bytes()))
+            self.assertEqual(supersession_payload["legacy"]["repair_manifest"]["sha256"], sha256_bytes(legacy_manifest.read_bytes()))
+            self.assertEqual(supersession_payload["legacy"]["registry"]["sha256"], sha256_bytes(legacy_registry.read_bytes()))
+            self.assertNotEqual(legacy_manifest.read_bytes(), repair_manifest.read_bytes())
 
-            def run_v4(*, proposal_path: Path = proposal_v4, manifest_path: Path = repair_manifest, registry_path: Path = registry_v2, decision_path: Path = experiment / "reviews/h1-source-gold-ontology-decision-v1.json") -> subprocess.CompletedProcess[str]:
+            def run_v4(*, proposal_path: Path = proposal_v4, manifest_path: Path = repair_manifest, registry_path: Path = registry_v2, supersession_path: Path = supersession, decision_path: Path = experiment / "reviews/h1-source-gold-ontology-decision-v1.json") -> subprocess.CompletedProcess[str]:
                 return subprocess.run(
                     [
                         sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-proposal-v4",
                         "--proposal", str(proposal_path), "--predecessor", str(predecessor_v3),
                         "--active-authority", str(experiment / "phase2/source-authority.json"),
+                        "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"),
                         "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"),
                         "--ontology-decision", str(decision_path), "--repair-manifest", str(manifest_path),
-                        "--registry", str(registry_path),
+                        "--registry", str(registry_path), "--supersession", str(supersession_path),
                     ], cwd=experiment, check=False, capture_output=True, text=True,
                 )
 
@@ -786,6 +798,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 original_proposal = json.loads(proposal_v4.read_text(encoding="utf-8"))
                 original_manifest = json.loads(repair_manifest.read_text(encoding="utf-8"))
                 original_registry = json.loads(registry_v2.read_text(encoding="utf-8"))
+                original_supersession = json.loads(supersession.read_text(encoding="utf-8"))
 
                 def write_payload(name: str, value: object) -> Path:
                     path = temporary / name
@@ -852,6 +865,43 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     opposite["decision_sha256"] = sha256_bytes(canonical_json_bytes(opposite))
                     opposite_path = write_payload("opposite-decision.json", opposite)
                     self.assertNotEqual(run_v4(decision_path=opposite_path).returncode, 0)
+
+                with self.subTest("v4_rejects_rebound_opposite_policy_when_payload_consequences_remain_v2"):
+                    opposite = json.loads((experiment / "reviews/h1-source-gold-ontology-decision-v1.json").read_text(encoding="utf-8"))
+                    opposite["pbmte_policy"]["selection"] = "excluded_from_discovery"
+                    opposite.pop("decision_sha256")
+                    opposite["decision_sha256"] = sha256_bytes(canonical_json_bytes(opposite))
+                    opposite_path = write_payload("rebound-opposite-decision.json", opposite)
+                    forged_manifest = copy.deepcopy(original_manifest)
+                    forged_manifest["ontology_decision_sha256"] = sha256_bytes(opposite_path.read_bytes())
+                    forged_manifest_path = write_payload("rebound-manifest.json", forged_manifest)
+                    forged_registry = copy.deepcopy(original_registry)
+                    forged_registry["ontology_decision_sha256"] = sha256_bytes(opposite_path.read_bytes())
+                    forged_registry_path = write_payload("rebound-registry.json", forged_registry)
+                    forged_proposal = copy.deepcopy(original_proposal)
+                    forged_proposal["ontology_decision"]["sha256"] = sha256_bytes(opposite_path.read_bytes())
+                    forged_proposal["repair_manifest"]["sha256"] = sha256_bytes(forged_manifest_path.read_bytes())
+                    forged_proposal["registry"]["sha256"] = sha256_bytes(forged_registry_path.read_bytes())
+                    forged_proposal["selected_policy"]["pbmte"] = "excluded_from_discovery"
+                    forged_proposal["successor_inventory"] = {
+                        "fixture_count": 10,
+                        "partition": {"candidate": 1, "negative": 3, "positive": 6},
+                        "raw_file_count": 28,
+                    }
+                    forged_proposal_path = write_payload("rebound-proposal.json", forged_proposal)
+                    forged_supersession = copy.deepcopy(original_supersession)
+                    forged_supersession["successor"]["proposal"]["sha256"] = sha256_bytes(forged_proposal_path.read_bytes())
+                    forged_supersession["successor"]["repair_manifest"]["sha256"] = sha256_bytes(forged_manifest_path.read_bytes())
+                    forged_supersession["successor"]["registry"]["sha256"] = sha256_bytes(forged_registry_path.read_bytes())
+                    forged_supersession_path = write_payload("rebound-supersession.json", forged_supersession)
+                    self.assertNotEqual(
+                        run_v4(
+                            proposal_path=forged_proposal_path, manifest_path=forged_manifest_path,
+                            registry_path=forged_registry_path, supersession_path=forged_supersession_path,
+                            decision_path=opposite_path,
+                        ).returncode,
+                        0,
+                    )
 
                 with self.subTest("v4_rejects_nonexistent_code_commit"):
                     forged_proposal = copy.deepcopy(original_proposal)
