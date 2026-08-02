@@ -155,6 +155,15 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 "--old-authority", str(active), "--accepted-bundle", str(accepted_bundle),
                 "--pending-authority", str(pending), "--transition", str(transition), "--revocation", str(revocation),
             )
+            self.assertEqual(
+                self._public_command(
+                    experiment,
+                    "validate-pending-source-cutover-v10", "--pending-authority", str(pending),
+                    "--transition", str(transition), "--active-authority", str(active),
+                    "--accepted-bundle", str(accepted_bundle),
+                )["status"],
+                "pending_cutover_valid_non_effective",
+            )
             revocation.write_bytes(transition.read_bytes())
             failed_v2 = subprocess.run(
                 [

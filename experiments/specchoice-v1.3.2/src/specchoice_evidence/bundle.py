@@ -1125,6 +1125,19 @@ def build_local_acceptance_request_v10(
     return request
 
 
+def _stage_held_candidate_inventory(candidate: Path, destination: Path) -> None:
+    """Copy a complete candidate only from descriptor-read bytes held in memory."""
+    try:
+        inventory = {
+            relative: read_authoritative_file(candidate, relative)[1]
+            for relative in sorted(enumerate_authoritative_files(candidate))
+        }
+    except (FilesystemPolicyError, OSError) as error:
+        raise BundleError(str(error)) from error
+    for relative, raw in inventory.items():
+        _write_exact(destination / relative, raw)
+
+
 def accept_fixture_closure_candidate_v10(
     request_path: Path, decision_path: Path, candidate: Path, accepted_root: Path,
 ) -> dict[str, object]:
@@ -1136,17 +1149,18 @@ def accept_fixture_closure_candidate_v10(
     validated_decision = validate_local_acceptance_decision_v10(decision, request, sha256_bytes(request_raw))
     if validated_decision["decision"] != "accept":
         raise BundleError("LOCAL_ACCEPTANCE_V10_REJECTED")
-    projected, core, _ = _accepted_v3_projection(candidate)
-    if projected != validate_local_acceptance_request_v10(request)["projected_accepted"]:
-        raise BundleError("LOCAL_ACCEPTANCE_V10_PROJECTION_MISMATCH")
-    target = accepted_root / str(projected["generation"])
+    expected_projection = validate_local_acceptance_request_v10(request)["projected_accepted"]
+    target = accepted_root / str(expected_projection["generation"])
     if target.exists() or target.is_symlink():
         raise BundleError("LOCAL_ACCEPTED_TARGET_EXISTS")
     accepted_root.mkdir(parents=True, exist_ok=True)
-    temporary = Path(tempfile.mkdtemp(prefix=f".{projected['generation']}.staging-", dir=accepted_root))
+    temporary = Path(tempfile.mkdtemp(prefix=f".{expected_projection['generation']}.staging-", dir=accepted_root))
     try:
         shutil.rmtree(temporary)
-        shutil.copytree(candidate, temporary)
+        _stage_held_candidate_inventory(candidate, temporary)
+        projected, core, _ = _accepted_v3_projection(temporary)
+        if projected != expected_projection:
+            raise BundleError("LOCAL_ACCEPTANCE_V10_PROJECTION_MISMATCH")
         (temporary / "snapshot-manifest.json").unlink()
         final = {
             "accepted_publication_authorized": False, "content_manifest_core": core,

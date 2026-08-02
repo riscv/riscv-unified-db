@@ -863,6 +863,59 @@ def command_prepare_pending_source_cutover_v10(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_validate_pending_source_cutover_v10(args: argparse.Namespace) -> int:
+    """Validate reviewed future bytes while proving current v2 remains active."""
+    def load(path: Path, code: str) -> tuple[dict[str, object], bytes]:
+        try:
+            from .filesystem import read_authoritative_file
+
+            _, raw = read_authoritative_file(path.parent, path.name)
+            payload = json.loads(raw.decode("utf-8"))
+        except Exception as error:
+            raise ReceiptError(code) from error
+        if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
+            raise ReceiptError(code)
+        return payload, raw
+
+    pending, pending_raw = load(args.pending_authority, "SOURCE_CUTOVER_PENDING_INVALID")
+    transition, transition_raw = load(args.transition, "SOURCE_CUTOVER_TRANSITION_INVALID")
+    active, active_raw = load(args.active_authority, "PHASE2_SOURCE_AUTHORITY_INVALID")
+    verified = verify_accepted_bundle(args.accepted_bundle)
+    manifest, _ = _load_canonical(args.accepted_bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    _, registry_raw = _load_canonical(args.accepted_bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+    _validate_v10_authority(pending, pending_raw, verified, manifest, sha256_bytes(registry_raw), transition_raw)
+    if set(transition) != {
+        "accepted_identity", "decision_sha256", "new_authority_projection_sha256",
+        "old_authority_sha256", "request_sha256", "schema_version",
+    } or transition.get("schema_version") != "2":
+        raise ReceiptError("SOURCE_CUTOVER_TRANSITION_INVALID")
+    projection = dict(pending)
+    projection.pop("transition_sha256", None)
+    if (
+        transition.get("accepted_identity") != pending.get("accepted_identity")
+        or transition.get("decision_sha256") != pending.get("decision_sha256")
+        or transition.get("request_sha256") != pending.get("request_sha256")
+        or transition.get("new_authority_projection_sha256") != sha256_bytes(canonical_json_bytes(projection))
+        or transition.get("old_authority_sha256") != sha256_bytes(active_raw)
+    ):
+        raise ReceiptError("SOURCE_CUTOVER_TRANSITION_INVALID")
+    if active.get("schema_version") != "1" or active.get("external_publication_authorized") is not False or active.get("local_only") is not True:
+        raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
+    canonical_revocation = args.active_authority.parents[1] / "receipts/fixture-closure-revocation-v2.json"
+    if canonical_revocation.exists() or canonical_revocation.is_symlink():
+        raise ReceiptError("SOURCE_CUTOVER_ALREADY_EFFECTIVE")
+    _print_json(
+        {
+            "active_authority_sha256": sha256_bytes(active_raw),
+            "eligible": False,
+            "pending_authority_sha256": sha256_bytes(pending_raw),
+            "status": "pending_cutover_valid_non_effective",
+            "transition_sha256": sha256_bytes(transition_raw),
+        }
+    )
+    return 0
+
+
 def command_activate_pending_source_cutover_v10(args: argparse.Namespace) -> int:
     pending_raw = args.pending_authority.read_bytes()
     transition_raw = args.transition.read_bytes()
@@ -1321,6 +1374,12 @@ def build_parser() -> argparse.ArgumentParser:
     pending_v10.add_argument("--transition", type=Path, required=True)
     pending_v10.add_argument("--revocation", type=Path, required=True)
     pending_v10.set_defaults(handler=command_prepare_pending_source_cutover_v10)
+    validate_pending_v10 = commands.add_parser("validate-pending-source-cutover-v10")
+    validate_pending_v10.add_argument("--pending-authority", type=Path, required=True)
+    validate_pending_v10.add_argument("--transition", type=Path, required=True)
+    validate_pending_v10.add_argument("--active-authority", type=Path, required=True)
+    validate_pending_v10.add_argument("--accepted-bundle", type=Path, required=True)
+    validate_pending_v10.set_defaults(handler=command_validate_pending_source_cutover_v10)
     cutover_v10 = commands.add_parser("activate-pending-source-cutover-v10")
     cutover_v10.add_argument("--pending-authority", type=Path, required=True)
     cutover_v10.add_argument("--transition", type=Path, required=True)
