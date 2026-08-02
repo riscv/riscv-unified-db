@@ -17,6 +17,7 @@ from unittest import mock
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence import filesystem
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
+from specchoice_evidence.verify import verify_accepted_bundle
 from specchoice_measurement import adapter
 from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch, validate_complete_adapter_batch
 
@@ -219,6 +220,15 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual(rejected.records, ())
         self.assertEqual(rejected.diagnostics[0].code, "PHASE2_SOURCE_AUTHORITY_INVALID")
 
+        with self.subTest(mode="revoked-v2-historical"):
+            rejected = build_pr2164_adapter_batch(
+                authority_path=self.experiment_root / "phase2/source-authority-v9-historical.json",
+                bundle_root=self.bundle,
+                rules_path=self.rules,
+            )
+            self.assertFalse(rejected.valid)
+            self.assertEqual(rejected.records, ())
+
     def test_rules_require_a_versioned_identifier(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "rules.json"
@@ -380,6 +390,12 @@ class MeasurementAdapterTests(unittest.TestCase):
         original_run = adapter.subprocess.run
         replacement = json.loads(self.pending_authority.read_text(encoding="utf-8"))
         replacement["root_sha256"] = "0" * 64
+        verified = verify_accepted_bundle(self.pending_bundle)
+        expected_provenance = {
+            "generation": verified["generation"],
+            "manifest_sha256": verified["manifest_sha256"],
+            "root_sha256": verified["root_sha256"],
+        }
 
         with tempfile.TemporaryDirectory() as temporary:
             pending = Path(temporary) / "source-authority-v10-pending.json"
@@ -398,7 +414,7 @@ class MeasurementAdapterTests(unittest.TestCase):
                 )
         self.assertFalse(invalid.valid)
         self.assertEqual(invalid.records, ())
-        self.assertEqual(invalid.source_identity["generation"], self.pending_bundle.name)
+        self.assertEqual(invalid.source_identity, expected_provenance)
 
         with tempfile.TemporaryDirectory() as temporary:
             revocation = Path(temporary) / "fixture-closure-revocation-v2.json"
@@ -418,7 +434,7 @@ class MeasurementAdapterTests(unittest.TestCase):
                 )
         self.assertFalse(invalid.valid)
         self.assertEqual(invalid.records, ())
-        self.assertEqual(invalid.source_identity["generation"], self.pending_bundle.name)
+        self.assertEqual(invalid.source_identity, expected_provenance)
 
         with tempfile.TemporaryDirectory() as temporary:
             active = Path(temporary) / "source-authority.json"
@@ -438,7 +454,85 @@ class MeasurementAdapterTests(unittest.TestCase):
                 )
         self.assertFalse(invalid.valid)
         self.assertEqual(invalid.records, ())
-        self.assertEqual(invalid.source_identity["generation"], self.pending_bundle.name)
+        self.assertEqual(invalid.source_identity, expected_provenance)
+
+        mutations = {
+            "external_publication_authorized": lambda payload: payload.__setitem__("external_publication_authorized", True),
+            "local_only": lambda payload: payload.__setitem__("local_only", False),
+            "decision_sha256": lambda payload: payload.__setitem__("decision_sha256", "0" * 64),
+            "request_sha256": lambda payload: payload.__setitem__("request_sha256", "0" * 64),
+            "extra_key": lambda payload: payload.__setitem__("unexpected", True),
+        }
+        for mutation, apply_mutation in mutations.items():
+            with self.subTest(mutation=mutation):
+                with tempfile.TemporaryDirectory() as temporary:
+                    active = Path(temporary) / "source-authority.json"
+                    active.write_bytes(self.active_authority.read_bytes())
+                    replacement = json.loads(active.read_text(encoding="utf-8"))
+                    apply_mutation(replacement)
+
+                    def validate_then_replace_active(*args, **kwargs):
+                        result = original_run(*args, **kwargs)
+                        active.write_bytes(canonical_json_bytes(replacement))
+                        return result
+
+                    with mock.patch("specchoice_measurement.adapter.subprocess.run", side_effect=validate_then_replace_active):
+                        invalid = build_pr2164_adapter_batch(
+                            authority_path=active,
+                            bundle_root=self.pending_bundle,
+                            rules_path=self.rules,
+                            revocation_path=self.revocation,
+                        )
+                self.assertFalse(invalid.valid)
+                self.assertEqual(invalid.records, ())
+                self.assertEqual(invalid.source_identity, expected_provenance)
+
+        for receipt_variant in ("missing-final-newline", "crlf"):
+            with self.subTest(receipt_variant=receipt_variant):
+                def validate_with_noncanonical_stdout(*args, **kwargs):
+                    result = original_run(*args, **kwargs)
+                    if receipt_variant == "missing-final-newline":
+                        stdout = result.stdout.rstrip("\n")
+                    else:
+                        stdout = result.stdout.replace("\n", "\r\n")
+                    return subprocess.CompletedProcess(result.args, result.returncode, stdout, result.stderr)
+
+                with mock.patch("specchoice_measurement.adapter.subprocess.run", side_effect=validate_with_noncanonical_stdout):
+                    invalid = self.build_active()
+                self.assertFalse(invalid.valid)
+                self.assertEqual(invalid.records, ())
+                self.assertEqual(invalid.source_identity, expected_provenance)
+
+        for descriptor in ("snapshot-manifest.json", "fixture-registry-pr2164-v1.json"):
+            with self.subTest(descriptor=descriptor):
+                with tempfile.TemporaryDirectory() as temporary:
+                    bundle = Path(temporary) / self.pending_bundle.name
+                    shutil.copytree(self.pending_bundle, bundle)
+                    descriptor_path = bundle / descriptor
+
+                    def validate_then_replace_descriptor(*args, **kwargs):
+                        result = original_run(*args, **kwargs)
+                        replacement = json.loads(descriptor_path.read_text(encoding="utf-8"))
+                        replacement["unexpected"] = True
+                        if descriptor == "snapshot-manifest.json":
+                            replacement["snapshot_manifest_sha256"] = sha256_bytes(
+                                canonical_json_bytes(
+                                    {key: value for key, value in replacement.items() if key != "snapshot_manifest_sha256"}
+                                )
+                            )
+                        descriptor_path.write_bytes(canonical_json_bytes(replacement))
+                        return result
+
+                    with mock.patch("specchoice_measurement.adapter.subprocess.run", side_effect=validate_then_replace_descriptor):
+                        invalid = build_pr2164_adapter_batch(
+                            authority_path=self.active_authority,
+                            bundle_root=bundle,
+                            rules_path=self.rules,
+                            revocation_path=self.revocation,
+                        )
+                self.assertFalse(invalid.valid)
+                self.assertEqual(invalid.records, ())
+                self.assertEqual(invalid.source_identity, expected_provenance)
 
     def test_public_builder_rejects_rebound_rules_authority_and_registry_roles(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
