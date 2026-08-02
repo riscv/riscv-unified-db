@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
 import unittest
 from copy import deepcopy
@@ -34,6 +35,22 @@ class H1PublicContractTests(unittest.TestCase):
         ):
             self.assertTrue(callable(value))
         self.assertFalse(any("decision" in name and "validate" not in name for name in dir(h1)))
+        from specchoice_measurement.cli import build_parser  # noqa: PLC0415
+
+        parser = build_parser()
+        with self.assertRaises(SystemExit):
+            parser.parse_args([
+                "build-h1-packet", "--formal-attempt", "formal", "--adversarial-report", "adversarial",
+                "--schema", "schema", "--output", "packet", "--markdown", "markdown",
+            ])
+        with self.assertRaises(SystemExit):
+            parser.parse_args([
+                "write-h1-readiness-v3", "--formal-attempt", "formal", "--adversarial-result", "adversarial",
+                "--packet", "packet", "--markdown", "markdown", "--schema", "schema",
+                "--source-authority", "authority", "--canonical-revocation", "revocation", "--bundle", "bundle",
+                "--rules", "rules", "--predictions", "predictions", "--oracle", "oracle",
+                "--offline-replay", "replay", "--plan-summary", "/summary", "--output", "readiness",
+            ])
 
 
 class H1PacketTests(unittest.TestCase):
@@ -52,10 +69,30 @@ class H1PacketTests(unittest.TestCase):
         self.formal = self.root / "runs/measurement-attempts/formal-golden-pr2164-v1"
         self.adversarial = self.root / "reports/h1/adversarial-oracle-results-v2.json"
         self.schema = self.root / "config/measurement/h1-review-schema-v2.json"
-        self.pending_authority = self.root / "phase2/source-authority-v10-pending.json"
+        self.bundle = self.root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        self.rules = self.root / "config/measurement/pr2164-adapter-rules-v1.json"
+        self.predictions = self.root / "fixtures/measurement/golden-predictions-v1.json"
+        self.oracle = self.root / "fixtures/measurement/adversarial/required-diagnostics-v1.json"
         self.revocation = self.root / "receipts/fixture-closure-revocation-v1.json"
         self.replay = self.root / "receipts/fixture-closure-offline-replay-v3.json"
         self.cutover = self.root / "receipts/source-cutover-readiness-v10.json"
+
+    def _context(self, directory: Path) -> dict[str, Path | None]:
+        source_root = directory / "pre-cutover"
+        authority = source_root / "phase2/source-authority.json"
+        authority.parent.mkdir(parents=True, exist_ok=True)
+        if not authority.exists():
+            shutil.copy2(self.root / "phase2/source-authority-v9-historical.json", authority)
+        return {
+            "authority": authority,
+            "bundle": self.bundle,
+            "rules": self.rules,
+            "predictions": self.predictions,
+            "oracle": self.oracle,
+            "pending_authority": None,
+            "transition": None,
+            "revocation": None,
+        }
 
     def _build(self, directory: Path) -> tuple[Path, Path, dict[str, object]]:
         packet_path = directory / "packet" / "packet.json"
@@ -66,6 +103,7 @@ class H1PacketTests(unittest.TestCase):
             output_json=packet_path,
             output_markdown=markdown_path,
             schema=self.schema,
+            **self._context(directory),
         )
         return packet_path, markdown_path, packet
 
@@ -80,8 +118,12 @@ class H1PacketTests(unittest.TestCase):
             packet=packet,
             markdown=markdown,
             schema=self.schema,
-            source_authority=self.pending_authority,
+            source_authority=self._context(directory)["authority"],
             canonical_revocation=self.revocation,
+            bundle=self.bundle,
+            rules=self.rules,
+            predictions=self.predictions,
+            oracle=self.oracle,
             offline_replay=self.replay,
             phase_gate=self.cutover.read_bytes(),
             plan_summary=summary,
@@ -126,7 +168,9 @@ class H1PacketTests(unittest.TestCase):
     def test_packet_is_complete_clean_and_markdown_is_a_pure_projection(self) -> None:
         with tempfile.TemporaryDirectory(dir=self.root) as directory:
             packet_path, markdown_path, packet = self._build(Path(directory))
-            validated = h1.validate_h1_packet(packet=packet_path, markdown=markdown_path, schema=self.schema)
+            validated = h1.validate_h1_packet(
+                packet=packet_path, markdown=markdown_path, schema=self.schema, **self._context(Path(directory))
+            )
             self.assertEqual(validated, packet)
             self.assertEqual(len(packet["fixture_reviews"]), 11)
             self.assertFalse(packet["external_publication_authorized"])
@@ -141,11 +185,15 @@ class H1PacketTests(unittest.TestCase):
             changed["packet_sha256"] = sha256_bytes(canonical_json_bytes({key: value for key, value in changed.items() if key != "packet_sha256"}))
             packet_path.write_bytes(canonical_json_bytes(changed))
             with self.assertRaisesRegex(H1Error, "H1_BINDINGS_INVALID"):
-                h1.validate_h1_packet(packet=packet_path, markdown=markdown_path, schema=self.schema)
+                h1.validate_h1_packet(
+                    packet=packet_path, markdown=markdown_path, schema=self.schema, **self._context(root)
+                )
             packet_path.write_bytes(canonical_json_bytes(packet))
             markdown_path.write_text("not a projection\n", encoding="utf-8")
             with self.assertRaisesRegex(H1Error, "H1_MARKDOWN_INVALID"):
-                h1.validate_h1_packet(packet=packet_path, markdown=markdown_path, schema=self.schema)
+                h1.validate_h1_packet(
+                    packet=packet_path, markdown=markdown_path, schema=self.schema, **self._context(root)
+                )
 
     def test_readiness_is_one_time_and_validator_is_read_only(self) -> None:
         with tempfile.TemporaryDirectory(dir=self.root) as directory:
@@ -157,9 +205,10 @@ class H1PacketTests(unittest.TestCase):
             self.assertEqual(
                 h1.validate_h1_readiness_v3(
                     readiness=readiness, formal_attempt=self.formal, adversarial_result=self.adversarial,
-                    packet=packet, markdown=markdown, schema=self.schema, source_authority=self.pending_authority,
+                    packet=packet, markdown=markdown, schema=self.schema, source_authority=self._context(root)["authority"],
                     canonical_revocation=self.revocation, offline_replay=self.replay, phase_gate=phase_gate,
-                    plan_summary=root / "02-16-SUMMARY-fixture.md",
+                    plan_summary=root / "02-16-SUMMARY-fixture.md", bundle=self.bundle, rules=self.rules,
+                    predictions=self.predictions, oracle=self.oracle,
                 )["readiness_sha256"],
                 json.loads(before)["readiness_sha256"],
             )
@@ -218,7 +267,9 @@ class H1PacketTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=self.root) as directory:
             packet_path, markdown_path, packet = self._build(Path(directory))
             self.assertEqual(
-                h1.validate_h1_packet(packet=packet_path, markdown=markdown_path, schema=self.schema)["bindings"],
+                h1.validate_h1_packet(
+                    packet=packet_path, markdown=markdown_path, schema=self.schema, **self._context(Path(directory))
+                )["bindings"],
                 packet["bindings"],
             )
 

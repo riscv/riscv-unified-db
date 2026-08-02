@@ -20,6 +20,7 @@ from specchoice_evidence.filesystem import FilesystemPolicyError
 from specchoice_measurement.adapter import build_pr2164_adapter_batch
 from specchoice_measurement.attempts import AttemptError, run_measurement_attempt, validate_measurement_attempt
 from specchoice_measurement.cli import (
+    command_validate_attempt,
     command_run_adversarial_oracles,
     command_run_formal_measurement,
     validate_adversarial_report,
@@ -382,6 +383,19 @@ class MeasurementAttemptTests(unittest.TestCase):
                     schema_raw=active_args.schema.read_bytes(),
                 )["status"],
                 "completed",
+            )
+            self.assertEqual(
+                command_validate_attempt(SimpleNamespace(
+                    attempt=active_args.attempt_root / active_args.attempt_id,
+                    authority=active_args.authority,
+                    bundle=active_args.bundle,
+                    rules=active_args.rules,
+                    schema=active_args.schema,
+                    pending_authority=None,
+                    transition=None,
+                    revocation=active_args.revocation,
+                )),
+                0,
             )
 
     def test_adversarial_cli_is_diagnostic_only_and_matches_every_frozen_oracle(self) -> None:
