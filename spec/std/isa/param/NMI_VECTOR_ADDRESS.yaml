@@ -23,7 +23,6 @@ schema:
   $ref: schema_defs.json#/$defs/uint64
 
 requirements:
-  idl(): |
-    (MXLEN == 32) -> (NMI_VECTOR_ADDRESS <= 32'hffffffff);
+  idl(): (MXLEN == 32) -> (NMI_VECTOR_ADDRESS <= 32'hffffffff);
   reason: |
     The NMI vector is a program counter value, which is MXLEN bits wide.
