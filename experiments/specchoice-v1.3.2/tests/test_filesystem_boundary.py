@@ -40,70 +40,6 @@ from specchoice_evidence.cli import build_parser
 
 
 class FilesystemBoundaryTests(unittest.TestCase):
-    def test_batch_read_holds_one_root_across_directory_swap(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            parent = Path(directory)
-            authority = parent / "authority"
-            replacement = parent / "replacement"
-            authority.mkdir()
-            replacement.mkdir()
-            (authority / "first.txt").write_text("old-first", encoding="utf-8")
-            (authority / "second.txt").write_text("old-second", encoding="utf-8")
-            (replacement / "first.txt").write_text("new-first", encoding="utf-8")
-            (replacement / "second.txt").write_text("new-second", encoding="utf-8")
-            original = filesystem_module._read_held_regular_file
-            swapped = False
-
-            def read_then_swap(*args: object, **kwargs: object) -> bytes:
-                nonlocal swapped
-                value = original(*args, **kwargs)
-                if not swapped:
-                    swapped = True
-                    os.rename(authority, parent / "retired")
-                    os.rename(replacement, authority)
-                return value
-
-            with patch.object(filesystem_module, "_read_held_regular_file", side_effect=read_then_swap):
-                try:
-                    held = read_authoritative_files(authority, ["first.txt", "second.txt"])
-                except FilesystemPolicyError as error:
-                    self.assertEqual(str(error), "AUTHORITATIVE_ROOT_CHANGED")
-                else:
-                    self.assertEqual(held["first.txt"][1], b"old-first")
-                    self.assertEqual(held["second.txt"][1], b"old-second")
-
-    def test_batch_read_holds_nested_fixture_directory_across_swap(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            parent = Path(directory)
-            authority = parent / "authority"
-            fixture = authority / "raw/evaluation_fixtures/FIXTURE"
-            replacement = parent / "replacement"
-            fixture.mkdir(parents=True)
-            replacement.mkdir()
-            (fixture / "first.txt").write_text("old-first", encoding="utf-8")
-            (fixture / "second.txt").write_text("old-second", encoding="utf-8")
-            (replacement / "first.txt").write_text("new-first", encoding="utf-8")
-            (replacement / "second.txt").write_text("new-second", encoding="utf-8")
-            original = filesystem_module._read_held_regular_file
-            swapped = False
-
-            def read_then_swap(*args: object, **kwargs: object) -> bytes:
-                nonlocal swapped
-                value = original(*args, **kwargs)
-                if not swapped:
-                    swapped = True
-                    os.rename(fixture, authority / "raw/evaluation_fixtures/retired")
-                    os.rename(replacement, fixture)
-                return value
-
-            with patch.object(filesystem_module, "_read_held_regular_file", side_effect=read_then_swap):
-                held = read_authoritative_files(
-                    authority,
-                    ["raw/evaluation_fixtures/FIXTURE/first.txt", "raw/evaluation_fixtures/FIXTURE/second.txt"],
-                )
-            self.assertEqual(held["raw/evaluation_fixtures/FIXTURE/first.txt"][1], b"old-first")
-            self.assertEqual(held["raw/evaluation_fixtures/FIXTURE/second.txt"][1], b"old-second")
-
     def _git(self, root: Path, *args: str) -> None:
         subprocess.run(["git", "-C", os.fspath(root), *args], check=True, stdout=subprocess.PIPE)
 
@@ -427,6 +363,66 @@ class FilesystemBoundaryTests(unittest.TestCase):
             self.assertEqual(evidence.file_kind, "regular_file")
             self.assertEqual(evidence.byte_length, 10)
             self.assertEqual(evidence.hardlink_count, 1)
+
+        with self.subTest("held root survives directory substitution"), tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            authority = parent / "authority"
+            replacement = parent / "replacement"
+            authority.mkdir()
+            replacement.mkdir()
+            for location, prefix in ((authority, "old"), (replacement, "new")):
+                (location / "first.txt").write_text(f"{prefix}-first", encoding="utf-8")
+                (location / "second.txt").write_text(f"{prefix}-second", encoding="utf-8")
+            original = filesystem_module._read_held_regular_file
+            swapped = False
+
+            def read_then_swap(*args: object, **kwargs: object) -> bytes:
+                nonlocal swapped
+                value = original(*args, **kwargs)
+                if not swapped:
+                    swapped = True
+                    os.rename(authority, parent / "retired")
+                    os.rename(replacement, authority)
+                return value
+
+            with patch.object(filesystem_module, "_read_held_regular_file", side_effect=read_then_swap):
+                try:
+                    held = read_authoritative_files(authority, ["first.txt", "second.txt"])
+                except FilesystemPolicyError as error:
+                    self.assertEqual(str(error), "AUTHORITATIVE_ROOT_CHANGED")
+                else:
+                    self.assertEqual(held["first.txt"][1], b"old-first")
+                    self.assertEqual(held["second.txt"][1], b"old-second")
+
+        with self.subTest("held nested fixture survives directory substitution"), tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            authority = parent / "authority"
+            fixture = authority / "raw/evaluation_fixtures/FIXTURE"
+            replacement = parent / "replacement"
+            fixture.mkdir(parents=True)
+            replacement.mkdir()
+            for location, prefix in ((fixture, "old"), (replacement, "new")):
+                (location / "first.txt").write_text(f"{prefix}-first", encoding="utf-8")
+                (location / "second.txt").write_text(f"{prefix}-second", encoding="utf-8")
+            original = filesystem_module._read_held_regular_file
+            swapped = False
+
+            def read_then_swap_nested(*args: object, **kwargs: object) -> bytes:
+                nonlocal swapped
+                value = original(*args, **kwargs)
+                if not swapped:
+                    swapped = True
+                    os.rename(fixture, authority / "raw/evaluation_fixtures/retired")
+                    os.rename(replacement, fixture)
+                return value
+
+            with patch.object(filesystem_module, "_read_held_regular_file", side_effect=read_then_swap_nested):
+                held = read_authoritative_files(
+                    authority,
+                    ["raw/evaluation_fixtures/FIXTURE/first.txt", "raw/evaluation_fixtures/FIXTURE/second.txt"],
+                )
+            self.assertEqual(held["raw/evaluation_fixtures/FIXTURE/first.txt"][1], b"old-first")
+            self.assertEqual(held["raw/evaluation_fixtures/FIXTURE/second.txt"][1], b"old-second")
 
     def test_descriptor_backed_read_requires_no_follow_support(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
