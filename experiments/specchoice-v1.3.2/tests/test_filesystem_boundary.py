@@ -27,6 +27,7 @@ from specchoice_evidence.baseline import (
     validate_restart_lineage,
 )
 from specchoice_evidence.filesystem import (
+    create_descriptor_directories,
     FilesystemPolicyError,
     inspect_authoritative_path,
     read_closed_authoritative_tree,
@@ -532,6 +533,43 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 self.assertTrue(triggered)
                 self.assertEqual((parent / "old-root" / "authority.json").read_bytes(), b"v3")
                 self.assertFalse((root / "authority.json").exists())
+
+        with self.subTest(operation="recoverable-directory-create"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            create_descriptor_directories(root, ("config/fixture-repairs/v3", "receipts"))
+            create_descriptor_directories(root, ("config/fixture-repairs/v3", "receipts"))
+            write_new_descriptor_file(root, "config/fixture-repairs/v3/gold.yaml", b"gold")
+            self.assertEqual((root / "config/fixture-repairs/v3/gold.yaml").read_bytes(), b"gold")
+
+        with self.subTest(operation="directory-create-held-root"), tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            root = parent / "root"
+            replacement = parent / "replacement"
+            root.mkdir()
+            replacement.mkdir()
+            original_mkdir = os.mkdir
+            triggered = False
+
+            def rebind_mkdir(path: object, *args: object, **kwargs: object) -> None:
+                nonlocal triggered
+                if not triggered and os.fspath(path) == "config":
+                    triggered = True
+                    os.rename(root, parent / "old-root")
+                    os.rename(replacement, root)
+                original_mkdir(path, *args, **kwargs)
+
+            with patch("specchoice_evidence.filesystem.os.mkdir", side_effect=rebind_mkdir):
+                create_descriptor_directories(root, ("config/nested",))
+            self.assertTrue(triggered)
+            self.assertTrue((parent / "old-root/config/nested").is_dir())
+            self.assertFalse((root / "config").exists())
+
+        with self.subTest(operation="directory-create-rejects-symlink"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "outside").mkdir()
+            (root / "config").symlink_to(root / "outside", target_is_directory=True)
+            with self.assertRaisesRegex(FilesystemPolicyError, "SYMLINK_REJECTED"):
+                create_descriptor_directories(root, ("config/nested",))
 
     def test_dirfd_reader_rejects_regular_to_fifo_immediate_open_without_blocking(self) -> None:
         """The final no-follow open must be nonblocking before a FIFO can be consumed."""
