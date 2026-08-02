@@ -20,7 +20,7 @@ description: |
   zero.
 
   Must be between 0 and NUM_PMP_ENTRIES, inclusive.
-long_name: TODO
+long_name: number of usable PMP entries
 schema:
   type: integer
   minimum: 0
@@ -31,5 +31,5 @@ definedBy:
     greaterThan: 0
 requirements:
   idl(): |
-    NUM_PMP_ENTRIES == 16 -> NUM_USABLE_PMP_ENTRIES <= 16;
+    NUM_USABLE_PMP_ENTRIES <= NUM_PMP_ENTRIES;
   reason: Usable PMP entries cannot exceed the number of implemented PMP entries
