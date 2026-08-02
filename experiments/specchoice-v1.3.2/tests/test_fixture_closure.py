@@ -23,8 +23,10 @@ from specchoice_evidence.bundle import (
 )
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
+from specchoice_evidence.cli import _v4_predecessor_material
 from specchoice_evidence.verify import _bundle_artifacts, _raw_artifacts, _root_digest, verify_accepted_bundle
 from specchoice_evidence.source_contract import (
+    _v4_inventory,
     FixtureRegistryError,
     SourceContractProposalError,
     require_fixture_closure_local_acceptance_authorization,
@@ -881,6 +883,12 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     forged_manifest_path = write_payload("rebound-manifest.json", forged_manifest)
                     forged_registry = copy.deepcopy(original_registry)
                     forged_registry["ontology_decision_sha256"] = sha256_bytes(opposite_path.read_bytes())
+                    forged_registry["fixtures"] = [
+                        fixture for fixture in forged_registry["fixtures"]
+                        if fixture["fixture_id"] != "NEG_EXT_GATED_PBMTE"
+                    ]
+                    forged_registry["fixture_count"] = 10
+                    forged_registry["raw_file_count"] = 26
                     forged_registry_path = write_payload("rebound-registry.json", forged_registry)
                     forged_proposal = copy.deepcopy(original_proposal)
                     forged_proposal["ontology_decision"]["sha256"] = sha256_bytes(opposite_path.read_bytes())
@@ -891,7 +899,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     forged_proposal["successor_inventory"] = {
                         "fixture_count": 10,
                         "partition": {"candidate": 1, "negative": 3, "positive": 6},
-                        "raw_file_count": 28,
+                        "raw_file_count": 26,
                     }
                     forged_proposal_path = write_payload("rebound-proposal.json", forged_proposal)
                     forged_supersession = copy.deepcopy(original_supersession)
@@ -899,10 +907,36 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     forged_supersession["successor"]["repair_manifest"]["sha256"] = sha256_bytes(forged_manifest_path.read_bytes())
                     forged_supersession["successor"]["registry"]["sha256"] = sha256_bytes(forged_registry_path.read_bytes())
                     forged_supersession_path = write_payload("rebound-supersession.json", forged_supersession)
-                    self.assertNotEqual(
+                    predecessor_material = _v4_predecessor_material(predecessor_v3)
+                    self.assertEqual(
+                        _v4_inventory(
+                            predecessor_material["files"], predecessor_material["classes"],
+                            "excluded_from_discovery", forged_manifest,
+                        ),
+                        forged_proposal["successor_inventory"],
+                    )
+                    self.assertEqual(
                         run_v4(
                             proposal_path=forged_proposal_path, manifest_path=forged_manifest_path,
                             registry_path=forged_registry_path, supersession_path=forged_supersession_path,
+                            decision_path=opposite_path,
+                        ).returncode,
+                        0,
+                    )
+                    retained_registry = copy.deepcopy(original_registry)
+                    retained_registry["ontology_decision_sha256"] = sha256_bytes(opposite_path.read_bytes())
+                    retained_registry_path = write_payload("retained-pbmte-registry.json", retained_registry)
+                    retained_proposal = copy.deepcopy(forged_proposal)
+                    retained_proposal["registry"]["sha256"] = sha256_bytes(retained_registry_path.read_bytes())
+                    retained_proposal_path = write_payload("retained-pbmte-proposal.json", retained_proposal)
+                    retained_supersession = copy.deepcopy(forged_supersession)
+                    retained_supersession["successor"]["proposal"]["sha256"] = sha256_bytes(retained_proposal_path.read_bytes())
+                    retained_supersession["successor"]["registry"]["sha256"] = sha256_bytes(retained_registry_path.read_bytes())
+                    retained_supersession_path = write_payload("retained-pbmte-supersession.json", retained_supersession)
+                    self.assertNotEqual(
+                        run_v4(
+                            proposal_path=retained_proposal_path, manifest_path=forged_manifest_path,
+                            registry_path=retained_registry_path, supersession_path=retained_supersession_path,
                             decision_path=opposite_path,
                         ).returncode,
                         0,
