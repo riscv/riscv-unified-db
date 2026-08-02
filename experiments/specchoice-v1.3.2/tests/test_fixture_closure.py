@@ -1035,7 +1035,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         subprocess.CompletedProcess([], 0, stdout=b'{"valid":true}\n', stderr=b"warning"),
                     )
                     for failure in failures:
-                        with mock.patch.object(source_contract_module.subprocess, "run", side_effect=failure if isinstance(failure, BaseException) else None, return_value=None if isinstance(failure, BaseException) else failure), self.assertRaisesRegex(
+                        with mock.patch.object(source_contract_module, "_run_bounded_subprocess", side_effect=failure if isinstance(failure, BaseException) else None, return_value=None if isinstance(failure, BaseException) else failure), self.assertRaisesRegex(
                             SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"
                         ):
                             source_contract_module._validate_v4_repair_yaml_batch(repaired_payloads)
@@ -1095,7 +1095,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         mutate(forged["fixed_code_artifacts"])
                         with self.subTest(name=name):
                             self.assertNotEqual(run_v4(proposal_path=write_payload(f"code-{name}.json", forged)).returncode, 0)
-                    with mock.patch("specchoice_evidence.source_contract.subprocess.run") as command:
+                    with mock.patch("specchoice_evidence.source_contract._run_bounded_subprocess") as command:
                         command.side_effect = [
                             subprocess.CompletedProcess([], 0), subprocess.CompletedProcess([], 1),
                         ]
@@ -1300,17 +1300,15 @@ class FixtureClosureCandidateTests(unittest.TestCase):
 
                     postflight_root = temporary / "postflight-mismatch"
                     postflight_root.mkdir()
-                    authoritative_read = cli_module.read_authoritative_file
-
-                    def mismatch_after_write(root: Path, relative: str):
-                        evidence, raw = authoritative_read(root, relative)
-                        return evidence, b"mismatch" if raw == b"expected" else raw
-
-                    with mock.patch.object(cli_module, "read_authoritative_file", side_effect=mismatch_after_write), self.assertRaisesRegex(
+                    with mock.patch.object(
+                        cli_module,
+                        "write_exact_descriptor_files",
+                        side_effect=FilesystemPolicyError("AUTHORITATIVE_POSTWRITE_MISMATCH"),
+                    ), self.assertRaisesRegex(
                         SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_WRITE_INVALID"
                     ):
                         cli_module._write_v4_no_replace(postflight_root, {"receipts/proposal.json": b"expected"})
-                    self.assertEqual((postflight_root / "receipts/proposal.json").read_bytes(), b"expected")
+                    self.assertFalse((postflight_root / "receipts/proposal.json").exists())
 
                 with self.subTest("v4_rejects_forged_old_hash_and_length"):
                     forged_manifest = copy.deepcopy(original_manifest)

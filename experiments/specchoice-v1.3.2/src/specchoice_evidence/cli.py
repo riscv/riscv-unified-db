@@ -22,7 +22,7 @@ from .baseline import (
     validate_boundary_restart,
     validate_restart_lineage,
 )
-from .filesystem import FilesystemPolicyError, create_descriptor_directories, read_authoritative_file, read_authoritative_files, read_closed_authoritative_tree, replace_descriptor_file, require_relative_posix_path, write_new_descriptor_file
+from .filesystem import FilesystemPolicyError, read_authoritative_file, read_authoritative_files, read_closed_authoritative_tree, replace_descriptor_file, require_relative_posix_path, write_exact_descriptor_files, write_new_descriptor_file
 from .receipt import (
     ReceiptError,
     build_blocked_receipt,
@@ -664,30 +664,12 @@ def command_validate_fixture_construction_decision_v4(args: argparse.Namespace) 
 
 
 def _write_v4_no_replace(output_root: Path, payloads: dict[str, bytes]) -> None:
-    """Preflight all leaves, then recoverably create only missing exact targets."""
-    missing: list[str] = []
-    for relative, expected in payloads.items():
-        try:
-            evidence, existing = read_authoritative_file(output_root, relative)
-        except FilesystemPolicyError as error:
-            if str(error) != "AUTHORITATIVE_FILE_MISSING":
-                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_INVALID") from error
-            missing.append(relative)
-        else:
-            if evidence.hardlink_count != 1 or existing != expected:
-                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_COLLISION")
+    """Bind the complete no-replace batch to one descriptor-rooted transaction."""
     try:
-        create_descriptor_directories(
-            output_root,
-            tuple(sorted({require_relative_posix_path(relative).parent.as_posix() for relative in missing})),
-        )
-        for relative in missing:
-            write_new_descriptor_file(output_root, relative, payloads[relative])
-        for relative, expected in payloads.items():
-            evidence, actual = read_authoritative_file(output_root, relative)
-            if evidence.hardlink_count != 1 or actual != expected:
-                raise FilesystemPolicyError("AUTHORITATIVE_POSTWRITE_MISMATCH")
+        write_exact_descriptor_files(output_root, payloads)
     except FilesystemPolicyError as error:
+        if str(error) == "AUTHORITATIVE_DESTINATION_COLLISION":
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_COLLISION") from error
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_INVALID") from error
 
 
@@ -794,26 +776,45 @@ def _v4_predecessor_material(predecessor: Path) -> dict[str, object]:
     }
 
 
+_V4_STAGED_REPAIR_PAYLOADS = frozenset({
+    "config/fixture-repairs/pr2164-semantic-gold-v3/POS_DIRECT_CACHE_BLOCK/gold.yaml",
+    "config/fixture-repairs/pr2164-semantic-gold-v3/POS_RECALL_COUNT_GEILEN/expected.yaml",
+})
+_V4_REUSED_REPAIR_PAYLOADS = frozenset({
+    "config/fixture-repairs/pr2164-semantic-gold-v2/CAND_WARL_FIXED_LEGAL_SET/expected.yaml",
+    "config/fixture-repairs/pr2164-semantic-gold-v2/NEG_EXT_GATED_PBMTE/expected.yaml",
+    "config/fixture-repairs/pr2164-semantic-gold-v2/NEG_EXT_GATED_PBMTE/gold.yaml",
+    "config/fixture-repairs/pr2164-semantic-gold-v2/POS_DIRECT_NUM_PMP/gold.yaml",
+    "config/fixture-repairs/pr2164-semantic-gold-v2/POS_RECALL_COUNT_GEILEN/gold.yaml",
+    "config/fixture-repairs/pr2164-semantic-gold-v2/POS_WARL_ASID_WIDTH/expected.yaml",
+    "config/fixture-repairs/pr2164-semantic-gold-v2/POS_WARL_ASID_WIDTH/gold.yaml",
+})
+
+
 def _v4_repair_payloads(manifest: dict[str, object], payload_root: Path) -> dict[str, bytes]:
     repairs = manifest.get("repairs")
     if not isinstance(repairs, list):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
-    result: dict[str, bytes] = {}
+    paths: list[str] = []
     for repair in repairs:
         if not isinstance(repair, dict) or not isinstance(repair.get("payload_path"), str):
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
-        payload = require_relative_posix_path(repair["payload_path"]).as_posix()
-        if payload in result:
-            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
-        source_root = payload_root if payload in {
-            "config/fixture-repairs/pr2164-semantic-gold-v3/POS_DIRECT_CACHE_BLOCK/gold.yaml",
-            "config/fixture-repairs/pr2164-semantic-gold-v3/POS_RECALL_COUNT_GEILEN/expected.yaml",
-        } else _experiment_root()
         try:
-            _, result[payload] = read_authoritative_file(source_root, payload)
-        except (FilesystemPolicyError, OSError) as error:
-            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID") from error
-    return result
+            paths.append(require_relative_posix_path(repair["payload_path"]).as_posix())
+        except FilesystemPolicyError as error:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID") from error
+    expected_paths = _V4_STAGED_REPAIR_PAYLOADS | _V4_REUSED_REPAIR_PAYLOADS
+    if len(paths) != len(expected_paths) or len(paths) != len(set(paths)) or set(paths) != expected_paths:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
+    try:
+        reused = read_authoritative_files(_experiment_root(), sorted(_V4_REUSED_REPAIR_PAYLOADS))
+        staged = read_authoritative_files(payload_root, sorted(_V4_STAGED_REPAIR_PAYLOADS))
+    except (FilesystemPolicyError, OSError) as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID") from error
+    held = reused | staged
+    if any(evidence.hardlink_count != 1 for evidence, _ in held.values()):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID")
+    return {path: held[path][1] for path in sorted(expected_paths)}
 
 
 def command_validate_source_contract_proposal(args: argparse.Namespace) -> int:

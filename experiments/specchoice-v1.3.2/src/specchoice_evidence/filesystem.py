@@ -6,6 +6,7 @@ from __future__ import annotations
 import errno
 import os
 import stat
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
@@ -231,6 +232,232 @@ def write_new_descriptor_file(root: Path, relative_path: str, content: bytes) ->
             os.close(descriptor)
         for held in reversed(descriptors):
             os.close(held)
+
+
+def _read_bounded_descriptor(descriptor: int, expected_length: int) -> bytes:
+    """Rewind and read no more than one byte beyond an already-bounded payload."""
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    chunks: list[bytes] = []
+    total = 0
+    while total <= expected_length:
+        chunk = os.read(descriptor, min(1024 * 1024, expected_length + 1 - total))
+        if not chunk:
+            break
+        chunks.append(chunk)
+        total += len(chunk)
+    return b"".join(chunks)
+
+
+def write_exact_descriptor_files(root: Path, payloads: Mapping[str, bytes]) -> None:
+    """Preflight, durably create, and postflight one exact no-replace file set.
+
+    The lexical root is opened exactly once. Every directory and leaf descriptor
+    remains rooted in that authority through the cross-leaf postflight, so a
+    pathname rebind cannot split one batch across two trees.
+    """
+    if not isinstance(payloads, Mapping) or not payloads:
+        raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID")
+    normalized: list[tuple[PurePosixPath, bytes]] = []
+    for path, raw in payloads.items():
+        if not isinstance(path, str) or not isinstance(raw, bytes):
+            raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID")
+        normalized.append((require_relative_posix_path(path), raw))
+    normalized.sort(key=lambda item: item[0].parts)
+    names = [relative.as_posix() for relative, _ in normalized]
+    target_parts = {relative.parts for relative, _ in normalized}
+    if len(names) != len(set(names)) or any(
+        relative.parts[:depth] in target_parts
+        for relative, _ in normalized
+        for depth in range(1, len(relative.parts))
+    ):
+        raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID")
+
+    root_descriptor: int | None = None
+    directories: dict[tuple[str, ...], int] = {}
+    directory_signatures: dict[tuple[str, ...], tuple[int, int, int, int, int, int, int]] = {}
+    absent_directories: set[tuple[str, ...]] = set()
+    files: dict[str, tuple[int, int, str, os.stat_result]] = {}
+    try:
+        root_descriptor, root_parts = _directory_components(root)
+        if root_parts:
+            raise FilesystemPolicyError("DIRECTORY_DESCRIPTOR_UNAVAILABLE")
+        authority = os.fstat(root_descriptor)
+        if not stat.S_ISDIR(authority.st_mode):
+            raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+        directories[()] = root_descriptor
+        directory_signatures[()] = _signature(authority)
+
+        # Complete the read-only preflight before any mkdir, create, or fsync.
+        missing: list[tuple[PurePosixPath, bytes]] = []
+        for relative, expected in normalized:
+            parent = root_descriptor
+            parent_prefix: tuple[str, ...] = ()
+            parent_missing = False
+            for depth, part in enumerate(relative.parts[:-1], start=1):
+                prefix = relative.parts[:depth]
+                if prefix in absent_directories:
+                    parent_missing = True
+                    break
+                child = directories.get(prefix)
+                if child is None:
+                    try:
+                        child = _open_directory(parent, part, authority.st_dev)
+                    except FilesystemPolicyError as error:
+                        if str(error) != "AUTHORITATIVE_FILE_MISSING":
+                            raise
+                        absent_directories.add(prefix)
+                        parent_missing = True
+                        break
+                    directories[prefix] = child
+                    directory_signatures[prefix] = _signature(os.fstat(child))
+                parent = child
+                parent_prefix = prefix
+            if parent_missing:
+                missing.append((relative, expected))
+                continue
+            leaf = relative.parts[-1]
+            try:
+                before = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+            except FileNotFoundError:
+                missing.append((relative, expected))
+                continue
+            except (NotImplementedError, TypeError, OSError) as error:
+                raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID") from error
+            if stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode) or before.st_dev != authority.st_dev:
+                raise FilesystemPolicyError("AUTHORITATIVE_DESTINATION_COLLISION")
+            descriptor: int | None = None
+            try:
+                descriptor = os.open(leaf, _file_flags(), dir_fd=parent)
+                opened = os.fstat(descriptor)
+                if not _same_identity(before, opened) or not stat.S_ISREG(opened.st_mode) or opened.st_dev != authority.st_dev:
+                    raise FilesystemPolicyError("AUTHORITATIVE_POSTWRITE_MISMATCH")
+                if opened.st_nlink != 1 or opened.st_size != len(expected):
+                    raise FilesystemPolicyError("AUTHORITATIVE_DESTINATION_COLLISION")
+                actual = _read_bounded_descriptor(descriptor, len(expected))
+                after = os.fstat(descriptor)
+                namespace_after = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+                if _signature(before) != _signature(after) or not _same_identity(after, namespace_after):
+                    raise FilesystemPolicyError("AUTHORITATIVE_FILE_CHANGED")
+                if actual != expected:
+                    raise FilesystemPolicyError("AUTHORITATIVE_DESTINATION_COLLISION")
+                files[relative.as_posix()] = (descriptor, parent, leaf, after)
+                descriptor = None
+            finally:
+                if descriptor is not None:
+                    os.close(descriptor)
+
+        # Exact resume leaves are not accepted until both file and namespace
+        # durability have been acknowledged through the held descriptors.
+        for descriptor, parent, _, baseline in files.values():
+            os.fsync(descriptor)
+            os.fsync(parent)
+            if _signature(os.fstat(descriptor)) != _signature(baseline):
+                raise FilesystemPolicyError("AUTHORITATIVE_FILE_CHANGED")
+
+        # Create every missing parent relative to the original held root.
+        for relative, _ in missing:
+            for depth, part in enumerate(relative.parts[:-1], start=1):
+                prefix = relative.parts[:depth]
+                if prefix in directories:
+                    continue
+                parent_prefix = prefix[:-1]
+                parent = directories[parent_prefix]
+                if _signature(os.fstat(parent)) != directory_signatures[parent_prefix]:
+                    raise FilesystemPolicyError("AUTHORITATIVE_DIRECTORY_CHANGED")
+                try:
+                    os.mkdir(part, 0o755, dir_fd=parent)
+                    os.fsync(parent)
+                    child = _open_directory(parent, part, authority.st_dev)
+                except (NotImplementedError, TypeError, OSError) as error:
+                    raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID") from error
+                directories[prefix] = child
+                directory_signatures[parent_prefix] = _signature(os.fstat(parent))
+                directory_signatures[prefix] = _signature(os.fstat(child))
+
+        # Only now may leaves be created. Keep every descriptor for the batch
+        # postflight; if durability fails, remove only the inode we created.
+        for relative, expected in missing:
+            parent_prefix = relative.parts[:-1]
+            parent = directories[parent_prefix]
+            leaf = relative.parts[-1]
+            if _signature(os.fstat(parent)) != directory_signatures[parent_prefix]:
+                raise FilesystemPolicyError("AUTHORITATIVE_DIRECTORY_CHANGED")
+            descriptor: int | None = None
+            created = False
+            try:
+                descriptor = os.open(
+                    leaf,
+                    os.O_RDWR | os.O_CREAT | os.O_EXCL | _require_flag("O_NOFOLLOW") | _require_flag("O_CLOEXEC"),
+                    0o644,
+                    dir_fd=parent,
+                )
+                created = True
+                _write_all(descriptor, expected)
+                os.fsync(descriptor)
+                os.fsync(parent)
+                opened = os.fstat(descriptor)
+                if not stat.S_ISREG(opened.st_mode) or opened.st_dev != authority.st_dev or opened.st_nlink != 1 or opened.st_size != len(expected):
+                    raise OSError(errno.EIO, "invalid created authoritative leaf")
+                files[relative.as_posix()] = (descriptor, parent, leaf, opened)
+                descriptor = None
+                directory_signatures[parent_prefix] = _signature(os.fstat(parent))
+            except (NotImplementedError, TypeError, OSError) as error:
+                cleanup_error: BaseException | None = None
+                if created and descriptor is not None:
+                    try:
+                        current = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+                        if _same_identity(current, os.fstat(descriptor)):
+                            os.unlink(leaf, dir_fd=parent)
+                            os.fsync(parent)
+                            directory_signatures[parent_prefix] = _signature(os.fstat(parent))
+                    except FileNotFoundError:
+                        pass
+                    except (NotImplementedError, TypeError, OSError) as cleanup_failure:
+                        cleanup_error = cleanup_failure
+                raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID") from (cleanup_error or error)
+            finally:
+                if descriptor is not None:
+                    os.close(descriptor)
+
+        # Read every held leaf before validating any final signature. A later
+        # leaf mutation of an earlier one is therefore visible in the final pass.
+        observed: dict[str, bytes] = {}
+        expected_by_name = {relative.as_posix(): raw for relative, raw in normalized}
+        for name in names:
+            descriptor, _, _, _ = files[name]
+            observed[name] = _read_bounded_descriptor(descriptor, len(expected_by_name[name]))
+        for name in names:
+            descriptor, parent, leaf, baseline = files[name]
+            os.fsync(descriptor)
+            os.fsync(parent)
+            after = os.fstat(descriptor)
+            try:
+                namespace_after = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+            except (NotImplementedError, TypeError, OSError) as error:
+                raise FilesystemPolicyError("AUTHORITATIVE_POSTWRITE_MISMATCH") from error
+            if (
+                observed[name] != expected_by_name[name]
+                or after.st_nlink != 1
+                or _signature(after) != _signature(baseline)
+                or not _same_identity(after, namespace_after)
+                or _signature(after) != _signature(namespace_after)
+            ):
+                raise FilesystemPolicyError("AUTHORITATIVE_POSTWRITE_MISMATCH")
+        for prefix, descriptor in directories.items():
+            if _signature(os.fstat(descriptor)) != directory_signatures[prefix]:
+                raise FilesystemPolicyError("AUTHORITATIVE_ROOT_CHANGED" if not prefix else "AUTHORITATIVE_DIRECTORY_CHANGED")
+    except FilesystemPolicyError:
+        raise
+    except (NotImplementedError, TypeError, OSError) as error:
+        raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID") from error
+    finally:
+        for descriptor, _, _, _ in files.values():
+            os.close(descriptor)
+        for prefix, descriptor in sorted(directories.items(), key=lambda item: len(item[0]), reverse=True):
+            if descriptor != root_descriptor:
+                os.close(descriptor)
+        if root_descriptor is not None:
+            os.close(root_descriptor)
 
 
 def _read_held_regular_file(

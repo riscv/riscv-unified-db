@@ -12,8 +12,11 @@ import base64
 import hashlib
 import os
 import re
+import selectors
 import shutil
 import subprocess
+import tempfile
+import time
 from datetime import datetime
 from collections.abc import Mapping
 from pathlib import Path
@@ -28,6 +31,78 @@ class SourceContractProposalError(ValueError):
 
 class FixtureRegistryError(ValueError):
     """Stable diagnostic for PR #2164 finite-set fixture custody failures."""
+
+
+class _BoundedSubprocessError(OSError):
+    """A child exceeded its closed input or output resource envelope."""
+
+
+def _run_bounded_subprocess(
+    command: list[str], *, input_bytes: bytes, max_stdout_bytes: int,
+    max_stderr_bytes: int, timeout: float, max_stdin_bytes: int = 1024 * 1024,
+    env: Mapping[str, str] | None = None,
+) -> subprocess.CompletedProcess[bytes]:
+    """Run one child while actively bounding all three byte streams."""
+    if (
+        not command or any(not isinstance(part, str) or not part for part in command)
+        or not isinstance(input_bytes, bytes) or len(input_bytes) > max_stdin_bytes
+        or min(max_stdin_bytes, max_stdout_bytes, max_stderr_bytes) < 0 or timeout <= 0
+    ):
+        raise _BoundedSubprocessError("SUBPROCESS_ENVELOPE_INVALID")
+    with tempfile.TemporaryFile() as input_stream:
+        input_stream.write(input_bytes)
+        input_stream.seek(0)
+        process = subprocess.Popen(
+            command, stdin=input_stream, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+        )
+        if process.stdout is None or process.stderr is None:
+            process.kill()
+            process.wait()
+            raise _BoundedSubprocessError("SUBPROCESS_PIPE_UNAVAILABLE")
+        selector = selectors.DefaultSelector()
+        streams = {"stdout": process.stdout, "stderr": process.stderr}
+        limits = {"stdout": max_stdout_bytes, "stderr": max_stderr_bytes}
+        chunks: dict[str, list[bytes]] = {"stdout": [], "stderr": []}
+        totals = {"stdout": 0, "stderr": 0}
+        selector.register(process.stdout, selectors.EVENT_READ, "stdout")
+        selector.register(process.stderr, selectors.EVENT_READ, "stderr")
+        deadline = time.monotonic() + timeout
+        try:
+            while selector.get_map():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise subprocess.TimeoutExpired(command, timeout)
+                events = selector.select(remaining)
+                if not events:
+                    raise subprocess.TimeoutExpired(command, timeout)
+                for key, _ in events:
+                    stream_name = key.data
+                    chunk = os.read(key.fileobj.fileno(), min(64 * 1024, limits[stream_name] - totals[stream_name] + 1))
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                        continue
+                    chunks[stream_name].append(chunk)
+                    totals[stream_name] += len(chunk)
+                    if totals[stream_name] > limits[stream_name]:
+                        raise _BoundedSubprocessError(f"SUBPROCESS_{stream_name.upper()}_LIMIT")
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired(command, timeout)
+            returncode = process.wait(timeout=remaining)
+        except BaseException:
+            process.kill()
+            for stream in streams.values():
+                stream.close()
+            try:
+                process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                pass
+            raise
+        finally:
+            selector.close()
+        return subprocess.CompletedProcess(
+            command, returncode, stdout=b"".join(chunks["stdout"]), stderr=b"".join(chunks["stderr"]),
+        )
 
 
 _FIXTURE_BASE = "tools/python/param-extraction-eval/cases"
@@ -147,7 +222,7 @@ def validate_fixture_construction_proposal_v4(
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_POLICY_INVALID")
     pbmte = selected_policy.get("pbmte")
     cache = selected_policy.get("cache")
-    if pbmte not in _V4_PBMTE_EFFECTS or cache not in _V4_CACHE_REPAIRS:
+    if pbmte != "surfaced_classified_out" or cache != "unified_cache_block_identity":
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_POLICY_INVALID")
     _require_v4_binding(proposal.get("ontology_decision"), "reviews/h1-source-gold-ontology-decision-v1.json", artifact_sha256)
     _require_v4_binding(proposal.get("active_authority"), "phase2/source-authority.json", authority_sha256)
@@ -196,6 +271,12 @@ def _require_v4_binding(value: object, path: str, digest: str) -> None:
     binding = _require_mapping(value, "FIXTURE_CONSTRUCTION_V4_BINDING_INVALID")
     if binding != {"path": path, "sha256": digest}:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_BINDING_INVALID")
+
+
+def _require_v4_artifact_set(value: object) -> Mapping[str, object]:
+    if not isinstance(value, Mapping) or set(value) != {"proposal", "repair_manifest", "registry"}:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    return value
 
 
 def validate_fixture_construction_decision_v4(
@@ -250,6 +331,8 @@ def _validate_v4_supersession(
         not receipt["replacement_reason"].strip()
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    legacy = _require_v4_artifact_set(receipt.get("legacy"))
+    successor = _require_v4_artifact_set(receipt.get("successor"))
     _require_v4_binding(receipt.get("previous_supersession"), "receipts/source-contract-construction-proposal-v4-supersession-v2.json", previous_supersession_sha256)
     _validate_v4_supersession_v2(
         previous_supersession, previous_supersession_sha256,
@@ -259,27 +342,27 @@ def _validate_v4_supersession(
         prior_legacy_proposal_sha256, prior_legacy_manifest_sha256, prior_legacy_registry_sha256,
     )
     _require_v4_binding(
-        receipt.get("legacy", {}).get("proposal") if isinstance(receipt.get("legacy"), Mapping) else None,
+        legacy.get("proposal"),
         "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json", legacy_proposal_sha256,
     )
     _require_v4_binding(
-        receipt.get("legacy", {}).get("repair_manifest") if isinstance(receipt.get("legacy"), Mapping) else None,
+        legacy.get("repair_manifest"),
         "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json", legacy_manifest_sha256,
     )
     _require_v4_binding(
-        receipt.get("legacy", {}).get("registry") if isinstance(receipt.get("legacy"), Mapping) else None,
+        legacy.get("registry"),
         "config/fixture-registry-pr2164-v3.json", legacy_registry_sha256,
     )
     _require_v4_binding(
-        receipt.get("successor", {}).get("proposal") if isinstance(receipt.get("successor"), Mapping) else None,
+        successor.get("proposal"),
         "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json", proposal_sha256,
     )
     _require_v4_binding(
-        receipt.get("successor", {}).get("repair_manifest") if isinstance(receipt.get("successor"), Mapping) else None,
+        successor.get("repair_manifest"),
         "config/fixture-repairs/pr2164-semantic-gold-v3/repair-manifest.json", manifest_sha256,
     )
     _require_v4_binding(
-        receipt.get("successor", {}).get("registry") if isinstance(receipt.get("successor"), Mapping) else None,
+        successor.get("registry"),
         "config/fixture-registry-pr2164-v4.json", registry_sha256,
     )
     if receipt_sha256 != sha256_bytes(canonical_json_bytes(receipt)):
@@ -311,10 +394,8 @@ def _validate_v4_supersession_v2(
         previous_supersession, legacy_proposal_sha256, legacy_manifest_sha256, legacy_registry_sha256,
         previous_legacy_proposal_sha256, previous_legacy_manifest_sha256, previous_legacy_registry_sha256,
     )
-    legacy = receipt.get("legacy")
-    successor = receipt.get("successor")
-    if not isinstance(legacy, Mapping) or not isinstance(successor, Mapping):
-        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    legacy = _require_v4_artifact_set(receipt.get("legacy"))
+    successor = _require_v4_artifact_set(receipt.get("successor"))
     _require_v4_binding(
         legacy.get("proposal"),
         "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json",
@@ -354,10 +435,8 @@ def _validate_v4_previous_supersession(
         not receipt["replacement_reason"].strip()
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
-    legacy = receipt.get("legacy")
-    successor = receipt.get("successor")
-    if not isinstance(legacy, Mapping) or not isinstance(successor, Mapping):
-        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    legacy = _require_v4_artifact_set(receipt.get("legacy"))
+    successor = _require_v4_artifact_set(receipt.get("successor"))
     _require_v4_binding(
         legacy.get("proposal"),
         "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json", previous_legacy_proposal_sha256,
@@ -376,22 +455,12 @@ def _validate_v4_previous_supersession(
     _require_v4_binding(successor.get("registry"), "config/fixture-registry-pr2164-v3.json", legacy_registry_sha256)
 
 
+_V4_GIT_MAX_ARTIFACT_BYTES = 1024 * 1024
+_V4_SUBPROCESS_MAX_STDERR_BYTES = 4096
+
+
 def _require_v4_git_commit(value: object, artifacts: object, repository_root: Path) -> None:
     if not isinstance(value, str) or len(value) != 40:
-        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
-    try:
-        int(value, 16)
-        object_check = subprocess.run(
-            ["git", "-C", str(repository_root), "cat-file", "-e", f"{value}^{{commit}}"],
-            check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
-        )
-        ancestry_check = subprocess.run(
-            ["git", "-C", str(repository_root), "merge-base", "--is-ancestor", value, "HEAD"],
-            check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
-        )
-    except (ValueError, OSError, subprocess.TimeoutExpired) as error:
-        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
-    if object_check.returncode != 0 or ancestry_check.returncode != 0:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
     if not isinstance(artifacts, list) or len(artifacts) != len(_V4_CODE_PATHS) or [item.get("path") if isinstance(item, Mapping) else None for item in artifacts] != list(_V4_CODE_PATHS):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
@@ -399,10 +468,39 @@ def _require_v4_git_commit(value: object, artifacts: object, repository_root: Pa
         if not isinstance(artifact, Mapping) or set(artifact) != {"byte_length", "path", "sha256"}:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
         try:
-            shown = subprocess.run(["git", "-C", str(repository_root), "show", f"{value}:{artifact['path']}"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+            length = require_byte_length(artifact.get("byte_length"))
+            require_sha256(artifact.get("sha256"))
+        except ValueError as error:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
+        if length > _V4_GIT_MAX_ARTIFACT_BYTES:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
+    try:
+        int(value, 16)
+        object_check = _run_bounded_subprocess(
+            ["git", "-C", str(repository_root), "cat-file", "-e", f"{value}^{{commit}}"],
+            input_bytes=b"", max_stdin_bytes=0, max_stdout_bytes=0,
+            max_stderr_bytes=_V4_SUBPROCESS_MAX_STDERR_BYTES, timeout=30,
+        )
+        ancestry_check = _run_bounded_subprocess(
+            ["git", "-C", str(repository_root), "merge-base", "--is-ancestor", value, "HEAD"],
+            input_bytes=b"", max_stdin_bytes=0, max_stdout_bytes=0,
+            max_stderr_bytes=_V4_SUBPROCESS_MAX_STDERR_BYTES, timeout=30,
+        )
+    except (ValueError, OSError, subprocess.TimeoutExpired) as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
+    if object_check.returncode != 0 or ancestry_check.returncode != 0:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
+    for artifact in artifacts:
+        length = int(artifact["byte_length"])
+        try:
+            shown = _run_bounded_subprocess(
+                ["git", "-C", str(repository_root), "show", f"{value}:{artifact['path']}"],
+                input_bytes=b"", max_stdin_bytes=0, max_stdout_bytes=length,
+                max_stderr_bytes=_V4_SUBPROCESS_MAX_STDERR_BYTES, timeout=30,
+            )
         except (OSError, subprocess.TimeoutExpired) as error:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
-        if shown.returncode != 0 or artifact.get("byte_length") != len(shown.stdout) or artifact.get("sha256") != sha256_bytes(shown.stdout):
+        if shown.returncode != 0 or length != len(shown.stdout) or artifact.get("sha256") != sha256_bytes(shown.stdout):
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
 
 
@@ -427,7 +525,7 @@ def _validate_v4_repair_manifest(
     ) or manifest.get("ontology_decision_sha256") != ontology_decision_sha256:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
     repairs = manifest.get("repairs")
-    if not isinstance(repairs, list) or not repairs:
+    if not isinstance(repairs, list) or len(repairs) != _V4_YAML_PAYLOAD_COUNT or len(allowed_repairs) != _V4_YAML_PAYLOAD_COUNT:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
     seen: set[str] = set()
     for repair in repairs:
@@ -471,9 +569,15 @@ def _validate_v4_repair_manifest(
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID") from error
         if raw is None or sha256_bytes(raw) != new_sha or len(raw) != new_length:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID")
-    if seen != allowed_repairs or [item.get("target_path") for item in repairs] != sorted(seen):
+    expected_payload_paths = {item.get("payload_path") for item in repairs}
+    if (
+        seen != allowed_repairs
+        or [item.get("target_path") for item in repairs] != sorted(seen)
+        or len(repair_payloads) != _V4_YAML_PAYLOAD_COUNT
+        or set(repair_payloads) != expected_payload_paths
+    ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
-    _validate_v4_repair_yaml_batch(repair_payloads, expected_count=len(allowed_repairs))
+    _validate_v4_repair_yaml_batch(repair_payloads)
     try:
         text = {target: repair_payloads[repair["payload_path"]].decode("utf-8") for repair in repairs for target in [repair["target_path"]]}
     except UnicodeDecodeError as error:
@@ -526,7 +630,7 @@ _V4_YAML_VALIDATOR = r'''
 begin
   batch = STDIN.read
   request = JSON.parse(batch)
-  raise "request" unless request.is_a?(Array) && !request.empty?
+  raise "request" unless request.is_a?(Array) && request.length == 9
   request.each do |entry|
     raise "entry" unless entry.is_a?(Hash) && entry.keys.sort == ["content_b64", "path"]
     raw = Base64.strict_decode64(entry.fetch("content_b64"))
@@ -564,34 +668,43 @@ end
 _V4_YAML_PAYLOAD_COUNT = 9
 _V4_YAML_MAX_PAYLOAD_BYTES = 64 * 1024
 _V4_YAML_MAX_BATCH_BYTES = 256 * 1024
+_V4_YAML_MAX_PATH_BYTES = 512
+_V4_YAML_MAX_REQUEST_BYTES = 320 * 1024
 
 
-def _validate_v4_repair_yaml_batch(
-    repair_payloads: Mapping[str, bytes], *, expected_count: int = _V4_YAML_PAYLOAD_COUNT,
-) -> None:
+def _validate_v4_repair_yaml_batch(repair_payloads: Mapping[str, bytes]) -> None:
     """Parse all already-read repair bytes in one fail-closed Psych subprocess."""
-    if not 1 <= expected_count <= _V4_YAML_PAYLOAD_COUNT or len(repair_payloads) != expected_count or any(
-        not isinstance(path, str) or not isinstance(raw, bytes) or len(raw) > _V4_YAML_MAX_PAYLOAD_BYTES
+    if len(repair_payloads) != _V4_YAML_PAYLOAD_COUNT or any(
+        not isinstance(path, str) or len(path.encode("utf-8")) > _V4_YAML_MAX_PATH_BYTES
+        or not isinstance(raw, bytes) or len(raw) > _V4_YAML_MAX_PAYLOAD_BYTES
         for path, raw in repair_payloads.items()
     ) or sum(len(raw) for raw in repair_payloads.values()) > _V4_YAML_MAX_BATCH_BYTES:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID")
+    try:
+        if any(require_relative_posix_path(path).as_posix() != path for path in repair_payloads):
+            raise FilesystemPolicyError("PATH_ESCAPE_DETECTED")
+    except FilesystemPolicyError as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID") from error
     request = [
         {"content_b64": base64.b64encode(repair_payloads[path]).decode("ascii"), "path": path}
         for path in sorted(repair_payloads)
     ]
     request_raw = canonical_json_bytes(request)
+    if len(request_raw) > _V4_YAML_MAX_REQUEST_BYTES:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID")
     ruby = shutil.which("ruby")
     if ruby is None or not Path(ruby).is_absolute():
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID")
+    expected = canonical_json_bytes({"batch_sha256": sha256_bytes(request_raw), "valid": True})
     try:
-        result = subprocess.run(
+        result = _run_bounded_subprocess(
             [ruby, "--disable-gems", "-rjson", "-rbase64", "-rpsych", "-rdigest", "-e", _V4_YAML_VALIDATOR],
-            input=request_raw, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=10,
+            input_bytes=request_raw, max_stdin_bytes=_V4_YAML_MAX_REQUEST_BYTES,
+            max_stdout_bytes=len(expected), max_stderr_bytes=_V4_SUBPROCESS_MAX_STDERR_BYTES, timeout=10,
             env={key: value for key, value in os.environ.items() if key not in {"RUBYOPT", "RUBYLIB"}},
         )
     except (OSError, subprocess.TimeoutExpired) as error:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID") from error
-    expected = canonical_json_bytes({"batch_sha256": sha256_bytes(request_raw), "valid": True})
     if result.returncode != 0 or result.stdout != expected or result.stderr != b"":
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID")
 
