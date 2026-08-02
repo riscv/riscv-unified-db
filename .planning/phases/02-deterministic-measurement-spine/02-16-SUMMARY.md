@@ -87,9 +87,9 @@ Plan implementation commits already present at the execution baseline include `c
 
 - Active authority and pending-v3 authority: `e1681a347a6d9cbdf6d0f19863b4d2856a36663949fcc0a6f4d2960c5dd8e6d1`.
 - Canonical revocation and pending transition: `472bc06268c2e7c70d6975717f9d0f60b14e1a495cbca73342e9effe7bb33543`.
-- Formal-v2 completed attempt: `5af7673e4b02cbafac57336805a28cb245466abe23450953d01452efc2bd655d`.
-- Adversarial-v3 report: `326ddbf2de9e4a0888fd0cc6da5ef00c34330060f594ceb047be1b8ee5b36cd0`.
-- H1 packet-v3 JSON: `65b4a3a0f1d1df32112cd7e8f9080ae247a704368756295273b52a6d99111aad`; Markdown: `7e9a0af5421df995107d9747fe6cac75ea8a4df72e4429c30200c38e29adc0a6`.
+- Formal-v2 internal `attempt_sha256`: `5af7673e4b02cbafac57336805a28cb245466abe23450953d01452efc2bd655d`; canonical `attempt.json` bytes: `dbdcea065674051c22facbb2b18e384db23e7b855fb65978fd4ebe4d38140b3d`.
+- Adversarial-v3 canonical report bytes: `326ddbf2de9e4a0888fd0cc6da5ef00c34330060f594ceb047be1b8ee5b36cd0`.
+- H1 packet-v3 internal `packet_sha256`: `65b4a3a0f1d1df32112cd7e8f9080ae247a704368756295273b52a6d99111aad`; canonical JSON bytes: `6b421c758b47e5ce4796b2a95ca26ed00bc0977468f388542df48130948a495e`; Markdown bytes: `7e9a0af5421df995107d9747fe6cac75ea8a4df72e4429c30200c38e29adc0a6`.
 
 ## Verification
 
