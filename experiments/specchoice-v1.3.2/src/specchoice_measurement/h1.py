@@ -478,13 +478,35 @@ _SEMANTIC_RESPONSE_IDS = (
 def validate_h1_decision_v2(*, schema: Path, packet: Path, readiness: Path, decision: Path) -> dict[str, Any]:
     """Validate a fully human-authored successor decision without authoring or inferring one."""
     schema_raw = _validate_v2_schema(schema)
-    packet_value, _ = _read_canonical_external(packet, "H1_PACKET_INVALID")
+    packet_value, packet_raw = _read_canonical_external(packet, "H1_PACKET_INVALID")
     packet_value = _validate_packet_value(packet_value)
-    readiness_value, readiness_raw = _read_canonical_external(readiness, "H1_READINESS_INVALID")
+    readiness_value, _ = _read_canonical_external(readiness, "H1_READINESS_INVALID")
+    if (
+        set(readiness_value) != {"bindings", "external_publication_authorized", "readiness_sha256", "schema_version"}
+        or readiness_value.get("schema_version") != "h1-review-readiness-v3"
+        or readiness_value.get("external_publication_authorized") is not False
+    ):
+        raise H1Error("H1_READINESS_INVALID")
+    readiness_bindings = readiness_value.get("bindings")
+    required_readiness_bindings = {
+        "adversarial_result_sha256", "canonical_revocation_sha256", "formal_attempt_sha256", "markdown_sha256",
+        "offline_replay_sha256", "packet_sha256", "phase_gate_sha256", "plan_summary_sha256", "schema_sha256",
+        "source_authority_sha256",
+    }
+    if not isinstance(readiness_bindings, dict) or set(readiness_bindings) != required_readiness_bindings:
+        raise H1Error("H1_READINESS_INVALID")
+    for binding in readiness_bindings.values():
+        _require_digest(binding, "H1_READINESS_INVALID")
+    _require_digest(readiness_value.get("readiness_sha256"), "H1_READINESS_INVALID")
     if readiness_value.get("readiness_sha256") != sha256_bytes(canonical_json_bytes({
         key: value for key, value in readiness_value.items() if key != "readiness_sha256"
     })):
         raise H1Error("H1_READINESS_INVALID")
+    if (
+        readiness_bindings["packet_sha256"] != sha256_bytes(packet_raw)
+        or readiness_bindings["schema_sha256"] != sha256_bytes(schema_raw)
+    ):
+        raise H1Error("H1_READINESS_BINDINGS_INVALID")
     value, _ = _read_canonical_external(decision, "H1_DECISION_INVALID")
     required = {
         "aggregate_disposition", "bindings", "decision_sha256", "external_publication_authorized", "fixture_reviews",
