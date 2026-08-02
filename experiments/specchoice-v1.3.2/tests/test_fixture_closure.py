@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -74,6 +75,37 @@ class FixtureClosureTests(unittest.TestCase):
 
 
 class FixtureClosureCandidateTests(unittest.TestCase):
+
+    def test_source_authority_and_bundle_consumers_reuse_descriptor_bound_canonical_bytes(self) -> None:
+        """The public authority receipt is assembled from descriptor-read bundle leaves."""
+        experiment = Path(__file__).resolve().parents[1]
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        command = [
+            sys.executable, "-m", "specchoice_evidence.cli", "validate-phase2-source-authority",
+            "--authority", "phase2/source-authority.json", "--bundle", str(accepted),
+        ]
+        result = subprocess.run(command, cwd=experiment, check=False, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", "replace"))
+        self.assertEqual(result.stdout, canonical_json_bytes(json.loads(result.stdout.decode("utf-8"))))
+        receipt = json.loads(result.stdout.decode("utf-8"))
+        self.assertEqual(receipt["status"], "valid")
+        self.assertEqual(set(receipt), {
+            "fixture_count", "generation", "manifest_sha256", "pinned_commit_sha",
+            "pinned_tree_sha", "raw_file_count", "registry_sha256", "root_sha256", "status",
+        })
+
+    def test_public_candidate_and_acceptance_paths_reject_rebound_control_leaves(self) -> None:
+        """Public consumers fail closed before a special control leaf can be consumed."""
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        with tempfile.TemporaryDirectory() as directory:
+            copied = Path(directory) / "candidate"
+            shutil.copytree(candidate, copied)
+            registry = copied / "fixture-registry-pr2164-v1.json"
+            registry.unlink()
+            os.mkfifo(registry)
+            with self.assertRaisesRegex(BundleError, "VERIFIER_ARTIFACT_INVALID|SPECIAL_FILE_KIND_REJECTED|STAGED_RAW_CUSTODY_MISMATCH"):
+                verify_candidate(copied)
 
     def test_fixture_candidate_publish_rejects_racing_empty_target_without_overwrite(self) -> None:
         experiment = Path(__file__).resolve().parents[1]

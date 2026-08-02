@@ -39,7 +39,7 @@ from .bundle import (
     publish_accepted,
     verify_candidate,
 )
-from .verify import verify_accepted_bundle
+from .verify import _load_canonical, verify_accepted_bundle
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
@@ -594,15 +594,20 @@ def command_verify_accepted(args: argparse.Namespace) -> int:
 
 def command_validate_phase2_source_authority(args: argparse.Namespace) -> int:
     """Fail closed unless the Phase 2 pin matches the accepted v3 registry exactly."""
-    raw = args.authority.read_bytes()
+    from .filesystem import FilesystemPolicyError, read_authoritative_file
+
+    try:
+        _, raw = read_authoritative_file(args.authority.parent, args.authority.name)
+    except FilesystemPolicyError as error:
+        raise ReceiptError("PHASE2_SOURCE_AUTHORITY_INVALID") from error
     authority = json.loads(raw.decode("utf-8"))
     if not isinstance(authority, dict) or canonical_json_bytes(authority) != raw:
         raise ReceiptError("PHASE2_SOURCE_AUTHORITY_NOT_CANONICAL")
     bundle = args.bundle
     verified = verify_accepted_bundle(bundle)
-    manifest = json.loads((bundle / "snapshot-manifest.json").read_text(encoding="utf-8"))
-    registry = bundle / "fixture-registry-pr2164-v1.json"
-    registry_sha256 = sha256_bytes(registry.read_bytes())
+    manifest, _ = _load_canonical(bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    _, registry_raw = _load_canonical(bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+    registry_sha256 = sha256_bytes(registry_raw)
     snapshot = manifest["content_manifest_core"]["snapshots"][0]
     expected = {
         "fixture_count": 11, "generation": verified["generation"], "manifest_sha256": manifest["snapshot_manifest_sha256"],

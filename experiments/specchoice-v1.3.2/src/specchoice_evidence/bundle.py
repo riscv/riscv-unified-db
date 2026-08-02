@@ -22,7 +22,13 @@ from typing import Any
 
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .baseline import BaselineError, check_current_boundary, validate_boundary_restart
-from .filesystem import FilesystemPolicyError, inspect_authoritative_path, require_relative_posix_path
+from .filesystem import (
+    FilesystemPolicyError,
+    enumerate_authoritative_files,
+    inspect_authoritative_path,
+    read_authoritative_file,
+    require_relative_posix_path,
+)
 from .git_proof import GitProofError, read_pinned_blob
 from .source_contract import (
     FixtureRegistryError,
@@ -67,6 +73,18 @@ def _canonical_load(path: Path, code: str) -> dict[str, Any]:
     if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
         raise BundleError(code)
     return payload
+
+
+def _canonical_load_from_root(root: Path, relative_path: str, code: str) -> tuple[dict[str, Any], bytes]:
+    """Parse one canonical control leaf from the descriptor-bound read result."""
+    try:
+        _, raw = read_authoritative_file(root, relative_path)
+        payload = json.loads(raw.decode("utf-8"))
+    except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise BundleError(code) from error
+    if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
+        raise BundleError(code)
+    return payload, raw
 
 
 def _relative(path: object, code: str) -> str:
@@ -270,9 +288,9 @@ def construct_candidate(
     registry_bytes: bytes | None = None
     if fixture_registry_path is not None:
         try:
-            registry_bytes = fixture_registry_path.read_bytes()
+            _, registry_bytes = read_authoritative_file(fixture_registry_path.parent, fixture_registry_path.name)
             registry = json.loads(registry_bytes.decode("utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
             raise BundleError("FIXTURE_REGISTRY_INVALID") from error
         if canonical_json_bytes(registry) != registry_bytes:
             raise BundleError("FIXTURE_REGISTRY_NOT_CANONICAL")
@@ -360,9 +378,9 @@ def construct_fixture_closure_candidate(
             proposal_sha256=sha256_bytes(proposal_raw),
         )
         bindings = validate_fixture_closure_proposal(proposal)
-        registry_raw = fixture_registry_path.read_bytes()
+        _, registry_raw = read_authoritative_file(fixture_registry_path.parent, fixture_registry_path.name)
         registry = json.loads(registry_raw.decode("utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError, SourceContractProposalError) as error:
+    except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError, SourceContractProposalError) as error:
         raise BundleError("FIXTURE_CLOSURE_PROPOSAL_INVALID") from error
     if canonical_json_bytes(registry) != registry_raw:
         raise BundleError("FIXTURE_REGISTRY_NOT_CANONICAL")
@@ -373,9 +391,9 @@ def construct_fixture_closure_candidate(
         raise BundleError("FIXTURE_REGISTRY_BINDING_MISMATCH")
     source_snapshots = fixture_registry_path.with_name("source_snapshots.json")
     try:
-        source_raw = source_snapshots.read_bytes()
+        _, source_raw = read_authoritative_file(source_snapshots.parent, source_snapshots.name)
         source_payload = json.loads(source_raw.decode("utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+    except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise BundleError("SOURCE_SNAPSHOTS_BINDING_MISMATCH") from error
     if canonical_json_bytes(source_payload) != source_raw or sha256_bytes(source_raw) != source_binding["sha256"]:
         raise BundleError("SOURCE_SNAPSHOTS_BINDING_MISMATCH")
@@ -590,13 +608,11 @@ def construct_verifier_rooted_candidate(
 
 def verify_candidate(candidate: Path) -> dict[str, object]:
     """Offline recomputation of raw custody, core/root, and final non-cyclic binding."""
-    core_path = candidate / "content-manifest-core.json"
-    final_path = candidate / "snapshot-manifest.json"
-    core = _canonical_load(core_path, "CONTENT_MANIFEST_CORE_INVALID")
-    final = _canonical_load(final_path, "SNAPSHOT_MANIFEST_INVALID")
+    core, core_raw = _canonical_load_from_root(candidate, "content-manifest-core.json", "CONTENT_MANIFEST_CORE_INVALID")
+    final, _ = _canonical_load_from_root(candidate, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
     if final.get("status") != "candidate" or final.get("downstream_eligible") is not False or final.get("accepted_publication_authorized") is not False or final.get("external_publication_authorized", False) is not False or not isinstance(final.get("offline_replay_proven"), bool):
         raise BundleError("CANDIDATE_ACCEPTED_STATE_FORBIDDEN")
-    actual_manifest = sha256_bytes(core_path.read_bytes())
+    actual_manifest = sha256_bytes(core_raw)
     if final.get("manifest_sha256") != actual_manifest:
         raise BundleError("MANIFEST_SHA256_MISMATCH")
     without_self = dict(final)
@@ -624,7 +640,7 @@ def verify_candidate(candidate: Path) -> dict[str, object]:
                 raise BundleError("CONSUMED_FILE_INVENTORY_INVALID")
             local = _relative(file.get("local_bundle_path"), "LOCAL_PATH_INVALID")
             try:
-                evidence = inspect_authoritative_path(candidate, local)
+                evidence, raw = read_authoritative_file(candidate, local)
             except FilesystemPolicyError as error:
                 raise BundleError(str(error)) from error
             except OSError as error:
@@ -639,19 +655,13 @@ def verify_candidate(candidate: Path) -> dict[str, object]:
             raise BundleError(str(error)) from error
     expected = {"content-manifest-core.json", "snapshot-manifest.json"}
     expected.update(str(item["local_bundle_path"]) for item in artifacts)
-    actual: set[str] = set()
-    for directory, names, entries in os.walk(candidate, topdown=True, followlinks=False):
-        current = Path(directory)
-        for name in [*names, *entries]:
-            relative = (current / name).relative_to(candidate).as_posix()
-            if "__pycache__" in relative.split("/") or relative.endswith(".pyc"):
-                continue
-            try:
-                evidence = inspect_authoritative_path(candidate, relative)
-            except FilesystemPolicyError as error:
-                raise BundleError(str(error)) from error
-            if evidence.file_kind == "regular_file":
-                actual.add(relative)
+    try:
+        actual = {
+            relative for relative in enumerate_authoritative_files(candidate)
+            if "__pycache__" not in relative.split("/") and not relative.endswith(".pyc")
+        }
+    except FilesystemPolicyError as error:
+        raise BundleError(str(error)) from error
     if expected - actual:
         raise BundleError("BUNDLE_MISSING_FILE")
     if actual - expected:
@@ -769,7 +779,7 @@ def accept_fixture_closure_candidate(
     if not isinstance(decision_path, Path):
         raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_DECISION_INVALID")
     try:
-        decision_raw = decision_path.read_bytes()
+        _, decision_raw = read_authoritative_file(decision_path.parent, decision_path.name)
         decision = json.loads(decision_raw.decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_DECISION_INVALID") from error
@@ -780,13 +790,13 @@ def accept_fixture_closure_candidate(
     generation = identity.get("generation")
     if generation != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2":
         raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_GENERATION_INVALID")
-    final_candidate = _canonical_load(candidate / "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    final_candidate, _ = _canonical_load_from_root(candidate, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
     snapshot_sha256 = final_candidate.get("snapshot_manifest_sha256")
     if not isinstance(snapshot_sha256, str):
         raise BundleError("SNAPSHOT_MANIFEST_SELF_DIGEST_MISMATCH")
-    registry = candidate / "fixture-registry-pr2164-v1.json"
     try:
-        registry_sha256 = sha256_bytes(registry.read_bytes())
+        _, registry_raw = read_authoritative_file(candidate, "fixture-registry-pr2164-v1.json")
+        registry_sha256 = sha256_bytes(registry_raw)
         require_fixture_closure_local_acceptance_authorization(
             decision, identity, snapshot_sha256, registry_sha256, v7_basis
         )
@@ -802,7 +812,7 @@ def accept_fixture_closure_candidate(
         shutil.copytree(candidate, temporary)
         (temporary / "content-manifest-core.json").unlink()
         (temporary / "snapshot-manifest.json").unlink()
-        core = _canonical_load(candidate / "content-manifest-core.json", "CONTENT_MANIFEST_CORE_INVALID")
+        core, _ = _canonical_load_from_root(candidate, "content-manifest-core.json", "CONTENT_MANIFEST_CORE_INVALID")
         closure = core.get("fixture_closure")
         if not isinstance(closure, dict) or closure.get("fixture_count") != 11 or closure.get("raw_file_count") != 28:
             raise BundleError("FIXTURE_CLOSURE_ACCEPTANCE_INCOMPLETE")
