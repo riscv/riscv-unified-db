@@ -220,6 +220,24 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual(rejected.records, ())
         self.assertEqual(rejected.diagnostics[0].code, "PHASE2_SOURCE_AUTHORITY_INVALID")
 
+        with self.subTest(mode="revocation-appears-during-legacy-validation"):
+            original_run = adapter.subprocess.run
+            revocation = self.authority.parent.parent / "receipts/fixture-closure-revocation-v2.json"
+
+            def validate_then_create_revocation(*args, **kwargs):
+                result = original_run(*args, **kwargs)
+                revocation.write_bytes(self.revocation.read_bytes())
+                return result
+
+            with mock.patch("specchoice_measurement.adapter.subprocess.run", side_effect=validate_then_create_revocation):
+                rejected = build_pr2164_adapter_batch(
+                    authority_path=self.authority,
+                    bundle_root=self.bundle,
+                    rules_path=self.rules,
+                )
+            self.assertFalse(rejected.valid)
+            self.assertEqual(rejected.records, ())
+
         with self.subTest(mode="revoked-v2-historical"):
             rejected = build_pr2164_adapter_batch(
                 authority_path=self.experiment_root / "phase2/source-authority-v9-historical.json",
