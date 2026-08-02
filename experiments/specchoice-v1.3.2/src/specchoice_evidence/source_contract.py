@@ -342,9 +342,11 @@ def _validate_v4_repair_manifest(
 
 def _v4_yaml_integer_domain(text: str, start: str, end: str) -> set[int]:
     try:
-        section = text.split(start, 1)[1].split(end, 1)[0]
+        section = text.split(start, 1)[1]
     except IndexError as error:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID") from error
+    if end in section:
+        section = section.split(end, 1)[0]
     values = re.findall(r"0x[0-9A-Fa-f]+|(?<![A-Za-z0-9_])-?[0-9]+", section)
     try:
         return {int(value, 0) for value in values}
