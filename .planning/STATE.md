@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
 status: executing
-stopped_at: Completed 02-11-PLAN.md
-last_updated: "2026-08-02T09:13:28.517Z"
+stopped_at: Completed 02-12-PLAN.md
+last_updated: "2026-08-02T09:24:10.461Z"
 last_activity: 2026-08-02
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 24
-  completed_plans: 18
+  completed_plans: 19
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 02 (deterministic-measurement-spine) — EXECUTING
-Plan: 4 of 17
+Plan: 5 of 17
 Status: Ready to execute
 Last activity: 2026-08-02 — Phase 02 execution started
 
-Progress: [████████░░] 75%
+Progress: [████████░░] 79%
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Progress: [████████░░] 75%
 | Phase 02 P09 | 32m | 2 tasks | 8 files |
 | Phase 02 P10 | 8m | 3 tasks | 45 files |
 | Phase 02 P11 | 1h | 3 tasks | 47 files |
+| Phase 02 P12 | 10m | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Verifier-rooted-v3 remains candidate-only and replay-verified in copied isolation; active v2 authority and external publication remain unchanged.
 - [Phase ?]: User-approved v3 remains local-only; active v2 is preserved until 02-16 cutover.
 - [Phase ?]: Accepted v3 materialization uses descriptor-held candidate inventory and the v10 transition is non-effective.
+- [Phase ?]: Accepted-v3 receipt custody is local-only and leaves the v10 pending cutover non-effective.
+- [Phase ?]: Receipt writers reuse descriptor-held verifier inputs and only create immutable no-replace leaves.
 
 ### Pending Todos
 
@@ -137,6 +140,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-02T09:13:28.506Z
-Stopped at: Completed 02-11-PLAN.md
+Last session: 2026-08-02T09:24:10.451Z
+Stopped at: Completed 02-12-PLAN.md
 Resume file: None
