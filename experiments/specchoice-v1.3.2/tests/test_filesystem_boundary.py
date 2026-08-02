@@ -10,6 +10,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import specchoice_evidence.filesystem as filesystem_module
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.baseline import (
     BaselineError,
@@ -570,6 +571,36 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 replace_descriptor_file(root, "leaf.txt", b"new", b"old")
             self.assertEqual(leaf.read_bytes(), b"old")
             self.assertEqual(temporary.read_bytes(), b"new")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            leaf = root / "leaf.txt"
+            temporary = root / ".leaf.txt.cutover"
+            leaf.write_bytes(b"old")
+            temporary.write_bytes(b"new")
+            original_read = filesystem_module._read_held_regular_file
+            target_reads = 0
+
+            def change_temp_during_final_target_check(
+                parent: int, name: str, accepted_device: int, **kwargs: object,
+            ) -> bytes:
+                nonlocal target_reads
+                result = original_read(parent, name, accepted_device, **kwargs)
+                if name == "leaf.txt":
+                    target_reads += 1
+                    if target_reads == 2:
+                        temporary.write_bytes(b"changed")
+                return result
+
+            with patch(
+                "specchoice_evidence.filesystem._read_held_regular_file",
+                side_effect=change_temp_during_final_target_check,
+            ):
+                with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_TEMPORARY_MISMATCH"):
+                    replace_descriptor_file(root, "leaf.txt", b"new", b"old")
+            self.assertEqual(target_reads, 2)
+            self.assertEqual(leaf.read_bytes(), b"old")
+            self.assertEqual(temporary.read_bytes(), b"changed")
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
