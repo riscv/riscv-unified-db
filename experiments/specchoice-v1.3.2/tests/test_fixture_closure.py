@@ -810,7 +810,6 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 historical_manifest = json.loads(repair_manifest_v2.read_text(encoding="utf-8"))
                 historical_registry = json.loads(registry_v3.read_text(encoding="utf-8"))
                 historical_proposal = json.loads(historical_proposal_v3.read_text(encoding="utf-8"))
-                historical_supersession = json.loads(historical_supersession_v2.read_text(encoding="utf-8"))
 
                 def write_payload(name: str, value: object) -> Path:
                     path = temporary / name
@@ -937,12 +936,21 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         source_contract_module._validate_v4_repair_yaml_batch(historical_payloads)
                     source_contract_module._validate_v4_repair_yaml_batch(repaired_payloads)
                     valid_key = next(iter(repaired_payloads))
+                    sibling_payloads = dict(repaired_payloads)
+                    sibling_payloads[valid_key] = b"items:\n  - name: first\n  - name: second\n"
+                    source_contract_module._validate_v4_repair_yaml_batch(sibling_payloads)
                     for name, raw in (
+                        ("empty", b""),
+                        ("non-mapping", b"- one\n- two\n"),
+                        ("invalid-utf8", b"key: \xff\n"),
                         ("nested-duplicate", b"root:\n  nested: 1\n  nested: 2\n"),
                         ("malformed", b"root: [\n"),
                         ("multi-document", b"---\na: 1\n---\nb: 2\n"),
+                        ("unused-anchor", b"a: &unused 1\n"),
                         ("anchor-alias", b"a: &shared 1\nb: *shared\n"),
                         ("merge", b"base: &base\n  a: 1\nvalue:\n  <<: *base\n"),
+                        ("inline-merge", b"value: {<<: {a: 1}}\n"),
+                        ("tagged-merge", b"value:\n  !!merge not-left: {a: 1}\n"),
                     ):
                         malformed_payloads = dict(repaired_payloads)
                         malformed_payloads[valid_key] = raw
@@ -955,6 +963,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     failures = (
                         OSError("ruby unavailable"),
                         subprocess.TimeoutExpired("ruby", 10),
+                        subprocess.CompletedProcess([], 2, stdout=b"", stderr=b""),
                         subprocess.CompletedProcess([], 0, stdout=b'{"valid":true} \n', stderr=b""),
                         subprocess.CompletedProcess([], 0, stdout=b'{"valid":true}\n', stderr=b"warning"),
                     )
@@ -1153,6 +1162,23 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         for other in targets:
                             if other != occupied:
                                 self.assertFalse((collision_root / other).exists())
+
+                    hardlink_root = temporary / "hardlink-collision"
+                    hardlink_root.mkdir()
+                    hardlink_target = next(iter(targets))
+                    hardlink_source = hardlink_root / "source"
+                    hardlink_source.write_bytes(targets[hardlink_target])
+                    linked = hardlink_root / hardlink_target
+                    linked.parent.mkdir(parents=True)
+                    os.link(hardlink_source, linked)
+                    hardlink_result = subprocess.run(
+                        [sys.executable, "-m", "specchoice_evidence.cli", "write-fixture-construction-proposal-v4", *v4_args, "--output-root", str(hardlink_root)],
+                        cwd=experiment, check=False, capture_output=True, text=True,
+                    )
+                    self.assertNotEqual(hardlink_result.returncode, 0)
+                    for other in targets:
+                        if other != hardlink_target:
+                            self.assertFalse((hardlink_root / other).exists())
 
                 with self.subTest("v4_rejects_forged_old_hash_and_length"):
                     forged_manifest = copy.deepcopy(original_manifest)
