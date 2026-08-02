@@ -1,0 +1,25 @@
+# Copyright (c) Yawar Hayat
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: RESET_VECTOR_ADDRESS
+long_name: |
+  Reset vector address
+definedBy:
+  extension:
+    name: Sm
+description: |
+  The address the `pc` is set to upon reset. The reset vector is
+  implementation-defined.
+
+schema:
+  $ref: schema_defs.json#/$defs/uint64
+
+requirements:
+  idl(): |
+    (MXLEN == 32) -> (RESET_VECTOR_ADDRESS <= 32'hffffffff);
+  reason: |
+    The reset vector is a program counter value, which is MXLEN bits wide.
