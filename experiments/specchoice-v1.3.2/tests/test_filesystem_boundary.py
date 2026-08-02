@@ -371,6 +371,64 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 with self.assertRaisesRegex(FilesystemPolicyError, "NOFOLLOW_UNAVAILABLE"):
                     read_authoritative_file(root, "sample.txt")
 
+    def test_dirfd_reader_rejects_root_and_intermediate_rebind_without_escape(self) -> None:
+        """A held authority directory must outlive lexical root/child replacement."""
+        original_open = os.open
+        for replaced_part in ("root", "nested"):
+            with self.subTest(replaced_part=replaced_part), tempfile.TemporaryDirectory() as directory:
+                parent = Path(directory)
+                root = parent / "root"
+                leaf = root / "nested" / "leaf.txt"
+                leaf.parent.mkdir(parents=True)
+                leaf.write_bytes(b"held-bytes")
+                replacement = parent / "replacement"
+                (replacement / "nested").mkdir(parents=True)
+                (replacement / "nested" / "leaf.txt").write_bytes(b"replacement-bytes")
+                triggered = False
+
+                def rebind(path: object, flags: int, *args: object, **kwargs: object) -> int:
+                    nonlocal triggered
+                    # The hardened implementation opens the final component relative
+                    # to a held parent; the old implementation opens the full path.
+                    if not triggered and os.fspath(path) in {os.fspath(leaf), "leaf.txt"}:
+                        triggered = True
+                        if replaced_part == "root":
+                            os.rename(root, parent / "old-root")
+                            os.rename(replacement, root)
+                        else:
+                            os.rename(root / "nested", root / "old-nested")
+                            os.rename(replacement / "nested", root / "nested")
+                    return original_open(path, flags, *args, **kwargs)
+
+                with patch("specchoice_evidence.filesystem.os.open", side_effect=rebind):
+                    evidence, content = read_authoritative_file(root, "nested/leaf.txt")
+                self.assertTrue(triggered)
+                self.assertEqual(content, b"held-bytes")
+                self.assertEqual(evidence.sha256, sha256_bytes(b"held-bytes"))
+
+    def test_dirfd_reader_rejects_regular_to_fifo_immediate_open_without_blocking(self) -> None:
+        """The final no-follow open must be nonblocking before a FIFO can be consumed."""
+        original_open = os.open
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            leaf = root / "leaf.txt"
+            leaf.write_bytes(b"regular")
+            triggered = False
+
+            def replace_with_fifo(path: object, flags: int, *args: object, **kwargs: object) -> int:
+                nonlocal triggered
+                if not triggered and os.fspath(path) in {os.fspath(leaf), "leaf.txt"}:
+                    triggered = True
+                    self.assertNotEqual(flags & os.O_NONBLOCK, 0, "final open must be nonblocking")
+                    leaf.unlink()
+                    os.mkfifo(leaf)
+                return original_open(path, flags, *args, **kwargs)
+
+            with patch("specchoice_evidence.filesystem.os.open", side_effect=replace_with_fifo):
+                with self.assertRaisesRegex(FilesystemPolicyError, "SPECIAL_FILE_KIND_REJECTED"):
+                    read_authoritative_file(root, "leaf.txt")
+            self.assertTrue(triggered)
+
     def test_hardlink_dependency_is_rejected_without_rejecting_independent_bytes(self) -> None:
         with self.assertRaisesRegex(FilesystemPolicyError, "HARDLINK_DEPENDENCY_REJECTED"):
             reject_hardlink_dependency(True)
