@@ -18,7 +18,7 @@ definedBy:
     allOf:
       - name: Q
       - name: Zfa
-assembly: fd, fs1, fs2
+assembly: xd, fs1, fs2
 encoding:
   match: 1010011----------101-----1010011
   variables:
@@ -26,7 +26,7 @@ encoding:
       location: 24-20
     - name: fs1
       location: 19-15
-    - name: fd
+    - name: xd
       location: 11-7
 access:
   s: always
