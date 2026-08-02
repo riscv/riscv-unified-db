@@ -260,6 +260,26 @@ class MeasurementParsingTests(unittest.TestCase):
             {item.code for item in result.diagnostics},
         )
 
+    def test_public_preflight_reuses_one_descriptor_read_per_fixture(self) -> None:
+        source_paths = {
+            raw_file.path
+            for record in self.batch.records
+            for raw_file in record.raw_files
+            if raw_file.role == "fixture_source"
+        }
+        original = preflight.read_authoritative_file
+        observed: list[str] = []
+
+        def counted(root: Path, relative: str):
+            if relative in source_paths:
+                observed.append(relative)
+            return original(root, relative)
+
+        with mock.patch("specchoice_measurement.preflight.read_authoritative_file", side_effect=counted):
+            result = self.preflight(self.payload())
+        self.assertEqual(result.status, "valid_preflight")
+        self.assertEqual(observed, sorted(source_paths))
+
 
 if __name__ == "__main__":
     unittest.main()

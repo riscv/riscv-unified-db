@@ -29,6 +29,12 @@ class MeasurementAdapterTests(unittest.TestCase):
             / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
         )
         self.rules = self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json"
+        self.pending_authority = self.experiment_root / "phase2/source-authority-v10-pending.json"
+        self.transition = self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json"
+        self.pending_bundle = (
+            self.experiment_root
+            / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+        )
 
     def build(self):
         return build_pr2164_adapter_batch(
@@ -37,8 +43,20 @@ class MeasurementAdapterTests(unittest.TestCase):
             rules_path=self.rules,
         )
 
-    def test_accepted_v2_builds_the_complete_canonical_partition(self) -> None:
-        batch = self.build()
+    def build_pending(self):
+        return build_pr2164_adapter_batch(
+            authority_path=self.authority,
+            bundle_root=self.pending_bundle,
+            rules_path=self.rules,
+            pending_authority_path=self.pending_authority,
+            transition_path=self.transition,
+        )
+
+    def source_environment(self) -> dict[str, str]:
+        return {**os.environ, "PYTHONPATH": str(self.experiment_root / "src")}
+
+    def test_explicit_pending_v3_builds_the_complete_canonical_partition(self) -> None:
+        batch = self.build_pending()
 
         self.assertTrue(batch.valid)
         self.assertEqual(len(batch.records), 11)
@@ -73,8 +91,18 @@ class MeasurementAdapterTests(unittest.TestCase):
                 "--bundle", self.bundle.as_posix(),
                 "--rules", self.rules.as_posix(),
             ]
-            subprocess.run([*command, "--output", first.as_posix()], check=True, cwd=self.experiment_root)
-            subprocess.run([*command, "--output", second.as_posix()], check=True, cwd=self.experiment_root)
+            subprocess.run(
+                [*command, "--output", first.as_posix()],
+                check=True,
+                cwd=self.experiment_root,
+                env=self.source_environment(),
+            )
+            subprocess.run(
+                [*command, "--output", second.as_posix()],
+                check=True,
+                cwd=self.experiment_root,
+                env=self.source_environment(),
+            )
 
             self.assertEqual(first.read_bytes(), second.read_bytes())
             emitted = json.loads(first.read_text(encoding="utf-8"))
@@ -170,6 +198,7 @@ class MeasurementAdapterTests(unittest.TestCase):
                     "--rules", self.rules.as_posix(), "--output", output.as_posix(),
                 ],
                 cwd=self.experiment_root,
+                env=self.source_environment(),
                 check=False,
                 capture_output=True,
                 text=True,
@@ -181,6 +210,7 @@ class MeasurementAdapterTests(unittest.TestCase):
             broken.symlink_to(Path(temporary) / "missing-target")
             result = subprocess.run(
                 [*result.args[:-1], broken.as_posix()], cwd=self.experiment_root,
+                env=self.source_environment(),
                 check=False, capture_output=True, text=True,
             )
             self.assertNotEqual(result.returncode, 0)
@@ -264,6 +294,56 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertFalse(invalid.valid)
         self.assertEqual(invalid.records, ())
         self.assertEqual(invalid.diagnostics[0].code, "RAW_PATH_OR_IDENTITY_INVALID")
+
+    def test_public_builder_binds_complete_validator_receipt_and_rejects_post_validation_authority_replacement(self) -> None:
+        original_run = adapter.subprocess.run
+        replacement = json.loads(self.pending_authority.read_text(encoding="utf-8"))
+        replacement["root_sha256"] = "0" * 64
+
+        with tempfile.TemporaryDirectory() as temporary:
+            pending = Path(temporary) / "source-authority-v10-pending.json"
+            pending.write_bytes(self.pending_authority.read_bytes())
+            def validate_then_replace(*args, **kwargs):
+                result = original_run(*args, **kwargs)
+                pending.write_bytes(canonical_json_bytes(replacement))
+                return result
+            with mock.patch("specchoice_measurement.adapter.subprocess.run", side_effect=validate_then_replace):
+                invalid = build_pr2164_adapter_batch(
+                    authority_path=self.authority,
+                    bundle_root=self.pending_bundle,
+                    rules_path=self.rules,
+                    pending_authority_path=pending,
+                    transition_path=self.transition,
+                )
+        self.assertFalse(invalid.valid)
+        self.assertEqual(invalid.records, ())
+        self.assertEqual(invalid.source_identity["generation"], self.pending_bundle.name)
+
+    def test_public_builder_rejects_rebound_rules_authority_and_registry_roles(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            copied_rules = root / "rules.json"
+            copied_rules.write_bytes(self.rules.read_bytes())
+            rebound = build_pr2164_adapter_batch(
+                authority_path=self.authority,
+                bundle_root=self.pending_bundle,
+                rules_path=copied_rules,
+                pending_authority_path=self.pending_authority,
+                transition_path=self.transition,
+            )
+            self.assertTrue(rebound.valid)
+            rules = json.loads(copied_rules.read_text(encoding="utf-8"))
+            rules["fixture_count"] = 10
+            copied_rules.write_bytes(canonical_json_bytes(rules))
+            invalid = build_pr2164_adapter_batch(
+                authority_path=self.authority,
+                bundle_root=self.pending_bundle,
+                rules_path=copied_rules,
+                pending_authority_path=self.pending_authority,
+                transition_path=self.transition,
+            )
+        self.assertFalse(invalid.valid)
+        self.assertEqual(invalid.records, ())
 
 
 if __name__ == "__main__":
