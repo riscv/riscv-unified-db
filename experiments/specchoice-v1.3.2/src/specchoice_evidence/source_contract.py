@@ -105,7 +105,7 @@ def validate_fixture_construction_proposal_v4(
     }:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PROPOSAL_INVALID")
     if proposal.get("schema_version") != "fixture-construction-proposal-v4" or proposal.get("generation") != (
-        "source-contract-v4-pr2164-semantic-gold-closure-verifier-rooted-v1"
+        "source-contract-v4-pr2164-semantic-gold-closure-verifier-rooted-v2"
     ) or proposal.get("status") != "awaiting_human_construction_authorization" or proposal.get("local_only") is not True or (
         proposal.get("external_publication_authorized") is not False
     ):
@@ -246,7 +246,7 @@ def _validate_v4_repair_manifest(
 ) -> None:
     if not isinstance(manifest, Mapping) or set(manifest) != {
         "ontology_decision_sha256", "predecessor_generation", "repairs", "schema_version",
-    } or manifest.get("schema_version") != "pr2164-semantic-gold-repair-manifest-v1" or (
+    } or manifest.get("schema_version") != "pr2164-semantic-gold-repair-manifest-v2" or (
         manifest.get("predecessor_generation") != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
     ) or manifest.get("ontology_decision_sha256") != ontology_decision_sha256:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
