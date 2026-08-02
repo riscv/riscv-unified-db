@@ -571,6 +571,116 @@ class FilesystemBoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(FilesystemPolicyError, "SYMLINK_REJECTED"):
                 create_descriptor_directories(root, ("config/nested",))
 
+        payloads = {"config/first.json": b"first", "receipts/second.json": b"second"}
+        with self.subTest(operation="batch-preflight-to-mkdir-root-rebind"), tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            root = parent / "root"
+            replacement = parent / "replacement"
+            root.mkdir()
+            replacement.mkdir()
+            original_mkdir = os.mkdir
+            triggered = False
+
+            def rebind_batch_mkdir(path: object, *args: object, **kwargs: object) -> None:
+                nonlocal triggered
+                if not triggered and os.fspath(path) in {"config", "receipts"}:
+                    triggered = True
+                    os.rename(root, parent / "old-root")
+                    os.rename(replacement, root)
+                original_mkdir(path, *args, **kwargs)
+
+            with patch("specchoice_evidence.filesystem.os.mkdir", side_effect=rebind_batch_mkdir):
+                try:
+                    filesystem_module.write_exact_descriptor_files(root, payloads)
+                except FilesystemPolicyError:
+                    pass
+            self.assertTrue(triggered)
+            self.assertFalse(any((root / relative).exists() for relative in payloads))
+
+        with self.subTest(operation="batch-write-to-postflight-root-rebind"), tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            root = parent / "root"
+            replacement = parent / "replacement"
+            root.mkdir()
+            replacement.mkdir()
+            original_read = os.read
+            triggered = False
+
+            def rebind_on_postflight(descriptor: int, size: int) -> bytes:
+                nonlocal triggered
+                if not triggered and stat.S_ISREG(os.fstat(descriptor).st_mode):
+                    triggered = True
+                    os.rename(root, parent / "old-root")
+                    os.rename(replacement, root)
+                return original_read(descriptor, size)
+
+            with patch("specchoice_evidence.filesystem.os.read", side_effect=rebind_on_postflight):
+                try:
+                    filesystem_module.write_exact_descriptor_files(root, payloads)
+                except FilesystemPolicyError:
+                    pass
+            self.assertTrue(triggered)
+            self.assertFalse(any((root / relative).exists() for relative in payloads))
+
+        with self.subTest(operation="batch-cross-leaf-postflight-mutation"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "config/first.json"
+            second = root / "receipts/second.json"
+            original_read = os.read
+            first_read = False
+            triggered = False
+
+            def mutate_prior_leaf(descriptor: int, size: int) -> bytes:
+                nonlocal first_read, triggered
+                details = os.fstat(descriptor)
+                if first.exists() and details.st_ino == first.stat().st_ino:
+                    chunk = original_read(descriptor, size)
+                    first_read = first_read or bool(chunk)
+                    return chunk
+                if second.exists() and details.st_ino == second.stat().st_ino and first_read and not triggered:
+                    triggered = True
+                    first.write_bytes(b"other")
+                return original_read(descriptor, size)
+
+            with patch("specchoice_evidence.filesystem.os.read", side_effect=mutate_prior_leaf), self.assertRaisesRegex(
+                FilesystemPolicyError, "AUTHORITATIVE_(POSTWRITE_MISMATCH|FILE_CHANGED)"
+            ):
+                filesystem_module.write_exact_descriptor_files(root, payloads)
+            self.assertTrue(triggered)
+
+        with self.subTest(operation="batch-fsync-failure-removes-unproven-leaf"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            original_fsync = os.fsync
+
+            def fail_regular_fsync(descriptor: int) -> None:
+                if stat.S_ISREG(os.fstat(descriptor).st_mode):
+                    raise OSError("fsync failed")
+                original_fsync(descriptor)
+
+            with patch("specchoice_evidence.filesystem.os.fsync", side_effect=fail_regular_fsync), self.assertRaisesRegex(
+                FilesystemPolicyError, "AUTHORITATIVE_WRITE_INVALID"
+            ):
+                filesystem_module.write_exact_descriptor_files(root, {"config/only.json": b"payload"})
+            self.assertFalse((root / "config/only.json").exists())
+
+        with self.subTest(operation="batch-existing-resume-is-durable"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative, raw in payloads.items():
+                leaf = root / relative
+                leaf.parent.mkdir(parents=True, exist_ok=True)
+                leaf.write_bytes(raw)
+            synced_modes: list[int] = []
+            original_fsync = os.fsync
+
+            def record_fsync(descriptor: int) -> None:
+                synced_modes.append(stat.S_IFMT(os.fstat(descriptor).st_mode))
+                original_fsync(descriptor)
+
+            with patch("specchoice_evidence.filesystem.os.fsync", side_effect=record_fsync):
+                filesystem_module.write_exact_descriptor_files(root, payloads)
+            self.assertIn(stat.S_IFREG, synced_modes)
+            self.assertIn(stat.S_IFDIR, synced_modes)
+
     def test_dirfd_reader_rejects_regular_to_fifo_immediate_open_without_blocking(self) -> None:
         """The final no-follow open must be nonblocking before a FIFO can be consumed."""
         original_open = os.open

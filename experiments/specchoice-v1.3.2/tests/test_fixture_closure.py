@@ -930,6 +930,52 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     for repair in original_manifest["repairs"]
                 }
                 self.assertFalse((staging_root / "config/fixture-repairs/pr2164-semantic-gold-v2").exists())
+                with self.subTest("v4_repair_payloads_require_exact_two_staged_and_seven_reused_single_links"):
+                    underspecified = copy.deepcopy(original_manifest)
+                    underspecified["repairs"].pop()
+                    with self.assertRaisesRegex(
+                        SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID"
+                    ):
+                        cli_module._v4_repair_payloads(underspecified, staging_root)
+
+                    linked_staging = temporary / "linked-staging"
+                    staged_paths = [
+                        repair["payload_path"] for repair in original_manifest["repairs"]
+                        if "pr2164-semantic-gold-v3" in repair["payload_path"]
+                    ]
+                    for payload in staged_paths:
+                        destination = linked_staging / payload
+                        destination.parent.mkdir(parents=True, exist_ok=True)
+                        destination.write_bytes((staging_root / payload).read_bytes())
+                    staged_link = linked_staging / staged_paths[0]
+                    staged_source = linked_staging / "staged-hardlink-source"
+                    staged_source.write_bytes(staged_link.read_bytes())
+                    staged_link.unlink()
+                    os.link(staged_source, staged_link)
+                    with self.assertRaisesRegex(
+                        SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID"
+                    ):
+                        cli_module._v4_repair_payloads(original_manifest, linked_staging)
+
+                    linked_experiment = temporary / "linked-experiment"
+                    reused_paths = [
+                        repair["payload_path"] for repair in original_manifest["repairs"]
+                        if "pr2164-semantic-gold-v2" in repair["payload_path"]
+                    ]
+                    for payload in reused_paths:
+                        destination = linked_experiment / payload
+                        destination.parent.mkdir(parents=True, exist_ok=True)
+                        destination.write_bytes((experiment / payload).read_bytes())
+                    reused_link = linked_experiment / reused_paths[0]
+                    reused_source = linked_experiment / "reused-hardlink-source"
+                    reused_source.write_bytes(reused_link.read_bytes())
+                    reused_link.unlink()
+                    os.link(reused_source, reused_link)
+                    with mock.patch.object(cli_module, "_experiment_root", return_value=linked_experiment), self.assertRaisesRegex(
+                        SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID"
+                    ):
+                        cli_module._v4_repair_payloads(original_manifest, staging_root)
+
                 with self.subTest("v4_yaml_batch_rejects_historical_and_structural_ambiguity"):
                     with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"):
                         source_contract_module._validate_v4_repair_yaml_batch(historical_payloads)
@@ -942,6 +988,24 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     oversized_payloads[valid_key] = b"x" * (64 * 1024 + 1)
                     with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"):
                         source_contract_module._validate_v4_repair_yaml_batch(oversized_payloads)
+                    eight_payloads = dict(list(repaired_payloads.items())[:-1])
+                    ten_payloads = dict(repaired_payloads)
+                    ten_payloads["config/fixture-repairs/pr2164-semantic-gold-v2/EXTRA/gold.yaml"] = b"name: extra\n"
+                    for payload_count, payloads in ((8, eight_payloads), (10, ten_payloads)):
+                        with self.subTest(payload_count=payload_count), self.assertRaisesRegex(
+                            SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"
+                        ):
+                            source_contract_module._validate_v4_repair_yaml_batch(payloads)
+                    oversized_path_payloads = dict(repaired_payloads)
+                    oversized_path_payloads["x" * 513] = oversized_path_payloads.pop(valid_key)
+                    with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"):
+                        source_contract_module._validate_v4_repair_yaml_batch(oversized_path_payloads)
+                    oversized_envelope_payloads = {
+                        path: b"key: " + (b"x" * (27 * 1024)) + b"\n"
+                        for path in repaired_payloads
+                    }
+                    with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"):
+                        source_contract_module._validate_v4_repair_yaml_batch(oversized_envelope_payloads)
                     for name, raw in (
                         ("empty", b""),
                         ("non-mapping", b"- one\n- two\n"),
@@ -975,6 +1039,21 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                             SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"
                         ):
                             source_contract_module._validate_v4_repair_yaml_batch(repaired_payloads)
+
+                    for stream in ("stdout", "stderr"):
+                        command = [
+                            sys.executable,
+                            "-c",
+                            f"import sys; sys.{stream}.buffer.write(b'x' * 4097)",
+                        ]
+                        with self.subTest(oversized_stream=stream), self.assertRaises(OSError):
+                            source_contract_module._run_bounded_subprocess(
+                                command,
+                                input_bytes=b"",
+                                max_stdout_bytes=4096,
+                                max_stderr_bytes=4096,
+                                timeout=5,
+                            )
 
                 with self.subTest("v4_cache_domain_requires_honest_versioned_boundary"):
                     with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID"):
@@ -1044,6 +1123,42 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                             sha256_bytes(legacy_proposal.read_bytes()), sha256_bytes(legacy_manifest.read_bytes()),
                             sha256_bytes(legacy_registry.read_bytes()),
                         )
+                    for side in ("legacy", "successor"):
+                        tampered_v1 = json.loads(supersession_v1.read_text(encoding="utf-8"))
+                        tampered_v1[side]["unknown"] = {"path": "extra", "sha256": "0" * 64}
+                        with self.subTest(lineage="s1", side=side), self.assertRaisesRegex(
+                            SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID"
+                        ):
+                            _validate_v4_previous_supersession(
+                                tampered_v1,
+                                sha256_bytes(proposal_v2.read_bytes()), sha256_bytes(repair_manifest_v2.read_bytes()),
+                                sha256_bytes(registry_v3.read_bytes()),
+                                sha256_bytes(legacy_proposal.read_bytes()), sha256_bytes(legacy_manifest.read_bytes()),
+                                sha256_bytes(legacy_registry.read_bytes()),
+                            )
+                    supersession_v2_payload = json.loads(historical_supersession_v2.read_text(encoding="utf-8"))
+                    for side in ("legacy", "successor"):
+                        tampered_v2 = copy.deepcopy(supersession_v2_payload)
+                        tampered_v2[side]["unknown"] = {"path": "extra", "sha256": "0" * 64}
+                        with self.subTest(lineage="s2", side=side), self.assertRaisesRegex(
+                            SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID"
+                        ):
+                            source_contract_module._validate_v4_supersession_v2(
+                                tampered_v2, sha256_bytes(canonical_json_bytes(tampered_v2)),
+                                sha256_bytes(proposal_v2.read_bytes()), sha256_bytes(repair_manifest_v2.read_bytes()),
+                                sha256_bytes(registry_v3.read_bytes()), sha256_bytes(historical_proposal_v3.read_bytes()),
+                                json.loads(supersession_v1.read_text(encoding="utf-8")), sha256_bytes(supersession_v1.read_bytes()),
+                                sha256_bytes(legacy_proposal.read_bytes()), sha256_bytes(legacy_manifest.read_bytes()),
+                                sha256_bytes(legacy_registry.read_bytes()),
+                            )
+                    for side in ("legacy", "successor"):
+                        tampered_v3 = copy.deepcopy(supersession_v3_payload)
+                        tampered_v3[side]["unknown"] = {"path": "extra", "sha256": "0" * 64}
+                        with self.subTest(lineage="s3", side=side):
+                            self.assertNotEqual(
+                                run_v4(supersession_path=write_payload(f"tampered-v3-{side}.json", tampered_v3)).returncode,
+                                0,
+                            )
 
                 with self.subTest("v4_decision_requires_closed_self_hashed_human_fields"):
                     proposal_binding = {"fixed_code_commit": "a" * 40}
@@ -1258,7 +1373,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     opposite_path = write_payload("opposite-decision.json", opposite)
                     self.assertNotEqual(run_v4(decision_path=opposite_path).returncode, 0)
 
-                with self.subTest("v4_rejects_rebound_opposite_policy_when_payload_consequences_remain_v2"):
+                with self.subTest("v4_rejects_rebound_opposite_policy_with_only_seven_repairs"):
                     opposite = json.loads((experiment / "reviews/h1-source-gold-ontology-decision-v1.json").read_text(encoding="utf-8"))
                     opposite["pbmte_policy"]["selection"] = "excluded_from_discovery"
                     opposite.pop("decision_sha256")
@@ -1310,7 +1425,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         registry_path=forged_registry_path, supersession_path=forged_supersession_path,
                         decision_path=opposite_path,
                     )
-                    self.assertEqual(counterfactual.returncode, 0, counterfactual.stderr)
+                    self.assertNotEqual(counterfactual.returncode, 0)
                     retained_registry = copy.deepcopy(original_registry)
                     retained_registry["ontology_decision_sha256"] = sha256_bytes(opposite_path.read_bytes())
                     retained_registry_path = write_payload("retained-pbmte-registry.json", retained_registry)
