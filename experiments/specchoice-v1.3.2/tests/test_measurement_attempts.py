@@ -53,6 +53,8 @@ class MeasurementAttemptTests(unittest.TestCase):
             rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
         )
         self.raw = (self.experiment_root / "fixtures/measurement/golden-predictions-v1.json").read_bytes()
+        self.active_v3_predictions = self.experiment_root / "fixtures/measurement/golden-predictions-v2.json"
+        self.active_v3_oracle = self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v2.json"
 
     def _pending_formal_args(self, root: Path) -> SimpleNamespace:
         root.parent.mkdir(parents=True, exist_ok=True)
@@ -90,16 +92,12 @@ class MeasurementAttemptTests(unittest.TestCase):
             revocation_path=self.revocation,
         )
         self.assertTrue(batch.valid)
-        payload = json.loads(self.raw.decode("utf-8"))
-        payload["adapter_batch_sha256"] = batch.adapter_batch_sha256
-        predictions = root.parent / "active-v3-golden-predictions.json"
-        predictions.write_bytes(canonical_json_bytes(payload))
         return SimpleNamespace(
             authority=self.active_authority,
             bundle=self.pending_bundle,
             rules=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
             schema=self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json",
-            predictions=predictions,
+            predictions=self.active_v3_predictions,
             pending_authority=None,
             transition=None,
             revocation=self.revocation,
@@ -465,7 +463,7 @@ class MeasurementAttemptTests(unittest.TestCase):
                 rules=active_formal.rules,
                 schema=active_formal.schema,
                 predictions=active_formal.predictions,
-                oracle=self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json",
+                oracle=self.active_v3_oracle,
                 pending_authority=None,
                 transition=None,
                 revocation=self.revocation,
@@ -487,6 +485,55 @@ class MeasurementAttemptTests(unittest.TestCase):
                 )["status"],
                 "diagnostic_only",
             )
+
+            legacy_golden = json.loads(self.raw.decode("utf-8"))
+            successor_golden = json.loads(self.active_v3_predictions.read_text(encoding="utf-8"))
+            projected_golden = deepcopy(successor_golden)
+            projected_golden["adapter_batch_sha256"] = legacy_golden["adapter_batch_sha256"]
+            self.assertEqual(projected_golden, legacy_golden)
+
+            legacy_oracle = json.loads((self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json").read_text(encoding="utf-8"))
+            successor_oracle = json.loads(self.active_v3_oracle.read_text(encoding="utf-8"))
+            projected_oracle = deepcopy(successor_oracle)
+            self.assertEqual(len(projected_oracle["oracles"]), len(legacy_oracle["oracles"]))
+            for legacy_entry, successor_entry in zip(legacy_oracle["oracles"], projected_oracle["oracles"], strict=True):
+                successor_entry["raw_input_identity"]["base_fixture"] = legacy_entry["raw_input_identity"]["base_fixture"]
+                successor_entry["raw_input_identity"]["base_sha256"] = legacy_entry["raw_input_identity"]["base_sha256"]
+            self.assertEqual(projected_oracle, legacy_oracle)
+
+            for label, predictions, oracle in (
+                ("v2-golden-v1-oracle", self.active_v3_predictions, self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json"),
+                ("v1-golden-v2-oracle", self.experiment_root / "fixtures/measurement/golden-predictions-v1.json", self.active_v3_oracle),
+            ):
+                with self.subTest(pair=label):
+                    blocked_report = root / f"{label}.json"
+                    blocked_args = SimpleNamespace(**{
+                        **vars(active_args), "predictions": predictions, "oracle": oracle, "report": blocked_report,
+                    })
+                    with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_ORACLE_INVALID"):
+                        command_run_adversarial_oracles(blocked_args)
+                    self.assertFalse(blocked_report.exists())
+                    self.assertFalse((root / f"{blocked_report.stem}-attempts").exists())
+
+            for label, mutate in (
+                ("missing", lambda identity: identity.pop("base_sha256")),
+                ("extra", lambda identity: identity.update(unexpected="value")),
+                ("type-invalid", lambda identity: identity.update(base_fixture=1)),
+                ("wrong-digest", lambda identity: identity.update(base_sha256="0" * 64)),
+            ):
+                with self.subTest(identity=label):
+                    tampered = deepcopy(successor_oracle)
+                    mutate(tampered["oracles"][0]["raw_input_identity"])
+                    tampered_oracle = root / f"tampered-{label}.json"
+                    tampered_oracle.write_bytes(canonical_json_bytes(tampered))
+                    blocked_report = root / f"tampered-{label}-report.json"
+                    blocked_args = SimpleNamespace(**{
+                        **vars(active_args), "oracle": tampered_oracle, "report": blocked_report,
+                    })
+                    with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_ORACLE_INVALID"):
+                        command_run_adversarial_oracles(blocked_args)
+                    self.assertFalse(blocked_report.exists())
+                    self.assertFalse((root / f"{blocked_report.stem}-attempts").exists())
 
     def test_adversarial_report_rejects_forged_formal_attempt_binding(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
