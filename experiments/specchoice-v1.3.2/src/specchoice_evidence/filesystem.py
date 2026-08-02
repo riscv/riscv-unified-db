@@ -129,6 +129,110 @@ def _held_parent(root: Path, relative: PurePosixPath, *, include_leaf_directory:
         raise
 
 
+def _write_all(descriptor: int, content: bytes) -> None:
+    """Write a complete immutable payload or fail before it can be trusted."""
+    offset = 0
+    while offset < len(content):
+        written = os.write(descriptor, content[offset:])
+        if written <= 0:
+            raise OSError(errno.EIO, "short authoritative write")
+        offset += written
+
+
+def _existing_leaf_kind(parent: int, leaf: str, accepted_device: int) -> os.stat_result:
+    """Return one existing regular leaf without following a mutable name."""
+    try:
+        details = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+    except OSError as error:
+        _raise_open_boundary_error(error)
+        raise AssertionError("unreachable")
+    if stat.S_ISLNK(details.st_mode):
+        raise FilesystemPolicyError("SYMLINK_REJECTED")
+    if not stat.S_ISREG(details.st_mode) or details.st_dev != accepted_device:
+        raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+    return details
+
+
+def write_new_descriptor_file(root: Path, relative_path: str, content: bytes) -> None:
+    """Durably create one exact no-replace authoritative leaf through held parents."""
+    relative = require_relative_posix_path(relative_path)
+    descriptors, parent, leaf, _ = _held_parent(root, relative)
+    descriptor: int | None = None
+    try:
+        try:
+            existing = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+        except FileNotFoundError:
+            existing = None
+        except OSError as error:
+            _raise_open_boundary_error(error)
+            raise AssertionError("unreachable")
+        if existing is not None:
+            if stat.S_ISLNK(existing.st_mode):
+                raise FilesystemPolicyError("SYMLINK_REJECTED")
+            raise FilesystemPolicyError("AUTHORITATIVE_DESTINATION_EXISTS")
+        descriptor = os.open(
+            leaf,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | _require_flag("O_NOFOLLOW") | _require_flag("O_CLOEXEC"),
+            0o644,
+            dir_fd=parent,
+        )
+        _write_all(descriptor, content)
+        os.fsync(descriptor)
+        os.fsync(parent)
+    except FilesystemPolicyError:
+        raise
+    except FileExistsError as error:
+        raise FilesystemPolicyError("AUTHORITATIVE_DESTINATION_EXISTS") from error
+    except (NotImplementedError, TypeError, OSError) as error:
+        raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID") from error
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        for held in reversed(descriptors):
+            os.close(held)
+
+
+def replace_descriptor_file(root: Path, relative_path: str, content: bytes) -> None:
+    """Durably replace one held regular leaf with exact bytes via dirfd-only rename."""
+    relative = require_relative_posix_path(relative_path)
+    descriptors, parent, leaf, accepted_device = _held_parent(root, relative)
+    descriptor: int | None = None
+    temporary = f".{leaf}.cutover"
+    created = False
+    try:
+        _existing_leaf_kind(parent, leaf, accepted_device)
+        descriptor = os.open(
+            temporary,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | _require_flag("O_NOFOLLOW") | _require_flag("O_CLOEXEC"),
+            0o644,
+            dir_fd=parent,
+        )
+        created = True
+        _write_all(descriptor, content)
+        os.fsync(descriptor)
+        os.close(descriptor)
+        descriptor = None
+        os.replace(temporary, leaf, src_dir_fd=parent, dst_dir_fd=parent)
+        created = False
+        os.fsync(parent)
+    except FilesystemPolicyError:
+        raise
+    except FileExistsError as error:
+        raise FilesystemPolicyError("AUTHORITATIVE_DESTINATION_EXISTS") from error
+    except (NotImplementedError, TypeError, OSError) as error:
+        raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID") from error
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        if created:
+            try:
+                os.unlink(temporary, dir_fd=parent)
+            except OSError:
+                pass
+        for held in reversed(descriptors):
+            os.close(held)
+
+
 def _signature(details: os.stat_result) -> tuple[int, int, int, int, int, int, int]:
     return (
         stat.S_IFMT(details.st_mode), details.st_dev, details.st_ino, details.st_nlink,

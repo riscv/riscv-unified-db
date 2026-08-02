@@ -22,6 +22,7 @@ from .baseline import (
     validate_boundary_restart,
     validate_restart_lineage,
 )
+from .filesystem import FilesystemPolicyError, read_authoritative_file, replace_descriptor_file, write_new_descriptor_file
 from .receipt import (
     ReceiptError,
     build_blocked_receipt,
@@ -699,16 +700,18 @@ def command_verify_accepted(args: argparse.Namespace) -> int:
 
 def command_validate_phase2_source_authority(args: argparse.Namespace) -> int:
     """Fail closed unless the Phase 2 pin matches the accepted v3 registry exactly."""
-    from .filesystem import FilesystemPolicyError, read_authoritative_file
+    authority, raw = _load_authoritative_canonical(args.authority, "PHASE2_SOURCE_AUTHORITY_INVALID")
+    if args.authority_mode is not None and args.revocation is None:
+        raise ReceiptError("SOURCE_AUTHORITY_REVOCATION_REQUIRED")
+    revocation_raw = _optional_canonical_bytes(args.revocation) if args.revocation is not None else None
+    _print_json(_validate_phase2_source_authority(authority, raw, args.bundle, revocation_raw, args.authority_mode))
+    return 0
 
-    try:
-        _, raw = read_authoritative_file(args.authority.parent, args.authority.name)
-    except FilesystemPolicyError as error:
-        raise ReceiptError("PHASE2_SOURCE_AUTHORITY_INVALID") from error
-    authority = json.loads(raw.decode("utf-8"))
-    if not isinstance(authority, dict) or canonical_json_bytes(authority) != raw:
-        raise ReceiptError("PHASE2_SOURCE_AUTHORITY_NOT_CANONICAL")
-    bundle = args.bundle
+
+def _validate_phase2_source_authority(
+    authority: dict[str, object], raw: bytes, bundle: Path, revocation_raw: bytes | None, authority_mode: str | None,
+) -> dict[str, object]:
+    """Validate held authority bytes without reopening any mutable authority leaf."""
     verified = verify_accepted_bundle(bundle)
     manifest, _ = _load_canonical(bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
     _, registry_raw = _load_canonical(bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
@@ -719,45 +722,46 @@ def command_validate_phase2_source_authority(args: argparse.Namespace) -> int:
         "pinned_commit_sha": snapshot["pinned_commit_sha"], "pinned_tree_sha": snapshot["pinned_tree_sha"],
         "raw_file_count": 28, "registry_sha256": registry_sha256, "root_sha256": verified["root_sha256"],
     }
-    if args.authority_mode is None:
+    if authority_mode is None:
         if authority.get("schema_version") != "1" or authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()):
             raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
-        _print_json({"status": "valid", **expected})
-        return 0
-    if args.revocation is None:
-        raise ReceiptError("SOURCE_AUTHORITY_REVOCATION_REQUIRED")
-    revocation_raw = _optional_canonical_bytes(args.revocation)
+        return {"status": "valid", **expected}
     if authority.get("schema_version") == "1":
         if authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()):
             raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
-        if args.authority_mode == "active" and revocation_raw is not None:
+        if authority_mode == "active" and revocation_raw is not None:
             raise ReceiptError("SOURCE_AUTHORITY_V2_REVOKED")
-        _print_json({"eligible": False, "status": "historical_valid", **expected} if args.authority_mode == "historical-inspection" else {"eligible": True, "status": "valid", **expected})
-        return 0
+        return {"eligible": False, "status": "historical_valid", **expected} if authority_mode == "historical-inspection" else {"eligible": True, "status": "valid", **expected}
     _validate_v10_authority(authority, raw, verified, manifest, registry_sha256, revocation_raw)
-    if args.authority_mode != "active":
-        _print_json({"eligible": False, "status": "historical_valid", **expected})
-        return 0
-    _print_json({"eligible": True, "status": "valid", **expected})
-    return 0
+    if authority_mode != "active":
+        return {"eligible": False, "status": "historical_valid", **expected}
+    return {"eligible": True, "status": "valid", **expected}
 
 
 def _optional_canonical_bytes(path: Path) -> bytes | None:
-    if not path.exists() and not path.exists():
-        return None
     try:
-        _, raw = __import__("specchoice_evidence.filesystem", fromlist=["read_authoritative_file"]).read_authoritative_file(path.parent, path.name)
-    except Exception as error:
-        if str(error) == "AUTHORITATIVE_PATH_MISSING":
+        _, raw = _load_authoritative_canonical(path, "SOURCE_AUTHORITY_REVOCATION_INVALID")
+    except ReceiptError as error:
+        if str(error) == "AUTHORITATIVE_FILE_MISSING":
             return None
-        raise ReceiptError("SOURCE_AUTHORITY_REVOCATION_INVALID") from error
-    try:
-        payload = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise ReceiptError("SOURCE_AUTHORITY_REVOCATION_INVALID") from error
-    if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
-        raise ReceiptError("SOURCE_AUTHORITY_REVOCATION_INVALID")
+        raise
     return raw
+
+
+def _load_authoritative_canonical(path: Path, code: str) -> tuple[dict[str, object], bytes]:
+    """Read one canonical control leaf exactly once through descriptor custody."""
+    try:
+        _, raw = read_authoritative_file(path.parent, path.name)
+        value = json.loads(raw.decode("utf-8"))
+    except FilesystemPolicyError as error:
+        if str(error) == "AUTHORITATIVE_FILE_MISSING":
+            raise ReceiptError("AUTHORITATIVE_FILE_MISSING") from error
+        raise ReceiptError(code) from error
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ReceiptError(code) from error
+    if not isinstance(value, dict) or canonical_json_bytes(value) != raw:
+        raise ReceiptError(code)
+    return value, raw
 
 
 def _v10_identity(verified: dict[str, object], manifest: dict[str, object]) -> dict[str, object]:
@@ -867,24 +871,35 @@ def command_prepare_pending_source_cutover_v10(args: argparse.Namespace) -> int:
 
 def command_validate_pending_source_cutover_v10(args: argparse.Namespace) -> int:
     """Validate reviewed future bytes while proving current v2 remains active."""
-    def load(path: Path, code: str) -> tuple[dict[str, object], bytes]:
-        try:
-            from .filesystem import read_authoritative_file
+    pending, pending_raw = _load_authoritative_canonical(args.pending_authority, "SOURCE_CUTOVER_PENDING_INVALID")
+    transition, transition_raw = _load_authoritative_canonical(args.transition, "SOURCE_CUTOVER_TRANSITION_INVALID")
+    active, active_raw = _load_authoritative_canonical(args.active_authority, "PHASE2_SOURCE_AUTHORITY_INVALID")
+    _validate_pending_source_cutover_v10(
+        pending, pending_raw, transition, transition_raw, active, active_raw, args.accepted_bundle,
+    )
+    canonical_revocation = args.active_authority.parents[1] / "receipts/fixture-closure-revocation-v2.json"
+    if _optional_canonical_bytes(canonical_revocation) is not None:
+        raise ReceiptError("SOURCE_CUTOVER_ALREADY_EFFECTIVE")
+    _print_json(
+        {
+            "active_authority_sha256": sha256_bytes(active_raw),
+            "eligible": False,
+            "pending_authority_sha256": sha256_bytes(pending_raw),
+            "status": "pending_cutover_valid_non_effective",
+            "transition_sha256": sha256_bytes(transition_raw),
+        }
+    )
+    return 0
 
-            _, raw = read_authoritative_file(path.parent, path.name)
-            payload = json.loads(raw.decode("utf-8"))
-        except Exception as error:
-            raise ReceiptError(code) from error
-        if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
-            raise ReceiptError(code)
-        return payload, raw
 
-    pending, pending_raw = load(args.pending_authority, "SOURCE_CUTOVER_PENDING_INVALID")
-    transition, transition_raw = load(args.transition, "SOURCE_CUTOVER_TRANSITION_INVALID")
-    active, active_raw = load(args.active_authority, "PHASE2_SOURCE_AUTHORITY_INVALID")
-    verified = verify_accepted_bundle(args.accepted_bundle)
-    manifest, _ = _load_canonical(args.accepted_bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
-    _, registry_raw = _load_canonical(args.accepted_bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+def _validate_pending_source_cutover_v10(
+    pending: dict[str, object], pending_raw: bytes, transition: dict[str, object], transition_raw: bytes,
+    active: dict[str, object], active_raw: bytes, accepted_bundle: Path,
+) -> None:
+    """Validate held pending transition bytes against one held active-v2 authority."""
+    verified = verify_accepted_bundle(accepted_bundle)
+    manifest, _ = _load_canonical(accepted_bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    _, registry_raw = _load_canonical(accepted_bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
     _validate_v10_authority(pending, pending_raw, verified, manifest, sha256_bytes(registry_raw), transition_raw)
     if set(transition) != {
         "accepted_identity", "decision_sha256", "new_authority_projection_sha256",
@@ -903,48 +918,39 @@ def command_validate_pending_source_cutover_v10(args: argparse.Namespace) -> int
         raise ReceiptError("SOURCE_CUTOVER_TRANSITION_INVALID")
     if active.get("schema_version") != "1" or active.get("external_publication_authorized") is not False or active.get("local_only") is not True:
         raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
-    canonical_revocation = args.active_authority.parents[1] / "receipts/fixture-closure-revocation-v2.json"
-    if canonical_revocation.exists() or canonical_revocation.is_symlink():
-        raise ReceiptError("SOURCE_CUTOVER_ALREADY_EFFECTIVE")
-    _print_json(
-        {
-            "active_authority_sha256": sha256_bytes(active_raw),
-            "eligible": False,
-            "pending_authority_sha256": sha256_bytes(pending_raw),
-            "status": "pending_cutover_valid_non_effective",
-            "transition_sha256": sha256_bytes(transition_raw),
-        }
-    )
-    return 0
 
 
 def command_activate_pending_source_cutover_v10(args: argparse.Namespace) -> int:
-    pending_raw = args.pending_authority.read_bytes()
-    transition_raw = args.transition.read_bytes()
-    pending = json.loads(pending_raw.decode("utf-8"))
-    transition = json.loads(transition_raw.decode("utf-8"))
-    if not isinstance(pending, dict) or not isinstance(transition, dict) or canonical_json_bytes(pending) != pending_raw or canonical_json_bytes(transition) != transition_raw:
-        raise ReceiptError("SOURCE_CUTOVER_PENDING_INVALID")
-    if pending.get("transition_sha256") != sha256_bytes(transition_raw) or transition.get("new_authority_projection_sha256") != sha256_bytes(canonical_json_bytes({key: value for key, value in pending.items() if key != "transition_sha256"})):
-        raise ReceiptError("SOURCE_CUTOVER_PENDING_INVALID")
-    active_raw = args.active_authority.read_bytes()
+    pending, pending_raw = _load_authoritative_canonical(args.pending_authority, "SOURCE_CUTOVER_PENDING_INVALID")
+    transition, transition_raw = _load_authoritative_canonical(args.transition, "SOURCE_CUTOVER_TRANSITION_INVALID")
+    active, active_raw = _load_authoritative_canonical(args.active_authority, "PHASE2_SOURCE_AUTHORITY_INVALID")
     revocation_raw = _optional_canonical_bytes(args.canonical_revocation)
     if active_raw == pending_raw and revocation_raw == transition_raw:
+        _validate_phase2_source_authority(active, active_raw, args.accepted_bundle, revocation_raw, "active")
         _print_json({"status": "already_activated"})
         return 0
-    if revocation_raw is not None or not isinstance(json.loads(active_raw.decode("utf-8")), dict) or json.loads(active_raw.decode("utf-8")).get("schema_version") != "1":
+    if active.get("schema_version") != "1":
         raise ReceiptError("SOURCE_CUTOVER_STATE_MISMATCH")
-    args.canonical_revocation.parent.mkdir(parents=True, exist_ok=True)
-    with args.canonical_revocation.open("xb") as stream:
-        stream.write(transition_raw)
-        stream.flush()
-        __import__("os").fsync(stream.fileno())
-    temporary = args.active_authority.with_name(f".{args.active_authority.name}.cutover")
-    with temporary.open("xb") as stream:
-        stream.write(pending_raw)
-        stream.flush()
-        __import__("os").fsync(stream.fileno())
-    __import__("os").replace(temporary, args.active_authority)
+    _validate_pending_source_cutover_v10(
+        pending, pending_raw, transition, transition_raw, active, active_raw, args.accepted_bundle,
+    )
+    if revocation_raw is None:
+        try:
+            write_new_descriptor_file(args.canonical_revocation.parent, args.canonical_revocation.name, transition_raw)
+        except FilesystemPolicyError as error:
+            raise ReceiptError("SOURCE_CUTOVER_REVOCATION_WRITE_INVALID") from error
+        _, revocation_raw = _load_authoritative_canonical(args.canonical_revocation, "SOURCE_CUTOVER_REVOCATION_INVALID")
+    if revocation_raw != transition_raw:
+        raise ReceiptError("SOURCE_CUTOVER_STATE_MISMATCH")
+    try:
+        replace_descriptor_file(args.active_authority.parent, args.active_authority.name, pending_raw)
+    except FilesystemPolicyError as error:
+        raise ReceiptError("SOURCE_CUTOVER_AUTHORITY_WRITE_INVALID") from error
+    active, active_raw = _load_authoritative_canonical(args.active_authority, "PHASE2_SOURCE_AUTHORITY_INVALID")
+    _, revocation_raw = _load_authoritative_canonical(args.canonical_revocation, "SOURCE_CUTOVER_REVOCATION_INVALID")
+    if active_raw != pending_raw or revocation_raw != transition_raw:
+        raise ReceiptError("SOURCE_CUTOVER_STATE_MISMATCH")
+    _validate_phase2_source_authority(active, active_raw, args.accepted_bundle, revocation_raw, "active")
     _print_json({"status": "activated"})
     return 0
 

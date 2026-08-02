@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from .canonical import canonical_json_bytes, require_sha256, sha256_bytes
-from .filesystem import _held_parent, read_authoritative_file, require_relative_posix_path
+from .filesystem import FilesystemPolicyError, read_authoritative_file, write_new_descriptor_file
 
 
 class ReceiptError(ValueError):
@@ -88,25 +88,14 @@ def render_v3_receipt_markdown(receipt: dict[str, Any], title: str) -> str:
 
 def _write_new_descriptor_file(root: Path, name: str, content: bytes) -> None:
     """Create exactly one immutable receipt leaf through a held root descriptor."""
-    descriptors, parent, leaf, _ = _held_parent(root, require_relative_posix_path(name))
-    descriptor: int | None = None
     try:
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC
-        descriptor = os.open(leaf, flags, 0o644, dir_fd=parent)
-        offset = 0
-        while offset < len(content):
-            offset += os.write(descriptor, content[offset:])
-        os.fsync(descriptor)
-        os.fsync(parent)
-    except FileExistsError as error:
-        raise ReceiptError("V3_RECEIPT_DESTINATION_EXISTS") from error
-    except OSError as error:
+        write_new_descriptor_file(root, name, content)
+    except FilesystemPolicyError as error:
+        if str(error) == "AUTHORITATIVE_DESTINATION_EXISTS":
+            raise ReceiptError("V3_RECEIPT_DESTINATION_EXISTS") from error
         raise ReceiptError("V3_RECEIPT_WRITE_INVALID") from error
-    finally:
-        if descriptor is not None:
-            os.close(descriptor)
-        for held in reversed(descriptors):
-            os.close(held)
+    except OSError as error:
+        raise ReceiptError("V3_RECEIPT_DESTINATION_EXISTS") from error
 
 
 def _run_embedded_v3_replay(accepted_bundle: Path) -> dict[str, object]:
