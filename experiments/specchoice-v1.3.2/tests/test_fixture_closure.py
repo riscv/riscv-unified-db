@@ -235,6 +235,58 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_v3_acceptance_receipts_and_copied_replay_bind_same_identity(self) -> None:
+        """Public receipt writers bind accepted v3 without activating the pending cutover."""
+        experiment = Path(__file__).resolve().parents[1]
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+        active = experiment / "phase2/source-authority.json"
+        before = active.read_bytes()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            result = self._public_command(
+                experiment,
+                "write-accepted-v3-receipts",
+                "--request", str(experiment / "receipts/local-acceptance-request-v10.json"),
+                "--decision", str(experiment / "receipts/local-acceptance-v10.json"),
+                "--candidate-audit", str(experiment / "receipts/fixture-closure-candidate-audit-v3.json"),
+                "--pending-authority", str(experiment / "phase2/source-authority-v10-pending.json"),
+                "--transition", str(experiment / "receipts/pending/fixture-closure-transition-v2-to-v3.json"),
+                "--active-authority", str(active),
+                "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"),
+                "--accepted-bundle", str(accepted),
+                "--receipt-directory", str(root),
+            )
+            self.assertEqual(result["status"], "accepted_v3_receipts_written")
+            self.assertEqual(result["written"], [
+                "fixture-closure-acceptance-audit-v3.json",
+                "fixture-closure-acceptance-audit-v3.md",
+                "fixture-closure-offline-replay-v3.json",
+                "integrity-receipt-v10.json",
+                "integrity-receipt-v10.md",
+            ])
+            audit = json.loads((root / "fixture-closure-acceptance-audit-v3.json").read_text(encoding="utf-8"))
+            integrity = json.loads((root / "integrity-receipt-v10.json").read_text(encoding="utf-8"))
+            replay = json.loads((root / "fixture-closure-offline-replay-v3.json").read_text(encoding="utf-8"))
+            for path in (
+                root / "fixture-closure-acceptance-audit-v3.json",
+                root / "integrity-receipt-v10.json",
+                root / "fixture-closure-offline-replay-v3.json",
+            ):
+                self.assertEqual(path.read_bytes(), canonical_json_bytes(json.loads(path.read_text(encoding="utf-8"))))
+            self.assertEqual(audit["accepted_identity"], integrity["accepted_identity"])
+            self.assertEqual(audit["accepted_identity"], replay["accepted_identity"])
+            self.assertEqual(audit["local_only"], True)
+            self.assertEqual(audit["external_publication_authorized"], False)
+            self.assertEqual(len(audit["verifier_artifacts"]), 5)
+            self.assertEqual(replay["copied_isolation_replay"], {
+                "git_available": False,
+                "network_available": False,
+                "original_bundle_available": False,
+                "repository_modules_available": False,
+                "result": "passed",
+            })
+        self.assertEqual(active.read_bytes(), before)
+
     def test_source_authority_and_bundle_consumers_reuse_descriptor_bound_canonical_bytes(self) -> None:
         """The public authority receipt is assembled from descriptor-read bundle leaves."""
         experiment = Path(__file__).resolve().parents[1]
