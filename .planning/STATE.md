@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
 status: executing
-stopped_at: Completed 02-14-PLAN.md
-last_updated: "2026-08-02T11:31:08.426Z"
+stopped_at: Completed 02-15-PLAN.md
+last_updated: "2026-08-02T11:47:25.009Z"
 last_activity: 2026-08-02
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 24
-  completed_plans: 21
+  completed_plans: 22
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 02 (deterministic-measurement-spine) — EXECUTING
-Plan: 7 of 17
+Plan: 8 of 17
 Status: Ready to execute
 Last activity: 2026-08-02 — Phase 02 execution started
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -78,6 +78,7 @@ Progress: [█████████░] 88%
 | Phase 02 P12 | 10m | 2 tasks | 8 files |
 | Phase 02 P13 | 11min | 1 tasks | 5 files |
 | Phase 02-deterministic-measurement-spine P14 | 14min | 1 tasks | 5 files |
+| Phase 02-deterministic-measurement-spine P15 | 11min | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Adapter validates one canonical pending-cutover stdout receipt against descriptor-held authority, bundle, registry, and audit custody.
 - [Phase 02-deterministic-measurement-spine]: Formal and adversarial public rehearsal requires explicit pending-v3 authority and transition custody.
 - [Phase 02-deterministic-measurement-spine]: Adversarial identity derives from independently validated formal-attempt custody, not report self-claims.
+- [Phase ?]: H1 successor packets require explicit schema-v2; readiness is immutable and decision-free.
+- [Phase ?]: H1 decision-v2 is a read-only validator with closed review and semantic-response contracts.
 
 ### Pending Todos
 
@@ -146,6 +149,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-02T11:31:00.289Z
-Stopped at: Completed 02-14-PLAN.md
+Last session: 2026-08-02T11:47:24.997Z
+Stopped at: Completed 02-15-PLAN.md
 Resume file: None
