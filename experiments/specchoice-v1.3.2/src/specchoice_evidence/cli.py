@@ -633,7 +633,7 @@ def _v4_predecessor_material(predecessor: Path) -> dict[str, object]:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID") from error
             if relative in files or evidence.byte_length != length or evidence.sha256 != digest:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
-            files[relative] = {"byte_length": length, "role": role, "sha256": digest}
+            files[relative] = {"byte_length": length, "fixture_id": fixture_id, "role": role, "sha256": digest}
     if len(files) != 28 or manifest.get("snapshot_manifest_sha256") is None:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
     return {

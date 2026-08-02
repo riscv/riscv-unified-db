@@ -802,6 +802,28 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     forged_proposal["replacements"] = forged_manifest["repairs"]
                     self.assertNotEqual(run_v4(proposal_path=write_payload("forged-proposal.json", forged_proposal), manifest_path=forged_manifest_path).returncode, 0)
 
+                with self.subTest("v4_rejects_mislabeled_replace_and_swapped_payload_control"):
+                    forged_manifest = copy.deepcopy(original_manifest)
+                    replacement = next(item for item in forged_manifest["repairs"] if item["kind"] == "replace")
+                    replacement["kind"] = "add"
+                    replacement["old_sha256"] = None
+                    replacement["old_byte_length"] = None
+                    forged_manifest_path = write_payload("mislabeled-manifest.json", forged_manifest)
+                    forged_proposal = copy.deepcopy(original_proposal)
+                    forged_proposal["repair_manifest"]["sha256"] = sha256_bytes(forged_manifest_path.read_bytes())
+                    forged_proposal["replacements"] = forged_manifest["repairs"]
+                    self.assertNotEqual(run_v4(proposal_path=write_payload("mislabeled-proposal.json", forged_proposal), manifest_path=forged_manifest_path).returncode, 0)
+
+                    forged_manifest = copy.deepcopy(original_manifest)
+                    first, second = forged_manifest["repairs"][:2]
+                    first["payload_path"], second["payload_path"] = second["payload_path"], first["payload_path"]
+                    first["control"] = "semantic_correction"
+                    forged_manifest_path = write_payload("swapped-manifest.json", forged_manifest)
+                    forged_proposal = copy.deepcopy(original_proposal)
+                    forged_proposal["repair_manifest"]["sha256"] = sha256_bytes(forged_manifest_path.read_bytes())
+                    forged_proposal["replacements"] = forged_manifest["repairs"]
+                    self.assertNotEqual(run_v4(proposal_path=write_payload("swapped-proposal.json", forged_proposal), manifest_path=forged_manifest_path).returncode, 0)
+
                 with self.subTest("v4_rejects_forged_registry_predecessor_and_reused_leaf"):
                     forged_registry = copy.deepcopy(original_registry)
                     forged_registry["predecessor_registry_sha256"] = "0" * 64
@@ -810,6 +832,18 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     forged_proposal = copy.deepcopy(original_proposal)
                     forged_proposal["registry"]["sha256"] = sha256_bytes(forged_registry_path.read_bytes())
                     self.assertNotEqual(run_v4(proposal_path=write_payload("registry-proposal.json", forged_proposal), registry_path=forged_registry_path).returncode, 0)
+
+                with self.subTest("v4_rejects_registry_repair_claimed_as_predecessor"):
+                    forged_registry = copy.deepcopy(original_registry)
+                    repaired = next(
+                        file for fixture in forged_registry["fixtures"] for file in fixture["files"]
+                        if file["path"] == "raw/evaluation_fixtures/CAND_WARL_FIXED_LEGAL_SET/expected.yaml"
+                    )
+                    repaired["origin"] = "predecessor"
+                    forged_registry_path = write_payload("origin-registry.json", forged_registry)
+                    forged_proposal = copy.deepcopy(original_proposal)
+                    forged_proposal["registry"]["sha256"] = sha256_bytes(forged_registry_path.read_bytes())
+                    self.assertNotEqual(run_v4(proposal_path=write_payload("origin-proposal.json", forged_proposal), registry_path=forged_registry_path).returncode, 0)
 
                 with self.subTest("v4_rejects_opposite_valid_human_selection"):
                     opposite = json.loads((experiment / "reviews/h1-source-gold-ontology-decision-v1.json").read_text(encoding="utf-8"))

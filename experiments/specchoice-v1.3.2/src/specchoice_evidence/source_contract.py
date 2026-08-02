@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import subprocess
 from collections.abc import Mapping
 from pathlib import Path
@@ -169,12 +170,17 @@ def _require_v4_git_commit(value: object, repository_root: Path) -> None:
         source_check = subprocess.run(
             ["git", "-C", str(repository_root), "diff", "--quiet", value, "--",
              "experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py",
-             "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py"],
+             "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py",
+             "experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py"],
+            check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
+        )
+        ancestry_check = subprocess.run(
+            ["git", "-C", str(repository_root), "merge-base", "--is-ancestor", value, "HEAD"],
             check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
         )
     except (ValueError, OSError, subprocess.TimeoutExpired) as error:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
-    if object_check.returncode != 0 or source_check.returncode != 0:
+    if object_check.returncode != 0 or source_check.returncode != 0 or ancestry_check.returncode != 0:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
 
 
@@ -253,14 +259,34 @@ def _validate_v4_repair_manifest(
     asid_expected = text["raw/evaluation_fixtures/POS_WARL_ASID_WIDTH/expected.yaml"]
     pbmte_text = text["raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/expected.yaml"]
     cand_text = text["raw/evaluation_fixtures/CAND_WARL_FIXED_LEGAL_SET/expected.yaml"]
-    if "uniform throughout" in cache_text or "implementation-specific" not in cache_text or "enum:" not in cache_text or "0x4" not in cache_text or (
-        "- 0" not in pmp_text or "- 16" not in pmp_text or "- 64" not in pmp_text or "minimum: 0" not in geilen_text or
+    cache_domain = _v4_yaml_integer_domain(cache_text, "enum:", "definedBy:")
+    pmp_domain = _v4_yaml_integer_domain(pmp_text, "enum:", "definedBy:")
+    asid_top_level = {
+        line.split(":", 1)[0] for line in asid_text.splitlines()
+        if line and not line.startswith((" ", "#")) and ":" in line
+    }
+    if "uniform throughout" in cache_text or "implementation-specific" not in cache_text or cache_domain != {1 << shift for shift in range(64)} or (
+        pmp_domain != {0, 16, 64} or "minimum: 0" not in geilen_text or
         "direct targets" not in geilen_text or "gold_name: NUM_EXTERNAL_GUEST_INTERRUPTS" not in geilen_expected or
         "existing_alias" not in geilen_expected or "ASIDLEN" not in asid_text or "ASID_WIDTH" not in asid_expected or
-        "existing_alias" not in asid_expected or f"fixture_class: {_V4_PBMTE_EFFECTS[pbmte]['fixture_class']}" not in pbmte_text or
+        "existing_alias" not in asid_expected or "versioned_aliases" in asid_text or asid_top_level != {
+            "$schema", "kind", "name", "description", "long_name", "schema", "definedBy", "requirements",
+        } or f"fixture_class: {_V4_PBMTE_EFFECTS[pbmte]['fixture_class']}" not in pbmte_text or
         "final_disposition: classify_out" not in pbmte_text or "classify_out_reason: isa_fixed_singleton_legal_set" not in cand_text
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID")
+
+
+def _v4_yaml_integer_domain(text: str, start: str, end: str) -> set[int]:
+    try:
+        section = text.split(start, 1)[1].split(end, 1)[0]
+    except IndexError as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID") from error
+    values = re.findall(r"0x[0-9A-Fa-f]+|(?<![A-Za-z0-9_])-?[0-9]+", section)
+    try:
+        return {int(value, 0) for value in values}
+    except ValueError as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID") from error
 
 
 def _v4_inventory(
@@ -295,6 +321,7 @@ def _validate_v4_registry(
     repairs = {item["target_path"]: item for item in manifest["repairs"] if isinstance(item, Mapping)}
     expected_paths = set(predecessor_files) | {path for path, item in repairs.items() if item["kind"] == "add"}
     actual_paths: set[str] = set()
+    registry_repairs: set[str] = set()
     classes = dict(predecessor_classes)
     classes["NEG_EXT_GATED_PBMTE"] = str(_V4_PBMTE_EFFECTS[pbmte]["fixture_class"])
     for fixture in fixtures:
@@ -313,6 +340,9 @@ def _validate_v4_registry(
             if not isinstance(file, Mapping) or set(file) != {"byte_length", "origin", "path", "role", "sha256"}:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
             path = _normalized_path(file.get("path"), "fixture_construction_v4_registry_path")
+            path_parts = path.split("/")
+            if len(path_parts) != 4 or path_parts[:2] != ["raw", "evaluation_fixtures"] or path_parts[2] != fixture_id:
+                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
             try:
                 require_byte_length(file.get("byte_length")); require_sha256(file.get("sha256"))
             except ValueError as error:
@@ -326,15 +356,16 @@ def _validate_v4_registry(
                     file.get("sha256"), file.get("byte_length"), _v4_expected_role(path),
                 ):
                     raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_CLOSURE_INVALID")
+                registry_repairs.add(path)
             elif file.get("origin") == "predecessor":
                 predecessor = predecessor_files.get(path)
                 if predecessor is None or (file.get("role"), file.get("byte_length"), file.get("sha256")) != (
                     predecessor["role"], predecessor["byte_length"], predecessor["sha256"],
-                ):
+                ) or predecessor["fixture_id"] != fixture_id or path in repairs:
                     raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
             else:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
-    if actual_paths != expected_paths:
+    if actual_paths != expected_paths or registry_repairs != set(repairs):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_CLOSURE_INVALID")
 
 
