@@ -281,6 +281,27 @@ class H1PacketTests(unittest.TestCase):
             self.assertEqual(receipt["aggregate_disposition"], "approved")
             self.assertFalse(receipt["external_publication_authorized"])
 
+            for binding in ("packet_sha256", "schema_sha256"):
+                with self.subTest(binding=binding):
+                    detached_readiness = deepcopy(readiness)
+                    assert isinstance(detached_readiness["bindings"], dict)
+                    detached_readiness["bindings"][binding] = "0" * 64
+                    detached_readiness["readiness_sha256"] = sha256_bytes(canonical_json_bytes({
+                        key: value for key, value in detached_readiness.items() if key != "readiness_sha256"
+                    }))
+                    detached_decision = deepcopy(decision)
+                    assert isinstance(detached_decision["bindings"], dict)
+                    detached_decision["bindings"]["readiness_sha256"] = detached_readiness["readiness_sha256"]
+                    detached_decision["decision_sha256"] = sha256_bytes(canonical_json_bytes({
+                        key: value for key, value in detached_decision.items() if key != "decision_sha256"
+                    }))
+                    readiness_path.write_bytes(canonical_json_bytes(detached_readiness))
+                    decision_path.write_bytes(canonical_json_bytes(detached_decision))
+                    with self.assertRaisesRegex(H1Error, "H1_READINESS_BINDINGS_INVALID"):
+                        h1.validate_h1_decision_v2(
+                            schema=self.schema, packet=packet_path, readiness=readiness_path, decision=decision_path
+                        )
+
     def test_incomplete_or_disputed_leaf_must_match_aggregate(self) -> None:
         with tempfile.TemporaryDirectory(dir=self.root) as directory:
             root = Path(directory)
