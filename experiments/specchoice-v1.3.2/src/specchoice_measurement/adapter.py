@@ -267,6 +267,7 @@ def _validate_active_source_cutover(
         or authority.get("manifest_sha256") != manifest.get("snapshot_manifest_sha256")
         or authority.get("root_sha256") != verified["root_sha256"]
         or authority.get("registry_sha256") != sha256_bytes(registry_raw)
+        or authority.get("transition_sha256") != sha256_bytes(revocation_raw)
         or authority.get("fixture_count") != 11
         or authority.get("raw_file_count") != 28
         or not authority_raw
