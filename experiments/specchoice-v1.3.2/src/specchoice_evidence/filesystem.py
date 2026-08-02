@@ -344,6 +344,47 @@ def read_authoritative_file(root: Path, relative_path: str) -> tuple[FileEvidenc
     return _read_authoritative_regular_file(root, require_relative_posix_path(relative_path))
 
 
+def read_authoritative_files(root: Path, relative_paths: list[str]) -> dict[str, tuple[FileEvidence, bytes]]:
+    """Read a fixed file set through one held authority-root descriptor."""
+    normalized = [require_relative_posix_path(value) for value in relative_paths]
+    names = [value.as_posix() for value in normalized]
+    if len(names) != len(set(names)):
+        raise FilesystemPolicyError("AUTHORITATIVE_BATCH_DUPLICATE")
+    root_descriptor: int | None = None
+    try:
+        root_descriptor, root_parts = _directory_components(root)
+        if root_parts:
+            raise FilesystemPolicyError("DIRECTORY_DESCRIPTOR_UNAVAILABLE")
+        root_stat = os.fstat(root_descriptor)
+        if not stat.S_ISDIR(root_stat.st_mode):
+            raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+        result: dict[str, tuple[FileEvidence, bytes]] = {}
+        for relative in normalized:
+            held: list[int] = []
+            parent = root_descriptor
+            try:
+                for part in relative.parts[:-1]:
+                    child = _open_directory(parent, part, root_stat.st_dev)
+                    held.append(child)
+                    parent = child
+                leaf = relative.parts[-1]
+                before = _existing_leaf_kind(parent, leaf, root_stat.st_dev)
+                content = _read_held_regular_file(parent, leaf, root_stat.st_dev)
+                result[relative.as_posix()] = (
+                    FileEvidence(relative.as_posix(), "regular_file", len(content), sha256_bytes(content), before.st_nlink),
+                    content,
+                )
+            finally:
+                for descriptor in reversed(held):
+                    os.close(descriptor)
+        if _signature(root_stat) != _signature(os.fstat(root_descriptor)):
+            raise FilesystemPolicyError("AUTHORITATIVE_ROOT_CHANGED")
+        return result
+    finally:
+        if root_descriptor is not None:
+            os.close(root_descriptor)
+
+
 def inspect_authoritative_path(root: Path, relative_path: str) -> FileEvidence:
     """Classify a contained path while retaining descriptors until classification ends."""
     relative = require_relative_posix_path(relative_path)

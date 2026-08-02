@@ -30,6 +30,7 @@ from specchoice_evidence.filesystem import (
     FilesystemPolicyError,
     inspect_authoritative_path,
     read_authoritative_file,
+    read_authoritative_files,
     reject_hardlink_dependency,
     require_relative_posix_path,
     replace_descriptor_file,
@@ -39,6 +40,38 @@ from specchoice_evidence.cli import build_parser
 
 
 class FilesystemBoundaryTests(unittest.TestCase):
+    def test_batch_read_holds_one_root_across_directory_swap(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            authority = parent / "authority"
+            replacement = parent / "replacement"
+            authority.mkdir()
+            replacement.mkdir()
+            (authority / "first.txt").write_text("old-first", encoding="utf-8")
+            (authority / "second.txt").write_text("old-second", encoding="utf-8")
+            (replacement / "first.txt").write_text("new-first", encoding="utf-8")
+            (replacement / "second.txt").write_text("new-second", encoding="utf-8")
+            original = filesystem_module._read_held_regular_file
+            swapped = False
+
+            def read_then_swap(*args: object, **kwargs: object) -> bytes:
+                nonlocal swapped
+                value = original(*args, **kwargs)
+                if not swapped:
+                    swapped = True
+                    os.rename(authority, parent / "retired")
+                    os.rename(replacement, authority)
+                return value
+
+            with patch.object(filesystem_module, "_read_held_regular_file", side_effect=read_then_swap):
+                try:
+                    held = read_authoritative_files(authority, ["first.txt", "second.txt"])
+                except FilesystemPolicyError as error:
+                    self.assertEqual(str(error), "AUTHORITATIVE_ROOT_CHANGED")
+                else:
+                    self.assertEqual(held["first.txt"][1], b"old-first")
+                    self.assertEqual(held["second.txt"][1], b"old-second")
+
     def _git(self, root: Path, *args: str) -> None:
         subprocess.run(["git", "-C", os.fspath(root), *args], check=True, stdout=subprocess.PIPE)
 

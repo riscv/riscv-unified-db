@@ -22,7 +22,7 @@ from .baseline import (
     validate_boundary_restart,
     validate_restart_lineage,
 )
-from .filesystem import FilesystemPolicyError, read_authoritative_file, replace_descriptor_file, require_relative_posix_path, write_new_descriptor_file
+from .filesystem import FilesystemPolicyError, read_authoritative_file, read_authoritative_files, replace_descriptor_file, require_relative_posix_path, write_new_descriptor_file
 from .receipt import (
     ReceiptError,
     build_blocked_receipt,
@@ -51,6 +51,7 @@ from .canonical import canonical_json_bytes, require_byte_length, require_sha256
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
 from .source_contract import (
+    _EXPECTED_FIXTURES,
     SourceContractProposalError,
     validate_fixture_construction_decision,
     validate_fixture_construction_proposal,
@@ -633,8 +634,31 @@ def _load_authoritative_canonical_v4(path: Path, code: str) -> tuple[dict[str, o
 def _v4_predecessor_material(predecessor: Path) -> dict[str, object]:
     """Hold and validate every predecessor registry leaf once before comparison."""
     identity = verify_accepted_bundle(predecessor)
-    manifest, _ = _load_authoritative_canonical_v4(predecessor / "snapshot-manifest.json", "FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
-    registry, registry_raw = _load_authoritative_canonical_v4(predecessor / "fixture-registry-pr2164-v1.json", "FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+    expected_paths = ["snapshot-manifest.json", "fixture-registry-pr2164-v1.json"] + [
+        f"raw/evaluation_fixtures/{fixture_id}/{name}"
+        for fixture_id, (_, _, names) in _EXPECTED_FIXTURES.items() for name in names
+    ]
+    try:
+        held = read_authoritative_files(predecessor, expected_paths)
+
+        def reject_duplicates(pairs: list[tuple[str, object]]) -> dict[str, object]:
+            result: dict[str, object] = {}
+            for key, value in pairs:
+                if key in result:
+                    raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+                result[key] = value
+            return result
+
+        manifest_raw = held["snapshot-manifest.json"][1]
+        registry_raw = held["fixture-registry-pr2164-v1.json"][1]
+        manifest = json.loads(manifest_raw.decode("utf-8"), object_pairs_hook=reject_duplicates)
+        registry = json.loads(registry_raw.decode("utf-8"), object_pairs_hook=reject_duplicates)
+    except (FilesystemPolicyError, UnicodeDecodeError, json.JSONDecodeError, SourceContractProposalError) as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID") from error
+    if not isinstance(manifest, dict) or not isinstance(registry, dict) or canonical_json_bytes(manifest) != manifest_raw or canonical_json_bytes(registry) != registry_raw or any(
+        manifest.get(key) != identity.get(key) for key in ("generation", "manifest_sha256", "root_sha256")
+    ):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
     fixtures = registry.get("fixtures")
     if not isinstance(fixtures, list):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
@@ -655,7 +679,7 @@ def _v4_predecessor_material(predecessor: Path) -> dict[str, object]:
                 role = str(file["role"])
                 length = require_byte_length(file["raw_byte_length"])
                 digest = require_sha256(file["raw_sha256"])
-                evidence, _ = read_authoritative_file(predecessor, relative)
+                evidence, _ = held[relative]
             except (KeyError, FilesystemPolicyError, ValueError) as error:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID") from error
             if relative in files or evidence.byte_length != length or evidence.sha256 != digest:
