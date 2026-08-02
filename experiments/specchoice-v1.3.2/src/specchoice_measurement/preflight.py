@@ -85,7 +85,11 @@ def preflight_prediction_batch(*, raw: bytes, adapter_batch: object, ingress: st
 
     # Attach immutable byte views only for this pure validation call; no artifact is written.
     source_bytes_by_fixture = _source_bytes_by_fixture(adapter_batch)
-    source_bytes = _source_bytes_by_sha256(adapter_batch)
+    source_bytes = {
+        digest: value
+        for values in source_bytes_by_fixture.values()
+        for digest, value in values.items()
+    }
     object.__setattr__(adapter_batch, "source_bytes_by_sha256", source_bytes) if False else None
     # Keep the adapter immutable: a narrow proxy supplies the verified source-byte index.
     class _BatchView:

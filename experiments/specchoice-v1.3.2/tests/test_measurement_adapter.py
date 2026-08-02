@@ -287,7 +287,11 @@ class MeasurementAdapterTests(unittest.TestCase):
 
         with mock.patch(
             "specchoice_measurement.adapter.read_authoritative_file",
-            side_effect=FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED"),
+            side_effect=lambda root, relative: (
+                (_ for _ in ()).throw(FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED"))
+                if relative.startswith("raw/")
+                else read_authoritative_file(root, relative)
+            ),
             create=True,
         ):
             invalid = self.build()
@@ -335,15 +339,14 @@ class MeasurementAdapterTests(unittest.TestCase):
             rules = json.loads(copied_rules.read_text(encoding="utf-8"))
             rules["fixture_count"] = 10
             copied_rules.write_bytes(canonical_json_bytes(rules))
-            invalid = build_pr2164_adapter_batch(
-                authority_path=self.authority,
-                bundle_root=self.pending_bundle,
-                rules_path=copied_rules,
-                pending_authority_path=self.pending_authority,
-                transition_path=self.transition,
-            )
-        self.assertFalse(invalid.valid)
-        self.assertEqual(invalid.records, ())
+            with self.assertRaisesRegex(AdapterError, "ADAPTER_RULES_INVALID"):
+                build_pr2164_adapter_batch(
+                    authority_path=self.authority,
+                    bundle_root=self.pending_bundle,
+                    rules_path=copied_rules,
+                    pending_authority_path=self.pending_authority,
+                    transition_path=self.transition,
+                )
 
 
 if __name__ == "__main__":
