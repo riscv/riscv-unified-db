@@ -187,7 +187,9 @@ module UdbGen
       ].join(" ")
 
       Udb.logger.debug cmd
-      system cmd
+      unless system(cmd)
+        exit_with(:software_error, "asciidoctor-pdf failed while generating #{pdf_filename}")
+      end
 
       puts "SUCCESS! Wrote result to #{pdf_filename}"
     end
