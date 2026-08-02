@@ -728,6 +728,31 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             with self.assertRaisesRegex(BundleError, "STAGED_RAW_CUSTODY_MISMATCH"):
                 verify_candidate(copied)
 
+        with self.subTest("semantic_gold_v4_proposal_is_closed_over_repairs_and_registry"):
+            proposal_v4 = experiment / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json"
+            repair_manifest = experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json"
+            registry_v2 = experiment / "config/fixture-registry-pr2164-v2.json"
+            result = subprocess.run(
+                [
+                    sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-proposal-v4",
+                    "--proposal", str(proposal_v4),
+                    "--predecessor", str(accepted),
+                    "--active-authority", str(experiment / "phase2/source-authority.json"),
+                    "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"),
+                    "--ontology-decision", str(experiment / "reviews/h1-source-gold-ontology-decision-v1.json"),
+                    "--repair-manifest", str(repair_manifest), "--registry", str(registry_v2),
+                ],
+                cwd=experiment,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            proposal_payload = json.loads(proposal_v4.read_text(encoding="utf-8"))
+            self.assertEqual(proposal_payload["status"], "awaiting_human_construction_authorization")
+            self.assertEqual(proposal_payload["selected_policy"]["pbmte"], "surfaced_classified_out")
+            self.assertEqual(proposal_payload["selected_policy"]["cache"], "unified_cache_block_identity")
+
     def test_accepted_v3_is_distinct_and_downstream_eligible(self) -> None:
         experiment = Path(__file__).resolve().parents[1]
         candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1"
