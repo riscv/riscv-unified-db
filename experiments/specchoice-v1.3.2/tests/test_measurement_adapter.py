@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import shutil
 import sys
 import tempfile
 import unittest
@@ -23,9 +24,18 @@ from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_ba
 class MeasurementAdapterTests(unittest.TestCase):
     def setUp(self) -> None:
         self.experiment_root = Path(__file__).parents[1]
-        # Legacy-mode coverage must stay pinned to the inspection-only v2 bytes;
-        # the live authority is intentionally active-v3 after cutover.
-        self.authority = self.experiment_root / "phase2/source-authority-v9-historical.json"
+        # Legacy/pending rehearsal coverage needs an isolated pre-cutover root;
+        # the live authority and revocation are intentionally active-v3.
+        self._legacy_root = tempfile.TemporaryDirectory()
+        self.addCleanup(self._legacy_root.cleanup)
+        source_root = Path(self._legacy_root.name)
+        (source_root / "phase2").mkdir()
+        (source_root / "receipts/pending").mkdir(parents=True)
+        shutil.copy2(self.experiment_root / "phase2/source-authority-v9-historical.json", source_root / "phase2/source-authority.json")
+        shutil.copy2(self.experiment_root / "phase2/source-authority-v10-pending.json", source_root / "phase2/source-authority-v10-pending.json")
+        shutil.copy2(self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json", source_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json")
+        shutil.copy2(self.experiment_root / "receipts/fixture-closure-acceptance-audit-v3.json", source_root / "receipts/fixture-closure-acceptance-audit-v3.json")
+        self.authority = source_root / "phase2/source-authority.json"
         self.active_authority = self.experiment_root / "phase2/source-authority.json"
         self.revocation = self.experiment_root / "receipts/fixture-closure-revocation-v2.json"
         self.bundle = (
@@ -33,8 +43,8 @@ class MeasurementAdapterTests(unittest.TestCase):
             / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
         )
         self.rules = self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json"
-        self.pending_authority = self.experiment_root / "phase2/source-authority-v10-pending.json"
-        self.transition = self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json"
+        self.pending_authority = source_root / "phase2/source-authority-v10-pending.json"
+        self.transition = source_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json"
         self.pending_bundle = (
             self.experiment_root
             / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"

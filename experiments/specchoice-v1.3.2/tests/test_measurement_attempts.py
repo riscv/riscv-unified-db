@@ -33,11 +33,20 @@ class MeasurementAttemptTests(unittest.TestCase):
         self.experiment_root = Path(__file__).parents[1]
         self.bundle = self.experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
         self.pending_bundle = self.experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
-        self.authority = self.experiment_root / "phase2/source-authority-v9-historical.json"
+        self._legacy_root = tempfile.TemporaryDirectory()
+        self.addCleanup(self._legacy_root.cleanup)
+        source_root = Path(self._legacy_root.name)
+        (source_root / "phase2").mkdir()
+        (source_root / "receipts/pending").mkdir(parents=True)
+        shutil.copy2(self.experiment_root / "phase2/source-authority-v9-historical.json", source_root / "phase2/source-authority.json")
+        shutil.copy2(self.experiment_root / "phase2/source-authority-v10-pending.json", source_root / "phase2/source-authority-v10-pending.json")
+        shutil.copy2(self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json", source_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json")
+        shutil.copy2(self.experiment_root / "receipts/fixture-closure-acceptance-audit-v3.json", source_root / "receipts/fixture-closure-acceptance-audit-v3.json")
+        self.authority = source_root / "phase2/source-authority.json"
         self.active_authority = self.experiment_root / "phase2/source-authority.json"
         self.revocation = self.experiment_root / "receipts/fixture-closure-revocation-v2.json"
-        self.pending_authority = self.experiment_root / "phase2/source-authority-v10-pending.json"
-        self.transition = self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json"
+        self.pending_authority = source_root / "phase2/source-authority-v10-pending.json"
+        self.transition = source_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json"
         self.batch = build_pr2164_adapter_batch(
             authority_path=self.authority,
             bundle_root=self.bundle,
@@ -69,6 +78,7 @@ class MeasurementAttemptTests(unittest.TestCase):
             transition=self.transition,
             attempt_root=root,
             attempt_id="formal-golden",
+            adapter_batch=batch,
         )
 
     def _active_formal_args(self, root: Path) -> SimpleNamespace:
@@ -95,6 +105,7 @@ class MeasurementAttemptTests(unittest.TestCase):
             revocation=self.revocation,
             attempt_root=root,
             attempt_id="formal-golden",
+            adapter_batch=batch,
         )
 
     def _inputs(self, *, raw: bytes | None = None, mode: str = "formal") -> dict[str, object]:
@@ -129,7 +140,14 @@ class MeasurementAttemptTests(unittest.TestCase):
             self.assertEqual(set(manifest["artifacts"]), {
                 "case-outcomes.json", "diagnostics.json", "metrics.json", "parsed-predictions.json", "report.json"
             })
-            self.assertEqual(validate_measurement_attempt(attempt_root=target)["status"], "completed")
+            self.assertEqual(
+                validate_measurement_attempt(
+                    attempt_root=target,
+                    adapter_batch=self.batch,
+                    schema_raw=(self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json").read_bytes(),
+                )["status"],
+                "completed",
+            )
 
     def test_blocking_preflight_is_immutable_but_has_no_score_artifacts(self) -> None:
         invalid = json.loads(self.raw.decode("utf-8"))
@@ -205,7 +223,11 @@ class MeasurementAttemptTests(unittest.TestCase):
             (target / "attempt.json").write_bytes(canonical_json_bytes(manifest))
 
             with self.assertRaisesRegex(AttemptError, "ATTEMPT_REPLAY_ARTIFACT_MISMATCH"):
-                validate_measurement_attempt(attempt_root=target)
+                validate_measurement_attempt(
+                    attempt_root=target,
+                    adapter_batch=self.batch,
+                    schema_raw=(self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json").read_bytes(),
+                )
 
     def test_attempt_validation_rejects_symlinked_manifest_and_all_retained_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -349,7 +371,11 @@ class MeasurementAttemptTests(unittest.TestCase):
             active_args = self._active_formal_args(root / "active-attempts")
             self.assertEqual(command_run_formal_measurement(active_args), 0)
             self.assertEqual(
-                validate_measurement_attempt(attempt_root=active_args.attempt_root / active_args.attempt_id)["status"],
+                validate_measurement_attempt(
+                    attempt_root=active_args.attempt_root / active_args.attempt_id,
+                    adapter_batch=active_args.adapter_batch,
+                    schema_raw=active_args.schema.read_bytes(),
+                )["status"],
                 "completed",
             )
 

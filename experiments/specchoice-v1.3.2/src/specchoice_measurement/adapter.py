@@ -31,6 +31,8 @@ EXPECTED_FIELDS = {
     "positive": ["class", "expect_extract", "expect_status", "gold_name", "id", "must_have_excerpt"],
 }
 
+_EXPERIMENT_ROOT = Path(__file__).parents[2]
+
 
 def _load_canonical_json(path: Path, code: str) -> tuple[dict[str, Any], bytes]:
     try:
@@ -44,7 +46,7 @@ def _load_canonical_json(path: Path, code: str) -> tuple[dict[str, Any], bytes]:
 
 
 def _validate_phase2_authority(authority_path: Path, bundle_root: Path) -> None:
-    """Use Phase 1's public CLI boundary rather than copying its authority policy."""
+    """Validate the inspection-only active-v2 mode at the public boundary."""
     completed = subprocess.run(
         [
             sys.executable,
@@ -58,27 +60,27 @@ def _validate_phase2_authority(authority_path: Path, bundle_root: Path) -> None:
         ],
         check=False,
         capture_output=True,
-        cwd=authority_path.parent.parent,
-        env={**os.environ, "PYTHONPATH": str(authority_path.parent.parent / "src")},
+        cwd=_EXPERIMENT_ROOT,
+        env={**os.environ, "PYTHONPATH": str(_EXPERIMENT_ROOT / "src")},
         text=True,
     )
     if completed.returncode != 0:
         raise AdapterError("PHASE2_SOURCE_AUTHORITY_INVALID")
 
 
-def _closed_validator_stdout(completed: subprocess.CompletedProcess[str]) -> dict[str, object]:
+def _closed_validator_stdout(completed: subprocess.CompletedProcess[str], code: str = "PENDING_SOURCE_CUTOVER_INVALID") -> dict[str, object]:
     """Accept precisely one canonical stdout receipt from the public validator."""
     if completed.returncode != 0 or completed.stderr:
-        raise AdapterError("PENDING_SOURCE_CUTOVER_INVALID")
+        raise AdapterError(code)
     lines = completed.stdout.splitlines()
     if len(lines) != 1:
-        raise AdapterError("PENDING_SOURCE_CUTOVER_STDOUT_INVALID")
+        raise AdapterError(f"{code}_STDOUT_INVALID")
     try:
         receipt = json.loads(lines[0])
     except json.JSONDecodeError as error:
-        raise AdapterError("PENDING_SOURCE_CUTOVER_STDOUT_INVALID") from error
+        raise AdapterError(f"{code}_STDOUT_INVALID") from error
     if not isinstance(receipt, dict) or canonical_json_bytes(receipt).decode("utf-8") != f"{lines[0]}\n":
-        raise AdapterError("PENDING_SOURCE_CUTOVER_STDOUT_INVALID")
+        raise AdapterError(f"{code}_STDOUT_INVALID")
     return receipt
 
 
@@ -116,8 +118,8 @@ def _validate_pending_source_cutover(
         ],
         check=False,
         capture_output=True,
-        cwd=authority_path.parent.parent,
-        env={**os.environ, "PYTHONPATH": str(authority_path.parent.parent / "src")},
+        cwd=_EXPERIMENT_ROOT,
+        env={**os.environ, "PYTHONPATH": str(_EXPERIMENT_ROOT / "src")},
         text=True,
     )
     receipt = _closed_validator_stdout(completed)
@@ -200,6 +202,81 @@ def _validate_pending_source_cutover(
     ):
         raise AdapterError("PENDING_SOURCE_AUDIT_MISMATCH")
     return _source_identity(pending, verified)
+
+
+def _validate_active_source_cutover(
+    *, authority_path: Path, bundle_root: Path, revocation_path: Path
+) -> dict[str, str]:
+    """Bind active-v3 only to one descriptor-rechecked public validator receipt."""
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "specchoice_evidence.cli",
+            "validate-phase2-source-authority",
+            "--authority",
+            authority_path.as_posix(),
+            "--bundle",
+            bundle_root.as_posix(),
+            "--revocation",
+            revocation_path.as_posix(),
+            "--authority-mode",
+            "active",
+        ],
+        check=False,
+        capture_output=True,
+        cwd=_EXPERIMENT_ROOT,
+        env={**os.environ, "PYTHONPATH": str(_EXPERIMENT_ROOT / "src")},
+        text=True,
+    )
+    receipt = _closed_validator_stdout(completed, "ACTIVE_SOURCE_CUTOVER_INVALID")
+    authority, authority_raw = _load_canonical_json(authority_path, "PHASE2_SOURCE_AUTHORITY_INVALID")
+    _revocation, revocation_raw = _load_canonical_json(revocation_path, "SOURCE_AUTHORITY_REVOCATION_INVALID")
+    verified = verify_accepted_bundle(bundle_root)
+    manifest, _ = _load_canonical_json(bundle_root / "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    registry, registry_raw = _load_canonical_json(bundle_root / "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+    fixtures = registry.get("fixtures") if isinstance(registry, dict) else None
+    partition = {
+        category: sum(isinstance(item, dict) and item.get("fixture_class") == category for item in fixtures or ())
+        for category in ("positive", "negative", "candidate")
+    }
+    expected_receipt = {
+        "eligible": True,
+        "fixture_count": 11,
+        "generation": verified["generation"],
+        "manifest_sha256": manifest.get("snapshot_manifest_sha256"),
+        "pinned_commit_sha": authority.get("pinned_commit_sha"),
+        "pinned_tree_sha": authority.get("pinned_tree_sha"),
+        "raw_file_count": 28,
+        "registry_sha256": sha256_bytes(registry_raw),
+        "root_sha256": verified["root_sha256"],
+        "status": "valid",
+    }
+    accepted_identity = {
+        "core_sha256": verified["manifest_sha256"],
+        "generation": verified["generation"],
+        "root_sha256": verified["root_sha256"],
+        "snapshot_manifest_sha256": manifest.get("snapshot_manifest_sha256"),
+    }
+    if (
+        receipt != expected_receipt
+        or authority.get("schema_version") != "10"
+        or authority.get("status") != "pending_cutover_v10"
+        or authority.get("accepted_identity") != accepted_identity
+        or authority.get("generation") != verified["generation"]
+        or authority.get("manifest_sha256") != manifest.get("snapshot_manifest_sha256")
+        or authority.get("root_sha256") != verified["root_sha256"]
+        or authority.get("registry_sha256") != sha256_bytes(registry_raw)
+        or authority.get("fixture_count") != 11
+        or authority.get("raw_file_count") != 28
+        or not authority_raw
+        or not revocation_raw
+        or not isinstance(fixtures, list)
+        or len(fixtures) != 11
+        or partition != {"positive": 6, "negative": 4, "candidate": 1}
+    ):
+        raise AdapterError("ACTIVE_SOURCE_CUTOVER_RECEIPT_MISMATCH")
+    return _source_identity(authority, verified)
 
 
 def _bounded_yaml_fields(raw: bytes, *, source: str) -> dict[str, object]:
@@ -466,8 +543,9 @@ def build_pr2164_adapter_batch(
     rules_path: Path,
     pending_authority_path: Path | None = None,
     transition_path: Path | None = None,
+    revocation_path: Path | None = None,
 ) -> AdapterBatch:
-    """Build an active-v2 batch or an explicit, non-effective pending-v3 rehearsal."""
+    """Build exactly one legacy-v2, pending-v3, or active-v3 source-mode batch."""
     rules, rules_raw = _load_canonical_json(rules_path, "ADAPTER_RULES_NOT_CANONICAL")
     required_rule_keys = {"adapter_version", "category_derivation", "expected_fields", "fixture_count", "fixture_id_sort", "gold_fields", "raw_file_count", "schema_version", "score_bearing_allowlist"}
     if set(rules) != required_rule_keys or rules.get("schema_version") != "1" or not isinstance(rules.get("adapter_version"), str) or not re.fullmatch(r"pr2164-adapter-v[1-9][0-9]*", rules["adapter_version"]):
@@ -478,15 +556,13 @@ def build_pr2164_adapter_batch(
     rule_sha256 = sha256_bytes(rules_raw)
     source_identity: dict[str, str] = {}
     try:
-        if (pending_authority_path is None) != (transition_path is None):
-            raise AdapterError("PENDING_SOURCE_CUTOVER_INPUTS_INVALID")
-        if pending_authority_path is None:
+        if pending_authority_path is None and transition_path is None and revocation_path is None:
             _validate_phase2_authority(authority_path, bundle_root)
             verified = verify_accepted_bundle(bundle_root)
             source_identity = _held_verified_provenance(verified)
             authority, _ = _load_canonical_json(authority_path, "PHASE2_SOURCE_AUTHORITY_INVALID")
             source_identity = _source_identity(authority, verified)
-        else:
+        elif pending_authority_path is not None and transition_path is not None and revocation_path is None:
             verified = verify_accepted_bundle(bundle_root)
             source_identity = _held_verified_provenance(verified)
             source_identity = _validate_pending_source_cutover(
@@ -495,6 +571,16 @@ def build_pr2164_adapter_batch(
                 pending_authority_path=pending_authority_path,
                 transition_path=transition_path,
             )
+        elif pending_authority_path is None and transition_path is None and revocation_path is not None:
+            verified = verify_accepted_bundle(bundle_root)
+            source_identity = _held_verified_provenance(verified)
+            source_identity = _validate_active_source_cutover(
+                authority_path=authority_path,
+                bundle_root=bundle_root,
+                revocation_path=revocation_path,
+            )
+        else:
+            raise AdapterError("SOURCE_CUTOVER_MODE_INVALID")
         registry_path = bundle_root / "fixture-registry-pr2164-v1.json"
         registry, registry_raw = _load_canonical_json(registry_path, "FIXTURE_REGISTRY_NOT_CANONICAL")
         if sha256_bytes(registry_raw) != source_identity["registry_sha256"]:
