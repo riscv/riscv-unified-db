@@ -22,7 +22,7 @@ from .baseline import (
     validate_boundary_restart,
     validate_restart_lineage,
 )
-from .filesystem import FilesystemPolicyError, read_authoritative_file, read_authoritative_files, read_closed_authoritative_tree, replace_descriptor_file, require_relative_posix_path, write_new_descriptor_file
+from .filesystem import FilesystemPolicyError, create_descriptor_directories, read_authoritative_file, read_authoritative_files, read_closed_authoritative_tree, replace_descriptor_file, require_relative_posix_path, write_new_descriptor_file
 from .receipt import (
     ReceiptError,
     build_blocked_receipt,
@@ -543,38 +543,48 @@ def _validated_v4_inputs(args: argparse.Namespace) -> dict[str, object]:
     from specchoice_measurement.h1 import validate_h1_ontology_decision_v1
 
     proposal, proposal_raw = _load_authoritative_canonical_v4(args.proposal, "FIXTURE_CONSTRUCTION_V4_PROPOSAL_NOT_CANONICAL")
-    repair_manifest, _ = _load_authoritative_canonical_v4(
+    repair_manifest, repair_manifest_raw = _load_authoritative_canonical_v4(
         args.repair_manifest, "FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_NOT_CANONICAL"
     )
-    registry, _ = _load_authoritative_canonical_v4(args.registry, "FIXTURE_CONSTRUCTION_V4_REGISTRY_NOT_CANONICAL")
+    registry, registry_raw = _load_authoritative_canonical_v4(args.registry, "FIXTURE_CONSTRUCTION_V4_REGISTRY_NOT_CANONICAL")
     supersession, supersession_raw = _load_authoritative_canonical_v4(
         args.supersession, "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_NOT_CANONICAL"
     )
-    legacy_proposal, legacy_proposal_raw = _load_authoritative_canonical_v4(
-        _experiment_root() / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json",
+    _, legacy_proposal_raw = _load_authoritative_canonical_v4(
+        _experiment_root() / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
-    legacy_manifest, legacy_manifest_raw = _load_authoritative_canonical_v4(
+    _, legacy_manifest_raw = _load_authoritative_canonical_v4(
         _experiment_root() / "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
-    legacy_registry, legacy_registry_raw = _load_authoritative_canonical_v4(
+    _, legacy_registry_raw = _load_authoritative_canonical_v4(
         _experiment_root() / "config/fixture-registry-pr2164-v3.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
     previous_supersession, previous_supersession_raw = _load_authoritative_canonical_v4(
-        _experiment_root() / "receipts/source-contract-construction-proposal-v4-supersession-v1.json",
+        _experiment_root() / "receipts/source-contract-construction-proposal-v4-supersession-v2.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
     _, previous_legacy_proposal_raw = _load_authoritative_canonical_v4(
+        _experiment_root() / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json",
+        "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
+    )
+    previous_legacy_manifest_raw = legacy_manifest_raw
+    previous_legacy_registry_raw = legacy_registry_raw
+    prior_supersession, prior_supersession_raw = _load_authoritative_canonical_v4(
+        _experiment_root() / "receipts/source-contract-construction-proposal-v4-supersession-v1.json",
+        "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
+    )
+    _, prior_legacy_proposal_raw = _load_authoritative_canonical_v4(
         _experiment_root() / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
-    _, previous_legacy_manifest_raw = _load_authoritative_canonical_v4(
+    _, prior_legacy_manifest_raw = _load_authoritative_canonical_v4(
         _experiment_root() / "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
-    _, previous_legacy_registry_raw = _load_authoritative_canonical_v4(
+    _, prior_legacy_registry_raw = _load_authoritative_canonical_v4(
         _experiment_root() / "config/fixture-registry-pr2164-v2.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
@@ -597,7 +607,7 @@ def _validated_v4_inputs(args: argparse.Namespace) -> dict[str, object]:
         authority, authority_raw, revocation, revocation_raw, historical, historical_raw, args.predecessor,
         accepted_material=predecessor,
     )
-    repair_payloads = _v4_repair_payloads(repair_manifest)
+    repair_payloads = _v4_repair_payloads(repair_manifest, args.staging_root)
     validated = validate_fixture_construction_proposal_v4(
         proposal=proposal,
         repair_manifest=repair_manifest,
@@ -621,11 +631,17 @@ def _validated_v4_inputs(args: argparse.Namespace) -> dict[str, object]:
         previous_legacy_proposal_sha256=sha256_bytes(previous_legacy_proposal_raw),
         previous_legacy_manifest_sha256=sha256_bytes(previous_legacy_manifest_raw),
         previous_legacy_registry_sha256=sha256_bytes(previous_legacy_registry_raw),
+        prior_supersession=prior_supersession,
+        prior_supersession_sha256=sha256_bytes(prior_supersession_raw),
+        prior_legacy_proposal_sha256=sha256_bytes(prior_legacy_proposal_raw),
+        prior_legacy_manifest_sha256=sha256_bytes(prior_legacy_manifest_raw),
+        prior_legacy_registry_sha256=sha256_bytes(prior_legacy_registry_raw),
         repository_root=_experiment_root().parents[1],
     )
     return {
         "authority_raw": authority_raw, "ontology": ontology, "proposal": validated, "proposal_raw": proposal_raw,
-        "supersession_raw": supersession_raw,
+        "registry_raw": registry_raw, "repair_manifest": repair_manifest, "repair_manifest_raw": repair_manifest_raw,
+        "repair_payloads": repair_payloads, "supersession_raw": supersession_raw,
     }
 
 
@@ -648,18 +664,25 @@ def command_validate_fixture_construction_decision_v4(args: argparse.Namespace) 
 
 
 def _write_v4_no_replace(output_root: Path, payloads: dict[str, bytes]) -> None:
-    """Preflight every target before first-write materialization through descriptor roots."""
-    for relative in payloads:
+    """Preflight all leaves, then recoverably create only missing exact targets."""
+    missing: list[str] = []
+    for relative, expected in payloads.items():
         try:
-            read_authoritative_file(output_root, relative)
+            evidence, existing = read_authoritative_file(output_root, relative)
         except FilesystemPolicyError as error:
             if str(error) != "AUTHORITATIVE_FILE_MISSING":
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_INVALID") from error
+            missing.append(relative)
         else:
-            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_COLLISION")
+            if evidence.hardlink_count != 1 or existing != expected:
+                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_COLLISION")
     try:
-        for relative, raw in payloads.items():
-            write_new_descriptor_file(output_root, relative, raw)
+        create_descriptor_directories(
+            output_root,
+            tuple(sorted({require_relative_posix_path(relative).parent.as_posix() for relative in missing})),
+        )
+        for relative in missing:
+            write_new_descriptor_file(output_root, relative, payloads[relative])
     except FilesystemPolicyError as error:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_INVALID") from error
 
@@ -667,9 +690,17 @@ def _write_v4_no_replace(output_root: Path, payloads: dict[str, bytes]) -> None:
 def command_write_fixture_construction_proposal_v4(args: argparse.Namespace) -> int:
     """Materialize only fully revalidated v4 staging bytes, never replacing a target."""
     inputs = _validated_v4_inputs(args)
+    repairs = {
+        item["target_path"]: item
+        for item in inputs["repair_manifest"]["repairs"]
+    }
     payloads = {
-        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json": inputs["proposal_raw"],
-        "receipts/source-contract-construction-proposal-v4-supersession-v2.json": inputs["supersession_raw"],
+        "config/fixture-repairs/pr2164-semantic-gold-v3/POS_DIRECT_CACHE_BLOCK/gold.yaml": inputs["repair_payloads"][repairs["raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/gold.yaml"]["payload_path"]],
+        "config/fixture-repairs/pr2164-semantic-gold-v3/POS_RECALL_COUNT_GEILEN/expected.yaml": inputs["repair_payloads"][repairs["raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/expected.yaml"]["payload_path"]],
+        "config/fixture-repairs/pr2164-semantic-gold-v3/repair-manifest.json": inputs["repair_manifest_raw"],
+        "config/fixture-registry-pr2164-v4.json": inputs["registry_raw"],
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json": inputs["proposal_raw"],
+        "receipts/source-contract-construction-proposal-v4-supersession-v3.json": inputs["supersession_raw"],
     }
     _write_v4_no_replace(args.output_root, payloads)
     _print_json({"status": "materialized", "targets": sorted(payloads)})
@@ -759,7 +790,7 @@ def _v4_predecessor_material(predecessor: Path) -> dict[str, object]:
     }
 
 
-def _v4_repair_payloads(manifest: dict[str, object]) -> dict[str, bytes]:
+def _v4_repair_payloads(manifest: dict[str, object], payload_root: Path) -> dict[str, bytes]:
     repairs = manifest.get("repairs")
     if not isinstance(repairs, list):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
@@ -771,7 +802,7 @@ def _v4_repair_payloads(manifest: dict[str, object]) -> dict[str, bytes]:
         if payload in result:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
         try:
-            _, result[payload] = read_authoritative_file(_experiment_root(), payload)
+            _, result[payload] = read_authoritative_file(payload_root, payload)
         except (FilesystemPolicyError, OSError) as error:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID") from error
     return result
@@ -1638,16 +1669,19 @@ def build_parser() -> argparse.ArgumentParser:
     fixture_construction_proposal_v4.add_argument("--repair-manifest", type=Path, required=True)
     fixture_construction_proposal_v4.add_argument("--registry", type=Path, required=True)
     fixture_construction_proposal_v4.add_argument("--supersession", type=Path, required=True)
+    fixture_construction_proposal_v4.add_argument("--staging-root", type=Path, default=_experiment_root())
     fixture_construction_proposal_v4.set_defaults(handler=command_validate_fixture_construction_proposal_v4)
     fixture_construction_decision_v4 = commands.add_parser("validate-fixture-construction-decision-v4")
     for option in ("proposal", "predecessor", "active_authority", "historical_authority", "revocation", "ontology_decision", "repair_manifest", "registry", "supersession"):
         fixture_construction_decision_v4.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
     fixture_construction_decision_v4.add_argument("--decision", type=Path, required=True)
+    fixture_construction_decision_v4.add_argument("--staging-root", type=Path, default=_experiment_root())
     fixture_construction_decision_v4.set_defaults(handler=command_validate_fixture_construction_decision_v4)
     fixture_construction_write_v4 = commands.add_parser("write-fixture-construction-proposal-v4")
     for option in ("proposal", "predecessor", "active_authority", "historical_authority", "revocation", "ontology_decision", "repair_manifest", "registry", "supersession"):
         fixture_construction_write_v4.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
     fixture_construction_write_v4.add_argument("--output-root", type=Path, required=True)
+    fixture_construction_write_v4.add_argument("--staging-root", type=Path, default=_experiment_root())
     fixture_construction_write_v4.set_defaults(handler=command_write_fixture_construction_proposal_v4)
     candidate = commands.add_parser("build-candidate")
     candidate.add_argument("--decision", type=Path, default=Path("receipts/source-publication-decision.json"))

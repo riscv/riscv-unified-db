@@ -8,9 +8,11 @@ constructed, while keeping the frozen contract and its rejected receipt intact.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import os
 import re
+import shutil
 import subprocess
 from datetime import datetime
 from collections.abc import Mapping
@@ -82,6 +84,10 @@ _V4_CACHE_REPAIRS = {
         "raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/gold.yaml",
     },
 }
+_V4_V3_REPAIR_TARGETS = {
+    "raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/gold.yaml",
+    "raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/expected.yaml",
+}
 _V4_PBMTE_EFFECTS = {
     "excluded_from_discovery": {"fixture_class": "absent", "gold": False, "classify_out": False, "surfaced": False},
     "surfaced_classified_out": {"fixture_class": "candidate", "gold": True, "classify_out": True, "surfaced": True},
@@ -117,6 +123,8 @@ def validate_fixture_construction_proposal_v4(
     legacy_proposal_sha256: str, legacy_manifest_sha256: str, legacy_registry_sha256: str,
     previous_supersession: object, previous_supersession_sha256: str,
     previous_legacy_proposal_sha256: str, previous_legacy_manifest_sha256: str, previous_legacy_registry_sha256: str,
+    prior_supersession: object, prior_supersession_sha256: str,
+    prior_legacy_proposal_sha256: str, prior_legacy_manifest_sha256: str, prior_legacy_registry_sha256: str,
     repository_root: Path,
 ) -> dict[str, object]:
     """Validate the decision-bound, append-only semantic-gold construction request."""
@@ -127,7 +135,7 @@ def validate_fixture_construction_proposal_v4(
     }:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PROPOSAL_INVALID")
     if proposal.get("schema_version") != "fixture-construction-proposal-v4" or proposal.get("generation") != (
-        "source-contract-v4-pr2164-semantic-gold-closure-verifier-rooted-v3"
+        "source-contract-v4-pr2164-semantic-gold-closure-verifier-rooted-v4"
     ) or proposal.get("status") != "awaiting_human_construction_authorization" or proposal.get("local_only") is not True or (
         proposal.get("external_publication_authorized") is not False
     ):
@@ -165,12 +173,14 @@ def validate_fixture_construction_proposal_v4(
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
     manifest_sha256 = sha256_bytes(canonical_json_bytes(repair_manifest))
     registry_sha256 = sha256_bytes(canonical_json_bytes(registry))
-    _require_v4_binding(proposal.get("repair_manifest"), "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json", manifest_sha256)
-    _require_v4_binding(proposal.get("registry"), "config/fixture-registry-pr2164-v3.json", registry_sha256)
+    _require_v4_binding(proposal.get("repair_manifest"), "config/fixture-repairs/pr2164-semantic-gold-v3/repair-manifest.json", manifest_sha256)
+    _require_v4_binding(proposal.get("registry"), "config/fixture-registry-pr2164-v4.json", registry_sha256)
     _validate_v4_supersession(
         supersession, supersession_sha256, legacy_proposal_sha256, legacy_manifest_sha256,
         legacy_registry_sha256, previous_supersession, previous_supersession_sha256,
         previous_legacy_proposal_sha256, previous_legacy_manifest_sha256, previous_legacy_registry_sha256,
+        prior_supersession, prior_supersession_sha256,
+        prior_legacy_proposal_sha256, prior_legacy_manifest_sha256, prior_legacy_registry_sha256,
         sha256_bytes(canonical_json_bytes(proposal)), manifest_sha256, registry_sha256,
     )
     if proposal.get("replacements") != repair_manifest["repairs"]:
@@ -198,7 +208,7 @@ def validate_fixture_construction_decision_v4(
         "external_publication_authorized", "fixed_code_commit", "local_only", "ontology_decision_sha256",
         "proposal_sha256", "rationale", "reviewer", "schema_version", "supersession_sha256",
     }
-    if not isinstance(decision, Mapping) or set(decision) != required or decision.get("schema_version") != "fixture-construction-decision-v4-v3" or decision.get("decision") not in {"authorize", "reject"}:
+    if not isinstance(decision, Mapping) or set(decision) != required or decision.get("schema_version") != "fixture-construction-decision-v4-v4" or decision.get("decision") not in {"authorize", "reject"}:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_INVALID")
     if decision.get("local_only") is not True or decision.get("external_publication_authorized") is not False or decision.get("fixed_code_commit") != proposal.get("fixed_code_commit") or (
         decision.get("proposal_sha256") != proposal_sha256 or decision.get("supersession_sha256") != supersession_sha256 or
@@ -228,24 +238,29 @@ def _validate_v4_supersession(
     receipt: object, receipt_sha256: str, legacy_proposal_sha256: str, legacy_manifest_sha256: str,
     legacy_registry_sha256: str, previous_supersession: object, previous_supersession_sha256: str,
     previous_legacy_proposal_sha256: str, previous_legacy_manifest_sha256: str, previous_legacy_registry_sha256: str,
+    prior_supersession: object, prior_supersession_sha256: str,
+    prior_legacy_proposal_sha256: str, prior_legacy_manifest_sha256: str, prior_legacy_registry_sha256: str,
     proposal_sha256: str, manifest_sha256: str, registry_sha256: str,
 ) -> None:
     if not isinstance(receipt, Mapping) or set(receipt) != {
         "construction_authorized", "legacy", "previous_supersession", "replacement_reason", "schema_version", "status", "successor",
-    } or receipt.get("schema_version") != "source-contract-construction-proposal-supersession-v2" or (
-        receipt.get("status") != "semantic_proposal_v2_superseded"
+    } or receipt.get("schema_version") != "source-contract-construction-proposal-supersession-v3" or (
+        receipt.get("status") != "semantic_proposal_v3_superseded"
     ) or receipt.get("construction_authorized") is not False or not isinstance(receipt.get("replacement_reason"), str) or (
         not receipt["replacement_reason"].strip()
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
-    _require_v4_binding(receipt.get("previous_supersession"), "receipts/source-contract-construction-proposal-v4-supersession-v1.json", previous_supersession_sha256)
-    _validate_v4_previous_supersession(
-        previous_supersession, legacy_proposal_sha256, legacy_manifest_sha256, legacy_registry_sha256,
+    _require_v4_binding(receipt.get("previous_supersession"), "receipts/source-contract-construction-proposal-v4-supersession-v2.json", previous_supersession_sha256)
+    _validate_v4_supersession_v2(
+        previous_supersession, previous_supersession_sha256,
         previous_legacy_proposal_sha256, previous_legacy_manifest_sha256, previous_legacy_registry_sha256,
+        legacy_proposal_sha256,
+        prior_supersession, prior_supersession_sha256,
+        prior_legacy_proposal_sha256, prior_legacy_manifest_sha256, prior_legacy_registry_sha256,
     )
     _require_v4_binding(
         receipt.get("legacy", {}).get("proposal") if isinstance(receipt.get("legacy"), Mapping) else None,
-        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json", legacy_proposal_sha256,
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json", legacy_proposal_sha256,
     )
     _require_v4_binding(
         receipt.get("legacy", {}).get("repair_manifest") if isinstance(receipt.get("legacy"), Mapping) else None,
@@ -257,16 +272,71 @@ def _validate_v4_supersession(
     )
     _require_v4_binding(
         receipt.get("successor", {}).get("proposal") if isinstance(receipt.get("successor"), Mapping) else None,
-        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json", proposal_sha256,
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json", proposal_sha256,
     )
     _require_v4_binding(
         receipt.get("successor", {}).get("repair_manifest") if isinstance(receipt.get("successor"), Mapping) else None,
-        "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json", manifest_sha256,
+        "config/fixture-repairs/pr2164-semantic-gold-v3/repair-manifest.json", manifest_sha256,
     )
     _require_v4_binding(
         receipt.get("successor", {}).get("registry") if isinstance(receipt.get("successor"), Mapping) else None,
-        "config/fixture-registry-pr2164-v3.json", registry_sha256,
+        "config/fixture-registry-pr2164-v4.json", registry_sha256,
     )
+    if receipt_sha256 != sha256_bytes(canonical_json_bytes(receipt)):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+
+
+def _validate_v4_supersession_v2(
+    receipt: object, receipt_sha256: str,
+    legacy_proposal_sha256: str, legacy_manifest_sha256: str, legacy_registry_sha256: str,
+    successor_proposal_sha256: str,
+    previous_supersession: object, previous_supersession_sha256: str,
+    previous_legacy_proposal_sha256: str, previous_legacy_manifest_sha256: str, previous_legacy_registry_sha256: str,
+) -> None:
+    """Prove the immutable v2 receipt bridges v2 to v3 through the v1 receipt."""
+    if not isinstance(receipt, Mapping) or set(receipt) != {
+        "construction_authorized", "legacy", "previous_supersession", "replacement_reason", "schema_version", "status", "successor",
+    } or receipt.get("schema_version") != "source-contract-construction-proposal-supersession-v2" or (
+        receipt.get("status") != "semantic_proposal_v2_superseded"
+    ) or receipt.get("construction_authorized") is not False or not isinstance(receipt.get("replacement_reason"), str) or (
+        not receipt["replacement_reason"].strip()
+    ):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    _require_v4_binding(
+        receipt.get("previous_supersession"),
+        "receipts/source-contract-construction-proposal-v4-supersession-v1.json",
+        previous_supersession_sha256,
+    )
+    _validate_v4_previous_supersession(
+        previous_supersession, legacy_proposal_sha256, legacy_manifest_sha256, legacy_registry_sha256,
+        previous_legacy_proposal_sha256, previous_legacy_manifest_sha256, previous_legacy_registry_sha256,
+    )
+    legacy = receipt.get("legacy")
+    successor = receipt.get("successor")
+    if not isinstance(legacy, Mapping) or not isinstance(successor, Mapping):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    _require_v4_binding(
+        legacy.get("proposal"),
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json",
+        legacy_proposal_sha256,
+    )
+    _require_v4_binding(
+        legacy.get("repair_manifest"),
+        "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json",
+        legacy_manifest_sha256,
+    )
+    _require_v4_binding(legacy.get("registry"), "config/fixture-registry-pr2164-v3.json", legacy_registry_sha256)
+    _require_v4_binding(
+        successor.get("proposal"),
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json",
+        successor_proposal_sha256,
+    )
+    _require_v4_binding(
+        successor.get("repair_manifest"),
+        "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json",
+        legacy_manifest_sha256,
+    )
+    _require_v4_binding(successor.get("registry"), "config/fixture-registry-pr2164-v3.json", legacy_registry_sha256)
     if receipt_sha256 != sha256_bytes(canonical_json_bytes(receipt)):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
 
@@ -352,7 +422,7 @@ def _validate_v4_repair_manifest(
 ) -> None:
     if not isinstance(manifest, Mapping) or set(manifest) != {
         "ontology_decision_sha256", "predecessor_generation", "repairs", "schema_version",
-    } or manifest.get("schema_version") != "pr2164-semantic-gold-repair-manifest-v2" or (
+    } or manifest.get("schema_version") != "pr2164-semantic-gold-repair-manifest-v3" or (
         manifest.get("predecessor_generation") != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
     ) or manifest.get("ontology_decision_sha256") != ontology_decision_sha256:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
@@ -369,7 +439,8 @@ def _validate_v4_repair_manifest(
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
         target = _normalized_path(repair.get("target_path"), "fixture_construction_v4_target_path")
         payload = _normalized_path(repair.get("payload_path"), "fixture_construction_v4_payload_path")
-        expected_payload = "config/fixture-repairs/pr2164-semantic-gold-v2/" + "/".join(target.split("/")[2:])
+        repair_version = "v3" if target in _V4_V3_REPAIR_TARGETS else "v2"
+        expected_payload = f"config/fixture-repairs/pr2164-semantic-gold-{repair_version}/" + "/".join(target.split("/")[2:])
         if target in seen or target not in allowed_repairs or payload != expected_payload:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
         seen.add(target)
@@ -402,7 +473,11 @@ def _validate_v4_repair_manifest(
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID")
     if seen != allowed_repairs or [item.get("target_path") for item in repairs] != sorted(seen):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
-    text = {target: repair_payloads[repair["payload_path"]].decode("utf-8") for repair in repairs for target in [repair["target_path"]]}
+    _validate_v4_repair_yaml_batch(repair_payloads)
+    try:
+        text = {target: repair_payloads[repair["payload_path"]].decode("utf-8") for repair in repairs for target in [repair["target_path"]]}
+    except UnicodeDecodeError as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID") from error
     cache_text = text["raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/gold.yaml"]
     pmp_text = text["raw/evaluation_fixtures/POS_DIRECT_NUM_PMP/gold.yaml"]
     geilen_text = text["raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/gold.yaml"]
@@ -436,6 +511,7 @@ def _validate_v4_repair_manifest(
         )
     ) or (not _V4_PBMTE_EFFECTS[pbmte]["surfaced"] and pbmte_text is not None)
     if cache_projection_invalid or "uniform throughout" in cache_text or "implementation-specific" not in cache_text or cache_domain != {1 << shift for shift in range(64)} or (
+        _v4_cache_semantics_invalid(cache_text) or
         pmp_domain != {0, 16, 64} or "minimum: 0" not in geilen_text or
         "direct targets" not in geilen_text or "gold_name: GEILEN" not in geilen_expected or
         "NUM_EXTERNAL_GUEST_INTERRUPTS" not in geilen_expected or "existing_alias" not in geilen_expected or "ASIDLEN" not in asid_text or "ASID_WIDTH" not in asid_expected or
@@ -443,6 +519,90 @@ def _validate_v4_repair_manifest(
             "$schema", "kind", "name", "description", "long_name", "schema", "definedBy", "requirements",
         } or pbmte_projection_invalid or "classify_out_reason: isa_fixed_singleton_legal_set" not in cand_text
     ):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID")
+
+
+_V4_YAML_VALIDATOR = r'''
+begin
+  batch = STDIN.read
+  request = JSON.parse(batch)
+  raise "request" unless request.is_a?(Array) && !request.empty?
+  request.each do |entry|
+    raise "entry" unless entry.is_a?(Hash) && entry.keys.sort == ["content_b64", "path"]
+    raw = Base64.strict_decode64(entry.fetch("content_b64"))
+    stream = Psych.parse_stream(raw)
+    raise "documents" unless stream.children.length == 1
+    root = stream.children.fetch(0).root
+    raise "root" unless root.is_a?(Psych::Nodes::Mapping)
+    stack = [root]
+    until stack.empty?
+      node = stack.pop
+      raise "alias" if node.alias?
+      raise "anchor" if node.respond_to?(:anchor) && node.anchor
+      if node.is_a?(Psych::Nodes::Mapping)
+        raise "mapping" unless node.children.length.even?
+        seen = {}
+        node.children.each_slice(2) do |key, value|
+          raise "key" unless key.is_a?(Psych::Nodes::Scalar)
+          raise "merge" if key.value == "<<" || key.tag == "tag:yaml.org,2002:merge"
+          raise "duplicate" if seen.key?(key.value)
+          seen[key.value] = true
+          stack << value << key
+        end
+      elsif node.is_a?(Psych::Nodes::Sequence)
+        node.children.each { |child| stack << child }
+      elsif !node.is_a?(Psych::Nodes::Scalar)
+        raise "node"
+      end
+    end
+  end
+  STDOUT.write(JSON.generate({"batch_sha256" => Digest::SHA256.hexdigest(batch), "valid" => true}) + "\n")
+rescue StandardError
+  exit 2
+end
+'''
+
+
+def _validate_v4_repair_yaml_batch(repair_payloads: Mapping[str, bytes]) -> None:
+    """Parse all already-read repair bytes in one fail-closed Psych subprocess."""
+    if not repair_payloads or any(not isinstance(path, str) or not isinstance(raw, bytes) for path, raw in repair_payloads.items()):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID")
+    request = [
+        {"content_b64": base64.b64encode(repair_payloads[path]).decode("ascii"), "path": path}
+        for path in sorted(repair_payloads)
+    ]
+    request_raw = canonical_json_bytes(request)
+    ruby = shutil.which("ruby")
+    if ruby is None or not Path(ruby).is_absolute():
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID")
+    try:
+        result = subprocess.run(
+            [ruby, "--disable-gems", "-rjson", "-rbase64", "-rpsych", "-rdigest", "-e", _V4_YAML_VALIDATOR],
+            input=request_raw, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=10,
+            env={key: value for key, value in os.environ.items() if key not in {"RUBYOPT", "RUBYLIB"}},
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID") from error
+    expected = canonical_json_bytes({"batch_sha256": sha256_bytes(request_raw), "valid": True})
+    if result.returncode != 0 or result.stdout != expected or result.stderr != b"":
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID")
+
+
+def _v4_cache_semantics_invalid(text: str) -> bool:
+    normalized = " ".join(text.lower().split())
+    return not all(
+        phrase in normalized
+        for phrase in (
+            "finite evaluation domain 2^0 through 2^63",
+            "versioned evaluation/udb modeling choice",
+            "not an upper bound asserted by the challenge source",
+        )
+    )
+
+
+def _validate_v4_cache_semantics(text: str) -> None:
+    """Expose the versioned finite-domain assertion for focused regression tests."""
+    if _v4_cache_semantics_invalid(text):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID")
 
 
@@ -483,7 +643,7 @@ def _validate_v4_registry(
 ) -> None:
     if not isinstance(registry, Mapping) or set(registry) != {
         "fixture_count", "fixtures", "ontology_decision_sha256", "predecessor_registry_sha256", "raw_file_count", "schema_version",
-    } or registry.get("schema_version") != "3" or registry.get("ontology_decision_sha256") != ontology_decision_sha256 or (
+    } or registry.get("schema_version") != "4" or registry.get("ontology_decision_sha256") != ontology_decision_sha256 or (
         registry.get("predecessor_registry_sha256") != predecessor_registry_sha256
     ) or registry.get("fixture_count") != inventory["fixture_count"] or registry.get("raw_file_count") != inventory["raw_file_count"]:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")

@@ -153,6 +153,47 @@ def _existing_leaf_kind(parent: int, leaf: str, accepted_device: int) -> os.stat
     return details
 
 
+def create_descriptor_directories(root: Path, relative_directories: tuple[str, ...]) -> None:
+    """Durably create recoverable no-follow directories beneath one held root."""
+    directories = sorted({require_relative_posix_path(value) for value in relative_directories}, key=lambda value: value.parts)
+    held: dict[tuple[str, ...], int] = {}
+    root_descriptor: int | None = None
+    try:
+        root_descriptor, root_parts = _directory_components(root)
+        if root_parts:
+            raise FilesystemPolicyError("DIRECTORY_DESCRIPTOR_UNAVAILABLE")
+        authority = os.fstat(root_descriptor)
+        if not stat.S_ISDIR(authority.st_mode):
+            raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+        held[()] = root_descriptor
+        for relative in directories:
+            for depth, part in enumerate(relative.parts, start=1):
+                prefix = relative.parts[:depth]
+                if prefix in held:
+                    continue
+                parent = held[prefix[:-1]]
+                try:
+                    child = _open_directory(parent, part, authority.st_dev)
+                except FilesystemPolicyError as error:
+                    if str(error) != "AUTHORITATIVE_FILE_MISSING":
+                        raise
+                    try:
+                        os.mkdir(part, 0o755, dir_fd=parent)
+                        os.fsync(parent)
+                    except FileExistsError:
+                        pass
+                    except (NotImplementedError, TypeError, OSError) as mkdir_error:
+                        raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID") from mkdir_error
+                    child = _open_directory(parent, part, authority.st_dev)
+                held[prefix] = child
+    finally:
+        for prefix, descriptor in sorted(held.items(), key=lambda item: len(item[0]), reverse=True):
+            if descriptor != root_descriptor:
+                os.close(descriptor)
+        if root_descriptor is not None:
+            os.close(root_descriptor)
+
+
 def write_new_descriptor_file(root: Path, relative_path: str, content: bytes) -> None:
     """Durably create one exact no-replace authoritative leaf through held parents."""
     relative = require_relative_posix_path(relative_path)
