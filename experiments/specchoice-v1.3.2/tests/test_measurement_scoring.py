@@ -25,21 +25,20 @@ class MeasurementScoringTests(unittest.TestCase):
             authority_path=self.experiment_root / "phase2/source-authority.json",
             bundle_root=self.bundle,
             rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
-            pending_authority_path=self.experiment_root / "phase2/source-authority-v10-pending.json",
-            transition_path=self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json",
+            revocation_path=self.experiment_root / "receipts/fixture-closure-revocation-v2.json",
         )
         self.assertTrue(self.batch.valid)
-        self.golden_path = self.experiment_root / "fixtures/measurement/golden-predictions-v1.json"
+        self.golden_path = self.experiment_root / "fixtures/measurement/golden-predictions-v2.json"
 
     def golden_payload(self) -> dict[str, object]:
         raw = self.golden_path.read_bytes()
         payload = json.loads(raw.decode("utf-8"))
         self.assertEqual(raw, canonical_json_bytes(payload))
-        payload["adapter_batch_sha256"] = self.batch.adapter_batch_sha256
+        self.assertEqual(payload["adapter_batch_sha256"], self.batch.adapter_batch_sha256)
         return payload
 
     def required_diagnostic_oracles(self) -> dict[str, object]:
-        path = self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json"
+        path = self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v2.json"
         raw = path.read_bytes()
         payload = json.loads(raw.decode("utf-8"))
         self.assertEqual(raw, canonical_json_bytes(payload))

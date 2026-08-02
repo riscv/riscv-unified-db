@@ -22,6 +22,7 @@ from specchoice_evidence.bundle import (
     verify_candidate,
 )
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 from specchoice_evidence.verify import _bundle_artifacts, _raw_artifacts, _root_digest, verify_accepted_bundle
 from specchoice_evidence.source_contract import (
     FixtureRegistryError,
@@ -77,6 +78,10 @@ class FixtureClosureTests(unittest.TestCase):
 
 class FixtureClosureCandidateTests(unittest.TestCase):
 
+    def _assert_canonical_revocation_absent(self, authority_root: Path) -> None:
+        with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_FILE_MISSING"):
+            read_authoritative_file(authority_root / "receipts", "fixture-closure-revocation-v2.json")
+
     def _public_command(self, experiment: Path, *arguments: str) -> dict[str, object]:
         result = subprocess.run(
             [sys.executable, "-m", "specchoice_evidence.cli", *arguments],
@@ -92,12 +97,18 @@ class FixtureClosureCandidateTests(unittest.TestCase):
         """The public v10 flow is disposable, forward-only, and leaves v2 alone until cutover."""
         experiment = Path(__file__).resolve().parents[1]
         candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
-        active_v2 = experiment / "phase2/source-authority.json"
+        historical_v2 = experiment / "phase2/source-authority-v9-historical.json"
         audit = experiment / "receipts/fixture-closure-candidate-audit-v3.json"
         construction = experiment / "receipts/source-contract-decision-v3-pr2164-fixture-closure-verifier-rooted-v3.json"
         proposal = experiment / "receipts/source-contract-proposal-v3-pr2164-fixture-closure-verifier-rooted-v3.json"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            authority_root = root / "authority-root"
+            active_v2 = authority_root / "phase2/source-authority.json"
+            active_v2.parent.mkdir(parents=True)
+            (authority_root / "receipts").mkdir()
+            shutil.copyfile(historical_v2, active_v2)
+            self._assert_canonical_revocation_absent(authority_root)
             request = root / "local-acceptance-request-v10.json"
             self._public_command(
                 experiment,
@@ -189,7 +200,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 "--revocation", str(revocation), "--authority-mode", "historical-inspection",
             )["eligible"])
             self.assertEqual(active.read_bytes(), active_v2.read_bytes())
-            self.assertFalse(revocation.exists())
+            self._assert_canonical_revocation_absent(authority_root)
             for bundle, expected in (
                 (root / "missing-bundle", ""),
                 (experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2", ""),
@@ -353,10 +364,15 @@ class FixtureClosureCandidateTests(unittest.TestCase):
         """Public receipt writers bind accepted v3 without activating the pending cutover."""
         experiment = Path(__file__).resolve().parents[1]
         accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
-        active = experiment / "phase2/source-authority.json"
-        before = active.read_bytes()
+        historical_v2 = experiment / "phase2/source-authority-v9-historical.json"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            active = root / "authority-root/phase2/source-authority.json"
+            active.parent.mkdir(parents=True)
+            (root / "authority-root/receipts").mkdir()
+            shutil.copyfile(historical_v2, active)
+            self._assert_canonical_revocation_absent(root / "authority-root")
+            before = active.read_bytes()
             result = self._public_command(
                 experiment,
                 "write-accepted-v3-receipts",
@@ -366,7 +382,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 "--pending-authority", str(experiment / "phase2/source-authority-v10-pending.json"),
                 "--transition", str(experiment / "receipts/pending/fixture-closure-transition-v2-to-v3.json"),
                 "--active-authority", str(active),
-                "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"),
+                "--historical-authority", str(active),
                 "--accepted-bundle", str(accepted),
                 "--receipt-directory", str(root),
             )
@@ -399,15 +415,17 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 "repository_modules_available": False,
                 "result": "passed",
             })
-        self.assertEqual(active.read_bytes(), before)
+            self.assertEqual(active.read_bytes(), before)
+            self._assert_canonical_revocation_absent(root / "authority-root")
 
     def test_source_authority_and_bundle_consumers_reuse_descriptor_bound_canonical_bytes(self) -> None:
         """The public authority receipt is assembled from descriptor-read bundle leaves."""
         experiment = Path(__file__).resolve().parents[1]
-        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
         command = [
             sys.executable, "-m", "specchoice_evidence.cli", "validate-phase2-source-authority",
             "--authority", "phase2/source-authority.json", "--bundle", str(accepted),
+            "--revocation", "receipts/fixture-closure-revocation-v2.json", "--authority-mode", "active",
         ]
         result = subprocess.run(command, cwd=experiment, check=False, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", "replace"))
@@ -415,7 +433,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
         receipt = json.loads(result.stdout.decode("utf-8"))
         self.assertEqual(receipt["status"], "valid")
         self.assertEqual(set(receipt), {
-            "fixture_count", "generation", "manifest_sha256", "pinned_commit_sha",
+            "eligible", "fixture_count", "generation", "manifest_sha256", "pinned_commit_sha",
             "pinned_tree_sha", "raw_file_count", "registry_sha256", "root_sha256", "status",
         })
 
@@ -470,7 +488,10 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 root / "decision.json", self._current_fixture_acceptance_decision(experiment)
             )
             target = root / "accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
-            with mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=attacker):
+            with mock.patch(
+                "specchoice_evidence.bundle._fixture_closure_current_v7_basis",
+                return_value=self._current_fixture_acceptance_decision(experiment)["v7_basis"],
+            ), mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=attacker):
                 with self.assertRaisesRegex(BundleError, "LOCAL_ACCEPTED_TARGET_EXISTS"):
                     accept_fixture_closure_candidate(candidate, root / "accepted", decision)
             self.assertTrue(target.is_dir())
@@ -507,7 +528,10 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             decision = self._write_fixture_acceptance_decision(
                 root / "decision.json", self._current_fixture_acceptance_decision(experiment)
             )
-            with mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=NotImplementedError):
+            with mock.patch(
+                "specchoice_evidence.bundle._fixture_closure_current_v7_basis",
+                return_value=self._current_fixture_acceptance_decision(experiment)["v7_basis"],
+            ), mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=NotImplementedError):
                 with self.assertRaisesRegex(BundleError, "ATOMIC_NO_REPLACE_UNAVAILABLE"):
                     accept_fixture_closure_candidate(candidate, root / "accepted", decision)
 
@@ -530,7 +554,11 @@ class FixtureClosureCandidateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             accepted_root = Path(directory) / "accepted"
             decision_path = self._write_fixture_acceptance_decision(Path(directory) / "decision.json", decision)
-            result = accept_fixture_closure_candidate(candidate, accepted_root, decision_path)
+            with mock.patch(
+                "specchoice_evidence.bundle._fixture_closure_current_v7_basis",
+                return_value=decision["v7_basis"],
+            ):
+                result = accept_fixture_closure_candidate(candidate, accepted_root, decision_path)
             self.assertEqual(result["status"], "accepted")
             self.assertTrue((accepted_root / result["generation"]).is_dir())
 
@@ -550,7 +578,10 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     None if authority is None
                     else self._write_fixture_acceptance_decision(Path(directory) / "decision.json", authority)
                 )
-                with self.assertRaisesRegex(BundleError, code):
+                with mock.patch(
+                    "specchoice_evidence.bundle._fixture_closure_current_v7_basis",
+                    return_value=decision["v7_basis"],
+                ), self.assertRaisesRegex(BundleError, code):
                     accept_fixture_closure_candidate(candidate, accepted_root, decision_path)
                 self.assertFalse(accepted_root.exists())
 
@@ -724,10 +755,11 @@ class FixtureClosureCandidateTests(unittest.TestCase):
 
     def test_phase2_authority_requires_the_accepted_registry_digest(self) -> None:
         experiment = Path(__file__).resolve().parents[1]
-        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
         command = [
             sys.executable, "-m", "specchoice_evidence.cli", "validate-phase2-source-authority",
             "--authority", "phase2/source-authority.json", "--bundle", str(accepted),
+            "--revocation", "receipts/fixture-closure-revocation-v2.json", "--authority-mode", "active",
         ]
         result = subprocess.run(command, cwd=experiment, check=False, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)

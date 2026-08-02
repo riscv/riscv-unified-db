@@ -25,14 +25,16 @@ class MeasurementParsingTests(unittest.TestCase):
             self.experiment_root
             / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
         )
+        self.golden_path = self.experiment_root / "fixtures/measurement/golden-predictions-v2.json"
         self.batch = build_pr2164_adapter_batch(
             authority_path=self.experiment_root / "phase2/source-authority.json",
             bundle_root=self.bundle,
             rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
-            pending_authority_path=self.experiment_root / "phase2/source-authority-v10-pending.json",
-            transition_path=self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json",
+            revocation_path=self.experiment_root / "receipts/fixture-closure-revocation-v2.json",
         )
         self.assertTrue(self.batch.valid)
+        golden = json.loads(self.golden_path.read_text(encoding="utf-8"))
+        self.assertEqual(golden["adapter_batch_sha256"], self.batch.adapter_batch_sha256)
 
     def _span(self, record) -> dict[str, object]:
         source = next(item for item in record.raw_files if item.role == "fixture_source")
