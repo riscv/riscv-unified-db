@@ -83,15 +83,25 @@ def _artifact_payloads(*, inputs: Mapping[str, object], role: str, status: str) 
     return payloads
 
 
-def _bindings(inputs: Mapping[str, object], raw_predictions: bytes) -> dict[str, object]:
-    batch = inputs.get("adapter_batch")
+def _schema_bytes(inputs: Mapping[str, object]) -> bytes:
+    schema_raw = inputs.get("schema_raw")
+    if isinstance(schema_raw, bytes):
+        return schema_raw
     schema_path = inputs.get("schema_path")
-    if batch is None or not isinstance(schema_path, Path):
+    if not isinstance(schema_path, Path):
         raise AttemptError("ATTEMPT_INPUTS_INCOMPLETE")
     try:
-        schema_raw = schema_path.read_bytes()
-    except OSError as error:
+        _, schema_raw = read_authoritative_file(schema_path.parent, schema_path.name)
+        return schema_raw
+    except (OSError, FilesystemPolicyError) as error:
         raise AttemptError("ATTEMPT_SCHEMA_UNREADABLE") from error
+
+
+def _bindings(inputs: Mapping[str, object], raw_predictions: bytes) -> dict[str, object]:
+    batch = inputs.get("adapter_batch")
+    if batch is None:
+        raise AttemptError("ATTEMPT_INPUTS_INCOMPLETE")
+    schema_raw = _schema_bytes(inputs)
     source_identity = getattr(batch, "source_identity", None)
     if not isinstance(source_identity, dict):
         raise AttemptError("ATTEMPT_SOURCE_IDENTITY_INVALID")
@@ -161,7 +171,11 @@ def run_measurement_attempt(*, mode: str, attempt_id: str, attempt_root: Path, i
             bindings=bindings, artifacts=artifacts,
         )
         _write_exact(temporary / "attempt.json", canonical_json_bytes(manifest))
-        validate_measurement_attempt(attempt_root=temporary)
+        validate_measurement_attempt(
+            attempt_root=temporary,
+            adapter_batch=values.get("adapter_batch"),
+            schema_raw=_schema_bytes(values),
+        )
         _sync_directory(temporary)
         _sync_directory(attempt_root)
         try:
@@ -201,9 +215,18 @@ def load_measurement_attempt_manifest(*, attempt_root: Path) -> dict[str, object
     return manifest
 
 
-def _verify_replay(*, manifest: dict[str, object], artifact_bytes: Mapping[str, bytes], raw: bytes) -> None:
+def _verify_replay(
+    *,
+    manifest: dict[str, object],
+    artifact_bytes: Mapping[str, bytes],
+    raw: bytes,
+    adapter_batch: object | None = None,
+    schema_raw: bytes | None = None,
+) -> None:
     """Derive every terminal artifact from the bound raw input and current custody roots."""
-    batch = build_pr2164_adapter_batch(authority_path=_AUTHORITY, bundle_root=_BUNDLE, rules_path=_RULES)
+    batch = adapter_batch or build_pr2164_adapter_batch(
+        authority_path=_AUTHORITY, bundle_root=_BUNDLE, rules_path=_RULES
+    )
     if not batch.valid:
         raise AttemptError("ATTEMPT_REPLAY_ADAPTER_INVALID")
     bindings = manifest["bindings"]
@@ -212,7 +235,13 @@ def _verify_replay(*, manifest: dict[str, object], artifact_bytes: Mapping[str, 
     if not isinstance(ingress, str):
         raise AttemptError("ATTEMPT_BINDINGS_INVALID")
     expected_bindings = _bindings(
-        {"adapter_batch": batch, "schema_path": _SCHEMA, "ingress": ingress}, raw
+        {
+            "adapter_batch": batch,
+            "schema_path": _SCHEMA,
+            "schema_raw": schema_raw,
+            "ingress": ingress,
+        },
+        raw,
     )
     if bindings != expected_bindings:
         raise AttemptError("ATTEMPT_BINDINGS_INVALID")
@@ -230,7 +259,12 @@ def _verify_replay(*, manifest: dict[str, object], artifact_bytes: Mapping[str, 
             raise AttemptError("ATTEMPT_REPLAY_ARTIFACT_MISMATCH")
 
 
-def validate_measurement_attempt(*, attempt_root: Path) -> dict[str, object]:
+def validate_measurement_attempt(
+    *,
+    attempt_root: Path,
+    adapter_batch: object | None = None,
+    schema_raw: bytes | None = None,
+) -> dict[str, object]:
     """Validate raw-byte recovery, non-cyclic manifest digest, and every sibling binding."""
     manifest = load_measurement_attempt_manifest(attempt_root=attempt_root)
     role, status = manifest.get("role"), manifest.get("status")
@@ -272,5 +306,11 @@ def validate_measurement_attempt(*, attempt_root: Path) -> dict[str, object]:
         if canonical_json_bytes(parsed) != content or identity.get("sha256") != sha256_bytes(content) or identity.get("byte_length") != len(content):
             raise AttemptError("ATTEMPT_ARTIFACT_HASH_MISMATCH")
         artifact_bytes[name] = content
-    _verify_replay(manifest=manifest, artifact_bytes=artifact_bytes, raw=raw)
+    _verify_replay(
+        manifest=manifest,
+        artifact_bytes=artifact_bytes,
+        raw=raw,
+        adapter_batch=adapter_batch,
+        schema_raw=schema_raw,
+    )
     return {"attempt_sha256": manifest["attempt_sha256"], "role": role, "status": status}

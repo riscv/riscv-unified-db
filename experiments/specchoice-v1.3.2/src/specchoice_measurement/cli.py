@@ -14,12 +14,38 @@ from pathlib import Path
 
 from specchoice_evidence.bundle import _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 
 from .adapter import AdapterError, build_pr2164_adapter_batch
 from .attempts import AttemptError, load_measurement_attempt_manifest, run_measurement_attempt, validate_measurement_attempt
 from .h1 import H1Error, build_h1_packet, validate_h1_decision, validate_h1_packet
 from .preflight import _source_bytes_by_fixture, preflight_prediction_batch
 from .scoring import score_prediction_batch
+
+
+def _read_bound_bytes(path: Path, code: str) -> bytes:
+    try:
+        _, raw = read_authoritative_file(path.parent, path.name)
+        return raw
+    except (OSError, FilesystemPolicyError) as error:
+        raise AttemptError(code) from error
+
+
+def _pending_batch(args: argparse.Namespace) -> object:
+    pending_authority = getattr(args, "pending_authority", None)
+    transition = getattr(args, "transition", None)
+    if not isinstance(pending_authority, Path) or not isinstance(transition, Path):
+        raise AttemptError("PENDING_SOURCE_CUTOVER_INPUTS_INVALID")
+    batch = build_pr2164_adapter_batch(
+        authority_path=args.authority,
+        bundle_root=args.bundle,
+        rules_path=args.rules,
+        pending_authority_path=pending_authority,
+        transition_path=transition,
+    )
+    if not batch.valid:
+        raise AdapterError("ADAPTER_BATCH_NOT_SCORE_ELIGIBLE")
+    return batch
 
 
 def command_adapt_pr2164(args: argparse.Namespace) -> int:
@@ -49,15 +75,10 @@ def command_adapt_pr2164(args: argparse.Namespace) -> int:
 
 
 def command_run_formal_measurement(args: argparse.Namespace) -> int:
-    """Publish only the exact all-11, accepted-v2 golden measurement attempt."""
-    raw_predictions = args.predictions.read_bytes()
-    batch = build_pr2164_adapter_batch(
-        authority_path=args.authority,
-        bundle_root=args.bundle,
-        rules_path=args.rules,
-    )
-    if not batch.valid:
-        raise AdapterError("ADAPTER_BATCH_NOT_SCORE_ELIGIBLE")
+    """Rehearse one pending-v3 formal attempt without changing active authority."""
+    raw_predictions = _read_bound_bytes(args.predictions, "FORMAL_PREDICTIONS_UNREADABLE")
+    schema_raw = _read_bound_bytes(args.schema, "ATTEMPT_SCHEMA_UNREADABLE")
+    batch = _pending_batch(args)
     preflight = preflight_prediction_batch(raw=raw_predictions, adapter_batch=batch, ingress="current-v1")
     score = score_prediction_batch(adapter_batch=batch, preflight=preflight, mode="formal")
     result = run_measurement_attempt(
@@ -70,12 +91,16 @@ def command_run_formal_measurement(args: argparse.Namespace) -> int:
             "preflight": preflight,
             "raw_predictions": raw_predictions,
             "score_result": score,
-            "schema_path": args.schema,
+            "schema_raw": schema_raw,
         },
     )
     if result["status"] != "completed":
         raise AttemptError("FORMAL_MEASUREMENT_NOT_CLEAN")
-    validated = validate_measurement_attempt(attempt_root=args.attempt_root / args.attempt_id)
+    validated = validate_measurement_attempt(
+        attempt_root=args.attempt_root / args.attempt_id,
+        adapter_batch=batch,
+        schema_raw=schema_raw,
+    )
     if validated != result:
         raise AttemptError("FORMAL_ATTEMPT_VALIDATION_MISMATCH")
     sys.stdout.buffer.write(canonical_json_bytes(result))
@@ -144,7 +169,7 @@ def _mutate_adversarial_payload(payload: dict[str, object], oracle_id: str, *, n
 
 def _canonical_object(path: Path, code: str) -> tuple[dict[str, object], bytes]:
     try:
-        raw = path.read_bytes()
+        raw = _read_bound_bytes(path, code)
         payload = json.loads(raw.decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise AttemptError(code) from error
@@ -153,20 +178,24 @@ def _canonical_object(path: Path, code: str) -> tuple[dict[str, object], bytes]:
     return payload, raw
 
 
-def _adversarial_bindings(*, batch: object, schema: Path, golden_raw: bytes, formal_attempt_sha256: str) -> dict[str, object]:
+def _adversarial_bindings(*, batch: object, schema_raw: bytes, golden_raw: bytes, formal_attempt_sha256: str) -> dict[str, object]:
     return {
         "adapter_batch_sha256": getattr(batch, "adapter_batch_sha256", None),
         "formal_attempt_sha256": formal_attempt_sha256,
         "golden_predictions_sha256": sha256_bytes(golden_raw),
         "rule_sha256": getattr(batch, "rule_sha256", None),
-        "schema_sha256": sha256_bytes(schema.read_bytes()),
+        "schema_sha256": sha256_bytes(schema_raw),
         "source_identity": getattr(batch, "source_identity", None),
     }
 
 
 def command_run_adversarial_oracles(args: argparse.Namespace) -> int:
     """Prove frozen diagnostics in diagnostic-only custody, without formal metrics."""
-    formal = validate_measurement_attempt(attempt_root=args.formal_attempt)
+    schema_raw = _read_bound_bytes(args.schema, "ADVERSARIAL_REPORT_INVALID")
+    batch = _pending_batch(args)
+    formal = validate_measurement_attempt(
+        attempt_root=args.formal_attempt, adapter_batch=batch, schema_raw=schema_raw
+    )
     if (formal["role"], formal["status"]) != ("formal", "completed"):
         raise AttemptError("FORMAL_ATTEMPT_NOT_CLEAN")
     oracle, oracle_raw = _canonical_object(args.oracle, "ADVERSARIAL_ORACLE_INVALID")
@@ -174,9 +203,6 @@ def command_run_adversarial_oracles(args: argparse.Namespace) -> int:
     if oracle.get("schema_version") != "required-diagnostics-v1" or not isinstance(entries, list) or not entries:
         raise AttemptError("ADVERSARIAL_ORACLE_INVALID")
     golden, golden_raw = _canonical_object(args.predictions, "ADVERSARIAL_INPUT_INVALID")
-    batch = build_pr2164_adapter_batch(authority_path=args.authority, bundle_root=args.bundle, rules_path=args.rules)
-    if not batch.valid:
-        raise AdapterError("ADAPTER_BATCH_NOT_SCORE_ELIGIBLE")
     negative_span = _fixture_span(batch, "NEG_EXT_GATED_PBMTE")
     attempt_root = args.report.parent / f"{args.report.stem}-attempts"
     if args.report.exists() or args.report.is_symlink() or attempt_root.exists() or attempt_root.is_symlink():
@@ -204,10 +230,14 @@ def command_run_adversarial_oracles(args: argparse.Namespace) -> int:
                     "preflight": preflight,
                     "raw_predictions": raw_predictions,
                     "score_result": score,
-                    "schema_path": args.schema,
+                    "schema_raw": schema_raw,
                 },
             )
-            if validate_measurement_attempt(attempt_root=attempt_root / f"oracle-{index:02d}") != attempt:
+            if validate_measurement_attempt(
+                attempt_root=attempt_root / f"oracle-{index:02d}",
+                adapter_batch=batch,
+                schema_raw=schema_raw,
+            ) != attempt:
                 raise AttemptError("ADVERSARIAL_ATTEMPT_VALIDATION_MISMATCH")
             cases.append({
                 "attempt_id": f"oracle-{index:02d}",
@@ -222,7 +252,8 @@ def command_run_adversarial_oracles(args: argparse.Namespace) -> int:
             })
     report = {
         "bindings": _adversarial_bindings(
-            batch=batch, schema=args.schema, golden_raw=golden_raw, formal_attempt_sha256=str(formal["attempt_sha256"])
+            batch=batch, schema_raw=schema_raw, golden_raw=golden_raw,
+            formal_attempt_sha256=str(formal["attempt_sha256"]),
         ),
         "cases": cases,
         "oracle_sha256": sha256_bytes(oracle_raw),
@@ -236,38 +267,72 @@ def command_run_adversarial_oracles(args: argparse.Namespace) -> int:
         _sync_directory(args.report.parent)
     except FileExistsError as error:
         raise AttemptError("ADVERSARIAL_REPORT_EXISTS") from error
-    validate_adversarial_report(report_path=args.report, formal_attempt=args.formal_attempt)
+    validate_adversarial_report(
+        report_path=args.report,
+        formal_attempt=args.formal_attempt,
+        authority=args.authority,
+        bundle=args.bundle,
+        rules=args.rules,
+        schema=args.schema,
+        predictions=args.predictions,
+        oracle=args.oracle,
+        pending_authority=args.pending_authority,
+        transition=args.transition,
+    )
     sys.stdout.buffer.write(canonical_json_bytes({"oracle_sha256": report["oracle_sha256"], "status": report["status"]}))
     return 0
 
 
-def validate_adversarial_report(*, report_path: Path, formal_attempt: Path) -> dict[str, object]:
+def validate_adversarial_report(
+    *,
+    report_path: Path,
+    formal_attempt: Path,
+    authority: Path | None = None,
+    bundle: Path | None = None,
+    rules: Path | None = None,
+    schema: Path | None = None,
+    predictions: Path | None = None,
+    oracle: Path | None = None,
+    pending_authority: Path | None = None,
+    transition: Path | None = None,
+) -> dict[str, object]:
     """Validate the closed, canonical diagnostic-only report against the frozen oracle."""
+    explicit = (authority, bundle, rules, schema, predictions, oracle, pending_authority, transition)
+    if any(value is None for value in explicit):
+        experiment_root = Path(__file__).parents[2]
+        authority = experiment_root / "phase2/source-authority.json"
+        bundle = experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        rules = experiment_root / "config/measurement/pr2164-adapter-rules-v1.json"
+        schema = experiment_root / "config/measurement/canonical-adjudication-schema-v1.json"
+        predictions = experiment_root / "fixtures/measurement/golden-predictions-v1.json"
+        oracle = experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json"
+        batch = build_pr2164_adapter_batch(authority_path=authority, bundle_root=bundle, rules_path=rules)
+    else:
+        args = argparse.Namespace(
+            authority=authority, bundle=bundle, rules=rules,
+            pending_authority=pending_authority, transition=transition,
+        )
+        batch = _pending_batch(args)
+    assert schema is not None and predictions is not None and oracle is not None
     try:
-        formal = validate_measurement_attempt(attempt_root=formal_attempt)
+        schema_raw = _read_bound_bytes(schema, "ADVERSARIAL_REPORT_INVALID")
+        formal = validate_measurement_attempt(
+            attempt_root=formal_attempt, adapter_batch=batch, schema_raw=schema_raw
+        )
+        report, _ = _canonical_object(report_path, "ADVERSARIAL_REPORT_INVALID")
+        oracle, oracle_raw = _canonical_object(oracle, "ADVERSARIAL_REPORT_INVALID")
+        golden, golden_raw = _canonical_object(predictions, "ADVERSARIAL_REPORT_INVALID")
     except (AttemptError, OSError, ValueError) as error:
         raise AttemptError("ADVERSARIAL_REPORT_INVALID") from error
     if (formal.get("role"), formal.get("status")) != ("formal", "completed"):
         raise AttemptError("ADVERSARIAL_REPORT_INVALID")
-    report, _ = _canonical_object(report_path, "ADVERSARIAL_REPORT_INVALID")
     expected_keys = {"bindings", "cases", "oracle_sha256", "schema_version", "status"}
     if set(report) != expected_keys or report.get("schema_version") != "adversarial-oracle-results-v2" or report.get("status") != "diagnostic_only":
         raise AttemptError("ADVERSARIAL_REPORT_INVALID")
-    experiment_root = Path(__file__).parents[2]
-    oracle, oracle_raw = _canonical_object(
-        experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json", "ADVERSARIAL_REPORT_INVALID"
-    )
-    golden_path = experiment_root / "fixtures/measurement/golden-predictions-v1.json"
-    schema_path = experiment_root / "config/measurement/canonical-adjudication-schema-v1.json"
-    golden, golden_raw = _canonical_object(golden_path, "ADVERSARIAL_REPORT_INVALID")
-    batch = build_pr2164_adapter_batch(
-        authority_path=experiment_root / "phase2/source-authority.json",
-        bundle_root=experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2",
-        rules_path=experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
-    )
     bindings = report.get("bindings")
     if not batch.valid or not isinstance(bindings, dict) or bindings != _adversarial_bindings(
-        batch=batch, schema=schema_path, golden_raw=golden_raw, formal_attempt_sha256=str(formal["attempt_sha256"])
+        batch=batch, schema_raw=schema_raw, golden_raw=golden_raw,
+        formal_attempt_sha256=str(formal["attempt_sha256"]),
     ):
         raise AttemptError("ADVERSARIAL_REPORT_INVALID")
     expected_entries = oracle.get("oracles")
@@ -289,7 +354,9 @@ def validate_adversarial_report(*, report_path: Path, formal_attempt: Path) -> d
         if not attempt_path.is_dir() or attempt_path.is_symlink():
             raise AttemptError("ADVERSARIAL_REPORT_INVALID")
         try:
-            validated = validate_measurement_attempt(attempt_root=attempt_path)
+            validated = validate_measurement_attempt(
+                attempt_root=attempt_path, adapter_batch=batch, schema_raw=schema_raw
+            )
             manifest = load_measurement_attempt_manifest(attempt_root=attempt_path)
         except AttemptError as error:
             raise AttemptError("ADVERSARIAL_REPORT_INVALID") from error
@@ -313,7 +380,20 @@ def validate_adversarial_report(*, report_path: Path, formal_attempt: Path) -> d
 
 def command_validate_adversarial_report(args: argparse.Namespace) -> int:
     sys.stdout.buffer.write(
-        canonical_json_bytes(validate_adversarial_report(report_path=args.report, formal_attempt=args.formal_attempt))
+        canonical_json_bytes(
+            validate_adversarial_report(
+                report_path=args.report,
+                formal_attempt=args.formal_attempt,
+                authority=args.authority,
+                bundle=args.bundle,
+                rules=args.rules,
+                schema=args.schema,
+                predictions=args.predictions,
+                oracle=args.oracle,
+                pending_authority=args.pending_authority,
+                transition=args.transition,
+            )
+        )
     )
     return 0
 
@@ -354,6 +434,8 @@ def build_parser() -> argparse.ArgumentParser:
     formal.add_argument("--rules", type=Path, required=True)
     formal.add_argument("--schema", type=Path, required=True)
     formal.add_argument("--predictions", type=Path, required=True)
+    formal.add_argument("--pending-authority", type=Path, required=True)
+    formal.add_argument("--transition", type=Path, required=True)
     formal.add_argument("--attempt-root", type=Path, required=True)
     formal.add_argument("--attempt-id", required=True)
     formal.set_defaults(handler=command_run_formal_measurement)
@@ -367,12 +449,22 @@ def build_parser() -> argparse.ArgumentParser:
     adversarial.add_argument("--schema", type=Path, required=True)
     adversarial.add_argument("--predictions", type=Path, required=True)
     adversarial.add_argument("--oracle", type=Path, required=True)
+    adversarial.add_argument("--pending-authority", type=Path, required=True)
+    adversarial.add_argument("--transition", type=Path, required=True)
     adversarial.add_argument("--formal-attempt", type=Path, required=True)
     adversarial.add_argument("--report", type=Path, required=True)
     adversarial.set_defaults(handler=command_run_adversarial_oracles)
     validate_adversarial = commands.add_parser("validate-adversarial-report")
     validate_adversarial.add_argument("--report", type=Path, required=True)
     validate_adversarial.add_argument("--formal-attempt", type=Path, required=True)
+    validate_adversarial.add_argument("--authority", type=Path, required=True)
+    validate_adversarial.add_argument("--bundle", type=Path, required=True)
+    validate_adversarial.add_argument("--rules", type=Path, required=True)
+    validate_adversarial.add_argument("--schema", type=Path, required=True)
+    validate_adversarial.add_argument("--predictions", type=Path, required=True)
+    validate_adversarial.add_argument("--oracle", type=Path, required=True)
+    validate_adversarial.add_argument("--pending-authority", type=Path, required=True)
+    validate_adversarial.add_argument("--transition", type=Path, required=True)
     validate_adversarial.set_defaults(handler=command_validate_adversarial_report)
     h1_build = commands.add_parser("build-h1-packet")
     h1_build.add_argument("--formal-attempt", type=Path, required=True)

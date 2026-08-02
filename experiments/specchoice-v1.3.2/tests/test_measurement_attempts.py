@@ -16,6 +16,7 @@ from unittest.mock import patch
 
 from specchoice_evidence import filesystem
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence.filesystem import FilesystemPolicyError
 from specchoice_measurement.adapter import build_pr2164_adapter_batch
 from specchoice_measurement.attempts import AttemptError, run_measurement_attempt, validate_measurement_attempt
 from specchoice_measurement.cli import (
@@ -42,12 +43,25 @@ class MeasurementAttemptTests(unittest.TestCase):
         self.raw = (self.experiment_root / "fixtures/measurement/golden-predictions-v1.json").read_bytes()
 
     def _pending_formal_args(self, root: Path) -> SimpleNamespace:
+        root.parent.mkdir(parents=True, exist_ok=True)
+        batch = build_pr2164_adapter_batch(
+            authority_path=self.experiment_root / "phase2/source-authority.json",
+            bundle_root=self.pending_bundle,
+            rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
+            pending_authority_path=self.pending_authority,
+            transition_path=self.transition,
+        )
+        self.assertTrue(batch.valid)
+        payload = json.loads(self.raw.decode("utf-8"))
+        payload["adapter_batch_sha256"] = batch.adapter_batch_sha256
+        predictions = root.parent / "pending-v3-golden-predictions.json"
+        predictions.write_bytes(canonical_json_bytes(payload))
         return SimpleNamespace(
             authority=self.experiment_root / "phase2/source-authority.json",
             bundle=self.pending_bundle,
             rules=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
             schema=self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json",
-            predictions=self.experiment_root / "fixtures/measurement/golden-predictions-v1.json",
+            predictions=predictions,
             pending_authority=self.pending_authority,
             transition=self.transition,
             attempt_root=root,
@@ -284,15 +298,7 @@ class MeasurementAttemptTests(unittest.TestCase):
     def test_formal_cli_writes_one_clean_all_eleven_attempt_and_refuses_regeneration(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            args = SimpleNamespace(
-                authority=self.experiment_root / "phase2/source-authority.json",
-                bundle=self.bundle,
-                rules=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
-                schema=self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json",
-                predictions=self.experiment_root / "fixtures/measurement/golden-predictions-v1.json",
-                attempt_root=root,
-                attempt_id="formal-golden",
-            )
+            args = self._pending_formal_args(root)
             self.assertEqual(command_run_formal_measurement(args), 0)
             target = root / "formal-golden"
             manifest = json.loads((target / "attempt.json").read_text(encoding="utf-8"))
@@ -314,15 +320,8 @@ class MeasurementAttemptTests(unittest.TestCase):
     def test_adversarial_cli_is_diagnostic_only_and_matches_every_frozen_oracle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            formal_args = SimpleNamespace(
-                authority=self.experiment_root / "phase2/source-authority.json",
-                bundle=self.bundle,
-                rules=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
-                schema=self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json",
-                predictions=self.experiment_root / "fixtures/measurement/golden-predictions-v1.json",
-                attempt_root=root / "attempts",
-                attempt_id="formal",
-            )
+            formal_args = self._pending_formal_args(root / "attempts")
+            formal_args.attempt_id = "formal"
             self.assertEqual(command_run_formal_measurement(formal_args), 0)
             report = root / "adversarial.json"
             args = SimpleNamespace(
@@ -332,11 +331,24 @@ class MeasurementAttemptTests(unittest.TestCase):
                 schema=formal_args.schema,
                 predictions=formal_args.predictions,
                 oracle=self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json",
+                pending_authority=self.pending_authority,
+                transition=self.transition,
                 formal_attempt=root / "attempts/formal",
                 report=report,
             )
             self.assertEqual(command_run_adversarial_oracles(args), 0)
-            payload = validate_adversarial_report(report_path=report, formal_attempt=args.formal_attempt)
+            payload = validate_adversarial_report(
+                report_path=report,
+                formal_attempt=args.formal_attempt,
+                authority=args.authority,
+                bundle=args.bundle,
+                rules=args.rules,
+                schema=args.schema,
+                predictions=args.predictions,
+                oracle=args.oracle,
+                pending_authority=args.pending_authority,
+                transition=args.transition,
+            )
             self.assertEqual(payload["status"], "diagnostic_only")
             self.assertEqual(len(payload["cases"]), 12)
             self.assertTrue(all(case["role"] == "diagnostic_only" and case["matched"] for case in payload["cases"]))
