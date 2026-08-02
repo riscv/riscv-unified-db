@@ -817,11 +817,6 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     return path
 
                 staging_root = temporary / "staging"
-                for repair in historical_manifest["repairs"]:
-                    source = experiment / repair["payload_path"]
-                    target = staging_root / repair["payload_path"]
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    target.write_bytes(source.read_bytes())
                 cache_target = staging_root / "config/fixture-repairs/pr2164-semantic-gold-v3/POS_DIRECT_CACHE_BLOCK/gold.yaml"
                 cache_target.parent.mkdir(parents=True, exist_ok=True)
                 fixed_cache = cache_gold.replace(
@@ -928,9 +923,13 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     for repair in historical_manifest["repairs"]
                 }
                 repaired_payloads = {
-                    repair["payload_path"]: (staging_root / repair["payload_path"]).read_bytes()
+                    repair["payload_path"]: (
+                        (staging_root if "pr2164-semantic-gold-v3" in repair["payload_path"] else experiment)
+                        / repair["payload_path"]
+                    ).read_bytes()
                     for repair in original_manifest["repairs"]
                 }
+                self.assertFalse((staging_root / "config/fixture-repairs/pr2164-semantic-gold-v2").exists())
                 with self.subTest("v4_yaml_batch_rejects_historical_and_structural_ambiguity"):
                     with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"):
                         source_contract_module._validate_v4_repair_yaml_batch(historical_payloads)
@@ -939,6 +938,10 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     sibling_payloads = dict(repaired_payloads)
                     sibling_payloads[valid_key] = b"items:\n  - name: first\n  - name: second\n"
                     source_contract_module._validate_v4_repair_yaml_batch(sibling_payloads)
+                    oversized_payloads = dict(repaired_payloads)
+                    oversized_payloads[valid_key] = b"x" * (64 * 1024 + 1)
+                    with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"):
+                        source_contract_module._validate_v4_repair_yaml_batch(oversized_payloads)
                     for name, raw in (
                         ("empty", b""),
                         ("non-mapping", b"- one\n- two\n"),
@@ -1179,6 +1182,20 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     for other in targets:
                         if other != hardlink_target:
                             self.assertFalse((hardlink_root / other).exists())
+
+                    postflight_root = temporary / "postflight-mismatch"
+                    postflight_root.mkdir()
+                    authoritative_read = cli_module.read_authoritative_file
+
+                    def mismatch_after_write(root: Path, relative: str):
+                        evidence, raw = authoritative_read(root, relative)
+                        return evidence, b"mismatch" if raw == b"expected" else raw
+
+                    with mock.patch.object(cli_module, "read_authoritative_file", side_effect=mismatch_after_write), self.assertRaisesRegex(
+                        SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_WRITE_INVALID"
+                    ):
+                        cli_module._write_v4_no_replace(postflight_root, {"receipts/proposal.json": b"expected"})
+                    self.assertEqual((postflight_root / "receipts/proposal.json").read_bytes(), b"expected")
 
                 with self.subTest("v4_rejects_forged_old_hash_and_length"):
                     forged_manifest = copy.deepcopy(original_manifest)

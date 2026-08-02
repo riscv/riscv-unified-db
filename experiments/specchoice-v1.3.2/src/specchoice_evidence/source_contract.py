@@ -473,7 +473,7 @@ def _validate_v4_repair_manifest(
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID")
     if seen != allowed_repairs or [item.get("target_path") for item in repairs] != sorted(seen):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
-    _validate_v4_repair_yaml_batch(repair_payloads)
+    _validate_v4_repair_yaml_batch(repair_payloads, expected_count=len(allowed_repairs))
     try:
         text = {target: repair_payloads[repair["payload_path"]].decode("utf-8") for repair in repairs for target in [repair["target_path"]]}
     except UnicodeDecodeError as error:
@@ -561,11 +561,19 @@ rescue StandardError
   exit 2
 end
 '''
+_V4_YAML_PAYLOAD_COUNT = 9
+_V4_YAML_MAX_PAYLOAD_BYTES = 64 * 1024
+_V4_YAML_MAX_BATCH_BYTES = 256 * 1024
 
 
-def _validate_v4_repair_yaml_batch(repair_payloads: Mapping[str, bytes]) -> None:
+def _validate_v4_repair_yaml_batch(
+    repair_payloads: Mapping[str, bytes], *, expected_count: int = _V4_YAML_PAYLOAD_COUNT,
+) -> None:
     """Parse all already-read repair bytes in one fail-closed Psych subprocess."""
-    if not repair_payloads or any(not isinstance(path, str) or not isinstance(raw, bytes) for path, raw in repair_payloads.items()):
+    if not 1 <= expected_count <= _V4_YAML_PAYLOAD_COUNT or len(repair_payloads) != expected_count or any(
+        not isinstance(path, str) or not isinstance(raw, bytes) or len(raw) > _V4_YAML_MAX_PAYLOAD_BYTES
+        for path, raw in repair_payloads.items()
+    ) or sum(len(raw) for raw in repair_payloads.values()) > _V4_YAML_MAX_BATCH_BYTES:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID")
     request = [
         {"content_b64": base64.b64encode(repair_payloads[path]).decode("ascii"), "path": path}

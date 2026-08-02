@@ -683,6 +683,10 @@ def _write_v4_no_replace(output_root: Path, payloads: dict[str, bytes]) -> None:
         )
         for relative in missing:
             write_new_descriptor_file(output_root, relative, payloads[relative])
+        for relative, expected in payloads.items():
+            evidence, actual = read_authoritative_file(output_root, relative)
+            if evidence.hardlink_count != 1 or actual != expected:
+                raise FilesystemPolicyError("AUTHORITATIVE_POSTWRITE_MISMATCH")
     except FilesystemPolicyError as error:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_INVALID") from error
 
@@ -801,8 +805,12 @@ def _v4_repair_payloads(manifest: dict[str, object], payload_root: Path) -> dict
         payload = require_relative_posix_path(repair["payload_path"]).as_posix()
         if payload in result:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
+        source_root = payload_root if payload in {
+            "config/fixture-repairs/pr2164-semantic-gold-v3/POS_DIRECT_CACHE_BLOCK/gold.yaml",
+            "config/fixture-repairs/pr2164-semantic-gold-v3/POS_RECALL_COUNT_GEILEN/expected.yaml",
+        } else _experiment_root()
         try:
-            _, result[payload] = read_authoritative_file(payload_root, payload)
+            _, result[payload] = read_authoritative_file(source_root, payload)
         except (FilesystemPolicyError, OSError) as error:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID") from error
     return result
