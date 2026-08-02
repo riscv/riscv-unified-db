@@ -36,6 +36,8 @@ from .source_contract import (
     require_accepted_publication_authorization,
     require_candidate_construction_authorization,
     require_fixture_closure_local_acceptance_authorization,
+    validate_local_acceptance_decision_v10,
+    validate_local_acceptance_request_v10,
     require_fixture_construction_authorization,
     require_local_accepted_generation_authorization,
     require_source_extraction_authorization,
@@ -1030,6 +1032,136 @@ def accept_fixture_closure_candidate(
         _write_exact(temporary / "snapshot-manifest.json", canonical_json_bytes(final))
         # The embedded verifier re-parses the frozen registry and proves its
         # bidirectional equality with the raw manifest inventory before acceptance.
+        verified = verify_accepted_bundle(temporary)
+        _run_embedded_verifier(temporary)
+        _sync_directory(temporary)
+        _sync_directory(accepted_root)
+        _publish_directory_no_replace(temporary, target, "LOCAL_ACCEPTED_TARGET_EXISTS")
+        _sync_directory(accepted_root)
+        return verified
+    except Exception:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        raise
+
+
+def _accepted_v3_projection(candidate: Path) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+    """Compute the exact accepted-v3 identity without publishing any state."""
+    identity = verify_candidate(candidate)
+    if identity.get("generation") != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3":
+        raise BundleError("LOCAL_ACCEPTANCE_V10_GENERATION_INVALID")
+    core, _ = _canonical_load_from_root(candidate, "content-manifest-core.json", "CONTENT_MANIFEST_CORE_INVALID")
+    final_candidate, _ = _canonical_load_from_root(candidate, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    if not isinstance(final_candidate.get("snapshot_manifest_sha256"), str):
+        raise BundleError("SNAPSHOT_MANIFEST_SELF_DIGEST_MISMATCH")
+    accepted_final = {
+        "accepted_publication_authorized": False, "content_manifest_core": core,
+        "downstream_eligible": True, "external_publication_authorized": False,
+        "generation": identity["generation"], "manifest_sha256": identity["manifest_sha256"],
+        "offline_replay_proven": True, "root_sha256": identity["root_sha256"], "schema_version": "1",
+        "snapshots": [
+            {**snapshot, "generation": identity["generation"], "manifest_sha256": identity["manifest_sha256"], "root_sha256": identity["root_sha256"]}
+            for snapshot in core["snapshots"]
+        ], "status": "accepted",
+    }
+    projection = {
+        "core_sha256": identity["manifest_sha256"], "generation": identity["generation"],
+        "root_sha256": identity["root_sha256"], "snapshot_manifest_sha256": sha256_bytes(canonical_json_bytes(accepted_final)),
+    }
+    return projection, core, final_candidate
+
+
+def build_local_acceptance_request_v10(
+    candidate: Path, audit_path: Path, construction_decision_path: Path, proposal_path: Path, active_authority_path: Path,
+) -> dict[str, object]:
+    """Build a closed machine request; it cannot grant local acceptance or publication."""
+    projected, _, _ = _accepted_v3_projection(candidate)
+    audit = _canonical_load(audit_path, "LOCAL_ACCEPTANCE_REQUEST_V10_AUDIT_INVALID")
+    construction = _canonical_load(construction_decision_path, "LOCAL_ACCEPTANCE_REQUEST_V10_CONSTRUCTION_INVALID")
+    proposal = _canonical_load(proposal_path, "LOCAL_ACCEPTANCE_REQUEST_V10_PROPOSAL_INVALID")
+    active_raw = active_authority_path.read_bytes()
+    active = _canonical_load(active_authority_path, "LOCAL_ACCEPTANCE_REQUEST_V10_AUTHORITY_INVALID")
+    candidate_identity = audit.get("candidate")
+    if not isinstance(candidate_identity, dict) or candidate_identity.get("status") != "candidate":
+        raise BundleError("LOCAL_ACCEPTANCE_REQUEST_V10_AUDIT_INVALID")
+    candidate_binding = {
+        key: candidate_identity.get(key)
+        for key in ("core_sha256", "generation", "root_sha256", "snapshot_manifest_sha256")
+    }
+    candidate_final, _ = _canonical_load_from_root(candidate, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    if candidate_binding != {
+        "core_sha256": projected["core_sha256"], "generation": projected["generation"],
+        "root_sha256": projected["root_sha256"], "snapshot_manifest_sha256": candidate_final["snapshot_manifest_sha256"],
+    }:
+        raise BundleError("LOCAL_ACCEPTANCE_REQUEST_V10_CANDIDATE_MISMATCH")
+    verifiers = audit.get("verifier_artifacts")
+    if not isinstance(verifiers, list):
+        raise BundleError("LOCAL_ACCEPTANCE_REQUEST_V10_AUDIT_INVALID")
+    request = {
+        "authorization": {"external_publication_authorized": False, "local_acceptance_decision_authorized": False},
+        "candidate": candidate_binding,
+        "construction": {
+            "audit": {"path": "receipts/fixture-closure-candidate-audit-v3.json", "sha256": sha256_bytes(audit_path.read_bytes())},
+            "decision": {"path": "receipts/source-contract-decision-v3-pr2164-fixture-closure-verifier-rooted-v3.json", "sha256": sha256_bytes(construction_decision_path.read_bytes())},
+            "proposal": {"path": "receipts/source-contract-proposal-v3-pr2164-fixture-closure-verifier-rooted-v3.json", "sha256": sha256_bytes(proposal_path.read_bytes())},
+        },
+        "fixed_source_commit": audit.get("fixed_source_commit"),
+        "fixture_inventory": audit.get("fixture_inventory"),
+        "phase_gate_receipt": {"result": "clean", "sha256": sha256_bytes(active_raw)},
+        "projected_accepted": projected,
+        "protected_path_baseline": {"commit": proposal.get("protected_path_baseline", {}).get("commit"), "result": "clean"},
+        "requested_targets": {
+            "accepted_bundle": f"bundles/accepted/{projected['generation']}",
+            "historical_authority": "phase2/source-authority-v9-historical.json",
+            "pending_authority": "phase2/source-authority-v10-pending.json",
+            "transition": "receipts/pending/fixture-closure-transition-v2-to-v3.json",
+        },
+        "schema_version": "10", "source_controls": audit.get("source_controls"),
+        "status": "pending_independent_local_acceptance", "verifier_artifacts": verifiers,
+    }
+    validate_local_acceptance_request_v10(request)
+    if active.get("schema_version") != "1":
+        raise BundleError("LOCAL_ACCEPTANCE_REQUEST_V10_AUTHORITY_INVALID")
+    return request
+
+
+def accept_fixture_closure_candidate_v10(
+    request_path: Path, decision_path: Path, candidate: Path, accepted_root: Path,
+) -> dict[str, object]:
+    """Materialize a reviewed v3 successor only in the caller-selected namespace."""
+    request_raw = request_path.read_bytes()
+    decision_raw = decision_path.read_bytes()
+    request = _canonical_load(request_path, "LOCAL_ACCEPTANCE_REQUEST_V10_INVALID")
+    decision = _canonical_load(decision_path, "LOCAL_ACCEPTANCE_DECISION_V10_INVALID")
+    validated_decision = validate_local_acceptance_decision_v10(decision, request, sha256_bytes(request_raw))
+    if validated_decision["decision"] != "accept":
+        raise BundleError("LOCAL_ACCEPTANCE_V10_REJECTED")
+    projected, core, _ = _accepted_v3_projection(candidate)
+    if projected != validate_local_acceptance_request_v10(request)["projected_accepted"]:
+        raise BundleError("LOCAL_ACCEPTANCE_V10_PROJECTION_MISMATCH")
+    target = accepted_root / str(projected["generation"])
+    if target.exists() or target.is_symlink():
+        raise BundleError("LOCAL_ACCEPTED_TARGET_EXISTS")
+    accepted_root.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix=f".{projected['generation']}.staging-", dir=accepted_root))
+    try:
+        shutil.rmtree(temporary)
+        shutil.copytree(candidate, temporary)
+        (temporary / "snapshot-manifest.json").unlink()
+        final = {
+            "accepted_publication_authorized": False, "content_manifest_core": core,
+            "downstream_eligible": True, "external_publication_authorized": False,
+            "generation": projected["generation"], "manifest_sha256": projected["core_sha256"],
+            "offline_replay_proven": True, "root_sha256": projected["root_sha256"], "schema_version": "1",
+            "snapshots": [
+                {**snapshot, "generation": projected["generation"], "manifest_sha256": projected["core_sha256"], "root_sha256": projected["root_sha256"]}
+                for snapshot in core["snapshots"]
+            ], "status": "accepted",
+        }
+        final["snapshot_manifest_sha256"] = sha256_bytes(canonical_json_bytes(final))
+        if final["snapshot_manifest_sha256"] != projected["snapshot_manifest_sha256"]:
+            raise BundleError("LOCAL_ACCEPTANCE_V10_PROJECTION_MISMATCH")
+        _write_exact(temporary / "snapshot-manifest.json", canonical_json_bytes(final))
         verified = verify_accepted_bundle(temporary)
         _run_embedded_verifier(temporary)
         _sync_directory(temporary)

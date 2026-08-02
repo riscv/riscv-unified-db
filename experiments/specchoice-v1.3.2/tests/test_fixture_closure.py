@@ -77,6 +77,143 @@ class FixtureClosureTests(unittest.TestCase):
 
 class FixtureClosureCandidateTests(unittest.TestCase):
 
+    def _public_command(self, experiment: Path, *arguments: str) -> dict[str, object]:
+        result = subprocess.run(
+            [sys.executable, "-m", "specchoice_evidence.cli", *arguments],
+            cwd=experiment,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_v3_local_acceptance_prepares_pending_cutover_without_switching_v2(self) -> None:
+        """The public v10 flow is disposable, forward-only, and leaves v2 alone until cutover."""
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+        active_v2 = experiment / "phase2/source-authority.json"
+        audit = experiment / "receipts/fixture-closure-candidate-audit-v3.json"
+        construction = experiment / "receipts/source-contract-decision-v3-pr2164-fixture-closure-verifier-rooted-v3.json"
+        proposal = experiment / "receipts/source-contract-proposal-v3-pr2164-fixture-closure-verifier-rooted-v3.json"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request = root / "local-acceptance-request-v10.json"
+            self._public_command(
+                experiment,
+                "write-local-acceptance-request-v10", "--candidate", str(candidate), "--audit", str(audit),
+                "--construction-decision", str(construction), "--proposal", str(proposal),
+                "--active-authority", str(active_v2), "--request", str(request),
+            )
+            request_payload = json.loads(request.read_text(encoding="utf-8"))
+            self.assertNotIn("reviewer_identity", request_payload)
+            decision = {
+                "candidate": request_payload["candidate"], "decision": "accept",
+                "external_publication_authorized": False,
+                "projected_accepted": request_payload["projected_accepted"],
+                "rationale": "disposable public test", "request_sha256": sha256_bytes(request.read_bytes()),
+                "reviewer_identity": "test-reviewer", "reviewed_at": "2026-08-02T00:00:00Z",
+                "schema_version": "10", "verifier_artifacts": request_payload["verifier_artifacts"],
+            }
+            decision_path = root / "decision.json"
+            decision_path.write_bytes(canonical_json_bytes(decision))
+            accepted_root = root / "accepted"
+            accepted = self._public_command(
+                experiment,
+                "accept-fixture-closure-local-v10", "--request", str(request), "--decision", str(decision_path),
+                "--candidate", str(candidate), "--accepted-directory", str(accepted_root),
+            )
+            accepted_bundle = accepted_root / str(accepted["generation"])
+            active = root / "source-authority.json"
+            shutil.copyfile(active_v2, active)
+            revocation = root / "fixture-closure-revocation-v2.json"
+            self._public_command(
+                experiment,
+                "validate-phase2-source-authority", "--authority", str(active),
+                "--bundle", str(experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"),
+                "--revocation", str(revocation), "--authority-mode", "active",
+            )
+            historical = root / "source-authority-v9-historical.json"
+            shutil.copyfile(active, historical)
+            pending = root / "source-authority-v10-pending.json"
+            transition = root / "fixture-closure-transition-v2-to-v3.json"
+            self._public_command(
+                experiment,
+                "prepare-pending-source-cutover-v10", "--request", str(request), "--decision", str(decision_path),
+                "--old-authority", str(active), "--accepted-bundle", str(accepted_bundle),
+                "--pending-authority", str(pending), "--transition", str(transition), "--revocation", str(revocation),
+            )
+            revocation.write_bytes(transition.read_bytes())
+            failed_v2 = subprocess.run(
+                [
+                    sys.executable, "-m", "specchoice_evidence.cli", "validate-phase2-source-authority",
+                    "--authority", str(active),
+                    "--bundle", str(experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"),
+                    "--revocation", str(revocation), "--authority-mode", "active",
+                ], cwd=experiment, check=False, capture_output=True, text=True,
+            )
+            self.assertNotEqual(failed_v2.returncode, 0)
+            revocation.unlink()
+            self._public_command(
+                experiment,
+                "validate-phase2-source-authority", "--authority", str(historical),
+                "--bundle", str(experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"),
+                "--revocation", str(revocation), "--authority-mode", "historical-inspection",
+            )
+            self.assertFalse(self._public_command(
+                experiment,
+                "validate-phase2-source-authority", "--authority", str(historical),
+                "--bundle", str(experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"),
+                "--revocation", str(revocation), "--authority-mode", "historical-inspection",
+            )["eligible"])
+            self.assertEqual(active.read_bytes(), active_v2.read_bytes())
+            self.assertFalse(revocation.exists())
+            self._public_command(
+                experiment,
+                "activate-pending-source-cutover-v10", "--pending-authority", str(pending), "--transition", str(transition),
+                "--canonical-revocation", str(revocation), "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
+            )
+            self.assertNotEqual(active.read_bytes(), active_v2.read_bytes())
+            self.assertTrue(revocation.exists())
+            self._public_command(
+                experiment,
+                "validate-phase2-source-authority", "--authority", str(active), "--bundle", str(accepted_bundle),
+                "--revocation", str(revocation), "--authority-mode", "active",
+            )
+            self.assertEqual(
+                self._public_command(
+                    experiment,
+                    "activate-pending-source-cutover-v10", "--pending-authority", str(pending), "--transition", str(transition),
+                    "--canonical-revocation", str(revocation), "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
+                )["status"],
+                "already_activated",
+            )
+            before = active.read_bytes()
+            invalid_pending = root / "invalid-pending.json"
+            invalid_pending.write_bytes(canonical_json_bytes({"schema_version": "10"}))
+            with self.assertRaisesRegex(AssertionError, "SOURCE_CUTOVER"):
+                self._public_command(
+                    experiment,
+                    "activate-pending-source-cutover-v10", "--pending-authority", str(invalid_pending),
+                    "--transition", str(transition), "--canonical-revocation", str(revocation),
+                    "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
+                )
+            self.assertEqual(active.read_bytes(), before)
+
+    def test_v3_copied_offline_replay_uses_embedded_hardened_verifier(self) -> None:
+        """The v10 accepted successor verifies with only its embedded verifier."""
+        experiment = Path(__file__).resolve().parents[1]
+        candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+        with tempfile.TemporaryDirectory() as directory:
+            copied = Path(directory) / "candidate"
+            shutil.copytree(candidate, copied)
+            result = subprocess.run(
+                [sys.executable, "verify_bundle.py"], cwd=copied,
+                env={"PATH": "/nonexistent", "PYTHONDONTWRITEBYTECODE": "1"},
+                check=False, capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_source_authority_and_bundle_consumers_reuse_descriptor_bound_canonical_bytes(self) -> None:
         """The public authority receipt is assembled from descriptor-read bundle leaves."""
         experiment = Path(__file__).resolve().parents[1]

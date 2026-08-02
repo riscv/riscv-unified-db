@@ -34,6 +34,8 @@ from .receipt import (
 from .bundle import (
     accept_local_candidate,
     accept_fixture_closure_candidate,
+    accept_fixture_closure_candidate_v10,
+    build_local_acceptance_request_v10,
     construct_candidate,
     construct_fixture_closure_candidate,
     construct_fixture_construction_candidate_v3,
@@ -49,6 +51,8 @@ from .source_contract import (
     SourceContractProposalError,
     validate_fixture_construction_decision,
     validate_fixture_construction_proposal,
+    validate_local_acceptance_decision_v10,
+    validate_local_acceptance_request_v10,
     validate_source_contract_proposal,
     require_local_accepted_generation_authorization,
     validate_local_accepted_generation_decision,
@@ -713,9 +717,158 @@ def command_validate_phase2_source_authority(args: argparse.Namespace) -> int:
         "pinned_commit_sha": snapshot["pinned_commit_sha"], "pinned_tree_sha": snapshot["pinned_tree_sha"],
         "raw_file_count": 28, "registry_sha256": registry_sha256, "root_sha256": verified["root_sha256"],
     }
-    if authority.get("schema_version") != "1" or authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()):
-        raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
-    _print_json({"status": "valid", **expected})
+    if args.authority_mode is None:
+        if authority.get("schema_version") != "1" or authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()):
+            raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
+        _print_json({"status": "valid", **expected})
+        return 0
+    if args.revocation is None:
+        raise ReceiptError("SOURCE_AUTHORITY_REVOCATION_REQUIRED")
+    revocation_raw = _optional_canonical_bytes(args.revocation)
+    if authority.get("schema_version") == "1":
+        if authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()):
+            raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
+        if args.authority_mode == "active" and revocation_raw is not None:
+            raise ReceiptError("SOURCE_AUTHORITY_V2_REVOKED")
+        _print_json({"eligible": False, "status": "historical_valid", **expected} if args.authority_mode == "historical-inspection" else {"eligible": True, "status": "valid", **expected})
+        return 0
+    _validate_v10_authority(authority, raw, verified, manifest, registry_sha256, revocation_raw)
+    if args.authority_mode != "active":
+        _print_json({"eligible": False, "status": "historical_valid", **expected})
+        return 0
+    _print_json({"eligible": True, "status": "valid", **expected})
+    return 0
+
+
+def _optional_canonical_bytes(path: Path) -> bytes | None:
+    if not path.exists() and not path.exists():
+        return None
+    try:
+        _, raw = __import__("specchoice_evidence.filesystem", fromlist=["read_authoritative_file"]).read_authoritative_file(path.parent, path.name)
+    except Exception as error:
+        if str(error) == "AUTHORITATIVE_PATH_MISSING":
+            return None
+        raise ReceiptError("SOURCE_AUTHORITY_REVOCATION_INVALID") from error
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ReceiptError("SOURCE_AUTHORITY_REVOCATION_INVALID") from error
+    if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
+        raise ReceiptError("SOURCE_AUTHORITY_REVOCATION_INVALID")
+    return raw
+
+
+def _v10_identity(verified: dict[str, object], manifest: dict[str, object]) -> dict[str, object]:
+    return {
+        "core_sha256": verified["manifest_sha256"], "generation": verified["generation"],
+        "root_sha256": verified["root_sha256"], "snapshot_manifest_sha256": manifest["snapshot_manifest_sha256"],
+    }
+
+
+def _validate_v10_authority(
+    authority: dict[str, object], raw: bytes, verified: dict[str, object], manifest: dict[str, object],
+    registry_sha256: str, revocation_raw: bytes | None,
+) -> None:
+    required = {
+        "accepted_identity", "decision_sha256", "external_publication_authorized", "fixture_count", "generation",
+        "local_only", "manifest_sha256", "pinned_commit_sha", "pinned_tree_sha", "raw_file_count",
+        "registry_sha256", "request_sha256", "root_sha256", "schema_version", "status", "transition_sha256",
+    }
+    if set(authority) != required or authority.get("schema_version") != "10" or authority.get("status") != "pending_cutover_v10":
+        raise ReceiptError("SOURCE_CUTOVER_PENDING_INVALID")
+    snapshot = manifest["content_manifest_core"]["snapshots"][0]
+    expected = {
+        "fixture_count": 11, "generation": verified["generation"], "manifest_sha256": manifest["snapshot_manifest_sha256"],
+        "pinned_commit_sha": snapshot["pinned_commit_sha"], "pinned_tree_sha": snapshot["pinned_tree_sha"],
+        "raw_file_count": 28, "registry_sha256": registry_sha256, "root_sha256": verified["root_sha256"],
+    }
+    if authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()) or authority.get("accepted_identity") != _v10_identity(verified, manifest):
+        raise ReceiptError("SOURCE_CUTOVER_PENDING_INVALID")
+    if revocation_raw is None or sha256_bytes(revocation_raw) != authority.get("transition_sha256"):
+        raise ReceiptError("SOURCE_CUTOVER_REVOCATION_MISMATCH")
+
+
+def command_write_local_acceptance_request_v10(args: argparse.Namespace) -> int:
+    request = build_local_acceptance_request_v10(args.candidate, args.audit, args.construction_decision, args.proposal, args.active_authority)
+    args.request.parent.mkdir(parents=True, exist_ok=True)
+    with args.request.open("xb") as stream:
+        stream.write(canonical_json_bytes(request))
+        stream.flush()
+        __import__("os").fsync(stream.fileno())
+    _print_json({"request_sha256": sha256_bytes(args.request.read_bytes()), "status": "pending_independent_local_acceptance"})
+    return 0
+
+
+def command_accept_fixture_closure_local_v10(args: argparse.Namespace) -> int:
+    _print_json(accept_fixture_closure_candidate_v10(args.request, args.decision, args.candidate, args.accepted_directory))
+    return 0
+
+
+def command_prepare_pending_source_cutover_v10(args: argparse.Namespace) -> int:
+    request_raw = args.request.read_bytes()
+    decision_raw = args.decision.read_bytes()
+    request = json.loads(request_raw.decode("utf-8"))
+    decision = json.loads(decision_raw.decode("utf-8"))
+    validate_local_acceptance_decision_v10(decision, request, sha256_bytes(request_raw))
+    if decision.get("decision") != "accept":
+        raise ReceiptError("SOURCE_CUTOVER_REJECTED")
+    verified = verify_accepted_bundle(args.accepted_bundle)
+    manifest, _ = _load_canonical(args.accepted_bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    _, registry_raw = _load_canonical(args.accepted_bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+    snapshot = manifest["content_manifest_core"]["snapshots"][0]
+    base = {
+        "accepted_identity": _v10_identity(verified, manifest), "decision_sha256": sha256_bytes(decision_raw),
+        "external_publication_authorized": False, "fixture_count": 11, "generation": verified["generation"],
+        "local_only": True, "manifest_sha256": manifest["snapshot_manifest_sha256"], "pinned_commit_sha": snapshot["pinned_commit_sha"],
+        "pinned_tree_sha": snapshot["pinned_tree_sha"], "raw_file_count": 28, "registry_sha256": sha256_bytes(registry_raw),
+        "request_sha256": sha256_bytes(request_raw), "root_sha256": verified["root_sha256"], "schema_version": "10", "status": "pending_cutover_v10",
+    }
+    old_raw = args.old_authority.read_bytes()
+    transition = {
+        "accepted_identity": base["accepted_identity"], "decision_sha256": base["decision_sha256"],
+        "new_authority_projection_sha256": sha256_bytes(canonical_json_bytes(base)),
+        "old_authority_sha256": sha256_bytes(old_raw), "request_sha256": base["request_sha256"], "schema_version": "2",
+    }
+    transition_raw = canonical_json_bytes(transition)
+    pending = {**base, "transition_sha256": sha256_bytes(transition_raw)}
+    for path, content in ((args.transition, transition_raw), (args.pending_authority, canonical_json_bytes(pending))):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("xb") as stream:
+            stream.write(content)
+            stream.flush()
+            __import__("os").fsync(stream.fileno())
+    _print_json({"pending_sha256": sha256_bytes(args.pending_authority.read_bytes()), "status": "pending_cutover_prepared", "transition_sha256": sha256_bytes(transition_raw)})
+    return 0
+
+
+def command_activate_pending_source_cutover_v10(args: argparse.Namespace) -> int:
+    pending_raw = args.pending_authority.read_bytes()
+    transition_raw = args.transition.read_bytes()
+    pending = json.loads(pending_raw.decode("utf-8"))
+    transition = json.loads(transition_raw.decode("utf-8"))
+    if not isinstance(pending, dict) or not isinstance(transition, dict) or canonical_json_bytes(pending) != pending_raw or canonical_json_bytes(transition) != transition_raw:
+        raise ReceiptError("SOURCE_CUTOVER_PENDING_INVALID")
+    if pending.get("transition_sha256") != sha256_bytes(transition_raw) or transition.get("new_authority_projection_sha256") != sha256_bytes(canonical_json_bytes({key: value for key, value in pending.items() if key != "transition_sha256"})):
+        raise ReceiptError("SOURCE_CUTOVER_PENDING_INVALID")
+    active_raw = args.active_authority.read_bytes()
+    revocation_raw = _optional_canonical_bytes(args.canonical_revocation)
+    if active_raw == pending_raw and revocation_raw == transition_raw:
+        _print_json({"status": "already_activated"})
+        return 0
+    if revocation_raw is not None or not isinstance(json.loads(active_raw.decode("utf-8")), dict) or json.loads(active_raw.decode("utf-8")).get("schema_version") != "1":
+        raise ReceiptError("SOURCE_CUTOVER_STATE_MISMATCH")
+    args.canonical_revocation.parent.mkdir(parents=True, exist_ok=True)
+    with args.canonical_revocation.open("xb") as stream:
+        stream.write(transition_raw)
+        stream.flush()
+        __import__("os").fsync(stream.fileno())
+    temporary = args.active_authority.with_name(f".{args.active_authority.name}.cutover")
+    with temporary.open("xb") as stream:
+        stream.write(pending_raw)
+        stream.flush()
+        __import__("os").fsync(stream.fileno())
+    __import__("os").replace(temporary, args.active_authority)
+    _print_json({"status": "activated"})
     return 0
 
 
@@ -1116,7 +1269,39 @@ def build_parser() -> argparse.ArgumentParser:
     authority = commands.add_parser("validate-phase2-source-authority")
     authority.add_argument("--authority", type=Path, required=True)
     authority.add_argument("--bundle", type=Path, required=True)
+    authority.add_argument("--revocation", type=Path)
+    authority.add_argument("--authority-mode", choices=("active", "historical-inspection"))
     authority.set_defaults(handler=command_validate_phase2_source_authority)
+    request_v10 = commands.add_parser("write-local-acceptance-request-v10")
+    request_v10.add_argument("--candidate", type=Path, required=True)
+    request_v10.add_argument("--audit", type=Path, required=True)
+    request_v10.add_argument("--construction-decision", type=Path, required=True)
+    request_v10.add_argument("--proposal", type=Path, required=True)
+    request_v10.add_argument("--active-authority", type=Path, required=True)
+    request_v10.add_argument("--request", type=Path, required=True)
+    request_v10.set_defaults(handler=command_write_local_acceptance_request_v10)
+    accept_v10 = commands.add_parser("accept-fixture-closure-local-v10")
+    accept_v10.add_argument("--request", type=Path, required=True)
+    accept_v10.add_argument("--decision", type=Path, required=True)
+    accept_v10.add_argument("--candidate", type=Path, required=True)
+    accept_v10.add_argument("--accepted-directory", type=Path, required=True)
+    accept_v10.set_defaults(handler=command_accept_fixture_closure_local_v10)
+    pending_v10 = commands.add_parser("prepare-pending-source-cutover-v10")
+    pending_v10.add_argument("--request", type=Path, required=True)
+    pending_v10.add_argument("--decision", type=Path, required=True)
+    pending_v10.add_argument("--old-authority", type=Path, required=True)
+    pending_v10.add_argument("--accepted-bundle", type=Path, required=True)
+    pending_v10.add_argument("--pending-authority", type=Path, required=True)
+    pending_v10.add_argument("--transition", type=Path, required=True)
+    pending_v10.add_argument("--revocation", type=Path, required=True)
+    pending_v10.set_defaults(handler=command_prepare_pending_source_cutover_v10)
+    cutover_v10 = commands.add_parser("activate-pending-source-cutover-v10")
+    cutover_v10.add_argument("--pending-authority", type=Path, required=True)
+    cutover_v10.add_argument("--transition", type=Path, required=True)
+    cutover_v10.add_argument("--canonical-revocation", type=Path, required=True)
+    cutover_v10.add_argument("--active-authority", type=Path, required=True)
+    cutover_v10.add_argument("--accepted-bundle", type=Path, required=True)
+    cutover_v10.set_defaults(handler=command_activate_pending_source_cutover_v10)
     closure_receipt = commands.add_parser("write-fixture-closure-receipt")
     closure_receipt.add_argument("--decision", type=Path, required=True)
     closure_receipt.add_argument("--bundle", type=Path, required=True)

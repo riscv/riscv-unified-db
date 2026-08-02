@@ -823,6 +823,125 @@ def require_fixture_closure_local_acceptance_authorization(
         raise SourceContractProposalError("FIXTURE_CLOSURE_ACCEPTANCE_BASIS_MISMATCH")
 
 
+def _v10_identity(value: object, code: str) -> dict[str, object]:
+    payload = _require_mapping(value, code)
+    if set(payload) != {"core_sha256", "generation", "root_sha256", "snapshot_manifest_sha256"}:
+        raise SourceContractProposalError(code)
+    _require_string(payload, "generation")
+    for field in ("core_sha256", "root_sha256", "snapshot_manifest_sha256"):
+        try:
+            require_sha256(payload.get(field))
+        except ValueError as error:
+            raise SourceContractProposalError(code) from error
+    return dict(payload)
+
+
+def _v10_verifiers(value: object, code: str) -> list[dict[str, object]]:
+    if not isinstance(value, list) or len(value) != 5:
+        raise SourceContractProposalError(code)
+    paths: list[str] = []
+    normalized: list[dict[str, object]] = []
+    for entry in value:
+        payload = _require_mapping(entry, code)
+        if set(payload) != {"byte_length", "path", "sha256"}:
+            raise SourceContractProposalError(code)
+        try:
+            length = require_byte_length(payload.get("byte_length"))
+            digest = require_sha256(payload.get("sha256"))
+            path = require_relative_posix_path(payload.get("path")).as_posix()
+        except (FilesystemPolicyError, ValueError) as error:
+            raise SourceContractProposalError(code) from error
+        paths.append(path)
+        normalized.append({"byte_length": length, "path": path, "sha256": digest})
+    if paths != sorted(paths) or len(set(paths)) != 5:
+        raise SourceContractProposalError(code)
+    return normalized
+
+
+def validate_local_acceptance_request_v10(request: object) -> dict[str, object]:
+    """Validate the machine-only v10 acceptance request without granting authority."""
+    payload = _require_mapping(request, "LOCAL_ACCEPTANCE_REQUEST_V10_INVALID")
+    required = {
+        "authorization", "candidate", "construction", "fixed_source_commit", "fixture_inventory",
+        "phase_gate_receipt", "projected_accepted", "protected_path_baseline", "requested_targets",
+        "schema_version", "source_controls", "status", "verifier_artifacts",
+    }
+    if set(payload) != required or payload.get("schema_version") != "10" or payload.get("status") != "pending_independent_local_acceptance":
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_INVALID")
+    if _require_mapping(payload.get("authorization"), "LOCAL_ACCEPTANCE_REQUEST_V10_INVALID") != {
+        "external_publication_authorized": False,
+        "local_acceptance_decision_authorized": False,
+    }:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_INVALID")
+    candidate = _v10_identity(payload.get("candidate"), "LOCAL_ACCEPTANCE_REQUEST_V10_IDENTITY_INVALID")
+    projected = _v10_identity(payload.get("projected_accepted"), "LOCAL_ACCEPTANCE_REQUEST_V10_IDENTITY_INVALID")
+    if candidate["generation"] != _FIXTURE_CONSTRUCTION_GENERATION or projected["generation"] != candidate["generation"]:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_IDENTITY_INVALID")
+    construction = _require_mapping(payload.get("construction"), "LOCAL_ACCEPTANCE_REQUEST_V10_CONSTRUCTION_INVALID")
+    if set(construction) != {"audit", "decision", "proposal"}:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_CONSTRUCTION_INVALID")
+    for name in ("audit", "decision", "proposal"):
+        entry = _require_mapping(construction.get(name), "LOCAL_ACCEPTANCE_REQUEST_V10_CONSTRUCTION_INVALID")
+        if set(entry) != {"path", "sha256"}:
+            raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_CONSTRUCTION_INVALID")
+        try:
+            require_relative_posix_path(entry.get("path"))
+            require_sha256(entry.get("sha256"))
+        except (FilesystemPolicyError, ValueError) as error:
+            raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_CONSTRUCTION_INVALID") from error
+    inventory = _require_mapping(payload.get("fixture_inventory"), "LOCAL_ACCEPTANCE_REQUEST_V10_INVENTORY_INVALID")
+    if inventory.get("fixture_count") != 11 or inventory.get("raw_file_count") != 28 or inventory.get("partition") != {"candidate": 1, "negative": 4, "positive": 6}:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_INVENTORY_INVALID")
+    verifier_artifacts = _v10_verifiers(payload.get("verifier_artifacts"), "LOCAL_ACCEPTANCE_REQUEST_V10_VERIFIERS_INVALID")
+    controls = payload.get("source_controls")
+    if not isinstance(controls, list) or len(controls) != 4:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_CONTROLS_INVALID")
+    for field in ("phase_gate_receipt", "protected_path_baseline"):
+        entry = _require_mapping(payload.get(field), "LOCAL_ACCEPTANCE_REQUEST_V10_PROJECTION_INVALID")
+        if entry.get("result") != "clean":
+            raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_PROJECTION_INVALID")
+    targets = _require_mapping(payload.get("requested_targets"), "LOCAL_ACCEPTANCE_REQUEST_V10_TARGETS_INVALID")
+    if set(targets) != {"accepted_bundle", "historical_authority", "pending_authority", "transition"}:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_TARGETS_INVALID")
+    for target in targets.values():
+        try:
+            require_relative_posix_path(target)
+        except FilesystemPolicyError as error:
+            raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_TARGETS_INVALID") from error
+    if payload.get("fixed_source_commit") != _FIXTURE_CONSTRUCTION_SOURCE_COMMIT:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_REQUEST_V10_SOURCE_INVALID")
+    return {**dict(payload), "candidate": candidate, "projected_accepted": projected, "verifier_artifacts": verifier_artifacts}
+
+
+def validate_local_acceptance_decision_v10(
+    decision: object, request: object, request_sha256: str,
+) -> dict[str, object]:
+    """Validate an independently authored accept/reject decision bound to one request."""
+    normalized_request = validate_local_acceptance_request_v10(request)
+    payload = _require_mapping(decision, "LOCAL_ACCEPTANCE_DECISION_V10_INVALID")
+    required = {
+        "candidate", "decision", "external_publication_authorized", "projected_accepted", "rationale",
+        "request_sha256", "reviewer_identity", "reviewed_at", "schema_version", "verifier_artifacts",
+    }
+    if set(payload) != required or payload.get("schema_version") != "10" or payload.get("decision") not in {"accept", "reject"}:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_V10_INVALID")
+    if payload.get("external_publication_authorized") is not False:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_V10_PUBLICATION_INVALID")
+    if not all(isinstance(payload.get(field), str) and payload[field] for field in ("rationale", "reviewer_identity", "reviewed_at")):
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_V10_REVIEWER_INVALID")
+    try:
+        request_digest = require_sha256(payload.get("request_sha256"))
+    except ValueError as error:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_V10_REQUEST_INVALID") from error
+    if request_digest != request_sha256:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_V10_REQUEST_MISMATCH")
+    if _v10_identity(payload.get("candidate"), "LOCAL_ACCEPTANCE_DECISION_V10_IDENTITY_INVALID") != normalized_request["candidate"] or _v10_identity(payload.get("projected_accepted"), "LOCAL_ACCEPTANCE_DECISION_V10_IDENTITY_INVALID") != normalized_request["projected_accepted"]:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_V10_IDENTITY_MISMATCH")
+    if _v10_verifiers(payload.get("verifier_artifacts"), "LOCAL_ACCEPTANCE_DECISION_V10_VERIFIERS_INVALID") != normalized_request["verifier_artifacts"]:
+        raise SourceContractProposalError("LOCAL_ACCEPTANCE_DECISION_V10_VERIFIERS_MISMATCH")
+    return dict(payload)
+
+
 def _run_git(repository: Path, *arguments: str) -> subprocess.CompletedProcess[bytes]:
     try:
         return subprocess.run(
