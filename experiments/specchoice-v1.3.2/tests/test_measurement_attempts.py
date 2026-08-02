@@ -31,12 +31,28 @@ class MeasurementAttemptTests(unittest.TestCase):
     def setUp(self) -> None:
         self.experiment_root = Path(__file__).parents[1]
         self.bundle = self.experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        self.pending_bundle = self.experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+        self.pending_authority = self.experiment_root / "phase2/source-authority-v10-pending.json"
+        self.transition = self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json"
         self.batch = build_pr2164_adapter_batch(
             authority_path=self.experiment_root / "phase2/source-authority.json",
             bundle_root=self.bundle,
             rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
         )
         self.raw = (self.experiment_root / "fixtures/measurement/golden-predictions-v1.json").read_bytes()
+
+    def _pending_formal_args(self, root: Path) -> SimpleNamespace:
+        return SimpleNamespace(
+            authority=self.experiment_root / "phase2/source-authority.json",
+            bundle=self.pending_bundle,
+            rules=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
+            schema=self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json",
+            predictions=self.experiment_root / "fixtures/measurement/golden-predictions-v1.json",
+            pending_authority=self.pending_authority,
+            transition=self.transition,
+            attempt_root=root,
+            attempt_id="formal-golden",
+        )
 
     def _inputs(self, *, raw: bytes | None = None, mode: str = "formal") -> dict[str, object]:
         prediction_bytes = self.raw if raw is None else raw
@@ -198,6 +214,72 @@ class MeasurementAttemptTests(unittest.TestCase):
                 self.assertTrue(owned.is_symlink())
                 owned.unlink()
                 shutil.copy2(external, owned)
+
+    def test_public_formal_cli_rejects_prediction_schema_manifest_and_retained_artifact_leaf_races(self) -> None:
+        """Every formal reader must use the descriptor-held value it validated."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            args = self._pending_formal_args(root / "attempts")
+            original_read = filesystem.read_authoritative_file
+
+            for path, code in (
+                (args.predictions, "FORMAL_PREDICTIONS_UNREADABLE"),
+                (args.schema, "ATTEMPT_SCHEMA_UNREADABLE"),
+            ):
+                with self.subTest(role=path.name):
+                    def swapped_read(parent: Path, relative: str, *, target: Path = path):
+                        if parent == target.parent and relative == target.name:
+                            raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+                        return original_read(parent, relative)
+
+                    with patch("specchoice_measurement.cli.read_authoritative_file", side_effect=swapped_read, create=True):
+                        with self.assertRaisesRegex(AttemptError, code):
+                            command_run_formal_measurement(args)
+                    self.assertFalse(args.attempt_root.exists())
+
+    def test_public_adversarial_validator_rejects_report_oracle_golden_schema_and_attempt_leaf_races(self) -> None:
+        """The report validator derives its identity from held public inputs, never report claims."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            formal_args = self._pending_formal_args(root / "attempts")
+            formal_args.attempt_id = "formal"
+            command_run_formal_measurement(formal_args)
+            report = root / "adversarial.json"
+            args = SimpleNamespace(
+                authority=formal_args.authority,
+                bundle=formal_args.bundle,
+                rules=formal_args.rules,
+                schema=formal_args.schema,
+                predictions=formal_args.predictions,
+                oracle=self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json",
+                pending_authority=self.pending_authority,
+                transition=self.transition,
+                formal_attempt=root / "attempts/formal",
+                report=report,
+            )
+            command_run_adversarial_oracles(args)
+            original_read = filesystem.read_authoritative_file
+            for path in (args.report, args.oracle, args.predictions, args.schema):
+                with self.subTest(role=path.name):
+                    def swapped_read(parent: Path, relative: str, *, target: Path = path):
+                        if parent == target.parent and relative == target.name:
+                            raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+                        return original_read(parent, relative)
+
+                    with patch("specchoice_measurement.cli.read_authoritative_file", side_effect=swapped_read, create=True):
+                        with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
+                            validate_adversarial_report(
+                                report_path=args.report,
+                                formal_attempt=args.formal_attempt,
+                                authority=args.authority,
+                                bundle=args.bundle,
+                                rules=args.rules,
+                                schema=args.schema,
+                                predictions=args.predictions,
+                                oracle=args.oracle,
+                                pending_authority=args.pending_authority,
+                                transition=args.transition,
+                            )
 
     def test_formal_cli_writes_one_clean_all_eleven_attempt_and_refuses_regeneration(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

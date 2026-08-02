@@ -23,12 +23,14 @@ class MeasurementParsingTests(unittest.TestCase):
         self.experiment_root = Path(__file__).parents[1]
         self.bundle = (
             self.experiment_root
-            / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+            / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
         )
         self.batch = build_pr2164_adapter_batch(
             authority_path=self.experiment_root / "phase2/source-authority.json",
             bundle_root=self.bundle,
             rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
+            pending_authority_path=self.experiment_root / "phase2/source-authority-v10-pending.json",
+            transition_path=self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json",
         )
         self.assertTrue(self.batch.valid)
 
