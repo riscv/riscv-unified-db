@@ -197,6 +197,28 @@ def _adversarial_bindings(*, batch: object, schema_raw: bytes, golden_raw: bytes
     }
 
 
+def _require_adversarial_oracle_identity(
+    oracle: dict[str, object], *, golden_path: Path, golden_raw: bytes, code: str
+) -> list[dict[str, object]]:
+    """Require every closed oracle entry to name the held prediction bytes exactly."""
+    entries = oracle.get("oracles")
+    if set(oracle) != {"oracles", "schema_version"} or oracle.get("schema_version") != "required-diagnostics-v1" or not isinstance(entries, list) or not entries:
+        raise AttemptError(code)
+    expected_identity = {
+        "base_fixture": golden_path.name,
+        "base_sha256": sha256_bytes(golden_raw),
+    }
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {"expected_diagnostics", "id", "raw_input_identity"} or not isinstance(entry.get("id"), str) or not isinstance(entry.get("expected_diagnostics"), list):
+            raise AttemptError(code)
+        identity = entry.get("raw_input_identity")
+        if not isinstance(identity, dict) or set(identity) != {"base_fixture", "base_sha256", "mutation"} or not isinstance(identity.get("mutation"), str) or {
+            "base_fixture": identity.get("base_fixture"), "base_sha256": identity.get("base_sha256"),
+        } != expected_identity:
+            raise AttemptError(code)
+    return entries
+
+
 def command_run_adversarial_oracles(args: argparse.Namespace) -> int:
     """Prove frozen diagnostics for the explicit selected source mode only."""
     schema_raw = _read_bound_bytes(args.schema, "ADVERSARIAL_REPORT_INVALID")
@@ -207,10 +229,10 @@ def command_run_adversarial_oracles(args: argparse.Namespace) -> int:
     if (formal["role"], formal["status"]) != ("formal", "completed"):
         raise AttemptError("FORMAL_ATTEMPT_NOT_CLEAN")
     oracle, oracle_raw = _canonical_object(args.oracle, "ADVERSARIAL_ORACLE_INVALID")
-    entries = oracle.get("oracles")
-    if oracle.get("schema_version") != "required-diagnostics-v1" or not isinstance(entries, list) or not entries:
-        raise AttemptError("ADVERSARIAL_ORACLE_INVALID")
     golden, golden_raw = _canonical_object(args.predictions, "ADVERSARIAL_INPUT_INVALID")
+    entries = _require_adversarial_oracle_identity(
+        oracle, golden_path=args.predictions, golden_raw=golden_raw, code="ADVERSARIAL_ORACLE_INVALID"
+    )
     negative_span = _fixture_span(batch, "NEG_EXT_GATED_PBMTE")
     attempt_root = args.report.parent / f"{args.report.stem}-attempts"
     if args.report.exists() or args.report.is_symlink() or attempt_root.exists() or attempt_root.is_symlink():
@@ -334,6 +356,9 @@ def validate_adversarial_report(
         report, _ = _canonical_object(report_path, "ADVERSARIAL_REPORT_INVALID")
         oracle, oracle_raw = _canonical_object(oracle, "ADVERSARIAL_REPORT_INVALID")
         golden, golden_raw = _canonical_object(predictions, "ADVERSARIAL_REPORT_INVALID")
+        expected_entries = _require_adversarial_oracle_identity(
+            oracle, golden_path=predictions, golden_raw=golden_raw, code="ADVERSARIAL_REPORT_INVALID"
+        )
     except (AttemptError, OSError, ValueError) as error:
         raise AttemptError("ADVERSARIAL_REPORT_INVALID") from error
     if (formal.get("role"), formal.get("status")) != ("formal", "completed"):
@@ -347,7 +372,6 @@ def validate_adversarial_report(
         formal_attempt_sha256=str(formal["attempt_sha256"]),
     ):
         raise AttemptError("ADVERSARIAL_REPORT_INVALID")
-    expected_entries = oracle.get("oracles")
     cases = report.get("cases")
     if report.get("oracle_sha256") != sha256_bytes(oracle_raw) or not isinstance(expected_entries, list) or not isinstance(cases, list) or len(cases) != len(expected_entries):
         raise AttemptError("ADVERSARIAL_REPORT_INVALID")

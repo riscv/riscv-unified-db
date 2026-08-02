@@ -70,6 +70,12 @@ class MeasurementAttemptTests(unittest.TestCase):
         payload["adapter_batch_sha256"] = batch.adapter_batch_sha256
         predictions = root.parent / "pending-v3-golden-predictions.json"
         predictions.write_bytes(canonical_json_bytes(payload))
+        oracle_payload = json.loads((self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json").read_text(encoding="utf-8"))
+        for entry in oracle_payload["oracles"]:
+            entry["raw_input_identity"]["base_fixture"] = predictions.name
+            entry["raw_input_identity"]["base_sha256"] = sha256_bytes(predictions.read_bytes())
+        oracle = root.parent / "pending-v3-required-diagnostics.json"
+        oracle.write_bytes(canonical_json_bytes(oracle_payload))
         return SimpleNamespace(
             authority=self.authority,
             bundle=self.pending_bundle,
@@ -81,6 +87,7 @@ class MeasurementAttemptTests(unittest.TestCase):
             attempt_root=root,
             attempt_id="formal-golden",
             adapter_batch=batch,
+            oracle=oracle,
         )
 
     def _active_formal_args(self, root: Path) -> SimpleNamespace:
@@ -314,7 +321,7 @@ class MeasurementAttemptTests(unittest.TestCase):
                 rules=formal_args.rules,
                 schema=formal_args.schema,
                 predictions=formal_args.predictions,
-                oracle=self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json",
+                oracle=formal_args.oracle,
                 pending_authority=self.pending_authority,
                 transition=self.transition,
                 formal_attempt=root / "attempts/formal",
@@ -390,7 +397,7 @@ class MeasurementAttemptTests(unittest.TestCase):
                 rules=formal_args.rules,
                 schema=formal_args.schema,
                 predictions=formal_args.predictions,
-                oracle=self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json",
+                oracle=formal_args.oracle,
                 pending_authority=self.pending_authority,
                 transition=self.transition,
                 formal_attempt=root / "attempts/formal",
