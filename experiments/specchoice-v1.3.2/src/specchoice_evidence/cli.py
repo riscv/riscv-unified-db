@@ -22,7 +22,7 @@ from .baseline import (
     validate_boundary_restart,
     validate_restart_lineage,
 )
-from .filesystem import FilesystemPolicyError, read_authoritative_file, replace_descriptor_file, write_new_descriptor_file
+from .filesystem import FilesystemPolicyError, read_authoritative_file, replace_descriptor_file, require_relative_posix_path, write_new_descriptor_file
 from .receipt import (
     ReceiptError,
     build_blocked_receipt,
@@ -540,47 +540,127 @@ def command_validate_fixture_construction_proposal_v4(args: argparse.Namespace) 
     """Validate one decision-free semantic-gold construction proposal."""
     from specchoice_measurement.h1 import validate_h1_ontology_decision_v1
 
-    proposal_raw = args.proposal.read_bytes()
-    proposal = _load_canonical_fixture_construction_payload(
-        args.proposal, "FIXTURE_CONSTRUCTION_V4_PROPOSAL_NOT_CANONICAL"
-    )
-    repair_manifest = _load_canonical_fixture_construction_payload(
+    proposal, proposal_raw = _load_authoritative_canonical_v4(args.proposal, "FIXTURE_CONSTRUCTION_V4_PROPOSAL_NOT_CANONICAL")
+    repair_manifest, _ = _load_authoritative_canonical_v4(
         args.repair_manifest, "FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_NOT_CANONICAL"
     )
-    registry = _load_canonical_fixture_construction_payload(
-        args.registry, "FIXTURE_CONSTRUCTION_V4_REGISTRY_NOT_CANONICAL"
-    )
+    registry, _ = _load_authoritative_canonical_v4(args.registry, "FIXTURE_CONSTRUCTION_V4_REGISTRY_NOT_CANONICAL")
     ontology = validate_h1_ontology_decision_v1(
         options=_experiment_root() / "config/measurement/h1-ontology-policy-options-v1.json",
         supersession=_experiment_root() / "receipts/h1-review-route-supersession-v1.json",
         decision=args.ontology_decision,
     )
-    predecessor_manifest_raw = (args.predecessor / "snapshot-manifest.json").read_bytes()
-    predecessor_manifest = _load_canonical_fixture_construction_payload(
-        args.predecessor / "snapshot-manifest.json", "FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID"
+    authority, authority_raw = _load_authoritative_canonical_v4(
+        args.active_authority, "FIXTURE_CONSTRUCTION_V4_AUTHORITY_INVALID"
     )
-    predecessor_registry_raw = (args.predecessor / "fixture-registry-pr2164-v1.json").read_bytes()
+    _, revocation_raw = _load_authoritative_canonical_v4(args.revocation, "FIXTURE_CONSTRUCTION_V4_REVOCATION_INVALID")
+    _validate_phase2_source_authority(authority, authority_raw, args.predecessor, revocation_raw, "active")
+    predecessor = _v4_predecessor_material(args.predecessor)
+    repair_payloads = _v4_repair_payloads(repair_manifest)
     validated = validate_fixture_construction_proposal_v4(
         proposal=proposal,
         repair_manifest=repair_manifest,
         registry=registry,
-        ontology_decision_sha256=sha256_bytes(args.ontology_decision.read_bytes()),
-        predecessor_manifest_sha256=str(predecessor_manifest["snapshot_manifest_sha256"]),
-        predecessor_manifest=predecessor_manifest,
-        predecessor_registry_sha256=sha256_bytes(predecessor_registry_raw),
-        authority_sha256=sha256_bytes(args.active_authority.read_bytes()),
-        revocation_sha256=sha256_bytes(args.revocation.read_bytes()),
-        repair_root=_experiment_root(),
+        ontology=ontology,
+        predecessor_identity=predecessor["identity"],
+        predecessor_manifest_sha256=predecessor["manifest_sha256"],
+        predecessor_registry_sha256=predecessor["registry_sha256"],
+        predecessor_files=predecessor["files"],
+        predecessor_classes=predecessor["classes"],
+        authority_sha256=sha256_bytes(authority_raw),
+        revocation_sha256=sha256_bytes(revocation_raw),
+        repair_payloads=repair_payloads,
+        repository_root=_experiment_root().parents[1],
     )
     _print_json(
         {
-            "ontology_decision_sha256": sha256_bytes(args.ontology_decision.read_bytes()),
+            "ontology_decision_sha256": ontology["artifact_sha256"],
             "proposal_sha256": sha256_bytes(proposal_raw),
             "status": validated["status"],
             "valid": True,
         }
     )
     return 0
+
+
+def _load_authoritative_canonical_v4(path: Path, code: str) -> tuple[dict[str, object], bytes]:
+    """Read exactly one regular canonical JSON input without path reopening."""
+    def reject_duplicates(pairs: list[tuple[str, object]]) -> dict[str, object]:
+        value: dict[str, object] = {}
+        for key, item in pairs:
+            if key in value:
+                raise SourceContractProposalError(code)
+            value[key] = item
+        return value
+
+    try:
+        _, raw = read_authoritative_file(path.parent, path.name)
+        payload = json.loads(raw.decode("utf-8"), object_pairs_hook=reject_duplicates)
+    except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError, SourceContractProposalError) as error:
+        raise SourceContractProposalError(code) from error
+    if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
+        raise SourceContractProposalError(code)
+    return payload, raw
+
+
+def _v4_predecessor_material(predecessor: Path) -> dict[str, object]:
+    """Hold and validate every predecessor registry leaf once before comparison."""
+    identity = verify_accepted_bundle(predecessor)
+    manifest, _ = _load_authoritative_canonical_v4(predecessor / "snapshot-manifest.json", "FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+    registry, registry_raw = _load_authoritative_canonical_v4(predecessor / "fixture-registry-pr2164-v1.json", "FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+    fixtures = registry.get("fixtures")
+    if not isinstance(fixtures, list):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+    files: dict[str, dict[str, object]] = {}
+    classes: dict[str, str] = {}
+    for fixture in fixtures:
+        if not isinstance(fixture, dict) or not isinstance(fixture.get("fixture_id"), str) or not isinstance(fixture.get("fixture_class"), str) or not isinstance(fixture.get("files"), list):
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+        fixture_id = fixture["fixture_id"]
+        if fixture_id in classes:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+        classes[fixture_id] = fixture["fixture_class"]
+        for file in fixture["files"]:
+            if not isinstance(file, dict):
+                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+            try:
+                relative = require_relative_posix_path(str(file["local_bundle_path"])).as_posix()
+                role = str(file["role"])
+                length = require_byte_length(file["raw_byte_length"])
+                digest = require_sha256(file["raw_sha256"])
+                evidence, _ = read_authoritative_file(predecessor, relative)
+            except (KeyError, FilesystemPolicyError, ValueError) as error:
+                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID") from error
+            if relative in files or evidence.byte_length != length or evidence.sha256 != digest:
+                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+            files[relative] = {"byte_length": length, "role": role, "sha256": digest}
+    if len(files) != 28 or manifest.get("snapshot_manifest_sha256") is None:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+    return {
+        "classes": classes,
+        "files": files,
+        "identity": identity,
+        "manifest_sha256": manifest["snapshot_manifest_sha256"],
+        "registry_sha256": sha256_bytes(registry_raw),
+    }
+
+
+def _v4_repair_payloads(manifest: dict[str, object]) -> dict[str, bytes]:
+    repairs = manifest.get("repairs")
+    if not isinstance(repairs, list):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
+    result: dict[str, bytes] = {}
+    for repair in repairs:
+        if not isinstance(repair, dict) or not isinstance(repair.get("payload_path"), str):
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
+        payload = require_relative_posix_path(repair["payload_path"]).as_posix()
+        if payload in result:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
+        try:
+            _, result[payload] = read_authoritative_file(_experiment_root(), payload)
+        except (FilesystemPolicyError, OSError) as error:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID") from error
+    return result
 
 
 def command_validate_source_contract_proposal(args: argparse.Namespace) -> int:

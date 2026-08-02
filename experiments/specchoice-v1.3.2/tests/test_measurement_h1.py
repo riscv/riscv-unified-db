@@ -129,7 +129,15 @@ class H1PublicContractTests(unittest.TestCase):
             valid_decision_path.write_bytes(canonical_json_bytes(valid_decision))
             self.assertEqual(
                 validate_ontology(valid_decision_path),
-                {"decision_sha256": valid_decision["decision_sha256"], "valid": True},
+                {
+                    "artifact_sha256": sha256_bytes(valid_decision_path.read_bytes()),
+                    "decision_sha256": valid_decision["decision_sha256"],
+                    "selected_policy": {
+                        "cache": "unified_cache_block_identity",
+                        "pbmte": "excluded_from_discovery",
+                    },
+                    "valid": True,
+                },
             )
             invalid_decision_path = temporary / "invalid-ontology-decision.json"
             for timestamp in (

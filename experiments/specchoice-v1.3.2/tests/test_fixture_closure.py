@@ -754,6 +754,87 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             self.assertEqual(proposal_payload["selected_policy"]["pbmte"], "surfaced_classified_out")
             self.assertEqual(proposal_payload["selected_policy"]["cache"], "unified_cache_block_identity")
 
+            cache_gold = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_DIRECT_CACHE_BLOCK/gold.yaml").read_text(encoding="utf-8")
+            pmp_gold = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_DIRECT_NUM_PMP/gold.yaml").read_text(encoding="utf-8")
+            geilen_expected = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_RECALL_COUNT_GEILEN/expected.yaml").read_text(encoding="utf-8")
+            asid_gold = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_WARL_ASID_WIDTH/gold.yaml").read_text(encoding="utf-8")
+            asid_expected = (experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_WARL_ASID_WIDTH/expected.yaml").read_text(encoding="utf-8")
+            self.assertIn("enum:", cache_gold)
+            self.assertIn("0x4", cache_gold)
+            self.assertNotIn("uniform throughout", cache_gold)
+            self.assertIn("- 0", pmp_gold)
+            self.assertIn("- 16", pmp_gold)
+            self.assertIn("- 64", pmp_gold)
+            self.assertIn("existing_alias", geilen_expected)
+            self.assertNotIn("versioned_aliases", asid_gold)
+            self.assertIn("versioned_aliases", asid_expected)
+
+            def run_v4(*, proposal_path: Path = proposal_v4, manifest_path: Path = repair_manifest, registry_path: Path = registry_v2, decision_path: Path = experiment / "reviews/h1-source-gold-ontology-decision-v1.json") -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    [
+                        sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-proposal-v4",
+                        "--proposal", str(proposal_path), "--predecessor", str(predecessor_v3),
+                        "--active-authority", str(experiment / "phase2/source-authority.json"),
+                        "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"),
+                        "--ontology-decision", str(decision_path), "--repair-manifest", str(manifest_path),
+                        "--registry", str(registry_path),
+                    ], cwd=experiment, check=False, capture_output=True, text=True,
+                )
+
+            with tempfile.TemporaryDirectory() as directory:
+                temporary = Path(directory)
+                original_proposal = json.loads(proposal_v4.read_text(encoding="utf-8"))
+                original_manifest = json.loads(repair_manifest.read_text(encoding="utf-8"))
+                original_registry = json.loads(registry_v2.read_text(encoding="utf-8"))
+
+                def write_payload(name: str, value: object) -> Path:
+                    path = temporary / name
+                    path.write_bytes(canonical_json_bytes(value))
+                    return path
+
+                with self.subTest("v4_rejects_forged_old_hash_and_length"):
+                    forged_manifest = copy.deepcopy(original_manifest)
+                    forged_manifest["repairs"][0]["old_sha256"] = "0" * 64
+                    forged_manifest["repairs"][0]["old_byte_length"] = 0
+                    forged_manifest_path = write_payload("forged-manifest.json", forged_manifest)
+                    forged_proposal = copy.deepcopy(original_proposal)
+                    forged_proposal["repair_manifest"]["sha256"] = sha256_bytes(forged_manifest_path.read_bytes())
+                    forged_proposal["replacements"] = forged_manifest["repairs"]
+                    self.assertNotEqual(run_v4(proposal_path=write_payload("forged-proposal.json", forged_proposal), manifest_path=forged_manifest_path).returncode, 0)
+
+                with self.subTest("v4_rejects_forged_registry_predecessor_and_reused_leaf"):
+                    forged_registry = copy.deepcopy(original_registry)
+                    forged_registry["predecessor_registry_sha256"] = "0" * 64
+                    forged_registry["fixtures"][0]["files"][0]["role"] = "fixture_gold"
+                    forged_registry_path = write_payload("forged-registry.json", forged_registry)
+                    forged_proposal = copy.deepcopy(original_proposal)
+                    forged_proposal["registry"]["sha256"] = sha256_bytes(forged_registry_path.read_bytes())
+                    self.assertNotEqual(run_v4(proposal_path=write_payload("registry-proposal.json", forged_proposal), registry_path=forged_registry_path).returncode, 0)
+
+                with self.subTest("v4_rejects_opposite_valid_human_selection"):
+                    opposite = json.loads((experiment / "reviews/h1-source-gold-ontology-decision-v1.json").read_text(encoding="utf-8"))
+                    opposite["pbmte_policy"]["selection"] = "excluded_from_discovery"
+                    opposite.pop("decision_sha256")
+                    opposite["decision_sha256"] = sha256_bytes(canonical_json_bytes(opposite))
+                    opposite_path = write_payload("opposite-decision.json", opposite)
+                    self.assertNotEqual(run_v4(decision_path=opposite_path).returncode, 0)
+
+                with self.subTest("v4_rejects_nonexistent_code_commit"):
+                    forged_proposal = copy.deepcopy(original_proposal)
+                    forged_proposal["fixed_code_commit"] = "0" * 40
+                    self.assertNotEqual(run_v4(proposal_path=write_payload("zero-commit.json", forged_proposal)).returncode, 0)
+
+                with self.subTest("v4_rejects_noncanonical_duplicate_and_symlink_inputs"):
+                    noncanonical = temporary / "noncanonical-proposal.json"
+                    noncanonical.write_text(json.dumps(original_proposal, indent=2), encoding="utf-8")
+                    self.assertNotEqual(run_v4(proposal_path=noncanonical).returncode, 0)
+                    duplicate = temporary / "duplicate-proposal.json"
+                    duplicate.write_bytes(b'{"schema_version":"fixture-construction-proposal-v4","schema_version":"fixture-construction-proposal-v4"}')
+                    self.assertNotEqual(run_v4(proposal_path=duplicate).returncode, 0)
+                    symlink = temporary / "proposal-link.json"
+                    symlink.symlink_to(proposal_v4)
+                    self.assertNotEqual(run_v4(proposal_path=symlink).returncode, 0)
+
     def test_accepted_v3_is_distinct_and_downstream_eligible(self) -> None:
         experiment = Path(__file__).resolve().parents[1]
         candidate = experiment / "bundles/candidates/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v1"

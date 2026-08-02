@@ -595,7 +595,7 @@ def validate_h1_ontology_decision_v1(*, options: Path, supersession: Path, decis
     """Validate a human-authored closed selection without supplying any human field."""
     options_value = validate_h1_ontology_options_v1(options=options)
     supersession_value = _validate_route_supersession_receipt(supersession)
-    value, _ = _read_canonical_external(decision, "H1_ONTOLOGY_DECISION_INVALID")
+    value, raw = _read_canonical_external(decision, "H1_ONTOLOGY_DECISION_INVALID")
     required = {
         "bindings", "cache_policy", "decision_sha256", "external_publication_authorized", "pbmte_policy",
         "reviewer", "schema_version", "signature", "timestamp",
@@ -628,7 +628,15 @@ def validate_h1_ontology_decision_v1(*, options: Path, supersession: Path, decis
         isinstance(value.get(key), str) and value[key].strip() for key in ("reviewer", "signature")
     ) or not _is_canonical_utc_timestamp(value.get("timestamp")):
         raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
-    return {"decision_sha256": value["decision_sha256"], "valid": True}
+    return {
+        "artifact_sha256": sha256_bytes(raw),
+        "decision_sha256": value["decision_sha256"],
+        "selected_policy": {
+            "cache": value["cache_policy"]["selection"],
+            "pbmte": value["pbmte_policy"]["selection"],
+        },
+        "valid": True,
+    }
 
 
 def build_h1_packet(

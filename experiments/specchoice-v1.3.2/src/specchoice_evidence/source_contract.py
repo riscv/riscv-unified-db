@@ -64,22 +64,35 @@ _FIXTURE_CONSTRUCTION_CONTROL_PATHS = (
     "reports/h1/adversarial-oracle-results-v2.json",
 )
 
-_SEMANTIC_GOLD_V4_REPAIR_TARGETS = {
-    "raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/expected.yaml",
-    "raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/gold.yaml",
-    "raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/gold.yaml",
+_V4_SEMANTIC_REPAIRS = {
+    "raw/evaluation_fixtures/CAND_WARL_FIXED_LEGAL_SET/expected.yaml",
     "raw/evaluation_fixtures/POS_DIRECT_NUM_PMP/gold.yaml",
     "raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/expected.yaml",
     "raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/gold.yaml",
     "raw/evaluation_fixtures/POS_WARL_ASID_WIDTH/expected.yaml",
     "raw/evaluation_fixtures/POS_WARL_ASID_WIDTH/gold.yaml",
 }
+_V4_CACHE_REPAIRS = {
+    "unified_cache_block_identity": {
+        "raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/gold.yaml",
+    },
+    "scoped_cache_block_identities": {
+        "raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/gold.yaml",
+    },
+}
+_V4_PBMTE_EFFECTS = {
+    "excluded_from_discovery": {"fixture_class": "negative", "gold": False},
+    "surfaced_classified_out": {"fixture_class": "candidate", "gold": True},
+    "included_capability_parameter": {"fixture_class": "positive", "gold": True},
+}
 
 
 def validate_fixture_construction_proposal_v4(
-    *, proposal: object, repair_manifest: object, registry: object, ontology_decision_sha256: str,
-    predecessor_manifest_sha256: str, predecessor_manifest: object, predecessor_registry_sha256: str,
-    authority_sha256: str, revocation_sha256: str, repair_root: Path,
+    *, proposal: object, repair_manifest: object, registry: object, ontology: Mapping[str, object],
+    predecessor_identity: Mapping[str, str], predecessor_manifest_sha256: str,
+    predecessor_registry_sha256: str, predecessor_files: Mapping[str, Mapping[str, object]],
+    predecessor_classes: Mapping[str, str], authority_sha256: str, revocation_sha256: str,
+    repair_payloads: Mapping[str, bytes], repository_root: Path,
 ) -> dict[str, object]:
     """Validate the decision-bound, append-only semantic-gold construction request."""
     if not isinstance(proposal, Mapping) or set(proposal) != {
@@ -94,24 +107,34 @@ def validate_fixture_construction_proposal_v4(
         proposal.get("external_publication_authorized") is not False
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PROPOSAL_INVALID")
-    if not isinstance(proposal.get("fixed_code_commit"), str) or len(proposal["fixed_code_commit"]) != 40:
-        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
-    try:
-        int(proposal["fixed_code_commit"], 16)
-    except ValueError as error:
-        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
-    _require_v4_binding(proposal.get("ontology_decision"), "reviews/h1-source-gold-ontology-decision-v1.json", ontology_decision_sha256)
+    _require_v4_git_commit(proposal.get("fixed_code_commit"), repository_root)
+    artifact_sha256 = ontology.get("artifact_sha256")
+    selected_policy = ontology.get("selected_policy")
+    if not isinstance(artifact_sha256, str) or not isinstance(selected_policy, Mapping):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_POLICY_INVALID")
+    pbmte = selected_policy.get("pbmte")
+    cache = selected_policy.get("cache")
+    if pbmte not in _V4_PBMTE_EFFECTS or cache not in _V4_CACHE_REPAIRS:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_POLICY_INVALID")
+    _require_v4_binding(proposal.get("ontology_decision"), "reviews/h1-source-gold-ontology-decision-v1.json", artifact_sha256)
     _require_v4_binding(proposal.get("active_authority"), "phase2/source-authority.json", authority_sha256)
     _require_v4_binding(proposal.get("revocation"), "receipts/fixture-closure-revocation-v2.json", revocation_sha256)
-    _validate_v4_repair_manifest(repair_manifest, ontology_decision_sha256, repair_root)
-    _validate_v4_registry(registry, repair_manifest, ontology_decision_sha256)
+    allowed_repairs = _v4_allowed_repairs(str(cache), str(pbmte))
+    _validate_v4_repair_manifest(
+        repair_manifest, artifact_sha256, allowed_repairs, predecessor_files, repair_payloads, str(cache), str(pbmte),
+    )
+    inventory = _v4_inventory(predecessor_files, predecessor_classes, str(pbmte), repair_manifest)
+    _validate_v4_registry(
+        registry, repair_manifest, artifact_sha256, predecessor_registry_sha256, predecessor_files,
+        predecessor_classes, str(pbmte), inventory,
+    )
     predecessor = _require_mapping(proposal.get("predecessor"), "FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
     expected_predecessor = {
-        "generation": "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3",
+        "generation": predecessor_identity.get("generation"),
         "manifest_sha256": predecessor_manifest_sha256,
         "path": "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3",
         "registry_sha256": predecessor_registry_sha256,
-        "root_sha256": _require_mapping(predecessor_manifest, "FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID").get("root_sha256"),
+        "root_sha256": predecessor_identity.get("root_sha256"),
     }
     if predecessor != expected_predecessor:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
@@ -121,11 +144,9 @@ def validate_fixture_construction_proposal_v4(
     _require_v4_binding(proposal.get("registry"), "config/fixture-registry-pr2164-v2.json", registry_sha256)
     if proposal.get("replacements") != repair_manifest["repairs"]:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_CLOSURE_INVALID")
-    if proposal.get("selected_policy") != {"cache": "unified_cache_block_identity", "pbmte": "surfaced_classified_out"}:
+    if proposal.get("selected_policy") != {"cache": cache, "pbmte": pbmte}:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_POLICY_INVALID")
-    if proposal.get("successor_inventory") != {
-        "fixture_count": 11, "partition": {"candidate": 2, "negative": 3, "positive": 6}, "raw_file_count": 29,
-    }:
+    if proposal.get("successor_inventory") != inventory:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_INVENTORY_INVALID")
     return dict(proposal)
 
@@ -136,7 +157,41 @@ def _require_v4_binding(value: object, path: str, digest: str) -> None:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_BINDING_INVALID")
 
 
-def _validate_v4_repair_manifest(manifest: object, ontology_decision_sha256: str, repair_root: Path) -> None:
+def _require_v4_git_commit(value: object, repository_root: Path) -> None:
+    if not isinstance(value, str) or len(value) != 40:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
+    try:
+        int(value, 16)
+        object_check = subprocess.run(
+            ["git", "-C", str(repository_root), "cat-file", "-e", f"{value}^{{commit}}"],
+            check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
+        )
+        source_check = subprocess.run(
+            ["git", "-C", str(repository_root), "diff", "--quiet", value, "--",
+             "experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py",
+             "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py"],
+            check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
+        )
+    except (ValueError, OSError, subprocess.TimeoutExpired) as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
+    if object_check.returncode != 0 or source_check.returncode != 0:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
+
+
+def _v4_allowed_repairs(cache: str, pbmte: str) -> set[str]:
+    effect = _V4_PBMTE_EFFECTS[pbmte]
+    result = set(_V4_SEMANTIC_REPAIRS) | set(_V4_CACHE_REPAIRS[cache]) | {
+        "raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/expected.yaml",
+    }
+    if effect["gold"]:
+        result.add("raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/gold.yaml")
+    return result
+
+
+def _validate_v4_repair_manifest(
+    manifest: object, ontology_decision_sha256: str, allowed_repairs: set[str],
+    predecessor_files: Mapping[str, Mapping[str, object]], repair_payloads: Mapping[str, bytes], cache: str, pbmte: str,
+) -> None:
     if not isinstance(manifest, Mapping) or set(manifest) != {
         "ontology_decision_sha256", "predecessor_generation", "repairs", "schema_version",
     } or manifest.get("schema_version") != "pr2164-semantic-gold-repair-manifest-v1" or (
@@ -149,57 +204,86 @@ def _validate_v4_repair_manifest(manifest: object, ontology_decision_sha256: str
     seen: set[str] = set()
     for repair in repairs:
         if not isinstance(repair, Mapping) or set(repair) != {
-            "control", "kind", "new_sha256", "old_sha256", "payload_path", "target_path",
+            "control", "kind", "new_byte_length", "new_sha256", "old_byte_length", "old_sha256", "payload_path", "reason", "target_path",
         } or repair.get("kind") not in {"add", "replace"} or repair.get("control") not in {
             "cache_policy", "pbmte_policy", "semantic_correction",
         }:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
         target = _normalized_path(repair.get("target_path"), "fixture_construction_v4_target_path")
         payload = _normalized_path(repair.get("payload_path"), "fixture_construction_v4_payload_path")
-        if target in seen or target not in _SEMANTIC_GOLD_V4_REPAIR_TARGETS or not payload.startswith(
-            "config/fixture-repairs/pr2164-semantic-gold-v1/"
-        ):
+        expected_payload = "config/fixture-repairs/pr2164-semantic-gold-v1/" + "/".join(target.split("/")[2:])
+        if target in seen or target not in allowed_repairs or payload != expected_payload:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
         seen.add(target)
         try:
             new_sha = require_sha256(repair.get("new_sha256"))
         except ValueError as error:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID") from error
+        expected_control = "cache_policy" if target in _V4_CACHE_REPAIRS[cache] else (
+            "pbmte_policy" if "NEG_EXT_GATED_PBMTE" in target else "semantic_correction"
+        )
+        if repair.get("control") != expected_control or not isinstance(repair.get("reason"), str) or not repair["reason"].strip():
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
+        old = predecessor_files.get(target)
         if repair.get("kind") == "add":
-            if repair.get("old_sha256") is not None:
+            if old is not None or repair.get("old_sha256") is not None or repair.get("old_byte_length") is not None:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
         else:
             try:
-                require_sha256(repair.get("old_sha256"))
+                old_sha = require_sha256(repair.get("old_sha256")); old_length = require_byte_length(repair.get("old_byte_length"))
             except ValueError as error:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID") from error
+            if old is None or (old_sha, old_length) != (old["sha256"], old["byte_length"]):
+                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+        raw = repair_payloads.get(payload)
         try:
-            raw = (repair_root / payload).read_bytes()
-        except OSError as error:
-            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID") from error
-        if sha256_bytes(raw) != new_sha:
+            new_length = require_byte_length(repair.get("new_byte_length"))
+        except ValueError as error:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID") from error
+        if raw is None or sha256_bytes(raw) != new_sha or len(raw) != new_length:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID")
-    if seen != _SEMANTIC_GOLD_V4_REPAIR_TARGETS or [item.get("target_path") for item in repairs] != sorted(seen):
+    if seen != allowed_repairs or [item.get("target_path") for item in repairs] != sorted(seen):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
-    cache = (repair_root / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_DIRECT_CACHE_BLOCK/gold.yaml").read_text(encoding="utf-8")
-    pmp = (repair_root / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_DIRECT_NUM_PMP/gold.yaml").read_text(encoding="utf-8")
-    geilen = (repair_root / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_RECALL_COUNT_GEILEN/gold.yaml").read_text(encoding="utf-8")
-    asid = (repair_root / "config/fixture-repairs/pr2164-semantic-gold-v1/POS_WARL_ASID_WIDTH/gold.yaml").read_text(encoding="utf-8")
-    pbmte = (repair_root / "config/fixture-repairs/pr2164-semantic-gold-v1/NEG_EXT_GATED_PBMTE/expected.yaml").read_text(encoding="utf-8")
-    if "uniform throughout" in cache or "implementation-specific" not in cache or "- 16" not in pmp or "- 64" not in pmp or (
-        "minimum: 0" not in geilen or "GEILEN" not in geilen or "ASIDLEN" not in asid or "ASID_WIDTH" not in asid or (
-            "fixture_class: candidate" not in pbmte or "final_disposition: classify_out" not in pbmte
-        )
+    text = {target: repair_payloads[repair["payload_path"]].decode("utf-8") for repair in repairs for target in [repair["target_path"]]}
+    cache_text = text["raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/gold.yaml"]
+    pmp_text = text["raw/evaluation_fixtures/POS_DIRECT_NUM_PMP/gold.yaml"]
+    geilen_text = text["raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/gold.yaml"]
+    geilen_expected = text["raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/expected.yaml"]
+    asid_text = text["raw/evaluation_fixtures/POS_WARL_ASID_WIDTH/gold.yaml"]
+    asid_expected = text["raw/evaluation_fixtures/POS_WARL_ASID_WIDTH/expected.yaml"]
+    pbmte_text = text["raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/expected.yaml"]
+    cand_text = text["raw/evaluation_fixtures/CAND_WARL_FIXED_LEGAL_SET/expected.yaml"]
+    if "uniform throughout" in cache_text or "implementation-specific" not in cache_text or "enum:" not in cache_text or "0x4" not in cache_text or (
+        "- 0" not in pmp_text or "- 16" not in pmp_text or "- 64" not in pmp_text or "minimum: 0" not in geilen_text or
+        "direct targets" not in geilen_text or "gold_name: NUM_EXTERNAL_GUEST_INTERRUPTS" not in geilen_expected or
+        "existing_alias" not in geilen_expected or "ASIDLEN" not in asid_text or "ASID_WIDTH" not in asid_expected or
+        "existing_alias" not in asid_expected or f"fixture_class: {_V4_PBMTE_EFFECTS[pbmte]['fixture_class']}" not in pbmte_text or
+        "final_disposition: classify_out" not in pbmte_text or "classify_out_reason: isa_fixed_singleton_legal_set" not in cand_text
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID")
 
 
-def _validate_v4_registry(registry: object, manifest: Mapping[str, object], ontology_decision_sha256: str) -> None:
+def _v4_inventory(
+    predecessor_files: Mapping[str, Mapping[str, object]], predecessor_classes: Mapping[str, str], pbmte: str, manifest: Mapping[str, object],
+) -> dict[str, object]:
+    classes = dict(predecessor_classes)
+    classes["NEG_EXT_GATED_PBMTE"] = str(_V4_PBMTE_EFFECTS[pbmte]["fixture_class"])
+    partition = {kind: list(classes.values()).count(kind) for kind in ("candidate", "negative", "positive")}
+    repairs = manifest["repairs"]
+    assert isinstance(repairs, list)
+    raw_count = len(predecessor_files) + sum(1 for item in repairs if item["kind"] == "add")
+    return {"fixture_count": len(classes), "partition": partition, "raw_file_count": raw_count}
+
+
+def _validate_v4_registry(
+    registry: object, manifest: Mapping[str, object], ontology_decision_sha256: str, predecessor_registry_sha256: str,
+    predecessor_files: Mapping[str, Mapping[str, object]], predecessor_classes: Mapping[str, str], pbmte: str, inventory: Mapping[str, object],
+) -> None:
     if not isinstance(registry, Mapping) or set(registry) != {
         "fixture_count", "fixtures", "ontology_decision_sha256", "predecessor_registry_sha256", "raw_file_count", "schema_version",
-    } or registry.get("schema_version") != "2" or registry.get("fixture_count") != 11 or registry.get("raw_file_count") != 29 or (
-        registry.get("ontology_decision_sha256") != ontology_decision_sha256
-    ):
+    } or registry.get("schema_version") != "2" or registry.get("ontology_decision_sha256") != ontology_decision_sha256 or (
+        registry.get("predecessor_registry_sha256") != predecessor_registry_sha256
+    ) or registry.get("fixture_count") != inventory["fixture_count"] or registry.get("raw_file_count") != inventory["raw_file_count"]:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
     try:
         require_sha256(registry.get("predecessor_registry_sha256"))
@@ -209,23 +293,22 @@ def _validate_v4_registry(registry: object, manifest: Mapping[str, object], onto
     if not isinstance(fixtures, list) or [item.get("fixture_id") if isinstance(item, Mapping) else None for item in fixtures] != sorted(_EXPECTED_FIXTURES):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
     repairs = {item["target_path"]: item for item in manifest["repairs"] if isinstance(item, Mapping)}
-    registry_repairs: set[str] = set()
-    count = 0
-    partition = {"candidate": 0, "negative": 0, "positive": 0}
+    expected_paths = set(predecessor_files) | {path for path, item in repairs.items() if item["kind"] == "add"}
+    actual_paths: set[str] = set()
+    classes = dict(predecessor_classes)
+    classes["NEG_EXT_GATED_PBMTE"] = str(_V4_PBMTE_EFFECTS[pbmte]["fixture_class"])
     for fixture in fixtures:
         if not isinstance(fixture, Mapping) or set(fixture) != {"files", "fixture_class", "fixture_id"}:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
         fixture_id = fixture.get("fixture_id")
-        expected_class = "candidate" if fixture_id == "NEG_EXT_GATED_PBMTE" else _EXPECTED_FIXTURES.get(fixture_id, (None,))[0]
-        if fixture.get("fixture_class") != expected_class or expected_class not in partition:
+        expected_class = classes.get(str(fixture_id))
+        if fixture.get("fixture_class") != expected_class:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
-        partition[expected_class] += 1
         files = fixture.get("files")
         if not isinstance(files, list) or [item.get("path") if isinstance(item, Mapping) else None for item in files] != sorted(
             item.get("path") for item in files if isinstance(item, Mapping)
         ):
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
-        count += len(files)
         for file in files:
             if not isinstance(file, Mapping) or set(file) != {"byte_length", "origin", "path", "role", "sha256"}:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
@@ -234,15 +317,30 @@ def _validate_v4_registry(registry: object, manifest: Mapping[str, object], onto
                 require_byte_length(file.get("byte_length")); require_sha256(file.get("sha256"))
             except ValueError as error:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID") from error
+            if path in actual_paths:
+                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
+            actual_paths.add(path)
             if file.get("origin") == "repair":
                 repair = repairs.get(path)
-                if repair is None or repair.get("new_sha256") != file.get("sha256"):
+                if repair is None or (repair.get("new_sha256"), repair.get("new_byte_length"), file.get("role")) != (
+                    file.get("sha256"), file.get("byte_length"), _v4_expected_role(path),
+                ):
                     raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_CLOSURE_INVALID")
-                registry_repairs.add(path)
-            elif file.get("origin") != "predecessor":
+            elif file.get("origin") == "predecessor":
+                predecessor = predecessor_files.get(path)
+                if predecessor is None or (file.get("role"), file.get("byte_length"), file.get("sha256")) != (
+                    predecessor["role"], predecessor["byte_length"], predecessor["sha256"],
+                ):
+                    raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID")
+            else:
                 raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
-    if count != 29 or partition != {"candidate": 2, "negative": 3, "positive": 6} or registry_repairs != set(repairs):
+    if actual_paths != expected_paths:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_CLOSURE_INVALID")
+
+
+def _v4_expected_role(path: str) -> str:
+    name = path.rsplit("/", 1)[-1]
+    return _FIXTURE_ROLES[name]
 
 
 def _fixture_path(value: object) -> str:
