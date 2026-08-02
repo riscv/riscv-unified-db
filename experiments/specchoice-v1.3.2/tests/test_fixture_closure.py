@@ -117,6 +117,18 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             }
             decision_path = root / "decision.json"
             decision_path.write_bytes(canonical_json_bytes(decision))
+            self.assertEqual(
+                self._public_command(
+                    experiment,
+                    "validate-local-acceptance-decision-v10", "--request", str(request),
+                    "--decision", str(decision_path),
+                ),
+                {
+                    "decision": "accept",
+                    "request_sha256": sha256_bytes(request.read_bytes()),
+                    "status": "local_acceptance_decision_valid",
+                },
+            )
             accepted_root = root / "accepted"
             accepted = self._public_command(
                 experiment,

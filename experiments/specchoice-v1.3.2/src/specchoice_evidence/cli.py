@@ -799,6 +799,28 @@ def command_write_local_acceptance_request_v10(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_validate_local_acceptance_decision_v10(args: argparse.Namespace) -> int:
+    """Validate one canonical, hash-bound local acceptance disposition without writing state."""
+    request_raw = args.request.read_bytes()
+    request = _load_canonical_fixture_construction_payload(
+        args.request, "LOCAL_ACCEPTANCE_REQUEST_V10_NOT_CANONICAL"
+    )
+    decision = _load_canonical_fixture_construction_payload(
+        args.decision, "LOCAL_ACCEPTANCE_DECISION_V10_NOT_CANONICAL"
+    )
+    validated = validate_local_acceptance_decision_v10(
+        decision, request, sha256_bytes(request_raw)
+    )
+    _print_json(
+        {
+            "decision": validated["decision"],
+            "request_sha256": sha256_bytes(request_raw),
+            "status": "local_acceptance_decision_valid",
+        }
+    )
+    return 0
+
+
 def command_accept_fixture_closure_local_v10(args: argparse.Namespace) -> int:
     _print_json(accept_fixture_closure_candidate_v10(args.request, args.decision, args.candidate, args.accepted_directory))
     return 0
@@ -1280,6 +1302,10 @@ def build_parser() -> argparse.ArgumentParser:
     request_v10.add_argument("--active-authority", type=Path, required=True)
     request_v10.add_argument("--request", type=Path, required=True)
     request_v10.set_defaults(handler=command_write_local_acceptance_request_v10)
+    validate_local_acceptance_v10 = commands.add_parser("validate-local-acceptance-decision-v10")
+    validate_local_acceptance_v10.add_argument("--request", type=Path, required=True)
+    validate_local_acceptance_v10.add_argument("--decision", type=Path, required=True)
+    validate_local_acceptance_v10.set_defaults(handler=command_validate_local_acceptance_decision_v10)
     accept_v10 = commands.add_parser("accept-fixture-closure-local-v10")
     accept_v10.add_argument("--request", type=Path, required=True)
     accept_v10.add_argument("--decision", type=Path, required=True)
