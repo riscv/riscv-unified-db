@@ -173,6 +173,21 @@ builtin function sw_write_mcycle {
   }
 }
 
+builtin function write_ctrcyclecounter {
+  arguments Bits<27> value
+  description {
+    Writes value into (hardware) CtrCycleCounter.
+  }
+}
+
+builtin function write_ccv {
+  arguments Boolean value
+  description {
+    Updates (hardware bit) CCV, which is reflected in ctrdata.CCV 
+    of the next qualified control transfer record.
+  }
+}
+
 builtin function cache_block_zero {
   arguments
     XReg cache_block_physical_address
