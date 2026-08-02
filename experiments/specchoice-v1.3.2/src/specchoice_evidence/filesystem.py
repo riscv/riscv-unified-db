@@ -192,28 +192,80 @@ def write_new_descriptor_file(root: Path, relative_path: str, content: bytes) ->
             os.close(held)
 
 
-def replace_descriptor_file(root: Path, relative_path: str, content: bytes) -> None:
-    """Durably replace one held regular leaf with exact bytes via dirfd-only rename."""
+def _read_held_regular_file(parent: int, leaf: str, accepted_device: int) -> bytes:
+    """Read one held regular leaf and reject identity or byte races."""
+    descriptor: int | None = None
+    try:
+        before = _existing_leaf_kind(parent, leaf, accepted_device)
+        descriptor = os.open(leaf, _file_flags(), dir_fd=parent)
+        opened = os.fstat(descriptor)
+        if not stat.S_ISREG(opened.st_mode) or not _same_identity(before, opened) or opened.st_dev != accepted_device:
+            raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+        chunks: list[bytes] = []
+        while True:
+            chunk = os.read(descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        if _signature(before) != _signature(os.fstat(descriptor)):
+            raise FilesystemPolicyError("AUTHORITATIVE_FILE_CHANGED")
+        return b"".join(chunks)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
+def _fsync_held_regular_file(parent: int, leaf: str, accepted_device: int) -> None:
+    """Durably acknowledge an exact process-death temporary without reopening paths."""
+    descriptor: int | None = None
+    try:
+        before = _existing_leaf_kind(parent, leaf, accepted_device)
+        descriptor = os.open(leaf, _file_flags(), dir_fd=parent)
+        opened = os.fstat(descriptor)
+        if not stat.S_ISREG(opened.st_mode) or not _same_identity(before, opened) or opened.st_dev != accepted_device:
+            raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+        os.fsync(descriptor)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
+def replace_descriptor_file(root: Path, relative_path: str, content: bytes, expected_current: bytes) -> None:
+    """Replace only an unchanged held target, reusing an exact crash temporary."""
     relative = require_relative_posix_path(relative_path)
     descriptors, parent, leaf, accepted_device = _held_parent(root, relative)
     descriptor: int | None = None
     temporary = f".{leaf}.cutover"
-    created = False
     try:
+        if _read_held_regular_file(parent, leaf, accepted_device) != expected_current:
+            raise FilesystemPolicyError("AUTHORITATIVE_TARGET_MISMATCH")
+        try:
+            temporary_raw = _read_held_regular_file(parent, temporary, accepted_device)
+        except FilesystemPolicyError as error:
+            if str(error) != "AUTHORITATIVE_FILE_MISSING":
+                raise
+            temporary_raw = None
+        if temporary_raw is None:
+            descriptor = os.open(
+                temporary,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | _require_flag("O_NOFOLLOW") | _require_flag("O_CLOEXEC"),
+                0o644,
+                dir_fd=parent,
+            )
+            _write_all(descriptor, content)
+            os.fsync(descriptor)
+            os.close(descriptor)
+            descriptor = None
+        elif temporary_raw != content:
+            raise FilesystemPolicyError("AUTHORITATIVE_TEMPORARY_MISMATCH")
+        else:
+            _fsync_held_regular_file(parent, temporary, accepted_device)
+        # This second held-parent read closes target changes detectable between
+        # temporary creation/reuse and the dirfd-only replacement.
+        if _read_held_regular_file(parent, leaf, accepted_device) != expected_current:
+            raise FilesystemPolicyError("AUTHORITATIVE_TARGET_MISMATCH")
         _existing_leaf_kind(parent, leaf, accepted_device)
-        descriptor = os.open(
-            temporary,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | _require_flag("O_NOFOLLOW") | _require_flag("O_CLOEXEC"),
-            0o644,
-            dir_fd=parent,
-        )
-        created = True
-        _write_all(descriptor, content)
-        os.fsync(descriptor)
-        os.close(descriptor)
-        descriptor = None
         os.replace(temporary, leaf, src_dir_fd=parent, dst_dir_fd=parent)
-        created = False
         os.fsync(parent)
     except FilesystemPolicyError:
         raise
@@ -224,11 +276,6 @@ def replace_descriptor_file(root: Path, relative_path: str, content: bytes) -> N
     finally:
         if descriptor is not None:
             os.close(descriptor)
-        if created:
-            try:
-                os.unlink(temporary, dir_fd=parent)
-            except OSError:
-                pass
         for held in reversed(descriptors):
             os.close(held)
 

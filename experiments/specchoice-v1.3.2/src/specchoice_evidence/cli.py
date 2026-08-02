@@ -920,11 +920,65 @@ def _validate_pending_source_cutover_v10(
         raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
 
 
+_SOURCE_CUTOVER_READINESS_V10_SHA256 = "24dc6bbfc56c1fbcdc856015673b109987b2e7683465f57d6bd20225689bbdc5"
+
+
+def _validate_source_cutover_readiness_v10(
+    readiness: dict[str, object], readiness_raw: bytes, pending: dict[str, object], pending_raw: bytes,
+    transition: dict[str, object], transition_raw: bytes, accepted_bundle: Path,
+) -> None:
+    """Authorize cutover only from the one reviewed, non-effective readiness receipt."""
+    required = {
+        "accepted_identity", "active_authority_sha256", "adapter_batch_sha256", "adapter_version",
+        "cutover_effective", "external_publication_authorized", "fixture_count", "kind", "local_only",
+        "pending_authority_sha256", "pending_v3_adapter_preflight_rehearsal", "preflight_status",
+        "raw_file_count", "registry_sha256", "schema_version", "status", "transition_sha256", "validator_receipt",
+    }
+    if (
+        sha256_bytes(readiness_raw) != _SOURCE_CUTOVER_READINESS_V10_SHA256
+        or set(readiness) != required
+        or readiness.get("schema_version") != "10"
+        or readiness.get("kind") != "source_cutover_readiness_v10"
+        or readiness.get("status") != "pending_v3_adapter_preflight_ready_non_effective"
+        or readiness.get("cutover_effective") is not False
+        or readiness.get("external_publication_authorized") is not False
+        or readiness.get("local_only") is not True
+        or readiness.get("pending_v3_adapter_preflight_rehearsal") is not True
+        or readiness.get("preflight_status") != "valid_preflight"
+        or readiness.get("adapter_version") != "pr2164-adapter-v1"
+        or readiness.get("pending_authority_sha256") != sha256_bytes(pending_raw)
+        or readiness.get("transition_sha256") != sha256_bytes(transition_raw)
+    ):
+        raise ReceiptError("SOURCE_CUTOVER_READINESS_INVALID")
+    verified = verify_accepted_bundle(accepted_bundle)
+    manifest, _ = _load_canonical(accepted_bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    _, registry_raw = _load_canonical(accepted_bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+    if (
+        readiness.get("accepted_identity") != _v10_identity(verified, manifest)
+        or readiness.get("registry_sha256") != sha256_bytes(registry_raw)
+        or readiness.get("fixture_count") != 11
+        or readiness.get("raw_file_count") != 28
+        or transition.get("old_authority_sha256") != readiness.get("active_authority_sha256")
+        or readiness.get("validator_receipt") != {
+            "active_authority_sha256": readiness["active_authority_sha256"],
+            "eligible": False,
+            "pending_authority_sha256": readiness["pending_authority_sha256"],
+            "status": "pending_cutover_valid_non_effective",
+            "transition_sha256": readiness["transition_sha256"],
+        }
+    ):
+        raise ReceiptError("SOURCE_CUTOVER_READINESS_INVALID")
+
+
 def command_activate_pending_source_cutover_v10(args: argparse.Namespace) -> int:
+    readiness, readiness_raw = _load_authoritative_canonical(args.readiness, "SOURCE_CUTOVER_READINESS_INVALID")
     pending, pending_raw = _load_authoritative_canonical(args.pending_authority, "SOURCE_CUTOVER_PENDING_INVALID")
     transition, transition_raw = _load_authoritative_canonical(args.transition, "SOURCE_CUTOVER_TRANSITION_INVALID")
     active, active_raw = _load_authoritative_canonical(args.active_authority, "PHASE2_SOURCE_AUTHORITY_INVALID")
     revocation_raw = _optional_canonical_bytes(args.canonical_revocation)
+    _validate_source_cutover_readiness_v10(
+        readiness, readiness_raw, pending, pending_raw, transition, transition_raw, args.accepted_bundle,
+    )
     if active_raw == pending_raw and revocation_raw == transition_raw:
         _validate_phase2_source_authority(active, active_raw, args.accepted_bundle, revocation_raw, "active")
         _print_json({"status": "already_activated"})
@@ -943,7 +997,7 @@ def command_activate_pending_source_cutover_v10(args: argparse.Namespace) -> int
     if revocation_raw != transition_raw:
         raise ReceiptError("SOURCE_CUTOVER_STATE_MISMATCH")
     try:
-        replace_descriptor_file(args.active_authority.parent, args.active_authority.name, pending_raw)
+        replace_descriptor_file(args.active_authority.parent, args.active_authority.name, pending_raw, active_raw)
     except FilesystemPolicyError as error:
         raise ReceiptError("SOURCE_CUTOVER_AUTHORITY_WRITE_INVALID") from error
     active, active_raw = _load_authoritative_canonical(args.active_authority, "PHASE2_SOURCE_AUTHORITY_INVALID")
@@ -1402,6 +1456,7 @@ def build_parser() -> argparse.ArgumentParser:
     cutover_v10 = commands.add_parser("activate-pending-source-cutover-v10")
     cutover_v10.add_argument("--pending-authority", type=Path, required=True)
     cutover_v10.add_argument("--transition", type=Path, required=True)
+    cutover_v10.add_argument("--readiness", type=Path, required=True)
     cutover_v10.add_argument("--canonical-revocation", type=Path, required=True)
     cutover_v10.add_argument("--active-authority", type=Path, required=True)
     cutover_v10.add_argument("--accepted-bundle", type=Path, required=True)

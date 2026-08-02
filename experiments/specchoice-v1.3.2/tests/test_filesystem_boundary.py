@@ -526,6 +526,32 @@ class FilesystemBoundaryTests(unittest.TestCase):
                     replace_descriptor_file(root, "leaf.txt", b"new", b"old")
             self.assertTrue((root / ".leaf.txt.cutover").exists())
 
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            leaf = root / "leaf.txt"
+            temporary = root / ".leaf.txt.cutover"
+            leaf.write_bytes(b"old")
+            temporary.write_bytes(b"new")
+
+            def change_target(*_args: object, **_kwargs: object) -> None:
+                leaf.write_bytes(b"changed")
+
+            with patch("specchoice_evidence.filesystem._fsync_held_regular_file", side_effect=change_target):
+                with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_TARGET_MISMATCH"):
+                    replace_descriptor_file(root, "leaf.txt", b"new", b"old")
+            self.assertEqual(leaf.read_bytes(), b"changed")
+            self.assertEqual(temporary.read_bytes(), b"new")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            leaf = root / "leaf.txt"
+            leaf.write_bytes(b"old")
+            with patch("specchoice_evidence.filesystem.os.fsync", side_effect=OSError("fsync")):
+                with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_WRITE_INVALID"):
+                    replace_descriptor_file(root, "leaf.txt", b"new", b"old")
+            self.assertEqual(leaf.read_bytes(), b"old")
+            self.assertEqual((root / ".leaf.txt.cutover").read_bytes(), b"new")
+
     def test_hardlink_dependency_is_rejected_without_rejecting_independent_bytes(self) -> None:
         with self.assertRaisesRegex(FilesystemPolicyError, "HARDLINK_DEPENDENCY_REJECTED"):
             reject_hardlink_dependency(True)

@@ -236,6 +236,44 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 )["status"],
                 "already_activated",
             )
+            complete_revocation = revocation.read_bytes()
+            complete_active = active.read_bytes()
+            alternative_pending_payload = json.loads(pending.read_text(encoding="utf-8"))
+            alternative_pending_payload["decision_sha256"] = "0" * 64
+            alternative_transition_payload = json.loads(transition.read_text(encoding="utf-8"))
+            alternative_transition_payload["decision_sha256"] = "0" * 64
+            alternative_projection = dict(alternative_pending_payload)
+            alternative_projection.pop("transition_sha256")
+            alternative_transition_payload["new_authority_projection_sha256"] = sha256_bytes(
+                canonical_json_bytes(alternative_projection)
+            )
+            alternative_transition = root / "self-consistent-transition.json"
+            alternative_transition.write_bytes(canonical_json_bytes(alternative_transition_payload))
+            alternative_pending_payload["transition_sha256"] = sha256_bytes(alternative_transition.read_bytes())
+            alternative_pending = root / "self-consistent-pending.json"
+            alternative_pending.write_bytes(canonical_json_bytes(alternative_pending_payload))
+            malformed_readiness = root / "malformed-readiness.json"
+            malformed_readiness.write_bytes(canonical_json_bytes({"schema_version": "10"}))
+            malformed_transition = root / "malformed-complete-transition.json"
+            malformed_transition.write_bytes(canonical_json_bytes({"schema_version": "2"}))
+            for supplied_readiness, supplied_pending, supplied_transition in (
+                (root / "missing-readiness.json", pending, transition),
+                (malformed_readiness, pending, transition),
+                (readiness, alternative_pending, alternative_transition),
+                (readiness, pending, malformed_transition),
+            ):
+                with self.subTest(readiness=supplied_readiness.name, pending=supplied_pending.name):
+                    result = subprocess.run(
+                        [
+                            sys.executable, "-m", "specchoice_evidence.cli", "activate-pending-source-cutover-v10",
+                            "--pending-authority", str(supplied_pending), "--transition", str(supplied_transition),
+                            "--readiness", str(supplied_readiness), "--canonical-revocation", str(revocation),
+                            "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
+                        ], cwd=experiment, check=False, capture_output=True, text=True,
+                    )
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(revocation.read_bytes(), complete_revocation)
+                    self.assertEqual(active.read_bytes(), complete_active)
             before = active.read_bytes()
             invalid_pending = root / "invalid-pending.json"
             invalid_pending.write_bytes(canonical_json_bytes({"schema_version": "10"}))
