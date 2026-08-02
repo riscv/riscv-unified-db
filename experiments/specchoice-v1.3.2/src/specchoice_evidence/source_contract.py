@@ -331,8 +331,8 @@ def _validate_v4_repair_manifest(
     ) or (not _V4_PBMTE_EFFECTS[pbmte]["surfaced"] and pbmte_text is not None)
     if cache_projection_invalid or "uniform throughout" in cache_text or "implementation-specific" not in cache_text or cache_domain != {1 << shift for shift in range(64)} or (
         pmp_domain != {0, 16, 64} or "minimum: 0" not in geilen_text or
-        "direct targets" not in geilen_text or "gold_name: NUM_EXTERNAL_GUEST_INTERRUPTS" not in geilen_expected or
-        "existing_alias" not in geilen_expected or "ASIDLEN" not in asid_text or "ASID_WIDTH" not in asid_expected or
+        "direct targets" not in geilen_text or "gold_name: GEILEN" not in geilen_expected or
+        "NUM_EXTERNAL_GUEST_INTERRUPTS" not in geilen_expected or "existing_alias" not in geilen_expected or "ASIDLEN" not in asid_text or "ASID_WIDTH" not in asid_expected or
         "existing_alias" not in asid_expected or "versioned_aliases" in asid_text or asid_top_level != {
             "$schema", "kind", "name", "description", "long_name", "schema", "definedBy", "requirements",
         } or pbmte_projection_invalid or "classify_out_reason: isa_fixed_singleton_legal_set" not in cand_text

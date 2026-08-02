@@ -772,6 +772,8 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             self.assertIn("- 16", pmp_gold)
             self.assertIn("- 64", pmp_gold)
             self.assertIn("existing_alias", geilen_expected)
+            self.assertIn("gold_name: GEILEN", geilen_expected)
+            self.assertIn("NUM_EXTERNAL_GUEST_INTERRUPTS", geilen_expected)
             self.assertNotIn("versioned_aliases", asid_gold)
             self.assertIn("versioned_aliases", asid_expected)
             legacy_proposal = experiment / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json"
