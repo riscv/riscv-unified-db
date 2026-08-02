@@ -114,6 +114,7 @@ def validate_fixture_construction_proposal_v4(
     repair_payloads: Mapping[str, bytes], supersession: object, supersession_sha256: str,
     legacy_proposal_sha256: str, legacy_manifest_sha256: str, legacy_registry_sha256: str,
     previous_supersession: object, previous_supersession_sha256: str,
+    previous_legacy_proposal_sha256: str, previous_legacy_manifest_sha256: str, previous_legacy_registry_sha256: str,
     repository_root: Path,
 ) -> dict[str, object]:
     """Validate the decision-bound, append-only semantic-gold construction request."""
@@ -167,6 +168,7 @@ def validate_fixture_construction_proposal_v4(
     _validate_v4_supersession(
         supersession, supersession_sha256, legacy_proposal_sha256, legacy_manifest_sha256,
         legacy_registry_sha256, previous_supersession, previous_supersession_sha256,
+        previous_legacy_proposal_sha256, previous_legacy_manifest_sha256, previous_legacy_registry_sha256,
         sha256_bytes(canonical_json_bytes(proposal)), manifest_sha256, registry_sha256,
     )
     if proposal.get("replacements") != repair_manifest["repairs"]:
@@ -223,6 +225,7 @@ def validate_fixture_construction_decision_v4(
 def _validate_v4_supersession(
     receipt: object, receipt_sha256: str, legacy_proposal_sha256: str, legacy_manifest_sha256: str,
     legacy_registry_sha256: str, previous_supersession: object, previous_supersession_sha256: str,
+    previous_legacy_proposal_sha256: str, previous_legacy_manifest_sha256: str, previous_legacy_registry_sha256: str,
     proposal_sha256: str, manifest_sha256: str, registry_sha256: str,
 ) -> None:
     if not isinstance(receipt, Mapping) or set(receipt) != {
@@ -236,6 +239,7 @@ def _validate_v4_supersession(
     _require_v4_binding(receipt.get("previous_supersession"), "receipts/source-contract-construction-proposal-v4-supersession-v1.json", previous_supersession_sha256)
     _validate_v4_previous_supersession(
         previous_supersession, legacy_proposal_sha256, legacy_manifest_sha256, legacy_registry_sha256,
+        previous_legacy_proposal_sha256, previous_legacy_manifest_sha256, previous_legacy_registry_sha256,
     )
     _require_v4_binding(
         receipt.get("legacy", {}).get("proposal") if isinstance(receipt.get("legacy"), Mapping) else None,
@@ -267,6 +271,7 @@ def _validate_v4_supersession(
 
 def _validate_v4_previous_supersession(
     receipt: object, legacy_proposal_sha256: str, legacy_manifest_sha256: str, legacy_registry_sha256: str,
+    previous_legacy_proposal_sha256: str, previous_legacy_manifest_sha256: str, previous_legacy_registry_sha256: str,
 ) -> None:
     """Prove the immutable v1 receipt itself bridges to this v2 legacy set."""
     if not isinstance(receipt, Mapping) or set(receipt) != {
@@ -277,9 +282,18 @@ def _validate_v4_previous_supersession(
         not receipt["replacement_reason"].strip()
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    legacy = receipt.get("legacy")
     successor = receipt.get("successor")
-    if not isinstance(successor, Mapping):
+    if not isinstance(legacy, Mapping) or not isinstance(successor, Mapping):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    _require_v4_binding(
+        legacy.get("proposal"),
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json", previous_legacy_proposal_sha256,
+    )
+    _require_v4_binding(
+        legacy.get("repair_manifest"), "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json", previous_legacy_manifest_sha256,
+    )
+    _require_v4_binding(legacy.get("registry"), "config/fixture-registry-pr2164-v2.json", previous_legacy_registry_sha256)
     _require_v4_binding(
         successor.get("proposal"),
         "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json", legacy_proposal_sha256,

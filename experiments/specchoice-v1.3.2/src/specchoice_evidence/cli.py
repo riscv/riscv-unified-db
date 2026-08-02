@@ -566,6 +566,18 @@ def _validated_v4_inputs(args: argparse.Namespace) -> dict[str, object]:
         _experiment_root() / "receipts/source-contract-construction-proposal-v4-supersession-v1.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
+    _, previous_legacy_proposal_raw = _load_authoritative_canonical_v4(
+        _experiment_root() / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json",
+        "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
+    )
+    _, previous_legacy_manifest_raw = _load_authoritative_canonical_v4(
+        _experiment_root() / "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json",
+        "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
+    )
+    _, previous_legacy_registry_raw = _load_authoritative_canonical_v4(
+        _experiment_root() / "config/fixture-registry-pr2164-v2.json",
+        "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
+    )
     ontology = validate_h1_ontology_decision_v1(
         options=_experiment_root() / "config/measurement/h1-ontology-policy-options-v1.json",
         supersession=_experiment_root() / "receipts/h1-review-route-supersession-v1.json",
@@ -606,6 +618,9 @@ def _validated_v4_inputs(args: argparse.Namespace) -> dict[str, object]:
         legacy_registry_sha256=sha256_bytes(legacy_registry_raw),
         previous_supersession=previous_supersession,
         previous_supersession_sha256=sha256_bytes(previous_supersession_raw),
+        previous_legacy_proposal_sha256=sha256_bytes(previous_legacy_proposal_raw),
+        previous_legacy_manifest_sha256=sha256_bytes(previous_legacy_manifest_raw),
+        previous_legacy_registry_sha256=sha256_bytes(previous_legacy_registry_raw),
         repository_root=_experiment_root().parents[1],
     )
     return {

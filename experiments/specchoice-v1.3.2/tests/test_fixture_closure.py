@@ -895,6 +895,8 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                             tampered_v1,
                             sha256_bytes(proposal_v4.read_bytes()), sha256_bytes(repair_manifest.read_bytes()),
                             sha256_bytes(registry_v2.read_bytes()),
+                            sha256_bytes(legacy_proposal.read_bytes()), sha256_bytes(legacy_manifest.read_bytes()),
+                            sha256_bytes(legacy_registry.read_bytes()),
                         )
 
                 with self.subTest("v4_decision_requires_closed_self_hashed_human_fields"):
