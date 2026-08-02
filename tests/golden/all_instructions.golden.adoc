@@ -22162,7 +22162,7 @@ Decode Variables::
 |Variable Name |Location
 |fs2 |$encoding[24:20]
 |fs1 |$encoding[19:15]
-|fd |$encoding[11:7]
+|xd |$encoding[11:7]
 |===
 
 Included in::
