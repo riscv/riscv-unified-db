@@ -21,8 +21,10 @@ class H1PublicContractTests(unittest.TestCase):
             build_h1_packet,
             render_h1_markdown,
             validate_h1_decision_v2,
+            validate_h1_ontology_options_v1,
             validate_h1_packet,
             validate_h1_readiness_v3,
+            validate_h1_route_supersession_v1,
             write_h1_readiness_v3,
         )
 
@@ -33,6 +35,8 @@ class H1PublicContractTests(unittest.TestCase):
             write_h1_readiness_v3,
             validate_h1_readiness_v3,
             validate_h1_decision_v2,
+            validate_h1_route_supersession_v1,
+            validate_h1_ontology_options_v1,
         ):
             self.assertTrue(callable(value))
         self.assertFalse(any("decision" in name and "validate" not in name for name in dir(h1)))
@@ -52,6 +56,9 @@ class H1PublicContractTests(unittest.TestCase):
                 "--rules", "rules", "--predictions", "predictions", "--oracle", "oracle",
                 "--offline-replay", "replay", "--plan-summary", "/summary", "--output", "readiness",
             ])
+        for command in ("validate-h1-route-supersession-v1", "validate-h1-ontology-options-v1"):
+            with self.subTest(command=command):
+                self.assertEqual(parser.parse_args([command, "--help"]).command, command)
 
 
 class H1PacketTests(unittest.TestCase):
