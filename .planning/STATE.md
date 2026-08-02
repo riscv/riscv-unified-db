@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
 status: executing
-stopped_at: Planned Phase 02 gap closure through 02-17-PLAN.md
-last_updated: "2026-08-02T03:12:42.980Z"
+stopped_at: Completed 02-09-PLAN.md
+last_updated: "2026-08-02T07:31:47.102Z"
 last_activity: 2026-08-02
-last_activity_desc: Phase 02 gap-closure planning complete — 17 plans total, 9 ready
+last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 24
-  completed_plans: 15
+  completed_plans: 16
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 02 (deterministic-measurement-spine) — EXECUTING
-Plan: 9 of 17
+Plan: 2 of 17
 Status: Ready to execute
-Last activity: 2026-08-02 — Phase 02 gap-closure planning complete
+Last activity: 2026-08-02 — Phase 02 execution started
 
-Progress: [█████░░░░░] 47%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
@@ -72,6 +72,7 @@ Progress: [█████░░░░░] 47%
 | Phase 02 P06 | 6min | 2 tasks | 2 files |
 | Phase 02 P07 | 6m | 2 tasks | 6 files |
 | Phase 02 P08 | 45m | 2 tasks | 6 files |
+| Phase 02 P09 | 32m | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Post-authority adapter conflicts retain verified source identity and one typed Diagnostic while still exposing zero records.
 - [Phase ?]: Phase 02-08 reuses the Phase 1 descriptor-bound reader for every authoritative measurement leaf.
 - [Phase ?]: Phase 02-08 preserves H1 as human-authored, local-only, and external_publication_authorized=false.
+- [Phase ?]: Candidate controls and Phase 2 source-authority receipt reuse descriptor-bound canonical bytes instead of reopening pathname leaves.
+- [Phase ?]: The Phase 1 expected-red baseline is a non-discovered gate with a fixed 66/141/136 partition.
 
 ### Pending Todos
 
@@ -128,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-02T03:12:42.980Z
-Stopped at: Planned Phase 02 gap closure through 02-17-PLAN.md
+Last session: 2026-08-02T07:31:47.091Z
+Stopped at: Completed 02-09-PLAN.md
 Resume file: None
