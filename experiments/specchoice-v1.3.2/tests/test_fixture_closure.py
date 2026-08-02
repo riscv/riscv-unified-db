@@ -30,6 +30,7 @@ from specchoice_evidence.source_contract import (
     FixtureRegistryError,
     SourceContractProposalError,
     require_fixture_closure_local_acceptance_authorization,
+    validate_fixture_construction_decision_v4,
     validate_fixture_registry,
     verify_fixture_registry_git,
 )
@@ -753,7 +754,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
-            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotEqual(result.returncode, 0, "legacy proposal-v2 must be decision-ineligible")
             proposal_payload = json.loads(proposal_v4.read_text(encoding="utf-8"))
             supersession_payload = json.loads(supersession.read_text(encoding="utf-8"))
             self.assertEqual(proposal_payload["status"], "awaiting_human_construction_authorization")
@@ -808,6 +809,28 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     path = temporary / name
                     path.write_bytes(canonical_json_bytes(value))
                     return path
+
+                with self.subTest("v4_decision_requires_closed_self_hashed_human_fields"):
+                    proposal_binding = {"fixed_code_commit": "a" * 40}
+                    decision = {
+                        "active_authority_sha256": "d" * 64, "attestation": "signed-by-reviewer",
+                        "decision": "authorize", "decision_timestamp": "2026-08-03T12:34:56Z",
+                        "external_publication_authorized": False, "fixed_code_commit": "a" * 40,
+                        "local_only": True, "ontology_decision_sha256": "c" * 64,
+                        "proposal_sha256": "b" * 64, "rationale": "human construction review complete",
+                        "reviewer": "reviewer@example.invalid", "schema_version": "fixture-construction-decision-v4-v3",
+                        "supersession_sha256": "e" * 64,
+                    }
+                    decision["decision_sha256"] = sha256_bytes(canonical_json_bytes(decision))
+                    for disposition in ("authorize", "reject"):
+                        candidate = copy.deepcopy(decision)
+                        candidate["decision"] = disposition
+                        candidate.pop("decision_sha256")
+                        candidate["decision_sha256"] = sha256_bytes(canonical_json_bytes(candidate))
+                        self.assertEqual(validate_fixture_construction_decision_v4(candidate, proposal=proposal_binding, proposal_sha256="b" * 64, supersession_sha256="e" * 64, ontology_sha256="c" * 64, authority_sha256="d" * 64)["decision"], disposition)
+                    malformed = copy.deepcopy(decision)
+                    malformed["decision_timestamp"] = "2026-08-03T12:34:56+00:00"
+                    self.assertRaises(SourceContractProposalError, validate_fixture_construction_decision_v4, malformed, proposal=proposal_binding, proposal_sha256="b" * 64, supersession_sha256="e" * 64, ontology_sha256="c" * 64, authority_sha256="d" * 64)
 
                 with self.subTest("v4_rejects_forged_old_hash_and_length"):
                     forged_manifest = copy.deepcopy(original_manifest)
@@ -917,7 +940,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         ),
                         forged_proposal["successor_inventory"],
                     )
-                    self.assertEqual(
+                    self.assertNotEqual(
                         run_v4(
                             proposal_path=forged_proposal_path, manifest_path=forged_manifest_path,
                             registry_path=forged_registry_path, supersession_path=forged_supersession_path,

@@ -87,6 +87,23 @@ _V4_PBMTE_EFFECTS = {
     "surfaced_classified_out": {"fixture_class": "candidate", "gold": True, "classify_out": True, "surfaced": True},
     "included_capability_parameter": {"fixture_class": "positive", "gold": True, "classify_out": False, "surfaced": True},
 }
+_V4_CODE_PATHS = (
+    "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py",
+    "experiments/specchoice-v1.3.2/src/specchoice_evidence/filesystem.py",
+    "experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py",
+    "experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py",
+)
+_V4_REPAIR_REASONS = {
+    "raw/evaluation_fixtures/CAND_WARL_FIXED_LEGAL_SET/expected.yaml": "freeze fixed legal-set classify-out disposition",
+    "raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/expected.yaml": "apply the human surfaced/classified-out policy",
+    "raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/gold.yaml": "record the surfaced PBMTE review candidate",
+    "raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/gold.yaml": "retain only cache-local implementation evidence and a power-of-two domain",
+    "raw/evaluation_fixtures/POS_DIRECT_NUM_PMP/gold.yaml": "restrict PMP entries to the architectural finite legal set",
+    "raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/expected.yaml": "record GEILEN canonical naming through the existing UDB alias",
+    "raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/gold.yaml": "permit zero GEILEN and describe direct guest-external targets",
+    "raw/evaluation_fixtures/POS_WARL_ASID_WIDTH/expected.yaml": "record ASIDLEN through the existing ASID_WIDTH alias",
+    "raw/evaluation_fixtures/POS_WARL_ASID_WIDTH/gold.yaml": "use ASIDLEN as the canonical ontology identity",
+}
 
 
 def validate_fixture_construction_proposal_v4(
@@ -95,7 +112,7 @@ def validate_fixture_construction_proposal_v4(
     predecessor_registry_sha256: str, predecessor_files: Mapping[str, Mapping[str, object]],
     predecessor_classes: Mapping[str, str], authority_sha256: str, revocation_sha256: str,
     repair_payloads: Mapping[str, bytes], supersession: object, supersession_sha256: str,
-    legacy_proposal_sha256: str, legacy_manifest_sha256: str, legacy_registry_sha256: str,
+    legacy_proposal_sha256: str, legacy_manifest_sha256: str, legacy_registry_sha256: str, previous_supersession_sha256: str,
     repository_root: Path,
 ) -> dict[str, object]:
     """Validate the decision-bound, append-only semantic-gold construction request."""
@@ -148,7 +165,7 @@ def validate_fixture_construction_proposal_v4(
     _require_v4_binding(proposal.get("registry"), "config/fixture-registry-pr2164-v3.json", registry_sha256)
     _validate_v4_supersession(
         supersession, supersession_sha256, legacy_proposal_sha256, legacy_manifest_sha256,
-        legacy_registry_sha256, sha256_bytes(canonical_json_bytes(proposal)), manifest_sha256, registry_sha256,
+        legacy_registry_sha256, previous_supersession_sha256, sha256_bytes(canonical_json_bytes(proposal)), manifest_sha256, registry_sha256,
     )
     if proposal.get("replacements") != repair_manifest["repairs"]:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_CLOSURE_INVALID")
@@ -175,7 +192,7 @@ def validate_fixture_construction_decision_v4(
         "external_publication_authorized", "fixed_code_commit", "local_only", "ontology_decision_sha256",
         "proposal_sha256", "rationale", "reviewer", "schema_version", "supersession_sha256",
     }
-    if not isinstance(decision, Mapping) or set(decision) != required or decision.get("schema_version") != "1" or decision.get("decision") not in {"authorize", "reject"}:
+    if not isinstance(decision, Mapping) or set(decision) != required or decision.get("schema_version") != "fixture-construction-decision-v4-v3" or decision.get("decision") not in {"authorize", "reject"}:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_INVALID")
     if decision.get("local_only") is not True or decision.get("external_publication_authorized") is not False or decision.get("fixed_code_commit") != proposal.get("fixed_code_commit") or (
         decision.get("proposal_sha256") != proposal_sha256 or decision.get("supersession_sha256") != supersession_sha256 or
@@ -203,16 +220,17 @@ def validate_fixture_construction_decision_v4(
 
 def _validate_v4_supersession(
     receipt: object, receipt_sha256: str, legacy_proposal_sha256: str, legacy_manifest_sha256: str,
-    legacy_registry_sha256: str, proposal_sha256: str, manifest_sha256: str, registry_sha256: str,
+    legacy_registry_sha256: str, previous_supersession_sha256: str, proposal_sha256: str, manifest_sha256: str, registry_sha256: str,
 ) -> None:
     if not isinstance(receipt, Mapping) or set(receipt) != {
-        "construction_authorized", "legacy", "replacement_reason", "schema_version", "status", "successor",
-    } or receipt.get("schema_version") != "source-contract-construction-proposal-supersession-v1" or (
-        receipt.get("status") != "legacy_semantic_proposal_superseded"
+        "construction_authorized", "legacy", "previous_supersession", "replacement_reason", "schema_version", "status", "successor",
+    } or receipt.get("schema_version") != "source-contract-construction-proposal-supersession-v2" or (
+        receipt.get("status") != "semantic_proposal_v2_superseded"
     ) or receipt.get("construction_authorized") is not False or not isinstance(receipt.get("replacement_reason"), str) or (
         not receipt["replacement_reason"].strip()
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
+    _require_v4_binding(receipt.get("previous_supersession"), "receipts/source-contract-construction-proposal-v4-supersession-v1.json", previous_supersession_sha256)
     _require_v4_binding(
         receipt.get("legacy", {}).get("proposal") if isinstance(receipt.get("legacy"), Mapping) else None,
         "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json", legacy_proposal_sha256,
@@ -258,22 +276,16 @@ def _require_v4_git_commit(value: object, artifacts: object, repository_root: Pa
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
     if object_check.returncode != 0 or ancestry_check.returncode != 0:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
-    expected_paths = {
-        "experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py",
-        "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py",
-        "experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py",
-        "experiments/specchoice-v1.3.2/src/specchoice_evidence/filesystem.py",
-    }
-    if not isinstance(artifacts, list) or {item.get("path") for item in artifacts if isinstance(item, Mapping)} != expected_paths:
+    if not isinstance(artifacts, list) or len(artifacts) != len(_V4_CODE_PATHS) or [item.get("path") if isinstance(item, Mapping) else None for item in artifacts] != list(_V4_CODE_PATHS):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
     for artifact in artifacts:
-        if not isinstance(artifact, Mapping) or set(artifact) != {"path", "sha256"}:
+        if not isinstance(artifact, Mapping) or set(artifact) != {"byte_length", "path", "sha256"}:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
         try:
             shown = subprocess.run(["git", "-C", str(repository_root), "show", f"{value}:{artifact['path']}"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
         except (OSError, subprocess.TimeoutExpired) as error:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
-        if shown.returncode != 0 or artifact.get("sha256") != sha256_bytes(shown.stdout):
+        if shown.returncode != 0 or artifact.get("byte_length") != len(shown.stdout) or artifact.get("sha256") != sha256_bytes(shown.stdout):
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
 
 
@@ -321,7 +333,7 @@ def _validate_v4_repair_manifest(
         expected_control = "cache_policy" if target in _V4_CACHE_REPAIRS[cache] else (
             "pbmte_policy" if "NEG_EXT_GATED_PBMTE" in target else "semantic_correction"
         )
-        if repair.get("control") != expected_control or not isinstance(repair.get("reason"), str) or not repair["reason"].strip():
+        if repair.get("control") != expected_control or repair.get("reason") != _V4_REPAIR_REASONS.get(target):
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
         old = predecessor_files.get(target)
         if repair.get("kind") == "add":

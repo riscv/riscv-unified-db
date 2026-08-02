@@ -538,8 +538,8 @@ def command_validate_fixture_construction_decision_v3(args: argparse.Namespace) 
     return 0
 
 
-def command_validate_fixture_construction_proposal_v4(args: argparse.Namespace) -> int:
-    """Validate one decision-free semantic-gold construction proposal."""
+def _validated_v4_inputs(args: argparse.Namespace) -> dict[str, object]:
+    """Read and fully validate each v4 input once for all non-authoring commands."""
     from specchoice_measurement.h1 import validate_h1_ontology_decision_v1
 
     proposal, proposal_raw = _load_authoritative_canonical_v4(args.proposal, "FIXTURE_CONSTRUCTION_V4_PROPOSAL_NOT_CANONICAL")
@@ -560,6 +560,10 @@ def command_validate_fixture_construction_proposal_v4(args: argparse.Namespace) 
     )
     legacy_registry, legacy_registry_raw = _load_authoritative_canonical_v4(
         _experiment_root() / "config/fixture-registry-pr2164-v3.json",
+        "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
+    )
+    _, previous_supersession_raw = _load_authoritative_canonical_v4(
+        _experiment_root() / "receipts/source-contract-construction-proposal-v4-supersession-v1.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
     ontology = validate_h1_ontology_decision_v1(
@@ -599,24 +603,29 @@ def command_validate_fixture_construction_proposal_v4(args: argparse.Namespace) 
         legacy_proposal_sha256=sha256_bytes(legacy_proposal_raw),
         legacy_manifest_sha256=sha256_bytes(legacy_manifest_raw),
         legacy_registry_sha256=sha256_bytes(legacy_registry_raw),
+        previous_supersession_sha256=sha256_bytes(previous_supersession_raw),
         repository_root=_experiment_root().parents[1],
     )
-    if not getattr(args, "_quiet", False):
-        _print_json({"ontology_decision_sha256": ontology["artifact_sha256"], "proposal_sha256": sha256_bytes(proposal_raw), "status": validated["status"], "valid": True})
+    return {
+        "authority_raw": authority_raw, "ontology": ontology, "proposal": validated, "proposal_raw": proposal_raw,
+        "supersession_raw": supersession_raw,
+    }
+
+
+def command_validate_fixture_construction_proposal_v4(args: argparse.Namespace) -> int:
+    """Validate one decision-free semantic-gold construction proposal."""
+    validated = _validated_v4_inputs(args)
+    _print_json({"ontology_decision_sha256": validated["ontology"]["artifact_sha256"], "proposal_sha256": sha256_bytes(validated["proposal_raw"]), "status": validated["proposal"]["status"], "valid": True})
     return 0
 
 
 def command_validate_fixture_construction_decision_v4(args: argparse.Namespace) -> int:
     """Revalidate all v4 inputs before validating an externally authored decision."""
-    args._quiet = True
-    command_validate_fixture_construction_proposal_v4(args)
-    proposal, proposal_raw = _load_authoritative_canonical_v4(args.proposal, "FIXTURE_CONSTRUCTION_V4_PROPOSAL_NOT_CANONICAL")
+    inputs = _validated_v4_inputs(args)
+    proposal = inputs["proposal"]
+    proposal_raw = inputs["proposal_raw"]
     decision, _ = _load_authoritative_canonical_v4(args.decision, "FIXTURE_CONSTRUCTION_V4_DECISION_NOT_CANONICAL")
-    _, supersession_raw = _load_authoritative_canonical_v4(args.supersession, "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_NOT_CANONICAL")
-    _, authority_raw = _load_authoritative_canonical_v4(args.active_authority, "FIXTURE_CONSTRUCTION_V4_AUTHORITY_INVALID")
-    from specchoice_measurement.h1 import validate_h1_ontology_decision_v1
-    ontology = validate_h1_ontology_decision_v1(options=_experiment_root() / "config/measurement/h1-ontology-policy-options-v1.json", supersession=_experiment_root() / "receipts/h1-review-route-supersession-v1.json", decision=args.ontology_decision)
-    validated = validate_fixture_construction_decision_v4(decision, proposal=proposal, proposal_sha256=sha256_bytes(proposal_raw), supersession_sha256=sha256_bytes(supersession_raw), ontology_sha256=str(ontology["artifact_sha256"]), authority_sha256=sha256_bytes(authority_raw))
+    validated = validate_fixture_construction_decision_v4(decision, proposal=proposal, proposal_sha256=sha256_bytes(proposal_raw), supersession_sha256=sha256_bytes(inputs["supersession_raw"]), ontology_sha256=str(inputs["ontology"]["artifact_sha256"]), authority_sha256=sha256_bytes(inputs["authority_raw"]))
     _print_json({"construction_authorized": validated["decision"] == "authorize", "decision": validated["decision"], "status": "decision_valid"})
     return 0
 
@@ -640,12 +649,11 @@ def _write_v4_no_replace(output_root: Path, payloads: dict[str, bytes]) -> None:
 
 def command_write_fixture_construction_proposal_v4(args: argparse.Namespace) -> int:
     """Materialize only fully revalidated v4 staging bytes, never replacing a target."""
-    args._quiet = True
-    command_validate_fixture_construction_proposal_v4(args)
-    payloads = {}
-    for path in (args.proposal, args.repair_manifest, args.registry, args.supersession):
-        _, raw = _load_authoritative_canonical_v4(path, "FIXTURE_CONSTRUCTION_V4_WRITE_INVALID")
-        payloads[path.name] = raw
+    inputs = _validated_v4_inputs(args)
+    payloads = {
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json": inputs["proposal_raw"],
+        "receipts/source-contract-construction-proposal-v4-supersession-v2.json": inputs["supersession_raw"],
+    }
     _write_v4_no_replace(args.output_root, payloads)
     _print_json({"status": "materialized", "targets": sorted(payloads)})
     return 0
