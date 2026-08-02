@@ -303,7 +303,7 @@ def _validate_v4_repair_manifest(
     geilen_expected = text["raw/evaluation_fixtures/POS_RECALL_COUNT_GEILEN/expected.yaml"]
     asid_text = text["raw/evaluation_fixtures/POS_WARL_ASID_WIDTH/gold.yaml"]
     asid_expected = text["raw/evaluation_fixtures/POS_WARL_ASID_WIDTH/expected.yaml"]
-    pbmte_text = text["raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/expected.yaml"]
+    pbmte_text = text.get("raw/evaluation_fixtures/NEG_EXT_GATED_PBMTE/expected.yaml")
     cand_text = text["raw/evaluation_fixtures/CAND_WARL_FIXED_LEGAL_SET/expected.yaml"]
     cache_domain = _v4_yaml_integer_domain(cache_text, "enum:", "definedBy:")
     pmp_domain = _v4_yaml_integer_domain(pmp_text, "enum:", "definedBy:")
@@ -320,21 +320,22 @@ def _validate_v4_repair_manifest(
         )
     )
     pbmte_projection_invalid = (
-        _V4_PBMTE_EFFECTS[pbmte]["classify_out"] and (
-            "final_disposition: classify_out" not in pbmte_text or
-            "classify_out_reason: surfaced_classified_out" not in pbmte_text
+        _V4_PBMTE_EFFECTS[pbmte]["surfaced"] and (
+            not isinstance(pbmte_text, str) or f"fixture_class: {_V4_PBMTE_EFFECTS[pbmte]['fixture_class']}" not in pbmte_text or (
+                _V4_PBMTE_EFFECTS[pbmte]["classify_out"] and (
+                    "final_disposition: classify_out" not in pbmte_text or
+                    "classify_out_reason: surfaced_classified_out" not in pbmte_text
+                )
+            ) or (not _V4_PBMTE_EFFECTS[pbmte]["classify_out"] and "final_disposition: classify_out" in pbmte_text)
         )
-    ) or (
-        not _V4_PBMTE_EFFECTS[pbmte]["classify_out"] and "final_disposition: classify_out" in pbmte_text
-    )
+    ) or (not _V4_PBMTE_EFFECTS[pbmte]["surfaced"] and pbmte_text is not None)
     if cache_projection_invalid or "uniform throughout" in cache_text or "implementation-specific" not in cache_text or cache_domain != {1 << shift for shift in range(64)} or (
         pmp_domain != {0, 16, 64} or "minimum: 0" not in geilen_text or
         "direct targets" not in geilen_text or "gold_name: NUM_EXTERNAL_GUEST_INTERRUPTS" not in geilen_expected or
         "existing_alias" not in geilen_expected or "ASIDLEN" not in asid_text or "ASID_WIDTH" not in asid_expected or
         "existing_alias" not in asid_expected or "versioned_aliases" in asid_text or asid_top_level != {
             "$schema", "kind", "name", "description", "long_name", "schema", "definedBy", "requirements",
-        } or f"fixture_class: {_V4_PBMTE_EFFECTS[pbmte]['fixture_class']}" not in pbmte_text or
-        pbmte_projection_invalid or "classify_out_reason: isa_fixed_singleton_legal_set" not in cand_text
+        } or pbmte_projection_invalid or "classify_out_reason: isa_fixed_singleton_legal_set" not in cand_text
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID")
 
@@ -362,7 +363,9 @@ def _v4_inventory(
     partition = {kind: list(classes.values()).count(kind) for kind in ("candidate", "negative", "positive")}
     repairs = manifest["repairs"]
     assert isinstance(repairs, list)
-    raw_count = len(predecessor_files) + sum(1 for item in repairs if item["kind"] == "add")
+    raw_count = sum(1 for item in predecessor_files.values() if item["fixture_id"] in classes) + sum(
+        1 for item in repairs if item["kind"] == "add"
+    )
     return {"fixture_count": len(classes), "partition": partition, "raw_file_count": raw_count}
 
 
@@ -372,7 +375,7 @@ def _validate_v4_registry(
 ) -> None:
     if not isinstance(registry, Mapping) or set(registry) != {
         "fixture_count", "fixtures", "ontology_decision_sha256", "predecessor_registry_sha256", "raw_file_count", "schema_version",
-    } or registry.get("schema_version") != "2" or registry.get("ontology_decision_sha256") != ontology_decision_sha256 or (
+    } or registry.get("schema_version") != "3" or registry.get("ontology_decision_sha256") != ontology_decision_sha256 or (
         registry.get("predecessor_registry_sha256") != predecessor_registry_sha256
     ) or registry.get("fixture_count") != inventory["fixture_count"] or registry.get("raw_file_count") != inventory["raw_file_count"]:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
@@ -380,18 +383,20 @@ def _validate_v4_registry(
         require_sha256(registry.get("predecessor_registry_sha256"))
     except ValueError as error:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID") from error
-    fixtures = registry.get("fixtures")
-    if not isinstance(fixtures, list) or [item.get("fixture_id") if isinstance(item, Mapping) else None for item in fixtures] != sorted(_EXPECTED_FIXTURES):
-        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
-    repairs = {item["target_path"]: item for item in manifest["repairs"] if isinstance(item, Mapping)}
-    expected_paths = set(predecessor_files) | {path for path, item in repairs.items() if item["kind"] == "add"}
-    actual_paths: set[str] = set()
-    registry_repairs: set[str] = set()
     classes = dict(predecessor_classes)
     if _V4_PBMTE_EFFECTS[pbmte]["fixture_class"] == "absent":
         classes.pop("NEG_EXT_GATED_PBMTE")
     else:
         classes["NEG_EXT_GATED_PBMTE"] = str(_V4_PBMTE_EFFECTS[pbmte]["fixture_class"])
+    fixtures = registry.get("fixtures")
+    if not isinstance(fixtures, list) or [item.get("fixture_id") if isinstance(item, Mapping) else None for item in fixtures] != sorted(classes):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")
+    repairs = {item["target_path"]: item for item in manifest["repairs"] if isinstance(item, Mapping)}
+    expected_paths = {
+        path for path, predecessor in predecessor_files.items() if predecessor["fixture_id"] in classes
+    } | {path for path, item in repairs.items() if item["kind"] == "add"}
+    actual_paths: set[str] = set()
+    registry_repairs: set[str] = set()
     for fixture in fixtures:
         if not isinstance(fixture, Mapping) or set(fixture) != {"files", "fixture_class", "fixture_id"}:
             raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REGISTRY_INVALID")

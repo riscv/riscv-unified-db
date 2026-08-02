@@ -358,29 +358,33 @@ def read_authoritative_files(root: Path, relative_paths: list[str]) -> dict[str,
         root_stat = os.fstat(root_descriptor)
         if not stat.S_ISDIR(root_stat.st_mode):
             raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+        directories: dict[tuple[str, ...], int] = {(): root_descriptor}
         result: dict[str, tuple[FileEvidence, bytes]] = {}
         for relative in normalized:
-            held: list[int] = []
             parent = root_descriptor
-            try:
-                for part in relative.parts[:-1]:
+            prefix: tuple[str, ...] = ()
+            for part in relative.parts[:-1]:
+                prefix += (part,)
+                child = directories.get(prefix)
+                if child is None:
                     child = _open_directory(parent, part, root_stat.st_dev)
-                    held.append(child)
-                    parent = child
-                leaf = relative.parts[-1]
-                before = _existing_leaf_kind(parent, leaf, root_stat.st_dev)
-                content = _read_held_regular_file(parent, leaf, root_stat.st_dev)
-                result[relative.as_posix()] = (
-                    FileEvidence(relative.as_posix(), "regular_file", len(content), sha256_bytes(content), before.st_nlink),
-                    content,
-                )
-            finally:
-                for descriptor in reversed(held):
-                    os.close(descriptor)
+                    directories[prefix] = child
+                parent = child
+            leaf = relative.parts[-1]
+            before = _existing_leaf_kind(parent, leaf, root_stat.st_dev)
+            content = _read_held_regular_file(parent, leaf, root_stat.st_dev)
+            result[relative.as_posix()] = (
+                FileEvidence(relative.as_posix(), "regular_file", len(content), sha256_bytes(content), before.st_nlink),
+                content,
+            )
         if _signature(root_stat) != _signature(os.fstat(root_descriptor)):
             raise FilesystemPolicyError("AUTHORITATIVE_ROOT_CHANGED")
         return result
     finally:
+        if root_descriptor is not None and "directories" in locals():
+            for _, descriptor in sorted(directories.items(), key=lambda item: len(item[0]), reverse=True):
+                if descriptor != root_descriptor:
+                    os.close(descriptor)
         if root_descriptor is not None:
             os.close(root_descriptor)
 

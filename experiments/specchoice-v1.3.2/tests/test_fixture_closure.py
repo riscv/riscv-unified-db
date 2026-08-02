@@ -874,6 +874,10 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     opposite_path = write_payload("rebound-opposite-decision.json", opposite)
                     forged_manifest = copy.deepcopy(original_manifest)
                     forged_manifest["ontology_decision_sha256"] = sha256_bytes(opposite_path.read_bytes())
+                    forged_manifest["repairs"] = [
+                        repair for repair in forged_manifest["repairs"]
+                        if "NEG_EXT_GATED_PBMTE" not in repair["target_path"]
+                    ]
                     forged_manifest_path = write_payload("rebound-manifest.json", forged_manifest)
                     forged_registry = copy.deepcopy(original_registry)
                     forged_registry["ontology_decision_sha256"] = sha256_bytes(opposite_path.read_bytes())
@@ -882,6 +886,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     forged_proposal["ontology_decision"]["sha256"] = sha256_bytes(opposite_path.read_bytes())
                     forged_proposal["repair_manifest"]["sha256"] = sha256_bytes(forged_manifest_path.read_bytes())
                     forged_proposal["registry"]["sha256"] = sha256_bytes(forged_registry_path.read_bytes())
+                    forged_proposal["replacements"] = forged_manifest["repairs"]
                     forged_proposal["selected_policy"]["pbmte"] = "excluded_from_discovery"
                     forged_proposal["successor_inventory"] = {
                         "fixture_count": 10,
