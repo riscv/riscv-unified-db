@@ -23,7 +23,11 @@ from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_ba
 class MeasurementAdapterTests(unittest.TestCase):
     def setUp(self) -> None:
         self.experiment_root = Path(__file__).parents[1]
-        self.authority = self.experiment_root / "phase2/source-authority.json"
+        # Legacy-mode coverage must stay pinned to the inspection-only v2 bytes;
+        # the live authority is intentionally active-v3 after cutover.
+        self.authority = self.experiment_root / "phase2/source-authority-v9-historical.json"
+        self.active_authority = self.experiment_root / "phase2/source-authority.json"
+        self.revocation = self.experiment_root / "receipts/fixture-closure-revocation-v2.json"
         self.bundle = (
             self.experiment_root
             / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
@@ -50,6 +54,14 @@ class MeasurementAdapterTests(unittest.TestCase):
             rules_path=self.rules,
             pending_authority_path=self.pending_authority,
             transition_path=self.transition,
+        )
+
+    def build_active(self):
+        return build_pr2164_adapter_batch(
+            authority_path=self.active_authority,
+            bundle_root=self.pending_bundle,
+            rules_path=self.rules,
+            revocation_path=self.revocation,
         )
 
     def source_environment(self) -> dict[str, str]:
@@ -80,6 +92,40 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual(len(batch.rule_sha256), 64)
         self.assertEqual(len(batch.adapter_batch_sha256), 64)
 
+        with self.subTest(mode="active-v3"):
+            active = self.build_active()
+            self.assertTrue(active.valid)
+            self.assertEqual(len(active.records), 11)
+            self.assertEqual(sum(len(record.raw_files) for record in active.records), 28)
+            self.assertEqual(
+                {category: sum(record.category == category for record in active.records)
+                 for category in ("positive", "negative", "candidate")},
+                {"positive": 6, "negative": 4, "candidate": 1},
+            )
+
+        for mode, inputs in {
+            "pending-only": {"pending_authority_path": self.pending_authority},
+            "transition-only": {"transition_path": self.transition},
+            "revocation-with-pending": {
+                "pending_authority_path": self.pending_authority,
+                "transition_path": self.transition,
+                "revocation_path": self.revocation,
+            },
+            "revocation-with-transition": {
+                "transition_path": self.transition,
+                "revocation_path": self.revocation,
+            },
+        }.items():
+            with self.subTest(mode=mode):
+                invalid = build_pr2164_adapter_batch(
+                    authority_path=self.active_authority,
+                    bundle_root=self.pending_bundle,
+                    rules_path=self.rules,
+                    **inputs,
+                )
+                self.assertFalse(invalid.valid)
+                self.assertEqual(invalid.records, ())
+
     def test_cli_writes_identical_new_canonical_batches(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -109,6 +155,25 @@ class MeasurementAdapterTests(unittest.TestCase):
             self.assertEqual(first.read_bytes(), second.read_bytes())
             emitted = json.loads(first.read_text(encoding="utf-8"))
             self.assertEqual(emitted["adapter_batch_sha256"], self.build_pending().adapter_batch_sha256)
+
+            active_command = [
+                sys.executable, "-m", "specchoice_measurement.cli", "adapt-pr2164",
+                "--authority", self.active_authority.as_posix(),
+                "--bundle", self.pending_bundle.as_posix(),
+                "--rules", self.rules.as_posix(),
+                "--revocation", self.revocation.as_posix(),
+            ]
+            active = root / "active-v3.json"
+            subprocess.run(
+                [*active_command, "--output", active.as_posix()],
+                check=True,
+                cwd=self.experiment_root,
+                env=self.source_environment(),
+            )
+            self.assertEqual(
+                json.loads(active.read_text(encoding="utf-8"))["adapter_batch_sha256"],
+                self.build_active().adapter_batch_sha256,
+            )
 
     def test_incomplete_duplicate_reordered_and_mixed_batches_have_all_blockers_and_no_records(self) -> None:
         valid = self.build()
@@ -320,6 +385,26 @@ class MeasurementAdapterTests(unittest.TestCase):
                     rules_path=self.rules,
                     pending_authority_path=pending,
                     transition_path=self.transition,
+                )
+        self.assertFalse(invalid.valid)
+        self.assertEqual(invalid.records, ())
+        self.assertEqual(invalid.source_identity["generation"], self.pending_bundle.name)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            active = Path(temporary) / "source-authority.json"
+            active.write_bytes(self.active_authority.read_bytes())
+
+            def validate_then_replace_active(*args, **kwargs):
+                result = original_run(*args, **kwargs)
+                active.write_bytes(canonical_json_bytes(replacement))
+                return result
+
+            with mock.patch("specchoice_measurement.adapter.subprocess.run", side_effect=validate_then_replace_active):
+                invalid = build_pr2164_adapter_batch(
+                    authority_path=active,
+                    bundle_root=self.pending_bundle,
+                    rules_path=self.rules,
+                    revocation_path=self.revocation,
                 )
         self.assertFalse(invalid.valid)
         self.assertEqual(invalid.records, ())

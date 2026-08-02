@@ -33,10 +33,13 @@ class MeasurementAttemptTests(unittest.TestCase):
         self.experiment_root = Path(__file__).parents[1]
         self.bundle = self.experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
         self.pending_bundle = self.experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+        self.authority = self.experiment_root / "phase2/source-authority-v9-historical.json"
+        self.active_authority = self.experiment_root / "phase2/source-authority.json"
+        self.revocation = self.experiment_root / "receipts/fixture-closure-revocation-v2.json"
         self.pending_authority = self.experiment_root / "phase2/source-authority-v10-pending.json"
         self.transition = self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json"
         self.batch = build_pr2164_adapter_batch(
-            authority_path=self.experiment_root / "phase2/source-authority.json",
+            authority_path=self.authority,
             bundle_root=self.bundle,
             rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
         )
@@ -45,7 +48,7 @@ class MeasurementAttemptTests(unittest.TestCase):
     def _pending_formal_args(self, root: Path) -> SimpleNamespace:
         root.parent.mkdir(parents=True, exist_ok=True)
         batch = build_pr2164_adapter_batch(
-            authority_path=self.experiment_root / "phase2/source-authority.json",
+            authority_path=self.authority,
             bundle_root=self.pending_bundle,
             rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
             pending_authority_path=self.pending_authority,
@@ -57,13 +60,39 @@ class MeasurementAttemptTests(unittest.TestCase):
         predictions = root.parent / "pending-v3-golden-predictions.json"
         predictions.write_bytes(canonical_json_bytes(payload))
         return SimpleNamespace(
-            authority=self.experiment_root / "phase2/source-authority.json",
+            authority=self.authority,
             bundle=self.pending_bundle,
             rules=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
             schema=self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json",
             predictions=predictions,
             pending_authority=self.pending_authority,
             transition=self.transition,
+            attempt_root=root,
+            attempt_id="formal-golden",
+        )
+
+    def _active_formal_args(self, root: Path) -> SimpleNamespace:
+        root.parent.mkdir(parents=True, exist_ok=True)
+        batch = build_pr2164_adapter_batch(
+            authority_path=self.active_authority,
+            bundle_root=self.pending_bundle,
+            rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
+            revocation_path=self.revocation,
+        )
+        self.assertTrue(batch.valid)
+        payload = json.loads(self.raw.decode("utf-8"))
+        payload["adapter_batch_sha256"] = batch.adapter_batch_sha256
+        predictions = root.parent / "active-v3-golden-predictions.json"
+        predictions.write_bytes(canonical_json_bytes(payload))
+        return SimpleNamespace(
+            authority=self.active_authority,
+            bundle=self.pending_bundle,
+            rules=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
+            schema=self.experiment_root / "config/measurement/canonical-adjudication-schema-v1.json",
+            predictions=predictions,
+            pending_authority=None,
+            transition=None,
+            revocation=self.revocation,
             attempt_root=root,
             attempt_id="formal-golden",
         )
@@ -317,6 +346,13 @@ class MeasurementAttemptTests(unittest.TestCase):
                 command_run_formal_measurement(args)
             self.assertEqual((target / "attempt.json").read_bytes(), original)
 
+            active_args = self._active_formal_args(root / "active-attempts")
+            self.assertEqual(command_run_formal_measurement(active_args), 0)
+            self.assertEqual(
+                validate_measurement_attempt(attempt_root=active_args.attempt_root / active_args.attempt_id)["status"],
+                "completed",
+            )
+
     def test_adversarial_cli_is_diagnostic_only_and_matches_every_frozen_oracle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -392,6 +428,39 @@ class MeasurementAttemptTests(unittest.TestCase):
             with self.assertRaisesRegex(AttemptError, "ADVERSARIAL_REPORT_INVALID"):
                 report.write_bytes(canonical_json_bytes({"status": "formal"}))
                 validate_adversarial_report(report_path=report, formal_attempt=args.formal_attempt)
+
+            active_formal = self._active_formal_args(root / "active-attempts")
+            active_formal.attempt_id = "formal"
+            self.assertEqual(command_run_formal_measurement(active_formal), 0)
+            active_report = root / "active-adversarial.json"
+            active_args = SimpleNamespace(
+                authority=active_formal.authority,
+                bundle=active_formal.bundle,
+                rules=active_formal.rules,
+                schema=active_formal.schema,
+                predictions=active_formal.predictions,
+                oracle=self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v1.json",
+                pending_authority=None,
+                transition=None,
+                revocation=self.revocation,
+                formal_attempt=active_formal.attempt_root / "formal",
+                report=active_report,
+            )
+            self.assertEqual(command_run_adversarial_oracles(active_args), 0)
+            self.assertEqual(
+                validate_adversarial_report(
+                    report_path=active_report,
+                    formal_attempt=active_args.formal_attempt,
+                    authority=active_args.authority,
+                    bundle=active_args.bundle,
+                    rules=active_args.rules,
+                    schema=active_args.schema,
+                    predictions=active_args.predictions,
+                    oracle=active_args.oracle,
+                    revocation=active_args.revocation,
+                )["status"],
+                "diagnostic_only",
+            )
 
     def test_adversarial_report_rejects_forged_formal_attempt_binding(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
