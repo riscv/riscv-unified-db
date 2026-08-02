@@ -192,7 +192,9 @@ def write_new_descriptor_file(root: Path, relative_path: str, content: bytes) ->
             os.close(held)
 
 
-def _read_held_regular_file(parent: int, leaf: str, accepted_device: int) -> bytes:
+def _read_held_regular_file(
+    parent: int, leaf: str, accepted_device: int, *, require_single_link: bool = False,
+) -> bytes:
     """Read one held regular leaf and reject identity or byte races."""
     descriptor: int | None = None
     try:
@@ -201,6 +203,8 @@ def _read_held_regular_file(parent: int, leaf: str, accepted_device: int) -> byt
         opened = os.fstat(descriptor)
         if not stat.S_ISREG(opened.st_mode) or not _same_identity(before, opened) or opened.st_dev != accepted_device:
             raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+        if require_single_link and opened.st_nlink != 1:
+            raise FilesystemPolicyError("HARDLINK_DEPENDENCY_REJECTED")
         chunks: list[bytes] = []
         while True:
             chunk = os.read(descriptor, 1024 * 1024)
@@ -224,6 +228,8 @@ def _fsync_held_regular_file(parent: int, leaf: str, accepted_device: int) -> No
         opened = os.fstat(descriptor)
         if not stat.S_ISREG(opened.st_mode) or not _same_identity(before, opened) or opened.st_dev != accepted_device:
             raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+        if opened.st_nlink != 1:
+            raise FilesystemPolicyError("HARDLINK_DEPENDENCY_REJECTED")
         os.fsync(descriptor)
     finally:
         if descriptor is not None:
@@ -240,7 +246,9 @@ def replace_descriptor_file(root: Path, relative_path: str, content: bytes, expe
         if _read_held_regular_file(parent, leaf, accepted_device) != expected_current:
             raise FilesystemPolicyError("AUTHORITATIVE_TARGET_MISMATCH")
         try:
-            temporary_raw = _read_held_regular_file(parent, temporary, accepted_device)
+            temporary_raw = _read_held_regular_file(
+                parent, temporary, accepted_device, require_single_link=True,
+            )
         except FilesystemPolicyError as error:
             if str(error) != "AUTHORITATIVE_FILE_MISSING":
                 raise
@@ -260,6 +268,10 @@ def replace_descriptor_file(root: Path, relative_path: str, content: bytes, expe
             raise FilesystemPolicyError("AUTHORITATIVE_TEMPORARY_MISMATCH")
         else:
             _fsync_held_regular_file(parent, temporary, accepted_device)
+        if _read_held_regular_file(
+            parent, temporary, accepted_device, require_single_link=True,
+        ) != content:
+            raise FilesystemPolicyError("AUTHORITATIVE_TEMPORARY_MISMATCH")
         # This second held-parent read closes target changes detectable between
         # temporary creation/reuse and the dirfd-only replacement.
         if _read_held_regular_file(parent, leaf, accepted_device) != expected_current:
