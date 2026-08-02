@@ -435,7 +435,7 @@ class FilesystemBoundaryTests(unittest.TestCase):
                     if operation == "create":
                         write_new_descriptor_file(root, "authority.json", b"v3")
                     else:
-                        replace_descriptor_file(root, "authority.json", b"v3")
+                        replace_descriptor_file(root, "authority.json", b"v3", b"v2")
                 self.assertTrue(triggered)
                 self.assertEqual((parent / "old-root" / "authority.json").read_bytes(), b"v3")
                 self.assertFalse((root / "authority.json").exists())
@@ -473,11 +473,11 @@ class FilesystemBoundaryTests(unittest.TestCase):
             os.unlink(existing)
             os.symlink("elsewhere", existing)
             with self.assertRaisesRegex(FilesystemPolicyError, "SYMLINK_REJECTED"):
-                replace_descriptor_file(root, "leaf.txt", b"new")
+                replace_descriptor_file(root, "leaf.txt", b"new", b"existing")
             os.unlink(existing)
             os.mkfifo(existing)
             with self.assertRaisesRegex(FilesystemPolicyError, "SPECIAL_FILE_KIND_REJECTED"):
-                replace_descriptor_file(root, "leaf.txt", b"new")
+                replace_descriptor_file(root, "leaf.txt", b"new", b"existing")
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -488,8 +488,43 @@ class FilesystemBoundaryTests(unittest.TestCase):
             (root / "leaf.txt").write_bytes(b"old")
             with patch("specchoice_evidence.filesystem.os.replace", side_effect=OSError("replace")):
                 with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_WRITE_INVALID"):
-                    replace_descriptor_file(root, "leaf.txt", b"new")
+                    replace_descriptor_file(root, "leaf.txt", b"new", b"old")
             self.assertEqual((root / "leaf.txt").read_bytes(), b"old")
+
+            # A crash may leave the already-fsynced exact temporary payload. It is
+            # reusable, but every other temporary form is an immutable failure.
+            temporary = root / ".leaf.txt.cutover"
+            temporary.write_bytes(b"new")
+            replace_descriptor_file(root, "leaf.txt", b"new", b"old")
+            self.assertEqual((root / "leaf.txt").read_bytes(), b"new")
+
+        for maker, code in (
+            (lambda path: path.write_bytes(b"wrong"), "AUTHORITATIVE_TEMPORARY_MISMATCH"),
+            (lambda path: os.symlink("leaf.txt", path), "SYMLINK_REJECTED"),
+            (lambda path: os.mkfifo(path), "SPECIAL_FILE_KIND_REJECTED"),
+        ):
+            with self.subTest(crash_temporary=code), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                leaf = root / "leaf.txt"
+                temporary = root / ".leaf.txt.cutover"
+                leaf.write_bytes(b"old")
+                maker(temporary)
+                with self.assertRaisesRegex(FilesystemPolicyError, code):
+                    replace_descriptor_file(root, "leaf.txt", b"new", b"old")
+                self.assertTrue(temporary.exists() or temporary.is_symlink())
+                self.assertEqual(leaf.read_bytes(), b"old")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            leaf = root / "leaf.txt"
+            leaf.write_bytes(b"old")
+            with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_TARGET_MISMATCH"):
+                replace_descriptor_file(root, "leaf.txt", b"new", b"different")
+            self.assertEqual(leaf.read_bytes(), b"old")
+            with patch("specchoice_evidence.filesystem.os.write", return_value=0):
+                with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_WRITE_INVALID"):
+                    replace_descriptor_file(root, "leaf.txt", b"new", b"old")
+            self.assertTrue((root / ".leaf.txt.cutover").exists())
 
     def test_hardlink_dependency_is_rejected_without_rejecting_independent_bytes(self) -> None:
         with self.assertRaisesRegex(FilesystemPolicyError, "HARDLINK_DEPENDENCY_REJECTED"):

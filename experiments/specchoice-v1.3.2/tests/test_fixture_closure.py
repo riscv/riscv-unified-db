@@ -139,6 +139,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             active = root / "source-authority.json"
             shutil.copyfile(active_v2, active)
             revocation = root / "fixture-closure-revocation-v2.json"
+            readiness = experiment / "receipts/source-cutover-readiness-v10.json"
             self._public_command(
                 experiment,
                 "validate-phase2-source-authority", "--authority", str(active),
@@ -198,6 +199,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         [
                             sys.executable, "-m", "specchoice_evidence.cli", "activate-pending-source-cutover-v10",
                             "--pending-authority", str(pending), "--transition", str(transition),
+                            "--readiness", str(readiness),
                             "--canonical-revocation", str(revocation), "--active-authority", str(active),
                             "--accepted-bundle", str(bundle),
                         ], cwd=experiment, check=False, capture_output=True, text=True,
@@ -205,9 +207,17 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0, expected)
                     self.assertFalse(revocation.exists())
                     self.assertEqual(active.read_bytes(), active_v2.read_bytes())
+            # The public activator only accepts the single reviewed readiness
+            # binding; its source inputs must therefore be the canonical pending
+            # objects, even though the mutation targets remain disposable.
+            pending = experiment / "phase2/source-authority-v10-pending.json"
+            transition = experiment / "receipts/pending/fixture-closure-transition-v2-to-v3.json"
+            accepted_bundle = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+            shutil.copyfile(active_v2, active)
             self._public_command(
                 experiment,
                 "activate-pending-source-cutover-v10", "--pending-authority", str(pending), "--transition", str(transition),
+                "--readiness", str(readiness),
                 "--canonical-revocation", str(revocation), "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
             )
             self.assertNotEqual(active.read_bytes(), active_v2.read_bytes())
@@ -221,6 +231,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 self._public_command(
                     experiment,
                     "activate-pending-source-cutover-v10", "--pending-authority", str(pending), "--transition", str(transition),
+                    "--readiness", str(readiness),
                     "--canonical-revocation", str(revocation), "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
                 )["status"],
                 "already_activated",
@@ -232,6 +243,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 self._public_command(
                     experiment,
                     "activate-pending-source-cutover-v10", "--pending-authority", str(invalid_pending),
+                    "--readiness", str(readiness),
                     "--transition", str(transition), "--canonical-revocation", str(revocation),
                     "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
                 )
@@ -249,6 +261,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 self._public_command(
                     experiment,
                     "activate-pending-source-cutover-v10", "--pending-authority", str(pending),
+                    "--readiness", str(readiness),
                     "--transition", str(transition), "--canonical-revocation", str(resume_revocation),
                     "--active-authority", str(resume_active), "--accepted-bundle", str(accepted_bundle),
                 )["status"],
@@ -268,6 +281,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     with self.assertRaisesRegex(AssertionError, "SOURCE_CUTOVER"):
                         self._public_command(
                             experiment, "activate-pending-source-cutover-v10", "--pending-authority", str(pending),
+                            "--readiness", str(readiness),
                             "--transition", str(invalid_transition), "--canonical-revocation", str(revocation),
                             "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
                         )
@@ -277,6 +291,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, "SOURCE_CUTOVER"):
                 self._public_command(
                     experiment, "activate-pending-source-cutover-v10", "--pending-authority", str(pending),
+                    "--readiness", str(readiness),
                     "--transition", str(transition), "--canonical-revocation", str(revocation),
                     "--active-authority", str(active),
                     "--accepted-bundle", str(experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"),
