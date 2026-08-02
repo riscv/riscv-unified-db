@@ -426,6 +426,7 @@ def write_exact_descriptor_files(root: Path, payloads: Mapping[str, bytes]) -> N
         for name in names:
             descriptor, _, _, _ = files[name]
             observed[name] = _read_bounded_descriptor(descriptor, len(expected_by_name[name]))
+        verified_signatures: dict[str, tuple[int, int, int, int, int, int, int]] = {}
         for name in names:
             descriptor, parent, leaf, baseline = files[name]
             os.fsync(descriptor)
@@ -439,6 +440,24 @@ def write_exact_descriptor_files(root: Path, payloads: Mapping[str, bytes]) -> N
                 observed[name] != expected_by_name[name]
                 or after.st_nlink != 1
                 or _signature(after) != _signature(baseline)
+                or not _same_identity(after, namespace_after)
+                or _signature(after) != _signature(namespace_after)
+            ):
+                raise FilesystemPolicyError("AUTHORITATIVE_POSTWRITE_MISMATCH")
+            verified_signatures[name] = _signature(after)
+        # Close mutations that occur after an earlier leaf's verification while
+        # a later leaf is still being checked. All descriptors stay held until
+        # this second namespace-and-inode sweep has completed.
+        for name in names:
+            descriptor, parent, leaf, _ = files[name]
+            after = os.fstat(descriptor)
+            try:
+                namespace_after = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+            except (NotImplementedError, TypeError, OSError) as error:
+                raise FilesystemPolicyError("AUTHORITATIVE_POSTWRITE_MISMATCH") from error
+            if (
+                after.st_nlink != 1
+                or _signature(after) != verified_signatures[name]
                 or not _same_identity(after, namespace_after)
                 or _signature(after) != _signature(namespace_after)
             ):

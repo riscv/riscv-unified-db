@@ -656,6 +656,29 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 filesystem_module.write_exact_descriptor_files(root, payloads)
             self.assertTrue(triggered)
 
+        with self.subTest(operation="batch-cross-leaf-verification-mutation"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "config/first.json"
+            original_stat = os.stat
+            first_verified = False
+            triggered = False
+
+            def mutate_after_first_verification(path: object, *args: object, **kwargs: object) -> os.stat_result:
+                nonlocal first_verified, triggered
+                result = original_stat(path, *args, **kwargs)
+                if os.fspath(path) == "first.json" and stat.S_ISREG(result.st_mode):
+                    first_verified = True
+                elif os.fspath(path) == "second.json" and first_verified and not triggered:
+                    triggered = True
+                    first.write_bytes(b"other")
+                return result
+
+            with patch("specchoice_evidence.filesystem.os.stat", side_effect=mutate_after_first_verification), self.assertRaisesRegex(
+                FilesystemPolicyError, "AUTHORITATIVE_POSTWRITE_MISMATCH"
+            ):
+                filesystem_module.write_exact_descriptor_files(root, payloads)
+            self.assertTrue(triggered)
+
         with self.subTest(operation="batch-fsync-failure-removes-unproven-leaf"), tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             original_fsync = os.fsync
