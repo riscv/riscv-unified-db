@@ -533,6 +533,34 @@ class MeasurementAdapterTests(unittest.TestCase):
                 self.assertFalse(invalid.valid)
                 self.assertEqual(invalid.records, ())
                 self.assertEqual(invalid.source_identity, expected_provenance)
+                self.assertEqual(invalid.diagnostics[0].code, "ACTIVE_SOURCE_CUTOVER_DESCRIPTOR_CHANGED_DURING_VALIDATION")
+
+        with self.subTest(descriptor="authority-revocation-pair-swap"):
+            with tempfile.TemporaryDirectory() as temporary:
+                authority = Path(temporary) / "source-authority.json"
+                revocation = Path(temporary) / "fixture-closure-revocation-v2.json"
+                authority.write_bytes(self.active_authority.read_bytes())
+                revocation.write_bytes(self.revocation.read_bytes())
+                authority_raw = authority.read_bytes()
+                revocation_raw = revocation.read_bytes()
+
+                def validate_then_swap_descriptors(*args, **kwargs):
+                    result = original_run(*args, **kwargs)
+                    authority.write_bytes(revocation_raw)
+                    revocation.write_bytes(authority_raw)
+                    return result
+
+                with mock.patch("specchoice_measurement.adapter.subprocess.run", side_effect=validate_then_swap_descriptors):
+                    invalid = build_pr2164_adapter_batch(
+                        authority_path=authority,
+                        bundle_root=self.pending_bundle,
+                        rules_path=self.rules,
+                        revocation_path=revocation,
+                    )
+            self.assertFalse(invalid.valid)
+            self.assertEqual(invalid.records, ())
+            self.assertEqual(invalid.source_identity, expected_provenance)
+            self.assertEqual(invalid.diagnostics[0].code, "ACTIVE_SOURCE_CUTOVER_DESCRIPTOR_CHANGED_DURING_VALIDATION")
 
     def test_public_builder_rejects_rebound_rules_authority_and_registry_roles(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
