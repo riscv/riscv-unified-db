@@ -642,6 +642,8 @@ def verify_candidate(candidate: Path) -> dict[str, object]:
             try:
                 evidence, raw = read_authoritative_file(candidate, local)
             except FilesystemPolicyError as error:
+                if str(error) == "AUTHORITATIVE_FILE_MISSING":
+                    raise BundleError("STAGED_RAW_CUSTODY_MISMATCH") from error
                 raise BundleError(str(error)) from error
             except OSError as error:
                 raise BundleError("STAGED_RAW_CUSTODY_MISMATCH") from error

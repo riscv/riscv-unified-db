@@ -185,11 +185,11 @@ class MeasurementAttemptTests(unittest.TestCase):
                 shutil.copy2(owned, external)
                 original_open = filesystem.os.open
 
-                def swap_before_open(path: Path | str, flags: int, *args: object) -> int:
-                    if Path(path) == owned:
+                def swap_before_open(path: Path | str, flags: int, *args: object, **kwargs: object) -> int:
+                    if path == owned.name and "dir_fd" in kwargs:
                         owned.unlink()
                         owned.symlink_to(external)
-                    return original_open(path, flags, *args)
+                    return original_open(path, flags, *args, **kwargs)
 
                 code = "ATTEMPT_MANIFEST_INVALID" if name == "attempt.json" else "ATTEMPT_ARTIFACT_INVALID"
                 with patch("specchoice_evidence.filesystem.os.open", side_effect=swap_before_open):

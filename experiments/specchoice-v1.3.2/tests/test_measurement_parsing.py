@@ -216,7 +216,7 @@ class MeasurementParsingTests(unittest.TestCase):
 
                     def guarded_open(path, flags, *args, **kwargs):
                         nonlocal opened
-                        if Path(path) != leaf:
+                        if path != leaf.name or "dir_fd" not in kwargs:
                             return real_open(path, flags, *args, **kwargs)
                         opened = True
                         if kind == "symlink":

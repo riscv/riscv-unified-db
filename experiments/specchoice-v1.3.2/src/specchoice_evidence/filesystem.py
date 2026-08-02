@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import errno
 import os
 import stat
 from dataclasses import dataclass
@@ -56,6 +57,15 @@ def _same_identity(left: os.stat_result, right: os.stat_result) -> bool:
     return left.st_dev == right.st_dev and left.st_ino == right.st_ino
 
 
+def _raise_open_boundary_error(error: OSError) -> None:
+    """Keep namespace substitution distinct from unavailable descriptor support."""
+    if error.errno == errno.ELOOP:
+        raise FilesystemPolicyError("SYMLINK_REJECTED") from error
+    if error.errno == errno.ENOENT:
+        raise FilesystemPolicyError("AUTHORITATIVE_FILE_MISSING") from error
+    raise FilesystemPolicyError("DIRECTORY_DESCRIPTOR_UNAVAILABLE") from error
+
+
 def _directory_components(root: Path) -> tuple[int, tuple[str, ...]]:
     """Open the lexical authority root without resolving it through a pathname."""
     text = os.fspath(root)
@@ -65,20 +75,26 @@ def _directory_components(root: Path) -> tuple[int, tuple[str, ...]]:
         # Opening the authority root once is itself the root binding.  Descendant
         # components are subsequently opened only relative to this held descriptor.
         return os.open(text, _directory_flags()), ()
-    except (NotImplementedError, TypeError, OSError) as error:
+    except (NotImplementedError, TypeError) as error:
         raise FilesystemPolicyError("DIRECTORY_DESCRIPTOR_UNAVAILABLE") from error
+    except OSError as error:
+        _raise_open_boundary_error(error)
 
 
 def _open_directory(parent: int, name: str, accepted_device: int | None) -> int:
     try:
         before = os.stat(name, dir_fd=parent, follow_symlinks=False)
-        if stat.S_ISLNK(before.st_mode) or not stat.S_ISDIR(before.st_mode):
+        if stat.S_ISLNK(before.st_mode):
+            raise FilesystemPolicyError("SYMLINK_REJECTED")
+        if not stat.S_ISDIR(before.st_mode):
             raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
         child = os.open(name, _directory_flags(), dir_fd=parent)
     except FilesystemPolicyError:
         raise
-    except (NotImplementedError, TypeError, OSError) as error:
+    except (NotImplementedError, TypeError) as error:
         raise FilesystemPolicyError("DIRECTORY_DESCRIPTOR_UNAVAILABLE") from error
+    except OSError as error:
+        _raise_open_boundary_error(error)
     opened = os.fstat(child)
     if not _same_identity(before, opened) or stat.S_ISLNK(opened.st_mode) or not stat.S_ISDIR(opened.st_mode):
         os.close(child)
@@ -127,13 +143,17 @@ def _read_authoritative_regular_file(root: Path, relative: PurePosixPath) -> tup
     try:
         try:
             before = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
-            if stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode):
+            if stat.S_ISLNK(before.st_mode):
+                raise FilesystemPolicyError("SYMLINK_REJECTED")
+            if not stat.S_ISREG(before.st_mode):
                 raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
             descriptor = os.open(leaf, _file_flags(), dir_fd=parent)
         except FilesystemPolicyError:
             raise
-        except (NotImplementedError, TypeError, OSError) as error:
+        except (NotImplementedError, TypeError) as error:
             raise FilesystemPolicyError("DIRECTORY_DESCRIPTOR_UNAVAILABLE") from error
+        except OSError as error:
+            _raise_open_boundary_error(error)
         opened = os.fstat(descriptor)
         if not stat.S_ISREG(opened.st_mode) or not _same_identity(before, opened) or opened.st_dev != accepted_device:
             raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
