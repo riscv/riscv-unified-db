@@ -5,10 +5,10 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
 status: executing
-stopped_at: Executing 02-18 Segment A (Tasks 1-2)
-last_updated: "2026-08-02T19:29:37.776Z"
+stopped_at: Awaiting 02-18 Task 2 blocking-human ontology policy decision
+last_updated: "2026-08-02T21:14:50.097Z"
 last_activity: 2026-08-02
-last_activity_desc: Phase 02 executing successor gap plan 02-18 Segment A
+last_activity_desc: 02-18 Task 1 superseded the legacy H1 route; Task 2 awaits human ontology selections
 progress:
   total_phases: 7
   completed_phases: 1
@@ -30,8 +30,8 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 
 Phase: 02 (deterministic-measurement-spine) — EXECUTING
 Plan: 18 of 18
-Status: Executing 02-18 Segment A
-Last activity: 2026-08-02 — Phase 02 executing successor gap plan 02-18 Segment A
+Status: Awaiting blocking-human Task 2 ontology policy decision
+Last activity: 2026-08-02 — 02-18 Task 1 superseded the legacy H1 route; Task 2 awaits human ontology selections
 
 Progress: [█████████░] 92%
 
@@ -140,6 +140,7 @@ None yet.
 - Exact provider and immutable model snapshot remain unfrozen until the conditional H4 checkpoint.
 - Python 3.14/scikit-learn lock resolution remains unverified for later measurement work.
 - Human-reviewed pair and strict-core sufficiency is unknown and may legitimately select Red.
+- 02-18 cannot advance to Task 3 until a human selects one PBMTE policy and one cache identity/scope policy.
 
 ## Deferred Items
 
@@ -149,6 +150,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-02T11:47:24.997Z
-Stopped at: Completed 02-15-PLAN.md
+Last session: 2026-08-02T21:14:50.097Z
+Stopped at: Awaiting 02-18 Task 2 blocking-human ontology policy decision
 Resume file: None
