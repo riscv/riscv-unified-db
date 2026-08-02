@@ -488,10 +488,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 root / "decision.json", self._current_fixture_acceptance_decision(experiment)
             )
             target = root / "accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
-            with mock.patch(
-                "specchoice_evidence.bundle._fixture_closure_current_v7_basis",
-                return_value=self._current_fixture_acceptance_decision(experiment)["v7_basis"],
-            ), mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=attacker):
+            with mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=attacker):
                 with self.assertRaisesRegex(BundleError, "LOCAL_ACCEPTED_TARGET_EXISTS"):
                     accept_fixture_closure_candidate(candidate, root / "accepted", decision)
             self.assertTrue(target.is_dir())
@@ -528,10 +525,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             decision = self._write_fixture_acceptance_decision(
                 root / "decision.json", self._current_fixture_acceptance_decision(experiment)
             )
-            with mock.patch(
-                "specchoice_evidence.bundle._fixture_closure_current_v7_basis",
-                return_value=self._current_fixture_acceptance_decision(experiment)["v7_basis"],
-            ), mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=NotImplementedError):
+            with mock.patch("specchoice_evidence.bundle._native_publish_no_replace", side_effect=NotImplementedError):
                 with self.assertRaisesRegex(BundleError, "ATOMIC_NO_REPLACE_UNAVAILABLE"):
                     accept_fixture_closure_candidate(candidate, root / "accepted", decision)
 
@@ -554,11 +548,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             accepted_root = Path(directory) / "accepted"
             decision_path = self._write_fixture_acceptance_decision(Path(directory) / "decision.json", decision)
-            with mock.patch(
-                "specchoice_evidence.bundle._fixture_closure_current_v7_basis",
-                return_value=decision["v7_basis"],
-            ):
-                result = accept_fixture_closure_candidate(candidate, accepted_root, decision_path)
+            result = accept_fixture_closure_candidate(candidate, accepted_root, decision_path)
             self.assertEqual(result["status"], "accepted")
             self.assertTrue((accepted_root / result["generation"]).is_dir())
 
@@ -578,10 +568,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     None if authority is None
                     else self._write_fixture_acceptance_decision(Path(directory) / "decision.json", authority)
                 )
-                with mock.patch(
-                    "specchoice_evidence.bundle._fixture_closure_current_v7_basis",
-                    return_value=decision["v7_basis"],
-                ), self.assertRaisesRegex(BundleError, code):
+                with self.assertRaisesRegex(BundleError, code):
                     accept_fixture_closure_candidate(candidate, accepted_root, decision_path)
                 self.assertFalse(accepted_root.exists())
 
