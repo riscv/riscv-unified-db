@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
 status: executing
-stopped_at: Completed 02-10-PLAN.md
-last_updated: "2026-08-02T08:16:58.053Z"
+stopped_at: Completed 02-11-PLAN.md
+last_updated: "2026-08-02T09:13:28.517Z"
 last_activity: 2026-08-02
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 24
-  completed_plans: 17
+  completed_plans: 18
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 02 (deterministic-measurement-spine) — EXECUTING
-Plan: 3 of 17
+Plan: 4 of 17
 Status: Ready to execute
 Last activity: 2026-08-02 — Phase 02 execution started
 
-Progress: [███████░░░] 71%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -74,6 +74,7 @@ Progress: [███████░░░] 71%
 | Phase 02 P08 | 45m | 2 tasks | 6 files |
 | Phase 02 P09 | 32m | 2 tasks | 8 files |
 | Phase 02 P10 | 8m | 3 tasks | 45 files |
+| Phase 02 P11 | 1h | 3 tasks | 47 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,8 @@ Recent decisions affecting current work:
 - [Phase ?]: The Phase 1 expected-red baseline is a non-discovered gate with a fixed 66/141/136 partition.
 - [Phase ?]: 02-10 binds only the explicit user authorization to the exact verifier-rooted-v3 proposal and fixed source; candidate construction is not acceptance.
 - [Phase ?]: Verifier-rooted-v3 remains candidate-only and replay-verified in copied isolation; active v2 authority and external publication remain unchanged.
+- [Phase ?]: User-approved v3 remains local-only; active v2 is preserved until 02-16 cutover.
+- [Phase ?]: Accepted v3 materialization uses descriptor-held candidate inventory and the v10 transition is non-effective.
 
 ### Pending Todos
 
@@ -134,6 +137,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-02T08:16:58.043Z
-Stopped at: Completed 02-10-PLAN.md
+Last session: 2026-08-02T09:13:28.506Z
+Stopped at: Completed 02-11-PLAN.md
 Resume file: None
