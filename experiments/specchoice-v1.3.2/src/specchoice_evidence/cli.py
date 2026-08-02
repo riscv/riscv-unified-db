@@ -56,6 +56,7 @@ from .source_contract import (
     validate_fixture_construction_decision,
     validate_fixture_construction_proposal,
     validate_fixture_construction_proposal_v4,
+    validate_fixture_construction_decision_v4,
     validate_local_acceptance_decision_v10,
     validate_local_acceptance_request_v10,
     validate_source_contract_proposal,
@@ -550,15 +551,15 @@ def command_validate_fixture_construction_proposal_v4(args: argparse.Namespace) 
         args.supersession, "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_NOT_CANONICAL"
     )
     legacy_proposal, legacy_proposal_raw = _load_authoritative_canonical_v4(
-        _experiment_root() / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json",
+        _experiment_root() / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
     legacy_manifest, legacy_manifest_raw = _load_authoritative_canonical_v4(
-        _experiment_root() / "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json",
+        _experiment_root() / "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
     legacy_registry, legacy_registry_raw = _load_authoritative_canonical_v4(
-        _experiment_root() / "config/fixture-registry-pr2164-v2.json",
+        _experiment_root() / "config/fixture-registry-pr2164-v3.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
     ontology = validate_h1_ontology_decision_v1(
@@ -600,14 +601,53 @@ def command_validate_fixture_construction_proposal_v4(args: argparse.Namespace) 
         legacy_registry_sha256=sha256_bytes(legacy_registry_raw),
         repository_root=_experiment_root().parents[1],
     )
-    _print_json(
-        {
-            "ontology_decision_sha256": ontology["artifact_sha256"],
-            "proposal_sha256": sha256_bytes(proposal_raw),
-            "status": validated["status"],
-            "valid": True,
-        }
-    )
+    if not getattr(args, "_quiet", False):
+        _print_json({"ontology_decision_sha256": ontology["artifact_sha256"], "proposal_sha256": sha256_bytes(proposal_raw), "status": validated["status"], "valid": True})
+    return 0
+
+
+def command_validate_fixture_construction_decision_v4(args: argparse.Namespace) -> int:
+    """Revalidate all v4 inputs before validating an externally authored decision."""
+    args._quiet = True
+    command_validate_fixture_construction_proposal_v4(args)
+    proposal, proposal_raw = _load_authoritative_canonical_v4(args.proposal, "FIXTURE_CONSTRUCTION_V4_PROPOSAL_NOT_CANONICAL")
+    decision, _ = _load_authoritative_canonical_v4(args.decision, "FIXTURE_CONSTRUCTION_V4_DECISION_NOT_CANONICAL")
+    _, supersession_raw = _load_authoritative_canonical_v4(args.supersession, "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_NOT_CANONICAL")
+    _, authority_raw = _load_authoritative_canonical_v4(args.active_authority, "FIXTURE_CONSTRUCTION_V4_AUTHORITY_INVALID")
+    from specchoice_measurement.h1 import validate_h1_ontology_decision_v1
+    ontology = validate_h1_ontology_decision_v1(options=_experiment_root() / "config/measurement/h1-ontology-policy-options-v1.json", supersession=_experiment_root() / "receipts/h1-review-route-supersession-v1.json", decision=args.ontology_decision)
+    validated = validate_fixture_construction_decision_v4(decision, proposal=proposal, proposal_sha256=sha256_bytes(proposal_raw), supersession_sha256=sha256_bytes(supersession_raw), ontology_sha256=str(ontology["artifact_sha256"]), authority_sha256=sha256_bytes(authority_raw))
+    _print_json({"construction_authorized": validated["decision"] == "authorize", "decision": validated["decision"], "status": "decision_valid"})
+    return 0
+
+
+def _write_v4_no_replace(output_root: Path, payloads: dict[str, bytes]) -> None:
+    """Preflight every target before first-write materialization through descriptor roots."""
+    for relative in payloads:
+        try:
+            read_authoritative_file(output_root, relative)
+        except FilesystemPolicyError as error:
+            if str(error) != "AUTHORITATIVE_FILE_MISSING":
+                raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_INVALID") from error
+        else:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_COLLISION")
+    try:
+        for relative, raw in payloads.items():
+            write_new_descriptor_file(output_root, relative, raw)
+    except FilesystemPolicyError as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_WRITE_INVALID") from error
+
+
+def command_write_fixture_construction_proposal_v4(args: argparse.Namespace) -> int:
+    """Materialize only fully revalidated v4 staging bytes, never replacing a target."""
+    args._quiet = True
+    command_validate_fixture_construction_proposal_v4(args)
+    payloads = {}
+    for path in (args.proposal, args.repair_manifest, args.registry, args.supersession):
+        _, raw = _load_authoritative_canonical_v4(path, "FIXTURE_CONSTRUCTION_V4_WRITE_INVALID")
+        payloads[path.name] = raw
+    _write_v4_no_replace(args.output_root, payloads)
+    _print_json({"status": "materialized", "targets": sorted(payloads)})
     return 0
 
 
@@ -1568,6 +1608,16 @@ def build_parser() -> argparse.ArgumentParser:
     fixture_construction_proposal_v4.add_argument("--registry", type=Path, required=True)
     fixture_construction_proposal_v4.add_argument("--supersession", type=Path, required=True)
     fixture_construction_proposal_v4.set_defaults(handler=command_validate_fixture_construction_proposal_v4)
+    fixture_construction_decision_v4 = commands.add_parser("validate-fixture-construction-decision-v4")
+    for option in ("proposal", "predecessor", "active_authority", "historical_authority", "revocation", "ontology_decision", "repair_manifest", "registry", "supersession"):
+        fixture_construction_decision_v4.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    fixture_construction_decision_v4.add_argument("--decision", type=Path, required=True)
+    fixture_construction_decision_v4.set_defaults(handler=command_validate_fixture_construction_decision_v4)
+    fixture_construction_write_v4 = commands.add_parser("write-fixture-construction-proposal-v4")
+    for option in ("proposal", "predecessor", "active_authority", "historical_authority", "revocation", "ontology_decision", "repair_manifest", "registry", "supersession"):
+        fixture_construction_write_v4.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    fixture_construction_write_v4.add_argument("--output-root", type=Path, required=True)
+    fixture_construction_write_v4.set_defaults(handler=command_write_fixture_construction_proposal_v4)
     candidate = commands.add_parser("build-candidate")
     candidate.add_argument("--decision", type=Path, default=Path("receipts/source-publication-decision.json"))
     candidate.add_argument("--proposal", type=Path, default=Path("receipts/source-contract-correction-proposal-v2.json"))

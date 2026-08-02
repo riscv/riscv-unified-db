@@ -12,6 +12,7 @@ import hashlib
 import os
 import re
 import subprocess
+from datetime import datetime
 from collections.abc import Mapping
 from pathlib import Path
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
@@ -99,18 +100,18 @@ def validate_fixture_construction_proposal_v4(
 ) -> dict[str, object]:
     """Validate the decision-bound, append-only semantic-gold construction request."""
     if not isinstance(proposal, Mapping) or set(proposal) != {
-        "active_authority", "external_publication_authorized", "fixed_code_commit", "generation", "local_only",
+        "active_authority", "external_publication_authorized", "fixed_code_artifacts", "fixed_code_commit", "generation", "local_only",
         "ontology_decision", "predecessor", "registry", "repair_manifest", "replacements", "revocation",
         "schema_version", "selected_policy", "status", "successor_inventory",
     }:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PROPOSAL_INVALID")
     if proposal.get("schema_version") != "fixture-construction-proposal-v4" or proposal.get("generation") != (
-        "source-contract-v4-pr2164-semantic-gold-closure-verifier-rooted-v2"
+        "source-contract-v4-pr2164-semantic-gold-closure-verifier-rooted-v3"
     ) or proposal.get("status") != "awaiting_human_construction_authorization" or proposal.get("local_only") is not True or (
         proposal.get("external_publication_authorized") is not False
     ):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_PROPOSAL_INVALID")
-    _require_v4_git_commit(proposal.get("fixed_code_commit"), repository_root)
+    _require_v4_git_commit(proposal.get("fixed_code_commit"), proposal.get("fixed_code_artifacts"), repository_root)
     artifact_sha256 = ontology.get("artifact_sha256")
     selected_policy = ontology.get("selected_policy")
     if not isinstance(artifact_sha256, str) or not isinstance(selected_policy, Mapping):
@@ -164,6 +165,42 @@ def _require_v4_binding(value: object, path: str, digest: str) -> None:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_BINDING_INVALID")
 
 
+def validate_fixture_construction_decision_v4(
+    decision: object, *, proposal: Mapping[str, object], proposal_sha256: str, supersession_sha256: str,
+    ontology_sha256: str, authority_sha256: str,
+) -> dict[str, object]:
+    """Validate a closed human disposition only after the v4 proposal gate passed."""
+    required = {
+        "active_authority_sha256", "attestation", "decision", "decision_sha256", "decision_timestamp",
+        "external_publication_authorized", "fixed_code_commit", "local_only", "ontology_decision_sha256",
+        "proposal_sha256", "rationale", "reviewer", "schema_version", "supersession_sha256",
+    }
+    if not isinstance(decision, Mapping) or set(decision) != required or decision.get("schema_version") != "1" or decision.get("decision") not in {"authorize", "reject"}:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_INVALID")
+    if decision.get("local_only") is not True or decision.get("external_publication_authorized") is not False or decision.get("fixed_code_commit") != proposal.get("fixed_code_commit") or (
+        decision.get("proposal_sha256") != proposal_sha256 or decision.get("supersession_sha256") != supersession_sha256 or
+        decision.get("ontology_decision_sha256") != ontology_sha256 or decision.get("active_authority_sha256") != authority_sha256
+    ):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_BINDING_INVALID")
+    if not all(isinstance(decision.get(field), str) and decision[field].strip() for field in ("rationale", "reviewer", "attestation")):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_INVALID")
+    timestamp = decision.get("decision_timestamp")
+    if not isinstance(timestamp, str) or not timestamp.endswith("Z"):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_INVALID")
+    try:
+        parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_INVALID") from error
+    if parsed.tzinfo is None or parsed.isoformat().replace("+00:00", "Z") != timestamp:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_INVALID")
+    supplied = decision.get("decision_sha256")
+    projected = dict(decision)
+    projected.pop("decision_sha256")
+    if not isinstance(supplied, str) or supplied != sha256_bytes(canonical_json_bytes(projected)):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_INVALID")
+    return dict(decision)
+
+
 def _validate_v4_supersession(
     receipt: object, receipt_sha256: str, legacy_proposal_sha256: str, legacy_manifest_sha256: str,
     legacy_registry_sha256: str, proposal_sha256: str, manifest_sha256: str, registry_sha256: str,
@@ -178,19 +215,19 @@ def _validate_v4_supersession(
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
     _require_v4_binding(
         receipt.get("legacy", {}).get("proposal") if isinstance(receipt.get("legacy"), Mapping) else None,
-        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json", legacy_proposal_sha256,
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json", legacy_proposal_sha256,
     )
     _require_v4_binding(
         receipt.get("legacy", {}).get("repair_manifest") if isinstance(receipt.get("legacy"), Mapping) else None,
-        "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json", legacy_manifest_sha256,
+        "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json", legacy_manifest_sha256,
     )
     _require_v4_binding(
         receipt.get("legacy", {}).get("registry") if isinstance(receipt.get("legacy"), Mapping) else None,
-        "config/fixture-registry-pr2164-v2.json", legacy_registry_sha256,
+        "config/fixture-registry-pr2164-v3.json", legacy_registry_sha256,
     )
     _require_v4_binding(
         receipt.get("successor", {}).get("proposal") if isinstance(receipt.get("successor"), Mapping) else None,
-        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json", proposal_sha256,
+        "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json", proposal_sha256,
     )
     _require_v4_binding(
         receipt.get("successor", {}).get("repair_manifest") if isinstance(receipt.get("successor"), Mapping) else None,
@@ -204,7 +241,7 @@ def _validate_v4_supersession(
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID")
 
 
-def _require_v4_git_commit(value: object, repository_root: Path) -> None:
+def _require_v4_git_commit(value: object, artifacts: object, repository_root: Path) -> None:
     if not isinstance(value, str) or len(value) != 40:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
     try:
@@ -213,21 +250,31 @@ def _require_v4_git_commit(value: object, repository_root: Path) -> None:
             ["git", "-C", str(repository_root), "cat-file", "-e", f"{value}^{{commit}}"],
             check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
         )
-        source_check = subprocess.run(
-            ["git", "-C", str(repository_root), "diff", "--quiet", value, "--",
-             "experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py",
-             "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py",
-             "experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py"],
-            check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
-        )
         ancestry_check = subprocess.run(
             ["git", "-C", str(repository_root), "merge-base", "--is-ancestor", value, "HEAD"],
             check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
         )
     except (ValueError, OSError, subprocess.TimeoutExpired) as error:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
-    if object_check.returncode != 0 or source_check.returncode != 0 or ancestry_check.returncode != 0:
+    if object_check.returncode != 0 or ancestry_check.returncode != 0:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
+    expected_paths = {
+        "experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py",
+        "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py",
+        "experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py",
+        "experiments/specchoice-v1.3.2/src/specchoice_evidence/filesystem.py",
+    }
+    if not isinstance(artifacts, list) or {item.get("path") for item in artifacts if isinstance(item, Mapping)} != expected_paths:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
+    for artifact in artifacts:
+        if not isinstance(artifact, Mapping) or set(artifact) != {"path", "sha256"}:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
+        try:
+            shown = subprocess.run(["git", "-C", str(repository_root), "show", f"{value}:{artifact['path']}"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID") from error
+        if shown.returncode != 0 or artifact.get("sha256") != sha256_bytes(shown.stdout):
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID")
 
 
 def _v4_allowed_repairs(cache: str, pbmte: str) -> set[str]:
