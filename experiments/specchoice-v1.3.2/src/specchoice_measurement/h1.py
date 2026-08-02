@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -147,6 +148,16 @@ def _require_digest(value: object, code: str) -> str:
         return require_sha256(value)
     except ValueError as error:
         raise H1Error(code) from error
+
+
+def _is_canonical_utc_timestamp(value: object) -> bool:
+    if not isinstance(value, str) or len(value) != 20:
+        return False
+    try:
+        parsed = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return False
+    return parsed.strftime("%Y-%m-%dT%H:%M:%SZ") == value
 
 
 def _packet_projection(packet: dict[str, Any]) -> dict[str, Any]:
@@ -583,10 +594,7 @@ def validate_h1_ontology_options_v1(*, options: Path) -> dict[str, Any]:
 def validate_h1_ontology_decision_v1(*, options: Path, supersession: Path, decision: Path) -> dict[str, Any]:
     """Validate a human-authored closed selection without supplying any human field."""
     options_value = validate_h1_ontology_options_v1(options=options)
-    supersession_value = validate_h1_route_supersession_v1(
-        supersession=supersession, schema=_H1_V2_SCHEMA, packet=_H1_V3_PACKET,
-        markdown=_H1_V3_MARKDOWN, readiness=_H1_V3_READINESS,
-    )
+    supersession_value = _validate_route_supersession_receipt(supersession)
     value, _ = _read_canonical_external(decision, "H1_ONTOLOGY_DECISION_INVALID")
     required = {
         "bindings", "cache_policy", "decision_sha256", "external_publication_authorized", "pbmte_policy",
@@ -607,11 +615,18 @@ def validate_h1_ontology_decision_v1(*, options: Path, supersession: Path, decis
         raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
     for key, choices in (("pbmte_policy", options_value["pbmte_choices"]), ("cache_policy", options_value["cache_choices"])):
         policy = value.get(key)
-        if not isinstance(policy, dict) or set(policy) != {"rationale", "selection"} or not isinstance(policy.get("rationale"), str) or not policy["rationale"]:
+        if (
+            not isinstance(policy, dict)
+            or set(policy) != {"rationale", "selection"}
+            or not isinstance(policy.get("rationale"), str)
+            or not policy["rationale"].strip()
+        ):
             raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
         if policy.get("selection") not in {choice["id"] for choice in choices}:
             raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
-    if not all(isinstance(value.get(key), str) and value[key] for key in ("reviewer", "signature", "timestamp")):
+    if not all(
+        isinstance(value.get(key), str) and value[key].strip() for key in ("reviewer", "signature")
+    ) or not _is_canonical_utc_timestamp(value.get("timestamp")):
         raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
     return {"decision_sha256": value["decision_sha256"], "valid": True}
 

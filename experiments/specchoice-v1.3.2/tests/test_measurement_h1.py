@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import stat
 import tempfile
 import unittest
 from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_measurement import h1
@@ -21,11 +24,13 @@ class H1PublicContractTests(unittest.TestCase):
             build_h1_packet,
             render_h1_markdown,
             validate_h1_decision_v2,
+            validate_h1_ontology_decision_v1,
             validate_h1_ontology_options_v1,
             validate_h1_packet,
             validate_h1_readiness_v3,
             validate_h1_route_supersession_v1,
             write_h1_readiness_v3,
+            write_h1_ontology_options_v1,
         )
 
         for value in (
@@ -35,8 +40,10 @@ class H1PublicContractTests(unittest.TestCase):
             write_h1_readiness_v3,
             validate_h1_readiness_v3,
             validate_h1_decision_v2,
+            validate_h1_ontology_decision_v1,
             validate_h1_route_supersession_v1,
             validate_h1_ontology_options_v1,
+            write_h1_ontology_options_v1,
         ):
             self.assertTrue(callable(value))
         self.assertFalse(any("decision" in name and "validate" not in name for name in dir(h1)))
@@ -68,28 +75,208 @@ class H1PublicContractTests(unittest.TestCase):
                 self.assertEqual(parser.parse_args([command, *arguments]).command, command)
         root = Path(__file__).parents[1]
         options_path = root / "config/measurement/h1-ontology-policy-options-v1.json"
+        supersession_path = root / "receipts/h1-review-route-supersession-v1.json"
         self.assertEqual(validate_h1_ontology_options_v1(options=options_path)["schema_version"], "h1-ontology-policy-options-v1")
         packet_path = root / "reports/h1/h1-source-gold-review-v3/h1-source-gold-review-v3.json"
         readiness_path = root / "receipts/h1-review-readiness-v3.json"
         with tempfile.TemporaryDirectory(dir=root) as directory:
             temporary = Path(directory)
-            unknown_options = json.loads(options_path.read_text(encoding="utf-8"))
-            unknown_options["unknown_option"] = True
-            unknown_options_path = temporary / "options.json"
-            unknown_options_path.write_bytes(canonical_json_bytes(unknown_options))
-            with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_OPTIONS_INVALID"):
-                validate_h1_ontology_options_v1(options=unknown_options_path)
+            options_value = json.loads(options_path.read_text(encoding="utf-8"))
+            supersession_value = json.loads(supersession_path.read_text(encoding="utf-8"))
+
+            def with_self_hash(value: dict[str, object], field: str) -> dict[str, object]:
+                value[field] = sha256_bytes(canonical_json_bytes({
+                    key: item for key, item in value.items() if key != field
+                }))
+                return value
+
+            def ontology_decision() -> dict[str, object]:
+                value: dict[str, object] = {
+                    "bindings": {
+                        "options_sha256": options_value["options_sha256"],
+                        "supersession_sha256": supersession_value["supersession_sha256"],
+                    },
+                    "cache_policy": {
+                        "rationale": "Keep the cache identity unified.",
+                        "selection": "unified_cache_block_identity",
+                    },
+                    "external_publication_authorized": False,
+                    "pbmte_policy": {
+                        "rationale": "PBMTE is absent from discovery.",
+                        "selection": "excluded_from_discovery",
+                    },
+                    "reviewer": "independent-human-reviewer",
+                    "schema_version": "h1-source-gold-ontology-decision-v1",
+                    "signature": "signed:ontology-policy",
+                    "timestamp": "2026-08-02T00:00:00Z",
+                }
+                return with_self_hash(value, "decision_sha256")
+
+            def validate_ontology(
+                decision: Path, *, options: Path = options_path, supersession: Path = supersession_path,
+            ) -> dict[str, object]:
+                with patch.object(
+                    h1,
+                    "validate_h1_route_supersession_v1",
+                    side_effect=AssertionError("ontology validation must not replay historical H1"),
+                ):
+                    return validate_h1_ontology_decision_v1(
+                        options=options, supersession=supersession, decision=decision,
+                    )
+
+            valid_decision = ontology_decision()
+            valid_decision_path = temporary / "ontology-decision.json"
+            valid_decision_path.write_bytes(canonical_json_bytes(valid_decision))
+            self.assertEqual(
+                validate_ontology(valid_decision_path),
+                {"decision_sha256": valid_decision["decision_sha256"], "valid": True},
+            )
+            invalid_decision_path = temporary / "invalid-ontology-decision.json"
+            for timestamp in (
+                "", "   ", "not-a-timestamp", "2026-08-02T00:00:00",
+                "2026-08-02T02:00:00+02:00", "2026-02-30T00:00:00Z", "2026-08-02T24:00:00Z",
+            ):
+                with self.subTest(ontology_timestamp=timestamp):
+                    invalid = ontology_decision()
+                    invalid["timestamp"] = timestamp
+                    invalid_decision_path.write_bytes(canonical_json_bytes(with_self_hash(invalid, "decision_sha256")))
+                    with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_DECISION_INVALID"):
+                        validate_ontology(invalid_decision_path)
+            for field in ("reviewer", "signature"):
+                with self.subTest(ontology_human_field=field):
+                    invalid = ontology_decision()
+                    invalid[field] = " \t "
+                    invalid_decision_path.write_bytes(canonical_json_bytes(with_self_hash(invalid, "decision_sha256")))
+                    with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_DECISION_INVALID"):
+                        validate_ontology(invalid_decision_path)
+            for policy_name in ("pbmte_policy", "cache_policy"):
+                with self.subTest(ontology_rationale=policy_name):
+                    invalid = ontology_decision()
+                    assert isinstance(invalid[policy_name], dict)
+                    invalid[policy_name]["rationale"] = " \t "
+                    invalid_decision_path.write_bytes(canonical_json_bytes(with_self_hash(invalid, "decision_sha256")))
+                    with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_DECISION_INVALID"):
+                        validate_ontology(invalid_decision_path)
+            route_bindings = supersession_value["bindings"]
+            self.assertIsInstance(route_bindings, dict)
+            self.assertEqual(len(route_bindings), 8)
+            for binding in sorted(route_bindings):
+                with self.subTest(supersession_binding=binding):
+                    invalid_supersession = deepcopy(supersession_value)
+                    invalid_supersession["bindings"][binding] = "0" * 64
+                    with_self_hash(invalid_supersession, "supersession_sha256")
+                    invalid_supersession_path = temporary / f"supersession-{binding}.json"
+                    invalid_supersession_path.write_bytes(canonical_json_bytes(invalid_supersession))
+                    with self.assertRaisesRegex(H1Error, "H1_ROUTE_SUPERSESSION_INVALID"):
+                        validate_ontology(valid_decision_path, supersession=invalid_supersession_path)
+
+            unknown_id = deepcopy(options_value)
+            unknown_id["pbmte_choices"][0]["id"] = "unknown_policy"
+            changed_consequence = deepcopy(options_value)
+            changed_consequence["cache_choices"][0]["consequences"]["scope"] = "changed"
+            changed_order = deepcopy(options_value)
+            changed_order["pbmte_choices"].reverse()
+            forbidden_selection = deepcopy(options_value)
+            forbidden_selection["selection"] = "excluded_from_discovery"
+            forbidden_human_field = deepcopy(options_value)
+            forbidden_human_field["reviewer"] = "test-only-reviewer"
+            invalid_options_path = temporary / "invalid-options.json"
+            for attack, invalid_options in (
+                ("unknown_id", unknown_id),
+                ("changed_consequence", changed_consequence),
+                ("changed_order", changed_order),
+                ("forbidden_selection", forbidden_selection),
+                ("forbidden_human_field", forbidden_human_field),
+            ):
+                with self.subTest(options_attack=attack):
+                    invalid_options_path.write_bytes(canonical_json_bytes(
+                        with_self_hash(invalid_options, "options_sha256")
+                    ))
+                    with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_OPTIONS_INVALID"):
+                        validate_h1_ontology_options_v1(options=invalid_options_path)
+
+            missing_options_path = temporary / "missing-options.json"
+            noncanonical_options_path = temporary / "noncanonical-options.json"
+            noncanonical_options_path.write_text(json.dumps(options_value, indent=2), encoding="utf-8")
+            symlink_options_path = temporary / "symlink-options.json"
+            symlink_options_path.symlink_to(options_path)
+            fifo_options_path = temporary / "fifo-options.json"
+            os.mkfifo(fifo_options_path)
+            for attack, invalid_path in (
+                ("missing", missing_options_path),
+                ("noncanonical", noncanonical_options_path),
+                ("symlink", symlink_options_path),
+                ("fifo", fifo_options_path),
+            ):
+                with self.subTest(options_path_attack=attack):
+                    with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_OPTIONS_INVALID"):
+                        validate_h1_ontology_options_v1(options=invalid_path)
+
+            generated_options_path = temporary / "generated-options.json"
+            self.assertEqual(write_h1_ontology_options_v1(output=generated_options_path), options_value)
+            generated_options_raw = generated_options_path.read_bytes()
+            with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_OPTIONS_OUTPUT_INVALID"):
+                write_h1_ontology_options_v1(output=generated_options_path)
+            self.assertEqual(generated_options_path.read_bytes(), generated_options_raw)
+
+            preexisting_options_path = temporary / "preexisting-options.json"
+            preexisting_options_path.write_bytes(b"preexisting options\n")
+            with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_OPTIONS_OUTPUT_INVALID"):
+                write_h1_ontology_options_v1(output=preexisting_options_path)
+            self.assertEqual(preexisting_options_path.read_bytes(), b"preexisting options\n")
+
+            writer_symlink_target = temporary / "writer-symlink-target.json"
+            writer_symlink_target.write_bytes(b"symlink target\n")
+            writer_symlink_path = temporary / "writer-symlink-options.json"
+            writer_symlink_path.symlink_to(writer_symlink_target)
+            with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_OPTIONS_OUTPUT_INVALID"):
+                write_h1_ontology_options_v1(output=writer_symlink_path)
+            self.assertTrue(writer_symlink_path.is_symlink())
+            self.assertEqual(writer_symlink_target.read_bytes(), b"symlink target\n")
+
+            writer_fifo_path = temporary / "writer-fifo-options.json"
+            os.mkfifo(writer_fifo_path)
+            with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_OPTIONS_OUTPUT_INVALID"):
+                write_h1_ontology_options_v1(output=writer_fifo_path)
+            self.assertTrue(stat.S_ISFIFO(os.lstat(writer_fifo_path).st_mode))
+
             legacy_decision = H1PacketTests._decision(
                 json.loads(packet_path.read_text(encoding="utf-8")),
                 json.loads(readiness_path.read_text(encoding="utf-8")),
             )
             legacy_decision_path = temporary / "legacy-decision.json"
             legacy_decision_path.write_bytes(canonical_json_bytes(legacy_decision))
+
+            def validate_legacy_with_supersession(path: Path) -> dict[str, object]:
+                with patch.object(h1, "_ROUTE_SUPERSESSION", path):
+                    return validate_h1_decision_v2(
+                        schema=root / "config/measurement/h1-review-schema-v2.json", packet=packet_path,
+                        readiness=readiness_path, decision=legacy_decision_path,
+                    )
+
             with self.assertRaisesRegex(H1Error, "H1_LEGACY_ROUTE_SUPERSEDED"):
-                validate_h1_decision_v2(
-                    schema=root / "config/measurement/h1-review-schema-v2.json", packet=packet_path,
-                    readiness=readiness_path, decision=legacy_decision_path,
-                )
+                validate_legacy_with_supersession(supersession_path)
+
+            missing_supersession_path = temporary / "missing-supersession.json"
+            tampered_supersession = deepcopy(supersession_value)
+            tampered_supersession["status"] = "reviewed"
+            tampered_supersession_path = temporary / "tampered-supersession.json"
+            tampered_supersession_path.write_bytes(canonical_json_bytes(
+                with_self_hash(tampered_supersession, "supersession_sha256")
+            ))
+            symlink_supersession_path = temporary / "symlink-supersession.json"
+            symlink_supersession_path.symlink_to(supersession_path)
+            fifo_supersession_path = temporary / "fifo-supersession.json"
+            os.mkfifo(fifo_supersession_path)
+            for attack, invalid_path in (
+                ("missing", missing_supersession_path),
+                ("tampered", tampered_supersession_path),
+                ("symlink", symlink_supersession_path),
+                ("fifo", fifo_supersession_path),
+            ):
+                with self.subTest(legacy_supersession_attack=attack):
+                    with self.assertRaisesRegex(H1Error, "H1_ROUTE_SUPERSESSION_INVALID"):
+                        validate_legacy_with_supersession(invalid_path)
 
 
 class H1PacketTests(unittest.TestCase):
