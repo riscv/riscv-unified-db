@@ -10,7 +10,6 @@ dependencies = [
     "deepmerge>=2.1.0",
     "jsonschema>=4.26.0",
     "pycobertura>=4.1.0",
-    "pyrefly>=1.1.1",
     "pytest>=9.0.2",
     "reuse>=6.2.0",
     "ruamel-yaml>=0.19.1",
@@ -18,11 +17,48 @@ dependencies = [
     "tqdm>=4.67.3",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "reuse==6.2.0",
+    "ruff==0.16.0",
+    "pyrefly>=1.1.1",
+]
+
+
 [tool.ruff]
 line-length = 100
 extend-exclude = [ "ext" ]
 
 [tool.ruff.lint]
+
+extend-select = [
+    "A005",
+    "B007",
+    "B011",
+    "B034",
+    "E713",
+    "E714",
+    "E721",
+    "EXE003",
+    "F403",
+    "F405",
+    "F406",
+    "F722",
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    "RUF006",
+    "RUF021",
+    "RUF043",
+    "RUF061",
+    "RUF064",
+    "RUF102",
+    "RUF103",
+    "RUF104",
+    "W191",
+]
+
 select = [
     "F",    # pyflakes - various basic rules
     "E",    # pycodestyle errors
@@ -61,4 +97,3 @@ search-path = [
     "tools/python",
 ]
 python-version = "3.12"
-preset = "basic"
