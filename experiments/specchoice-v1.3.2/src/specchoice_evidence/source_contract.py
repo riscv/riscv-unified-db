@@ -90,9 +90,8 @@ def _run_bounded_subprocess(
                 raise subprocess.TimeoutExpired(command, timeout)
             returncode = process.wait(timeout=remaining)
         except BaseException:
-            process.kill()
-            for stream in streams.values():
-                stream.close()
+            if process.poll() is None:
+                process.kill()
             try:
                 process.wait(timeout=1)
             except subprocess.TimeoutExpired:
@@ -100,6 +99,8 @@ def _run_bounded_subprocess(
             raise
         finally:
             selector.close()
+            for stream in streams.values():
+                stream.close()
         return subprocess.CompletedProcess(
             command, returncode, stdout=b"".join(chunks["stdout"]), stderr=b"".join(chunks["stderr"]),
         )
@@ -674,7 +675,7 @@ _V4_YAML_MAX_REQUEST_BYTES = 320 * 1024
 
 def _validate_v4_repair_yaml_batch(repair_payloads: Mapping[str, bytes]) -> None:
     """Parse all already-read repair bytes in one fail-closed Psych subprocess."""
-    if len(repair_payloads) != _V4_YAML_PAYLOAD_COUNT or any(
+    if not isinstance(repair_payloads, Mapping) or len(repair_payloads) != _V4_YAML_PAYLOAD_COUNT or any(
         not isinstance(path, str) or len(path.encode("utf-8")) > _V4_YAML_MAX_PATH_BYTES
         or not isinstance(raw, bytes) or len(raw) > _V4_YAML_MAX_PAYLOAD_BYTES
         for path, raw in repair_payloads.items()

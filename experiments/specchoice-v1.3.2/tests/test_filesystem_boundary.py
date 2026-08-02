@@ -572,6 +572,14 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 create_descriptor_directories(root, ("config/nested",))
 
         payloads = {"config/first.json": b"first", "receipts/second.json": b"second"}
+        with self.subTest(operation="batch-opens-authority-root-once"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(
+                filesystem_module, "_directory_components", wraps=filesystem_module._directory_components,
+            ) as open_root:
+                filesystem_module.write_exact_descriptor_files(root, payloads)
+            self.assertEqual(open_root.call_count, 1)
+
         with self.subTest(operation="batch-preflight-to-mkdir-root-rebind"), tempfile.TemporaryDirectory() as directory:
             parent = Path(directory)
             root = parent / "root"
@@ -658,6 +666,19 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 original_fsync(descriptor)
 
             with patch("specchoice_evidence.filesystem.os.fsync", side_effect=fail_regular_fsync), self.assertRaisesRegex(
+                FilesystemPolicyError, "AUTHORITATIVE_WRITE_INVALID"
+            ):
+                filesystem_module.write_exact_descriptor_files(root, {"config/only.json": b"payload"})
+            self.assertFalse((root / "config/only.json").exists())
+
+        with self.subTest(operation="batch-short-write-removes-partial-leaf"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+
+            def partial_then_fail(descriptor: int, content: bytes) -> None:
+                os.write(descriptor, content[:1])
+                raise OSError("short write")
+
+            with patch.object(filesystem_module, "_write_all", side_effect=partial_then_fail), self.assertRaisesRegex(
                 FilesystemPolicyError, "AUTHORITATIVE_WRITE_INVALID"
             ):
                 filesystem_module.write_exact_descriptor_files(root, {"config/only.json": b"payload"})

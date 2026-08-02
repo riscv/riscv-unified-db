@@ -1095,6 +1095,13 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         mutate(forged["fixed_code_artifacts"])
                         with self.subTest(name=name):
                             self.assertNotEqual(run_v4(proposal_path=write_payload(f"code-{name}.json", forged)).returncode, 0)
+                    oversized_artifacts = copy.deepcopy(code_artifacts)
+                    oversized_artifacts[0]["byte_length"] = source_contract_module._V4_GIT_MAX_ARTIFACT_BYTES + 1
+                    with mock.patch("specchoice_evidence.source_contract._run_bounded_subprocess") as command, self.assertRaisesRegex(
+                        SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID"
+                    ):
+                        _require_v4_git_commit(fixed_commit, oversized_artifacts, experiment.parents[1])
+                    command.assert_not_called()
                     with mock.patch("specchoice_evidence.source_contract._run_bounded_subprocess") as command:
                         command.side_effect = [
                             subprocess.CompletedProcess([], 0), subprocess.CompletedProcess([], 1),
