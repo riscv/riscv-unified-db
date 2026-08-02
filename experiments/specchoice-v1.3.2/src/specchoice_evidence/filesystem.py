@@ -268,15 +268,16 @@ def replace_descriptor_file(root: Path, relative_path: str, content: bytes, expe
             raise FilesystemPolicyError("AUTHORITATIVE_TEMPORARY_MISMATCH")
         else:
             _fsync_held_regular_file(parent, temporary, accepted_device)
-        if _read_held_regular_file(
-            parent, temporary, accepted_device, require_single_link=True,
-        ) != content:
-            raise FilesystemPolicyError("AUTHORITATIVE_TEMPORARY_MISMATCH")
         # This second held-parent read closes target changes detectable between
         # temporary creation/reuse and the dirfd-only replacement.
         if _read_held_regular_file(parent, leaf, accepted_device) != expected_current:
             raise FilesystemPolicyError("AUTHORITATIVE_TARGET_MISMATCH")
-        _existing_leaf_kind(parent, leaf, accepted_device)
+        # Validate the source name last so the only remaining interval is the
+        # unavoidable boundary between this descriptor check and rename(2).
+        if _read_held_regular_file(
+            parent, temporary, accepted_device, require_single_link=True,
+        ) != content:
+            raise FilesystemPolicyError("AUTHORITATIVE_TEMPORARY_MISMATCH")
         os.replace(temporary, leaf, src_dir_fd=parent, dst_dir_fd=parent)
         os.fsync(parent)
     except FilesystemPolicyError:
