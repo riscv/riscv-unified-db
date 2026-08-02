@@ -116,7 +116,11 @@ def command_run_formal_measurement(args: argparse.Namespace) -> int:
 
 
 def command_validate_attempt(args: argparse.Namespace) -> int:
-    sys.stdout.buffer.write(canonical_json_bytes(validate_measurement_attempt(attempt_root=args.attempt)))
+    schema_raw = _read_bound_bytes(args.schema, "ATTEMPT_SCHEMA_UNREADABLE")
+    batch = _source_batch(args)
+    sys.stdout.buffer.write(canonical_json_bytes(validate_measurement_attempt(
+        attempt_root=args.attempt, adapter_batch=batch, schema_raw=schema_raw,
+    )))
     return 0
 
 
@@ -442,31 +446,50 @@ def command_build_h1_packet(args: argparse.Namespace) -> int:
         output_json=args.output,
         output_markdown=args.markdown,
         schema=args.schema,
+        authority=args.authority,
+        bundle=args.bundle,
+        rules=args.rules,
+        predictions=args.predictions,
+        oracle=args.oracle,
+        pending_authority=args.pending_authority,
+        transition=args.transition,
+        revocation=args.revocation,
     )
     sys.stdout.buffer.write(canonical_json_bytes({"packet_sha256": packet["packet_sha256"], "status": "written"}))
     return 0
 
 
 def command_validate_h1_packet(args: argparse.Namespace) -> int:
-    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_packet(packet=args.packet, markdown=args.markdown, schema=args.schema)))
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_packet(
+        packet=args.packet, markdown=args.markdown, schema=args.schema,
+        formal_attempt=args.formal_attempt, adversarial_report=args.adversarial_report,
+        authority=args.authority, bundle=args.bundle, rules=args.rules, predictions=args.predictions, oracle=args.oracle,
+        pending_authority=args.pending_authority, transition=args.transition, revocation=args.revocation,
+    )))
     return 0
 
 
 def command_write_h1_readiness_v3(args: argparse.Namespace) -> int:
+    if not args.phase_gate_stdin:
+        raise H1Error("H1_PHASE_GATE_STDIN_REQUIRED")
     sys.stdout.buffer.write(canonical_json_bytes(write_h1_readiness_v3(
         output=args.output, formal_attempt=args.formal_attempt, adversarial_result=args.adversarial_result,
         packet=args.packet, markdown=args.markdown, schema=args.schema, source_authority=args.source_authority,
-        canonical_revocation=args.canonical_revocation, offline_replay=args.offline_replay,
+        canonical_revocation=args.canonical_revocation, bundle=args.bundle, rules=args.rules,
+        predictions=args.predictions, oracle=args.oracle, offline_replay=args.offline_replay,
         phase_gate=sys.stdin.buffer.read(), plan_summary=args.plan_summary,
     )))
     return 0
 
 
 def command_validate_h1_readiness_v3(args: argparse.Namespace) -> int:
+    if not args.phase_gate_stdin:
+        raise H1Error("H1_PHASE_GATE_STDIN_REQUIRED")
     sys.stdout.buffer.write(canonical_json_bytes(validate_h1_readiness_v3(
         readiness=args.readiness, formal_attempt=args.formal_attempt, adversarial_result=args.adversarial_result,
         packet=args.packet, markdown=args.markdown, schema=args.schema, source_authority=args.source_authority,
-        canonical_revocation=args.canonical_revocation, offline_replay=args.offline_replay,
+        canonical_revocation=args.canonical_revocation, bundle=args.bundle, rules=args.rules,
+        predictions=args.predictions, oracle=args.oracle, offline_replay=args.offline_replay,
         phase_gate=sys.stdin.buffer.read(), plan_summary=args.plan_summary,
     )))
     return 0
@@ -505,6 +528,13 @@ def build_parser() -> argparse.ArgumentParser:
     formal.set_defaults(handler=command_run_formal_measurement)
     validate_attempt = commands.add_parser("validate-attempt")
     validate_attempt.add_argument("--attempt", type=Path, required=True)
+    validate_attempt.add_argument("--authority", type=Path, required=True)
+    validate_attempt.add_argument("--bundle", type=Path, required=True)
+    validate_attempt.add_argument("--rules", type=Path, required=True)
+    validate_attempt.add_argument("--schema", type=Path, required=True)
+    validate_attempt.add_argument("--pending-authority", type=Path)
+    validate_attempt.add_argument("--transition", type=Path)
+    validate_attempt.add_argument("--revocation", type=Path)
     validate_attempt.set_defaults(handler=command_validate_attempt)
     adversarial = commands.add_parser("run-adversarial-oracles")
     adversarial.add_argument("--authority", type=Path, required=True)
@@ -536,6 +566,14 @@ def build_parser() -> argparse.ArgumentParser:
     h1_build.add_argument("--formal-attempt", type=Path, required=True)
     h1_build.add_argument("--adversarial-report", type=Path, required=True)
     h1_build.add_argument("--schema", type=Path, required=True)
+    h1_build.add_argument("--authority", type=Path, required=True)
+    h1_build.add_argument("--bundle", type=Path, required=True)
+    h1_build.add_argument("--rules", type=Path, required=True)
+    h1_build.add_argument("--predictions", type=Path, required=True)
+    h1_build.add_argument("--oracle", type=Path, required=True)
+    h1_build.add_argument("--pending-authority", type=Path)
+    h1_build.add_argument("--transition", type=Path)
+    h1_build.add_argument("--revocation", type=Path)
     h1_build.add_argument("--output", type=Path, required=True)
     h1_build.add_argument("--markdown", type=Path, required=True)
     h1_build.set_defaults(handler=command_build_h1_packet)
@@ -543,6 +581,16 @@ def build_parser() -> argparse.ArgumentParser:
     h1_packet.add_argument("--packet", type=Path, required=True)
     h1_packet.add_argument("--markdown", type=Path, required=True)
     h1_packet.add_argument("--schema", type=Path, required=True)
+    h1_packet.add_argument("--formal-attempt", type=Path, required=True)
+    h1_packet.add_argument("--adversarial-report", type=Path, required=True)
+    h1_packet.add_argument("--authority", type=Path, required=True)
+    h1_packet.add_argument("--bundle", type=Path, required=True)
+    h1_packet.add_argument("--rules", type=Path, required=True)
+    h1_packet.add_argument("--predictions", type=Path, required=True)
+    h1_packet.add_argument("--oracle", type=Path, required=True)
+    h1_packet.add_argument("--pending-authority", type=Path)
+    h1_packet.add_argument("--transition", type=Path)
+    h1_packet.add_argument("--revocation", type=Path)
     h1_packet.set_defaults(handler=command_validate_h1_packet)
     readiness_writer = commands.add_parser("write-h1-readiness-v3")
     readiness_validator = commands.add_parser("validate-h1-readiness-v3")
@@ -554,8 +602,13 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("--schema", type=Path, required=True)
         command.add_argument("--source-authority", type=Path, required=True)
         command.add_argument("--canonical-revocation", type=Path, required=True)
+        command.add_argument("--bundle", type=Path, required=True)
+        command.add_argument("--rules", type=Path, required=True)
+        command.add_argument("--predictions", type=Path, required=True)
+        command.add_argument("--oracle", type=Path, required=True)
         command.add_argument("--offline-replay", type=Path, required=True)
         command.add_argument("--plan-summary", type=Path, required=True)
+        command.add_argument("--phase-gate-stdin", action="store_true", required=True)
     readiness_writer.add_argument("--output", type=Path, required=True)
     readiness_writer.set_defaults(handler=command_write_h1_readiness_v3)
     readiness_validator.add_argument("--readiness", type=Path, required=True)

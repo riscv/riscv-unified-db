@@ -17,7 +17,7 @@ from unittest.mock import patch
 from specchoice_evidence import filesystem
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError
-from specchoice_measurement.adapter import build_pr2164_adapter_batch
+from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch
 from specchoice_measurement.attempts import AttemptError, run_measurement_attempt, validate_measurement_attempt
 from specchoice_measurement.cli import (
     command_validate_attempt,
@@ -397,6 +397,28 @@ class MeasurementAttemptTests(unittest.TestCase):
                 )),
                 0,
             )
+            with self.assertRaisesRegex(AttemptError, "ATTEMPT_BINDINGS_INVALID"):
+                command_validate_attempt(SimpleNamespace(
+                    attempt=self.experiment_root / "runs/measurement-attempts/formal-golden-pr2164-v1",
+                    authority=active_args.authority,
+                    bundle=active_args.bundle,
+                    rules=active_args.rules,
+                    schema=active_args.schema,
+                    pending_authority=None,
+                    transition=None,
+                    revocation=active_args.revocation,
+                ))
+            with self.assertRaisesRegex(AdapterError, "ADAPTER_BATCH_NOT_SCORE_ELIGIBLE"):
+                command_validate_attempt(SimpleNamespace(
+                    attempt=active_args.attempt_root / active_args.attempt_id,
+                    authority=active_args.authority,
+                    bundle=active_args.bundle,
+                    rules=active_args.rules,
+                    schema=active_args.schema,
+                    pending_authority=self.pending_authority,
+                    transition=None,
+                    revocation=active_args.revocation,
+                ))
 
     def test_adversarial_cli_is_diagnostic_only_and_matches_every_frozen_oracle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

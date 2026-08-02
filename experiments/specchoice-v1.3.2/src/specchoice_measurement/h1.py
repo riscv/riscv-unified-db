@@ -22,13 +22,7 @@ class H1Error(ValueError):
 
 
 _ROOT = Path(__file__).parents[2]
-_BUNDLE = _ROOT / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
-_AUTHORITY = _ROOT / "phase2/source-authority.json"
-_RULES = _ROOT / "config/measurement/pr2164-adapter-rules-v1.json"
 _SCHEMA = _ROOT / "config/measurement/canonical-adjudication-schema-v1.json"
-_H1_SCHEMA = _ROOT / "config/measurement/h1-review-schema-v1.json"
-_GOLDEN = _ROOT / "fixtures/measurement/golden-predictions-v1.json"
-_ADVERSARIAL = _ROOT / "reports/h1/adversarial-oracle-results-v2.json"
 
 
 def _relative(path: Path, code: str) -> str:
@@ -69,8 +63,18 @@ def _packet_projection(packet: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in packet.items() if key != "packet_sha256"}
 
 
-def _batch() -> object:
-    batch = build_pr2164_adapter_batch(authority_path=_AUTHORITY, bundle_root=_BUNDLE, rules_path=_RULES)
+def _batch(
+    *, authority: Path, bundle: Path, rules: Path, pending_authority: Path | None,
+    transition: Path | None, revocation: Path | None,
+) -> object:
+    batch = build_pr2164_adapter_batch(
+        authority_path=authority,
+        bundle_root=bundle,
+        rules_path=rules,
+        pending_authority_path=pending_authority,
+        transition_path=transition,
+        revocation_path=revocation,
+    )
     if not batch.valid:
         raise H1Error("H1_ADAPTER_NOT_ELIGIBLE")
     return batch
@@ -100,13 +104,32 @@ def _review_items(batch: object) -> list[dict[str, Any]]:
     return items
 
 
-def _expected_bindings(*, formal_attempt: Path, adversarial_report: Path, h1_schema: Path) -> dict[str, Any]:
+def _expected_bindings(
+    *, formal_attempt: Path, adversarial_report: Path, h1_schema: Path, authority: Path, bundle: Path,
+    rules: Path, predictions: Path, oracle: Path, pending_authority: Path | None, transition: Path | None,
+    revocation: Path | None, batch: object,
+) -> dict[str, Any]:
     from .cli import validate_adversarial_report
 
     try:
-        formal_summary = validate_measurement_attempt(attempt_root=formal_attempt)
+        _, schema_raw = _read_canonical(_SCHEMA, "H1_BINDINGS_INVALID")
+        formal_summary = validate_measurement_attempt(
+            attempt_root=formal_attempt, adapter_batch=batch, schema_raw=schema_raw
+        )
         formal, _ = _read_canonical(formal_attempt / "attempt.json", "H1_FORMAL_ATTEMPT_INVALID")
-        adversarial = validate_adversarial_report(report_path=adversarial_report, formal_attempt=formal_attempt)
+        adversarial = validate_adversarial_report(
+            report_path=adversarial_report,
+            formal_attempt=formal_attempt,
+            authority=authority,
+            bundle=bundle,
+            rules=rules,
+            schema=_SCHEMA,
+            predictions=predictions,
+            oracle=oracle,
+            pending_authority=pending_authority,
+            transition=transition,
+            revocation=revocation,
+        )
     except (AttemptError, ValueError, OSError) as error:
         raise H1Error("H1_EVIDENCE_INVALID") from error
     if (formal_summary.get("role"), formal_summary.get("status")) != ("formal", "completed") or (
@@ -126,11 +149,9 @@ def _expected_bindings(*, formal_attempt: Path, adversarial_report: Path, h1_sch
         "byte_length": len(diagnostics_raw), "sha256": sha256_bytes(diagnostics_raw)
     }:
         raise H1Error("H1_FORMAL_DIAGNOSTICS_INVALID")
-    batch = _batch()
     adversarial_bindings = adversarial.get("bindings")
     expected_source = getattr(batch, "source_identity")
     try:
-        _, schema_raw = read_authoritative_file(_ROOT, _relative(_SCHEMA, "H1_BINDINGS_INVALID"))
         _, h1_schema_raw = read_authoritative_file(h1_schema.parent, h1_schema.name)
     except (FilesystemPolicyError, OSError) as error:
         raise H1Error("H1_BINDINGS_INVALID") from error
@@ -293,14 +314,26 @@ def _validate_v2_schema(schema: Path) -> bytes:
     return raw
 
 
-def build_h1_packet(*, formal_attempt: Path, adversarial_report: Path, output_json: Path, output_markdown: Path, schema: Path) -> dict[str, Any]:
+def build_h1_packet(
+    *, formal_attempt: Path, adversarial_report: Path, output_json: Path, output_markdown: Path, schema: Path,
+    authority: Path, bundle: Path, rules: Path, predictions: Path, oracle: Path,
+    pending_authority: Path | None = None, transition: Path | None = None, revocation: Path | None = None,
+) -> dict[str, Any]:
     """Build an immutable packet from validated evidence; it never creates a decision."""
     _validate_v2_schema(schema)
-    expected = _expected_bindings(formal_attempt=formal_attempt, adversarial_report=adversarial_report, h1_schema=schema)
+    batch = _batch(
+        authority=authority, bundle=bundle, rules=rules, pending_authority=pending_authority,
+        transition=transition, revocation=revocation,
+    )
+    expected = _expected_bindings(
+        formal_attempt=formal_attempt, adversarial_report=adversarial_report, h1_schema=schema,
+        authority=authority, bundle=bundle, rules=rules, predictions=predictions, oracle=oracle,
+        pending_authority=pending_authority, transition=transition, revocation=revocation, batch=batch,
+    )
     packet: dict[str, Any] = {
         "bindings": expected,
         "external_publication_authorized": False,
-        "fixture_reviews": _review_items(_batch()),
+        "fixture_reviews": _review_items(batch),
         "schema_version": "h1-source-gold-review-v2",
     }
     packet["packet_sha256"] = sha256_bytes(canonical_json_bytes(packet))
@@ -314,17 +347,25 @@ def build_h1_packet(*, formal_attempt: Path, adversarial_report: Path, output_js
     return packet
 
 
-def validate_h1_packet(*, packet: Path, markdown: Path, schema: Path) -> dict[str, Any]:
+def validate_h1_packet(
+    *, packet: Path, markdown: Path, schema: Path, formal_attempt: Path, adversarial_report: Path,
+    authority: Path, bundle: Path, rules: Path, predictions: Path, oracle: Path,
+    pending_authority: Path | None = None, transition: Path | None = None, revocation: Path | None = None,
+) -> dict[str, Any]:
     """Recompute every current H1 binding and reject non-projection Markdown."""
     _validate_v2_schema(schema)
     value, _ = _read_canonical(packet, "H1_PACKET_INVALID")
+    batch = _batch(
+        authority=authority, bundle=bundle, rules=rules, pending_authority=pending_authority,
+        transition=transition, revocation=revocation,
+    )
     expected = _expected_bindings(
-        formal_attempt=_ROOT / "runs/measurement-attempts/formal-golden-pr2164-v1",
-        adversarial_report=_ADVERSARIAL,
-        h1_schema=schema,
+        formal_attempt=formal_attempt, adversarial_report=adversarial_report, h1_schema=schema,
+        authority=authority, bundle=bundle, rules=rules, predictions=predictions, oracle=oracle,
+        pending_authority=pending_authority, transition=transition, revocation=revocation, batch=batch,
     )
     value = _validate_packet_value(value, expected=expected)
-    if value.get("fixture_reviews") != _review_items(_batch()):
+    if value.get("fixture_reviews") != _review_items(batch):
         raise H1Error("H1_REVIEW_ITEM_INVALID")
     try:
         _, markdown_bytes = read_authoritative_file(_ROOT, _relative(markdown, "H1_MARKDOWN_INVALID"))
@@ -337,13 +378,18 @@ def validate_h1_packet(*, packet: Path, markdown: Path, schema: Path) -> dict[st
 
 def _readiness_bindings(
     *, formal_attempt: Path, adversarial_result: Path, packet: Path, markdown: Path, schema: Path,
-    source_authority: Path, canonical_revocation: Path, offline_replay: Path, phase_gate: bytes,
+    source_authority: Path, canonical_revocation: Path, bundle: Path, rules: Path, predictions: Path, oracle: Path,
+    offline_replay: Path, phase_gate: bytes,
     plan_summary: Path,
 ) -> dict[str, str]:
     if not plan_summary.is_absolute() or ".." in plan_summary.parts:
         raise H1Error("H1_PLAN_SUMMARY_PATH_INVALID")
     _validate_v2_schema(schema)
-    validate_h1_packet(packet=packet, markdown=markdown, schema=schema)
+    validate_h1_packet(
+        packet=packet, markdown=markdown, schema=schema, formal_attempt=formal_attempt,
+        adversarial_report=adversarial_result, authority=source_authority, bundle=bundle, rules=rules,
+        predictions=predictions, oracle=oracle, revocation=canonical_revocation,
+    )
     _, formal_raw = _read_canonical_external(formal_attempt / "attempt.json", "H1_FORMAL_ATTEMPT_INVALID")
     _, adversarial_raw = _read_canonical_external(adversarial_result, "H1_ADVERSARIAL_REPORT_INVALID")
     _, packet_raw = _read_canonical_external(packet, "H1_PACKET_INVALID")
@@ -384,7 +430,8 @@ def _readiness_value(bindings: dict[str, str]) -> dict[str, Any]:
 
 def write_h1_readiness_v3(
     *, output: Path, formal_attempt: Path, adversarial_result: Path, packet: Path, markdown: Path, schema: Path,
-    source_authority: Path, canonical_revocation: Path, offline_replay: Path, phase_gate: bytes, plan_summary: Path,
+    source_authority: Path, canonical_revocation: Path, bundle: Path, rules: Path, predictions: Path, oracle: Path,
+    offline_replay: Path, phase_gate: bytes, plan_summary: Path,
 ) -> dict[str, Any]:
     """Create one descriptor-checked readiness receipt; never creates a human decision."""
     if output.exists() or output.is_symlink() or not output.parent.is_dir() or output.parent.is_symlink():
@@ -392,6 +439,7 @@ def write_h1_readiness_v3(
     value = _readiness_value(_readiness_bindings(
         formal_attempt=formal_attempt, adversarial_result=adversarial_result, packet=packet, markdown=markdown,
         schema=schema, source_authority=source_authority, canonical_revocation=canonical_revocation,
+        bundle=bundle, rules=rules, predictions=predictions, oracle=oracle,
         offline_replay=offline_replay, phase_gate=phase_gate, plan_summary=plan_summary,
     ))
     try:
@@ -404,13 +452,15 @@ def write_h1_readiness_v3(
 
 def validate_h1_readiness_v3(
     *, readiness: Path, formal_attempt: Path, adversarial_result: Path, packet: Path, markdown: Path, schema: Path,
-    source_authority: Path, canonical_revocation: Path, offline_replay: Path, phase_gate: bytes, plan_summary: Path,
+    source_authority: Path, canonical_revocation: Path, bundle: Path, rules: Path, predictions: Path, oracle: Path,
+    offline_replay: Path, phase_gate: bytes, plan_summary: Path,
 ) -> dict[str, Any]:
     """Compare a pre-existing readiness receipt with fresh held inputs without rewriting it."""
     value, _ = _read_canonical_external(readiness, "H1_READINESS_INVALID")
     expected = _readiness_value(_readiness_bindings(
         formal_attempt=formal_attempt, adversarial_result=adversarial_result, packet=packet, markdown=markdown,
         schema=schema, source_authority=source_authority, canonical_revocation=canonical_revocation,
+        bundle=bundle, rules=rules, predictions=predictions, oracle=oracle,
         offline_replay=offline_replay, phase_gate=phase_gate, plan_summary=plan_summary,
     ))
     if value != expected:
@@ -428,7 +478,8 @@ _SEMANTIC_RESPONSE_IDS = (
 def validate_h1_decision_v2(*, schema: Path, packet: Path, readiness: Path, decision: Path) -> dict[str, Any]:
     """Validate a fully human-authored successor decision without authoring or inferring one."""
     schema_raw = _validate_v2_schema(schema)
-    packet_value = validate_h1_packet(packet=packet, markdown=packet.with_suffix(".md"), schema=schema)
+    packet_value, _ = _read_canonical_external(packet, "H1_PACKET_INVALID")
+    packet_value = _validate_packet_value(packet_value)
     readiness_value, readiness_raw = _read_canonical_external(readiness, "H1_READINESS_INVALID")
     if readiness_value.get("readiness_sha256") != sha256_bytes(canonical_json_bytes({
         key: value for key, value in readiness_value.items() if key != "readiness_sha256"
