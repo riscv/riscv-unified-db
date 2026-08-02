@@ -36,6 +36,8 @@ from .bundle import (
     accept_fixture_closure_candidate,
     construct_candidate,
     construct_fixture_closure_candidate,
+    construct_fixture_construction_candidate_v3,
+    fixture_construction_candidate_audit,
     publish_accepted,
     verify_candidate,
 )
@@ -623,6 +625,52 @@ def command_build_fixture_closure_candidate(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_build_fixture_construction_candidate_v3(args: argparse.Namespace) -> int:
+    """Construct the exact authorized v3 candidate and its closed machine audit."""
+    proposal = _load_canonical_fixture_construction_payload(
+        args.proposal, "FIXTURE_CONSTRUCTION_PROPOSAL_NOT_CANONICAL"
+    )
+    decision = _load_canonical_fixture_construction_payload(
+        args.decision, "FIXTURE_CONSTRUCTION_DECISION_NOT_CANONICAL"
+    )
+    result = construct_fixture_construction_candidate_v3(
+        decision, proposal, args.proposal.as_posix(), args.predecessor, args.candidates_directory
+    )
+    audit = fixture_construction_candidate_audit(
+        decision, proposal, args.proposal.as_posix(), args.decision.as_posix(),
+        args.candidates_directory / result["generation"],
+    )
+    if args.audit.exists() or args.audit.is_symlink():
+        raise ReceiptError("FIXTURE_CONSTRUCTION_AUDIT_EXISTS")
+    args.audit.write_bytes(canonical_json_bytes(audit))
+    _print_json({"audit_sha256": sha256_bytes(canonical_json_bytes(audit)), **result})
+    return 0
+
+
+def command_validate_fixture_candidate_v3(args: argparse.Namespace) -> int:
+    """Verify the candidate and its exact proposal/decision-bound audit."""
+    experiment = args.candidate.resolve().parents[2]
+    proposal_path = experiment / "receipts/source-contract-proposal-v3-pr2164-fixture-closure-verifier-rooted-v3.json"
+    decision_path = experiment / "receipts/source-contract-decision-v3-pr2164-fixture-closure-verifier-rooted-v3.json"
+    proposal = _load_canonical_fixture_construction_payload(
+        proposal_path, "FIXTURE_CONSTRUCTION_PROPOSAL_NOT_CANONICAL"
+    )
+    decision = _load_canonical_fixture_construction_payload(
+        decision_path, "FIXTURE_CONSTRUCTION_DECISION_NOT_CANONICAL"
+    )
+    audit = _load_canonical_fixture_construction_payload(args.audit, "FIXTURE_CONSTRUCTION_AUDIT_NOT_CANONICAL")
+    expected = fixture_construction_candidate_audit(
+        decision, proposal,
+        proposal_path.relative_to(experiment).as_posix(),
+        decision_path.relative_to(experiment).as_posix(),
+        args.candidate,
+    )
+    if audit != expected:
+        raise ReceiptError("FIXTURE_CONSTRUCTION_AUDIT_MISMATCH")
+    _print_json({"generation": expected["candidate"]["generation"], "status": "candidate_valid"})
+    return 0
+
+
 def command_publish_accepted(args: argparse.Namespace) -> int:
     """Reject accepted publication until a later, offline-proven Plan 04 gate exists."""
     decision = json.loads(args.decision.read_bytes().decode("utf-8"))
@@ -1043,6 +1091,17 @@ def build_parser() -> argparse.ArgumentParser:
     fixture_candidate.add_argument("--git-repository", type=Path, required=True)
     fixture_candidate.add_argument("--candidates-directory", type=Path, default=Path("bundles/candidates"))
     fixture_candidate.set_defaults(handler=command_build_fixture_closure_candidate)
+    fixture_construction_candidate = commands.add_parser("build-fixture-construction-candidate-v3")
+    fixture_construction_candidate.add_argument("--proposal", type=Path, required=True)
+    fixture_construction_candidate.add_argument("--decision", type=Path, required=True)
+    fixture_construction_candidate.add_argument("--predecessor", type=Path, required=True)
+    fixture_construction_candidate.add_argument("--audit", type=Path, required=True)
+    fixture_construction_candidate.add_argument("--candidates-directory", type=Path, default=Path("bundles/candidates"))
+    fixture_construction_candidate.set_defaults(handler=command_build_fixture_construction_candidate_v3)
+    fixture_candidate_v3 = commands.add_parser("validate-fixture-candidate-v3")
+    fixture_candidate_v3.add_argument("--candidate", type=Path, required=True)
+    fixture_candidate_v3.add_argument("--audit", type=Path, required=True)
+    fixture_candidate_v3.set_defaults(handler=command_validate_fixture_candidate_v3)
     verify_candidate_parser = commands.add_parser("verify-candidate")
     verify_candidate_parser.add_argument("candidate_directory", type=Path)
     verify_candidate_parser.set_defaults(handler=command_verify_candidate)

@@ -18,6 +18,7 @@ from specchoice_evidence.bundle import (
     BundleError,
     accept_fixture_closure_candidate,
     construct_fixture_closure_candidate,
+    fixture_construction_candidate_audit,
     verify_candidate,
 )
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
@@ -329,11 +330,11 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             with self.assertRaisesRegex(Exception, "FIXTURE_CLOSURE_CORE_REGISTRY_MISMATCH"):
                 verify_accepted_bundle(copied)
 
-    def test_complete_candidate_is_ineligible_and_rejects_extra_or_missing_files(self) -> None:
+    def test_verifier_rooted_v3_candidate_has_fresh_root_and_unchanged_source_hashes(self) -> None:
         experiment = Path(__file__).resolve().parents[1]
         candidate = experiment / (
             "bundles/candidates/source-contract-v3-pr2164-fixture-closure-"
-            "22e84458-verifier-rooted-v1"
+            "22e84458-verifier-rooted-v3"
         )
         identity = verify_candidate(candidate)
         self.assertEqual(identity["status"], "candidate")
@@ -343,6 +344,36 @@ class FixtureClosureCandidateTests(unittest.TestCase):
         self.assertEqual(
             sum(len(snapshot["consumed_files"]) for snapshot in manifest["snapshots"]), 28
         )
+        core = json.loads((candidate / "content-manifest-core.json").read_text(encoding="utf-8"))
+        self.assertEqual(core["fixture_closure"]["fixture_count"], 11)
+        self.assertEqual(core["fixture_closure"]["raw_file_count"], 28)
+        self.assertEqual(len(core["bundle_artifacts"]), 6)
+        self.assertEqual(
+            [artifact["local_bundle_path"] for artifact in core["bundle_artifacts"] if artifact["kind"] == "verifier"],
+            [
+                "verifier/specchoice_evidence/__init__.py",
+                "verifier/specchoice_evidence/canonical.py",
+                "verifier/specchoice_evidence/filesystem.py",
+                "verifier/specchoice_evidence/verify.py",
+                "verify_bundle.py",
+            ],
+        )
+        accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        accepted_core = json.loads((accepted / "content-manifest-core.json").read_text(encoding="utf-8"))
+        self.assertNotEqual(identity["manifest_sha256"], sha256_bytes((accepted / "content-manifest-core.json").read_bytes()))
+        self.assertEqual(
+            sorted(entry["raw_sha256"] for entry in core["snapshots"][0]["consumed_files"]),
+            sorted(entry["raw_sha256"] for entry in accepted_core["snapshots"][0]["consumed_files"]),
+        )
+        proposal = json.loads((experiment / "receipts/source-contract-proposal-v3-pr2164-fixture-closure-verifier-rooted-v3.json").read_text())
+        decision = json.loads((experiment / "receipts/source-contract-decision-v3-pr2164-fixture-closure-verifier-rooted-v3.json").read_text())
+        audit = fixture_construction_candidate_audit(
+            decision, proposal,
+            "receipts/source-contract-proposal-v3-pr2164-fixture-closure-verifier-rooted-v3.json",
+            "receipts/source-contract-decision-v3-pr2164-fixture-closure-verifier-rooted-v3.json",
+            candidate,
+        )
+        self.assertEqual(audit["copied_isolation_replay"]["result"], "passed")
 
         with tempfile.TemporaryDirectory() as directory:
             copied = Path(directory) / "candidate"

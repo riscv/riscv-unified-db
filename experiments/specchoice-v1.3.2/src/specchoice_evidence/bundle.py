@@ -36,12 +36,15 @@ from .source_contract import (
     require_accepted_publication_authorization,
     require_candidate_construction_authorization,
     require_fixture_closure_local_acceptance_authorization,
+    require_fixture_construction_authorization,
     require_local_accepted_generation_authorization,
     require_source_extraction_authorization,
     validate_source_publication_decision,
     validate_fixture_registry,
     validate_fixture_closure_decision,
     validate_fixture_closure_proposal,
+    validate_fixture_construction_decision,
+    validate_fixture_construction_proposal,
     verify_fixture_registry_git,
 )
 from .verify import (
@@ -603,6 +606,182 @@ def construct_verifier_rooted_candidate(
         "manifest_sha256": manifest_sha256,
         "root_sha256": root_sha256,
         "status": "candidate",
+    }
+
+
+def construct_fixture_construction_candidate_v3(
+    decision: object,
+    proposal: object,
+    proposal_path: str,
+    predecessor: Path,
+    candidates_root: Path,
+) -> dict[str, object]:
+    """Construct only the human-authorized verifier-rooted-v3 candidate.
+
+    The accepted predecessor is read and copied as immutable source material.  The
+    new tree is always a candidate: it receives fresh verifier-derived identities
+    and never writes an accepted or authority namespace.
+    """
+    proposal_raw = canonical_json_bytes(proposal)
+    try:
+        bindings = validate_fixture_construction_proposal(proposal)
+        authorized = validate_fixture_construction_decision(
+            decision,
+            proposal,
+            proposal_path=proposal_path,
+            proposal_sha256=sha256_bytes(proposal_raw),
+        )
+        require_fixture_construction_authorization(authorized)
+        predecessor_identity = verify_accepted_bundle(predecessor)
+        predecessor_binding = _mapping(
+            bindings.get("predecessor_candidate"), "FIXTURE_CONSTRUCTION_PREDECESSOR_INVALID"
+        )
+    except (BundleVerificationError, SourceContractProposalError) as error:
+        raise BundleError(str(error)) from error
+    expected_relative = predecessor_binding.get("candidate_relative_path")
+    try:
+        experiment = Path(__file__).resolve().parents[2]
+        if predecessor.resolve() != (experiment / str(expected_relative)).resolve():
+            raise BundleError("FIXTURE_CONSTRUCTION_PREDECESSOR_MISMATCH")
+        for control in bindings["source_controls"]:
+            _, raw = read_authoritative_file(experiment, str(control["path"]))
+            if sha256_bytes(raw) != control["sha256"]:
+                raise BundleError("FIXTURE_CONSTRUCTION_CONTROL_MISMATCH")
+        receipt = _mapping(bindings["phase_gate_receipt"], "FIXTURE_CONSTRUCTION_GATE_RECEIPT_INVALID")
+        _, receipt_raw = read_authoritative_file(experiment, str(receipt["path"]))
+        if sha256_bytes(receipt_raw) != receipt["sha256"]:
+            raise BundleError("FIXTURE_CONSTRUCTION_GATE_RECEIPT_MISMATCH")
+    except OSError as error:
+        raise BundleError("FIXTURE_CONSTRUCTION_PREDECESSOR_MISMATCH") from error
+    if (
+        predecessor_identity.get("generation") != predecessor_binding.get("generation")
+        or predecessor_identity.get("manifest_sha256") != predecessor_binding.get("core_sha256")
+        or predecessor_identity.get("root_sha256") != predecessor_binding.get("root_sha256")
+    ):
+        raise BundleError("FIXTURE_CONSTRUCTION_PREDECESSOR_MISMATCH")
+    predecessor_final = _canonical_load(predecessor / "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+    if predecessor_final.get("snapshot_manifest_sha256") != predecessor_binding.get("snapshot_manifest_sha256"):
+        raise BundleError("FIXTURE_CONSTRUCTION_PREDECESSOR_MISMATCH")
+    target_generation = bindings["generation"]
+    assert isinstance(target_generation, str)
+    target = candidates_root / target_generation
+    if target.exists() or target.is_symlink():
+        raise BundleError("CANDIDATE_TARGET_EXISTS")
+    candidates_root.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix=f".{target_generation}.staging-", dir=candidates_root))
+    try:
+        shutil.rmtree(temporary)
+        shutil.copytree(predecessor, temporary)
+        (temporary / "content-manifest-core.json").unlink()
+        (temporary / "snapshot-manifest.json").unlink()
+        core, _ = _canonical_load_from_root(predecessor, "content-manifest-core.json", "CONTENT_MANIFEST_CORE_INVALID")
+        registry_artifacts = [
+            artifact for artifact in core.get("bundle_artifacts", [])
+            if isinstance(artifact, dict) and artifact.get("kind") == "fixture_registry"
+        ]
+        if len(registry_artifacts) != 1:
+            raise BundleError("FIXTURE_CLOSURE_REGISTRY_ARTIFACT_MISSING")
+        core["bundle_artifacts"] = embed_verifier_artifacts(temporary) + registry_artifacts
+        core_bytes = canonical_json_bytes(core)
+        core_sha256 = sha256_bytes(core_bytes)
+        artifacts = _raw_artifacts(core, temporary) + _bundle_artifacts(core, temporary)
+        root_sha256 = _root_digest(core_sha256, artifacts)
+        _write_exact(temporary / "content-manifest-core.json", core_bytes)
+        final = _snapshot_manifest(core, target_generation, core_sha256, root_sha256)
+        _write_exact(temporary / "snapshot-manifest.json", canonical_json_bytes(final))
+        verify_candidate(temporary)
+        _run_embedded_verifier(temporary)
+        with tempfile.TemporaryDirectory(prefix="fixture-v3-isolation-") as isolated:
+            replay = Path(isolated) / "bundle"
+            shutil.copytree(temporary, replay)
+            result = subprocess.run(
+                [sys.executable, "verify_bundle.py"],
+                cwd=replay,
+                env={"PATH": "/nonexistent", "PYTHONDONTWRITEBYTECODE": "1"},
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0 or result.stdout != "bundle verified\n":
+                raise BundleError("COPIED_ISOLATION_REPLAY_FAILED")
+        final["offline_replay_proven"] = True
+        final["snapshot_manifest_sha256"] = sha256_bytes(canonical_json_bytes({
+            key: value for key, value in final.items() if key != "snapshot_manifest_sha256"
+        }))
+        _replace_exact(temporary / "snapshot-manifest.json", canonical_json_bytes(final))
+        identity = verify_candidate(temporary)
+        _run_embedded_verifier(temporary)
+        _sync_directory(temporary)
+        _sync_directory(candidates_root)
+        _publish_directory_no_replace(temporary, target, "CANDIDATE_TARGET_EXISTS")
+        _sync_directory(candidates_root)
+    except Exception:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        raise
+    return {
+        **identity,
+        "copied_isolation_replay": "passed",
+        "snapshot_manifest_sha256": final["snapshot_manifest_sha256"],
+    }
+
+
+def fixture_construction_candidate_audit(
+    decision: object, proposal: object, proposal_path: str, decision_path: str, candidate: Path
+) -> dict[str, object]:
+    """Return the closed audit projection for the non-authoritative v3 candidate."""
+    proposal_raw = canonical_json_bytes(proposal)
+    decision_raw = canonical_json_bytes(decision)
+    try:
+        bindings = validate_fixture_construction_proposal(proposal)
+        authorized = validate_fixture_construction_decision(
+            decision, proposal, proposal_path=proposal_path, proposal_sha256=sha256_bytes(proposal_raw)
+        )
+        require_fixture_construction_authorization(authorized)
+        identity = verify_candidate(candidate)
+        final, _ = _canonical_load_from_root(candidate, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+        core, _ = _canonical_load_from_root(candidate, "content-manifest-core.json", "CONTENT_MANIFEST_CORE_INVALID")
+    except (SourceContractProposalError, OSError) as error:
+        raise BundleError(str(error)) from error
+    if identity.get("generation") != bindings.get("generation"):
+        raise BundleError("FIXTURE_CONSTRUCTION_GENERATION_INVALID")
+    raw_artifacts = [
+        {"path": item["local_bundle_path"], "sha256": item["raw_sha256"]}
+        for item in _raw_artifacts(core, candidate)
+    ]
+    verifier_artifacts = [
+        {"byte_length": item["byte_length"], "path": item["local_bundle_path"], "sha256": item["sha256"]}
+        for item in core.get("bundle_artifacts", [])
+        if isinstance(item, dict) and item.get("kind") == "verifier"
+    ]
+    if verifier_artifacts != bindings["verifier_artifacts"]:
+        raise BundleError("FIXTURE_CONSTRUCTION_VERIFIER_BINDING_MISMATCH")
+    return {
+        "candidate": {
+            "core_sha256": identity["manifest_sha256"],
+            "downstream_eligible": False,
+            "external_publication_authorized": False,
+            "generation": identity["generation"],
+            "root_sha256": identity["root_sha256"],
+            "snapshot_manifest_sha256": final["snapshot_manifest_sha256"],
+            "status": "candidate",
+        },
+        "copied_isolation_replay": {
+            "original_bundle_available": False,
+            "repository_modules_available": False,
+            "result": "passed",
+        },
+        "decision": {"path": decision_path, "sha256": sha256_bytes(decision_raw)},
+        "fixed_source_commit": bindings["fixed_source"]["commit"],
+        "fixture_inventory": bindings["fixture_inventory"],
+        "pinned_commit_sha": core["snapshots"][0]["pinned_commit_sha"],
+        "pinned_tree_sha": core["snapshots"][0]["pinned_tree_sha"],
+        "proposal": {"generation": bindings["generation"], "path": proposal_path, "sha256": sha256_bytes(proposal_raw)},
+        "raw_artifacts": raw_artifacts,
+        "schema_version": "1",
+        "source_controls": bindings["source_controls"],
+        "status": "candidate",
+        "verifier_artifacts": verifier_artifacts,
     }
 
 
