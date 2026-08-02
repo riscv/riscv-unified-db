@@ -8,13 +8,17 @@ each accepted generation.  It never discovers a repository or executes a process
 from __future__ import annotations
 
 import json
-import os
 import shutil
 from pathlib import Path
 from typing import Any
 
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
-from .filesystem import FilesystemPolicyError, inspect_authoritative_path, require_relative_posix_path
+from .filesystem import (
+    FilesystemPolicyError,
+    enumerate_authoritative_files,
+    read_authoritative_file,
+    require_relative_posix_path,
+)
 
 
 class BundleVerificationError(ValueError):
@@ -49,10 +53,7 @@ _FIXTURE_ROLES = {
 
 def _load_canonical(root: Path, relative_path: str, code: str) -> tuple[dict[str, Any], bytes]:
     try:
-        evidence = inspect_authoritative_path(root, relative_path)
-        if evidence.file_kind != "regular_file":
-            raise BundleVerificationError(code)
-        raw = (root / relative_path).read_bytes()
+        _, raw = read_authoritative_file(root, relative_path)
         value = json.loads(raw.decode("utf-8"))
     except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise BundleVerificationError(code) from error
@@ -84,7 +85,7 @@ def _raw_artifacts(core: dict[str, Any], root: Path) -> list[dict[str, object]]:
                 local = require_relative_posix_path(str(entry.get("local_bundle_path"))).as_posix()
                 length = require_byte_length(entry.get("raw_byte_length"))
                 digest = require_sha256(entry.get("raw_sha256"))
-                evidence = inspect_authoritative_path(root, local)
+                evidence, _ = read_authoritative_file(root, local)
             except (FilesystemPolicyError, ValueError) as error:
                 raise BundleVerificationError("RAW_INVENTORY_INVALID") from error
             if evidence.file_kind != "regular_file" or evidence.byte_length != length or evidence.sha256 != digest:
@@ -113,7 +114,7 @@ def _bundle_artifacts(core: dict[str, Any], root: Path) -> list[dict[str, object
             local = require_relative_posix_path(str(record.get("local_bundle_path"))).as_posix()
             length = require_byte_length(record.get("byte_length"))
             digest = require_sha256(record.get("sha256"))
-            evidence = inspect_authoritative_path(root, local)
+            evidence, _ = read_authoritative_file(root, local)
         except (FilesystemPolicyError, ValueError) as error:
             raise BundleVerificationError("VERIFIER_ARTIFACT_INVALID") from error
         kind = record.get("kind")
@@ -262,20 +263,13 @@ def _verify_tree_closure(root: Path, artifacts: list[dict[str, object]]) -> None
     """Reject any unmanifested file or prohibited kind in a replayable bundle."""
     expected = {"content-manifest-core.json", "snapshot-manifest.json"}
     expected.update(str(item["local_bundle_path"]) for item in artifacts)
-    actual: set[str] = set()
-    for directory, names, files in os.walk(root, topdown=True, followlinks=False):
-        current = Path(directory)
-        for name in [*names, *files]:
-            path = current / name
-            relative = path.relative_to(root).as_posix()
-            if "__pycache__" in relative.split("/") or relative.endswith(".pyc"):
-                continue
-            try:
-                evidence = inspect_authoritative_path(root, relative)
-            except FilesystemPolicyError as error:
-                raise BundleVerificationError(str(error)) from error
-            if evidence.file_kind == "regular_file":
-                actual.add(relative)
+    try:
+        actual = {
+            relative for relative in enumerate_authoritative_files(root)
+            if "__pycache__" not in relative.split("/") and not relative.endswith(".pyc")
+        }
+    except FilesystemPolicyError as error:
+        raise BundleVerificationError(str(error)) from error
     missing = expected - actual
     if missing:
         raise BundleVerificationError("BUNDLE_MISSING_FILE")

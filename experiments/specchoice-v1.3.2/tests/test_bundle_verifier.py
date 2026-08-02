@@ -30,7 +30,11 @@ from specchoice_evidence.source_contract import (
     validate_local_accepted_generation_decision,
     validate_source_publication_decision,
 )
-from specchoice_evidence.verify import create_synthetic_accepted_bundle, verify_accepted_bundle
+from specchoice_evidence.verify import (
+    BundleVerificationError,
+    create_synthetic_accepted_bundle,
+    verify_accepted_bundle,
+)
 
 
 def git(*arguments: str, cwd: Path | None = None) -> str:
@@ -95,6 +99,51 @@ def candidate_decision_for(proposal: dict[str, object]) -> dict[str, object]:
         "schema_version": "1",
         "state": "candidate_construction_authorized",
     }
+
+
+class BundleVerifierTests(unittest.TestCase):
+    """Public verifier regressions for descriptor-bound source consumption."""
+
+    def _accepted_copy(self, root: Path) -> Path:
+        experiment = Path(__file__).resolve().parents[1]
+        source = experiment / (
+            "bundles/accepted/"
+            "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"
+        )
+        copied = root / "accepted"
+        shutil.copytree(source, copied)
+        return copied
+
+    def test_public_source_verifier_rejects_rebound_root_intermediate_and_fifo_leafs(self) -> None:
+        for mutation in ("root", "intermediate", "fifo"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
+                copied = self._accepted_copy(Path(directory))
+                if mutation == "root":
+                    sibling = copied.with_name("replacement")
+                    shutil.copytree(copied, sibling)
+                    (sibling / "content-manifest-core.json").write_bytes(b"{}\n")
+                    os.rename(copied, copied.with_name("old"))
+                    os.rename(sibling, copied)
+                elif mutation == "intermediate":
+                    raw = copied / "raw"
+                    sibling = copied / "replacement-raw"
+                    shutil.copytree(raw, sibling)
+                    next(sibling.rglob("*.txt")).write_bytes(b"replacement raw bytes")
+                    shutil.rmtree(raw)
+                    os.rename(sibling, raw)
+                else:
+                    leaf = copied / "fixture-registry-pr2164-v1.json"
+                    leaf.unlink()
+                    os.mkfifo(leaf)
+                with self.assertRaises(BundleVerificationError):
+                    verify_accepted_bundle(copied)
+
+    def test_descriptor_tree_closure_rejects_rebind_without_pathname_walk(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            copied = self._accepted_copy(Path(directory))
+            (copied / "unexpected.txt").write_bytes(b"must block closed inventory")
+            with self.assertRaisesRegex(BundleVerificationError, "BUNDLE_EXTRA_FILE"):
+                verify_accepted_bundle(copied)
 
 
 class CandidateBundleTests(unittest.TestCase):

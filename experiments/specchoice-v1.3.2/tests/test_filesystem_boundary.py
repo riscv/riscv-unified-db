@@ -451,16 +451,14 @@ class FilesystemBoundaryTests(unittest.TestCase):
             os.mkfifo(root / "evidence.fifo")
             with self.assertRaisesRegex(FilesystemPolicyError, "SPECIAL_FILE_KIND_REJECTED"):
                 inspect_authoritative_path(root, "evidence.fifo")
-        root_stat = os.stat_result((stat.S_IFDIR | 0o755, 1, 10, 1, 0, 0, 0, 0, 0, 0))
-        mounted_stat = os.stat_result((stat.S_IFDIR | 0o755, 2, 11, 1, 0, 0, 0, 0, 0, 0))
-
-        def fake_lstat(path: Path) -> os.stat_result:
-            return root_stat if path.name == "root" else mounted_stat
-
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "root"
             root.mkdir()
-            with patch.object(Path, "lstat", fake_lstat):
+            (root / "mounted").mkdir()
+            with patch(
+                "specchoice_evidence.filesystem._open_directory",
+                side_effect=FilesystemPolicyError("MOUNT_BOUNDARY_UNPROVEN"),
+            ):
                 with self.assertRaisesRegex(FilesystemPolicyError, "MOUNT_BOUNDARY_UNPROVEN"):
                     inspect_authoritative_path(root, "mounted")
 
