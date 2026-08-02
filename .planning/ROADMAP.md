@@ -110,7 +110,7 @@ Plans:
 - [x] 02-11-PLAN.md
 - [x] 02-12-PLAN.md
 - [x] 02-13-PLAN.md
-- [ ] 02-14-PLAN.md
+- [x] 02-14-PLAN.md
 - [ ] 02-15-PLAN.md
 - [ ] 02-16-PLAN.md
 - [ ] 02-17-PLAN.md
@@ -165,7 +165,7 @@ Plans:
 
 **Wave 13** *(blocked on Wave 12 completion)*
 
-- [ ] 02-13: Rehearse adapter and preflight against pending v3 while the active authority remains unchanged.
+- [x] 02-13: Rehearse adapter and preflight against pending v3 while the active authority remains unchanged.
 
 **Wave 14** *(blocked on Wave 13 completion)*
 
