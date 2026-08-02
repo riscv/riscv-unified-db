@@ -25,10 +25,12 @@ from .baseline import (
 from .receipt import (
     ReceiptError,
     build_blocked_receipt,
+    build_accepted_v3_receipts,
     build_local_mvp_receipt,
     local_receipt_basis_sha256,
     render_markdown,
     validate_receipt,
+    write_accepted_v3_receipts,
     write_receipt_package,
 )
 from .bundle import (
@@ -947,6 +949,17 @@ def command_activate_pending_source_cutover_v10(args: argparse.Namespace) -> int
     return 0
 
 
+def command_write_accepted_v3_receipts(args: argparse.Namespace) -> int:
+    """Write only the immutable accepted-v3 custody receipts; never activate the pending authority."""
+    receipts = build_accepted_v3_receipts(
+        args.request, args.decision, args.candidate_audit, args.pending_authority, args.transition,
+        args.active_authority, args.historical_authority, args.accepted_bundle,
+    )
+    written = write_accepted_v3_receipts(args.receipt_directory, receipts)
+    _print_json({"status": "accepted_v3_receipts_written", "written": sorted(written)})
+    return 0
+
+
 def command_write_fixture_closure_receipt(args: argparse.Namespace) -> int:
     """Write the v7-bound JSON-first local closure receipt for accepted v3."""
     decision_raw = args.decision.read_bytes()
@@ -1387,6 +1400,17 @@ def build_parser() -> argparse.ArgumentParser:
     cutover_v10.add_argument("--active-authority", type=Path, required=True)
     cutover_v10.add_argument("--accepted-bundle", type=Path, required=True)
     cutover_v10.set_defaults(handler=command_activate_pending_source_cutover_v10)
+    accepted_v3_receipts = commands.add_parser("write-accepted-v3-receipts")
+    accepted_v3_receipts.add_argument("--request", type=Path, required=True)
+    accepted_v3_receipts.add_argument("--decision", type=Path, required=True)
+    accepted_v3_receipts.add_argument("--candidate-audit", type=Path, required=True)
+    accepted_v3_receipts.add_argument("--pending-authority", type=Path, required=True)
+    accepted_v3_receipts.add_argument("--transition", type=Path, required=True)
+    accepted_v3_receipts.add_argument("--active-authority", type=Path, required=True)
+    accepted_v3_receipts.add_argument("--historical-authority", type=Path, required=True)
+    accepted_v3_receipts.add_argument("--accepted-bundle", type=Path, required=True)
+    accepted_v3_receipts.add_argument("--receipt-directory", type=Path, required=True)
+    accepted_v3_receipts.set_defaults(handler=command_write_accepted_v3_receipts)
     closure_receipt = commands.add_parser("write-fixture-closure-receipt")
     closure_receipt.add_argument("--decision", type=Path, required=True)
     closure_receipt.add_argument("--bundle", type=Path, required=True)

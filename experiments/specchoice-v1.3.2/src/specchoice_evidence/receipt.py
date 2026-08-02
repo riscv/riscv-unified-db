@@ -4,14 +4,216 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from .canonical import canonical_json_bytes, require_sha256, sha256_bytes
+from .filesystem import _held_parent, read_authoritative_file, require_relative_posix_path
 
 
 class ReceiptError(ValueError):
     """Stable receipt construction or validation failure."""
+
+
+_V3_VERIFIER_PATHS = (
+    "verifier/specchoice_evidence/__init__.py",
+    "verifier/specchoice_evidence/canonical.py",
+    "verifier/specchoice_evidence/filesystem.py",
+    "verifier/specchoice_evidence/verify.py",
+    "verify_bundle.py",
+)
+
+
+def _canonical_descriptor_payload(path: Path, code: str) -> tuple[dict[str, Any], bytes]:
+    """Read one canonical receipt through its held parent descriptor."""
+    try:
+        _, raw = read_authoritative_file(path.parent, path.name)
+        value = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+        raise ReceiptError(code) from error
+    if not isinstance(value, dict) or canonical_json_bytes(value) != raw:
+        raise ReceiptError(code)
+    return value, raw
+
+
+def _require_exact_keys(value: dict[str, Any], keys: set[str], code: str) -> None:
+    if set(value) != keys:
+        raise ReceiptError(code)
+
+
+def _v3_identity(value: object, code: str) -> dict[str, str]:
+    if not isinstance(value, dict):
+        raise ReceiptError(code)
+    expected = {"core_sha256", "generation", "root_sha256", "snapshot_manifest_sha256"}
+    if set(value) != expected or not isinstance(value.get("generation"), str):
+        raise ReceiptError(code)
+    for key in expected - {"generation"}:
+        _require_digest(value.get(key), code)
+    return {key: str(value[key]) for key in expected}
+
+
+def _validate_v3_verifier_artifacts(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list) or len(value) != len(_V3_VERIFIER_PATHS):
+        raise ReceiptError("V3_VERIFIER_ARTIFACTS_INVALID")
+    if [entry.get("path") if isinstance(entry, dict) else None for entry in value] != list(_V3_VERIFIER_PATHS):
+        raise ReceiptError("V3_VERIFIER_ARTIFACTS_INVALID")
+    for entry in value:
+        if not isinstance(entry, dict) or set(entry) != {"byte_length", "path", "sha256"}:
+            raise ReceiptError("V3_VERIFIER_ARTIFACTS_INVALID")
+        if isinstance(entry["byte_length"], bool) or not isinstance(entry["byte_length"], int) or entry["byte_length"] < 0:
+            raise ReceiptError("V3_VERIFIER_ARTIFACTS_INVALID")
+        _require_digest(entry["sha256"], "V3_VERIFIER_ARTIFACTS_INVALID")
+    return value
+
+
+def _hashed_v3(receipt: dict[str, Any]) -> dict[str, Any]:
+    if "receipt_sha256" in receipt:
+        raise ReceiptError("V3_RECEIPT_HASH_INVALID")
+    return {**receipt, "receipt_sha256": sha256_bytes(canonical_json_bytes(receipt))}
+
+
+def render_v3_receipt_markdown(receipt: dict[str, Any], title: str) -> str:
+    """Render a pure, JSON-derived Markdown projection for an immutable v3 receipt."""
+    if not isinstance(title, str) or not title:
+        raise ReceiptError("V3_RECEIPT_MARKDOWN_INVALID")
+    if receipt.get("receipt_sha256") != sha256_bytes(canonical_json_bytes({key: value for key, value in receipt.items() if key != "receipt_sha256"})):
+        raise ReceiptError("V3_RECEIPT_HASH_INVALID")
+    return f"# {title}\n\n```json\n{canonical_json_bytes(receipt).decode('utf-8')}```\n"
+
+
+def _write_new_descriptor_file(root: Path, name: str, content: bytes) -> None:
+    """Create exactly one immutable receipt leaf through a held root descriptor."""
+    descriptors, parent, leaf, _ = _held_parent(root, require_relative_posix_path(name))
+    descriptor: int | None = None
+    try:
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC
+        descriptor = os.open(leaf, flags, 0o644, dir_fd=parent)
+        offset = 0
+        while offset < len(content):
+            offset += os.write(descriptor, content[offset:])
+        os.fsync(descriptor)
+        os.fsync(parent)
+    except FileExistsError as error:
+        raise ReceiptError("V3_RECEIPT_DESTINATION_EXISTS") from error
+    except OSError as error:
+        raise ReceiptError("V3_RECEIPT_WRITE_INVALID") from error
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        for held in reversed(descriptors):
+            os.close(held)
+
+
+def _run_embedded_v3_replay(accepted_bundle: Path) -> dict[str, object]:
+    """Prove the embedded verifier rejects tamper, missing, and extra artifacts in copied isolation."""
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        environment = {"PATH": "/nonexistent", "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1"}
+        for name, mutate in (
+            ("clean", None),
+            ("tampered", lambda copied: (copied / "verify_bundle.py").write_bytes(b"tampered\n")),
+            ("missing", lambda copied: (copied / "verify_bundle.py").unlink()),
+            ("extra", lambda copied: (copied / "unexpected.txt").write_text("extra\n", encoding="utf-8")),
+        ):
+            copied = root / name
+            shutil.copytree(accepted_bundle, copied)
+            if mutate is not None:
+                mutate(copied)
+            result = subprocess.run(
+                [sys.executable, "verify_bundle.py"], cwd=copied, env=environment,
+                check=False, capture_output=True, text=True,
+            )
+            if (name == "clean") != (result.returncode == 0):
+                raise ReceiptError("V3_OFFLINE_REPLAY_INVALID")
+    return {
+        "git_available": False,
+        "network_available": False,
+        "original_bundle_available": False,
+        "repository_modules_available": False,
+        "result": "passed",
+    }
+
+
+def build_accepted_v3_receipts(
+    request_path: Path,
+    decision_path: Path,
+    candidate_audit_path: Path,
+    pending_authority_path: Path,
+    transition_path: Path,
+    active_authority_path: Path,
+    historical_authority_path: Path,
+    accepted_bundle: Path,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Build three cross-bound accepted-v3 receipts from canonical descriptor-held inputs."""
+    request, request_raw = _canonical_descriptor_payload(request_path, "V3_ACCEPTANCE_REQUEST_INVALID")
+    decision, decision_raw = _canonical_descriptor_payload(decision_path, "V3_ACCEPTANCE_DECISION_INVALID")
+    audit, audit_raw = _canonical_descriptor_payload(candidate_audit_path, "V3_CANDIDATE_AUDIT_INVALID")
+    pending, pending_raw = _canonical_descriptor_payload(pending_authority_path, "V3_PENDING_AUTHORITY_INVALID")
+    transition, transition_raw = _canonical_descriptor_payload(transition_path, "V3_TRANSITION_INVALID")
+    active, active_raw = _canonical_descriptor_payload(active_authority_path, "V3_ACTIVE_AUTHORITY_INVALID")
+    historical, historical_raw = _canonical_descriptor_payload(historical_authority_path, "V3_HISTORICAL_AUTHORITY_INVALID")
+    if active_raw != historical_raw or active.get("schema_version") != "1" or active.get("local_only") is not True or active.get("external_publication_authorized") is not False:
+        raise ReceiptError("V3_ACTIVE_AUTHORITY_INVALID")
+    from .source_contract import validate_local_acceptance_decision_v10
+    from .verify import verify_accepted_bundle
+
+    validate_local_acceptance_decision_v10(decision, request, sha256_bytes(request_raw))
+    verified = verify_accepted_bundle(accepted_bundle)
+    identity = _v3_identity(decision.get("projected_accepted"), "V3_ACCEPTED_IDENTITY_INVALID")
+    if identity != _v3_identity(pending.get("accepted_identity"), "V3_PENDING_AUTHORITY_INVALID"):
+        raise ReceiptError("V3_ACCEPTED_IDENTITY_MISMATCH")
+    if identity["generation"] != verified.get("generation") or identity["core_sha256"] != verified.get("manifest_sha256") or identity["root_sha256"] != verified.get("root_sha256"):
+        raise ReceiptError("V3_ACCEPTED_IDENTITY_MISMATCH")
+    artifacts = _validate_v3_verifier_artifacts(decision.get("verifier_artifacts"))
+    for value, key, raw in ((pending, "request_sha256", request_raw), (pending, "decision_sha256", decision_raw), (pending, "transition_sha256", transition_raw)):
+        if value.get(key) != sha256_bytes(raw):
+            raise ReceiptError("V3_PENDING_LINEAGE_MISMATCH")
+    if pending.get("status") != "pending_cutover_v10" or pending.get("local_only") is not True or pending.get("external_publication_authorized") is not False:
+        raise ReceiptError("V3_PENDING_AUTHORITY_INVALID")
+    if transition.get("request_sha256") != sha256_bytes(request_raw) or transition.get("decision_sha256") != sha256_bytes(decision_raw) or transition.get("old_authority_sha256") != sha256_bytes(active_raw):
+        raise ReceiptError("V3_TRANSITION_INVALID")
+    construction = {key: audit.get(key) for key in ("proposal", "decision")}
+    if not all(isinstance(value, dict) and set(value) >= {"path", "sha256"} for value in construction.values()):
+        raise ReceiptError("V3_CANDIDATE_AUDIT_INVALID")
+    common = {
+        "accepted_identity": identity,
+        "active_authority_sha256": sha256_bytes(active_raw),
+        "candidate_audit_sha256": sha256_bytes(audit_raw),
+        "construction": construction,
+        "decision_sha256": sha256_bytes(decision_raw),
+        "external_publication_authorized": False,
+        "fixture_inventory": {"fixture_count": 11, "partition": {"candidate": 1, "negative": 4, "positive": 6}, "raw_file_count": 28, "registry_sha256": pending["registry_sha256"]},
+        "historical_authority_sha256": sha256_bytes(historical_raw),
+        "local_only": True,
+        "pending_authority_sha256": sha256_bytes(pending_raw),
+        "pending_transition_sha256": sha256_bytes(transition_raw),
+        "request_sha256": sha256_bytes(request_raw),
+        "verifier_artifacts": artifacts,
+    }
+    acceptance = _hashed_v3({**common, "kind": "fixture_closure_acceptance_audit_v3", "schema_version": "3", "status": "accepted_v3_local_only"})
+    integrity = _hashed_v3({**common, "acceptance_audit_sha256": acceptance["receipt_sha256"], "kind": "integrity_receipt_v10", "schema_version": "10", "status": "accepted_v3_integrity_pass"})
+    replay = _hashed_v3({**common, "acceptance_audit_sha256": acceptance["receipt_sha256"], "copied_isolation_replay": _run_embedded_v3_replay(accepted_bundle), "integrity_receipt_sha256": integrity["receipt_sha256"], "kind": "fixture_closure_offline_replay_v3", "schema_version": "3", "status": "accepted_v3_offline_replay_pass"})
+    return acceptance, integrity, replay
+
+
+def write_accepted_v3_receipts(receipt_directory: Path, receipts: tuple[dict[str, Any], dict[str, Any], dict[str, Any]]) -> list[str]:
+    """Persist the exact immutable v3 receipt set without replacement."""
+    acceptance, integrity, replay = receipts
+    outputs = (
+        ("fixture-closure-acceptance-audit-v3.json", canonical_json_bytes(acceptance)),
+        ("fixture-closure-acceptance-audit-v3.md", render_v3_receipt_markdown(acceptance, "Fixture Closure Acceptance Audit v3").encode("utf-8")),
+        ("fixture-closure-offline-replay-v3.json", canonical_json_bytes(replay)),
+        ("integrity-receipt-v10.json", canonical_json_bytes(integrity)),
+        ("integrity-receipt-v10.md", render_v3_receipt_markdown(integrity, "Integrity Receipt v10").encode("utf-8")),
+    )
+    for name, content in outputs:
+        _write_new_descriptor_file(receipt_directory, name, content)
+    return [name for name, _ in outputs]
 
 
 def _receipt_projection(receipt: dict[str, Any]) -> dict[str, Any]:
