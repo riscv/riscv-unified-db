@@ -31,6 +31,8 @@ from specchoice_evidence.filesystem import (
     read_authoritative_file,
     reject_hardlink_dependency,
     require_relative_posix_path,
+    replace_descriptor_file,
+    write_new_descriptor_file,
 )
 from specchoice_evidence.cli import build_parser
 
@@ -406,6 +408,38 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 self.assertEqual(content, b"held-bytes")
                 self.assertEqual(evidence.sha256, sha256_bytes(b"held-bytes"))
 
+        # The two cutover writers must remain pinned to the original held parent
+        # even if a concurrent pathname rebind happens between write and replace.
+        for operation in ("create", "replace"):
+            with self.subTest(operation=operation), tempfile.TemporaryDirectory() as directory:
+                parent = Path(directory)
+                root = parent / "root"
+                root.mkdir()
+                leaf = root / "authority.json"
+                if operation == "replace":
+                    leaf.write_bytes(b"v2")
+                replacement = parent / "replacement"
+                replacement.mkdir()
+                triggered = False
+                original_open = os.open
+
+                def rebind(path: object, flags: int, *args: object, **kwargs: object) -> int:
+                    nonlocal triggered
+                    if not triggered and os.fspath(path) in {"authority.json", ".authority.json.cutover"}:
+                        triggered = True
+                        os.rename(root, parent / "old-root")
+                        os.rename(replacement, root)
+                    return original_open(path, flags, *args, **kwargs)
+
+                with patch("specchoice_evidence.filesystem.os.open", side_effect=rebind):
+                    if operation == "create":
+                        write_new_descriptor_file(root, "authority.json", b"v3")
+                    else:
+                        replace_descriptor_file(root, "authority.json", b"v3")
+                self.assertTrue(triggered)
+                self.assertEqual((parent / "old-root" / "authority.json").read_bytes(), b"v3")
+                self.assertFalse((root / "authority.json").exists())
+
     def test_dirfd_reader_rejects_regular_to_fifo_immediate_open_without_blocking(self) -> None:
         """The final no-follow open must be nonblocking before a FIFO can be consumed."""
         original_open = os.open
@@ -428,6 +462,34 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 with self.assertRaisesRegex(FilesystemPolicyError, "SPECIAL_FILE_KIND_REJECTED"):
                     read_authoritative_file(root, "leaf.txt")
             self.assertTrue(triggered)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            existing = root / "leaf.txt"
+            existing.write_bytes(b"existing")
+            with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_DESTINATION_EXISTS"):
+                write_new_descriptor_file(root, "leaf.txt", b"new")
+            self.assertEqual(existing.read_bytes(), b"existing")
+            os.unlink(existing)
+            os.symlink("elsewhere", existing)
+            with self.assertRaisesRegex(FilesystemPolicyError, "SYMLINK_REJECTED"):
+                replace_descriptor_file(root, "leaf.txt", b"new")
+            os.unlink(existing)
+            os.mkfifo(existing)
+            with self.assertRaisesRegex(FilesystemPolicyError, "SPECIAL_FILE_KIND_REJECTED"):
+                replace_descriptor_file(root, "leaf.txt", b"new")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch("specchoice_evidence.filesystem.os.fsync", side_effect=OSError("fsync")):
+                with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_WRITE_INVALID"):
+                    write_new_descriptor_file(root, "leaf.txt", b"new")
+            (root / "leaf.txt").unlink()
+            (root / "leaf.txt").write_bytes(b"old")
+            with patch("specchoice_evidence.filesystem.os.replace", side_effect=OSError("replace")):
+                with self.assertRaisesRegex(FilesystemPolicyError, "AUTHORITATIVE_WRITE_INVALID"):
+                    replace_descriptor_file(root, "leaf.txt", b"new")
+            self.assertEqual((root / "leaf.txt").read_bytes(), b"old")
 
     def test_hardlink_dependency_is_rejected_without_rejecting_independent_bytes(self) -> None:
         with self.assertRaisesRegex(FilesystemPolicyError, "HARDLINK_DEPENDENCY_REJECTED"):

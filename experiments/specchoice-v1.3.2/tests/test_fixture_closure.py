@@ -189,6 +189,22 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             )["eligible"])
             self.assertEqual(active.read_bytes(), active_v2.read_bytes())
             self.assertFalse(revocation.exists())
+            for bundle, expected in (
+                (root / "missing-bundle", ""),
+                (experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2", ""),
+            ):
+                with self.subTest(bundle=bundle):
+                    result = subprocess.run(
+                        [
+                            sys.executable, "-m", "specchoice_evidence.cli", "activate-pending-source-cutover-v10",
+                            "--pending-authority", str(pending), "--transition", str(transition),
+                            "--canonical-revocation", str(revocation), "--active-authority", str(active),
+                            "--accepted-bundle", str(bundle),
+                        ], cwd=experiment, check=False, capture_output=True, text=True,
+                    )
+                    self.assertNotEqual(result.returncode, 0, expected)
+                    self.assertFalse(revocation.exists())
+                    self.assertEqual(active.read_bytes(), active_v2.read_bytes())
             self._public_command(
                 experiment,
                 "activate-pending-source-cutover-v10", "--pending-authority", str(pending), "--transition", str(transition),
@@ -220,6 +236,51 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
                 )
             self.assertEqual(active.read_bytes(), before)
+
+            # Revocation may be durable while the authority replacement has not
+            # happened; the public owner resumes only from exact held bytes.
+            resume = root / "resume"
+            resume.mkdir()
+            resume_active = resume / "source-authority.json"
+            resume_revocation = resume / "fixture-closure-revocation-v2.json"
+            shutil.copyfile(active_v2, resume_active)
+            resume_revocation.write_bytes(transition.read_bytes())
+            self.assertEqual(
+                self._public_command(
+                    experiment,
+                    "activate-pending-source-cutover-v10", "--pending-authority", str(pending),
+                    "--transition", str(transition), "--canonical-revocation", str(resume_revocation),
+                    "--active-authority", str(resume_active), "--accepted-bundle", str(accepted_bundle),
+                )["status"],
+                "activated",
+            )
+            self.assertEqual(resume_active.read_bytes(), pending.read_bytes())
+
+            for mutation in (
+                lambda path: path.write_bytes(canonical_json_bytes({"schema_version": "2"})),
+                lambda path: path.write_bytes(canonical_json_bytes({**json.loads(transition.read_text(encoding="utf-8")), "old_authority_sha256": "0" * 64})),
+            ):
+                with self.subTest(transition_mutation=mutation):
+                    invalid_transition = root / "invalid-transition.json"
+                    mutation(invalid_transition)
+                    before_revocation = revocation.read_bytes()
+                    before_active = active.read_bytes()
+                    with self.assertRaisesRegex(AssertionError, "SOURCE_CUTOVER"):
+                        self._public_command(
+                            experiment, "activate-pending-source-cutover-v10", "--pending-authority", str(pending),
+                            "--transition", str(invalid_transition), "--canonical-revocation", str(revocation),
+                            "--active-authority", str(active), "--accepted-bundle", str(accepted_bundle),
+                        )
+                    self.assertEqual(revocation.read_bytes(), before_revocation)
+                    self.assertEqual(active.read_bytes(), before_active)
+
+            with self.assertRaisesRegex(AssertionError, "SOURCE_CUTOVER"):
+                self._public_command(
+                    experiment, "activate-pending-source-cutover-v10", "--pending-authority", str(pending),
+                    "--transition", str(transition), "--canonical-revocation", str(revocation),
+                    "--active-authority", str(active),
+                    "--accepted-bundle", str(experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2"),
+                )
 
     def test_v3_copied_offline_replay_uses_embedded_hardened_verifier(self) -> None:
         """The v10 accepted successor verifies with only its embedded verifier."""
