@@ -1,0 +1,25 @@
+# Copyright (c) Yawar Hayat
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: RNMI_INTERRUPT_TRAP_ADDRESS
+long_name: |
+  RNMI interrupt trap handler address
+definedBy:
+  extension:
+    name: Smrnmi
+description: |
+  The address the hart jumps to when a resumable non-maskable interrupt is
+  taken. The RNMI interrupt trap handler address is implementation-defined.
+
+schema:
+  $ref: schema_defs.json#/$defs/uint64
+
+requirements:
+  idl(): |
+    (MXLEN == 32) -> (RNMI_INTERRUPT_TRAP_ADDRESS <= 32'hffffffff);
+  reason: |
+    The handler address is a program counter value, which is MXLEN bits wide.
