@@ -49,6 +49,15 @@ def _validate_phase2_authority(authority_path: Path, bundle_root: Path) -> dict[
     """Validate the inspection-only active-v2 mode at the public boundary."""
     authority_before, authority_before_raw = _load_canonical_json(authority_path, "PHASE2_SOURCE_AUTHORITY_INVALID")
     revocation_path = authority_path.parent.parent / "receipts/fixture-closure-revocation-v2.json"
+    try:
+        read_authoritative_file(revocation_path.parent, revocation_path.name)
+    except FilesystemPolicyError as error:
+        if str(error) != "AUTHORITATIVE_FILE_MISSING":
+            raise AdapterError("SOURCE_AUTHORITY_REVOCATION_INVALID") from error
+    except OSError as error:
+        raise AdapterError("SOURCE_AUTHORITY_REVOCATION_INVALID") from error
+    else:
+        raise AdapterError("SOURCE_AUTHORITY_V2_REVOKED")
     completed = subprocess.run(
         [
             sys.executable,
@@ -70,6 +79,15 @@ def _validate_phase2_authority(authority_path: Path, bundle_root: Path) -> dict[
         env={**os.environ, "PYTHONPATH": str(_EXPERIMENT_ROOT / "src")},
         text=True,
     )
+    try:
+        read_authoritative_file(revocation_path.parent, revocation_path.name)
+    except FilesystemPolicyError as error:
+        if str(error) != "AUTHORITATIVE_FILE_MISSING":
+            raise AdapterError("SOURCE_AUTHORITY_REVOCATION_INVALID") from error
+    except OSError as error:
+        raise AdapterError("SOURCE_AUTHORITY_REVOCATION_INVALID") from error
+    else:
+        raise AdapterError("SOURCE_AUTHORITY_V2_REVOKED")
     authority, authority_raw = _load_canonical_json(authority_path, "PHASE2_SOURCE_AUTHORITY_INVALID")
     if authority_raw != authority_before_raw:
         raise AdapterError("PHASE2_SOURCE_AUTHORITY_CHANGED_DURING_VALIDATION")
