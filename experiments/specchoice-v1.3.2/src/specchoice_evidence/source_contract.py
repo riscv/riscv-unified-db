@@ -88,9 +88,11 @@ _V4_PBMTE_EFFECTS = {
     "included_capability_parameter": {"fixture_class": "positive", "gold": True, "classify_out": False, "surfaced": True},
 }
 _V4_CODE_PATHS = (
+    "experiments/specchoice-v1.3.2/src/specchoice_evidence/canonical.py",
     "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py",
     "experiments/specchoice-v1.3.2/src/specchoice_evidence/filesystem.py",
     "experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py",
+    "experiments/specchoice-v1.3.2/src/specchoice_evidence/verify.py",
     "experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py",
 )
 _V4_REPAIR_REASONS = {

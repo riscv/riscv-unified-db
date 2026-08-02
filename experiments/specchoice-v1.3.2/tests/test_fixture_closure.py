@@ -14,6 +14,7 @@ import unittest
 from unittest import mock
 from pathlib import Path
 
+import specchoice_evidence.cli as cli_module
 from specchoice_evidence.bundle import (
     BundleError,
     accept_fixture_closure_candidate,
@@ -814,9 +815,11 @@ class FixtureClosureCandidateTests(unittest.TestCase):
 
                 fixed_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=experiment, check=True, capture_output=True, text=True).stdout.strip()
                 code_paths = (
+                    "experiments/specchoice-v1.3.2/src/specchoice_evidence/canonical.py",
                     "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py",
                     "experiments/specchoice-v1.3.2/src/specchoice_evidence/filesystem.py",
                     "experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py",
+                    "experiments/specchoice-v1.3.2/src/specchoice_evidence/verify.py",
                     "experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py",
                 )
                 code_artifacts = []
@@ -856,6 +859,19 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     rebound["successor"]["registry"]["sha256"] = sha256_bytes(registry_path.read_bytes())
                     return write_payload(f"rebound-{len(list(temporary.iterdir()))}.json", rebound)
                 self.assertEqual(run_v4().returncode, 0)
+
+                with self.subTest("v4_predecessor_uses_one_closed_tree_snapshot"):
+                    with mock.patch(
+                        "specchoice_evidence.cli.read_closed_authoritative_tree",
+                        wraps=cli_module.read_closed_authoritative_tree,
+                    ) as read_closed, mock.patch(
+                        "specchoice_evidence.cli.verify_accepted_bundle", side_effect=AssertionError("legacy path reopen")
+                    ), mock.patch(
+                        "specchoice_evidence.verify.read_authoritative_file", side_effect=AssertionError("material reopen")
+                    ):
+                        material = _v4_predecessor_material(predecessor_v3)
+                    self.assertEqual(read_closed.call_count, 1)
+                    self.assertEqual(material["identity"]["status"], "accepted")
 
                 with self.subTest("v4_code_artifacts_are_exact_historical_commit_proofs"):
                     mutations = {
@@ -956,6 +972,14 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         ("decision-empty.json", lambda value: value.update({"rationale": ""})),
                         ("decision-utc.json", lambda value: value.update({"decision_timestamp": "2026-08-03T12:34:56+00:00"})),
                         ("decision-stale-binding.json", lambda value: value.update({"proposal_sha256": "0" * 64})),
+                        ("decision-fixed-commit.json", lambda value: value.update({"fixed_code_commit": "0" * 40})),
+                        ("decision-supersession.json", lambda value: value.update({"supersession_sha256": "0" * 64})),
+                        ("decision-ontology.json", lambda value: value.update({"ontology_decision_sha256": "0" * 64})),
+                        ("decision-authority.json", lambda value: value.update({"active_authority_sha256": "0" * 64})),
+                        ("decision-not-local.json", lambda value: value.update({"local_only": False})),
+                        ("decision-external.json", lambda value: value.update({"external_publication_authorized": True})),
+                        ("decision-empty-reviewer.json", lambda value: value.update({"reviewer": ""})),
+                        ("decision-empty-attestation.json", lambda value: value.update({"attestation": ""})),
                     ):
                         invalid = decision_payload("authorize")
                         mutation(invalid)
@@ -1092,7 +1116,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         "raw_file_count": 26,
                     }
                     forged_proposal_path = write_payload("rebound-proposal.json", forged_proposal)
-                    forged_supersession = copy.deepcopy(original_supersession)
+                    forged_supersession = copy.deepcopy(supersession_v2_payload)
                     forged_supersession["successor"]["proposal"]["sha256"] = sha256_bytes(forged_proposal_path.read_bytes())
                     forged_supersession["successor"]["repair_manifest"]["sha256"] = sha256_bytes(forged_manifest_path.read_bytes())
                     forged_supersession["successor"]["registry"]["sha256"] = sha256_bytes(forged_registry_path.read_bytes())
@@ -1105,14 +1129,12 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         ),
                         forged_proposal["successor_inventory"],
                     )
-                    self.assertNotEqual(
-                        run_v4(
-                            proposal_path=forged_proposal_path, manifest_path=forged_manifest_path,
-                            registry_path=forged_registry_path, supersession_path=forged_supersession_path,
-                            decision_path=opposite_path,
-                        ).returncode,
-                        0,
+                    counterfactual = run_v4(
+                        proposal_path=forged_proposal_path, manifest_path=forged_manifest_path,
+                        registry_path=forged_registry_path, supersession_path=forged_supersession_path,
+                        decision_path=opposite_path,
                     )
+                    self.assertEqual(counterfactual.returncode, 0, counterfactual.stderr)
                     retained_registry = copy.deepcopy(original_registry)
                     retained_registry["ontology_decision_sha256"] = sha256_bytes(opposite_path.read_bytes())
                     retained_registry_path = write_payload("retained-pbmte-registry.json", retained_registry)

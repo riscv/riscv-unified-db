@@ -10,12 +10,13 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .filesystem import (
     FilesystemPolicyError,
-    enumerate_authoritative_files,
+    FileEvidence,
+    read_closed_authoritative_tree,
     read_authoritative_file,
     require_relative_posix_path,
 )
@@ -51,7 +52,22 @@ _FIXTURE_ROLES = {
 }
 
 
+BundleMaterial = Mapping[str, tuple[FileEvidence, bytes]]
+
+
+def _load_canonical_material(material: BundleMaterial, relative_path: str, code: str) -> tuple[dict[str, Any], bytes]:
+    try:
+        _, raw = material[relative_path]
+        value = json.loads(raw.decode("utf-8"))
+    except (KeyError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise BundleVerificationError(code) from error
+    if not isinstance(value, dict) or canonical_json_bytes(value) != raw:
+        raise BundleVerificationError(code)
+    return value, raw
+
+
 def _load_canonical(root: Path, relative_path: str, code: str) -> tuple[dict[str, Any], bytes]:
+    """Read one canonical descriptor-rooted file for legacy call sites."""
     try:
         _, raw = read_authoritative_file(root, relative_path)
         value = json.loads(raw.decode("utf-8"))
@@ -62,7 +78,13 @@ def _load_canonical(root: Path, relative_path: str, code: str) -> tuple[dict[str
     return value, raw
 
 
-def _raw_artifacts(core: dict[str, Any], root: Path) -> list[dict[str, object]]:
+def _material_file(material: BundleMaterial | Path, relative_path: str) -> tuple[FileEvidence, bytes]:
+    if isinstance(material, Path):
+        return read_authoritative_file(material, relative_path)
+    return material[relative_path]
+
+
+def _raw_artifacts(core: dict[str, Any], material: BundleMaterial | Path) -> list[dict[str, object]]:
     snapshots = core.get("snapshots")
     if not isinstance(snapshots, list) or not snapshots:
         raise BundleVerificationError("SNAPSHOT_INVENTORY_EMPTY")
@@ -85,8 +107,8 @@ def _raw_artifacts(core: dict[str, Any], root: Path) -> list[dict[str, object]]:
                 local = require_relative_posix_path(str(entry.get("local_bundle_path"))).as_posix()
                 length = require_byte_length(entry.get("raw_byte_length"))
                 digest = require_sha256(entry.get("raw_sha256"))
-                evidence, _ = read_authoritative_file(root, local)
-            except (FilesystemPolicyError, ValueError) as error:
+                evidence, _ = _material_file(material, local)
+            except (KeyError, FilesystemPolicyError, ValueError) as error:
                 raise BundleVerificationError("RAW_INVENTORY_INVALID") from error
             if evidence.file_kind != "regular_file" or evidence.byte_length != length or evidence.sha256 != digest:
                 raise BundleVerificationError("STAGED_RAW_CUSTODY_MISMATCH")
@@ -102,7 +124,7 @@ def _raw_artifacts(core: dict[str, Any], root: Path) -> list[dict[str, object]]:
     return artifacts
 
 
-def _bundle_artifacts(core: dict[str, Any], root: Path) -> list[dict[str, object]]:
+def _bundle_artifacts(core: dict[str, Any], material: BundleMaterial | Path) -> list[dict[str, object]]:
     records = core.get("bundle_artifacts")
     if not isinstance(records, list) or not records:
         raise BundleVerificationError("VERIFIER_ARTIFACTS_MISSING")
@@ -114,8 +136,8 @@ def _bundle_artifacts(core: dict[str, Any], root: Path) -> list[dict[str, object
             local = require_relative_posix_path(str(record.get("local_bundle_path"))).as_posix()
             length = require_byte_length(record.get("byte_length"))
             digest = require_sha256(record.get("sha256"))
-            evidence, _ = read_authoritative_file(root, local)
-        except (FilesystemPolicyError, ValueError) as error:
+            evidence, _ = _material_file(material, local)
+        except (KeyError, FilesystemPolicyError, ValueError) as error:
             raise BundleVerificationError("VERIFIER_ARTIFACT_INVALID") from error
         kind = record.get("kind")
         relationship = record.get("relationship")
@@ -154,7 +176,7 @@ def _fixture_tuple(entry: dict[str, Any], *, registry: bool) -> tuple[str, str, 
     return (upstream, local, role, length, digest)
 
 
-def _verify_fixture_closure(core: dict[str, Any], root: Path) -> None:
+def _verify_fixture_closure(core: dict[str, Any], material: BundleMaterial) -> None:
     """Prove a v3 fixture bundle has exactly the frozen 11/28 raw universe."""
     closure = core.get("fixture_closure")
     if closure is None:
@@ -171,7 +193,7 @@ def _verify_fixture_closure(core: dict[str, Any], root: Path) -> None:
         registry_digest = require_sha256(closure.get("registry_sha256"))
     except ValueError as error:
         raise BundleVerificationError("FIXTURE_CLOSURE_REGISTRY_DIGEST_INVALID") from error
-    registry, registry_raw = _load_canonical(root, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+    registry, registry_raw = _load_canonical_material(material, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
     if sha256_bytes(registry_raw) != registry_digest:
         raise BundleVerificationError("FIXTURE_CLOSURE_REGISTRY_DIGEST_MISMATCH")
     if (
@@ -259,17 +281,14 @@ def _root_digest(manifest_sha256: str, artifacts: list[dict[str, object]]) -> st
     )
 
 
-def _verify_tree_closure(root: Path, artifacts: list[dict[str, object]]) -> None:
+def _verify_tree_closure(material: BundleMaterial, artifacts: list[dict[str, object]]) -> None:
     """Reject any unmanifested file or prohibited kind in a replayable bundle."""
     expected = {"content-manifest-core.json", "snapshot-manifest.json"}
     expected.update(str(item["local_bundle_path"]) for item in artifacts)
-    try:
-        actual = {
-            relative for relative in enumerate_authoritative_files(root)
-            if "__pycache__" not in relative.split("/") and not relative.endswith(".pyc")
-        }
-    except FilesystemPolicyError as error:
-        raise BundleVerificationError(str(error)) from error
+    actual = {
+        relative for relative in material
+        if "__pycache__" not in relative.split("/") and not relative.endswith(".pyc")
+    }
     missing = expected - actual
     if missing:
         raise BundleVerificationError("BUNDLE_MISSING_FILE")
@@ -277,10 +296,10 @@ def _verify_tree_closure(root: Path, artifacts: list[dict[str, object]]) -> None
         raise BundleVerificationError("BUNDLE_EXTRA_FILE")
 
 
-def verify_bundle(bundle_root: Path, expected_status: str | None = None) -> dict[str, str]:
-    """Recompute a rooted candidate or accepted generation from bundle-relative files."""
-    core, core_bytes = _load_canonical(bundle_root, "content-manifest-core.json", "CORE_INVALID")
-    final, _ = _load_canonical(bundle_root, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+def verify_bundle_material(material: BundleMaterial, expected_status: str | None = None) -> dict[str, str]:
+    """Verify one held closed-tree snapshot without reopening any authority paths."""
+    core, core_bytes = _load_canonical_material(material, "content-manifest-core.json", "CORE_INVALID")
+    final, _ = _load_canonical_material(material, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
     status = final.get("status")
     if status not in {"accepted", "candidate"}:
         raise BundleVerificationError("GENERATION_STATUS_INVALID")
@@ -340,18 +359,32 @@ def verify_bundle(bundle_root: Path, expected_status: str | None = None) -> dict
     projected_final.pop("snapshot_manifest_sha256", None)
     if supplied_self != sha256_bytes(canonical_json_bytes(projected_final)):
         raise BundleVerificationError("SNAPSHOT_MANIFEST_SELF_DIGEST_MISMATCH")
-    _verify_fixture_closure(core, bundle_root)
-    artifacts = _raw_artifacts(core, bundle_root) + _bundle_artifacts(core, bundle_root)
-    _verify_tree_closure(bundle_root, artifacts)
+    _verify_fixture_closure(core, material)
+    artifacts = _raw_artifacts(core, material) + _bundle_artifacts(core, material)
+    _verify_tree_closure(material, artifacts)
     recomputed_root = _root_digest(manifest_sha256, artifacts)
     if recomputed_root != root_sha256:
         raise BundleVerificationError("ROOT_SHA256_MISMATCH")
     return {"generation": generation, "manifest_sha256": manifest_sha256, "root_sha256": root_sha256, "status": status}
 
 
+def verify_bundle(bundle_root: Path, expected_status: str | None = None) -> dict[str, str]:
+    """Read and verify a rooted candidate or accepted generation from one closed tree."""
+    try:
+        material = read_closed_authoritative_tree(bundle_root)
+    except FilesystemPolicyError as error:
+        raise BundleVerificationError(str(error)) from error
+    return verify_bundle_material(material, expected_status)
+
+
 def verify_accepted_bundle(bundle_root: Path) -> dict[str, str]:
     """Recompute an accepted generation entirely from bundle-relative regular files."""
     return verify_bundle(bundle_root, "accepted")
+
+
+def verify_accepted_bundle_material(material: BundleMaterial) -> dict[str, str]:
+    """Verify an accepted generation from an already-held closed-tree snapshot."""
+    return verify_bundle_material(material, "accepted")
 
 
 def verify_candidate_bundle(bundle_root: Path) -> dict[str, str]:

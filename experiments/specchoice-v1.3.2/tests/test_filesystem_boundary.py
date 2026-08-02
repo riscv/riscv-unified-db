@@ -29,6 +29,7 @@ from specchoice_evidence.baseline import (
 from specchoice_evidence.filesystem import (
     FilesystemPolicyError,
     inspect_authoritative_path,
+    read_closed_authoritative_tree,
     read_authoritative_file,
     read_authoritative_files,
     reject_hardlink_dependency,
@@ -423,6 +424,36 @@ class FilesystemBoundaryTests(unittest.TestCase):
                 )
             self.assertEqual(held["raw/evaluation_fixtures/FIXTURE/first.txt"][1], b"old-first")
             self.assertEqual(held["raw/evaluation_fixtures/FIXTURE/second.txt"][1], b"old-second")
+
+        with self.subTest("closed tree resists root substitution"), tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            authority = parent / "authority"
+            replacement = parent / "replacement"
+            authority.mkdir()
+            replacement.mkdir()
+            for location, prefix in ((authority, "old"), (replacement, "new")):
+                (location / "first.txt").write_text(f"{prefix}-first", encoding="utf-8")
+                (location / "second.txt").write_text(f"{prefix}-second", encoding="utf-8")
+            original = filesystem_module._read_held_regular_file_evidence
+            swapped = False
+
+            def read_then_swap_tree(*args: object, **kwargs: object) -> tuple[os.stat_result, bytes]:
+                nonlocal swapped
+                value = original(*args, **kwargs)
+                if not swapped:
+                    swapped = True
+                    os.rename(authority, parent / "retired")
+                    os.rename(replacement, authority)
+                return value
+
+            with patch.object(filesystem_module, "_read_held_regular_file_evidence", side_effect=read_then_swap_tree):
+                try:
+                    held = read_closed_authoritative_tree(authority)
+                except FilesystemPolicyError as error:
+                    self.assertEqual(str(error), "AUTHORITATIVE_ROOT_CHANGED")
+                else:
+                    self.assertEqual(held["first.txt"][1], b"old-first")
+                    self.assertEqual(held["second.txt"][1], b"old-second")
 
     def test_descriptor_backed_read_requires_no_follow_support(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

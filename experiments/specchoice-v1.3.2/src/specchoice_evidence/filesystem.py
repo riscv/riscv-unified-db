@@ -196,6 +196,15 @@ def _read_held_regular_file(
     parent: int, leaf: str, accepted_device: int, *, require_single_link: bool = False,
 ) -> bytes:
     """Read one held regular leaf and reject identity or byte races."""
+    return _read_held_regular_file_evidence(
+        parent, leaf, accepted_device, require_single_link=require_single_link,
+    )[1]
+
+
+def _read_held_regular_file_evidence(
+    parent: int, leaf: str, accepted_device: int, *, require_single_link: bool = False,
+) -> tuple[os.stat_result, bytes]:
+    """Read one held regular leaf and retain the matching descriptor evidence."""
     descriptor: int | None = None
     try:
         before = _existing_leaf_kind(parent, leaf, accepted_device)
@@ -213,7 +222,7 @@ def _read_held_regular_file(
             chunks.append(chunk)
         if _signature(before) != _signature(os.fstat(descriptor)):
             raise FilesystemPolicyError("AUTHORITATIVE_FILE_CHANGED")
-        return b"".join(chunks)
+        return opened, b"".join(chunks)
     finally:
         if descriptor is not None:
             os.close(descriptor)
@@ -371,10 +380,9 @@ def read_authoritative_files(root: Path, relative_paths: list[str]) -> dict[str,
                     directories[prefix] = child
                 parent = child
             leaf = relative.parts[-1]
-            before = _existing_leaf_kind(parent, leaf, root_stat.st_dev)
-            content = _read_held_regular_file(parent, leaf, root_stat.st_dev)
+            details, content = _read_held_regular_file_evidence(parent, leaf, root_stat.st_dev)
             result[relative.as_posix()] = (
-                FileEvidence(relative.as_posix(), "regular_file", len(content), sha256_bytes(content), before.st_nlink),
+                FileEvidence(relative.as_posix(), "regular_file", len(content), sha256_bytes(content), details.st_nlink),
                 content,
             )
         if _signature(root_stat) != _signature(os.fstat(root_descriptor)):
@@ -451,6 +459,58 @@ def enumerate_authoritative_files(root: Path) -> set[str]:
                 raise FilesystemPolicyError("AUTHORITATIVE_DIRECTORY_CHANGED")
 
         visit(current, "")
+        return result
+    finally:
+        for held in reversed(descriptors):
+            os.close(held)
+
+
+def read_closed_authoritative_tree(root: Path) -> dict[str, tuple[FileEvidence, bytes]]:
+    """Read a complete regular-file authority tree through one held root descriptor."""
+    descriptors: list[int] = []
+    try:
+        current, root_parts = _directory_components(root)
+        descriptors.append(current)
+        for part in root_parts:
+            current = _open_directory(current, part, None)
+            descriptors.append(current)
+        authority = os.fstat(current)
+        result: dict[str, tuple[FileEvidence, bytes]] = {}
+
+        def visit(directory: int, prefix: str) -> None:
+            before = _signature(os.fstat(directory))
+            try:
+                with os.scandir(directory) as entries:
+                    names = sorted(entry.name for entry in entries)
+            except (NotImplementedError, TypeError, OSError) as error:
+                raise FilesystemPolicyError("DIRECTORY_DESCRIPTOR_UNAVAILABLE") from error
+            for name in names:
+                try:
+                    details = os.stat(name, dir_fd=directory, follow_symlinks=False)
+                except (NotImplementedError, TypeError, OSError) as error:
+                    raise FilesystemPolicyError("DIRECTORY_DESCRIPTOR_UNAVAILABLE") from error
+                relative = f"{prefix}/{name}" if prefix else name
+                if stat.S_ISLNK(details.st_mode) or not (stat.S_ISDIR(details.st_mode) or stat.S_ISREG(details.st_mode)):
+                    raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
+                if details.st_dev != authority.st_dev:
+                    raise FilesystemPolicyError("MOUNT_BOUNDARY_UNPROVEN")
+                if stat.S_ISREG(details.st_mode):
+                    opened, content = _read_held_regular_file_evidence(directory, name, authority.st_dev)
+                    result[relative] = (
+                        FileEvidence(relative, "regular_file", len(content), sha256_bytes(content), opened.st_nlink), content,
+                    )
+                    continue
+                child = _open_directory(directory, name, authority.st_dev)
+                try:
+                    visit(child, relative)
+                finally:
+                    os.close(child)
+            if prefix and before != _signature(os.fstat(directory)):
+                raise FilesystemPolicyError("AUTHORITATIVE_DIRECTORY_CHANGED")
+
+        visit(current, "")
+        if _signature(authority) != _signature(os.fstat(current)):
+            raise FilesystemPolicyError("AUTHORITATIVE_ROOT_CHANGED")
         return result
     finally:
         for held in reversed(descriptors):
