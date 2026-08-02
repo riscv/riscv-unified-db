@@ -69,10 +69,6 @@ def _packet_projection(packet: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in packet.items() if key != "packet_sha256"}
 
 
-def _decision_projection(decision: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in decision.items() if key != "decision_sha256"}
-
-
 def _batch() -> object:
     batch = build_pr2164_adapter_batch(authority_path=_AUTHORITY, bundle_root=_BUNDLE, rules_path=_RULES)
     if not batch.valid:
@@ -104,7 +100,7 @@ def _review_items(batch: object) -> list[dict[str, Any]]:
     return items
 
 
-def _expected_bindings(*, formal_attempt: Path, adversarial_report: Path) -> dict[str, Any]:
+def _expected_bindings(*, formal_attempt: Path, adversarial_report: Path, h1_schema: Path) -> dict[str, Any]:
     from .cli import validate_adversarial_report
 
     try:
@@ -135,7 +131,7 @@ def _expected_bindings(*, formal_attempt: Path, adversarial_report: Path) -> dic
     expected_source = getattr(batch, "source_identity")
     try:
         _, schema_raw = read_authoritative_file(_ROOT, _relative(_SCHEMA, "H1_BINDINGS_INVALID"))
-        _, h1_schema_raw = read_authoritative_file(_ROOT, _relative(_H1_SCHEMA, "H1_BINDINGS_INVALID"))
+        _, h1_schema_raw = read_authoritative_file(h1_schema.parent, h1_schema.name)
     except (FilesystemPolicyError, OSError) as error:
         raise H1Error("H1_BINDINGS_INVALID") from error
     schema_sha256 = sha256_bytes(schema_raw)
@@ -175,7 +171,7 @@ def _validate_packet_value(packet: object, *, expected: dict[str, Any] | None = 
         "bindings", "external_publication_authorized", "fixture_reviews", "packet_sha256", "schema_version"
     }:
         raise H1Error("H1_PACKET_INVALID")
-    if packet.get("schema_version") != "h1-source-gold-review-v1" or packet.get("external_publication_authorized") is not False:
+    if packet.get("schema_version") != "h1-source-gold-review-v2" or packet.get("external_publication_authorized") is not False:
         raise H1Error("H1_PACKET_INVALID")
     if packet.get("packet_sha256") != sha256_bytes(canonical_json_bytes(_packet_projection(packet))):
         raise H1Error("H1_PACKET_HASH_INVALID")
@@ -253,14 +249,59 @@ def _publish_packet_pair(*, output_json: Path, output_markdown: Path, json_bytes
         raise H1Error("H1_OUTPUT_EXISTS") from error
 
 
-def build_h1_packet(*, formal_attempt: Path, adversarial_report: Path, output_json: Path, output_markdown: Path) -> dict[str, Any]:
+def _read_canonical_external(path: Path, code: str) -> tuple[dict[str, Any], bytes]:
+    try:
+        _, raw = read_authoritative_file(path.parent, path.name)
+        value = json.loads(raw.decode("utf-8"))
+    except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise H1Error(code) from error
+    if not isinstance(value, dict) or canonical_json_bytes(value) != raw:
+        raise H1Error(code)
+    return value, raw
+
+
+def _validate_v2_schema(schema: Path) -> bytes:
+    value, raw = _read_canonical_external(schema, "H1_SCHEMA_INVALID")
+    required = {
+        "schema_version": "h1-review-schema-v2",
+        "packet": {
+            "additional_properties": False,
+            "external_publication_authorized": False,
+            "fixture_reviews": 11,
+            "schema_version": "h1-source-gold-review-v2",
+        },
+        "readiness": {"additional_properties": False, "external_publication_authorized": False},
+        "decision": {
+            "additional_properties": False,
+            "aggregate_disposition": ["approved", "disputed", "incomplete"],
+            "external_publication_authorized": False,
+            "fixture_reviews": 11,
+            "human_authored": True,
+            "semantic_response_ids": [
+                "ts03_adjacency",
+                "ts03_empty_null_single_element",
+                "ts03_equal_element_stable_order",
+                "ts04_unclassified_manual_review",
+                "ts05_adjacency",
+                "ts05_empty_null_single_element",
+                "ts05_equal_element_stable_order",
+            ],
+        },
+    }
+    if value != required:
+        raise H1Error("H1_SCHEMA_INVALID")
+    return raw
+
+
+def build_h1_packet(*, formal_attempt: Path, adversarial_report: Path, output_json: Path, output_markdown: Path, schema: Path) -> dict[str, Any]:
     """Build an immutable packet from validated evidence; it never creates a decision."""
-    expected = _expected_bindings(formal_attempt=formal_attempt, adversarial_report=adversarial_report)
+    _validate_v2_schema(schema)
+    expected = _expected_bindings(formal_attempt=formal_attempt, adversarial_report=adversarial_report, h1_schema=schema)
     packet: dict[str, Any] = {
         "bindings": expected,
         "external_publication_authorized": False,
         "fixture_reviews": _review_items(_batch()),
-        "schema_version": "h1-source-gold-review-v1",
+        "schema_version": "h1-source-gold-review-v2",
     }
     packet["packet_sha256"] = sha256_bytes(canonical_json_bytes(packet))
     _validate_packet_value(packet, expected=expected)
@@ -273,12 +314,14 @@ def build_h1_packet(*, formal_attempt: Path, adversarial_report: Path, output_js
     return packet
 
 
-def validate_h1_packet(*, packet: Path, markdown: Path) -> dict[str, Any]:
+def validate_h1_packet(*, packet: Path, markdown: Path, schema: Path) -> dict[str, Any]:
     """Recompute every current H1 binding and reject non-projection Markdown."""
+    _validate_v2_schema(schema)
     value, _ = _read_canonical(packet, "H1_PACKET_INVALID")
     expected = _expected_bindings(
         formal_attempt=_ROOT / "runs/measurement-attempts/formal-golden-pr2164-v1",
         adversarial_report=_ADVERSARIAL,
+        h1_schema=schema,
     )
     value = _validate_packet_value(value, expected=expected)
     if value.get("fixture_reviews") != _review_items(_batch()):
@@ -292,48 +335,166 @@ def validate_h1_packet(*, packet: Path, markdown: Path) -> dict[str, Any]:
     return value
 
 
-def validate_h1_decision(*, packet: Path, decision: Path) -> dict[str, Any]:
-    """Validate, but never create or repair, an independently authored H1 decision."""
-    packet_value = validate_h1_packet(packet=packet, markdown=packet.with_suffix(".md"))
-    value, _ = _read_canonical(decision, "H1_DECISION_INVALID")
-    if not isinstance(value, dict) or set(value) != {
-        "aggregate_disposition", "bindings", "decision_sha256", "external_publication_authorized",
-        "fixture_reviews", "schema_version"
-    } or value.get("schema_version") != "h1-source-gold-decision-v1" or value.get("external_publication_authorized") is not False:
+def _readiness_bindings(
+    *, formal_attempt: Path, adversarial_result: Path, packet: Path, markdown: Path, schema: Path,
+    source_authority: Path, canonical_revocation: Path, offline_replay: Path, phase_gate: bytes,
+    plan_summary: Path,
+) -> dict[str, str]:
+    if not plan_summary.is_absolute() or ".." in plan_summary.parts:
+        raise H1Error("H1_PLAN_SUMMARY_PATH_INVALID")
+    _validate_v2_schema(schema)
+    validate_h1_packet(packet=packet, markdown=markdown, schema=schema)
+    _, formal_raw = _read_canonical_external(formal_attempt / "attempt.json", "H1_FORMAL_ATTEMPT_INVALID")
+    _, adversarial_raw = _read_canonical_external(adversarial_result, "H1_ADVERSARIAL_REPORT_INVALID")
+    _, packet_raw = _read_canonical_external(packet, "H1_PACKET_INVALID")
+    try:
+        _, markdown_raw = read_authoritative_file(markdown.parent, markdown.name)
+        _, authority_raw = _read_canonical_external(source_authority, "H1_SOURCE_AUTHORITY_INVALID")
+        _, revocation_raw = _read_canonical_external(canonical_revocation, "H1_REVOCATION_INVALID")
+        _, replay_raw = _read_canonical_external(offline_replay, "H1_OFFLINE_REPLAY_INVALID")
+        _, summary_raw = read_authoritative_file(plan_summary.parent, plan_summary.name)
+        phase_gate_value = json.loads(phase_gate.decode("utf-8"))
+    except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise H1Error("H1_READINESS_INPUT_INVALID") from error
+    if canonical_json_bytes(phase_gate_value) != phase_gate:
+        raise H1Error("H1_PHASE_GATE_INVALID")
+    return {
+        "adversarial_result_sha256": sha256_bytes(adversarial_raw),
+        "canonical_revocation_sha256": sha256_bytes(revocation_raw),
+        "formal_attempt_sha256": sha256_bytes(formal_raw),
+        "markdown_sha256": sha256_bytes(markdown_raw),
+        "offline_replay_sha256": sha256_bytes(replay_raw),
+        "packet_sha256": sha256_bytes(packet_raw),
+        "phase_gate_sha256": sha256_bytes(phase_gate),
+        "plan_summary_sha256": sha256_bytes(summary_raw),
+        "schema_sha256": sha256_bytes(_validate_v2_schema(schema)),
+        "source_authority_sha256": sha256_bytes(authority_raw),
+    }
+
+
+def _readiness_value(bindings: dict[str, str]) -> dict[str, Any]:
+    value: dict[str, Any] = {
+        "bindings": bindings,
+        "external_publication_authorized": False,
+        "schema_version": "h1-review-readiness-v3",
+    }
+    value["readiness_sha256"] = sha256_bytes(canonical_json_bytes(value))
+    return value
+
+
+def write_h1_readiness_v3(
+    *, output: Path, formal_attempt: Path, adversarial_result: Path, packet: Path, markdown: Path, schema: Path,
+    source_authority: Path, canonical_revocation: Path, offline_replay: Path, phase_gate: bytes, plan_summary: Path,
+) -> dict[str, Any]:
+    """Create one descriptor-checked readiness receipt; never creates a human decision."""
+    if output.exists() or output.is_symlink() or not output.parent.is_dir() or output.parent.is_symlink():
+        raise H1Error("H1_READINESS_EXISTS")
+    value = _readiness_value(_readiness_bindings(
+        formal_attempt=formal_attempt, adversarial_result=adversarial_result, packet=packet, markdown=markdown,
+        schema=schema, source_authority=source_authority, canonical_revocation=canonical_revocation,
+        offline_replay=offline_replay, phase_gate=phase_gate, plan_summary=plan_summary,
+    ))
+    try:
+        _write_exact(output, canonical_json_bytes(value))
+        _sync_directory(output.parent)
+    except (FileExistsError, OSError) as error:
+        raise H1Error("H1_READINESS_EXISTS") from error
+    return value
+
+
+def validate_h1_readiness_v3(
+    *, readiness: Path, formal_attempt: Path, adversarial_result: Path, packet: Path, markdown: Path, schema: Path,
+    source_authority: Path, canonical_revocation: Path, offline_replay: Path, phase_gate: bytes, plan_summary: Path,
+) -> dict[str, Any]:
+    """Compare a pre-existing readiness receipt with fresh held inputs without rewriting it."""
+    value, _ = _read_canonical_external(readiness, "H1_READINESS_INVALID")
+    expected = _readiness_value(_readiness_bindings(
+        formal_attempt=formal_attempt, adversarial_result=adversarial_result, packet=packet, markdown=markdown,
+        schema=schema, source_authority=source_authority, canonical_revocation=canonical_revocation,
+        offline_replay=offline_replay, phase_gate=phase_gate, plan_summary=plan_summary,
+    ))
+    if value != expected:
+        raise H1Error("H1_READINESS_BINDINGS_INVALID")
+    return value
+
+
+_SEMANTIC_RESPONSE_IDS = (
+    "ts03_adjacency", "ts03_empty_null_single_element", "ts03_equal_element_stable_order",
+    "ts04_unclassified_manual_review", "ts05_adjacency", "ts05_empty_null_single_element",
+    "ts05_equal_element_stable_order",
+)
+
+
+def validate_h1_decision_v2(*, schema: Path, packet: Path, readiness: Path, decision: Path) -> dict[str, Any]:
+    """Validate a fully human-authored successor decision without authoring or inferring one."""
+    schema_raw = _validate_v2_schema(schema)
+    packet_value = validate_h1_packet(packet=packet, markdown=packet.with_suffix(".md"), schema=schema)
+    readiness_value, readiness_raw = _read_canonical_external(readiness, "H1_READINESS_INVALID")
+    if readiness_value.get("readiness_sha256") != sha256_bytes(canonical_json_bytes({
+        key: value for key, value in readiness_value.items() if key != "readiness_sha256"
+    })):
+        raise H1Error("H1_READINESS_INVALID")
+    value, _ = _read_canonical_external(decision, "H1_DECISION_INVALID")
+    required = {
+        "aggregate_disposition", "bindings", "decision_sha256", "external_publication_authorized", "fixture_reviews",
+        "rationale", "reviewer", "schema_version", "semantic_responses", "timestamp",
+    }
+    if set(value) != required or value.get("schema_version") != "h1-source-gold-decision-v2" or value.get("external_publication_authorized") is not False:
         raise H1Error("H1_DECISION_INVALID")
-    disposition = value.get("aggregate_disposition")
-    if disposition not in {"approved", "disputed", "incomplete"}:
-        raise H1Error("H1_DECISION_INVALID")
-    if value.get("decision_sha256") != sha256_bytes(canonical_json_bytes(_decision_projection(value))):
+    if value.get("decision_sha256") != sha256_bytes(canonical_json_bytes({key: item for key, item in value.items() if key != "decision_sha256"})):
         raise H1Error("H1_DECISION_HASH_INVALID")
-    if value.get("bindings") != {"packet_sha256": packet_value["packet_sha256"], "packet_bindings": packet_value["bindings"]}:
+    if not all(isinstance(value.get(key), str) and value[key] for key in ("reviewer", "timestamp", "rationale")):
+        raise H1Error("H1_DECISION_INVALID")
+    expected_bindings = {
+        "packet_sha256": packet_value["packet_sha256"],
+        "phase_gate_sha256": readiness_value.get("bindings", {}).get("phase_gate_sha256"),
+        "readiness_sha256": readiness_value.get("readiness_sha256"),
+        "schema_sha256": sha256_bytes(schema_raw),
+    }
+    if value.get("bindings") != expected_bindings:
         raise H1Error("H1_DECISION_BINDINGS_INVALID")
     reviews = value.get("fixture_reviews")
-    expected_reviews = packet_value["fixture_reviews"]
-    if not isinstance(reviews, list) or len(reviews) != 11:
+    packet_reviews = packet_value.get("fixture_reviews")
+    if not isinstance(reviews, list) or not isinstance(packet_reviews, list) or len(reviews) != 11:
         raise H1Error("H1_DECISION_REVIEW_SET_INVALID")
-    disputed = False
-    for expected_review, review in zip(expected_reviews, reviews, strict=True):
-        if not isinstance(review, dict):
+    expected_by_id = {review["fixture_id"]: review for review in packet_reviews if isinstance(review, dict)}
+    if len(expected_by_id) != 11 or {review.get("fixture_id") for review in reviews if isinstance(review, dict)} != set(expected_by_id):
+        raise H1Error("H1_DECISION_REVIEW_SET_INVALID")
+    dispositions: list[str] = []
+    for review in reviews:
+        if not isinstance(review, dict) or set(review) != {"disposition", "fixture_id", "reviewed_semantics_sha256", "reviewer", "signature"}:
             raise H1Error("H1_DECISION_REVIEW_INVALID")
-        expected_semantics = {key: item for key, item in expected_review.items() if key != "signature_slot"}
-        full_fields = {"disposition", "fixture_id", "reviewed_semantics", "reviewer", "signature"}
-        hashed_fields = {"disposition", "fixture_id", "reviewed_semantics_sha256", "reviewer", "signature"}
-        if set(review) == full_fields:
-            semantics_valid = review.get("reviewed_semantics") == expected_semantics
-        elif set(review) == hashed_fields:
-            semantics_valid = review.get("reviewed_semantics_sha256") == sha256_bytes(canonical_json_bytes(expected_semantics))
-        else:
-            semantics_valid = False
-        if review.get("fixture_id") != expected_review["fixture_id"] or not semantics_valid or not isinstance(review.get("reviewer"), str) or not review["reviewer"] or not isinstance(review.get("signature"), str) or not review["signature"]:
+        expected_review = expected_by_id.get(review.get("fixture_id"))
+        if expected_review is None or review.get("reviewed_semantics_sha256") != sha256_bytes(canonical_json_bytes({
+            key: item for key, item in expected_review.items() if key != "signature_slot"
+        })) or not isinstance(review.get("reviewer"), str) or not review["reviewer"]:
             raise H1Error("H1_DECISION_REVIEW_INVALID")
-        if review.get("disposition") not in {"approved", "disputed", "incomplete"}:
+        disposition = review.get("disposition")
+        signature = review.get("signature")
+        if disposition not in {"approved", "disputed", "incomplete"} or (disposition == "incomplete" and signature is not None) or (disposition != "incomplete" and (not isinstance(signature, str) or not signature)):
             raise H1Error("H1_DECISION_REVIEW_INVALID")
-        disputed = disputed or review["disposition"] == "disputed"
-    if disputed and disposition != "disputed":
+        dispositions.append(disposition)
+    responses = value.get("semantic_responses")
+    if not isinstance(responses, dict) or set(responses) != set(_SEMANTIC_RESPONSE_IDS):
+        raise H1Error("H1_SEMANTIC_RESPONSES_INVALID")
+    for identifier in _SEMANTIC_RESPONSE_IDS:
+        response = responses[identifier]
+        if not isinstance(response, dict) or set(response) != {"disposition", "response"}:
+            raise H1Error("H1_SEMANTIC_RESPONSES_INVALID")
+        disposition = response.get("disposition")
+        answer = response.get("response")
+        if disposition not in {"approved", "disputed", "incomplete"} or (disposition == "incomplete" and answer is not None) or (disposition != "incomplete" and (not isinstance(answer, str) or not answer)):
+            raise H1Error("H1_SEMANTIC_RESPONSES_INVALID")
+        dispositions.append(disposition)
+    aggregate = value.get("aggregate_disposition")
+    expected_aggregate = "incomplete" if "incomplete" in dispositions else "disputed" if "disputed" in dispositions else "approved"
+    if aggregate != expected_aggregate:
         raise H1Error("H1_DISPUTE_AGGREGATION_INVALID")
-    if disposition == "approved" and any(review["disposition"] != "approved" for review in reviews):
-        raise H1Error("H1_APPROVAL_REQUIRES_ALL_ITEMS")
-    if disposition == "approved":
-        raise H1Error("H1_MANUAL_AUTHORIZATION_REQUIRED")
-    return value
+    return {
+        "aggregate_disposition": aggregate,
+        "decision_sha256": value["decision_sha256"],
+        "external_publication_authorized": False,
+        "fixture_count": 11,
+        "semantic_response_ids": sorted(_SEMANTIC_RESPONSE_IDS),
+        "valid": True,
+    }

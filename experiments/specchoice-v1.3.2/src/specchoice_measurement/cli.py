@@ -18,7 +18,14 @@ from specchoice_evidence.filesystem import FilesystemPolicyError, read_authorita
 
 from .adapter import AdapterError, build_pr2164_adapter_batch
 from .attempts import AttemptError, load_measurement_attempt_manifest, run_measurement_attempt, validate_measurement_attempt
-from .h1 import H1Error, build_h1_packet, validate_h1_decision, validate_h1_packet
+from .h1 import (
+    H1Error,
+    build_h1_packet,
+    validate_h1_decision_v2,
+    validate_h1_packet,
+    validate_h1_readiness_v3,
+    write_h1_readiness_v3,
+)
 from .preflight import _source_bytes_by_fixture, preflight_prediction_batch
 from .scoring import score_prediction_batch
 
@@ -62,6 +69,8 @@ def command_adapt_pr2164(args: argparse.Namespace) -> int:
         authority_path=args.authority,
         bundle_root=args.bundle,
         rules_path=args.rules,
+        pending_authority_path=args.pending_authority,
+        transition_path=args.transition,
     )
     if not batch.valid:
         raise AdapterError("ADAPTER_BATCH_NOT_SCORE_ELIGIBLE")
@@ -404,18 +413,41 @@ def command_build_h1_packet(args: argparse.Namespace) -> int:
         adversarial_report=args.adversarial_report,
         output_json=args.output,
         output_markdown=args.markdown,
+        schema=args.schema,
     )
     sys.stdout.buffer.write(canonical_json_bytes({"packet_sha256": packet["packet_sha256"], "status": "written"}))
     return 0
 
 
 def command_validate_h1_packet(args: argparse.Namespace) -> int:
-    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_packet(packet=args.packet, markdown=args.markdown)))
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_packet(packet=args.packet, markdown=args.markdown, schema=args.schema)))
     return 0
 
 
-def command_validate_h1_decision(args: argparse.Namespace) -> int:
-    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_decision(packet=args.packet, decision=args.decision)))
+def command_write_h1_readiness_v3(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(write_h1_readiness_v3(
+        output=args.output, formal_attempt=args.formal_attempt, adversarial_result=args.adversarial_result,
+        packet=args.packet, markdown=args.markdown, schema=args.schema, source_authority=args.source_authority,
+        canonical_revocation=args.canonical_revocation, offline_replay=args.offline_replay,
+        phase_gate=sys.stdin.buffer.read(), plan_summary=args.plan_summary,
+    )))
+    return 0
+
+
+def command_validate_h1_readiness_v3(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_readiness_v3(
+        readiness=args.readiness, formal_attempt=args.formal_attempt, adversarial_result=args.adversarial_result,
+        packet=args.packet, markdown=args.markdown, schema=args.schema, source_authority=args.source_authority,
+        canonical_revocation=args.canonical_revocation, offline_replay=args.offline_replay,
+        phase_gate=sys.stdin.buffer.read(), plan_summary=args.plan_summary,
+    )))
+    return 0
+
+
+def command_validate_h1_decision_v2(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_decision_v2(
+        schema=args.schema, packet=args.packet, readiness=args.readiness, decision=args.decision,
+    )))
     return 0
 
 
@@ -426,6 +458,8 @@ def build_parser() -> argparse.ArgumentParser:
     adapter.add_argument("--authority", type=Path, required=True)
     adapter.add_argument("--bundle", type=Path, required=True)
     adapter.add_argument("--rules", type=Path, required=True)
+    adapter.add_argument("--pending-authority", type=Path)
+    adapter.add_argument("--transition", type=Path)
     adapter.add_argument("--output", type=Path, required=True)
     adapter.set_defaults(handler=command_adapt_pr2164)
     formal = commands.add_parser("run-formal-measurement")
@@ -469,17 +503,37 @@ def build_parser() -> argparse.ArgumentParser:
     h1_build = commands.add_parser("build-h1-packet")
     h1_build.add_argument("--formal-attempt", type=Path, required=True)
     h1_build.add_argument("--adversarial-report", type=Path, required=True)
+    h1_build.add_argument("--schema", type=Path, required=True)
     h1_build.add_argument("--output", type=Path, required=True)
     h1_build.add_argument("--markdown", type=Path, required=True)
     h1_build.set_defaults(handler=command_build_h1_packet)
     h1_packet = commands.add_parser("validate-h1-packet")
     h1_packet.add_argument("--packet", type=Path, required=True)
     h1_packet.add_argument("--markdown", type=Path, required=True)
+    h1_packet.add_argument("--schema", type=Path, required=True)
     h1_packet.set_defaults(handler=command_validate_h1_packet)
-    h1_decision = commands.add_parser("validate-h1-decision")
+    readiness_writer = commands.add_parser("write-h1-readiness-v3")
+    readiness_validator = commands.add_parser("validate-h1-readiness-v3")
+    for command in (readiness_writer, readiness_validator):
+        command.add_argument("--formal-attempt", type=Path, required=True)
+        command.add_argument("--adversarial-result", type=Path, required=True)
+        command.add_argument("--packet", type=Path, required=True)
+        command.add_argument("--markdown", type=Path, required=True)
+        command.add_argument("--schema", type=Path, required=True)
+        command.add_argument("--source-authority", type=Path, required=True)
+        command.add_argument("--canonical-revocation", type=Path, required=True)
+        command.add_argument("--offline-replay", type=Path, required=True)
+        command.add_argument("--plan-summary", type=Path, required=True)
+    readiness_writer.add_argument("--output", type=Path, required=True)
+    readiness_writer.set_defaults(handler=command_write_h1_readiness_v3)
+    readiness_validator.add_argument("--readiness", type=Path, required=True)
+    readiness_validator.set_defaults(handler=command_validate_h1_readiness_v3)
+    h1_decision = commands.add_parser("validate-h1-decision-v2")
+    h1_decision.add_argument("--schema", type=Path, required=True)
     h1_decision.add_argument("--packet", type=Path, required=True)
+    h1_decision.add_argument("--readiness", type=Path, required=True)
     h1_decision.add_argument("--decision", type=Path, required=True)
-    h1_decision.set_defaults(handler=command_validate_h1_decision)
+    h1_decision.set_defaults(handler=command_validate_h1_decision_v2)
     return parser
 
 

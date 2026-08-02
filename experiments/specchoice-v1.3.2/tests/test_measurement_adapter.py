@@ -88,8 +88,10 @@ class MeasurementAdapterTests(unittest.TestCase):
             command = [
                 sys.executable, "-m", "specchoice_measurement.cli", "adapt-pr2164",
                 "--authority", self.authority.as_posix(),
-                "--bundle", self.bundle.as_posix(),
+                "--bundle", self.pending_bundle.as_posix(),
                 "--rules", self.rules.as_posix(),
+                "--pending-authority", self.pending_authority.as_posix(),
+                "--transition", self.transition.as_posix(),
             ]
             subprocess.run(
                 [*command, "--output", first.as_posix()],
@@ -106,7 +108,7 @@ class MeasurementAdapterTests(unittest.TestCase):
 
             self.assertEqual(first.read_bytes(), second.read_bytes())
             emitted = json.loads(first.read_text(encoding="utf-8"))
-            self.assertEqual(emitted["adapter_batch_sha256"], self.build().adapter_batch_sha256)
+            self.assertEqual(emitted["adapter_batch_sha256"], self.build_pending().adapter_batch_sha256)
 
     def test_incomplete_duplicate_reordered_and_mixed_batches_have_all_blockers_and_no_records(self) -> None:
         valid = self.build()

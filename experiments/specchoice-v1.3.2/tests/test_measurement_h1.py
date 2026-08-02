@@ -214,6 +214,14 @@ class H1PacketTests(unittest.TestCase):
             for path in (packet_path, markdown_path, readiness_path, decision_path, self.schema, self.formal / "attempt.json", self.adversarial):
                 self.assertTrue(path.is_file(), path)
 
+    def test_public_h1_reuses_validated_attempt_and_adversarial_objects_without_reopen(self) -> None:
+        with tempfile.TemporaryDirectory(dir=self.root) as directory:
+            packet_path, markdown_path, packet = self._build(Path(directory))
+            self.assertEqual(
+                h1.validate_h1_packet(packet=packet_path, markdown=markdown_path, schema=self.schema)["bindings"],
+                packet["bindings"],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
