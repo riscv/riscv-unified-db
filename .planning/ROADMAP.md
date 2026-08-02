@@ -93,7 +93,7 @@ Plans:
   3. The reviewer can trace every failed or warning outcome to a stable diagnostic code and structured fields; a missing accepted name remains an identity warning and never rewrites disposition.
   4. The human reviewer can approve or dispute the frozen gold interpretation from the adapter audit without any model output being used to compensate for disputed semantics.
 
-**Plans:** 9/17 plans executed
+**Plans:** 10/17 plans executed
 
 Plans:
 
@@ -106,7 +106,7 @@ Plans:
 - [x] 02-07-PLAN.md
 - [x] 02-08-PLAN.md
 - [x] 02-09-PLAN.md
-- [ ] 02-10-PLAN.md
+- [x] 02-10-PLAN.md
 - [ ] 02-11-PLAN.md
 - [ ] 02-12-PLAN.md
 - [ ] 02-13-PLAN.md
@@ -149,7 +149,7 @@ Plans:
 
 **Wave 9** *(blocked on Wave 8 completion)*
 
-- [ ] 02-09: Build descriptor-rooted source-custody primitives with stable reads, exact tree snapshots, and parent-held publication.
+- [x] 02-09: Build descriptor-rooted source-custody primitives with stable reads, exact tree snapshots, and parent-held publication.
 
 **Wave 10** *(blocked on Wave 9 completion)*
 
@@ -339,7 +339,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Isolated Evidence Boundary and Source Integrity | 7/7 | Complete    | 2026-07-31 |
-| 2. Deterministic Measurement Spine | 9/17 | In Progress|  |
+| 2. Deterministic Measurement Spine | 10/17 | In Progress|  |
 | 3. Human-Reviewed Data Preregistration | 0/4 | Not started | - |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |
 | 5. Authorized Execution and Immutable Evidence | 0/3 | Not started | - |

@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
 status: executing
-stopped_at: Completed 02-09-PLAN.md
-last_updated: "2026-08-02T07:31:47.102Z"
+stopped_at: Completed 02-10-PLAN.md
+last_updated: "2026-08-02T08:16:58.053Z"
 last_activity: 2026-08-02
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 24
-  completed_plans: 16
+  completed_plans: 17
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 02 (deterministic-measurement-spine) — EXECUTING
-Plan: 2 of 17
+Plan: 3 of 17
 Status: Ready to execute
 Last activity: 2026-08-02 — Phase 02 execution started
 
-Progress: [███████░░░] 67%
+Progress: [███████░░░] 71%
 
 ## Performance Metrics
 
@@ -73,6 +73,7 @@ Progress: [███████░░░] 67%
 | Phase 02 P07 | 6m | 2 tasks | 6 files |
 | Phase 02 P08 | 45m | 2 tasks | 6 files |
 | Phase 02 P09 | 32m | 2 tasks | 8 files |
+| Phase 02 P10 | 8m | 3 tasks | 45 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Phase 02-08 preserves H1 as human-authored, local-only, and external_publication_authorized=false.
 - [Phase ?]: Candidate controls and Phase 2 source-authority receipt reuse descriptor-bound canonical bytes instead of reopening pathname leaves.
 - [Phase ?]: The Phase 1 expected-red baseline is a non-discovered gate with a fixed 66/141/136 partition.
+- [Phase ?]: 02-10 binds only the explicit user authorization to the exact verifier-rooted-v3 proposal and fixed source; candidate construction is not acceptance.
+- [Phase ?]: Verifier-rooted-v3 remains candidate-only and replay-verified in copied isolation; active v2 authority and external publication remain unchanged.
 
 ### Pending Todos
 
@@ -131,6 +134,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-02T07:31:47.091Z
-Stopped at: Completed 02-09-PLAN.md
+Last session: 2026-08-02T08:16:58.043Z
+Stopped at: Completed 02-10-PLAN.md
 Resume file: None
