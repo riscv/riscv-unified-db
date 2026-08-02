@@ -54,6 +54,7 @@ from .source_contract import (
     SourceContractProposalError,
     validate_fixture_construction_decision,
     validate_fixture_construction_proposal,
+    validate_fixture_construction_proposal_v4,
     validate_local_acceptance_decision_v10,
     validate_local_acceptance_request_v10,
     validate_source_contract_proposal,
@@ -530,6 +531,53 @@ def command_validate_fixture_construction_decision_v3(args: argparse.Namespace) 
             "generation": proposal["generation"],
             "proposal_sha256": sha256_bytes(proposal_raw),
             "status": "decision_valid",
+        }
+    )
+    return 0
+
+
+def command_validate_fixture_construction_proposal_v4(args: argparse.Namespace) -> int:
+    """Validate one decision-free semantic-gold construction proposal."""
+    from specchoice_measurement.h1 import validate_h1_ontology_decision_v1
+
+    proposal_raw = args.proposal.read_bytes()
+    proposal = _load_canonical_fixture_construction_payload(
+        args.proposal, "FIXTURE_CONSTRUCTION_V4_PROPOSAL_NOT_CANONICAL"
+    )
+    repair_manifest = _load_canonical_fixture_construction_payload(
+        args.repair_manifest, "FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_NOT_CANONICAL"
+    )
+    registry = _load_canonical_fixture_construction_payload(
+        args.registry, "FIXTURE_CONSTRUCTION_V4_REGISTRY_NOT_CANONICAL"
+    )
+    ontology = validate_h1_ontology_decision_v1(
+        options=_experiment_root() / "config/measurement/h1-ontology-policy-options-v1.json",
+        supersession=_experiment_root() / "receipts/h1-review-route-supersession-v1.json",
+        decision=args.ontology_decision,
+    )
+    predecessor_manifest_raw = (args.predecessor / "snapshot-manifest.json").read_bytes()
+    predecessor_manifest = _load_canonical_fixture_construction_payload(
+        args.predecessor / "snapshot-manifest.json", "FIXTURE_CONSTRUCTION_V4_PREDECESSOR_INVALID"
+    )
+    predecessor_registry_raw = (args.predecessor / "fixture-registry-pr2164-v1.json").read_bytes()
+    validated = validate_fixture_construction_proposal_v4(
+        proposal=proposal,
+        repair_manifest=repair_manifest,
+        registry=registry,
+        ontology_decision_sha256=sha256_bytes(args.ontology_decision.read_bytes()),
+        predecessor_manifest_sha256=str(predecessor_manifest["snapshot_manifest_sha256"]),
+        predecessor_manifest=predecessor_manifest,
+        predecessor_registry_sha256=sha256_bytes(predecessor_registry_raw),
+        authority_sha256=sha256_bytes(args.active_authority.read_bytes()),
+        revocation_sha256=sha256_bytes(args.revocation.read_bytes()),
+        repair_root=_experiment_root(),
+    )
+    _print_json(
+        {
+            "ontology_decision_sha256": sha256_bytes(args.ontology_decision.read_bytes()),
+            "proposal_sha256": sha256_bytes(proposal_raw),
+            "status": validated["status"],
+            "valid": True,
         }
     )
     return 0
@@ -1378,6 +1426,15 @@ def build_parser() -> argparse.ArgumentParser:
     fixture_construction_decision.add_argument("--proposal", type=Path, required=True)
     fixture_construction_decision.add_argument("--decision", type=Path, required=True)
     fixture_construction_decision.set_defaults(handler=command_validate_fixture_construction_decision_v3)
+    fixture_construction_proposal_v4 = commands.add_parser("validate-fixture-construction-proposal-v4")
+    fixture_construction_proposal_v4.add_argument("--proposal", type=Path, required=True)
+    fixture_construction_proposal_v4.add_argument("--predecessor", type=Path, required=True)
+    fixture_construction_proposal_v4.add_argument("--active-authority", type=Path, required=True)
+    fixture_construction_proposal_v4.add_argument("--revocation", type=Path, required=True)
+    fixture_construction_proposal_v4.add_argument("--ontology-decision", type=Path, required=True)
+    fixture_construction_proposal_v4.add_argument("--repair-manifest", type=Path, required=True)
+    fixture_construction_proposal_v4.add_argument("--registry", type=Path, required=True)
+    fixture_construction_proposal_v4.set_defaults(handler=command_validate_fixture_construction_proposal_v4)
     candidate = commands.add_parser("build-candidate")
     candidate.add_argument("--decision", type=Path, default=Path("receipts/source-publication-decision.json"))
     candidate.add_argument("--proposal", type=Path, default=Path("receipts/source-contract-correction-proposal-v2.json"))

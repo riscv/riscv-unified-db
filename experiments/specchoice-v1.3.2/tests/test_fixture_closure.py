@@ -732,11 +732,12 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             proposal_v4 = experiment / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v1.json"
             repair_manifest = experiment / "config/fixture-repairs/pr2164-semantic-gold-v1/repair-manifest.json"
             registry_v2 = experiment / "config/fixture-registry-pr2164-v2.json"
+            predecessor_v3 = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
             result = subprocess.run(
                 [
                     sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-proposal-v4",
                     "--proposal", str(proposal_v4),
-                    "--predecessor", str(accepted),
+                    "--predecessor", str(predecessor_v3),
                     "--active-authority", str(experiment / "phase2/source-authority.json"),
                     "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"),
                     "--ontology-decision", str(experiment / "reviews/h1-source-gold-ontology-decision-v1.json"),
