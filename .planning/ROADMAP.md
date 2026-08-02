@@ -47,6 +47,8 @@ Plans:
 - [x] 01-03-PLAN.md
 - [x] 01-04-PLAN.md
 - [x] 01-05-PLAN.md
+- [x] 01-06-PLAN.md
+- [x] 01-07-PLAN.md
 
 **Wave 1**
 
@@ -68,6 +70,14 @@ Plans:
 
 - [x] 01-05: Preserve the v2 incident, create the D-15 gap-restart lineage, and make committed post-baseline changes fail closed.
 
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [x] 01-06: Freeze the exact 11-fixture/28-raw-file registry and construct a verifier-rooted but ineligible candidate.
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [x] 01-07: Complete the separately authorized local-only acceptance transition and bind the exact Phase 2 source authority.
+
 ### Phase 2: Deterministic Measurement Spine
 
 **Goal:** As a human RISC-V reviewer, I want to trust the experiment's adjudication semantics and diagnostics, so that I can review the measurement spine before any frame, retrieval, or model result is considered.
@@ -83,21 +93,27 @@ Plans:
   3. The reviewer can trace every failed or warning outcome to a stable diagnostic code and structured fields; a missing accepted name remains an identity warning and never rewrites disposition.
   4. The human reviewer can approve or dispute the frozen gold interpretation from the adapter audit without any model output being used to compensate for disputed semantics.
 
-**Plans:** 8/8 plans executed
+**Plans:** 8/17 plans executed
 
 Plans:
-
-- [x] 02-08-PLAN.md
-
-- [x] 02-07-PLAN.md
-
-- [x] 02-06-PLAN.md
 
 - [x] 02-01-PLAN.md
 - [x] 02-02-PLAN.md
 - [x] 02-03-PLAN.md
 - [x] 02-04-PLAN.md
 - [x] 02-05-PLAN.md
+- [x] 02-06-PLAN.md
+- [x] 02-07-PLAN.md
+- [x] 02-08-PLAN.md
+- [ ] 02-09-PLAN.md
+- [ ] 02-10-PLAN.md
+- [ ] 02-11-PLAN.md
+- [ ] 02-12-PLAN.md
+- [ ] 02-13-PLAN.md
+- [ ] 02-14-PLAN.md
+- [ ] 02-15-PLAN.md
+- [ ] 02-16-PLAN.md
+- [ ] 02-17-PLAN.md
 
 **Wave 1**
 
@@ -118,6 +134,54 @@ Plans:
 **Wave 5** *(blocked on Wave 4 completion)*
 
 - [x] 02-05: Produce the hash-bound H1 source/gold review packet and validate the human decision gate.
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [x] 02-06: Record the narrow custody-hardening governance override and restore the Phase 2 MVP goal contract.
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [x] 02-07: Bind adversarial lineage to a validated formal attempt and retain adapter conflict provenance.
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
+- [x] 02-08: Route adapter, preflight, and H1 leaves through descriptor-bound reads and preserve the exact phase-aware regression partition.
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
+- [ ] 02-09: Build descriptor-rooted source-custody primitives with stable reads, exact tree snapshots, and parent-held publication.
+
+**Wave 10** *(blocked on Wave 9 completion)*
+
+- [ ] 02-10: Create a byte-bound v3 construction proposal, require human construction authorization, and publish only an ineligible candidate.
+
+**Wave 11** *(blocked on Wave 10 completion)*
+
+- [ ] 02-11: Require separate human local acceptance, materialize accepted v3 from held bytes, and create a non-effective pending transition.
+
+**Wave 12** *(blocked on Wave 11 completion)*
+
+- [ ] 02-12: Generate accepted-v3 receipts and prove copied offline replay without repository or network authority.
+
+**Wave 13** *(blocked on Wave 12 completion)*
+
+- [ ] 02-13: Rehearse adapter and preflight against pending v3 while the active authority remains unchanged.
+
+**Wave 14** *(blocked on Wave 13 completion)*
+
+- [ ] 02-14: Rehearse the formal and adversarial held-read graph against pending v3 with independently validated lineage.
+
+**Wave 15** *(blocked on Wave 14 completion)*
+
+- [ ] 02-15: Freeze the versioned H1 schema, explicit-schema packet bindings, readiness oracle, and seven-response decision contract.
+
+**Wave 16** *(blocked on Wave 15 completion)*
+
+- [ ] 02-16: Perform the forward-only authority cutover, then generate all post-active measurement and H1 evidence.
+
+**Wave 17** *(blocked on Wave 16 completion)*
+
+- [ ] 02-17: Validate fresh readiness, collect the human H1 disposition, and require four same-commit clean final reports.
 
 ### Phase 3: Human-Reviewed Data Preregistration
 
@@ -275,7 +339,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Isolated Evidence Boundary and Source Integrity | 7/7 | Complete    | 2026-07-31 |
-| 2. Deterministic Measurement Spine | 8/8 | In Progress|  |
+| 2. Deterministic Measurement Spine | 8/17 | In Progress|  |
 | 3. Human-Reviewed Data Preregistration | 0/4 | Not started | - |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |
 | 5. Authorized Execution and Immutable Evidence | 0/3 | Not started | - |
