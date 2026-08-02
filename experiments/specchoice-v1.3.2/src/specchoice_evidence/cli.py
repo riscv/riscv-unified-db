@@ -562,7 +562,7 @@ def _validated_v4_inputs(args: argparse.Namespace) -> dict[str, object]:
         _experiment_root() / "config/fixture-registry-pr2164-v3.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
-    _, previous_supersession_raw = _load_authoritative_canonical_v4(
+    previous_supersession, previous_supersession_raw = _load_authoritative_canonical_v4(
         _experiment_root() / "receipts/source-contract-construction-proposal-v4-supersession-v1.json",
         "FIXTURE_CONSTRUCTION_V4_SUPERSESSION_INVALID",
     )
@@ -580,10 +580,11 @@ def _validated_v4_inputs(args: argparse.Namespace) -> dict[str, object]:
     revocation, revocation_raw = _load_authoritative_canonical_v4(
         args.revocation, "FIXTURE_CONSTRUCTION_V4_REVOCATION_INVALID"
     )
+    predecessor = _v4_predecessor_material(args.predecessor)
     _validate_pending_source_cutover_v10(
         authority, authority_raw, revocation, revocation_raw, historical, historical_raw, args.predecessor,
+        accepted_material=predecessor,
     )
-    predecessor = _v4_predecessor_material(args.predecessor)
     repair_payloads = _v4_repair_payloads(repair_manifest)
     validated = validate_fixture_construction_proposal_v4(
         proposal=proposal,
@@ -603,6 +604,7 @@ def _validated_v4_inputs(args: argparse.Namespace) -> dict[str, object]:
         legacy_proposal_sha256=sha256_bytes(legacy_proposal_raw),
         legacy_manifest_sha256=sha256_bytes(legacy_manifest_raw),
         legacy_registry_sha256=sha256_bytes(legacy_registry_raw),
+        previous_supersession=previous_supersession,
         previous_supersession_sha256=sha256_bytes(previous_supersession_raw),
         repository_root=_experiment_root().parents[1],
     )
@@ -739,7 +741,9 @@ def _v4_predecessor_material(predecessor: Path) -> dict[str, object]:
         "classes": classes,
         "files": files,
         "identity": identity,
+        "manifest": manifest,
         "manifest_sha256": manifest["snapshot_manifest_sha256"],
+        "registry_raw": registry_raw,
         "registry_sha256": sha256_bytes(registry_raw),
     }
 
@@ -1122,11 +1126,19 @@ def command_validate_pending_source_cutover_v10(args: argparse.Namespace) -> int
 def _validate_pending_source_cutover_v10(
     pending: dict[str, object], pending_raw: bytes, transition: dict[str, object], transition_raw: bytes,
     active: dict[str, object], active_raw: bytes, accepted_bundle: Path,
+    *, accepted_material: dict[str, object] | None = None,
 ) -> None:
     """Validate held pending transition bytes against one held active-v2 authority."""
-    verified = verify_accepted_bundle(accepted_bundle)
-    manifest, _ = _load_canonical(accepted_bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
-    _, registry_raw = _load_canonical(accepted_bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+    if accepted_material is None:
+        verified = verify_accepted_bundle(accepted_bundle)
+        manifest, _ = _load_canonical(accepted_bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
+        _, registry_raw = _load_canonical(accepted_bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
+    else:
+        verified = accepted_material["identity"]
+        manifest = accepted_material["manifest"]
+        registry_raw = accepted_material["registry_raw"]
+        if not isinstance(verified, dict) or not isinstance(manifest, dict) or not isinstance(registry_raw, bytes):
+            raise ReceiptError("SOURCE_CUTOVER_TRANSITION_INVALID")
     _validate_v10_authority(pending, pending_raw, verified, manifest, sha256_bytes(registry_raw), transition_raw)
     if set(transition) != {
         "accepted_identity", "decision_sha256", "new_authority_projection_sha256",

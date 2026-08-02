@@ -27,6 +27,8 @@ from specchoice_evidence.cli import _v4_predecessor_material
 from specchoice_evidence.verify import _bundle_artifacts, _raw_artifacts, _root_digest, verify_accepted_bundle
 from specchoice_evidence.source_contract import (
     _v4_inventory,
+    _require_v4_git_commit,
+    _validate_v4_previous_supersession,
     FixtureRegistryError,
     SourceContractProposalError,
     require_fixture_closure_local_acceptance_authorization,
@@ -785,16 +787,16 @@ class FixtureClosureCandidateTests(unittest.TestCase):
             self.assertEqual(supersession_payload["legacy"]["registry"]["sha256"], sha256_bytes(legacy_registry.read_bytes()))
             self.assertNotEqual(legacy_manifest.read_bytes(), repair_manifest.read_bytes())
 
-            def run_v4(*, proposal_path: Path = proposal_v4, manifest_path: Path = repair_manifest, registry_path: Path = registry_v2, supersession_path: Path = supersession, decision_path: Path = experiment / "reviews/h1-source-gold-ontology-decision-v1.json") -> subprocess.CompletedProcess[str]:
+            def run_v4(*, proposal_path: Path | None = None, manifest_path: Path = repair_manifest, registry_path: Path = registry_v2, supersession_path: Path | None = None, decision_path: Path = experiment / "reviews/h1-source-gold-ontology-decision-v1.json") -> subprocess.CompletedProcess[str]:
                 return subprocess.run(
                     [
                         sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-proposal-v4",
-                        "--proposal", str(proposal_path), "--predecessor", str(predecessor_v3),
+                        "--proposal", str(proposal_path or proposal_v3), "--predecessor", str(predecessor_v3),
                         "--active-authority", str(experiment / "phase2/source-authority.json"),
                         "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"),
                         "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"),
                         "--ontology-decision", str(decision_path), "--repair-manifest", str(manifest_path),
-                        "--registry", str(registry_path), "--supersession", str(supersession_path),
+                        "--registry", str(registry_path), "--supersession", str(supersession_path or rebind_supersession(proposal_path or proposal_v3, manifest_path, registry_path)),
                     ], cwd=experiment, check=False, capture_output=True, text=True,
                 )
 
@@ -809,6 +811,91 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     path = temporary / name
                     path.write_bytes(canonical_json_bytes(value))
                     return path
+
+                fixed_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=experiment, check=True, capture_output=True, text=True).stdout.strip()
+                code_paths = (
+                    "experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py",
+                    "experiments/specchoice-v1.3.2/src/specchoice_evidence/filesystem.py",
+                    "experiments/specchoice-v1.3.2/src/specchoice_evidence/source_contract.py",
+                    "experiments/specchoice-v1.3.2/src/specchoice_measurement/h1.py",
+                )
+                code_artifacts = []
+                for path in code_paths:
+                    raw = subprocess.run(["git", "show", f"{fixed_commit}:{path}"], cwd=experiment, check=True, capture_output=True).stdout
+                    code_artifacts.append({"byte_length": len(raw), "path": path, "sha256": sha256_bytes(raw)})
+                original_manifest = json.loads(repair_manifest.read_text(encoding="utf-8"))
+                original_registry = json.loads(registry_v2.read_text(encoding="utf-8"))
+                original_proposal = json.loads(proposal_v4.read_text(encoding="utf-8"))
+                original_supersession = json.loads(supersession.read_text(encoding="utf-8"))
+                original_proposal["fixed_code_artifacts"] = code_artifacts
+                original_proposal["fixed_code_commit"] = fixed_commit
+                original_proposal["generation"] = "source-contract-v4-pr2164-semantic-gold-closure-verifier-rooted-v3"
+                proposal_v3 = write_payload("proposal-v3.json", original_proposal)
+                supersession_v2_payload = {
+                    "construction_authorized": False,
+                    "legacy": {
+                        "proposal": {"path": "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v2.json", "sha256": sha256_bytes(proposal_v4.read_bytes())},
+                        "repair_manifest": {"path": "config/fixture-repairs/pr2164-semantic-gold-v2/repair-manifest.json", "sha256": sha256_bytes(repair_manifest.read_bytes())},
+                        "registry": {"path": "config/fixture-registry-pr2164-v3.json", "sha256": sha256_bytes(registry_v2.read_bytes())},
+                    },
+                    "previous_supersession": {"path": "receipts/source-contract-construction-proposal-v4-supersession-v1.json", "sha256": sha256_bytes(supersession.read_bytes())},
+                    "replacement_reason": "v3 adds decision-gate custody without replacing v2 artifacts",
+                    "schema_version": "source-contract-construction-proposal-supersession-v2",
+                    "status": "semantic_proposal_v2_superseded",
+                    "successor": {
+                        "proposal": {"path": "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json", "sha256": sha256_bytes(proposal_v3.read_bytes())},
+                        "repair_manifest": original_proposal["repair_manifest"], "registry": original_proposal["registry"],
+                    },
+                }
+                supersession_v2 = write_payload("supersession-v2.json", supersession_v2_payload)
+
+                def rebind_supersession(proposal_path: Path, manifest_path: Path, registry_path: Path) -> Path:
+                    rebound = copy.deepcopy(supersession_v2_payload)
+                    rebound["successor"]["proposal"]["sha256"] = sha256_bytes(proposal_path.read_bytes())
+                    rebound["successor"]["repair_manifest"]["sha256"] = sha256_bytes(manifest_path.read_bytes())
+                    rebound["successor"]["registry"]["sha256"] = sha256_bytes(registry_path.read_bytes())
+                    return write_payload(f"rebound-{len(list(temporary.iterdir()))}.json", rebound)
+                self.assertEqual(run_v4().returncode, 0)
+
+                with self.subTest("v4_code_artifacts_are_exact_historical_commit_proofs"):
+                    mutations = {
+                        "wrong-path": lambda artifacts: artifacts[0].update({"path": "experiments/specchoice-v1.3.2/src/specchoice_evidence/not-cli.py"}),
+                        "wrong-order": lambda artifacts: artifacts.reverse(),
+                        "duplicate": lambda artifacts: artifacts.__setitem__(1, copy.deepcopy(artifacts[0])),
+                        "wrong-length": lambda artifacts: artifacts[0].update({"byte_length": artifacts[0]["byte_length"] + 1}),
+                        "wrong-hash": lambda artifacts: artifacts[0].update({"sha256": "0" * 64}),
+                    }
+                    for name, mutate in mutations.items():
+                        forged = copy.deepcopy(original_proposal)
+                        mutate(forged["fixed_code_artifacts"])
+                        with self.subTest(name=name):
+                            self.assertNotEqual(run_v4(proposal_path=write_payload(f"code-{name}.json", forged)).returncode, 0)
+                    with mock.patch("specchoice_evidence.source_contract.subprocess.run") as command:
+                        command.side_effect = [
+                            subprocess.CompletedProcess([], 0), subprocess.CompletedProcess([], 1),
+                        ]
+                        with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_CODE_COMMIT_INVALID"):
+                            _require_v4_git_commit(fixed_commit, code_artifacts, experiment.parents[1])
+                    forged = copy.deepcopy(original_proposal)
+                    forged["fixed_code_commit"] = "0" * 40
+                    self.assertNotEqual(run_v4(proposal_path=write_payload("code-nonexistent.json", forged)).returncode, 0)
+
+                with self.subTest("v4_rejects_reason_and_previous_supersession_lineage_tampering"):
+                    forged_manifest = copy.deepcopy(original_manifest)
+                    forged_manifest["repairs"][0]["reason"] = "different rationale"
+                    forged_manifest_path = write_payload("wrong-reason-manifest.json", forged_manifest)
+                    forged_proposal = copy.deepcopy(original_proposal)
+                    forged_proposal["repair_manifest"]["sha256"] = sha256_bytes(forged_manifest_path.read_bytes())
+                    forged_proposal["replacements"] = forged_manifest["repairs"]
+                    self.assertNotEqual(run_v4(proposal_path=write_payload("wrong-reason-proposal.json", forged_proposal), manifest_path=forged_manifest_path).returncode, 0)
+                    tampered_v1 = copy.deepcopy(original_supersession)
+                    tampered_v1["successor"]["proposal"]["sha256"] = "0" * 64
+                    with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_(SUPERSESSION|BINDING)_INVALID"):
+                        _validate_v4_previous_supersession(
+                            tampered_v1,
+                            sha256_bytes(proposal_v4.read_bytes()), sha256_bytes(repair_manifest.read_bytes()),
+                            sha256_bytes(registry_v2.read_bytes()),
+                        )
 
                 with self.subTest("v4_decision_requires_closed_self_hashed_human_fields"):
                     proposal_binding = {"fixed_code_commit": "a" * 40}
@@ -831,6 +918,82 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     malformed = copy.deepcopy(decision)
                     malformed["decision_timestamp"] = "2026-08-03T12:34:56+00:00"
                     self.assertRaises(SourceContractProposalError, validate_fixture_construction_decision_v4, malformed, proposal=proposal_binding, proposal_sha256="b" * 64, supersession_sha256="e" * 64, ontology_sha256="c" * 64, authority_sha256="d" * 64)
+
+                with self.subTest("v4_decision_cli_and_writer_accept_only_the_valid_v3_baseline"):
+                    def decision_payload(disposition: str) -> dict[str, object]:
+                        value = {
+                            "active_authority_sha256": sha256_bytes((experiment / "phase2/source-authority.json").read_bytes()), "attestation": "signed-by-reviewer",
+                            "decision": disposition, "decision_timestamp": "2026-08-03T12:34:56Z", "external_publication_authorized": False,
+                            "fixed_code_commit": fixed_commit, "local_only": True,
+                            "ontology_decision_sha256": sha256_bytes((experiment / "reviews/h1-source-gold-ontology-decision-v1.json").read_bytes()),
+                            "proposal_sha256": sha256_bytes(proposal_v3.read_bytes()), "rationale": "reviewed construction disposition",
+                            "reviewer": "reviewer@example.invalid", "schema_version": "fixture-construction-decision-v4-v3",
+                            "supersession_sha256": sha256_bytes(supersession_v2.read_bytes()),
+                        }
+                        value["decision_sha256"] = sha256_bytes(canonical_json_bytes(value))
+                        return value
+
+                    v4_args = ["--proposal", str(proposal_v3), "--predecessor", str(predecessor_v3), "--active-authority", str(experiment / "phase2/source-authority.json"), "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"), "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"), "--ontology-decision", str(experiment / "reviews/h1-source-gold-ontology-decision-v1.json"), "--repair-manifest", str(repair_manifest), "--registry", str(registry_v2), "--supersession", str(supersession_v2)]
+                    for disposition in ("authorize", "reject"):
+                        decision_path = write_payload(f"decision-{disposition}.json", decision_payload(disposition))
+                        result = subprocess.run([sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-decision-v4", *v4_args, "--decision", str(decision_path)], cwd=experiment, check=False, capture_output=True, text=True)
+                        self.assertEqual(result.returncode, 0, result.stderr)
+
+                    def rejects_decision(name: str, value: object) -> None:
+                        self.assertNotEqual(
+                            subprocess.run(
+                                [sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-decision-v4", *v4_args,
+                                 "--decision", str(write_payload(name, value))], cwd=experiment, check=False,
+                            ).returncode,
+                            0,
+                        )
+
+                    for name, mutation in (
+                        ("decision-wrong-schema.json", lambda value: value.update({"schema_version": "fixture-construction-decision-v4-v2"})),
+                        ("decision-unknown.json", lambda value: value.update({"unknown": True})),
+                        ("decision-empty.json", lambda value: value.update({"rationale": ""})),
+                        ("decision-utc.json", lambda value: value.update({"decision_timestamp": "2026-08-03T12:34:56+00:00"})),
+                        ("decision-stale-binding.json", lambda value: value.update({"proposal_sha256": "0" * 64})),
+                    ):
+                        invalid = decision_payload("authorize")
+                        mutation(invalid)
+                        invalid.pop("decision_sha256")
+                        invalid["decision_sha256"] = sha256_bytes(canonical_json_bytes(invalid))
+                        rejects_decision(name, invalid)
+                    stale_self = decision_payload("authorize")
+                    stale_self["rationale"] = "changed without refreshing the self hash"
+                    rejects_decision("decision-stale-self.json", stale_self)
+                    noncanonical_decision = temporary / "decision-noncanonical.json"
+                    noncanonical_decision.write_text(json.dumps(decision_payload("authorize"), indent=2), encoding="utf-8")
+                    self.assertNotEqual(subprocess.run([sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-decision-v4", *v4_args, "--decision", str(noncanonical_decision)], cwd=experiment, check=False).returncode, 0)
+                    duplicate_decision = temporary / "decision-duplicate.json"
+                    duplicate_decision.write_bytes(b'{"decision":"authorize","decision":"reject"}')
+                    self.assertNotEqual(subprocess.run([sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-decision-v4", *v4_args, "--decision", str(duplicate_decision)], cwd=experiment, check=False).returncode, 0)
+                    linked_decision = temporary / "decision-link.json"
+                    linked_decision.symlink_to(temporary / "decision-authorize.json")
+                    self.assertNotEqual(subprocess.run([sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-decision-v4", *v4_args, "--decision", str(linked_decision)], cwd=experiment, check=False).returncode, 0)
+                    output = temporary / "output"
+                    (output / "receipts").mkdir(parents=True)
+                    writer = subprocess.run([sys.executable, "-m", "specchoice_evidence.cli", "write-fixture-construction-proposal-v4", *v4_args, "--output-root", str(output)], cwd=experiment, check=False, capture_output=True, text=True)
+                    self.assertEqual(writer.returncode, 0, writer.stderr)
+                    self.assertEqual((output / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json").read_bytes(), proposal_v3.read_bytes())
+                    self.assertEqual((output / "receipts/source-contract-construction-proposal-v4-supersession-v2.json").read_bytes(), supersession_v2.read_bytes())
+                    self.assertFalse((output / "config").exists())
+                    self.assertNotEqual(subprocess.run([sys.executable, "-m", "specchoice_evidence.cli", "write-fixture-construction-proposal-v4", *v4_args, "--output-root", str(output)], cwd=experiment, check=False).returncode, 0)
+                    targets = (
+                        "source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v3.json",
+                        "source-contract-construction-proposal-v4-supersession-v2.json",
+                    )
+                    for index, occupied in enumerate(targets):
+                        collision_root = temporary / f"collision-{index}"
+                        receipts = collision_root / "receipts"
+                        receipts.mkdir(parents=True)
+                        occupied_path = receipts / occupied
+                        occupied_path.write_bytes(b"preexisting")
+                        result = subprocess.run([sys.executable, "-m", "specchoice_evidence.cli", "write-fixture-construction-proposal-v4", *v4_args, "--output-root", str(collision_root)], cwd=experiment, check=False, capture_output=True, text=True)
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertEqual(occupied_path.read_bytes(), b"preexisting")
+                        self.assertFalse((receipts / next(target for target in targets if target != occupied)).exists())
 
                 with self.subTest("v4_rejects_forged_old_hash_and_length"):
                     forged_manifest = copy.deepcopy(original_manifest)
