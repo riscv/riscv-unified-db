@@ -15,7 +15,10 @@ from specchoice_evidence.source_contract import (
     SourceContractProposalError,
     require_accepted_publication_authorization,
     require_candidate_construction_authorization,
+    require_fixture_construction_authorization,
     require_source_extraction_authorization,
+    validate_fixture_construction_decision,
+    validate_fixture_construction_proposal,
     validate_source_contract_proposal,
     validate_source_publication_decision,
     verify_source_contract_proposal_git,
@@ -188,32 +191,61 @@ class SourceContractProposalTests(unittest.TestCase):
                 proposal_sha256=sha256_bytes(canonical_json_bytes(self.proposal)),
             )
 
-    def test_repository_decision_binds_v2_candidate_authority_without_accepted_generation(self) -> None:
+    def test_v3_fixture_construction_decision_binds_exact_proposal_and_source(self) -> None:
         experiment_root = Path(__file__).parents[1]
-        proposal_raw = (experiment_root / "receipts/source-contract-correction-proposal-v2.json").read_bytes()
-        decision_raw = (experiment_root / "receipts/source-publication-decision.json").read_bytes()
+        proposal_path = (
+            experiment_root
+            / "receipts/source-contract-proposal-v3-pr2164-fixture-closure-verifier-rooted-v3.json"
+        )
+        proposal_raw = proposal_path.read_bytes()
         proposal = json.loads(proposal_raw.decode("utf-8"))
-        decision = json.loads(decision_raw.decode("utf-8"))
-        validated = validate_source_publication_decision(
+        fixed_source = proposal["fixed_source"]
+        self.assertIsInstance(fixed_source, dict)
+        decision = {
+            "decision": "authorize",
+            "decision_timestamp": "2026-08-02T12:00:00Z",
+            "fixed_source_commit": fixed_source["commit"],
+            "proposal": {
+                "generation": proposal["generation"],
+                "path": proposal_path.relative_to(experiment_root).as_posix(),
+                "sha256": sha256_bytes(proposal_raw),
+            },
+            "rationale": "The exact immutable candidate construction proposal was reviewed.",
+            "reviewer_identity": "human-riscv-reviewer",
+            "schema_version": "1",
+        }
+
+        validate_fixture_construction_proposal(proposal)
+        validated = validate_fixture_construction_decision(
             decision,
             proposal,
-            proposal_path="receipts/source-contract-correction-proposal-v2.json",
+            proposal_path=proposal_path.relative_to(experiment_root).as_posix(),
             proposal_sha256=sha256_bytes(proposal_raw),
         )
 
-        self.assertEqual(validated["state"], "candidate_construction_authorized")
-        self.assertEqual(validated["approval_scope"], "candidate_construction_only")
-        self.assertTrue(validated["authorization"]["source_extraction_authorized"])
-        self.assertTrue(validated["authorization"]["candidate_construction_authorized"])
-        self.assertFalse(validated["authorization"]["accepted_publication_authorized"])
-        self.assertNotIn("generation", validated)
-        self.assertNotIn("root_sha256", validated)
-        local_manifest = experiment_root / "bundles/accepted/source-contract-v2-pr2192-86a0021b-verifier-rooted-v1/snapshot-manifest.json"
-        self.assertTrue(local_manifest.is_file())
-        local_state = json.loads(local_manifest.read_text(encoding="utf-8"))
-        self.assertEqual(local_state["status"], "candidate")
-        self.assertFalse(local_state["downstream_eligible"])
-        self.assertFalse(local_state["accepted_publication_authorized"])
+        self.assertEqual(validated["decision"], "authorize")
+        self.assertEqual(validated["fixed_source_commit"], fixed_source["commit"])
+        self.assertEqual(validated["proposal"]["generation"], proposal["generation"])
+        require_fixture_construction_authorization(validated)
+
+        rejected = {**decision, "decision": "reject"}
+        validated_rejection = validate_fixture_construction_decision(
+            rejected,
+            proposal,
+            proposal_path=proposal_path.relative_to(experiment_root).as_posix(),
+            proposal_sha256=sha256_bytes(proposal_raw),
+        )
+        with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_NOT_AUTHORIZED"):
+            require_fixture_construction_authorization(validated_rejection)
+
+        wrong_source = {**decision, "fixed_source_commit": "0" * 40}
+        with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_SOURCE_MISMATCH"):
+            validate_fixture_construction_decision(
+                wrong_source,
+                proposal,
+                proposal_path=proposal_path.relative_to(experiment_root).as_posix(),
+                proposal_sha256=sha256_bytes(proposal_raw),
+            )
 
 
 if __name__ == "__main__":

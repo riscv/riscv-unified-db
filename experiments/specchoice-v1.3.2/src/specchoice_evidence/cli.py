@@ -45,6 +45,8 @@ from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
 from .source_contract import (
     SourceContractProposalError,
+    validate_fixture_construction_decision,
+    validate_fixture_construction_proposal,
     validate_source_contract_proposal,
     require_local_accepted_generation_authorization,
     validate_local_accepted_generation_decision,
@@ -473,6 +475,55 @@ def _load_canonical_source_contract_proposal(path: Path) -> object:
     if canonical_json_bytes(payload) != raw:
         raise SourceContractProposalError("SOURCE_CONTRACT_PROPOSAL_NOT_CANONICAL")
     return payload
+
+
+def _load_canonical_fixture_construction_payload(path: Path, error_code: str) -> object:
+    """Load one closed v3 governance object while rejecting duplicate keys."""
+    def reject_duplicates(pairs: list[tuple[str, object]]) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise SourceContractProposalError(error_code)
+            result[key] = value
+        return result
+
+    raw = path.read_bytes()
+    try:
+        payload = json.loads(raw.decode("utf-8"), object_pairs_hook=reject_duplicates)
+    except (UnicodeDecodeError, json.JSONDecodeError, SourceContractProposalError) as error:
+        raise SourceContractProposalError(error_code) from error
+    if canonical_json_bytes(payload) != raw:
+        raise SourceContractProposalError(error_code)
+    return payload
+
+
+def command_validate_fixture_construction_decision_v3(args: argparse.Namespace) -> int:
+    """Validate only one closed human construction disposition for verifier-rooted-v3."""
+    proposal_raw = args.proposal.read_bytes()
+    proposal = _load_canonical_fixture_construction_payload(
+        args.proposal, "FIXTURE_CONSTRUCTION_PROPOSAL_NOT_CANONICAL"
+    )
+    decision = _load_canonical_fixture_construction_payload(
+        args.decision, "FIXTURE_CONSTRUCTION_DECISION_NOT_CANONICAL"
+    )
+    validate_fixture_construction_proposal(proposal)
+    validated = validate_fixture_construction_decision(
+        decision,
+        proposal,
+        proposal_path=args.proposal.as_posix(),
+        proposal_sha256=sha256_bytes(proposal_raw),
+    )
+    _print_json(
+        {
+            "construction_authorized": validated["decision"] == "authorize",
+            "decision": validated["decision"],
+            "fixed_source_commit": validated["fixed_source_commit"],
+            "generation": proposal["generation"],
+            "proposal_sha256": sha256_bytes(proposal_raw),
+            "status": "decision_valid",
+        }
+    )
+    return 0
 
 
 def command_validate_source_contract_proposal(args: argparse.Namespace) -> int:
@@ -974,6 +1025,10 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("receipts/source-contract-correction-proposal-v2.json"),
     )
     source_decision.set_defaults(handler=command_validate_source_decision)
+    fixture_construction_decision = commands.add_parser("validate-fixture-construction-decision-v3")
+    fixture_construction_decision.add_argument("--proposal", type=Path, required=True)
+    fixture_construction_decision.add_argument("--decision", type=Path, required=True)
+    fixture_construction_decision.set_defaults(handler=command_validate_fixture_construction_decision_v3)
     candidate = commands.add_parser("build-candidate")
     candidate.add_argument("--decision", type=Path, default=Path("receipts/source-publication-decision.json"))
     candidate.add_argument("--proposal", type=Path, default=Path("receipts/source-contract-correction-proposal-v2.json"))

@@ -47,6 +47,22 @@ _FIXTURE_ROLES = {
 }
 _FIXTURE_COMMIT = "22e84458c87a7ccf4c07034de1eb6d0bf9764144"
 _FIXTURE_TREE = "af003b427c66bd8ac9803a91b3bf363a1b1304d9"
+_FIXTURE_CONSTRUCTION_GENERATION = "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+_FIXTURE_CONSTRUCTION_SOURCE_COMMIT = "bf91185887590799e76a3077ca03fd7f319e88e2"
+_FIXTURE_CONSTRUCTION_REGISTRY_SHA256 = "ddda6f6c96b4007d8d57aed64210fc08701b89bfd27feac5f0732c828c388f36"
+_FIXTURE_CONSTRUCTION_VERIFIER_PATHS = (
+    "verifier/specchoice_evidence/__init__.py",
+    "verifier/specchoice_evidence/canonical.py",
+    "verifier/specchoice_evidence/filesystem.py",
+    "verifier/specchoice_evidence/verify.py",
+    "verify_bundle.py",
+)
+_FIXTURE_CONSTRUCTION_CONTROL_PATHS = (
+    "config/measurement/canonical-adjudication-schema-v1.json",
+    "config/measurement/pr2164-adapter-rules-v1.json",
+    "fixtures/measurement/golden-predictions-v1.json",
+    "reports/h1/adversarial-oracle-results-v2.json",
+)
 
 
 def _fixture_path(value: object) -> str:
@@ -233,6 +249,152 @@ def validate_fixture_closure_decision(
     if digest != proposal_sha256:
         raise SourceContractProposalError("FIXTURE_CLOSURE_PROPOSAL_MISMATCH")
     return dict(decision)
+
+
+def validate_fixture_construction_proposal(proposal: object) -> dict[str, object]:
+    """Validate the closed, non-authoritative verifier-rooted-v3 proposal."""
+    if not isinstance(proposal, Mapping) or set(proposal) != {
+        "candidate_identity_contract", "fixture_inventory", "fixed_source", "generation",
+        "phase_gate_receipt", "predecessor_candidate", "protected_path_baseline",
+        "schema_version", "source_controls", "status", "verifier_artifacts",
+    }:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_PROPOSAL_FIELDS_INVALID")
+    if proposal.get("schema_version") != "1" or proposal.get("status") != "pending_human_construction_decision":
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_PROPOSAL_INVALID")
+    if proposal.get("generation") != _FIXTURE_CONSTRUCTION_GENERATION:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_GENERATION_INVALID")
+    identity_contract = _require_mapping(
+        proposal.get("candidate_identity_contract"), "FIXTURE_CONSTRUCTION_IDENTITY_CONTRACT_INVALID"
+    )
+    if identity_contract != {
+        "core_field": "core_sha256",
+        "root_field": "root_sha256",
+        "snapshot_field": "snapshot_manifest_sha256",
+    }:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_IDENTITY_CONTRACT_INVALID")
+    fixed_source = _require_mapping(proposal.get("fixed_source"), "FIXTURE_CONSTRUCTION_SOURCE_INVALID")
+    if fixed_source.get("commit") != _FIXTURE_CONSTRUCTION_SOURCE_COMMIT or set(fixed_source) != {
+        "commit", "implementation_diff"
+    }:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_SOURCE_INVALID")
+    implementation_diff = _require_mapping(
+        fixed_source.get("implementation_diff"), "FIXTURE_CONSTRUCTION_IMPLEMENTATION_DIFF_INVALID"
+    )
+    if set(implementation_diff) != {"changed_verifier_artifacts", "predecessor_generation"} or implementation_diff.get(
+        "predecessor_generation"
+    ) != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2":
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_IMPLEMENTATION_DIFF_INVALID")
+    changed = implementation_diff.get("changed_verifier_artifacts")
+    if not isinstance(changed, list) or changed != sorted(changed) or set(changed) != {
+        "verifier/specchoice_evidence/filesystem.py", "verifier/specchoice_evidence/verify.py"
+    }:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_IMPLEMENTATION_DIFF_INVALID")
+    inventory = _require_mapping(proposal.get("fixture_inventory"), "FIXTURE_CONSTRUCTION_INVENTORY_INVALID")
+    if set(inventory) != {"fixture_count", "partition", "raw_file_count", "registry"}:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_INVENTORY_INVALID")
+    if inventory.get("fixture_count") != 11 or inventory.get("raw_file_count") != 28 or inventory.get("partition") != {
+        "candidate": 1, "negative": 4, "positive": 6
+    }:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_INVENTORY_INVALID")
+    registry = _require_mapping(inventory.get("registry"), "FIXTURE_CONSTRUCTION_REGISTRY_INVALID")
+    if registry.get("path") != "config/fixture-registry-pr2164-v1.json" or set(registry) != {"path", "sha256"}:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_REGISTRY_INVALID")
+    if registry.get("sha256") != _FIXTURE_CONSTRUCTION_REGISTRY_SHA256:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_REGISTRY_INVALID")
+    predecessor = _require_mapping(proposal.get("predecessor_candidate"), "FIXTURE_CONSTRUCTION_PREDECESSOR_INVALID")
+    if set(predecessor) != {
+        "candidate_relative_path", "core_sha256", "generation", "root_sha256", "snapshot_manifest_sha256"
+    } or predecessor.get("generation") != "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v2":
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_PREDECESSOR_INVALID")
+    _normalized_path(predecessor.get("candidate_relative_path"), "fixture_construction_predecessor_path")
+    for field in ("core_sha256", "root_sha256", "snapshot_manifest_sha256"):
+        try:
+            require_sha256(predecessor.get(field))
+        except ValueError as error:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_PREDECESSOR_INVALID") from error
+    controls = proposal.get("source_controls")
+    if not isinstance(controls, list) or len(controls) != len(_FIXTURE_CONSTRUCTION_CONTROL_PATHS):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_CONTROLS_INVALID")
+    normalized_controls: list[dict[str, str]] = []
+    for control in controls:
+        if not isinstance(control, Mapping) or set(control) != {"path", "sha256"}:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_CONTROLS_INVALID")
+        path = _normalized_path(control.get("path"), "fixture_construction_control_path")
+        try:
+            digest = require_sha256(control.get("sha256"))
+        except ValueError as error:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_CONTROLS_INVALID") from error
+        normalized_controls.append({"path": path, "sha256": digest})
+    if [item["path"] for item in normalized_controls] != list(_FIXTURE_CONSTRUCTION_CONTROL_PATHS):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_CONTROLS_INVALID")
+    receipt = _require_mapping(proposal.get("phase_gate_receipt"), "FIXTURE_CONSTRUCTION_GATE_RECEIPT_INVALID")
+    if set(receipt) != {"path", "sha256"} or receipt.get("path") != "phase2/source-authority.json":
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_GATE_RECEIPT_INVALID")
+    try:
+        require_sha256(receipt.get("sha256"))
+    except ValueError as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_GATE_RECEIPT_INVALID") from error
+    baseline = _require_mapping(proposal.get("protected_path_baseline"), "FIXTURE_CONSTRUCTION_BASELINE_INVALID")
+    if baseline != {"commit": _FIXTURE_CONSTRUCTION_SOURCE_COMMIT, "result": "clean"}:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_BASELINE_INVALID")
+    artifacts = proposal.get("verifier_artifacts")
+    if not isinstance(artifacts, list) or len(artifacts) != len(_FIXTURE_CONSTRUCTION_VERIFIER_PATHS):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_VERIFIER_INVALID")
+    normalized_artifacts: list[dict[str, object]] = []
+    for artifact in artifacts:
+        if not isinstance(artifact, Mapping) or set(artifact) != {"byte_length", "path", "sha256"}:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_VERIFIER_INVALID")
+        path = _normalized_path(artifact.get("path"), "fixture_construction_verifier_path")
+        try:
+            normalized_artifacts.append({
+                "byte_length": require_byte_length(artifact.get("byte_length")),
+                "path": path,
+                "sha256": require_sha256(artifact.get("sha256")),
+            })
+        except ValueError as error:
+            raise SourceContractProposalError("FIXTURE_CONSTRUCTION_VERIFIER_INVALID") from error
+    if [item["path"] for item in normalized_artifacts] != list(_FIXTURE_CONSTRUCTION_VERIFIER_PATHS):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_VERIFIER_INVALID")
+    return dict(proposal)
+
+
+def validate_fixture_construction_decision(
+    decision: object, proposal: object, *, proposal_path: str, proposal_sha256: str
+) -> dict[str, object]:
+    """Validate a human-owned authorize/reject construction disposition only."""
+    validate_fixture_construction_proposal(proposal)
+    if not isinstance(decision, Mapping) or set(decision) != {
+        "decision", "decision_timestamp", "fixed_source_commit", "proposal", "rationale",
+        "reviewer_identity", "schema_version",
+    }:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_DECISION_FIELDS_INVALID")
+    if decision.get("schema_version") != "1" or decision.get("decision") not in {"authorize", "reject"}:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_DECISION_INVALID")
+    for field in ("decision_timestamp", "rationale", "reviewer_identity"):
+        _require_string(decision, field)
+    fixed_source = _require_mapping(proposal.get("fixed_source"), "FIXTURE_CONSTRUCTION_SOURCE_INVALID")
+    if decision.get("fixed_source_commit") != fixed_source.get("commit"):
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_SOURCE_MISMATCH")
+    binding = _require_mapping(decision.get("proposal"), "FIXTURE_CONSTRUCTION_DECISION_PROPOSAL_INVALID")
+    if set(binding) != {"generation", "path", "sha256"}:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_DECISION_PROPOSAL_INVALID")
+    if binding.get("generation") != proposal.get("generation") or _normalized_path(
+        binding.get("path"), "fixture_construction_proposal_path"
+    ) != proposal_path:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_PROPOSAL_MISMATCH")
+    try:
+        digest = require_sha256(binding.get("sha256"))
+    except ValueError as error:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_PROPOSAL_MISMATCH") from error
+    if digest != proposal_sha256:
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_PROPOSAL_MISMATCH")
+    return dict(decision)
+
+
+def require_fixture_construction_authorization(decision: Mapping[str, object]) -> None:
+    """Permit construction only for the human-authored authorize disposition."""
+    if decision.get("decision") != "authorize":
+        raise SourceContractProposalError("FIXTURE_CONSTRUCTION_NOT_AUTHORIZED")
 
 
 def _require_string(mapping: Mapping[str, object], field: str) -> str:
