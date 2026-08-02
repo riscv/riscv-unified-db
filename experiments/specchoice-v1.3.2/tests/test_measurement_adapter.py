@@ -401,6 +401,26 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual(invalid.source_identity["generation"], self.pending_bundle.name)
 
         with tempfile.TemporaryDirectory() as temporary:
+            revocation = Path(temporary) / "fixture-closure-revocation-v2.json"
+            revocation.write_bytes(self.revocation.read_bytes())
+
+            def validate_then_replace_revocation(*args, **kwargs):
+                result = original_run(*args, **kwargs)
+                revocation.write_bytes(canonical_json_bytes(replacement))
+                return result
+
+            with mock.patch("specchoice_measurement.adapter.subprocess.run", side_effect=validate_then_replace_revocation):
+                invalid = build_pr2164_adapter_batch(
+                    authority_path=self.active_authority,
+                    bundle_root=self.pending_bundle,
+                    rules_path=self.rules,
+                    revocation_path=revocation,
+                )
+        self.assertFalse(invalid.valid)
+        self.assertEqual(invalid.records, ())
+        self.assertEqual(invalid.source_identity["generation"], self.pending_bundle.name)
+
+        with tempfile.TemporaryDirectory() as temporary:
             active = Path(temporary) / "source-authority.json"
             active.write_bytes(self.active_authority.read_bytes())
 
