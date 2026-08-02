@@ -22,8 +22,11 @@ from .h1 import (
     H1Error,
     build_h1_packet,
     validate_h1_decision_v2,
+    validate_h1_ontology_decision_v1,
+    validate_h1_ontology_options_v1,
     validate_h1_packet,
     validate_h1_readiness_v3,
+    validate_h1_route_supersession_v1,
     write_h1_readiness_v3,
 )
 from .preflight import _source_bytes_by_fixture, preflight_prediction_batch
@@ -502,6 +505,26 @@ def command_validate_h1_decision_v2(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_validate_h1_route_supersession_v1(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_route_supersession_v1(
+        supersession=args.supersession, schema=args.schema, packet=args.packet, markdown=args.markdown,
+        readiness=args.readiness,
+    )))
+    return 0
+
+
+def command_validate_h1_ontology_options_v1(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_ontology_options_v1(options=args.options)))
+    return 0
+
+
+def command_validate_h1_ontology_decision_v1(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_ontology_decision_v1(
+        options=args.options, supersession=args.supersession, decision=args.decision,
+    )))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-measurement")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -619,6 +642,21 @@ def build_parser() -> argparse.ArgumentParser:
     h1_decision.add_argument("--readiness", type=Path, required=True)
     h1_decision.add_argument("--decision", type=Path, required=True)
     h1_decision.set_defaults(handler=command_validate_h1_decision_v2)
+    h1_supersession = commands.add_parser("validate-h1-route-supersession-v1")
+    h1_supersession.add_argument("--supersession", type=Path, required=True)
+    h1_supersession.add_argument("--schema", type=Path, required=True)
+    h1_supersession.add_argument("--packet", type=Path, required=True)
+    h1_supersession.add_argument("--markdown", type=Path, required=True)
+    h1_supersession.add_argument("--readiness", type=Path, required=True)
+    h1_supersession.set_defaults(handler=command_validate_h1_route_supersession_v1)
+    h1_options = commands.add_parser("validate-h1-ontology-options-v1")
+    h1_options.add_argument("--options", type=Path, required=True)
+    h1_options.set_defaults(handler=command_validate_h1_ontology_options_v1)
+    h1_ontology_decision = commands.add_parser("validate-h1-ontology-decision-v1")
+    h1_ontology_decision.add_argument("--options", type=Path, required=True)
+    h1_ontology_decision.add_argument("--supersession", type=Path, required=True)
+    h1_ontology_decision.add_argument("--decision", type=Path, required=True)
+    h1_ontology_decision.set_defaults(handler=command_validate_h1_ontology_decision_v1)
     return parser
 
 

@@ -4,14 +4,22 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
 
 from specchoice_evidence.bundle import BundleError, _publish_directory_no_replace, _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, require_sha256, sha256_bytes
-from specchoice_evidence.filesystem import FilesystemPolicyError, inspect_authoritative_path, read_authoritative_file
+from specchoice_evidence.filesystem import (
+    FilesystemPolicyError,
+    inspect_authoritative_path,
+    read_authoritative_file,
+    write_new_descriptor_file,
+)
 
 from .adapter import build_pr2164_adapter_batch
 from .attempts import AttemptError, validate_measurement_attempt
@@ -23,6 +31,88 @@ class H1Error(ValueError):
 
 _ROOT = Path(__file__).parents[2]
 _SCHEMA = _ROOT / "config/measurement/canonical-adjudication-schema-v1.json"
+_H1_V2_SCHEMA = _ROOT / "config/measurement/h1-review-schema-v2.json"
+_H1_V3_PACKET = _ROOT / "reports/h1/h1-source-gold-review-v3/h1-source-gold-review-v3.json"
+_H1_V3_MARKDOWN = _ROOT / "reports/h1/h1-source-gold-review-v3/h1-source-gold-review-v3.md"
+_H1_V3_READINESS = _ROOT / "receipts/h1-review-readiness-v3.json"
+_H1_V2_FORMAL = _ROOT / "runs/measurement-attempts/formal-golden-pr2164-v2/attempt.json"
+_H1_V3_ADVERSARIAL = _ROOT / "reports/h1/adversarial-oracle-results-v3.json"
+_ACTIVE_AUTHORITY = _ROOT / "phase2/source-authority.json"
+_REVOCATION_V2 = _ROOT / "receipts/fixture-closure-revocation-v2.json"
+_ROUTE_SUPERSESSION = _ROOT / "receipts/h1-review-route-supersession-v1.json"
+_H1_V3_BUNDLE = _ROOT / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+_H1_V1_RULES = _ROOT / "config/measurement/pr2164-adapter-rules-v1.json"
+_H1_V2_PREDICTIONS = _ROOT / "fixtures/measurement/golden-predictions-v2.json"
+_H1_V2_ORACLE = _ROOT / "fixtures/measurement/adversarial/required-diagnostics-v2.json"
+_H1_V3_REPLAY = _ROOT / "receipts/fixture-closure-offline-replay-v3.json"
+_H1_V2_SUMMARY = _ROOT.parents[1] / ".planning/phases/02-deterministic-measurement-spine/02-16-SUMMARY.md"
+
+_ROUTE_BINDING_PATHS = {
+    "active_authority_sha256": _ACTIVE_AUTHORITY,
+    "adversarial_v3_sha256": _H1_V3_ADVERSARIAL,
+    "formal_v2_sha256": _H1_V2_FORMAL,
+    "h1_review_schema_v2_sha256": _H1_V2_SCHEMA,
+    "packet_v3_json_sha256": _H1_V3_PACKET,
+    "packet_v3_markdown_sha256": _H1_V3_MARKDOWN,
+    "readiness_v3_sha256": _H1_V3_READINESS,
+    "revocation_v2_sha256": _REVOCATION_V2,
+}
+
+_ONTOLOGY_OPTIONS = {
+    "cache_choices": [
+        {
+            "consequences": {
+                "management_prefetch_identity": "CACHE_BLOCK_SIZE",
+                "scope": "unified",
+                "zero_block_identity": "CACHE_BLOCK_SIZE",
+            },
+            "id": "unified_cache_block_identity",
+        },
+        {
+            "consequences": {
+                "management_prefetch_identity": "CACHE_BLOCK_SIZE.management_prefetch",
+                "scope": "scoped",
+                "zero_block_identity": "CACHE_BLOCK_SIZE.zero_block",
+            },
+            "id": "scoped_cache_block_identities",
+        },
+    ],
+    "external_publication_authorized": False,
+    "local_only": True,
+    "pbmte_choices": [
+        {
+            "consequences": {
+                "discovery_surfaced": False,
+                "exclusion_reason": "excluded_from_discovery",
+                "final_included": False,
+                "fixture_class": "absent",
+                "parameter_identity": None,
+            },
+            "id": "excluded_from_discovery",
+        },
+        {
+            "consequences": {
+                "discovery_surfaced": True,
+                "exclusion_reason": "surfaced_classified_out",
+                "final_included": False,
+                "fixture_class": "candidate",
+                "parameter_identity": None,
+            },
+            "id": "surfaced_classified_out",
+        },
+        {
+            "consequences": {
+                "discovery_surfaced": True,
+                "exclusion_reason": None,
+                "final_included": True,
+                "fixture_class": "positive",
+                "parameter_identity": "PBMTE",
+            },
+            "id": "included_capability_parameter",
+        },
+    ],
+    "schema_version": "h1-ontology-policy-options-v1",
+}
 
 
 def _relative(path: Path, code: str) -> str:
@@ -314,6 +404,218 @@ def _validate_v2_schema(schema: Path) -> bytes:
     return raw
 
 
+def _canonical_digest(path: Path, code: str) -> str:
+    if path == _H1_V3_MARKDOWN:
+        try:
+            _, raw = read_authoritative_file(path.parent, path.name)
+        except (FilesystemPolicyError, OSError) as error:
+            raise H1Error(code) from error
+        return sha256_bytes(raw)
+    _, raw = _read_canonical_external(path, code)
+    return sha256_bytes(raw)
+
+
+def _route_bindings() -> dict[str, str]:
+    return {
+        name: _canonical_digest(path, "H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+        for name, path in _ROUTE_BINDING_PATHS.items()
+    }
+
+
+def _historical_phase_gate() -> bytes:
+    environment = dict(os.environ)
+    environment["PYTHONPATH"] = str(_ROOT / "src")
+    try:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "tests/phase1_expected_red_oracle.py",
+                "--expected-focused", "72",
+                "--expected-discovered", "150",
+                "--expected-green", "145",
+            ],
+            cwd=_ROOT,
+            env=environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=120,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise H1Error("H1_ROUTE_SUPERSESSION_INPUT_INVALID") from error
+    if completed.returncode != 0:
+        raise H1Error("H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+    return completed.stdout
+
+
+def _validate_v3_route_inputs(*, schema: Path, packet: Path, markdown: Path, readiness: Path) -> dict[str, str]:
+    expected_paths = {
+        "schema": _H1_V2_SCHEMA,
+        "packet": _H1_V3_PACKET,
+        "markdown": _H1_V3_MARKDOWN,
+        "readiness": _H1_V3_READINESS,
+    }
+    supplied_paths = {"schema": schema, "packet": packet, "markdown": markdown, "readiness": readiness}
+    for name, expected in expected_paths.items():
+        if supplied_paths[name].absolute() != expected.absolute():
+            raise H1Error("H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+    schema_raw = _validate_v2_schema(schema)
+    packet_value, packet_raw = _read_canonical_external(packet, "H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+    _validate_packet_value(packet_value)
+    try:
+        _, markdown_raw = read_authoritative_file(markdown.parent, markdown.name)
+    except (FilesystemPolicyError, OSError) as error:
+        raise H1Error("H1_ROUTE_SUPERSESSION_INPUT_INVALID") from error
+    if markdown_raw != render_h1_markdown(packet_value).encode("utf-8"):
+        raise H1Error("H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+    readiness_value, readiness_raw = _read_canonical_external(readiness, "H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+    if (
+        set(readiness_value) != {"bindings", "external_publication_authorized", "readiness_sha256", "schema_version"}
+        or readiness_value.get("schema_version") != "h1-review-readiness-v3"
+        or readiness_value.get("external_publication_authorized") is not False
+        or readiness_value.get("readiness_sha256") != sha256_bytes(canonical_json_bytes({
+            key: value for key, value in readiness_value.items() if key != "readiness_sha256"
+        }))
+    ):
+        raise H1Error("H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+    bindings = readiness_value.get("bindings")
+    if not isinstance(bindings, dict) or bindings.get("packet_sha256") != sha256_bytes(packet_raw) or (
+        bindings.get("schema_sha256") != sha256_bytes(schema_raw)
+    ):
+        raise H1Error("H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+    validate_h1_readiness_v3(
+        readiness=readiness,
+        formal_attempt=_H1_V2_FORMAL.parent,
+        adversarial_result=_H1_V3_ADVERSARIAL,
+        packet=packet,
+        markdown=markdown,
+        schema=schema,
+        source_authority=_ACTIVE_AUTHORITY,
+        canonical_revocation=_REVOCATION_V2,
+        bundle=_H1_V3_BUNDLE,
+        rules=_H1_V1_RULES,
+        predictions=_H1_V2_PREDICTIONS,
+        oracle=_H1_V2_ORACLE,
+        offline_replay=_H1_V3_REPLAY,
+        phase_gate=_historical_phase_gate(),
+        plan_summary=_H1_V2_SUMMARY,
+    )
+    return {
+        "h1_review_schema_v2_sha256": sha256_bytes(schema_raw),
+        "packet_v3_json_sha256": sha256_bytes(packet_raw),
+        "packet_v3_markdown_sha256": sha256_bytes(markdown_raw),
+        "readiness_v3_sha256": sha256_bytes(readiness_raw),
+    }
+
+
+def _route_supersession_value(bindings: dict[str, str]) -> dict[str, Any]:
+    value: dict[str, Any] = {
+        "bindings": bindings,
+        "external_publication_authorized": False,
+        "local_only": True,
+        "schema_version": "h1-review-route-supersession-v1",
+        "status": "insufficient_for_decision",
+    }
+    value["supersession_sha256"] = sha256_bytes(canonical_json_bytes(value))
+    return value
+
+
+def _validate_route_supersession_receipt(supersession: Path) -> dict[str, Any]:
+    """Strictly validate the published refusal receipt without replaying history."""
+    value, _ = _read_canonical_external(supersession, "H1_ROUTE_SUPERSESSION_INVALID")
+    expected = _route_supersession_value(_route_bindings())
+    if value != expected:
+        raise H1Error("H1_ROUTE_SUPERSESSION_INVALID")
+    return value
+
+
+def write_h1_route_supersession_v1(
+    *, output: Path, schema: Path, packet: Path, markdown: Path, readiness: Path,
+) -> dict[str, Any]:
+    """Write the one immutable refusal receipt for the historical H1 route."""
+    direct = _validate_v3_route_inputs(schema=schema, packet=packet, markdown=markdown, readiness=readiness)
+    bindings = _route_bindings()
+    if any(bindings[name] != value for name, value in direct.items()):
+        raise H1Error("H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+    value = _route_supersession_value(bindings)
+    try:
+        write_new_descriptor_file(_ROOT, _relative(output, "H1_ROUTE_SUPERSESSION_OUTPUT_INVALID"), canonical_json_bytes(value))
+    except FilesystemPolicyError as error:
+        raise H1Error("H1_ROUTE_SUPERSESSION_OUTPUT_INVALID") from error
+    return value
+
+
+def validate_h1_route_supersession_v1(
+    *, supersession: Path, schema: Path, packet: Path, markdown: Path, readiness: Path,
+) -> dict[str, Any]:
+    """Validate that the fixed v3 route remains historical evidence only."""
+    direct = _validate_v3_route_inputs(schema=schema, packet=packet, markdown=markdown, readiness=readiness)
+    bindings = _route_bindings()
+    if any(bindings[name] != value for name, value in direct.items()):
+        raise H1Error("H1_ROUTE_SUPERSESSION_INPUT_INVALID")
+    return _validate_route_supersession_receipt(supersession)
+
+
+def _ontology_options_value() -> dict[str, Any]:
+    value = dict(_ONTOLOGY_OPTIONS)
+    value["options_sha256"] = sha256_bytes(canonical_json_bytes(value))
+    return value
+
+
+def write_h1_ontology_options_v1(*, output: Path) -> dict[str, Any]:
+    """Write the closed, decision-free H1 ontology policy request once."""
+    value = _ontology_options_value()
+    try:
+        write_new_descriptor_file(_ROOT, _relative(output, "H1_ONTOLOGY_OPTIONS_OUTPUT_INVALID"), canonical_json_bytes(value))
+    except FilesystemPolicyError as error:
+        raise H1Error("H1_ONTOLOGY_OPTIONS_OUTPUT_INVALID") from error
+    return value
+
+
+def validate_h1_ontology_options_v1(*, options: Path) -> dict[str, Any]:
+    """Require the exact closed PBMTE and cache choice request."""
+    value, _ = _read_canonical_external(options, "H1_ONTOLOGY_OPTIONS_INVALID")
+    if value != _ontology_options_value():
+        raise H1Error("H1_ONTOLOGY_OPTIONS_INVALID")
+    return value
+
+
+def validate_h1_ontology_decision_v1(*, options: Path, supersession: Path, decision: Path) -> dict[str, Any]:
+    """Validate a human-authored closed selection without supplying any human field."""
+    options_value = validate_h1_ontology_options_v1(options=options)
+    supersession_value = validate_h1_route_supersession_v1(
+        supersession=supersession, schema=_H1_V2_SCHEMA, packet=_H1_V3_PACKET,
+        markdown=_H1_V3_MARKDOWN, readiness=_H1_V3_READINESS,
+    )
+    value, _ = _read_canonical_external(decision, "H1_ONTOLOGY_DECISION_INVALID")
+    required = {
+        "bindings", "cache_policy", "decision_sha256", "external_publication_authorized", "pbmte_policy",
+        "reviewer", "schema_version", "signature", "timestamp",
+    }
+    if set(value) != required or value.get("schema_version") != "h1-source-gold-ontology-decision-v1" or (
+        value.get("external_publication_authorized") is not False
+    ):
+        raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
+    if value.get("decision_sha256") != sha256_bytes(canonical_json_bytes({
+        key: item for key, item in value.items() if key != "decision_sha256"
+    })):
+        raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
+    if value.get("bindings") != {
+        "options_sha256": options_value["options_sha256"],
+        "supersession_sha256": supersession_value["supersession_sha256"],
+    }:
+        raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
+    for key, choices in (("pbmte_policy", options_value["pbmte_choices"]), ("cache_policy", options_value["cache_choices"])):
+        policy = value.get(key)
+        if not isinstance(policy, dict) or set(policy) != {"rationale", "selection"} or not isinstance(policy.get("rationale"), str) or not policy["rationale"]:
+            raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
+        if policy.get("selection") not in {choice["id"] for choice in choices}:
+            raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
+    if not all(isinstance(value.get(key), str) and value[key] for key in ("reviewer", "signature", "timestamp")):
+        raise H1Error("H1_ONTOLOGY_DECISION_INVALID")
+    return {"decision_sha256": value["decision_sha256"], "valid": True}
+
+
 def build_h1_packet(
     *, formal_attempt: Path, adversarial_report: Path, output_json: Path, output_markdown: Path, schema: Path,
     authority: Path, bundle: Path, rules: Path, predictions: Path, oracle: Path,
@@ -480,7 +782,7 @@ def validate_h1_decision_v2(*, schema: Path, packet: Path, readiness: Path, deci
     schema_raw = _validate_v2_schema(schema)
     packet_value, packet_raw = _read_canonical_external(packet, "H1_PACKET_INVALID")
     packet_value = _validate_packet_value(packet_value)
-    readiness_value, _ = _read_canonical_external(readiness, "H1_READINESS_INVALID")
+    readiness_value, readiness_raw = _read_canonical_external(readiness, "H1_READINESS_INVALID")
     if (
         set(readiness_value) != {"bindings", "external_publication_authorized", "readiness_sha256", "schema_version"}
         or readiness_value.get("schema_version") != "h1-review-readiness-v3"
@@ -563,6 +865,13 @@ def validate_h1_decision_v2(*, schema: Path, packet: Path, readiness: Path, deci
     expected_aggregate = "incomplete" if "incomplete" in dispositions else "disputed" if "disputed" in dispositions else "approved"
     if aggregate != expected_aggregate:
         raise H1Error("H1_DISPUTE_AGGREGATION_INVALID")
+    supersession = _validate_route_supersession_receipt(_ROUTE_SUPERSESSION)
+    route_bindings = supersession["bindings"]
+    if (
+        sha256_bytes(packet_raw) == route_bindings["packet_v3_json_sha256"]
+        and sha256_bytes(readiness_raw) == route_bindings["readiness_v3_sha256"]
+    ):
+        raise H1Error("H1_LEGACY_ROUTE_SUPERSEDED")
     return {
         "aggregate_disposition": aggregate,
         "decision_sha256": value["decision_sha256"],

@@ -56,9 +56,40 @@ class H1PublicContractTests(unittest.TestCase):
                 "--rules", "rules", "--predictions", "predictions", "--oracle", "oracle",
                 "--offline-replay", "replay", "--plan-summary", "/summary", "--output", "readiness",
             ])
-        for command in ("validate-h1-route-supersession-v1", "validate-h1-ontology-options-v1"):
+        command_args = {
+            "validate-h1-route-supersession-v1": [
+                "--supersession", "supersession", "--schema", "schema", "--packet", "packet",
+                "--markdown", "markdown", "--readiness", "readiness",
+            ],
+            "validate-h1-ontology-options-v1": ["--options", "options"],
+        }
+        for command, arguments in command_args.items():
             with self.subTest(command=command):
-                self.assertEqual(parser.parse_args([command, "--help"]).command, command)
+                self.assertEqual(parser.parse_args([command, *arguments]).command, command)
+        root = Path(__file__).parents[1]
+        options_path = root / "config/measurement/h1-ontology-policy-options-v1.json"
+        self.assertEqual(validate_h1_ontology_options_v1(options=options_path)["schema_version"], "h1-ontology-policy-options-v1")
+        packet_path = root / "reports/h1/h1-source-gold-review-v3/h1-source-gold-review-v3.json"
+        readiness_path = root / "receipts/h1-review-readiness-v3.json"
+        with tempfile.TemporaryDirectory(dir=root) as directory:
+            temporary = Path(directory)
+            unknown_options = json.loads(options_path.read_text(encoding="utf-8"))
+            unknown_options["unknown_option"] = True
+            unknown_options_path = temporary / "options.json"
+            unknown_options_path.write_bytes(canonical_json_bytes(unknown_options))
+            with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_OPTIONS_INVALID"):
+                validate_h1_ontology_options_v1(options=unknown_options_path)
+            legacy_decision = H1PacketTests._decision(
+                json.loads(packet_path.read_text(encoding="utf-8")),
+                json.loads(readiness_path.read_text(encoding="utf-8")),
+            )
+            legacy_decision_path = temporary / "legacy-decision.json"
+            legacy_decision_path.write_bytes(canonical_json_bytes(legacy_decision))
+            with self.assertRaisesRegex(H1Error, "H1_LEGACY_ROUTE_SUPERSEDED"):
+                validate_h1_decision_v2(
+                    schema=root / "config/measurement/h1-review-schema-v2.json", packet=packet_path,
+                    readiness=readiness_path, decision=legacy_decision_path,
+                )
 
 
 class H1PacketTests(unittest.TestCase):
