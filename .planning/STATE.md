@@ -5,10 +5,10 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
 status: executing
-stopped_at: Awaiting 02-18 Task 2 blocking-human ontology policy decision
-last_updated: "2026-08-02T21:14:50.097Z"
-last_activity: 2026-08-02
-last_activity_desc: 02-18 Task 1 superseded the legacy H1 route; Task 2 awaits human ontology selections
+stopped_at: Awaiting 02-18 Task 4 blocking-human rooted-v4 construction decision
+last_updated: "2026-08-03T00:24:19Z"
+last_activity: 2026-08-03
+last_activity_desc: 02-18 Task 3 prepared and validated the decision-free rooted-v4 construction proposal; Task 4 awaits human authorization
 progress:
   total_phases: 7
   completed_phases: 1
@@ -30,8 +30,8 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 
 Phase: 02 (deterministic-measurement-spine) — EXECUTING
 Plan: 18 of 18
-Status: Awaiting blocking-human Task 2 ontology policy decision
-Last activity: 2026-08-02 — 02-18 Task 1 superseded the legacy H1 route; Task 2 awaits human ontology selections
+Status: Awaiting blocking-human Task 4 rooted-v4 construction decision
+Last activity: 2026-08-03 — 02-18 Task 3 prepared and validated the decision-free rooted-v4 construction proposal; Task 4 awaits human authorization
 
 Progress: [█████████░] 92%
 
@@ -130,6 +130,8 @@ Recent decisions affecting current work:
 - [Phase 02-deterministic-measurement-spine]: Adversarial identity derives from independently validated formal-attempt custody, not report self-claims.
 - [Phase ?]: H1 successor packets require explicit schema-v2; readiness is immutable and decision-free.
 - [Phase ?]: H1 decision-v2 is a read-only validator with closed review and semantic-response contracts.
+- [Phase 02-deterministic-measurement-spine]: Human ontology policy freezes PBMTE as surfaced then classified out and cache block identity as unified for this ontology version.
+- [Phase 02-deterministic-measurement-spine]: Rooted-v4 proposal construction is duplicate-safe, append-only, local-only, and decision-free until a human authorizes or rejects its exact hashes.
 
 ### Pending Todos
 
@@ -140,7 +142,7 @@ None yet.
 - Exact provider and immutable model snapshot remain unfrozen until the conditional H4 checkpoint.
 - Python 3.14/scikit-learn lock resolution remains unverified for later measurement work.
 - Human-reviewed pair and strict-core sufficiency is unknown and may legitimately select Red.
-- 02-18 cannot advance to Task 3 until a human selects one PBMTE policy and one cache identity/scope policy.
+- 02-18 cannot advance to Task 5 until a human authorizes or rejects the exact rooted-v4 construction proposal at Task 4.
 
 ## Deferred Items
 
@@ -150,6 +152,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-02T21:14:50.097Z
-Stopped at: Awaiting 02-18 Task 2 blocking-human ontology policy decision
+Last session: 2026-08-03T00:24:19Z
+Stopped at: Awaiting 02-18 Task 4 blocking-human rooted-v4 construction decision
 Resume file: None
