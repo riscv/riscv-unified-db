@@ -19,7 +19,7 @@ from specchoice_evidence import filesystem
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 from specchoice_evidence.verify import verify_accepted_bundle
 from specchoice_measurement import adapter
-from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch, validate_complete_adapter_batch
+from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch, validate_complete_adapter_batch, validate_v5_outcome_contract
 
 
 class MeasurementAdapterTests(unittest.TestCase):
@@ -67,6 +67,14 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual({key for key, value in outcomes.items() if not value["surfaced"]}, set(contract["negative_ids"]))
         self.assertEqual([outcomes[key]["proposed_name"] for key in outcomes if outcomes[key]["parameter_status"] == "accept"], contract["identity_names"])
         self.assertEqual(golden["score_bearing_span_count"], 8)
+
+    def test_v5_outcome_contract_rejects_candidate_identity_leakage(self) -> None:
+        contract = json.loads((self.experiment_root / "config/measurement/pr2164-semantic-gold-contract-v1.json").read_text())
+        golden = json.loads((self.experiment_root / "fixtures/measurement/golden-predictions-v3.json").read_text())
+        validate_v5_outcome_contract(contract, golden)
+        golden["outcomes"][0]["proposed_name"] = "PBMTE"
+        with self.assertRaisesRegex(AdapterError, "V5_OUTCOME_CONTRACT_INVALID"):
+            validate_v5_outcome_contract(contract, golden)
 
     def build_pending(self):
         return build_pr2164_adapter_batch(
