@@ -298,47 +298,7 @@ class DecodeGen
           end
 
           if child.type == DecodeTreeNode::ENDPOINT_TYPE && needs_to_check_implemented?(child.insts[0])
-            conds << child.insts[0].defined_by_condition.to_cxx do |term|
-              if term.is_a?(Udb::ExtensionTerm)
-                if term.matches_any_version?
-                  "implemented_Q_(ExtensionName::#{term.name})"
-                else
-                  "implemented_version_Q_(ExtensionName::#{term.name}, \"#{term.comparison.serialize}#{term.version}\"sv)"
-                end
-              elsif term.is_a?(Udb::XlenTerm)
-                "(xlen() == #{term.xlen}_b)"
-              elsif term.is_a?(Udb::ParameterTerm)
-                var =
-                  if cfg_arch.params_with_value.key?(term.name)
-                    "m_params.#{term.name}_VALUE"
-                  else
-                    "m_params.#{term.name}"
-                  end
-                comparison_type = term.comparison_type
-                case comparison_type
-                when Udb::ParameterTerm::ParameterComparisonType::Equal
-                  "(#{var} == #{term.comparison_value})"
-                when Udb::ParameterTerm::ParameterComparisonType::NotEqual
-                  "(#{var} != #{term.comparison_value})"
-                when Udb::ParameterTerm::ParameterComparisonType::LessThan
-                  "(#{var} < #{term.comparison_value})"
-                when Udb::ParameterTerm::ParameterComparisonType::GreaterThan
-                  "(#{var} > #{term.comparison_value})"
-                when Udb::ParameterTerm::ParameterComparisonType::LessThanOrEqual
-                  "(#{var} <= #{term.comparison_value})"
-                when Udb::ParameterTerm::ParameterComparisonType::GreaterThanOrEqual
-                  "(#{var} >= #{term.comparison_value})"
-                when Udb::ParameterTerm::ParameterComparisonType::Includes
-                  "(#{var}.find(#{term.comparison_value}) != #{var}.end())"
-                when Udb::ParameterTerm::ParameterComparisonType::OneOf
-                  vals = term.comparison_value
-                  tests = vals.map { |v| "(#{var} == #{v})" }.join(" || ")
-                  "(#{tests})"
-                else
-                  T.absurd(comparison_type)
-                end
-              end
-            end
+            conds << implemented_cond_cxx(child.insts[0])
           end
           if !conds.empty?
             code += "#{' ' * indent}#{els}if ((#{encoding_var_name}.extract<#{child.range.last}, #{child.range.first}>() == 0b#{child.value.reverse}_b) && #{conds.join(' && ')}) {\n"
@@ -376,6 +336,52 @@ class DecodeGen
     code
   end
   private :decode_c
+
+  # @return [String] C++ condition that inst's defining extension is implemented
+  def implemented_cond_cxx(inst)
+    inst.defined_by_condition.to_cxx do |term|
+      if term.is_a?(Udb::ExtensionTerm)
+        if term.matches_any_version?
+          "implemented_Q_(ExtensionName::#{term.name})"
+        else
+          "implemented_version_Q_(ExtensionName::#{term.name}, \"#{term.comparison.serialize}#{term.version}\"sv)"
+        end
+      elsif term.is_a?(Udb::XlenTerm)
+        "(xlen() == #{term.xlen}_b)"
+      elsif term.is_a?(Udb::ParameterTerm)
+        var =
+          if cfg_arch.params_with_value.key?(term.name)
+            "m_params.#{term.name}_VALUE"
+          else
+            "m_params.#{term.name}"
+          end
+        comparison_type = term.comparison_type
+        case comparison_type
+        when Udb::ParameterTerm::ParameterComparisonType::Equal
+          "(#{var} == #{term.comparison_value})"
+        when Udb::ParameterTerm::ParameterComparisonType::NotEqual
+          "(#{var} != #{term.comparison_value})"
+        when Udb::ParameterTerm::ParameterComparisonType::LessThan
+          "(#{var} < #{term.comparison_value})"
+        when Udb::ParameterTerm::ParameterComparisonType::GreaterThan
+          "(#{var} > #{term.comparison_value})"
+        when Udb::ParameterTerm::ParameterComparisonType::LessThanOrEqual
+          "(#{var} <= #{term.comparison_value})"
+        when Udb::ParameterTerm::ParameterComparisonType::GreaterThanOrEqual
+          "(#{var} >= #{term.comparison_value})"
+        when Udb::ParameterTerm::ParameterComparisonType::Includes
+          "(#{var}.find(#{term.comparison_value}) != #{var}.end())"
+        when Udb::ParameterTerm::ParameterComparisonType::OneOf
+          vals = term.comparison_value
+          tests = vals.map { |v| "(#{var} == #{v})" }.join(" || ")
+          "(#{tests})"
+        else
+          T.absurd(comparison_type)
+        end
+      end
+    end
+  end
+  private :implemented_cond_cxx
 
   def annotate_identical(tree, xlen)
     tree.children.each do |child|
