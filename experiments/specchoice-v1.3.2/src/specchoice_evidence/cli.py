@@ -789,6 +789,7 @@ _V4_REUSED_REPAIR_PAYLOADS = frozenset({
     "config/fixture-repairs/pr2164-semantic-gold-v2/POS_WARL_ASID_WIDTH/expected.yaml",
     "config/fixture-repairs/pr2164-semantic-gold-v2/POS_WARL_ASID_WIDTH/gold.yaml",
 })
+_V4_REPAIR_PAYLOAD_MAX_BYTES = 64 * 1024
 
 
 def _v4_repair_payloads(manifest: dict[str, object], payload_root: Path) -> dict[str, bytes]:
@@ -807,8 +808,12 @@ def _v4_repair_payloads(manifest: dict[str, object], payload_root: Path) -> dict
     if len(paths) != len(expected_paths) or len(paths) != len(set(paths)) or set(paths) != expected_paths:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_MANIFEST_INVALID")
     try:
-        reused = read_authoritative_files(_experiment_root(), sorted(_V4_REUSED_REPAIR_PAYLOADS))
-        staged = read_authoritative_files(payload_root, sorted(_V4_STAGED_REPAIR_PAYLOADS))
+        reused = read_authoritative_files(
+            _experiment_root(), sorted(_V4_REUSED_REPAIR_PAYLOADS), max_bytes=_V4_REPAIR_PAYLOAD_MAX_BYTES,
+        )
+        staged = read_authoritative_files(
+            payload_root, sorted(_V4_STAGED_REPAIR_PAYLOADS), max_bytes=_V4_REPAIR_PAYLOAD_MAX_BYTES,
+        )
     except (FilesystemPolicyError, OSError) as error:
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID") from error
     held = reused | staged

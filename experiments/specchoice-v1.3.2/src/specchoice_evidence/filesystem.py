@@ -493,8 +493,11 @@ def _read_held_regular_file(
 
 def _read_held_regular_file_evidence(
     parent: int, leaf: str, accepted_device: int, *, require_single_link: bool = False,
+    max_bytes: int | None = None,
 ) -> tuple[os.stat_result, bytes]:
     """Read one held regular leaf and retain the matching descriptor evidence."""
+    if max_bytes is not None and (isinstance(max_bytes, bool) or not isinstance(max_bytes, int) or max_bytes < 0):
+        raise FilesystemPolicyError("AUTHORITATIVE_READ_LIMIT_INVALID")
     descriptor: int | None = None
     try:
         before = _existing_leaf_kind(parent, leaf, accepted_device)
@@ -504,14 +507,25 @@ def _read_held_regular_file_evidence(
             raise FilesystemPolicyError("SPECIAL_FILE_KIND_REJECTED")
         if require_single_link and opened.st_nlink != 1:
             raise FilesystemPolicyError("HARDLINK_DEPENDENCY_REJECTED")
+        if max_bytes is not None and opened.st_size > max_bytes:
+            raise FilesystemPolicyError("AUTHORITATIVE_FILE_TOO_LARGE")
         chunks: list[bytes] = []
+        total = 0
+        exceeded = False
         while True:
-            chunk = os.read(descriptor, 1024 * 1024)
+            read_size = 1024 * 1024 if max_bytes is None else min(1024 * 1024, max_bytes + 1 - total)
+            chunk = os.read(descriptor, read_size)
             if not chunk:
                 break
             chunks.append(chunk)
+            total += len(chunk)
+            if max_bytes is not None and total > max_bytes:
+                exceeded = True
+                break
         if _signature(before) != _signature(os.fstat(descriptor)):
             raise FilesystemPolicyError("AUTHORITATIVE_FILE_CHANGED")
+        if exceeded:
+            raise FilesystemPolicyError("AUTHORITATIVE_FILE_TOO_LARGE")
         return opened, b"".join(chunks)
     finally:
         if descriptor is not None:
@@ -643,8 +657,12 @@ def read_authoritative_file(root: Path, relative_path: str) -> tuple[FileEvidenc
     return _read_authoritative_regular_file(root, require_relative_posix_path(relative_path))
 
 
-def read_authoritative_files(root: Path, relative_paths: list[str]) -> dict[str, tuple[FileEvidence, bytes]]:
+def read_authoritative_files(
+    root: Path, relative_paths: list[str], *, max_bytes: int | None = None,
+) -> dict[str, tuple[FileEvidence, bytes]]:
     """Read a fixed file set through one held authority-root descriptor."""
+    if max_bytes is not None and (isinstance(max_bytes, bool) or not isinstance(max_bytes, int) or max_bytes < 0):
+        raise FilesystemPolicyError("AUTHORITATIVE_READ_LIMIT_INVALID")
     normalized = [require_relative_posix_path(value) for value in relative_paths]
     names = [value.as_posix() for value in normalized]
     if len(names) != len(set(names)):
@@ -670,7 +688,9 @@ def read_authoritative_files(root: Path, relative_paths: list[str]) -> dict[str,
                     directories[prefix] = child
                 parent = child
             leaf = relative.parts[-1]
-            details, content = _read_held_regular_file_evidence(parent, leaf, root_stat.st_dev)
+            details, content = _read_held_regular_file_evidence(
+                parent, leaf, root_stat.st_dev, max_bytes=max_bytes,
+            )
             result[relative.as_posix()] = (
                 FileEvidence(relative.as_posix(), "regular_file", len(content), sha256_bytes(content), details.st_nlink),
                 content,
