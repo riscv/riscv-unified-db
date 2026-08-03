@@ -15540,7 +15540,7 @@ The table below summarizes the options.
 xref:insts:cbo_inval.adoc#udb:doc:inst:cbo_inval[cbo.inval] is ordered by `FENCE` instructions but not `FENCE.I` or `SFENCE.VMA`.
 
 <%- if CACHE_BLOCK_SIZE.bit_length > [PMP_GRANULARITY, PMA_GRANULARITY].min -%>
-Both PMP and PMA access control must be the same for all bytes in the block; otherwise, xref:insts:cbo_zero.adoc#udb:doc:inst:cbo_zero[cbo.zero] has UNSPECIFIED behavior.
+Both PMP and PMA access control must be the same for all bytes in the block; otherwise, xref:insts:cbo_inval.adoc#udb:doc:inst:cbo_inval[cbo.inval] has UNSPECIFIED behavior.
 <%- end -%>
 
 Invalidate operations are treated as stores for page and access permissions. If permission checks fail,
