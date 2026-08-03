@@ -220,10 +220,20 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 03-01: Curate provenance-rich prototype pairs and held-out gold without fabricated quota filling.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 03-02: Define the versioned family registry and strict/auxiliary split manifest.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 03-03: Preregister pair relevance and the four human-reviewed metamorphic directions.
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 03-04: Run leakage/provenance validation and assemble the H2 approval and branch-eligibility packet.
 
 ### Phase 4: Offline Treatments, Retrieval, and Branch Freeze
