@@ -13,7 +13,7 @@ from specchoice_measurement.adapter import build_pr2164_adapter_batch
 from specchoice_measurement.cli import _fixture_span
 from specchoice_measurement.diagnostics import Diagnostic
 from specchoice_measurement.preflight import preflight_prediction_batch
-from specchoice_measurement.scoring import score_prediction_batch
+from specchoice_measurement.scoring import score_prediction_batch, validate_v5_span_population
 from specchoice_measurement.strict_json import _validate_span
 
 
@@ -36,6 +36,13 @@ class MeasurementScoringTests(unittest.TestCase):
         self.assertEqual(raw, canonical_json_bytes(payload))
         self.assertEqual(payload["adapter_batch_sha256"], self.batch.adapter_batch_sha256)
         return payload
+
+    def test_v5_span_population_is_frozen(self) -> None:
+        golden = json.loads((self.experiment_root / "fixtures/measurement/golden-predictions-v3.json").read_text())
+        self.assertEqual(validate_v5_span_population(golden), 8)
+        golden["score_bearing_span_count"] = 7
+        with self.assertRaisesRegex(ValueError, "V5_SPAN_POPULATION_INVALID"):
+            validate_v5_span_population(golden)
 
     def required_diagnostic_oracles(self) -> dict[str, object]:
         path = self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v2.json"

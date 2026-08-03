@@ -74,6 +74,16 @@ class ScoreResult:
         }
 
 
+def validate_v5_span_population(golden: object) -> int:
+    """Require the frozen v5 denominator to match all score-bearing outcomes."""
+    if not isinstance(golden, dict) or not isinstance(golden.get("outcomes"), list):
+        raise ValueError("V5_SPAN_POPULATION_INVALID")
+    count = sum(1 for outcome in golden["outcomes"] if isinstance(outcome, dict) and outcome.get("surfaced") is True)
+    if golden.get("score_bearing_span_count") != count:
+        raise ValueError("V5_SPAN_POPULATION_INVALID")
+    return count
+
+
 def _score_gate_diagnostics(*, adapter_batch: object, preflight: object) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = list(getattr(preflight, "diagnostics", ()))
     if not getattr(adapter_batch, "valid", False):
