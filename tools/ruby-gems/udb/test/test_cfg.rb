@@ -52,4 +52,26 @@ class TestCfg < Minitest::Test
       MSG
     end
   end
+
+  # a partially-configured config with no `params:` key at all must still
+  # expose a Hash from param_values, not the Array it used to default to
+  def test_partial_config_without_params_key_has_hash_param_values
+    cfg_path = Pathname.new(@gen_dir) / "no_params.yaml"
+    cfg_path.write(<<~YAML)
+      $schema: config_schema.json#
+      kind: architecture configuration
+      type: partially configured
+      name: no_params
+      description: Partial config with no params key, to check param_values defaults to a Hash
+      mandatory_extensions:
+        - name: I
+          version: ">= 2.1"
+    YAML
+
+    cfg_arch = @resolver.cfg_arch_for(cfg_path)
+
+    assert_kind_of Hash, cfg_arch.config.param_values
+    refute cfg_arch.config.param_values.key?("SXLEN")
+    assert_nil cfg_arch.config.param_values["SXLEN"]
+  end
 end
