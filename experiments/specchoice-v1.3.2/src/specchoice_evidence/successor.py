@@ -1477,7 +1477,12 @@ def verify_accepted_v6_receipts(
 
 
 def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]:
-    """Validate the live accepted-v6 authority and its complete fixed-path state chain."""
+    """Validate the immutable accepted-v6 custody chain without rebuilding v6.
+
+    The v6 construction proposal is historical: rebuilding it from later
+    measurement code would make source authority depend on downstream edits.
+    We instead verify the recorded, canonical receipts and every hash link.
+    """
     repository = repository.resolve(strict=True)
     fixed = {
         "closure": _CLOSURE_V3_RELATIVE,
@@ -1487,18 +1492,68 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
         "request": _REQUEST_RELATIVE,
         "decision": _ACCEPTANCE_DECISION_RELATIVE,
     }
+    values: dict[str, dict[str, object]] = {}
     raw: dict[str, bytes] = {}
     for name, relative in fixed.items():
-        _, raw[name] = _canonical_object(
+        values[name], raw[name] = _canonical_object(
             repository / relative, "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID"
         )
-    return verify_accepted_v6_receipts(
-        repository, candidate=repository / _CANDIDATE_RELATIVE,
-        packet_directory=repository / _PACKET_RELATIVE,
-        closure_raw=raw["closure"], authority_pre_state_raw=raw["historical"],
-        audit_raw=raw["audit"], construction_decision_raw=raw["construction"],
-        request_raw=raw["request"], decision_raw=raw["decision"],
+    authority, authority_raw = _canonical_object(
+        repository / _AUTHORITY_RELATIVE, "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID"
     )
+    integrity, integrity_raw = _canonical_object(
+        repository / f"{_EXPERIMENT_PREFIX}/receipts/integrity-receipt-v14.json",
+        "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+    )
+    replay, replay_raw = _canonical_object(
+        repository / f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-offline-replay-v6.json",
+        "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+    )
+    revocation, revocation_raw = _canonical_object(
+        repository / f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-revocation-v3-to-v6.json",
+        "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+    )
+    pending, pending_raw = _canonical_object(
+        repository / f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-pending.json",
+        "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+    )
+    readiness, readiness_raw = _canonical_object(
+        repository / f"{_EXPERIMENT_PREFIX}/receipts/pending/source-cutover-readiness-v13.json",
+        "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+    )
+    transition, transition_raw = _canonical_object(
+        repository / f"{_EXPERIMENT_PREFIX}/receipts/pending/fixture-closure-transition-v3-to-v6.json",
+        "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+    )
+    audit = values["audit"]
+    decision = values["decision"]
+    if (
+        authority.get("status") != "accepted_cutover_v13"
+        or decision.get("decision") != "accept"
+        or audit.get("authority_sha256") != sha256_bytes(authority_raw)
+        or audit.get("request_sha256") != sha256_bytes(raw["request"])
+        or audit.get("decision_sha256") != sha256_bytes(raw["decision"])
+        or authority.get("decision_sha256") != sha256_bytes(raw["decision"])
+        or authority.get("transition_sha256") != sha256_bytes(transition_raw)
+        or integrity != {
+            "acceptance_audit_sha256": sha256_bytes(raw["audit"]),
+            "active_authority_sha256": sha256_bytes(authority_raw),
+            "offline_replay_sha256": sha256_bytes(replay_raw),
+            "pending_authority_sha256": sha256_bytes(pending_raw),
+            "readiness_sha256": sha256_bytes(readiness_raw),
+            "revocation_sha256": sha256_bytes(revocation_raw),
+            "schema_version": "integrity-receipt-v14",
+            "status": "accepted_v6_state_chain_verified",
+            "transition_sha256": sha256_bytes(transition_raw),
+        }
+        or replay.get("status") != "verified"
+        or revocation.get("to_authority_sha256") != sha256_bytes(authority_raw)
+    ):
+        raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+    projected = decision.get("projected_accepted")
+    if not isinstance(projected, Mapping) or authority.get("accepted_identity") != projected:
+        raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+    return {"authority_sha256": sha256_bytes(authority_raw), "status": "accepted_v6_state_chain_verified"}
 
 
 def accepted_v6_active_bound_paths(repository: Path) -> tuple[str, ...]:
