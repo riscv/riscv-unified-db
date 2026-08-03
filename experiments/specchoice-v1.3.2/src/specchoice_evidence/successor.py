@@ -1530,6 +1530,12 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
         "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
     )
     decision = values["decision"]
+    candidate_audit = values["audit"]
+    construction = values["construction"]
+    try:
+        proposal_raw = (repository / _PACKET_RELATIVE / "proposal.json").read_bytes()
+    except OSError as error:
+        raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID") from error
     if (
         authority.get("status") != "accepted_cutover_v13"
         or decision.get("decision") != "accept"
@@ -1551,6 +1557,10 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
         }
         or replay.get("status") != "verified"
         or revocation.get("to_authority_sha256") != sha256_bytes(authority_raw)
+        or candidate_audit.get("construction_decision_sha256") != sha256_bytes(raw["construction"])
+        or candidate_audit.get("proposal_sha256") != sha256_bytes(proposal_raw)
+        or construction.get("proposal_sha256") != sha256_bytes(proposal_raw)
+        or candidate_audit.get("candidate") != decision.get("candidate")
     ):
         raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
     projected = decision.get("projected_accepted")
@@ -1580,6 +1590,10 @@ def accepted_v6_active_bound_paths(repository: Path) -> tuple[str, ...]:
         f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-revocation-v3-to-v6.json",
         f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-offline-replay-v6.json",
         f"{_EXPERIMENT_PREFIX}/receipts/integrity-receipt-v14.json",
+        f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-pending.json",
+        f"{_EXPERIMENT_PREFIX}/receipts/pending/source-cutover-readiness-v13.json",
+        f"{_EXPERIMENT_PREFIX}/receipts/pending/fixture-closure-transition-v3-to-v6.json",
+        f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-acceptance-audit-v6.json",
     }
     for tree in (_CANDIDATE_RELATIVE, _PACKET_RELATIVE):
         root = repository / tree
