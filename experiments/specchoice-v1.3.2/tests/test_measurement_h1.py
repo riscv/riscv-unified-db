@@ -408,6 +408,8 @@ class H1PacketTests(unittest.TestCase):
             self.assertIn(command, parser._subparsers._group_actions[0].choices)
 
     def test_successor_public_cli_e2e_rejects_forged_adapter_formal_adversarial_and_packet(self) -> None:
+        from specchoice_measurement.cli import build_parser  # noqa: PLC0415
+
         root = self.root.absolute()
         registry = root / "config/fixture-registry-pr2164-v6.json"
         rules = root / "config/measurement/pr2164-adapter-rules-v3.json"
@@ -581,30 +583,96 @@ class H1PacketTests(unittest.TestCase):
                 selected_adapter: Path = adapter,
                 selected_formal: Path = formal,
                 selected_adversarial: Path = adversarial,
+                selected_closure: Path | None = None,
+                selected_ontology: Path | None = None,
+                selected_authority: Path | None = None,
             ) -> list[str]:
                 return [
                     "--adapter-batch", str(selected_adapter),
                     "--adversarial-report", str(selected_adversarial),
                     "--adversarial-contract", str(adversarial_contract),
                     "--adjudication-schema", str(adjudication_schema),
-                    "--executable-closure", str(root / "receipts/runtime-executable-closure-v1.json"),
+                    "--executable-closure", str(selected_closure or closure),
                     "--fixture-registry", str(registry),
                     "--formal-attempt", str(selected_formal),
                     "--golden-predictions", str(golden),
-                    "--ontology-decision", str(root / "reviews/h1-source-gold-ontology-decision-v1.json"),
+                    "--ontology-decision", str(selected_ontology or root / "reviews/h1-source-gold-ontology-decision-v1.json"),
+                    "--ontology-options", str(root / "config/measurement/h1-ontology-policy-options-v1.json"),
+                    "--ontology-supersession", str(root / "receipts/h1-review-route-supersession-v1.json"),
                     "--questions", str(questions),
                     "--rules", str(rules),
                     "--semantic-contract", str(semantic_contract),
                     "--schema", str(h1_schema),
-                    "--source-authority", str(root / "phase2/source-authority.json"),
+                    "--source-authority", str(selected_authority or root / "phase2/source-authority.json"),
                     "--bundle-root", str(self.active_bundle.absolute()),
                 ]
+
+            closure = temporary / "runtime-executable-closure-v2.json"
+            closure_value = {
+                "freeze_commit": "0" * 40,
+                "schema_version": "runtime-executable-closure-v2",
+            }
+            closure.write_bytes(canonical_json_bytes(closure_value))
+            active_authority = root / "phase2/source-authority.json"
+
+            def h1_cli(
+                arguments: list[str], *, expected: int = 0
+            ) -> dict[str, object] | None:
+                parsed = build_parser().parse_args(arguments)
+                output = tempfile.SpooledTemporaryFile()
+                with (
+                    patch.object(
+                        h1,
+                        "_SUCCESSOR_EXECUTABLE_CLOSURE",
+                        closure,
+                    ),
+                    patch.object(
+                        h1,
+                        "_SUCCESSOR_ONTOLOGY_DECISION",
+                        parsed.ontology_decision,
+                    ),
+                    patch.object(
+                        h1,
+                        "_ACTIVE_AUTHORITY",
+                        parsed.source_authority,
+                    ),
+                    patch.object(
+                        h1,
+                        "verify_runtime_closure_v2",
+                        return_value=closure_value,
+                    ) as closure_validator,
+                    patch.object(
+                        h1,
+                        "validate_accepted_v6_active_authority",
+                        return_value={
+                            "authority_sha256": sha256_bytes(active_authority.read_bytes()),
+                            "status": "accepted_v6_state_chain_verified",
+                        },
+                    ) as authority_validator,
+                    patch.object(sys, "stdout", SimpleNamespace(buffer=output)),
+                ):
+                    if expected:
+                        with self.assertRaises(H1Error):
+                            parsed.handler(parsed)
+                    else:
+                        self.assertEqual(parsed.handler(parsed), 0)
+                        closure_validator.assert_called_once_with(
+                            closure_value, root.parents[1]
+                        )
+                        authority_validator.assert_called_once_with(root.parents[1])
+                if expected:
+                    output.close()
+                    return None
+                output.seek(0)
+                raw = output.read()
+                output.close()
+                return json.loads(raw)
 
             packet = temporary / "review-v6/review-packet.json"
             markdown = temporary / "review-v6/REVIEW.md"
             self.assertIn(
                 "packet_sha256",
-                cli(
+                h1_cli(
                     [
                         "build-h1-semantic-packet-v6",
                         *successor_h1_args(),
@@ -614,7 +682,7 @@ class H1PacketTests(unittest.TestCase):
                 ),
             )
             self.assertEqual(
-                cli(
+                h1_cli(
                     [
                         "validate-h1-semantic-packet-v6",
                         *successor_h1_args(),
@@ -626,7 +694,7 @@ class H1PacketTests(unittest.TestCase):
             )
             readiness = temporary / "readiness-v6.json"
             self.assertEqual(
-                cli(
+                h1_cli(
                     [
                         "write-h1-semantic-readiness-v6",
                         *successor_h1_args(),
@@ -638,7 +706,7 @@ class H1PacketTests(unittest.TestCase):
                 "h1-semantic-readiness-v6",
             )
             self.assertEqual(
-                cli(
+                h1_cli(
                     [
                         "validate-h1-semantic-readiness",
                         *successor_h1_args(),
@@ -648,6 +716,79 @@ class H1PacketTests(unittest.TestCase):
                     ]
                 )["readiness_sha256"],
                 json.loads(readiness.read_bytes())["readiness_sha256"],
+            )
+
+            packet_value = json.loads(packet.read_bytes())
+            readiness_value = json.loads(readiness.read_bytes())
+            schema_result = h1.validate_h1_review_schema_v4(
+                schema=h1_schema,
+                questions=questions,
+                bundle_root=self.active_bundle,
+            )
+            decision_value: dict[str, object] = {
+                "aggregate_disposition": "approved",
+                "bindings": {
+                    "packet_sha256": packet_value["packet_sha256"],
+                    "questions_sha256": schema_result["questions_sha256"],
+                    "readiness_sha256": readiness_value["readiness_sha256"],
+                    "schema_sha256": schema_result["schema_sha256"],
+                },
+                "external_publication_authorized": False,
+                "fixture_reviews": [
+                    {
+                        "disposition": "approved",
+                        "fixture_id": review["fixture_id"],
+                        "rationale": "I reviewed the frozen fixture semantics.",
+                        "reviewed_semantics_sha256": review[
+                            "reviewed_semantics_sha256"
+                        ],
+                        "signature": f"human:{review['fixture_id']}",
+                    }
+                    for review in packet_value["fixture_reviews"]
+                ],
+                "rationale": "I reviewed every fixture and semantic question.",
+                "responses": [
+                    {
+                        "disposition": "approved",
+                        "fixture_signoffs": [
+                            {
+                                "disposition": "approved",
+                                "fixture_id": fixture_id,
+                                "signature": f"human:{question['id']}:{fixture_id}",
+                            }
+                            for fixture_id in question["fixture_ids"]
+                        ],
+                        "question_id": question["id"],
+                        "rationale": "The expected semantics are correct.",
+                        "response": "approve_expected_semantics",
+                    }
+                    for question in packet_value["semantic_questions"]
+                ],
+                "reviewer_identity": "independent-human-reviewer",
+                "schema_version": "h1-source-gold-decision-v5",
+                "signature": "human:all-successor-semantics",
+                "timestamp": "2026-08-03T00:00:00Z",
+            }
+            decision_value["decision_sha256"] = sha256_bytes(
+                canonical_json_bytes(decision_value)
+            )
+            decision = temporary / "decision-v5.json"
+            decision.write_bytes(canonical_json_bytes(decision_value))
+            self.assertTrue(
+                h1_cli(
+                    [
+                        "validate-h1-semantic-review-decision",
+                        *successor_h1_args(),
+                        "--packet",
+                        str(packet),
+                        "--markdown",
+                        str(markdown),
+                        "--readiness",
+                        str(readiness),
+                        "--decision",
+                        str(decision),
+                    ]
+                )["valid"]
             )
 
             forged_adapter = temporary / "forged-adapter.json"
@@ -713,12 +854,106 @@ class H1PacketTests(unittest.TestCase):
             ):
                 with self.subTest(upstream_forgery=label):
                     forged_packet = temporary / f"blocked-{label}/packet.json"
-                    cli(
+                    h1_cli(
                         [
                             "build-h1-semantic-packet-v6",
                             *inputs,
                             "--output", str(forged_packet),
                             "--markdown", str(forged_packet.with_name("REVIEW.md")),
+                            "--preflight",
+                        ],
+                        expected=2,
+                    )
+                    h1_cli(
+                        [
+                            "validate-h1-semantic-review-decision",
+                            *inputs,
+                            "--packet",
+                            str(packet),
+                            "--markdown",
+                            str(markdown),
+                            "--readiness",
+                            str(readiness),
+                            "--decision",
+                            str(decision),
+                        ],
+                        expected=2,
+                    )
+                    self.assertFalse(forged_packet.parent.exists())
+
+            empty = temporary / "canonical-empty.json"
+            empty.write_bytes(canonical_json_bytes({}))
+            closure_packet = temporary / "blocked-governance-closure/packet.json"
+            closure_args = build_parser().parse_args(
+                [
+                    "build-h1-semantic-packet-v6",
+                    *successor_h1_args(selected_closure=empty),
+                    "--output",
+                    str(closure_packet),
+                    "--markdown",
+                    str(closure_packet.with_name("REVIEW.md")),
+                    "--preflight",
+                ]
+            )
+            with (
+                patch.object(
+                    h1,
+                    "validate_accepted_v6_active_authority",
+                    return_value={
+                        "authority_sha256": sha256_bytes(active_authority.read_bytes()),
+                        "status": "accepted_v6_state_chain_verified",
+                    },
+                ),
+                self.assertRaisesRegex(
+                    H1Error, "H1_SUCCESSOR_GOVERNANCE_INVALID"
+                ),
+            ):
+                closure_args.handler(closure_args)
+            self.assertFalse(closure_packet.parent.exists())
+
+            wrong_ontology = temporary / "wrong-ontology-selection.json"
+            wrong_ontology_value = json.loads(
+                (
+                    root / "reviews/h1-source-gold-ontology-decision-v1.json"
+                ).read_bytes()
+            )
+            wrong_ontology_value["pbmte_policy"]["selection"] = (
+                "excluded_from_discovery"
+            )
+            wrong_ontology_value["decision_sha256"] = sha256_bytes(
+                canonical_json_bytes(
+                    {
+                        key: item
+                        for key, item in wrong_ontology_value.items()
+                        if key != "decision_sha256"
+                    }
+                )
+            )
+            wrong_ontology.write_bytes(canonical_json_bytes(wrong_ontology_value))
+            for label, inputs in (
+                (
+                    "ontology",
+                    successor_h1_args(selected_ontology=empty),
+                ),
+                (
+                    "ontology-selection",
+                    successor_h1_args(selected_ontology=wrong_ontology),
+                ),
+                (
+                    "source-authority",
+                    successor_h1_args(selected_authority=empty),
+                ),
+            ):
+                with self.subTest(governance_forgery=label):
+                    forged_packet = temporary / f"blocked-governance-{label}/packet.json"
+                    h1_cli(
+                        [
+                            "build-h1-semantic-packet-v6",
+                            *inputs,
+                            "--output",
+                            str(forged_packet),
+                            "--markdown",
+                            str(forged_packet.with_name("REVIEW.md")),
                             "--preflight",
                         ],
                         expected=2,
@@ -743,7 +978,7 @@ class H1PacketTests(unittest.TestCase):
                     )
                     forged_packet = temporary / f"packet-{label}.json"
                     forged_packet.write_bytes(canonical_json_bytes(forged_packet_value))
-                    cli(
+                    h1_cli(
                         [
                             "validate-h1-semantic-packet-v6",
                             *successor_h1_args(),
@@ -752,6 +987,39 @@ class H1PacketTests(unittest.TestCase):
                         ],
                         expected=2,
                     )
+
+    def test_successor_governance_validators_fail_closed_on_empty_inputs(self) -> None:
+        from specchoice_evidence.runtime_closure import (  # noqa: PLC0415
+            RuntimeClosureError,
+            verify_runtime_closure_v2,
+        )
+        from specchoice_evidence.successor import (  # noqa: PLC0415
+            SuccessorProtocolError,
+            validate_accepted_v6_active_authority,
+        )
+
+        repository = self.root.parents[1]
+        with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_V2_INVALID"):
+            verify_runtime_closure_v2({}, repository)
+        with tempfile.TemporaryDirectory(dir=self.root) as directory:
+            temporary = Path(directory)
+            empty = temporary / "empty.json"
+            empty.write_bytes(canonical_json_bytes({}))
+            with self.assertRaisesRegex(H1Error, "H1_ONTOLOGY_DECISION_INVALID"):
+                h1.validate_h1_ontology_decision_v1(
+                    options=self.root
+                    / "config/measurement/h1-ontology-policy-options-v1.json",
+                    supersession=self.root
+                    / "receipts/h1-review-route-supersession-v1.json",
+                    decision=empty,
+                )
+            empty_repository = temporary / "empty-repository"
+            empty_repository.mkdir()
+            with self.assertRaisesRegex(
+                SuccessorProtocolError,
+                "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+            ):
+                validate_accepted_v6_active_authority(empty_repository)
 
     def test_report_generation_rejects_one_byte_planning_or_predecessor_report_drift_before_write(self) -> None:
         from specchoice_measurement import final_reports  # noqa: PLC0415
@@ -1083,6 +1351,9 @@ class H1PacketTests(unittest.TestCase):
             successor_bindings.update(
                 {
                     "h1_review_schema_sha256": schema_result["schema_sha256"],
+                    "golden_predictions_sha256": sha256_bytes(
+                        (self.root / "fixtures/measurement/golden-predictions-v4.json").read_bytes()
+                    ),
                     "questions_semantic_content_sha256": schema_result[
                         "canonical_semantic_content_sha256"
                     ],
@@ -1155,6 +1426,7 @@ class H1PacketTests(unittest.TestCase):
                 h1.validate_h1_semantic_review_decision(
                     schema=schema_v4,
                     questions=questions_path,
+                    golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
                     packet=successor_packet_path,
                     readiness=successor_readiness_path,
                     decision=successor_decision_path,
@@ -1232,10 +1504,75 @@ class H1PacketTests(unittest.TestCase):
                         h1.validate_h1_semantic_review_decision(
                             schema=schema_v4,
                             questions=questions_path,
+                            golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
                             packet=successor_packet_path,
                             readiness=successor_readiness_path,
                             decision=successor_decision_path,
                         )
+            forged_review_packet = deepcopy(successor_packet)
+            forged_review = forged_review_packet["fixture_reviews"][0]
+            forged_review["reviewed_semantics"]["rationale"] += " forged"
+            forged_review["reviewed_semantics_sha256"] = sha256_bytes(
+                canonical_json_bytes(forged_review["reviewed_semantics"])
+            )
+            forged_review_packet["packet_sha256"] = sha256_bytes(
+                canonical_json_bytes(
+                    {
+                        key: item
+                        for key, item in forged_review_packet.items()
+                        if key != "packet_sha256"
+                    }
+                )
+            )
+            successor_packet_path.write_bytes(canonical_json_bytes(forged_review_packet))
+            forged_review_readiness = deepcopy(successor_readiness)
+            forged_review_readiness["bindings"]["packet_file_sha256"] = sha256_bytes(
+                successor_packet_path.read_bytes()
+            )
+            forged_review_readiness["readiness_sha256"] = sha256_bytes(
+                canonical_json_bytes(
+                    {
+                        key: item
+                        for key, item in forged_review_readiness.items()
+                        if key != "readiness_sha256"
+                    }
+                )
+            )
+            successor_readiness_path.write_bytes(
+                canonical_json_bytes(forged_review_readiness)
+            )
+            forged_review_decision = deepcopy(successor_decision)
+            forged_review_decision["fixture_reviews"][0][
+                "reviewed_semantics_sha256"
+            ] = forged_review["reviewed_semantics_sha256"]
+            forged_review_decision["bindings"]["packet_sha256"] = (
+                forged_review_packet["packet_sha256"]
+            )
+            forged_review_decision["bindings"]["readiness_sha256"] = (
+                forged_review_readiness["readiness_sha256"]
+            )
+            forged_review_decision["decision_sha256"] = sha256_bytes(
+                canonical_json_bytes(
+                    {
+                        key: item
+                        for key, item in forged_review_decision.items()
+                        if key != "decision_sha256"
+                    }
+                )
+            )
+            successor_decision_path.write_bytes(
+                canonical_json_bytes(forged_review_decision)
+            )
+            with self.assertRaisesRegex(H1Error, "H1_SUCCESSOR_PACKET_INVALID"):
+                h1.validate_h1_semantic_review_decision(
+                    schema=schema_v4,
+                    questions=questions_path,
+                    golden_predictions=self.root
+                    / "fixtures/measurement/golden-predictions-v4.json",
+                    packet=successor_packet_path,
+                    readiness=successor_readiness_path,
+                    decision=successor_decision_path,
+                )
             successor_packet_path.write_bytes(canonical_json_bytes(successor_packet))
             successor_readiness_path.write_bytes(
                 canonical_json_bytes(successor_readiness)
@@ -1248,7 +1585,9 @@ class H1PacketTests(unittest.TestCase):
             successor_decision_path.write_bytes(canonical_json_bytes(placeholder))
             with self.assertRaisesRegex(H1Error, "H1_SEMANTIC_RESPONSES_INVALID"):
                 h1.validate_h1_semantic_review_decision(
-                    schema=schema_v4, questions=questions_path, packet=successor_packet_path,
+                    schema=schema_v4, questions=questions_path,
+                    golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
+                    packet=successor_packet_path,
                     readiness=successor_readiness_path, decision=successor_decision_path,
                 )
             inconsistent = deepcopy(successor_decision)
@@ -1262,13 +1601,17 @@ class H1PacketTests(unittest.TestCase):
             successor_decision_path.write_bytes(canonical_json_bytes(inconsistent))
             with self.assertRaisesRegex(H1Error, "H1_DISPUTE_AGGREGATION_INVALID"):
                 h1.validate_h1_semantic_review_decision(
-                    schema=schema_v4, questions=questions_path, packet=successor_packet_path,
+                    schema=schema_v4, questions=questions_path,
+                    golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
+                    packet=successor_packet_path,
                     readiness=successor_readiness_path, decision=successor_decision_path,
                 )
             with self.assertRaisesRegex(H1Error, "H1_REVIEW_SCHEMA_V4_INVALID"):
                 h1.validate_h1_semantic_review_decision(
                     schema=self.root / "config/measurement/h1-review-schema-v3.json",
-                    questions=questions_path, packet=successor_packet_path,
+                    questions=questions_path,
+                    golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
+                    packet=successor_packet_path,
                     readiness=successor_readiness_path, decision=successor_decision_path,
                 )
 

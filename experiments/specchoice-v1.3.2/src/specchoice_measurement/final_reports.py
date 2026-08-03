@@ -288,6 +288,7 @@ def _decision_semantics(root: Path, records: list[dict[str, object]], values: Ma
         receipt = validate_h1_semantic_review_decision(
             schema=root / by_role["h1_schema"],
             questions=root / by_role["h1_questions"],
+            golden_predictions=root / by_role["golden_predictions"],
             packet=root / by_role["h1_packet"],
             readiness=root / by_role["h1_readiness"],
             decision=root / by_role["h1_decision"],

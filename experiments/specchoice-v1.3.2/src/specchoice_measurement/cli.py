@@ -640,6 +640,8 @@ def _successor_h1_inputs(args: argparse.Namespace) -> dict[str, object]:
         "golden_predictions": args.golden_predictions,
         "fixture_registry": args.fixture_registry,
         "ontology_decision": args.ontology_decision,
+        "ontology_options": args.ontology_options,
+        "ontology_supersession": args.ontology_supersession,
         "questions": args.questions,
         "rules": args.rules,
         "semantic_contract": args.semantic_contract,
@@ -694,9 +696,16 @@ def command_validate_h1_semantic_readiness_v6(args: argparse.Namespace) -> int:
 
 
 def command_validate_h1_semantic_review_decision(args: argparse.Namespace) -> int:
+    validate_h1_semantic_readiness_v6(
+        readiness=args.readiness,
+        packet=args.packet,
+        markdown=args.markdown,
+        **_successor_h1_inputs(args),
+    )
     sys.stdout.buffer.write(canonical_json_bytes(validate_h1_semantic_review_decision(
         schema=args.schema,
         questions=args.questions,
+        golden_predictions=args.golden_predictions,
         packet=args.packet,
         readiness=args.readiness,
         decision=args.decision,
@@ -765,6 +774,8 @@ def _add_successor_h1_inputs(command: argparse.ArgumentParser) -> None:
     command.add_argument("--golden-predictions", type=Path, required=True)
     command.add_argument("--fixture-registry", type=Path, required=True)
     command.add_argument("--ontology-decision", type=Path, required=True)
+    command.add_argument("--ontology-options", type=Path, required=True)
+    command.add_argument("--ontology-supersession", type=Path, required=True)
     command.add_argument("--questions", type=Path, required=True)
     command.add_argument("--rules", type=Path, required=True)
     command.add_argument("--semantic-contract", type=Path, required=True)
@@ -995,9 +1006,9 @@ def build_parser() -> argparse.ArgumentParser:
     h1_semantic_readiness_validate.add_argument("--readiness", type=Path, required=True)
     h1_semantic_readiness_validate.set_defaults(handler=command_validate_h1_semantic_readiness_v6)
     h1_semantic_decision = commands.add_parser("validate-h1-semantic-review-decision")
-    h1_semantic_decision.add_argument("--schema", type=Path, required=True)
-    h1_semantic_decision.add_argument("--questions", type=Path, required=True)
+    _add_successor_h1_inputs(h1_semantic_decision)
     h1_semantic_decision.add_argument("--packet", type=Path, required=True)
+    h1_semantic_decision.add_argument("--markdown", type=Path, required=True)
     h1_semantic_decision.add_argument("--readiness", type=Path, required=True)
     h1_semantic_decision.add_argument("--decision", type=Path, required=True)
     h1_semantic_decision.set_defaults(handler=command_validate_h1_semantic_review_decision)

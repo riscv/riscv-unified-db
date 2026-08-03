@@ -22,6 +22,14 @@ from specchoice_evidence.filesystem import (
     read_authoritative_file,
     write_new_descriptor_file,
 )
+from specchoice_evidence.runtime_closure import (
+    RuntimeClosureError,
+    verify_runtime_closure_v2,
+)
+from specchoice_evidence.successor import (
+    SuccessorProtocolError,
+    validate_accepted_v6_active_authority,
+)
 
 from .adapter import build_pr2164_adapter_batch
 from .attempts import (
@@ -51,6 +59,7 @@ def validate_v5_h1_question_contract(value: object) -> None:
 
 
 _ROOT = Path(__file__).parents[2]
+_REPOSITORY = _ROOT.parents[1]
 _SCHEMA = _ROOT / "config/measurement/canonical-adjudication-schema-v1.json"
 _H1_V2_SCHEMA = _ROOT / "config/measurement/h1-review-schema-v2.json"
 _H1_V3_PACKET = _ROOT / "reports/h1/h1-source-gold-review-v3/h1-source-gold-review-v3.json"
@@ -61,6 +70,9 @@ _H1_V3_ADVERSARIAL = _ROOT / "reports/h1/adversarial-oracle-results-v3.json"
 _ACTIVE_AUTHORITY = _ROOT / "phase2/source-authority.json"
 _REVOCATION_V2 = _ROOT / "receipts/fixture-closure-revocation-v2.json"
 _ROUTE_SUPERSESSION = _ROOT / "receipts/h1-review-route-supersession-v1.json"
+_SUCCESSOR_ONTOLOGY_OPTIONS = _ROOT / "config/measurement/h1-ontology-policy-options-v1.json"
+_SUCCESSOR_ONTOLOGY_DECISION = _ROOT / "reviews/h1-source-gold-ontology-decision-v1.json"
+_SUCCESSOR_EXECUTABLE_CLOSURE = _ROOT / "receipts/runtime-executable-closure-v2.json"
 _H1_V3_BUNDLE = _ROOT / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
 _H1_V1_RULES = _ROOT / "config/measurement/pr2164-adapter-rules-v1.json"
 _H1_V2_PREDICTIONS = _ROOT / "fixtures/measurement/golden-predictions-v2.json"
@@ -1281,6 +1293,8 @@ def _successor_bindings(
     formal_attempt: Path,
     golden_predictions: Path,
     ontology_decision: Path,
+    ontology_options: Path,
+    ontology_supersession: Path,
     questions: Path,
     rules: Path,
     semantic_contract: Path,
@@ -1302,6 +1316,42 @@ def _successor_bindings(
     if golden.get("schema_version") != "golden-predictions-v4":
         raise H1Error("H1_SUCCESSOR_GOLDEN_INVALID")
     _successor_fixture_reviews(golden)
+    closure, closure_raw = _read_canonical_external(
+        executable_closure, "H1_SUCCESSOR_EXECUTABLE_CLOSURE_INVALID"
+    )
+    if (
+        executable_closure.absolute() != _SUCCESSOR_EXECUTABLE_CLOSURE.absolute()
+        or ontology_options.absolute() != _SUCCESSOR_ONTOLOGY_OPTIONS.absolute()
+        or ontology_supersession.absolute() != _ROUTE_SUPERSESSION.absolute()
+        or ontology_decision.absolute() != _SUCCESSOR_ONTOLOGY_DECISION.absolute()
+        or source_authority.absolute() != _ACTIVE_AUTHORITY.absolute()
+    ):
+        raise H1Error("H1_SUCCESSOR_GOVERNANCE_INVALID")
+    try:
+        verify_runtime_closure_v2(closure, _REPOSITORY)
+        ontology_result = validate_h1_ontology_decision_v1(
+            options=ontology_options,
+            supersession=ontology_supersession,
+            decision=ontology_decision,
+        )
+        authority_result = validate_accepted_v6_active_authority(_REPOSITORY)
+    except (RuntimeClosureError, SuccessorProtocolError, OSError, ValueError) as error:
+        raise H1Error("H1_SUCCESSOR_GOVERNANCE_INVALID") from error
+    if ontology_result.get("selected_policy") != {
+        "cache": "unified_cache_block_identity",
+        "pbmte": "surfaced_classified_out",
+    }:
+        raise H1Error("H1_SUCCESSOR_ONTOLOGY_INVALID")
+    _, ontology_raw = _read_canonical_external(
+        ontology_decision, "H1_SUCCESSOR_ONTOLOGY_INVALID"
+    )
+    if ontology_result.get("artifact_sha256") != sha256_bytes(ontology_raw):
+        raise H1Error("H1_SUCCESSOR_ONTOLOGY_INVALID")
+    _, authority_raw = _read_canonical_external(
+        source_authority, "H1_SUCCESSOR_SOURCE_AUTHORITY_INVALID"
+    )
+    if authority_result.get("authority_sha256") != sha256_bytes(authority_raw):
+        raise H1Error("H1_SUCCESSOR_SOURCE_AUTHORITY_INVALID")
     try:
         batch, adapter_raw, _, rebuilt_golden_raw = _successor_adapter_v6(
             adapter_batch=adapter_batch,
@@ -1365,12 +1415,9 @@ def _successor_bindings(
         "adversarial_contract_sha256": adversarial_contract,
         "adversarial_report_sha256": adversarial_report,
         "adjudication_schema_sha256": adjudication_schema,
-        "executable_closure_sha256": executable_closure,
         "fixture_registry_sha256": fixture_registry,
-        "ontology_decision_sha256": ontology_decision,
         "rule_sha256": rules,
         "semantic_contract_sha256": semantic_contract,
-        "source_authority_sha256": source_authority,
     }
     bindings: dict[str, str] = {
         "adapter_batch_file_sha256": sha256_bytes(adapter_raw),
@@ -1379,10 +1426,13 @@ def _successor_bindings(
         "formal_attempt_sha256": str(formal_result["attempt_sha256"]),
         "golden_predictions_sha256": sha256_bytes(golden_raw),
         "h1_review_schema_sha256": str(schema_result["schema_sha256"]),
+        "executable_closure_sha256": sha256_bytes(closure_raw),
+        "ontology_decision_sha256": sha256_bytes(ontology_raw),
         "questions_semantic_content_sha256": str(
             schema_result["canonical_semantic_content_sha256"]
         ),
         "questions_sha256": sha256_bytes(questions_raw),
+        "source_authority_sha256": sha256_bytes(authority_raw),
     }
     for name, path in canonical_inputs.items():
         _, raw = _read_canonical_external(path, "H1_SUCCESSOR_BINDING_INVALID")
@@ -1518,7 +1568,7 @@ def _validate_successor_packet_value(
     if expected_questions is not None and questions != expected_questions:
         raise H1Error("H1_SUCCESSOR_PACKET_QUESTIONS_INVALID")
     if expected_reviews is not None and reviews != expected_reviews:
-        raise H1Error("H1_SUCCESSOR_PACKET_REVIEWS_INVALID")
+        raise H1Error("H1_SUCCESSOR_PACKET_INVALID")
     forbidden_human_keys = {
         "aggregate_disposition",
         "choice",
@@ -1595,6 +1645,8 @@ def build_h1_semantic_packet_v6(
     formal_attempt: Path,
     golden_predictions: Path,
     ontology_decision: Path,
+    ontology_options: Path,
+    ontology_supersession: Path,
     output_json: Path,
     output_markdown: Path,
     questions: Path,
@@ -1616,6 +1668,8 @@ def build_h1_semantic_packet_v6(
         formal_attempt=formal_attempt,
         golden_predictions=golden_predictions,
         ontology_decision=ontology_decision,
+        ontology_options=ontology_options,
+        ontology_supersession=ontology_supersession,
         questions=questions,
         rules=rules,
         semantic_contract=semantic_contract,
@@ -1671,6 +1725,8 @@ def validate_h1_semantic_packet_v6(
     formal_attempt: Path,
     golden_predictions: Path,
     ontology_decision: Path,
+    ontology_options: Path,
+    ontology_supersession: Path,
     questions: Path,
     rules: Path,
     semantic_contract: Path,
@@ -1688,6 +1744,8 @@ def validate_h1_semantic_packet_v6(
         formal_attempt=formal_attempt,
         golden_predictions=golden_predictions,
         ontology_decision=ontology_decision,
+        ontology_options=ontology_options,
+        ontology_supersession=ontology_supersession,
         questions=questions,
         rules=rules,
         semantic_contract=semantic_contract,
@@ -1767,18 +1825,27 @@ def _aggregate_disposition(values: list[str]) -> str:
 
 
 def validate_h1_semantic_review_decision(
-    *, schema: Path, questions: Path, packet: Path, readiness: Path, decision: Path
+    *, schema: Path, questions: Path, golden_predictions: Path, packet: Path,
+    readiness: Path, decision: Path,
 ) -> dict[str, Any]:
-    """Validate seven genuine structured answers; arbitrary free text is never a choice."""
+    """Validate human answers against the frozen machine-owned fixture semantics."""
     schema_result = validate_h1_review_schema_v4(schema=schema, questions=questions)
     questions_value, _ = _read_canonical_external(
         questions, "H1_SEMANTIC_QUESTIONS_INVALID"
     )
+    golden, golden_raw = _read_canonical_external(
+        golden_predictions, "H1_SUCCESSOR_GOLDEN_INVALID"
+    )
+    if golden.get("schema_version") != "golden-predictions-v4":
+        raise H1Error("H1_SUCCESSOR_GOLDEN_INVALID")
+    expected_reviews = _successor_fixture_reviews(golden)
     packet_value, packet_raw = _read_canonical_external(
         packet, "H1_SUCCESSOR_PACKET_INVALID"
     )
     packet_value = _validate_successor_packet_value(
-        packet_value, expected_questions=questions_value["questions"]
+        packet_value,
+        expected_questions=questions_value["questions"],
+        expected_reviews=expected_reviews,
     )
     packet_bindings = packet_value["bindings"]
     if (
@@ -1788,8 +1855,10 @@ def validate_h1_semantic_review_decision(
         != schema_result["canonical_semantic_content_sha256"]
         or packet_bindings.get("h1_review_schema_sha256")
         != schema_result["schema_sha256"]
+        or packet_bindings.get("golden_predictions_sha256")
+        != sha256_bytes(golden_raw)
     ):
-        raise H1Error("H1_SUCCESSOR_PACKET_QUESTIONS_INVALID")
+        raise H1Error("H1_SUCCESSOR_PACKET_BINDING_INVALID")
     readiness_value, readiness_raw = _read_canonical_external(
         readiness, "H1_SUCCESSOR_READINESS_INVALID"
     )
