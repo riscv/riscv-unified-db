@@ -18,7 +18,15 @@ from specchoice_evidence import filesystem
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError
 from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch
-from specchoice_measurement.attempts import AttemptError, run_measurement_attempt, validate_measurement_attempt
+from specchoice_measurement.attempts import (
+    AttemptError,
+    _apply_successor_mutations,
+    _canonical_file,
+    _evaluate_successor_payload,
+    run_measurement_attempt,
+    validate_measurement_attempt,
+    validate_required_diagnostics_v4,
+)
 from specchoice_measurement.cli import (
     command_validate_attempt,
     command_run_adversarial_oracles,
@@ -421,6 +429,34 @@ class MeasurementAttemptTests(unittest.TestCase):
                 ))
 
     def test_adversarial_cli_is_diagnostic_only_and_matches_every_frozen_oracle(self) -> None:
+        v4_golden = self.experiment_root / "fixtures/measurement/golden-predictions-v4.json"
+        v4_contract = self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v4.json"
+        contract_result = validate_required_diagnostics_v4(
+            contract=v4_contract, golden_predictions=v4_golden
+        )
+        self.assertEqual(contract_result["case_count"], 17)
+        contract_value, _ = _canonical_file(v4_contract, "invalid")
+        golden_value, _ = _canonical_file(v4_golden, "invalid")
+        self.assertEqual(
+            [case["id"] for case in contract_value["cases"]],
+            [
+                "unknown-top-level-field", "missing-outcome", "duplicate-outcome",
+                "candidate-not-surfaced", "candidate-accepted", "candidate-review-status",
+                "candidate-evidence-empty", "positive-not-surfaced", "positive-classified-out",
+                "accepted-name-missing", "evidence-source-changed", "evidence-empty-range",
+                "evidence-text-mismatch", "negative-null-evidence", "negative-surfaced",
+                "unknown-outcome-field", "complete-multi-diagnostic-order",
+            ],
+        )
+        for case in contract_value["cases"]:
+            mutated = _apply_successor_mutations(golden_value, case["mutations"])
+            self.assertEqual(
+                _evaluate_successor_payload(mutated, golden_value),
+                case["expected_diagnostics"],
+                case["id"],
+            )
+            self.assertFalse(case["metric_output_allowed"])
+
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             formal_args = self._pending_formal_args(root / "attempts")

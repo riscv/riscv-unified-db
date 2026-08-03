@@ -8,6 +8,7 @@ import json
 import shutil
 import tempfile
 from collections.abc import Mapping
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -314,3 +315,676 @@ def validate_measurement_attempt(
         schema_raw=schema_raw,
     )
     return {"attempt_sha256": manifest["attempt_sha256"], "role": role, "status": status}
+
+
+_V4_ADVERSARIAL_CASE_IDS = (
+    "unknown-top-level-field",
+    "missing-outcome",
+    "duplicate-outcome",
+    "candidate-not-surfaced",
+    "candidate-accepted",
+    "candidate-review-status",
+    "candidate-evidence-empty",
+    "positive-not-surfaced",
+    "positive-classified-out",
+    "accepted-name-missing",
+    "evidence-source-changed",
+    "evidence-empty-range",
+    "evidence-text-mismatch",
+    "negative-null-evidence",
+    "negative-surfaced",
+    "unknown-outcome-field",
+    "complete-multi-diagnostic-order",
+)
+_V4_MUTATION_OPERATIONS = frozenset(
+    {
+        "add_outcome_field",
+        "add_top_level",
+        "delete_outcome",
+        "duplicate_outcome",
+        "remove",
+        "set",
+    }
+)
+
+
+def _canonical_file(path: Path, code: str) -> tuple[dict[str, object], bytes]:
+    try:
+        _, raw = read_authoritative_file(path.parent, path.name)
+        value = json.loads(raw.decode("utf-8"))
+    except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise AttemptError(code) from error
+    if not isinstance(value, dict) or canonical_json_bytes(value) != raw:
+        raise AttemptError(code)
+    return value, raw
+
+
+def _successor_diagnostic_sort_key(value: Mapping[str, object]) -> tuple[object, ...]:
+    severity = {"blocker": 0, "warning": 1}.get(value.get("severity"), 2)
+    return (
+        severity,
+        str(value.get("code", "")),
+        str(value.get("fixture_id") or ""),
+        str(value.get("field", "")),
+        str(value.get("finding_id") or ""),
+        value.get("occurrence") if isinstance(value.get("occurrence"), int) else -1,
+        str(value.get("source_sha256") or ""),
+        canonical_json_bytes(value.get("expected")).decode("utf-8"),
+        canonical_json_bytes(value.get("observed")).decode("utf-8"),
+    )
+
+
+def _successor_diagnostic(
+    code: str,
+    severity: str,
+    *,
+    fixture_id: str | None = None,
+    field: str,
+    occurrence: int = 0,
+    expected: object = None,
+    observed: object = None,
+    source_sha256: str | None = None,
+) -> dict[str, object]:
+    return {
+        "code": code,
+        "expected": expected,
+        "field": field,
+        "finding_id": None if fixture_id is None else f"{fixture_id}:1",
+        "fixture_id": fixture_id,
+        "observed": observed,
+        "occurrence": occurrence,
+        "severity": severity,
+        "source_sha256": source_sha256,
+    }
+
+
+def validate_required_diagnostics_v4(
+    *, contract: Path, golden_predictions: Path
+) -> dict[str, object]:
+    """Require a closed, typed 17-case mutation contract bound to golden-v4 bytes."""
+    value, raw = _canonical_file(contract, "ADVERSARIAL_V4_CONTRACT_INVALID")
+    golden, golden_raw = _canonical_file(
+        golden_predictions, "ADVERSARIAL_V4_GOLDEN_INVALID"
+    )
+    if golden.get("schema_version") != "golden-predictions-v4":
+        raise AttemptError("ADVERSARIAL_V4_GOLDEN_INVALID")
+    if set(value) != {
+        "base_input",
+        "cases",
+        "diagnostic_order",
+        "schema_version",
+    } or value.get("schema_version") != "required-diagnostics-v4":
+        raise AttemptError("ADVERSARIAL_V4_CONTRACT_INVALID")
+    if value.get("base_input") != {
+        "path": "fixtures/measurement/golden-predictions-v4.json",
+        "sha256": sha256_bytes(golden_raw),
+    }:
+        raise AttemptError("ADVERSARIAL_V4_CONTRACT_BINDING_INVALID")
+    if value.get("diagnostic_order") != {
+        "deduplication": "never",
+        "equal_element_tie_break": "input_ordinal",
+        "fields": [
+            "severity",
+            "code",
+            "fixture_id",
+            "field",
+            "finding_id",
+            "occurrence",
+            "source_sha256",
+            "expected",
+            "observed",
+            "input_ordinal",
+        ],
+    }:
+        raise AttemptError("ADVERSARIAL_V4_CONTRACT_INVALID")
+    cases = value.get("cases")
+    if (
+        not isinstance(cases, list)
+        or [case.get("id") for case in cases if isinstance(case, dict)]
+        != list(_V4_ADVERSARIAL_CASE_IDS)
+    ):
+        raise AttemptError("ADVERSARIAL_V4_CONTRACT_INVALID")
+    for case in cases:
+        if not isinstance(case, dict) or set(case) != {
+            "expected_diagnostics",
+            "formal_effect",
+            "fixture_id",
+            "id",
+            "metric_output_allowed",
+            "mutations",
+            "rationale",
+        }:
+            raise AttemptError("ADVERSARIAL_V4_CASE_INVALID")
+        if (
+            not isinstance(case.get("fixture_id"), str)
+            or not isinstance(case.get("rationale"), str)
+            or not case["rationale"].strip()
+            or case.get("metric_output_allowed") is not False
+            or case.get("formal_effect")
+            not in {"invalid_preflight", "invalid_score", "completed_with_warnings"}
+        ):
+            raise AttemptError("ADVERSARIAL_V4_CASE_INVALID")
+        mutations = case.get("mutations")
+        if not isinstance(mutations, list) or not mutations:
+            raise AttemptError("ADVERSARIAL_V4_CASE_INVALID")
+        for mutation in mutations:
+            if (
+                not isinstance(mutation, dict)
+                or set(mutation) != {"field", "fixture_id", "operation", "value"}
+                or mutation.get("operation") not in _V4_MUTATION_OPERATIONS
+                or not isinstance(mutation.get("field"), str)
+                or not isinstance(mutation.get("fixture_id"), str)
+            ):
+                raise AttemptError("ADVERSARIAL_V4_CASE_INVALID")
+        diagnostics = case.get("expected_diagnostics")
+        if not isinstance(diagnostics, list) or not diagnostics:
+            raise AttemptError("ADVERSARIAL_V4_CASE_INVALID")
+        for diagnostic in diagnostics:
+            if not isinstance(diagnostic, dict) or set(diagnostic) != {
+                "code",
+                "expected",
+                "field",
+                "finding_id",
+                "fixture_id",
+                "observed",
+                "occurrence",
+                "severity",
+                "source_sha256",
+            } or diagnostic.get("severity") not in {"blocker", "warning"}:
+                raise AttemptError("ADVERSARIAL_V4_CASE_INVALID")
+        if diagnostics != sorted(diagnostics, key=_successor_diagnostic_sort_key):
+            raise AttemptError("ADVERSARIAL_V4_DIAGNOSTIC_ORDER_INVALID")
+    return {
+        "case_count": len(cases),
+        "contract_sha256": sha256_bytes(raw),
+        "golden_predictions_sha256": sha256_bytes(golden_raw),
+        "valid": True,
+    }
+
+
+def _outcome_by_id(payload: dict[str, object], fixture_id: str) -> dict[str, object]:
+    outcomes = payload.get("outcomes")
+    if not isinstance(outcomes, list):
+        raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+    for outcome in outcomes:
+        if isinstance(outcome, dict) and outcome.get("fixture_id") == fixture_id:
+            return outcome
+    raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+
+
+def _nested_parent(value: object, field: str) -> tuple[object, str]:
+    tokens = field.split(".")
+    if not tokens or any(not token for token in tokens):
+        raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+    current = value
+    for token in tokens[:-1]:
+        if isinstance(current, dict):
+            if token not in current:
+                raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+            current = current[token]
+        elif isinstance(current, list) and token.isdigit():
+            try:
+                current = current[int(token)]
+            except IndexError as error:
+                raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID") from error
+        else:
+            raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+    return current, tokens[-1]
+
+
+def _apply_successor_mutations(
+    base: dict[str, object], mutations: list[dict[str, object]]
+) -> dict[str, object]:
+    value = deepcopy(base)
+    for mutation in mutations:
+        operation = mutation["operation"]
+        fixture_id = str(mutation["fixture_id"])
+        field = str(mutation["field"])
+        replacement = deepcopy(mutation.get("value"))
+        if operation == "add_top_level":
+            value[field] = replacement
+            continue
+        outcomes = value.get("outcomes")
+        if not isinstance(outcomes, list):
+            raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+        if operation in {"delete_outcome", "duplicate_outcome"}:
+            positions = [
+                index
+                for index, outcome in enumerate(outcomes)
+                if isinstance(outcome, dict) and outcome.get("fixture_id") == fixture_id
+            ]
+            if len(positions) != 1:
+                raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+            if operation == "delete_outcome":
+                del outcomes[positions[0]]
+            else:
+                outcomes.insert(positions[0] + 1, deepcopy(outcomes[positions[0]]))
+            continue
+        outcome = _outcome_by_id(value, fixture_id)
+        if operation == "add_outcome_field":
+            outcome[field] = replacement
+            continue
+        parent, leaf = _nested_parent(outcome, field)
+        if isinstance(parent, dict):
+            if operation == "remove":
+                if leaf not in parent:
+                    raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+                del parent[leaf]
+            elif operation == "set":
+                if leaf not in parent:
+                    raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+                parent[leaf] = replacement
+            else:
+                raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+        elif isinstance(parent, list) and leaf.isdigit():
+            index = int(leaf)
+            try:
+                if operation == "remove":
+                    del parent[index]
+                elif operation == "set":
+                    parent[index] = replacement
+                else:
+                    raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+            except IndexError as error:
+                raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID") from error
+        else:
+            raise AttemptError("ADVERSARIAL_V4_MUTATION_INVALID")
+    return value
+
+
+def _evaluate_successor_payload(
+    value: dict[str, object], base: dict[str, object]
+) -> list[dict[str, object]]:
+    diagnostics: list[dict[str, object]] = []
+    extra_top = sorted(set(value) - set(base))
+    for field in extra_top:
+        diagnostics.append(
+            _successor_diagnostic(
+                "UNKNOWN_FIELD",
+                "blocker",
+                field=f"payload.{field}",
+                expected=None,
+                observed=field,
+            )
+        )
+    outcomes = value.get("outcomes")
+    base_outcomes = base.get("outcomes")
+    if not isinstance(outcomes, list) or not isinstance(base_outcomes, list):
+        diagnostics.append(
+            _successor_diagnostic(
+                "FORMAL_COVERAGE_MISMATCH",
+                "blocker",
+                field="outcomes",
+                expected=11,
+                observed=None if not isinstance(outcomes, list) else len(outcomes),
+            )
+        )
+        return sorted(diagnostics, key=_successor_diagnostic_sort_key)
+    base_by_id = {
+        item.get("fixture_id"): item for item in base_outcomes if isinstance(item, dict)
+    }
+    ids = [item.get("fixture_id") for item in outcomes if isinstance(item, dict)]
+    for fixture_id in sorted(set(ids)):
+        count = ids.count(fixture_id)
+        if isinstance(fixture_id, str) and count > 1:
+            diagnostics.append(
+                _successor_diagnostic(
+                    "PREDICTION_FIXTURE_DUPLICATE",
+                    "blocker",
+                    fixture_id=fixture_id,
+                    field="outcomes",
+                    expected=1,
+                    observed=count,
+                )
+            )
+    missing = sorted(set(base_by_id) - set(ids))
+    if missing:
+        diagnostics.append(
+            _successor_diagnostic(
+                "PREDICTION_FIXTURE_MISSING",
+                "blocker",
+                field="outcomes",
+                expected=missing,
+                observed=[],
+            )
+        )
+    for outcome in outcomes:
+        if not isinstance(outcome, dict):
+            continue
+        fixture_id = outcome.get("fixture_id")
+        baseline = base_by_id.get(fixture_id)
+        if not isinstance(fixture_id, str) or not isinstance(baseline, dict):
+            continue
+        extras = sorted(set(outcome) - set(baseline))
+        for field in extras:
+            diagnostics.append(
+                _successor_diagnostic(
+                    "UNKNOWN_FIELD",
+                    "blocker",
+                    fixture_id=fixture_id,
+                    field=f"outcomes.{field}",
+                    expected=None,
+                    observed=field,
+                )
+            )
+        expected = outcome.get("expected")
+        observed = outcome.get("observed")
+        base_observed = baseline.get("observed")
+        fixture_class = outcome.get("fixture_class")
+        if not isinstance(expected, dict) or not isinstance(observed, dict) or not isinstance(base_observed, dict):
+            continue
+        actual_surfaced = observed.get("surfaced")
+        expected_surfaced = expected.get("surface")
+        status = observed.get("status")
+        expected_status = expected.get("disposition")
+        if actual_surfaced != expected_surfaced:
+            code = (
+                "CANDIDATE_NOT_SURFACED"
+                if fixture_class == "candidate" and actual_surfaced is False
+                else "MISSING_EXPECTED_PARAMETER"
+                if fixture_class == "positive" and actual_surfaced is False
+                else "NEGATIVE_UNNECESSARILY_SURFACED"
+            )
+            diagnostics.append(
+                _successor_diagnostic(
+                    code,
+                    "blocker",
+                    fixture_id=fixture_id,
+                    field="observed.surfaced",
+                    expected=expected_surfaced,
+                    observed=actual_surfaced,
+                )
+            )
+        if status not in {"accept", "classify_out", None}:
+            diagnostics.append(
+                _successor_diagnostic(
+                    "PARAMETER_STATUS_INVALID",
+                    "blocker",
+                    fixture_id=fixture_id,
+                    field="observed.status",
+                    expected=expected_status,
+                    observed=status,
+                )
+            )
+        elif fixture_class == "candidate" and status == "accept":
+            diagnostics.append(
+                _successor_diagnostic(
+                    "CANDIDATE_ACCEPTED_AS_PARAMETER",
+                    "blocker",
+                    fixture_id=fixture_id,
+                    field="observed.status",
+                    expected="classify_out",
+                    observed="accept",
+                )
+            )
+        elif fixture_class == "positive" and status == "classify_out":
+            diagnostics.append(
+                _successor_diagnostic(
+                    "POSITIVE_CLASSIFIED_OUT",
+                    "blocker",
+                    fixture_id=fixture_id,
+                    field="observed.status",
+                    expected="accept",
+                    observed="classify_out",
+                )
+            )
+        if (
+            fixture_class == "positive"
+            and actual_surfaced is True
+            and status == "accept"
+            and observed.get("name") is None
+        ):
+            names = expected.get("names")
+            diagnostics.append(
+                _successor_diagnostic(
+                    "ACCEPTED_PARAMETER_NAME_MISSING",
+                    "warning",
+                    fixture_id=fixture_id,
+                    field="observed.name",
+                    expected=names[0] if isinstance(names, list) and names else None,
+                    observed=None,
+                )
+            )
+        spans = outcome.get("evidence_spans")
+        base_spans = baseline.get("evidence_spans")
+        if actual_surfaced is False and spans is None:
+            diagnostics.append(
+                _successor_diagnostic(
+                    "NO_FINDING_NONCANONICAL",
+                    "blocker",
+                    fixture_id=fixture_id,
+                    field="evidence_spans",
+                    expected=[],
+                    observed=None,
+                )
+            )
+        elif actual_surfaced is True and spans == []:
+            diagnostics.append(
+                _successor_diagnostic(
+                    "EVIDENCE_SPAN_EMPTY",
+                    "blocker",
+                    fixture_id=fixture_id,
+                    field="evidence_spans",
+                    expected="non-empty array",
+                    observed=[],
+                )
+            )
+        elif isinstance(spans, list) and isinstance(base_spans, list):
+            known_sources = {
+                item.get("source_sha256")
+                for item in base_spans
+                if isinstance(item, dict)
+            }
+            for occurrence, span in enumerate(spans, start=1):
+                if not isinstance(span, dict):
+                    continue
+                source_sha = span.get("source_sha256")
+                start, end, text = span.get("start_byte"), span.get("end_byte"), span.get("text")
+                if source_sha not in known_sources:
+                    diagnostics.append(
+                        _successor_diagnostic(
+                            "EVIDENCE_SOURCE_UNKNOWN",
+                            "blocker",
+                            fixture_id=fixture_id,
+                            field="evidence_spans",
+                            occurrence=occurrence,
+                            expected=sorted(item for item in known_sources if isinstance(item, str)),
+                            observed=source_sha,
+                            source_sha256=source_sha if isinstance(source_sha, str) else None,
+                        )
+                    )
+                    continue
+                if (
+                    isinstance(start, bool)
+                    or not isinstance(start, int)
+                    or isinstance(end, bool)
+                    or not isinstance(end, int)
+                    or end <= start
+                ):
+                    diagnostics.append(
+                        _successor_diagnostic(
+                            "EVIDENCE_RANGE_EMPTY",
+                            "blocker",
+                            fixture_id=fixture_id,
+                            field="evidence_spans",
+                            occurrence=occurrence,
+                            expected="start_byte < end_byte",
+                            observed=[start, end],
+                            source_sha256=source_sha if isinstance(source_sha, str) else None,
+                        )
+                    )
+                    continue
+                matching = [
+                    item
+                    for item in base_spans
+                    if isinstance(item, dict)
+                    and item.get("source_sha256") == source_sha
+                    and item.get("start_byte") == start
+                    and item.get("end_byte") == end
+                ]
+                if matching and all(item.get("text") != text for item in matching):
+                    diagnostics.append(
+                        _successor_diagnostic(
+                            "EVIDENCE_TEXT_MISMATCH",
+                            "blocker",
+                            fixture_id=fixture_id,
+                            field="evidence_spans",
+                            occurrence=occurrence,
+                            expected=matching[0].get("text"),
+                            observed=text,
+                            source_sha256=source_sha if isinstance(source_sha, str) else None,
+                        )
+                    )
+    return sorted(diagnostics, key=_successor_diagnostic_sort_key)
+
+
+def _build_adversarial_result_v6(
+    *,
+    contract: Path,
+    golden_predictions: Path,
+    formal_attempt: Path,
+    adapter_batch: Path,
+    rules: Path,
+    schema: Path,
+) -> tuple[dict[str, object], dict[str, object]]:
+    contract_result = validate_required_diagnostics_v4(
+        contract=contract, golden_predictions=golden_predictions
+    )
+    contract_value, contract_raw = _canonical_file(
+        contract, "ADVERSARIAL_V4_CONTRACT_INVALID"
+    )
+    golden, golden_raw = _canonical_file(
+        golden_predictions, "ADVERSARIAL_V4_GOLDEN_INVALID"
+    )
+    manifest = load_measurement_attempt_manifest(attempt_root=formal_attempt)
+    manifest_projection = {
+        key: item for key, item in manifest.items() if key != "attempt_sha256"
+    }
+    if (
+        manifest.get("role") != "formal"
+        or manifest.get("status") != "completed"
+        or manifest.get("attempt_sha256")
+        != sha256_bytes(canonical_json_bytes(manifest_projection))
+    ):
+        raise AttemptError("ADVERSARIAL_V6_FORMAL_INVALID")
+    formal_bindings = manifest.get("bindings")
+    adapter, adapter_raw = _canonical_file(
+        adapter_batch, "ADVERSARIAL_V6_ADAPTER_INVALID"
+    )
+    adapter_projection = {
+        key: item for key, item in adapter.items() if key != "adapter_batch_sha256"
+    }
+    adapter_identity = adapter.get("adapter_batch_sha256")
+    _, rules_raw = _canonical_file(rules, "ADVERSARIAL_V6_RULES_INVALID")
+    _, schema_raw = _canonical_file(schema, "ADVERSARIAL_V6_SCHEMA_INVALID")
+    if (
+        not isinstance(adapter_identity, str)
+        or adapter_identity != sha256_bytes(canonical_json_bytes(adapter_projection))
+        or not isinstance(formal_bindings, dict)
+        or formal_bindings.get("adapter_batch_sha256") != adapter_identity
+        or formal_bindings.get("raw_predictions_sha256") != sha256_bytes(golden_raw)
+        or formal_bindings.get("rule_sha256") != sha256_bytes(rules_raw)
+        or formal_bindings.get("schema_sha256") != sha256_bytes(schema_raw)
+    ):
+        raise AttemptError("ADVERSARIAL_V6_FORMAL_BINDING_INVALID")
+    cases: list[dict[str, object]] = []
+    for case in contract_value["cases"]:
+        assert isinstance(case, dict)
+        mutations = case["mutations"]
+        assert isinstance(mutations, list)
+        mutated = _apply_successor_mutations(golden, mutations)
+        observed = _evaluate_successor_payload(mutated, golden)
+        if observed != case["expected_diagnostics"]:
+            raise AttemptError(f"ADVERSARIAL_V6_MISMATCH:{case['id']}")
+        cases.append(
+            {
+                "expected_diagnostics": case["expected_diagnostics"],
+                "formal_effect": case["formal_effect"],
+                "id": case["id"],
+                "matched": True,
+                "metric_output_allowed": False,
+                "mutated_input_sha256": sha256_bytes(canonical_json_bytes(mutated)),
+                "observed_diagnostics": observed,
+            }
+        )
+    report: dict[str, object] = {
+        "bindings": {
+            "adapter_batch_file_sha256": sha256_bytes(adapter_raw),
+            "adapter_batch_sha256": adapter_identity,
+            "formal_attempt_sha256": manifest["attempt_sha256"],
+            "golden_predictions_sha256": sha256_bytes(golden_raw),
+            "required_diagnostics_sha256": sha256_bytes(contract_raw),
+            "rule_sha256": sha256_bytes(rules_raw),
+            "schema_sha256": sha256_bytes(schema_raw),
+        },
+        "cases": cases,
+        "schema_version": "adversarial-oracle-results-v6",
+        "status": "diagnostic_only",
+    }
+    report["report_sha256"] = sha256_bytes(canonical_json_bytes(report))
+    return report, contract_result
+
+
+def run_adversarial_suite_v6(
+    *,
+    contract: Path,
+    golden_predictions: Path,
+    formal_attempt: Path,
+    adapter_batch: Path,
+    rules: Path,
+    schema: Path,
+    output: Path,
+    preflight: bool = False,
+) -> dict[str, object]:
+    """Execute every typed mutation and emit no formal metrics for diagnostic subsets."""
+    report, contract_result = _build_adversarial_result_v6(
+        contract=contract,
+        golden_predictions=golden_predictions,
+        formal_attempt=formal_attempt,
+        adapter_batch=adapter_batch,
+        rules=rules,
+        schema=schema,
+    )
+    if output.exists() or output.is_symlink() or not output.parent.is_dir() or output.parent.is_symlink():
+        raise AttemptError("ADVERSARIAL_V6_OUTPUT_EXISTS")
+    if not preflight:
+        try:
+            _write_exact(output, canonical_json_bytes(report))
+            _sync_directory(output.parent)
+        except (FileExistsError, OSError) as error:
+            raise AttemptError("ADVERSARIAL_V6_OUTPUT_EXISTS") from error
+    return {
+        "case_count": contract_result["case_count"],
+        "report_sha256": report["report_sha256"],
+        "status": "preflight_valid" if preflight else "diagnostic_only",
+    }
+
+
+def validate_adversarial_result_v6(
+    *,
+    report: Path,
+    contract: Path,
+    golden_predictions: Path,
+    formal_attempt: Path,
+    adapter_batch: Path,
+    rules: Path,
+    schema: Path,
+) -> dict[str, object]:
+    """Replay the full mutation contract and compare a pre-existing canonical report."""
+    expected, _ = _build_adversarial_result_v6(
+        contract=contract,
+        golden_predictions=golden_predictions,
+        formal_attempt=formal_attempt,
+        adapter_batch=adapter_batch,
+        rules=rules,
+        schema=schema,
+    )
+    value, raw = _canonical_file(report, "ADVERSARIAL_V6_REPORT_INVALID")
+    if raw != canonical_json_bytes(expected):
+        raise AttemptError("ADVERSARIAL_V6_REPORT_INVALID")
+    return {
+        "case_count": len(value["cases"]),
+        "report_sha256": value["report_sha256"],
+        "status": value["status"],
+        "valid": True,
+    }

@@ -17,17 +17,35 @@ from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 
 from .adapter import AdapterError, build_pr2164_adapter_batch
-from .attempts import AttemptError, load_measurement_attempt_manifest, run_measurement_attempt, validate_measurement_attempt
+from .attempts import (
+    AttemptError,
+    load_measurement_attempt_manifest,
+    run_adversarial_suite_v6,
+    run_measurement_attempt,
+    validate_adversarial_result_v6,
+    validate_measurement_attempt,
+)
+from .final_reports import (
+    FINAL_SUCCESSOR_TARGETS,
+    FinalReportError,
+    verify_final_successor_reports,
+    write_final_successor_reports,
+)
 from .h1 import (
     H1Error,
     build_h1_packet,
+    build_h1_semantic_packet_v6,
     validate_h1_decision_v2,
     validate_h1_ontology_decision_v1,
     validate_h1_ontology_options_v1,
     validate_h1_packet,
     validate_h1_readiness_v3,
     validate_h1_route_supersession_v1,
+    validate_h1_semantic_packet_v6,
+    validate_h1_semantic_readiness_v6,
+    validate_h1_semantic_review_decision,
     write_h1_readiness_v3,
+    write_h1_semantic_readiness_v6,
 )
 from .preflight import _source_bytes_by_fixture, preflight_prediction_batch
 from .scoring import score_prediction_batch
@@ -525,6 +543,180 @@ def command_validate_h1_ontology_decision_v1(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_run_adversarial_v6(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(run_adversarial_suite_v6(
+        contract=args.contract,
+        golden_predictions=args.golden_predictions,
+        formal_attempt=args.formal_attempt,
+        adapter_batch=args.adapter_batch,
+        rules=args.rules,
+        schema=args.schema,
+        output=args.output,
+        preflight=args.preflight,
+    )))
+    return 0
+
+
+def command_validate_adversarial_v6(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_adversarial_result_v6(
+        report=args.report,
+        contract=args.contract,
+        golden_predictions=args.golden_predictions,
+        formal_attempt=args.formal_attempt,
+        adapter_batch=args.adapter_batch,
+        rules=args.rules,
+        schema=args.schema,
+    )))
+    return 0
+
+
+def _successor_h1_inputs(args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "adapter_batch": args.adapter_batch,
+        "adversarial_report": args.adversarial_report,
+        "adjudication_schema": args.adjudication_schema,
+        "executable_closure": args.executable_closure,
+        "formal_attempt": args.formal_attempt,
+        "golden_predictions": args.golden_predictions,
+        "ontology_decision": args.ontology_decision,
+        "questions": args.questions,
+        "rules": args.rules,
+        "schema": args.schema,
+        "source_authority": args.source_authority,
+        "bundle_root": args.bundle_root,
+    }
+
+
+def command_build_h1_semantic_packet_v6(args: argparse.Namespace) -> int:
+    value = build_h1_semantic_packet_v6(
+        output_json=args.output,
+        output_markdown=args.markdown,
+        preflight=args.preflight,
+        **_successor_h1_inputs(args),
+    )
+    sys.stdout.buffer.write(canonical_json_bytes({
+        "packet_sha256": value["packet_sha256"],
+        "status": "preflight_valid" if args.preflight else "written",
+    }))
+    return 0
+
+
+def command_validate_h1_semantic_packet_v6(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_semantic_packet_v6(
+        packet=args.packet,
+        markdown=args.markdown,
+        **_successor_h1_inputs(args),
+    )))
+    return 0
+
+
+def command_write_h1_semantic_readiness_v6(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(write_h1_semantic_readiness_v6(
+        output=args.output,
+        packet=args.packet,
+        markdown=args.markdown,
+        preflight=args.preflight,
+        **_successor_h1_inputs(args),
+    )))
+    return 0
+
+
+def command_validate_h1_semantic_readiness_v6(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_semantic_readiness_v6(
+        readiness=args.readiness,
+        packet=args.packet,
+        markdown=args.markdown,
+        **_successor_h1_inputs(args),
+    )))
+    return 0
+
+
+def command_validate_h1_semantic_review_decision(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_semantic_review_decision(
+        schema=args.schema,
+        questions=args.questions,
+        packet=args.packet,
+        readiness=args.readiness,
+        decision=args.decision,
+    )))
+    return 0
+
+
+def _repository_root(args: argparse.Namespace) -> Path:
+    return args.repository_root.absolute()
+
+
+def _final_targets(args: argparse.Namespace) -> tuple[str, ...]:
+    root = _repository_root(args)
+    supplied = (
+        args.phase1_verification,
+        args.phase1_review,
+        args.phase2_verification,
+        args.phase2_review,
+    )
+    values: list[str] = []
+    for path in supplied:
+        absolute = path.absolute()
+        try:
+            values.append(absolute.relative_to(root).as_posix())
+        except ValueError as error:
+            raise FinalReportError("FINAL_REPORT_TARGET_INVENTORY_INVALID") from error
+    if tuple(values) != FINAL_SUCCESSOR_TARGETS:
+        raise FinalReportError("FINAL_REPORT_TARGET_INVENTORY_INVALID")
+    return tuple(values)
+
+
+def command_write_final_successor_reports(args: argparse.Namespace) -> int:
+    bindings: list[dict[str, object]] = []
+    for encoded in args.binding:
+        try:
+            value = json.loads(encoded)
+        except json.JSONDecodeError as error:
+            raise FinalReportError("FINAL_REPORT_BINDING_INVALID") from error
+        if not isinstance(value, dict):
+            raise FinalReportError("FINAL_REPORT_BINDING_INVALID")
+        bindings.append(value)
+    sys.stdout.buffer.write(canonical_json_bytes(write_final_successor_reports(
+        _repository_root(args),
+        audited_commit=args.audited_commit,
+        bindings=bindings,
+        targets=_final_targets(args),
+        preflight=args.preflight,
+    )))
+    return 0
+
+
+def command_verify_final_successor_reports(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(verify_final_successor_reports(
+        _repository_root(args), targets=_final_targets(args)
+    )))
+    return 0
+
+
+def _add_successor_h1_inputs(command: argparse.ArgumentParser) -> None:
+    command.add_argument("--adapter-batch", type=Path, required=True)
+    command.add_argument("--adversarial-report", type=Path, required=True)
+    command.add_argument("--adjudication-schema", type=Path, required=True)
+    command.add_argument("--executable-closure", type=Path, required=True)
+    command.add_argument("--formal-attempt", type=Path, required=True)
+    command.add_argument("--golden-predictions", type=Path, required=True)
+    command.add_argument("--ontology-decision", type=Path, required=True)
+    command.add_argument("--questions", type=Path, required=True)
+    command.add_argument("--rules", type=Path, required=True)
+    command.add_argument("--schema", type=Path, required=True)
+    command.add_argument("--source-authority", type=Path, required=True)
+    command.add_argument("--bundle-root", type=Path, required=True)
+
+
+def _add_final_report_targets(command: argparse.ArgumentParser) -> None:
+    repository_root = Path(__file__).parents[4]
+    command.add_argument("--repository-root", type=Path, default=repository_root)
+    command.add_argument("--phase1-verification", type=Path, required=True)
+    command.add_argument("--phase1-review", type=Path, required=True)
+    command.add_argument("--phase2-verification", type=Path, required=True)
+    command.add_argument("--phase2-review", type=Path, required=True)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-measurement")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -657,6 +849,65 @@ def build_parser() -> argparse.ArgumentParser:
     h1_ontology_decision.add_argument("--supersession", type=Path, required=True)
     h1_ontology_decision.add_argument("--decision", type=Path, required=True)
     h1_ontology_decision.set_defaults(handler=command_validate_h1_ontology_decision_v1)
+    adversarial_v6 = commands.add_parser("run-adversarial-semantic-suite-v6")
+    adversarial_v6.add_argument("--contract", type=Path, required=True)
+    adversarial_v6.add_argument("--golden-predictions", type=Path, required=True)
+    adversarial_v6.add_argument("--formal-attempt", type=Path, required=True)
+    adversarial_v6.add_argument("--adapter-batch", type=Path, required=True)
+    adversarial_v6.add_argument("--rules", type=Path, required=True)
+    adversarial_v6.add_argument("--schema", type=Path, required=True)
+    adversarial_v6.add_argument("--output", type=Path, required=True)
+    adversarial_v6.add_argument("--preflight", action="store_true")
+    adversarial_v6.set_defaults(handler=command_run_adversarial_v6)
+    adversarial_v6_validator = commands.add_parser("validate-adversarial-semantic-result-v6")
+    adversarial_v6_validator.add_argument("--report", type=Path, required=True)
+    adversarial_v6_validator.add_argument("--contract", type=Path, required=True)
+    adversarial_v6_validator.add_argument("--golden-predictions", type=Path, required=True)
+    adversarial_v6_validator.add_argument("--formal-attempt", type=Path, required=True)
+    adversarial_v6_validator.add_argument("--adapter-batch", type=Path, required=True)
+    adversarial_v6_validator.add_argument("--rules", type=Path, required=True)
+    adversarial_v6_validator.add_argument("--schema", type=Path, required=True)
+    adversarial_v6_validator.set_defaults(handler=command_validate_adversarial_v6)
+    h1_semantic_build = commands.add_parser("build-h1-semantic-packet-v6")
+    _add_successor_h1_inputs(h1_semantic_build)
+    h1_semantic_build.add_argument("--output", type=Path, required=True)
+    h1_semantic_build.add_argument("--markdown", type=Path, required=True)
+    h1_semantic_build.add_argument("--preflight", action="store_true")
+    h1_semantic_build.set_defaults(handler=command_build_h1_semantic_packet_v6)
+    h1_semantic_validate = commands.add_parser("validate-h1-semantic-packet-v6")
+    _add_successor_h1_inputs(h1_semantic_validate)
+    h1_semantic_validate.add_argument("--packet", type=Path, required=True)
+    h1_semantic_validate.add_argument("--markdown", type=Path, required=True)
+    h1_semantic_validate.set_defaults(handler=command_validate_h1_semantic_packet_v6)
+    h1_semantic_readiness_write = commands.add_parser("write-h1-semantic-readiness-v6")
+    _add_successor_h1_inputs(h1_semantic_readiness_write)
+    h1_semantic_readiness_write.add_argument("--packet", type=Path, required=True)
+    h1_semantic_readiness_write.add_argument("--markdown", type=Path, required=True)
+    h1_semantic_readiness_write.add_argument("--output", type=Path, required=True)
+    h1_semantic_readiness_write.add_argument("--preflight", action="store_true")
+    h1_semantic_readiness_write.set_defaults(handler=command_write_h1_semantic_readiness_v6)
+    h1_semantic_readiness_validate = commands.add_parser("validate-h1-semantic-readiness")
+    _add_successor_h1_inputs(h1_semantic_readiness_validate)
+    h1_semantic_readiness_validate.add_argument("--packet", type=Path, required=True)
+    h1_semantic_readiness_validate.add_argument("--markdown", type=Path, required=True)
+    h1_semantic_readiness_validate.add_argument("--readiness", type=Path, required=True)
+    h1_semantic_readiness_validate.set_defaults(handler=command_validate_h1_semantic_readiness_v6)
+    h1_semantic_decision = commands.add_parser("validate-h1-semantic-review-decision")
+    h1_semantic_decision.add_argument("--schema", type=Path, required=True)
+    h1_semantic_decision.add_argument("--questions", type=Path, required=True)
+    h1_semantic_decision.add_argument("--packet", type=Path, required=True)
+    h1_semantic_decision.add_argument("--readiness", type=Path, required=True)
+    h1_semantic_decision.add_argument("--decision", type=Path, required=True)
+    h1_semantic_decision.set_defaults(handler=command_validate_h1_semantic_review_decision)
+    final_write = commands.add_parser("write-final-successor-reports")
+    _add_final_report_targets(final_write)
+    final_write.add_argument("--audited-commit", required=True)
+    final_write.add_argument("--binding", action="append", required=True)
+    final_write.add_argument("--preflight", action="store_true")
+    final_write.set_defaults(handler=command_write_final_successor_reports)
+    final_verify = commands.add_parser("verify-final-successor-reports")
+    _add_final_report_targets(final_verify)
+    final_verify.set_defaults(handler=command_verify_final_successor_reports)
     return parser
 
 
@@ -664,7 +915,7 @@ def main() -> int:
     args = build_parser().parse_args()
     try:
         return args.handler(args)
-    except (AdapterError, AttemptError, H1Error, OSError, ValueError) as error:
+    except (AdapterError, AttemptError, FinalReportError, H1Error, OSError, ValueError) as error:
         print(str(error), file=sys.stderr)
         return 2
 

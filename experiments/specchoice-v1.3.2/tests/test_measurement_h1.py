@@ -20,11 +20,58 @@ from specchoice_measurement.h1 import H1Error
 
 class H1PublicContractTests(unittest.TestCase):
     def test_v5_h1_question_contract_is_exactly_seven_questions(self) -> None:
-        value = json.loads((Path(__file__).parents[1] / "config/measurement/h1-semantic-review-questions-v1.json").read_text())
+        root = Path(__file__).parents[1]
+        value = json.loads((root / "config/measurement/h1-semantic-review-questions-v1.json").read_text())
         h1.validate_v5_h1_question_contract(value)
         value["question_ids"] = value["question_ids"][:-1]
         with self.assertRaisesRegex(H1Error, "V5_H1_QUESTION_CONTRACT_INVALID"):
             h1.validate_v5_h1_question_contract(value)
+
+        questions = root / "config/measurement/h1-semantic-review-questions-v2.json"
+        schema = root / "config/measurement/h1-review-schema-v4.json"
+        bundle = root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+        result = h1.validate_h1_semantic_questions_v2(
+            questions=questions, bundle_root=bundle
+        )
+        self.assertEqual(result["question_count"], 7)
+        self.assertEqual(result["question_ids"], list(h1._SUCCESSOR_QUESTION_IDS))
+        schema_result = h1.validate_h1_review_schema_v4(
+            schema=schema, questions=questions, bundle_root=bundle
+        )
+        self.assertEqual(schema_result["questions_sha256"], result["questions_sha256"])
+        complete = json.loads(questions.read_text(encoding="utf-8"))
+        self.assertEqual(
+            {fixture for question in complete["questions"] for fixture in question["fixture_ids"]},
+            set(h1._SUCCESSOR_FIXTURE_IDS),
+        )
+        self.assertEqual(
+            {policy for question in complete["questions"] for policy in question["policy_ids"]},
+            {"CACHE", "PBMTE"},
+        )
+        self.assertTrue(all(len(question["evidence"]) == len(question["fixture_ids"]) for question in complete["questions"]))
+        self.assertFalse(any(
+            forbidden in question
+            for question in complete["questions"]
+            for forbidden in ("reviewer", "reviewer_identity", "signature", "timestamp", "choice")
+        ))
+        with tempfile.TemporaryDirectory(dir=root) as directory:
+            temporary = Path(directory)
+            unknown = deepcopy(complete)
+            unknown["questions"][0]["unexpected"] = True
+            unknown["canonical_semantic_content_sha256"] = sha256_bytes(canonical_json_bytes({
+                key: item for key, item in unknown.items() if key != "canonical_semantic_content_sha256"
+            }))
+            unknown_path = temporary / "unknown.json"
+            unknown_path.write_bytes(canonical_json_bytes(unknown))
+            with self.assertRaisesRegex(H1Error, "H1_SEMANTIC_QUESTION_INVALID"):
+                h1.validate_h1_semantic_questions_v2(questions=unknown_path)
+
+            drifted = deepcopy(complete)
+            drifted["questions"][0]["prompt"] += " drift"
+            drifted_path = temporary / "drifted.json"
+            drifted_path.write_bytes(canonical_json_bytes(drifted))
+            with self.assertRaisesRegex(H1Error, "H1_SEMANTIC_QUESTIONS_HASH_INVALID"):
+                h1.validate_h1_semantic_questions_v2(questions=drifted_path)
 
     def test_h1_v3_exposes_readiness_and_v2_decision_validation_without_human_writers(self) -> None:
         from specchoice_measurement.h1 import (  # noqa: PLC0415
@@ -325,8 +372,37 @@ class H1PacketTests(unittest.TestCase):
         value = json.loads((self.root / "config/measurement/h1-semantic-review-questions-v1.json").read_text())
         h1.validate_v5_h1_question_contract(value)
         self.assertEqual(value["question_ids"], list(self.semantic_ids))
+        questions = self.root / "config/measurement/h1-semantic-review-questions-v2.json"
+        schema = self.root / "config/measurement/h1-review-schema-v4.json"
+        result = h1.validate_h1_semantic_questions_v2(
+            questions=questions,
+            bundle_root=self.active_bundle,
+        )
+        self.assertEqual(result["question_ids"], list(self.semantic_ids))
+        self.assertEqual(
+            h1.validate_h1_review_schema_v4(
+                schema=schema, questions=questions, bundle_root=self.active_bundle
+            )["question_count"],
+            7,
+        )
+        from specchoice_measurement.cli import build_parser  # noqa: PLC0415
+
+        parser = build_parser()
+        for command in (
+            "run-adversarial-semantic-suite-v6",
+            "validate-adversarial-semantic-result-v6",
+            "build-h1-semantic-packet-v6",
+            "validate-h1-semantic-packet-v6",
+            "write-h1-semantic-readiness-v6",
+            "validate-h1-semantic-readiness",
+            "validate-h1-semantic-review-decision",
+            "write-final-successor-reports",
+            "verify-final-successor-reports",
+        ):
+            self.assertIn(command, parser._subparsers._group_actions[0].choices)
 
     def test_report_generation_rejects_one_byte_planning_or_predecessor_report_drift_before_write(self) -> None:
+        from specchoice_measurement import final_reports  # noqa: PLC0415
         from specchoice_measurement.final_reports import FinalReportError, validate_final_report_inputs  # noqa: PLC0415
         repository = self.root.parents[1]
         source = repository / ".planning" / "ROADMAP.md"
@@ -340,6 +416,86 @@ class H1PacketTests(unittest.TestCase):
             with self.assertRaisesRegex(FinalReportError, "FINAL_REPORT_INPUT_DRIFT"):
                 validate_final_report_inputs(root, {"input.txt": sha256_bytes(b"frozen\n")}, {"all": True}, human_disposition="approved")
         self.assertNotEqual(frozen, sha256_bytes(source.read_bytes() + b"\n"))
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            records = []
+            for role in final_reports._FINAL_BINDING_ROLES:
+                path = f"inputs/{role}.json" if role in final_reports._CANONICAL_JSON_BINDINGS else f"inputs/{role}.md"
+                target = root / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                raw = canonical_json_bytes({}) if role in final_reports._CANONICAL_JSON_BINDINGS else b"frozen\n"
+                target.write_bytes(raw)
+                records.append({
+                    "byte_length": len(raw),
+                    "path": path,
+                    "role": role,
+                    "sha256": sha256_bytes(raw),
+                })
+            validated, _ = final_reports._validate_final_binding_set(root, records)
+            self.assertEqual(tuple(item["role"] for item in validated), final_reports._FINAL_BINDING_ROLES)
+            roadmap = root / str(records[0]["path"])
+            roadmap.write_bytes(b"drifted\n")
+            with self.assertRaisesRegex(FinalReportError, "FINAL_REPORT_INPUT_DRIFT"):
+                final_reports._validate_final_binding_set(root, records)
+            roadmap.write_bytes(b"frozen\n")
+            for malformed in (
+                records[:-1],
+                [records[1], records[0], *records[2:]],
+                [*records, {**records[-1], "role": "extra"}],
+            ):
+                with self.assertRaisesRegex(FinalReportError, "FINAL_REPORT_BINDING"):
+                    final_reports._validate_final_binding_set(root, malformed)
+
+            for relative in final_reports.FINAL_SUCCESSOR_TARGETS:
+                (root / relative).parent.mkdir(parents=True, exist_ok=True)
+            evidence = {
+                "adversarial": {"case_count": 17, "matched": 17, "status": "diagnostic_only"},
+                "audited_commit": "a" * 40,
+                "bindings": records,
+                "decision": {"aggregate_disposition": "approved", "open_semantic_ids": [], "question_count": 7},
+                "external_publication_authorized": False,
+                "formal": {"case_count": 11, "evidence_span_population": 10, "metrics": {}, "negative_no_surface": {"denominator": 3, "numerator": 3}},
+                "schema_version": "final-successor-evidence-v1",
+            }
+            with patch("specchoice_measurement.final_reports._final_evidence", return_value=evidence):
+                for targets in (
+                    final_reports.FINAL_SUCCESSOR_TARGETS[:-1],
+                    (*final_reports.FINAL_SUCCESSOR_TARGETS, "extra.md"),
+                    (
+                        final_reports.FINAL_SUCCESSOR_TARGETS[1],
+                        final_reports.FINAL_SUCCESSOR_TARGETS[0],
+                        *final_reports.FINAL_SUCCESSOR_TARGETS[2:],
+                    ),
+                ):
+                    with self.assertRaisesRegex(FinalReportError, "FINAL_REPORT_TARGET_INVENTORY_INVALID"):
+                        final_reports.write_final_successor_reports(
+                            root,
+                            audited_commit="a" * 40,
+                            bindings=records,
+                            targets=targets,
+                        )
+                original_link = final_reports._link_no_replace
+                last = root / final_reports.FINAL_SUCCESSOR_TARGETS[-1]
+
+                def collide_on_last(staged: Path, target: Path) -> None:
+                    if target == last:
+                        target.write_bytes(b"racer\n")
+                    original_link(staged, target)
+
+                with patch("specchoice_measurement.final_reports._link_no_replace", side_effect=collide_on_last):
+                    with self.assertRaisesRegex(FinalReportError, "FINAL_REPORT_ATOMIC_PUBLISH_FAILED"):
+                        final_reports.write_final_successor_reports(
+                            root,
+                            audited_commit="a" * 40,
+                            bindings=records,
+                            targets=final_reports.FINAL_SUCCESSOR_TARGETS,
+                        )
+                self.assertTrue(all(
+                    not (root / relative).exists()
+                    for relative in final_reports.FINAL_SUCCESSOR_TARGETS[:-1]
+                ))
+                self.assertEqual(last.read_bytes(), b"racer\n")
 
     def _legacy_context(self, directory: Path) -> dict[str, Path | None]:
         source_root = directory / "pre-cutover"
@@ -561,6 +717,114 @@ class H1PacketTests(unittest.TestCase):
                         h1.validate_h1_decision_v2(
                             schema=self.schema, packet=packet_path, readiness=readiness_path, decision=decision_path
                         )
+
+            questions_path = self.root / "config/measurement/h1-semantic-review-questions-v2.json"
+            schema_v4 = self.root / "config/measurement/h1-review-schema-v4.json"
+            questions = json.loads(questions_path.read_text(encoding="utf-8"))
+            golden = json.loads((self.root / "fixtures/measurement/golden-predictions-v4.json").read_text(encoding="utf-8"))
+            successor_packet: dict[str, object] = {
+                "bindings": {},
+                "external_publication_authorized": False,
+                "fixture_reviews": h1._successor_fixture_reviews(golden),
+                "schema_version": "h1-source-gold-review-v6",
+                "semantic_questions": questions["questions"],
+            }
+            successor_packet["packet_sha256"] = sha256_bytes(canonical_json_bytes(successor_packet))
+            successor_packet_path = root / "successor-packet.json"
+            successor_packet_path.write_bytes(canonical_json_bytes(successor_packet))
+            successor_readiness: dict[str, object] = {
+                "bindings": {"packet_file_sha256": sha256_bytes(successor_packet_path.read_bytes())},
+                "external_publication_authorized": False,
+                "schema_version": "h1-semantic-readiness-v6",
+            }
+            successor_readiness["readiness_sha256"] = sha256_bytes(canonical_json_bytes(successor_readiness))
+            successor_readiness_path = root / "successor-readiness.json"
+            successor_readiness_path.write_bytes(canonical_json_bytes(successor_readiness))
+            schema_result = h1.validate_h1_review_schema_v4(
+                schema=schema_v4, questions=questions_path
+            )
+            successor_decision: dict[str, object] = {
+                "aggregate_disposition": "approved",
+                "bindings": {
+                    "packet_sha256": successor_packet["packet_sha256"],
+                    "questions_sha256": schema_result["questions_sha256"],
+                    "readiness_sha256": successor_readiness["readiness_sha256"],
+                    "schema_sha256": schema_result["schema_sha256"],
+                },
+                "external_publication_authorized": False,
+                "fixture_reviews": [
+                    {
+                        "disposition": "approved",
+                        "fixture_id": review["fixture_id"],
+                        "rationale": "I reviewed this fixture's frozen semantics.",
+                        "reviewed_semantics_sha256": review["reviewed_semantics_sha256"],
+                        "signature": f"human:{review['fixture_id']}",
+                    }
+                    for review in successor_packet["fixture_reviews"]
+                ],
+                "rationale": "I reviewed all fixture and question semantics.",
+                "responses": [
+                    {
+                        "disposition": "approved",
+                        "fixture_signoffs": [
+                            {"disposition": "approved", "fixture_id": fixture_id, "signature": f"human:{question['id']}:{fixture_id}"}
+                            for fixture_id in question["fixture_ids"]
+                        ],
+                        "question_id": question["id"],
+                        "rationale": "The expected semantics and machine assertions are correct.",
+                        "response": "approve_expected_semantics",
+                    }
+                    for question in successor_packet["semantic_questions"]
+                ],
+                "reviewer_identity": "independent-human-reviewer",
+                "schema_version": "h1-source-gold-decision-v5",
+                "signature": "human:all-seven-questions",
+                "timestamp": "2026-08-03T00:00:00Z",
+            }
+            successor_decision["decision_sha256"] = sha256_bytes(canonical_json_bytes(successor_decision))
+            successor_decision_path = root / "successor-decision.json"
+            successor_decision_path.write_bytes(canonical_json_bytes(successor_decision))
+            self.assertEqual(
+                h1.validate_h1_semantic_review_decision(
+                    schema=schema_v4,
+                    questions=questions_path,
+                    packet=successor_packet_path,
+                    readiness=successor_readiness_path,
+                    decision=successor_decision_path,
+                )["questions"],
+                7,
+            )
+            placeholder = deepcopy(successor_decision)
+            placeholder["responses"][0]["response"] = "reviewed"
+            placeholder["decision_sha256"] = sha256_bytes(canonical_json_bytes({
+                key: item for key, item in placeholder.items() if key != "decision_sha256"
+            }))
+            successor_decision_path.write_bytes(canonical_json_bytes(placeholder))
+            with self.assertRaisesRegex(H1Error, "H1_SEMANTIC_RESPONSES_INVALID"):
+                h1.validate_h1_semantic_review_decision(
+                    schema=schema_v4, questions=questions_path, packet=successor_packet_path,
+                    readiness=successor_readiness_path, decision=successor_decision_path,
+                )
+            inconsistent = deepcopy(successor_decision)
+            inconsistent["responses"][0]["response"] = "reject_expected_semantics"
+            inconsistent["responses"][0]["disposition"] = "disputed"
+            for signoff in inconsistent["responses"][0]["fixture_signoffs"]:
+                signoff["disposition"] = "disputed"
+            inconsistent["decision_sha256"] = sha256_bytes(canonical_json_bytes({
+                key: item for key, item in inconsistent.items() if key != "decision_sha256"
+            }))
+            successor_decision_path.write_bytes(canonical_json_bytes(inconsistent))
+            with self.assertRaisesRegex(H1Error, "H1_DISPUTE_AGGREGATION_INVALID"):
+                h1.validate_h1_semantic_review_decision(
+                    schema=schema_v4, questions=questions_path, packet=successor_packet_path,
+                    readiness=successor_readiness_path, decision=successor_decision_path,
+                )
+            with self.assertRaisesRegex(H1Error, "H1_REVIEW_SCHEMA_V4_INVALID"):
+                h1.validate_h1_semantic_review_decision(
+                    schema=self.root / "config/measurement/h1-review-schema-v3.json",
+                    questions=questions_path, packet=successor_packet_path,
+                    readiness=successor_readiness_path, decision=successor_decision_path,
+                )
 
     def test_incomplete_or_disputed_leaf_must_match_aggregate(self) -> None:
         with tempfile.TemporaryDirectory(dir=self.root) as directory:
