@@ -23,6 +23,7 @@ from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_data.cli import require_phase2_local_closure
 from specchoice_evidence.runtime_closure import (
     RuntimeClosureError,
+    verify_phase2_lifecycle_successor_v1,
     verify_runtime_closure_v4_historical,
 )
 from specchoice_measurement.strict_json import decode_strict_json
@@ -158,6 +159,23 @@ class DataAdmissionTests(unittest.TestCase):
             RuntimeClosureError, "RUNTIME_CLOSURE_V4_HISTORY_MISMATCH"
         ):
             verify_runtime_closure_v4_historical(mutated, repository)
+
+    def test_phase2_lifecycle_successor_rejects_alternate_evidence(self) -> None:
+        experiment = Path(__file__).parents[1]
+        repository = experiment.parents[1]
+        successor = decode_strict_json(
+            (experiment / "receipts/phase2-lifecycle-successor-v1.json").read_bytes()
+        )
+
+        verified = verify_phase2_lifecycle_successor_v1(successor, repository)
+        self.assertEqual(verified, successor)
+
+        mutated = deepcopy(successor)
+        mutated["evidence_bindings"][0]["sha256"] = "0" * 64
+        with self.assertRaisesRegex(
+            RuntimeClosureError, "PHASE2_LIFECYCLE_SUCCESSOR_MISMATCH"
+        ):
+            verify_phase2_lifecycle_successor_v1(mutated, repository)
 
     def test_tracer_freezes_admits_renders_and_validates_explicit_human_decision(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
