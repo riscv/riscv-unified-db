@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from copy import deepcopy
 from pathlib import Path
 
 from specchoice_data.admission import (
@@ -19,6 +20,12 @@ from specchoice_data.review import (
     validate_pair_review_decision_v1,
 )
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_data.cli import require_phase2_local_closure
+from specchoice_evidence.runtime_closure import (
+    RuntimeClosureError,
+    verify_runtime_closure_v4_historical,
+)
+from specchoice_measurement.strict_json import decode_strict_json
 
 
 class DataAdmissionTests(unittest.TestCase):
@@ -118,6 +125,39 @@ class DataAdmissionTests(unittest.TestCase):
             accepted_root=accepted,
             schema_raw=self.schema_raw,
         )
+
+    def test_phase2_lifecycle_successor_closes_tracking_transition(self) -> None:
+        gate = require_phase2_local_closure()
+
+        self.assertTrue(gate["approved"])
+        self.assertEqual(
+            gate["authority_sha256"],
+            "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae",
+        )
+        self.assertEqual(
+            gate["decision_file_sha256"],
+            "cac3039340d778198e8bbb3f565d9adc9009183624e81aa9b4dcd31c7a504599",
+        )
+
+    def test_phase2_predecessor_is_historical_and_tamper_evident(self) -> None:
+        experiment = Path(__file__).parents[1]
+        repository = experiment.parents[1]
+        receipt = decode_strict_json(
+            (experiment / "receipts/runtime-executable-closure-v4.json").read_bytes()
+        )
+
+        validated = verify_runtime_closure_v4_historical(receipt, repository)
+        self.assertEqual(
+            validated["freeze_commit"],
+            "47ffaa1c5be6c058a3316cf7f8c56260c1e6ebde",
+        )
+
+        mutated = deepcopy(receipt)
+        mutated["entries"][0]["sha256"] = "0" * 64
+        with self.assertRaisesRegex(
+            RuntimeClosureError, "RUNTIME_CLOSURE_V4_HISTORY_MISMATCH"
+        ):
+            verify_runtime_closure_v4_historical(mutated, repository)
 
     def test_tracer_freezes_admits_renders_and_validates_explicit_human_decision(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

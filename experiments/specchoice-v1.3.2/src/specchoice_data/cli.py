@@ -9,8 +9,10 @@ from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file, write_new_descriptor_file
-from specchoice_measurement.final_reports import build_final_02_22_input_bindings, validate_final_successor_summary_02_22
-from specchoice_measurement.h1 import validate_approved_h1_terminal_v6
+from specchoice_evidence.runtime_closure import (
+    build_phase2_lifecycle_successor_v1,
+    load_phase2_lifecycle_successor_v1,
+)
 from specchoice_measurement.strict_json import decode_strict_json
 
 from .admission import DataAdmissionError, admit_pair_candidate_v1, freeze_candidate_inventory_v1
@@ -38,23 +40,33 @@ def _canonical(path: Path, code: str) -> tuple[dict[str, object], bytes]:
 
 
 def require_phase2_local_closure() -> dict[str, object]:
-    """Recompute the exact approved H1 and terminal-report chain or fail closed."""
+    """Verify the forward-only Phase 2 lifecycle successor or fail closed."""
     try:
         decision, decision_raw = _canonical(_EXPERIMENT / "reviews/h1-source-gold-decision-v6.json", "PHASE2_AUTHORITY_NOT_CLOSED")
-        packet, _ = _canonical(_EXPERIMENT / "reports/h1/h1-source-gold-review-v7/review-packet.json", "PHASE2_AUTHORITY_NOT_CLOSED")
-        readiness, _ = _canonical(_EXPERIMENT / "receipts/h1-review-readiness-v7.json", "PHASE2_AUTHORITY_NOT_CLOSED")
-        closure, _ = _canonical(_EXPERIMENT / "receipts/runtime-executable-closure-v4.json", "PHASE2_AUTHORITY_NOT_CLOSED")
+        successor, _ = _canonical(
+            _EXPERIMENT / "receipts/phase2-lifecycle-successor-v1.json",
+            "PHASE2_AUTHORITY_NOT_CLOSED",
+        )
+        validated_successor = load_phase2_lifecycle_successor_v1(_REPOSITORY, successor)
         authority_path = _EXPERIMENT / "phase2/source-authority.json"
-        approved = validate_approved_h1_terminal_v6(
-            decision=decision, packet=packet, readiness=readiness,
-            runtime_closure=closure, authority_path=authority_path,
-        )
-        terminal = validate_final_successor_summary_02_22(
-            _REPOSITORY, decision=decision, packet=packet, readiness=readiness,
-            runtime_closure=closure, authority_path=authority_path,
-            input_bindings=build_final_02_22_input_bindings(_REPOSITORY),
-        )
         authority, authority_raw = _canonical(authority_path, "PHASE2_AUTHORITY_NOT_CLOSED")
+        evidence = {
+            str(item["path"]): item
+            for item in validated_successor["evidence_bindings"]
+        }
+        decision_binding = evidence[
+            "experiments/specchoice-v1.3.2/reviews/h1-source-gold-decision-v6.json"
+        ]
+        summary_binding = evidence[
+            ".planning/phases/02-deterministic-measurement-spine/02-22-SUMMARY.md"
+        ]
+        if (
+            decision.get("aggregate_disposition") != "approved"
+            or decision_binding.get("sha256") != sha256_bytes(decision_raw)
+            or evidence["experiments/specchoice-v1.3.2/phase2/source-authority.json"].get("sha256")
+            != sha256_bytes(authority_raw)
+        ):
+            raise DataAdmissionError("PHASE2_AUTHORITY_NOT_CLOSED")
     except Exception as error:
         if isinstance(error, KeyboardInterrupt):
             raise
@@ -63,10 +75,33 @@ def require_phase2_local_closure() -> dict[str, object]:
         "accepted_root": _EXPERIMENT / "bundles/accepted" / str(authority["generation"]),
         "authority_sha256": sha256_bytes(authority_raw),
         "decision_sha256": decision["decision_sha256"],
-        "terminal_sha256": terminal["sha256"],
-        "approved": approved["aggregate_disposition"] == "approved",
+        "terminal_sha256": summary_binding["sha256"],
+        "approved": True,
         "decision_file_sha256": sha256_bytes(decision_raw),
     }
+
+
+def _build_phase2_successor(args: argparse.Namespace) -> int:
+    expected_output = _EXPERIMENT / "receipts/phase2-lifecycle-successor-v1.json"
+    if args.output.absolute() != expected_output.absolute():
+        raise DataAdmissionError("PHASE2_LIFECYCLE_OUTPUT_PATH_INVALID")
+    successor = build_phase2_lifecycle_successor_v1(
+        _REPOSITORY,
+        code_freeze_commit=args.code_freeze_commit,
+    )
+    raw = canonical_json_bytes(successor)
+    _write(args.output, raw)
+    load_phase2_lifecycle_successor_v1(_REPOSITORY, successor)
+    sys.stdout.buffer.write(
+        canonical_json_bytes(
+            {
+                "receipt_sha256": sha256_bytes(raw),
+                "status": "written",
+                "successor_sha256": successor["successor_sha256"],
+            }
+        )
+    )
+    return 0
 
 
 def _write(path: Path, raw: bytes) -> None:
@@ -130,6 +165,10 @@ def _validate_decision(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="specchoice-data")
     commands = parser.add_subparsers(dest="command", required=True)
+    successor = commands.add_parser("build-phase2-lifecycle-successor-v1")
+    successor.add_argument("--code-freeze-commit", required=True)
+    successor.add_argument("--output", type=Path, required=True)
+    successor.set_defaults(handler=_build_phase2_successor)
     freeze = commands.add_parser("freeze-candidate-inventory-v1")
     freeze.add_argument("--candidate-root", type=Path, required=True)
     freeze.add_argument("--declarations", type=Path, required=True)

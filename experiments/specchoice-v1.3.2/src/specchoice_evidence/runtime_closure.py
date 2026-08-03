@@ -9,7 +9,6 @@ import platform
 import shutil
 import subprocess
 import sys
-import tempfile
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -725,6 +724,23 @@ def validate_future_target_occupancy_v6(
 # v4 is deliberately a downstream-only closure.  Its receipt is an output, not
 # an input: bootstrap must be useful precisely while that receipt is absent.
 _CLOSURE_V4_RECEIPT = f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v4.json"
+_CLOSURE_V4_FREEZE = "47ffaa1c5be6c058a3316cf7f8c56260c1e6ebde"
+_CLOSURE_V4_BYTE_LENGTH = 127457
+_CLOSURE_V4_SHA256 = "ccaa237c248d374fad781f6645d603d8d64710e8e4c0a748254caccbb7f4a018"
+_PHASE2_LIFECYCLE_RECEIPT = (
+    f"{_EXPERIMENT_PREFIX}/receipts/phase2-lifecycle-successor-v1.json"
+)
+_PHASE2_EVIDENCE_COMMIT = "dc3e5883a10cd3efe1393220caf1f711561867b9"
+_PHASE2_TRACKING_COMMIT = "d419689d829214e0913013c3de0268ffb987f826"
+_PHASE2_TRACKING_PATHS = (
+    ".planning/REQUIREMENTS.md",
+    ".planning/ROADMAP.md",
+    ".planning/STATE.md",
+)
+_PHASE2_SUCCESSOR_CODE_PATHS = (
+    f"{_EXPERIMENT_PREFIX}/src/specchoice_data/cli.py",
+    f"{_EXPERIMENT_PREFIX}/src/specchoice_evidence/runtime_closure.py",
+)
 _ACCEPTED_V6 = (
     f"{_EXPERIMENT_PREFIX}/bundles/accepted/"
     "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
@@ -966,4 +982,182 @@ def load_runtime_closure_v4(repository: Path, supplied: object) -> dict[str, obj
     verified = verify_runtime_closure_v4(receipt, repository)
     if not isinstance(supplied, Mapping) or dict(supplied) != verified:
         raise RuntimeClosureError("RUNTIME_CLOSURE_V4_RECEIPT_MISMATCH")
+    return verified
+
+
+def verify_runtime_closure_v4_historical(closure: object, repository: Path) -> dict[str, object]:
+    """Verify the published v4 receipt from its frozen Git tree after lifecycle close."""
+    if not isinstance(closure, Mapping) or closure.get("schema_version") != "runtime-executable-closure-v4":
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_HISTORY_INVALID")
+    expected, raw = _canonical_object_with_raw(
+        repository.resolve(strict=True) / _CLOSURE_V4_RECEIPT,
+        "RUNTIME_CLOSURE_V4_HISTORY_INVALID",
+    )
+    if (
+        len(raw) != _CLOSURE_V4_BYTE_LENGTH
+        or sha256_bytes(raw) != _CLOSURE_V4_SHA256
+        or dict(closure) != expected
+        or expected.get("freeze_commit") != _CLOSURE_V4_FREEZE
+        or expected.get("future_targets") != future_target_inventory_v7()
+    ):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_HISTORY_MISMATCH")
+    entries = expected.get("entries")
+    if not isinstance(entries, list) or len(entries) != 198:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_HISTORY_INVALID")
+    paths: list[str] = []
+    for entry in entries:
+        if not isinstance(entry, Mapping) or not isinstance(entry.get("path"), str):
+            raise RuntimeClosureError("RUNTIME_CLOSURE_V4_HISTORY_INVALID")
+        path = str(entry["path"])
+        paths.append(path)
+        frozen = _git_blob_binding(repository, _CLOSURE_V4_FREEZE, path)
+        if any(
+            entry.get(key) != frozen.get(key)
+            for key in ("path", "byte_length", "sha256", "git_blob_oid")
+        ):
+            raise RuntimeClosureError("RUNTIME_CLOSURE_V4_HISTORY_MISMATCH")
+    if paths != sorted(paths) or len(set(paths)) != 198:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_HISTORY_INVALID")
+    historical = expected.get("historical_closure_v3")
+    if not isinstance(historical, Mapping):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_HISTORY_INVALID")
+    verify_runtime_closure_v3_historical(
+        _canonical_object(repository / _CLOSURE_V3_RECEIPT, "RUNTIME_CLOSURE_V3_HISTORY_INVALID"),
+        repository,
+    )
+    return expected
+
+
+def _require_commit_ancestor(repository: Path, ancestor: str, descendant: str) -> None:
+    try:
+        _git(repository, "merge-base", "--is-ancestor", ancestor, descendant)
+    except RuntimeClosureError as error:
+        raise RuntimeClosureError("PHASE2_LIFECYCLE_ANCESTRY_INVALID") from error
+
+
+def _lifecycle_binding(
+    repository: Path, commit: str, path: str, *, require_current: bool,
+) -> dict[str, object]:
+    frozen = _git_blob_binding(repository, commit, path)
+    if require_current:
+        current = closure_entry(repository, path)
+        if any(current.get(key) != frozen.get(key) for key in ("path", "byte_length", "sha256")):
+            raise RuntimeClosureError("PHASE2_LIFECYCLE_CURRENT_BYTES_CHANGED")
+    return frozen
+
+
+def build_phase2_lifecycle_successor_v1(
+    repository: Path, *, code_freeze_commit: str,
+) -> dict[str, object]:
+    """Bind the validated v4 freeze, terminal evidence, and tracking transition forward-only."""
+    repository = repository.resolve(strict=True)
+    head = _git(repository, "rev-parse", "HEAD").decode("ascii").strip()
+    for commit in (
+        _PHASE2_EVIDENCE_COMMIT,
+        _PHASE2_TRACKING_COMMIT,
+        code_freeze_commit,
+        head,
+    ):
+        if len(commit) != 40:
+            raise RuntimeClosureError("PHASE2_LIFECYCLE_COMMIT_INVALID")
+        try:
+            int(commit, 16)
+        except ValueError as error:
+            raise RuntimeClosureError("PHASE2_LIFECYCLE_COMMIT_INVALID") from error
+        _git(repository, "cat-file", "-e", f"{commit}^{{commit}}")
+    _require_commit_ancestor(repository, _PHASE2_EVIDENCE_COMMIT, _PHASE2_TRACKING_COMMIT)
+    _require_commit_ancestor(repository, _PHASE2_TRACKING_COMMIT, code_freeze_commit)
+    _require_commit_ancestor(repository, code_freeze_commit, head)
+    try:
+        _git(repository, "cat-file", "-e", f"{code_freeze_commit}:{_PHASE2_LIFECYCLE_RECEIPT}")
+    except RuntimeClosureError:
+        pass
+    else:
+        raise RuntimeClosureError("PHASE2_LIFECYCLE_RECEIPT_PREEXISTED")
+
+    predecessor = _canonical_object(
+        repository / _CLOSURE_V4_RECEIPT,
+        "RUNTIME_CLOSURE_V4_HISTORY_INVALID",
+    )
+    verify_runtime_closure_v4_historical(predecessor, repository)
+    evidence_paths = sorted(
+        {
+            _AUTHORITY_PRE_STATE,
+            _CLOSURE_V4_RECEIPT,
+            *(entry["path"] for entry in future_target_inventory_v7()),
+        }
+    )
+    evidence_bindings = [
+        _lifecycle_binding(
+            repository, _PHASE2_EVIDENCE_COMMIT, path, require_current=True,
+        )
+        for path in evidence_paths
+    ]
+    tracking_bindings = [
+        _lifecycle_binding(
+            repository, _PHASE2_TRACKING_COMMIT, path, require_current=False,
+        )
+        for path in sorted(_PHASE2_TRACKING_PATHS)
+    ]
+    code_bindings = [
+        _lifecycle_binding(repository, code_freeze_commit, path, require_current=True)
+        for path in sorted(_PHASE2_SUCCESSOR_CODE_PATHS)
+    ]
+    payload: dict[str, object] = {
+        "code_bindings": code_bindings,
+        "code_freeze_commit": code_freeze_commit,
+        "evidence_bindings": evidence_bindings,
+        "evidence_commit": _PHASE2_EVIDENCE_COMMIT,
+        "external_publication_authorized": False,
+        "local_only": True,
+        "predecessor_runtime_closure": {
+            "byte_length": _CLOSURE_V4_BYTE_LENGTH,
+            "freeze_commit": _CLOSURE_V4_FREEZE,
+            "path": _CLOSURE_V4_RECEIPT,
+            "sha256": _CLOSURE_V4_SHA256,
+        },
+        "receipt_prestate": {
+            "path": _PHASE2_LIFECYCLE_RECEIPT,
+            "state_at_code_freeze": "absent",
+        },
+        "schema_version": "phase2-lifecycle-successor-v1",
+        "tracking_bindings": tracking_bindings,
+        "tracking_commit": _PHASE2_TRACKING_COMMIT,
+    }
+    return {
+        **payload,
+        "successor_sha256": sha256_bytes(canonical_json_bytes(payload)),
+    }
+
+
+def verify_phase2_lifecycle_successor_v1(
+    successor: object, repository: Path,
+) -> dict[str, object]:
+    """Rebuild the lifecycle successor and reject alternate history or mutable authority."""
+    if (
+        not isinstance(successor, Mapping)
+        or successor.get("schema_version") != "phase2-lifecycle-successor-v1"
+        or not isinstance(successor.get("code_freeze_commit"), str)
+    ):
+        raise RuntimeClosureError("PHASE2_LIFECYCLE_SUCCESSOR_INVALID")
+    rebuilt = build_phase2_lifecycle_successor_v1(
+        repository,
+        code_freeze_commit=str(successor["code_freeze_commit"]),
+    )
+    if dict(successor) != rebuilt:
+        raise RuntimeClosureError("PHASE2_LIFECYCLE_SUCCESSOR_MISMATCH")
+    return rebuilt
+
+
+def load_phase2_lifecycle_successor_v1(
+    repository: Path, supplied: object,
+) -> dict[str, object]:
+    """Load the one canonical local lifecycle successor receipt."""
+    receipt = _canonical_object(
+        repository.resolve(strict=True) / _PHASE2_LIFECYCLE_RECEIPT,
+        "PHASE2_LIFECYCLE_SUCCESSOR_REQUIRED",
+    )
+    verified = verify_phase2_lifecycle_successor_v1(receipt, repository)
+    if not isinstance(supplied, Mapping) or dict(supplied) != verified:
+        raise RuntimeClosureError("PHASE2_LIFECYCLE_SUCCESSOR_MISMATCH")
     return verified
