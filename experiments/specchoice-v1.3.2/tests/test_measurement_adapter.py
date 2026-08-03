@@ -76,6 +76,15 @@ class MeasurementAdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(AdapterError, "V5_OUTCOME_CONTRACT_INVALID"):
             validate_v5_outcome_contract(contract, golden)
 
+    def test_v6_golden_contract_contains_all_eleven_evidence_bound_outcomes(self) -> None:
+        golden = json.loads((self.experiment_root / "fixtures/measurement/golden-predictions-v4.json").read_text())
+        self.assertEqual(len(golden["outcomes"]), 11)
+        for outcome in golden["outcomes"]:
+            self.assertEqual(set(outcome), {"fixture_id", "fixture_class", "expected", "observed", "evidence_spans", "rationale"})
+            if outcome["observed"]["surfaced"]:
+                self.assertTrue(outcome["evidence_spans"])
+                self.assertTrue(all(len(span["text"]) > 1 for span in outcome["evidence_spans"]))
+
     def build_pending(self):
         return build_pr2164_adapter_batch(
             authority_path=self.authority,
