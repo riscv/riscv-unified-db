@@ -154,6 +154,16 @@ class FixtureClosureTests(unittest.TestCase):
             "write-accepted-v5-receipts",
         }.issubset(commands))
 
+    def test_v5_registry_manifest_and_every_repair_payload_are_pre_freeze_committed_inputs(self) -> None:
+        registry = json.loads((self.experiment / "config/fixture-registry-pr2164-v5.json").read_text())
+        manifest = json.loads((self.experiment / "config/fixture-repairs/pr2164-semantic-gold-v4/repair-manifest.json").read_text())
+        self.assertEqual(registry["fixture_count"], 11)
+        self.assertEqual(registry["raw_file_count"], 29)
+        self.assertEqual(len(registry["fixture_ids"]), 11)
+        self.assertEqual(len(manifest["payload_paths"]), 9)
+        for path in manifest["payload_paths"]:
+            self.assertTrue((self.experiment / path).is_file(), path)
+
 
 class FixtureClosureCandidateTests(unittest.TestCase):
 

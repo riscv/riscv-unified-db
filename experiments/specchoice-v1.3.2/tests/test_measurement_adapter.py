@@ -58,6 +58,16 @@ class MeasurementAdapterTests(unittest.TestCase):
             rules_path=self.rules,
         )
 
+    def test_exact_eleven_case_metric_population_contract(self) -> None:
+        contract = json.loads((self.experiment_root / "config/measurement/pr2164-semantic-gold-contract-v1.json").read_text())
+        golden = json.loads((self.experiment_root / "fixtures/measurement/golden-predictions-v3.json").read_text())
+        outcomes = {outcome["fixture_id"]: outcome for outcome in golden["outcomes"]}
+        self.assertEqual(len(outcomes), 11)
+        self.assertEqual({key for key, value in outcomes.items() if value["surfaced"]}, set(contract["surfaced_ids"]))
+        self.assertEqual({key for key, value in outcomes.items() if not value["surfaced"]}, set(contract["negative_ids"]))
+        self.assertEqual([outcomes[key]["proposed_name"] for key in outcomes if outcomes[key]["parameter_status"] == "accept"], contract["identity_names"])
+        self.assertEqual(golden["score_bearing_span_count"], 8)
+
     def build_pending(self):
         return build_pr2164_adapter_batch(
             authority_path=self.authority,
