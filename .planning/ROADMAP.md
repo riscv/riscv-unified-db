@@ -93,7 +93,7 @@ Plans:
   3. The reviewer can trace every failed or warning outcome to a stable diagnostic code and structured fields; a missing accepted name remains an identity warning and never rewrites disposition.
   4. The human reviewer can approve or dispute the frozen gold interpretation from the adapter audit without any model output being used to compensate for disputed semantics.
 
-**Plans:** 16/19 plans executed
+**Plans:** 16/22 plans executed
 
 Plans:
 
@@ -116,6 +116,9 @@ Plans:
 - [ ] 02-17-PLAN.md
 - [ ] 02-18-PLAN.md
 - [ ] 02-19-PLAN.md
+- [ ] 02-20-PLAN.md
+- [ ] 02-21-PLAN.md
+- [ ] 02-22-PLAN.md
 
 **Wave 1**
 
@@ -192,6 +195,12 @@ Plans:
 **Wave 19** *(depends on completed 02-18 Tasks 1-4 and supersedes only unfinished Tasks 5-13)*
 
 - [ ] 02-19: Freeze the complete executable, tool, semantic-input, and authority-prestate closure before renewed construction authorization, then finish dual-gated v5 acceptance, deterministic measurement, seven-question H1 review, and four fresh reports.
+
+**Waves 20-22** *(single downstream-only successor; supersedes further execution of 02-17 through 02-19 without rewriting their history)*
+
+- [ ] 02-20: Implement the authority-bound closure-v4, adapter, measurement, H1, and report code contracts, then freeze only committed code/tests/contracts.
+- [ ] 02-21: Bootstrap closure-v4 from that code-only commit and materialize fresh decision-free adapter, formal, adversarial, packet, and readiness evidence.
+- [ ] 02-22: Obtain the genuine three-state H1 decision and create four fresh reports plus the terminal summary only for an approved result.
 
 ### Phase 3: Human-Reviewed Data Preregistration
 

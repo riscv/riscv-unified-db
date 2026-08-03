@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
 status: executing
-stopped_at: "02-19 Task 14: awaiting independent local acceptance decision for the exact candidate-v6"
-last_updated: "2026-08-03T13:00:00Z"
+stopped_at: "02-20: ready to execute downstream-only closure-v4 code freeze"
+last_updated: "2026-08-03T14:27:09Z"
 last_activity: 2026-08-03
-last_activity_desc: Human-authorized rooted-v6 candidate, audit, and machine-only local-acceptance request validated; no acceptance decision or authority change exists
+last_activity_desc: Accepted-v6 is active; closure-v3 correctly rejects post-freeze Task16 code, and the verified 02-20 to 02-22 downstream-only successor is ready
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 26
+  total_plans: 29
   completed_plans: 23
-  percent: 88
+  percent: 79
 ---
 
 # Project State
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 02 (deterministic-measurement-spine) — EXECUTING
-Plan: 19 of 19
-Status: Task 14 blocking human gate — exact candidate-v6 local acceptance pending
-Last activity: 2026-08-03 — construction decision, candidate-v6, audit, and machine-only request validated; no acceptance decision exists
+Plan: 20 of 22
+Status: Ready to execute downstream-only closure-v4 successor
+Last activity: 2026-08-03 — accepted-v6 cutover remains valid; Task16 evidence is preserved as non-authorizing diagnostic history
 
-Progress: [█████████░] 88%
+Progress: [████████░░] 79%
 
 ## Performance Metrics
 
@@ -139,7 +139,9 @@ Recent decisions affecting current work:
 - [Phase 02-deterministic-measurement-spine]: Both candidate fixtures are formal surfaced-then-classified-out records; the frozen populations are 11 outcomes, 8/8 surfacing, 8/8 disposition, 6/6 parameter identity, S/S evidence spans, and 3/3 negative no-surface outcomes.
 - [Phase 02-deterministic-measurement-spine]: Runtime closure-v2 remains exact non-authorizing history because it omitted the freeze-tree authority pre-state binding.
 - [Phase 02-deterministic-measurement-spine]: Runtime closure-v3 binds the accepted-v3 authority Git blob and all executable inputs at freeze commit dc87436a; its independently rebuilt receipt SHA-256 is dbc86e53c044910536d9dbd494aa7df286604f3fbf6e4fdf8c4f3c11c943f774.
-- [Phase 02-deterministic-measurement-spine]: Rooted proposal-v6 is decision-free and awaits a new human construction disposition; proposal SHA-256 is 2b1864ecc64f23c2b0de4efe1c1bc17f0573f454de5f051a6f036a90c3d725aa.
+- [Phase 02-deterministic-measurement-spine]: Rooted proposal-v6 received genuine local construction authorization, candidate acceptance, and source-authority cutover; accepted-v6 remains the immutable active source identity.
+- [Phase 02-deterministic-measurement-spine]: Task16 measurement outputs are numerically useful but non-authorizing because closure-v3 correctly rejects the post-freeze adapter/test bytes with RUNTIME_CLOSURE_UNCOMMITTED_INPUT.
+- [Phase 02-deterministic-measurement-spine]: 02-20 through 02-22 form one downstream-only successor; they preserve accepted-v6 and do not reopen source construction, acceptance, or cutover unless source identity bytes change.
 
 ### Pending Todos
 
@@ -150,7 +152,7 @@ None yet.
 - Exact provider and immutable model snapshot remain unfrozen until the conditional H4 checkpoint.
 - Python 3.14/scikit-learn lock resolution remains unverified for later measurement work.
 - Human-reviewed pair and strict-core sufficiency is unknown and may legitimately select Red.
-- 02-19 Task 14 is blocking. No accepted-v6, authority cutover, measurement, H1 decision, or report may be created until a genuine independent human local-acceptance decision binds the exact candidate-v6 request.
+- Runtime closure-v4 and fresh measurement/H1 evidence do not yet exist. Phase 2 remains open until the 02-20/21 chain is green and a genuine three-state H1 decision is supplied; only approved may produce terminal reports and summary.
 
 ## Deferred Items
 
@@ -160,6 +162,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-03T13:00:00Z
-Stopped at: 02-19 Task 14 — awaiting independent local acceptance decision for the exact candidate-v6
-Resume file: .planning/phases/02-deterministic-measurement-spine/02-19-PLAN.md
+Last session: 2026-08-03T14:27:09Z
+Stopped at: 02-20 — verified successor plan ready for local code freeze
+Resume file: .planning/phases/02-deterministic-measurement-spine/02-20-PLAN.md
