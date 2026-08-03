@@ -4,25 +4,17 @@
 
 """Fail if IDL/YAML compares a string-enum parameter to a literal not in its enum.
 
-Parameter files under spec/std/isa/param declare legal string values with
-schema.enum. Call sites (CSR type() IDL, globals.isa, etc.) sometimes compare
-those parameters to string literals. A typo such as "always_zero" where the
+Parameter files declare legal string values with schema.enum. Call sites
+(CSR type() IDL, globals.isa, instruction operation() blocks) sometimes compare
+those parameters to a string literal. A typo such as "always_zero" where the
 enum only lists "always zero" is silently wrong: the comparison is always true
-or always false and no schema check catches it.
+or always false, and no schema check catches it.
 
 See https://github.com/riscv/riscv-unified-db/issues/2285
 
-Scope and known limits
-----------------------
-* Parameter enums are loaded with ruamel YAML (typ=safe) from
-  ``spec/std/isa/param/*.yaml``.
-* Call sites are scanned under the entire ``spec/`` tree, restricted to ordinary
-  files whose names contain a dot (e.g. ``foo.yaml``), so extension-less junk is
-  skipped.
-* Comparisons are matched only in the form ``PARAM op "literal"`` or
-  ``PARAM op 'literal'`` (parameter name on the left). The reverse form
-  ``"literal" op PARAM`` is legal IDL but is not checked; it is expected to be
-  rare or absent in this tree. Extend COMPARE_RE if that form appears.
+Only comparisons written on a single line are tested, and only with the
+parameter on the left. "literal" op PARAM is legal IDL but does not currently
+appear anywhere under spec/.
 """
 
 from __future__ import annotations
@@ -35,39 +27,17 @@ from pathlib import Path
 from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
 
-ROOT = Path(__file__).resolve().parents[2]
-PARAM_DIR = ROOT / "spec" / "std" / "isa" / "param"
-SPEC_ROOT = ROOT / "spec"
-
-# Safe loader shared with other UDB Python tooling (see tools/python/udb.py).
 YAML_SAFE = YAML(typ="safe")
 
-
-def repo_paths(root: Path) -> tuple[Path, Path]:
-    """Return (param_dir, spec_root) for a repository root.
-
-    Uses module globals PARAM_DIR / SPEC_ROOT when ``root`` is this checkout,
-    so the default path is not re-derived by string concatenation in main().
-    """
-    root = root.resolve()
-    if root == ROOT:
-        return PARAM_DIR, SPEC_ROOT
-    return root / "spec" / "std" / "isa" / "param", root / "spec"
-
-
-# PARAM == "literal" or PARAM != 'literal'
-# group(1) = parameter name
-# group(2) = operator (== or !=)
-# group(3) = literal when double-quoted
-# group(4) = literal when single-quoted
-# (Only one of group(3)/group(4) is set per match.)
-#
-# Robustness: does not match "literal" == PARAM (parameter on the right).
+# Regular expression to match either:
+# - PARAM [op] "literal"
+# - PARAM [op] 'literal'
+# ... where "op" can be either "==" or "!=".
 COMPARE_RE = re.compile(r"""\b([A-Z][A-Z0-9_]*)\s*(==|!=)\s*(?:"([^"]*)"|'([^']*)')""")
 
 
 def load_param_string_enums(param_dir: Path) -> dict[str, set[str]]:
-    """Map parameter name -> set of schema.enum string values (ruamel YAML)."""
+    """Map parameter name -> set of schema.enum string values."""
     enums: dict[str, set[str]] = {}
     if not param_dir.is_dir():
         return enums
@@ -80,45 +50,31 @@ def load_param_string_enums(param_dir: Path) -> dict[str, set[str]]:
             print(f"ERROR: could not load {path}: {exc}", file=sys.stderr)
             continue
 
-        if not isinstance(doc, dict):
+        if not isinstance(doc, dict) or doc.get("kind") != "parameter":
             continue
 
-        # Only true parameter objects (defensive; param/ should be all kind: parameter).
-        if doc.get("kind") != "parameter":
-            continue
-
-        name = doc.get("name")
         schema = doc.get("schema")
-        if not isinstance(name, str) or not isinstance(schema, dict):
+        if not isinstance(schema, dict):
             continue
 
-        enum_vals = schema.get("enum")
-        if not isinstance(enum_vals, list):
-            continue
-
-        # Only string members matter for string-literal compares in IDL.
-        # Include even when schema.type is missing (some params only set enum).
-        values = {v for v in enum_vals if isinstance(v, str)}
+        # Only string members matter here. Parameters that set enum without
+        # type are included, since several real ones do.
+        values = {v for v in schema.get("enum", []) if isinstance(v, str)}
         if values:
-            enums[name] = values
+            enums[doc["name"]] = values
 
     return enums
 
 
 def iter_scan_files(spec_root: Path) -> list[Path]:
-    """All files under spec/ whose basename contains a '.' (has an extension)."""
-    files: list[Path] = []
-    if not spec_root.is_dir():
-        return files
+    """Every ordinary file under spec/ whose name has an extension.
 
-    for path in spec_root.rglob("*"):
-        if not path.is_file():
-            continue
-        # ?*.?* style: require a dot in the filename so we skip extension-less paths.
-        if "." not in path.name:
-            continue
-        files.append(path)
-    return sorted(files)
+    .layout templates are scanned too. They are the source the generated
+    instruction YAML comes from, and they do carry comparisons, so a typo in
+    one should be reported against the file you can actually edit rather than
+    against the generated copy that says not to edit it.
+    """
+    return sorted(p for p in spec_root.rglob("?*.?*") if p.is_file())
 
 
 def find_invalid_compares(
@@ -139,9 +95,9 @@ def find_invalid_compares(
                 if param not in enums:
                     continue
                 op = match.group(2)
-                # group(3) = double-quoted literal; group(4) = single-quoted.
+                # group(3) is the double-quoted literal, group(4) the
+                # single-quoted one. Exactly one of them matches.
                 literal = match.group(3) if match.group(3) is not None else match.group(4)
-                assert literal is not None
                 if literal in enums[param]:
                     continue
                 bad.append((path, line_no, param, op, literal, line.strip()))
@@ -153,20 +109,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--root",
         type=Path,
-        default=ROOT,
-        help="Repository root (default: inferred from script location)",
+        default=".",
+        help="Repository root (default: current directory)",
     )
     args = parser.parse_args(argv)
     root: Path = args.root.resolve()
 
-    param_dir, spec_root = repo_paths(root)
+    spec_root = root / "spec"
+    param_dir = spec_root / "std" / "isa" / "param"
 
     if not param_dir.is_dir():
         print(f"ERROR: param directory not found: {param_dir}", file=sys.stderr)
-        return 2
-
-    if not spec_root.is_dir():
-        print(f"ERROR: spec directory not found: {spec_root}", file=sys.stderr)
         return 2
 
     enums = load_param_string_enums(param_dir)
