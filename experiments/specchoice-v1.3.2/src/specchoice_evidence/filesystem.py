@@ -253,7 +253,10 @@ def write_exact_descriptor_files(root: Path, payloads: Mapping[str, bytes]) -> N
 
     The lexical root is opened exactly once. Every directory and leaf descriptor
     remains rooted in that authority through the cross-leaf postflight, so a
-    pathname rebind cannot split one batch across two trees.
+    pathname rebind cannot split one batch across two trees. The final sweep
+    detects mutations overlapping the first verification pass; it does not
+    provide cross-file transaction atomicity or protect against a same-UID
+    writer modifying a leaf after that leaf's final observation.
     """
     if not isinstance(payloads, Mapping) or not payloads:
         raise FilesystemPolicyError("AUTHORITATIVE_WRITE_INVALID")
