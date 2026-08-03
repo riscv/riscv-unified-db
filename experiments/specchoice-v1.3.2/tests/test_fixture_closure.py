@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import io
 import json
 import os
 import shutil
@@ -976,6 +977,17 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     ):
                         cli_module._v4_repair_payloads(original_manifest, staging_root)
 
+                    oversized_staging = temporary / "oversized-staging"
+                    for payload in staged_paths:
+                        destination = oversized_staging / payload
+                        destination.parent.mkdir(parents=True, exist_ok=True)
+                        destination.write_bytes((staging_root / payload).read_bytes())
+                    (oversized_staging / staged_paths[0]).write_bytes(b"x" * (64 * 1024 + 1))
+                    with self.assertRaisesRegex(
+                        SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_PAYLOAD_INVALID"
+                    ):
+                        cli_module._v4_repair_payloads(original_manifest, oversized_staging)
+
                 with self.subTest("v4_yaml_batch_rejects_historical_and_structural_ambiguity"):
                     with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_REPAIR_YAML_INVALID"):
                         source_contract_module._validate_v4_repair_yaml_batch(historical_payloads)
@@ -1054,6 +1066,56 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                                 max_stderr_bytes=4096,
                                 timeout=5,
                             )
+
+                    def fake_process() -> mock.Mock:
+                        process = mock.Mock()
+                        process.stdout = io.BytesIO()
+                        process.stderr = io.BytesIO()
+                        process.poll.return_value = None
+                        process.wait.return_value = -9
+                        return process
+
+                    selector_setup_cases = ("constructor", "second-register")
+                    for setup_case in selector_setup_cases:
+                        process = fake_process()
+                        selector = mock.Mock()
+                        selector.register.side_effect = [None, OSError("register failed")]
+                        selector_patch = (
+                            mock.patch.object(source_contract_module.selectors, "DefaultSelector", side_effect=OSError("selector failed"))
+                            if setup_case == "constructor"
+                            else mock.patch.object(source_contract_module.selectors, "DefaultSelector", return_value=selector)
+                        )
+                        with self.subTest(selector_setup=setup_case), mock.patch.object(
+                            source_contract_module.subprocess, "Popen", return_value=process,
+                        ), selector_patch, self.assertRaises(OSError):
+                            source_contract_module._run_bounded_subprocess(
+                                [sys.executable, "-c", "pass"], input_bytes=b"",
+                                max_stdout_bytes=1, max_stderr_bytes=1, timeout=1,
+                            )
+                        process.kill.assert_called_once_with()
+                        process.wait.assert_called()
+                        self.assertTrue(process.stdout.closed)
+                        self.assertTrue(process.stderr.closed)
+                        if setup_case == "second-register":
+                            selector.close.assert_called_once_with()
+
+                    spawned: list[subprocess.Popen[bytes]] = []
+                    original_popen = source_contract_module.subprocess.Popen
+
+                    def capture_popen(*args: object, **kwargs: object) -> subprocess.Popen[bytes]:
+                        process = original_popen(*args, **kwargs)
+                        spawned.append(process)
+                        return process
+
+                    with mock.patch.object(source_contract_module.subprocess, "Popen", side_effect=capture_popen), self.assertRaises(subprocess.TimeoutExpired):
+                        source_contract_module._run_bounded_subprocess(
+                            [sys.executable, "-c", "import time; time.sleep(10)"], input_bytes=b"",
+                            max_stdout_bytes=1, max_stderr_bytes=1, timeout=0.05,
+                        )
+                    self.assertEqual(len(spawned), 1)
+                    self.assertIsNotNone(spawned[0].poll())
+                    self.assertTrue(spawned[0].stdout is not None and spawned[0].stdout.closed)
+                    self.assertTrue(spawned[0].stderr is not None and spawned[0].stderr.closed)
 
                 with self.subTest("v4_cache_domain_requires_honest_versioned_boundary"):
                     with self.assertRaisesRegex(SourceContractProposalError, "FIXTURE_CONSTRUCTION_V4_SEMANTICS_INVALID"):

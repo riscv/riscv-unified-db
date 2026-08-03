@@ -469,6 +469,53 @@ class FilesystemBoundaryTests(unittest.TestCase):
 
     def test_dirfd_reader_rejects_root_and_intermediate_rebind_without_escape(self) -> None:
         """A held authority directory must outlive lexical root/child replacement."""
+        with self.subTest(operation="batch-bounded-read-rejects-static-oversize"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "large.yaml").write_bytes(b"x" * 65)
+            read_calls = 0
+            original_read = os.read
+
+            def count_reads(descriptor: int, size: int) -> bytes:
+                nonlocal read_calls
+                if stat.S_ISREG(os.fstat(descriptor).st_mode):
+                    read_calls += 1
+                return original_read(descriptor, size)
+
+            with patch("specchoice_evidence.filesystem.os.read", side_effect=count_reads), self.assertRaisesRegex(
+                FilesystemPolicyError, "AUTHORITATIVE_FILE_TOO_LARGE"
+            ):
+                read_authoritative_files(root, ["large.yaml"], max_bytes=64)
+            self.assertEqual(read_calls, 0)
+
+        with self.subTest(operation="batch-bounded-read-stops-at-max-plus-one"), tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            limit = 64
+            leaf = root / "growing.yaml"
+            leaf.write_bytes(b"a" * limit)
+            inode = leaf.stat().st_ino
+            delivered = 0
+            grew = False
+            original_read = os.read
+
+            def grow_during_read(descriptor: int, size: int) -> bytes:
+                nonlocal delivered, grew
+                if stat.S_ISREG(os.fstat(descriptor).st_mode) and os.fstat(descriptor).st_ino == inode:
+                    if not grew:
+                        grew = True
+                        with leaf.open("ab") as stream:
+                            stream.write(b"b" * 1024)
+                    chunk = original_read(descriptor, size)
+                    delivered += len(chunk)
+                    return chunk
+                return original_read(descriptor, size)
+
+            with patch("specchoice_evidence.filesystem.os.read", side_effect=grow_during_read), self.assertRaisesRegex(
+                FilesystemPolicyError, "AUTHORITATIVE_(FILE_CHANGED|FILE_TOO_LARGE)"
+            ):
+                read_authoritative_files(root, ["growing.yaml"], max_bytes=limit)
+            self.assertTrue(grew)
+            self.assertLessEqual(delivered, limit + 1)
+
         original_open = os.open
         for replaced_part in ("root", "nested"):
             with self.subTest(replaced_part=replaced_part), tempfile.TemporaryDirectory() as directory:
