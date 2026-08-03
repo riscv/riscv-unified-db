@@ -30,6 +30,19 @@ class H1Error(ValueError):
     """Stable H1 packet or decision validation diagnostic."""
 
 
+_V5_H1_QUESTION_IDS = (
+    "ts03_adjacency", "ts03_empty_null_single_element", "ts03_equal_element_stable_order",
+    "ts04_unclassified_manual_review", "ts05_adjacency", "ts05_empty_null_single_element",
+    "ts05_equal_element_stable_order",
+)
+
+
+def validate_v5_h1_question_contract(value: object) -> None:
+    """Require the fixed seven human-owned semantic questions before packet rendering."""
+    if not isinstance(value, dict) or value.get("schema_version") != "h1-semantic-review-questions-v1" or value.get("question_ids") != list(_V5_H1_QUESTION_IDS):
+        raise H1Error("V5_H1_QUESTION_CONTRACT_INVALID")
+
+
 _ROOT = Path(__file__).parents[2]
 _SCHEMA = _ROOT / "config/measurement/canonical-adjudication-schema-v1.json"
 _H1_V2_SCHEMA = _ROOT / "config/measurement/h1-review-schema-v2.json"

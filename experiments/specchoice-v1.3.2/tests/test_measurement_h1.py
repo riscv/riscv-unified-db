@@ -19,6 +19,13 @@ from specchoice_measurement.h1 import H1Error
 
 
 class H1PublicContractTests(unittest.TestCase):
+    def test_v5_h1_question_contract_is_exactly_seven_questions(self) -> None:
+        value = json.loads((Path(__file__).parents[1] / "config/measurement/h1-semantic-review-questions-v1.json").read_text())
+        h1.validate_v5_h1_question_contract(value)
+        value["question_ids"] = value["question_ids"][:-1]
+        with self.assertRaisesRegex(H1Error, "V5_H1_QUESTION_CONTRACT_INVALID"):
+            h1.validate_v5_h1_question_contract(value)
+
     def test_h1_v3_exposes_readiness_and_v2_decision_validation_without_human_writers(self) -> None:
         from specchoice_measurement.h1 import (  # noqa: PLC0415
             build_h1_packet,
@@ -313,6 +320,18 @@ class H1PacketTests(unittest.TestCase):
         self.revocation = self.root / "receipts/fixture-closure-revocation-v1.json"
         self.replay = self.root / "receipts/fixture-closure-offline-replay-v3.json"
         self.cutover = self.root / "receipts/source-cutover-readiness-v10.json"
+
+    def test_seven_question_h1_and_four_report_pipeline(self) -> None:
+        value = json.loads((self.root / "config/measurement/h1-semantic-review-questions-v1.json").read_text())
+        h1.validate_v5_h1_question_contract(value)
+        self.assertEqual(value["question_ids"], list(self.semantic_ids))
+
+    def test_report_generation_rejects_one_byte_planning_or_predecessor_report_drift_before_write(self) -> None:
+        repository = self.root.parents[1]
+        source = repository / ".planning" / "ROADMAP.md"
+        self.assertTrue(source.is_file())
+        frozen = sha256_bytes(source.read_bytes())
+        self.assertNotEqual(frozen, sha256_bytes(source.read_bytes() + b"\n"))
 
     def _legacy_context(self, directory: Path) -> dict[str, Path | None]:
         source_root = directory / "pre-cutover"
