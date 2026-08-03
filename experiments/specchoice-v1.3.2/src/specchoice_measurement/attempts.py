@@ -16,7 +16,7 @@ from specchoice_evidence.bundle import BundleError, _publish_directory_no_replac
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 
-from .adapter import build_pr2164_adapter_batch
+from .adapter import build_pr2164_adapter_batch, build_pr2164_v6_adapter_batch
 from .preflight import preflight_prediction_batch
 from .scoring import score_prediction_batch
 
@@ -315,6 +315,357 @@ def validate_measurement_attempt(
         schema_raw=schema_raw,
     )
     return {"attempt_sha256": manifest["attempt_sha256"], "role": role, "status": status}
+
+
+_SUCCESSOR_PARTITION_V6 = {"candidate": 2, "negative": 3, "positive": 6}
+_SUCCESSOR_METRICS_V5 = {
+    "disposition": {"denominator": 8, "numerator": 8},
+    "evidence_integrity": {"denominator": 10, "numerator": 10},
+    "identity": {"denominator": 6, "numerator": 6},
+    "negative_controls": {"denominator": 3, "numerator": 3},
+    "surfacing": {"denominator": 8, "numerator": 8},
+}
+
+
+def _successor_adapter_v6(
+    *,
+    fixture_registry: Path,
+    rules: Path,
+    semantic_contract: Path,
+    golden_predictions: Path,
+    bundle_root: Path,
+    adapter_batch: Path | None = None,
+) -> tuple[object, bytes, dict[str, object], bytes]:
+    """Rebuild the successor adapter and optionally match its exact published bytes."""
+    golden, golden_raw = _canonical_file(
+        golden_predictions, "SUCCESSOR_GOLDEN_INVALID"
+    )
+    batch = build_pr2164_v6_adapter_batch(
+        registry_path=fixture_registry,
+        rules_path=rules,
+        contract_path=semantic_contract,
+        golden_path=golden_predictions,
+        bundle_root=bundle_root,
+    )
+    records = tuple(getattr(batch, "records", ()))
+    partition = {
+        category: sum(getattr(record, "category", None) == category for record in records)
+        for category in _SUCCESSOR_PARTITION_V6
+    }
+    raw_count = sum(len(tuple(getattr(record, "raw_files", ()))) for record in records)
+    source_identity = getattr(batch, "source_identity", None)
+    if (
+        getattr(batch, "valid", False) is not True
+        or tuple(getattr(batch, "diagnostics", ()))
+        or len(records) != 11
+        or partition != _SUCCESSOR_PARTITION_V6
+        or raw_count != 29
+        or getattr(batch, "score_bearing_span_count", None) != 10
+        or not isinstance(source_identity, dict)
+        or source_identity.get("golden_predictions_sha256") != sha256_bytes(golden_raw)
+    ):
+        raise AttemptError("SUCCESSOR_ADAPTER_INVALID")
+    canonical = canonical_json_bytes(getattr(batch, "as_dict")())
+    if adapter_batch is not None:
+        _, published = _canonical_file(
+            adapter_batch, "SUCCESSOR_ADAPTER_ARTIFACT_INVALID"
+        )
+        if published != canonical:
+            raise AttemptError("SUCCESSOR_ADAPTER_ARTIFACT_INVALID")
+    return batch, canonical, golden, golden_raw
+
+
+def write_successor_adapter_batch_v6(
+    *,
+    fixture_registry: Path,
+    rules: Path,
+    semantic_contract: Path,
+    golden_predictions: Path,
+    bundle_root: Path,
+    output: Path,
+    preflight: bool = False,
+) -> dict[str, object]:
+    batch, canonical, _, _ = _successor_adapter_v6(
+        fixture_registry=fixture_registry,
+        rules=rules,
+        semantic_contract=semantic_contract,
+        golden_predictions=golden_predictions,
+        bundle_root=bundle_root,
+    )
+    if (
+        output.exists()
+        or output.is_symlink()
+        or not output.parent.is_dir()
+        or output.parent.is_symlink()
+    ):
+        raise AttemptError("SUCCESSOR_ADAPTER_OUTPUT_EXISTS")
+    if not preflight:
+        try:
+            _write_exact(output, canonical)
+            _sync_directory(output.parent)
+        except (FileExistsError, OSError) as error:
+            raise AttemptError("SUCCESSOR_ADAPTER_OUTPUT_EXISTS") from error
+    return {
+        "adapter_batch_sha256": getattr(batch, "adapter_batch_sha256"),
+        "fixture_count": 11,
+        "raw_file_count": 29,
+        "status": "preflight_valid" if preflight else "written",
+    }
+
+
+def validate_successor_adapter_batch_v6(
+    *,
+    adapter_batch: Path,
+    fixture_registry: Path,
+    rules: Path,
+    semantic_contract: Path,
+    golden_predictions: Path,
+    bundle_root: Path,
+) -> dict[str, object]:
+    batch, canonical, _, _ = _successor_adapter_v6(
+        adapter_batch=adapter_batch,
+        fixture_registry=fixture_registry,
+        rules=rules,
+        semantic_contract=semantic_contract,
+        golden_predictions=golden_predictions,
+        bundle_root=bundle_root,
+    )
+    return {
+        "adapter_batch_file_sha256": sha256_bytes(canonical),
+        "adapter_batch_sha256": getattr(batch, "adapter_batch_sha256"),
+        "fixture_count": 11,
+        "partition": dict(_SUCCESSOR_PARTITION_V6),
+        "raw_file_count": 29,
+        "score_bearing_span_count": 10,
+        "valid": True,
+    }
+
+
+def _successor_prediction_bytes_v5(
+    *, golden: Mapping[str, object], adapter_batch: object
+) -> bytes:
+    outcomes = golden.get("outcomes")
+    if (
+        golden.get("schema_version") != "golden-predictions-v4"
+        or not isinstance(outcomes, list)
+        or len(outcomes) != 11
+    ):
+        raise AttemptError("SUCCESSOR_GOLDEN_INVALID")
+    predictions: list[dict[str, object]] = []
+    for outcome in outcomes:
+        if not isinstance(outcome, dict):
+            raise AttemptError("SUCCESSOR_GOLDEN_INVALID")
+        observed = outcome.get("observed")
+        spans = outcome.get("evidence_spans")
+        if (
+            not isinstance(observed, dict)
+            or not isinstance(spans, list)
+            or not isinstance(outcome.get("fixture_id"), str)
+            or not isinstance(outcome.get("rationale"), str)
+        ):
+            raise AttemptError("SUCCESSOR_GOLDEN_INVALID")
+        fixture_id = str(outcome["fixture_id"])
+        predictions.append(
+            {
+                "adjudication": {
+                    "evidence_spans": deepcopy(spans),
+                    "parameter_status": observed.get("status"),
+                    "proposed_name": observed.get("name"),
+                    "surfaced": observed.get("surfaced"),
+                },
+                "finding_id": f"{fixture_id}:1",
+                "fixture_id": fixture_id,
+                "rationale": outcome["rationale"],
+            }
+        )
+    return canonical_json_bytes(
+        {
+            "adapter_batch_sha256": getattr(adapter_batch, "adapter_batch_sha256", None),
+            "predictions": predictions,
+            "schema_version": "canonical-adjudication-v3",
+        }
+    )
+
+
+def _successor_formal_score_v5(
+    *, batch: object, golden: Mapping[str, object]
+) -> tuple[bytes, object, object]:
+    raw_predictions = _successor_prediction_bytes_v5(
+        golden=golden, adapter_batch=batch
+    )
+    preflight = preflight_prediction_batch(
+        raw=raw_predictions, adapter_batch=batch, ingress="current-v3"
+    )
+    score = score_prediction_batch(
+        adapter_batch=batch, preflight=preflight, mode="formal"
+    )
+    metrics = getattr(score, "metrics", None)
+    if (
+        getattr(preflight, "status", None) != "valid_preflight"
+        or len(tuple(getattr(preflight, "parsed_predictions", ()))) != 11
+        or getattr(score, "status", None) != "completed"
+        or len(tuple(getattr(score, "case_outcomes", ()))) != 11
+        or tuple(getattr(score, "diagnostics", ()))
+        or metrics is None
+        or getattr(metrics, "as_dict")() != _SUCCESSOR_METRICS_V5
+    ):
+        raise AttemptError("SUCCESSOR_FORMAL_SCORE_INVALID")
+    return raw_predictions, preflight, score
+
+
+def _read_successor_formal_artifacts_v5(attempt: Path) -> tuple[dict[str, object], list[object], dict[str, object]]:
+    manifest = load_measurement_attempt_manifest(attempt_root=attempt)
+    try:
+        case_raw = _read_attempt_file(
+            attempt_root=attempt,
+            name="case-outcomes.json",
+            code="SUCCESSOR_FORMAL_ARTIFACT_INVALID",
+        )
+        metrics_raw = _read_attempt_file(
+            attempt_root=attempt,
+            name="metrics.json",
+            code="SUCCESSOR_FORMAL_ARTIFACT_INVALID",
+        )
+        cases = json.loads(case_raw.decode("utf-8"))
+        metrics = json.loads(metrics_raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise AttemptError("SUCCESSOR_FORMAL_ARTIFACT_INVALID") from error
+    if (
+        not isinstance(cases, list)
+        or len(cases) != 11
+        or not isinstance(metrics, dict)
+        or metrics != _SUCCESSOR_METRICS_V5
+        or canonical_json_bytes(cases) != case_raw
+        or canonical_json_bytes(metrics) != metrics_raw
+    ):
+        raise AttemptError("SUCCESSOR_FORMAL_ARTIFACT_INVALID")
+    return manifest, cases, metrics
+
+
+def run_formal_measurement_v5(
+    *,
+    adapter_batch: Path,
+    fixture_registry: Path,
+    rules: Path,
+    semantic_contract: Path,
+    golden_predictions: Path,
+    adjudication_schema: Path,
+    bundle_root: Path,
+    attempt_root: Path,
+    attempt_id: str,
+    preflight: bool = False,
+) -> dict[str, object]:
+    batch, _, golden, _ = _successor_adapter_v6(
+        adapter_batch=adapter_batch,
+        fixture_registry=fixture_registry,
+        rules=rules,
+        semantic_contract=semantic_contract,
+        golden_predictions=golden_predictions,
+        bundle_root=bundle_root,
+    )
+    _, schema_raw = _canonical_file(
+        adjudication_schema, "SUCCESSOR_ADJUDICATION_SCHEMA_INVALID"
+    )
+    source_identity = getattr(batch, "source_identity", {})
+    if source_identity.get("adjudication_schema_sha256") != sha256_bytes(schema_raw):
+        raise AttemptError("SUCCESSOR_ADJUDICATION_SCHEMA_INVALID")
+    raw_predictions, parsed, score = _successor_formal_score_v5(
+        batch=batch, golden=golden
+    )
+    target = _attempt_target(attempt_root, attempt_id)
+    if preflight:
+        return {
+            "adapter_batch_sha256": getattr(batch, "adapter_batch_sha256"),
+            "case_count": 11,
+            "metrics": dict(_SUCCESSOR_METRICS_V5),
+            "status": "preflight_valid",
+        }
+    result = run_measurement_attempt(
+        mode="formal",
+        attempt_id=attempt_id,
+        attempt_root=attempt_root,
+        inputs={
+            "adapter_batch": batch,
+            "ingress": "current-v3",
+            "preflight": parsed,
+            "raw_predictions": raw_predictions,
+            "score_result": score,
+            "schema_raw": schema_raw,
+        },
+    )
+    validated = validate_formal_measurement_v5(
+        adapter_batch=adapter_batch,
+        fixture_registry=fixture_registry,
+        rules=rules,
+        semantic_contract=semantic_contract,
+        golden_predictions=golden_predictions,
+        adjudication_schema=adjudication_schema,
+        bundle_root=bundle_root,
+        attempt=target,
+    )
+    if result.get("attempt_sha256") != validated.get("attempt_sha256"):
+        raise AttemptError("SUCCESSOR_FORMAL_VALIDATION_MISMATCH")
+    return validated
+
+
+def validate_formal_measurement_v5(
+    *,
+    adapter_batch: Path,
+    fixture_registry: Path,
+    rules: Path,
+    semantic_contract: Path,
+    golden_predictions: Path,
+    adjudication_schema: Path,
+    bundle_root: Path,
+    attempt: Path,
+) -> dict[str, object]:
+    batch, _, golden, _ = _successor_adapter_v6(
+        adapter_batch=adapter_batch,
+        fixture_registry=fixture_registry,
+        rules=rules,
+        semantic_contract=semantic_contract,
+        golden_predictions=golden_predictions,
+        bundle_root=bundle_root,
+    )
+    _, schema_raw = _canonical_file(
+        adjudication_schema, "SUCCESSOR_ADJUDICATION_SCHEMA_INVALID"
+    )
+    source_identity = getattr(batch, "source_identity", {})
+    if source_identity.get("adjudication_schema_sha256") != sha256_bytes(schema_raw):
+        raise AttemptError("SUCCESSOR_ADJUDICATION_SCHEMA_INVALID")
+    expected_raw, _, _ = _successor_formal_score_v5(batch=batch, golden=golden)
+    validated = validate_measurement_attempt(
+        attempt_root=attempt, adapter_batch=batch, schema_raw=schema_raw
+    )
+    manifest, cases, metrics = _read_successor_formal_artifacts_v5(attempt)
+    try:
+        retained_raw = base64.b64decode(
+            manifest["raw_predictions_base64"], validate=True
+        )
+    except (KeyError, TypeError, ValueError) as error:
+        raise AttemptError("SUCCESSOR_FORMAL_LINEAGE_INVALID") from error
+    category_counts = {
+        category: sum(
+            isinstance(case, dict) and case.get("category") == category for case in cases
+        )
+        for category in _SUCCESSOR_PARTITION_V6
+    }
+    if (
+        validated.get("role") != "formal"
+        or validated.get("status") != "completed"
+        or manifest.get("schema_version") != "measurement-attempt-v1"
+        or manifest.get("raw_predictions_sha256") != sha256_bytes(expected_raw)
+        or retained_raw != expected_raw
+        or category_counts != _SUCCESSOR_PARTITION_V6
+    ):
+        raise AttemptError("SUCCESSOR_FORMAL_LINEAGE_INVALID")
+    return {
+        "attempt_sha256": validated["attempt_sha256"],
+        "case_count": len(cases),
+        "metrics": metrics,
+        "role": "formal",
+        "status": "completed",
+    }
 
 
 _V4_ADVERSARIAL_CASE_IDS = (
@@ -844,8 +1195,11 @@ def _build_adversarial_result_v6(
     golden_predictions: Path,
     formal_attempt: Path,
     adapter_batch: Path,
+    fixture_registry: Path,
     rules: Path,
+    semantic_contract: Path,
     schema: Path,
+    bundle_root: Path,
 ) -> tuple[dict[str, object], dict[str, object]]:
     contract_result = validate_required_diagnostics_v4(
         contract=contract, golden_predictions=golden_predictions
@@ -853,40 +1207,27 @@ def _build_adversarial_result_v6(
     contract_value, contract_raw = _canonical_file(
         contract, "ADVERSARIAL_V4_CONTRACT_INVALID"
     )
-    golden, golden_raw = _canonical_file(
-        golden_predictions, "ADVERSARIAL_V4_GOLDEN_INVALID"
+    batch, adapter_raw, golden, golden_raw = _successor_adapter_v6(
+        adapter_batch=adapter_batch,
+        fixture_registry=fixture_registry,
+        rules=rules,
+        semantic_contract=semantic_contract,
+        golden_predictions=golden_predictions,
+        bundle_root=bundle_root,
     )
-    manifest = load_measurement_attempt_manifest(attempt_root=formal_attempt)
-    manifest_projection = {
-        key: item for key, item in manifest.items() if key != "attempt_sha256"
-    }
-    if (
-        manifest.get("role") != "formal"
-        or manifest.get("status") != "completed"
-        or manifest.get("attempt_sha256")
-        != sha256_bytes(canonical_json_bytes(manifest_projection))
-    ):
-        raise AttemptError("ADVERSARIAL_V6_FORMAL_INVALID")
-    formal_bindings = manifest.get("bindings")
-    adapter, adapter_raw = _canonical_file(
-        adapter_batch, "ADVERSARIAL_V6_ADAPTER_INVALID"
+    formal = validate_formal_measurement_v5(
+        adapter_batch=adapter_batch,
+        fixture_registry=fixture_registry,
+        rules=rules,
+        semantic_contract=semantic_contract,
+        golden_predictions=golden_predictions,
+        adjudication_schema=schema,
+        bundle_root=bundle_root,
+        attempt=formal_attempt,
     )
-    adapter_projection = {
-        key: item for key, item in adapter.items() if key != "adapter_batch_sha256"
-    }
-    adapter_identity = adapter.get("adapter_batch_sha256")
+    adapter_identity = getattr(batch, "adapter_batch_sha256")
     _, rules_raw = _canonical_file(rules, "ADVERSARIAL_V6_RULES_INVALID")
     _, schema_raw = _canonical_file(schema, "ADVERSARIAL_V6_SCHEMA_INVALID")
-    if (
-        not isinstance(adapter_identity, str)
-        or adapter_identity != sha256_bytes(canonical_json_bytes(adapter_projection))
-        or not isinstance(formal_bindings, dict)
-        or formal_bindings.get("adapter_batch_sha256") != adapter_identity
-        or formal_bindings.get("raw_predictions_sha256") != sha256_bytes(golden_raw)
-        or formal_bindings.get("rule_sha256") != sha256_bytes(rules_raw)
-        or formal_bindings.get("schema_sha256") != sha256_bytes(schema_raw)
-    ):
-        raise AttemptError("ADVERSARIAL_V6_FORMAL_BINDING_INVALID")
     cases: list[dict[str, object]] = []
     for case in contract_value["cases"]:
         assert isinstance(case, dict)
@@ -911,7 +1252,7 @@ def _build_adversarial_result_v6(
         "bindings": {
             "adapter_batch_file_sha256": sha256_bytes(adapter_raw),
             "adapter_batch_sha256": adapter_identity,
-            "formal_attempt_sha256": manifest["attempt_sha256"],
+            "formal_attempt_sha256": formal["attempt_sha256"],
             "golden_predictions_sha256": sha256_bytes(golden_raw),
             "required_diagnostics_sha256": sha256_bytes(contract_raw),
             "rule_sha256": sha256_bytes(rules_raw),
@@ -931,8 +1272,11 @@ def run_adversarial_suite_v6(
     golden_predictions: Path,
     formal_attempt: Path,
     adapter_batch: Path,
+    fixture_registry: Path,
     rules: Path,
+    semantic_contract: Path,
     schema: Path,
+    bundle_root: Path,
     output: Path,
     preflight: bool = False,
 ) -> dict[str, object]:
@@ -942,8 +1286,11 @@ def run_adversarial_suite_v6(
         golden_predictions=golden_predictions,
         formal_attempt=formal_attempt,
         adapter_batch=adapter_batch,
+        fixture_registry=fixture_registry,
         rules=rules,
+        semantic_contract=semantic_contract,
         schema=schema,
+        bundle_root=bundle_root,
     )
     if output.exists() or output.is_symlink() or not output.parent.is_dir() or output.parent.is_symlink():
         raise AttemptError("ADVERSARIAL_V6_OUTPUT_EXISTS")
@@ -967,8 +1314,11 @@ def validate_adversarial_result_v6(
     golden_predictions: Path,
     formal_attempt: Path,
     adapter_batch: Path,
+    fixture_registry: Path,
     rules: Path,
+    semantic_contract: Path,
     schema: Path,
+    bundle_root: Path,
 ) -> dict[str, object]:
     """Replay the full mutation contract and compare a pre-existing canonical report."""
     expected, _ = _build_adversarial_result_v6(
@@ -976,8 +1326,11 @@ def validate_adversarial_result_v6(
         golden_predictions=golden_predictions,
         formal_attempt=formal_attempt,
         adapter_batch=adapter_batch,
+        fixture_registry=fixture_registry,
         rules=rules,
+        semantic_contract=semantic_contract,
         schema=schema,
+        bundle_root=bundle_root,
     )
     value, raw = _canonical_file(report, "ADVERSARIAL_V6_REPORT_INVALID")
     if raw != canonical_json_bytes(expected):

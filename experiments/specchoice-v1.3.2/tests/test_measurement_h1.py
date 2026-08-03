@@ -6,6 +6,8 @@ import json
 import os
 import shutil
 import stat
+import subprocess
+import sys
 import tempfile
 import unittest
 from copy import deepcopy
@@ -389,6 +391,10 @@ class H1PacketTests(unittest.TestCase):
 
         parser = build_parser()
         for command in (
+            "adapt-pr2164-v6",
+            "validate-adapter-batch-v6",
+            "run-formal-measurement-v5",
+            "validate-formal-measurement-v5",
             "run-adversarial-semantic-suite-v6",
             "validate-adversarial-semantic-result-v6",
             "build-h1-semantic-packet-v6",
@@ -400,6 +406,352 @@ class H1PacketTests(unittest.TestCase):
             "verify-final-successor-reports",
         ):
             self.assertIn(command, parser._subparsers._group_actions[0].choices)
+
+    def test_successor_public_cli_e2e_rejects_forged_adapter_formal_adversarial_and_packet(self) -> None:
+        root = self.root.absolute()
+        registry = root / "config/fixture-registry-pr2164-v6.json"
+        rules = root / "config/measurement/pr2164-adapter-rules-v3.json"
+        semantic_contract = root / "config/measurement/pr2164-semantic-gold-contract-v2.json"
+        golden = root / "fixtures/measurement/golden-predictions-v4.json"
+        adjudication_schema = root / "config/measurement/canonical-adjudication-schema-v3.json"
+        adversarial_contract = root / "fixtures/measurement/adversarial/required-diagnostics-v4.json"
+        questions = root / "config/measurement/h1-semantic-review-questions-v2.json"
+        h1_schema = root / "config/measurement/h1-review-schema-v4.json"
+        measurement_args = [
+            "--fixture-registry", str(registry),
+            "--rules", str(rules),
+            "--semantic-contract", str(semantic_contract),
+            "--golden-predictions", str(golden),
+            "--bundle-root", str(self.active_bundle.absolute()),
+        ]
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "PYTHONNOUSERSITE": "1",
+                "PYTHONPATH": str(root / "src"),
+            }
+        )
+
+        def cli(arguments: list[str], *, expected: int = 0) -> dict[str, object] | None:
+            completed = subprocess.run(
+                [sys.executable, "-B", "-m", "specchoice_measurement.cli", *arguments],
+                cwd=root,
+                env=environment,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(
+                completed.returncode,
+                expected,
+                completed.stderr.decode("utf-8", "replace"),
+            )
+            if expected:
+                self.assertFalse(completed.stdout)
+                return None
+            self.assertFalse(completed.stderr)
+            return json.loads(completed.stdout)
+
+        with tempfile.TemporaryDirectory(dir=root) as directory:
+            temporary = Path(directory)
+            legacy_adapter = temporary / "legacy-adapter-must-not-accept-v3.json"
+            cli(
+                [
+                    "adapt-pr2164",
+                    "--authority", str(root / "phase2/source-authority.json"),
+                    "--bundle", str(self.active_bundle.absolute()),
+                    "--rules", str(rules),
+                    "--output", str(legacy_adapter),
+                ],
+                expected=2,
+            )
+            self.assertFalse(legacy_adapter.exists())
+            legacy_attempt_root = temporary / "legacy-attempt-must-not-accept-v3"
+            cli(
+                [
+                    "run-formal-measurement",
+                    "--authority", str(root / "phase2/source-authority.json"),
+                    "--bundle", str(self.active_bundle.absolute()),
+                    "--rules", str(rules),
+                    "--schema", str(adjudication_schema),
+                    "--predictions", str(golden),
+                    "--attempt-root", str(legacy_attempt_root),
+                    "--attempt-id", "forbidden-v3",
+                ],
+                expected=2,
+            )
+            self.assertFalse(legacy_attempt_root.exists())
+
+            adapter = temporary / "adapter-v6.json"
+            adapted = cli(
+                ["adapt-pr2164-v6", *measurement_args, "--output", str(adapter)]
+            )
+            self.assertEqual(
+                (adapted["fixture_count"], adapted["raw_file_count"]), (11, 29)
+            )
+            validated_adapter = cli(
+                [
+                    "validate-adapter-batch-v6",
+                    *measurement_args,
+                    "--adapter-batch",
+                    str(adapter),
+                ]
+            )
+            self.assertEqual(
+                validated_adapter["partition"],
+                {"candidate": 2, "negative": 3, "positive": 6},
+            )
+
+            attempt_root = temporary / "attempts"
+            formal = attempt_root / "formal-v5"
+            formal_result = cli(
+                [
+                    "run-formal-measurement-v5",
+                    *measurement_args,
+                    "--adapter-batch",
+                    str(adapter),
+                    "--adjudication-schema",
+                    str(adjudication_schema),
+                    "--attempt-root",
+                    str(attempt_root),
+                    "--attempt-id",
+                    "formal-v5",
+                ]
+            )
+            expected_metrics = {
+                "disposition": {"denominator": 8, "numerator": 8},
+                "evidence_integrity": {"denominator": 10, "numerator": 10},
+                "identity": {"denominator": 6, "numerator": 6},
+                "negative_controls": {"denominator": 3, "numerator": 3},
+                "surfacing": {"denominator": 8, "numerator": 8},
+            }
+            self.assertEqual(formal_result["metrics"], expected_metrics)
+            self.assertEqual(
+                cli(
+                    [
+                        "validate-formal-measurement-v5",
+                        *measurement_args,
+                        "--adapter-batch",
+                        str(adapter),
+                        "--adjudication-schema",
+                        str(adjudication_schema),
+                        "--attempt",
+                        str(formal),
+                    ]
+                )["case_count"],
+                11,
+            )
+
+            adversarial = temporary / "adversarial-v6.json"
+            adversarial_args = [
+                "--contract", str(adversarial_contract),
+                "--golden-predictions", str(golden),
+                "--formal-attempt", str(formal),
+                "--adapter-batch", str(adapter),
+                "--fixture-registry", str(registry),
+                "--rules", str(rules),
+                "--semantic-contract", str(semantic_contract),
+                "--schema", str(adjudication_schema),
+                "--bundle-root", str(self.active_bundle.absolute()),
+            ]
+            self.assertEqual(
+                cli(
+                    [
+                        "run-adversarial-semantic-suite-v6",
+                        *adversarial_args,
+                        "--output",
+                        str(adversarial),
+                    ]
+                )["case_count"],
+                17,
+            )
+            self.assertTrue(
+                cli(
+                    [
+                        "validate-adversarial-semantic-result-v6",
+                        "--report",
+                        str(adversarial),
+                        *adversarial_args,
+                    ]
+                )["valid"]
+            )
+
+            def successor_h1_args(
+                *,
+                selected_adapter: Path = adapter,
+                selected_formal: Path = formal,
+                selected_adversarial: Path = adversarial,
+            ) -> list[str]:
+                return [
+                    "--adapter-batch", str(selected_adapter),
+                    "--adversarial-report", str(selected_adversarial),
+                    "--adversarial-contract", str(adversarial_contract),
+                    "--adjudication-schema", str(adjudication_schema),
+                    "--executable-closure", str(root / "receipts/runtime-executable-closure-v1.json"),
+                    "--fixture-registry", str(registry),
+                    "--formal-attempt", str(selected_formal),
+                    "--golden-predictions", str(golden),
+                    "--ontology-decision", str(root / "reviews/h1-source-gold-ontology-decision-v1.json"),
+                    "--questions", str(questions),
+                    "--rules", str(rules),
+                    "--semantic-contract", str(semantic_contract),
+                    "--schema", str(h1_schema),
+                    "--source-authority", str(root / "phase2/source-authority.json"),
+                    "--bundle-root", str(self.active_bundle.absolute()),
+                ]
+
+            packet = temporary / "review-v6/review-packet.json"
+            markdown = temporary / "review-v6/REVIEW.md"
+            self.assertIn(
+                "packet_sha256",
+                cli(
+                    [
+                        "build-h1-semantic-packet-v6",
+                        *successor_h1_args(),
+                        "--output", str(packet),
+                        "--markdown", str(markdown),
+                    ]
+                ),
+            )
+            self.assertEqual(
+                cli(
+                    [
+                        "validate-h1-semantic-packet-v6",
+                        *successor_h1_args(),
+                        "--packet", str(packet),
+                        "--markdown", str(markdown),
+                    ]
+                )["schema_version"],
+                "h1-source-gold-review-v6",
+            )
+            readiness = temporary / "readiness-v6.json"
+            self.assertEqual(
+                cli(
+                    [
+                        "write-h1-semantic-readiness-v6",
+                        *successor_h1_args(),
+                        "--packet", str(packet),
+                        "--markdown", str(markdown),
+                        "--output", str(readiness),
+                    ]
+                )["schema_version"],
+                "h1-semantic-readiness-v6",
+            )
+            self.assertEqual(
+                cli(
+                    [
+                        "validate-h1-semantic-readiness",
+                        *successor_h1_args(),
+                        "--packet", str(packet),
+                        "--markdown", str(markdown),
+                        "--readiness", str(readiness),
+                    ]
+                )["readiness_sha256"],
+                json.loads(readiness.read_bytes())["readiness_sha256"],
+            )
+
+            forged_adapter = temporary / "forged-adapter.json"
+            forged_adapter_value = json.loads(adapter.read_bytes())
+            forged_adapter_value.update(diagnostics=[], records=[], valid=False)
+            forged_adapter_value["adapter_batch_sha256"] = sha256_bytes(
+                canonical_json_bytes(
+                    {
+                        key: item
+                        for key, item in forged_adapter_value.items()
+                        if key != "adapter_batch_sha256"
+                    }
+                )
+            )
+            forged_adapter.write_bytes(canonical_json_bytes(forged_adapter_value))
+
+            forged_formal = temporary / "forged-formal"
+            shutil.copytree(formal, forged_formal)
+            forged_manifest = json.loads((forged_formal / "attempt.json").read_bytes())
+            forged_manifest["artifacts"] = {}
+            forged_manifest["attempt_sha256"] = sha256_bytes(
+                canonical_json_bytes(
+                    {
+                        key: item
+                        for key, item in forged_manifest.items()
+                        if key != "attempt_sha256"
+                    }
+                )
+            )
+            (forged_formal / "attempt.json").write_bytes(
+                canonical_json_bytes(forged_manifest)
+            )
+
+            forged_adversarial = temporary / "forged-adversarial.json"
+            forged_adversarial_value = json.loads(adversarial.read_bytes())
+            forged_adversarial_value["cases"] = []
+            forged_adversarial_value["report_sha256"] = sha256_bytes(
+                canonical_json_bytes(
+                    {
+                        key: item
+                        for key, item in forged_adversarial_value.items()
+                        if key != "report_sha256"
+                    }
+                )
+            )
+            forged_adversarial.write_bytes(
+                canonical_json_bytes(forged_adversarial_value)
+            )
+
+            for label, inputs in (
+                (
+                    "adapter",
+                    successor_h1_args(selected_adapter=forged_adapter),
+                ),
+                (
+                    "formal",
+                    successor_h1_args(selected_formal=forged_formal),
+                ),
+                (
+                    "adversarial",
+                    successor_h1_args(selected_adversarial=forged_adversarial),
+                ),
+            ):
+                with self.subTest(upstream_forgery=label):
+                    forged_packet = temporary / f"blocked-{label}/packet.json"
+                    cli(
+                        [
+                            "build-h1-semantic-packet-v6",
+                            *inputs,
+                            "--output", str(forged_packet),
+                            "--markdown", str(forged_packet.with_name("REVIEW.md")),
+                            "--preflight",
+                        ],
+                        expected=2,
+                    )
+                    self.assertFalse(forged_packet.parent.exists())
+
+            for label, mutate in (
+                ("prompt", lambda value: value["semantic_questions"][0].update(prompt="forged")),
+                ("unknown", lambda value: value["semantic_questions"][0].update(unexpected=True)),
+            ):
+                with self.subTest(packet_forgery=label):
+                    forged_packet_value = json.loads(packet.read_bytes())
+                    mutate(forged_packet_value)
+                    forged_packet_value["packet_sha256"] = sha256_bytes(
+                        canonical_json_bytes(
+                            {
+                                key: item
+                                for key, item in forged_packet_value.items()
+                                if key != "packet_sha256"
+                            }
+                        )
+                    )
+                    forged_packet = temporary / f"packet-{label}.json"
+                    forged_packet.write_bytes(canonical_json_bytes(forged_packet_value))
+                    cli(
+                        [
+                            "validate-h1-semantic-packet-v6",
+                            *successor_h1_args(),
+                            "--packet", str(forged_packet),
+                            "--markdown", str(markdown),
+                        ],
+                        expected=2,
+                    )
 
     def test_report_generation_rejects_one_byte_planning_or_predecessor_report_drift_before_write(self) -> None:
         from specchoice_measurement import final_reports  # noqa: PLC0415
@@ -722,8 +1074,23 @@ class H1PacketTests(unittest.TestCase):
             schema_v4 = self.root / "config/measurement/h1-review-schema-v4.json"
             questions = json.loads(questions_path.read_text(encoding="utf-8"))
             golden = json.loads((self.root / "fixtures/measurement/golden-predictions-v4.json").read_text(encoding="utf-8"))
+            schema_result = h1.validate_h1_review_schema_v4(
+                schema=schema_v4, questions=questions_path
+            )
+            successor_bindings = {
+                key: "0" * 64 for key in h1._SUCCESSOR_PACKET_BINDING_KEYS
+            }
+            successor_bindings.update(
+                {
+                    "h1_review_schema_sha256": schema_result["schema_sha256"],
+                    "questions_semantic_content_sha256": schema_result[
+                        "canonical_semantic_content_sha256"
+                    ],
+                    "questions_sha256": schema_result["questions_sha256"],
+                }
+            )
             successor_packet: dict[str, object] = {
-                "bindings": {},
+                "bindings": successor_bindings,
                 "external_publication_authorized": False,
                 "fixture_reviews": h1._successor_fixture_reviews(golden),
                 "schema_version": "h1-source-gold-review-v6",
@@ -733,16 +1100,16 @@ class H1PacketTests(unittest.TestCase):
             successor_packet_path = root / "successor-packet.json"
             successor_packet_path.write_bytes(canonical_json_bytes(successor_packet))
             successor_readiness: dict[str, object] = {
-                "bindings": {"packet_file_sha256": sha256_bytes(successor_packet_path.read_bytes())},
+                "bindings": {
+                    **successor_bindings,
+                    "packet_file_sha256": sha256_bytes(successor_packet_path.read_bytes()),
+                },
                 "external_publication_authorized": False,
                 "schema_version": "h1-semantic-readiness-v6",
             }
             successor_readiness["readiness_sha256"] = sha256_bytes(canonical_json_bytes(successor_readiness))
             successor_readiness_path = root / "successor-readiness.json"
             successor_readiness_path.write_bytes(canonical_json_bytes(successor_readiness))
-            schema_result = h1.validate_h1_review_schema_v4(
-                schema=schema_v4, questions=questions_path
-            )
             successor_decision: dict[str, object] = {
                 "aggregate_disposition": "approved",
                 "bindings": {
@@ -793,6 +1160,85 @@ class H1PacketTests(unittest.TestCase):
                     decision=successor_decision_path,
                 )["questions"],
                 7,
+            )
+            for label, mutate in (
+                (
+                    "prompt",
+                    lambda packet: packet["semantic_questions"][0].update(
+                        prompt="Forged prompt with a recomputed packet digest."
+                    ),
+                ),
+                (
+                    "unknown-nested-key",
+                    lambda packet: packet["semantic_questions"][0].update(
+                        unexpected="forged"
+                    ),
+                ),
+            ):
+                with self.subTest(packet_forgery=label):
+                    forged_packet = deepcopy(successor_packet)
+                    mutate(forged_packet)
+                    forged_packet["packet_sha256"] = sha256_bytes(
+                        canonical_json_bytes(
+                            {
+                                key: item
+                                for key, item in forged_packet.items()
+                                if key != "packet_sha256"
+                            }
+                        )
+                    )
+                    successor_packet_path.write_bytes(
+                        canonical_json_bytes(forged_packet)
+                    )
+                    forged_readiness = deepcopy(successor_readiness)
+                    forged_readiness["bindings"]["packet_file_sha256"] = sha256_bytes(
+                        successor_packet_path.read_bytes()
+                    )
+                    forged_readiness["readiness_sha256"] = sha256_bytes(
+                        canonical_json_bytes(
+                            {
+                                key: item
+                                for key, item in forged_readiness.items()
+                                if key != "readiness_sha256"
+                            }
+                        )
+                    )
+                    successor_readiness_path.write_bytes(
+                        canonical_json_bytes(forged_readiness)
+                    )
+                    forged_decision = deepcopy(successor_decision)
+                    forged_decision["bindings"]["packet_sha256"] = forged_packet[
+                        "packet_sha256"
+                    ]
+                    forged_decision["bindings"]["readiness_sha256"] = (
+                        forged_readiness["readiness_sha256"]
+                    )
+                    forged_decision["decision_sha256"] = sha256_bytes(
+                        canonical_json_bytes(
+                            {
+                                key: item
+                                for key, item in forged_decision.items()
+                                if key != "decision_sha256"
+                            }
+                        )
+                    )
+                    successor_decision_path.write_bytes(
+                        canonical_json_bytes(forged_decision)
+                    )
+                    with self.assertRaisesRegex(
+                        H1Error,
+                        "H1_SUCCESSOR_PACKET_(QUESTIONS_)?INVALID",
+                    ):
+                        h1.validate_h1_semantic_review_decision(
+                            schema=schema_v4,
+                            questions=questions_path,
+                            packet=successor_packet_path,
+                            readiness=successor_readiness_path,
+                            decision=successor_decision_path,
+                        )
+            successor_packet_path.write_bytes(canonical_json_bytes(successor_packet))
+            successor_readiness_path.write_bytes(
+                canonical_json_bytes(successor_readiness)
             )
             placeholder = deepcopy(successor_decision)
             placeholder["responses"][0]["response"] = "reviewed"

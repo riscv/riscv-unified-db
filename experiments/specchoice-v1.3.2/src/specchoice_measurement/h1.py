@@ -24,7 +24,13 @@ from specchoice_evidence.filesystem import (
 )
 
 from .adapter import build_pr2164_adapter_batch
-from .attempts import AttemptError, validate_measurement_attempt
+from .attempts import (
+    AttemptError,
+    _successor_adapter_v6,
+    validate_adversarial_result_v6,
+    validate_formal_measurement_v5,
+    validate_measurement_attempt,
+)
 
 
 class H1Error(ValueError):
@@ -965,6 +971,25 @@ _STRUCTURAL_RULE_KEYS = {
     "empty_null_single",
     "equal_element_order",
 }
+_SUCCESSOR_PACKET_BINDING_KEYS = {
+    "adapter_batch_file_sha256",
+    "adapter_batch_sha256",
+    "adversarial_contract_sha256",
+    "adversarial_report_sha256",
+    "adjudication_schema_sha256",
+    "executable_closure_sha256",
+    "fixture_registry_sha256",
+    "formal_attempt_manifest_sha256",
+    "formal_attempt_sha256",
+    "golden_predictions_sha256",
+    "h1_review_schema_sha256",
+    "ontology_decision_sha256",
+    "questions_semantic_content_sha256",
+    "questions_sha256",
+    "rule_sha256",
+    "semantic_contract_sha256",
+    "source_authority_sha256",
+}
 
 
 def _nonempty_text(value: object) -> bool:
@@ -1156,6 +1181,12 @@ def validate_h1_review_schema_v4(
     *, schema: Path, questions: Path, bundle_root: Path | None = None
 ) -> dict[str, Any]:
     """Require the closed v4 schema to bind the exact seven-question bytes."""
+    if tuple(questions.parts[-3:]) != (
+        "config",
+        "measurement",
+        "h1-semantic-review-questions-v2.json",
+    ):
+        raise H1Error("H1_REVIEW_SCHEMA_V4_INVALID")
     questions_result = validate_h1_semantic_questions_v2(
         questions=questions, bundle_root=bundle_root
     )
@@ -1243,17 +1274,22 @@ def _successor_bindings(
     *,
     adapter_batch: Path,
     adversarial_report: Path,
+    adversarial_contract: Path,
     adjudication_schema: Path,
     executable_closure: Path,
+    fixture_registry: Path,
     formal_attempt: Path,
     golden_predictions: Path,
     ontology_decision: Path,
     questions: Path,
     rules: Path,
+    semantic_contract: Path,
     schema: Path,
     source_authority: Path,
     bundle_root: Path | None = None,
 ) -> tuple[dict[str, str], dict[str, Any], dict[str, Any]]:
+    if bundle_root is None:
+        raise H1Error("H1_SUCCESSOR_BUNDLE_REQUIRED")
     schema_result = validate_h1_review_schema_v4(
         schema=schema, questions=questions, bundle_root=bundle_root
     )
@@ -1266,61 +1302,81 @@ def _successor_bindings(
     if golden.get("schema_version") != "golden-predictions-v4":
         raise H1Error("H1_SUCCESSOR_GOLDEN_INVALID")
     _successor_fixture_reviews(golden)
-    formal, formal_raw = _read_successor_formal_manifest(formal_attempt)
-    formal_bindings = formal.get("bindings")
-    if not isinstance(formal_bindings, dict):
-        raise H1Error("H1_SUCCESSOR_FORMAL_INVALID")
-    adapter, adapter_raw = _read_canonical_external(
-        adapter_batch, "H1_SUCCESSOR_ADVERSARIAL_INVALID"
-    )
-    adapter_projection = {
-        key: item for key, item in adapter.items() if key != "adapter_batch_sha256"
-    }
-    adapter_identity = adapter.get("adapter_batch_sha256")
-    _, rules_raw = _read_canonical_external(rules, "H1_SUCCESSOR_BINDING_INVALID")
-    _, adjudication_raw = _read_canonical_external(
-        adjudication_schema, "H1_SUCCESSOR_BINDING_INVALID"
-    )
+    try:
+        batch, adapter_raw, _, rebuilt_golden_raw = _successor_adapter_v6(
+            adapter_batch=adapter_batch,
+            fixture_registry=fixture_registry,
+            rules=rules,
+            semantic_contract=semantic_contract,
+            golden_predictions=golden_predictions,
+            bundle_root=bundle_root,
+        )
+        if rebuilt_golden_raw != golden_raw:
+            raise AttemptError("SUCCESSOR_GOLDEN_REOPEN_MISMATCH")
+        formal_result = validate_formal_measurement_v5(
+            adapter_batch=adapter_batch,
+            fixture_registry=fixture_registry,
+            rules=rules,
+            semantic_contract=semantic_contract,
+            golden_predictions=golden_predictions,
+            adjudication_schema=adjudication_schema,
+            bundle_root=bundle_root,
+            attempt=formal_attempt,
+        )
+        adversarial_result = validate_adversarial_result_v6(
+            report=adversarial_report,
+            contract=adversarial_contract,
+            golden_predictions=golden_predictions,
+            formal_attempt=formal_attempt,
+            adapter_batch=adapter_batch,
+            fixture_registry=fixture_registry,
+            rules=rules,
+            semantic_contract=semantic_contract,
+            schema=adjudication_schema,
+            bundle_root=bundle_root,
+        )
+    except AttemptError as error:
+        raise H1Error(f"H1_SUCCESSOR_UPSTREAM_INVALID:{error}") from error
     if (
-        not isinstance(adapter_identity, str)
-        or adapter_identity != sha256_bytes(canonical_json_bytes(adapter_projection))
-        or formal_bindings.get("adapter_batch_sha256") != adapter_identity
-        or formal_bindings.get("raw_predictions_sha256") != sha256_bytes(golden_raw)
-        or formal_bindings.get("rule_sha256") != sha256_bytes(rules_raw)
-        or formal_bindings.get("schema_sha256") != sha256_bytes(adjudication_raw)
+        formal_result.get("case_count") != 11
+        or formal_result.get("metrics")
+        != {
+            "disposition": {"denominator": 8, "numerator": 8},
+            "evidence_integrity": {"denominator": 10, "numerator": 10},
+            "identity": {"denominator": 6, "numerator": 6},
+            "negative_controls": {"denominator": 3, "numerator": 3},
+            "surfacing": {"denominator": 8, "numerator": 8},
+        }
+        or adversarial_result.get("case_count") != 17
+        or adversarial_result.get("status") != "diagnostic_only"
+        or adversarial_result.get("valid") is not True
     ):
-        raise H1Error("H1_SUCCESSOR_FORMAL_BINDING_INVALID")
+        raise H1Error("H1_SUCCESSOR_UPSTREAM_INVALID")
+    formal, formal_raw = _read_successor_formal_manifest(formal_attempt)
     adversarial, adversarial_raw = _read_canonical_external(
         adversarial_report, "H1_SUCCESSOR_ADVERSARIAL_INVALID"
     )
-    adversarial_bindings = adversarial.get("bindings")
     if (
-        adversarial.get("schema_version") != "adversarial-oracle-results-v6"
-        or adversarial.get("status") != "diagnostic_only"
-        or not isinstance(adversarial_bindings, dict)
-        or adversarial_bindings.get("adapter_batch_sha256") != adapter_identity
-        or adversarial_bindings.get("adapter_batch_file_sha256")
-        != sha256_bytes(adapter_raw)
-        or adversarial_bindings.get("formal_attempt_sha256")
-        != formal.get("attempt_sha256")
-        or adversarial_bindings.get("golden_predictions_sha256")
-        != sha256_bytes(golden_raw)
-        or adversarial_bindings.get("rule_sha256") != sha256_bytes(rules_raw)
-        or adversarial_bindings.get("schema_sha256") != sha256_bytes(adjudication_raw)
+        formal.get("attempt_sha256") != formal_result.get("attempt_sha256")
+        or adversarial.get("report_sha256") != adversarial_result.get("report_sha256")
     ):
-        raise H1Error("H1_SUCCESSOR_ADVERSARIAL_INVALID")
+        raise H1Error("H1_SUCCESSOR_UPSTREAM_INVALID")
     canonical_inputs = {
-        "adapter_batch_file_sha256": adapter_batch,
+        "adversarial_contract_sha256": adversarial_contract,
         "adversarial_report_sha256": adversarial_report,
         "adjudication_schema_sha256": adjudication_schema,
         "executable_closure_sha256": executable_closure,
+        "fixture_registry_sha256": fixture_registry,
         "ontology_decision_sha256": ontology_decision,
         "rule_sha256": rules,
+        "semantic_contract_sha256": semantic_contract,
         "source_authority_sha256": source_authority,
     }
     bindings: dict[str, str] = {
-        "adapter_batch_sha256": adapter_identity,
+        "adapter_batch_file_sha256": sha256_bytes(adapter_raw),
+        "adapter_batch_sha256": str(getattr(batch, "adapter_batch_sha256")),
         "formal_attempt_manifest_sha256": sha256_bytes(formal_raw),
+        "formal_attempt_sha256": str(formal_result["attempt_sha256"]),
         "golden_predictions_sha256": sha256_bytes(golden_raw),
         "h1_review_schema_sha256": str(schema_result["schema_sha256"]),
         "questions_semantic_content_sha256": str(
@@ -1331,11 +1387,17 @@ def _successor_bindings(
     for name, path in canonical_inputs.items():
         _, raw = _read_canonical_external(path, "H1_SUCCESSOR_BINDING_INVALID")
         bindings[name] = sha256_bytes(raw)
+    if set(bindings) != _SUCCESSOR_PACKET_BINDING_KEYS:
+        raise H1Error("H1_SUCCESSOR_BINDING_INVALID")
     return bindings, questions_value, golden
 
 
 def _validate_successor_packet_value(
-    value: object, *, expected_bindings: dict[str, str] | None = None
+    value: object,
+    *,
+    expected_bindings: dict[str, str] | None = None,
+    expected_questions: list[dict[str, Any]] | None = None,
+    expected_reviews: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     if not isinstance(value, dict) or set(value) != {
         "bindings",
@@ -1354,8 +1416,14 @@ def _validate_successor_packet_value(
     ):
         raise H1Error("H1_SUCCESSOR_PACKET_INVALID")
     bindings = value.get("bindings")
-    if not isinstance(bindings, dict) or (
-        expected_bindings is not None and bindings != expected_bindings
+    if (
+        not isinstance(bindings, dict)
+        or set(bindings) != _SUCCESSOR_PACKET_BINDING_KEYS
+        or any(
+            not isinstance(item, str) or len(item) != 64
+            for item in bindings.values()
+        )
+        or (expected_bindings is not None and bindings != expected_bindings)
     ):
         raise H1Error("H1_SUCCESSOR_PACKET_BINDING_INVALID")
     reviews = value.get("fixture_reviews")
@@ -1369,6 +1437,88 @@ def _validate_successor_packet_value(
         != list(_SUCCESSOR_QUESTION_IDS)
     ):
         raise H1Error("H1_SUCCESSOR_PACKET_INVALID")
+    for review in reviews:
+        if not isinstance(review, dict) or set(review) != {
+            "fixture_id",
+            "reviewed_semantics",
+            "reviewed_semantics_sha256",
+        }:
+            raise H1Error("H1_SUCCESSOR_PACKET_INVALID")
+        semantics = review.get("reviewed_semantics")
+        if (
+            not isinstance(semantics, dict)
+            or set(semantics)
+            != {
+                "evidence_spans",
+                "expected",
+                "fixture_class",
+                "fixture_id",
+                "observed",
+                "rationale",
+            }
+            or semantics.get("fixture_id") != review.get("fixture_id")
+            or review.get("reviewed_semantics_sha256")
+            != sha256_bytes(canonical_json_bytes(semantics))
+            or not isinstance(semantics.get("expected"), dict)
+            or set(semantics["expected"])
+            != {"disposition", "names", "parameter_count", "surface"}
+            or not isinstance(semantics.get("observed"), dict)
+            or set(semantics["observed"])
+            != {"name", "status", "surfaced"}
+            or not isinstance(semantics.get("evidence_spans"), list)
+            or any(
+                not isinstance(span, dict)
+                or set(span)
+                != {
+                    "dimension",
+                    "end_byte",
+                    "source_path",
+                    "source_sha256",
+                    "start_byte",
+                    "text",
+                }
+                for span in semantics["evidence_spans"]
+            )
+        ):
+            raise H1Error("H1_SUCCESSOR_PACKET_INVALID")
+    for question in questions:
+        if (
+            not isinstance(question, dict)
+            or set(question) != _QUESTION_KEYS
+            or not isinstance(question.get("expected_semantics"), dict)
+            or set(question["expected_semantics"])
+            != {"accepted_behavior", "rejected_behavior", "summary"}
+            or not isinstance(question.get("metric_effect"), dict)
+            or set(question["metric_effect"])
+            != {"denominator_effect", "failure_effect", "metric"}
+            or not isinstance(question.get("structural_rules"), dict)
+            or set(question["structural_rules"]) != _STRUCTURAL_RULE_KEYS
+            or not isinstance(question.get("machine_assertions"), list)
+            or any(
+                not isinstance(assertion, dict)
+                or set(assertion) != {"expected", "id", "operator", "path"}
+                for assertion in question["machine_assertions"]
+            )
+            or not isinstance(question.get("evidence"), list)
+            or any(
+                not isinstance(span, dict)
+                or set(span)
+                != {
+                    "end_byte",
+                    "fixture_id",
+                    "source_path",
+                    "source_sha256",
+                    "start_byte",
+                    "text",
+                }
+                for span in question["evidence"]
+            )
+        ):
+            raise H1Error("H1_SUCCESSOR_PACKET_INVALID")
+    if expected_questions is not None and questions != expected_questions:
+        raise H1Error("H1_SUCCESSOR_PACKET_QUESTIONS_INVALID")
+    if expected_reviews is not None and reviews != expected_reviews:
+        raise H1Error("H1_SUCCESSOR_PACKET_REVIEWS_INVALID")
     forbidden_human_keys = {
         "aggregate_disposition",
         "choice",
@@ -1438,8 +1588,10 @@ def build_h1_semantic_packet_v6(
     *,
     adapter_batch: Path,
     adversarial_report: Path,
+    adversarial_contract: Path,
     adjudication_schema: Path,
     executable_closure: Path,
+    fixture_registry: Path,
     formal_attempt: Path,
     golden_predictions: Path,
     ontology_decision: Path,
@@ -1447,6 +1599,7 @@ def build_h1_semantic_packet_v6(
     output_markdown: Path,
     questions: Path,
     rules: Path,
+    semantic_contract: Path,
     schema: Path,
     source_authority: Path,
     bundle_root: Path | None = None,
@@ -1456,13 +1609,16 @@ def build_h1_semantic_packet_v6(
     bindings, question_value, golden = _successor_bindings(
         adapter_batch=adapter_batch,
         adversarial_report=adversarial_report,
+        adversarial_contract=adversarial_contract,
         adjudication_schema=adjudication_schema,
         executable_closure=executable_closure,
+        fixture_registry=fixture_registry,
         formal_attempt=formal_attempt,
         golden_predictions=golden_predictions,
         ontology_decision=ontology_decision,
         questions=questions,
         rules=rules,
+        semantic_contract=semantic_contract,
         schema=schema,
         source_authority=source_authority,
         bundle_root=bundle_root,
@@ -1475,7 +1631,12 @@ def build_h1_semantic_packet_v6(
         "semantic_questions": question_value["questions"],
     }
     packet["packet_sha256"] = sha256_bytes(canonical_json_bytes(packet))
-    _validate_successor_packet_value(packet, expected_bindings=bindings)
+    _validate_successor_packet_value(
+        packet,
+        expected_bindings=bindings,
+        expected_questions=question_value["questions"],
+        expected_reviews=_successor_fixture_reviews(golden),
+    )
     markdown = render_h1_semantic_markdown_v6(packet).encode("utf-8")
     if preflight:
         if (
@@ -1503,13 +1664,16 @@ def validate_h1_semantic_packet_v6(
     markdown: Path,
     adapter_batch: Path,
     adversarial_report: Path,
+    adversarial_contract: Path,
     adjudication_schema: Path,
     executable_closure: Path,
+    fixture_registry: Path,
     formal_attempt: Path,
     golden_predictions: Path,
     ontology_decision: Path,
     questions: Path,
     rules: Path,
+    semantic_contract: Path,
     schema: Path,
     source_authority: Path,
     bundle_root: Path | None = None,
@@ -1517,19 +1681,27 @@ def validate_h1_semantic_packet_v6(
     bindings, question_value, golden = _successor_bindings(
         adapter_batch=adapter_batch,
         adversarial_report=adversarial_report,
+        adversarial_contract=adversarial_contract,
         adjudication_schema=adjudication_schema,
         executable_closure=executable_closure,
+        fixture_registry=fixture_registry,
         formal_attempt=formal_attempt,
         golden_predictions=golden_predictions,
         ontology_decision=ontology_decision,
         questions=questions,
         rules=rules,
+        semantic_contract=semantic_contract,
         schema=schema,
         source_authority=source_authority,
         bundle_root=bundle_root,
     )
     value, _ = _read_canonical_external(packet, "H1_SUCCESSOR_PACKET_INVALID")
-    value = _validate_successor_packet_value(value, expected_bindings=bindings)
+    value = _validate_successor_packet_value(
+        value,
+        expected_bindings=bindings,
+        expected_questions=question_value["questions"],
+        expected_reviews=_successor_fixture_reviews(golden),
+    )
     if value["semantic_questions"] != question_value["questions"] or value[
         "fixture_reviews"
     ] != _successor_fixture_reviews(golden):
@@ -1599,10 +1771,25 @@ def validate_h1_semantic_review_decision(
 ) -> dict[str, Any]:
     """Validate seven genuine structured answers; arbitrary free text is never a choice."""
     schema_result = validate_h1_review_schema_v4(schema=schema, questions=questions)
+    questions_value, _ = _read_canonical_external(
+        questions, "H1_SEMANTIC_QUESTIONS_INVALID"
+    )
     packet_value, packet_raw = _read_canonical_external(
         packet, "H1_SUCCESSOR_PACKET_INVALID"
     )
-    packet_value = _validate_successor_packet_value(packet_value)
+    packet_value = _validate_successor_packet_value(
+        packet_value, expected_questions=questions_value["questions"]
+    )
+    packet_bindings = packet_value["bindings"]
+    if (
+        packet_bindings.get("questions_sha256")
+        != schema_result["questions_sha256"]
+        or packet_bindings.get("questions_semantic_content_sha256")
+        != schema_result["canonical_semantic_content_sha256"]
+        or packet_bindings.get("h1_review_schema_sha256")
+        != schema_result["schema_sha256"]
+    ):
+        raise H1Error("H1_SUCCESSOR_PACKET_QUESTIONS_INVALID")
     readiness_value, readiness_raw = _read_canonical_external(
         readiness, "H1_SUCCESSOR_READINESS_INVALID"
     )

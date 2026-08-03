@@ -21,9 +21,13 @@ from .attempts import (
     AttemptError,
     load_measurement_attempt_manifest,
     run_adversarial_suite_v6,
+    run_formal_measurement_v5,
     run_measurement_attempt,
     validate_adversarial_result_v6,
+    validate_formal_measurement_v5,
     validate_measurement_attempt,
+    validate_successor_adapter_batch_v6,
+    write_successor_adapter_batch_v6,
 )
 from .final_reports import (
     FINAL_SUCCESSOR_TARGETS,
@@ -543,14 +547,66 @@ def command_validate_h1_ontology_decision_v1(args: argparse.Namespace) -> int:
     return 0
 
 
+def _successor_measurement_inputs(args: argparse.Namespace) -> dict[str, Path]:
+    return {
+        "fixture_registry": args.fixture_registry,
+        "rules": args.rules,
+        "semantic_contract": args.semantic_contract,
+        "golden_predictions": args.golden_predictions,
+        "bundle_root": args.bundle_root,
+    }
+
+
+def command_adapt_pr2164_v6(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(write_successor_adapter_batch_v6(
+        output=args.output,
+        preflight=args.preflight,
+        **_successor_measurement_inputs(args),
+    )))
+    return 0
+
+
+def command_validate_adapter_batch_v6(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_successor_adapter_batch_v6(
+        adapter_batch=args.adapter_batch,
+        **_successor_measurement_inputs(args),
+    )))
+    return 0
+
+
+def command_run_formal_measurement_v5(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(run_formal_measurement_v5(
+        adapter_batch=args.adapter_batch,
+        adjudication_schema=args.adjudication_schema,
+        attempt_root=args.attempt_root,
+        attempt_id=args.attempt_id,
+        preflight=args.preflight,
+        **_successor_measurement_inputs(args),
+    )))
+    return 0
+
+
+def command_validate_formal_measurement_v5(args: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(canonical_json_bytes(validate_formal_measurement_v5(
+        adapter_batch=args.adapter_batch,
+        adjudication_schema=args.adjudication_schema,
+        attempt=args.attempt,
+        **_successor_measurement_inputs(args),
+    )))
+    return 0
+
+
 def command_run_adversarial_v6(args: argparse.Namespace) -> int:
     sys.stdout.buffer.write(canonical_json_bytes(run_adversarial_suite_v6(
         contract=args.contract,
         golden_predictions=args.golden_predictions,
         formal_attempt=args.formal_attempt,
         adapter_batch=args.adapter_batch,
+        fixture_registry=args.fixture_registry,
         rules=args.rules,
+        semantic_contract=args.semantic_contract,
         schema=args.schema,
+        bundle_root=args.bundle_root,
         output=args.output,
         preflight=args.preflight,
     )))
@@ -564,8 +620,11 @@ def command_validate_adversarial_v6(args: argparse.Namespace) -> int:
         golden_predictions=args.golden_predictions,
         formal_attempt=args.formal_attempt,
         adapter_batch=args.adapter_batch,
+        fixture_registry=args.fixture_registry,
         rules=args.rules,
+        semantic_contract=args.semantic_contract,
         schema=args.schema,
+        bundle_root=args.bundle_root,
     )))
     return 0
 
@@ -574,13 +633,16 @@ def _successor_h1_inputs(args: argparse.Namespace) -> dict[str, object]:
     return {
         "adapter_batch": args.adapter_batch,
         "adversarial_report": args.adversarial_report,
+        "adversarial_contract": args.adversarial_contract,
         "adjudication_schema": args.adjudication_schema,
         "executable_closure": args.executable_closure,
         "formal_attempt": args.formal_attempt,
         "golden_predictions": args.golden_predictions,
+        "fixture_registry": args.fixture_registry,
         "ontology_decision": args.ontology_decision,
         "questions": args.questions,
         "rules": args.rules,
+        "semantic_contract": args.semantic_contract,
         "schema": args.schema,
         "source_authority": args.source_authority,
         "bundle_root": args.bundle_root,
@@ -696,15 +758,26 @@ def command_verify_final_successor_reports(args: argparse.Namespace) -> int:
 def _add_successor_h1_inputs(command: argparse.ArgumentParser) -> None:
     command.add_argument("--adapter-batch", type=Path, required=True)
     command.add_argument("--adversarial-report", type=Path, required=True)
+    command.add_argument("--adversarial-contract", type=Path, required=True)
     command.add_argument("--adjudication-schema", type=Path, required=True)
     command.add_argument("--executable-closure", type=Path, required=True)
     command.add_argument("--formal-attempt", type=Path, required=True)
     command.add_argument("--golden-predictions", type=Path, required=True)
+    command.add_argument("--fixture-registry", type=Path, required=True)
     command.add_argument("--ontology-decision", type=Path, required=True)
     command.add_argument("--questions", type=Path, required=True)
     command.add_argument("--rules", type=Path, required=True)
+    command.add_argument("--semantic-contract", type=Path, required=True)
     command.add_argument("--schema", type=Path, required=True)
     command.add_argument("--source-authority", type=Path, required=True)
+    command.add_argument("--bundle-root", type=Path, required=True)
+
+
+def _add_successor_measurement_inputs(command: argparse.ArgumentParser) -> None:
+    command.add_argument("--fixture-registry", type=Path, required=True)
+    command.add_argument("--rules", type=Path, required=True)
+    command.add_argument("--semantic-contract", type=Path, required=True)
+    command.add_argument("--golden-predictions", type=Path, required=True)
     command.add_argument("--bundle-root", type=Path, required=True)
 
 
@@ -849,13 +922,39 @@ def build_parser() -> argparse.ArgumentParser:
     h1_ontology_decision.add_argument("--supersession", type=Path, required=True)
     h1_ontology_decision.add_argument("--decision", type=Path, required=True)
     h1_ontology_decision.set_defaults(handler=command_validate_h1_ontology_decision_v1)
+    successor_adapter = commands.add_parser("adapt-pr2164-v6")
+    _add_successor_measurement_inputs(successor_adapter)
+    successor_adapter.add_argument("--output", type=Path, required=True)
+    successor_adapter.add_argument("--preflight", action="store_true")
+    successor_adapter.set_defaults(handler=command_adapt_pr2164_v6)
+    successor_adapter_validator = commands.add_parser("validate-adapter-batch-v6")
+    _add_successor_measurement_inputs(successor_adapter_validator)
+    successor_adapter_validator.add_argument("--adapter-batch", type=Path, required=True)
+    successor_adapter_validator.set_defaults(handler=command_validate_adapter_batch_v6)
+    successor_formal = commands.add_parser("run-formal-measurement-v5")
+    _add_successor_measurement_inputs(successor_formal)
+    successor_formal.add_argument("--adapter-batch", type=Path, required=True)
+    successor_formal.add_argument("--adjudication-schema", type=Path, required=True)
+    successor_formal.add_argument("--attempt-root", type=Path, required=True)
+    successor_formal.add_argument("--attempt-id", required=True)
+    successor_formal.add_argument("--preflight", action="store_true")
+    successor_formal.set_defaults(handler=command_run_formal_measurement_v5)
+    successor_formal_validator = commands.add_parser("validate-formal-measurement-v5")
+    _add_successor_measurement_inputs(successor_formal_validator)
+    successor_formal_validator.add_argument("--adapter-batch", type=Path, required=True)
+    successor_formal_validator.add_argument("--adjudication-schema", type=Path, required=True)
+    successor_formal_validator.add_argument("--attempt", type=Path, required=True)
+    successor_formal_validator.set_defaults(handler=command_validate_formal_measurement_v5)
     adversarial_v6 = commands.add_parser("run-adversarial-semantic-suite-v6")
     adversarial_v6.add_argument("--contract", type=Path, required=True)
     adversarial_v6.add_argument("--golden-predictions", type=Path, required=True)
     adversarial_v6.add_argument("--formal-attempt", type=Path, required=True)
     adversarial_v6.add_argument("--adapter-batch", type=Path, required=True)
+    adversarial_v6.add_argument("--fixture-registry", type=Path, required=True)
     adversarial_v6.add_argument("--rules", type=Path, required=True)
+    adversarial_v6.add_argument("--semantic-contract", type=Path, required=True)
     adversarial_v6.add_argument("--schema", type=Path, required=True)
+    adversarial_v6.add_argument("--bundle-root", type=Path, required=True)
     adversarial_v6.add_argument("--output", type=Path, required=True)
     adversarial_v6.add_argument("--preflight", action="store_true")
     adversarial_v6.set_defaults(handler=command_run_adversarial_v6)
@@ -865,8 +964,11 @@ def build_parser() -> argparse.ArgumentParser:
     adversarial_v6_validator.add_argument("--golden-predictions", type=Path, required=True)
     adversarial_v6_validator.add_argument("--formal-attempt", type=Path, required=True)
     adversarial_v6_validator.add_argument("--adapter-batch", type=Path, required=True)
+    adversarial_v6_validator.add_argument("--fixture-registry", type=Path, required=True)
     adversarial_v6_validator.add_argument("--rules", type=Path, required=True)
+    adversarial_v6_validator.add_argument("--semantic-contract", type=Path, required=True)
     adversarial_v6_validator.add_argument("--schema", type=Path, required=True)
+    adversarial_v6_validator.add_argument("--bundle-root", type=Path, required=True)
     adversarial_v6_validator.set_defaults(handler=command_validate_adversarial_v6)
     h1_semantic_build = commands.add_parser("build-h1-semantic-packet-v6")
     _add_successor_h1_inputs(h1_semantic_build)
