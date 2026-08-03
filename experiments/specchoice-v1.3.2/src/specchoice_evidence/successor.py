@@ -1505,6 +1505,10 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
         repository / f"{_EXPERIMENT_PREFIX}/receipts/integrity-receipt-v14.json",
         "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
     )
+    acceptance_audit, acceptance_audit_raw = _canonical_object(
+        repository / f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-acceptance-audit-v6.json",
+        "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+    )
     replay, replay_raw = _canonical_object(
         repository / f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-offline-replay-v6.json",
         "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
@@ -1525,18 +1529,17 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
         repository / f"{_EXPERIMENT_PREFIX}/receipts/pending/fixture-closure-transition-v3-to-v6.json",
         "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
     )
-    audit = values["audit"]
     decision = values["decision"]
     if (
         authority.get("status") != "accepted_cutover_v13"
         or decision.get("decision") != "accept"
-        or audit.get("authority_sha256") != sha256_bytes(authority_raw)
-        or audit.get("request_sha256") != sha256_bytes(raw["request"])
-        or audit.get("decision_sha256") != sha256_bytes(raw["decision"])
+        or acceptance_audit.get("authority_sha256") != sha256_bytes(authority_raw)
+        or acceptance_audit.get("request_sha256") != sha256_bytes(raw["request"])
+        or acceptance_audit.get("decision_sha256") != sha256_bytes(raw["decision"])
         or authority.get("decision_sha256") != sha256_bytes(raw["decision"])
         or authority.get("transition_sha256") != sha256_bytes(transition_raw)
         or integrity != {
-            "acceptance_audit_sha256": sha256_bytes(raw["audit"]),
+            "acceptance_audit_sha256": sha256_bytes(acceptance_audit_raw),
             "active_authority_sha256": sha256_bytes(authority_raw),
             "offline_replay_sha256": sha256_bytes(replay_raw),
             "pending_authority_sha256": sha256_bytes(pending_raw),

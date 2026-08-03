@@ -179,8 +179,9 @@ def validate_h1_source_gold_decision_v6(*, decision: object, packet: object, rea
     for field in ("aggregate_rationale", "attestation", "reviewer", "signature", "timestamp_utc"):
         if not isinstance(decision.get(field), str) or not decision[field].strip():
             raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    timestamp = decision["timestamp_utc"]
     try:
-        datetime.fromisoformat(str(decision["timestamp_utc"]).replace("Z", "+00:00"))
+        parsed_timestamp = datetime.strptime(str(timestamp), "%Y-%m-%dT%H:%M:%SZ")
     except ValueError as error:
         raise H1Error("H1_V6_DECISION_INCOMPLETE") from error
     items = decision.get("semantic_responses")
@@ -201,11 +202,12 @@ def validate_h1_source_gold_decision_v6(*, decision: object, packet: object, rea
     if any(not isinstance(item, dict) or set(item) != {"fixture_id", "disposition", "rationale"} or item.get("disposition") not in _H1_DISPOSITIONS or not isinstance(item.get("rationale"), str) or not item["rationale"].strip() for item in fixture_items):
         raise H1Error("H1_V6_DECISION_INCOMPLETE")
     all_dispositions = [item["disposition"] for item in items + fixture_items]
-    if aggregate == "approved" and any(value != "approved" for value in all_dispositions):
-        raise H1Error("H1_V6_AGGREGATE_CONFLICT")
-    if aggregate == "disputed" and "disputed" not in all_dispositions:
-        raise H1Error("H1_V6_AGGREGATE_CONFLICT")
-    if aggregate == "incomplete" and "incomplete" not in all_dispositions:
+    expected_aggregate = (
+        "incomplete" if "incomplete" in all_dispositions
+        else "disputed" if "disputed" in all_dispositions
+        else "approved"
+    )
+    if aggregate != expected_aggregate:
         raise H1Error("H1_V6_AGGREGATE_CONFLICT")
     return dict(decision)
 
