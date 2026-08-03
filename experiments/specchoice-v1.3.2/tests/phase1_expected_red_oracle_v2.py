@@ -18,6 +18,7 @@ SUCCESSOR_IDS = {
     "tests.test_fixture_closure.FixtureClosureTests.test_v12_acceptance_and_cutover_entrypoints",
     "tests.test_fixture_closure.FixtureClosureTests.test_v5_registry_manifest_and_every_repair_payload_are_pre_freeze_committed_inputs",
     "tests.test_fixture_closure.FixtureClosureTests.test_v6_preflight_reconstructs_target_inventory_before_any_write",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v6_registry_is_a_complete_twenty_nine_file_inventory",
     "tests.test_measurement_adapter.MeasurementAdapterTests.test_exact_eleven_case_metric_population_contract",
     "tests.test_measurement_adapter.MeasurementAdapterTests.test_v5_outcome_contract_rejects_candidate_identity_leakage",
     "tests.test_measurement_scoring.MeasurementScoringTests.test_v5_span_population_is_frozen",
