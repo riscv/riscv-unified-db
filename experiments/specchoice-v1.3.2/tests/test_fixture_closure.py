@@ -142,6 +142,18 @@ class FixtureClosureTests(unittest.TestCase):
                     bound_inputs={"config/fixture-registry-pr2164-v5.json": changed} if name == "input" else inputs,
                 )
 
+    def test_v12_acceptance_and_cutover_entrypoints(self) -> None:
+        commands = cli_module.build_parser()._subparsers._group_actions[0].choices
+        self.assertTrue({
+            "write-local-acceptance-request-v12",
+            "validate-local-acceptance-decision-v12",
+            "accept-fixture-closure-local-v12",
+            "prepare-pending-source-cutover-v12",
+            "validate-pending-source-cutover-v12",
+            "activate-pending-source-cutover-v12",
+            "write-accepted-v5-receipts",
+        }.issubset(commands))
+
 
 class FixtureClosureCandidateTests(unittest.TestCase):
 
