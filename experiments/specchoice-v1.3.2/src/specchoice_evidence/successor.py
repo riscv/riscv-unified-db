@@ -46,7 +46,7 @@ from .runtime_closure import (
     future_target_inventory_v6,
     validate_future_target_occupancy_v6,
     validate_runtime_closure_v2_supersession,
-    verify_runtime_closure_v3,
+    verify_runtime_closure_v3_historical,
 )
 from .source_contract import (
     SourceContractProposalError,
@@ -235,9 +235,15 @@ def _parse_closure_v3(
     if not isinstance(closure, dict) or canonical_json_bytes(closure) != closure_raw:
         raise SuccessorProtocolError("RUNTIME_CLOSURE_V3_INVALID")
     try:
-        return verify_runtime_closure_v3(
-            closure, repository, authority_pre_state_raw=authority_pre_state_raw
-        )
+        verified = verify_runtime_closure_v3_historical(closure, repository)
+        binding = verified.get("authority_pre_state")
+        if (
+            not isinstance(binding, Mapping)
+            or binding.get("byte_length") != len(authority_pre_state_raw)
+            or binding.get("sha256") != sha256_bytes(authority_pre_state_raw)
+        ):
+            raise RuntimeClosureError("RUNTIME_CLOSURE_V3_AUTHORITY_PRESTATE_INVALID")
+        return verified
     except RuntimeClosureError as error:
         raise SuccessorProtocolError(str(error)) from error
 
