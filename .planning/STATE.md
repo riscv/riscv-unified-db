@@ -5,10 +5,10 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
 status: executing
-stopped_at: "02-19 Task 12: awaiting human construction authorization for the exact rooted-v6 packet"
-last_updated: "2026-08-03T12:23:17Z"
+stopped_at: "02-19 Task 14: awaiting independent local acceptance decision for the exact candidate-v6"
+last_updated: "2026-08-03T13:00:00Z"
 last_activity: 2026-08-03
-last_activity_desc: Closure-v3 and the rooted-v6 proposal passed independent rebuild audits; no human decision or candidate exists
+last_activity_desc: Human-authorized rooted-v6 candidate, audit, and machine-only local-acceptance request validated; no acceptance decision or authority change exists
 progress:
   total_phases: 7
   completed_phases: 1
@@ -30,8 +30,8 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 
 Phase: 02 (deterministic-measurement-spine) — EXECUTING
 Plan: 19 of 19
-Status: Task 12 blocking human gate — exact rooted-v6 construction authorization pending
-Last activity: 2026-08-03 — closure-v3 and proposal-v6 independently validated; no decision or candidate exists
+Status: Task 14 blocking human gate — exact candidate-v6 local acceptance pending
+Last activity: 2026-08-03 — construction decision, candidate-v6, audit, and machine-only request validated; no acceptance decision exists
 
 Progress: [█████████░] 88%
 
@@ -150,7 +150,7 @@ None yet.
 - Exact provider and immutable model snapshot remain unfrozen until the conditional H4 checkpoint.
 - Python 3.14/scikit-learn lock resolution remains unverified for later measurement work.
 - Human-reviewed pair and strict-core sufficiency is unknown and may legitimately select Red.
-- 02-19 Task 12 is blocking. No v6 candidate may be created until a genuine human decision authorizes the exact proposal-v6, supersession, closure-v3, authority pre-state, and rejected-v5 history hashes.
+- 02-19 Task 14 is blocking. No accepted-v6, authority cutover, measurement, H1 decision, or report may be created until a genuine independent human local-acceptance decision binds the exact candidate-v6 request.
 
 ## Deferred Items
 
@@ -160,6 +160,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-03T12:23:17Z
-Stopped at: 02-19 Task 12 — awaiting human construction authorization for the exact rooted-v6 packet
+Last session: 2026-08-03T13:00:00Z
+Stopped at: 02-19 Task 14 — awaiting independent local acceptance decision for the exact candidate-v6
 Resume file: .planning/phases/02-deterministic-measurement-spine/02-19-PLAN.md
