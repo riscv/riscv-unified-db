@@ -54,7 +54,7 @@ module Udb
         when /\Af/
           "Reg(#{name}(), true).to_string()"
         when /\Av/
-          "Reg::from_rf_index(#{name}(), 64).to_string()"
+          "Reg::from_rf_index(#{name}(), Reg::V0).to_string()"
         else
           "#{name}()"
         end
