@@ -176,6 +176,21 @@ class FixtureClosureTests(unittest.TestCase):
         for path in manifest["payload_paths"]:
             self.assertTrue((self.experiment / path).is_file(), path)
 
+    def test_v6_registry_is_a_complete_twenty_nine_file_inventory(self) -> None:
+        registry = json.loads((self.experiment / "config/fixture-registry-pr2164-v6.json").read_text())
+        entries = registry["file_entries"]
+        self.assertEqual(registry["fixture_count"], 11)
+        self.assertEqual(registry["raw_file_count"], 29)
+        self.assertEqual(len(entries), 29)
+        self.assertEqual({entry["fixture_id"] for entry in entries}, {
+            "CAND_WARL_FIXED_LEGAL_SET", "NEG_EXT_GATED_PBMTE", "NEG_FIXED_ENCODING",
+            "NEG_SHALL_NO_DELEGATION", "NEG_SOFTWARE_ADVICE", "POS_CSR_RW_MTVEC_ACCESS",
+            "POS_DIRECT_CACHE_BLOCK", "POS_DIRECT_NUM_PMP", "POS_RECALL_COUNT_GEILEN",
+            "POS_WARL_ASID_WIDTH", "POS_WARL_MTVEC_MODES",
+        })
+        self.assertEqual(registry["partition"], {"candidate": 2, "negative": 3, "positive": 6})
+        self.assertTrue(all(set(entry) == {"fixture_id", "origin", "path", "role", "byte_length", "sha256"} for entry in entries))
+
     def test_v6_preflight_reconstructs_target_inventory_before_any_write(self) -> None:
         from specchoice_evidence.runtime_closure import validate_v6_preflight_inventory
 
