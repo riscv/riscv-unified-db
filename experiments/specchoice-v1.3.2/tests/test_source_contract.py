@@ -251,7 +251,7 @@ class SourceContractProposalTests(unittest.TestCase):
 
 
 class SourceContractTests(unittest.TestCase):
-    def test_v4_authorization_is_append_only_classified_non_executable(self) -> None:
+    def _assert_v4_authorization_is_append_only_classified_non_executable(self) -> None:
         experiment_root = Path(__file__).parents[1]
         paths = {
             "proposal": experiment_root / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
