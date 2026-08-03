@@ -55,19 +55,17 @@ def _run_bounded_subprocess(
         process = subprocess.Popen(
             command, stdin=input_stream, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
         )
-        if process.stdout is None or process.stderr is None:
-            process.kill()
-            process.wait()
-            raise _BoundedSubprocessError("SUBPROCESS_PIPE_UNAVAILABLE")
-        selector = selectors.DefaultSelector()
-        streams = {"stdout": process.stdout, "stderr": process.stderr}
-        limits = {"stdout": max_stdout_bytes, "stderr": max_stderr_bytes}
+        selector: selectors.BaseSelector | None = None
         chunks: dict[str, list[bytes]] = {"stdout": [], "stderr": []}
-        totals = {"stdout": 0, "stderr": 0}
-        selector.register(process.stdout, selectors.EVENT_READ, "stdout")
-        selector.register(process.stderr, selectors.EVENT_READ, "stderr")
-        deadline = time.monotonic() + timeout
         try:
+            if process.stdout is None or process.stderr is None:
+                raise _BoundedSubprocessError("SUBPROCESS_PIPE_UNAVAILABLE")
+            selector = selectors.DefaultSelector()
+            limits = {"stdout": max_stdout_bytes, "stderr": max_stderr_bytes}
+            totals = {"stdout": 0, "stderr": 0}
+            selector.register(process.stdout, selectors.EVENT_READ, "stdout")
+            selector.register(process.stderr, selectors.EVENT_READ, "stderr")
+            deadline = time.monotonic() + timeout
             while selector.get_map():
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
@@ -95,12 +93,22 @@ def _run_bounded_subprocess(
             try:
                 process.wait(timeout=1)
             except subprocess.TimeoutExpired:
-                pass
+                if process.poll() is None:
+                    process.kill()
+                process.wait()
             raise
         finally:
-            selector.close()
-            for stream in streams.values():
-                stream.close()
+            if selector is not None:
+                try:
+                    selector.close()
+                except BaseException:
+                    pass
+            for stream in (process.stdout, process.stderr):
+                if stream is not None:
+                    try:
+                        stream.close()
+                    except BaseException:
+                        pass
         return subprocess.CompletedProcess(
             command, returncode, stdout=b"".join(chunks["stdout"]), stderr=b"".join(chunks["stderr"]),
         )
