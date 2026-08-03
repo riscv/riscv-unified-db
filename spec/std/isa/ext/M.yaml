@@ -15,7 +15,7 @@ versions:
     requirements:
       extension:
         name: Zmmul
-        version: "= 1.0.0"
+        version: "~> 1.0.0"
 description: |
   This chapter describes the standard integer multiplication and division
   instruction extension, which is named `M` and contains instructions
