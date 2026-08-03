@@ -273,7 +273,7 @@ class DataAdmissionTests(unittest.TestCase):
                 accepted_root=accepted,
                 schema_raw=self.schema_raw,
             )
-            self.assertIn("CANDIDATE_NOT_IN_INVENTORY", {item.code for item in unlisted.diagnostics})
+            self.assertIn("CANDIDATE_INVENTORY_CHANGED", {item.code for item in unlisted.diagnostics})
 
             candidate_path = candidates / "pairs/pair-mtvec.json"
             candidate_path.write_bytes(candidate_path.read_bytes() + b" ")

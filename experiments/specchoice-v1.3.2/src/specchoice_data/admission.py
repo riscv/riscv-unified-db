@@ -7,7 +7,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from specchoice_evidence.canonical import canonical_json_bytes, require_sha256, sha256_bytes
+from specchoice_evidence.canonical import (
+    canonical_json_bytes,
+    require_byte_length,
+    require_sha256,
+    sha256_bytes,
+)
 from specchoice_evidence.filesystem import (
     FilesystemPolicyError,
     enumerate_authoritative_files,
@@ -104,6 +109,88 @@ def freeze_candidate_inventory_v1(
     return {**payload, "inventory_sha256": sha256_bytes(canonical_json_bytes(payload))}
 
 
+def validate_candidate_inventory_v1(
+    *, candidate_root: Path, inventory: object, schema_raw: bytes,
+) -> dict[str, object]:
+    """Revalidate the complete frozen candidate tree before semantic review."""
+    schema = load_phase3_schema_v1(schema_raw)
+    if not isinstance(inventory, dict) or set(inventory) != {
+        "bindings", "entries", "inventory_sha256", "schema_version"
+    }:
+        raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED")
+    payload = {key: inventory[key] for key in ("bindings", "entries", "schema_version")}
+    bindings = inventory.get("bindings")
+    entries = inventory.get("entries")
+    try:
+        if (
+            inventory.get("schema_version") != schema["supported_versions"]["candidate_inventory"]
+            or inventory.get("inventory_sha256") != sha256_bytes(canonical_json_bytes(payload))
+            or not isinstance(bindings, Mapping)
+            or set(bindings) != {
+                "h1_decision_sha256", "phase2_authority_sha256", "schema_sha256"
+            }
+            or require_sha256(bindings["h1_decision_sha256"]) != bindings["h1_decision_sha256"]
+            or require_sha256(bindings["phase2_authority_sha256"]) != bindings["phase2_authority_sha256"]
+            or bindings["schema_sha256"] != sha256_bytes(schema_raw)
+            or not isinstance(entries, list)
+        ):
+            raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED")
+    except (KeyError, TypeError, ValueError) as error:
+        if isinstance(error, DataAdmissionError):
+            raise
+        raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED") from error
+
+    declared_paths: list[str] = []
+    for entry in entries:
+        try:
+            if not isinstance(entry, Mapping) or set(entry) != {
+                "byte_length", "kind", "path", "sha256"
+            }:
+                raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED")
+            path = require_relative_posix_path(entry["path"]).as_posix()
+            if (
+                path == "candidate-inventory.json"
+                or entry["kind"] not in schema["candidate_kinds"]
+                or require_byte_length(entry["byte_length"]) != entry["byte_length"]
+                or require_sha256(entry["sha256"]) != entry["sha256"]
+            ):
+                raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED")
+        except (KeyError, FilesystemPolicyError, TypeError, ValueError) as error:
+            if isinstance(error, DataAdmissionError):
+                raise
+            raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED") from error
+        declared_paths.append(path)
+    if declared_paths != sorted(declared_paths) or len(set(declared_paths)) != len(declared_paths):
+        raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED")
+
+    try:
+        observed = enumerate_authoritative_files(candidate_root)
+        expected = set(declared_paths)
+        if "candidate-inventory.json" in observed:
+            expected.add("candidate-inventory.json")
+            _, inventory_raw = read_authoritative_file(candidate_root, "candidate-inventory.json")
+            if inventory_raw != canonical_json_bytes(inventory):
+                raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED")
+        if observed != expected:
+            raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED")
+        for entry in entries:
+            _, raw = read_authoritative_file(candidate_root, str(entry["path"]))
+            candidate = decode_strict_json(raw)
+            if (
+                len(raw) != entry["byte_length"]
+                or sha256_bytes(raw) != entry["sha256"]
+                or not isinstance(candidate, dict)
+                or canonical_json_bytes(candidate) != raw
+                or candidate.get("candidate_kind") != entry["kind"]
+            ):
+                raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED")
+    except (FilesystemPolicyError, OSError, UnicodeDecodeError, ValueError) as error:
+        if isinstance(error, DataAdmissionError):
+            raise
+        raise DataAdmissionError("CANDIDATE_INVENTORY_CHANGED") from error
+    return inventory
+
+
 def _diag(code: str, candidate_id: str | None, field: str, *, expected: object = None, observed: object = None) -> Diagnostic:
     return Diagnostic(code, "blocker", fixture_id=candidate_id, field=field, expected=expected, observed=observed)
 
@@ -148,6 +235,15 @@ def admit_pair_candidate_v1(
         normalized = require_relative_posix_path(candidate_path).as_posix()
     except (DataSchemaError, FilesystemPolicyError, ValueError):
         diagnostics.append(_diag("CANDIDATE_PATH_REJECTED", None, "candidate_path", observed=candidate_path))
+        return AdmissionResult(None, None, ordered_diagnostics(diagnostics))
+    try:
+        validate_candidate_inventory_v1(
+            candidate_root=candidate_root,
+            inventory=inventory,
+            schema_raw=schema_raw,
+        )
+    except DataAdmissionError:
+        diagnostics.append(_diag("CANDIDATE_INVENTORY_CHANGED", None, "candidate_root"))
         return AdmissionResult(None, None, ordered_diagnostics(diagnostics))
     entry = _inventory_entry(inventory, normalized, schema_raw)
     if entry is None:
