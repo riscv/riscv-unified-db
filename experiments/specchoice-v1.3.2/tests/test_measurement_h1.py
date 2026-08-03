@@ -16,6 +16,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence import cli as cli_module
 from specchoice_measurement import h1
 from specchoice_measurement.h1 import H1Error
 
@@ -1927,6 +1928,58 @@ class H1PacketTests(unittest.TestCase):
             self.assertEqual(legacy["bindings"]["formal_attempt_sha256"], json.loads(
                 (self.formal / "attempt.json").read_text(encoding="utf-8")
             )["attempt_sha256"])
+
+
+    def _v7_packet(self) -> tuple[dict[str, object], dict[str, object]]:
+        root = Path(__file__).parents[1]
+        closure = {"schema_version": "runtime-executable-closure-v4"}
+        questions = [
+            {"id": question_id, "prompt": "prompt", "rationale": "rationale", "structural_rules": ["closed"], "machine_assertions": ["asserted"], "metric_effect": "none", "evidence_bindings": ["bound"]}
+            for question_id in h1._V7_H1_QUESTION_IDS
+        ]
+        packet = h1.build_h1_review_packet_v7(questions=questions, source_identity={"authority_sha256": "bound"}, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+        return packet, closure
+
+    def test_h1_v7_binds_complete_seven_question_semantics_and_v4_identity(self) -> None:
+        packet, _ = self._v7_packet()
+        self.assertEqual([item["id"] for item in packet["questions"]], list(h1._V7_H1_QUESTION_IDS))
+        self.assertEqual(packet["schema_version"], "h1-review-packet-v7")
+
+    def test_h1_v7_packet_and_readiness_contain_no_human_values(self) -> None:
+        packet, closure = self._v7_packet()
+        readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=Path(__file__).parents[1] / "phase2/source-authority.json")
+        self.assertNotIn("responses", packet)
+        self.assertNotIn("responses", readiness)
+
+    def test_h1_v6_decision_distinguishes_missing_payload_from_complete_incomplete_judgment(self) -> None:
+        packet, closure = self._v7_packet()
+        root = Path(__file__).parents[1]
+        readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+        with self.assertRaisesRegex(H1Error, "H1_V6_DECISION_INCOMPLETE"):
+            h1.validate_h1_source_gold_decision_v6(decision={}, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+        decision = {"aggregate_disposition": "incomplete", "items": [{"id": item, "disposition": "incomplete", "rationale": "human judgment"} for item in h1._V7_H1_QUESTION_IDS]}
+        self.assertEqual(h1.validate_h1_source_gold_decision_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json"), decision)
+
+    def test_h1_v6_terminal_outputs_require_approved_decision(self) -> None:
+        packet, closure = self._v7_packet()
+        root = Path(__file__).parents[1]
+        readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+        decision = {"aggregate_disposition": "disputed", "items": [{"id": item, "disposition": "disputed", "rationale": "human judgment"} for item in h1._V7_H1_QUESTION_IDS]}
+        with self.assertRaisesRegex(H1Error, "H1_V6_TERMINAL_APPROVAL_REQUIRED"):
+            h1.validate_approved_h1_terminal_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+
+    def test_validate_h1_review_readiness_v7_cli_is_registered_read_only_and_fail_closed(self) -> None:
+        self.assertIn("validate-h1-review-readiness-v7", cli_module.build_parser()._subparsers._group_actions[0].choices)
+
+    def test_render_h1_review_checkpoint_v7_cli_requires_no_write_and_persists_no_human_fields(self) -> None:
+        command = cli_module.build_parser()._subparsers._group_actions[0].choices["render-h1-review-checkpoint-v7"]
+        self.assertIn("--no-write", command.format_help())
+
+    def test_validate_h1_source_gold_decision_v6_cli_is_registered_read_only_and_fail_closed(self) -> None:
+        self.assertIn("validate-h1-source-gold-decision-v6", cli_module.build_parser()._subparsers._group_actions[0].choices)
+
+    def test_validate_approved_h1_terminal_v6_cli_is_registered_read_only_and_fail_closed(self) -> None:
+        self.assertIn("validate-approved-h1-terminal-v6", cli_module.build_parser()._subparsers._group_actions[0].choices)
 
 
 if __name__ == "__main__":

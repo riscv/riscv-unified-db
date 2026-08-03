@@ -1493,3 +1493,18 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
         audit_raw=raw["audit"], construction_decision_raw=raw["construction"],
         request_raw=raw["request"], decision_raw=raw["decision"],
     )
+
+
+def validate_accepted_v6_for_downstream_v4(repository: Path) -> dict[str, object]:
+    """Keep the historical authority chain while exposing the v4 exact identity seam."""
+    result = validate_accepted_v6_active_authority(repository)
+    authority = _canonical_object(repository / _AUTHORITY_RELATIVE, "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID")[0]
+    identity = authority.get("accepted_identity")
+    expected = {
+        "core_sha256": "3a55a816904c787bd6e1ffc78c1cb90fd4503cbe30022477472e777612b6d547",
+        "root_sha256": "bd75dbc97869630bbaa41dbe48c3eb1b743b7c1022bd950180b7675ecf4dd1e9",
+        "snapshot_manifest_sha256": "a143334abbbc15bf455789c862ffb0ece13047348e1e91aad3f71a8a7c7cbdd0",
+    }
+    if not isinstance(identity, Mapping) or {key: identity.get(key) for key in expected} != expected:
+        raise SuccessorProtocolError("ACCEPTED_V6_DOWNSTREAM_IDENTITY_MISMATCH")
+    return {**result, **expected}

@@ -45,6 +45,77 @@ class H1Error(ValueError):
     """Stable H1 packet or decision validation diagnostic."""
 
 
+_V7_H1_QUESTION_IDS = (
+    "ts03_adjacency", "ts03_empty_null_single_element", "ts03_equal_element_stable_order",
+    "ts04_unclassified_manual_review", "ts05_adjacency", "ts05_empty_null_single_element",
+    "ts05_equal_element_stable_order",
+)
+_H1_DISPOSITIONS = frozenset({"approved", "disputed", "incomplete"})
+
+
+def _v7_gate(runtime_closure: object, authority_path: Path) -> dict[str, object]:
+    """Require the published closure and the active authority before a v7 write."""
+    if not isinstance(runtime_closure, Mapping) or runtime_closure.get("schema_version") != "runtime-executable-closure-v4":
+        raise H1Error("RUNTIME_CLOSURE_V4_REQUIRED")
+    raw = authority_path.read_bytes()
+    if sha256_bytes(raw) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae":
+        raise H1Error("ACTIVE_AUTHORITY_MISMATCH")
+    value = json.loads(raw)
+    if value.get("status") != "accepted_cutover_v13":
+        raise H1Error("ACTIVE_AUTHORITY_INVALID")
+    return value
+
+
+def build_h1_review_packet_v7(*, questions: object, source_identity: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
+    """Build a decision-free packet with every semantic question fully bound."""
+    _v7_gate(runtime_closure, authority_path)
+    if not isinstance(questions, list) or [item.get("id") if isinstance(item, dict) else None for item in questions] != list(_V7_H1_QUESTION_IDS):
+        raise H1Error("H1_V7_QUESTION_SET_INVALID")
+    required = {"id", "prompt", "rationale", "structural_rules", "machine_assertions", "metric_effect", "evidence_bindings"}
+    if any(not isinstance(item, dict) or set(item) != required or any(not item[key] for key in required - {"id"}) for item in questions):
+        raise H1Error("H1_V7_QUESTION_SEMANTICS_INVALID")
+    if not isinstance(source_identity, dict) or not source_identity:
+        raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID")
+    payload = {"questions": questions, "schema_version": "h1-review-packet-v7", "source_identity": source_identity}
+    return {**payload, "packet_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def build_h1_review_readiness_v7(*, packet: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
+    """Produce decision-free readiness; human response fields are never accepted."""
+    _v7_gate(runtime_closure, authority_path)
+    if not isinstance(packet, Mapping) or packet.get("schema_version") != "h1-review-packet-v7" or "responses" in packet:
+        raise H1Error("H1_V7_PACKET_INVALID")
+    payload = {"packet_sha256": packet.get("packet_sha256"), "schema_version": "h1-review-readiness-v7", "status": "ready_for_human"}
+    if not isinstance(payload["packet_sha256"], str):
+        raise H1Error("H1_V7_PACKET_INVALID")
+    return {**payload, "readiness_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def validate_h1_source_gold_decision_v6(*, decision: object, packet: object, readiness: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
+    """Validate the closed three-state human judgment without writing anything."""
+    _v7_gate(runtime_closure, authority_path)
+    if not isinstance(packet, Mapping) or not isinstance(readiness, Mapping) or not isinstance(decision, Mapping):
+        raise H1Error("H1_V6_DECISION_INVALID")
+    if readiness.get("packet_sha256") != packet.get("packet_sha256"):
+        raise H1Error("H1_V6_PACKET_READINESS_MISMATCH")
+    items = decision.get("items")
+    aggregate = decision.get("aggregate_disposition")
+    if not isinstance(items, list) or len(items) != 7 or aggregate not in _H1_DISPOSITIONS:
+        raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    if [item.get("id") if isinstance(item, dict) else None for item in items] != list(_V7_H1_QUESTION_IDS):
+        raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    if any(not isinstance(item, dict) or item.get("disposition") not in _H1_DISPOSITIONS or not isinstance(item.get("rationale"), str) or not item["rationale"].strip() for item in items):
+        raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    return dict(decision)
+
+
+def validate_approved_h1_terminal_v6(*, decision: object, packet: object, readiness: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
+    validated = validate_h1_source_gold_decision_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=runtime_closure, authority_path=authority_path)
+    if validated.get("aggregate_disposition") != "approved":
+        raise H1Error("H1_V6_TERMINAL_APPROVAL_REQUIRED")
+    return validated
+
+
 _V5_H1_QUESTION_IDS = (
     "ts03_adjacency", "ts03_empty_null_single_element", "ts03_equal_element_stable_order",
     "ts04_unclassified_manual_review", "ts05_adjacency", "ts05_empty_null_single_element",

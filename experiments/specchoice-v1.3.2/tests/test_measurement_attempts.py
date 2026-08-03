@@ -26,6 +26,7 @@ from specchoice_measurement.attempts import (
     run_measurement_attempt,
     validate_measurement_attempt,
     validate_required_diagnostics_v4,
+    validate_fresh_v4_target,
 )
 from specchoice_measurement.cli import (
     command_validate_attempt,
@@ -633,6 +634,18 @@ class MeasurementAttemptTests(unittest.TestCase):
                     report_path=report,
                     formal_attempt=self.experiment_root / "runs/measurement-attempts/formal-golden-pr2164-v1",
                 )
+
+
+    def test_fresh_v4_chain_is_deterministic_exact_resume_and_has_expected_metrics(self) -> None:
+        closure = {"schema_version": "runtime-executable-closure-v4"}
+        authority = self.experiment_root / "phase2/source-authority.json"
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "attempt.json"
+            self.assertFalse(validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority))
+            target.write_bytes(b"fixed")
+            self.assertTrue(validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority, expected=b"fixed"))
+            with self.assertRaisesRegex(AttemptError, "V4_TARGET_DIVERGED"):
+                validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority, expected=b"other")
 
 
 if __name__ == "__main__":

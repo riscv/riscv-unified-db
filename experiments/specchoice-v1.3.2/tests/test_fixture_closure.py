@@ -56,6 +56,8 @@ from specchoice_evidence.runtime_closure import (
     verify_runtime_closure_v2,
     verify_runtime_closure_v3,
     validate_runtime_closure_v2_supersession,
+    build_runtime_closure_v4,
+    future_target_inventory_v7,
 )
 from specchoice_evidence.successor import (
     SuccessorProtocolError,
@@ -161,6 +163,22 @@ class FixtureClosureTests(unittest.TestCase):
             (root / "b.txt").write_bytes(b"B\n")
             with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_ENTRY_MISMATCH"):
                 verify_runtime_closure(closure, root)
+
+    def test_runtime_closure_v4_bootstrap_has_no_self_dependency(self) -> None:
+        receipt = "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v4.json"
+        self.assertNotIn(receipt, {entry["path"] for entry in future_target_inventory_v7()})
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertEqual(
+                build_runtime_closure_v4.__name__, "build_runtime_closure_v4"
+            )
+            self.assertFalse((root / receipt).exists())
+
+    def test_runtime_closure_v4_binds_all_seventeen_post_closure_targets(self) -> None:
+        targets = future_target_inventory_v7()
+        self.assertEqual(len(targets), 17)
+        self.assertEqual(targets, sorted(targets, key=lambda entry: entry["path"]))
+        self.assertEqual({entry["kind"] for entry in targets}, {"file"})
 
     def test_v5_construction_decision_rejects_every_transitive_one_byte_drift_before_write(self) -> None:
         closure_raw = b'{"closure":"frozen"}\n'

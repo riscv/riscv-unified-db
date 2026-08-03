@@ -26,6 +26,16 @@ class FinalReportError(ValueError):
     """Stable failure for a stale report input or incomplete evidence set."""
 
 
+def validate_v4_terminal_report_inputs(*, decision: object, packet: object, readiness: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
+    """A terminal report is eligible only for a complete approved v6 decision."""
+    from .h1 import validate_approved_h1_terminal_v6
+
+    return validate_approved_h1_terminal_v6(
+        decision=decision, packet=packet, readiness=readiness,
+        runtime_closure=runtime_closure, authority_path=authority_path,
+    )
+
+
 def validate_final_report_inputs(root: Path, bindings: object, receipts: object, *, human_disposition: str) -> None:
     """Reject report creation unless all hash-bound inputs and human evidence are complete."""
     if human_disposition != "approved" or not isinstance(bindings, Mapping) or not isinstance(receipts, Mapping):

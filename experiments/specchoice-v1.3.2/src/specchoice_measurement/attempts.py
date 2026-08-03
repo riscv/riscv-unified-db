@@ -25,6 +25,26 @@ class AttemptError(ValueError):
     """Stable custody or validation diagnostic for a terminal attempt."""
 
 
+def require_v4_downstream_gate(*, runtime_closure: object, authority_path: Path) -> None:
+    """Shared pre-write gate for every fresh v4 evidence writer."""
+    if not isinstance(runtime_closure, Mapping) or runtime_closure.get("schema_version") != "runtime-executable-closure-v4":
+        raise AttemptError("RUNTIME_CLOSURE_V4_REQUIRED")
+    if sha256_bytes(authority_path.read_bytes()) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae":
+        raise AttemptError("ACTIVE_AUTHORITY_MISMATCH")
+
+
+def validate_fresh_v4_target(*, target: Path, runtime_closure: object, authority_path: Path, expected: bytes | None = None) -> bool:
+    """Require absent creation or byte-exact resume after revalidating authority."""
+    require_v4_downstream_gate(runtime_closure=runtime_closure, authority_path=authority_path)
+    if target.is_symlink() or (target.exists() and not target.is_file()):
+        raise AttemptError("V4_TARGET_KIND_INVALID")
+    if not target.exists():
+        return False
+    if expected is None or target.read_bytes() != expected:
+        raise AttemptError("V4_TARGET_DIVERGED")
+    return True
+
+
 _ATTEMPT_KEYS = frozenset({
     "artifacts", "attempt_id", "attempt_sha256", "bindings", "raw_predictions_base64",
     "raw_predictions_sha256", "role", "schema_version", "status",

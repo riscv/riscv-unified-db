@@ -59,10 +59,16 @@ from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_re
 from .runtime_closure import (
     build_runtime_closure,
     build_runtime_closure_v3,
+    build_runtime_closure_v4,
     validate_runtime_closure_v2_supersession,
     validate_v6_preflight_inventory,
     verify_runtime_closure,
     verify_runtime_closure_v3,
+)
+from specchoice_measurement.h1 import (
+    build_h1_review_readiness_v7,
+    validate_approved_h1_terminal_v6,
+    validate_h1_source_gold_decision_v6,
 )
 from .source_contract import (
     _EXPECTED_FIXTURES,
@@ -981,6 +987,80 @@ def command_validate_runtime_executable_closure_v3(args: argparse.Namespace) -> 
         "authority_pre_state_sha256": sha256_bytes(authority_raw),
         "status": "runtime_closure_v3_valid",
     })
+    return 0
+
+
+def command_write_runtime_executable_closure_v4(args: argparse.Namespace) -> int:
+    repository = _repository_root(_experiment_root())
+    expected = repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v4.json"
+    if args.receipt.resolve() != expected.resolve():
+        raise ValueError("RUNTIME_CLOSURE_V4_PATH_INVALID")
+    closure = build_runtime_closure_v4(repository, freeze_commit=args.freeze_commit)
+    write_new_descriptor_file(args.receipt.parent, args.receipt.name, canonical_json_bytes(closure))
+    _print_json({"status": "runtime_closure_v4_frozen"})
+    return 0
+
+
+def command_validate_runtime_executable_closure_v4(args: argparse.Namespace) -> int:
+    receipt = _v7_h1_value(args.receipt, "RUNTIME_CLOSURE_V4_INVALID")
+    if receipt.get("schema_version") != "runtime-executable-closure-v4":
+        raise ValueError("RUNTIME_CLOSURE_V4_INVALID")
+    _print_json({"status": "runtime_closure_v4_valid"})
+    return 0
+
+
+def _v7_h1_value(path: Path, code: str) -> dict[str, object]:
+    value, _ = _load_authoritative_canonical_v4(path, code)
+    return value
+
+
+def command_validate_h1_review_readiness_v7(args: argparse.Namespace) -> int:
+    receipt = _v7_h1_value(args.receipt, "H1_V7_READINESS_INVALID")
+    packet = _v7_h1_value(args.packet, "H1_V7_PACKET_INVALID")
+    closure = _v7_h1_value(args.runtime_closure, "RUNTIME_CLOSURE_V4_INVALID")
+    _v7_h1_value(args.adapter_config, "ADAPTER_V4_RULES_INVALID")
+    _v7_h1_value(args.h1_schema, "H1_V7_SCHEMA_INVALID")
+    expected = build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=args.authority)
+    if receipt != expected:
+        raise ValueError("H1_V7_READINESS_MISMATCH")
+    _print_json({"status": "h1_review_readiness_v7_valid"})
+    return 0
+
+
+def command_render_h1_review_checkpoint_v7(args: argparse.Namespace) -> int:
+    if args.no_write is not True:
+        raise ValueError("H1_V7_NO_WRITE_REQUIRED")
+    packet = _v7_h1_value(args.packet, "H1_V7_PACKET_INVALID")
+    readiness = _v7_h1_value(args.readiness, "H1_V7_READINESS_INVALID")
+    closure = _v7_h1_value(args.runtime_closure, "RUNTIME_CLOSURE_V4_INVALID")
+    _v7_h1_value(args.h1_schema, "H1_V7_SCHEMA_INVALID")
+    expected = build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=args.authority)
+    if readiness != expected:
+        raise ValueError("H1_V7_READINESS_MISMATCH")
+    _print_json({"packet_sha256": packet["packet_sha256"], "status": "h1_review_checkpoint_v7_rendered"})
+    return 0
+
+
+def command_validate_h1_source_gold_decision_v6(args: argparse.Namespace) -> int:
+    decision = _v7_h1_value(args.decision, "H1_V6_DECISION_INVALID")
+    packet = _v7_h1_value(args.packet, "H1_V7_PACKET_INVALID")
+    readiness = _v7_h1_value(args.readiness, "H1_V7_READINESS_INVALID")
+    closure = _v7_h1_value(args.runtime_closure, "RUNTIME_CLOSURE_V4_INVALID")
+    _v7_h1_value(args.h1_schema, "H1_V7_SCHEMA_INVALID")
+    validate_h1_source_gold_decision_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=args.authority)
+    _print_json({"status": "h1_source_gold_decision_v6_valid"})
+    return 0
+
+
+def command_validate_approved_h1_terminal_v6(args: argparse.Namespace) -> int:
+    decision = _v7_h1_value(args.decision, "H1_V6_DECISION_INVALID")
+    packet = _v7_h1_value(args.packet, "H1_V7_PACKET_INVALID")
+    readiness = _v7_h1_value(args.readiness, "H1_V7_READINESS_INVALID")
+    closure = _v7_h1_value(args.runtime_closure, "RUNTIME_CLOSURE_V4_INVALID")
+    for path, code in ((args.adapter_config, "ADAPTER_V4_RULES_INVALID"), (args.h1_schema, "H1_V7_SCHEMA_INVALID"), (args.phase1_verification, "H1_V6_REPORT_INPUT_INVALID"), (args.phase1_review, "H1_V6_REPORT_INPUT_INVALID"), (args.phase2_verification, "H1_V6_REPORT_INPUT_INVALID"), (args.phase2_review, "H1_V6_REPORT_INPUT_INVALID"), (args.summary, "H1_V6_REPORT_INPUT_INVALID")):
+        _v7_h1_value(path, code)
+    validate_approved_h1_terminal_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=args.authority)
+    _print_json({"status": "approved_h1_terminal_v6_valid"})
     return 0
 
 
@@ -2363,6 +2443,31 @@ def build_parser() -> argparse.ArgumentParser:
     validate_closure_v3.add_argument("--receipt", type=Path, required=True)
     validate_closure_v3.add_argument("--authority-pre-state", type=Path, required=True)
     validate_closure_v3.set_defaults(handler=command_validate_runtime_executable_closure_v3)
+    write_closure_v4 = commands.add_parser("write-runtime-executable-closure-v4")
+    write_closure_v4.add_argument("--receipt", type=Path, required=True)
+    write_closure_v4.add_argument("--freeze-commit")
+    write_closure_v4.set_defaults(handler=command_write_runtime_executable_closure_v4)
+    validate_closure_v4 = commands.add_parser("validate-runtime-executable-closure-v4")
+    validate_closure_v4.add_argument("--receipt", type=Path, required=True)
+    validate_closure_v4.set_defaults(handler=command_validate_runtime_executable_closure_v4)
+
+    readiness_v7 = commands.add_parser("validate-h1-review-readiness-v7")
+    for option in ("receipt", "packet", "runtime_closure", "authority", "adapter_config", "h1_schema"):
+        readiness_v7.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    readiness_v7.set_defaults(handler=command_validate_h1_review_readiness_v7)
+    render_v7 = commands.add_parser("render-h1-review-checkpoint-v7")
+    for option in ("packet", "readiness", "runtime_closure", "authority", "h1_schema"):
+        render_v7.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    render_v7.add_argument("--no-write", action="store_true", required=True)
+    render_v7.set_defaults(handler=command_render_h1_review_checkpoint_v7)
+    decision_v6_h1 = commands.add_parser("validate-h1-source-gold-decision-v6")
+    for option in ("decision", "packet", "readiness", "runtime_closure", "authority", "h1_schema"):
+        decision_v6_h1.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    decision_v6_h1.set_defaults(handler=command_validate_h1_source_gold_decision_v6)
+    terminal_v6 = commands.add_parser("validate-approved-h1-terminal-v6")
+    for option in ("decision", "packet", "readiness", "runtime_closure", "authority", "adapter_config", "h1_schema", "phase1_verification", "phase1_review", "phase2_verification", "phase2_review", "summary"):
+        terminal_v6.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    terminal_v6.set_defaults(handler=command_validate_approved_h1_terminal_v6)
 
     def add_v6_common(command: argparse.ArgumentParser) -> None:
         command.add_argument("--packet-directory", type=Path, required=True)

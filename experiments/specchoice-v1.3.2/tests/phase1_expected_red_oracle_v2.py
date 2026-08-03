@@ -63,6 +63,20 @@ RECOVERY_SEMANTIC_IDS = {
     "tests.test_measurement_scoring.MeasurementScoringTests.test_v6_span_population_and_candidate_identity_are_tamper_checked",
 }
 SUCCESSOR_IDS |= RECOVERY_SEMANTIC_IDS
+SUCCESSOR_IDS |= {
+    "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v4_bootstrap_has_no_self_dependency",
+    "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v4_binds_all_seventeen_post_closure_targets",
+    "tests.test_measurement_adapter.MeasurementAdapterTests.test_pr2164_adapter_v4_binds_canonical_authority_and_materialized_raw_tree",
+    "tests.test_measurement_attempts.MeasurementAttemptTests.test_fresh_v4_chain_is_deterministic_exact_resume_and_has_expected_metrics",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v7_binds_complete_seven_question_semantics_and_v4_identity",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v7_packet_and_readiness_contain_no_human_values",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v6_decision_distinguishes_missing_payload_from_complete_incomplete_judgment",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v6_terminal_outputs_require_approved_decision",
+    "tests.test_measurement_h1.H1PacketTests.test_validate_h1_review_readiness_v7_cli_is_registered_read_only_and_fail_closed",
+    "tests.test_measurement_h1.H1PacketTests.test_render_h1_review_checkpoint_v7_cli_requires_no_write_and_persists_no_human_fields",
+    "tests.test_measurement_h1.H1PacketTests.test_validate_h1_source_gold_decision_v6_cli_is_registered_read_only_and_fail_closed",
+    "tests.test_measurement_h1.H1PacketTests.test_validate_approved_h1_terminal_v6_cli_is_registered_read_only_and_fail_closed",
+}
 
 
 def main() -> int:

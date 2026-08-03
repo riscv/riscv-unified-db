@@ -701,3 +701,140 @@ def validate_future_target_occupancy_v6(
         if occupied != (path in allowed_existing):
             raise RuntimeClosureError("V6_TARGET_OCCUPANCY_MISMATCH")
     return expected
+
+
+# v4 is deliberately a downstream-only closure.  Its receipt is an output, not
+# an input: bootstrap must be useful precisely while that receipt is absent.
+_CLOSURE_V4_RECEIPT = f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v4.json"
+_ACCEPTED_V6 = (
+    f"{_EXPERIMENT_PREFIX}/bundles/accepted/"
+    "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+)
+_V4_AUTHORITY_SHA256 = "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae"
+_V4_ACCEPTED_IDENTITY = {
+    "core_sha256": "3a55a816904c787bd6e1ffc78c1cb90fd4503cbe30022477472e777612b6d547",
+    "root_sha256": "bd75dbc97869630bbaa41dbe48c3eb1b743b7c1022bd950180b7675ecf4dd1e9",
+    "snapshot_manifest_sha256": "a143334abbbc15bf455789c862ffb0ece13047348e1e91aad3f71a8a7c7cbdd0",
+}
+_POST_CLOSURE_TARGETS_V4: tuple[str, ...] = tuple(sorted((
+    f"{_EXPERIMENT_PREFIX}/reports/h1/adapter-batch-pr2164-v6.json",
+    f"{_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/attempt.json",
+    f"{_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/case-outcomes.json",
+    f"{_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/diagnostics.json",
+    f"{_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/metrics.json",
+    f"{_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/parsed-predictions.json",
+    f"{_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/report.json",
+    f"{_EXPERIMENT_PREFIX}/reports/h1/adversarial-oracle-results-v7.json",
+    f"{_EXPERIMENT_PREFIX}/reports/h1/h1-source-gold-review-v7/review-packet.json",
+    f"{_EXPERIMENT_PREFIX}/reports/h1/h1-source-gold-review-v7/review-packet.md",
+    f"{_EXPERIMENT_PREFIX}/receipts/h1-review-readiness-v7.json",
+    f"{_EXPERIMENT_PREFIX}/reviews/h1-source-gold-decision-v6.json",
+    ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-VERIFICATION-02-22.md",
+    ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-REVIEW-02-22.md",
+    ".planning/phases/02-deterministic-measurement-spine/02-VERIFICATION-02-22.md",
+    ".planning/phases/02-deterministic-measurement-spine/02-REVIEW-02-22.md",
+    ".planning/phases/02-deterministic-measurement-spine/02-22-SUMMARY.md",
+)))
+
+
+def future_target_inventory_v7() -> list[dict[str, str]]:
+    """Return the closed, typed, path-sorted v4 successor target set."""
+    return [{"kind": "file", "path": path} for path in _POST_CLOSURE_TARGETS_V4]
+
+
+def _v4_target_state(repository: Path, relative: str) -> str:
+    """Classify a target without following links or accepting partial objects."""
+    import stat
+
+    candidate = repository / relative
+    try:
+        status = candidate.lstat()
+    except FileNotFoundError:
+        return "absent"
+    if stat.S_ISLNK(status.st_mode):
+        return "symlink"
+    if stat.S_ISREG(status.st_mode):
+        return "file"
+    if stat.S_ISDIR(status.st_mode):
+        return "directory"
+    return "special"
+
+
+def validate_runtime_closure_v4_bootstrap_targets(repository: Path) -> list[dict[str, str]]:
+    """Fail before publication unless every future target and receipt is absent."""
+    repository = repository.resolve(strict=True)
+    for entry in future_target_inventory_v7():
+        if _v4_target_state(repository, entry["path"]) != "absent":
+            raise RuntimeClosureError("RUNTIME_CLOSURE_V4_BOOTSTRAP_TARGET_OCCUPIED")
+    # Do not open the receipt here.  lstat is intentionally the only interaction
+    # with the output path before its future no-replace writer opens it.
+    if _v4_target_state(repository, _CLOSURE_V4_RECEIPT) != "absent":
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_RECEIPT_OCCUPIED")
+    return future_target_inventory_v7()
+
+
+def _v4_authority_identity(repository: Path) -> dict[str, str]:
+    authority_path = repository / _AUTHORITY_PRE_STATE
+    raw = authority_path.read_bytes()
+    if sha256_bytes(raw) != _V4_AUTHORITY_SHA256:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_AUTHORITY_SHA256_MISMATCH")
+    authority = _canonical_object(authority_path, "RUNTIME_CLOSURE_V4_AUTHORITY_INVALID")
+    accepted = authority.get("accepted_identity")
+    if not isinstance(accepted, Mapping) or {key: accepted.get(key) for key in _V4_ACCEPTED_IDENTITY} != _V4_ACCEPTED_IDENTITY:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_IDENTITY_MISMATCH")
+    manifest = _canonical_object(repository / f"{_ACCEPTED_V6}/snapshot-manifest.json", "RUNTIME_CLOSURE_V4_ACCEPTED_MANIFEST_INVALID")
+    if (
+        manifest.get("manifest_sha256") != _V4_ACCEPTED_IDENTITY["core_sha256"]
+        or manifest.get("root_sha256") != _V4_ACCEPTED_IDENTITY["root_sha256"]
+        or manifest.get("snapshot_manifest_sha256") != _V4_ACCEPTED_IDENTITY["snapshot_manifest_sha256"]
+    ):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_MANIFEST_MISMATCH")
+    return {"authority_sha256": _V4_AUTHORITY_SHA256, **_V4_ACCEPTED_IDENTITY}
+
+
+def verify_runtime_closure_v3_historical(closure: object, repository: Path) -> dict[str, object]:
+    """Verify v3 from its recorded Git tree without consulting mutable v3 inputs."""
+    if not isinstance(closure, Mapping) or closure.get("schema_version") != "runtime-executable-closure-v3":
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID")
+    freeze_commit = closure.get("freeze_commit")
+    if freeze_commit != "dc87436a1a6e26ae6bd412d1800e39352ac2f811":
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_FREEZE_INVALID")
+    entries = closure.get("entries")
+    if not isinstance(entries, list) or not entries:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID")
+    for entry in entries:
+        if not isinstance(entry, Mapping) or not isinstance(entry.get("path"), str):
+            raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID")
+        frozen = _git_blob_binding(repository, freeze_commit, str(entry["path"]))
+        if any(entry.get(key) != frozen.get(key) for key in ("path", "byte_length", "sha256", "git_blob_oid")):
+            raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_MISMATCH")
+    return dict(closure)
+
+
+def build_runtime_closure_v4(repository: Path, *, freeze_commit: str | None = None) -> dict[str, object]:
+    """Build only the absent-receipt bootstrap projection for closure v4."""
+    repository = repository.resolve(strict=True)
+    targets = validate_runtime_closure_v4_bootstrap_targets(repository)
+    common = _build_versioned_runtime_closure(
+        repository,
+        freeze_commit=freeze_commit,
+        classes={
+            **_referenced_runtime_paths_v3(repository),
+            f"{_EXPERIMENT_PREFIX}/config/measurement/pr2164-adapter-rules-v4.json": {"v4_control"},
+            f"{_EXPERIMENT_PREFIX}/config/measurement/h1-review-schema-v5.json": {"v4_control"},
+        },
+        schema_version="runtime-executable-closure-v4",
+    )
+    historical = _canonical_object(repository / _CLOSURE_V3_RECEIPT, "RUNTIME_CLOSURE_V3_HISTORY_INVALID")
+    verify_runtime_closure_v3_historical(historical, repository)
+    return {
+        **common,
+        "accepted_v6_identity": _v4_authority_identity(repository),
+        "bootstrap_receipt_path": _CLOSURE_V4_RECEIPT,
+        "future_targets": targets,
+        "historical_closure_v3": {
+            "freeze_commit": historical["freeze_commit"],
+            "path": _CLOSURE_V3_RECEIPT,
+            "sha256": sha256_bytes(canonical_json_bytes(historical)),
+        },
+    }

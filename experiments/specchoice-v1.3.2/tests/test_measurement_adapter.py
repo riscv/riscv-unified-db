@@ -27,6 +27,7 @@ from specchoice_measurement.adapter import (
     validate_complete_adapter_batch,
     validate_v5_outcome_contract,
     validate_v6_outcome_contract,
+    build_pr2164_accepted_v6_adapter_batch_v4,
 )
 
 
@@ -113,6 +114,19 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual({key for key, value in outcomes.items() if not value["surfaced"]}, set(contract["negative_ids"]))
         self.assertEqual([outcomes[key]["proposed_name"] for key in outcomes if outcomes[key]["parameter_status"] == "accept"], contract["identity_names"])
         self.assertEqual(golden["score_bearing_span_count"], 8)
+
+    def test_pr2164_adapter_v4_binds_canonical_authority_and_materialized_raw_tree(self) -> None:
+        batch = build_pr2164_accepted_v6_adapter_batch_v4(
+            repository=self.experiment_root.parents[1],
+            runtime_closure={"schema_version": "runtime-executable-closure-v4"},
+            authority_path=self.experiment_root / "phase2/source-authority.json",
+            bundle_root=self.experiment_root / "bundles/accepted/source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6",
+            rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v4.json",
+        )
+        self.assertTrue(batch.valid)
+        self.assertEqual(len(batch.records), 11)
+        self.assertEqual(sum(len(record.raw_files) for record in batch.records), 29)
+        self.assertEqual(batch.source_identity["authority_sha256"], "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae")
 
     def test_v5_outcome_contract_rejects_candidate_identity_leakage(self) -> None:
         contract = json.loads((self.experiment_root / "config/measurement/pr2164-semantic-gold-contract-v1.json").read_text())

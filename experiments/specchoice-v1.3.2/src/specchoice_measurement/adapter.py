@@ -1304,3 +1304,62 @@ def build_pr2164_v6_adapter_batch(
             code=str(error).split(":", 1)[0],
             diagnostic=error.diagnostic if isinstance(error, AdapterError) else None,
         )
+
+
+def build_pr2164_accepted_v6_adapter_batch_v4(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+    bundle_root: Path, rules_path: Path,
+) -> AdapterBatch:
+    """Build the v4 batch only from the active canonical accepted-v6 bundle."""
+    repository = repository.resolve(strict=True)
+    source_identity: dict[str, str] = {}
+    try:
+        if runtime_closure.get("schema_version") != "runtime-executable-closure-v4":
+            raise AdapterError("RUNTIME_CLOSURE_V4_REQUIRED")
+        canonical_authority = repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json"
+        canonical_bundle = repository / (
+            "experiments/specchoice-v1.3.2/bundles/accepted/"
+            "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+        )
+        canonical_rules = repository / "experiments/specchoice-v1.3.2/config/measurement/pr2164-adapter-rules-v4.json"
+        if authority_path.resolve(strict=True) != canonical_authority or bundle_root.resolve(strict=True) != canonical_bundle or rules_path.resolve(strict=True) != canonical_rules:
+            raise AdapterError("FORGED_UNBOUND_GENERATION")
+        authority_raw = canonical_authority.read_bytes()
+        if sha256_bytes(authority_raw) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae":
+            raise AdapterError("ACTIVE_AUTHORITY_MISMATCH")
+        authority = json.loads(authority_raw)
+        accepted = authority.get("accepted_identity")
+        expected = {
+            "core_sha256": "3a55a816904c787bd6e1ffc78c1cb90fd4503cbe30022477472e777612b6d547",
+            "root_sha256": "bd75dbc97869630bbaa41dbe48c3eb1b743b7c1022bd950180b7675ecf4dd1e9",
+            "snapshot_manifest_sha256": "a143334abbbc15bf455789c862ffb0ece13047348e1e91aad3f71a8a7c7cbdd0",
+        }
+        if not isinstance(accepted, dict) or {key: accepted.get(key) for key in expected} != expected:
+            raise AdapterError("ACTIVE_ACCEPTED_V6_IDENTITY_MISMATCH")
+        rules, rules_raw = _load_canonical_json(canonical_rules, "ADAPTER_V4_RULES_INVALID")
+        if rules.get("adapter_version") != "pr2164-adapter-v4" or rules.get("accepted_generation") != canonical_bundle.name:
+            raise AdapterError("ADAPTER_V4_RULES_INVALID")
+        batch = build_pr2164_v6_adapter_batch(
+            registry_path=repository / "experiments/specchoice-v1.3.2/config/fixture-registry-pr2164-v6.json",
+            rules_path=repository / "experiments/specchoice-v1.3.2/config/measurement/pr2164-adapter-rules-v3.json",
+            contract_path=repository / "experiments/specchoice-v1.3.2/config/measurement/pr2164-semantic-gold-contract-v2.json",
+            golden_path=repository / "experiments/specchoice-v1.3.2/fixtures/measurement/golden-predictions-v4.json",
+            bundle_root=canonical_bundle,
+        )
+        if not batch.valid or len(batch.records) != 11 or sum(len(record.raw_files) for record in batch.records) != 29:
+            raise AdapterError("ACCEPTED_V6_MATERIALIZED_RAW_TREE_INVALID")
+        source_identity = {
+            **batch.source_identity,
+            "authority_sha256": sha256_bytes(authority_raw),
+            "core_sha256": expected["core_sha256"],
+            "root_sha256": expected["root_sha256"],
+            "snapshot_manifest_sha256": expected["snapshot_manifest_sha256"],
+            "closure_schema_version": "runtime-executable-closure-v4",
+            "adapter_v4_rules_sha256": sha256_bytes(rules_raw),
+        }
+        return replace(batch, adapter_version="pr2164-adapter-v4", rule_sha256=sha256_bytes(rules_raw), source_identity=source_identity)
+    except (AdapterError, OSError, TypeError, ValueError, json.JSONDecodeError) as error:
+        return _invalid_batch(
+            adapter_version="pr2164-adapter-v4", rule_sha256="", source_identity=source_identity,
+            code=str(error).split(":", 1)[0], diagnostic=error.diagnostic if isinstance(error, AdapterError) else None,
+        )
