@@ -93,7 +93,7 @@ Plans:
   3. The reviewer can trace every failed or warning outcome to a stable diagnostic code and structured fields; a missing accepted name remains an identity warning and never rewrites disposition.
   4. The human reviewer can approve or dispute the frozen gold interpretation from the adapter audit without any model output being used to compensate for disputed semantics.
 
-**Plans:** 16/18 plans executed
+**Plans:** 16/19 plans executed
 
 Plans:
 
@@ -115,6 +115,7 @@ Plans:
 - [x] 02-16-PLAN.md
 - [ ] 02-17-PLAN.md
 - [ ] 02-18-PLAN.md
+- [ ] 02-19-PLAN.md
 
 **Wave 1**
 
@@ -180,13 +181,17 @@ Plans:
 
 - [x] 02-16: Perform the forward-only authority cutover, then generate all post-active measurement and H1 evidence.
 
-**Wave 17** *(blocked on Wave 16 completion)*
+**Wave 17** *(historical route superseded by Waves 18 and 19)*
 
 - [ ] 02-17: Validate fresh readiness, collect the human H1 disposition, and require four same-commit clean final reports.
 
-**Wave 18** *(supersedes unfinished 02-17 decision route; blocked on Wave 16 completion)*
+**Wave 18** *(Tasks 1-4 preserved; unfinished Tasks 5-13 superseded by Wave 19)*
 
 - [ ] 02-18: Execute the single versioned Phase 1/2 semantic-integrity successor across seven fresh-context segments, preserving v3 history and retaining four genuine human gates.
+
+**Wave 19** *(depends on completed 02-18 Tasks 1-4 and supersedes only unfinished Tasks 5-13)*
+
+- [ ] 02-19: Freeze the complete executable, tool, semantic-input, and authority-prestate closure before renewed construction authorization, then finish dual-gated v5 acceptance, deterministic measurement, seven-question H1 review, and four fresh reports.
 
 ### Phase 3: Human-Reviewed Data Preregistration
 
@@ -344,7 +349,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Isolated Evidence Boundary and Source Integrity | 7/7 | Complete    | 2026-07-31 |
-| 2. Deterministic Measurement Spine | 16/18 | In Progress|  |
+| 2. Deterministic Measurement Spine | 16/19 | Ready to execute |  |
 | 3. Human-Reviewed Data Preregistration | 0/4 | Not started | - |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |
 | 5. Authorized Execution and Immutable Evidence | 0/3 | Not started | - |

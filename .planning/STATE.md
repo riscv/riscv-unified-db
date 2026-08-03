@@ -4,17 +4,17 @@ milestone: v1.3.2
 milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
-status: executing
-stopped_at: 02-18 Task 5 blocked before construction; v4/v11 executable-code closure is incomplete
-last_updated: "2026-08-03T07:15:10Z"
+status: ready_to_execute
+stopped_at: 02-19 ready to execute; supersedes unfinished 02-18 Tasks 5-13
+last_updated: "2026-08-03T08:08:35Z"
 last_activity: 2026-08-03
-last_activity_desc: 02-18 Task 4 authorization validated; Task 5 failed closed because required v4/v11 entry points are absent and the authorized fixed-code closure omits executed construction code
+last_activity_desc: 02-19 successor executable-closure plan passed three independent checker rounds with zero remaining issues
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 25
+  total_plans: 26
   completed_plans: 23
-  percent: 92
+  percent: 88
 ---
 
 # Project State
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 
 ## Current Position
 
-Phase: 02 (deterministic-measurement-spine) — EXECUTING
-Plan: 18 of 18
-Status: Task 5 blocked before construction — executable-code closure incomplete
-Last activity: 2026-08-03 — Task 4 authorization validated; Task 5 failed closed before candidate construction
+Phase: 02 (deterministic-measurement-spine) — READY TO EXECUTE
+Plan: 19 of 19
+Status: 02-19 is the active successor; 02-18 Tasks 5-13 are superseded
+Last activity: 2026-08-03 — 02-19 passed three independent checker rounds with zero remaining issues
 
-Progress: [█████████░] 92%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -134,6 +134,9 @@ Recent decisions affecting current work:
 - [Phase 02-deterministic-measurement-spine]: Rooted-v4 proposal construction is duplicate-safe, append-only, local-only, and decision-free until a human authorizes or rejects its exact hashes.
 - [Phase 02-deterministic-measurement-spine]: Human construction decision `b1be0980...` authorizes only the exact rooted-v4 proposal locally; it does not authorize post-decision fixed-code changes.
 - [Phase 02-deterministic-measurement-spine]: Rooted-v4 Task 5 must fail closed because its three v4/v11 entry points are absent, two planned implementation files are fixed artifacts, and the mutating `bundle.py` runtime is outside the authorized fixed-code closure.
+- [Phase 02-deterministic-measurement-spine]: 02-19 preserves the rooted-v4 authorization as authorized-but-non-executable history and supersedes only unfinished 02-18 Tasks 5-13.
+- [Phase 02-deterministic-measurement-spine]: The successor must commit and bind all post-gate code, tests, semantic inputs, report inputs, Python/git/Ruby/Psych identities, and the accepted-v3 authority pre-state before requesting a new human construction authorization.
+- [Phase 02-deterministic-measurement-spine]: Both candidate fixtures are formal surfaced-then-classified-out records; the frozen populations are 11 outcomes, 8/8 surfacing, 8/8 disposition, 6/6 parameter identity, S/S evidence spans, and 3/3 negative no-surface outcomes.
 
 ### Pending Todos
 
@@ -144,7 +147,7 @@ None yet.
 - Exact provider and immutable model snapshot remain unfrozen until the conditional H4 checkpoint.
 - Python 3.14/scikit-learn lock resolution remains unverified for later measurement work.
 - Human-reviewed pair and strict-core sufficiency is unknown and may legitimately select Red.
-- 02-18 cannot construct the rooted-v4 candidate from the current authorization. A new append-only proposal must bind the implemented v4/v11 runtime closure, supersede the current non-executable authorization, and receive fresh human construction authorization.
+- 02-19 execution is pending. No v5 candidate may be created until Tasks 1-9 implement, commit, freeze, and bind the complete closure and Task 10 records a genuine validated human `authorize` decision.
 
 ## Deferred Items
 
@@ -154,6 +157,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-03T07:15:10Z
-Stopped at: 02-18 Task 5 blocked before construction; v4/v11 executable-code closure is incomplete
+Last session: 2026-08-03T08:08:35Z
+Stopped at: 02-19 ready to execute; supersedes unfinished 02-18 Tasks 5-13
 Resume file: None
