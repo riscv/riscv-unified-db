@@ -14,36 +14,52 @@ end
 
 module Udb
   class Instruction
+    # Decode variables ordered by where they appear in the assembly syntax
+    # string. Variables that are not printed as operands (e.g. fence's fm)
+    # produce no entry, so format placeholders and arguments always align.
+    def assembly_operands(xlen)
+      encoding(xlen).decode_variables
+                    .map { |dv| [assembly =~ /\b#{Regexp.escape(dv.name)}\b/, dv] }
+                    .select { |idx, _dv| idx }
+                    .sort_by { |idx, _dv| idx }
+                    .map { |_idx, dv| dv }
+    end
+
     def assembly_fmt(xlen)
       fmt = assembly.dup
       # fmt::format treats braces as replacement fields, so any literal braces in
       # the assembly syntax must be escaped before we inject positional "{}".
       fmt.gsub!("{", "{{")
       fmt.gsub!("}", "}}")
-      dvs = encoding(xlen).decode_variables
-      dvs.each do |dv|
-        fmt.gsub!(dv.name, "{}")
+      # Longest names first so a name that contains another (e.g. imm/uimm)
+      # cannot corrupt the other's token.
+      assembly_operands(xlen).sort_by { |dv| -dv.name.length }.each do |dv|
+        fmt.sub!(/\b#{Regexp.escape(dv.name)}\b/, "{}")
       end
       fmt
     end
 
     def assembly_fmt_args(xlen)
-      args = []
-      dvs = encoding(xlen).decode_variables
-      dvs.each do |dv|
-        if dv.name[0] == "x" || dv.name[0] == "r"
-          args << "Reg(#{dv.name}()).to_string()"
-        elsif dv.name[0] == "f"
-          args << "Reg(#{dv.name}(), true).to_string()"
+      args = assembly_operands(xlen).map do |dv|
+        name = dv.name
+        case name
+        when "rm", "rnum", "vm", "vtypei"
+          # immediate fields despite a register-like prefix
+          "#{name}()"
+        when "r1s", "r2s"
+          # Zcmp s-register index: 0-1 -> x8-x9, 2-7 -> x18-x23
+          "Reg(#{name}().get() < 2 ? #{name}().get() + 8 : #{name}().get() + 16).to_string()"
+        when /\A[xr]/
+          "Reg(#{name}()).to_string()"
+        when /\Af/
+          "Reg(#{name}(), true).to_string()"
+        when /\Av/
+          "Reg::from_rf_index(#{name}(), 64).to_string()"
         else
-          args << "#{dv.name}()"
+          "#{name}()"
         end
       end
-      if args.empty?
-        ""
-      else
-        ", #{args.reverse.join(', ')}"
-      end
+      args.empty? ? "" : ", #{args.join(', ')}"
     end
   end
 end
