@@ -71,7 +71,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     Ascii85 (2.0.1)
-    activesupport (8.1.3)
+    activesupport (8.1.3.1)
       base64
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.3.1)
@@ -132,7 +132,7 @@ GEM
       prism (>= 1.3.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.21.1)
+    json (2.21.2)
     json_schemer (2.5.0)
       bigdecimal
       hana (~> 1.3)
@@ -190,10 +190,10 @@ GEM
     rack (3.2.6)
     rainbow (3.1.1)
     rake (13.4.2)
-    rbi (0.4.0)
+    rbi (0.4.2)
       prism (~> 1.0)
       rbs (>= 4.0.1)
-    rbs (4.1.0)
+    rbs (4.1.2)
       logger
       prism (>= 1.6.0)
       tsort
@@ -265,18 +265,18 @@ GEM
       rexml
       simplecov (~> 1.0)
     simpleidn (0.2.3)
-    sorbet (0.6.13363)
-      sorbet-static (= 0.6.13363)
-    sorbet-runtime (0.6.13363)
-    sorbet-static (0.6.13363-aarch64-linux)
-    sorbet-static (0.6.13363-x86_64-linux)
-    sorbet-static-and-runtime (0.6.13363)
-      sorbet (= 0.6.13363)
-      sorbet-runtime (= 0.6.13363)
-    spoom (1.8.4)
+    sorbet (0.6.13393)
+      sorbet-static (= 0.6.13393)
+    sorbet-runtime (0.6.13393)
+    sorbet-static (0.6.13393-aarch64-linux)
+    sorbet-static (0.6.13393-x86_64-linux)
+    sorbet-static-and-runtime (0.6.13393)
+      sorbet (= 0.6.13393)
+      sorbet-runtime (= 0.6.13393)
+    spoom (1.8.7)
       erubi (>= 1.10.0)
       prism (>= 0.28.0)
-      rbi (>= 0.3.15)
+      rbi (>= 0.4.2)
       rbs (>= 4.0.0.dev.5)
       rexml (>= 3.2.6)
       sorbet-static-and-runtime (>= 0.5.10187)
