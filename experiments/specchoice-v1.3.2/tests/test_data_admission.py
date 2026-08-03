@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from specchoice_data.admission import (
+    DataAdmissionError,
     admit_pair_candidate_v1,
     freeze_candidate_inventory_v1,
 )
@@ -97,7 +98,10 @@ class DataAdmissionTests(unittest.TestCase):
         }
 
     def _freeze(self, candidates: Path, accepted: Path) -> dict[str, object]:
-        (candidates / "pairs/pair-mtvec.json").write_bytes(canonical_json_bytes(self._candidate(accepted)))
+        return self._freeze_value(candidates, self._candidate(accepted))
+
+    def _freeze_value(self, candidates: Path, candidate: dict[str, object]) -> dict[str, object]:
+        (candidates / "pairs/pair-mtvec.json").write_bytes(canonical_json_bytes(candidate))
         return freeze_candidate_inventory_v1(
             candidate_root=candidates,
             declarations=(("pairs/pair-mtvec.json", "pair"),),
@@ -198,6 +202,43 @@ class DataAdmissionTests(unittest.TestCase):
                 schema_raw=self.schema_raw,
             )
             self.assertIn("CANDIDATE_PATH_REJECTED", {item.code for item in escaped.diagnostics})
+
+        mutations = {
+            "empty_span": lambda value: value["sides"][0]["spans"][0].update({"end_byte": 0}),
+            "unmapped_claim": lambda value: value["sides"][0]["claims"][0].update({"span_ids": ["missing-span"]}),
+            "same_example": lambda value: value["sides"][1].update({"example_id": value["sides"][0]["example_id"]}),
+            "missing_axis": lambda value: value["sides"][0]["claims"].pop(),
+            "unknown_key": lambda value: value.update({"machine_guess": "forbidden"}),
+        }
+        expected = {
+            "empty_span": "SOURCE_SPAN_INVALID",
+            "unmapped_claim": "CLAIM_MAPPING_INVALID",
+            "same_example": "PAIR_EXAMPLE_IDS_NOT_DISTINCT",
+            "missing_axis": "CLAIM_AXIS_MISSING",
+            "unknown_key": "CANDIDATE_SCHEMA_INVALID",
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                candidates, accepted = self._workspace(directory)
+                candidate = self._candidate(accepted)
+                mutate(candidate)
+                inventory = self._freeze_value(candidates, candidate)
+                result = self._admit(candidates, accepted, inventory)
+                self.assertIn(expected[name], {item.code for item in result.diagnostics})
+
+        with tempfile.TemporaryDirectory() as directory:
+            candidates, _ = self._workspace(directory)
+            (candidates / "pairs/pair-mtvec.json").write_bytes(
+                b'{"candidate_kind":"pair","candidate_kind":"pair"}\n'
+            )
+            with self.assertRaisesRegex(DataAdmissionError, "CANDIDATE_INVENTORY_INPUT_INVALID"):
+                freeze_candidate_inventory_v1(
+                    candidate_root=candidates,
+                    declarations=(("pairs/pair-mtvec.json", "pair"),),
+                    phase2_authority_sha256="a" * 64,
+                    h1_decision_sha256="b" * 64,
+                    schema_raw=self.schema_raw,
+                )
 
     def test_tracer_never_infers_human_fields(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
