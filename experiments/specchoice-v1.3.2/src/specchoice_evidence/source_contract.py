@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import os
 import re
 import selectors
@@ -322,6 +323,74 @@ def validate_fixture_construction_decision_v4(
     if not isinstance(supplied, str) or supplied != sha256_bytes(canonical_json_bytes(projected)):
         raise SourceContractProposalError("FIXTURE_CONSTRUCTION_V4_DECISION_INVALID")
     return dict(decision)
+
+
+_V4_NON_EXECUTABLE_ENTRYPOINTS = (
+    "build-fixture-construction-candidate-v5",
+    "validate-fixture-candidate-v5",
+)
+
+
+def _canonical_json_object(raw: bytes, diagnostic: str) -> Mapping[str, object]:
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SourceContractProposalError(diagnostic) from error
+    if not isinstance(value, Mapping) or canonical_json_bytes(value) != raw:
+        raise SourceContractProposalError(diagnostic)
+    return value
+
+
+def render_v4_non_executable_supersession(
+    *, proposal_raw: bytes, supersession_raw: bytes, decision_raw: bytes, ontology_raw: bytes,
+) -> dict[str, object]:
+    """Classify the preserved v4 authorization without changing its meaning."""
+    proposal = _canonical_json_object(proposal_raw, "V4_NON_EXECUTABLE_INPUT_INVALID")
+    supersession = _canonical_json_object(supersession_raw, "V4_NON_EXECUTABLE_INPUT_INVALID")
+    decision = _canonical_json_object(decision_raw, "V4_NON_EXECUTABLE_INPUT_INVALID")
+    ontology = _canonical_json_object(ontology_raw, "V4_NON_EXECUTABLE_INPUT_INVALID")
+    artifacts = proposal.get("fixed_code_artifacts")
+    if (
+        proposal.get("schema_version") != "fixture-construction-proposal-v4"
+        or supersession.get("schema_version") != "source-contract-construction-proposal-supersession-v3"
+        or decision.get("schema_version") != "fixture-construction-decision-v4-v4"
+        or decision.get("decision") != "authorize"
+        or not isinstance(artifacts, list)
+        or {artifact.get("path") for artifact in artifacts if isinstance(artifact, Mapping)} != set(_V4_CODE_PATHS)
+    ):
+        raise SourceContractProposalError("V4_NON_EXECUTABLE_INPUT_INVALID")
+    return {
+        "construction_authorized": False,
+        "external_publication_authorized": False,
+        "historical_v4": {
+            "decision_sha256": sha256_bytes(decision_raw),
+            "proposal_sha256": sha256_bytes(proposal_raw),
+            "supersession_sha256": sha256_bytes(supersession_raw),
+        },
+        "local_only": True,
+        "missing_entrypoints": list(_V4_NON_EXECUTABLE_ENTRYPOINTS),
+        "missing_live_runtime_closure": True,
+        "observed_fixed_code_artifacts": artifacts,
+        "ontology_decision_sha256": sha256_bytes(ontology_raw),
+        "schema_version": "v4-construction-authorization-non-executable-supersession-v1",
+        "status": "authorized_but_non_executable",
+        "successor_generation": "source-contract-v5-pr2164-semantic-gold-executable-closure-verifier-rooted-v5",
+    }
+
+
+def validate_v4_non_executable_supersession(
+    receipt: object, *, proposal_raw: bytes, supersession_raw: bytes, decision_raw: bytes, ontology_raw: bytes,
+) -> dict[str, object]:
+    """Fail closed unless an append-only receipt is the exact rendered classification."""
+    expected = render_v4_non_executable_supersession(
+        proposal_raw=proposal_raw,
+        supersession_raw=supersession_raw,
+        decision_raw=decision_raw,
+        ontology_raw=ontology_raw,
+    )
+    if not isinstance(receipt, Mapping) or dict(receipt) != expected:
+        raise SourceContractProposalError("V4_NON_EXECUTABLE_RECEIPT_INVALID")
+    return dict(receipt)
 
 
 def _validate_v4_supersession(

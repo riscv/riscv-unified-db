@@ -57,6 +57,7 @@ from .source_contract import (
     validate_fixture_construction_proposal,
     validate_fixture_construction_proposal_v4,
     validate_fixture_construction_decision_v4,
+    validate_v4_non_executable_supersession,
     validate_local_acceptance_decision_v10,
     validate_local_acceptance_request_v10,
     validate_source_contract_proposal,
@@ -660,6 +661,21 @@ def command_validate_fixture_construction_decision_v4(args: argparse.Namespace) 
     decision, _ = _load_authoritative_canonical_v4(args.decision, "FIXTURE_CONSTRUCTION_V4_DECISION_NOT_CANONICAL")
     validated = validate_fixture_construction_decision_v4(decision, proposal=proposal, proposal_sha256=sha256_bytes(proposal_raw), supersession_sha256=sha256_bytes(inputs["supersession_raw"]), ontology_sha256=str(inputs["ontology"]["artifact_sha256"]), authority_sha256=sha256_bytes(inputs["authority_raw"]))
     _print_json({"construction_authorized": validated["decision"] == "authorize", "decision": validated["decision"], "status": "decision_valid"})
+    return 0
+
+
+def command_validate_v4_non_executable_supersession(args: argparse.Namespace) -> int:
+    """Validate the historical v4 classification without authoring any evidence."""
+    receipt, _ = _load_authoritative_canonical_v4(args.receipt, "V4_NON_EXECUTABLE_RECEIPT_INVALID")
+    root = _experiment_root()
+    validate_v4_non_executable_supersession(
+        receipt,
+        proposal_raw=(root / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json").read_bytes(),
+        supersession_raw=(root / "receipts/source-contract-construction-proposal-v4-supersession-v3.json").read_bytes(),
+        decision_raw=(root / "receipts/source-contract-construction-decision-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json").read_bytes(),
+        ontology_raw=(root / "reviews/h1-source-gold-ontology-decision-v1.json").read_bytes(),
+    )
+    _print_json({"status": "authorized_but_non_executable", "valid": True})
     return 0
 
 
@@ -1691,6 +1707,9 @@ def build_parser() -> argparse.ArgumentParser:
     fixture_construction_decision_v4.add_argument("--decision", type=Path, required=True)
     fixture_construction_decision_v4.add_argument("--staging-root", type=Path, default=_experiment_root())
     fixture_construction_decision_v4.set_defaults(handler=command_validate_fixture_construction_decision_v4)
+    v4_non_executable = commands.add_parser("validate-v4-non-executable-supersession")
+    v4_non_executable.add_argument("--receipt", type=Path, required=True)
+    v4_non_executable.set_defaults(handler=command_validate_v4_non_executable_supersession)
     fixture_construction_write_v4 = commands.add_parser("write-fixture-construction-proposal-v4")
     for option in ("proposal", "predecessor", "active_authority", "historical_authority", "revocation", "ontology_decision", "repair_manifest", "registry", "supersession"):
         fixture_construction_write_v4.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
