@@ -40,6 +40,7 @@ SUCCESSOR_IDS = {
     "tests.test_fixture_closure.FixtureClosureTests.test_v13_activation_preflights_every_receipt_before_authority_replacement",
     "tests.test_measurement_h1.H1PacketTests.test_successor_public_cli_e2e_rejects_forged_adapter_formal_adversarial_and_packet",
     "tests.test_measurement_h1.H1PacketTests.test_successor_governance_validators_fail_closed_on_empty_inputs",
+    "tests.test_measurement_h1.H1PacketTests.test_direct_decision_and_final_reports_reject_zero_upstream_bindings",
 }
 
 # These ten tests were introduced by the two semantic recovery commits.  Keep
