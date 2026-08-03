@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 03
 current_phase_name: human-reviewed-data-preregistration
 status: in_progress
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-08-03T23:04:58.353Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-08-03T23:23:03.245Z"
 last_activity: 2026-08-03
-last_activity_desc: Phase 3 plan 03-01 froze and approved one H1-consistent natural pair; execution continues on deterministic Red path
+last_activity_desc: Phase 3 plan 03-02 froze the approved family registry and deterministic empty-held-out split on the Red path
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 33
-  completed_plans: 25
-  percent: 76
+  completed_plans: 26
+  percent: 79
 ---
 
 # Project State
@@ -29,19 +29,19 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 ## Current Position
 
 Phase: 03 (human-reviewed-data-preregistration) — IN PROGRESS
-Plan: 2 of 4
-Status: 03-01 complete; ready to execute 03-02 on the frozen one-pair Red path
-Last activity: 2026-08-03 — froze one candidate inventory, approved its pair decision, and preserved rejected-combination audit
+Plan: 3 of 4
+Status: 03-02 complete; ready to execute 03-03 with prototype=1, strict=0, and auxiliary=0
+Last activity: 2026-08-03 — froze the approved family registry and deterministic split without moving or fabricating cases
 
-Progress: [████████░░] 76%
+Progress: [████████░░] 79%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans executed: 27
-- Total plans resolved: 30 (including three superseded Phase 2 plans)
-- GSD summary-bearing plans: 25 (02-20 and 02-21 intentionally have no summaries)
+- Total plans executed: 28
+- Total plans resolved: 31 (including three superseded Phase 2 plans)
+- GSD summary-bearing plans: 26 (02-20 and 02-21 intentionally have no summaries)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -51,7 +51,7 @@ Progress: [████████░░] 76%
 |-------|-------|-------|----------|
 | 01 | 7 | - | - |
 | 02 | 19 executed / 22 resolved | - | - |
-| 03 | 1 | - | - |
+| 03 | 2 | - | - |
 
 **Recent Trend:**
 
@@ -83,6 +83,7 @@ Progress: [████████░░] 76%
 | Phase 02-deterministic-measurement-spine P14 | 14min | 1 tasks | 5 files |
 | Phase 02-deterministic-measurement-spine P15 | 11min | 1 tasks | 5 files |
 | Phase 03 P01 | multi-session | 3 tasks | 14 files |
+| Phase 03 P02 | multi-session | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -149,6 +150,7 @@ Recent decisions affecting current work:
 - [Phase 02-deterministic-measurement-spine]: 02-20 and 02-21 intentionally create no SUMMARY by their plan contracts; their absence is not missing execution evidence.
 - [Phase 02-deterministic-measurement-spine]: The approved 02-22 decision, four terminal reports, and last-written summary passed the canonical validator against the 47ffaa1c freeze state and are frozen in local evidence commit dc3e5883a10cd3efe1393220caf1f711561867b9.
 - [Phase 03]: Phase 3 candidate inventory is frozen at one H1-consistent natural pair; no upstream reopening, weak pairing, or replacement is permitted to meet Green/Yellow thresholds. — The only remaining H1 classify_out fixture has no same-choice-object positive partner. Rejected cache-block and CSR-access proposals fail controlled-contrast or frozen-status requirements, so insufficient coverage must flow deterministically to red_required with model execution unauthorized.
+- [Phase 03]: Family registry and split freeze one warl_legal_set prototype pair with empty strict and auxiliary sets; membership is deterministic and no case may be moved or fabricated. — The approved registry and assignment derive prototype=1, strict=0, auxiliary=0 without diagnostics. Insufficient natural coverage remains red_required and model execution stays unauthorized.
 
 ### Pending Todos
 
@@ -158,7 +160,7 @@ None yet.
 
 - Exact provider and immutable model snapshot remain unfrozen until the conditional H4 checkpoint.
 - Python 3.14/scikit-learn lock resolution remains unverified for later measurement work.
-- Human-reviewed pair and strict-core sufficiency is unknown and may legitimately select Red.
+- Human-reviewed natural-pair and strict-core coverage is insufficient; Phase 3 must preserve the deterministic `red_required` conclusion.
 
 ## Deferred Items
 
@@ -168,6 +170,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-03T23:04:32.817Z
-Stopped at: Completed 03-01-PLAN.md
-Resume file: .planning/phases/03-human-reviewed-data-preregistration/03-02-PLAN.md
+Last session: 2026-08-03T23:23:02.247Z
+Stopped at: Completed 03-02-PLAN.md
+Resume file: .planning/phases/03-human-reviewed-data-preregistration/03-03-PLAN.md

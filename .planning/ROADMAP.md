@@ -217,12 +217,12 @@ Plans:
   3. The human reviewer can explicitly approve or dispute every label, membership decision, family, pair axis, relevance judgment, and metamorphic expectation without automated relabeling or quota-filling pairs.
   4. The reviewer receives audited counts showing either a possible Green/Yellow data threshold or the exact defensible evidence requiring Red.
 
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 
 - [x] 03-01-PLAN.md
-- [ ] 03-02-PLAN.md
+- [x] 03-02-PLAN.md
 - [ ] 03-03-PLAN.md
 - [ ] 03-04-PLAN.md
 
@@ -232,7 +232,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02: Define the versioned family registry and strict/auxiliary split manifest.
+- [x] 03-02: Define the versioned family registry and strict/auxiliary split manifest.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -375,7 +375,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Isolated Evidence Boundary and Source Integrity | 7/7 | Complete    | 2026-07-31 |
 | 2. Deterministic Measurement Spine | 22/22 | Complete | 2026-08-03 |
-| 3. Human-Reviewed Data Preregistration | 1/4 | In Progress|  |
+| 3. Human-Reviewed Data Preregistration | 2/4 | In Progress|  |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |
 | 5. Authorized Execution and Immutable Evidence | 0/3 | Not started | - |
 | 6. Partition-Aware Ablation and Metamorphic Evaluation | 0/4 | Not started | - |
