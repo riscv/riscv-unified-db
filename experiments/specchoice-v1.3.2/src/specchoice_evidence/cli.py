@@ -58,6 +58,7 @@ from .source_contract import (
     validate_fixture_construction_proposal,
     validate_fixture_construction_proposal_v4,
     validate_fixture_construction_decision_v4,
+    render_v4_non_executable_supersession,
     validate_v4_non_executable_supersession,
     build_source_contract_proposal_v5,
     validate_source_contract_proposal_v5,
@@ -682,15 +683,38 @@ def command_validate_v4_non_executable_supersession(args: argparse.Namespace) ->
     return 0
 
 
+def command_write_v4_non_executable_supersession(args: argparse.Namespace) -> int:
+    """Materialize only the canonical append-only classification of historical v4."""
+    root = _experiment_root()
+    receipt = render_v4_non_executable_supersession(
+        proposal_raw=(root / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json").read_bytes(),
+        supersession_raw=(root / "receipts/source-contract-construction-proposal-v4-supersession-v3.json").read_bytes(),
+        decision_raw=(root / "receipts/source-contract-construction-decision-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json").read_bytes(),
+        ontology_raw=(root / "reviews/h1-source-gold-ontology-decision-v1.json").read_bytes(),
+    )
+    write_new_descriptor_file(args.receipt.parent, args.receipt.name, canonical_json_bytes(receipt))
+    _print_json({"status": receipt["status"], "sha256": sha256_bytes(args.receipt.read_bytes())})
+    return 0
+
+
+def command_write_runtime_executable_closure(args: argparse.Namespace) -> int:
+    """Freeze a complete repository-relative inventory with no replacement semantics."""
+    repository = _repository_root(_experiment_root())
+    closure = build_runtime_closure(repository, args.path)
+    write_new_descriptor_file(args.receipt.parent, args.receipt.name, canonical_json_bytes(closure))
+    _print_json({"entry_count": len(closure["entries"]), "sha256": sha256_bytes(args.receipt.read_bytes())})
+    return 0
+
+
 def command_validate_runtime_executable_closure(args: argparse.Namespace) -> int:
     """Validate a frozen runtime closure before any later writer may run."""
     closure, _ = _load_authoritative_canonical_v4(args.receipt, "RUNTIME_CLOSURE_INVALID")
-    root = _experiment_root()
+    root = _repository_root(_experiment_root())
     verify_runtime_closure(closure, root)
     authority_raw = args.authority_pre_state.read_bytes()
-    if not authority_raw or args.authority_pre_state.resolve() != (root / "phase2/source-authority.json").resolve():
+    if not authority_raw or args.authority_pre_state.resolve() != (root / "experiments/specchoice-v1.3.2/phase2/source-authority.json").resolve():
         raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
-    if args.verify_known_mandatory and not {"src/specchoice_evidence/cli.py", "src/specchoice_evidence/runtime_closure.py"}.issubset(
+    if args.verify_known_mandatory and not {"experiments/specchoice-v1.3.2/src/specchoice_evidence/cli.py", "experiments/specchoice-v1.3.2/src/specchoice_evidence/runtime_closure.py"}.issubset(
         {str(entry["path"]) for entry in closure["entries"]}
     ):
         raise SourceContractProposalError("RUNTIME_CLOSURE_MANDATORY_PATH_MISSING")
@@ -726,11 +750,11 @@ def _v5_supersession(proposal_raw: bytes, historical_raw: bytes) -> dict[str, ob
 
 
 def _validated_v5_proposal(args: argparse.Namespace) -> tuple[dict[str, object], bytes, dict[str, object], bytes]:
-    root = _experiment_root()
+    root = _repository_root(_experiment_root())
     closure, closure_raw = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_INVALID")
     verify_runtime_closure(closure, root)
     proposal, proposal_raw = _load_authoritative_canonical_v4(args.proposal, "V5_PROPOSAL_BINDING_MISMATCH")
-    authority_raw = (root / "phase2/source-authority.json").read_bytes()
+    authority_raw = (root / "experiments/specchoice-v1.3.2/phase2/source-authority.json").read_bytes()
     validate_source_contract_proposal_v5(
         proposal, runtime_closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
         bound_inputs=_v5_closure_inputs(closure, root),
@@ -740,11 +764,11 @@ def _validated_v5_proposal(args: argparse.Namespace) -> tuple[dict[str, object],
 
 def command_write_source_contract_proposal_v5(args: argparse.Namespace) -> int:
     """Write the sole v5 proposal from a revalidated, already-frozen closure."""
-    root = _experiment_root()
+    root = _repository_root(_experiment_root())
     closure, closure_raw = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_INVALID")
     verify_runtime_closure(closure, root)
     authority_raw = args.authority_pre_state.read_bytes()
-    if args.authority_pre_state.resolve() != (root / "phase2/source-authority.json").resolve():
+    if args.authority_pre_state.resolve() != (root / "experiments/specchoice-v1.3.2/phase2/source-authority.json").resolve():
         raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
     proposal = build_source_contract_proposal_v5(
         runtime_closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
@@ -1816,6 +1840,13 @@ def build_parser() -> argparse.ArgumentParser:
     v4_non_executable = commands.add_parser("validate-v4-non-executable-supersession")
     v4_non_executable.add_argument("--receipt", type=Path, required=True)
     v4_non_executable.set_defaults(handler=command_validate_v4_non_executable_supersession)
+    write_v4_non_executable = commands.add_parser("write-v4-non-executable-supersession")
+    write_v4_non_executable.add_argument("--receipt", type=Path, required=True)
+    write_v4_non_executable.set_defaults(handler=command_write_v4_non_executable_supersession)
+    write_runtime_closure = commands.add_parser("write-runtime-executable-closure")
+    write_runtime_closure.add_argument("--receipt", type=Path, required=True)
+    write_runtime_closure.add_argument("--path", action="append", required=True)
+    write_runtime_closure.set_defaults(handler=command_write_runtime_executable_closure)
     runtime_closure = commands.add_parser("validate-runtime-executable-closure")
     runtime_closure.add_argument("--receipt", type=Path, required=True)
     runtime_closure.add_argument("--authority-pre-state", type=Path, required=True)
