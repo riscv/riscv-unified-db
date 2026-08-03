@@ -5,20 +5,23 @@
 
 $schema: inst_schema.json#
 kind: instruction
-name: sspopchk.x1
-long_name: Shadow Stack Pop and Check (x1)
+name: sspopchk
+long_name: Shadow Stack Pop and Check
 description: |
   SSPOPCHK pops a value from the shadow stack and checks it against link
-  register `x1`.
+  register `xs1`. The encoding restricts `xs1` to `x1` or `x5`.
 
   This instruction uses the `mop.r.28` codepoint provided by Zimop.
 definedBy:
   extension:
     name: Zicfiss
-assembly: x1
+assembly: xs1
 encoding:
-  match: "11001101110000001100000001110011"
-  variables: []
+  match: "110011011100-----100000001110011"
+  variables:
+    - name: xs1
+      location: 19-15
+      not: [0, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 access:
   s: always
   u: always

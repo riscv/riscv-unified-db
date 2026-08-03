@@ -39226,11 +39226,11 @@ Included in::
 
 
 
-[#udb:doc:inst:sspopchk_x1]
-== sspopchk.x1
+[#udb:doc:inst:sspopchk]
+== sspopchk
 
 Synopsis::
-Shadow Stack Pop and Check (x1)
+Shadow Stack Pop and Check
 
 Base::
 
@@ -39243,23 +39243,27 @@ Base::
 |===
 
 Assembly::
-sspopchk.x1 x1
+sspopchk xs1
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name": 0xcdc0c073,"type":2}]}
+{"reg":[{"bits":15,"name": 0x4073,"type":2},{"bits":5,"name": "xs1 != {0,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}","type":4},{"bits":12,"name": 0xcdc,"type":2}]}
 ....
 
 Description::
 SSPOPCHK pops a value from the shadow stack and checks it against link
-register `x1`.
+register `xs1`. The encoding restricts `xs1` to `x1` or `x5`.
 
 This instruction uses the xref:insts:mop_r_28.adoc#udb:doc:inst:mop_r_28[mop.r.28] codepoint provided by Zimop.
 
 
 Decode Variables::
-sspopchk.x1 has no decode variables.
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|===
 
 Included in::
 
@@ -39275,11 +39279,11 @@ Included in::
 
 
 
-[#udb:doc:inst:sspopchk_x5]
-== sspopchk.x5
+[#udb:doc:inst:sspush]
+== sspush
 
 Synopsis::
-Shadow Stack Pop and Check (x5)
+Shadow Stack Push
 
 Base::
 
@@ -39292,119 +39296,27 @@ Base::
 |===
 
 Assembly::
-sspopchk.x5 x5
+sspush xs2
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name": 0xcdc2c073,"type":2}]}
+{"reg":[{"bits":20,"name": 0x4073,"type":2},{"bits":5,"name": "xs2 != {0,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}","type":4},{"bits":7,"name": 0x67,"type":2}]}
 ....
 
 Description::
-SSPOPCHK pops a value from the shadow stack and checks it against link
-register `x5`.
-
-This instruction uses the xref:insts:mop_r_28.adoc#udb:doc:inst:mop_r_28[mop.r.28] codepoint provided by Zimop.
-
-
-Decode Variables::
-sspopchk.x5 has no decode variables.
-
-Included in::
-
-
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
-
-| *Zicfiss*
-| any
-|===
-
-
-
-
-[#udb:doc:inst:sspush_x1]
-== sspush.x1
-
-Synopsis::
-Shadow Stack Push (x1)
-
-Base::
-
-[cols="1,1"]
-|===
-| RV32 | RV64
-
-| &#x2713;
-| &#x2713;
-|===
-
-Assembly::
-sspush.x1 x1
-
-Encoding::
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":32,"name": 0xce104073,"type":2}]}
-....
-
-Description::
-SSPUSH pushes link register `x1` to the shadow stack.
+SSPUSH pushes the value of link register `xs2` to the shadow stack.
+The encoding restricts `xs2` to `x1` or `x5`.
 
 This instruction uses the xref:insts:mop_rr_7.adoc#udb:doc:inst:mop_rr_7[mop.rr.7] codepoint provided by Zimop.
 
 
 Decode Variables::
-sspush.x1 has no decode variables.
-
-Included in::
-
-
-[width="100%",cols="1,2",options="header"]
+[width="100%", cols="1,2", options="header"]
 |===
-| Extension | Version
-
-| *Zicfiss*
-| any
+|Variable Name |Location
+|xs2 |$encoding[24:20]
 |===
-
-
-
-
-[#udb:doc:inst:sspush_x5]
-== sspush.x5
-
-Synopsis::
-Shadow Stack Push (x5)
-
-Base::
-
-[cols="1,1"]
-|===
-| RV32 | RV64
-
-| &#x2713;
-| &#x2713;
-|===
-
-Assembly::
-sspush.x5 x5
-
-Encoding::
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":32,"name": 0xce504073,"type":2}]}
-....
-
-Description::
-SSPUSH pushes link register `x5` to the shadow stack.
-
-This instruction uses the xref:insts:mop_rr_7.adoc#udb:doc:inst:mop_rr_7[mop.rr.7] codepoint provided by Zimop.
-
-
-Decode Variables::
-sspush.x5 has no decode variables.
 
 Included in::
 
