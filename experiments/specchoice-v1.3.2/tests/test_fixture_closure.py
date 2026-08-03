@@ -13,6 +13,7 @@ import sys
 import tempfile
 import unittest
 from copy import deepcopy
+from types import SimpleNamespace
 from unittest import mock
 from pathlib import Path
 
@@ -56,6 +57,8 @@ from specchoice_evidence.runtime_closure import (
     verify_runtime_closure,
     verify_runtime_closure_v2,
     verify_runtime_closure_v3,
+    verify_runtime_closure_v4,
+    validate_runtime_closure_v4_bootstrap_targets,
     validate_runtime_closure_v2_supersession,
     build_runtime_closure_v4,
     future_target_inventory_v7,
@@ -71,6 +74,7 @@ from specchoice_evidence.successor import (
     _REQUEST_RELATIVE,
     _accepted_projection_v6,
     _preflight_exact_file,
+    _validate_recorded_proposal_inputs,
     _verify_exact_accepted_v6,
     _occupied_v13_targets,
     build_source_contract_proposal_v6,
@@ -78,6 +82,8 @@ from specchoice_evidence.successor import (
     preflight_activate_pending_source_cutover_v13,
     preflight_prepare_pending_source_cutover_v13,
     validate_local_acceptance_decision_v13,
+    accepted_v6_active_bound_paths,
+    validate_accepted_v6_active_authority,
     validate_source_contract_proposal_v6,
     validate_v13_evidence_chain,
     write_source_contract_proposal_packet_v6,
@@ -181,6 +187,257 @@ class FixtureClosureTests(unittest.TestCase):
         self.assertEqual(len(targets), 17)
         self.assertEqual(targets, sorted(targets, key=lambda entry: entry["path"]))
         self.assertEqual({entry["kind"] for entry in targets}, {"file"})
+
+    def test_runtime_closure_v4_rejects_schema_only_and_hostile_bootstrap_targets(self) -> None:
+        with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_V4_INVALID"):
+            verify_runtime_closure_v4(
+                {"schema_version": "runtime-executable-closure-v4"}, self.repository
+            )
+
+        target = future_target_inventory_v7()[0]["path"]
+        for kind in ("file", "directory", "symlink"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                occupied = root / target
+                occupied.parent.mkdir(parents=True)
+                if kind == "file":
+                    occupied.write_bytes(b"occupied\n")
+                elif kind == "directory":
+                    occupied.mkdir()
+                else:
+                    occupied.symlink_to("missing")
+                with self.assertRaisesRegex(
+                    RuntimeClosureError,
+                    "RUNTIME_CLOSURE_V4_BOOTSTRAP_TARGET_OCCUPIED",
+                ):
+                    validate_runtime_closure_v4_bootstrap_targets(root)
+
+    def test_runtime_closure_v4_writer_repeats_preflight_before_first_write(self) -> None:
+        closure = {
+            "freeze_commit": "f" * 40,
+            "schema_version": "runtime-executable-closure-v4",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment = repository / "experiments/specchoice-v1.3.2"
+            receipt = experiment / "receipts/runtime-executable-closure-v4.json"
+            receipt.parent.mkdir(parents=True)
+            args = SimpleNamespace(receipt=receipt, freeze_commit="f" * 40)
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=experiment),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module,
+                    "build_runtime_closure_v4",
+                    side_effect=[closure, RuntimeClosureError("late target race")],
+                ) as builder,
+                mock.patch.object(cli_module, "write_new_descriptor_file") as writer,
+            ):
+                with self.assertRaisesRegex(RuntimeClosureError, "late target race"):
+                    cli_module.command_write_runtime_executable_closure_v4(args)
+                self.assertEqual(builder.call_count, 2)
+                writer.assert_not_called()
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment = repository / "experiments/specchoice-v1.3.2"
+            receipt = experiment / "receipts/runtime-executable-closure-v4.json"
+            receipt.parent.mkdir(parents=True)
+            receipt.write_bytes(canonical_json_bytes(closure))
+            args = SimpleNamespace(receipt=receipt, freeze_commit="f" * 40)
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=experiment),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(cli_module, "verify_runtime_closure_v4", return_value=closure),
+                mock.patch.object(cli_module, "build_runtime_closure_v4") as builder,
+            ):
+                self.assertEqual(
+                    cli_module.command_write_runtime_executable_closure_v4(args), 0
+                )
+                builder.assert_not_called()
+            alias = receipt.with_name("closure-alias.json")
+            alias.symlink_to(receipt.name)
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=experiment),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                self.assertRaisesRegex(ValueError, "RUNTIME_CLOSURE_V4_PATH_INVALID"),
+            ):
+                cli_module.command_write_runtime_executable_closure_v4(
+                    SimpleNamespace(receipt=alias, freeze_commit="f" * 40)
+                )
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment = repository / "experiments/specchoice-v1.3.2"
+            receipt = experiment / "receipts/runtime-executable-closure-v4.json"
+            receipt.parent.mkdir(parents=True)
+            args = SimpleNamespace(receipt=receipt, freeze_commit="f" * 40)
+
+            def identical_racer(root: Path, relative: str, raw: bytes) -> None:
+                (root / relative).write_bytes(raw)
+                raise FilesystemPolicyError("AUTHORITATIVE_DESTINATION_EXISTS")
+
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=experiment),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module, "build_runtime_closure_v4", side_effect=[closure, closure]
+                ),
+                mock.patch.object(cli_module, "verify_runtime_closure_v4", return_value=closure),
+                mock.patch.object(
+                    cli_module, "write_new_descriptor_file", side_effect=identical_racer
+                ),
+            ):
+                self.assertEqual(
+                    cli_module.command_write_runtime_executable_closure_v4(args), 0
+                )
+            self.assertEqual(receipt.read_bytes(), canonical_json_bytes(closure))
+
+    def test_runtime_closure_v4_post_validation_does_not_reapply_bootstrap_absence(self) -> None:
+        closure = {
+            "freeze_commit": "e" * 40,
+            "schema_version": "runtime-executable-closure-v4",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            materialized = repository / future_target_inventory_v7()[0]["path"]
+            materialized.parent.mkdir(parents=True)
+            materialized.write_bytes(b"downstream exact-resume bytes\n")
+            with mock.patch(
+                "specchoice_evidence.runtime_closure._runtime_closure_v4_projection",
+                return_value=closure,
+            ):
+                self.assertEqual(
+                    verify_runtime_closure_v4(closure, repository), closure
+                )
+
+    def test_accepted_v6_active_validator_rejects_lineage_and_materialized_raw_drift(self) -> None:
+        repository = self.repository
+        accepted = (
+            "experiments/specchoice-v1.3.2/bundles/accepted/"
+            "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+        )
+        candidate = (
+            "experiments/specchoice-v1.3.2/bundles/candidates/"
+            "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+        )
+        packet = (
+            "experiments/specchoice-v1.3.2/receipts/"
+            "source-contract-proposal-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+        )
+        bound = accepted_v6_active_bound_paths(repository)
+        expected_fixed = {
+            "experiments/specchoice-v1.3.2/phase2/source-authority.json",
+            "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v3.json",
+            "experiments/specchoice-v1.3.2/phase2/source-authority-v13-historical.json",
+            "experiments/specchoice-v1.3.2/phase2/source-authority-v13-pending.json",
+            "experiments/specchoice-v1.3.2/receipts/pending/source-cutover-readiness-v13.json",
+            "experiments/specchoice-v1.3.2/receipts/pending/fixture-closure-transition-v3-to-v6.json",
+            "experiments/specchoice-v1.3.2/receipts/fixture-closure-acceptance-audit-v6.json",
+            "experiments/specchoice-v1.3.2/receipts/fixture-closure-revocation-v3-to-v6.json",
+            "experiments/specchoice-v1.3.2/receipts/fixture-closure-offline-replay-v6.json",
+            "experiments/specchoice-v1.3.2/receipts/integrity-receipt-v14.json",
+            "experiments/specchoice-v1.3.2/receipts/local-acceptance-request-v13.json",
+            "experiments/specchoice-v1.3.2/receipts/local-acceptance-decision-v13.json",
+            "experiments/specchoice-v1.3.2/receipts/source-contract-construction-decision-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6.json",
+            "experiments/specchoice-v1.3.2/receipts/source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6/candidate-audit-v6.json",
+            "experiments/specchoice-v1.3.2/receipts/source-contract-construction-proposal-v5-non-executable-supersession-v1.json",
+        }
+        proposal_value = json.loads((repository / packet / "proposal.json").read_text())
+        proposal_inputs = {entry["path"] for entry in proposal_value["bound_inputs"]}
+        v4_lineage = {
+            "experiments/specchoice-v1.3.2/receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
+            "experiments/specchoice-v1.3.2/receipts/source-contract-construction-proposal-v4-supersession-v3.json",
+            "experiments/specchoice-v1.3.2/receipts/source-contract-construction-decision-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
+        }
+        self.assertTrue(v4_lineage <= proposal_inputs)
+        historical_closure = json.loads(
+            (repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v3.json").read_text()
+        )
+        incomplete_proposal = deepcopy(proposal_value)
+        incomplete_proposal["bound_inputs"] = [
+            entry for entry in incomplete_proposal["bound_inputs"]
+            if entry["path"]
+            != "experiments/specchoice-v1.3.2/config/measurement/pr2164-semantic-gold-contract-v2.json"
+        ]
+        with self.assertRaisesRegex(
+            SuccessorProtocolError, "ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH",
+        ):
+            _validate_recorded_proposal_inputs(
+                repository, incomplete_proposal, historical_closure,
+            )
+        expected_tree = {
+            path.relative_to(repository).as_posix()
+            for tree in (repository / candidate, repository / packet)
+            for path in tree.rglob("*")
+            if path.is_file() and not path.is_symlink()
+        }
+        self.assertEqual(set(bound), expected_fixed | v4_lineage | expected_tree)
+
+        def copied_repository(destination: Path) -> None:
+            for relative in bound:
+                source = repository / relative
+                target = destination / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+            shutil.copytree(repository / accepted, destination / accepted)
+
+        def validate_copy(root: Path) -> dict[str, object]:
+            with mock.patch(
+                "specchoice_evidence.successor.verify_runtime_closure_v3_historical",
+                side_effect=lambda closure, _repository: dict(closure),
+            ):
+                return validate_accepted_v6_active_authority(root)
+
+        tamper_paths = (
+            f"{packet}/proposal.json",
+            f"{packet}/supersession-v5.json",
+            "experiments/specchoice-v1.3.2/phase2/source-authority-v13-pending.json",
+            "experiments/specchoice-v1.3.2/receipts/local-acceptance-decision-v13.json",
+            "experiments/specchoice-v1.3.2/receipts/source-contract-construction-decision-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6.json",
+            "experiments/specchoice-v1.3.2/receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
+            "experiments/specchoice-v1.3.2/receipts/source-contract-construction-proposal-v4-supersession-v3.json",
+            "experiments/specchoice-v1.3.2/receipts/source-contract-construction-decision-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
+            (
+                f"{accepted}/raw/evaluation_fixtures/"
+                "CAND_WARL_FIXED_LEGAL_SET/source.txt"
+            ),
+            f"{accepted}/snapshot-manifest.json",
+            (
+                f"{candidate}/raw/evaluation_fixtures/"
+                "CAND_WARL_FIXED_LEGAL_SET/source.txt"
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            clean = Path(directory)
+            copied_repository(clean)
+            validate_copy(clean)
+        for relative in tamper_paths:
+            with self.subTest(path=relative), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                copied_repository(root)
+                path = root / relative
+                path.write_bytes(path.read_bytes() + b"tamper")
+                with self.assertRaisesRegex(
+                    SuccessorProtocolError,
+                    "ACCEPTED_V6_ACTIVE_AUTHORITY_(?:INPUT_INVALID|MISMATCH)",
+                ):
+                    validate_copy(root)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            copied_repository(root)
+            with (
+                mock.patch(
+                    "specchoice_evidence.successor._verify_exact_accepted_v6",
+                    side_effect=SuccessorProtocolError("LOCAL_ACCEPTED_V6_DIVERGENT"),
+                ),
+                self.assertRaisesRegex(
+                    SuccessorProtocolError,
+                    "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+                ),
+            ):
+                validate_copy(root)
 
     def test_runtime_closure_v3_historical_rejects_truncated_or_mutated_receipt(self) -> None:
         repository = Path(__file__).parents[3]
@@ -1235,7 +1492,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
         accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
         command = [
             sys.executable, "-m", "specchoice_evidence.cli", "validate-phase2-source-authority",
-            "--authority", "phase2/source-authority.json", "--bundle", str(accepted),
+            "--authority", "phase2/source-authority-v13-historical.json", "--bundle", str(accepted),
             "--revocation", "receipts/fixture-closure-revocation-v2.json", "--authority-mode", "active",
         ]
         result = subprocess.run(command, cwd=experiment, check=False, capture_output=True)
@@ -1552,7 +1809,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-proposal-v4",
                     "--proposal", str(proposal_v2),
                     "--predecessor", str(predecessor_v3),
-                    "--active-authority", str(experiment / "phase2/source-authority.json"),
+                    "--active-authority", str(experiment / "phase2/source-authority-v13-historical.json"),
                     "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"),
                     "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"),
                     "--ontology-decision", str(experiment / "reviews/h1-source-gold-ontology-decision-v1.json"),
@@ -1601,7 +1858,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                     [
                         sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-proposal-v4",
                         "--proposal", str(proposal_path or proposal_v4), "--predecessor", str(predecessor_v3),
-                        "--active-authority", str(experiment / "phase2/source-authority.json"),
+                        "--active-authority", str(experiment / "phase2/source-authority-v13-historical.json"),
                         "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"),
                         "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"),
                         "--ontology-decision", str(decision_path), "--repair-manifest", str(manifest_path or repair_manifest),
@@ -2058,7 +2315,9 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                 with self.subTest("v4_decision_cli_and_writer_accept_only_the_valid_v4_baseline"):
                     def decision_payload(disposition: str) -> dict[str, object]:
                         value = {
-                            "active_authority_sha256": sha256_bytes((experiment / "phase2/source-authority.json").read_bytes()), "attestation": "signed-by-reviewer",
+                            "active_authority_sha256": sha256_bytes(
+                                (experiment / "phase2/source-authority-v13-historical.json").read_bytes()
+                            ), "attestation": "signed-by-reviewer",
                             "decision": disposition, "decision_timestamp": "2026-08-03T12:34:56Z", "external_publication_authorized": False,
                             "fixed_code_commit": fixed_commit, "local_only": True,
                             "ontology_decision_sha256": sha256_bytes((experiment / "reviews/h1-source-gold-ontology-decision-v1.json").read_bytes()),
@@ -2069,7 +2328,7 @@ class FixtureClosureCandidateTests(unittest.TestCase):
                         value["decision_sha256"] = sha256_bytes(canonical_json_bytes(value))
                         return value
 
-                    v4_args = ["--proposal", str(proposal_v4), "--predecessor", str(predecessor_v3), "--active-authority", str(experiment / "phase2/source-authority.json"), "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"), "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"), "--ontology-decision", str(experiment / "reviews/h1-source-gold-ontology-decision-v1.json"), "--repair-manifest", str(repair_manifest), "--registry", str(registry_v4), "--supersession", str(supersession_v3), "--staging-root", str(staging_root)]
+                    v4_args = ["--proposal", str(proposal_v4), "--predecessor", str(predecessor_v3), "--active-authority", str(experiment / "phase2/source-authority-v13-historical.json"), "--historical-authority", str(experiment / "phase2/source-authority-v9-historical.json"), "--revocation", str(experiment / "receipts/fixture-closure-revocation-v2.json"), "--ontology-decision", str(experiment / "reviews/h1-source-gold-ontology-decision-v1.json"), "--repair-manifest", str(repair_manifest), "--registry", str(registry_v4), "--supersession", str(supersession_v3), "--staging-root", str(staging_root)]
                     for disposition in ("authorize", "reject"):
                         decision_path = write_payload(f"decision-{disposition}.json", decision_payload(disposition))
                         result = subprocess.run([sys.executable, "-m", "specchoice_evidence.cli", "validate-fixture-construction-decision-v4", *v4_args, "--decision", str(decision_path)], cwd=experiment, check=False, capture_output=True, text=True)
@@ -2349,17 +2608,19 @@ class FixtureClosureCandidateTests(unittest.TestCase):
         accepted = experiment / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
         command = [
             sys.executable, "-m", "specchoice_evidence.cli", "validate-phase2-source-authority",
-            "--authority", "phase2/source-authority.json", "--bundle", str(accepted),
+            "--authority", "phase2/source-authority-v13-historical.json", "--bundle", str(accepted),
             "--revocation", "receipts/fixture-closure-revocation-v2.json", "--authority-mode", "active",
         ]
         result = subprocess.run(command, cwd=experiment, check=False, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        authority = json.loads((experiment / "phase2/source-authority.json").read_text(encoding="utf-8"))
+        authority = json.loads(
+            (experiment / "phase2/source-authority-v13-historical.json").read_text(encoding="utf-8")
+        )
         authority["registry_sha256"] = "0" * 64
         with tempfile.TemporaryDirectory() as directory:
             invalid = Path(directory) / "source-authority.json"
             invalid.write_text(json.dumps(authority, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
-            command[command.index("phase2/source-authority.json")] = str(invalid)
+            command[command.index("phase2/source-authority-v13-historical.json")] = str(invalid)
             result = subprocess.run(command, cwd=experiment, check=False, capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
 

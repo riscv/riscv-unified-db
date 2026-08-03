@@ -46,6 +46,7 @@ from .runtime_closure import (
     future_target_inventory_v6,
     validate_future_target_occupancy_v6,
     validate_runtime_closure_v2_supersession,
+    verify_runtime_closure_v3,
     verify_runtime_closure_v3_historical,
 )
 from .source_contract import (
@@ -92,6 +93,12 @@ _CLOSURE_V2_SUPERSESSION_RELATIVE = (
     "runtime-executable-closure-v2-non-authorizing-supersession-v1.json"
 )
 _CLOSURE_V3_RELATIVE = f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v3.json"
+
+_V4_LINEAGE_INPUTS = frozenset({
+    f"{_EXPERIMENT_PREFIX}/receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
+    f"{_EXPERIMENT_PREFIX}/receipts/source-contract-construction-proposal-v4-supersession-v3.json",
+    f"{_EXPERIMENT_PREFIX}/receipts/source-contract-construction-decision-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
+})
 
 _PROPOSAL_INPUTS = (
     f"{_EXPERIMENT_PREFIX}/receipts/source-contract-construction-authorization-v4-non-executable-supersession-v1.json",
@@ -150,10 +157,94 @@ def _run_isolated_verifier(bundle: Path) -> None:
 def _binding(repository: Path, relative: str) -> dict[str, object]:
     try:
         relative = require_relative_posix_path(relative).as_posix()
-        raw = (repository / relative).read_bytes()
-    except (OSError, ValueError) as error:
+        evidence, raw = read_authoritative_file(repository, relative)
+    except (FilesystemPolicyError, OSError, ValueError) as error:
         raise SuccessorProtocolError("V6_PROPOSAL_INPUT_INVALID") from error
+    if evidence.file_kind != "regular_file":
+        raise SuccessorProtocolError("V6_PROPOSAL_INPUT_INVALID")
     return {"byte_length": len(raw), "path": relative, "sha256": sha256_bytes(raw)}
+
+
+def _proposal_input_paths(repository: Path) -> tuple[str, ...]:
+    """Reconstruct the exact historical v6 proposal input inventory."""
+    manifest, _ = _canonical_object(
+        repository
+        / f"{_EXPERIMENT_PREFIX}/config/fixture-repairs/pr2164-semantic-gold-v5/repair-manifest.json",
+        "V6_REPAIR_MANIFEST_INVALID",
+    )
+    payloads = manifest.get("payloads")
+    if not isinstance(payloads, list):
+        raise SuccessorProtocolError("V6_REPAIR_MANIFEST_INVALID")
+    paths = set(_PROPOSAL_INPUTS)
+    for item in payloads:
+        if not isinstance(item, dict) or not isinstance(item.get("path"), str):
+            raise SuccessorProtocolError("V6_REPAIR_MANIFEST_INVALID")
+        paths.add(f"{_EXPERIMENT_PREFIX}/{item['path']}")
+    return tuple(sorted(paths))
+
+
+def _validate_recorded_proposal_inputs(
+    repository: Path,
+    proposal: Mapping[str, object],
+    historical_closure: Mapping[str, object],
+) -> tuple[str, ...]:
+    """Bind proposal inputs to closure-v3 Git history plus three v4 leaves."""
+    bound_inputs = proposal.get("bound_inputs")
+    closure_entries = historical_closure.get("entries")
+    if not isinstance(bound_inputs, list) or not isinstance(closure_entries, list):
+        raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+    historical: dict[str, Mapping[str, object]] = {}
+    for entry in closure_entries:
+        if not isinstance(entry, Mapping) or not isinstance(entry.get("path"), str):
+            raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+        historical[str(entry["path"])] = entry
+    paths: list[str] = []
+    normalized: list[dict[str, object]] = []
+    for item in bound_inputs:
+        if not isinstance(item, Mapping) or set(item) != {"byte_length", "path", "sha256"}:
+            raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+        try:
+            path = require_relative_posix_path(item.get("path")).as_posix()
+            byte_length = require_byte_length(item.get("byte_length"))
+            digest = require_sha256(item.get("sha256"))
+        except (FilesystemPolicyError, TypeError, ValueError) as error:
+            raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH") from error
+        paths.append(path)
+        normalized.append({"byte_length": byte_length, "path": path, "sha256": digest})
+    if paths != sorted(paths) or len(paths) != len(set(paths)):
+        raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+    repair_paths = set(paths) - set(_PROPOSAL_INPUTS)
+    repair_prefix = f"{_EXPERIMENT_PREFIX}/config/fixture-repairs/pr2164-semantic-gold-v5/"
+    historical_repairs = {
+        path
+        for path, entry in historical.items()
+        if isinstance(entry.get("classes"), list)
+        and "repair_v5_payload" in entry["classes"]
+    }
+    if (
+        not set(_PROPOSAL_INPUTS) <= set(paths)
+        or len(repair_paths) != 9
+        or any(not path.startswith(repair_prefix) for path in repair_paths)
+        or repair_paths != historical_repairs
+        or set(paths) - set(historical) != set(_V4_LINEAGE_INPUTS)
+    ):
+        raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+    expected: list[dict[str, object]] = []
+    for path in paths:
+        if path in _V4_LINEAGE_INPUTS:
+            expected.append(_binding(repository, path))
+        else:
+            entry = historical.get(path)
+            if entry is None:
+                raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+            expected.append({
+                "byte_length": entry.get("byte_length"),
+                "path": path,
+                "sha256": entry.get("sha256"),
+            })
+    if normalized != expected:
+        raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+    return tuple(paths)
 
 
 def _validate_registry_v6(repository: Path) -> tuple[dict[str, object], bytes]:
@@ -210,19 +301,7 @@ def _validate_registry_v6(repository: Path) -> tuple[dict[str, object], bytes]:
 
 def _proposal_inputs(repository: Path) -> list[dict[str, object]]:
     _, _ = _validate_registry_v6(repository)
-    manifest, _ = _canonical_object(
-        repository / f"{_EXPERIMENT_PREFIX}/config/fixture-repairs/pr2164-semantic-gold-v5/repair-manifest.json",
-        "V6_REPAIR_MANIFEST_INVALID",
-    )
-    payloads = manifest.get("payloads")
-    if not isinstance(payloads, list):
-        raise SuccessorProtocolError("V6_REPAIR_MANIFEST_INVALID")
-    paths = set(_PROPOSAL_INPUTS)
-    for item in payloads:
-        if not isinstance(item, dict) or not isinstance(item.get("path"), str):
-            raise SuccessorProtocolError("V6_REPAIR_MANIFEST_INVALID")
-        paths.add(f"{_EXPERIMENT_PREFIX}/{item['path']}")
-    return [_binding(repository, path) for path in sorted(paths)]
+    return [_binding(repository, path) for path in _proposal_input_paths(repository)]
 
 
 def _parse_closure_v3(
@@ -235,15 +314,9 @@ def _parse_closure_v3(
     if not isinstance(closure, dict) or canonical_json_bytes(closure) != closure_raw:
         raise SuccessorProtocolError("RUNTIME_CLOSURE_V3_INVALID")
     try:
-        verified = verify_runtime_closure_v3_historical(closure, repository)
-        binding = verified.get("authority_pre_state")
-        if (
-            not isinstance(binding, Mapping)
-            or binding.get("byte_length") != len(authority_pre_state_raw)
-            or binding.get("sha256") != sha256_bytes(authority_pre_state_raw)
-        ):
-            raise RuntimeClosureError("RUNTIME_CLOSURE_V3_AUTHORITY_PRESTATE_INVALID")
-        return verified
+        return verify_runtime_closure_v3(
+            closure, repository, authority_pre_state_raw=authority_pre_state_raw
+        )
     except RuntimeClosureError as error:
         raise SuccessorProtocolError(str(error)) from error
 
@@ -1491,6 +1564,7 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
         "construction": _DECISION_RELATIVE,
         "request": _REQUEST_RELATIVE,
         "decision": _ACCEPTANCE_DECISION_RELATIVE,
+        "v5_rejection": _V5_REJECTION_RELATIVE,
     }
     values: dict[str, dict[str, object]] = {}
     raw: dict[str, bytes] = {}
@@ -1530,48 +1604,196 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
         "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
     )
     decision = values["decision"]
-    candidate_audit = values["audit"]
     construction = values["construction"]
+    candidate = repository / _CANDIDATE_RELATIVE
+    accepted = repository / _ACCEPTED_RELATIVE
     try:
-        proposal_raw = (repository / _PACKET_RELATIVE / "proposal.json").read_bytes()
-        verified_bundle = verify_accepted_bundle(repository / _ACCEPTED_RELATIVE)
+        proposal, proposal_raw = _canonical_object(
+            repository / _PACKET_RELATIVE / "proposal.json",
+            "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+        )
+        _, supersession_raw = _canonical_object(
+            repository / _PACKET_RELATIVE / "supersession-v5.json",
+            "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+        )
+        candidate_manifest, _ = _canonical_object(
+            candidate / "snapshot-manifest.json",
+            "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+        )
+        accepted_manifest, _ = _canonical_object(
+            accepted / "snapshot-manifest.json",
+            "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+        )
+        _, candidate_registry_raw = _canonical_object(
+            candidate / "fixture-registry-pr2164-v6.json",
+            "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID",
+        )
+        historical_closure = verify_runtime_closure_v3_historical(
+            values["closure"], repository,
+        )
+        _validate_recorded_proposal_inputs(
+            repository, proposal, historical_closure,
+        )
+        verified_candidate = verify_candidate(candidate)
+        projected_accepted, _, projected_manifest = _accepted_projection_v6(candidate)
+        projected_manifest_raw = canonical_json_bytes(projected_manifest)
+        verified_bundle = _verify_exact_accepted_v6(
+            candidate, accepted, projected_manifest_raw,
+        )
         validated_decision = validate_local_acceptance_decision_v13(
             decision, values["request"], request_sha256=sha256_bytes(raw["request"]),
         )
-    except (OSError, BundleVerificationError, SuccessorProtocolError) as error:
+    except (
+        OSError,
+        BundleError,
+        BundleVerificationError,
+        RuntimeClosureError,
+        SuccessorProtocolError,
+    ) as error:
         raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID") from error
+
+    candidate_identity = {
+        "core_sha256": candidate_manifest.get("manifest_sha256"),
+        "generation": candidate_manifest.get("generation"),
+        "root_sha256": candidate_manifest.get("root_sha256"),
+        "snapshot_manifest_sha256": candidate_manifest.get("snapshot_manifest_sha256"),
+        "status": "candidate",
+    }
+    accepted_identity = dict(projected_accepted)
+    expected_candidate_audit = {
+        "candidate": candidate_identity,
+        "construction_decision_sha256": sha256_bytes(raw["construction"]),
+        "external_publication_authorized": False,
+        "local_only": True,
+        "proposal_sha256": sha256_bytes(proposal_raw),
+        "raw_file_count": 29,
+        "registry_sha256": sha256_bytes(candidate_registry_raw),
+        "runtime_closure_v3_sha256": sha256_bytes(raw["closure"]),
+        "schema_version": "fixture-candidate-audit-v6",
+        "status": "candidate_valid_local_acceptance_pending",
+    }
+    expected_request = {
+        "authority_pre_state_sha256": sha256_bytes(raw["historical"]),
+        "authorization": {
+            "external_publication_authorized": False,
+            "local_acceptance_authorized": False,
+        },
+        "candidate": candidate_identity,
+        "construction": {
+            "audit_sha256": sha256_bytes(raw["audit"]),
+            "decision_sha256": sha256_bytes(raw["construction"]),
+            "proposal_sha256": sha256_bytes(proposal_raw),
+            "supersession_sha256": sha256_bytes(supersession_raw),
+        },
+        "external_publication_authorized": False,
+        "local_only": True,
+        "projected_accepted": accepted_identity,
+        "requested_targets": {
+            "accepted_bundle": _ACCEPTED_RELATIVE,
+            "historical_authority": f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-historical.json",
+            "pending_authority": f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-pending.json",
+            "transition": f"{_EXPERIMENT_PREFIX}/receipts/pending/fixture-closure-transition-v3-to-v6.json",
+        },
+        "runtime_closure_v3_sha256": sha256_bytes(raw["closure"]),
+        "schema_version": "local-acceptance-request-v13",
+        "status": "pending_independent_local_acceptance",
+    }
+    expected_pending = {
+        "accepted_identity": accepted_identity,
+        "authority_pre_state_sha256": sha256_bytes(raw["historical"]),
+        "decision_sha256": sha256_bytes(raw["decision"]),
+        "external_publication_authorized": False,
+        "fixture_count": 11,
+        "generation": _GENERATION_V6,
+        "local_only": True,
+        "raw_file_count": 29,
+        "request_sha256": sha256_bytes(raw["request"]),
+        "schema_version": "13",
+        "status": "pending_cutover_v13",
+    }
+    expected_pending_raw = _canonical_bytes(expected_pending)
+    expected_transition = {
+        "accepted_identity": accepted_identity,
+        "from_authority_sha256": sha256_bytes(raw["historical"]),
+        "pending_authority_sha256": sha256_bytes(expected_pending_raw),
+        "schema_version": "fixture-closure-transition-v3-to-v6",
+        "status": "pending_non_effective",
+        "to_generation": _GENERATION_V6,
+    }
+    expected_transition_raw = _canonical_bytes(expected_transition)
+    expected_readiness = {
+        "cutover_effective": False,
+        "external_publication_authorized": False,
+        "local_only": True,
+        "pending_authority_sha256": sha256_bytes(expected_pending_raw),
+        "schema_version": "source-cutover-readiness-v13",
+        "status": "ready_for_atomic_activation",
+        "transition_sha256": sha256_bytes(expected_transition_raw),
+    }
+    expected_authority = _accepted_v6_final_authority(
+        expected_pending, expected_transition_raw, raw["decision"]
+    )
+    expected_receipts = _accepted_v6_receipts(
+        pre_state_raw=raw["historical"],
+        pending_raw=expected_pending_raw,
+        transition_raw=expected_transition_raw,
+        readiness_raw=_canonical_bytes(expected_readiness),
+        final_authority_raw=_canonical_bytes(expected_authority),
+        request_raw=raw["request"],
+        decision_raw=raw["decision"],
+        accepted_identity=accepted_identity,
+    )
+    construction_required = {
+        "attestation", "authority_pre_state_sha256", "decision", "decision_sha256",
+        "decision_timestamp", "external_publication_authorized", "local_only",
+        "proposal_sha256", "rationale", "reviewer", "runtime_closure_v3_sha256",
+        "schema_version", "supersession_sha256", "v5_rejected_history_sha256",
+    }
+    try:
+        if set(construction) != construction_required:
+            raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+        _require_human_fields(construction, "ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+        _decision_self_hash(construction, "ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+    except (TypeError, SuccessorProtocolError) as error:
+        raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH") from error
     if (
-        authority.get("status") != "accepted_cutover_v13"
-        or decision.get("decision") != "accept"
-        or acceptance_audit.get("authority_sha256") != sha256_bytes(authority_raw)
-        or acceptance_audit.get("request_sha256") != sha256_bytes(raw["request"])
-        or acceptance_audit.get("decision_sha256") != sha256_bytes(raw["decision"])
-        or authority.get("decision_sha256") != sha256_bytes(raw["decision"])
-        or authority.get("transition_sha256") != sha256_bytes(transition_raw)
-        or integrity != {
-            "acceptance_audit_sha256": sha256_bytes(acceptance_audit_raw),
-            "active_authority_sha256": sha256_bytes(authority_raw),
-            "offline_replay_sha256": sha256_bytes(replay_raw),
-            "pending_authority_sha256": sha256_bytes(pending_raw),
-            "readiness_sha256": sha256_bytes(readiness_raw),
-            "revocation_sha256": sha256_bytes(revocation_raw),
-            "schema_version": "integrity-receipt-v14",
-            "status": "accepted_v6_state_chain_verified",
-            "transition_sha256": sha256_bytes(transition_raw),
-        }
-        or replay.get("status") != "verified"
-        or revocation.get("to_authority_sha256") != sha256_bytes(authority_raw)
-        or candidate_audit.get("construction_decision_sha256") != sha256_bytes(raw["construction"])
-        or candidate_audit.get("proposal_sha256") != sha256_bytes(proposal_raw)
+        values["audit"] != expected_candidate_audit
+        or values["request"] != expected_request
+        or pending != expected_pending
+        or transition != expected_transition
+        or readiness != expected_readiness
+        or authority != expected_authority
+        or construction.get("schema_version") != "fixture-construction-decision-v6"
+        or construction.get("decision") != "authorize"
+        or construction.get("local_only") is not True
+        or construction.get("external_publication_authorized") is not False
+        or construction.get("authority_pre_state_sha256") != sha256_bytes(raw["historical"])
         or construction.get("proposal_sha256") != sha256_bytes(proposal_raw)
-        or candidate_audit.get("candidate") != decision.get("candidate")
-        or verified_bundle.get("manifest_sha256") != authority.get("accepted_identity", {}).get("core_sha256")
-        or validated_decision.get("projected_accepted") != authority.get("accepted_identity")
+        or construction.get("supersession_sha256") != sha256_bytes(supersession_raw)
+        or construction.get("runtime_closure_v3_sha256") != sha256_bytes(raw["closure"])
+        or construction.get("v5_rejected_history_sha256") != sha256_bytes(raw["v5_rejection"])
+        or verified_candidate.get("manifest_sha256") != candidate_identity["core_sha256"]
+        or verified_candidate.get("root_sha256") != candidate_identity["root_sha256"]
+        or accepted_manifest != projected_manifest
+        or verified_bundle.get("manifest_sha256") != accepted_identity["core_sha256"]
+        or verified_bundle.get("root_sha256") != accepted_identity["root_sha256"]
+        or verified_bundle.get("snapshot_manifest_sha256")
+        != accepted_identity["snapshot_manifest_sha256"]
+        or validated_decision.get("candidate") != candidate_identity
+        or validated_decision.get("projected_accepted") != accepted_identity
     ):
         raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
-    projected = decision.get("projected_accepted")
-    if not isinstance(projected, Mapping) or authority.get("accepted_identity") != projected:
+    retained_receipts = {
+        f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-revocation-v3-to-v6.json": revocation_raw,
+        f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-acceptance-audit-v6.json": acceptance_audit_raw,
+        f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-offline-replay-v6.json": replay_raw,
+        f"{_EXPERIMENT_PREFIX}/receipts/integrity-receipt-v14.json": integrity_raw,
+    }
+    if set(retained_receipts) != set(expected_receipts):
         raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
+    for relative, expected_raw in expected_receipts.items():
+        if retained_receipts[relative] != expected_raw:
+            raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
     return {"authority_sha256": sha256_bytes(authority_raw), "status": "accepted_v6_state_chain_verified"}
 
 
@@ -1593,6 +1815,7 @@ def accepted_v6_active_bound_paths(repository: Path) -> tuple[str, ...]:
         _DECISION_RELATIVE,
         _REQUEST_RELATIVE,
         _ACCEPTANCE_DECISION_RELATIVE,
+        _V5_REJECTION_RELATIVE,
         f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-revocation-v3-to-v6.json",
         f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-offline-replay-v6.json",
         f"{_EXPERIMENT_PREFIX}/receipts/integrity-receipt-v14.json",
@@ -1601,6 +1824,7 @@ def accepted_v6_active_bound_paths(repository: Path) -> tuple[str, ...]:
         f"{_EXPERIMENT_PREFIX}/receipts/pending/fixture-closure-transition-v3-to-v6.json",
         f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-acceptance-audit-v6.json",
     }
+    fixed.update(_V4_LINEAGE_INPUTS)
     for tree in (_CANDIDATE_RELATIVE, _PACKET_RELATIVE):
         root = repository / tree
         try:

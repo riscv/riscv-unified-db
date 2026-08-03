@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import shutil
@@ -104,7 +105,12 @@ class H1PublicContractTests(unittest.TestCase):
             write_h1_ontology_options_v1,
         ):
             self.assertTrue(callable(value))
-        self.assertFalse(any("decision" in name and "validate" not in name for name in dir(h1)))
+        self.assertFalse(any(
+            "decision" in name
+            and "validate" not in name
+            and name != "write_h1_source_gold_decision_v6"
+            for name in dir(h1)
+        ))
         from specchoice_measurement.cli import build_parser  # noqa: PLC0415
 
         parser = build_parser()
@@ -1395,7 +1401,9 @@ class H1PacketTests(unittest.TestCase):
 
     def _active_context(self) -> dict[str, Path | None]:
         return {
-            "authority": self.root / "phase2/source-authority.json",
+            # These v2/v3 fixtures are historical after the accepted-v6
+            # cutover; replay them against the preserved pre-cutover authority.
+            "authority": self.root / "phase2/source-authority-v13-historical.json",
             "bundle": self.active_bundle,
             "rules": self.rules,
             "predictions": self.root / "fixtures/measurement/golden-predictions-v2.json",
@@ -1931,45 +1939,274 @@ class H1PacketTests(unittest.TestCase):
             )["attempt_sha256"])
 
 
+    def _copy_fresh_v7_repository(
+        self, repository: Path
+    ) -> tuple[Path, dict[str, object]]:
+        experiment = repository / "experiments/specchoice-v1.3.2"
+        for relative in (
+            "phase2/source-authority.json",
+            "config/fixture-registry-pr2164-v6.json",
+            "config/measurement/pr2164-semantic-gold-contract-v2.json",
+            "config/measurement/pr2164-adapter-rules-v3.json",
+            "config/measurement/pr2164-adapter-rules-v4.json",
+            "config/measurement/canonical-adjudication-schema-v3.json",
+            "config/measurement/h1-review-schema-v5.json",
+            "config/measurement/h1-semantic-review-questions-v2.json",
+            "fixtures/measurement/golden-predictions-v4.json",
+            "fixtures/measurement/adversarial/required-diagnostics-v4.json",
+        ):
+            target = experiment / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(self.root / relative, target)
+        shutil.copytree(
+            self.root / (
+                "bundles/accepted/"
+                "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+            ),
+            experiment / (
+                "bundles/accepted/"
+                "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+            ),
+        )
+        (experiment / "reports/h1").mkdir(parents=True)
+        (experiment / "runs/measurement-attempts").mkdir(parents=True)
+        closure: dict[str, object] = {
+            "freeze_commit": "f" * 40,
+            "future_targets": [
+                {
+                    "kind": "file",
+                    "path": (
+                        "experiments/specchoice-v1.3.2/reports/h1/"
+                        "adapter-batch-pr2164-v6.json"
+                    ),
+                }
+            ],
+            "schema_version": "runtime-executable-closure-v4",
+        }
+        receipt = experiment / "receipts/runtime-executable-closure-v4.json"
+        receipt.parent.mkdir(parents=True)
+        receipt.write_bytes(canonical_json_bytes(closure))
+        return experiment, closure
+
+    def test_h1_v7_real_fresh_chain_rejects_each_canonical_forgery(self) -> None:
+        from specchoice_measurement.adapter import (  # noqa: PLC0415
+            write_pr2164_accepted_v6_adapter_batch_v4,
+        )
+        from specchoice_measurement.attempts import (  # noqa: PLC0415
+            run_fresh_adversarial_suite_v7,
+            run_fresh_formal_measurement_v6,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment, closure = self._copy_fresh_v7_repository(repository)
+            authority = experiment / "phase2/source-authority.json"
+            patches = (
+                mock.patch.object(h1, "_REPOSITORY", repository),
+                mock.patch.object(h1, "load_runtime_closure_v4", return_value=closure),
+                mock.patch(
+                    "specchoice_measurement.adapter.load_runtime_closure_v4",
+                    return_value=closure,
+                ),
+                mock.patch(
+                    "specchoice_measurement.attempts.load_runtime_closure_v4",
+                    return_value=closure,
+                ),
+            )
+            with patches[0], patches[1], patches[2], patches[3]:
+                write_pr2164_accepted_v6_adapter_batch_v4(
+                    repository=repository,
+                    runtime_closure=closure,
+                    authority_path=authority,
+                )
+                run_fresh_formal_measurement_v6(
+                    repository=repository,
+                    runtime_closure=closure,
+                    authority_path=authority,
+                )
+                run_fresh_adversarial_suite_v7(
+                    repository=repository,
+                    runtime_closure=closure,
+                    authority_path=authority,
+                )
+                records, values, _ = h1._v7_source_snapshot(
+                    runtime_closure=closure,
+                    authority_path=authority,
+                )
+                packet = h1.build_h1_review_packet_v7(
+                    questions=values["question_contract"]["questions"],
+                    fixture_reviews=h1._expected_v7_fixture_reviews(
+                        values["formal_case_outcomes"], records
+                    ),
+                    source_identity=records,
+                    runtime_closure=closure,
+                    authority_path=authority,
+                )
+                self.assertEqual(len(packet["fixture_reviews"]), 11)
+                self.assertEqual(len(packet["questions"]), 7)
+
+                targets = {
+                    "adapter": experiment / "reports/h1/adapter-batch-pr2164-v6.json",
+                    "attempt": experiment
+                    / "runs/measurement-attempts/formal-golden-pr2164-v6/attempt.json",
+                    "metrics": experiment
+                    / "runs/measurement-attempts/formal-golden-pr2164-v6/metrics.json",
+                    "case_outcomes": experiment
+                    / "runs/measurement-attempts/formal-golden-pr2164-v6/case-outcomes.json",
+                    "adversarial": experiment
+                    / "reports/h1/adversarial-oracle-results-v7.json",
+                }
+                for role, target in targets.items():
+                    with self.subTest(role=role):
+                        original = target.read_bytes()
+                        forged = json.loads(original)
+                        if isinstance(forged, dict):
+                            forged["forged"] = True
+                        else:
+                            self.assertIsInstance(forged, list)
+                            forged[0] = {**forged[0], "forged": True}
+                        target.write_bytes(canonical_json_bytes(forged))
+                        try:
+                            with self.assertRaisesRegex(
+                                H1Error, "H1_V7_FRESH_CHAIN_INVALID"
+                            ):
+                                h1._v7_source_snapshot(
+                                    runtime_closure=closure,
+                                    authority_path=authority,
+                                )
+                        finally:
+                            target.write_bytes(original)
+
     def _v7_packet(self) -> tuple[dict[str, object], dict[str, object]]:
+        """Build an isolated packet projection; real fresh-chain coverage is above."""
         root = Path(__file__).parents[1]
         closure = {"schema_version": "runtime-executable-closure-v4"}
-        questions = [
-            {"id": question_id, "prompt": "prompt", "rationale": "rationale", "structural_rules": ["closed"], "machine_assertions": ["asserted"], "metric_effect": "none", "evidence_bindings": ["bound"]}
-            for question_id in h1._V7_H1_QUESTION_IDS
-        ]
-        fixture_reviews = [
-            {"fixture_id": fixture_id, "fixture_class": "positive", "expected_surfaced": True,
-             "expected_disposition": "accept", "evidence_bindings": ["bound"]}
-            for fixture_id in h1._V7_FIXTURE_IDS
-        ]
-        source_identity = {
-            key: {"path": f"inputs/{key}.json", "byte_length": 1, "sha256": "a" * 64}
+        question_contract = json.loads(
+            (root / "config/measurement/h1-semantic-review-questions-v2.json").read_text(encoding="utf-8")
+        )
+        cases = json.loads(
+            (root / "runs/measurement-attempts/formal-golden-pr2164-v5/case-outcomes.json").read_text(encoding="utf-8")
+        )
+        raws = {
+            key: canonical_json_bytes(
+                question_contract if key == "question_contract"
+                else cases if key == "formal_case_outcomes"
+                else {"role": key}
+            )
             for key in h1._V7_SOURCE_IDENTITY_KEYS
         }
-        with mock.patch.object(h1, "_v7_gate", return_value={}):
+        source_identity = {
+            key: {
+                "path": h1._V7_SOURCE_IDENTITY_PATHS[key],
+                "byte_length": len(raws[key]),
+                "sha256": sha256_bytes(raws[key]),
+            }
+            for key in h1._V7_SOURCE_IDENTITY_KEYS
+        }
+        values = {
+            key: question_contract if key == "question_contract"
+            else cases if key == "formal_case_outcomes"
+            else {"role": key}
+            for key in h1._V7_SOURCE_IDENTITY_KEYS
+        }
+        snapshot = (source_identity, values, raws)
+        self._last_v7_snapshot = snapshot
+        fixture_reviews = h1._expected_v7_fixture_reviews(cases, source_identity)
+        with mock.patch.object(h1, "_v7_source_snapshot", return_value=snapshot):
             packet = h1.build_h1_review_packet_v7(
-                questions=questions, fixture_reviews=fixture_reviews, source_identity=source_identity, markdown_sha256="b" * 64,
+                questions=question_contract["questions"], fixture_reviews=fixture_reviews, source_identity=source_identity,
                 runtime_closure=closure, authority_path=root / "phase2/source-authority.json",
             )
         return packet, closure
 
+    @staticmethod
+    def _v7_human_decision(
+        packet: dict[str, object], readiness: dict[str, object],
+        *, disposition: str = "incomplete",
+    ) -> dict[str, object]:
+        decision: dict[str, object] = {
+            "aggregate_disposition": disposition,
+            "aggregate_rationale": f"human judgment {disposition}",
+            "attestation": "personally reviewed",
+            "fixture_reviews": [
+                {
+                    "fixture_id": item["fixture_id"],
+                    "disposition": disposition,
+                    "rationale": "human judgment",
+                }
+                for item in packet["fixture_reviews"]
+            ],
+            "packet_sha256": packet["packet_sha256"],
+            "readiness_sha256": readiness["readiness_sha256"],
+            "reviewer": "reviewer",
+            "schema_version": "h1-source-gold-decision-v6",
+            "semantic_responses": [
+                {
+                    "id": item,
+                    "disposition": disposition,
+                    "rationale": "human judgment",
+                }
+                for item in h1._V7_H1_QUESTION_IDS
+            ],
+            "signature": "signature",
+            "timestamp_utc": "2026-08-03T00:00:00Z",
+        }
+        decision["decision_sha256"] = sha256_bytes(
+            canonical_json_bytes(decision)
+        )
+        return decision
+
     def test_h1_v7_binds_complete_seven_question_semantics_and_v4_identity(self) -> None:
-        packet, _ = self._v7_packet()
+        packet, closure = self._v7_packet()
         self.assertEqual([item["id"] for item in packet["questions"]], list(h1._V7_H1_QUESTION_IDS))
         self.assertEqual(packet["schema_version"], "h1-review-packet-v7")
+        self.assertEqual(len(packet["fixture_reviews"]), 11)
+        self.assertTrue(all(question["evidence"] for question in packet["questions"]))
+        self.assertTrue(all(
+            {"source_path", "source_sha256", "start_byte", "end_byte", "text"} <= set(span)
+            for question in packet["questions"] for span in question["evidence"]
+        ))
+        forged = deepcopy(packet["source_identity"])
+        forged["adapter"]["sha256"] = "0" * 64
+        with (
+            mock.patch.object(h1, "_v7_source_snapshot", return_value=self._last_v7_snapshot),
+            self.assertRaisesRegex(H1Error, "H1_V7_SOURCE_IDENTITY_INVALID"),
+        ):
+            h1.build_h1_review_packet_v7(
+                questions=packet["questions"], fixture_reviews=packet["fixture_reviews"],
+                source_identity=forged, runtime_closure=closure,
+                authority_path=Path(__file__).parents[1] / "phase2/source-authority.json",
+            )
 
     def test_h1_v7_packet_and_readiness_contain_no_human_values(self) -> None:
         packet, closure = self._v7_packet()
-        with mock.patch.object(h1, "_v7_gate", return_value={}):
+        with (
+            mock.patch.object(h1, "_v7_source_snapshot", return_value=self._last_v7_snapshot),
+            mock.patch.object(h1, "_validate_published_v7_review_bytes"),
+        ):
             readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=Path(__file__).parents[1] / "phase2/source-authority.json")
         self.assertNotIn("responses", packet)
         self.assertNotIn("responses", readiness)
+        self.assertEqual(readiness["source_identity"], packet["source_identity"])
+        self.assertEqual(readiness["markdown"], packet["markdown"])
+        tampered = deepcopy(packet)
+        tampered["questions"][0]["prompt"] += " tampered"
+        with (
+            mock.patch.object(h1, "_v7_source_snapshot", return_value=self._last_v7_snapshot),
+            self.assertRaises(H1Error),
+        ):
+            h1.build_h1_review_readiness_v7(
+                packet=tampered, runtime_closure=closure,
+                authority_path=Path(__file__).parents[1] / "phase2/source-authority.json",
+            )
 
     def test_h1_v6_decision_distinguishes_missing_payload_from_complete_incomplete_judgment(self) -> None:
         packet, closure = self._v7_packet()
         root = Path(__file__).parents[1]
-        with mock.patch.object(h1, "_v7_gate", return_value={}):
+        with (
+            mock.patch.object(h1, "_v7_source_snapshot", return_value=self._last_v7_snapshot),
+            mock.patch.object(h1, "_validate_published_v7_review_bytes"),
+        ):
             readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
             with self.assertRaisesRegex(H1Error, "H1_V6_DECISION_INCOMPLETE"):
                 h1.validate_h1_source_gold_decision_v6(decision={}, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
@@ -1982,35 +2219,1051 @@ class H1PacketTests(unittest.TestCase):
             }
             decision["decision_sha256"] = sha256_bytes(canonical_json_bytes({key: decision[key] for key in sorted(decision)}))
             self.assertEqual(h1.validate_h1_source_gold_decision_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json"), decision)
+            with tempfile.TemporaryDirectory() as directory:
+                repository = Path(directory)
+                output = repository / h1._V7_DECISION_PATH
+                output.parent.mkdir(parents=True)
+                with mock.patch.object(h1, "_REPOSITORY", repository):
+                    result = h1.write_h1_source_gold_decision_v6(
+                        output=output, decision=decision, packet=packet, readiness=readiness,
+                        runtime_closure=closure, authority_path=root / "phase2/source-authority.json",
+                    )
+                    self.assertEqual(result["aggregate_disposition"], "incomplete")
+                    self.assertEqual(output.read_bytes(), canonical_json_bytes(decision))
+                    self.assertEqual(
+                        h1.write_h1_source_gold_decision_v6(
+                            output=output, decision=decision, packet=packet, readiness=readiness,
+                            runtime_closure=closure, authority_path=root / "phase2/source-authority.json",
+                        )["status"],
+                        "resumed",
+                    )
+                    invalid = deepcopy(decision)
+                    invalid["timestamp_utc"] = "2026-08-03T02:00:00+02:00"
+                    invalid["decision_sha256"] = sha256_bytes(canonical_json_bytes({
+                        key: value for key, value in invalid.items() if key != "decision_sha256"
+                    }))
+                    output.unlink()
+                    with self.assertRaisesRegex(H1Error, "H1_V6_DECISION_INCOMPLETE"):
+                        h1.write_h1_source_gold_decision_v6(
+                            output=output, decision=invalid, packet=packet, readiness=readiness,
+                            runtime_closure=closure, authority_path=root / "phase2/source-authority.json",
+                        )
+                    self.assertFalse(output.exists())
 
     def test_h1_v6_terminal_outputs_require_approved_decision(self) -> None:
         packet, closure = self._v7_packet()
         root = Path(__file__).parents[1]
-        with mock.patch.object(h1, "_v7_gate", return_value={}):
+        with (
+            mock.patch.object(h1, "_v7_source_snapshot", return_value=self._last_v7_snapshot),
+            mock.patch.object(h1, "_validate_published_v7_review_bytes"),
+        ):
             readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
-            decision = {
-                "aggregate_disposition": "disputed", "aggregate_rationale": "human judgment disputed", "attestation": "personally reviewed",
-                "fixture_reviews": [{"fixture_id": item["fixture_id"], "disposition": "disputed", "rationale": "human judgment"} for item in packet["fixture_reviews"]],
-                "packet_sha256": packet["packet_sha256"], "readiness_sha256": readiness["readiness_sha256"], "reviewer": "reviewer",
-                "schema_version": "h1-source-gold-decision-v6", "semantic_responses": [{"id": item, "disposition": "disputed", "rationale": "human judgment"} for item in h1._V7_H1_QUESTION_IDS],
-                "signature": "signature", "timestamp_utc": "2026-08-03T00:00:00Z",
-            }
-            decision["decision_sha256"] = sha256_bytes(canonical_json_bytes({key: decision[key] for key in sorted(decision)}))
-            with self.assertRaisesRegex(H1Error, "H1_V6_TERMINAL_APPROVAL_REQUIRED"):
-                h1.validate_approved_h1_terminal_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+            for disposition in ("approved", "disputed", "incomplete"):
+                decision = {
+                    "aggregate_disposition": disposition, "aggregate_rationale": f"human judgment {disposition}", "attestation": "personally reviewed",
+                    "fixture_reviews": [{"fixture_id": item["fixture_id"], "disposition": disposition, "rationale": "human judgment"} for item in packet["fixture_reviews"]],
+                    "packet_sha256": packet["packet_sha256"], "readiness_sha256": readiness["readiness_sha256"], "reviewer": "reviewer",
+                    "schema_version": "h1-source-gold-decision-v6", "semantic_responses": [{"id": item, "disposition": disposition, "rationale": "human judgment"} for item in h1._V7_H1_QUESTION_IDS],
+                    "signature": "signature", "timestamp_utc": "2026-08-03T00:00:00Z",
+                }
+                decision["decision_sha256"] = sha256_bytes(canonical_json_bytes({key: decision[key] for key in sorted(decision)}))
+                self.assertEqual(
+                    h1.validate_h1_source_gold_decision_v6(
+                        decision=decision, packet=packet, readiness=readiness,
+                        runtime_closure=closure, authority_path=root / "phase2/source-authority.json",
+                    )["aggregate_disposition"], disposition,
+                )
+                if disposition == "approved":
+                    self.assertEqual(
+                        h1.validate_approved_h1_terminal_v6(
+                            decision=decision, packet=packet, readiness=readiness,
+                            runtime_closure=closure, authority_path=root / "phase2/source-authority.json",
+                        )["aggregate_disposition"], "approved",
+                    )
+                else:
+                    with self.assertRaisesRegex(H1Error, "H1_V6_TERMINAL_APPROVAL_REQUIRED"):
+                        h1.validate_approved_h1_terminal_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+
+    def test_h1_v7_fixed_packet_and_readiness_writers_are_decision_free_exact_resume(self) -> None:
+        from specchoice_measurement.adapter import (  # noqa: PLC0415
+            write_pr2164_accepted_v6_adapter_batch_v4,
+        )
+        from specchoice_measurement.attempts import (  # noqa: PLC0415
+            run_fresh_adversarial_suite_v7,
+            run_fresh_formal_measurement_v6,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment, closure = self._copy_fresh_v7_repository(repository)
+            authority = experiment / "phase2/source-authority.json"
+            with (
+                mock.patch.object(h1, "_REPOSITORY", repository),
+                mock.patch.object(h1, "load_runtime_closure_v4", return_value=closure),
+                mock.patch(
+                    "specchoice_measurement.adapter.load_runtime_closure_v4",
+                    return_value=closure,
+                ),
+                mock.patch(
+                    "specchoice_measurement.attempts.load_runtime_closure_v4",
+                    return_value=closure,
+                ),
+            ):
+                write_pr2164_accepted_v6_adapter_batch_v4(
+                    repository=repository,
+                    runtime_closure=closure,
+                    authority_path=authority,
+                )
+                run_fresh_formal_measurement_v6(
+                    repository=repository,
+                    runtime_closure=closure,
+                    authority_path=authority,
+                )
+                run_fresh_adversarial_suite_v7(
+                    repository=repository,
+                    runtime_closure=closure,
+                    authority_path=authority,
+                )
+                self.assertEqual(
+                    h1.write_h1_review_packet_v7(
+                        runtime_closure=closure, authority_path=authority
+                    )["status"],
+                    "written",
+                )
+                self.assertEqual(
+                    h1.write_h1_review_packet_v7(
+                        runtime_closure=closure, authority_path=authority
+                    )["status"],
+                    "resumed",
+                )
+                self.assertEqual(
+                    h1.write_h1_review_readiness_v7(
+                        runtime_closure=closure, authority_path=authority
+                    )["status"],
+                    "written",
+                )
+                self.assertEqual(
+                    h1.write_h1_review_readiness_v7(
+                        runtime_closure=closure, authority_path=authority
+                    )["status"],
+                    "resumed",
+                )
+
+                packet = json.loads((repository / h1._V7_PACKET_PATH).read_bytes())
+                readiness = json.loads(
+                    (repository / h1._V7_READINESS_PATH).read_bytes()
+                )
+                h1.validate_h1_review_readiness_v7(
+                    readiness=readiness,
+                    packet=packet,
+                    runtime_closure=closure,
+                    authority_path=authority,
+                )
+                for forbidden in (
+                    "aggregate_disposition",
+                    "attestation",
+                    "reviewer",
+                    "semantic_responses",
+                    "signature",
+                    "timestamp_utc",
+                ):
+                    self.assertNotIn(forbidden, packet)
+                    self.assertNotIn(forbidden, readiness)
+                self.assertFalse((repository / h1._V7_DECISION_PATH).exists())
+
+    def test_h1_v7_writers_repeat_full_gate_before_write_primitive(self) -> None:
+        packet, closure = self._v7_packet()
+        packet_expected = (
+            packet,
+            canonical_json_bytes(packet),
+            h1.render_h1_review_checkpoint_v7(packet),
+        )
+        root = Path(__file__).parents[1]
+        with (
+            mock.patch.object(h1, "_v7_source_snapshot", return_value=self._last_v7_snapshot),
+            mock.patch.object(h1, "_validate_published_v7_review_bytes"),
+        ):
+            readiness = h1.build_h1_review_readiness_v7(
+                packet=packet,
+                runtime_closure=closure,
+                authority_path=root / "phase2/source-authority.json",
+            )
+        readiness_expected = (
+            packet,
+            readiness,
+            canonical_json_bytes(readiness),
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            with (
+                mock.patch.object(h1, "_REPOSITORY", repository),
+                mock.patch.object(
+                    h1,
+                    "_expected_fixed_h1_review_packet_v7",
+                    side_effect=[
+                        packet_expected,
+                        H1Error("ACTIVE_AUTHORITY_MISMATCH"),
+                    ],
+                ),
+                mock.patch.object(h1, "_publish_directory_no_replace") as primitive,
+                self.assertRaisesRegex(H1Error, "ACTIVE_AUTHORITY_MISMATCH"),
+            ):
+                h1.write_h1_review_packet_v7(
+                    runtime_closure=closure,
+                    authority_path=root / "phase2/source-authority.json",
+                )
+            primitive.assert_not_called()
+            self.assertFalse((repository / h1._V7_PACKET_PATH).exists())
+            self.assertFalse((repository / h1._V7_MARKDOWN_PATH).exists())
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            publish_parent = (
+                repository / h1._V7_PACKET_PATH
+            ).parent.parent
+            publish_parent.mkdir(parents=True)
+            with (
+                mock.patch.object(h1, "_REPOSITORY", repository),
+                mock.patch.object(
+                    h1,
+                    "_expected_fixed_h1_review_packet_v7",
+                    side_effect=[
+                        packet_expected,
+                        packet_expected,
+                        H1Error("ACTIVE_AUTHORITY_MISMATCH"),
+                    ],
+                ),
+                mock.patch.object(h1, "_publish_directory_no_replace") as primitive,
+                self.assertRaisesRegex(H1Error, "ACTIVE_AUTHORITY_MISMATCH"),
+            ):
+                h1.write_h1_review_packet_v7(
+                    runtime_closure=closure,
+                    authority_path=root / "phase2/source-authority.json",
+                )
+            primitive.assert_not_called()
+            self.assertFalse((repository / h1._V7_PACKET_PATH).exists())
+            self.assertFalse((repository / h1._V7_MARKDOWN_PATH).exists())
+            self.assertEqual(list(publish_parent.iterdir()), [])
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            (repository / h1._V7_READINESS_PATH).parent.mkdir(parents=True)
+            with (
+                mock.patch.object(h1, "_REPOSITORY", repository),
+                mock.patch.object(
+                    h1,
+                    "_expected_fixed_h1_review_readiness_v7",
+                    side_effect=[
+                        readiness_expected,
+                        H1Error("RUNTIME_CLOSURE_V4_REQUIRED"),
+                    ],
+                ),
+                mock.patch.object(h1, "_write_h1_exact_resume") as primitive,
+                self.assertRaisesRegex(H1Error, "RUNTIME_CLOSURE_V4_REQUIRED"),
+            ):
+                h1.write_h1_review_readiness_v7(
+                    runtime_closure=closure,
+                    authority_path=root / "phase2/source-authority.json",
+                )
+            primitive.assert_not_called()
+            self.assertFalse((repository / h1._V7_READINESS_PATH).exists())
+
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "readiness.json"
+            with (
+                mock.patch.object(
+                    h1,
+                    "_preflight_h1_exact_resume",
+                    side_effect=AssertionError("late target preflight"),
+                ),
+                mock.patch.object(h1, "write_new_descriptor_file") as primitive,
+            ):
+                self.assertEqual(
+                    h1._write_h1_exact_resume(
+                        output,
+                        b"{}\n",
+                        "H1_V7_READINESS_OUTPUT_INVALID",
+                        preflight_status="written",
+                    ),
+                    "written",
+                )
+            primitive.assert_called_once_with(output.parent, output.name, b"{}\n")
+
+    def test_h1_v7_packet_writer_rejects_divergent_link_special_partial_and_race(self) -> None:
+        packet, closure = self._v7_packet()
+        packet_raw = canonical_json_bytes(packet)
+        markdown_raw = h1.render_h1_review_checkpoint_v7(packet)
+        expected = (packet, packet_raw, markdown_raw)
+        root = Path(__file__).parents[1]
+
+        for kind in (
+            "divergent", "symlink", "special", "partial", "empty_directory", "extra"
+        ):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
+                repository = Path(directory)
+                packet_path = repository / h1._V7_PACKET_PATH
+                packet_path.parent.mkdir(parents=True)
+                if kind == "divergent":
+                    packet_path.write_bytes(b"divergent\n")
+                elif kind == "symlink":
+                    source = repository / "symlink-source"
+                    source.write_bytes(packet_raw)
+                    packet_path.symlink_to(source)
+                elif kind == "special":
+                    os.mkfifo(packet_path)
+                elif kind == "partial":
+                    packet_path.write_bytes(packet_raw)
+                elif kind == "empty_directory":
+                    pass
+                else:
+                    packet_path.write_bytes(packet_raw)
+                    (repository / h1._V7_MARKDOWN_PATH).write_bytes(markdown_raw)
+                    (packet_path.parent / "undeclared.json").write_bytes(b"{}\n")
+                with (
+                    mock.patch.object(h1, "_REPOSITORY", repository),
+                    mock.patch.object(
+                        h1,
+                        "_expected_fixed_h1_review_packet_v7",
+                        return_value=expected,
+                    ),
+                    mock.patch.object(h1, "_publish_directory_no_replace") as primitive,
+                    self.assertRaisesRegex(H1Error, "H1_V7_PACKET_OUTPUT_INVALID"),
+                ):
+                    h1.write_h1_review_packet_v7(
+                        runtime_closure=closure,
+                        authority_path=root / "phase2/source-authority.json",
+                    )
+                primitive.assert_not_called()
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            racer = repository / h1._V7_PACKET_PATH
+            racer.parent.parent.mkdir(parents=True)
+            real_publish = h1._publish_directory_no_replace
+
+            def race(source: Path, target: Path, code: str) -> None:
+                racer.parent.mkdir(parents=True)
+                racer.write_bytes(b"racer\n")
+                real_publish(source, target, code)
+
+            with (
+                mock.patch.object(h1, "_REPOSITORY", repository),
+                mock.patch.object(
+                    h1,
+                    "_expected_fixed_h1_review_packet_v7",
+                    return_value=expected,
+                ),
+                mock.patch.object(
+                    h1, "_publish_directory_no_replace", side_effect=race
+                ),
+                self.assertRaisesRegex(H1Error, "H1_V7_PACKET_OUTPUT_INVALID"),
+            ):
+                h1.write_h1_review_packet_v7(
+                    runtime_closure=closure,
+                    authority_path=root / "phase2/source-authority.json",
+                )
+            self.assertEqual(racer.read_bytes(), b"racer\n")
+            self.assertFalse((repository / h1._V7_MARKDOWN_PATH).exists())
+
+    def test_h1_v6_decision_writer_is_fixed_path_and_preflight_rejects_hostile_target(self) -> None:
+        packet, closure = self._v7_packet()
+        root = Path(__file__).parents[1]
+        with (
+            mock.patch.object(h1, "_v7_source_snapshot", return_value=self._last_v7_snapshot),
+            mock.patch.object(h1, "_validate_published_v7_review_bytes"),
+        ):
+            readiness = h1.build_h1_review_readiness_v7(
+                packet=packet,
+                runtime_closure=closure,
+                authority_path=root / "phase2/source-authority.json",
+            )
+        decision = self._v7_human_decision(packet, readiness)
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            fixed_parent = (repository / h1._V7_DECISION_PATH).parent
+            fixed_parent.mkdir(parents=True)
+            alias_parent = repository / "review-alias"
+            alias_parent.symlink_to(fixed_parent, target_is_directory=True)
+            for alternate in (
+                repository / "reviews/alternate.json",
+                repository / "reviews/h1-source-gold-decision-v5.json",
+                alias_parent / Path(h1._V7_DECISION_PATH).name,
+            ):
+                with (
+                    self.subTest(path=alternate.name),
+                    mock.patch.object(h1, "_REPOSITORY", repository),
+                    mock.patch.object(h1, "_write_h1_exact_resume") as primitive,
+                    self.assertRaisesRegex(H1Error, "H1_V6_DECISION_OUTPUT_INVALID"),
+                ):
+                    h1.write_h1_source_gold_decision_v6(
+                        output=alternate,
+                        decision=decision,
+                        packet=packet,
+                        readiness=readiness,
+                        runtime_closure=closure,
+                        authority_path=root / "phase2/source-authority.json",
+                    )
+                primitive.assert_not_called()
+                self.assertFalse(alternate.exists())
+
+        for kind in ("directory", "symlink", "divergent"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
+                repository = Path(directory)
+                output = repository / h1._V7_DECISION_PATH
+                output.parent.mkdir(parents=True)
+                if kind == "directory":
+                    output.mkdir()
+                elif kind == "symlink":
+                    source = repository / "decision-source"
+                    source.write_bytes(canonical_json_bytes(decision))
+                    output.symlink_to(source)
+                else:
+                    output.write_bytes(b"divergent\n")
+                with (
+                    mock.patch.object(h1, "_REPOSITORY", repository),
+                    mock.patch.object(h1, "_v7_source_snapshot", return_value=self._last_v7_snapshot),
+                    mock.patch.object(h1, "_validate_published_v7_review_bytes"),
+                    self.assertRaisesRegex(H1Error, "H1_V6_DECISION_OUTPUT_INVALID"),
+                ):
+                    h1.write_h1_source_gold_decision_v6(
+                        output=output,
+                        decision=decision,
+                        packet=packet,
+                        readiness=readiness,
+                        runtime_closure=closure,
+                        authority_path=root / "phase2/source-authority.json",
+                        preflight=True,
+                    )
+
+    def test_h1_v6_decision_writer_revalidates_closure_and_authority_before_write(self) -> None:
+        packet, closure = self._v7_packet()
+        snapshot = self._last_v7_snapshot
+        root = Path(__file__).parents[1]
+        with (
+            mock.patch.object(h1, "_v7_source_snapshot", return_value=snapshot),
+            mock.patch.object(h1, "_validate_published_v7_review_bytes"),
+        ):
+            readiness = h1.build_h1_review_readiness_v7(
+                packet=packet,
+                runtime_closure=closure,
+                authority_path=root / "phase2/source-authority.json",
+            )
+        decision = self._v7_human_decision(packet, readiness)
+
+        for code in ("RUNTIME_CLOSURE_V4_REQUIRED", "ACTIVE_AUTHORITY_MISMATCH"):
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as directory:
+                repository = Path(directory)
+                output = repository / h1._V7_DECISION_PATH
+                output.parent.mkdir(parents=True)
+                with (
+                    mock.patch.object(h1, "_REPOSITORY", repository),
+                    mock.patch.object(
+                        h1,
+                        "_v7_source_snapshot",
+                        side_effect=[snapshot, H1Error(code)],
+                    ),
+                    mock.patch.object(h1, "_validate_published_v7_review_bytes"),
+                    mock.patch.object(h1, "_write_h1_exact_resume") as primitive,
+                    self.assertRaisesRegex(H1Error, code),
+                ):
+                    h1.write_h1_source_gold_decision_v6(
+                        output=output,
+                        decision=decision,
+                        packet=packet,
+                        readiness=readiness,
+                        runtime_closure=closure,
+                        authority_path=root / "phase2/source-authority.json",
+                    )
+                primitive.assert_not_called()
+                self.assertFalse(output.exists())
+
+    def test_v4_02_22_reports_are_approved_only_exact_resume_and_summary_is_downstream(self) -> None:
+        from specchoice_measurement import final_reports
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative in final_reports._FINAL_02_22_INPUT_PATHS.values():
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(f"frozen:{relative}\n".encode())
+            for relative in (*final_reports.FINAL_SUCCESSOR_TARGETS_02_22, final_reports.FINAL_SUCCESSOR_SUMMARY_02_22):
+                (root / relative).parent.mkdir(parents=True, exist_ok=True)
+            bindings = final_reports.build_final_02_22_input_bindings(root)
+            decision = {"decision_sha256": "d" * 64, "aggregate_disposition": "approved"}
+            packet = {"packet_sha256": "p" * 64, "source_identity": {"closure": {"path": "fixed", "byte_length": 1, "sha256": "c" * 64}}}
+            readiness = {"readiness_sha256": "r" * 64, "source_identity": packet["source_identity"]}
+            with mock.patch.object(final_reports, "validate_v4_terminal_report_inputs", return_value=decision):
+                real_write = final_reports._write_final_02_22_exact_resume
+                write_count = 0
+
+                def racing_write(
+                    base: Path,
+                    relative: str,
+                    raw: bytes,
+                    *,
+                    preflight_status: str,
+                ) -> str:
+                    nonlocal write_count
+                    write_count += 1
+                    if write_count == 2:
+                        (base / relative).write_bytes(b"concurrent-divergent\n")
+                    return real_write(
+                        base,
+                        relative,
+                        raw,
+                        preflight_status=preflight_status,
+                    )
+
+                with (
+                    mock.patch.object(
+                        final_reports,
+                        "_write_final_02_22_exact_resume",
+                        side_effect=racing_write,
+                    ),
+                    self.assertRaisesRegex(
+                        final_reports.FinalReportError,
+                        "FINAL_02_22_TARGET_DIVERGED",
+                    ),
+                ):
+                    final_reports.write_final_successor_reports_02_22(
+                        root, decision=decision, packet=packet, readiness=readiness,
+                        runtime_closure={}, authority_path=root / "authority.json",
+                        input_bindings=bindings,
+                    )
+                first, second, third, _ = final_reports.FINAL_SUCCESSOR_TARGETS_02_22
+                self.assertTrue((root / first).is_file())
+                self.assertEqual((root / second).read_bytes(), b"concurrent-divergent\n")
+                self.assertFalse((root / third).exists())
+                (root / second).unlink()
+                with mock.patch.object(
+                    final_reports,
+                    "verify_final_successor_reports_02_22",
+                    wraps=final_reports.verify_final_successor_reports_02_22,
+                ) as postflight:
+                    written = final_reports.write_final_successor_reports_02_22(
+                        root, decision=decision, packet=packet, readiness=readiness,
+                        runtime_closure={}, authority_path=root / "authority.json",
+                        input_bindings=bindings,
+                    )
+                self.assertEqual(postflight.call_count, 1)
+                self.assertEqual(written["status"], "written")
+                self.assertEqual(
+                    final_reports.write_final_successor_reports_02_22(
+                        root, decision=decision, packet=packet, readiness=readiness,
+                        runtime_closure={}, authority_path=root / "authority.json",
+                        input_bindings=bindings,
+                    )["status"], "resumed",
+                )
+                with mock.patch.object(
+                    final_reports,
+                    "verify_final_successor_reports_02_22",
+                    wraps=final_reports.verify_final_successor_reports_02_22,
+                ) as summary_gate:
+                    final_reports.write_final_successor_summary_02_22(
+                        root, decision=decision, packet=packet, readiness=readiness,
+                        runtime_closure={}, authority_path=root / "authority.json",
+                        input_bindings=bindings,
+                    )
+                self.assertEqual(summary_gate.call_count, 3)
+                self.assertEqual(
+                    final_reports.validate_final_successor_summary_02_22(
+                        root, decision=decision, packet=packet, readiness=readiness,
+                        runtime_closure={}, authority_path=root / "authority.json",
+                        input_bindings=bindings,
+                    )["status"], "verified",
+                )
+                summary_path = root / final_reports.FINAL_SUCCESSOR_SUMMARY_02_22
+                summary_raw = summary_path.read_bytes()
+                real_summary_gate = final_reports.verify_final_successor_reports_02_22
+                summary_gate_count = 0
+
+                def drift_summary_during_repeated_gate(*args: object, **kwargs: object) -> dict[str, object]:
+                    nonlocal summary_gate_count
+                    verified_reports = real_summary_gate(*args, **kwargs)
+                    summary_gate_count += 1
+                    if summary_gate_count == 2:
+                        summary_path.write_bytes(b"concurrent-divergent\n")
+                    return verified_reports
+
+                with (
+                    mock.patch.object(
+                        final_reports,
+                        "verify_final_successor_reports_02_22",
+                        side_effect=drift_summary_during_repeated_gate,
+                    ),
+                    self.assertRaisesRegex(
+                        final_reports.FinalReportError,
+                        "FINAL_02_22_SUMMARY_INVALID",
+                    ),
+                ):
+                    final_reports.write_final_successor_summary_02_22(
+                        root, decision=decision, packet=packet, readiness=readiness,
+                        runtime_closure={}, authority_path=root / "authority.json",
+                        input_bindings=bindings,
+                    )
+                self.assertEqual(summary_gate_count, 3)
+                self.assertEqual(summary_path.read_bytes(), b"concurrent-divergent\n")
+                summary_path.write_bytes(summary_raw)
+                drifted = root / final_reports._FINAL_02_22_INPUT_PATHS["roadmap"]
+                drifted.write_bytes(drifted.read_bytes() + b"drift")
+                with self.assertRaisesRegex(final_reports.FinalReportError, "FINAL_02_22_INPUT_DRIFT"):
+                    final_reports.verify_final_successor_reports_02_22(
+                        root, decision=decision, packet=packet, readiness=readiness,
+                        runtime_closure={}, authority_path=root / "authority.json",
+                        input_bindings=bindings,
+                    )
+
+    @staticmethod
+    def _run_evidence_cli(argv: list[str]) -> tuple[int, bytes, bytes]:
+        stdout_bytes = io.BytesIO()
+        stderr_bytes = io.BytesIO()
+        stdout = io.TextIOWrapper(stdout_bytes, encoding="utf-8", write_through=True)
+        stderr = io.TextIOWrapper(stderr_bytes, encoding="utf-8", write_through=True)
+        with (
+            mock.patch.object(sys, "argv", ["specchoice-evidence", *argv]),
+            mock.patch.object(sys, "stdout", stdout),
+            mock.patch.object(sys, "stderr", stderr),
+        ):
+            try:
+                status = cli_module.main()
+            except SystemExit as error:
+                status = int(error.code or 0)
+        stdout.flush()
+        stderr.flush()
+        observed_stdout = stdout_bytes.getvalue()
+        observed_stderr = stderr_bytes.getvalue()
+        stdout.detach()
+        stderr.detach()
+        return status, observed_stdout, observed_stderr
+
+    @staticmethod
+    def _filesystem_snapshot(root: Path) -> tuple[tuple[object, ...], ...]:
+        entries: list[tuple[object, ...]] = []
+        for path in sorted(root.rglob("*")):
+            status = path.lstat()
+            relative = path.relative_to(root).as_posix()
+            if path.is_symlink():
+                kind = "symlink"
+                content: object = os.readlink(path)
+            elif path.is_file():
+                kind = "file"
+                content = path.read_bytes()
+            elif path.is_dir():
+                kind = "directory"
+                content = None
+            else:
+                kind = "special"
+                content = None
+            entries.append(
+                (relative, kind, content, stat.S_IMODE(status.st_mode), status.st_mtime_ns)
+            )
+        return tuple(entries)
+
+    def _assert_v7_parser_contract(
+        self,
+        repository: Path,
+        command: str,
+        pairs: list[tuple[str, Path]],
+        *,
+        flags: tuple[str, ...] = (),
+    ) -> list[str]:
+        argv = [command]
+        for option, value in pairs:
+            argv.extend((option, str(value)))
+        argv.extend(flags)
+        parsed = cli_module.build_parser().parse_args(argv)
+        self.assertTrue(callable(parsed.handler))
+        baseline = self._filesystem_snapshot(repository)
+
+        for index, (option, _) in enumerate(pairs):
+            start = 1 + (index * 2)
+            candidate = argv[:start] + argv[start + 2 :]
+            status, stdout, stderr = self._run_evidence_cli(candidate)
+            self.assertEqual(status, 2, option)
+            self.assertEqual(stdout, b"", option)
+            self.assertTrue(stderr, option)
+            self.assertEqual(self._filesystem_snapshot(repository), baseline, option)
+        for option, value in pairs:
+            status, stdout, stderr = self._run_evidence_cli(
+                [*argv, option, str(value)]
+            )
+            self.assertEqual(status, 2, option)
+            self.assertEqual(stdout, b"", option)
+            self.assertTrue(stderr, option)
+            self.assertEqual(self._filesystem_snapshot(repository), baseline, option)
+        for flag in flags:
+            without = [item for item in argv if item != flag]
+            status, stdout, stderr = self._run_evidence_cli(without)
+            self.assertEqual((status, stdout), (2, b""), flag)
+            self.assertTrue(stderr, flag)
+            self.assertEqual(self._filesystem_snapshot(repository), baseline, flag)
+            status, stdout, stderr = self._run_evidence_cli([*argv, flag])
+            self.assertEqual((status, stdout), (2, b""), flag)
+            self.assertTrue(stderr, flag)
+            self.assertEqual(self._filesystem_snapshot(repository), baseline, flag)
+
+        abbreviated = list(argv)
+        abbreviated[1] = pairs[0][0][:-2]
+        for candidate in (
+            abbreviated,
+            [*argv, "--unknown-option", "value"],
+            [*argv, "extra-positional"],
+        ):
+            status, stdout, stderr = self._run_evidence_cli(candidate)
+            self.assertEqual(status, 2)
+            self.assertEqual(stdout, b"")
+            self.assertTrue(stderr)
+            self.assertEqual(self._filesystem_snapshot(repository), baseline)
+        return argv
+
+    @staticmethod
+    def _fixed_v7_paths(repository: Path) -> dict[str, Path]:
+        return {
+            role: repository / relative
+            for role, relative in cli_module._H1_V7_FIXED_PATHS.items()
+        }
+
+    def _assert_wrong_cli_paths(
+        self,
+        repository: Path,
+        argv: list[str],
+        pairs: list[tuple[str, Path]],
+    ) -> None:
+        for index, (option, _) in enumerate(pairs):
+            candidate = list(argv)
+            candidate[2 + (index * 2)] = str(repository / f"alternate-{index}.json")
+            before = self._filesystem_snapshot(repository)
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+            ):
+                status, stdout, stderr = self._run_evidence_cli(candidate)
+            self.assertEqual(status, 2, option)
+            self.assertEqual(stdout, b"", option)
+            self.assertIn(b"H1_V7_CANONICAL_PATH_REQUIRED", stderr, option)
+            self.assertEqual(self._filesystem_snapshot(repository), before, option)
 
     def test_validate_h1_review_readiness_v7_cli_is_registered_read_only_and_fail_closed(self) -> None:
-        self.assertIn("validate-h1-review-readiness-v7", cli_module.build_parser()._subparsers._group_actions[0].choices)
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            (repository / "marker").write_bytes(b"unchanged\n")
+            paths = self._fixed_v7_paths(repository)
+            pairs = [
+                ("--receipt", paths["readiness"]),
+                ("--packet", paths["packet"]),
+                ("--runtime-closure", paths["runtime_closure"]),
+                ("--authority", paths["authority"]),
+                ("--adapter-config", paths["adapter_config"]),
+                ("--h1-schema", paths["h1_schema"]),
+            ]
+            argv = self._assert_v7_parser_contract(
+                repository,
+                "validate-h1-review-readiness-v7", pairs
+            )
+            before = self._filesystem_snapshot(repository)
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module,
+                    "_v7_h1_value",
+                    side_effect=[{"ready": True}, {"packet": True}, {"closure": True}, {"rules": True}],
+                ),
+                mock.patch.object(cli_module, "_validate_h1_v7_cli_schema"),
+                mock.patch.object(
+                    cli_module, "validate_h1_review_readiness_v7", return_value={"ready": True}
+                ),
+            ):
+                status, stdout, stderr = self._run_evidence_cli(argv)
+            self.assertEqual(status, 0)
+            self.assertEqual(
+                stdout,
+                canonical_json_bytes({"status": "h1_review_readiness_v7_valid"}),
+            )
+            self.assertEqual(stderr, b"")
+            self.assertEqual(self._filesystem_snapshot(repository), before)
+            self._assert_wrong_cli_paths(repository, argv, pairs)
+
+            wrong_directory = repository / "wrong-directory"
+            wrong_directory.mkdir()
+            wrong_link = repository / "wrong-link"
+            wrong_link.symlink_to(wrong_directory, target_is_directory=True)
+            for wrong in (wrong_directory, wrong_link):
+                candidate = list(argv)
+                candidate[2] = str(wrong)
+                with (
+                    mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                    mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                ):
+                    status, output, _ = self._run_evidence_cli(candidate)
+                self.assertEqual((status, output), (2, b""))
+
+            failure_before = self._filesystem_snapshot(repository)
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module,
+                    "_v7_h1_value",
+                    side_effect=[{"ready": True}, {"packet": True}, {"closure": True}, {"rules": True}],
+                ),
+                mock.patch.object(cli_module, "_validate_h1_v7_cli_schema"),
+                mock.patch.object(
+                    cli_module,
+                    "validate_h1_review_readiness_v7",
+                    side_effect=H1Error("H1_V7_READINESS_MISMATCH"),
+                ),
+            ):
+                status, stdout, stderr = self._run_evidence_cli(argv)
+            self.assertEqual((status, stdout), (2, b""))
+            self.assertIn(b"H1_V7_READINESS_MISMATCH", stderr)
+            self.assertEqual(self._filesystem_snapshot(repository), failure_before)
+
+        for kind in ("missing", "directory", "symlink", "duplicate", "noncanonical"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
+                repository = Path(directory)
+                paths = self._fixed_v7_paths(repository)
+                target = paths["readiness"]
+                target.parent.mkdir(parents=True)
+                if kind == "directory":
+                    target.mkdir()
+                elif kind == "symlink":
+                    source = repository / "source.json"
+                    source.write_bytes(b"{}\n")
+                    target.symlink_to(source)
+                elif kind == "duplicate":
+                    target.write_bytes(b'{"status":1,"status":2}\n')
+                elif kind == "noncanonical":
+                    target.write_bytes(b'{\n  "status": 1\n}\n')
+                pairs = [
+                    ("--receipt", paths["readiness"]),
+                    ("--packet", paths["packet"]),
+                    ("--runtime-closure", paths["runtime_closure"]),
+                    ("--authority", paths["authority"]),
+                    ("--adapter-config", paths["adapter_config"]),
+                    ("--h1-schema", paths["h1_schema"]),
+                ]
+                candidate = ["validate-h1-review-readiness-v7"]
+                for option, value in pairs:
+                    candidate.extend((option, str(value)))
+                before = self._filesystem_snapshot(repository)
+                with (
+                    mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                    mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                ):
+                    status, stdout, stderr = self._run_evidence_cli(candidate)
+                self.assertEqual((status, stdout), (2, b""))
+                self.assertTrue(stderr)
+                self.assertEqual(self._filesystem_snapshot(repository), before)
 
     def test_render_h1_review_checkpoint_v7_cli_requires_no_write_and_persists_no_human_fields(self) -> None:
-        command = cli_module.build_parser()._subparsers._group_actions[0].choices["render-h1-review-checkpoint-v7"]
-        self.assertIn("--no-write", command.format_help())
+        packet, _ = self._v7_packet()
+        rendered = h1.render_h1_review_checkpoint_v7(packet)
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            (repository / "marker").write_bytes(b"unchanged\n")
+            paths = self._fixed_v7_paths(repository)
+            pairs = [
+                ("--packet", paths["packet"]),
+                ("--readiness", paths["readiness"]),
+                ("--runtime-closure", paths["runtime_closure"]),
+                ("--authority", paths["authority"]),
+                ("--h1-schema", paths["h1_schema"]),
+            ]
+            argv = self._assert_v7_parser_contract(
+                repository,
+                "render-h1-review-checkpoint-v7", pairs, flags=("--no-write",)
+            )
+            before = self._filesystem_snapshot(repository)
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module,
+                    "_v7_h1_value",
+                    side_effect=[packet, {"readiness": True}, {"closure": True}],
+                ),
+                mock.patch.object(cli_module, "_validate_h1_v7_cli_schema"),
+                mock.patch.object(
+                    cli_module, "validate_h1_review_readiness_v7", return_value={"readiness": True}
+                ),
+            ):
+                status, stdout, stderr = self._run_evidence_cli(argv)
+            self.assertEqual((status, stdout, stderr), (0, rendered, b""))
+            self.assertEqual(self._filesystem_snapshot(repository), before)
+            for field in (b'"reviewer"', b'"signature"', b'"timestamp_utc"'):
+                self.assertNotIn(field, stdout)
+            self._assert_wrong_cli_paths(repository, argv, pairs)
+
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module,
+                    "_v7_h1_value",
+                    side_effect=[packet, {"readiness": True}, {"closure": True}],
+                ),
+                mock.patch.object(cli_module, "_validate_h1_v7_cli_schema"),
+                mock.patch.object(
+                    cli_module,
+                    "validate_h1_review_readiness_v7",
+                    side_effect=H1Error("H1_V7_PUBLISHED_REVIEW_INVALID"),
+                ),
+            ):
+                status, stdout, stderr = self._run_evidence_cli(argv)
+            self.assertEqual((status, stdout), (2, b""))
+            self.assertIn(b"H1_V7_PUBLISHED_REVIEW_INVALID", stderr)
+            self.assertEqual(self._filesystem_snapshot(repository), before)
 
     def test_validate_h1_source_gold_decision_v6_cli_is_registered_read_only_and_fail_closed(self) -> None:
-        self.assertIn("validate-h1-source-gold-decision-v6", cli_module.build_parser()._subparsers._group_actions[0].choices)
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            (repository / "marker").write_bytes(b"unchanged\n")
+            paths = self._fixed_v7_paths(repository)
+            pairs = [
+                ("--decision", paths["decision"]),
+                ("--packet", paths["packet"]),
+                ("--readiness", paths["readiness"]),
+                ("--runtime-closure", paths["runtime_closure"]),
+                ("--authority", paths["authority"]),
+                ("--h1-schema", paths["h1_schema"]),
+            ]
+            argv = self._assert_v7_parser_contract(
+                repository,
+                "validate-h1-source-gold-decision-v6", pairs
+            )
+            before = self._filesystem_snapshot(repository)
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module,
+                    "_v7_h1_value",
+                    side_effect=[{"decision": True}, {"packet": True}, {"ready": True}, {"closure": True}],
+                ),
+                mock.patch.object(cli_module, "_validate_h1_v7_cli_schema"),
+                mock.patch.object(
+                    cli_module, "validate_h1_source_gold_decision_v6", return_value={"decision": True}
+                ),
+            ):
+                status, stdout, stderr = self._run_evidence_cli(argv)
+            self.assertEqual(status, 0)
+            self.assertEqual(
+                stdout,
+                canonical_json_bytes({"status": "h1_source_gold_decision_v6_valid"}),
+            )
+            self.assertEqual(stderr, b"")
+            self.assertEqual(self._filesystem_snapshot(repository), before)
+            self._assert_wrong_cli_paths(repository, argv, pairs)
+
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module,
+                    "_v7_h1_value",
+                    side_effect=[{"decision": True}, {"packet": True}, {"ready": True}, {"closure": True}],
+                ),
+                mock.patch.object(cli_module, "_validate_h1_v7_cli_schema"),
+                mock.patch.object(
+                    cli_module,
+                    "validate_h1_source_gold_decision_v6",
+                    side_effect=H1Error("H1_V6_AGGREGATE_CONFLICT"),
+                ),
+            ):
+                status, stdout, stderr = self._run_evidence_cli(argv)
+            self.assertEqual((status, stdout), (2, b""))
+            self.assertIn(b"H1_V6_AGGREGATE_CONFLICT", stderr)
+            self.assertEqual(self._filesystem_snapshot(repository), before)
 
     def test_validate_approved_h1_terminal_v6_cli_is_registered_read_only_and_fail_closed(self) -> None:
-        self.assertIn("validate-approved-h1-terminal-v6", cli_module.build_parser()._subparsers._group_actions[0].choices)
+        from specchoice_measurement import final_reports
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            (repository / "marker").write_bytes(b"unchanged\n")
+            paths = self._fixed_v7_paths(repository)
+            terminal_paths = [repository / path for path in final_reports.FINAL_SUCCESSOR_TARGETS_02_22]
+            pairs = [
+                ("--decision", paths["decision"]),
+                ("--packet", paths["packet"]),
+                ("--readiness", paths["readiness"]),
+                ("--runtime-closure", paths["runtime_closure"]),
+                ("--authority", paths["authority"]),
+                ("--adapter-config", paths["adapter_config"]),
+                ("--h1-schema", paths["h1_schema"]),
+                ("--phase1-verification", terminal_paths[0]),
+                ("--phase1-review", terminal_paths[1]),
+                ("--phase2-verification", terminal_paths[2]),
+                ("--phase2-review", terminal_paths[3]),
+                ("--summary", repository / final_reports.FINAL_SUCCESSOR_SUMMARY_02_22),
+            ]
+            argv = self._assert_v7_parser_contract(
+                repository,
+                "validate-approved-h1-terminal-v6", pairs
+            )
+            before = self._filesystem_snapshot(repository)
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module,
+                    "_v7_h1_value",
+                    side_effect=[{"decision": True}, {"packet": True}, {"ready": True}, {"closure": True}, {"rules": True}],
+                ),
+                mock.patch.object(cli_module, "_validate_h1_v7_cli_schema"),
+                mock.patch.object(
+                    cli_module, "validate_approved_h1_terminal_v6", return_value={"decision": True}
+                ),
+                mock.patch.object(cli_module, "build_final_02_22_input_bindings", return_value={}),
+                mock.patch.object(cli_module, "validate_final_successor_summary_02_22", return_value={"status": "verified"}),
+            ):
+                status, stdout, stderr = self._run_evidence_cli(argv)
+            self.assertEqual(status, 0)
+            self.assertEqual(
+                stdout,
+                canonical_json_bytes({"status": "approved_h1_terminal_v6_valid"}),
+            )
+            self.assertEqual(stderr, b"")
+            self.assertEqual(self._filesystem_snapshot(repository), before)
+            self._assert_wrong_cli_paths(repository, argv, pairs[:7])
+
+            for index, (option, _) in enumerate(pairs[7:], start=7):
+                candidate = list(argv)
+                candidate[2 + (index * 2)] = str(repository / f"wrong-terminal-{index}.md")
+                wrong_path_before = self._filesystem_snapshot(repository)
+                with (
+                    mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                    mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                ):
+                    status, output, error = self._run_evidence_cli(candidate)
+                self.assertEqual((status, output), (2, b""), option)
+                self.assertIn(b"FINAL_02_22_CANONICAL_PATH_REQUIRED", error, option)
+                self.assertEqual(
+                    self._filesystem_snapshot(repository), wrong_path_before, option
+                )
+
+            with (
+                mock.patch.object(cli_module, "_experiment_root", return_value=repository / "experiments/specchoice-v1.3.2"),
+                mock.patch.object(cli_module, "_repository_root", return_value=repository),
+                mock.patch.object(
+                    cli_module,
+                    "_v7_h1_value",
+                    side_effect=[{"decision": True}, {"packet": True}, {"ready": True}, {"closure": True}, {"rules": True}],
+                ),
+                mock.patch.object(cli_module, "_validate_h1_v7_cli_schema"),
+                mock.patch.object(
+                    cli_module,
+                    "validate_approved_h1_terminal_v6",
+                    side_effect=H1Error("H1_V6_TERMINAL_APPROVAL_REQUIRED"),
+                ),
+            ):
+                status, stdout, stderr = self._run_evidence_cli(argv)
+            self.assertEqual((status, stdout), (2, b""))
+            self.assertIn(b"H1_V6_TERMINAL_APPROVAL_REQUIRED", stderr)
+            self.assertEqual(self._filesystem_snapshot(repository), before)
 
 
 if __name__ == "__main__":

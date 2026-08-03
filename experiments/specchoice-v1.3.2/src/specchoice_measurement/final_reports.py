@@ -26,6 +26,31 @@ class FinalReportError(ValueError):
     """Stable failure for a stale report input or incomplete evidence set."""
 
 
+FINAL_SUCCESSOR_TARGETS_02_22 = (
+    ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-VERIFICATION-02-22.md",
+    ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-REVIEW-02-22.md",
+    ".planning/phases/02-deterministic-measurement-spine/02-VERIFICATION-02-22.md",
+    ".planning/phases/02-deterministic-measurement-spine/02-REVIEW-02-22.md",
+)
+FINAL_SUCCESSOR_SUMMARY_02_22 = (
+    ".planning/phases/02-deterministic-measurement-spine/02-22-SUMMARY.md"
+)
+_FINAL_02_22_ROLES = (
+    "phase1_verification",
+    "phase1_review",
+    "phase2_verification",
+    "phase2_review",
+)
+_FINAL_02_22_INPUT_PATHS = {
+    "requirements": ".planning/REQUIREMENTS.md",
+    "roadmap": ".planning/ROADMAP.md",
+    "phase1_predecessor_review": ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-REVIEW.md",
+    "phase1_predecessor_verification": ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-VERIFICATION.md",
+    "phase2_predecessor_review": ".planning/phases/02-deterministic-measurement-spine/02-REVIEW.md",
+    "phase2_predecessor_verification": ".planning/phases/02-deterministic-measurement-spine/02-VERIFICATION.md",
+}
+
+
 def validate_v4_terminal_report_inputs(*, decision: object, packet: object, readiness: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
     """A terminal report is eligible only for a complete approved v6 decision."""
     from .h1 import validate_approved_h1_terminal_v6
@@ -34,6 +59,52 @@ def validate_v4_terminal_report_inputs(*, decision: object, packet: object, read
         decision=decision, packet=packet, readiness=readiness,
         runtime_closure=runtime_closure, authority_path=authority_path,
     )
+
+
+def _validate_final_02_22_input_bindings(
+    root: Path, bindings: object
+) -> dict[str, dict[str, object]]:
+    """Re-read the fixed planning/predecessor inventory and match every record."""
+    if not isinstance(bindings, Mapping) or set(bindings) != set(_FINAL_02_22_INPUT_PATHS):
+        raise FinalReportError("FINAL_02_22_BINDING_INVENTORY_INVALID")
+    normalized: dict[str, dict[str, object]] = {}
+    for role in sorted(_FINAL_02_22_INPUT_PATHS):
+        record = bindings.get(role)
+        if not isinstance(record, Mapping) or set(record) != {"byte_length", "path", "sha256"}:
+            raise FinalReportError("FINAL_02_22_BINDING_INVALID")
+        expected_path = _FINAL_02_22_INPUT_PATHS[role]
+        length = record.get("byte_length")
+        try:
+            digest = require_sha256(record.get("sha256"))
+            evidence, raw = read_authoritative_file(root, expected_path)
+        except (FilesystemPolicyError, OSError, ValueError) as error:
+            raise FinalReportError("FINAL_02_22_BINDING_INVALID") from error
+        actual = {"byte_length": len(raw), "path": expected_path, "sha256": sha256_bytes(raw)}
+        if (
+            evidence.file_kind != "regular_file"
+            or isinstance(length, bool)
+            or not isinstance(length, int)
+            or digest == "0" * 64
+            or dict(record) != actual
+        ):
+            raise FinalReportError("FINAL_02_22_INPUT_DRIFT")
+        normalized[role] = actual
+    return normalized
+
+
+def build_final_02_22_input_bindings(root: Path) -> dict[str, dict[str, object]]:
+    """Capture the current fixed planning inputs for writer/validator preflight."""
+    result: dict[str, dict[str, object]] = {}
+    for role in sorted(_FINAL_02_22_INPUT_PATHS):
+        path = _FINAL_02_22_INPUT_PATHS[role]
+        try:
+            evidence, raw = read_authoritative_file(root, path)
+        except (FilesystemPolicyError, OSError) as error:
+            raise FinalReportError("FINAL_02_22_BINDING_INVALID") from error
+        if evidence.file_kind != "regular_file":
+            raise FinalReportError("FINAL_02_22_BINDING_INVALID")
+        result[role] = {"byte_length": len(raw), "path": path, "sha256": sha256_bytes(raw)}
+    return result
 
 
 def validate_final_report_inputs(root: Path, bindings: object, receipts: object, *, human_disposition: str) -> None:
@@ -633,3 +704,346 @@ def verify_final_successor_reports(root: Path, *, targets: object) -> dict[str, 
         "report_sha256": hashes,
         "status": "verified",
     }
+
+
+def _final_02_22_evidence(
+    root: Path,
+    *,
+    decision: object,
+    packet: object,
+    readiness: object,
+    runtime_closure: object,
+    authority_path: Path,
+    input_bindings: object,
+) -> dict[str, object]:
+    validated_decision = validate_v4_terminal_report_inputs(
+        decision=decision,
+        packet=packet,
+        readiness=readiness,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    planning = _validate_final_02_22_input_bindings(root, input_bindings)
+    if not isinstance(packet, Mapping) or not isinstance(readiness, Mapping):
+        raise FinalReportError("FINAL_02_22_H1_INVALID")
+    source_identity = packet.get("source_identity")
+    if not isinstance(source_identity, Mapping) or readiness.get("source_identity") != source_identity:
+        raise FinalReportError("FINAL_02_22_H1_INVALID")
+    return {
+        "decision_sha256": validated_decision["decision_sha256"],
+        "external_publication_authorized": False,
+        "input_bindings": planning,
+        "packet_sha256": packet.get("packet_sha256"),
+        "readiness_sha256": readiness.get("readiness_sha256"),
+        "schema_version": "final-successor-evidence-02-22-v1",
+        "source_identity": dict(source_identity),
+    }
+
+
+def _render_final_02_22_report(role: str, evidence: Mapping[str, object]) -> bytes:
+    if role not in _FINAL_02_22_ROLES:
+        raise FinalReportError("FINAL_02_22_TARGET_INVENTORY_INVALID")
+    title = {
+        "phase1_verification": "Phase 1 Verification Successor 02-22",
+        "phase1_review": "Phase 1 Review Successor 02-22",
+        "phase2_verification": "Phase 2 Verification Successor 02-22",
+        "phase2_review": "Phase 2 Review Successor 02-22",
+    }[role]
+    lines = [
+        "---",
+        f"report_role: {json.dumps(role)}",
+        'schema_version: "final-successor-report-02-22-v1"',
+        'status: "approved"',
+        "---",
+        "",
+        f"# {title}",
+        "",
+        "Status: `approved`.",
+        "",
+        "This report is a deterministic projection of the approved canonical evidence.",
+        "",
+        "```json",
+        canonical_json_bytes(dict(evidence)).decode("utf-8").rstrip("\n"),
+        "```",
+        "",
+    ]
+    return "\n".join(lines).encode("utf-8")
+
+
+def _read_optional_exact(root: Path, relative: str) -> bytes | None:
+    try:
+        _, raw = read_authoritative_file(root, relative)
+        return raw
+    except FilesystemPolicyError as error:
+        if str(error) == "AUTHORITATIVE_FILE_MISSING":
+            return None
+        raise FinalReportError("FINAL_02_22_TARGET_INVALID") from error
+    except OSError as error:
+        raise FinalReportError("FINAL_02_22_TARGET_INVALID") from error
+
+
+def _write_final_02_22_exact_resume(
+    root: Path,
+    relative: str,
+    raw: bytes,
+    *,
+    preflight_status: str,
+) -> str:
+    """Enter only the no-replace primitive after the caller's final gate."""
+    if preflight_status not in {"written", "resumed"}:
+        raise FinalReportError("FINAL_02_22_TARGET_INVALID")
+    if preflight_status == "resumed":
+        return "resumed"
+    try:
+        write_new_descriptor_file(root, relative, raw)
+        return "written"
+    except FilesystemPolicyError as error:
+        if str(error) != "AUTHORITATIVE_DESTINATION_EXISTS":
+            raise FinalReportError("FINAL_02_22_TARGET_INVALID") from error
+    existing = _read_optional_exact(root, relative)
+    if existing != raw:
+        raise FinalReportError("FINAL_02_22_TARGET_DIVERGED")
+    return "resumed"
+
+
+def write_final_successor_reports_02_22(
+    root: Path,
+    *,
+    decision: object,
+    packet: object,
+    readiness: object,
+    runtime_closure: object,
+    authority_path: Path,
+    input_bindings: object,
+    targets: object = FINAL_SUCCESSOR_TARGETS_02_22,
+    preflight: bool = False,
+) -> dict[str, object]:
+    """Write the fixed four approved reports with no-replace exact resume."""
+    if not isinstance(targets, (list, tuple)) or tuple(targets) != FINAL_SUCCESSOR_TARGETS_02_22:
+        raise FinalReportError("FINAL_02_22_TARGET_INVENTORY_INVALID")
+    evidence = _final_02_22_evidence(
+        root,
+        decision=decision,
+        packet=packet,
+        readiness=readiness,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+        input_bindings=input_bindings,
+    )
+    payloads = {
+        relative: _render_final_02_22_report(role, evidence)
+        for relative, role in zip(FINAL_SUCCESSOR_TARGETS_02_22, _FINAL_02_22_ROLES, strict=True)
+    }
+    preflight_statuses: dict[str, str] = {}
+    for relative, raw in payloads.items():
+        existing = _read_optional_exact(root, relative)
+        if existing is not None and existing != raw:
+            raise FinalReportError("FINAL_02_22_TARGET_DIVERGED")
+        preflight_statuses[relative] = (
+            "resumed" if existing is not None else "written"
+        )
+    if preflight:
+        return {
+            "report_sha256": {path: sha256_bytes(raw) for path, raw in payloads.items()},
+            "status": "preflight_valid",
+        }
+    # Revalidate the approval and all source bytes immediately before first write.
+    if _final_02_22_evidence(
+        root,
+        decision=decision,
+        packet=packet,
+        readiness=readiness,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+        input_bindings=input_bindings,
+    ) != evidence:
+        raise FinalReportError("FINAL_02_22_PREWRITE_DRIFT")
+    statuses = {
+        relative: _write_final_02_22_exact_resume(
+            root,
+            relative,
+            payloads[relative],
+            preflight_status=preflight_statuses[relative],
+        )
+        for relative in FINAL_SUCCESSOR_TARGETS_02_22
+    }
+    postflight = verify_final_successor_reports_02_22(
+        root,
+        decision=decision,
+        packet=packet,
+        readiness=readiness,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+        input_bindings=input_bindings,
+    )
+    if postflight["report_sha256"] != {
+        path: sha256_bytes(raw) for path, raw in payloads.items()
+    }:
+        raise FinalReportError("FINAL_02_22_POSTWRITE_DRIFT")
+    return {
+        "report_sha256": {path: sha256_bytes(raw) for path, raw in payloads.items()},
+        "status": "resumed" if all(value == "resumed" for value in statuses.values()) else "written",
+    }
+
+
+def verify_final_successor_reports_02_22(
+    root: Path,
+    *,
+    decision: object,
+    packet: object,
+    readiness: object,
+    runtime_closure: object,
+    authority_path: Path,
+    input_bindings: object,
+    targets: object = FINAL_SUCCESSOR_TARGETS_02_22,
+) -> dict[str, object]:
+    """Re-render and byte-verify exactly the four fixed 02-22 reports."""
+    if not isinstance(targets, (list, tuple)) or tuple(targets) != FINAL_SUCCESSOR_TARGETS_02_22:
+        raise FinalReportError("FINAL_02_22_TARGET_INVENTORY_INVALID")
+    evidence = _final_02_22_evidence(
+        root,
+        decision=decision,
+        packet=packet,
+        readiness=readiness,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+        input_bindings=input_bindings,
+    )
+    hashes: dict[str, str] = {}
+    for relative, role in zip(FINAL_SUCCESSOR_TARGETS_02_22, _FINAL_02_22_ROLES, strict=True):
+        expected = _render_final_02_22_report(role, evidence)
+        observed = _read_optional_exact(root, relative)
+        if observed != expected:
+            raise FinalReportError("FINAL_02_22_REPORT_INVALID")
+        hashes[relative] = sha256_bytes(expected)
+    return {"report_sha256": hashes, "status": "verified"}
+
+
+def _render_final_02_22_summary(
+    *, decision_sha256: str, report_sha256: Mapping[str, str]
+) -> bytes:
+    payload = {
+        "decision_sha256": decision_sha256,
+        "external_publication_authorized": False,
+        "reports": [
+            {"path": path, "sha256": report_sha256[path]}
+            for path in FINAL_SUCCESSOR_TARGETS_02_22
+        ],
+        "schema_version": "final-successor-summary-02-22-v1",
+        "status": "approved",
+    }
+    return (
+        "# Phase 2 Successor Summary 02-22\n\n"
+        "```json\n"
+        + canonical_json_bytes(payload).decode("utf-8").rstrip("\n")
+        + "\n```\n"
+    ).encode("utf-8")
+
+
+def write_final_successor_summary_02_22(
+    root: Path,
+    *,
+    decision: object,
+    packet: object,
+    readiness: object,
+    runtime_closure: object,
+    authority_path: Path,
+    input_bindings: object,
+    output: str = FINAL_SUCCESSOR_SUMMARY_02_22,
+    preflight: bool = False,
+) -> dict[str, object]:
+    """Write the summary only after exact verification of all four reports."""
+    if output != FINAL_SUCCESSOR_SUMMARY_02_22:
+        raise FinalReportError("FINAL_02_22_SUMMARY_PATH_INVALID")
+    verified = verify_final_successor_reports_02_22(
+        root,
+        decision=decision,
+        packet=packet,
+        readiness=readiness,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+        input_bindings=input_bindings,
+    )
+    if not isinstance(decision, Mapping) or not isinstance(decision.get("decision_sha256"), str):
+        raise FinalReportError("FINAL_02_22_H1_INVALID")
+    raw = _render_final_02_22_summary(
+        decision_sha256=decision["decision_sha256"],
+        report_sha256=verified["report_sha256"],
+    )
+    existing = _read_optional_exact(root, output)
+    if existing is not None and existing != raw:
+        raise FinalReportError("FINAL_02_22_TARGET_DIVERGED")
+    preflight_status = "resumed" if existing is not None else "written"
+    if preflight:
+        status = "preflight_valid"
+    else:
+        # Re-run the complete approved-report gate immediately before the
+        # no-replace summary write; the first pass is only used to render bytes.
+        repeated = verify_final_successor_reports_02_22(
+            root,
+            decision=decision,
+            packet=packet,
+            readiness=readiness,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+            input_bindings=input_bindings,
+        )
+        if repeated != verified:
+            raise FinalReportError("FINAL_02_22_PREWRITE_DRIFT")
+        status = _write_final_02_22_exact_resume(
+            root, output, raw, preflight_status=preflight_status
+        )
+        postflight = validate_final_successor_summary_02_22(
+            root,
+            decision=decision,
+            packet=packet,
+            readiness=readiness,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+            input_bindings=input_bindings,
+            summary=output,
+        )
+        if postflight.get("sha256") != sha256_bytes(raw):
+            raise FinalReportError("FINAL_02_22_POSTWRITE_DRIFT")
+    return {"sha256": sha256_bytes(raw), "status": status}
+
+
+def validate_final_successor_summary_02_22(
+    root: Path,
+    *,
+    decision: object,
+    packet: object,
+    readiness: object,
+    runtime_closure: object,
+    authority_path: Path,
+    input_bindings: object,
+    summary: str = FINAL_SUCCESSOR_SUMMARY_02_22,
+) -> dict[str, object]:
+    """Read-only post-generation verification of reports and terminal summary."""
+    if summary != FINAL_SUCCESSOR_SUMMARY_02_22:
+        raise FinalReportError("FINAL_02_22_SUMMARY_PATH_INVALID")
+    verified = verify_final_successor_reports_02_22(
+        root,
+        decision=decision,
+        packet=packet,
+        readiness=readiness,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+        input_bindings=input_bindings,
+    )
+    if not isinstance(decision, Mapping) or not isinstance(decision.get("decision_sha256"), str):
+        raise FinalReportError("FINAL_02_22_H1_INVALID")
+    expected = _render_final_02_22_summary(
+        decision_sha256=decision["decision_sha256"],
+        report_sha256=verified["report_sha256"],
+    )
+    if _read_optional_exact(root, summary) != expected:
+        raise FinalReportError("FINAL_02_22_SUMMARY_INVALID")
+    return {"sha256": sha256_bytes(expected), "status": "verified"}
+
+
+# Explicit version aliases for callers that key interfaces by closure generation.
+write_final_successor_reports_v4 = write_final_successor_reports_02_22
+verify_final_successor_reports_v4 = verify_final_successor_reports_02_22
+write_final_successor_summary_v4 = write_final_successor_summary_02_22
+validate_final_successor_summary_v4 = validate_final_successor_summary_02_22

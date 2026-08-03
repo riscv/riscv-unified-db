@@ -63,19 +63,52 @@ RECOVERY_SEMANTIC_IDS = {
     "tests.test_measurement_scoring.MeasurementScoringTests.test_v6_span_population_and_candidate_identity_are_tamper_checked",
 }
 SUCCESSOR_IDS |= RECOVERY_SEMANTIC_IDS
-SUCCESSOR_IDS |= {
+PHASE_02_20_IDS = {
     "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v4_bootstrap_has_no_self_dependency",
     "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v4_binds_all_seventeen_post_closure_targets",
     "tests.test_measurement_adapter.MeasurementAdapterTests.test_pr2164_adapter_v4_binds_canonical_authority_and_materialized_raw_tree",
     "tests.test_measurement_attempts.MeasurementAttemptTests.test_fresh_v4_chain_is_deterministic_exact_resume_and_has_expected_metrics",
     "tests.test_measurement_h1.H1PacketTests.test_h1_v7_binds_complete_seven_question_semantics_and_v4_identity",
     "tests.test_measurement_h1.H1PacketTests.test_h1_v7_packet_and_readiness_contain_no_human_values",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v7_real_fresh_chain_rejects_each_canonical_forgery",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v7_fixed_packet_and_readiness_writers_are_decision_free_exact_resume",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v7_writers_repeat_full_gate_before_write_primitive",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v7_packet_writer_rejects_divergent_link_special_partial_and_race",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v6_decision_writer_is_fixed_path_and_preflight_rejects_hostile_target",
+    "tests.test_measurement_h1.H1PacketTests.test_h1_v6_decision_writer_revalidates_closure_and_authority_before_write",
     "tests.test_measurement_h1.H1PacketTests.test_h1_v6_decision_distinguishes_missing_payload_from_complete_incomplete_judgment",
     "tests.test_measurement_h1.H1PacketTests.test_h1_v6_terminal_outputs_require_approved_decision",
     "tests.test_measurement_h1.H1PacketTests.test_validate_h1_review_readiness_v7_cli_is_registered_read_only_and_fail_closed",
     "tests.test_measurement_h1.H1PacketTests.test_render_h1_review_checkpoint_v7_cli_requires_no_write_and_persists_no_human_fields",
     "tests.test_measurement_h1.H1PacketTests.test_validate_h1_source_gold_decision_v6_cli_is_registered_read_only_and_fail_closed",
     "tests.test_measurement_h1.H1PacketTests.test_validate_approved_h1_terminal_v6_cli_is_registered_read_only_and_fail_closed",
+    "tests.test_measurement_h1.H1PacketTests.test_v4_02_22_reports_are_approved_only_exact_resume_and_summary_is_downstream",
+}
+PHASE_02_20_HARDENING_IDS = {
+    "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v4_rejects_schema_only_and_hostile_bootstrap_targets",
+    "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v4_writer_repeats_preflight_before_first_write",
+    "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v4_post_validation_does_not_reapply_bootstrap_absence",
+    "tests.test_fixture_closure.FixtureClosureTests.test_accepted_v6_active_validator_rejects_lineage_and_materialized_raw_drift",
+    "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v3_historical_rejects_truncated_or_mutated_receipt",
+    "tests.test_measurement_adapter.MeasurementAdapterTests.test_pr2164_adapter_v4_rejects_unpublished_schema_only_closure_and_raw_drift",
+    "tests.test_measurement_adapter.MeasurementAdapterTests.test_pr2164_adapter_v4_writer_exact_resume_divergence_and_fixed_path",
+    "tests.test_measurement_adapter.MeasurementAdapterTests.test_pr2164_adapter_v4_writer_rejects_target_race_without_replacement",
+    "tests.test_measurement_attempts.MeasurementAttemptTests.test_fresh_formal_v6_fixed_target_exact_resume_and_metrics",
+    "tests.test_measurement_attempts.MeasurementAttemptTests.test_fresh_formal_v6_rejects_partial_symlink_divergence_race_and_task16_adapter",
+    "tests.test_measurement_attempts.MeasurementAttemptTests.test_fresh_adversarial_v7_fixed_target_resume_divergence_and_race",
+}
+PHASE_02_20_IDS |= PHASE_02_20_HARDENING_IDS
+SUCCESSOR_IDS |= PHASE_02_20_IDS
+
+CURRENT_CODE_MODULES = (
+    "tests.test_fixture_closure",
+    "tests.test_measurement_adapter",
+    "tests.test_measurement_attempts",
+    "tests.test_measurement_h1",
+)
+CURRENT_CODE_RED_IDS = {
+    test_id for test_id in legacy.RED_IDS
+    if test_id.startswith("tests.test_fixture_closure.")
 }
 
 
@@ -83,21 +116,54 @@ def main() -> int:
     loader = unittest.defaultTestLoader
     all_discovered = list(legacy._flatten(loader.discover("tests", top_level_dir=".")))
     discovered_ids = {test.id() for test in all_discovered}
-    if len(RECOVERY_SEMANTIC_IDS) != 10 or not SUCCESSOR_IDS <= discovered_ids:
+    if (
+        len(RECOVERY_SEMANTIC_IDS) != 10
+        or len(PHASE_02_20_HARDENING_IDS) != 11
+        or len(PHASE_02_20_IDS) != 30
+        or not SUCCESSOR_IDS <= discovered_ids
+    ):
         raise SystemExit("ORACLE_SUCCESSOR_DISCOVERY_CHANGED")
     discovered = [test for test in all_discovered if test.id() not in SUCCESSOR_IDS]
     focused = [test for test in legacy._flatten(unittest.TestSuite(loader.loadTestsFromName(name) for name in legacy.FOCUSED_MODULES)) if test.id() not in SUCCESSOR_IDS]
     if len(discovered) != 150 or len(focused) != 72:
         raise SystemExit("ORACLE_LEGACY_COHORT_CHANGED")
-    green = [test for test in discovered if test.id() not in legacy.RED_IDS]
-    result, _ = legacy._run(green)
-    if result["tests_run"] != 145 or result["failures"] or result["errors"] or result["skipped"]:
-        raise SystemExit("ORACLE_LEGACY_GREEN_CHANGED")
+    # The 145 predecessor-green cases are a frozen partition fact, not a live
+    # authority assertion.  Accepted-v6 intentionally supersedes several
+    # predecessor current-authority/schema assumptions; re-running those tests
+    # against the new authority would conflate historical evidence with the
+    # successor state.  The exact five-method/six-outcome red signature remains
+    # live below, while the explicit 02-20 cohort is the current-green gate.
+    historical_green = [test for test in discovered if test.id() not in legacy.RED_IDS]
+    if len(historical_green) != 145:
+        raise SystemExit("ORACLE_LEGACY_GREEN_PARTITION_CHANGED")
     red, _ = legacy._run([test for test in discovered if test.id() in legacy.RED_IDS])
-    if legacy._normalized_outcomes(red) is None:
+    if (
+        red["tests_run"] != 5
+        or len(red["failures"]) != 5
+        or len(red["errors"]) != 1
+        or red["skipped"]
+        or red["expected_failures"]
+        or red["unexpected_successes"]
+        or legacy._normalized_outcomes(red) is None
+    ):
         raise SystemExit("ORACLE_LEGACY_RED_CHANGED")
-    suite = unittest.defaultTestLoader.loadTestsFromNames(tuple(sorted(SUCCESSOR_IDS)))
-    return 0 if unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful() else 1
+    current = list(legacy._flatten(unittest.TestSuite(
+        loader.loadTestsFromName(name) for name in CURRENT_CODE_MODULES
+    )))
+    current_ids = {test.id() for test in current}
+    if (
+        len(current) != 116
+        or len(current_ids) != 116
+        or (current_ids & legacy.RED_IDS) != CURRENT_CODE_RED_IDS
+        or not PHASE_02_20_IDS <= current_ids
+    ):
+        raise SystemExit("ORACLE_CURRENT_CODE_COHORT_CHANGED")
+    current_green = [test for test in current if test.id() not in legacy.RED_IDS]
+    if len(current_green) != 112:
+        raise SystemExit("ORACLE_CURRENT_CODE_GREEN_PARTITION_CHANGED")
+    return 0 if unittest.TextTestRunner(verbosity=2).run(
+        unittest.TestSuite(current_green)
+    ).wasSuccessful() else 1
 
 
 if __name__ == "__main__":

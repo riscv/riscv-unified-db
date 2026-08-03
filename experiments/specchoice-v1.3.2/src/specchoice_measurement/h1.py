@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -20,6 +21,7 @@ from specchoice_evidence.filesystem import (
     FilesystemPolicyError,
     inspect_authoritative_path,
     read_authoritative_file,
+    read_authoritative_files,
     write_new_descriptor_file,
 )
 from specchoice_evidence.runtime_closure import (
@@ -32,11 +34,17 @@ from specchoice_evidence.successor import (
     validate_accepted_v6_active_authority,
 )
 
-from .adapter import build_pr2164_adapter_batch
+from .adapter import (
+    AdapterError,
+    build_pr2164_adapter_batch,
+    validate_pr2164_accepted_v6_adapter_batch_v4,
+)
 from .attempts import (
     AttemptError,
     _successor_adapter_v6,
     validate_adversarial_result_v6,
+    validate_fresh_adversarial_result_v7,
+    validate_fresh_formal_measurement_v6,
     validate_formal_measurement_v5,
     validate_measurement_attempt,
 )
@@ -58,113 +66,729 @@ _V7_FIXTURE_IDS = (
     "POS_WARL_ASID_WIDTH", "POS_WARL_MTVEC_MODES",
 )
 _H1_DISPOSITIONS = frozenset({"approved", "disputed", "incomplete"})
-_V7_SOURCE_IDENTITY_KEYS = frozenset({
-    "adapter", "adapter_config", "adversarial", "authority", "closure",
-    "formal_attempt", "formal_case_outcomes", "formal_diagnostics", "formal_metrics",
-    "formal_parsed_predictions", "formal_report", "h1_schema", "question_contract",
-})
+_V7_EXPERIMENT_PREFIX = "experiments/specchoice-v1.3.2"
+_V7_SOURCE_IDENTITY_PATHS = {
+    "adapter": f"{_V7_EXPERIMENT_PREFIX}/reports/h1/adapter-batch-pr2164-v6.json",
+    "adapter_config": f"{_V7_EXPERIMENT_PREFIX}/config/measurement/pr2164-adapter-rules-v4.json",
+    "adversarial": f"{_V7_EXPERIMENT_PREFIX}/reports/h1/adversarial-oracle-results-v7.json",
+    "authority": f"{_V7_EXPERIMENT_PREFIX}/phase2/source-authority.json",
+    "closure": f"{_V7_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v4.json",
+    "formal_attempt": f"{_V7_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/attempt.json",
+    "formal_case_outcomes": f"{_V7_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/case-outcomes.json",
+    "formal_diagnostics": f"{_V7_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/diagnostics.json",
+    "formal_metrics": f"{_V7_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/metrics.json",
+    "formal_parsed_predictions": f"{_V7_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/parsed-predictions.json",
+    "formal_report": f"{_V7_EXPERIMENT_PREFIX}/runs/measurement-attempts/formal-golden-pr2164-v6/report.json",
+    "h1_schema": f"{_V7_EXPERIMENT_PREFIX}/config/measurement/h1-review-schema-v5.json",
+    "question_contract": f"{_V7_EXPERIMENT_PREFIX}/config/measurement/h1-semantic-review-questions-v2.json",
+}
+_V7_SOURCE_IDENTITY_KEYS = frozenset(_V7_SOURCE_IDENTITY_PATHS)
+_V7_PACKET_PATH = f"{_V7_EXPERIMENT_PREFIX}/reports/h1/h1-source-gold-review-v7/review-packet.json"
+_V7_MARKDOWN_PATH = f"{_V7_EXPERIMENT_PREFIX}/reports/h1/h1-source-gold-review-v7/review-packet.md"
+_V7_READINESS_PATH = f"{_V7_EXPERIMENT_PREFIX}/receipts/h1-review-readiness-v7.json"
+_V7_DECISION_PATH = f"{_V7_EXPERIMENT_PREFIX}/reviews/h1-source-gold-decision-v6.json"
+_CANONICAL_UTC_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z\Z")
+_V7_EXPECTED_METRICS = {
+    "disposition": {"denominator": 8, "numerator": 8},
+    "evidence_integrity": {"denominator": 10, "numerator": 10},
+    "identity": {"denominator": 6, "numerator": 6},
+    "negative_controls": {"denominator": 3, "numerator": 3},
+    "surfacing": {"denominator": 8, "numerator": 8},
+}
+_V7_FORMAL_ARTIFACT_ROLES = {
+    "formal_case_outcomes": "case-outcomes.json",
+    "formal_diagnostics": "diagnostics.json",
+    "formal_metrics": "metrics.json",
+    "formal_parsed_predictions": "parsed-predictions.json",
+    "formal_report": "report.json",
+}
 
 
 def _v7_gate(runtime_closure: object, authority_path: Path) -> dict[str, object]:
-    """Require the published closure and the active authority before a v7 write."""
-    try:
-        canonical = authority_path.resolve(strict=True)
-        repository = canonical.parents[3]
-        if canonical != repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json":
-            raise H1Error("ACTIVE_AUTHORITY_MISMATCH")
-        load_runtime_closure_v4(repository, runtime_closure)
-    except (OSError, RuntimeClosureError) as error:
-        raise H1Error("RUNTIME_CLOSURE_V4_REQUIRED") from error
-    raw = canonical.read_bytes()
-    if sha256_bytes(raw) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae":
+    """Require the one published closure and descriptor-read active authority."""
+    repository = _REPOSITORY.absolute()
+    expected_authority = repository / _V7_SOURCE_IDENTITY_PATHS["authority"]
+    if Path(os.path.abspath(authority_path)) != expected_authority:
         raise H1Error("ACTIVE_AUTHORITY_MISMATCH")
-    value = json.loads(raw)
-    if value.get("status") != "accepted_cutover_v13":
-        raise H1Error("ACTIVE_AUTHORITY_INVALID")
-    return value
+    try:
+        closure = load_runtime_closure_v4(repository, runtime_closure)
+        _, raw = read_authoritative_file(repository, _V7_SOURCE_IDENTITY_PATHS["authority"])
+        value = json.loads(raw.decode("utf-8"))
+    except (FilesystemPolicyError, OSError, RuntimeClosureError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise H1Error("RUNTIME_CLOSURE_V4_REQUIRED") from error
+    if (
+        canonical_json_bytes(value) != raw
+        or sha256_bytes(raw) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae"
+        or value.get("status") != "accepted_cutover_v13"
+    ):
+        raise H1Error("ACTIVE_AUTHORITY_MISMATCH")
+    return {"authority": value, "closure": closure}
 
 
-def build_h1_review_packet_v7(*, questions: object, fixture_reviews: object, source_identity: object, markdown_sha256: str, runtime_closure: object, authority_path: Path) -> dict[str, object]:
-    """Build a decision-free packet with every semantic question fully bound."""
-    _v7_gate(runtime_closure, authority_path)
-    if not isinstance(questions, list) or [item.get("id") if isinstance(item, dict) else None for item in questions] != list(_V7_H1_QUESTION_IDS):
-        raise H1Error("H1_V7_QUESTION_SET_INVALID")
-    required = {"id", "prompt", "rationale", "structural_rules", "machine_assertions", "metric_effect", "evidence_bindings"}
-    if any(not isinstance(item, dict) or set(item) != required or any(not item[key] for key in required - {"id"}) for item in questions):
-        raise H1Error("H1_V7_QUESTION_SEMANTICS_INVALID")
-    if not isinstance(source_identity, dict) or set(source_identity) != _V7_SOURCE_IDENTITY_KEYS:
+def _validate_v7_fresh_measurement_chain(
+    *,
+    runtime_closure: Mapping[str, object],
+    authority_path: Path,
+    records: Mapping[str, Mapping[str, object]],
+    values: Mapping[str, object],
+    raws: Mapping[str, bytes],
+) -> None:
+    """Replay all fresh measurement stages and bind their exact retained bytes."""
+    repository = _REPOSITORY.absolute()
+    try:
+        adapter = validate_pr2164_accepted_v6_adapter_batch_v4(
+            repository=repository,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+        formal = validate_fresh_formal_measurement_v6(
+            repository=repository,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+        adversarial = validate_fresh_adversarial_result_v7(
+            repository=repository,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+    except (AdapterError, AttemptError, FilesystemPolicyError, OSError, ValueError) as error:
+        raise H1Error("H1_V7_FRESH_CHAIN_INVALID") from error
+
+    adapter_value = values.get("adapter")
+    formal_manifest = values.get("formal_attempt")
+    formal_metrics = values.get("formal_metrics")
+    adversarial_value = values.get("adversarial")
+    if (
+        adapter
+        != {
+            "adapter_batch_file_sha256": records["adapter"]["sha256"],
+            "adapter_batch_sha256": (
+                adapter_value.get("adapter_batch_sha256")
+                if isinstance(adapter_value, Mapping)
+                else None
+            ),
+            "fixture_count": 11,
+            "raw_file_count": 29,
+            "score_bearing_span_count": 10,
+            "valid": True,
+        }
+        or not isinstance(formal_manifest, Mapping)
+        or formal.get("attempt_sha256") != formal_manifest.get("attempt_sha256")
+        or formal.get("case_count") != 11
+        or formal.get("metrics") != _V7_EXPECTED_METRICS
+        or formal_metrics != _V7_EXPECTED_METRICS
+        or formal.get("role") != "formal"
+        or formal.get("status") != "completed"
+        or formal.get("valid") is not True
+        or not isinstance(adversarial_value, Mapping)
+        or adversarial.get("case_count") != 17
+        or adversarial.get("report_sha256")
+        != adversarial_value.get("report_sha256")
+        or adversarial.get("status") != "diagnostic_only"
+        or adversarial.get("valid") is not True
+    ):
+        raise H1Error("H1_V7_FRESH_CHAIN_INVALID")
+
+    artifacts = formal_manifest.get("artifacts")
+    if not isinstance(artifacts, Mapping):
+        raise H1Error("H1_V7_FRESH_CHAIN_INVALID")
+    for role, name in _V7_FORMAL_ARTIFACT_ROLES.items():
+        if artifacts.get(name) != {
+            "byte_length": records[role]["byte_length"],
+            "sha256": records[role]["sha256"],
+        }:
+            raise H1Error("H1_V7_FRESH_CHAIN_INVALID")
+
+    # Reject a pathname replacement during replay. The packet binds only the
+    # first retained snapshot after every validator has proven the same bytes.
+    try:
+        current = read_authoritative_files(
+            repository,
+            [_V7_SOURCE_IDENTITY_PATHS[key] for key in sorted(_V7_SOURCE_IDENTITY_PATHS)],
+        )
+    except (FilesystemPolicyError, OSError) as error:
+        raise H1Error("H1_V7_FRESH_CHAIN_INVALID") from error
+    if any(
+        current[_V7_SOURCE_IDENTITY_PATHS[role]][1] != raws[role]
+        for role in sorted(_V7_SOURCE_IDENTITY_PATHS)
+    ):
+        raise H1Error("H1_V7_FRESH_CHAIN_INVALID")
+
+
+def _v7_source_snapshot(
+    *, runtime_closure: object, authority_path: Path
+) -> tuple[dict[str, dict[str, object]], dict[str, object], dict[str, bytes]]:
+    """Re-read every fixed source and return its actual path/length/hash record."""
+    gated = _v7_gate(runtime_closure, authority_path)
+    try:
+        held = read_authoritative_files(
+            _REPOSITORY.absolute(),
+            [_V7_SOURCE_IDENTITY_PATHS[key] for key in sorted(_V7_SOURCE_IDENTITY_PATHS)],
+        )
+    except (FilesystemPolicyError, OSError) as error:
+        raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID") from error
+    records: dict[str, dict[str, object]] = {}
+    values: dict[str, object] = {}
+    raws: dict[str, bytes] = {}
+    for role in sorted(_V7_SOURCE_IDENTITY_PATHS):
+        path = _V7_SOURCE_IDENTITY_PATHS[role]
+        evidence, raw = held[path]
+        if evidence.file_kind != "regular_file":
+            raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID")
+        try:
+            value = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID") from error
+        if canonical_json_bytes(value) != raw:
+            raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID")
+        records[role] = {"path": path, "byte_length": len(raw), "sha256": sha256_bytes(raw)}
+        values[role] = value
+        raws[role] = raw
+    if values["closure"] != gated["closure"] or values["authority"] != gated["authority"]:
         raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID")
-    for value in source_identity.values():
+    _validate_h1_review_schema_v5_value(values["h1_schema"])
+    bundle = _REPOSITORY.absolute() / (
+        f"{_V7_EXPERIMENT_PREFIX}/bundles/accepted/"
+        "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+    )
+    question_result = validate_h1_semantic_questions_v2(
+        questions=_REPOSITORY.absolute() / _V7_SOURCE_IDENTITY_PATHS["question_contract"],
+        bundle_root=bundle,
+    )
+    if question_result["question_ids"] != list(_V7_H1_QUESTION_IDS):
+        raise H1Error("H1_V7_QUESTION_SET_INVALID")
+    _validate_v7_fresh_measurement_chain(
+        runtime_closure=gated["closure"],
+        authority_path=authority_path,
+        records=records,
+        values=values,
+        raws=raws,
+    )
+    return records, values, raws
+
+
+def _require_v7_source_identity(
+    supplied: object, actual: Mapping[str, Mapping[str, object]]
+) -> dict[str, dict[str, object]]:
+    if not isinstance(supplied, Mapping) or set(supplied) != _V7_SOURCE_IDENTITY_KEYS:
+        raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID")
+    normalized: dict[str, dict[str, object]] = {}
+    for role in sorted(_V7_SOURCE_IDENTITY_PATHS):
+        value = supplied.get(role)
+        if not isinstance(value, Mapping) or set(value) != {"path", "byte_length", "sha256"}:
+            raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID")
+        length = value.get("byte_length")
+        try:
+            digest = require_sha256(value.get("sha256"))
+        except ValueError as error:
+            raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID") from error
+        record = {"path": value.get("path"), "byte_length": length, "sha256": digest}
         if (
-            not isinstance(value, Mapping)
-            or set(value) != {"path", "byte_length", "sha256"}
-            or not isinstance(value["path"], str)
-            or not isinstance(value["byte_length"], int)
-            or value["byte_length"] < 0
-            or not isinstance(value["sha256"], str)
-            or len(value["sha256"]) != 64
+            isinstance(length, bool)
+            or not isinstance(length, int)
+            or length < 0
+            or digest == "0" * 64
+            or record != actual[role]
         ):
             raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID")
+        normalized[role] = record
+    return normalized
+
+
+def _validate_h1_review_schema_v5_value(value: object) -> None:
+    if not isinstance(value, Mapping) or set(value) != {
+        "additional_properties", "aggregate_precedence", "decision", "markdown",
+        "packet", "question_ids", "readiness", "schema_version", "source_identity",
+    }:
+        raise H1Error("H1_REVIEW_SCHEMA_V5_INVALID")
+    source = value.get("source_identity")
+    packet = value.get("packet")
+    readiness = value.get("readiness")
+    decision = value.get("decision")
     if (
-        not isinstance(fixture_reviews, list) or len(fixture_reviews) != 11
-        or [item.get("fixture_id") if isinstance(item, dict) else None for item in fixture_reviews]
+        value.get("additional_properties") is not False
+        or value.get("schema_version") != "h1-review-schema-v5"
+        or value.get("aggregate_precedence") != ["incomplete", "disputed", "approved"]
+        or value.get("question_ids") != list(_V7_H1_QUESTION_IDS)
+        or source != {
+            "additional_properties": False,
+            "record_fields": ["byte_length", "path", "sha256"],
+            "required_paths": _V7_SOURCE_IDENTITY_PATHS,
+        }
+        or not isinstance(packet, Mapping)
+        or packet.get("schema_version") != "h1-review-packet-v7"
+        or packet.get("required_fields") != [
+            "fixture_reviews", "markdown", "packet_sha256", "questions", "schema_version", "source_identity"
+        ]
+        or packet.get("fixture_review_count") != 11
+        or packet.get("question_count") != 7
+        or packet.get("human_fields") is not False
+        or not isinstance(readiness, Mapping)
+        or readiness.get("schema_version") != "h1-review-readiness-v7"
+        or readiness.get("required_fields") != [
+            "markdown", "packet", "packet_sha256", "readiness_sha256", "schema_version", "source_identity", "status"
+        ]
+        or readiness.get("human_fields") is not False
+        or not isinstance(decision, Mapping)
+        or decision.get("schema_version") != "h1-source-gold-decision-v6"
+        or decision.get("allowed_dispositions") != ["approved", "disputed", "incomplete"]
+        or decision.get("fixture_review_count") != 11
+        or decision.get("semantic_response_count") != 7
+        or decision.get("timestamp_format") != "YYYY-MM-DDTHH:MM:SSZ"
+    ):
+        raise H1Error("H1_REVIEW_SCHEMA_V5_INVALID")
+
+
+def validate_h1_review_schema_v5(*, schema: Path) -> dict[str, object]:
+    """Validate the closed v5 schema without accepting an alternate path contract."""
+    try:
+        _, raw = read_authoritative_file(schema.parent, schema.name)
+        value = json.loads(raw.decode("utf-8"))
+    except (FilesystemPolicyError, OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise H1Error("H1_REVIEW_SCHEMA_V5_INVALID") from error
+    if canonical_json_bytes(value) != raw:
+        raise H1Error("H1_REVIEW_SCHEMA_V5_INVALID")
+    _validate_h1_review_schema_v5_value(value)
+    return {"schema_sha256": sha256_bytes(raw), "valid": True}
+
+
+def _expected_v7_fixture_reviews(
+    cases: object, source_identity: Mapping[str, Mapping[str, object]]
+) -> list[dict[str, object]]:
+    if (
+        not isinstance(cases, list)
+        or [case.get("fixture_id") if isinstance(case, Mapping) else None for case in cases]
         != list(_V7_FIXTURE_IDS)
-        or any(
-            not isinstance(item, dict)
-            or set(item) != {"fixture_id", "fixture_class", "expected_surfaced", "expected_disposition", "evidence_bindings"}
-            or not isinstance(item["fixture_id"], str)
-            or item["fixture_class"] not in {"positive", "negative", "candidate"}
-            or not isinstance(item["expected_surfaced"], bool)
-            or not isinstance(item["expected_disposition"], str)
-            or not isinstance(item["evidence_bindings"], list)
-            or not item["evidence_bindings"]
-            for item in fixture_reviews
-        )
     ):
         raise H1Error("H1_V7_FIXTURE_REVIEW_SET_INVALID")
-    if not isinstance(markdown_sha256, str) or len(markdown_sha256) != 64:
+    binding = source_identity["formal_case_outcomes"]
+    reviews: list[dict[str, object]] = []
+    for index, case in enumerate(cases):
+        if not isinstance(case, Mapping) or case.get("category") not in {"candidate", "negative", "positive"}:
+            raise H1Error("H1_V7_FIXTURE_REVIEW_SET_INVALID")
+        surfaced = case.get("actual_surfaced")
+        if not isinstance(surfaced, bool):
+            raise H1Error("H1_V7_FIXTURE_REVIEW_SET_INVALID")
+        disposition = case.get("actual_status") if surfaced else "not_surfaced"
+        if not isinstance(disposition, str) or not disposition:
+            raise H1Error("H1_V7_FIXTURE_REVIEW_SET_INVALID")
+        outcome = dict(case)
+        reviews.append({
+            "evidence_binding": {
+                "byte_length": binding["byte_length"],
+                "index": index,
+                "path": binding["path"],
+                "sha256": binding["sha256"],
+            },
+            "expected_disposition": disposition,
+            "expected_surfaced": surfaced,
+            "fixture_class": case["category"],
+            "fixture_id": case["fixture_id"],
+            "formal_outcome_sha256": sha256_bytes(canonical_json_bytes(outcome)),
+        })
+    return reviews
+
+
+def _v7_review_core(
+    *, questions: object, fixture_reviews: object, source_identity: object,
+    runtime_closure: object, authority_path: Path,
+) -> dict[str, object]:
+    actual, values, _ = _v7_source_snapshot(
+        runtime_closure=runtime_closure, authority_path=authority_path
+    )
+    normalized_identity = _require_v7_source_identity(source_identity, actual)
+    contract = values["question_contract"]
+    expected_questions = contract.get("questions") if isinstance(contract, Mapping) else None
+    if questions != expected_questions:
+        raise H1Error("H1_V7_QUESTION_SEMANTICS_INVALID")
+    expected_reviews = _expected_v7_fixture_reviews(
+        values["formal_case_outcomes"], normalized_identity
+    )
+    if fixture_reviews != expected_reviews:
+        raise H1Error("H1_V7_FIXTURE_REVIEW_SET_INVALID")
+    return {
+        "fixture_reviews": expected_reviews,
+        "questions": expected_questions,
+        "schema_version": "h1-review-core-v7",
+        "source_identity": normalized_identity,
+    }
+
+
+def _render_h1_review_core_v7(core: Mapping[str, object]) -> bytes:
+    return (
+        "# H1 Source-Gold Review Checkpoint v7\n\n"
+        "This decision-free checkpoint is a deterministic projection of the canonical review core.\n\n"
+        "```json\n"
+        + canonical_json_bytes(dict(core)).decode("utf-8").rstrip("\n")
+        + "\n```\n"
+    ).encode("utf-8")
+
+
+def build_h1_review_packet_v7(*, questions: object, fixture_reviews: object, source_identity: object, markdown_sha256: str | None = None, runtime_closure: object, authority_path: Path) -> dict[str, object]:
+    """Build a decision-free packet with every semantic question fully bound."""
+    core = _v7_review_core(
+        questions=questions, fixture_reviews=fixture_reviews,
+        source_identity=source_identity, runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    markdown = _render_h1_review_core_v7(core)
+    actual_markdown_sha256 = sha256_bytes(markdown)
+    if markdown_sha256 is not None and markdown_sha256 != actual_markdown_sha256:
         raise H1Error("H1_V7_MARKDOWN_BINDING_INVALID")
     payload = {
-        "fixture_reviews": fixture_reviews,
-        "markdown_sha256": markdown_sha256,
-        "questions": questions,
+        "fixture_reviews": core["fixture_reviews"],
+        "markdown": {
+            "byte_length": len(markdown),
+            "path": _V7_MARKDOWN_PATH,
+            "sha256": actual_markdown_sha256,
+        },
+        "questions": core["questions"],
         "schema_version": "h1-review-packet-v7",
-        "source_identity": source_identity,
+        "source_identity": core["source_identity"],
     }
     return {**payload, "packet_sha256": sha256_bytes(canonical_json_bytes(payload))}
 
 
+def render_h1_review_checkpoint_v7(packet: object) -> bytes:
+    """Render the packet's decision-free core without introducing a hash cycle."""
+    if not isinstance(packet, Mapping) or set(packet) != {
+        "fixture_reviews", "markdown", "packet_sha256", "questions", "schema_version", "source_identity"
+    }:
+        raise H1Error("H1_V7_PACKET_INVALID")
+    core = {
+        "fixture_reviews": packet["fixture_reviews"],
+        "questions": packet["questions"],
+        "schema_version": "h1-review-core-v7",
+        "source_identity": packet["source_identity"],
+    }
+    raw = _render_h1_review_core_v7(core)
+    if packet.get("markdown") != {
+        "byte_length": len(raw), "path": _V7_MARKDOWN_PATH, "sha256": sha256_bytes(raw)
+    }:
+        raise H1Error("H1_V7_MARKDOWN_BINDING_INVALID")
+    return raw
+
+
+def _expected_fixed_h1_review_packet_v7(
+    *, runtime_closure: object, authority_path: Path
+) -> tuple[dict[str, object], bytes, bytes]:
+    """Rebuild the one fixed decision-free packet and both published bytes."""
+    source_identity, values, _ = _v7_source_snapshot(
+        runtime_closure=runtime_closure, authority_path=authority_path
+    )
+    question_contract = values["question_contract"]
+    questions = (
+        question_contract.get("questions")
+        if isinstance(question_contract, Mapping)
+        else None
+    )
+    packet = build_h1_review_packet_v7(
+        questions=questions,
+        fixture_reviews=_expected_v7_fixture_reviews(
+            values["formal_case_outcomes"], source_identity
+        ),
+        source_identity=source_identity,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    packet_raw = canonical_json_bytes(packet)
+    markdown_raw = render_h1_review_checkpoint_v7(packet)
+    return packet, packet_raw, markdown_raw
+
+
+def _preflight_v7_packet_targets(
+    *, packet_raw: bytes, markdown_raw: bytes
+) -> str:
+    """Require both fixed packet leaves to be absent or byte-identical."""
+    repository = _REPOSITORY.absolute()
+    expected = {
+        _V7_PACKET_PATH: packet_raw,
+        _V7_MARKDOWN_PATH: markdown_raw,
+    }
+    states: list[str] = []
+    for path, raw in expected.items():
+        try:
+            evidence, existing = read_authoritative_file(repository, path)
+        except FilesystemPolicyError as error:
+            if str(error) != "AUTHORITATIVE_FILE_MISSING":
+                raise H1Error("H1_V7_PACKET_OUTPUT_INVALID") from error
+            states.append("absent")
+            continue
+        except OSError as error:
+            raise H1Error("H1_V7_PACKET_OUTPUT_INVALID") from error
+        if evidence.file_kind != "regular_file" or existing != raw:
+            raise H1Error("H1_V7_PACKET_OUTPUT_INVALID")
+        states.append("identical")
+    if states == ["absent", "absent"]:
+        target_directory = (repository / _V7_PACKET_PATH).parent
+        if target_directory.exists() or target_directory.is_symlink():
+            raise H1Error("H1_V7_PACKET_OUTPUT_INVALID")
+        return "written"
+    if states == ["identical", "identical"]:
+        _validate_v7_packet_directory_shape()
+        return "resumed"
+    raise H1Error("H1_V7_PACKET_OUTPUT_INVALID")
+
+
+def _validate_v7_packet_directory_shape() -> None:
+    target = (_REPOSITORY.absolute() / _V7_PACKET_PATH).parent
+    if target.is_symlink() or not target.is_dir():
+        raise H1Error("H1_V7_PACKET_OUTPUT_INVALID")
+    try:
+        children = list(target.iterdir())
+    except OSError as error:
+        raise H1Error("H1_V7_PACKET_OUTPUT_INVALID") from error
+    if {child.name for child in children} != {
+        Path(_V7_PACKET_PATH).name,
+        Path(_V7_MARKDOWN_PATH).name,
+    } or len(children) != 2:
+        raise H1Error("H1_V7_PACKET_OUTPUT_INVALID")
+
+
+def _validate_published_v7_packet_bytes(
+    *, packet: Mapping[str, object], packet_raw: bytes, markdown_raw: bytes
+) -> None:
+    """Postflight the fixed packet pair through one held authority root."""
+    if packet_raw != canonical_json_bytes(dict(packet)):
+        raise H1Error("H1_V7_PACKET_OUTPUT_INVALID")
+    _validate_v7_packet_directory_shape()
+    try:
+        held = read_authoritative_files(
+            _REPOSITORY.absolute(), [_V7_PACKET_PATH, _V7_MARKDOWN_PATH]
+        )
+    except (FilesystemPolicyError, OSError) as error:
+        raise H1Error("H1_V7_PACKET_OUTPUT_INVALID") from error
+    if (
+        held[_V7_PACKET_PATH][1] != packet_raw
+        or held[_V7_MARKDOWN_PATH][1] != markdown_raw
+        or render_h1_review_checkpoint_v7(packet) != markdown_raw
+    ):
+        raise H1Error("H1_V7_PACKET_OUTPUT_INVALID")
+
+
+def write_h1_review_packet_v7(
+    *, runtime_closure: object, authority_path: Path
+) -> dict[str, object]:
+    """Publish or exactly resume the fixed decision-free packet pair."""
+    packet, packet_raw, markdown_raw = _expected_fixed_h1_review_packet_v7(
+        runtime_closure=runtime_closure, authority_path=authority_path
+    )
+    status = _preflight_v7_packet_targets(
+        packet_raw=packet_raw, markdown_raw=markdown_raw
+    )
+
+    # A first build is never a write token. Replay the complete closure,
+    # authority, adapter, formal, and adversarial chain immediately before the
+    # descriptor-rooted multi-file publication primitive is entered.
+    fresh_packet, fresh_packet_raw, fresh_markdown_raw = (
+        _expected_fixed_h1_review_packet_v7(
+            runtime_closure=runtime_closure, authority_path=authority_path
+        )
+    )
+    if (
+        fresh_packet != packet
+        or fresh_packet_raw != packet_raw
+        or fresh_markdown_raw != markdown_raw
+    ):
+        raise H1Error("H1_V7_PACKET_PREWRITE_DRIFT")
+    if status == "written":
+        repository = _REPOSITORY.absolute()
+        target = (repository / _V7_PACKET_PATH).parent
+        parent = target.parent
+        if not parent.is_dir() or parent.is_symlink():
+            raise H1Error("H1_V7_PACKET_OUTPUT_INVALID")
+        temporary = Path(
+            tempfile.mkdtemp(prefix=".h1-source-gold-review-v7.staging-", dir=parent)
+        )
+        try:
+            _write_exact(temporary / Path(_V7_PACKET_PATH).name, fresh_packet_raw)
+            _write_exact(temporary / Path(_V7_MARKDOWN_PATH).name, fresh_markdown_raw)
+            _sync_directory(temporary)
+
+            # Staging may take long enough for the accepted authority or one of
+            # the retained fresh-chain leaves to change.  Rebuild the complete
+            # chain only after staging is durable and immediately before the
+            # no-replace directory publication.
+            publish_packet, publish_packet_raw, publish_markdown_raw = (
+                _expected_fixed_h1_review_packet_v7(
+                    runtime_closure=runtime_closure,
+                    authority_path=authority_path,
+                )
+            )
+            if (
+                publish_packet != fresh_packet
+                or publish_packet_raw != fresh_packet_raw
+                or publish_markdown_raw != fresh_markdown_raw
+            ):
+                raise H1Error("H1_V7_PACKET_PREWRITE_DRIFT")
+            _publish_directory_no_replace(
+                temporary, target, "H1_V7_PACKET_OUTPUT_RACE"
+            )
+            _sync_directory(parent)
+        except (BundleError, OSError) as error:
+            raise H1Error("H1_V7_PACKET_OUTPUT_INVALID") from error
+        finally:
+            if temporary.exists():
+                shutil.rmtree(temporary)
+    _validate_published_v7_packet_bytes(
+        packet=fresh_packet,
+        packet_raw=fresh_packet_raw,
+        markdown_raw=fresh_markdown_raw,
+    )
+    postflight_packet, postflight_packet_raw, postflight_markdown_raw = (
+        _expected_fixed_h1_review_packet_v7(
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+    )
+    if (
+        postflight_packet != fresh_packet
+        or postflight_packet_raw != fresh_packet_raw
+        or postflight_markdown_raw != fresh_markdown_raw
+    ):
+        raise H1Error("H1_V7_PACKET_OUTPUT_INVALID")
+    return {
+        "markdown_sha256": fresh_packet["markdown"]["sha256"],
+        "packet_sha256": fresh_packet["packet_sha256"],
+        "status": status,
+        "valid": True,
+    }
+
+
 def build_h1_review_readiness_v7(*, packet: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
     """Produce decision-free readiness; human response fields are never accepted."""
-    _v7_gate(runtime_closure, authority_path)
     if not isinstance(packet, Mapping) or packet.get("schema_version") != "h1-review-packet-v7" or "responses" in packet:
         raise H1Error("H1_V7_PACKET_INVALID")
-    expected_packet = {key: packet[key] for key in ("fixture_reviews", "markdown_sha256", "questions", "schema_version", "source_identity") if key in packet}
-    if packet.get("packet_sha256") != sha256_bytes(canonical_json_bytes(expected_packet)):
+    expected_packet = build_h1_review_packet_v7(
+        questions=packet.get("questions"), fixture_reviews=packet.get("fixture_reviews"),
+        source_identity=packet.get("source_identity"), runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    if dict(packet) != expected_packet:
         raise H1Error("H1_V7_PACKET_INVALID")
+    packet_raw = canonical_json_bytes(expected_packet)
+    markdown_raw = render_h1_review_checkpoint_v7(expected_packet)
     payload = {
-        "markdown_sha256": packet.get("markdown_sha256"),
-        "packet_sha256": packet.get("packet_sha256"),
+        "markdown": {"byte_length": len(markdown_raw), "path": _V7_MARKDOWN_PATH, "sha256": sha256_bytes(markdown_raw)},
+        "packet": {"byte_length": len(packet_raw), "path": _V7_PACKET_PATH, "sha256": sha256_bytes(packet_raw)},
+        "packet_sha256": expected_packet["packet_sha256"],
         "schema_version": "h1-review-readiness-v7",
-        "source_identity_sha256": sha256_bytes(canonical_json_bytes(packet["source_identity"])),
+        "source_identity": expected_packet["source_identity"],
         "status": "ready_for_human",
     }
-    if not isinstance(payload["packet_sha256"], str) or not isinstance(payload["markdown_sha256"], str) or len(payload["markdown_sha256"]) != 64:
-        raise H1Error("H1_V7_PACKET_INVALID")
     return {**payload, "readiness_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def _expected_fixed_h1_review_readiness_v7(
+    *, runtime_closure: object, authority_path: Path
+) -> tuple[dict[str, object], dict[str, object], bytes]:
+    """Rebuild readiness only after the fixed packet pair is retained exactly."""
+    packet, packet_raw, markdown_raw = _expected_fixed_h1_review_packet_v7(
+        runtime_closure=runtime_closure, authority_path=authority_path
+    )
+    _validate_published_v7_packet_bytes(
+        packet=packet, packet_raw=packet_raw, markdown_raw=markdown_raw
+    )
+    readiness = build_h1_review_readiness_v7(
+        packet=packet,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    return packet, readiness, canonical_json_bytes(readiness)
+
+
+def write_h1_review_readiness_v7(
+    *, runtime_closure: object, authority_path: Path
+) -> dict[str, object]:
+    """Publish or exactly resume the one fixed decision-free readiness receipt."""
+    packet, readiness, raw = _expected_fixed_h1_review_readiness_v7(
+        runtime_closure=runtime_closure, authority_path=authority_path
+    )
+    output = _REPOSITORY.absolute() / _V7_READINESS_PATH
+    preflight_status = _preflight_h1_exact_resume(
+        output, raw, "H1_V7_READINESS_OUTPUT_INVALID"
+    )
+
+    # Rebuild the complete fixed chain after construction and immediately
+    # after the target preflight, immediately before entering the no-replace
+    # write primitive. No human value is an argument to this writer or
+    # introduced into its canonical projection.
+    fresh_packet, fresh_readiness, fresh_raw = (
+        _expected_fixed_h1_review_readiness_v7(
+            runtime_closure=runtime_closure, authority_path=authority_path
+        )
+    )
+    if (
+        fresh_packet != packet
+        or fresh_readiness != readiness
+        or fresh_raw != raw
+    ):
+        raise H1Error("H1_V7_READINESS_PREWRITE_DRIFT")
+    status = _write_h1_exact_resume(
+        output,
+        fresh_raw,
+        "H1_V7_READINESS_OUTPUT_INVALID",
+        preflight_status=preflight_status,
+    )
+    postflight = validate_h1_review_readiness_v7(
+        readiness=fresh_readiness,
+        packet=fresh_packet,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    if canonical_json_bytes(postflight) != fresh_raw:
+        raise H1Error("H1_V7_READINESS_OUTPUT_INVALID")
+    return {
+        "packet_sha256": fresh_packet["packet_sha256"],
+        "readiness_sha256": fresh_readiness["readiness_sha256"],
+        "status": status,
+        "valid": True,
+    }
+
+
+def _validate_published_v7_review_bytes(
+    *, packet: Mapping[str, object], readiness: Mapping[str, object]
+) -> None:
+    try:
+        held = read_authoritative_files(
+            _REPOSITORY.absolute(), [_V7_PACKET_PATH, _V7_MARKDOWN_PATH, _V7_READINESS_PATH]
+        )
+    except (FilesystemPolicyError, OSError) as error:
+        raise H1Error("H1_V7_PUBLISHED_REVIEW_INVALID") from error
+    expected = {
+        _V7_PACKET_PATH: canonical_json_bytes(dict(packet)),
+        _V7_MARKDOWN_PATH: render_h1_review_checkpoint_v7(packet),
+        _V7_READINESS_PATH: canonical_json_bytes(dict(readiness)),
+    }
+    if any(held[path][1] != raw for path, raw in expected.items()):
+        raise H1Error("H1_V7_PUBLISHED_REVIEW_INVALID")
+
+
+def validate_h1_review_readiness_v7(
+    *, readiness: object, packet: object, runtime_closure: object, authority_path: Path
+) -> dict[str, object]:
+    """Read-only validation of the three published packet/Markdown/readiness files."""
+    if not isinstance(readiness, Mapping) or not isinstance(packet, Mapping):
+        raise H1Error("H1_V7_READINESS_INVALID")
+    expected = build_h1_review_readiness_v7(
+        packet=packet, runtime_closure=runtime_closure, authority_path=authority_path
+    )
+    if dict(readiness) != expected:
+        raise H1Error("H1_V7_READINESS_MISMATCH")
+    _validate_published_v7_review_bytes(packet=packet, readiness=readiness)
+    return dict(readiness)
 
 
 def validate_h1_source_gold_decision_v6(*, decision: object, packet: object, readiness: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
     """Validate the closed three-state human judgment without writing anything."""
-    _v7_gate(runtime_closure, authority_path)
     if not isinstance(packet, Mapping) or not isinstance(readiness, Mapping) or not isinstance(decision, Mapping):
         raise H1Error("H1_V6_DECISION_INVALID")
-    if readiness.get("packet_sha256") != packet.get("packet_sha256"):
+    expected_readiness = build_h1_review_readiness_v7(
+        packet=packet, runtime_closure=runtime_closure, authority_path=authority_path
+    )
+    if dict(readiness) != expected_readiness:
         raise H1Error("H1_V6_PACKET_READINESS_MISMATCH")
-    packet_payload = {key: packet[key] for key in ("fixture_reviews", "markdown_sha256", "questions", "schema_version", "source_identity") if key in packet}
-    readiness_payload = {key: readiness[key] for key in ("markdown_sha256", "packet_sha256", "schema_version", "source_identity_sha256", "status") if key in readiness}
-    if packet.get("packet_sha256") != sha256_bytes(canonical_json_bytes(packet_payload)) or readiness.get("readiness_sha256") != sha256_bytes(canonical_json_bytes(readiness_payload)):
-        raise H1Error("H1_V6_PACKET_READINESS_MISMATCH")
+    _validate_published_v7_review_bytes(packet=packet, readiness=readiness)
     required = {
         "aggregate_disposition", "aggregate_rationale", "attestation", "decision_sha256", "fixture_reviews",
         "packet_sha256", "readiness_sha256", "reviewer", "schema_version", "semantic_responses", "signature", "timestamp_utc",
@@ -181,9 +805,13 @@ def validate_h1_source_gold_decision_v6(*, decision: object, packet: object, rea
             raise H1Error("H1_V6_DECISION_INCOMPLETE")
     timestamp = decision["timestamp_utc"]
     try:
-        parsed_timestamp = datetime.strptime(str(timestamp), "%Y-%m-%dT%H:%M:%SZ")
+        if _CANONICAL_UTC_RE.fullmatch(timestamp) is None:
+            raise ValueError("noncanonical UTC timestamp")
+        parsed_timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError as error:
         raise H1Error("H1_V6_DECISION_INCOMPLETE") from error
+    if parsed_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ") != timestamp:
+        raise H1Error("H1_V6_DECISION_INCOMPLETE")
     items = decision.get("semantic_responses")
     aggregate = decision.get("aggregate_disposition")
     if not isinstance(items, list) or len(items) != 7 or aggregate not in _H1_DISPOSITIONS:
@@ -210,6 +838,103 @@ def validate_h1_source_gold_decision_v6(*, decision: object, packet: object, rea
     if aggregate != expected_aggregate:
         raise H1Error("H1_V6_AGGREGATE_CONFLICT")
     return dict(decision)
+
+
+def _preflight_h1_exact_resume(output: Path, raw: bytes, code: str) -> str:
+    if not output.parent.is_dir() or output.parent.is_symlink():
+        raise H1Error(code)
+    try:
+        _, existing = read_authoritative_file(output.parent, output.name)
+    except FilesystemPolicyError as error:
+        if str(error) != "AUTHORITATIVE_FILE_MISSING":
+            raise H1Error(code) from error
+        return "written"
+    except OSError as error:
+        raise H1Error(code) from error
+    if existing != raw:
+        raise H1Error(code)
+    return "resumed"
+
+
+def _write_h1_exact_resume(
+    output: Path, raw: bytes, code: str, *, preflight_status: str
+) -> str:
+    """Enter only the no-replace primitive after the caller's final gate."""
+    if preflight_status not in {"written", "resumed"}:
+        raise H1Error(code)
+    if preflight_status == "resumed":
+        return preflight_status
+    try:
+        write_new_descriptor_file(output.parent, output.name, raw)
+    except FilesystemPolicyError as error:
+        raise H1Error(code) from error
+    return "written"
+
+
+def _validate_h1_exact_output(output: Path, raw: bytes, code: str) -> None:
+    try:
+        evidence, retained = read_authoritative_file(output.parent, output.name)
+    except (FilesystemPolicyError, OSError) as error:
+        raise H1Error(code) from error
+    if evidence.file_kind != "regular_file" or retained != raw:
+        raise H1Error(code)
+
+
+def write_h1_source_gold_decision_v6(
+    *, output: Path, decision: object, packet: object, readiness: object,
+    runtime_closure: object, authority_path: Path, preflight: bool = False,
+) -> dict[str, object]:
+    """Validate a complete human decision before an immutable exact-resume write."""
+    fixed_output = (_REPOSITORY.absolute() / _V7_DECISION_PATH).absolute()
+    if output.absolute() != fixed_output:
+        raise H1Error("H1_V6_DECISION_OUTPUT_INVALID")
+    validated = validate_h1_source_gold_decision_v6(
+        decision=decision, packet=packet, readiness=readiness,
+        runtime_closure=runtime_closure, authority_path=authority_path,
+    )
+    raw = canonical_json_bytes(validated)
+    preflight_status = _preflight_h1_exact_resume(
+        output, raw, "H1_V6_DECISION_OUTPUT_INVALID"
+    )
+    if preflight:
+        status = "preflight_valid"
+    else:
+        # The first validation is not a durable authorization token. Repeat the
+        # complete packet/readiness/fresh-chain gate at the write boundary so a
+        # changed closure or active authority cannot reach the primitive.
+        fresh = validate_h1_source_gold_decision_v6(
+            decision=decision,
+            packet=packet,
+            readiness=readiness,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+        fresh_raw = canonical_json_bytes(fresh)
+        if fresh != validated or fresh_raw != raw:
+            raise H1Error("H1_V6_DECISION_PREWRITE_DRIFT")
+        status = _write_h1_exact_resume(
+            output,
+            fresh_raw,
+            "H1_V6_DECISION_OUTPUT_INVALID",
+            preflight_status=preflight_status,
+        )
+        _validate_h1_exact_output(
+            output, fresh_raw, "H1_V6_DECISION_OUTPUT_INVALID"
+        )
+        postflight = validate_h1_source_gold_decision_v6(
+            decision=decision,
+            packet=packet,
+            readiness=readiness,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+        if canonical_json_bytes(postflight) != fresh_raw:
+            raise H1Error("H1_V6_DECISION_OUTPUT_INVALID")
+    return {
+        "aggregate_disposition": validated["aggregate_disposition"],
+        "decision_sha256": validated["decision_sha256"],
+        "status": status,
+    }
 
 
 def validate_approved_h1_terminal_v6(*, decision: object, packet: object, readiness: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
@@ -256,7 +981,9 @@ _H1_V3_REPLAY = _ROOT / "receipts/fixture-closure-offline-replay-v3.json"
 _H1_V2_SUMMARY = _ROOT.parents[1] / ".planning/phases/02-deterministic-measurement-spine/02-16-SUMMARY.md"
 
 _ROUTE_BINDING_PATHS = {
-    "active_authority_sha256": _ACTIVE_AUTHORITY,
+    # The route refusal is immutable history.  After accepted-v6 cutover its
+    # authority input is the preserved v13 historical file, not the new head.
+    "active_authority_sha256": _SUCCESSOR_HISTORICAL_AUTHORITY,
     "adversarial_v3_sha256": _H1_V3_ADVERSARIAL,
     "formal_v2_sha256": _H1_V2_FORMAL,
     "h1_review_schema_v2_sha256": _H1_V2_SCHEMA,
@@ -708,7 +1435,7 @@ def _validate_v3_route_inputs(*, schema: Path, packet: Path, markdown: Path, rea
         packet=packet,
         markdown=markdown,
         schema=schema,
-        source_authority=_ACTIVE_AUTHORITY,
+        source_authority=_SUCCESSOR_HISTORICAL_AUTHORITY,
         canonical_revocation=_REVOCATION_V2,
         bundle=_H1_V3_BUNDLE,
         rules=_H1_V1_RULES,

@@ -17,7 +17,12 @@ from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 from specchoice_evidence.runtime_closure import RuntimeClosureError, load_runtime_closure_v4
 
-from .adapter import build_pr2164_adapter_batch, build_pr2164_v6_adapter_batch
+from .adapter import (
+    build_pr2164_accepted_v6_adapter_batch_v4,
+    build_pr2164_adapter_batch,
+    build_pr2164_v6_adapter_batch,
+    validate_pr2164_accepted_v6_adapter_batch_v4,
+)
 from .preflight import preflight_prediction_batch
 from .scoring import score_prediction_batch
 
@@ -35,9 +40,16 @@ def require_v4_downstream_gate(*, runtime_closure: object, authority_path: Path)
         if canonical != expected:
             raise AttemptError("ACTIVE_AUTHORITY_MISMATCH")
         load_runtime_closure_v4(repository, runtime_closure)
-    except (OSError, RuntimeClosureError) as error:
+        evidence, authority_raw = read_authoritative_file(canonical.parent, canonical.name)
+    except (FilesystemPolicyError, OSError, RuntimeClosureError) as error:
         raise AttemptError("RUNTIME_CLOSURE_V4_REQUIRED") from error
-    if sha256_bytes(canonical.read_bytes()) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae":
+    if (
+        evidence.file_kind != "regular_file"
+        or evidence.sha256
+        != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae"
+        or sha256_bytes(authority_raw)
+        != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae"
+    ):
         raise AttemptError("ACTIVE_AUTHORITY_MISMATCH")
 
 
@@ -48,7 +60,11 @@ def validate_fresh_v4_target(*, target: Path, runtime_closure: object, authority
         raise AttemptError("V4_TARGET_KIND_INVALID")
     if not target.exists():
         return False
-    if expected is None or target.read_bytes() != expected:
+    try:
+        evidence, raw = read_authoritative_file(target.parent, target.name)
+    except (FilesystemPolicyError, OSError) as error:
+        raise AttemptError("V4_TARGET_DIVERGED") from error
+    if evidence.file_kind != "regular_file" or expected is None or raw != expected:
         raise AttemptError("V4_TARGET_DIVERGED")
     return True
 
@@ -1375,3 +1391,384 @@ def validate_adversarial_result_v6(
         "status": value["status"],
         "valid": True,
     }
+
+
+_FRESH_EXPERIMENT = Path("experiments/specchoice-v1.3.2")
+_FRESH_ADAPTER = Path("reports/h1/adapter-batch-pr2164-v6.json")
+_FRESH_FORMAL = Path("runs/measurement-attempts/formal-golden-pr2164-v6")
+_FRESH_ADVERSARIAL = Path("reports/h1/adversarial-oracle-results-v7.json")
+_FRESH_FORMAL_FILES = frozenset({
+    "attempt.json", "case-outcomes.json", "diagnostics.json", "metrics.json",
+    "parsed-predictions.json", "report.json",
+})
+
+
+def _fresh_paths(repository: Path) -> dict[str, Path]:
+    experiment = repository / _FRESH_EXPERIMENT
+    return {
+        "adapter": experiment / _FRESH_ADAPTER,
+        "adversarial": experiment / _FRESH_ADVERSARIAL,
+        "authority": experiment / "phase2/source-authority.json",
+        "bundle": experiment / (
+            "bundles/accepted/"
+            "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+        ),
+        "contract": experiment / "fixtures/measurement/adversarial/required-diagnostics-v4.json",
+        "formal": experiment / _FRESH_FORMAL,
+        "golden": experiment / "fixtures/measurement/golden-predictions-v4.json",
+        "registry": experiment / "config/fixture-registry-pr2164-v6.json",
+        "rules": experiment / "config/measurement/pr2164-adapter-rules-v4.json",
+        "schema": experiment / "config/measurement/canonical-adjudication-schema-v3.json",
+        "semantic": experiment / "config/measurement/pr2164-semantic-gold-contract-v2.json",
+    }
+
+
+def _fresh_v6_context(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> tuple[object, dict[str, object], bytes]:
+    """Rebuild the fresh adapter and require its fixed published artifact."""
+    repository = repository.resolve(strict=True)
+    paths = _fresh_paths(repository)
+    require_v4_downstream_gate(
+        runtime_closure=runtime_closure, authority_path=authority_path,
+    )
+    validate_pr2164_accepted_v6_adapter_batch_v4(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    batch = build_pr2164_accepted_v6_adapter_batch_v4(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+        bundle_root=paths["bundle"],
+        rules_path=paths["rules"],
+    )
+    if not getattr(batch, "valid", False) or tuple(getattr(batch, "diagnostics", ())):
+        raise AttemptError("FRESH_V6_ADAPTER_INVALID")
+    _, adapter_raw = _canonical_file(paths["adapter"], "FRESH_V6_ADAPTER_INVALID")
+    if adapter_raw != getattr(batch, "canonical_bytes")():
+        raise AttemptError("FRESH_V6_ADAPTER_INVALID")
+    golden, golden_raw = _canonical_file(paths["golden"], "FRESH_V6_GOLDEN_INVALID")
+    source_identity = getattr(batch, "source_identity", None)
+    if (
+        not isinstance(source_identity, dict)
+        or source_identity.get("golden_predictions_sha256") != sha256_bytes(golden_raw)
+    ):
+        raise AttemptError("FRESH_V6_GOLDEN_INVALID")
+    return batch, golden, golden_raw
+
+
+def _fresh_formal_expected_files(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> tuple[object, bytes, dict[str, bytes]]:
+    batch, golden, _ = _fresh_v6_context(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    paths = _fresh_paths(repository)
+    _, schema_raw = _canonical_file(paths["schema"], "FRESH_V6_SCHEMA_INVALID")
+    source_identity = getattr(batch, "source_identity", None)
+    if (
+        not isinstance(source_identity, dict)
+        or source_identity.get("adjudication_schema_sha256") != sha256_bytes(schema_raw)
+    ):
+        raise AttemptError("FRESH_V6_SCHEMA_INVALID")
+    raw_predictions, parsed, score = _successor_formal_score_v5(
+        batch=batch, golden=golden,
+    )
+    role, status = _terminal_role(mode="formal", score=score)
+    if (role, status) != ("formal", "completed"):
+        raise AttemptError("FRESH_V6_FORMAL_SCORE_INVALID")
+    values: dict[str, object] = {
+        "adapter_batch": batch,
+        # canonical-adjudication-v3 remains the closed payload schema; v4 is
+        # the custody/adapter generation, not a new JSON ingress dialect.
+        "ingress": "current-v3",
+        "preflight": parsed,
+        "raw_predictions": raw_predictions,
+        "score_result": score,
+        "schema_raw": schema_raw,
+    }
+    artifacts: dict[str, dict[str, object]] = {}
+    files: dict[str, bytes] = {}
+    for name, payload in _artifact_payloads(
+        inputs=values, role=role, status=status,
+    ).items():
+        content = canonical_json_bytes(payload)
+        files[name] = content
+        artifacts[name] = {"byte_length": len(content), "sha256": sha256_bytes(content)}
+    manifest = _manifest(
+        attempt_id="formal-golden-pr2164-v6",
+        role=role,
+        status=status,
+        raw_predictions=raw_predictions,
+        bindings=_bindings(values, raw_predictions),
+        artifacts=artifacts,
+    )
+    files["attempt.json"] = canonical_json_bytes(manifest)
+    if set(files) != _FRESH_FORMAL_FILES:
+        raise AttemptError("FRESH_V6_FORMAL_ARTIFACT_SET_INVALID")
+    return batch, schema_raw, files
+
+
+def _read_exact_formal_directory(target: Path, expected: Mapping[str, bytes]) -> dict[str, bytes]:
+    if target.is_symlink() or not target.is_dir():
+        raise AttemptError("FRESH_V6_FORMAL_TARGET_KIND_INVALID")
+    try:
+        children = list(target.iterdir())
+    except OSError as error:
+        raise AttemptError("FRESH_V6_FORMAL_TARGET_INVALID") from error
+    if {child.name for child in children} != set(expected) or len(children) != len(expected):
+        raise AttemptError("FRESH_V6_FORMAL_TARGET_DIVERGED")
+    retained: dict[str, bytes] = {}
+    for name in sorted(expected):
+        try:
+            evidence, raw = read_authoritative_file(target, name)
+        except (OSError, FilesystemPolicyError) as error:
+            raise AttemptError("FRESH_V6_FORMAL_TARGET_INVALID") from error
+        if evidence.file_kind != "regular_file" or raw != expected[name]:
+            raise AttemptError("FRESH_V6_FORMAL_TARGET_DIVERGED")
+        retained[name] = raw
+    try:
+        final_children = list(target.iterdir())
+    except OSError as error:
+        raise AttemptError("FRESH_V6_FORMAL_TARGET_INVALID") from error
+    if (
+        target.is_symlink()
+        or not target.is_dir()
+        or {child.name for child in final_children} != set(expected)
+        or len(final_children) != len(expected)
+    ):
+        raise AttemptError("FRESH_V6_FORMAL_TARGET_DIVERGED")
+    return retained
+
+
+def validate_fresh_formal_measurement_v6(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> dict[str, object]:
+    """Replay and byte-compare the fixed six-file formal-v6 directory."""
+    repository = repository.resolve(strict=True)
+    batch, schema_raw, expected = _fresh_formal_expected_files(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    target = _fresh_paths(repository)["formal"]
+    _read_exact_formal_directory(target, expected)
+    validated = validate_measurement_attempt(
+        attempt_root=target, adapter_batch=batch, schema_raw=schema_raw,
+    )
+    metrics = json.loads(expected["metrics.json"].decode("utf-8"))
+    if metrics != _SUCCESSOR_METRICS_V5:
+        raise AttemptError("FRESH_V6_FORMAL_METRICS_INVALID")
+    return {
+        "attempt_sha256": validated["attempt_sha256"],
+        "case_count": 11,
+        "metrics": metrics,
+        "role": "formal",
+        "status": "completed",
+        "valid": True,
+    }
+
+
+def run_fresh_formal_measurement_v6(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> dict[str, object]:
+    """Publish or byte-exactly resume the fixed fresh formal-v6 directory."""
+    repository = repository.resolve(strict=True)
+    paths = _fresh_paths(repository)
+    batch, schema_raw, expected = _fresh_formal_expected_files(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    target = paths["formal"]
+    if target.is_symlink() or (target.exists() and not target.is_dir()):
+        raise AttemptError("FRESH_V6_FORMAL_TARGET_KIND_INVALID")
+    if target.exists():
+        _read_exact_formal_directory(target, expected)
+        result = validate_fresh_formal_measurement_v6(
+            repository=repository,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+        return {**result, "write_status": "resumed"}
+    parent = target.parent
+    if not parent.is_dir() or parent.is_symlink():
+        raise AttemptError("FRESH_V6_FORMAL_PARENT_INVALID")
+    temporary = Path(tempfile.mkdtemp(prefix=".formal-golden-pr2164-v6.staging-", dir=parent))
+    try:
+        for name in sorted(expected):
+            _write_exact(temporary / name, expected[name])
+        validate_measurement_attempt(
+            attempt_root=temporary, adapter_batch=batch, schema_raw=schema_raw,
+        )
+        _sync_directory(temporary)
+        _sync_directory(parent)
+
+        # Re-run the non-optional published closure and active-authority gate
+        # immediately before publishing the directory.
+        fresh_batch, fresh_schema, fresh_expected = _fresh_formal_expected_files(
+            repository=repository,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+        if (
+            fresh_expected != expected
+            or getattr(fresh_batch, "adapter_batch_sha256", None)
+            != getattr(batch, "adapter_batch_sha256", None)
+            or fresh_schema != schema_raw
+        ):
+            raise AttemptError("FRESH_V6_FORMAL_PREWRITE_DRIFT")
+        try:
+            _publish_directory_no_replace(
+                temporary, target, "FRESH_V6_FORMAL_TARGET_RACE",
+            )
+        except BundleError as error:
+            raise AttemptError(str(error)) from error
+        _sync_directory(parent)
+    except Exception:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        raise
+    result = validate_fresh_formal_measurement_v6(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    return {**result, "write_status": "written"}
+
+
+def _fresh_adversarial_expected(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> tuple[dict[str, object], bytes]:
+    batch, golden, golden_raw = _fresh_v6_context(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    paths = _fresh_paths(repository)
+    formal = validate_fresh_formal_measurement_v6(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    contract_result = validate_required_diagnostics_v4(
+        contract=paths["contract"], golden_predictions=paths["golden"],
+    )
+    contract, contract_raw = _canonical_file(
+        paths["contract"], "FRESH_V7_ADVERSARIAL_CONTRACT_INVALID",
+    )
+    _, adapter_raw = _canonical_file(paths["adapter"], "FRESH_V7_ADAPTER_INVALID")
+    _, rules_raw = _canonical_file(paths["rules"], "FRESH_V7_RULES_INVALID")
+    _, schema_raw = _canonical_file(paths["schema"], "FRESH_V7_SCHEMA_INVALID")
+    cases: list[dict[str, object]] = []
+    for case in contract["cases"]:
+        if not isinstance(case, dict) or not isinstance(case.get("mutations"), list):
+            raise AttemptError("FRESH_V7_ADVERSARIAL_CONTRACT_INVALID")
+        mutated = _apply_successor_mutations(golden, case["mutations"])
+        observed = _evaluate_successor_payload(mutated, golden)
+        if observed != case.get("expected_diagnostics"):
+            raise AttemptError(f"FRESH_V7_ADVERSARIAL_MISMATCH:{case.get('id')}")
+        cases.append({
+            "expected_diagnostics": case["expected_diagnostics"],
+            "formal_effect": case["formal_effect"],
+            "id": case["id"],
+            "matched": True,
+            "metric_output_allowed": False,
+            "mutated_input_sha256": sha256_bytes(canonical_json_bytes(mutated)),
+            "observed_diagnostics": observed,
+        })
+    if len(cases) != contract_result["case_count"] or len(cases) != 17:
+        raise AttemptError("FRESH_V7_ADVERSARIAL_CONTRACT_INVALID")
+    source_identity = getattr(batch, "source_identity", {})
+    report: dict[str, object] = {
+        "bindings": {
+            "adapter_batch_file_sha256": sha256_bytes(adapter_raw),
+            "adapter_batch_sha256": getattr(batch, "adapter_batch_sha256", None),
+            "authority_sha256": source_identity.get("authority_sha256"),
+            "closure_freeze_commit": source_identity.get("closure_freeze_commit"),
+            "closure_sha256": source_identity.get("closure_sha256"),
+            "formal_attempt_sha256": formal["attempt_sha256"],
+            "golden_predictions_sha256": sha256_bytes(golden_raw),
+            "required_diagnostics_sha256": sha256_bytes(contract_raw),
+            "rule_sha256": sha256_bytes(rules_raw),
+            "schema_sha256": sha256_bytes(schema_raw),
+        },
+        "cases": cases,
+        "schema_version": "adversarial-oracle-results-v7",
+        "status": "diagnostic_only",
+    }
+    report["report_sha256"] = sha256_bytes(canonical_json_bytes(report))
+    return report, canonical_json_bytes(report)
+
+
+def validate_fresh_adversarial_result_v7(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> dict[str, object]:
+    """Replay and byte-compare the fixed fresh adversarial-v7 report."""
+    repository = repository.resolve(strict=True)
+    expected, expected_raw = _fresh_adversarial_expected(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    target = _fresh_paths(repository)["adversarial"]
+    try:
+        evidence, raw = read_authoritative_file(target.parent, target.name)
+    except (OSError, FilesystemPolicyError) as error:
+        raise AttemptError("FRESH_V7_ADVERSARIAL_REPORT_INVALID") from error
+    if evidence.file_kind != "regular_file" or raw != expected_raw:
+        raise AttemptError("FRESH_V7_ADVERSARIAL_REPORT_DIVERGED")
+    return {
+        "case_count": len(expected["cases"]),
+        "report_sha256": expected["report_sha256"],
+        "status": "diagnostic_only",
+        "valid": True,
+    }
+
+
+def run_fresh_adversarial_suite_v7(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> dict[str, object]:
+    """Publish or byte-exactly resume the fixed fresh adversarial-v7 report."""
+    repository = repository.resolve(strict=True)
+    target = _fresh_paths(repository)["adversarial"]
+    expected, expected_raw = _fresh_adversarial_expected(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    if target.is_symlink() or (target.exists() and not target.is_file()):
+        raise AttemptError("FRESH_V7_ADVERSARIAL_TARGET_KIND_INVALID")
+    if target.exists():
+        result = validate_fresh_adversarial_result_v7(
+            repository=repository,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+        return {**result, "write_status": "resumed"}
+    if not target.parent.is_dir() or target.parent.is_symlink():
+        raise AttemptError("FRESH_V7_ADVERSARIAL_PARENT_INVALID")
+
+    # The second build is the write-adjacent mandatory closure/authority gate.
+    fresh, fresh_raw = _fresh_adversarial_expected(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    if fresh_raw != expected_raw or fresh.get("report_sha256") != expected.get("report_sha256"):
+        raise AttemptError("FRESH_V7_ADVERSARIAL_PREWRITE_DRIFT")
+    try:
+        _write_exact(target, fresh_raw)
+        _sync_directory(target.parent)
+    except (FileExistsError, OSError) as error:
+        raise AttemptError("FRESH_V7_ADVERSARIAL_TARGET_RACE") from error
+    result = validate_fresh_adversarial_result_v7(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+    )
+    return {**result, "write_status": "written"}

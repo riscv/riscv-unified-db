@@ -8,10 +8,12 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+from specchoice_evidence.bundle import _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file, require_relative_posix_path
 from specchoice_evidence.runtime_closure import RuntimeClosureError, load_runtime_closure_v4
@@ -1070,6 +1072,13 @@ def build_pr2164_v6_adapter_batch(
         payloads: dict[str, dict[str, Any]] = {}
         raws: dict[str, bytes] = {}
         for name in sorted(_V6_BINDING_KEYS):
+            # The accepted-v6 adapter consumes the materialized bundle, not the
+            # mutable repair-workspace copies.  The repair manifest remains
+            # provenance in the registry, but is deliberately not opened in
+            # materialized-only mode.
+            if materialized_only and name == "repair_manifest":
+                _v6_binding(bindings[name], "V6_ADAPTER_BINDING_MISMATCH")
+                continue
             binding, raw = _v6_bound_raw(experiment_root, bindings[name], "V6_ADAPTER_BINDING_MISMATCH")
             payloads[name] = _v6_canonical_payload(raw, "V6_ADAPTER_BINDING_MISMATCH")
             raws[name] = raw
@@ -1084,7 +1093,7 @@ def build_pr2164_v6_adapter_batch(
         registry = payloads["fixture_registry"]
         contract = payloads["semantic_contract"]
         golden = payloads["golden_predictions"]
-        manifest = payloads["repair_manifest"]
+        manifest = payloads.get("repair_manifest")
         schema = payloads["adjudication_schema"]
         if (
             set(schema) != _V6_SCHEMA_KEYS
@@ -1133,32 +1142,36 @@ def build_pr2164_v6_adapter_batch(
         if {entry["fixture_id"] for entry in entries} != set(fixture_ids):
             raise AdapterError("V6_REGISTRY_INVENTORY_INVALID")
 
-        manifest_value = _v6_exact_keys(
-            manifest,
-            {"ontology_decision", "payload_count", "payloads", "predecessor_generation", "schema_version"},
-            "V6_REPAIR_MANIFEST_INVALID",
-        )
-        if (
-            manifest_value.get("schema_version") != "pr2164-semantic-gold-repair-manifest-v5"
-            or manifest_value.get("payload_count") != 9
-        ):
-            raise AdapterError("V6_REPAIR_MANIFEST_INVALID")
-        ontology_binding, _ = _v6_bound_raw(experiment_root, manifest_value.get("ontology_decision"), "V6_ONTOLOGY_BINDING_INVALID")
-        if ontology_binding["sha256"] != registry.get("ontology_decision_sha256"):
-            raise AdapterError("V6_ONTOLOGY_BINDING_INVALID")
-        manifest_payloads = manifest_value.get("payloads")
-        if not isinstance(manifest_payloads, list) or len(manifest_payloads) != 9:
-            raise AdapterError("V6_REPAIR_MANIFEST_INVALID")
-        manifest_paths: set[str] = set()
-        for value in manifest_payloads:
-            binding, _ = _v6_bound_raw(experiment_root, value, "V6_REPAIR_PAYLOAD_BINDING_INVALID")
-            path = str(binding["path"])
-            if path in manifest_paths:
-                raise AdapterError("V6_REPAIR_PAYLOAD_DUPLICATE")
-            manifest_paths.add(path)
         repair_entries = {str(entry["path"]) for entry in entries if entry["origin"] == "repair-v5"}
-        if repair_entries != manifest_paths:
-            raise AdapterError("V6_REPAIR_MANIFEST_REGISTRY_MISMATCH")
+        if materialized_only:
+            if len(repair_entries) != 9:
+                raise AdapterError("V6_REPAIR_MANIFEST_REGISTRY_MISMATCH")
+        else:
+            manifest_value = _v6_exact_keys(
+                manifest,
+                {"ontology_decision", "payload_count", "payloads", "predecessor_generation", "schema_version"},
+                "V6_REPAIR_MANIFEST_INVALID",
+            )
+            if (
+                manifest_value.get("schema_version") != "pr2164-semantic-gold-repair-manifest-v5"
+                or manifest_value.get("payload_count") != 9
+            ):
+                raise AdapterError("V6_REPAIR_MANIFEST_INVALID")
+            ontology_binding, _ = _v6_bound_raw(experiment_root, manifest_value.get("ontology_decision"), "V6_ONTOLOGY_BINDING_INVALID")
+            if ontology_binding["sha256"] != registry.get("ontology_decision_sha256"):
+                raise AdapterError("V6_ONTOLOGY_BINDING_INVALID")
+            manifest_payloads = manifest_value.get("payloads")
+            if not isinstance(manifest_payloads, list) or len(manifest_payloads) != 9:
+                raise AdapterError("V6_REPAIR_MANIFEST_INVALID")
+            manifest_paths: set[str] = set()
+            for value in manifest_payloads:
+                binding, _ = _v6_bound_raw(experiment_root, value, "V6_REPAIR_PAYLOAD_BINDING_INVALID")
+                path = str(binding["path"])
+                if path in manifest_paths:
+                    raise AdapterError("V6_REPAIR_PAYLOAD_DUPLICATE")
+                manifest_paths.add(path)
+            if repair_entries != manifest_paths:
+                raise AdapterError("V6_REPAIR_MANIFEST_REGISTRY_MISMATCH")
 
         if set(contract) != _V6_CONTRACT_KEYS or contract.get("schema_version") != "pr2164-semantic-gold-contract-v2":
             raise AdapterError("V6_SEMANTIC_CONTRACT_INVALID")
@@ -1225,7 +1238,10 @@ def build_pr2164_v6_adapter_batch(
             "generation": bundle_root.name,
             "golden_predictions_sha256": sha256_bytes(raws["golden_predictions"]),
             "registry_sha256": sha256_bytes(raws["fixture_registry"]),
-            "repair_manifest_sha256": sha256_bytes(raws["repair_manifest"]),
+            "repair_manifest_sha256": (
+                str(bindings["repair_manifest"]["sha256"])
+                if materialized_only else sha256_bytes(raws["repair_manifest"])
+            ),
             "rule_sha256": rule_sha256,
             "semantic_contract_sha256": sha256_bytes(raws["semantic_contract"]),
         }
@@ -1317,66 +1333,303 @@ def build_pr2164_v6_adapter_batch(
         )
 
 
+_V4_EXPERIMENT = Path("experiments/specchoice-v1.3.2")
+_V4_GENERATION = "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+_V4_AUTHORITY_SHA256 = "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae"
+_V4_ACCEPTED_IDENTITY = {
+    "core_sha256": "3a55a816904c787bd6e1ffc78c1cb90fd4503cbe30022477472e777612b6d547",
+    "root_sha256": "bd75dbc97869630bbaa41dbe48c3eb1b743b7c1022bd950180b7675ecf4dd1e9",
+    "snapshot_manifest_sha256": "a143334abbbc15bf455789c862ffb0ece13047348e1e91aad3f71a8a7c7cbdd0",
+}
+_V4_RULE_KEYS = {
+    "accepted_generation", "adapter_version", "bindings", "closed",
+    "fixture_count", "materialized_leaf_by_role", "output_path",
+    "raw_file_count", "schema_version",
+}
+_V4_BINDING_KEYS = {
+    "adjudication_schema", "fixture_registry", "golden_predictions",
+    "legacy_rules", "semantic_contract",
+}
+_V4_LEAVES = {
+    "fixture_expected": "expected.yaml",
+    "fixture_gold": "gold.yaml",
+    "fixture_source": "source.txt",
+}
+
+
+def _v4_paths(repository: Path) -> dict[str, Path]:
+    experiment = repository / _V4_EXPERIMENT
+    return {
+        "authority": experiment / "phase2/source-authority.json",
+        "bundle": experiment / f"bundles/accepted/{_V4_GENERATION}",
+        "closure": experiment / "receipts/runtime-executable-closure-v4.json",
+        "output": experiment / "reports/h1/adapter-batch-pr2164-v6.json",
+        "rules": experiment / "config/measurement/pr2164-adapter-rules-v4.json",
+    }
+
+
+def _v4_canonical_binding(
+    *, experiment_root: Path, binding: object, code: str,
+) -> tuple[dict[str, object], dict[str, Any], bytes]:
+    normalized, raw = _v6_bound_raw(experiment_root, binding, code)
+    return normalized, _v6_canonical_payload(raw, code), raw
+
+
+def _v4_gate(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+    bundle_root: Path, rules_path: Path,
+) -> tuple[
+    dict[str, object], bytes, dict[str, Any], bytes,
+    dict[str, tuple[dict[str, object], dict[str, Any], bytes]], bytes,
+]:
+    """Hold the published closure, authority, and every v4 control by exact bytes."""
+    paths = _v4_paths(repository)
+    try:
+        verified_closure = load_runtime_closure_v4(repository, runtime_closure)
+    except RuntimeClosureError as error:
+        raise AdapterError("RUNTIME_CLOSURE_V4_REQUIRED") from error
+    try:
+        if (
+            authority_path.resolve(strict=True) != paths["authority"]
+            or bundle_root.resolve(strict=True) != paths["bundle"]
+            or rules_path.resolve(strict=True) != paths["rules"]
+        ):
+            raise AdapterError("FORGED_UNBOUND_GENERATION")
+    except OSError as error:
+        raise AdapterError("FORGED_UNBOUND_GENERATION") from error
+
+    closure, closure_raw = _load_canonical_json(paths["closure"], "RUNTIME_CLOSURE_V4_REQUIRED")
+    if closure != verified_closure or canonical_json_bytes(verified_closure) != closure_raw:
+        raise AdapterError("RUNTIME_CLOSURE_V4_REQUIRED")
+    future_targets = verified_closure.get("future_targets")
+    if not isinstance(future_targets, list) or {
+        item.get("path") for item in future_targets if isinstance(item, dict)
+    }.isdisjoint({_V4_EXPERIMENT.joinpath("reports/h1/adapter-batch-pr2164-v6.json").as_posix()}):
+        raise AdapterError("RUNTIME_CLOSURE_V4_TARGET_INVENTORY_INVALID")
+
+    authority, authority_raw = _load_canonical_json(paths["authority"], "ACTIVE_AUTHORITY_MISMATCH")
+    accepted = authority.get("accepted_identity")
+    if (
+        sha256_bytes(authority_raw) != _V4_AUTHORITY_SHA256
+        or authority.get("schema_version") != "13"
+        or authority.get("status") != "accepted_cutover_v13"
+        or authority.get("generation") != _V4_GENERATION
+        or authority.get("fixture_count") != 11
+        or authority.get("raw_file_count") != 29
+        or authority.get("local_only") is not True
+        or authority.get("external_publication_authorized") is not False
+        or not isinstance(accepted, dict)
+        or accepted.get("generation") != _V4_GENERATION
+        or {key: accepted.get(key) for key in _V4_ACCEPTED_IDENTITY} != _V4_ACCEPTED_IDENTITY
+    ):
+        raise AdapterError("ACTIVE_AUTHORITY_MISMATCH")
+
+    rules, rules_raw = _load_canonical_json(paths["rules"], "ADAPTER_V4_RULES_INVALID")
+    if (
+        set(rules) != _V4_RULE_KEYS
+        or rules.get("schema_version") != "4"
+        or rules.get("adapter_version") != "pr2164-adapter-v4"
+        or rules.get("accepted_generation") != _V4_GENERATION
+        or rules.get("closed") is not True
+        or rules.get("fixture_count") != 11
+        or rules.get("raw_file_count") != 29
+        or rules.get("output_path") != "reports/h1/adapter-batch-pr2164-v6.json"
+        or rules.get("materialized_leaf_by_role") != _V4_LEAVES
+    ):
+        raise AdapterError("ADAPTER_V4_RULES_INVALID")
+    bindings = _v6_exact_keys(rules.get("bindings"), _V4_BINDING_KEYS, "ADAPTER_V4_RULES_INVALID")
+    experiment_root = repository / _V4_EXPERIMENT
+    controls = {
+        name: _v4_canonical_binding(
+            experiment_root=experiment_root,
+            binding=bindings[name],
+            code="ADAPTER_V4_BINDING_INVALID",
+        )
+        for name in sorted(_V4_BINDING_KEYS)
+    }
+    _, bundle_registry_raw = _load_canonical_json(
+        paths["bundle"] / "fixture-registry-pr2164-v6.json",
+        "ACCEPTED_V6_BUNDLE_REGISTRY_INVALID",
+    )
+    if bundle_registry_raw != controls["fixture_registry"][2]:
+        raise AdapterError("ACCEPTED_V6_BUNDLE_REGISTRY_INVALID")
+    return verified_closure, closure_raw, authority, authority_raw, controls, rules_raw
+
+
 def build_pr2164_accepted_v6_adapter_batch_v4(
     *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
     bundle_root: Path, rules_path: Path,
 ) -> AdapterBatch:
     """Build the v4 batch only from the active canonical accepted-v6 bundle."""
-    repository = repository.resolve(strict=True)
     source_identity: dict[str, str] = {}
     try:
-        try:
-            verified_closure = load_runtime_closure_v4(repository, runtime_closure)
-        except RuntimeClosureError as error:
-            raise AdapterError("RUNTIME_CLOSURE_V4_REQUIRED") from error
-        canonical_authority = repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json"
-        canonical_bundle = repository / (
-            "experiments/specchoice-v1.3.2/bundles/accepted/"
-            "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+        repository = repository.resolve(strict=True)
+        paths = _v4_paths(repository)
+        verified_closure, closure_raw, _, authority_raw, controls, rules_raw = _v4_gate(
+            repository=repository,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+            bundle_root=bundle_root,
+            rules_path=rules_path,
         )
-        canonical_rules = repository / "experiments/specchoice-v1.3.2/config/measurement/pr2164-adapter-rules-v4.json"
-        if authority_path.resolve(strict=True) != canonical_authority or bundle_root.resolve(strict=True) != canonical_bundle or rules_path.resolve(strict=True) != canonical_rules:
-            raise AdapterError("FORGED_UNBOUND_GENERATION")
-        authority_raw = canonical_authority.read_bytes()
-        if sha256_bytes(authority_raw) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae":
-            raise AdapterError("ACTIVE_AUTHORITY_MISMATCH")
-        authority = json.loads(authority_raw)
-        accepted = authority.get("accepted_identity")
-        expected = {
-            "core_sha256": "3a55a816904c787bd6e1ffc78c1cb90fd4503cbe30022477472e777612b6d547",
-            "root_sha256": "bd75dbc97869630bbaa41dbe48c3eb1b743b7c1022bd950180b7675ecf4dd1e9",
-            "snapshot_manifest_sha256": "a143334abbbc15bf455789c862ffb0ece13047348e1e91aad3f71a8a7c7cbdd0",
-        }
-        if not isinstance(accepted, dict) or {key: accepted.get(key) for key in expected} != expected:
-            raise AdapterError("ACTIVE_ACCEPTED_V6_IDENTITY_MISMATCH")
-        rules, rules_raw = _load_canonical_json(canonical_rules, "ADAPTER_V4_RULES_INVALID")
-        if rules.get("adapter_version") != "pr2164-adapter-v4" or rules.get("accepted_generation") != canonical_bundle.name:
-            raise AdapterError("ADAPTER_V4_RULES_INVALID")
         batch = build_pr2164_v6_adapter_batch(
-            registry_path=repository / "experiments/specchoice-v1.3.2/config/fixture-registry-pr2164-v6.json",
-            rules_path=repository / "experiments/specchoice-v1.3.2/config/measurement/pr2164-adapter-rules-v3.json",
-            contract_path=repository / "experiments/specchoice-v1.3.2/config/measurement/pr2164-semantic-gold-contract-v2.json",
-            golden_path=repository / "experiments/specchoice-v1.3.2/fixtures/measurement/golden-predictions-v4.json",
-            bundle_root=canonical_bundle,
+            registry_path=repository / _V4_EXPERIMENT / str(controls["fixture_registry"][0]["path"]),
+            rules_path=repository / _V4_EXPERIMENT / str(controls["legacy_rules"][0]["path"]),
+            contract_path=repository / _V4_EXPERIMENT / str(controls["semantic_contract"][0]["path"]),
+            golden_path=repository / _V4_EXPERIMENT / str(controls["golden_predictions"][0]["path"]),
+            bundle_root=paths["bundle"],
             materialized_only=True,
         )
-        if not batch.valid or len(batch.records) != 11 or sum(len(record.raw_files) for record in batch.records) != 29:
+        if not batch.valid or batch.diagnostics:
+            raise AdapterError(
+                batch.diagnostics[0].code if batch.diagnostics
+                else "ACCEPTED_V6_MATERIALIZED_RAW_TREE_INVALID"
+            )
+        if (
+            len(batch.records) != 11
+            or sum(len(record.raw_files) for record in batch.records) != 29
+            or batch.score_bearing_span_count != 10
+            or any(
+                raw.path != f"raw/evaluation_fixtures/{record.fixture_id}/{_V4_LEAVES[raw.role]}"
+                for record in batch.records for raw in record.raw_files
+            )
+        ):
             raise AdapterError("ACCEPTED_V6_MATERIALIZED_RAW_TREE_INVALID")
         source_identity = {
-            **batch.source_identity,
-            "authority_sha256": sha256_bytes(authority_raw),
-            "core_sha256": expected["core_sha256"],
-            "root_sha256": expected["root_sha256"],
-            "snapshot_manifest_sha256": expected["snapshot_manifest_sha256"],
-            "closure_schema_version": "runtime-executable-closure-v4",
-            "closure_freeze_commit": str(verified_closure["freeze_commit"]),
-            "closure_sha256": sha256_bytes(canonical_json_bytes(verified_closure)),
-            "closure_byte_length": str(len(canonical_json_bytes(verified_closure))),
+            "accepted_bundle_path": f"bundles/accepted/{_V4_GENERATION}",
+            "adapter_v4_rules_path": "config/measurement/pr2164-adapter-rules-v4.json",
             "adapter_v4_rules_sha256": sha256_bytes(rules_raw),
+            "adjudication_schema_path": str(controls["adjudication_schema"][0]["path"]),
+            "adjudication_schema_sha256": sha256_bytes(controls["adjudication_schema"][2]),
+            "authority_path": "phase2/source-authority.json",
+            "authority_sha256": sha256_bytes(authority_raw),
+            "closure_byte_length": str(len(closure_raw)),
+            "closure_freeze_commit": str(verified_closure["freeze_commit"]),
+            "closure_path": "receipts/runtime-executable-closure-v4.json",
+            "closure_sha256": sha256_bytes(closure_raw),
+            "core_sha256": _V4_ACCEPTED_IDENTITY["core_sha256"],
+            "generation": _V4_GENERATION,
+            "golden_predictions_path": str(controls["golden_predictions"][0]["path"]),
+            "golden_predictions_sha256": sha256_bytes(controls["golden_predictions"][2]),
+            "legacy_rules_path": str(controls["legacy_rules"][0]["path"]),
+            "legacy_rules_sha256": sha256_bytes(controls["legacy_rules"][2]),
+            "registry_path": str(controls["fixture_registry"][0]["path"]),
+            "registry_sha256": sha256_bytes(controls["fixture_registry"][2]),
+            "root_sha256": _V4_ACCEPTED_IDENTITY["root_sha256"],
+            "semantic_contract_path": str(controls["semantic_contract"][0]["path"]),
+            "semantic_contract_sha256": sha256_bytes(controls["semantic_contract"][2]),
+            "snapshot_manifest_sha256": _V4_ACCEPTED_IDENTITY["snapshot_manifest_sha256"],
         }
-        return replace(batch, adapter_version="pr2164-adapter-v4", rule_sha256=sha256_bytes(rules_raw), source_identity=source_identity)
+        rule_sha256 = sha256_bytes(rules_raw)
+        records = tuple(
+            replace(
+                record,
+                adapter_version="pr2164-adapter-v4",
+                rule_sha256=rule_sha256,
+                source_identity=source_identity,
+            )
+            for record in batch.records
+        )
+        rebuilt = AdapterBatch.from_parts(
+            adapter_version="pr2164-adapter-v4",
+            rule_sha256=rule_sha256,
+            source_identity=source_identity,
+            records=records,
+            diagnostics=(),
+        )
+        return replace(rebuilt, score_bearing_span_count=10)
     except (AdapterError, OSError, TypeError, ValueError, json.JSONDecodeError) as error:
         return _invalid_batch(
             adapter_version="pr2164-adapter-v4", rule_sha256="", source_identity=source_identity,
             code=str(error).split(":", 1)[0], diagnostic=error.diagnostic if isinstance(error, AdapterError) else None,
         )
+
+
+def _expected_pr2164_accepted_v6_adapter_v4(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> tuple[AdapterBatch, bytes]:
+    paths = _v4_paths(repository)
+    batch = build_pr2164_accepted_v6_adapter_batch_v4(
+        repository=repository,
+        runtime_closure=runtime_closure,
+        authority_path=authority_path,
+        bundle_root=paths["bundle"],
+        rules_path=paths["rules"],
+    )
+    if not batch.valid or batch.diagnostics:
+        code = batch.diagnostics[0].code if batch.diagnostics else "ADAPTER_V4_INVALID"
+        raise AdapterError(code)
+    return batch, batch.canonical_bytes()
+
+
+def write_pr2164_accepted_v6_adapter_batch_v4(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> dict[str, object]:
+    """Publish or byte-exactly resume the one fixed fresh adapter artifact."""
+    repository = repository.resolve(strict=True)
+    paths = _v4_paths(repository)
+    batch, expected = _expected_pr2164_accepted_v6_adapter_v4(
+        repository=repository, runtime_closure=runtime_closure, authority_path=authority_path,
+    )
+    target = paths["output"]
+    if target.is_symlink() or (target.exists() and not target.is_file()):
+        raise AdapterError("ADAPTER_V4_OUTPUT_KIND_INVALID")
+    if target.exists():
+        try:
+            evidence, raw = read_authoritative_file(target.parent, target.name)
+        except (FilesystemPolicyError, OSError) as error:
+            raise AdapterError("ADAPTER_V4_OUTPUT_INVALID") from error
+        if evidence.file_kind != "regular_file" or raw != expected:
+            raise AdapterError("ADAPTER_V4_OUTPUT_DIVERGED")
+        validated = validate_pr2164_accepted_v6_adapter_batch_v4(
+            repository=repository,
+            runtime_closure=runtime_closure,
+            authority_path=authority_path,
+        )
+        if validated.get("adapter_batch_sha256") != batch.adapter_batch_sha256:
+            raise AdapterError("ADAPTER_V4_OUTPUT_DIVERGED")
+        return {"adapter_batch_sha256": batch.adapter_batch_sha256, "status": "resumed", "valid": True}
+    if not target.parent.is_dir() or target.parent.is_symlink():
+        raise AdapterError("ADAPTER_V4_OUTPUT_PARENT_INVALID")
+
+    # Repeat the complete published-closure and authority gate immediately next
+    # to the first no-replace write.  A target race is rejected by O_EXCL.
+    fresh_batch, fresh = _expected_pr2164_accepted_v6_adapter_v4(
+        repository=repository, runtime_closure=runtime_closure, authority_path=authority_path,
+    )
+    if fresh != expected:
+        raise AdapterError("ADAPTER_V4_PREWRITE_DRIFT")
+    try:
+        _write_exact(target, fresh)
+        _sync_directory(target.parent)
+    except (FileExistsError, OSError) as error:
+        raise AdapterError("ADAPTER_V4_OUTPUT_RACE") from error
+    validate_pr2164_accepted_v6_adapter_batch_v4(
+        repository=repository, runtime_closure=runtime_closure, authority_path=authority_path,
+    )
+    return {"adapter_batch_sha256": fresh_batch.adapter_batch_sha256, "status": "written", "valid": True}
+
+
+def validate_pr2164_accepted_v6_adapter_batch_v4(
+    *, repository: Path, runtime_closure: Mapping[str, object], authority_path: Path,
+) -> dict[str, object]:
+    """Rebuild the fixed adapter from custody roots and compare published bytes."""
+    repository = repository.resolve(strict=True)
+    paths = _v4_paths(repository)
+    batch, expected = _expected_pr2164_accepted_v6_adapter_v4(
+        repository=repository, runtime_closure=runtime_closure, authority_path=authority_path,
+    )
+    try:
+        evidence, raw = read_authoritative_file(paths["output"].parent, paths["output"].name)
+    except (FilesystemPolicyError, OSError) as error:
+        raise AdapterError("ADAPTER_V4_OUTPUT_INVALID") from error
+    if evidence.file_kind != "regular_file" or raw != expected:
+        raise AdapterError("ADAPTER_V4_OUTPUT_DIVERGED")
+    return {
+        "adapter_batch_file_sha256": sha256_bytes(raw),
+        "adapter_batch_sha256": batch.adapter_batch_sha256,
+        "fixture_count": 11,
+        "raw_file_count": 29,
+        "score_bearing_span_count": 10,
+        "valid": True,
+    }

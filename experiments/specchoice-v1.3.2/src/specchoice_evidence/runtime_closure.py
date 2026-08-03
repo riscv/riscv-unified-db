@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
-from .filesystem import require_relative_posix_path
+from .filesystem import FilesystemPolicyError, read_authoritative_file, require_relative_posix_path
 
 
 class RuntimeClosureError(ValueError):
@@ -266,15 +266,30 @@ def no_user_site_environment() -> dict[str, str]:
     }
 
 
-def _canonical_object(path: Path, diagnostic: str) -> dict[str, object]:
+def _canonical_object_with_raw(
+    path: Path, diagnostic: str,
+) -> tuple[dict[str, object], bytes]:
     try:
-        raw = path.read_bytes()
+        evidence, raw = read_authoritative_file(path.parent, path.name)
         value = json.loads(raw.decode("utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+    except (
+        FilesystemPolicyError,
+        OSError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ) as error:
         raise RuntimeClosureError(diagnostic) from error
-    if not isinstance(value, dict) or canonical_json_bytes(value) != raw:
+    if (
+        evidence.file_kind != "regular_file"
+        or not isinstance(value, dict)
+        or canonical_json_bytes(value) != raw
+    ):
         raise RuntimeClosureError(diagnostic)
-    return value
+    return value, raw
+
+
+def _canonical_object(path: Path, diagnostic: str) -> dict[str, object]:
+    return _canonical_object_with_raw(path, diagnostic)[0]
 
 
 def _repository_relative(repository: Path, path: Path) -> str:
@@ -788,10 +803,11 @@ def _v4_authority_identity(repository: Path) -> dict[str, object]:
     except (ImportError, SuccessorProtocolError) as error:
         raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_AUTHORITY_INVALID") from error
     authority_path = repository / _AUTHORITY_PRE_STATE
-    raw = authority_path.read_bytes()
+    authority, raw = _canonical_object_with_raw(
+        authority_path, "RUNTIME_CLOSURE_V4_AUTHORITY_INVALID",
+    )
     if sha256_bytes(raw) != _V4_AUTHORITY_SHA256:
         raise RuntimeClosureError("RUNTIME_CLOSURE_V4_AUTHORITY_SHA256_MISMATCH")
-    authority = _canonical_object(authority_path, "RUNTIME_CLOSURE_V4_AUTHORITY_INVALID")
     accepted = authority.get("accepted_identity")
     if not isinstance(accepted, Mapping) or {key: accepted.get(key) for key in _V4_ACCEPTED_IDENTITY} != _V4_ACCEPTED_IDENTITY:
         raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_IDENTITY_MISMATCH")
@@ -815,13 +831,11 @@ def verify_runtime_closure_v3_historical(closure: object, repository: Path) -> d
     if not isinstance(closure, Mapping) or closure.get("schema_version") != "runtime-executable-closure-v3":
         raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID")
     receipt_path = repository / _CLOSURE_V3_RECEIPT
-    try:
-        raw = receipt_path.read_bytes()
-    except OSError as error:
-        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID") from error
+    expected, raw = _canonical_object_with_raw(
+        receipt_path, "RUNTIME_CLOSURE_V3_HISTORY_INVALID",
+    )
     if len(raw) != _CLOSURE_V3_BYTE_LENGTH or sha256_bytes(raw) != _CLOSURE_V3_SHA256:
         raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_RECEIPT_INVALID")
-    expected = _canonical_object(receipt_path, "RUNTIME_CLOSURE_V3_HISTORY_INVALID")
     if dict(closure) != expected:
         raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_MISMATCH")
     freeze_commit = expected.get("freeze_commit")

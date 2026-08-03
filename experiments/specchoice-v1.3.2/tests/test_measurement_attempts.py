@@ -17,7 +17,11 @@ from unittest.mock import patch
 from specchoice_evidence import filesystem
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError
-from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch
+from specchoice_measurement.adapter import (
+    AdapterError,
+    build_pr2164_adapter_batch,
+    write_pr2164_accepted_v6_adapter_batch_v4,
+)
 from specchoice_measurement.attempts import (
     AttemptError,
     _apply_successor_mutations,
@@ -27,6 +31,10 @@ from specchoice_measurement.attempts import (
     validate_measurement_attempt,
     validate_required_diagnostics_v4,
     validate_fresh_v4_target,
+    run_fresh_adversarial_suite_v7,
+    run_fresh_formal_measurement_v6,
+    validate_fresh_adversarial_result_v7,
+    validate_fresh_formal_measurement_v6,
 )
 from specchoice_measurement.cli import (
     command_validate_attempt,
@@ -99,6 +107,46 @@ class MeasurementAttemptTests(unittest.TestCase):
             adapter_batch=batch,
             oracle=oracle,
         )
+
+    def _copy_fresh_repository(self, repository: Path) -> tuple[Path, dict[str, object]]:
+        experiment = repository / "experiments/specchoice-v1.3.2"
+        for relative in (
+            "phase2/source-authority.json",
+            "config/fixture-registry-pr2164-v6.json",
+            "config/measurement/pr2164-semantic-gold-contract-v2.json",
+            "config/measurement/pr2164-adapter-rules-v3.json",
+            "config/measurement/pr2164-adapter-rules-v4.json",
+            "config/measurement/canonical-adjudication-schema-v3.json",
+            "fixtures/measurement/golden-predictions-v4.json",
+            "fixtures/measurement/adversarial/required-diagnostics-v4.json",
+        ):
+            target = experiment / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(self.experiment_root / relative, target)
+        shutil.copytree(
+            self.experiment_root / (
+                "bundles/accepted/"
+                "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+            ),
+            experiment / (
+                "bundles/accepted/"
+                "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+            ),
+        )
+        (experiment / "reports/h1").mkdir(parents=True)
+        (experiment / "runs/measurement-attempts").mkdir(parents=True)
+        closure: dict[str, object] = {
+            "freeze_commit": "f" * 40,
+            "future_targets": [{
+                "kind": "file",
+                "path": "experiments/specchoice-v1.3.2/reports/h1/adapter-batch-pr2164-v6.json",
+            }],
+            "schema_version": "runtime-executable-closure-v4",
+        }
+        receipt = experiment / "receipts/runtime-executable-closure-v4.json"
+        receipt.parent.mkdir(parents=True)
+        receipt.write_bytes(canonical_json_bytes(closure))
+        return experiment, closure
 
     def _active_formal_args(self, root: Path) -> SimpleNamespace:
         root.parent.mkdir(parents=True, exist_ok=True)
@@ -647,6 +695,193 @@ class MeasurementAttemptTests(unittest.TestCase):
                 self.assertTrue(validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority, expected=b"fixed"))
                 with self.assertRaisesRegex(AttemptError, "V4_TARGET_DIVERGED"):
                     validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority, expected=b"other")
+
+    def test_fresh_formal_v6_fixed_target_exact_resume_and_metrics(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment, closure = self._copy_fresh_repository(repository)
+            authority = experiment / "phase2/source-authority.json"
+            with (
+                patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure),
+                patch("specchoice_measurement.attempts.load_runtime_closure_v4", return_value=closure),
+            ):
+                write_pr2164_accepted_v6_adapter_batch_v4(
+                    repository=repository, runtime_closure=closure, authority_path=authority,
+                )
+                result = run_fresh_formal_measurement_v6(
+                    repository=repository, runtime_closure=closure, authority_path=authority,
+                )
+                self.assertEqual(result["write_status"], "written")
+                self.assertEqual(result["case_count"], 11)
+                self.assertEqual(result["metrics"], {
+                    "disposition": {"denominator": 8, "numerator": 8},
+                    "evidence_integrity": {"denominator": 10, "numerator": 10},
+                    "identity": {"denominator": 6, "numerator": 6},
+                    "negative_controls": {"denominator": 3, "numerator": 3},
+                    "surfacing": {"denominator": 8, "numerator": 8},
+                })
+                resumed = run_fresh_formal_measurement_v6(
+                    repository=repository, runtime_closure=closure, authority_path=authority,
+                )
+                self.assertEqual(resumed["write_status"], "resumed")
+                self.assertTrue(validate_fresh_formal_measurement_v6(
+                    repository=repository, runtime_closure=closure, authority_path=authority,
+                )["valid"])
+            self.assertEqual(
+                {path.name for path in (experiment / "runs/measurement-attempts/formal-golden-pr2164-v6").iterdir()},
+                {"attempt.json", "case-outcomes.json", "diagnostics.json", "metrics.json", "parsed-predictions.json", "report.json"},
+            )
+
+    def test_fresh_formal_v6_rejects_partial_symlink_divergence_race_and_task16_adapter(self) -> None:
+        for failure in (
+            "partial", "symlink", "divergent", "race", "task16", "golden-drift",
+        ):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as directory:
+                repository = Path(directory)
+                experiment, closure = self._copy_fresh_repository(repository)
+                authority = experiment / "phase2/source-authority.json"
+                target = experiment / "runs/measurement-attempts/formal-golden-pr2164-v6"
+                with (
+                    patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure),
+                    patch("specchoice_measurement.attempts.load_runtime_closure_v4", return_value=closure),
+                ):
+                    write_pr2164_accepted_v6_adapter_batch_v4(
+                        repository=repository, runtime_closure=closure, authority_path=authority,
+                    )
+                    if failure == "partial":
+                        target.mkdir()
+                        (target / "attempt.json").write_bytes(b"{}\n")
+                        with self.assertRaisesRegex(AttemptError, "FRESH_V6_FORMAL_TARGET_DIVERGED"):
+                            run_fresh_formal_measurement_v6(
+                                repository=repository, runtime_closure=closure, authority_path=authority,
+                            )
+                    elif failure == "symlink":
+                        outside = repository / "outside"
+                        outside.mkdir()
+                        target.symlink_to(outside, target_is_directory=True)
+                        with self.assertRaisesRegex(AttemptError, "FRESH_V6_FORMAL_TARGET_KIND_INVALID"):
+                            run_fresh_formal_measurement_v6(
+                                repository=repository, runtime_closure=closure, authority_path=authority,
+                            )
+                    elif failure == "divergent":
+                        run_fresh_formal_measurement_v6(
+                            repository=repository, runtime_closure=closure, authority_path=authority,
+                        )
+                        (target / "metrics.json").write_bytes(b"{}\n")
+                        with self.assertRaisesRegex(AttemptError, "FRESH_V6_FORMAL_TARGET_DIVERGED"):
+                            run_fresh_formal_measurement_v6(
+                                repository=repository, runtime_closure=closure, authority_path=authority,
+                            )
+                    elif failure == "race":
+                        from specchoice_measurement import attempts
+                        original = attempts._publish_directory_no_replace
+
+                        def race(source: Path, destination: Path, collision_code: str) -> None:
+                            destination.mkdir()
+                            (destination / "sentinel").write_bytes(b"racer")
+                            original(source, destination, collision_code)
+
+                        with patch("specchoice_measurement.attempts._publish_directory_no_replace", side_effect=race):
+                            with self.assertRaisesRegex(AttemptError, "FRESH_V6_FORMAL_TARGET_RACE"):
+                                run_fresh_formal_measurement_v6(
+                                    repository=repository, runtime_closure=closure, authority_path=authority,
+                                )
+                        self.assertEqual((target / "sentinel").read_bytes(), b"racer")
+                    elif failure == "task16":
+                        adapter_target = experiment / "reports/h1/adapter-batch-pr2164-v6.json"
+                        shutil.copy2(
+                            self.experiment_root / "reports/h1/adapter-batch-pr2164-v5.json",
+                            adapter_target,
+                        )
+                        with self.assertRaisesRegex(AdapterError, "ADAPTER_V4_OUTPUT_DIVERGED"):
+                            run_fresh_formal_measurement_v6(
+                                repository=repository, runtime_closure=closure, authority_path=authority,
+                            )
+                        self.assertFalse(target.exists())
+                    else:
+                        golden = experiment / "fixtures/measurement/golden-predictions-v4.json"
+                        original_canonical_file = _canonical_file
+
+                        def drift_after_adapter(path: Path, code: str):
+                            payload, raw = original_canonical_file(path, code)
+                            if path.resolve() == golden.resolve():
+                                payload = deepcopy(payload)
+                                payload["outcomes"][0]["rationale"] += " drift"
+                                raw = canonical_json_bytes(payload)
+                            return payload, raw
+
+                        with (
+                            patch(
+                                "specchoice_measurement.attempts._canonical_file",
+                                side_effect=drift_after_adapter,
+                            ),
+                            self.assertRaisesRegex(AttemptError, "FRESH_V6_GOLDEN_INVALID"),
+                        ):
+                            run_fresh_formal_measurement_v6(
+                                repository=repository,
+                                runtime_closure=closure,
+                                authority_path=authority,
+                            )
+                        self.assertFalse(target.exists())
+
+    def test_fresh_adversarial_v7_fixed_target_resume_divergence_and_race(self) -> None:
+        for failure in ("resume", "divergent", "symlink", "race"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as directory:
+                repository = Path(directory)
+                experiment, closure = self._copy_fresh_repository(repository)
+                authority = experiment / "phase2/source-authority.json"
+                target = experiment / "reports/h1/adversarial-oracle-results-v7.json"
+                with (
+                    patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure),
+                    patch("specchoice_measurement.attempts.load_runtime_closure_v4", return_value=closure),
+                ):
+                    write_pr2164_accepted_v6_adapter_batch_v4(
+                        repository=repository, runtime_closure=closure, authority_path=authority,
+                    )
+                    run_fresh_formal_measurement_v6(
+                        repository=repository, runtime_closure=closure, authority_path=authority,
+                    )
+                    if failure == "symlink":
+                        outside = repository / "outside-report"
+                        outside.write_bytes(b"outside")
+                        target.symlink_to(outside)
+                        with self.assertRaisesRegex(AttemptError, "FRESH_V7_ADVERSARIAL_TARGET_KIND_INVALID"):
+                            run_fresh_adversarial_suite_v7(
+                                repository=repository, runtime_closure=closure, authority_path=authority,
+                            )
+                    elif failure == "race":
+                        def race(path: Path, content: bytes) -> None:
+                            target.write_bytes(b"racer")
+                            raise FileExistsError(path)
+
+                        with patch("specchoice_measurement.attempts._write_exact", side_effect=race):
+                            with self.assertRaisesRegex(AttemptError, "FRESH_V7_ADVERSARIAL_TARGET_RACE"):
+                                run_fresh_adversarial_suite_v7(
+                                    repository=repository, runtime_closure=closure, authority_path=authority,
+                                )
+                        self.assertEqual(target.read_bytes(), b"racer")
+                    else:
+                        written = run_fresh_adversarial_suite_v7(
+                            repository=repository, runtime_closure=closure, authority_path=authority,
+                        )
+                        self.assertEqual(written["case_count"], 17)
+                        payload = json.loads(target.read_text(encoding="utf-8"))
+                        self.assertEqual(payload["schema_version"], "adversarial-oracle-results-v7")
+                        self.assertEqual(payload["bindings"]["closure_freeze_commit"], "f" * 40)
+                        if failure == "resume":
+                            resumed = run_fresh_adversarial_suite_v7(
+                                repository=repository, runtime_closure=closure, authority_path=authority,
+                            )
+                            self.assertEqual(resumed["write_status"], "resumed")
+                            self.assertTrue(validate_fresh_adversarial_result_v7(
+                                repository=repository, runtime_closure=closure, authority_path=authority,
+                            )["valid"])
+                        else:
+                            target.write_bytes(b"{}\n")
+                            with self.assertRaisesRegex(AttemptError, "FRESH_V7_ADVERSARIAL_REPORT_DIVERGED"):
+                                run_fresh_adversarial_suite_v7(
+                                    repository=repository, runtime_closure=closure, authority_path=authority,
+                                )
 
 
 if __name__ == "__main__":

@@ -28,6 +28,8 @@ from specchoice_measurement.adapter import (
     validate_v5_outcome_contract,
     validate_v6_outcome_contract,
     build_pr2164_accepted_v6_adapter_batch_v4,
+    validate_pr2164_accepted_v6_adapter_batch_v4,
+    write_pr2164_accepted_v6_adapter_batch_v4,
 )
 
 
@@ -94,6 +96,44 @@ class MeasurementAdapterTests(unittest.TestCase):
             root / "config/fixture-repairs/pr2164-semantic-gold-v5",
         )
 
+    def copy_v4_repository(self, repository: Path) -> tuple[Path, dict[str, object]]:
+        experiment = repository / "experiments/specchoice-v1.3.2"
+        for relative in (
+            "phase2/source-authority.json",
+            "config/fixture-registry-pr2164-v6.json",
+            "config/measurement/pr2164-semantic-gold-contract-v2.json",
+            "config/measurement/pr2164-adapter-rules-v3.json",
+            "config/measurement/pr2164-adapter-rules-v4.json",
+            "config/measurement/canonical-adjudication-schema-v3.json",
+            "fixtures/measurement/golden-predictions-v4.json",
+        ):
+            target = experiment / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(self.experiment_root / relative, target)
+        shutil.copytree(
+            self.experiment_root / (
+                "bundles/accepted/"
+                "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+            ),
+            experiment / (
+                "bundles/accepted/"
+                "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+            ),
+        )
+        (experiment / "reports/h1").mkdir(parents=True)
+        closure: dict[str, object] = {
+            "freeze_commit": "f" * 40,
+            "future_targets": [{
+                "kind": "file",
+                "path": "experiments/specchoice-v1.3.2/reports/h1/adapter-batch-pr2164-v6.json",
+            }],
+            "schema_version": "runtime-executable-closure-v4",
+        }
+        receipt = experiment / "receipts/runtime-executable-closure-v4.json"
+        receipt.parent.mkdir(parents=True)
+        receipt.write_bytes(canonical_json_bytes(closure))
+        return experiment, closure
+
     @staticmethod
     def write_canonical(path: Path, payload: object) -> bytes:
         raw = canonical_json_bytes(payload)
@@ -116,18 +156,143 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual(golden["score_bearing_span_count"], 8)
 
     def test_pr2164_adapter_v4_binds_canonical_authority_and_materialized_raw_tree(self) -> None:
-        closure = {"schema_version": "runtime-executable-closure-v4", "freeze_commit": "f" * 40}
-        with mock.patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure):
-            batch = build_pr2164_accepted_v6_adapter_batch_v4(
-                repository=self.experiment_root.parents[1], runtime_closure=closure,
-                authority_path=self.experiment_root / "phase2/source-authority.json",
-                bundle_root=self.experiment_root / "bundles/accepted/source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6",
-                rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v4.json",
-            )
-        self.assertTrue(batch.valid)
-        self.assertEqual(len(batch.records), 11)
-        self.assertEqual(sum(len(record.raw_files) for record in batch.records), 29)
-        self.assertEqual(batch.source_identity["authority_sha256"], "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae")
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment, closure = self.copy_v4_repository(repository)
+            original_read = adapter.read_authoritative_file
+
+            def reject_repair_workspace(parent: Path, relative: str):
+                if "config/fixture-repairs" in (parent / relative).as_posix():
+                    raise AssertionError("accepted-v6 adapter opened repair workspace")
+                return original_read(parent, relative)
+
+            with (
+                mock.patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure),
+                mock.patch("specchoice_measurement.adapter.read_authoritative_file", side_effect=reject_repair_workspace),
+            ):
+                batch = build_pr2164_accepted_v6_adapter_batch_v4(
+                    repository=repository,
+                    runtime_closure=closure,
+                    authority_path=experiment / "phase2/source-authority.json",
+                    bundle_root=experiment / (
+                        "bundles/accepted/"
+                        "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+                    ),
+                    rules_path=experiment / "config/measurement/pr2164-adapter-rules-v4.json",
+                )
+            self.assertTrue(batch.valid, [item.as_dict() for item in batch.diagnostics])
+            self.assertEqual(len(batch.records), 11)
+            self.assertEqual(sum(len(record.raw_files) for record in batch.records), 29)
+            self.assertEqual(batch.score_bearing_span_count, 10)
+            self.assertEqual(batch.source_identity["authority_sha256"], "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae")
+            self.assertEqual(batch.source_identity["closure_path"], "receipts/runtime-executable-closure-v4.json")
+            self.assertTrue(all(
+                raw.path.startswith("raw/evaluation_fixtures/")
+                for record in batch.records for raw in record.raw_files
+            ))
+
+    def test_pr2164_adapter_v4_rejects_unpublished_schema_only_closure_and_raw_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment, closure = self.copy_v4_repository(repository)
+            arguments = {
+                "repository": repository,
+                "runtime_closure": closure,
+                "authority_path": experiment / "phase2/source-authority.json",
+                "bundle_root": experiment / (
+                    "bundles/accepted/"
+                    "source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6"
+                ),
+                "rules_path": experiment / "config/measurement/pr2164-adapter-rules-v4.json",
+            }
+            with mock.patch(
+                "specchoice_measurement.adapter.load_runtime_closure_v4",
+                side_effect=adapter.RuntimeClosureError("RUNTIME_CLOSURE_V4_RECEIPT_REQUIRED"),
+            ):
+                rejected = build_pr2164_accepted_v6_adapter_batch_v4(
+                    **{**arguments, "runtime_closure": {"schema_version": "runtime-executable-closure-v4"}}
+                )
+            self.assertFalse(rejected.valid)
+            self.assertEqual(rejected.diagnostics[0].code, "RUNTIME_CLOSURE_V4_REQUIRED")
+
+            renamed = experiment / "bundles/accepted/copied-v6"
+            shutil.copytree(arguments["bundle_root"], renamed)
+            with mock.patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure):
+                rejected = build_pr2164_accepted_v6_adapter_batch_v4(
+                    **{**arguments, "bundle_root": renamed}
+                )
+            self.assertFalse(rejected.valid)
+            self.assertEqual(rejected.diagnostics[0].code, "FORGED_UNBOUND_GENERATION")
+
+            raw = arguments["bundle_root"] / "raw/evaluation_fixtures/POS_DIRECT_CACHE_BLOCK/source.txt"
+            original = raw.read_bytes()
+            raw.write_bytes(original + b"drift")
+            with mock.patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure):
+                rejected = build_pr2164_accepted_v6_adapter_batch_v4(**arguments)
+            self.assertFalse(rejected.valid)
+            self.assertEqual(rejected.diagnostics[0].code, "V6_RAW_IDENTITY_MISMATCH")
+            raw.write_bytes(original)
+            raw.unlink()
+            with mock.patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure):
+                rejected = build_pr2164_accepted_v6_adapter_batch_v4(**arguments)
+            self.assertFalse(rejected.valid)
+            self.assertEqual(rejected.diagnostics[0].code, "V6_RAW_IDENTITY_INVALID")
+
+    def test_pr2164_adapter_v4_writer_exact_resume_divergence_and_fixed_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment, closure = self.copy_v4_repository(repository)
+            authority = experiment / "phase2/source-authority.json"
+            with (
+                mock.patch(
+                    "specchoice_measurement.adapter.load_runtime_closure_v4",
+                    return_value=closure,
+                ),
+                mock.patch(
+                    "specchoice_measurement.adapter.validate_pr2164_accepted_v6_adapter_batch_v4",
+                    wraps=validate_pr2164_accepted_v6_adapter_batch_v4,
+                ) as postflight,
+            ):
+                written = write_pr2164_accepted_v6_adapter_batch_v4(
+                    repository=repository, runtime_closure=closure, authority_path=authority,
+                )
+                self.assertEqual(written["status"], "written")
+                self.assertEqual(postflight.call_count, 1)
+                resumed = write_pr2164_accepted_v6_adapter_batch_v4(
+                    repository=repository, runtime_closure=closure, authority_path=authority,
+                )
+                self.assertEqual(resumed["status"], "resumed")
+                self.assertEqual(postflight.call_count, 2)
+                self.assertTrue(validate_pr2164_accepted_v6_adapter_batch_v4(
+                    repository=repository, runtime_closure=closure, authority_path=authority,
+                )["valid"])
+                output = experiment / "reports/h1/adapter-batch-pr2164-v6.json"
+                output.write_bytes(b"{}\n")
+                with self.assertRaisesRegex(AdapterError, "ADAPTER_V4_OUTPUT_DIVERGED"):
+                    write_pr2164_accepted_v6_adapter_batch_v4(
+                        repository=repository, runtime_closure=closure, authority_path=authority,
+                    )
+
+    def test_pr2164_adapter_v4_writer_rejects_target_race_without_replacement(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            experiment, closure = self.copy_v4_repository(repository)
+            authority = experiment / "phase2/source-authority.json"
+            target = experiment / "reports/h1/adapter-batch-pr2164-v6.json"
+
+            def race(path: Path, content: bytes) -> None:
+                target.write_bytes(b"racer")
+                raise FileExistsError(path)
+
+            with (
+                mock.patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure),
+                mock.patch("specchoice_measurement.adapter._write_exact", side_effect=race),
+            ):
+                with self.assertRaisesRegex(AdapterError, "ADAPTER_V4_OUTPUT_RACE"):
+                    write_pr2164_accepted_v6_adapter_batch_v4(
+                        repository=repository, runtime_closure=closure, authority_path=authority,
+                    )
+            self.assertEqual(target.read_bytes(), b"racer")
 
     def test_v5_outcome_contract_rejects_candidate_identity_leakage(self) -> None:
         contract = json.loads((self.experiment_root / "config/measurement/pr2164-semantic-gold-contract-v1.json").read_text())

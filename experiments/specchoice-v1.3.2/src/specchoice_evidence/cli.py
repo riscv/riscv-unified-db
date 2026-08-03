@@ -67,9 +67,17 @@ from .runtime_closure import (
     verify_runtime_closure_v4,
 )
 from specchoice_measurement.h1 import (
-    build_h1_review_readiness_v7,
+    render_h1_review_checkpoint_v7,
     validate_approved_h1_terminal_v6,
+    validate_h1_review_readiness_v7,
+    validate_h1_review_schema_v5,
     validate_h1_source_gold_decision_v6,
+)
+from specchoice_measurement.final_reports import (
+    FINAL_SUCCESSOR_SUMMARY_02_22,
+    FINAL_SUCCESSOR_TARGETS_02_22,
+    build_final_02_22_input_bindings,
+    validate_final_successor_summary_02_22,
 )
 from .source_contract import (
     _EXPECTED_FIXTURES,
@@ -124,6 +132,25 @@ from .successor import (
     write_source_contract_proposal_packet_v6,
     write_local_acceptance_request_v13,
 )
+
+
+class _UniquePathAction(argparse.Action):
+    """Reject duplicate options instead of silently taking the last value."""
+
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: object, option_string: str | None = None) -> None:
+        if getattr(namespace, self.dest, None) is not None:
+            parser.error(f"duplicate option: {option_string}")
+        setattr(namespace, self.dest, values)
+
+
+class _UniqueTrueAction(argparse.Action):
+    def __init__(self, option_strings: list[str], dest: str, **kwargs: object) -> None:
+        super().__init__(option_strings, dest, nargs=0, **kwargs)
+
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: object, option_string: str | None = None) -> None:
+        if getattr(namespace, self.dest, False):
+            parser.error(f"duplicate option: {option_string}")
+        setattr(namespace, self.dest, True)
 
 
 def _default_capture_baseline() -> Path:
@@ -896,7 +923,7 @@ def command_write_runtime_executable_closure_v2(args: argparse.Namespace) -> int
 def command_validate_runtime_executable_closure_v2(args: argparse.Namespace) -> int:
     repository = _repository_root(_experiment_root())
     expected = repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json"
-    if args.receipt.resolve() != expected.resolve():
+    if args.receipt.absolute() != expected.absolute():
         raise SourceContractProposalError("RUNTIME_CLOSURE_V2_HISTORY_PATH_INVALID")
     _, predecessor_raw = _load_authoritative_canonical_v4(
         args.receipt, "RUNTIME_CLOSURE_V2_HISTORY_INVALID"
@@ -994,15 +1021,46 @@ def command_validate_runtime_executable_closure_v3(args: argparse.Namespace) -> 
 def command_write_runtime_executable_closure_v4(args: argparse.Namespace) -> int:
     repository = _repository_root(_experiment_root())
     expected = repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v4.json"
-    if args.receipt.resolve() != expected.resolve():
+    if args.receipt.absolute() != expected.absolute():
         raise ValueError("RUNTIME_CLOSURE_V4_PATH_INVALID")
+
+    def existing_receipt() -> dict[str, object] | None:
+        try:
+            _, raw = read_authoritative_file(expected.parent, expected.name)
+        except FilesystemPolicyError as error:
+            if str(error) == "AUTHORITATIVE_FILE_MISSING":
+                return None
+            raise ValueError("RUNTIME_CLOSURE_V4_RECEIPT_INVALID") from error
+        try:
+            value = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ValueError("RUNTIME_CLOSURE_V4_RECEIPT_INVALID") from error
+        if not isinstance(value, dict) or canonical_json_bytes(value) != raw:
+            raise ValueError("RUNTIME_CLOSURE_V4_RECEIPT_INVALID")
+        verify_runtime_closure_v4(value, repository)
+        return value
+
+    resumed = existing_receipt()
+    if resumed is not None:
+        _print_json({"status": "runtime_closure_v4_resumed"})
+        return 0
     closure = build_runtime_closure_v4(repository, freeze_commit=args.freeze_commit)
     # Repeat the complete bootstrap preflight immediately before the O_EXCL
     # publication.  A concurrently-created downstream target must fail rather
     # than becoming an unrecorded input to this receipt.
     if build_runtime_closure_v4(repository, freeze_commit=args.freeze_commit) != closure:
         raise ValueError("RUNTIME_CLOSURE_V4_PREWRITE_DRIFT")
-    write_new_descriptor_file(args.receipt.parent, args.receipt.name, canonical_json_bytes(closure))
+    raw = canonical_json_bytes(closure)
+    try:
+        write_new_descriptor_file(args.receipt.parent, args.receipt.name, raw)
+    except FilesystemPolicyError as error:
+        if str(error) != "AUTHORITATIVE_DESTINATION_EXISTS":
+            raise
+        raced = existing_receipt()
+        if raced != closure:
+            raise ValueError("RUNTIME_CLOSURE_V4_RECEIPT_DIVERGED") from error
+        _print_json({"status": "runtime_closure_v4_resumed"})
+        return 0
     verify_runtime_closure_v4(closure, repository)
     _print_json({"status": "runtime_closure_v4_frozen"})
     return 0
@@ -1021,15 +1079,43 @@ def _v7_h1_value(path: Path, code: str) -> dict[str, object]:
     return value
 
 
+_H1_V7_FIXED_PATHS = {
+    "adapter_config": "experiments/specchoice-v1.3.2/config/measurement/pr2164-adapter-rules-v4.json",
+    "authority": "experiments/specchoice-v1.3.2/phase2/source-authority.json",
+    "decision": "experiments/specchoice-v1.3.2/reviews/h1-source-gold-decision-v6.json",
+    "h1_schema": "experiments/specchoice-v1.3.2/config/measurement/h1-review-schema-v5.json",
+    "markdown": "experiments/specchoice-v1.3.2/reports/h1/h1-source-gold-review-v7/review-packet.md",
+    "packet": "experiments/specchoice-v1.3.2/reports/h1/h1-source-gold-review-v7/review-packet.json",
+    "readiness": "experiments/specchoice-v1.3.2/receipts/h1-review-readiness-v7.json",
+    "runtime_closure": "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v4.json",
+}
+
+
+def _require_h1_v7_cli_path(path: Path, role: str) -> Path:
+    repository = _repository_root(_experiment_root())
+    expected = (repository / _H1_V7_FIXED_PATHS[role]).absolute()
+    if path.absolute() != expected:
+        raise ValueError("H1_V7_CANONICAL_PATH_REQUIRED")
+    return expected
+
+
+def _validate_h1_v7_cli_schema(path: Path) -> None:
+    _require_h1_v7_cli_path(path, "h1_schema")
+    validate_h1_review_schema_v5(schema=path)
+
+
 def command_validate_h1_review_readiness_v7(args: argparse.Namespace) -> int:
+    for role in ("readiness", "packet", "runtime_closure", "authority", "adapter_config", "h1_schema"):
+        _require_h1_v7_cli_path(getattr(args, "receipt" if role == "readiness" else role), role)
     receipt = _v7_h1_value(args.receipt, "H1_V7_READINESS_INVALID")
     packet = _v7_h1_value(args.packet, "H1_V7_PACKET_INVALID")
     closure = _v7_h1_value(args.runtime_closure, "RUNTIME_CLOSURE_V4_INVALID")
     _v7_h1_value(args.adapter_config, "ADAPTER_V4_RULES_INVALID")
-    _v7_h1_value(args.h1_schema, "H1_V7_SCHEMA_INVALID")
-    expected = build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=args.authority)
-    if receipt != expected:
-        raise ValueError("H1_V7_READINESS_MISMATCH")
+    _validate_h1_v7_cli_schema(args.h1_schema)
+    validate_h1_review_readiness_v7(
+        readiness=receipt, packet=packet, runtime_closure=closure,
+        authority_path=args.authority,
+    )
     _print_json({"status": "h1_review_readiness_v7_valid"})
     return 0
 
@@ -1037,36 +1123,65 @@ def command_validate_h1_review_readiness_v7(args: argparse.Namespace) -> int:
 def command_render_h1_review_checkpoint_v7(args: argparse.Namespace) -> int:
     if args.no_write is not True:
         raise ValueError("H1_V7_NO_WRITE_REQUIRED")
+    for role in ("packet", "readiness", "runtime_closure", "authority", "h1_schema"):
+        _require_h1_v7_cli_path(getattr(args, role), role)
     packet = _v7_h1_value(args.packet, "H1_V7_PACKET_INVALID")
     readiness = _v7_h1_value(args.readiness, "H1_V7_READINESS_INVALID")
     closure = _v7_h1_value(args.runtime_closure, "RUNTIME_CLOSURE_V4_INVALID")
-    _v7_h1_value(args.h1_schema, "H1_V7_SCHEMA_INVALID")
-    expected = build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=args.authority)
-    if readiness != expected:
-        raise ValueError("H1_V7_READINESS_MISMATCH")
-    _print_json({"packet_sha256": packet["packet_sha256"], "status": "h1_review_checkpoint_v7_rendered"})
+    _validate_h1_v7_cli_schema(args.h1_schema)
+    validate_h1_review_readiness_v7(
+        readiness=readiness,
+        packet=packet,
+        runtime_closure=closure,
+        authority_path=args.authority,
+    )
+    sys.stdout.buffer.write(render_h1_review_checkpoint_v7(packet))
     return 0
 
 
 def command_validate_h1_source_gold_decision_v6(args: argparse.Namespace) -> int:
+    for role in ("decision", "packet", "readiness", "runtime_closure", "authority", "h1_schema"):
+        _require_h1_v7_cli_path(getattr(args, role), role)
     decision = _v7_h1_value(args.decision, "H1_V6_DECISION_INVALID")
     packet = _v7_h1_value(args.packet, "H1_V7_PACKET_INVALID")
     readiness = _v7_h1_value(args.readiness, "H1_V7_READINESS_INVALID")
     closure = _v7_h1_value(args.runtime_closure, "RUNTIME_CLOSURE_V4_INVALID")
-    _v7_h1_value(args.h1_schema, "H1_V7_SCHEMA_INVALID")
+    _validate_h1_v7_cli_schema(args.h1_schema)
     validate_h1_source_gold_decision_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=args.authority)
     _print_json({"status": "h1_source_gold_decision_v6_valid"})
     return 0
 
 
 def command_validate_approved_h1_terminal_v6(args: argparse.Namespace) -> int:
+    for role in ("decision", "packet", "readiness", "runtime_closure", "authority", "adapter_config", "h1_schema"):
+        _require_h1_v7_cli_path(getattr(args, role), role)
+    repository = _repository_root(_experiment_root())
+    supplied_terminal = (
+        args.phase1_verification,
+        args.phase1_review,
+        args.phase2_verification,
+        args.phase2_review,
+    )
+    if tuple(path.absolute() for path in supplied_terminal) != tuple(
+        (repository / relative).absolute() for relative in FINAL_SUCCESSOR_TARGETS_02_22
+    ) or args.summary.absolute() != (repository / FINAL_SUCCESSOR_SUMMARY_02_22).absolute():
+        raise ValueError("FINAL_02_22_CANONICAL_PATH_REQUIRED")
     decision = _v7_h1_value(args.decision, "H1_V6_DECISION_INVALID")
     packet = _v7_h1_value(args.packet, "H1_V7_PACKET_INVALID")
     readiness = _v7_h1_value(args.readiness, "H1_V7_READINESS_INVALID")
     closure = _v7_h1_value(args.runtime_closure, "RUNTIME_CLOSURE_V4_INVALID")
-    for path, code in ((args.adapter_config, "ADAPTER_V4_RULES_INVALID"), (args.h1_schema, "H1_V7_SCHEMA_INVALID")):
-        _v7_h1_value(path, code)
+    _v7_h1_value(args.adapter_config, "ADAPTER_V4_RULES_INVALID")
+    _validate_h1_v7_cli_schema(args.h1_schema)
     validate_approved_h1_terminal_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=args.authority)
+    validate_final_successor_summary_02_22(
+        repository,
+        decision=decision,
+        packet=packet,
+        readiness=readiness,
+        runtime_closure=closure,
+        authority_path=args.authority,
+        input_bindings=build_final_02_22_input_bindings(repository),
+    )
     _print_json({"status": "approved_h1_terminal_v6_valid"})
     return 0
 
@@ -2277,7 +2392,7 @@ def command_finalize_review(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="specchoice-evidence")
+    parser = argparse.ArgumentParser(prog="specchoice-evidence", allow_abbrev=False)
     commands = parser.add_subparsers(dest="command", required=True)
     capture = commands.add_parser("capture-baseline")
     capture.add_argument("--input", type=Path, required=True)
@@ -2458,22 +2573,25 @@ def build_parser() -> argparse.ArgumentParser:
     validate_closure_v4.add_argument("--receipt", type=Path, required=True)
     validate_closure_v4.set_defaults(handler=command_validate_runtime_executable_closure_v4)
 
-    readiness_v7 = commands.add_parser("validate-h1-review-readiness-v7")
+    readiness_v7 = commands.add_parser("validate-h1-review-readiness-v7", allow_abbrev=False)
     for option in ("receipt", "packet", "runtime_closure", "authority", "adapter_config", "h1_schema"):
-        readiness_v7.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+        readiness_v7.add_argument("--" + option.replace("_", "-"), type=Path, action=_UniquePathAction, required=True)
     readiness_v7.set_defaults(handler=command_validate_h1_review_readiness_v7)
-    render_v7 = commands.add_parser("render-h1-review-checkpoint-v7")
+    render_v7 = commands.add_parser("render-h1-review-checkpoint-v7", allow_abbrev=False)
     for option in ("packet", "readiness", "runtime_closure", "authority", "h1_schema"):
-        render_v7.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
-    render_v7.add_argument("--no-write", action="store_true", required=True)
+        render_v7.add_argument("--" + option.replace("_", "-"), type=Path, action=_UniquePathAction, required=True)
+    render_v7.add_argument("--no-write", action=_UniqueTrueAction, required=True)
     render_v7.set_defaults(handler=command_render_h1_review_checkpoint_v7)
-    decision_v6_h1 = commands.add_parser("validate-h1-source-gold-decision-v6")
+    decision_v6_h1 = commands.add_parser("validate-h1-source-gold-decision-v6", allow_abbrev=False)
     for option in ("decision", "packet", "readiness", "runtime_closure", "authority", "h1_schema"):
-        decision_v6_h1.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+        decision_v6_h1.add_argument("--" + option.replace("_", "-"), type=Path, action=_UniquePathAction, required=True)
     decision_v6_h1.set_defaults(handler=command_validate_h1_source_gold_decision_v6)
-    terminal_v6 = commands.add_parser("validate-approved-h1-terminal-v6")
-    for option in ("decision", "packet", "readiness", "runtime_closure", "authority", "adapter_config", "h1_schema"):
-        terminal_v6.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    terminal_v6 = commands.add_parser("validate-approved-h1-terminal-v6", allow_abbrev=False)
+    for option in (
+        "decision", "packet", "readiness", "runtime_closure", "authority", "adapter_config", "h1_schema",
+        "phase1_verification", "phase1_review", "phase2_verification", "phase2_review", "summary",
+    ):
+        terminal_v6.add_argument("--" + option.replace("_", "-"), type=Path, action=_UniquePathAction, required=True)
     terminal_v6.set_defaults(handler=command_validate_approved_h1_terminal_v6)
 
     def add_v6_common(command: argparse.ArgumentParser) -> None:
