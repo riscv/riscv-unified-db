@@ -10716,6 +10716,65 @@ Included in::
 
 
 
+[#udb:doc:inst:beqi]
+== beqi
+
+Synopsis::
+Branch if equal immediate
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+beqi xs1, cimm, offset
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x63,"type":2},{"bits":5,"name": "offset[4:1|11]","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "cimm","type":4},{"bits":7,"name": "offset[12|10:5]","type":4}]}
+....
+
+Description::
+Branch to PC + offset if the value in register xs1 is equal to the XLEN-bit
+comparison constant decoded from cimm.
+
+The cimm field is not sign-extended: cimm == 0 encodes the value -1, and
+cimm values 1 through 31 encode the corresponding positive integer values.
+
+Raise a `MisalignedAddress` exception if the branch is taken and PC + offset is
+misaligned.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|offset |sext({$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}, 13)
+|cimm |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zibi*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:bext]
 == bext
 
@@ -11243,6 +11302,65 @@ Included in::
 | Extension | Version
 
 | *I*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:bnei]
+== bnei
+
+Synopsis::
+Branch if not equal immediate
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+bnei xs1, cimm, offset
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x63,"type":2},{"bits":5,"name": "offset[4:1|11]","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "cimm","type":4},{"bits":7,"name": "offset[12|10:5]","type":4}]}
+....
+
+Description::
+Branch to PC + offset if the value in register xs1 is not equal to the XLEN-bit
+comparison constant decoded from cimm.
+
+The cimm field is not sign-extended: cimm == 0 encodes the value -1, and
+cimm values 1 through 31 encode the corresponding positive integer values.
+
+Raise a `MisalignedAddress` exception if the branch is taken and PC + offset is
+misaligned.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|offset |sext({$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}, 13)
+|cimm |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zibi*
 | any
 |===
 
