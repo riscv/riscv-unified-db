@@ -269,7 +269,7 @@ do_gen_regress() {
     sha_before=$(sha256sum "$UDB_ROOT"/.github/workflows/regress.yml)
   fi
   rm -f .github/workflows/regress.yml
-  "$UDB_ROOT/bin/python" tools/test/gen_regress.py
+  "$UDB_ROOT/bin/python" tools/test/gen_regress.py || return 1
   chmod -wx .github/workflows/regress.yml
   if [ $fail_on_change -eq 1 ]; then
     local sha_after
@@ -291,7 +291,7 @@ do_gen_vscode_idl() {
     local sha_before
     sha_before=$(sha256sum "$out")
   fi
-  node "$UDB_ROOT/tools/node/idl-grammar-gen/index.js"
+  node "$UDB_ROOT/tools/node/idl-grammar-gen/index.js" || return 1
   if [ $fail_on_change -eq 1 ]; then
     local sha_after
     sha_after=$(sha256sum "$out")
@@ -314,7 +314,7 @@ do_gen_schema_docs() {
   "$UDB_ROOT/bin/ruby" "$UDB_ROOT/tools/internal-gems/schema_doc_gen/bin/schema-docs-all" \
     --schema-dir "$UDB_ROOT/spec/schemas" \
     --output-dir "$UDB_ROOT/doc/docs/schemas" \
-    --generate-index
+    --generate-index || return 1
   if [ $fail_on_change -eq 1 ]; then
     local sha_after
     sha_after=$(find "$UDB_ROOT"/doc/docs/schemas -type f -name "*.mdx" -exec sha256sum {} \; 2>/dev/null | sort | sha256sum)
@@ -336,9 +336,9 @@ do_gen_gem_versions() {
   fi
   echo "Syncing inter-gem version pins for tools/ruby-gems/ gems"
   if [ $fail_on_change -eq 1 ]; then
-    "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change "${extra_args[@]}"
+    "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb --fail-on-change "${extra_args[@]}" || return 1
   else
-    "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb "${extra_args[@]}"
+    "$UDB_ROOT/bin/ruby" "$UDB_ROOT"/tools/scripts/gen_gem_versions.rb "${extra_args[@]}" || return 1
   fi
 }
 
@@ -360,32 +360,32 @@ do_update_gem_versions() {
 # Generate test cases for udb_gen
 #
 do_gen_udb_gen_fixtures() {
-  "$UDB_ROOT/do" chore:udb_gen:update_fixtures
+  "$UDB_ROOT/do" chore:udb_gen:update_fixtures || return 1
 }
 
 #
 # Generate all development artifacts
 #
 do_gen_all() {
-  do_gen_regress
-  do_gen_vscode_idl
-  do_gen_gem_versions
-  do_ruby_type_def all
-  do_gen_profile_cfgs
-  do_gen_xqci_golden
-  do_gen_instruction_appendix_golden
-  do_gen_schema_docs
-  do_gen_cfg_headers_golden
-  do_gen_udb_gen_fixtures
+  do_gen_regress || return 1
+  do_gen_vscode_idl || return 1
+  do_gen_gem_versions || return 1
+  do_ruby_type_def all || return 1
+  do_gen_profile_cfgs || return 1
+  do_gen_xqci_golden || return 1
+  do_gen_instruction_appendix_golden || return 1
+  do_gen_schema_docs || return 1
+  do_gen_cfg_headers_golden || return 1
+  do_gen_udb_gen_fixtures || return 1
 }
 
 #
 # Generate the development artifacts that are quick to resolve; should be run frequently (e.g., before git push)
 #
 do_gen_smoke() {
-  do_gen_regress
-  do_gen_vscode_idl
-  do_ruby_type_def all
+  do_gen_regress || return 1
+  do_gen_vscode_idl || return 1
+  do_ruby_type_def all || return 1
 }
 
 #
@@ -425,7 +425,7 @@ do_gen_xqci_golden() {
   echo "Generating Xqci golden adoc"
   local xqci_version
   xqci_version=$("${UDB_ROOT}"/bin/bundle exec ruby -e "require 'yaml'; puts YAML.load_file('spec/custom/isa/qc_iu/ext/Xqci.yaml')['versions'].last['version']" | tr -d '\r\n')
-  "${UDB_ROOT}"/bin/bundle exec ruby tools/scripts/gen_xqci.rb
+  "${UDB_ROOT}"/bin/bundle exec ruby tools/scripts/gen_xqci.rb || return 1
   mkdir -p tests/data/golden
   # Remove any stale golden files from previous versions
   rm -f tests/data/golden/Xqci@*.adoc
@@ -441,7 +441,7 @@ do_gen_xqci_golden() {
 #
 do_gen_instruction_appendix_golden() {
   echo "Generating instruction appendix golden adoc"
-  "$UDB_ROOT/do" chore:update_golden_appendix
+  "$UDB_ROOT/do" chore:update_golden_appendix || return 1
 }
 
 #
@@ -487,8 +487,8 @@ do_gen_cfg_headers_golden() {
 do_install_gems() {
   do_lock_all_gemfiles
 
-  "${UDB_ROOT}"/bin/bundle install
-  do_ruby_type_def
+  "${UDB_ROOT}"/bin/bundle install || return 1
+do_ruby_type_def || return 1
 }
 
 #
@@ -498,14 +498,14 @@ do_install_gems() {
 do_ruby_type_def() {
   cd "${UDB_ROOT}" || exit 1
   "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca gems --all
-  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca dsl
+  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca dsl || return 1
 
-  # tapioca annotations requires the ext/rbi-central submodule to be initialized.
+  # tapioca annotations || return 1 requires the ext/rbi-central submodule to be initialized.
   if [ ! -f "${UDB_ROOT}/ext/rbi-central/index.json" ]; then
     echo "Initializing ext/rbi-central submodule..."
     git -C "${UDB_ROOT}" submodule update --init ext/rbi-central
   fi
-  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca annotations
+  "${UDB_ROOT}"/bin/bundle exec --gemfile "${UDB_ROOT}"/Gemfile tapioca annotations || return 1
 }
 
 #
@@ -594,7 +594,7 @@ case "$subcommand" in
           esac
         done
         do_container_build "$force"
-        exit 0
+        exit $?
       ;;
       pull )
         force=no
@@ -606,7 +606,7 @@ case "$subcommand" in
           esac
         done
         do_container_pull "$force"
-        exit 0
+        exit $?
       ;;
       remove|rm )
         while getopts ":h" opt; do
@@ -616,7 +616,7 @@ case "$subcommand" in
           esac
         done
         do_container_remove
-        exit 0
+        exit $?
       ;;
       * )
         echo "Invalid target: $target"
@@ -655,27 +655,27 @@ case "$subcommand" in
     case "$target" in
       all )
         do_gen_all
-        exit 0
+        exit $?
         ;;
       smoke )
         do_gen_smoke
-        exit 0
+        exit $?
         ;;
       gem-versions )
         do_gen_gem_versions "$base_ref"
-        exit 0
+        exit $?
         ;;
       vscode-idl )
         do_gen_vscode_idl
-        exit 0
+        exit $?
         ;;
       regress )
         do_gen_regress
-        exit 0
+        exit $?
         ;;
       schema-docs )
         do_gen_schema_docs
-        exit 0
+        exit $?
         ;;
       profile-cfgs )
         do_gen_profile_cfgs
@@ -684,15 +684,15 @@ case "$subcommand" in
         ;;
       xqci )
         do_gen_xqci_golden
-        exit 0
+        exit $?
         ;;
       instruction-appendix )
         do_gen_instruction_appendix_golden
-        exit 0
+        exit $?
         ;;
       udb-gen )
         do_gen_udb_gen_fixtures
-        exit 0
+        exit $?
         ;;
       cfg-headers )
         do_gen_cfg_headers_golden
@@ -722,7 +722,7 @@ case "$subcommand" in
             exit 1
         fi
         do_ruby_type_def
-        exit 0
+        exit $?
         ;;
       * )
         echo "Invalid target: $subcommand"
@@ -763,7 +763,7 @@ case "$subcommand" in
           esac
         done
         do_install_gems
-        exit 0
+        exit $?
       ;;
       * )
         echo "Invalid target: $subcommand"
@@ -808,7 +808,7 @@ case "$subcommand" in
           esac
         done
         do_update_gem_versions "$base_ref"
-        exit 0
+        exit $?
         ;;
       gems )
           while getopts ":h" opt; do # Go through the options
@@ -827,7 +827,7 @@ case "$subcommand" in
             esac
           done
         do_update_gems
-        exit 0
+        exit $?
       ;;
       eqntott )
         native_only=no
@@ -970,7 +970,7 @@ case "$subcommand" in
           esac
         done
         do_build_udb_gem "$gen_dir"
-        exit 0
+        exit $?
       ;;
       * )
         echo "Invalid target: $target"
