@@ -38,6 +38,7 @@ from specchoice_evidence.source_contract import (
     validate_fixture_registry,
     verify_fixture_registry_git,
 )
+from specchoice_evidence.runtime_closure import RuntimeClosureError, verify_runtime_closure
 
 
 class FixtureClosureTests(unittest.TestCase):
@@ -81,6 +82,34 @@ class FixtureClosureTests(unittest.TestCase):
         invalid["fixtures"][0]["files"][0]["raw_sha256"] = "0" * 64
         with self.assertRaisesRegex(FixtureRegistryError, "FIXTURE_RAW_SHA256_MISMATCH"):
             verify_fixture_registry_git(invalid, self.repository)
+
+    def test_v5_executable_closure_and_candidate_entrypoints(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tracked = root / "tracked.json"
+            tracked.write_bytes(b"frozen\n")
+            closure = {
+                "entries": [{
+                    "byte_length": len(tracked.read_bytes()),
+                    "path": "tracked.json",
+                    "sha256": sha256_bytes(tracked.read_bytes()),
+                }],
+                "schema_version": "runtime-executable-closure-v1",
+            }
+            self.assertEqual(verify_runtime_closure(closure, root)["schema_version"], closure["schema_version"])
+            tracked.write_bytes(b"drifted\n")
+            with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_ENTRY_MISMATCH"):
+                verify_runtime_closure(closure, root)
+
+        commands = cli_module.build_parser()._subparsers._group_actions[0].choices
+        self.assertTrue({
+            "write-source-contract-proposal-v5",
+            "validate-source-contract-proposal-v5",
+            "validate-fixture-construction-decision-v5",
+            "build-fixture-construction-candidate-v5",
+            "validate-fixture-candidate-v5",
+            "validate-runtime-executable-closure",
+        }.issubset(commands))
 
 
 class FixtureClosureCandidateTests(unittest.TestCase):
