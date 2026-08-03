@@ -1825,10 +1825,37 @@ def _aggregate_disposition(values: list[str]) -> str:
 
 
 def validate_h1_semantic_review_decision(
-    *, schema: Path, questions: Path, golden_predictions: Path, packet: Path,
-    readiness: Path, decision: Path,
+    *, adapter_batch: Path, adversarial_report: Path, adversarial_contract: Path,
+    adjudication_schema: Path, executable_closure: Path, fixture_registry: Path,
+    formal_attempt: Path, golden_predictions: Path, ontology_decision: Path,
+    ontology_options: Path, ontology_supersession: Path, questions: Path,
+    rules: Path, semantic_contract: Path, schema: Path, source_authority: Path,
+    bundle_root: Path, packet: Path, markdown: Path, readiness: Path,
+    decision: Path,
 ) -> dict[str, Any]:
-    """Validate human answers against the frozen machine-owned fixture semantics."""
+    """Validate human answers only after replaying the complete successor chain."""
+    validated_readiness = validate_h1_semantic_readiness_v6(
+        readiness=readiness,
+        packet=packet,
+        markdown=markdown,
+        adapter_batch=adapter_batch,
+        adversarial_report=adversarial_report,
+        adversarial_contract=adversarial_contract,
+        adjudication_schema=adjudication_schema,
+        executable_closure=executable_closure,
+        fixture_registry=fixture_registry,
+        formal_attempt=formal_attempt,
+        golden_predictions=golden_predictions,
+        ontology_decision=ontology_decision,
+        ontology_options=ontology_options,
+        ontology_supersession=ontology_supersession,
+        questions=questions,
+        rules=rules,
+        semantic_contract=semantic_contract,
+        schema=schema,
+        source_authority=source_authority,
+        bundle_root=bundle_root,
+    )
     schema_result = validate_h1_review_schema_v4(schema=schema, questions=questions)
     questions_value, _ = _read_canonical_external(
         questions, "H1_SEMANTIC_QUESTIONS_INVALID"
@@ -1848,8 +1875,16 @@ def validate_h1_semantic_review_decision(
         expected_reviews=expected_reviews,
     )
     packet_bindings = packet_value["bindings"]
+    validated_bindings = dict(validated_readiness["bindings"])
+    validated_packet_file_sha256 = validated_bindings.pop(
+        "packet_file_sha256", None
+    )
     if (
-        packet_bindings.get("questions_sha256")
+        packet_bindings != validated_bindings
+        or validated_packet_file_sha256 != sha256_bytes(packet_raw)
+        or validated_readiness.get("schema_version")
+        != "h1-semantic-readiness-v6"
+        or packet_bindings.get("questions_sha256")
         != schema_result["questions_sha256"]
         or packet_bindings.get("questions_semantic_content_sha256")
         != schema_result["canonical_semantic_content_sha256"]
@@ -1871,7 +1906,8 @@ def validate_h1_semantic_review_decision(
     expected_readiness_bindings = dict(packet_value["bindings"])
     expected_readiness_bindings["packet_file_sha256"] = sha256_bytes(packet_raw)
     if (
-        set(readiness_value) != expected_readiness_keys
+        readiness_value != validated_readiness
+        or set(readiness_value) != expected_readiness_keys
         or readiness_value.get("schema_version") != "h1-semantic-readiness-v6"
         or readiness_value.get("external_publication_authorized") is not False
         or readiness_value.get("readiness_sha256")

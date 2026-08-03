@@ -115,6 +115,77 @@ _CANONICAL_JSON_BINDINGS = frozenset(
 _COMMIT_RE = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})\Z")
 
 
+def _canonical_successor_h1_inputs(root: Path) -> dict[str, Path]:
+    """Return the one fixed successor chain that may authorize final reports."""
+    experiment = root / "experiments/specchoice-v1.3.2"
+    formal = experiment / "runs/measurement-attempts/formal-golden-pr2164-v5"
+    review = experiment / "reports/h1/h1-source-gold-review-v6"
+    return {
+        "adapter_batch": experiment / "reports/h1/adapter-batch-pr2164-v5.json",
+        "adversarial_report": experiment / "reports/h1/adversarial-oracle-results-v6.json",
+        "adversarial_contract": experiment
+        / "fixtures/measurement/adversarial/required-diagnostics-v4.json",
+        "adjudication_schema": experiment
+        / "config/measurement/canonical-adjudication-schema-v3.json",
+        "executable_closure": experiment
+        / "receipts/runtime-executable-closure-v2.json",
+        "fixture_registry": experiment / "config/fixture-registry-pr2164-v6.json",
+        "formal_attempt": formal,
+        "golden_predictions": experiment
+        / "fixtures/measurement/golden-predictions-v4.json",
+        "ontology_decision": experiment
+        / "reviews/h1-source-gold-ontology-decision-v1.json",
+        "ontology_options": experiment
+        / "config/measurement/h1-ontology-policy-options-v1.json",
+        "ontology_supersession": experiment
+        / "receipts/h1-review-route-supersession-v1.json",
+        "questions": experiment
+        / "config/measurement/h1-semantic-review-questions-v2.json",
+        "rules": experiment / "config/measurement/pr2164-adapter-rules-v3.json",
+        "semantic_contract": experiment
+        / "config/measurement/pr2164-semantic-gold-contract-v2.json",
+        "schema": experiment / "config/measurement/h1-review-schema-v4.json",
+        "source_authority": experiment / "phase2/source-authority.json",
+        "bundle_root": experiment
+        / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3",
+        "packet": review / "h1-source-gold-review-v6.json",
+        "markdown": review / "h1-source-gold-review-v6.md",
+        "readiness": experiment / "receipts/h1-review-readiness-v6.json",
+        "decision": experiment / "reviews/h1-source-gold-decision-v5.json",
+    }
+
+
+def _canonical_final_binding_paths(root: Path) -> dict[str, Path]:
+    inputs = _canonical_successor_h1_inputs(root)
+    formal = inputs["formal_attempt"]
+    return {
+        "roadmap": root / ".planning/ROADMAP.md",
+        "requirements": root / ".planning/REQUIREMENTS.md",
+        "phase1_predecessor_verification": root
+        / ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-VERIFICATION.md",
+        "phase1_predecessor_review": root
+        / ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-REVIEW.md",
+        "phase2_predecessor_verification": root
+        / ".planning/phases/02-deterministic-measurement-spine/02-VERIFICATION.md",
+        "phase2_predecessor_review": root
+        / ".planning/phases/02-deterministic-measurement-spine/02-REVIEW.md",
+        "executable_closure": inputs["executable_closure"],
+        "source_authority": inputs["source_authority"],
+        "integrity_receipt": root
+        / "experiments/specchoice-v1.3.2/receipts/integrity-receipt-v14.json",
+        "golden_predictions": inputs["golden_predictions"],
+        "formal_attempt": formal / "attempt.json",
+        "formal_case_outcomes": formal / "case-outcomes.json",
+        "formal_metrics": formal / "metrics.json",
+        "adversarial_report": inputs["adversarial_report"],
+        "h1_questions": inputs["questions"],
+        "h1_schema": inputs["schema"],
+        "h1_packet": inputs["packet"],
+        "h1_readiness": inputs["readiness"],
+        "h1_decision": inputs["decision"],
+    }
+
+
 def _canonical_input(root: Path, path: str, code: str) -> tuple[object, bytes]:
     try:
         relative = require_relative_posix_path(path).as_posix()
@@ -282,19 +353,33 @@ def _adversarial_semantics(values: Mapping[str, bytes]) -> dict[str, object]:
 
 def _decision_semantics(root: Path, records: list[dict[str, object]], values: Mapping[str, bytes]) -> dict[str, object]:
     by_role = {str(item["role"]): str(item["path"]) for item in records}
+    expected_paths = _canonical_final_binding_paths(root)
+    try:
+        supplied_paths = {
+            role: root / require_relative_posix_path(by_role[role])
+            for role in expected_paths
+        }
+    except (FilesystemPolicyError, KeyError, ValueError) as error:
+        raise FinalReportError("FINAL_REPORT_BINDING_INVENTORY_INVALID") from error
+    if any(
+        supplied_paths[role].absolute() != expected.absolute()
+        for role, expected in expected_paths.items()
+    ):
+        raise FinalReportError("FINAL_REPORT_BINDING_INVENTORY_INVALID")
     try:
         from .h1 import validate_h1_semantic_review_decision
 
         receipt = validate_h1_semantic_review_decision(
-            schema=root / by_role["h1_schema"],
-            questions=root / by_role["h1_questions"],
-            golden_predictions=root / by_role["golden_predictions"],
-            packet=root / by_role["h1_packet"],
-            readiness=root / by_role["h1_readiness"],
-            decision=root / by_role["h1_decision"],
+            **_canonical_successor_h1_inputs(root)
         )
         decision = json.loads(values["h1_decision"])
-    except (KeyError, ValueError, json.JSONDecodeError, UnicodeDecodeError) as error:
+    except (
+        FilesystemPolicyError,
+        KeyError,
+        ValueError,
+        json.JSONDecodeError,
+        UnicodeDecodeError,
+    ) as error:
         raise FinalReportError("FINAL_REPORT_H1_DECISION_INVALID") from error
     responses = decision.get("responses")
     if not isinstance(responses, list):

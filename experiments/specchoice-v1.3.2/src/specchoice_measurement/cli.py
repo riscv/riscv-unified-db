@@ -696,19 +696,12 @@ def command_validate_h1_semantic_readiness_v6(args: argparse.Namespace) -> int:
 
 
 def command_validate_h1_semantic_review_decision(args: argparse.Namespace) -> int:
-    validate_h1_semantic_readiness_v6(
-        readiness=args.readiness,
+    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_semantic_review_decision(
         packet=args.packet,
         markdown=args.markdown,
-        **_successor_h1_inputs(args),
-    )
-    sys.stdout.buffer.write(canonical_json_bytes(validate_h1_semantic_review_decision(
-        schema=args.schema,
-        questions=args.questions,
-        golden_predictions=args.golden_predictions,
-        packet=args.packet,
         readiness=args.readiness,
         decision=args.decision,
+        **_successor_h1_inputs(args),
     )))
     return 0
 

@@ -408,6 +408,14 @@ class H1PacketTests(unittest.TestCase):
             self.assertIn(command, parser._subparsers._group_actions[0].choices)
 
     def test_successor_public_cli_e2e_rejects_forged_adapter_formal_adversarial_and_packet(self) -> None:
+        self._run_successor_public_chain(check_direct_report_bypass=False)
+
+    def test_direct_decision_and_final_reports_reject_zero_upstream_bindings(self) -> None:
+        self._run_successor_public_chain(check_direct_report_bypass=True)
+
+    def _run_successor_public_chain(
+        self, *, check_direct_report_bypass: bool
+    ) -> None:
         from specchoice_measurement.cli import build_parser  # noqa: PLC0415
 
         root = self.root.absolute()
@@ -578,7 +586,7 @@ class H1PacketTests(unittest.TestCase):
                 )["valid"]
             )
 
-            def successor_h1_args(
+            def successor_h1_inputs(
                 *,
                 selected_adapter: Path = adapter,
                 selected_formal: Path = formal,
@@ -586,26 +594,37 @@ class H1PacketTests(unittest.TestCase):
                 selected_closure: Path | None = None,
                 selected_ontology: Path | None = None,
                 selected_authority: Path | None = None,
-            ) -> list[str]:
-                return [
-                    "--adapter-batch", str(selected_adapter),
-                    "--adversarial-report", str(selected_adversarial),
-                    "--adversarial-contract", str(adversarial_contract),
-                    "--adjudication-schema", str(adjudication_schema),
-                    "--executable-closure", str(selected_closure or closure),
-                    "--fixture-registry", str(registry),
-                    "--formal-attempt", str(selected_formal),
-                    "--golden-predictions", str(golden),
-                    "--ontology-decision", str(selected_ontology or root / "reviews/h1-source-gold-ontology-decision-v1.json"),
-                    "--ontology-options", str(root / "config/measurement/h1-ontology-policy-options-v1.json"),
-                    "--ontology-supersession", str(root / "receipts/h1-review-route-supersession-v1.json"),
-                    "--questions", str(questions),
-                    "--rules", str(rules),
-                    "--semantic-contract", str(semantic_contract),
-                    "--schema", str(h1_schema),
-                    "--source-authority", str(selected_authority or root / "phase2/source-authority.json"),
-                    "--bundle-root", str(self.active_bundle.absolute()),
-                ]
+            ) -> dict[str, Path]:
+                return {
+                    "adapter_batch": selected_adapter,
+                    "adversarial_report": selected_adversarial,
+                    "adversarial_contract": adversarial_contract,
+                    "adjudication_schema": adjudication_schema,
+                    "executable_closure": selected_closure or closure,
+                    "fixture_registry": registry,
+                    "formal_attempt": selected_formal,
+                    "golden_predictions": golden,
+                    "ontology_decision": selected_ontology
+                    or root / "reviews/h1-source-gold-ontology-decision-v1.json",
+                    "ontology_options": root
+                    / "config/measurement/h1-ontology-policy-options-v1.json",
+                    "ontology_supersession": root
+                    / "receipts/h1-review-route-supersession-v1.json",
+                    "questions": questions,
+                    "rules": rules,
+                    "semantic_contract": semantic_contract,
+                    "schema": h1_schema,
+                    "source_authority": selected_authority
+                    or root / "phase2/source-authority.json",
+                    "bundle_root": self.active_bundle.absolute(),
+                }
+
+            def successor_h1_args(**selections: Path) -> list[str]:
+                values = successor_h1_inputs(**selections)
+                arguments: list[str] = []
+                for name, path in values.items():
+                    arguments.extend((f"--{name.replace('_', '-')}", str(path)))
+                return arguments
 
             closure = temporary / "runtime-executable-closure-v2.json"
             closure_value = {
@@ -790,6 +809,225 @@ class H1PacketTests(unittest.TestCase):
                     ]
                 )["valid"]
             )
+
+            if check_direct_report_bypass:
+                from specchoice_measurement import final_reports  # noqa: PLC0415
+                from specchoice_measurement.final_reports import (  # noqa: PLC0415
+                    FinalReportError,
+                )
+
+                def validate_direct_decision(
+                    *, selected_packet: Path = packet,
+                    selected_markdown: Path = markdown,
+                    selected_readiness: Path = readiness,
+                    selected_decision: Path = decision,
+                ) -> dict[str, object]:
+                    with (
+                        patch.object(
+                            h1,
+                            "_SUCCESSOR_EXECUTABLE_CLOSURE",
+                            closure,
+                        ),
+                        patch.object(
+                            h1,
+                            "verify_runtime_closure_v2",
+                            return_value=closure_value,
+                        ) as closure_validator,
+                        patch.object(
+                            h1,
+                            "validate_accepted_v6_active_authority",
+                            return_value={
+                                "authority_sha256": sha256_bytes(
+                                    active_authority.read_bytes()
+                                ),
+                                "status": "accepted_v6_state_chain_verified",
+                            },
+                        ) as authority_validator,
+                    ):
+                        result = h1.validate_h1_semantic_review_decision(
+                            **successor_h1_inputs(),
+                            packet=selected_packet,
+                            markdown=selected_markdown,
+                            readiness=selected_readiness,
+                            decision=selected_decision,
+                        )
+                        closure_validator.assert_called_once_with(
+                            closure_value, root.parents[1]
+                        )
+                        authority_validator.assert_called_once_with(root.parents[1])
+                        return result
+
+                self.assertTrue(validate_direct_decision()["valid"])
+                zero_packet_value = deepcopy(packet_value)
+                retained_bindings = {
+                    "golden_predictions_sha256",
+                    "h1_review_schema_sha256",
+                    "questions_semantic_content_sha256",
+                    "questions_sha256",
+                }
+                for name in h1._SUCCESSOR_PACKET_BINDING_KEYS - retained_bindings:
+                    zero_packet_value["bindings"][name] = "0" * 64
+                self.assertEqual(
+                    sum(
+                        digest == "0" * 64
+                        for digest in zero_packet_value["bindings"].values()
+                    ),
+                    13,
+                )
+                zero_packet_value["packet_sha256"] = sha256_bytes(
+                    canonical_json_bytes(
+                        {
+                            key: item
+                            for key, item in zero_packet_value.items()
+                            if key != "packet_sha256"
+                        }
+                    )
+                )
+                zero_packet = temporary / "zero-upstream-packet.json"
+                zero_packet.write_bytes(canonical_json_bytes(zero_packet_value))
+                zero_markdown = temporary / "zero-upstream-review.md"
+                zero_markdown.write_text(
+                    h1.render_h1_semantic_markdown_v6(zero_packet_value),
+                    encoding="utf-8",
+                )
+                zero_readiness_value = deepcopy(readiness_value)
+                zero_readiness_value["bindings"] = {
+                    **zero_packet_value["bindings"],
+                    "packet_file_sha256": sha256_bytes(zero_packet.read_bytes()),
+                }
+                zero_readiness_value["readiness_sha256"] = sha256_bytes(
+                    canonical_json_bytes(
+                        {
+                            key: item
+                            for key, item in zero_readiness_value.items()
+                            if key != "readiness_sha256"
+                        }
+                    )
+                )
+                zero_readiness = temporary / "zero-upstream-readiness.json"
+                zero_readiness.write_bytes(canonical_json_bytes(zero_readiness_value))
+                zero_decision_value = deepcopy(decision_value)
+                zero_decision_value["bindings"]["packet_sha256"] = (
+                    zero_packet_value["packet_sha256"]
+                )
+                zero_decision_value["bindings"]["readiness_sha256"] = (
+                    zero_readiness_value["readiness_sha256"]
+                )
+                zero_decision_value["decision_sha256"] = sha256_bytes(
+                    canonical_json_bytes(
+                        {
+                            key: item
+                            for key, item in zero_decision_value.items()
+                            if key != "decision_sha256"
+                        }
+                    )
+                )
+                zero_decision = temporary / "zero-upstream-decision.json"
+                zero_decision.write_bytes(canonical_json_bytes(zero_decision_value))
+                with self.assertRaisesRegex(
+                    H1Error, "H1_SUCCESSOR_PACKET_BINDING_INVALID"
+                ):
+                    validate_direct_decision(
+                        selected_packet=zero_packet,
+                        selected_markdown=zero_markdown,
+                        selected_readiness=zero_readiness,
+                        selected_decision=zero_decision,
+                    )
+
+                integrity = temporary / "integrity-v14.json"
+                integrity.write_bytes(canonical_json_bytes({}))
+                report_inputs = {
+                    **successor_h1_inputs(),
+                    "packet": zero_packet,
+                    "markdown": zero_markdown,
+                    "readiness": zero_readiness,
+                    "decision": zero_decision,
+                }
+                repository = root.parents[1]
+                binding_paths = {
+                    "roadmap": repository / ".planning/ROADMAP.md",
+                    "requirements": repository / ".planning/REQUIREMENTS.md",
+                    "phase1_predecessor_verification": repository
+                    / ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-VERIFICATION.md",
+                    "phase1_predecessor_review": repository
+                    / ".planning/phases/01-isolated-evidence-boundary-and-source-integrity/01-REVIEW.md",
+                    "phase2_predecessor_verification": repository
+                    / ".planning/phases/02-deterministic-measurement-spine/02-VERIFICATION.md",
+                    "phase2_predecessor_review": repository
+                    / ".planning/phases/02-deterministic-measurement-spine/02-REVIEW.md",
+                    "executable_closure": closure,
+                    "source_authority": active_authority,
+                    "integrity_receipt": integrity,
+                    "golden_predictions": golden,
+                    "formal_attempt": formal / "attempt.json",
+                    "formal_case_outcomes": formal / "case-outcomes.json",
+                    "formal_metrics": formal / "metrics.json",
+                    "adversarial_report": adversarial,
+                    "h1_questions": questions,
+                    "h1_schema": h1_schema,
+                    "h1_packet": zero_packet,
+                    "h1_readiness": zero_readiness,
+                    "h1_decision": zero_decision,
+                }
+                report_bindings = []
+                for role in final_reports._FINAL_BINDING_ROLES:
+                    path = binding_paths[role]
+                    raw = path.read_bytes()
+                    report_bindings.append(
+                        {
+                            "byte_length": len(raw),
+                            "path": path.relative_to(repository).as_posix(),
+                            "role": role,
+                            "sha256": sha256_bytes(raw),
+                        }
+                    )
+                with (
+                    patch.object(
+                        final_reports,
+                        "_canonical_successor_h1_inputs",
+                        return_value=report_inputs,
+                    ),
+                    patch.object(
+                        final_reports,
+                        "_canonical_final_binding_paths",
+                        return_value=binding_paths,
+                    ),
+                    patch.object(
+                        final_reports,
+                        "_validate_target_inventory",
+                        side_effect=AssertionError("report target opened"),
+                    ) as target_guard,
+                    patch.object(
+                        h1,
+                        "_SUCCESSOR_EXECUTABLE_CLOSURE",
+                        closure,
+                    ),
+                    patch.object(
+                        h1,
+                        "verify_runtime_closure_v2",
+                        return_value=closure_value,
+                    ),
+                    patch.object(
+                        h1,
+                        "validate_accepted_v6_active_authority",
+                        return_value={
+                            "authority_sha256": sha256_bytes(
+                                active_authority.read_bytes()
+                            ),
+                            "status": "accepted_v6_state_chain_verified",
+                        },
+                    ),
+                    self.assertRaisesRegex(
+                        FinalReportError, "FINAL_REPORT_H1_DECISION_INVALID"
+                    ),
+                ):
+                    final_reports.write_final_successor_reports(
+                        repository,
+                        audited_commit="a" * 40,
+                        bindings=report_bindings,
+                        preflight=True,
+                    )
+                target_guard.assert_not_called()
 
             forged_adapter = temporary / "forged-adapter.json"
             forged_adapter_value = json.loads(adapter.read_bytes())
@@ -1422,15 +1660,44 @@ class H1PacketTests(unittest.TestCase):
             successor_decision["decision_sha256"] = sha256_bytes(canonical_json_bytes(successor_decision))
             successor_decision_path = root / "successor-decision.json"
             successor_decision_path.write_bytes(canonical_json_bytes(successor_decision))
+
+            def validate_successor_decision(
+                *, selected_schema: Path = schema_v4,
+            ) -> dict[str, object]:
+                validated_readiness = json.loads(successor_readiness_path.read_bytes())
+                with patch.object(
+                    h1,
+                    "validate_h1_semantic_readiness_v6",
+                    return_value=validated_readiness,
+                ):
+                    return h1.validate_h1_semantic_review_decision(
+                        adapter_batch=root / "validated-adapter.json",
+                        adversarial_report=root / "validated-adversarial.json",
+                        adversarial_contract=root / "validated-adversarial-contract.json",
+                        adjudication_schema=root / "validated-adjudication-schema.json",
+                        executable_closure=root / "validated-closure.json",
+                        fixture_registry=root / "validated-registry.json",
+                        formal_attempt=root / "validated-formal",
+                        golden_predictions=self.root
+                        / "fixtures/measurement/golden-predictions-v4.json",
+                        ontology_decision=root / "validated-ontology.json",
+                        ontology_options=root / "validated-ontology-options.json",
+                        ontology_supersession=root
+                        / "validated-ontology-supersession.json",
+                        questions=questions_path,
+                        rules=root / "validated-rules.json",
+                        semantic_contract=root / "validated-semantic-contract.json",
+                        schema=selected_schema,
+                        source_authority=root / "validated-authority.json",
+                        bundle_root=root / "validated-bundle",
+                        packet=successor_packet_path,
+                        markdown=root / "validated-review.md",
+                        readiness=successor_readiness_path,
+                        decision=successor_decision_path,
+                    )
+
             self.assertEqual(
-                h1.validate_h1_semantic_review_decision(
-                    schema=schema_v4,
-                    questions=questions_path,
-                    golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
-                    packet=successor_packet_path,
-                    readiness=successor_readiness_path,
-                    decision=successor_decision_path,
-                )["questions"],
+                validate_successor_decision()["questions"],
                 7,
             )
             for label, mutate in (
@@ -1501,14 +1768,7 @@ class H1PacketTests(unittest.TestCase):
                         H1Error,
                         "H1_SUCCESSOR_PACKET_(QUESTIONS_)?INVALID",
                     ):
-                        h1.validate_h1_semantic_review_decision(
-                            schema=schema_v4,
-                            questions=questions_path,
-                            golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
-                            packet=successor_packet_path,
-                            readiness=successor_readiness_path,
-                            decision=successor_decision_path,
-                        )
+                        validate_successor_decision()
             forged_review_packet = deepcopy(successor_packet)
             forged_review = forged_review_packet["fixture_reviews"][0]
             forged_review["reviewed_semantics"]["rationale"] += " forged"
@@ -1564,15 +1824,7 @@ class H1PacketTests(unittest.TestCase):
                 canonical_json_bytes(forged_review_decision)
             )
             with self.assertRaisesRegex(H1Error, "H1_SUCCESSOR_PACKET_INVALID"):
-                h1.validate_h1_semantic_review_decision(
-                    schema=schema_v4,
-                    questions=questions_path,
-                    golden_predictions=self.root
-                    / "fixtures/measurement/golden-predictions-v4.json",
-                    packet=successor_packet_path,
-                    readiness=successor_readiness_path,
-                    decision=successor_decision_path,
-                )
+                validate_successor_decision()
             successor_packet_path.write_bytes(canonical_json_bytes(successor_packet))
             successor_readiness_path.write_bytes(
                 canonical_json_bytes(successor_readiness)
@@ -1584,12 +1836,7 @@ class H1PacketTests(unittest.TestCase):
             }))
             successor_decision_path.write_bytes(canonical_json_bytes(placeholder))
             with self.assertRaisesRegex(H1Error, "H1_SEMANTIC_RESPONSES_INVALID"):
-                h1.validate_h1_semantic_review_decision(
-                    schema=schema_v4, questions=questions_path,
-                    golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
-                    packet=successor_packet_path,
-                    readiness=successor_readiness_path, decision=successor_decision_path,
-                )
+                validate_successor_decision()
             inconsistent = deepcopy(successor_decision)
             inconsistent["responses"][0]["response"] = "reject_expected_semantics"
             inconsistent["responses"][0]["disposition"] = "disputed"
@@ -1600,19 +1847,11 @@ class H1PacketTests(unittest.TestCase):
             }))
             successor_decision_path.write_bytes(canonical_json_bytes(inconsistent))
             with self.assertRaisesRegex(H1Error, "H1_DISPUTE_AGGREGATION_INVALID"):
-                h1.validate_h1_semantic_review_decision(
-                    schema=schema_v4, questions=questions_path,
-                    golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
-                    packet=successor_packet_path,
-                    readiness=successor_readiness_path, decision=successor_decision_path,
-                )
+                validate_successor_decision()
             with self.assertRaisesRegex(H1Error, "H1_REVIEW_SCHEMA_V4_INVALID"):
-                h1.validate_h1_semantic_review_decision(
-                    schema=self.root / "config/measurement/h1-review-schema-v3.json",
-                    questions=questions_path,
-                    golden_predictions=self.root / "fixtures/measurement/golden-predictions-v4.json",
-                    packet=successor_packet_path,
-                    readiness=successor_readiness_path, decision=successor_decision_path,
+                validate_successor_decision(
+                    selected_schema=self.root
+                    / "config/measurement/h1-review-schema-v3.json"
                 )
 
     def test_incomplete_or_disputed_leaf_must_match_aggregate(self) -> None:
