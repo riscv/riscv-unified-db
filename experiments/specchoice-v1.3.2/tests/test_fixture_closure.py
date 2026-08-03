@@ -36,11 +36,21 @@ from specchoice_evidence.source_contract import (
     require_fixture_closure_local_acceptance_authorization,
     validate_fixture_construction_decision_v4,
     build_source_contract_proposal_v5,
+    render_v5_rejected_pre_authorization_receipt,
+    validate_v5_rejected_pre_authorization_receipt,
     validate_source_contract_proposal_v5,
     validate_fixture_registry,
     verify_fixture_registry_git,
 )
-from specchoice_evidence.runtime_closure import RuntimeClosureError, build_runtime_closure, verify_runtime_closure
+from specchoice_evidence.runtime_closure import (
+    RuntimeClosureError,
+    _referenced_runtime_paths_v2,
+    build_runtime_closure,
+    future_target_inventory_v6,
+    validate_future_target_occupancy_v6,
+    verify_runtime_closure,
+)
+from specchoice_evidence.successor import validate_local_acceptance_decision_v13
 
 
 class FixtureClosureTests(unittest.TestCase):
@@ -213,6 +223,111 @@ class FixtureClosureTests(unittest.TestCase):
                     input_paths=["inputs/registry.json"],
                     target_paths=["receipts/proposal.json", "bundles/candidate"],
                 )
+
+    def test_v5_rejection_is_exact_and_v5_mutators_fail_closed(self) -> None:
+        receipt = render_v5_rejected_pre_authorization_receipt()
+        validated = validate_v5_rejected_pre_authorization_receipt(
+            receipt,
+            runtime_closure_raw=(self.experiment / "receipts/runtime-executable-closure-v1.json").read_bytes(),
+            proposal_raw=(self.experiment / "receipts/source-contract-proposal-v5-pr2164-semantic-gold-executable-closure-verifier-rooted-v5.json").read_bytes(),
+            supersession_raw=(self.experiment / "receipts/source-contract-construction-proposal-v5-supersession-v4.json").read_bytes(),
+            repository_root=self.repository,
+        )
+        self.assertEqual(validated["status"], "rejected_pre_authorization_non_executable")
+        self.assertFalse(validated["human_decision_present"])
+        self.assertFalse(validated["candidate_present"])
+        for command in (
+            "build-fixture-construction-candidate-v5",
+            "accept-fixture-closure-local-v12",
+            "activate-pending-source-cutover-v12",
+        ):
+            result = subprocess.run(
+                [sys.executable, "-m", "specchoice_evidence.cli", command, "--preflight"],
+                cwd=self.experiment, check=False, capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("V5_PACKET_REJECTED_PRE_AUTHORIZATION", result.stderr)
+
+    def test_v6_future_target_inventory_is_typed_complete_and_occupancy_checked(self) -> None:
+        inventory = future_target_inventory_v6()
+        self.assertEqual(len(inventory), 25)
+        self.assertEqual([item["path"] for item in inventory], sorted(item["path"] for item in inventory))
+        self.assertEqual(len({item["kind"] for item in inventory}), 25)
+        self.assertTrue(all("source-contract-v5" not in item["path"] for item in inventory))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertEqual(validate_future_target_occupancy_v6(root), inventory)
+            occupied = next(item["path"] for item in inventory if item["kind"] == "construction_decision")
+            target = root / occupied
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"occupied")
+            with self.assertRaisesRegex(RuntimeClosureError, "V6_TARGET_OCCUPANCY_MISMATCH"):
+                validate_future_target_occupancy_v6(root)
+            self.assertEqual(target.read_bytes(), b"occupied")
+
+    def test_v6_registry_and_accepted_v3_transitive_inventories_are_reconstructed(self) -> None:
+        classes = _referenced_runtime_paths_v2(self.repository)
+        accepted = {path for path, kinds in classes.items() if "accepted_v3_referenced_file" in kinds}
+        registry = {path for path, kinds in classes.items() if "registry_v6_raw_input" in kinds}
+        repairs = {path for path, kinds in classes.items() if "repair_v5_payload" in kinds}
+        self.assertEqual(len(accepted), 34)
+        self.assertEqual(len(registry), 29)
+        self.assertEqual(len(repairs), 9)
+        self.assertTrue(all((self.repository / path).is_file() for path in accepted | registry | repairs))
+
+    def test_v6_v13_command_surface_is_real(self) -> None:
+        commands = cli_module.build_parser()._subparsers._group_actions[0].choices
+        expected = {
+            "write-runtime-executable-closure-v2", "validate-runtime-executable-closure-v2",
+            "write-source-contract-proposal-v6", "validate-source-contract-proposal-v6",
+            "validate-fixture-construction-decision-v6", "build-fixture-construction-candidate-v6",
+            "validate-fixture-candidate-v6", "write-fixture-candidate-audit-v6",
+            "write-local-acceptance-request-v13", "validate-local-acceptance-decision-v13",
+            "accept-fixture-closure-local-v13", "prepare-pending-source-cutover-v13",
+            "validate-pending-source-cutover-v13", "activate-pending-source-cutover-v13",
+            "write-accepted-v6-receipts", "verify-accepted-v6-receipts",
+        }
+        self.assertTrue(expected <= set(commands))
+
+    def test_v13_human_decision_is_closed_self_hashed_and_request_bound(self) -> None:
+        candidate = {
+            "core_sha256": "a" * 64, "generation": "source-contract-v6",
+            "root_sha256": "b" * 64, "snapshot_manifest_sha256": "c" * 64,
+            "status": "candidate",
+        }
+        projected = {key: value for key, value in candidate.items() if key != "status"}
+        request = {
+            "candidate": candidate, "projected_accepted": projected,
+            "schema_version": "local-acceptance-request-v13",
+        }
+        request_sha = sha256_bytes(canonical_json_bytes(request))
+        decision = {
+            "attestation": "I personally reviewed these exact candidate bytes.",
+            "candidate": candidate, "decision": "accept",
+            "decision_timestamp": "2026-08-03T12:34:56Z",
+            "external_publication_authorized": False,
+            "projected_accepted": projected, "rationale": "Exact local candidate accepted.",
+            "request_sha256": request_sha, "reviewer": "human-reviewer",
+            "schema_version": "local-acceptance-decision-v13",
+        }
+        decision["decision_sha256"] = sha256_bytes(canonical_json_bytes(decision))
+        self.assertEqual(
+            validate_local_acceptance_decision_v13(decision, request, request_sha256=request_sha)["decision"],
+            "accept",
+        )
+        for field in ("reviewer", "rationale", "attestation"):
+            malformed = copy.deepcopy(decision)
+            malformed[field] = ""
+            malformed.pop("decision_sha256")
+            malformed["decision_sha256"] = sha256_bytes(canonical_json_bytes(malformed))
+            with self.subTest(field=field), self.assertRaisesRegex(
+                ValueError, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID"
+            ):
+                validate_local_acceptance_decision_v13(malformed, request, request_sha256=request_sha)
+        stale = copy.deepcopy(decision)
+        stale["rationale"] = "changed without refreshing self hash"
+        with self.assertRaisesRegex(ValueError, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID"):
+            validate_local_acceptance_decision_v13(stale, request, request_sha256=request_sha)
 
 
 class FixtureClosureCandidateTests(unittest.TestCase):

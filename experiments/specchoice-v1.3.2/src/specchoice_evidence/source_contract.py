@@ -461,14 +461,20 @@ def render_v5_rejected_pre_authorization_receipt() -> dict[str, object]:
     candidate was ever present.
     """
     return {
+        "authorization_present": False,
         "candidate_present": False,
         "construction_authorized": False,
+        "external_publication_authorized": False,
         "human_decision_present": False,
         "known_defects": [
-            "preflight handlers were stubs",
-            "transitive closure did not reconstruct target inventory",
-            "v5 proposal trusted self-declared targets",
+            "candidate and acceptance command handlers were success-shaped no-write stubs",
+            "runtime closure omitted the 34 accepted-v3 referenced bundle files",
+            "runtime closure omitted resolved Python git Ruby and Psych executable and library identities",
+            "runtime closure did not reconstruct the registry-v6 29-raw-input universe",
+            "target inventory contained only the two proposal leaves and trusted its own declaration",
+            "required successor tests were renamed out of unittest discovery",
         ],
+        "local_only": True,
         "proposal_commit": "e1d52d8b",
         "schema_version": "source-contract-construction-proposal-v5-non-executable-supersession-v1",
         "status": "rejected_pre_authorization_non_executable",
@@ -476,6 +482,40 @@ def render_v5_rejected_pre_authorization_receipt() -> dict[str, object]:
         "v5_supersession_sha256": "3bfaf6015f92bcfa2fdff7c11da1fea50f170b6ed8318f0f69466936948c4a2d",
         "v5_runtime_closure_sha256": "671fe4e36cfe23ea9f1490279c75ae615e46db60769f54a2edb801fd7c2524fe",
     }
+
+
+def validate_v5_rejected_pre_authorization_receipt(
+    receipt: object, *, runtime_closure_raw: bytes, proposal_raw: bytes,
+    supersession_raw: bytes, repository_root: Path,
+) -> dict[str, object]:
+    """Validate the exact v5 rejected-history classification from live facts."""
+    if (
+        sha256_bytes(runtime_closure_raw) != "671fe4e36cfe23ea9f1490279c75ae615e46db60769f54a2edb801fd7c2524fe"
+        or sha256_bytes(proposal_raw) != "18443f3ef7a305500386ea40186cf7e789d697f9b8ea0cf10e8141f401812405"
+        or sha256_bytes(supersession_raw) != "3bfaf6015f92bcfa2fdff7c11da1fea50f170b6ed8318f0f69466936948c4a2d"
+    ):
+        raise SourceContractProposalError("V5_REJECTED_HISTORY_INPUT_MISMATCH")
+    expected = render_v5_rejected_pre_authorization_receipt()
+    if not isinstance(receipt, Mapping) or dict(receipt) != expected:
+        raise SourceContractProposalError("V5_REJECTED_HISTORY_RECEIPT_INVALID")
+    experiment = repository_root / "experiments/specchoice-v1.3.2"
+    forbidden = (
+        experiment / "receipts/source-contract-construction-decision-v5-pr2164-semantic-gold-executable-closure-verifier-rooted-v5.json",
+        experiment / "bundles/candidates/source-contract-v5-pr2164-semantic-gold-executable-closure-verifier-rooted-v5",
+    )
+    if any(path.exists() or path.is_symlink() for path in forbidden):
+        raise SourceContractProposalError("V5_REJECTED_HISTORY_STATE_MISMATCH")
+    try:
+        resolved = _run_bounded_subprocess(
+            ["git", "-C", str(repository_root), "rev-parse", "e1d52d8b^{commit}"],
+            input_bytes=b"", max_stdin_bytes=0, max_stdout_bytes=64,
+            max_stderr_bytes=_V4_SUBPROCESS_MAX_STDERR_BYTES, timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise SourceContractProposalError("V5_REJECTED_HISTORY_COMMIT_INVALID") from error
+    if resolved.returncode != 0 or not resolved.stdout.decode("ascii", "strict").strip().startswith("e1d52d8b"):
+        raise SourceContractProposalError("V5_REJECTED_HISTORY_COMMIT_INVALID")
+    return dict(receipt)
 
 
 def _validate_v4_supersession(

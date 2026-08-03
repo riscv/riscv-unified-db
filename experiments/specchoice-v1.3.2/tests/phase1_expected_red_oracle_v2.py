@@ -25,12 +25,39 @@ SUCCESSOR_IDS = {
     "tests.test_measurement_h1.H1PublicContractTests.test_v5_h1_question_contract_is_exactly_seven_questions",
     "tests.test_measurement_h1.H1PacketTests.test_seven_question_h1_and_four_report_pipeline",
     "tests.test_measurement_h1.H1PacketTests.test_report_generation_rejects_one_byte_planning_or_predecessor_report_drift_before_write",
+    "tests.test_source_contract.SourceContractTests.test_v4_authorization_is_append_only_classified_non_executable",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v5_rejection_is_exact_and_v5_mutators_fail_closed",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v6_future_target_inventory_is_typed_complete_and_occupancy_checked",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v6_registry_and_accepted_v3_transitive_inventories_are_reconstructed",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v6_v13_command_surface_is_real",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v13_human_decision_is_closed_self_hashed_and_request_bound",
 }
+
+# These ten tests were introduced by the two semantic recovery commits.  Keep
+# their exact discovery IDs explicit so they cannot silently leak back into the
+# historical 72/150/145 oracle population.
+RECOVERY_SEMANTIC_IDS = {
+    "tests.test_measurement_adapter.MeasurementAdapterTests.test_v6_golden_contract_contains_all_eleven_evidence_bound_outcomes",
+    "tests.test_measurement_adapter.MeasurementAdapterTests.test_v6_adapter_closes_the_full_twenty_nine_file_semantic_population",
+    "tests.test_measurement_adapter.MeasurementAdapterTests.test_v6_golden_spans_are_exact_semantic_bytes_and_candidates_bind_both_dimensions",
+    "tests.test_measurement_adapter.MeasurementAdapterTests.test_v6_closed_controls_reject_unknown_keys_missing_mapping_and_twenty_ninth_raw_drift",
+    "tests.test_measurement_parsing.MeasurementParsingTests.test_v3_closed_schema_rejects_unknown_keys_at_every_score_bearing_level",
+    "tests.test_measurement_parsing.MeasurementParsingTests.test_v3_binds_schema_and_ingress_but_leaves_integrity_to_per_span_scoring",
+    "tests.test_measurement_scoring.MeasurementScoringTests.test_v6_metrics_are_eight_eight_six_s_and_three",
+    "tests.test_measurement_scoring.MeasurementScoringTests.test_v6_one_invalid_span_decrements_only_the_evidence_numerator",
+    "tests.test_measurement_scoring.MeasurementScoringTests.test_v6_duplicate_adjacent_and_multi_spans_each_count_in_s",
+    "tests.test_measurement_scoring.MeasurementScoringTests.test_v6_span_population_and_candidate_identity_are_tamper_checked",
+}
+SUCCESSOR_IDS |= RECOVERY_SEMANTIC_IDS
 
 
 def main() -> int:
     loader = unittest.defaultTestLoader
-    discovered = [test for test in legacy._flatten(loader.discover("tests", top_level_dir=".")) if test.id() not in SUCCESSOR_IDS]
+    all_discovered = list(legacy._flatten(loader.discover("tests", top_level_dir=".")))
+    discovered_ids = {test.id() for test in all_discovered}
+    if len(RECOVERY_SEMANTIC_IDS) != 10 or not SUCCESSOR_IDS <= discovered_ids:
+        raise SystemExit("ORACLE_SUCCESSOR_DISCOVERY_CHANGED")
+    discovered = [test for test in all_discovered if test.id() not in SUCCESSOR_IDS]
     focused = [test for test in legacy._flatten(unittest.TestSuite(loader.loadTestsFromName(name) for name in legacy.FOCUSED_MODULES)) if test.id() not in SUCCESSOR_IDS]
     if len(discovered) != 150 or len(focused) != 72:
         raise SystemExit("ORACLE_LEGACY_COHORT_CHANGED")

@@ -50,7 +50,13 @@ from .verify import BundleVerificationError, _load_canonical, verify_accepted_bu
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
-from .runtime_closure import build_runtime_closure, validate_v6_preflight_inventory, verify_runtime_closure
+from .runtime_closure import (
+    build_runtime_closure,
+    build_runtime_closure_v2,
+    validate_v6_preflight_inventory,
+    verify_runtime_closure,
+    verify_runtime_closure_v2,
+)
 from .source_contract import (
     _EXPECTED_FIXTURES,
     SourceContractProposalError,
@@ -61,6 +67,8 @@ from .source_contract import (
     render_v4_non_executable_supersession,
     validate_v4_non_executable_supersession,
     build_source_contract_proposal_v5,
+    render_v5_rejected_pre_authorization_receipt,
+    validate_v5_rejected_pre_authorization_receipt,
     validate_source_contract_proposal_v5,
     validate_local_acceptance_decision_v10,
     validate_local_acceptance_request_v10,
@@ -69,6 +77,29 @@ from .source_contract import (
     validate_local_accepted_generation_decision,
     validate_source_publication_decision,
     verify_source_contract_proposal_git,
+)
+from .successor import (
+    _ACCEPTANCE_DECISION_RELATIVE,
+    _AUDIT_RELATIVE,
+    _CANDIDATE_RELATIVE,
+    _DECISION_RELATIVE,
+    _REQUEST_RELATIVE,
+    _validate_registry_v6,
+    accept_fixture_closure_candidate_v13,
+    activate_pending_source_cutover_v13,
+    build_pending_source_cutover_v13,
+    build_fixture_candidate_audit_v6,
+    build_local_acceptance_request_v13,
+    construct_fixture_construction_candidate_v6,
+    prepare_pending_source_cutover_v13,
+    validate_fixture_candidate_v6,
+    validate_fixture_construction_decision_v6,
+    validate_local_acceptance_decision_v13,
+    validate_local_acceptance_request_v13,
+    validate_pending_source_cutover_v13,
+    validate_source_contract_proposal_v6,
+    verify_accepted_v6_receipts,
+    write_source_contract_proposal_packet_v6,
 )
 
 
@@ -798,6 +829,316 @@ def command_validate_source_contract_proposal_v5(args: argparse.Namespace) -> in
     if supersession != _v5_supersession(proposal_raw, historical_raw):
         raise SourceContractProposalError("V5_SUPERSESSION_INVALID")
     _print_json({"status": "v5_proposal_valid", "valid": True})
+    return 0
+
+
+def _v5_history_bytes(root: Path) -> tuple[bytes, bytes, bytes]:
+    experiment = root / "experiments/specchoice-v1.3.2"
+    return (
+        (experiment / "receipts/runtime-executable-closure-v1.json").read_bytes(),
+        (experiment / "receipts/source-contract-proposal-v5-pr2164-semantic-gold-executable-closure-verifier-rooted-v5.json").read_bytes(),
+        (experiment / "receipts/source-contract-construction-proposal-v5-supersession-v4.json").read_bytes(),
+    )
+
+
+def command_write_v5_rejected_pre_authorization(args: argparse.Namespace) -> int:
+    repository = _repository_root(_experiment_root())
+    closure_raw, proposal_raw, supersession_raw = _v5_history_bytes(repository)
+    receipt = render_v5_rejected_pre_authorization_receipt()
+    validate_v5_rejected_pre_authorization_receipt(
+        receipt, runtime_closure_raw=closure_raw, proposal_raw=proposal_raw,
+        supersession_raw=supersession_raw, repository_root=repository,
+    )
+    write_new_descriptor_file(args.receipt.parent, args.receipt.name, canonical_json_bytes(receipt))
+    _print_json({"sha256": sha256_bytes(args.receipt.read_bytes()), "status": receipt["status"]})
+    return 0
+
+
+def command_validate_v5_rejected_pre_authorization(args: argparse.Namespace) -> int:
+    repository = _repository_root(_experiment_root())
+    receipt, _ = _load_authoritative_canonical_v4(args.receipt, "V5_REJECTED_HISTORY_RECEIPT_INVALID")
+    closure_raw, proposal_raw, supersession_raw = _v5_history_bytes(repository)
+    validate_v5_rejected_pre_authorization_receipt(
+        receipt, runtime_closure_raw=closure_raw, proposal_raw=proposal_raw,
+        supersession_raw=supersession_raw, repository_root=repository,
+    )
+    _print_json({"status": receipt["status"], "valid": True})
+    return 0
+
+
+def command_write_runtime_executable_closure_v2(args: argparse.Namespace) -> int:
+    repository = _repository_root(_experiment_root())
+    authority = (repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json").read_bytes()
+    if args.authority_pre_state.read_bytes() != authority:
+        raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
+    closure = build_runtime_closure_v2(repository, freeze_commit=args.freeze_commit)
+    write_new_descriptor_file(args.receipt.parent, args.receipt.name, canonical_json_bytes(closure))
+    _print_json({
+        "authority_pre_state_sha256": sha256_bytes(authority), "entry_count": len(closure["entries"]),
+        "sha256": sha256_bytes(args.receipt.read_bytes()), "status": "runtime_closure_v2_frozen",
+    })
+    return 0
+
+
+def command_validate_runtime_executable_closure_v2(args: argparse.Namespace) -> int:
+    repository = _repository_root(_experiment_root())
+    closure, _ = _load_authoritative_canonical_v4(args.receipt, "RUNTIME_CLOSURE_V2_INVALID")
+    verify_runtime_closure_v2(closure, repository)
+    authority = (repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json").read_bytes()
+    if args.authority_pre_state.read_bytes() != authority:
+        raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
+    _print_json({"authority_pre_state_sha256": sha256_bytes(authority), "status": "runtime_closure_v2_valid"})
+    return 0
+
+
+def _successor_common_bytes(args: argparse.Namespace) -> tuple[Path, bytes, bytes, bytes]:
+    repository = _repository_root(_experiment_root())
+    expected = {
+        "authority_pre_state": repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json",
+        "runtime_closure": repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json",
+        "v5_rejection": repository / "experiments/specchoice-v1.3.2/receipts/source-contract-construction-proposal-v5-non-executable-supersession-v1.json",
+    }
+    for field, path in expected.items():
+        if getattr(args, field).resolve() != path.resolve():
+            raise SourceContractProposalError("V6_BOUND_PATH_INVALID")
+    closure_raw = args.runtime_closure.read_bytes()
+    authority_raw = args.authority_pre_state.read_bytes()
+    rejection_raw = args.v5_rejection.read_bytes()
+    return repository, closure_raw, authority_raw, rejection_raw
+
+
+def command_write_source_contract_proposal_v6(args: argparse.Namespace) -> int:
+    repository, closure_raw, authority_raw, rejection_raw = _successor_common_bytes(args)
+    result = write_source_contract_proposal_packet_v6(
+        repository, args.packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+    )
+    _print_json({**result, "status": "v6_proposal_packet_written"})
+    return 0
+
+
+def command_validate_source_contract_proposal_v6(args: argparse.Namespace) -> int:
+    repository, closure_raw, authority_raw, rejection_raw = _successor_common_bytes(args)
+    proposal = validate_source_contract_proposal_v6(
+        repository, args.packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+    )
+    _print_json({"generation": proposal["generation"], "status": "v6_proposal_packet_valid"})
+    return 0
+
+
+def _load_successor_decision(path: Path, code: str) -> tuple[dict[str, object], bytes]:
+    return _load_authoritative_canonical_v4(path, code)
+
+
+def command_validate_fixture_construction_decision_v6(args: argparse.Namespace) -> int:
+    repository, closure_raw, authority_raw, rejection_raw = _successor_common_bytes(args)
+    if args.decision.resolve() != (repository / _DECISION_RELATIVE).resolve():
+        raise SourceContractProposalError("V6_BOUND_PATH_INVALID")
+    decision, _ = _load_successor_decision(args.decision, "V6_CONSTRUCTION_DECISION_INVALID")
+    validated = validate_fixture_construction_decision_v6(
+        repository, decision, args.packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+    )
+    _print_json({"decision": validated["decision"], "status": "v6_construction_decision_valid"})
+    return 0
+
+
+def command_build_fixture_construction_candidate_v6(args: argparse.Namespace) -> int:
+    repository, closure_raw, authority_raw, rejection_raw = _successor_common_bytes(args)
+    decision, _ = _load_successor_decision(args.decision, "V6_CONSTRUCTION_DECISION_INVALID")
+    if args.decision.resolve() != (repository / _DECISION_RELATIVE).resolve():
+        raise SourceContractProposalError("V6_BOUND_PATH_INVALID")
+    if args.preflight:
+        validated = validate_fixture_construction_decision_v6(
+            repository, decision, args.packet_directory, closure_raw=closure_raw,
+            authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+        )
+        if validated["decision"] != "authorize":
+            raise SourceContractProposalError("V6_CONSTRUCTION_NOT_AUTHORIZED")
+        _print_json({"preflight": True, "status": "v6_candidate_construction_ready"})
+        return 0
+    result = construct_fixture_construction_candidate_v6(
+        repository, decision, args.packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+    )
+    _print_json(result)
+    return 0
+
+
+def command_validate_fixture_candidate_v6(args: argparse.Namespace) -> int:
+    repository, closure_raw, authority_raw, rejection_raw = _successor_common_bytes(args)
+    decision, _ = _load_successor_decision(args.decision, "V6_CONSTRUCTION_DECISION_INVALID")
+    if args.candidate.resolve() != (repository / _CANDIDATE_RELATIVE).resolve():
+        raise SourceContractProposalError("V6_BOUND_PATH_INVALID")
+    validate_fixture_construction_decision_v6(
+        repository, decision, args.packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+        allowed_existing_targets={_DECISION_RELATIVE, _CANDIDATE_RELATIVE},
+    )
+    registry, registry_raw = _validate_registry_v6(repository)
+    result = validate_fixture_candidate_v6(args.candidate, registry=registry, registry_raw=registry_raw)
+    _print_json(result)
+    return 0
+
+
+def command_write_fixture_candidate_audit_v6(args: argparse.Namespace) -> int:
+    repository, closure_raw, authority_raw, rejection_raw = _successor_common_bytes(args)
+    decision, decision_raw = _load_successor_decision(args.decision, "V6_CONSTRUCTION_DECISION_INVALID")
+    if args.candidate.resolve() != (repository / _CANDIDATE_RELATIVE).resolve() or args.audit.resolve() != (repository / _AUDIT_RELATIVE).resolve():
+        raise SourceContractProposalError("V6_BOUND_PATH_INVALID")
+    validate_fixture_construction_decision_v6(
+        repository, decision, args.packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+        allowed_existing_targets={_DECISION_RELATIVE, _CANDIDATE_RELATIVE},
+    )
+    audit = build_fixture_candidate_audit_v6(
+        repository, args.candidate, decision_raw, args.packet_directory, closure_raw,
+    )
+    write_new_descriptor_file(args.audit.parent, args.audit.name, canonical_json_bytes(audit))
+    _print_json({"sha256": sha256_bytes(args.audit.read_bytes()), "status": audit["status"]})
+    return 0
+
+
+def _acceptance_v13_inputs(args: argparse.Namespace) -> tuple[Path, bytes, bytes, bytes, bytes]:
+    repository = _repository_root(_experiment_root())
+    expected = {
+        "candidate": repository / _CANDIDATE_RELATIVE,
+        "audit": repository / _AUDIT_RELATIVE,
+        "construction_decision": repository / _DECISION_RELATIVE,
+        "request": repository / _REQUEST_RELATIVE,
+    }
+    for field, path in expected.items():
+        if getattr(args, field).resolve() != path.resolve():
+            raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
+    closure_raw = args.runtime_closure.read_bytes()
+    closure, _ = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_V2_INVALID")
+    verify_runtime_closure_v2(closure, repository)
+    authority_raw = args.authority_pre_state.read_bytes()
+    audit_raw = args.audit.read_bytes()
+    construction_raw = args.construction_decision.read_bytes()
+    return repository, closure_raw, authority_raw, audit_raw, construction_raw
+
+
+def command_write_local_acceptance_request_v13(args: argparse.Namespace) -> int:
+    repository, closure_raw, authority_raw, audit_raw, construction_raw = _acceptance_v13_inputs(args)
+    request = build_local_acceptance_request_v13(
+        repository, args.candidate, audit_raw, construction_raw, args.packet_directory,
+        closure_raw, authority_raw,
+    )
+    if args.preflight:
+        _print_json({"preflight": True, "request_sha256": sha256_bytes(canonical_json_bytes(request)), "status": "local_acceptance_v13_request_ready"})
+        return 0
+    write_new_descriptor_file(args.request.parent, args.request.name, canonical_json_bytes(request))
+    _print_json({"request_sha256": sha256_bytes(args.request.read_bytes()), "status": request["status"]})
+    return 0
+
+
+def command_validate_local_acceptance_decision_v13(args: argparse.Namespace) -> int:
+    repository, closure_raw, authority_raw, audit_raw, construction_raw = _acceptance_v13_inputs(args)
+    request, request_raw = _load_successor_decision(args.request, "LOCAL_ACCEPTANCE_REQUEST_V13_INVALID")
+    validate_local_acceptance_request_v13(
+        request, candidate=args.candidate, audit_raw=audit_raw,
+        construction_decision_raw=construction_raw, packet_directory=args.packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_raw, repository=repository,
+    )
+    decision, _ = _load_successor_decision(args.decision, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID")
+    if args.decision.resolve() != (repository / _ACCEPTANCE_DECISION_RELATIVE).resolve():
+        raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
+    validated = validate_local_acceptance_decision_v13(decision, request, request_sha256=sha256_bytes(request_raw))
+    _print_json({"decision": validated["decision"], "status": "local_acceptance_v13_decision_valid"})
+    return 0
+
+
+def command_accept_fixture_closure_local_v13(args: argparse.Namespace) -> int:
+    repository, closure_raw, authority_raw, audit_raw, construction_raw = _acceptance_v13_inputs(args)
+    request, request_raw = _load_successor_decision(args.request, "LOCAL_ACCEPTANCE_REQUEST_V13_INVALID")
+    validate_local_acceptance_request_v13(
+        request, candidate=args.candidate, audit_raw=audit_raw,
+        construction_decision_raw=construction_raw, packet_directory=args.packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_raw, repository=repository,
+    )
+    decision, _ = _load_successor_decision(args.decision, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID")
+    if args.decision.resolve() != (repository / _ACCEPTANCE_DECISION_RELATIVE).resolve():
+        raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
+    validate_local_acceptance_decision_v13(decision, request, request_sha256=sha256_bytes(request_raw))
+    if args.preflight:
+        _print_json({"preflight": True, "status": "accepted_v6_construction_ready"})
+        return 0
+    result = accept_fixture_closure_candidate_v13(repository, args.candidate, request, decision)
+    _print_json(result)
+    return 0
+
+
+def _cutover_v13_inputs(args: argparse.Namespace) -> tuple[Path, bytes, bytes, bytes]:
+    repository = _repository_root(_experiment_root())
+    expected = {
+        "runtime_closure": repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json",
+        "request": repository / _REQUEST_RELATIVE,
+        "decision": repository / _ACCEPTANCE_DECISION_RELATIVE,
+    }
+    for field, path in expected.items():
+        if getattr(args, field).resolve() != path.resolve():
+            raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
+    authority_paths = {
+        (repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json").resolve(),
+        (repository / "experiments/specchoice-v1.3.2/phase2/source-authority-v13-historical.json").resolve(),
+    }
+    if args.authority_pre_state.resolve() not in authority_paths:
+        raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
+    closure, _ = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_V2_INVALID")
+    verify_runtime_closure_v2(closure, repository)
+    return repository, args.authority_pre_state.read_bytes(), args.request.read_bytes(), args.decision.read_bytes()
+
+
+def command_prepare_pending_source_cutover_v13(args: argparse.Namespace) -> int:
+    repository, authority_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
+    if args.preflight:
+        values = build_pending_source_cutover_v13(
+            repository, authority_pre_state_raw=authority_raw,
+            request_raw=request_raw, decision_raw=decision_raw,
+        )
+        _print_json({"preflight": True, "pending_sha256": sha256_bytes(canonical_json_bytes(values["pending"])), "status": "pending_cutover_v13_ready"})
+        return 0
+    _print_json(prepare_pending_source_cutover_v13(
+        repository, authority_pre_state_raw=authority_raw,
+        request_raw=request_raw, decision_raw=decision_raw,
+    ))
+    return 0
+
+
+def command_validate_pending_source_cutover_v13(args: argparse.Namespace) -> int:
+    repository, authority_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
+    values = validate_pending_source_cutover_v13(
+        repository, authority_pre_state_raw=authority_raw,
+        request_raw=request_raw, decision_raw=decision_raw,
+    )
+    _print_json({"pending_sha256": sha256_bytes(canonical_json_bytes(values["pending"])), "status": "pending_cutover_v13_valid"})
+    return 0
+
+
+def command_activate_pending_source_cutover_v13(args: argparse.Namespace) -> int:
+    repository, authority_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
+    if args.preflight:
+        validate_pending_source_cutover_v13(
+            repository, authority_pre_state_raw=authority_raw,
+            request_raw=request_raw, decision_raw=decision_raw,
+        )
+        _print_json({"preflight": True, "status": "pending_cutover_v13_activation_ready"})
+        return 0
+    _print_json(activate_pending_source_cutover_v13(
+        repository, authority_pre_state_raw=authority_raw,
+        request_raw=request_raw, decision_raw=decision_raw,
+    ))
+    return 0
+
+
+def command_verify_accepted_v6_receipts(args: argparse.Namespace) -> int:
+    repository, authority_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
+    _print_json(verify_accepted_v6_receipts(
+        repository, authority_pre_state_raw=authority_raw,
+        request_raw=request_raw, decision_raw=decision_raw,
+    ))
     return 0
 
 
@@ -1886,6 +2227,102 @@ def build_parser() -> argparse.ArgumentParser:
     validate_proposal_v5.add_argument("--supersession", type=Path, required=True)
     validate_proposal_v5.add_argument("--runtime-closure", type=Path, required=True)
     validate_proposal_v5.set_defaults(handler=command_validate_source_contract_proposal_v5)
+    write_v5_rejection = commands.add_parser("write-v5-rejected-pre-authorization")
+    write_v5_rejection.add_argument("--receipt", type=Path, required=True)
+    write_v5_rejection.set_defaults(handler=command_write_v5_rejected_pre_authorization)
+    validate_v5_rejection = commands.add_parser("validate-v5-rejected-pre-authorization")
+    validate_v5_rejection.add_argument("--receipt", type=Path, required=True)
+    validate_v5_rejection.set_defaults(handler=command_validate_v5_rejected_pre_authorization)
+    write_closure_v2 = commands.add_parser("write-runtime-executable-closure-v2")
+    write_closure_v2.add_argument("--receipt", type=Path, required=True)
+    write_closure_v2.add_argument("--authority-pre-state", type=Path, required=True)
+    write_closure_v2.add_argument("--freeze-commit")
+    write_closure_v2.set_defaults(handler=command_write_runtime_executable_closure_v2)
+    validate_closure_v2 = commands.add_parser("validate-runtime-executable-closure-v2")
+    validate_closure_v2.add_argument("--receipt", type=Path, required=True)
+    validate_closure_v2.add_argument("--authority-pre-state", type=Path, required=True)
+    validate_closure_v2.set_defaults(handler=command_validate_runtime_executable_closure_v2)
+
+    def add_v6_common(command: argparse.ArgumentParser) -> None:
+        command.add_argument("--packet-directory", type=Path, required=True)
+        command.add_argument("--runtime-closure", type=Path, required=True)
+        command.add_argument("--authority-pre-state", type=Path, required=True)
+        command.add_argument("--v5-rejection", type=Path, required=True)
+
+    write_proposal_v6 = commands.add_parser("write-source-contract-proposal-v6")
+    add_v6_common(write_proposal_v6)
+    write_proposal_v6.set_defaults(handler=command_write_source_contract_proposal_v6)
+    validate_proposal_v6 = commands.add_parser("validate-source-contract-proposal-v6")
+    add_v6_common(validate_proposal_v6)
+    validate_proposal_v6.set_defaults(handler=command_validate_source_contract_proposal_v6)
+    decision_v6 = commands.add_parser("validate-fixture-construction-decision-v6")
+    add_v6_common(decision_v6)
+    decision_v6.add_argument("--decision", type=Path, required=True)
+    decision_v6.set_defaults(handler=command_validate_fixture_construction_decision_v6)
+    candidate_v6 = commands.add_parser("build-fixture-construction-candidate-v6")
+    add_v6_common(candidate_v6)
+    candidate_v6.add_argument("--decision", type=Path, required=True)
+    candidate_v6.add_argument("--preflight", action="store_true")
+    candidate_v6.set_defaults(handler=command_build_fixture_construction_candidate_v6)
+    validate_candidate_v6 = commands.add_parser("validate-fixture-candidate-v6")
+    add_v6_common(validate_candidate_v6)
+    validate_candidate_v6.add_argument("--decision", type=Path, required=True)
+    validate_candidate_v6.add_argument("--candidate", type=Path, required=True)
+    validate_candidate_v6.set_defaults(handler=command_validate_fixture_candidate_v6)
+    audit_v6 = commands.add_parser("write-fixture-candidate-audit-v6")
+    add_v6_common(audit_v6)
+    audit_v6.add_argument("--decision", type=Path, required=True)
+    audit_v6.add_argument("--candidate", type=Path, required=True)
+    audit_v6.add_argument("--audit", type=Path, required=True)
+    audit_v6.set_defaults(handler=command_write_fixture_candidate_audit_v6)
+
+    def add_v13_acceptance(command: argparse.ArgumentParser, *, include_decision: bool = False) -> None:
+        command.add_argument("--runtime-closure", type=Path, required=True)
+        command.add_argument("--authority-pre-state", type=Path, required=True)
+        command.add_argument("--candidate", type=Path, required=True)
+        command.add_argument("--audit", type=Path, required=True)
+        command.add_argument("--construction-decision", type=Path, required=True)
+        command.add_argument("--packet-directory", type=Path, required=True)
+        command.add_argument("--request", type=Path, required=True)
+        if include_decision:
+            command.add_argument("--decision", type=Path, required=True)
+
+    request_v13 = commands.add_parser("write-local-acceptance-request-v13")
+    add_v13_acceptance(request_v13)
+    request_v13.add_argument("--preflight", action="store_true")
+    request_v13.set_defaults(handler=command_write_local_acceptance_request_v13)
+    decision_v13 = commands.add_parser("validate-local-acceptance-decision-v13")
+    add_v13_acceptance(decision_v13, include_decision=True)
+    decision_v13.set_defaults(handler=command_validate_local_acceptance_decision_v13)
+    accept_v13 = commands.add_parser("accept-fixture-closure-local-v13")
+    add_v13_acceptance(accept_v13, include_decision=True)
+    accept_v13.add_argument("--preflight", action="store_true")
+    accept_v13.set_defaults(handler=command_accept_fixture_closure_local_v13)
+
+    def add_v13_cutover(command: argparse.ArgumentParser, *, preflight: bool = False) -> None:
+        command.add_argument("--runtime-closure", type=Path, required=True)
+        command.add_argument("--authority-pre-state", type=Path, required=True)
+        command.add_argument("--request", type=Path, required=True)
+        command.add_argument("--decision", type=Path, required=True)
+        if preflight:
+            command.add_argument("--preflight", action="store_true")
+
+    prepare_v13 = commands.add_parser("prepare-pending-source-cutover-v13")
+    add_v13_cutover(prepare_v13, preflight=True)
+    prepare_v13.set_defaults(handler=command_prepare_pending_source_cutover_v13)
+    validate_pending_v13 = commands.add_parser("validate-pending-source-cutover-v13")
+    add_v13_cutover(validate_pending_v13)
+    validate_pending_v13.set_defaults(handler=command_validate_pending_source_cutover_v13)
+    activate_v13 = commands.add_parser("activate-pending-source-cutover-v13")
+    add_v13_cutover(activate_v13, preflight=True)
+    activate_v13.set_defaults(handler=command_activate_pending_source_cutover_v13)
+    write_receipts_v6 = commands.add_parser("write-accepted-v6-receipts")
+    add_v13_cutover(write_receipts_v6, preflight=True)
+    write_receipts_v6.set_defaults(handler=command_activate_pending_source_cutover_v13)
+    verify_v6 = commands.add_parser("verify-accepted-v6-receipts")
+    add_v13_cutover(verify_v6)
+    verify_v6.set_defaults(handler=command_verify_accepted_v6_receipts)
+
     def add_preflight_surface(command_name: str) -> None:
         command = commands.add_parser(command_name)
         command.add_argument("--runtime-closure", type=Path, required=True)
@@ -1895,8 +2332,12 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("--preflight", action="store_true")
         command.set_defaults(handler=_v6_preflight)
 
-    # v5 names remain only as rejected-history validators; they now execute the
-    # same real no-write inventory gate rather than a success-shaped stub.
+    def rejected_v5_handler(args: argparse.Namespace) -> int:
+        del args
+        raise SourceContractProposalError("V5_PACKET_REJECTED_PRE_AUTHORIZATION")
+
+    # These historical names cannot mutate or return success after the v5
+    # packet was independently rejected before authorization.
     for command_name in (
         "validate-fixture-construction-decision-v5",
         "build-fixture-construction-candidate-v5",
@@ -1909,20 +2350,9 @@ def build_parser() -> argparse.ArgumentParser:
         "activate-pending-source-cutover-v12",
         "write-accepted-v5-receipts",
     ):
-        add_preflight_surface(command_name)
-    for command_name in (
-        "validate-fixture-construction-decision-v6",
-        "build-fixture-construction-candidate-v6",
-        "validate-fixture-candidate-v6",
-        "write-local-acceptance-request-v13",
-        "validate-local-acceptance-decision-v13",
-        "accept-fixture-closure-local-v13",
-        "prepare-pending-source-cutover-v13",
-        "validate-pending-source-cutover-v13",
-        "activate-pending-source-cutover-v13",
-        "write-accepted-v6-receipts",
-    ):
-        add_preflight_surface(command_name)
+        command = commands.add_parser(command_name)
+        command.add_argument("--preflight", action="store_true")
+        command.set_defaults(handler=rejected_v5_handler)
     fixture_construction_write_v4 = commands.add_parser("write-fixture-construction-proposal-v4")
     for option in ("proposal", "predecessor", "active_authority", "historical_authority", "revocation", "ontology_decision", "repair_manifest", "registry", "supersession"):
         fixture_construction_write_v4.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
