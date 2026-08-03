@@ -31,6 +31,14 @@ _REPAIR_MANIFEST_V5 = (
     f"{_EXPERIMENT_PREFIX}/config/fixture-repairs/"
     "pr2164-semantic-gold-v5/repair-manifest.json"
 )
+_AUTHORITY_PRE_STATE = f"{_EXPERIMENT_PREFIX}/phase2/source-authority.json"
+_CLOSURE_V2_RECEIPT = f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v2.json"
+_CLOSURE_V2_BYTE_LENGTH = 89025
+_CLOSURE_V2_SHA256 = "a09246c22165383613f6ffd7f4a0f925d631eee48c50e452ff4592532ae8b2eb"
+_CLOSURE_V2_SUPERSESSION = (
+    f"{_EXPERIMENT_PREFIX}/receipts/"
+    "runtime-executable-closure-v2-non-authorizing-supersession-v1.json"
+)
 
 # This is intentionally code authority, not proposal authority.  A proposal can
 # repeat this inventory but cannot add, remove, reorder, or relabel one target.
@@ -67,7 +75,7 @@ _KNOWN_RUNTIME_PATHS_V2 = (
     *(
         f"{_EXPERIMENT_PREFIX}/src/{package}/{name}.py"
         for package, names in (
-            ("specchoice_evidence", ("__init__", "baseline", "bundle", "canonical", "cli", "environment", "filesystem", "git_proof", "receipt", "runtime_closure", "source_contract", "successor", "verify")),
+            ("specchoice_evidence", ("__init__", "authority", "baseline", "bundle", "canonical", "cli", "environment", "filesystem", "git_proof", "receipt", "runtime_closure", "source_contract", "successor", "verify")),
             ("specchoice_measurement", ("__init__", "adapter", "attempts", "cli", "diagnostics", "domain", "final_reports", "h1", "preflight", "scoring", "strict_json")),
         )
         for name in names
@@ -107,8 +115,14 @@ _KNOWN_RUNTIME_PATHS_V2 = (
     ".planning/phases/02-deterministic-measurement-spine/02-19-PLAN.md",
 )
 
+_KNOWN_RUNTIME_PATHS_V3 = (
+    *_KNOWN_RUNTIME_PATHS_V2,
+    _CLOSURE_V2_RECEIPT,
+    _CLOSURE_V2_SUPERSESSION,
+)
+
 _DYNAMIC_IMPORTS = (
-    "specchoice_evidence.bundle", "specchoice_evidence.cli", "specchoice_evidence.runtime_closure",
+    "specchoice_evidence.authority", "specchoice_evidence.bundle", "specchoice_evidence.cli", "specchoice_evidence.runtime_closure",
     "specchoice_evidence.source_contract", "specchoice_evidence.successor",
     "specchoice_measurement.adapter", "specchoice_measurement.attempts", "specchoice_measurement.cli",
     "specchoice_measurement.final_reports", "specchoice_measurement.h1", "specchoice_measurement.scoring",
@@ -129,6 +143,7 @@ def _git_environment() -> dict[str, str]:
     return {
         "GIT_CONFIG_GLOBAL": "/dev/null",
         "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_NO_REPLACE_OBJECTS": "1",
         "GIT_OPTIONAL_LOCKS": "0",
         "LC_ALL": "C",
         "PATH": "/usr/bin:/bin",
@@ -392,7 +407,13 @@ def _git(repository: Path, *arguments: str) -> bytes:
     if git_name is None:
         raise RuntimeClosureError("RUNTIME_CLOSURE_TOOL_UNAVAILABLE")
     return _run(
-        [os.fspath(Path(git_name).resolve(strict=True)), "-C", os.fspath(repository), *arguments],
+        [
+            os.fspath(Path(git_name).resolve(strict=True)),
+            "--no-replace-objects",
+            "-C",
+            os.fspath(repository),
+            *arguments,
+        ],
         cwd=repository,
         env=_git_environment(),
     )
@@ -468,10 +489,19 @@ def _referenced_runtime_paths_v2(repository: Path) -> dict[str, set[str]]:
     return classes
 
 
-def _git_bound_entry(repository: Path, freeze_commit: str, relative_path: str, kinds: set[str]) -> dict[str, object]:
-    entry = closure_entry(repository, relative_path)
+def _referenced_runtime_paths_v3(repository: Path) -> dict[str, set[str]]:
+    """Extend the complete v2 input universe with its append-only history."""
+    classes = _referenced_runtime_paths_v2(repository)
+    for path in (_CLOSURE_V2_RECEIPT, _CLOSURE_V2_SUPERSESSION):
+        classes.setdefault(path, set()).add("known_mandatory")
+    return classes
+
+
+def _git_blob_binding(repository: Path, freeze_commit: str, relative_path: str) -> dict[str, object]:
+    """Bind bytes from the frozen Git tree without consulting mutable live state."""
     try:
-        blob_oid = _git(repository, "rev-parse", f"{freeze_commit}:{relative_path}").decode("ascii").strip()
+        normalized = require_relative_posix_path(relative_path).as_posix()
+        blob_oid = _git(repository, "rev-parse", f"{freeze_commit}:{normalized}").decode("ascii").strip()
         if len(blob_oid) not in {40, 64}:
             raise ValueError
         int(blob_oid, 16)
@@ -480,13 +510,33 @@ def _git_bound_entry(repository: Path, freeze_commit: str, relative_path: str, k
         raise RuntimeClosureError("RUNTIME_CLOSURE_UNCOMMITTED_INPUT") from error
     except (UnicodeDecodeError, ValueError) as error:
         raise RuntimeClosureError("RUNTIME_CLOSURE_GIT_BLOB_OID_INVALID") from error
-    if committed != (repository / relative_path).read_bytes():
+    return {
+        "byte_length": len(committed),
+        "git_blob_oid": blob_oid,
+        "path": normalized,
+        "sha256": sha256_bytes(committed),
+    }
+
+
+def _git_bound_entry(repository: Path, freeze_commit: str, relative_path: str, kinds: set[str]) -> dict[str, object]:
+    frozen = _git_blob_binding(repository, freeze_commit, relative_path)
+    current = closure_entry(repository, relative_path)
+    if (
+        current["byte_length"] != frozen["byte_length"]
+        or current["sha256"] != frozen["sha256"]
+    ):
         raise RuntimeClosureError("RUNTIME_CLOSURE_UNCOMMITTED_INPUT")
-    return {**entry, "classes": sorted(kinds), "git_blob_oid": blob_oid}
+    return {**current, "classes": sorted(kinds), "git_blob_oid": frozen["git_blob_oid"]}
 
 
-def build_runtime_closure_v2(repository: Path, *, freeze_commit: str | None = None) -> dict[str, object]:
-    """Build the transitive, tool-bound successor closure from code authority."""
+def _build_versioned_runtime_closure(
+    repository: Path,
+    *,
+    freeze_commit: str | None,
+    classes: dict[str, set[str]],
+    schema_version: str,
+) -> dict[str, object]:
+    """Build common runtime/tool custody for one schema version."""
     ambient_tool_environment = _require_clean_tool_environment()
     repository = repository.resolve(strict=True)
     experiment = repository / _EXPERIMENT_PREFIX
@@ -500,7 +550,6 @@ def build_runtime_closure_v2(repository: Path, *, freeze_commit: str | None = No
         raise RuntimeClosureError("RUNTIME_CLOSURE_FREEZE_COMMIT_INVALID") from error
     _git(repository, "cat-file", "-e", f"{freeze_commit}^{{commit}}")
 
-    classes = _referenced_runtime_paths_v2(repository)
     discovery = _fresh_python_discovery(experiment)
     for origin in discovery["module_origins"]:
         assert isinstance(origin, dict)
@@ -509,9 +558,11 @@ def build_runtime_closure_v2(repository: Path, *, freeze_commit: str | None = No
         except ValueError:
             continue
         classes.setdefault(relative, set()).add("dynamic_python_module")
-    entries = [_git_bound_entry(repository, freeze_commit, path, kinds) for path, kinds in sorted(classes.items())]
     return {
-        "entries": entries,
+        "entries": [
+            _git_bound_entry(repository, freeze_commit, path, kinds)
+            for path, kinds in sorted(classes.items())
+        ],
         "freeze_commit": freeze_commit,
         "future_targets": future_target_inventory_v6(),
         "roots": {
@@ -519,9 +570,20 @@ def build_runtime_closure_v2(repository: Path, *, freeze_commit: str | None = No
             "repository": os.fspath(repository),
         },
         "ambient_tool_environment": ambient_tool_environment,
-        "schema_version": "runtime-executable-closure-v2",
+        "schema_version": schema_version,
         "tools": _tool_identities(repository, experiment),
     }
+
+
+def build_runtime_closure_v2(repository: Path, *, freeze_commit: str | None = None) -> dict[str, object]:
+    """Build the transitive, tool-bound successor closure from code authority."""
+    repository = repository.resolve(strict=True)
+    return _build_versioned_runtime_closure(
+        repository,
+        freeze_commit=freeze_commit,
+        classes=_referenced_runtime_paths_v2(repository),
+        schema_version="runtime-executable-closure-v2",
+    )
 
 
 def verify_runtime_closure_v2(closure: object, repository: Path) -> dict[str, object]:
@@ -534,6 +596,94 @@ def verify_runtime_closure_v2(closure: object, repository: Path) -> dict[str, ob
     rebuilt = build_runtime_closure_v2(repository, freeze_commit=freeze_commit)
     if dict(closure) != rebuilt:
         raise RuntimeClosureError("RUNTIME_CLOSURE_V2_MISMATCH")
+    return rebuilt
+
+
+def validate_runtime_closure_v2_supersession(
+    receipt: object, *, predecessor_raw: bytes,
+) -> dict[str, object]:
+    """Validate the exact non-authorizing reason v2 cannot seed a proposal."""
+    if (
+        len(predecessor_raw) != _CLOSURE_V2_BYTE_LENGTH
+        or sha256_bytes(predecessor_raw) != _CLOSURE_V2_SHA256
+    ):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V2_HISTORY_INVALID")
+    expected = {
+        "authorization_recorded": False,
+        "candidate_exists": False,
+        "defects": [
+            {
+                "code": "AUTHORITY_PRE_STATE_NOT_FREEZE_BOUND",
+                "detail": (
+                    "The v2 receipt does not bind phase2/source-authority.json to "
+                    "its freeze commit, so a later proposal could silently rebind drifted bytes."
+                ),
+            }
+        ],
+        "external_publication_authorized": False,
+        "local_only": True,
+        "predecessor": {
+            "byte_length": _CLOSURE_V2_BYTE_LENGTH,
+            "path": _CLOSURE_V2_RECEIPT,
+            "sha256": _CLOSURE_V2_SHA256,
+        },
+        "replacement": {
+            "path": f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v3.json",
+            "schema_version": "runtime-executable-closure-v3",
+        },
+        "schema_version": "runtime-executable-closure-v2-non-authorizing-supersession-v1",
+        "status": "superseded_pre_authorization_authority_pre_state_unbound",
+        "successor_proposal_exists": False,
+    }
+    if not isinstance(receipt, Mapping) or dict(receipt) != expected:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V2_SUPERSESSION_INVALID")
+    return expected
+
+
+def build_runtime_closure_v3(repository: Path, *, freeze_commit: str | None = None) -> dict[str, object]:
+    """Build the successor closure with a freeze-tree authority pre-state anchor."""
+    repository = repository.resolve(strict=True)
+    common = _build_versioned_runtime_closure(
+        repository,
+        freeze_commit=freeze_commit,
+        classes=_referenced_runtime_paths_v3(repository),
+        schema_version="runtime-executable-closure-v3",
+    )
+    frozen = common["freeze_commit"]
+    assert isinstance(frozen, str)
+    return {
+        **common,
+        "authority_pre_state": _git_blob_binding(repository, frozen, _AUTHORITY_PRE_STATE),
+        "predecessor_closure_v2": _git_blob_binding(
+            repository, frozen, _CLOSURE_V2_RECEIPT
+        ),
+    }
+
+
+def verify_runtime_closure_v3(
+    closure: object, repository: Path, *, authority_pre_state_raw: bytes,
+) -> dict[str, object]:
+    """Rebuild v3 and require the supplied historical authority to match the freeze tree."""
+    if (
+        not isinstance(closure, Mapping)
+        or closure.get("schema_version") != "runtime-executable-closure-v3"
+        or not isinstance(authority_pre_state_raw, bytes)
+        or not authority_pre_state_raw
+    ):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_INVALID")
+    freeze_commit = closure.get("freeze_commit")
+    if not isinstance(freeze_commit, str):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_INVALID")
+    rebuilt = build_runtime_closure_v3(repository, freeze_commit=freeze_commit)
+    if dict(closure) != rebuilt:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_MISMATCH")
+    authority = rebuilt["authority_pre_state"]
+    assert isinstance(authority, dict)
+    if (
+        authority.get("byte_length") != len(authority_pre_state_raw)
+        or authority.get("sha256") != sha256_bytes(authority_pre_state_raw)
+    ):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_AUTHORITY_PRESTATE_INVALID")
     return rebuilt
 
 

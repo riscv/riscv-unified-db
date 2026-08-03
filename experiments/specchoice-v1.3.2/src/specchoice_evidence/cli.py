@@ -46,16 +46,23 @@ from .bundle import (
     publish_accepted,
     verify_candidate,
 )
+from .authority import (
+    AuthorityValidationError,
+    validate_phase2_source_authority as _shared_validate_phase2_source_authority,
+    validate_v10_authority as _shared_validate_v10_authority,
+    v10_identity as _shared_v10_identity,
+)
 from .verify import BundleVerificationError, _load_canonical, verify_accepted_bundle, verify_accepted_bundle_material
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
 from .runtime_closure import (
     build_runtime_closure,
-    build_runtime_closure_v2,
+    build_runtime_closure_v3,
+    validate_runtime_closure_v2_supersession,
     validate_v6_preflight_inventory,
     verify_runtime_closure,
-    verify_runtime_closure_v2,
+    verify_runtime_closure_v3,
 )
 from .source_contract import (
     _EXPECTED_FIXTURES,
@@ -79,9 +86,11 @@ from .source_contract import (
     verify_source_contract_proposal_git,
 )
 from .successor import (
+    _ACCEPTED_V3_RELATIVE,
     _ACCEPTANCE_DECISION_RELATIVE,
     _AUDIT_RELATIVE,
     _CANDIDATE_RELATIVE,
+    _CLOSURE_V3_RELATIVE,
     _DECISION_RELATIVE,
     _PACKET_RELATIVE,
     _REQUEST_RELATIVE,
@@ -874,27 +883,104 @@ def command_validate_v5_rejected_pre_authorization(args: argparse.Namespace) -> 
 
 
 def command_write_runtime_executable_closure_v2(args: argparse.Namespace) -> int:
-    repository = _repository_root(_experiment_root())
-    authority = (repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json").read_bytes()
-    if args.authority_pre_state.read_bytes() != authority:
-        raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
-    closure = build_runtime_closure_v2(repository, freeze_commit=args.freeze_commit)
-    write_new_descriptor_file(args.receipt.parent, args.receipt.name, canonical_json_bytes(closure))
-    _print_json({
-        "authority_pre_state_sha256": sha256_bytes(authority), "entry_count": len(closure["entries"]),
-        "sha256": sha256_bytes(args.receipt.read_bytes()), "status": "runtime_closure_v2_frozen",
-    })
-    return 0
+    raise SourceContractProposalError("RUNTIME_CLOSURE_V2_SUPERSEDED")
 
 
 def command_validate_runtime_executable_closure_v2(args: argparse.Namespace) -> int:
     repository = _repository_root(_experiment_root())
-    closure, _ = _load_authoritative_canonical_v4(args.receipt, "RUNTIME_CLOSURE_V2_INVALID")
-    verify_runtime_closure_v2(closure, repository)
-    authority = (repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json").read_bytes()
-    if args.authority_pre_state.read_bytes() != authority:
-        raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
-    _print_json({"authority_pre_state_sha256": sha256_bytes(authority), "status": "runtime_closure_v2_valid"})
+    expected = repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json"
+    if args.receipt.resolve() != expected.resolve():
+        raise SourceContractProposalError("RUNTIME_CLOSURE_V2_HISTORY_PATH_INVALID")
+    _, predecessor_raw = _load_authoritative_canonical_v4(
+        args.receipt, "RUNTIME_CLOSURE_V2_HISTORY_INVALID"
+    )
+    supersession_path = repository / (
+        "experiments/specchoice-v1.3.2/receipts/"
+        "runtime-executable-closure-v2-non-authorizing-supersession-v1.json"
+    )
+    supersession, _ = _load_authoritative_canonical_v4(
+        supersession_path, "RUNTIME_CLOSURE_V2_SUPERSESSION_INVALID"
+    )
+    validate_runtime_closure_v2_supersession(
+        supersession, predecessor_raw=predecessor_raw
+    )
+    _print_json({
+        "sha256": sha256_bytes(predecessor_raw),
+        "status": "runtime_closure_v2_historical_non_authorizing",
+    })
+    return 0
+
+
+def _authority_pre_state_bytes_v3(
+    repository: Path, path: Path, *, require_current: bool,
+) -> bytes:
+    """Load and semantically validate the accepted-v3 authority pre-state once."""
+    current = repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json"
+    historical = repository / "experiments/specchoice-v1.3.2/phase2/source-authority-v13-historical.json"
+    allowed = {current.resolve(), historical.resolve()}
+    resolved = path.resolve()
+    if resolved not in allowed or (require_current and resolved != current.resolve()):
+        raise SourceContractProposalError("RUNTIME_CLOSURE_V3_AUTHORITY_PATH_INVALID")
+    authority, raw = _load_authoritative_canonical(
+        path, "RUNTIME_CLOSURE_V3_AUTHORITY_PRESTATE_INVALID"
+    )
+    revocation = repository / "experiments/specchoice-v1.3.2/receipts/fixture-closure-revocation-v2.json"
+    revocation_raw = _optional_canonical_bytes(revocation)
+    try:
+        _validate_phase2_source_authority(
+            authority,
+            raw,
+            repository / _ACCEPTED_V3_RELATIVE,
+            revocation_raw,
+            "active" if resolved == current.resolve() else "historical-inspection",
+        )
+    except ReceiptError as error:
+        raise SourceContractProposalError(
+            "RUNTIME_CLOSURE_V3_AUTHORITY_PRESTATE_INVALID"
+        ) from error
+    return raw
+
+
+def command_write_runtime_executable_closure_v3(args: argparse.Namespace) -> int:
+    repository = _repository_root(_experiment_root())
+    expected = repository / _CLOSURE_V3_RELATIVE
+    if args.receipt.resolve() != expected.resolve():
+        raise SourceContractProposalError("RUNTIME_CLOSURE_V3_PATH_INVALID")
+    authority_raw = _authority_pre_state_bytes_v3(
+        repository, args.authority_pre_state, require_current=True
+    )
+    closure = build_runtime_closure_v3(repository, freeze_commit=args.freeze_commit)
+    verify_runtime_closure_v3(
+        closure, repository, authority_pre_state_raw=authority_raw
+    )
+    write_new_descriptor_file(args.receipt.parent, args.receipt.name, canonical_json_bytes(closure))
+    _print_json({
+        "authority_pre_state_sha256": sha256_bytes(authority_raw),
+        "entry_count": len(closure["entries"]),
+        "sha256": sha256_bytes(args.receipt.read_bytes()),
+        "status": "runtime_closure_v3_frozen",
+    })
+    return 0
+
+
+def command_validate_runtime_executable_closure_v3(args: argparse.Namespace) -> int:
+    repository = _repository_root(_experiment_root())
+    expected = repository / _CLOSURE_V3_RELATIVE
+    if args.receipt.resolve() != expected.resolve():
+        raise SourceContractProposalError("RUNTIME_CLOSURE_V3_PATH_INVALID")
+    authority_raw = _authority_pre_state_bytes_v3(
+        repository, args.authority_pre_state, require_current=False
+    )
+    closure, _ = _load_authoritative_canonical_v4(
+        args.receipt, "RUNTIME_CLOSURE_V3_INVALID"
+    )
+    verify_runtime_closure_v3(
+        closure, repository, authority_pre_state_raw=authority_raw
+    )
+    _print_json({
+        "authority_pre_state_sha256": sha256_bytes(authority_raw),
+        "status": "runtime_closure_v3_valid",
+    })
     return 0
 
 
@@ -902,14 +988,16 @@ def _successor_common_bytes(args: argparse.Namespace) -> tuple[Path, bytes, byte
     repository = _repository_root(_experiment_root())
     expected = {
         "authority_pre_state": repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json",
-        "runtime_closure": repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json",
+        "runtime_closure": repository / _CLOSURE_V3_RELATIVE,
         "v5_rejection": repository / "experiments/specchoice-v1.3.2/receipts/source-contract-construction-proposal-v5-non-executable-supersession-v1.json",
     }
     for field, path in expected.items():
         if getattr(args, field).resolve() != path.resolve():
             raise SourceContractProposalError("V6_BOUND_PATH_INVALID")
     closure_raw = args.runtime_closure.read_bytes()
-    authority_raw = args.authority_pre_state.read_bytes()
+    authority_raw = _authority_pre_state_bytes_v3(
+        repository, args.authority_pre_state, require_current=True
+    )
     rejection_raw = args.v5_rejection.read_bytes()
     return repository, closure_raw, authority_raw, rejection_raw
 
@@ -1014,7 +1102,7 @@ def _acceptance_v13_inputs(args: argparse.Namespace) -> tuple[Path, bytes, bytes
         "audit": repository / _AUDIT_RELATIVE,
         "construction_decision": repository / _DECISION_RELATIVE,
         "request": repository / _REQUEST_RELATIVE,
-        "runtime_closure": repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json",
+        "runtime_closure": repository / _CLOSURE_V3_RELATIVE,
         "authority_pre_state": repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json",
         "packet_directory": repository / _PACKET_RELATIVE,
     }
@@ -1022,9 +1110,13 @@ def _acceptance_v13_inputs(args: argparse.Namespace) -> tuple[Path, bytes, bytes
         if getattr(args, field).resolve() != path.resolve():
             raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
     closure_raw = args.runtime_closure.read_bytes()
-    closure, _ = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_V2_INVALID")
-    verify_runtime_closure_v2(closure, repository)
-    authority_raw = args.authority_pre_state.read_bytes()
+    authority_raw = _authority_pre_state_bytes_v3(
+        repository, args.authority_pre_state, require_current=True
+    )
+    closure, _ = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_V3_INVALID")
+    verify_runtime_closure_v3(
+        closure, repository, authority_pre_state_raw=authority_raw
+    )
     audit_raw = args.audit.read_bytes()
     construction_raw = args.construction_decision.read_bytes()
     return repository, closure_raw, authority_raw, audit_raw, construction_raw
@@ -1100,7 +1192,7 @@ def _cutover_v13_inputs(
 ) -> tuple[Path, Path, Path, bytes, bytes, bytes, bytes, bytes, bytes]:
     repository = _repository_root(_experiment_root())
     expected = {
-        "runtime_closure": repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json",
+        "runtime_closure": repository / _CLOSURE_V3_RELATIVE,
         "request": repository / _REQUEST_RELATIVE,
         "decision": repository / _ACCEPTANCE_DECISION_RELATIVE,
     }
@@ -1113,15 +1205,20 @@ def _cutover_v13_inputs(
     }
     if args.authority_pre_state.resolve() not in authority_paths:
         raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
-    closure, _ = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_V2_INVALID")
-    verify_runtime_closure_v2(closure, repository)
+    authority_raw = _authority_pre_state_bytes_v3(
+        repository, args.authority_pre_state, require_current=False
+    )
+    closure, _ = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_V3_INVALID")
+    verify_runtime_closure_v3(
+        closure, repository, authority_pre_state_raw=authority_raw
+    )
     candidate = repository / _CANDIDATE_RELATIVE
     packet = repository / _PACKET_RELATIVE
     audit_raw = (repository / _AUDIT_RELATIVE).read_bytes()
     construction_raw = (repository / _DECISION_RELATIVE).read_bytes()
     return (
         repository, candidate, packet, args.runtime_closure.read_bytes(),
-        args.authority_pre_state.read_bytes(), audit_raw, construction_raw,
+        authority_raw, audit_raw, construction_raw,
         args.request.read_bytes(), args.decision.read_bytes(),
     )
 
@@ -1550,30 +1647,12 @@ def _validate_phase2_source_authority(
     authority: dict[str, object], raw: bytes, bundle: Path, revocation_raw: bytes | None, authority_mode: str | None,
 ) -> dict[str, object]:
     """Validate held authority bytes without reopening any mutable authority leaf."""
-    verified = verify_accepted_bundle(bundle)
-    manifest, _ = _load_canonical(bundle, "snapshot-manifest.json", "SNAPSHOT_MANIFEST_INVALID")
-    _, registry_raw = _load_canonical(bundle, "fixture-registry-pr2164-v1.json", "FIXTURE_REGISTRY_INVALID")
-    registry_sha256 = sha256_bytes(registry_raw)
-    snapshot = manifest["content_manifest_core"]["snapshots"][0]
-    expected = {
-        "fixture_count": 11, "generation": verified["generation"], "manifest_sha256": manifest["snapshot_manifest_sha256"],
-        "pinned_commit_sha": snapshot["pinned_commit_sha"], "pinned_tree_sha": snapshot["pinned_tree_sha"],
-        "raw_file_count": 28, "registry_sha256": registry_sha256, "root_sha256": verified["root_sha256"],
-    }
-    if authority_mode is None:
-        if authority.get("schema_version") != "1" or authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()):
-            raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
-        return {"status": "valid", **expected}
-    if authority.get("schema_version") == "1":
-        if authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()):
-            raise ReceiptError("PHASE2_SOURCE_AUTHORITY_MISMATCH")
-        if authority_mode == "active" and revocation_raw is not None:
-            raise ReceiptError("SOURCE_AUTHORITY_V2_REVOKED")
-        return {"eligible": False, "status": "historical_valid", **expected} if authority_mode == "historical-inspection" else {"eligible": True, "status": "valid", **expected}
-    _validate_v10_authority(authority, raw, verified, manifest, registry_sha256, revocation_raw)
-    if authority_mode != "active":
-        return {"eligible": False, "status": "historical_valid", **expected}
-    return {"eligible": True, "status": "valid", **expected}
+    try:
+        return _shared_validate_phase2_source_authority(
+            authority, raw, bundle, revocation_raw, authority_mode
+        )
+    except AuthorityValidationError as error:
+        raise ReceiptError(str(error)) from error
 
 
 def _optional_canonical_bytes(path: Path) -> bytes | None:
@@ -1603,33 +1682,19 @@ def _load_authoritative_canonical(path: Path, code: str) -> tuple[dict[str, obje
 
 
 def _v10_identity(verified: dict[str, object], manifest: dict[str, object]) -> dict[str, object]:
-    return {
-        "core_sha256": verified["manifest_sha256"], "generation": verified["generation"],
-        "root_sha256": verified["root_sha256"], "snapshot_manifest_sha256": manifest["snapshot_manifest_sha256"],
-    }
+    return _shared_v10_identity(verified, manifest)
 
 
 def _validate_v10_authority(
     authority: dict[str, object], raw: bytes, verified: dict[str, object], manifest: dict[str, object],
     registry_sha256: str, revocation_raw: bytes | None,
 ) -> None:
-    required = {
-        "accepted_identity", "decision_sha256", "external_publication_authorized", "fixture_count", "generation",
-        "local_only", "manifest_sha256", "pinned_commit_sha", "pinned_tree_sha", "raw_file_count",
-        "registry_sha256", "request_sha256", "root_sha256", "schema_version", "status", "transition_sha256",
-    }
-    if set(authority) != required or authority.get("schema_version") != "10" or authority.get("status") != "pending_cutover_v10":
-        raise ReceiptError("SOURCE_CUTOVER_PENDING_INVALID")
-    snapshot = manifest["content_manifest_core"]["snapshots"][0]
-    expected = {
-        "fixture_count": 11, "generation": verified["generation"], "manifest_sha256": manifest["snapshot_manifest_sha256"],
-        "pinned_commit_sha": snapshot["pinned_commit_sha"], "pinned_tree_sha": snapshot["pinned_tree_sha"],
-        "raw_file_count": 28, "registry_sha256": registry_sha256, "root_sha256": verified["root_sha256"],
-    }
-    if authority.get("external_publication_authorized") is not False or authority.get("local_only") is not True or any(authority.get(key) != value for key, value in expected.items()) or authority.get("accepted_identity") != _v10_identity(verified, manifest):
-        raise ReceiptError("SOURCE_CUTOVER_PENDING_INVALID")
-    if revocation_raw is None or sha256_bytes(revocation_raw) != authority.get("transition_sha256"):
-        raise ReceiptError("SOURCE_CUTOVER_REVOCATION_MISMATCH")
+    try:
+        _shared_validate_v10_authority(
+            authority, raw, verified, manifest, registry_sha256, revocation_raw
+        )
+    except AuthorityValidationError as error:
+        raise ReceiptError(str(error)) from error
 
 
 def command_write_local_acceptance_request_v10(args: argparse.Namespace) -> int:
@@ -2289,6 +2354,15 @@ def build_parser() -> argparse.ArgumentParser:
     validate_closure_v2.add_argument("--receipt", type=Path, required=True)
     validate_closure_v2.add_argument("--authority-pre-state", type=Path, required=True)
     validate_closure_v2.set_defaults(handler=command_validate_runtime_executable_closure_v2)
+    write_closure_v3 = commands.add_parser("write-runtime-executable-closure-v3")
+    write_closure_v3.add_argument("--receipt", type=Path, required=True)
+    write_closure_v3.add_argument("--authority-pre-state", type=Path, required=True)
+    write_closure_v3.add_argument("--freeze-commit")
+    write_closure_v3.set_defaults(handler=command_write_runtime_executable_closure_v3)
+    validate_closure_v3 = commands.add_parser("validate-runtime-executable-closure-v3")
+    validate_closure_v3.add_argument("--receipt", type=Path, required=True)
+    validate_closure_v3.add_argument("--authority-pre-state", type=Path, required=True)
+    validate_closure_v3.set_defaults(handler=command_validate_runtime_executable_closure_v3)
 
     def add_v6_common(command: argparse.ArgumentParser) -> None:
         command.add_argument("--packet-directory", type=Path, required=True)

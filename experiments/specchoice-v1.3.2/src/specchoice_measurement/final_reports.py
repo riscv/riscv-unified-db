@@ -128,7 +128,7 @@ def _canonical_successor_h1_inputs(root: Path) -> dict[str, Path]:
         "adjudication_schema": experiment
         / "config/measurement/canonical-adjudication-schema-v3.json",
         "executable_closure": experiment
-        / "receipts/runtime-executable-closure-v2.json",
+        / "receipts/runtime-executable-closure-v3.json",
         "fixture_registry": experiment / "config/fixture-registry-pr2164-v6.json",
         "formal_attempt": formal,
         "golden_predictions": experiment

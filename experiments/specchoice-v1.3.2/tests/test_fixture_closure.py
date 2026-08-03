@@ -44,6 +44,7 @@ from specchoice_evidence.source_contract import (
 )
 from specchoice_evidence.runtime_closure import (
     RuntimeClosureError,
+    _git_blob_binding,
     _git_bound_entry,
     _require_clean_tool_environment,
     _tool_identities,
@@ -53,6 +54,8 @@ from specchoice_evidence.runtime_closure import (
     validate_future_target_occupancy_v6,
     verify_runtime_closure,
     verify_runtime_closure_v2,
+    verify_runtime_closure_v3,
+    validate_runtime_closure_v2_supersession,
 )
 from specchoice_evidence.successor import (
     SuccessorProtocolError,
@@ -66,6 +69,7 @@ from specchoice_evidence.successor import (
     _preflight_exact_file,
     _verify_exact_accepted_v6,
     _occupied_v13_targets,
+    build_source_contract_proposal_v6,
     preflight_local_acceptance_request_v13,
     preflight_activate_pending_source_cutover_v13,
     preflight_prepare_pending_source_cutover_v13,
@@ -301,7 +305,7 @@ class FixtureClosureTests(unittest.TestCase):
     def test_v6_v13_command_surface_is_real(self) -> None:
         commands = cli_module.build_parser()._subparsers._group_actions[0].choices
         expected = {
-            "write-runtime-executable-closure-v2", "validate-runtime-executable-closure-v2",
+            "write-runtime-executable-closure-v3", "validate-runtime-executable-closure-v3",
             "write-source-contract-proposal-v6", "validate-source-contract-proposal-v6",
             "validate-fixture-construction-decision-v6", "build-fixture-construction-candidate-v6",
             "validate-fixture-candidate-v6", "write-fixture-candidate-audit-v6",
@@ -411,6 +415,143 @@ class FixtureClosureTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_V2_MISMATCH"):
                     verify_runtime_closure_v2(drifted, self.repository)
 
+    def test_runtime_closure_v3_freezes_authority_and_accepts_exact_historical_bytes(self) -> None:
+        authority_raw = b'{"schema_version":"10"}\n'
+        frozen = {
+            "authority_pre_state": {
+                "byte_length": len(authority_raw),
+                "git_blob_oid": "a" * 40,
+                "path": "experiments/specchoice-v1.3.2/phase2/source-authority.json",
+                "sha256": sha256_bytes(authority_raw),
+            },
+            "freeze_commit": "b" * 40,
+            "schema_version": "runtime-executable-closure-v3",
+        }
+        with mock.patch(
+            "specchoice_evidence.runtime_closure.build_runtime_closure_v3",
+            return_value=frozen,
+        ):
+            self.assertEqual(
+                verify_runtime_closure_v3(
+                    frozen, self.repository, authority_pre_state_raw=authority_raw
+                ),
+                frozen,
+            )
+            with self.assertRaisesRegex(
+                RuntimeClosureError, "RUNTIME_CLOSURE_V3_AUTHORITY_PRESTATE_INVALID"
+            ):
+                verify_runtime_closure_v3(
+                    frozen,
+                    self.repository,
+                    authority_pre_state_raw=authority_raw.replace(b"10", b"11"),
+                )
+
+    def test_runtime_closure_v3_authority_binding_comes_from_freeze_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            subprocess.run(["git", "init", "-q", str(repository)], check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Closure Test"], cwd=repository, check=True)
+            authority = repository / "authority.json"
+            original = b'{"authority":"frozen"}\n'
+            authority.write_bytes(original)
+            subprocess.run(["git", "add", "authority.json"], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-qm", "authority"], cwd=repository, check=True)
+            commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True,
+                capture_output=True, text=True,
+            ).stdout.strip()
+            drifted = b'{"authority":"live-drift"}\n'
+            authority.write_bytes(drifted)
+            subprocess.run(["git", "add", "authority.json"], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-qm", "replacement"], cwd=repository, check=True)
+            replacement = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True,
+                capture_output=True, text=True,
+            ).stdout.strip()
+            subprocess.run(["git", "replace", commit, replacement], cwd=repository, check=True)
+            replaced_blob = subprocess.run(
+                ["git", "show", f"{commit}:authority.json"], cwd=repository, check=True,
+                capture_output=True,
+            ).stdout
+            self.assertEqual(replaced_blob, drifted)
+            binding = _git_blob_binding(repository, commit, "authority.json")
+            self.assertEqual(binding["sha256"], sha256_bytes(original))
+            self.assertNotEqual(binding["sha256"], sha256_bytes(drifted))
+
+    def test_runtime_closure_v2_is_exact_non_authorizing_history(self) -> None:
+        predecessor_raw = (self.experiment / "receipts/runtime-executable-closure-v2.json").read_bytes()
+        receipt_path = self.experiment / (
+            "receipts/runtime-executable-closure-v2-"
+            "non-authorizing-supersession-v1.json"
+        )
+        receipt = json.loads(receipt_path.read_bytes())
+        validated = validate_runtime_closure_v2_supersession(
+            receipt, predecessor_raw=predecessor_raw
+        )
+        self.assertEqual(
+            validated["status"],
+            "superseded_pre_authorization_authority_pre_state_unbound",
+        )
+        self.assertFalse(validated["authorization_recorded"])
+        self.assertFalse(validated["successor_proposal_exists"])
+        with self.assertRaisesRegex(
+            RuntimeClosureError, "RUNTIME_CLOSURE_V2_HISTORY_INVALID"
+        ):
+            validate_runtime_closure_v2_supersession(
+                receipt, predecessor_raw=predecessor_raw[:-1] + b" "
+            )
+        with self.assertRaisesRegex(
+            SourceContractProposalError, "RUNTIME_CLOSURE_V2_SUPERSEDED"
+        ):
+            cli_module.command_write_runtime_executable_closure_v2(
+                mock.Mock()
+            )
+
+    def test_public_v6_builder_rejects_semantically_invalid_authority_pre_state(self) -> None:
+        """Direct library callers cannot bypass accepted-v3 authority semantics."""
+        accepted = self.experiment / (
+            "bundles/accepted/"
+            "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
+        )
+        revocation = self.experiment / "receipts/fixture-closure-revocation-v2.json"
+        authority_raw = canonical_json_bytes({})
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory).resolve()
+            experiment = repository / "experiments/specchoice-v1.3.2"
+            shutil.copytree(
+                accepted,
+                experiment
+                / "bundles/accepted/"
+                "source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3",
+            )
+            (experiment / "receipts").mkdir(parents=True)
+            shutil.copy2(
+                revocation,
+                experiment / "receipts/fixture-closure-revocation-v2.json",
+            )
+            (experiment / "phase2").mkdir()
+            (experiment / "phase2/source-authority.json").write_bytes(authority_raw)
+            with (
+                mock.patch(
+                    "specchoice_evidence.successor._parse_closure_v3",
+                    return_value={"freeze_commit": "a" * 40},
+                ),
+                mock.patch(
+                    "specchoice_evidence.successor._validate_closure_v2_history"
+                ),
+                mock.patch("specchoice_evidence.successor._validate_v5_rejection"),
+            ):
+                with self.assertRaisesRegex(
+                    SuccessorProtocolError, "V6_AUTHORITY_PRE_STATE_INVALID"
+                ):
+                    build_source_contract_proposal_v6(
+                        repository,
+                        closure_raw=b"closure",
+                        authority_pre_state_raw=authority_raw,
+                        v5_rejection_raw=b"rejection",
+                    )
+
     def test_rooted_v6_proposal_rejects_copies_tamper_and_late_publish_collision_atomically(self) -> None:
         proposal = {"generation": "v6", "schema_version": "fixture-construction-proposal-v6"}
         supersession = {"schema_version": "source-contract-construction-proposal-v6-supersession-v5"}
@@ -484,8 +625,8 @@ class FixtureClosureTests(unittest.TestCase):
                 return raw
 
             closure_raw = write(
-                "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json",
-                {"schema_version": "runtime-executable-closure-v2"},
+                "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v3.json",
+                {"schema_version": "runtime-executable-closure-v3"},
             )
             construction_raw = write(_DECISION_RELATIVE, {"decision": "authorize"})
             audit_raw = write(_AUDIT_RELATIVE, {})
@@ -506,7 +647,7 @@ class FixtureClosureTests(unittest.TestCase):
             decision["decision_sha256"] = sha256_bytes(canonical_json_bytes(decision))
             decision_raw = write(_ACCEPTANCE_DECISION_RELATIVE, decision)
             common_patches = (
-                mock.patch("specchoice_evidence.successor._parse_closure_v2", return_value={}),
+                mock.patch("specchoice_evidence.successor._parse_closure_v3", return_value={}),
                 mock.patch("specchoice_evidence.successor._validate_fixture_construction_decision_v6", return_value={"decision": "authorize"}),
                 mock.patch("specchoice_evidence.successor._validate_registry_v6", return_value=({}, b"{}")),
                 mock.patch("specchoice_evidence.successor.validate_fixture_candidate_v6", return_value={}),

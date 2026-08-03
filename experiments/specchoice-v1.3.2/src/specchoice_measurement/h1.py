@@ -24,7 +24,7 @@ from specchoice_evidence.filesystem import (
 )
 from specchoice_evidence.runtime_closure import (
     RuntimeClosureError,
-    verify_runtime_closure_v2,
+    verify_runtime_closure_v3,
 )
 from specchoice_evidence.successor import (
     SuccessorProtocolError,
@@ -72,7 +72,8 @@ _REVOCATION_V2 = _ROOT / "receipts/fixture-closure-revocation-v2.json"
 _ROUTE_SUPERSESSION = _ROOT / "receipts/h1-review-route-supersession-v1.json"
 _SUCCESSOR_ONTOLOGY_OPTIONS = _ROOT / "config/measurement/h1-ontology-policy-options-v1.json"
 _SUCCESSOR_ONTOLOGY_DECISION = _ROOT / "reviews/h1-source-gold-ontology-decision-v1.json"
-_SUCCESSOR_EXECUTABLE_CLOSURE = _ROOT / "receipts/runtime-executable-closure-v2.json"
+_SUCCESSOR_EXECUTABLE_CLOSURE = _ROOT / "receipts/runtime-executable-closure-v3.json"
+_SUCCESSOR_HISTORICAL_AUTHORITY = _ROOT / "phase2/source-authority-v13-historical.json"
 _H1_V3_BUNDLE = _ROOT / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
 _H1_V1_RULES = _ROOT / "config/measurement/pr2164-adapter-rules-v1.json"
 _H1_V2_PREDICTIONS = _ROOT / "fixtures/measurement/golden-predictions-v2.json"
@@ -1328,7 +1329,15 @@ def _successor_bindings(
     ):
         raise H1Error("H1_SUCCESSOR_GOVERNANCE_INVALID")
     try:
-        verify_runtime_closure_v2(closure, _REPOSITORY)
+        _, historical_authority_raw = _read_canonical_external(
+            _SUCCESSOR_HISTORICAL_AUTHORITY,
+            "H1_SUCCESSOR_GOVERNANCE_INVALID",
+        )
+        verify_runtime_closure_v3(
+            closure,
+            _REPOSITORY,
+            authority_pre_state_raw=historical_authority_raw,
+        )
         ontology_result = validate_h1_ontology_decision_v1(
             options=ontology_options,
             supersession=ontology_supersession,

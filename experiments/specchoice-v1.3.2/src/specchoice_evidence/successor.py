@@ -31,6 +31,7 @@ from .bundle import (
     _write_exact,
     verify_candidate,
 )
+from .authority import AuthorityValidationError, validate_phase2_source_authority
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .filesystem import (
     FilesystemPolicyError,
@@ -44,13 +45,14 @@ from .runtime_closure import (
     RuntimeClosureError,
     future_target_inventory_v6,
     validate_future_target_occupancy_v6,
-    verify_runtime_closure_v2,
+    validate_runtime_closure_v2_supersession,
+    verify_runtime_closure_v3,
 )
 from .source_contract import (
     SourceContractProposalError,
     validate_v5_rejected_pre_authorization_receipt,
 )
-from .verify import embed_verifier_artifacts, verify_accepted_bundle
+from .verify import BundleVerificationError, embed_verifier_artifacts, verify_accepted_bundle
 
 
 class SuccessorProtocolError(ValueError):
@@ -77,16 +79,27 @@ _REQUEST_RELATIVE = f"{_EXPERIMENT_PREFIX}/receipts/local-acceptance-request-v13
 _ACCEPTANCE_DECISION_RELATIVE = f"{_EXPERIMENT_PREFIX}/receipts/local-acceptance-decision-v13.json"
 _ACCEPTED_RELATIVE = f"{_EXPERIMENT_PREFIX}/bundles/accepted/{_GENERATION_V6}"
 _AUTHORITY_RELATIVE = f"{_EXPERIMENT_PREFIX}/phase2/source-authority.json"
+_ACCEPTED_V3_REVOCATION_RELATIVE = (
+    f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-revocation-v2.json"
+)
 _V5_REJECTION_RELATIVE = (
     f"{_EXPERIMENT_PREFIX}/receipts/"
     "source-contract-construction-proposal-v5-non-executable-supersession-v1.json"
 )
+_CLOSURE_V2_RELATIVE = f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v2.json"
+_CLOSURE_V2_SUPERSESSION_RELATIVE = (
+    f"{_EXPERIMENT_PREFIX}/receipts/"
+    "runtime-executable-closure-v2-non-authorizing-supersession-v1.json"
+)
+_CLOSURE_V3_RELATIVE = f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v3.json"
 
 _PROPOSAL_INPUTS = (
     f"{_EXPERIMENT_PREFIX}/receipts/source-contract-construction-authorization-v4-non-executable-supersession-v1.json",
     f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v1.json",
     f"{_EXPERIMENT_PREFIX}/receipts/source-contract-proposal-v5-pr2164-semantic-gold-executable-closure-verifier-rooted-v5.json",
     f"{_EXPERIMENT_PREFIX}/receipts/source-contract-construction-proposal-v5-supersession-v4.json",
+    _CLOSURE_V2_RELATIVE,
+    _CLOSURE_V2_SUPERSESSION_RELATIVE,
     f"{_EXPERIMENT_PREFIX}/receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
     f"{_EXPERIMENT_PREFIX}/receipts/source-contract-construction-proposal-v4-supersession-v3.json",
     f"{_EXPERIMENT_PREFIX}/receipts/source-contract-construction-decision-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
@@ -212,17 +225,69 @@ def _proposal_inputs(repository: Path) -> list[dict[str, object]]:
     return [_binding(repository, path) for path in sorted(paths)]
 
 
-def _parse_closure_v2(repository: Path, closure_raw: bytes) -> dict[str, object]:
+def _parse_closure_v3(
+    repository: Path, closure_raw: bytes, authority_pre_state_raw: bytes,
+) -> dict[str, object]:
     try:
         closure = json.loads(closure_raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise SuccessorProtocolError("RUNTIME_CLOSURE_V2_INVALID") from error
+        raise SuccessorProtocolError("RUNTIME_CLOSURE_V3_INVALID") from error
     if not isinstance(closure, dict) or canonical_json_bytes(closure) != closure_raw:
-        raise SuccessorProtocolError("RUNTIME_CLOSURE_V2_INVALID")
+        raise SuccessorProtocolError("RUNTIME_CLOSURE_V3_INVALID")
     try:
-        return verify_runtime_closure_v2(closure, repository)
+        return verify_runtime_closure_v3(
+            closure, repository, authority_pre_state_raw=authority_pre_state_raw
+        )
     except RuntimeClosureError as error:
         raise SuccessorProtocolError(str(error)) from error
+
+
+def _validate_closure_v2_history(repository: Path) -> None:
+    """Require the exact append-only receipt that makes v2 non-authorizing."""
+    predecessor, predecessor_raw = _canonical_object(
+        repository / _CLOSURE_V2_RELATIVE, "RUNTIME_CLOSURE_V2_HISTORY_INVALID"
+    )
+    if predecessor.get("schema_version") != "runtime-executable-closure-v2":
+        raise SuccessorProtocolError("RUNTIME_CLOSURE_V2_HISTORY_INVALID")
+    supersession, _ = _canonical_object(
+        repository / _CLOSURE_V2_SUPERSESSION_RELATIVE,
+        "RUNTIME_CLOSURE_V2_SUPERSESSION_INVALID",
+    )
+    try:
+        validate_runtime_closure_v2_supersession(
+            supersession, predecessor_raw=predecessor_raw
+        )
+    except RuntimeClosureError as error:
+        raise SuccessorProtocolError(str(error)) from error
+
+
+def _validate_authority_pre_state_semantics(
+    repository: Path, authority_pre_state_raw: bytes,
+) -> None:
+    """Require the held pre-state to denote the active accepted-v3 authority."""
+    try:
+        authority = json.loads(authority_pre_state_raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SuccessorProtocolError("V6_AUTHORITY_PRE_STATE_INVALID") from error
+    if (
+        not isinstance(authority, dict)
+        or canonical_json_bytes(authority) != authority_pre_state_raw
+    ):
+        raise SuccessorProtocolError("V6_AUTHORITY_PRE_STATE_INVALID")
+    _, revocation_raw = _canonical_object(
+        repository / _ACCEPTED_V3_REVOCATION_RELATIVE,
+        "V6_AUTHORITY_PRE_STATE_INVALID",
+    )
+    try:
+        validate_phase2_source_authority(
+            authority,
+            authority_pre_state_raw,
+            repository / _ACCEPTED_V3_RELATIVE,
+            revocation_raw,
+            "active",
+        )
+    except (AuthorityValidationError, BundleVerificationError) as error:
+        raise SuccessorProtocolError("V6_AUTHORITY_PRE_STATE_INVALID") from error
 
 
 def _validate_v5_rejection(repository: Path, raw: bytes) -> dict[str, object]:
@@ -250,10 +315,17 @@ def _build_source_contract_proposal_v6(
     require_current_authority_pre_state: bool = True,
 ) -> dict[str, object]:
     """Build the exact decision-free v6 proposal from code-derived inventories."""
-    closure = _parse_closure_v2(repository, closure_raw)
+    closure = _parse_closure_v3(repository, closure_raw, authority_pre_state_raw)
+    _validate_closure_v2_history(repository)
     _validate_v5_rejection(repository, v5_rejection_raw)
-    current_authority = (repository / _AUTHORITY_RELATIVE).read_bytes()
-    if require_current_authority_pre_state and current_authority != authority_pre_state_raw:
+    _validate_authority_pre_state_semantics(repository, authority_pre_state_raw)
+    _, current_authority_raw = _canonical_object(
+        repository / _AUTHORITY_RELATIVE, "V6_AUTHORITY_PRE_STATE_INVALID"
+    )
+    if (
+        require_current_authority_pre_state
+        and current_authority_raw != authority_pre_state_raw
+    ):
         raise SuccessorProtocolError("V6_AUTHORITY_PRE_STATE_MISMATCH")
     return {
         "authority_pre_state": {
@@ -265,9 +337,9 @@ def _build_source_contract_proposal_v6(
         "freeze_commit": closure["freeze_commit"],
         "generation": _GENERATION_V6,
         "local_only": True,
-        "runtime_closure_v2": {
+        "runtime_closure_v3": {
             "byte_length": len(closure_raw),
-            "path": f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v2.json",
+            "path": _CLOSURE_V3_RELATIVE,
             "sha256": sha256_bytes(closure_raw),
         },
         "schema_version": "fixture-construction-proposal-v6",
@@ -429,7 +501,7 @@ def _validate_fixture_construction_decision_v6(
     required = {
         "attestation", "authority_pre_state_sha256", "decision", "decision_sha256",
         "decision_timestamp", "external_publication_authorized", "local_only",
-        "proposal_sha256", "rationale", "reviewer", "runtime_closure_v2_sha256",
+        "proposal_sha256", "rationale", "reviewer", "runtime_closure_v3_sha256",
         "schema_version", "supersession_sha256", "v5_rejected_history_sha256",
     }
     if (
@@ -447,7 +519,7 @@ def _validate_fixture_construction_decision_v6(
     expected = {
         "authority_pre_state_sha256": sha256_bytes(authority_pre_state_raw),
         "proposal_sha256": sha256_bytes(proposal_raw),
-        "runtime_closure_v2_sha256": sha256_bytes(closure_raw),
+        "runtime_closure_v3_sha256": sha256_bytes(closure_raw),
         "supersession_sha256": sha256_bytes(supersession_raw),
         "v5_rejected_history_sha256": sha256_bytes(v5_rejection_raw),
     }
@@ -651,7 +723,7 @@ def build_fixture_candidate_audit_v6(
         "proposal_sha256": sha256_bytes((packet_directory / "proposal.json").read_bytes()),
         "raw_file_count": 29,
         "registry_sha256": sha256_bytes(registry_raw),
-        "runtime_closure_v2_sha256": sha256_bytes(closure_raw),
+        "runtime_closure_v3_sha256": sha256_bytes(closure_raw),
         "schema_version": "fixture-candidate-audit-v6",
         "status": "candidate_valid_local_acceptance_pending",
     }
@@ -738,7 +810,7 @@ def _build_local_acceptance_request_v13(
             "pending_authority": f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-pending.json",
             "transition": f"{_EXPERIMENT_PREFIX}/receipts/pending/fixture-closure-transition-v3-to-v6.json",
         },
-        "runtime_closure_v2_sha256": sha256_bytes(closure_raw),
+        "runtime_closure_v3_sha256": sha256_bytes(closure_raw),
         "schema_version": "local-acceptance-request-v13",
         "status": "pending_independent_local_acceptance",
     }
@@ -864,11 +936,11 @@ def validate_v13_evidence_chain(
     if Path(os.path.abspath(candidate)) != (repository / _CANDIDATE_RELATIVE).resolve():
         raise SuccessorProtocolError("V13_BOUND_PATH_INVALID")
     occupied = _occupied_v13_targets(repository, stage)
-    closure_path = f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v2.json"
+    closure_path = _CLOSURE_V3_RELATIVE
     _require_bound_canonical_bytes(
-        repository, closure_path, closure_raw, "RUNTIME_CLOSURE_V2_INVALID"
+        repository, closure_path, closure_raw, "RUNTIME_CLOSURE_V3_INVALID"
     )
-    _parse_closure_v2(repository, closure_raw)
+    _parse_closure_v3(repository, closure_raw, authority_pre_state_raw)
     v5_rejection_raw = (repository / _V5_REJECTION_RELATIVE).read_bytes()
     construction = _require_bound_canonical_bytes(
         repository, _DECISION_RELATIVE, construction_decision_raw,
@@ -1402,7 +1474,7 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
     """Validate the live accepted-v6 authority and its complete fixed-path state chain."""
     repository = repository.resolve(strict=True)
     fixed = {
-        "closure": f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v2.json",
+        "closure": _CLOSURE_V3_RELATIVE,
         "historical": f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-historical.json",
         "audit": _AUDIT_RELATIVE,
         "construction": _DECISION_RELATIVE,

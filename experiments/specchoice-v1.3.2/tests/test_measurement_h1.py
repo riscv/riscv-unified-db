@@ -626,10 +626,10 @@ class H1PacketTests(unittest.TestCase):
                     arguments.extend((f"--{name.replace('_', '-')}", str(path)))
                 return arguments
 
-            closure = temporary / "runtime-executable-closure-v2.json"
+            closure = temporary / "runtime-executable-closure-v3.json"
             closure_value = {
                 "freeze_commit": "0" * 40,
-                "schema_version": "runtime-executable-closure-v2",
+                "schema_version": "runtime-executable-closure-v3",
             }
             closure.write_bytes(canonical_json_bytes(closure_value))
             active_authority = root / "phase2/source-authority.json"
@@ -657,7 +657,12 @@ class H1PacketTests(unittest.TestCase):
                     ),
                     patch.object(
                         h1,
-                        "verify_runtime_closure_v2",
+                        "_SUCCESSOR_HISTORICAL_AUTHORITY",
+                        active_authority,
+                    ),
+                    patch.object(
+                        h1,
+                        "verify_runtime_closure_v3",
                         return_value=closure_value,
                     ) as closure_validator,
                     patch.object(
@@ -676,7 +681,9 @@ class H1PacketTests(unittest.TestCase):
                     else:
                         self.assertEqual(parsed.handler(parsed), 0)
                         closure_validator.assert_called_once_with(
-                            closure_value, root.parents[1]
+                            closure_value,
+                            root.parents[1],
+                            authority_pre_state_raw=active_authority.read_bytes(),
                         )
                         authority_validator.assert_called_once_with(root.parents[1])
                 if expected:
@@ -830,7 +837,12 @@ class H1PacketTests(unittest.TestCase):
                         ),
                         patch.object(
                             h1,
-                            "verify_runtime_closure_v2",
+                            "_SUCCESSOR_HISTORICAL_AUTHORITY",
+                            active_authority,
+                        ),
+                        patch.object(
+                            h1,
+                            "verify_runtime_closure_v3",
                             return_value=closure_value,
                         ) as closure_validator,
                         patch.object(
@@ -852,7 +864,9 @@ class H1PacketTests(unittest.TestCase):
                             decision=selected_decision,
                         )
                         closure_validator.assert_called_once_with(
-                            closure_value, root.parents[1]
+                            closure_value,
+                            root.parents[1],
+                            authority_pre_state_raw=active_authority.read_bytes(),
                         )
                         authority_validator.assert_called_once_with(root.parents[1])
                         return result
@@ -1004,7 +1018,12 @@ class H1PacketTests(unittest.TestCase):
                     ),
                     patch.object(
                         h1,
-                        "verify_runtime_closure_v2",
+                        "_SUCCESSOR_HISTORICAL_AUTHORITY",
+                        active_authority,
+                    ),
+                    patch.object(
+                        h1,
+                        "verify_runtime_closure_v3",
                         return_value=closure_value,
                     ),
                     patch.object(
@@ -1229,7 +1248,7 @@ class H1PacketTests(unittest.TestCase):
     def test_successor_governance_validators_fail_closed_on_empty_inputs(self) -> None:
         from specchoice_evidence.runtime_closure import (  # noqa: PLC0415
             RuntimeClosureError,
-            verify_runtime_closure_v2,
+            verify_runtime_closure_v3,
         )
         from specchoice_evidence.successor import (  # noqa: PLC0415
             SuccessorProtocolError,
@@ -1237,8 +1256,8 @@ class H1PacketTests(unittest.TestCase):
         )
 
         repository = self.root.parents[1]
-        with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_V2_INVALID"):
-            verify_runtime_closure_v2({}, repository)
+        with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_V3_INVALID"):
+            verify_runtime_closure_v3({}, repository, authority_pre_state_raw=b"authority")
         with tempfile.TemporaryDirectory(dir=self.root) as directory:
             temporary = Path(directory)
             empty = temporary / "empty.json"
