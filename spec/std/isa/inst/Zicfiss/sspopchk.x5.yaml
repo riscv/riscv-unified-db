@@ -6,13 +6,16 @@
 $schema: inst_schema.json#
 kind: instruction
 name: sspopchk.x5
-long_name: No synopsis available
+long_name: Shadow Stack Pop and Check (x5)
 description: |
-  No description available.
+  SSPOPCHK pops a value from the shadow stack and checks it against link
+  register `x5`.
+
+  This instruction uses the `mop.r.28` codepoint provided by Zimop.
 definedBy:
   extension:
     name: Zicfiss
-assembly: sspopchk_x5
+assembly: x5
 encoding:
   match: "11001101110000101100000001110011"
   variables: []

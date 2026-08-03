@@ -6,13 +6,15 @@
 $schema: inst_schema.json#
 kind: instruction
 name: sspush.x5
-long_name: No synopsis available
+long_name: Shadow Stack Push (x5)
 description: |
-  No description available.
+  SSPUSH pushes link register `x5` to the shadow stack.
+
+  This instruction uses the `mop.rr.7` codepoint provided by Zimop.
 definedBy:
   extension:
     name: Zicfiss
-assembly: sspush_x5
+assembly: x5
 encoding:
   match: "11001110010100000100000001110011"
   variables: []

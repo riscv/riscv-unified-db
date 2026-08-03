@@ -39230,7 +39230,7 @@ Included in::
 == sspopchk.x1
 
 Synopsis::
-No synopsis available
+Shadow Stack Pop and Check (x1)
 
 Base::
 
@@ -39243,7 +39243,7 @@ Base::
 |===
 
 Assembly::
-sspopchk.x1 sspopchk_x1
+sspopchk.x1 x1
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -39252,7 +39252,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+SSPOPCHK pops a value from the shadow stack and checks it against link
+register `x1`.
+
+This instruction uses the xref:insts:mop_r_28.adoc#udb:doc:inst:mop_r_28[mop.r.28] codepoint provided by Zimop.
 
 
 Decode Variables::
@@ -39276,7 +39279,7 @@ Included in::
 == sspopchk.x5
 
 Synopsis::
-No synopsis available
+Shadow Stack Pop and Check (x5)
 
 Base::
 
@@ -39289,7 +39292,7 @@ Base::
 |===
 
 Assembly::
-sspopchk.x5 sspopchk_x5
+sspopchk.x5 x5
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -39298,7 +39301,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+SSPOPCHK pops a value from the shadow stack and checks it against link
+register `x5`.
+
+This instruction uses the xref:insts:mop_r_28.adoc#udb:doc:inst:mop_r_28[mop.r.28] codepoint provided by Zimop.
 
 
 Decode Variables::
@@ -39322,7 +39328,7 @@ Included in::
 == sspush.x1
 
 Synopsis::
-No synopsis available
+Shadow Stack Push (x1)
 
 Base::
 
@@ -39335,7 +39341,7 @@ Base::
 |===
 
 Assembly::
-sspush.x1 sspush_x1
+sspush.x1 x1
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -39344,7 +39350,9 @@ Encoding::
 ....
 
 Description::
-No description available.
+SSPUSH pushes link register `x1` to the shadow stack.
+
+This instruction uses the xref:insts:mop_rr_7.adoc#udb:doc:inst:mop_rr_7[mop.rr.7] codepoint provided by Zimop.
 
 
 Decode Variables::
@@ -39368,7 +39376,7 @@ Included in::
 == sspush.x5
 
 Synopsis::
-No synopsis available
+Shadow Stack Push (x5)
 
 Base::
 
@@ -39381,7 +39389,7 @@ Base::
 |===
 
 Assembly::
-sspush.x5 sspush_x5
+sspush.x5 x5
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -39390,7 +39398,9 @@ Encoding::
 ....
 
 Description::
-No description available.
+SSPUSH pushes link register `x5` to the shadow stack.
+
+This instruction uses the xref:insts:mop_rr_7.adoc#udb:doc:inst:mop_rr_7[mop.rr.7] codepoint provided by Zimop.
 
 
 Decode Variables::
