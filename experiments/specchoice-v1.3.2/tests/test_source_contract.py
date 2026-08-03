@@ -13,6 +13,8 @@ from pathlib import Path
 
 from specchoice_evidence.source_contract import (
     SourceContractProposalError,
+    render_v4_non_executable_supersession,
+    validate_v4_non_executable_supersession,
     require_accepted_publication_authorization,
     require_candidate_construction_authorization,
     require_fixture_construction_authorization,
@@ -246,6 +248,40 @@ class SourceContractProposalTests(unittest.TestCase):
                 proposal_path=proposal_path.relative_to(experiment_root).as_posix(),
                 proposal_sha256=sha256_bytes(proposal_raw),
             )
+
+
+class SourceContractTests(unittest.TestCase):
+    def test_v4_authorization_is_append_only_classified_non_executable(self) -> None:
+        experiment_root = Path(__file__).parents[1]
+        paths = {
+            "proposal": experiment_root / "receipts/source-contract-proposal-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
+            "supersession": experiment_root / "receipts/source-contract-construction-proposal-v4-supersession-v3.json",
+            "decision": experiment_root / "receipts/source-contract-construction-decision-v4-pr2164-semantic-gold-closure-verifier-rooted-v4.json",
+            "ontology": experiment_root / "reviews/h1-source-gold-ontology-decision-v1.json",
+        }
+        original = {name: path.read_bytes() for name, path in paths.items()}
+
+        rendered = render_v4_non_executable_supersession(
+            proposal_raw=original["proposal"],
+            supersession_raw=original["supersession"],
+            decision_raw=original["decision"],
+            ontology_raw=original["ontology"],
+        )
+
+        self.assertEqual(rendered["status"], "authorized_but_non_executable")
+        self.assertFalse(rendered["construction_authorized"])
+        self.assertEqual(rendered["missing_entrypoints"], [
+            "build-fixture-construction-candidate-v5",
+            "validate-fixture-candidate-v5",
+        ])
+        validate_v4_non_executable_supersession(
+            rendered,
+            proposal_raw=original["proposal"],
+            supersession_raw=original["supersession"],
+            decision_raw=original["decision"],
+            ontology_raw=original["ontology"],
+        )
+        self.assertEqual({name: path.read_bytes() for name, path in paths.items()}, original)
 
 
 if __name__ == "__main__":
