@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import unittest
-from copy import deepcopy
 
 from specchoice_data.splits import (
     SplitValidationError,
@@ -27,17 +26,17 @@ class DataSplitTests(unittest.TestCase):
             "bindings": {"candidate_inventory_sha256": "a" * 64, "pair_review_decision_sha256": "b" * 64},
             "families": [
                 {
-                    "definition": "Implementation-selected versus fixed legal-value sets.",
-                    "exclusion_criteria": ["Constraints that do not define a legal-value set."],
-                    "family_id": "warl_legal_set",
-                    "inclusion_criteria": ["The choice object is a legal-value set."],
-                    "review_state": "approved",
-                },
-                {
                     "definition": "A disjoint held-out family used only by tests.",
                     "exclusion_criteria": ["WARL legal-set cases."],
                     "family_id": "other_family",
                     "inclusion_criteria": ["The item is not a WARL legal-set case."],
+                    "review_state": "approved",
+                },
+                {
+                    "definition": "Implementation-selected versus fixed legal-value sets.",
+                    "exclusion_criteria": ["Constraints that do not define a legal-value set."],
+                    "family_id": "warl_legal_set",
+                    "inclusion_criteria": ["The choice object is a legal-value set."],
                     "review_state": "approved",
                 },
             ],
