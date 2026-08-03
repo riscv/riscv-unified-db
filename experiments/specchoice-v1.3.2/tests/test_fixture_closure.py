@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from copy import deepcopy
 from unittest import mock
 from pathlib import Path
 
@@ -58,6 +59,7 @@ from specchoice_evidence.runtime_closure import (
     validate_runtime_closure_v2_supersession,
     build_runtime_closure_v4,
     future_target_inventory_v7,
+    verify_runtime_closure_v3_historical,
 )
 from specchoice_evidence.successor import (
     SuccessorProtocolError,
@@ -179,6 +181,20 @@ class FixtureClosureTests(unittest.TestCase):
         self.assertEqual(len(targets), 17)
         self.assertEqual(targets, sorted(targets, key=lambda entry: entry["path"]))
         self.assertEqual({entry["kind"] for entry in targets}, {"file"})
+
+    def test_runtime_closure_v3_historical_rejects_truncated_or_mutated_receipt(self) -> None:
+        repository = Path(__file__).parents[3]
+        receipt = json.loads((repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v3.json").read_text())
+        self.assertEqual(len(receipt["entries"]), 103)
+        verify_runtime_closure_v3_historical(receipt, repository)
+        truncated = deepcopy(receipt)
+        truncated["entries"] = truncated["entries"][:1]
+        with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_V3_HISTORY_MISMATCH"):
+            verify_runtime_closure_v3_historical(truncated, repository)
+        mutated = deepcopy(receipt)
+        mutated["entries"][0]["sha256"] = "0" * 64
+        with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_V3_HISTORY_MISMATCH"):
+            verify_runtime_closure_v3_historical(mutated, repository)
 
     def test_v5_construction_decision_rejects_every_transitive_one_byte_drift_before_write(self) -> None:
         closure_raw = b'{"closure":"frozen"}\n'
