@@ -35,6 +35,8 @@ from specchoice_evidence.source_contract import (
     SourceContractProposalError,
     require_fixture_closure_local_acceptance_authorization,
     validate_fixture_construction_decision_v4,
+    build_source_contract_proposal_v5,
+    validate_source_contract_proposal_v5,
     validate_fixture_registry,
     verify_fixture_registry_git,
 )
@@ -110,6 +112,35 @@ class FixtureClosureTests(unittest.TestCase):
             "validate-fixture-candidate-v5",
             "validate-runtime-executable-closure",
         }.issubset(commands))
+
+    def test_v5_construction_decision_rejects_every_transitive_one_byte_drift_before_write(self) -> None:
+        closure_raw = b'{"closure":"frozen"}\n'
+        authority_raw = b'{"accepted_identity":"accepted-v3"}\n'
+        inputs = {"config/fixture-registry-pr2164-v5.json": b"registry\n"}
+        proposal = build_source_contract_proposal_v5(
+            runtime_closure_raw=closure_raw,
+            authority_pre_state_raw=authority_raw,
+            bound_inputs=inputs,
+            targets=["bundles/candidates/source-contract-v5"],
+        )
+        validate_source_contract_proposal_v5(
+            proposal,
+            runtime_closure_raw=closure_raw,
+            authority_pre_state_raw=authority_raw,
+            bound_inputs=inputs,
+        )
+        for name, changed in (
+            ("closure", b'{"closure":"drifted"}\n'),
+            ("authority", b'{"accepted_identity":"drifted"}\n'),
+            ("input", b"registry drift\n"),
+        ):
+            with self.subTest(name=name), self.assertRaisesRegex(SourceContractProposalError, "V5_PROPOSAL_BINDING_MISMATCH"):
+                validate_source_contract_proposal_v5(
+                    proposal,
+                    runtime_closure_raw=changed if name == "closure" else closure_raw,
+                    authority_pre_state_raw=changed if name == "authority" else authority_raw,
+                    bound_inputs={"config/fixture-registry-pr2164-v5.json": changed} if name == "input" else inputs,
+                )
 
 
 class FixtureClosureCandidateTests(unittest.TestCase):
