@@ -245,14 +245,15 @@ def _validate_v5_rejection(repository: Path, raw: bytes) -> dict[str, object]:
         raise SuccessorProtocolError(str(error)) from error
 
 
-def build_source_contract_proposal_v6(
+def _build_source_contract_proposal_v6(
     repository: Path, *, closure_raw: bytes, authority_pre_state_raw: bytes, v5_rejection_raw: bytes,
+    require_current_authority_pre_state: bool = True,
 ) -> dict[str, object]:
     """Build the exact decision-free v6 proposal from code-derived inventories."""
     closure = _parse_closure_v2(repository, closure_raw)
     _validate_v5_rejection(repository, v5_rejection_raw)
     current_authority = (repository / _AUTHORITY_RELATIVE).read_bytes()
-    if current_authority != authority_pre_state_raw:
+    if require_current_authority_pre_state and current_authority != authority_pre_state_raw:
         raise SuccessorProtocolError("V6_AUTHORITY_PRE_STATE_MISMATCH")
     return {
         "authority_pre_state": {
@@ -279,6 +280,19 @@ def build_source_contract_proposal_v6(
     }
 
 
+def build_source_contract_proposal_v6(
+    repository: Path, *, closure_raw: bytes, authority_pre_state_raw: bytes,
+    v5_rejection_raw: bytes,
+) -> dict[str, object]:
+    """Public proposal builder always requires the still-active bound pre-state."""
+    return _build_source_contract_proposal_v6(
+        repository, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_pre_state_raw,
+        v5_rejection_raw=v5_rejection_raw,
+        require_current_authority_pre_state=True,
+    )
+
+
 def _supersession_v5(proposal_raw: bytes, rejection_raw: bytes) -> dict[str, object]:
     return {
         "rejected_v5": {"path": _V5_REJECTION_RELATIVE, "sha256": sha256_bytes(rejection_raw)},
@@ -293,11 +307,35 @@ def validate_source_contract_proposal_v6(
     authority_pre_state_raw: bytes, v5_rejection_raw: bytes,
     allowed_existing_targets: set[str] | frozenset[str] = frozenset(),
 ) -> dict[str, object]:
+    expected_packet = (repository / _PACKET_RELATIVE).resolve()
+    lexical_packet = Path(os.path.abspath(packet_directory))
+    if (
+        lexical_packet != expected_packet
+        or packet_directory.is_symlink()
+        or not packet_directory.is_dir()
+    ):
+        raise SuccessorProtocolError("V6_PROPOSAL_PACKET_PATH_INVALID")
+    return _validate_source_contract_proposal_v6_at(
+        repository, packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_pre_state_raw, v5_rejection_raw=v5_rejection_raw,
+        allowed_existing_targets=allowed_existing_targets,
+        require_current_authority_pre_state=True,
+    )
+
+
+def _validate_source_contract_proposal_v6_at(
+    repository: Path, packet_directory: Path, *, closure_raw: bytes,
+    authority_pre_state_raw: bytes, v5_rejection_raw: bytes,
+    allowed_existing_targets: set[str] | frozenset[str] = frozenset(),
+    require_current_authority_pre_state: bool = True,
+) -> dict[str, object]:
+    """Validate packet bytes; staging callers still cannot weaken public rooting."""
     proposal, proposal_raw = _canonical_object(packet_directory / "proposal.json", "V6_PROPOSAL_NOT_CANONICAL")
     supersession, _ = _canonical_object(packet_directory / "supersession-v5.json", "V6_SUPERSESSION_NOT_CANONICAL")
-    expected = build_source_contract_proposal_v6(
+    expected = _build_source_contract_proposal_v6(
         repository, closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
         v5_rejection_raw=v5_rejection_raw,
+        require_current_authority_pre_state=require_current_authority_pre_state,
     )
     if proposal != expected or supersession != _supersession_v5(proposal_raw, v5_rejection_raw):
         raise SuccessorProtocolError("V6_PROPOSAL_BINDING_MISMATCH")
@@ -314,8 +352,8 @@ def write_source_contract_proposal_packet_v6(
 ) -> dict[str, object]:
     """Publish proposal+supersession as one atomic no-replace rooted packet."""
     repository = repository.resolve(strict=True)
-    expected_packet = repository / _PACKET_RELATIVE
-    if packet_directory.resolve() != expected_packet.resolve():
+    expected_packet = (repository / _PACKET_RELATIVE).resolve()
+    if Path(os.path.abspath(packet_directory)) != expected_packet or packet_directory.is_symlink():
         raise SuccessorProtocolError("V6_PROPOSAL_PACKET_PATH_INVALID")
     proposal = build_source_contract_proposal_v6(
         repository, closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
@@ -331,13 +369,17 @@ def write_source_contract_proposal_packet_v6(
     try:
         _write_exact(temporary / "proposal.json", proposal_raw)
         _write_exact(temporary / "supersession-v5.json", supersession_raw)
-        validate_source_contract_proposal_v6(
+        _validate_source_contract_proposal_v6_at(
             repository, temporary, closure_raw=closure_raw,
             authority_pre_state_raw=authority_pre_state_raw, v5_rejection_raw=v5_rejection_raw,
         )
         _sync_directory(temporary)
         _publish_directory_no_replace(temporary, packet_directory, "V6_PROPOSAL_PACKET_OCCUPIED")
         _sync_directory(packet_directory.parent)
+        validate_source_contract_proposal_v6(
+            repository, packet_directory, closure_raw=closure_raw,
+            authority_pre_state_raw=authority_pre_state_raw, v5_rejection_raw=v5_rejection_raw,
+        )
     except (BundleError, RuntimeClosureError) as error:
         if temporary.exists():
             shutil.rmtree(temporary)
@@ -375,10 +417,11 @@ def _decision_self_hash(payload: Mapping[str, object], diagnostic: str) -> None:
         raise SuccessorProtocolError(diagnostic)
 
 
-def validate_fixture_construction_decision_v6(
+def _validate_fixture_construction_decision_v6(
     repository: Path, decision: object, packet_directory: Path, *, closure_raw: bytes,
     authority_pre_state_raw: bytes, v5_rejection_raw: bytes,
     allowed_existing_targets: set[str] | frozenset[str] | None = None,
+    require_current_authority_pre_state: bool = True,
 ) -> dict[str, object]:
     """Validate a human-only construction disposition against all frozen bytes."""
     if not isinstance(decision, Mapping):
@@ -410,14 +453,37 @@ def validate_fixture_construction_decision_v6(
     }
     if any(decision.get(field) != digest for field, digest in expected.items()):
         raise SuccessorProtocolError("V6_CONSTRUCTION_DECISION_BINDING_MISMATCH")
-    validate_source_contract_proposal_v6(
+    expected_packet = (repository / _PACKET_RELATIVE).resolve()
+    if (
+        Path(os.path.abspath(packet_directory)) != expected_packet
+        or packet_directory.is_symlink()
+        or not packet_directory.is_dir()
+    ):
+        raise SuccessorProtocolError("V6_PROPOSAL_PACKET_PATH_INVALID")
+    _validate_source_contract_proposal_v6_at(
         repository, packet_directory, closure_raw=closure_raw,
         authority_pre_state_raw=authority_pre_state_raw, v5_rejection_raw=v5_rejection_raw,
         allowed_existing_targets=(
             {_DECISION_RELATIVE} if allowed_existing_targets is None else allowed_existing_targets
         ),
+        require_current_authority_pre_state=require_current_authority_pre_state,
     )
     return dict(decision)
+
+
+def validate_fixture_construction_decision_v6(
+    repository: Path, decision: object, packet_directory: Path, *, closure_raw: bytes,
+    authority_pre_state_raw: bytes, v5_rejection_raw: bytes,
+    allowed_existing_targets: set[str] | frozenset[str] | None = None,
+) -> dict[str, object]:
+    """Public decision validator cannot bypass the bound authority pre-state."""
+    return _validate_fixture_construction_decision_v6(
+        repository, decision, packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_pre_state_raw,
+        v5_rejection_raw=v5_rejection_raw,
+        allowed_existing_targets=allowed_existing_targets,
+        require_current_authority_pre_state=True,
+    )
 
 
 def _candidate_local_path(entry: Mapping[str, object]) -> str:
@@ -624,9 +690,10 @@ def _accepted_projection_v6(candidate: Path) -> tuple[dict[str, object], dict[st
     return projection, core, final
 
 
-def build_local_acceptance_request_v13(
+def _build_local_acceptance_request_v13(
     repository: Path, candidate: Path, audit_raw: bytes, construction_decision_raw: bytes,
     packet_directory: Path, closure_raw: bytes, authority_pre_state_raw: bytes,
+    *, require_current_authority_pre_state: bool = True,
 ) -> dict[str, object]:
     """Build a machine-only request that grants no acceptance authority."""
     try:
@@ -647,7 +714,10 @@ def build_local_acceptance_request_v13(
         "status": "candidate",
     }:
         raise SuccessorProtocolError("LOCAL_ACCEPTANCE_REQUEST_V13_AUDIT_MISMATCH")
-    if (repository / _AUTHORITY_RELATIVE).read_bytes() != authority_pre_state_raw:
+    if (
+        require_current_authority_pre_state
+        and (repository / _AUTHORITY_RELATIVE).read_bytes() != authority_pre_state_raw
+    ):
         raise SuccessorProtocolError("V6_AUTHORITY_PRE_STATE_MISMATCH")
     return {
         "authorization": {"external_publication_authorized": False, "local_acceptance_authorized": False},
@@ -672,6 +742,17 @@ def build_local_acceptance_request_v13(
         "schema_version": "local-acceptance-request-v13",
         "status": "pending_independent_local_acceptance",
     }
+
+
+def build_local_acceptance_request_v13(
+    repository: Path, candidate: Path, audit_raw: bytes, construction_decision_raw: bytes,
+    packet_directory: Path, closure_raw: bytes, authority_pre_state_raw: bytes,
+) -> dict[str, object]:
+    """Public request builder always requires the still-active bound pre-state."""
+    return _build_local_acceptance_request_v13(
+        repository, candidate, audit_raw, construction_decision_raw, packet_directory,
+        closure_raw, authority_pre_state_raw, require_current_authority_pre_state=True,
+    )
 
 
 def validate_local_acceptance_request_v13(
@@ -716,27 +797,262 @@ def validate_local_acceptance_decision_v13(
     return dict(decision)
 
 
-def accept_fixture_closure_candidate_v13(
-    repository: Path, candidate: Path, request: object, decision: object,
+_V13_PENDING_TARGETS = {
+    f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-historical.json",
+    f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-pending.json",
+    f"{_EXPERIMENT_PREFIX}/receipts/pending/fixture-closure-transition-v3-to-v6.json",
+    f"{_EXPERIMENT_PREFIX}/receipts/pending/source-cutover-readiness-v13.json",
+}
+_V13_RECEIPT_TARGETS = {
+    f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-revocation-v3-to-v6.json",
+    f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-acceptance-audit-v6.json",
+    f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-offline-replay-v6.json",
+    f"{_EXPERIMENT_PREFIX}/receipts/integrity-receipt-v14.json",
+}
+_V13_BASE_TARGETS = {
+    _DECISION_RELATIVE, _CANDIDATE_RELATIVE, _AUDIT_RELATIVE,
+    _REQUEST_RELATIVE, _ACCEPTANCE_DECISION_RELATIVE, _ACCEPTED_RELATIVE,
+}
+
+
+def _v13_permitted_targets(stage: str) -> set[str]:
+    if stage == "request":
+        return {_DECISION_RELATIVE, _CANDIDATE_RELATIVE, _AUDIT_RELATIVE, _REQUEST_RELATIVE}
+    if stage == "decision":
+        return _V13_BASE_TARGETS - {_ACCEPTED_RELATIVE}
+    if stage == "accept":
+        return set(_V13_BASE_TARGETS)
+    if stage == "prepare":
+        return set(_V13_BASE_TARGETS) | _V13_PENDING_TARGETS
+    if stage == "activate":
+        return set(_V13_BASE_TARGETS) | _V13_PENDING_TARGETS | _V13_RECEIPT_TARGETS
+    if stage == "verify":
+        return {entry["path"] for entry in future_target_inventory_v6()}
+    raise SuccessorProtocolError("V13_VALIDATION_STAGE_INVALID")
+
+
+def _occupied_v13_targets(repository: Path, stage: str) -> set[str]:
+    permitted = _v13_permitted_targets(stage)
+    occupied: set[str] = set()
+    for entry in future_target_inventory_v6():
+        path = entry["path"]
+        target = repository / path
+        if target.exists() or target.is_symlink():
+            if path not in permitted:
+                raise SuccessorProtocolError("V13_PREFLIGHT_TARGET_OCCUPIED")
+            occupied.add(path)
+    return occupied
+
+
+def _require_bound_canonical_bytes(
+    repository: Path, relative: str, supplied: bytes, diagnostic: str,
 ) -> dict[str, object]:
-    """Atomically publish accepted-v6 only after the second human decision."""
-    request_raw = canonical_json_bytes(request)
-    validated = validate_local_acceptance_decision_v13(decision, request, request_sha256=sha256_bytes(request_raw))
-    if validated["decision"] != "accept":
-        raise SuccessorProtocolError("LOCAL_ACCEPTANCE_V13_REJECTED")
-    target = repository / _ACCEPTED_RELATIVE
-    if target.exists() or target.is_symlink():
-        raise SuccessorProtocolError("LOCAL_ACCEPTED_V6_TARGET_OCCUPIED")
-    projection, core, final = _accepted_projection_v6(candidate)
+    value, raw = _canonical_object(repository / relative, diagnostic)
+    if raw != supplied:
+        raise SuccessorProtocolError(diagnostic)
+    return value
+
+
+def validate_v13_evidence_chain(
+    repository: Path, *, stage: str, candidate: Path, packet_directory: Path,
+    closure_raw: bytes, authority_pre_state_raw: bytes, audit_raw: bytes,
+    construction_decision_raw: bytes, request_raw: bytes | None = None,
+    acceptance_decision_raw: bytes | None = None, require_accept: bool = False,
+) -> dict[str, object]:
+    """Single fail-closed validation seam used immediately before every v13 write."""
+    repository = repository.resolve(strict=True)
+    if Path(os.path.abspath(candidate)) != (repository / _CANDIDATE_RELATIVE).resolve():
+        raise SuccessorProtocolError("V13_BOUND_PATH_INVALID")
+    occupied = _occupied_v13_targets(repository, stage)
+    closure_path = f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v2.json"
+    _require_bound_canonical_bytes(
+        repository, closure_path, closure_raw, "RUNTIME_CLOSURE_V2_INVALID"
+    )
+    _parse_closure_v2(repository, closure_raw)
+    v5_rejection_raw = (repository / _V5_REJECTION_RELATIVE).read_bytes()
+    construction = _require_bound_canonical_bytes(
+        repository, _DECISION_RELATIVE, construction_decision_raw,
+        "V6_CONSTRUCTION_DECISION_INVALID",
+    )
+    require_old_head = stage not in {"activate", "verify"}
+    validated_construction = _validate_fixture_construction_decision_v6(
+        repository, construction, packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_pre_state_raw,
+        v5_rejection_raw=v5_rejection_raw,
+        allowed_existing_targets=occupied,
+        require_current_authority_pre_state=require_old_head,
+    )
+    if validated_construction["decision"] != "authorize":
+        raise SuccessorProtocolError("V6_CONSTRUCTION_NOT_AUTHORIZED")
+    registry, registry_raw = _validate_registry_v6(repository)
+    validate_fixture_candidate_v6(candidate, registry=registry, registry_raw=registry_raw)
+    audit = _require_bound_canonical_bytes(
+        repository, _AUDIT_RELATIVE, audit_raw, "V6_CANDIDATE_AUDIT_INVALID"
+    )
+    expected_audit = build_fixture_candidate_audit_v6(
+        repository, candidate, construction_decision_raw, packet_directory, closure_raw,
+    )
+    if audit != expected_audit:
+        raise SuccessorProtocolError("V6_CANDIDATE_AUDIT_MISMATCH")
+    request = _build_local_acceptance_request_v13(
+        repository, candidate, audit_raw, construction_decision_raw, packet_directory,
+        closure_raw, authority_pre_state_raw,
+        require_current_authority_pre_state=require_old_head,
+    )
+    validated_decision: dict[str, object] | None = None
+    if request_raw is not None:
+        supplied_request = _require_bound_canonical_bytes(
+            repository, _REQUEST_RELATIVE, request_raw,
+            "LOCAL_ACCEPTANCE_REQUEST_V13_INVALID",
+        )
+        if supplied_request != request:
+            raise SuccessorProtocolError("LOCAL_ACCEPTANCE_REQUEST_V13_INVALID")
+        if acceptance_decision_raw is not None:
+            supplied_decision = _require_bound_canonical_bytes(
+                repository, _ACCEPTANCE_DECISION_RELATIVE, acceptance_decision_raw,
+                "LOCAL_ACCEPTANCE_DECISION_V13_INVALID",
+            )
+            validated_decision = validate_local_acceptance_decision_v13(
+                supplied_decision, request, request_sha256=sha256_bytes(request_raw),
+            )
+            if require_accept and validated_decision["decision"] != "accept":
+                raise SuccessorProtocolError("LOCAL_ACCEPTANCE_V13_REJECTED")
+    elif acceptance_decision_raw is not None:
+        raise SuccessorProtocolError("LOCAL_ACCEPTANCE_REQUEST_V13_INVALID")
+    return {
+        "audit": audit,
+        "construction_decision": validated_construction,
+        "local_acceptance_decision": validated_decision,
+        "occupied_targets": sorted(occupied),
+        "request": request,
+    }
+
+
+def _preflight_exact_file(
+    repository: Path, relative: str, expected: bytes, diagnostic: str,
+) -> str:
+    target = repository / relative
+    if not target.exists() and not target.is_symlink():
+        return "absent"
+    try:
+        _, current = read_authoritative_file(repository, relative)
+    except (FilesystemPolicyError, OSError) as error:
+        raise SuccessorProtocolError(diagnostic) from error
+    if current != expected:
+        raise SuccessorProtocolError(diagnostic)
+    return "exact_resume"
+
+
+def preflight_local_acceptance_request_v13(
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+) -> tuple[dict[str, object], bytes, str]:
+    chain = validate_v13_evidence_chain(
+        repository, stage="request", candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
+    )
+    request = chain["request"]
+    assert isinstance(request, dict)
+    raw = canonical_json_bytes(request)
+    disposition = _preflight_exact_file(
+        repository, _REQUEST_RELATIVE, raw, "LOCAL_ACCEPTANCE_REQUEST_V13_DIVERGENT"
+    )
+    return request, raw, disposition
+
+
+def write_local_acceptance_request_v13(
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+) -> dict[str, object]:
+    request, raw, disposition = preflight_local_acceptance_request_v13(
+        repository, candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
+    )
+    try:
+        write_exact_descriptor_files(repository, {_REQUEST_RELATIVE: raw})
+    except FilesystemPolicyError as error:
+        raise SuccessorProtocolError(str(error)) from error
+    return {
+        "request": request, "request_sha256": sha256_bytes(raw),
+        "resume": disposition == "exact_resume",
+    }
+
+
+def _verify_exact_accepted_v6(
+    candidate: Path, accepted: Path, final_raw: bytes,
+) -> dict[str, object]:
+    try:
+        candidate_files = enumerate_authoritative_files(candidate)
+        accepted_files = enumerate_authoritative_files(accepted)
+        if candidate_files != accepted_files:
+            raise SuccessorProtocolError("LOCAL_ACCEPTED_V6_DIVERGENT")
+        for relative in sorted(candidate_files):
+            _, current = read_authoritative_file(accepted, relative)
+            if relative == "snapshot-manifest.json":
+                expected = final_raw
+            else:
+                _, expected = read_authoritative_file(candidate, relative)
+            if current != expected:
+                raise SuccessorProtocolError("LOCAL_ACCEPTED_V6_DIVERGENT")
+        verified = verify_accepted_bundle(accepted)
+        final, _ = _canonical_object(accepted / "snapshot-manifest.json", "ACCEPTED_V6_INVALID")
+    except (FilesystemPolicyError, BundleError, OSError) as error:
+        raise SuccessorProtocolError("LOCAL_ACCEPTED_V6_DIVERGENT") from error
+    return {**verified, "snapshot_manifest_sha256": final["snapshot_manifest_sha256"]}
+
+
+def preflight_accept_fixture_closure_candidate_v13(
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+    request_raw: bytes, acceptance_decision_raw: bytes,
+) -> tuple[dict[str, object], dict[str, object], bytes, str]:
+    chain = validate_v13_evidence_chain(
+        repository, stage="accept", candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
+        request_raw=request_raw, acceptance_decision_raw=acceptance_decision_raw,
+        require_accept=True,
+    )
+    projection, _, final = _accepted_projection_v6(candidate)
+    request = chain["request"]
+    assert isinstance(request, dict)
     if projection != request.get("projected_accepted"):
         raise SuccessorProtocolError("LOCAL_ACCEPTANCE_V13_PROJECTION_MISMATCH")
+    final_raw = canonical_json_bytes(final)
+    target = repository / _ACCEPTED_RELATIVE
+    if target.is_symlink():
+        raise SuccessorProtocolError("LOCAL_ACCEPTED_V6_DIVERGENT")
+    disposition = "absent"
+    if target.exists():
+        _verify_exact_accepted_v6(candidate, target, final_raw)
+        disposition = "exact_resume"
+    return chain, final, final_raw, disposition
+
+
+def accept_fixture_closure_candidate_v13(
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+    request_raw: bytes, acceptance_decision_raw: bytes,
+) -> dict[str, object]:
+    """Atomically publish accepted-v6 only after the complete accepted evidence chain."""
+    _, final, final_raw, disposition = preflight_accept_fixture_closure_candidate_v13(
+        repository, candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
+        request_raw=request_raw, acceptance_decision_raw=acceptance_decision_raw,
+    )
+    target = repository / _ACCEPTED_RELATIVE
+    if disposition == "exact_resume":
+        return _verify_exact_accepted_v6(candidate, target, final_raw)
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=f".{_GENERATION_V6}.accepted-staging-", dir=target.parent))
     try:
         shutil.rmtree(temporary)
         shutil.copytree(candidate, temporary)
         (temporary / "snapshot-manifest.json").unlink()
-        _write_exact(temporary / "snapshot-manifest.json", canonical_json_bytes(final))
+        _write_exact(temporary / "snapshot-manifest.json", final_raw)
         verified = verify_accepted_bundle(temporary)
         _run_embedded_verifier(temporary)
         _run_isolated_verifier(temporary)
@@ -755,15 +1071,25 @@ def _canonical_bytes(value: Mapping[str, object]) -> bytes:
 
 
 def build_pending_source_cutover_v13(
-    repository: Path, *, authority_pre_state_raw: bytes, request_raw: bytes,
-    decision_raw: bytes,
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+    request_raw: bytes, decision_raw: bytes, validation_stage: str = "prepare",
 ) -> dict[str, dict[str, object]]:
+    validate_v13_evidence_chain(
+        repository, stage=validation_stage, candidate=candidate,
+        packet_directory=packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_pre_state_raw, audit_raw=audit_raw,
+        construction_decision_raw=construction_decision_raw, request_raw=request_raw,
+        acceptance_decision_raw=decision_raw, require_accept=True,
+    )
     accepted = repository / _ACCEPTED_RELATIVE
-    try:
-        accepted_identity = verify_accepted_bundle(accepted)
-    except Exception as error:
-        raise SuccessorProtocolError("ACCEPTED_V6_INVALID") from error
-    final, _ = _canonical_object(accepted / "snapshot-manifest.json", "ACCEPTED_V6_INVALID")
+    _, _, expected_final = _accepted_projection_v6(candidate)
+    accepted_identity = _verify_exact_accepted_v6(
+        candidate, accepted, canonical_json_bytes(expected_final)
+    )
+    final, _ = _canonical_object(
+        accepted / "snapshot-manifest.json", "ACCEPTED_V6_INVALID"
+    )
     identity = {
         "core_sha256": accepted_identity["manifest_sha256"], "generation": _GENERATION_V6,
         "root_sha256": accepted_identity["root_sha256"],
@@ -805,13 +1131,39 @@ def build_pending_source_cutover_v13(
 
 
 def prepare_pending_source_cutover_v13(
-    repository: Path, *, authority_pre_state_raw: bytes, request_raw: bytes, decision_raw: bytes,
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+    request_raw: bytes, decision_raw: bytes,
 ) -> dict[str, object]:
+    values, payloads, dispositions = preflight_prepare_pending_source_cutover_v13(
+        repository, candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
+        request_raw=request_raw, decision_raw=decision_raw,
+    )
+    try:
+        write_exact_descriptor_files(repository, payloads)
+    except FilesystemPolicyError as error:
+        raise SuccessorProtocolError(str(error)) from error
+    return {
+        "payload_sha256": {path: sha256_bytes(raw) for path, raw in sorted(payloads.items())},
+        "resumed": sorted(path for path, state in dispositions.items() if state == "exact_resume"),
+        "status": values["pending"]["status"],
+    }
+
+
+def preflight_prepare_pending_source_cutover_v13(
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+    request_raw: bytes, decision_raw: bytes,
+) -> tuple[dict[str, dict[str, object]], dict[str, bytes], dict[str, str]]:
     if (repository / _AUTHORITY_RELATIVE).read_bytes() != authority_pre_state_raw:
         raise SuccessorProtocolError("V6_AUTHORITY_PRE_STATE_MISMATCH")
     values = build_pending_source_cutover_v13(
-        repository, authority_pre_state_raw=authority_pre_state_raw,
-        request_raw=request_raw, decision_raw=decision_raw,
+        repository, candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
+        request_raw=request_raw, decision_raw=decision_raw, validation_stage="prepare",
     )
     payloads = {
         f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-historical.json": authority_pre_state_raw,
@@ -819,19 +1171,23 @@ def prepare_pending_source_cutover_v13(
         f"{_EXPERIMENT_PREFIX}/receipts/pending/fixture-closure-transition-v3-to-v6.json": _canonical_bytes(values["transition"]),
         f"{_EXPERIMENT_PREFIX}/receipts/pending/source-cutover-readiness-v13.json": _canonical_bytes(values["readiness"]),
     }
-    try:
-        write_exact_descriptor_files(repository, payloads)
-    except FilesystemPolicyError as error:
-        raise SuccessorProtocolError(str(error)) from error
-    return {path: sha256_bytes(raw) for path, raw in sorted(payloads.items())}
+    dispositions = {
+        path: _preflight_exact_file(repository, path, raw, "PENDING_CUTOVER_V13_DIVERGENT")
+        for path, raw in sorted(payloads.items())
+    }
+    return values, payloads, dispositions
 
 
 def validate_pending_source_cutover_v13(
-    repository: Path, *, authority_pre_state_raw: bytes, request_raw: bytes, decision_raw: bytes,
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+    request_raw: bytes, decision_raw: bytes, validation_stage: str = "activate",
 ) -> dict[str, dict[str, object]]:
     expected = build_pending_source_cutover_v13(
-        repository, authority_pre_state_raw=authority_pre_state_raw,
-        request_raw=request_raw, decision_raw=decision_raw,
+        repository, candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
+        request_raw=request_raw, decision_raw=decision_raw, validation_stage=validation_stage,
     )
     paths = {
         "pending": f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-pending.json",
@@ -845,6 +1201,16 @@ def validate_pending_source_cutover_v13(
         current, _ = _canonical_object(repository / relative, "PENDING_CUTOVER_V13_INVALID")
         if current != expected[name]:
             raise SuccessorProtocolError("PENDING_CUTOVER_V13_INVALID")
+    transition_raw = _canonical_bytes(expected["transition"])
+    final_raw = _canonical_bytes(
+        _accepted_v6_final_authority(expected["pending"], transition_raw, decision_raw)
+    )
+    try:
+        _, authority_head = read_authoritative_file(repository, _AUTHORITY_RELATIVE)
+    except (FilesystemPolicyError, OSError) as error:
+        raise SuccessorProtocolError("V13_AUTHORITY_HEAD_DIVERGED") from error
+    if authority_head not in {authority_pre_state_raw, final_raw}:
+        raise SuccessorProtocolError("V13_AUTHORITY_HEAD_DIVERGED")
     return expected
 
 
@@ -921,30 +1287,21 @@ def _accepted_v6_receipts(
 
 
 def activate_pending_source_cutover_v13(
-    repository: Path, *, authority_pre_state_raw: bytes, request_raw: bytes, decision_raw: bytes,
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+    request_raw: bytes, decision_raw: bytes,
 ) -> dict[str, object]:
     """Resume safely across exact partial writes, then replace the authority head once."""
-    values = validate_pending_source_cutover_v13(
-        repository, authority_pre_state_raw=authority_pre_state_raw,
+    values, receipts, final_authority_raw, dispositions = preflight_activate_pending_source_cutover_v13(
+        repository, candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
         request_raw=request_raw, decision_raw=decision_raw,
     )
     pending_raw = _canonical_bytes(values["pending"])
     transition_raw = _canonical_bytes(values["transition"])
-    readiness_raw = _canonical_bytes(values["readiness"])
-    final_authority = _accepted_v6_final_authority(values["pending"], transition_raw, decision_raw)
-    final_authority_raw = _canonical_bytes(final_authority)
-    identity = values["pending"]["accepted_identity"]
-    assert isinstance(identity, Mapping)
-    receipts = _accepted_v6_receipts(
-        pre_state_raw=authority_pre_state_raw, pending_raw=pending_raw,
-        transition_raw=transition_raw, readiness_raw=readiness_raw,
-        final_authority_raw=final_authority_raw, request_raw=request_raw,
-        decision_raw=decision_raw, accepted_identity=identity,
-    )
     authority_path = repository / _AUTHORITY_RELATIVE
     current = authority_path.read_bytes()
-    if current not in {authority_pre_state_raw, final_authority_raw}:
-        raise SuccessorProtocolError("V13_AUTHORITY_HEAD_DIVERGED")
     try:
         write_exact_descriptor_files(repository, receipts)
         if current == authority_pre_state_raw:
@@ -959,22 +1316,66 @@ def activate_pending_source_cutover_v13(
     if authority_path.read_bytes() != final_authority_raw:
         raise SuccessorProtocolError("V13_AUTHORITY_ACTIVATION_FAILED")
     verify_accepted_v6_receipts(
-        repository, authority_pre_state_raw=authority_pre_state_raw,
+        repository, candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
         request_raw=request_raw, decision_raw=decision_raw,
     )
     return {
         "active_authority_sha256": sha256_bytes(final_authority_raw),
         "integrity_sha256": sha256_bytes(receipts[f"{_EXPERIMENT_PREFIX}/receipts/integrity-receipt-v14.json"]),
+        "resumed": sorted(path for path, state in dispositions.items() if state == "exact_resume"),
         "status": "accepted_v6_state_chain_verified",
     }
 
 
+def preflight_activate_pending_source_cutover_v13(
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+    request_raw: bytes, decision_raw: bytes,
+) -> tuple[dict[str, dict[str, object]], dict[str, bytes], bytes, dict[str, str]]:
+    values = validate_pending_source_cutover_v13(
+        repository, candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
+        request_raw=request_raw, decision_raw=decision_raw, validation_stage="activate",
+    )
+    pending_raw = _canonical_bytes(values["pending"])
+    transition_raw = _canonical_bytes(values["transition"])
+    readiness_raw = _canonical_bytes(values["readiness"])
+    final_authority = _accepted_v6_final_authority(values["pending"], transition_raw, decision_raw)
+    final_authority_raw = _canonical_bytes(final_authority)
+    identity = values["pending"]["accepted_identity"]
+    assert isinstance(identity, Mapping)
+    receipts = _accepted_v6_receipts(
+        pre_state_raw=authority_pre_state_raw, pending_raw=pending_raw,
+        transition_raw=transition_raw, readiness_raw=readiness_raw,
+        final_authority_raw=final_authority_raw, request_raw=request_raw,
+        decision_raw=decision_raw, accepted_identity=identity,
+    )
+    try:
+        _, current = read_authoritative_file(repository, _AUTHORITY_RELATIVE)
+    except (FilesystemPolicyError, OSError) as error:
+        raise SuccessorProtocolError("V13_AUTHORITY_HEAD_DIVERGED") from error
+    if current not in {authority_pre_state_raw, final_authority_raw}:
+        raise SuccessorProtocolError("V13_AUTHORITY_HEAD_DIVERGED")
+    dispositions = {
+        path: _preflight_exact_file(repository, path, raw, "ACCEPTED_V6_RECEIPT_DIVERGENT")
+        for path, raw in sorted(receipts.items())
+    }
+    return values, receipts, final_authority_raw, dispositions
+
+
 def verify_accepted_v6_receipts(
-    repository: Path, *, authority_pre_state_raw: bytes, request_raw: bytes, decision_raw: bytes,
+    repository: Path, *, candidate: Path, packet_directory: Path, closure_raw: bytes,
+    authority_pre_state_raw: bytes, audit_raw: bytes, construction_decision_raw: bytes,
+    request_raw: bytes, decision_raw: bytes,
 ) -> dict[str, object]:
     values = build_pending_source_cutover_v13(
-        repository, authority_pre_state_raw=authority_pre_state_raw,
-        request_raw=request_raw, decision_raw=decision_raw,
+        repository, candidate=candidate, packet_directory=packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_pre_state_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_decision_raw,
+        request_raw=request_raw, decision_raw=decision_raw, validation_stage="verify",
     )
     pending_raw = _canonical_bytes(values["pending"])
     transition_raw = _canonical_bytes(values["transition"])
@@ -995,3 +1396,28 @@ def verify_accepted_v6_receipts(
         if (repository / relative).read_bytes() != raw:
             raise SuccessorProtocolError("ACCEPTED_V6_RECEIPT_MISMATCH")
     return {"authority_sha256": sha256_bytes(final_authority_raw), "status": "accepted_v6_state_chain_verified"}
+
+
+def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]:
+    """Validate the live accepted-v6 authority and its complete fixed-path state chain."""
+    repository = repository.resolve(strict=True)
+    fixed = {
+        "closure": f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v2.json",
+        "historical": f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-historical.json",
+        "audit": _AUDIT_RELATIVE,
+        "construction": _DECISION_RELATIVE,
+        "request": _REQUEST_RELATIVE,
+        "decision": _ACCEPTANCE_DECISION_RELATIVE,
+    }
+    raw: dict[str, bytes] = {}
+    for name, relative in fixed.items():
+        _, raw[name] = _canonical_object(
+            repository / relative, "ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID"
+        )
+    return verify_accepted_v6_receipts(
+        repository, candidate=repository / _CANDIDATE_RELATIVE,
+        packet_directory=repository / _PACKET_RELATIVE,
+        closure_raw=raw["closure"], authority_pre_state_raw=raw["historical"],
+        audit_raw=raw["audit"], construction_decision_raw=raw["construction"],
+        request_raw=raw["request"], decision_raw=raw["decision"],
+    )

@@ -44,13 +44,36 @@ from specchoice_evidence.source_contract import (
 )
 from specchoice_evidence.runtime_closure import (
     RuntimeClosureError,
+    _git_bound_entry,
+    _require_clean_tool_environment,
+    _tool_identities,
     _referenced_runtime_paths_v2,
     build_runtime_closure,
     future_target_inventory_v6,
     validate_future_target_occupancy_v6,
     verify_runtime_closure,
+    verify_runtime_closure_v2,
 )
-from specchoice_evidence.successor import validate_local_acceptance_decision_v13
+from specchoice_evidence.successor import (
+    SuccessorProtocolError,
+    _ACCEPTANCE_DECISION_RELATIVE,
+    _AUDIT_RELATIVE,
+    _CANDIDATE_RELATIVE,
+    _DECISION_RELATIVE,
+    _PACKET_RELATIVE,
+    _REQUEST_RELATIVE,
+    _accepted_projection_v6,
+    _preflight_exact_file,
+    _verify_exact_accepted_v6,
+    _occupied_v13_targets,
+    preflight_local_acceptance_request_v13,
+    preflight_activate_pending_source_cutover_v13,
+    preflight_prepare_pending_source_cutover_v13,
+    validate_local_acceptance_decision_v13,
+    validate_source_contract_proposal_v6,
+    validate_v13_evidence_chain,
+    write_source_contract_proposal_packet_v6,
+)
 
 
 class FixtureClosureTests(unittest.TestCase):
@@ -328,6 +351,365 @@ class FixtureClosureTests(unittest.TestCase):
         stale["rationale"] = "changed without refreshing self hash"
         with self.assertRaisesRegex(ValueError, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID"):
             validate_local_acceptance_decision_v13(stale, request, request_sha256=request_sha)
+
+    def test_runtime_closure_v2_binds_clean_tool_env_exact_argv_and_real_git_blob_oid(self) -> None:
+        with mock.patch.dict(os.environ, {"GIT_OPTIONAL_LOCKS": "1"}, clear=False):
+            with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_TOOL_ENVIRONMENT_DIRTY"):
+                _require_clean_tool_environment()
+        with mock.patch.dict(os.environ, {"RUBYOPT": "-rnot_allowed"}, clear=False):
+            with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_TOOL_ENVIRONMENT_DIRTY"):
+                _tool_identities(self.repository, self.experiment)
+
+        tools = _tool_identities(self.repository, self.experiment)
+        self.assertEqual(tools["git"]["environment"]["GIT_CONFIG_NOSYSTEM"], "1")
+        self.assertEqual(tools["git"]["environment"]["GIT_OPTIONAL_LOCKS"], "0")
+        self.assertIn("require 'psych'", tools["ruby_psych"]["argv"][-1])
+        self.assertIn("import importlib", tools["python"]["discovery_argv"][-1])
+        self.assertFalse(tools["ruby_psych"]["argv"][-1].startswith("sha256:"))
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            subprocess.run(["git", "init", "-q", str(repository)], check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Closure Test"], cwd=repository, check=True)
+            (repository / "bound.txt").write_bytes(b"bound bytes\n")
+            subprocess.run(["git", "add", "bound.txt"], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-qm", "bound"], cwd=repository, check=True)
+            commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True,
+                capture_output=True, text=True,
+            ).stdout.strip()
+            blob = subprocess.run(
+                ["git", "rev-parse", f"{commit}:bound.txt"], cwd=repository,
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+            entry = _git_bound_entry(repository, commit, "bound.txt", {"test"})
+            self.assertEqual(entry["git_blob_oid"], blob)
+            self.assertNotIn("git_blob_sha256", entry)
+
+    def test_runtime_closure_v2_rejects_tool_version_argv_environment_and_blob_oid_drift(self) -> None:
+        frozen = {
+            "ambient_tool_environment": {"GIT_OPTIONAL_LOCKS": "", "RUBYLIB": "", "RUBYOPT": ""},
+            "entries": [{"git_blob_oid": "a" * 40, "path": "bound.txt"}],
+            "freeze_commit": "b" * 40,
+            "schema_version": "runtime-executable-closure-v2",
+            "tools": {
+                "git": {"argv": ["/git", "--version"], "environment": {"LC_ALL": "C"}, "version_output": "git version 1"},
+                "ruby_psych": {"argv": ["/ruby", "-e", "script"], "ruby_version": "3.3.0"},
+            },
+        }
+        with mock.patch("specchoice_evidence.runtime_closure.build_runtime_closure_v2", return_value=frozen):
+            verify_runtime_closure_v2(frozen, self.repository)
+            for mutation in (
+                lambda value: value["tools"]["git"].update({"version_output": "git version forged"}),
+                lambda value: value["tools"]["git"].update({"argv": ["git", "--version"]}),
+                lambda value: value["tools"]["git"].update({"environment": {"LC_ALL": "en_US"}}),
+                lambda value: value["entries"][0].update({"git_blob_oid": "c" * 40}),
+            ):
+                drifted = copy.deepcopy(frozen)
+                mutation(drifted)
+                with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_V2_MISMATCH"):
+                    verify_runtime_closure_v2(drifted, self.repository)
+
+    def test_rooted_v6_proposal_rejects_copies_tamper_and_late_publish_collision_atomically(self) -> None:
+        proposal = {"generation": "v6", "schema_version": "fixture-construction-proposal-v6"}
+        supersession = {"schema_version": "source-contract-construction-proposal-v6-supersession-v5"}
+        closure_raw, authority_raw, rejection_raw = b"closure", b"authority", b"rejection"
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory).resolve()
+            packet = repository / _PACKET_RELATIVE
+            packet.mkdir(parents=True)
+            (packet / "proposal.json").write_bytes(canonical_json_bytes(proposal))
+            (packet / "supersession-v5.json").write_bytes(canonical_json_bytes(supersession))
+            copied = repository / "copied-packet"
+            shutil.copytree(packet, copied)
+            patches = (
+                mock.patch("specchoice_evidence.successor._build_source_contract_proposal_v6", return_value=proposal),
+                mock.patch("specchoice_evidence.successor._supersession_v5", return_value=supersession),
+                mock.patch("specchoice_evidence.successor.validate_future_target_occupancy_v6", return_value=[]),
+            )
+            with patches[0], patches[1], patches[2]:
+                validate_source_contract_proposal_v6(
+                    repository, packet, closure_raw=closure_raw,
+                    authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+                )
+                with self.assertRaisesRegex(SuccessorProtocolError, "V6_PROPOSAL_PACKET_PATH_INVALID"):
+                    validate_source_contract_proposal_v6(
+                        repository, copied, closure_raw=closure_raw,
+                        authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+                    )
+                (packet / "proposal.json").write_bytes(canonical_json_bytes({"generation": "tampered"}))
+                with self.assertRaisesRegex(SuccessorProtocolError, "V6_PROPOSAL_BINDING_MISMATCH"):
+                    validate_source_contract_proposal_v6(
+                        repository, packet, closure_raw=closure_raw,
+                        authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+                    )
+
+            shutil.rmtree(packet)
+            with (
+                mock.patch("specchoice_evidence.successor._build_source_contract_proposal_v6", return_value=proposal),
+                mock.patch("specchoice_evidence.successor._supersession_v5", return_value=supersession),
+                mock.patch("specchoice_evidence.successor.validate_future_target_occupancy_v6", return_value=[]),
+                mock.patch(
+                    "specchoice_evidence.successor._publish_directory_no_replace",
+                    side_effect=BundleError("late collision"),
+                ),
+            ):
+                with self.assertRaisesRegex(SuccessorProtocolError, "late collision"):
+                    write_source_contract_proposal_packet_v6(
+                        repository, packet, closure_raw=closure_raw,
+                        authority_pre_state_raw=authority_raw, v5_rejection_raw=rejection_raw,
+                    )
+            self.assertFalse(packet.exists())
+            self.assertEqual(list(packet.parent.glob(".proposal-v6.staging-*")), [])
+
+    def test_v13_evidence_seam_rejects_invalid_or_reject_decisions_before_any_target_open(self) -> None:
+        candidate_projection = {
+            "core_sha256": "a" * 64, "generation": "v6", "root_sha256": "b" * 64,
+            "snapshot_manifest_sha256": "c" * 64, "status": "candidate",
+        }
+        request = {
+            "candidate": candidate_projection,
+            "projected_accepted": {key: value for key, value in candidate_projection.items() if key != "status"},
+            "schema_version": "local-acceptance-request-v13",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory).resolve()
+
+            def write(relative: str, value: dict[str, object]) -> bytes:
+                raw = canonical_json_bytes(value)
+                target = repository / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(raw)
+                return raw
+
+            closure_raw = write(
+                "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json",
+                {"schema_version": "runtime-executable-closure-v2"},
+            )
+            construction_raw = write(_DECISION_RELATIVE, {"decision": "authorize"})
+            audit_raw = write(_AUDIT_RELATIVE, {})
+            request_raw = write(_REQUEST_RELATIVE, request)
+            (repository / _CANDIDATE_RELATIVE).mkdir(parents=True)
+            rejection = repository / "experiments/specchoice-v1.3.2/receipts/source-contract-construction-proposal-v5-non-executable-supersession-v1.json"
+            rejection.parent.mkdir(parents=True, exist_ok=True)
+            rejection.write_bytes(canonical_json_bytes({}))
+            decision = {
+                "attestation": "Personally reviewed.", "candidate": candidate_projection,
+                "decision": "reject", "decision_timestamp": "2026-08-03T12:34:56Z",
+                "external_publication_authorized": False,
+                "projected_accepted": request["projected_accepted"],
+                "rationale": "Reject exact candidate.",
+                "request_sha256": sha256_bytes(request_raw), "reviewer": "human",
+                "schema_version": "local-acceptance-decision-v13",
+            }
+            decision["decision_sha256"] = sha256_bytes(canonical_json_bytes(decision))
+            decision_raw = write(_ACCEPTANCE_DECISION_RELATIVE, decision)
+            common_patches = (
+                mock.patch("specchoice_evidence.successor._parse_closure_v2", return_value={}),
+                mock.patch("specchoice_evidence.successor._validate_fixture_construction_decision_v6", return_value={"decision": "authorize"}),
+                mock.patch("specchoice_evidence.successor._validate_registry_v6", return_value=({}, b"{}")),
+                mock.patch("specchoice_evidence.successor.validate_fixture_candidate_v6", return_value={}),
+                mock.patch("specchoice_evidence.successor.build_fixture_candidate_audit_v6", return_value={}),
+                mock.patch("specchoice_evidence.successor._build_local_acceptance_request_v13", return_value=request),
+            )
+            with common_patches[0], common_patches[1], common_patches[2], common_patches[3], common_patches[4], common_patches[5]:
+                with self.assertRaisesRegex(SuccessorProtocolError, "LOCAL_ACCEPTANCE_V13_REJECTED"):
+                    validate_v13_evidence_chain(
+                        repository, stage="accept", candidate=repository / _CANDIDATE_RELATIVE,
+                        packet_directory=repository / _PACKET_RELATIVE, closure_raw=closure_raw,
+                        authority_pre_state_raw=b"authority", audit_raw=audit_raw,
+                        construction_decision_raw=construction_raw, request_raw=request_raw,
+                        acceptance_decision_raw=decision_raw, require_accept=True,
+                    )
+            self.assertFalse((repository / "experiments/specchoice-v1.3.2/bundles/accepted/source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6").exists())
+
+            invalid = dict(decision)
+            invalid["decision"] = "accept"
+            invalid["decision_sha256"] = "0" * 64
+            invalid_raw = write(_ACCEPTANCE_DECISION_RELATIVE, invalid)
+            with common_patches[0], common_patches[1], common_patches[2], common_patches[3], common_patches[4], common_patches[5]:
+                with self.assertRaisesRegex(SuccessorProtocolError, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID"):
+                    validate_v13_evidence_chain(
+                        repository, stage="accept", candidate=repository / _CANDIDATE_RELATIVE,
+                        packet_directory=repository / _PACKET_RELATIVE, closure_raw=closure_raw,
+                        authority_pre_state_raw=b"authority", audit_raw=audit_raw,
+                        construction_decision_raw=construction_raw, request_raw=request_raw,
+                        acceptance_decision_raw=invalid_raw, require_accept=True,
+                    )
+
+    def test_v13_full_preflight_accepts_absent_or_exact_resume_and_rejects_divergent_occupancy(self) -> None:
+        expected_request = {"schema_version": "local-acceptance-request-v13", "status": "pending"}
+        expected_raw = canonical_json_bytes(expected_request)
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory).resolve()
+            request_path = repository / _REQUEST_RELATIVE
+            with mock.patch(
+                "specchoice_evidence.successor.validate_v13_evidence_chain",
+                return_value={"request": expected_request},
+            ):
+                _, _, state = preflight_local_acceptance_request_v13(
+                    repository, candidate=repository / _CANDIDATE_RELATIVE,
+                    packet_directory=repository / _PACKET_RELATIVE, closure_raw=b"closure",
+                    authority_pre_state_raw=b"authority", audit_raw=b"audit",
+                    construction_decision_raw=b"construction",
+                )
+                self.assertEqual(state, "absent")
+                request_path.parent.mkdir(parents=True, exist_ok=True)
+                request_path.write_bytes(expected_raw)
+                _, _, state = preflight_local_acceptance_request_v13(
+                    repository, candidate=repository / _CANDIDATE_RELATIVE,
+                    packet_directory=repository / _PACKET_RELATIVE, closure_raw=b"closure",
+                    authority_pre_state_raw=b"authority", audit_raw=b"audit",
+                    construction_decision_raw=b"construction",
+                )
+                self.assertEqual(state, "exact_resume")
+                request_path.write_bytes(b"divergent")
+                with self.assertRaisesRegex(SuccessorProtocolError, "LOCAL_ACCEPTANCE_REQUEST_V13_DIVERGENT"):
+                    preflight_local_acceptance_request_v13(
+                        repository, candidate=repository / _CANDIDATE_RELATIVE,
+                        packet_directory=repository / _PACKET_RELATIVE, closure_raw=b"closure",
+                        authority_pre_state_raw=b"authority", audit_raw=b"audit",
+                        construction_decision_raw=b"construction",
+                    )
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory).resolve()
+            unexpected = repository / _ACCEPTANCE_DECISION_RELATIVE
+            unexpected.parent.mkdir(parents=True)
+            unexpected.write_bytes(b"occupied before request")
+            with self.assertRaisesRegex(SuccessorProtocolError, "V13_PREFLIGHT_TARGET_OCCUPIED"):
+                _occupied_v13_targets(repository, "request")
+
+    def test_v13_accepted_directory_and_pending_batch_are_byte_exact_resumable(self) -> None:
+        final = {"snapshot_manifest_sha256": "f" * 64, "status": "accepted"}
+        final_raw = canonical_json_bytes(final)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            candidate, accepted = root / "candidate", root / "accepted"
+            candidate.mkdir()
+            accepted.mkdir()
+            (candidate / "payload.txt").write_bytes(b"exact payload\n")
+            (accepted / "payload.txt").write_bytes(b"exact payload\n")
+            (candidate / "snapshot-manifest.json").write_bytes(canonical_json_bytes({"status": "candidate"}))
+            (accepted / "snapshot-manifest.json").write_bytes(final_raw)
+            with mock.patch(
+                "specchoice_evidence.successor.verify_accepted_bundle",
+                return_value={"generation": "v6", "manifest_sha256": "a" * 64, "root_sha256": "b" * 64},
+            ):
+                verified = _verify_exact_accepted_v6(candidate, accepted, final_raw)
+                self.assertEqual(verified["snapshot_manifest_sha256"], "f" * 64)
+                (accepted / "payload.txt").write_bytes(b"divergent payload\n")
+                with self.assertRaisesRegex(SuccessorProtocolError, "LOCAL_ACCEPTED_V6_DIVERGENT"):
+                    _verify_exact_accepted_v6(candidate, accepted, final_raw)
+
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory).resolve()
+            authority_raw = canonical_json_bytes({"generation": "v3"})
+            authority = repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json"
+            authority.parent.mkdir(parents=True)
+            authority.write_bytes(authority_raw)
+            values = {
+                "pending": {"status": "pending_cutover_v13"},
+                "transition": {"status": "pending_non_effective"},
+                "readiness": {"status": "ready_for_atomic_activation"},
+            }
+            with mock.patch(
+                "specchoice_evidence.successor.build_pending_source_cutover_v13",
+                return_value=values,
+            ):
+                _, payloads, dispositions = preflight_prepare_pending_source_cutover_v13(
+                    repository, candidate=repository / _CANDIDATE_RELATIVE,
+                    packet_directory=repository / _PACKET_RELATIVE, closure_raw=b"closure",
+                    authority_pre_state_raw=authority_raw, audit_raw=b"audit",
+                    construction_decision_raw=b"construction", request_raw=b"request",
+                    decision_raw=b"decision",
+                )
+                self.assertTrue(all(state == "absent" for state in dispositions.values()))
+                exact_path = sorted(payloads)[0]
+                exact = repository / exact_path
+                exact.parent.mkdir(parents=True, exist_ok=True)
+                exact.write_bytes(payloads[exact_path])
+                _, _, resumed = preflight_prepare_pending_source_cutover_v13(
+                    repository, candidate=repository / _CANDIDATE_RELATIVE,
+                    packet_directory=repository / _PACKET_RELATIVE, closure_raw=b"closure",
+                    authority_pre_state_raw=authority_raw, audit_raw=b"audit",
+                    construction_decision_raw=b"construction", request_raw=b"request",
+                    decision_raw=b"decision",
+                )
+                self.assertEqual(resumed[exact_path], "exact_resume")
+                divergent_path = sorted(payloads)[1]
+                divergent = repository / divergent_path
+                divergent.parent.mkdir(parents=True, exist_ok=True)
+                divergent.write_bytes(b"divergent")
+                with self.assertRaisesRegex(SuccessorProtocolError, "PENDING_CUTOVER_V13_DIVERGENT"):
+                    preflight_prepare_pending_source_cutover_v13(
+                        repository, candidate=repository / _CANDIDATE_RELATIVE,
+                        packet_directory=repository / _PACKET_RELATIVE, closure_raw=b"closure",
+                        authority_pre_state_raw=authority_raw, audit_raw=b"audit",
+                        construction_decision_raw=b"construction", request_raw=b"request",
+                        decision_raw=b"decision",
+                    )
+
+    def test_v13_activation_preflights_every_receipt_before_authority_replacement(self) -> None:
+        authority_raw = canonical_json_bytes({"generation": "v3"})
+        identity = {
+            "core_sha256": "a" * 64, "generation": "v6", "root_sha256": "b" * 64,
+            "snapshot_manifest_sha256": "c" * 64,
+        }
+        values = {
+            "pending": {"accepted_identity": identity},
+            "transition": {"status": "pending_non_effective"},
+            "readiness": {"status": "ready_for_atomic_activation"},
+        }
+        receipts = {
+            "experiments/specchoice-v1.3.2/receipts/fixture-closure-acceptance-audit-v6.json": canonical_json_bytes({"status": "accepted"}),
+            "experiments/specchoice-v1.3.2/receipts/integrity-receipt-v14.json": canonical_json_bytes({"status": "verified"}),
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory).resolve()
+            authority = repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json"
+            authority.parent.mkdir(parents=True)
+            authority.write_bytes(authority_raw)
+            patches = (
+                mock.patch("specchoice_evidence.successor.validate_pending_source_cutover_v13", return_value=values),
+                mock.patch("specchoice_evidence.successor._accepted_v6_receipts", return_value=receipts),
+            )
+            with patches[0], patches[1]:
+                _, _, _, dispositions = preflight_activate_pending_source_cutover_v13(
+                    repository, candidate=repository / _CANDIDATE_RELATIVE,
+                    packet_directory=repository / _PACKET_RELATIVE, closure_raw=b"closure",
+                    authority_pre_state_raw=authority_raw, audit_raw=b"audit",
+                    construction_decision_raw=b"construction", request_raw=b"request",
+                    decision_raw=b"decision",
+                )
+                self.assertEqual(set(dispositions), set(receipts))
+                self.assertTrue(all(state == "absent" for state in dispositions.values()))
+                exact_path = sorted(receipts)[0]
+                exact = repository / exact_path
+                exact.parent.mkdir(parents=True, exist_ok=True)
+                exact.write_bytes(receipts[exact_path])
+                _, _, _, resumed = preflight_activate_pending_source_cutover_v13(
+                    repository, candidate=repository / _CANDIDATE_RELATIVE,
+                    packet_directory=repository / _PACKET_RELATIVE, closure_raw=b"closure",
+                    authority_pre_state_raw=authority_raw, audit_raw=b"audit",
+                    construction_decision_raw=b"construction", request_raw=b"request",
+                    decision_raw=b"decision",
+                )
+                self.assertEqual(resumed[exact_path], "exact_resume")
+                divergent_path = sorted(receipts)[1]
+                divergent = repository / divergent_path
+                divergent.parent.mkdir(parents=True, exist_ok=True)
+                divergent.write_bytes(b"divergent")
+                with self.assertRaisesRegex(SuccessorProtocolError, "ACCEPTED_V6_RECEIPT_DIVERGENT"):
+                    preflight_activate_pending_source_cutover_v13(
+                        repository, candidate=repository / _CANDIDATE_RELATIVE,
+                        packet_directory=repository / _PACKET_RELATIVE, closure_raw=b"closure",
+                        authority_pre_state_raw=authority_raw, audit_raw=b"audit",
+                        construction_decision_raw=b"construction", request_raw=b"request",
+                        decision_raw=b"decision",
+                    )
+            self.assertEqual(authority.read_bytes(), authority_raw)
 
 
 class FixtureClosureCandidateTests(unittest.TestCase):

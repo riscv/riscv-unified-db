@@ -31,6 +31,15 @@ SUCCESSOR_IDS = {
     "tests.test_fixture_closure.FixtureClosureTests.test_v6_registry_and_accepted_v3_transitive_inventories_are_reconstructed",
     "tests.test_fixture_closure.FixtureClosureTests.test_v6_v13_command_surface_is_real",
     "tests.test_fixture_closure.FixtureClosureTests.test_v13_human_decision_is_closed_self_hashed_and_request_bound",
+    "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v2_binds_clean_tool_env_exact_argv_and_real_git_blob_oid",
+    "tests.test_fixture_closure.FixtureClosureTests.test_runtime_closure_v2_rejects_tool_version_argv_environment_and_blob_oid_drift",
+    "tests.test_fixture_closure.FixtureClosureTests.test_rooted_v6_proposal_rejects_copies_tamper_and_late_publish_collision_atomically",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v13_evidence_seam_rejects_invalid_or_reject_decisions_before_any_target_open",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v13_full_preflight_accepts_absent_or_exact_resume_and_rejects_divergent_occupancy",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v13_accepted_directory_and_pending_batch_are_byte_exact_resumable",
+    "tests.test_fixture_closure.FixtureClosureTests.test_v13_activation_preflights_every_receipt_before_authority_replacement",
+    "tests.test_measurement_h1.H1PacketTests.test_successor_public_cli_e2e_rejects_forged_adapter_formal_adversarial_and_packet",
+    "tests.test_measurement_h1.H1PacketTests.test_successor_governance_validators_fail_closed_on_empty_inputs",
 }
 
 # These ten tests were introduced by the two semantic recovery commits.  Keep

@@ -83,6 +83,7 @@ from .successor import (
     _AUDIT_RELATIVE,
     _CANDIDATE_RELATIVE,
     _DECISION_RELATIVE,
+    _PACKET_RELATIVE,
     _REQUEST_RELATIVE,
     _validate_registry_v6,
     accept_fixture_closure_candidate_v13,
@@ -92,14 +93,20 @@ from .successor import (
     build_local_acceptance_request_v13,
     construct_fixture_construction_candidate_v6,
     prepare_pending_source_cutover_v13,
+    preflight_accept_fixture_closure_candidate_v13,
+    preflight_activate_pending_source_cutover_v13,
+    preflight_local_acceptance_request_v13,
+    preflight_prepare_pending_source_cutover_v13,
     validate_fixture_candidate_v6,
     validate_fixture_construction_decision_v6,
     validate_local_acceptance_decision_v13,
     validate_local_acceptance_request_v13,
     validate_pending_source_cutover_v13,
     validate_source_contract_proposal_v6,
+    validate_v13_evidence_chain,
     verify_accepted_v6_receipts,
     write_source_contract_proposal_packet_v6,
+    write_local_acceptance_request_v13,
 )
 
 
@@ -1007,6 +1014,9 @@ def _acceptance_v13_inputs(args: argparse.Namespace) -> tuple[Path, bytes, bytes
         "audit": repository / _AUDIT_RELATIVE,
         "construction_decision": repository / _DECISION_RELATIVE,
         "request": repository / _REQUEST_RELATIVE,
+        "runtime_closure": repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json",
+        "authority_pre_state": repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json",
+        "packet_directory": repository / _PACKET_RELATIVE,
     }
     for field, path in expected.items():
         if getattr(args, field).resolve() != path.resolve():
@@ -1022,30 +1032,40 @@ def _acceptance_v13_inputs(args: argparse.Namespace) -> tuple[Path, bytes, bytes
 
 def command_write_local_acceptance_request_v13(args: argparse.Namespace) -> int:
     repository, closure_raw, authority_raw, audit_raw, construction_raw = _acceptance_v13_inputs(args)
-    request = build_local_acceptance_request_v13(
-        repository, args.candidate, audit_raw, construction_raw, args.packet_directory,
-        closure_raw, authority_raw,
-    )
     if args.preflight:
-        _print_json({"preflight": True, "request_sha256": sha256_bytes(canonical_json_bytes(request)), "status": "local_acceptance_v13_request_ready"})
+        request, raw, disposition = preflight_local_acceptance_request_v13(
+            repository, candidate=args.candidate, packet_directory=args.packet_directory,
+            closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+            audit_raw=audit_raw, construction_decision_raw=construction_raw,
+        )
+        _print_json({"preflight": True, "request_sha256": sha256_bytes(raw), "resume": disposition == "exact_resume", "status": "local_acceptance_v13_request_ready"})
         return 0
-    write_new_descriptor_file(args.request.parent, args.request.name, canonical_json_bytes(request))
-    _print_json({"request_sha256": sha256_bytes(args.request.read_bytes()), "status": request["status"]})
+    result = write_local_acceptance_request_v13(
+        repository, candidate=args.candidate, packet_directory=args.packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_raw,
+    )
+    request = result.pop("request")
+    assert isinstance(request, dict)
+    _print_json({**result, "status": request["status"]})
     return 0
 
 
 def command_validate_local_acceptance_decision_v13(args: argparse.Namespace) -> int:
     repository, closure_raw, authority_raw, audit_raw, construction_raw = _acceptance_v13_inputs(args)
     request, request_raw = _load_successor_decision(args.request, "LOCAL_ACCEPTANCE_REQUEST_V13_INVALID")
-    validate_local_acceptance_request_v13(
-        request, candidate=args.candidate, audit_raw=audit_raw,
-        construction_decision_raw=construction_raw, packet_directory=args.packet_directory,
-        closure_raw=closure_raw, authority_pre_state_raw=authority_raw, repository=repository,
-    )
-    decision, _ = _load_successor_decision(args.decision, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID")
+    decision, decision_raw = _load_successor_decision(args.decision, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID")
     if args.decision.resolve() != (repository / _ACCEPTANCE_DECISION_RELATIVE).resolve():
         raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
-    validated = validate_local_acceptance_decision_v13(decision, request, request_sha256=sha256_bytes(request_raw))
+    chain = validate_v13_evidence_chain(
+        repository, stage="decision", candidate=args.candidate,
+        packet_directory=args.packet_directory, closure_raw=closure_raw,
+        authority_pre_state_raw=authority_raw, audit_raw=audit_raw,
+        construction_decision_raw=construction_raw, request_raw=request_raw,
+        acceptance_decision_raw=decision_raw,
+    )
+    validated = chain["local_acceptance_decision"]
+    assert isinstance(validated, dict)
     _print_json({"decision": validated["decision"], "status": "local_acceptance_v13_decision_valid"})
     return 0
 
@@ -1053,24 +1073,31 @@ def command_validate_local_acceptance_decision_v13(args: argparse.Namespace) -> 
 def command_accept_fixture_closure_local_v13(args: argparse.Namespace) -> int:
     repository, closure_raw, authority_raw, audit_raw, construction_raw = _acceptance_v13_inputs(args)
     request, request_raw = _load_successor_decision(args.request, "LOCAL_ACCEPTANCE_REQUEST_V13_INVALID")
-    validate_local_acceptance_request_v13(
-        request, candidate=args.candidate, audit_raw=audit_raw,
-        construction_decision_raw=construction_raw, packet_directory=args.packet_directory,
-        closure_raw=closure_raw, authority_pre_state_raw=authority_raw, repository=repository,
-    )
-    decision, _ = _load_successor_decision(args.decision, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID")
+    _, decision_raw = _load_successor_decision(args.decision, "LOCAL_ACCEPTANCE_DECISION_V13_INVALID")
     if args.decision.resolve() != (repository / _ACCEPTANCE_DECISION_RELATIVE).resolve():
         raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
-    validate_local_acceptance_decision_v13(decision, request, request_sha256=sha256_bytes(request_raw))
     if args.preflight:
-        _print_json({"preflight": True, "status": "accepted_v6_construction_ready"})
+        _, _, _, disposition = preflight_accept_fixture_closure_candidate_v13(
+            repository, candidate=args.candidate, packet_directory=args.packet_directory,
+            closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+            audit_raw=audit_raw, construction_decision_raw=construction_raw,
+            request_raw=request_raw, acceptance_decision_raw=decision_raw,
+        )
+        _print_json({"preflight": True, "resume": disposition == "exact_resume", "status": "accepted_v6_construction_ready"})
         return 0
-    result = accept_fixture_closure_candidate_v13(repository, args.candidate, request, decision)
+    result = accept_fixture_closure_candidate_v13(
+        repository, candidate=args.candidate, packet_directory=args.packet_directory,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_raw,
+        request_raw=request_raw, acceptance_decision_raw=decision_raw,
+    )
     _print_json(result)
     return 0
 
 
-def _cutover_v13_inputs(args: argparse.Namespace) -> tuple[Path, bytes, bytes, bytes]:
+def _cutover_v13_inputs(
+    args: argparse.Namespace,
+) -> tuple[Path, Path, Path, bytes, bytes, bytes, bytes, bytes, bytes]:
     repository = _repository_root(_experiment_root())
     expected = {
         "runtime_closure": repository / "experiments/specchoice-v1.3.2/receipts/runtime-executable-closure-v2.json",
@@ -1088,29 +1115,43 @@ def _cutover_v13_inputs(args: argparse.Namespace) -> tuple[Path, bytes, bytes, b
         raise SourceContractProposalError("V13_BOUND_PATH_INVALID")
     closure, _ = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_V2_INVALID")
     verify_runtime_closure_v2(closure, repository)
-    return repository, args.authority_pre_state.read_bytes(), args.request.read_bytes(), args.decision.read_bytes()
+    candidate = repository / _CANDIDATE_RELATIVE
+    packet = repository / _PACKET_RELATIVE
+    audit_raw = (repository / _AUDIT_RELATIVE).read_bytes()
+    construction_raw = (repository / _DECISION_RELATIVE).read_bytes()
+    return (
+        repository, candidate, packet, args.runtime_closure.read_bytes(),
+        args.authority_pre_state.read_bytes(), audit_raw, construction_raw,
+        args.request.read_bytes(), args.decision.read_bytes(),
+    )
 
 
 def command_prepare_pending_source_cutover_v13(args: argparse.Namespace) -> int:
-    repository, authority_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
+    repository, candidate, packet, closure_raw, authority_raw, audit_raw, construction_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
     if args.preflight:
-        values = build_pending_source_cutover_v13(
-            repository, authority_pre_state_raw=authority_raw,
+        values, _, dispositions = preflight_prepare_pending_source_cutover_v13(
+            repository, candidate=candidate, packet_directory=packet,
+            closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+            audit_raw=audit_raw, construction_decision_raw=construction_raw,
             request_raw=request_raw, decision_raw=decision_raw,
         )
-        _print_json({"preflight": True, "pending_sha256": sha256_bytes(canonical_json_bytes(values["pending"])), "status": "pending_cutover_v13_ready"})
+        _print_json({"preflight": True, "pending_sha256": sha256_bytes(canonical_json_bytes(values["pending"])), "resumed": sorted(path for path, state in dispositions.items() if state == "exact_resume"), "status": "pending_cutover_v13_ready"})
         return 0
     _print_json(prepare_pending_source_cutover_v13(
-        repository, authority_pre_state_raw=authority_raw,
+        repository, candidate=candidate, packet_directory=packet,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_raw,
         request_raw=request_raw, decision_raw=decision_raw,
     ))
     return 0
 
 
 def command_validate_pending_source_cutover_v13(args: argparse.Namespace) -> int:
-    repository, authority_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
+    repository, candidate, packet, closure_raw, authority_raw, audit_raw, construction_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
     values = validate_pending_source_cutover_v13(
-        repository, authority_pre_state_raw=authority_raw,
+        repository, candidate=candidate, packet_directory=packet,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_raw,
         request_raw=request_raw, decision_raw=decision_raw,
     )
     _print_json({"pending_sha256": sha256_bytes(canonical_json_bytes(values["pending"])), "status": "pending_cutover_v13_valid"})
@@ -1118,25 +1159,31 @@ def command_validate_pending_source_cutover_v13(args: argparse.Namespace) -> int
 
 
 def command_activate_pending_source_cutover_v13(args: argparse.Namespace) -> int:
-    repository, authority_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
+    repository, candidate, packet, closure_raw, authority_raw, audit_raw, construction_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
     if args.preflight:
-        validate_pending_source_cutover_v13(
-            repository, authority_pre_state_raw=authority_raw,
+        _, _, _, dispositions = preflight_activate_pending_source_cutover_v13(
+            repository, candidate=candidate, packet_directory=packet,
+            closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+            audit_raw=audit_raw, construction_decision_raw=construction_raw,
             request_raw=request_raw, decision_raw=decision_raw,
         )
-        _print_json({"preflight": True, "status": "pending_cutover_v13_activation_ready"})
+        _print_json({"preflight": True, "resumed": sorted(path for path, state in dispositions.items() if state == "exact_resume"), "status": "pending_cutover_v13_activation_ready"})
         return 0
     _print_json(activate_pending_source_cutover_v13(
-        repository, authority_pre_state_raw=authority_raw,
+        repository, candidate=candidate, packet_directory=packet,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_raw,
         request_raw=request_raw, decision_raw=decision_raw,
     ))
     return 0
 
 
 def command_verify_accepted_v6_receipts(args: argparse.Namespace) -> int:
-    repository, authority_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
+    repository, candidate, packet, closure_raw, authority_raw, audit_raw, construction_raw, request_raw, decision_raw = _cutover_v13_inputs(args)
     _print_json(verify_accepted_v6_receipts(
-        repository, authority_pre_state_raw=authority_raw,
+        repository, candidate=candidate, packet_directory=packet,
+        closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+        audit_raw=audit_raw, construction_decision_raw=construction_raw,
         request_raw=request_raw, decision_raw=decision_raw,
     ))
     return 0

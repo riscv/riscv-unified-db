@@ -114,6 +114,35 @@ _DYNAMIC_IMPORTS = (
     "specchoice_measurement.final_reports", "specchoice_measurement.h1", "specchoice_measurement.scoring",
 )
 
+_FORBIDDEN_AMBIENT_TOOL_ENV = ("GIT_OPTIONAL_LOCKS", "RUBYOPT", "RUBYLIB")
+
+
+def _require_clean_tool_environment() -> dict[str, str]:
+    """Reject ambient Git/Ruby injection before constructing or checking custody."""
+    projection = {name: os.environ.get(name, "") for name in _FORBIDDEN_AMBIENT_TOOL_ENV}
+    if any(projection.values()):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_TOOL_ENVIRONMENT_DIRTY")
+    return projection
+
+
+def _git_environment() -> dict[str, str]:
+    return {
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "LC_ALL": "C",
+        "PATH": "/usr/bin:/bin",
+    }
+
+
+def _ruby_environment() -> dict[str, str]:
+    return {
+        "LC_ALL": "C",
+        "PATH": "/usr/bin:/bin",
+        "RUBYLIB": "",
+        "RUBYOPT": "",
+    }
+
 
 def future_target_inventory_v6() -> list[dict[str, str]]:
     """Return the typed, canonical future target inventory reconstructed from code."""
@@ -272,7 +301,8 @@ def _fresh_python_discovery(experiment: Path) -> dict[str, object]:
         "print(json.dumps(items,sort_keys=True,separators=(',',':')))\n"
     )
     environment = {
-        "PATH": os.environ.get("PATH", ""),
+        "LC_ALL": "C",
+        "PATH": "/usr/bin:/bin",
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONNOUSERSITE": "1",
         "PYTHONPATH": os.fspath((experiment / "src").resolve(strict=True)),
@@ -296,13 +326,14 @@ def _fresh_python_discovery(experiment: Path) -> dict[str, object]:
         origins.append({"module": item["module"], **identity})
     origins.sort(key=lambda item: (str(item["path"]), str(item["module"])))
     return {
-        "discovery_argv": [argv[0], "-B", "-c", "sha256:" + sha256_bytes(script.encode("utf-8"))],
-        "discovery_environment": {key: environment[key] for key in ("PYTHONDONTWRITEBYTECODE", "PYTHONNOUSERSITE", "PYTHONPATH")},
+        "discovery_argv": argv,
+        "discovery_environment": environment,
         "module_origins": origins,
     }
 
 
 def _tool_identities(repository: Path, experiment: Path) -> dict[str, object]:
+    _require_clean_tool_environment()
     python = _file_identity(Path(sys.executable))
     python.update({
         "cache_tag": sys.implementation.cache_tag,
@@ -321,7 +352,10 @@ def _tool_identities(repository: Path, experiment: Path) -> dict[str, object]:
     git = {
         **_file_identity(git_path),
         "argv": git_argv,
-        "version_output": _run(git_argv, cwd=repository).decode("utf-8", "strict").rstrip("\n"),
+        "environment": _git_environment(),
+        "version_output": _run(
+            git_argv, cwd=repository, env=_git_environment()
+        ).decode("utf-8", "strict").rstrip("\n"),
     }
 
     ruby_path = Path(ruby_name).resolve(strict=True)
@@ -332,7 +366,9 @@ def _tool_identities(repository: Path, experiment: Path) -> dict[str, object]:
     )
     ruby_argv = [os.fspath(ruby_path), "-e", ruby_script]
     try:
-        ruby_projection = json.loads(_run(ruby_argv, cwd=repository).decode("utf-8"))
+        ruby_projection = json.loads(
+            _run(ruby_argv, cwd=repository, env=_ruby_environment()).decode("utf-8")
+        )
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise RuntimeClosureError("RUNTIME_CLOSURE_RUBY_DISCOVERY_INVALID") from error
     if not isinstance(ruby_projection, dict) or not isinstance(ruby_projection.get("loaded_features"), list):
@@ -341,7 +377,8 @@ def _tool_identities(repository: Path, experiment: Path) -> dict[str, object]:
     libraries.sort(key=lambda item: str(item["path"]))
     ruby = {
         **_file_identity(ruby_path),
-        "argv": [os.fspath(ruby_path), "-e", "sha256:" + sha256_bytes(ruby_script.encode("utf-8"))],
+        "argv": ruby_argv,
+        "environment": _ruby_environment(),
         "loaded_libraries": libraries,
         "psych_version": ruby_projection.get("psych_version"),
         "ruby_description": ruby_projection.get("ruby_description"),
@@ -354,7 +391,11 @@ def _git(repository: Path, *arguments: str) -> bytes:
     git_name = shutil.which("git")
     if git_name is None:
         raise RuntimeClosureError("RUNTIME_CLOSURE_TOOL_UNAVAILABLE")
-    return _run([os.fspath(Path(git_name).resolve(strict=True)), "-C", os.fspath(repository), *arguments], cwd=repository)
+    return _run(
+        [os.fspath(Path(git_name).resolve(strict=True)), "-C", os.fspath(repository), *arguments],
+        cwd=repository,
+        env=_git_environment(),
+    )
 
 
 def _referenced_runtime_paths_v2(repository: Path) -> dict[str, set[str]]:
@@ -430,16 +471,23 @@ def _referenced_runtime_paths_v2(repository: Path) -> dict[str, set[str]]:
 def _git_bound_entry(repository: Path, freeze_commit: str, relative_path: str, kinds: set[str]) -> dict[str, object]:
     entry = closure_entry(repository, relative_path)
     try:
-        committed = _git(repository, "show", f"{freeze_commit}:{relative_path}")
+        blob_oid = _git(repository, "rev-parse", f"{freeze_commit}:{relative_path}").decode("ascii").strip()
+        if len(blob_oid) not in {40, 64}:
+            raise ValueError
+        int(blob_oid, 16)
+        committed = _git(repository, "cat-file", "blob", blob_oid)
     except RuntimeClosureError as error:
         raise RuntimeClosureError("RUNTIME_CLOSURE_UNCOMMITTED_INPUT") from error
+    except (UnicodeDecodeError, ValueError) as error:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_GIT_BLOB_OID_INVALID") from error
     if committed != (repository / relative_path).read_bytes():
         raise RuntimeClosureError("RUNTIME_CLOSURE_UNCOMMITTED_INPUT")
-    return {**entry, "classes": sorted(kinds), "git_blob_sha256": sha256_bytes(committed)}
+    return {**entry, "classes": sorted(kinds), "git_blob_oid": blob_oid}
 
 
 def build_runtime_closure_v2(repository: Path, *, freeze_commit: str | None = None) -> dict[str, object]:
     """Build the transitive, tool-bound successor closure from code authority."""
+    ambient_tool_environment = _require_clean_tool_environment()
     repository = repository.resolve(strict=True)
     experiment = repository / _EXPERIMENT_PREFIX
     if freeze_commit is None:
@@ -470,6 +518,7 @@ def build_runtime_closure_v2(repository: Path, *, freeze_commit: str | None = No
             "experiment": _repository_relative(repository, experiment),
             "repository": os.fspath(repository),
         },
+        "ambient_tool_environment": ambient_tool_environment,
         "schema_version": "runtime-executable-closure-v2",
         "tools": _tool_identities(repository, experiment),
     }
