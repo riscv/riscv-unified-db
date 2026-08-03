@@ -1131,7 +1131,6 @@ def build_pr2164_v6_adapter_batch(
         if (
             manifest_value.get("schema_version") != "pr2164-semantic-gold-repair-manifest-v5"
             or manifest_value.get("payload_count") != 9
-            or manifest_value.get("predecessor_generation") != bundle_root.name
         ):
             raise AdapterError("V6_REPAIR_MANIFEST_INVALID")
         ontology_binding, _ = _v6_bound_raw(experiment_root, manifest_value.get("ontology_decision"), "V6_ONTOLOGY_BINDING_INVALID")

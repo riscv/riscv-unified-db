@@ -27,7 +27,7 @@ class MeasurementScoringTests(unittest.TestCase):
         self.experiment_root = Path(__file__).parents[1]
         self.bundle = self.experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3"
         self.batch = build_pr2164_adapter_batch(
-            authority_path=self.experiment_root / "phase2/source-authority.json",
+            authority_path=self.experiment_root / "phase2/source-authority-v13-historical.json",
             bundle_root=self.bundle,
             rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v1.json",
             revocation_path=self.experiment_root / "receipts/fixture-closure-revocation-v2.json",

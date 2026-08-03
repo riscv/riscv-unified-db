@@ -45,7 +45,7 @@ class MeasurementAdapterTests(unittest.TestCase):
         shutil.copy2(self.experiment_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json", source_root / "receipts/pending/fixture-closure-transition-v2-to-v3.json")
         shutil.copy2(self.experiment_root / "receipts/fixture-closure-acceptance-audit-v3.json", source_root / "receipts/fixture-closure-acceptance-audit-v3.json")
         self.authority = source_root / "phase2/source-authority.json"
-        self.active_authority = self.experiment_root / "phase2/source-authority.json"
+        self.active_authority = self.experiment_root / "phase2/source-authority-v13-historical.json"
         self.revocation = self.experiment_root / "receipts/fixture-closure-revocation-v2.json"
         self.bundle = (
             self.experiment_root
