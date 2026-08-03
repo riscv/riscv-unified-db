@@ -1534,7 +1534,11 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
     construction = values["construction"]
     try:
         proposal_raw = (repository / _PACKET_RELATIVE / "proposal.json").read_bytes()
-    except OSError as error:
+        verified_bundle = verify_accepted_bundle(repository / _ACCEPTED_RELATIVE)
+        validated_decision = validate_local_acceptance_decision_v13(
+            decision, values["request"], request_sha256=sha256_bytes(raw["request"]),
+        )
+    except (OSError, BundleVerificationError, SuccessorProtocolError) as error:
         raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID") from error
     if (
         authority.get("status") != "accepted_cutover_v13"
@@ -1561,6 +1565,8 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
         or candidate_audit.get("proposal_sha256") != sha256_bytes(proposal_raw)
         or construction.get("proposal_sha256") != sha256_bytes(proposal_raw)
         or candidate_audit.get("candidate") != decision.get("candidate")
+        or verified_bundle.get("manifest_sha256") != authority.get("accepted_identity", {}).get("core_sha256")
+        or validated_decision.get("projected_accepted") != authority.get("accepted_identity")
     ):
         raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_MISMATCH")
     projected = decision.get("projected_accepted")
