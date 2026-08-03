@@ -4,11 +4,11 @@ milestone: v1.3.2
 milestone_name: milestone
 current_phase: 02
 current_phase_name: deterministic-measurement-spine
-status: ready_to_execute
-stopped_at: 02-19 ready to execute; supersedes unfinished 02-18 Tasks 5-13
-last_updated: "2026-08-03T08:08:35Z"
+status: executing
+stopped_at: "02-19 Task 12: awaiting human construction authorization for the exact rooted-v6 packet"
+last_updated: "2026-08-03T12:23:17Z"
 last_activity: 2026-08-03
-last_activity_desc: 02-19 successor executable-closure plan passed three independent checker rounds with zero remaining issues
+last_activity_desc: Closure-v3 and the rooted-v6 proposal passed independent rebuild audits; no human decision or candidate exists
 progress:
   total_phases: 7
   completed_phases: 1
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 
 ## Current Position
 
-Phase: 02 (deterministic-measurement-spine) — READY TO EXECUTE
+Phase: 02 (deterministic-measurement-spine) — EXECUTING
 Plan: 19 of 19
-Status: 02-19 is the active successor; 02-18 Tasks 5-13 are superseded
-Last activity: 2026-08-03 — 02-19 passed three independent checker rounds with zero remaining issues
+Status: Task 12 blocking human gate — exact rooted-v6 construction authorization pending
+Last activity: 2026-08-03 — closure-v3 and proposal-v6 independently validated; no decision or candidate exists
 
 Progress: [█████████░] 88%
 
@@ -137,6 +137,9 @@ Recent decisions affecting current work:
 - [Phase 02-deterministic-measurement-spine]: 02-19 preserves the rooted-v4 authorization as authorized-but-non-executable history and supersedes only unfinished 02-18 Tasks 5-13.
 - [Phase 02-deterministic-measurement-spine]: The successor must commit and bind all post-gate code, tests, semantic inputs, report inputs, Python/git/Ruby/Psych identities, and the accepted-v3 authority pre-state before requesting a new human construction authorization.
 - [Phase 02-deterministic-measurement-spine]: Both candidate fixtures are formal surfaced-then-classified-out records; the frozen populations are 11 outcomes, 8/8 surfacing, 8/8 disposition, 6/6 parameter identity, S/S evidence spans, and 3/3 negative no-surface outcomes.
+- [Phase 02-deterministic-measurement-spine]: Runtime closure-v2 remains exact non-authorizing history because it omitted the freeze-tree authority pre-state binding.
+- [Phase 02-deterministic-measurement-spine]: Runtime closure-v3 binds the accepted-v3 authority Git blob and all executable inputs at freeze commit dc87436a; its independently rebuilt receipt SHA-256 is dbc86e53c044910536d9dbd494aa7df286604f3fbf6e4fdf8c4f3c11c943f774.
+- [Phase 02-deterministic-measurement-spine]: Rooted proposal-v6 is decision-free and awaits a new human construction disposition; proposal SHA-256 is 2b1864ecc64f23c2b0de4efe1c1bc17f0573f454de5f051a6f036a90c3d725aa.
 
 ### Pending Todos
 
@@ -147,7 +150,7 @@ None yet.
 - Exact provider and immutable model snapshot remain unfrozen until the conditional H4 checkpoint.
 - Python 3.14/scikit-learn lock resolution remains unverified for later measurement work.
 - Human-reviewed pair and strict-core sufficiency is unknown and may legitimately select Red.
-- 02-19 execution is pending. No v5 candidate may be created until Tasks 1-9 implement, commit, freeze, and bind the complete closure and Task 10 records a genuine validated human `authorize` decision.
+- 02-19 Task 12 is blocking. No v6 candidate may be created until a genuine human decision authorizes the exact proposal-v6, supersession, closure-v3, authority pre-state, and rejected-v5 history hashes.
 
 ## Deferred Items
 
@@ -157,6 +160,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-03T08:08:35Z
-Stopped at: 02-19 ready to execute; supersedes unfinished 02-18 Tasks 5-13
-Resume file: None
+Last session: 2026-08-03T12:23:17Z
+Stopped at: 02-19 Task 12 — awaiting human construction authorization for the exact rooted-v6 packet
+Resume file: .planning/phases/02-deterministic-measurement-spine/02-19-PLAN.md
