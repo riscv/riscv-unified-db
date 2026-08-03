@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.3.2
 milestone_name: milestone
-current_phase: 02
-current_phase_name: deterministic-measurement-spine
-status: executing
-stopped_at: "02-20: ready to execute downstream-only closure-v4 code freeze"
-last_updated: "2026-08-03T14:27:09Z"
+current_phase: 03
+current_phase_name: human-reviewed-data-preregistration
+status: ready_to_execute
+stopped_at: "Phase 3 ready to execute 03-01"
+last_updated: "2026-08-03T21:00:53Z"
 last_activity: 2026-08-03
-last_activity_desc: Accepted-v6 is active; closure-v3 correctly rejects post-freeze Task16 code, and the verified 02-20 to 02-22 downstream-only successor is ready
+last_activity_desc: Phase 2 closed with approved H1 terminal evidence frozen at commit dc3e5883a10cd3efe1393220caf1f711561867b9; Phase 3 plan 03-01 is ready
 progress:
   total_phases: 7
-  completed_phases: 1
-  total_plans: 29
-  completed_plans: 23
-  percent: 79
+  completed_phases: 2
+  total_plans: 33
+  completed_plans: 24
+  percent: 73
 ---
 
 # Project State
@@ -24,22 +24,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-30)
 
 **Core value:** Produce a reproducible, leakage-safe, falsifiable A/B/C result—positive, negative, or Red-path infeasible—without weakening gold semantics, deterministic measurement, or human control of RISC-V judgments.
-**Current focus:** Phase 02 — deterministic-measurement-spine
+**Current focus:** Phase 03 — human-reviewed-data-preregistration
 
 ## Current Position
 
-Phase: 02 (deterministic-measurement-spine) — EXECUTING
-Plan: 20 of 22
-Status: Ready to execute downstream-only closure-v4 successor
-Last activity: 2026-08-03 — accepted-v6 cutover remains valid; Task16 evidence is preserved as non-authorizing diagnostic history
+Phase: 03 (human-reviewed-data-preregistration) — READY TO EXECUTE
+Plan: 1 of 4
+Status: Phase 2 terminal closure is frozen; ready to execute 03-01
+Last activity: 2026-08-03 — approved H1 evidence and four terminal reports validated; Phase 2 tracking closed without rewriting predecessor history
 
-Progress: [████████░░] 79%
+Progress: [███████░░░] 73%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 23
+- Total plans executed: 26
+- Total plans resolved: 29 (including three superseded Phase 2 plans)
+- GSD summary-bearing plans: 24 (02-20 and 02-21 intentionally have no summaries)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -48,7 +50,7 @@ Progress: [████████░░] 79%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 7 | - | - |
-| 02 | 16 | - | - |
+| 02 | 19 executed / 22 resolved | - | - |
 
 **Recent Trend:**
 
@@ -142,6 +144,8 @@ Recent decisions affecting current work:
 - [Phase 02-deterministic-measurement-spine]: Rooted proposal-v6 received genuine local construction authorization, candidate acceptance, and source-authority cutover; accepted-v6 remains the immutable active source identity.
 - [Phase 02-deterministic-measurement-spine]: Task16 measurement outputs are numerically useful but non-authorizing because closure-v3 correctly rejects the post-freeze adapter/test bytes with RUNTIME_CLOSURE_UNCOMMITTED_INPUT.
 - [Phase 02-deterministic-measurement-spine]: 02-20 through 02-22 form one downstream-only successor; they preserve accepted-v6 and do not reopen source construction, acceptance, or cutover unless source identity bytes change.
+- [Phase 02-deterministic-measurement-spine]: 02-20 and 02-21 intentionally create no SUMMARY by their plan contracts; their absence is not missing execution evidence.
+- [Phase 02-deterministic-measurement-spine]: The approved 02-22 decision, four terminal reports, and last-written summary passed the canonical validator against the 47ffaa1c freeze state and are frozen in local evidence commit dc3e5883a10cd3efe1393220caf1f711561867b9.
 
 ### Pending Todos
 
@@ -152,7 +156,6 @@ None yet.
 - Exact provider and immutable model snapshot remain unfrozen until the conditional H4 checkpoint.
 - Python 3.14/scikit-learn lock resolution remains unverified for later measurement work.
 - Human-reviewed pair and strict-core sufficiency is unknown and may legitimately select Red.
-- Runtime closure-v4 and fresh measurement/H1 evidence do not yet exist. Phase 2 remains open until the 02-20/21 chain is green and a genuine three-state H1 decision is supplied; only approved may produce terminal reports and summary.
 
 ## Deferred Items
 
@@ -162,6 +165,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-03T14:27:09Z
-Stopped at: 02-20 — verified successor plan ready for local code freeze
-Resume file: .planning/phases/02-deterministic-measurement-spine/02-20-PLAN.md
+Last session: 2026-08-03T21:00:53Z
+Stopped at: Phase 3 ready to execute 03-01
+Resume file: .planning/phases/03-human-reviewed-data-preregistration/03-01-PLAN.md

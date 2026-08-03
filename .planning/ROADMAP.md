@@ -15,7 +15,7 @@ SpecChoice v1.3.2 proceeds through seven strict, dependency-ordered increments: 
 ## Phases
 
 - [x] **Phase 1: Isolated Evidence Boundary and Source Integrity** - Establish a dependency-light experiment boundary and independently verifiable public inputs. (completed 2026-07-31)
-- [ ] **Phase 2: Deterministic Measurement Spine** - Prove the frozen adjudication and diagnostic contract on all 11 fixtures before innovation.
+- [x] **Phase 2: Deterministic Measurement Spine** - Prove the frozen adjudication and diagnostic contract on all 11 fixtures before innovation. (completed 2026-08-03)
 - [ ] **Phase 3: Human-Reviewed Data Preregistration** - Produce leakage-safe, provenance-rich data whose semantic decisions are explicitly human-approved.
 - [ ] **Phase 4: Offline Treatments, Retrieval, and Branch Freeze** - Make the controlled treatments inspectable offline, freeze them, and select exactly one fail-closed branch.
 - [ ] **Phase 5: Authorized Execution and Immutable Evidence** - Execute the approved Green/Yellow call matrix or preserve a verifiable Red no-call record.
@@ -93,7 +93,7 @@ Plans:
   3. The reviewer can trace every failed or warning outcome to a stable diagnostic code and structured fields; a missing accepted name remains an identity warning and never rewrites disposition.
   4. The human reviewer can approve or dispute the frozen gold interpretation from the adapter audit without any model output being used to compensate for disputed semantics.
 
-**Plans:** 16/22 plans executed
+**Plans:** 22/22 plans resolved (19 executed, 3 superseded; 02-20 and 02-21 intentionally omit summaries by plan contract)
 
 Plans:
 
@@ -113,12 +113,12 @@ Plans:
 - [x] 02-14-PLAN.md
 - [x] 02-15-PLAN.md
 - [x] 02-16-PLAN.md
-- [ ] 02-17-PLAN.md
-- [ ] 02-18-PLAN.md
-- [ ] 02-19-PLAN.md
-- [ ] 02-20-PLAN.md
-- [ ] 02-21-PLAN.md
-- [ ] 02-22-PLAN.md
+- [x] 02-17-PLAN.md — superseded by the successor chain
+- [x] 02-18-PLAN.md — partially executed, then superseded by 02-19 and the downstream-only successor
+- [x] 02-19-PLAN.md — superseded downstream by 02-20 through 02-22
+- [x] 02-20-PLAN.md
+- [x] 02-21-PLAN.md
+- [x] 02-22-PLAN.md
 
 **Wave 1**
 
@@ -184,23 +184,23 @@ Plans:
 
 - [x] 02-16: Perform the forward-only authority cutover, then generate all post-active measurement and H1 evidence.
 
-**Wave 17** *(historical route superseded by Waves 18 and 19)*
+**Wave 17** *(historical route superseded by Waves 18 and 19; resolved without terminal authority)*
 
-- [ ] 02-17: Validate fresh readiness, collect the human H1 disposition, and require four same-commit clean final reports.
+- [x] 02-17: Validate fresh readiness, collect the human H1 disposition, and require four same-commit clean final reports. *(superseded)*
 
 **Wave 18** *(Tasks 1-4 preserved; unfinished Tasks 5-13 superseded by Wave 19)*
 
-- [ ] 02-18: Execute the single versioned Phase 1/2 semantic-integrity successor across seven fresh-context segments, preserving v3 history and retaining four genuine human gates.
+- [x] 02-18: Execute the single versioned Phase 1/2 semantic-integrity successor across seven fresh-context segments, preserving v3 history and retaining four genuine human gates. *(partially executed, then superseded)*
 
 **Wave 19** *(depends on completed 02-18 Tasks 1-4 and supersedes only unfinished Tasks 5-13)*
 
-- [ ] 02-19: Freeze the complete executable, tool, semantic-input, and authority-prestate closure before renewed construction authorization, then finish dual-gated v5 acceptance, deterministic measurement, seven-question H1 review, and four fresh reports.
+- [x] 02-19: Freeze the complete executable, tool, semantic-input, and authority-prestate closure before renewed construction authorization, then finish dual-gated v5 acceptance, deterministic measurement, seven-question H1 review, and four fresh reports. *(superseded downstream)*
 
 **Waves 20-22** *(single downstream-only successor; supersedes further execution of 02-17 through 02-19 without rewriting their history)*
 
-- [ ] 02-20: Implement the authority-bound closure-v4, adapter, measurement, H1, and report code contracts, then freeze only committed code/tests/contracts.
-- [ ] 02-21: Bootstrap closure-v4 from that code-only commit and materialize fresh decision-free adapter, formal, adversarial, packet, and readiness evidence.
-- [ ] 02-22: Obtain the genuine three-state H1 decision and create four fresh reports plus the terminal summary only for an approved result.
+- [x] 02-20: Implement the authority-bound closure-v4, adapter, measurement, H1, and report code contracts, then freeze only committed code/tests/contracts. *(summary intentionally omitted by plan contract)*
+- [x] 02-21: Bootstrap closure-v4 from that code-only commit and materialize fresh decision-free adapter, formal, adversarial, packet, and readiness evidence. *(summary intentionally omitted by plan contract)*
+- [x] 02-22: Obtain the genuine three-state H1 decision and create four fresh reports plus the terminal summary only for an approved result.
 
 ### Phase 3: Human-Reviewed Data Preregistration
 
@@ -368,8 +368,8 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Isolated Evidence Boundary and Source Integrity | 7/7 | Complete    | 2026-07-31 |
-| 2. Deterministic Measurement Spine | 16/19 | Ready to execute |  |
-| 3. Human-Reviewed Data Preregistration | 0/4 | Not started | - |
+| 2. Deterministic Measurement Spine | 22/22 | Complete | 2026-08-03 |
+| 3. Human-Reviewed Data Preregistration | 0/4 | Ready to execute | - |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |
 | 5. Authorized Execution and Immutable Evidence | 0/3 | Not started | - |
 | 6. Partition-Aware Ablation and Metamorphic Evaluation | 0/4 | Not started | - |
