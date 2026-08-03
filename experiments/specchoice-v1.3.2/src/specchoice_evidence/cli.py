@@ -50,6 +50,7 @@ from .verify import BundleVerificationError, _load_canonical, verify_accepted_bu
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
+from .runtime_closure import verify_runtime_closure
 from .source_contract import (
     _EXPECTED_FIXTURES,
     SourceContractProposalError,
@@ -676,6 +677,22 @@ def command_validate_v4_non_executable_supersession(args: argparse.Namespace) ->
         ontology_raw=(root / "reviews/h1-source-gold-ontology-decision-v1.json").read_bytes(),
     )
     _print_json({"status": "authorized_but_non_executable", "valid": True})
+    return 0
+
+
+def command_validate_runtime_executable_closure(args: argparse.Namespace) -> int:
+    """Validate a frozen runtime closure before any later writer may run."""
+    closure, _ = _load_authoritative_canonical_v4(args.receipt, "RUNTIME_CLOSURE_INVALID")
+    verify_runtime_closure(closure, _experiment_root())
+    _print_json({"preflight": bool(args.preflight_all), "status": "runtime_closure_valid"})
+    return 0
+
+
+def _v5_preflight(args: argparse.Namespace) -> int:
+    """Expose a no-write command surface until the relevant human gate is satisfied."""
+    if not getattr(args, "preflight", False):
+        raise SourceContractProposalError("V5_PRE_GATE_PREFLIGHT_REQUIRED")
+    _print_json({"preflight": True, "status": "v5_pre_gate_surface_ready"})
     return 0
 
 
@@ -1710,6 +1727,37 @@ def build_parser() -> argparse.ArgumentParser:
     v4_non_executable = commands.add_parser("validate-v4-non-executable-supersession")
     v4_non_executable.add_argument("--receipt", type=Path, required=True)
     v4_non_executable.set_defaults(handler=command_validate_v4_non_executable_supersession)
+    runtime_closure = commands.add_parser("validate-runtime-executable-closure")
+    runtime_closure.add_argument("--receipt", type=Path, required=True)
+    runtime_closure.add_argument("--authority-pre-state", type=Path, required=True)
+    runtime_closure.add_argument("--verify-known-mandatory", action="store_true")
+    runtime_closure.add_argument("--preflight-all", action="store_true")
+    runtime_closure.set_defaults(handler=command_validate_runtime_executable_closure)
+    proposal_v5 = commands.add_parser("write-source-contract-proposal-v5")
+    proposal_v5.add_argument("--proposal", type=Path, required=True)
+    proposal_v5.add_argument("--preflight", action="store_true")
+    proposal_v5.set_defaults(handler=_v5_preflight)
+    validate_proposal_v5 = commands.add_parser("validate-source-contract-proposal-v5")
+    validate_proposal_v5.add_argument("--proposal", type=Path, required=True)
+    validate_proposal_v5.add_argument("--supersession", type=Path, required=True)
+    validate_proposal_v5.add_argument("--runtime-closure", type=Path, required=True)
+    validate_proposal_v5.add_argument("--preflight", action="store_true")
+    validate_proposal_v5.set_defaults(handler=_v5_preflight)
+    construction_decision_v5 = commands.add_parser("validate-fixture-construction-decision-v5")
+    for option in ("proposal", "supersession", "runtime_closure", "registry", "repair_manifest", "ontology", "authority_pre_state", "decision"):
+        construction_decision_v5.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    construction_decision_v5.add_argument("--preflight", action="store_true")
+    construction_decision_v5.set_defaults(handler=_v5_preflight)
+    candidate_v5 = commands.add_parser("build-fixture-construction-candidate-v5")
+    for option in ("proposal", "supersession", "runtime_closure", "decision", "candidate", "audit"):
+        candidate_v5.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    candidate_v5.add_argument("--preflight", action="store_true")
+    candidate_v5.set_defaults(handler=_v5_preflight)
+    validate_candidate_v5 = commands.add_parser("validate-fixture-candidate-v5")
+    for option in ("candidate", "proposal", "audit"):
+        validate_candidate_v5.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
+    validate_candidate_v5.add_argument("--preflight", action="store_true")
+    validate_candidate_v5.set_defaults(handler=_v5_preflight)
     fixture_construction_write_v4 = commands.add_parser("write-fixture-construction-proposal-v4")
     for option in ("proposal", "predecessor", "active_authority", "historical_authority", "revocation", "ontology_decision", "repair_manifest", "registry", "supersession"):
         fixture_construction_write_v4.add_argument("--" + option.replace("_", "-"), type=Path, required=True)

@@ -393,6 +393,66 @@ def validate_v4_non_executable_supersession(
     return dict(receipt)
 
 
+_V5_CONSTRUCTION_GENERATION = "source-contract-v5-pr2164-semantic-gold-executable-closure-verifier-rooted-v5"
+
+
+def _v5_bound_inputs(bound_inputs: Mapping[str, bytes]) -> list[dict[str, object]]:
+    if not isinstance(bound_inputs, Mapping) or not bound_inputs:
+        raise SourceContractProposalError("V5_PROPOSAL_INPUT_INVALID")
+    result: list[dict[str, object]] = []
+    for path, raw in sorted(bound_inputs.items()):
+        try:
+            normalized = str(require_relative_posix_path(path))
+        except ValueError as error:
+            raise SourceContractProposalError("V5_PROPOSAL_INPUT_INVALID") from error
+        if not isinstance(raw, bytes):
+            raise SourceContractProposalError("V5_PROPOSAL_INPUT_INVALID")
+        result.append({"byte_length": len(raw), "path": normalized, "sha256": sha256_bytes(raw)})
+    if len({entry["path"] for entry in result}) != len(result):
+        raise SourceContractProposalError("V5_PROPOSAL_INPUT_INVALID")
+    return result
+
+
+def build_source_contract_proposal_v5(
+    *, runtime_closure_raw: bytes, authority_pre_state_raw: bytes, bound_inputs: Mapping[str, bytes], targets: list[str],
+) -> dict[str, object]:
+    """Build the decision-free v5 proposal from already-frozen bytes only."""
+    if not isinstance(runtime_closure_raw, bytes) or not isinstance(authority_pre_state_raw, bytes):
+        raise SourceContractProposalError("V5_PROPOSAL_INPUT_INVALID")
+    try:
+        target_paths = [str(require_relative_posix_path(target)) for target in targets]
+    except (TypeError, ValueError) as error:
+        raise SourceContractProposalError("V5_PROPOSAL_TARGET_INVALID") from error
+    if not target_paths or target_paths != sorted(target_paths) or len(set(target_paths)) != len(target_paths):
+        raise SourceContractProposalError("V5_PROPOSAL_TARGET_INVALID")
+    return {
+        "authority_pre_state": {"byte_length": len(authority_pre_state_raw), "path": "phase2/source-authority.json", "sha256": sha256_bytes(authority_pre_state_raw)},
+        "bound_inputs": _v5_bound_inputs(bound_inputs),
+        "external_publication_authorized": False,
+        "generation": _V5_CONSTRUCTION_GENERATION,
+        "local_only": True,
+        "runtime_closure_sha256": sha256_bytes(runtime_closure_raw),
+        "schema_version": "fixture-construction-proposal-v5",
+        "status": "awaiting_human_construction_authorization",
+        "targets": target_paths,
+    }
+
+
+def validate_source_contract_proposal_v5(
+    proposal: object, *, runtime_closure_raw: bytes, authority_pre_state_raw: bytes, bound_inputs: Mapping[str, bytes],
+) -> dict[str, object]:
+    """Revalidate every transitive frozen byte before a v5 write boundary."""
+    expected = build_source_contract_proposal_v5(
+        runtime_closure_raw=runtime_closure_raw,
+        authority_pre_state_raw=authority_pre_state_raw,
+        bound_inputs=bound_inputs,
+        targets=list(proposal.get("targets", [])) if isinstance(proposal, Mapping) else [],
+    )
+    if not isinstance(proposal, Mapping) or dict(proposal) != expected:
+        raise SourceContractProposalError("V5_PROPOSAL_BINDING_MISMATCH")
+    return dict(proposal)
+
+
 def _validate_v4_supersession(
     receipt: object, receipt_sha256: str, legacy_proposal_sha256: str, legacy_manifest_sha256: str,
     legacy_registry_sha256: str, previous_supersession: object, previous_supersession_sha256: str,
