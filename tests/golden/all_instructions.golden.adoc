@@ -32810,10 +32810,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulh]
@@ -32867,10 +32872,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulhsu]
@@ -32924,10 +32934,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulhu]
@@ -32981,10 +32996,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulw]
@@ -33037,10 +33057,18 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-++(++xlen+++()+++ == 64 && xref:exts:M.adoc#udb:doc:ext:M[M])
-++(++xlen+++()+++ == 64 && xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul])
+| *Zmmul*
+| any
+|===
+
+
+Additionally, this instruction requires the following:
+
+xlen+++()+++ == 64
 
 
 [#udb:doc:inst:ntl_all]
