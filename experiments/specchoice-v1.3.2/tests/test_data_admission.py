@@ -11,6 +11,7 @@ from specchoice_data.admission import (
     DataAdmissionError,
     admit_pair_candidate_v1,
     freeze_candidate_inventory_v1,
+    validate_candidate_inventory_v1,
 )
 from specchoice_data.review import (
     DataReviewError,
@@ -355,6 +356,58 @@ class DataAdmissionTests(unittest.TestCase):
                 packet=packet,
                 readiness=readiness,
             )
+
+    def test_complete_inventory_is_frozen_before_review(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            candidates, accepted = self._workspace(directory)
+            inventory = self._freeze(candidates, accepted)
+
+            self.assertEqual(
+                validate_candidate_inventory_v1(
+                    candidate_root=candidates,
+                    inventory=inventory,
+                    schema_raw=self.schema_raw,
+                ),
+                inventory,
+            )
+
+            (candidates / "pairs/unlisted.json").write_bytes(
+                canonical_json_bytes(self._candidate(accepted))
+            )
+            with self.assertRaisesRegex(
+                DataAdmissionError, "CANDIDATE_INVENTORY_CHANGED"
+            ):
+                validate_candidate_inventory_v1(
+                    candidate_root=candidates,
+                    inventory=inventory,
+                    schema_raw=self.schema_raw,
+                )
+
+    def test_invalid_candidates_remain_auditable_and_cannot_be_backfilled(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            candidates, accepted = self._workspace(directory)
+            invalid_candidate = self._candidate(accepted)
+            invalid_candidate["sides"][0]["spans"][0]["end_byte"] = 0
+            inventory = self._freeze_value(candidates, invalid_candidate)
+
+            invalid = self._admit(candidates, accepted, inventory)
+            self.assertFalse(invalid.valid)
+            self.assertEqual(invalid.candidate_id, "PAIR_MTVEC_ACCESS_V1")
+            self.assertIn(
+                "SOURCE_SPAN_INVALID", {item.code for item in invalid.diagnostics}
+            )
+
+            (candidates / "pairs/replacement.json").write_bytes(
+                canonical_json_bytes(self._candidate(accepted))
+            )
+            with self.assertRaisesRegex(
+                DataAdmissionError, "CANDIDATE_INVENTORY_CHANGED"
+            ):
+                validate_candidate_inventory_v1(
+                    candidate_root=candidates,
+                    inventory=inventory,
+                    schema_raw=self.schema_raw,
+                )
 
 
 if __name__ == "__main__":
