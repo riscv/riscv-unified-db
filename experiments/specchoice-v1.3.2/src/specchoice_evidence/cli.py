@@ -50,7 +50,7 @@ from .verify import BundleVerificationError, _load_canonical, verify_accepted_bu
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
-from .runtime_closure import build_runtime_closure, verify_runtime_closure
+from .runtime_closure import build_runtime_closure, validate_v6_preflight_inventory, verify_runtime_closure
 from .source_contract import (
     _EXPECTED_FIXTURES,
     SourceContractProposalError,
@@ -801,11 +801,28 @@ def command_validate_source_contract_proposal_v5(args: argparse.Namespace) -> in
     return 0
 
 
-def _v5_preflight(args: argparse.Namespace) -> int:
-    """Keep post-gate command names observable without permitting a write."""
+def _v6_preflight(args: argparse.Namespace) -> int:
+    """Run the real no-write v6/v13 gate over explicit custody inputs.
+
+    The command surface intentionally has no implicit defaults: it consumes a
+    closure, an authority head and every reconstructed input/target path before
+    any later mutator can be selected.  Actual writers repeat this gate directly
+    before their first open.
+    """
     if not getattr(args, "preflight", False):
-        raise SourceContractProposalError("V5_PRE_GATE_PREFLIGHT_REQUIRED")
-    _print_json({"preflight": True, "status": "v5_pre_gate_surface_ready"})
+        raise SourceContractProposalError("V6_PRE_GATE_PREFLIGHT_REQUIRED")
+    root = _experiment_root()
+    closure, _ = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_INVALID")
+    verify_runtime_closure(closure, _repository_root(root))
+    if args.authority_pre_state.resolve() != (root / "phase2/source-authority.json").resolve():
+        raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
+    authority_raw = args.authority_pre_state.read_bytes()
+    if not authority_raw:
+        raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
+    inventory = validate_v6_preflight_inventory(
+        root=root, input_paths=args.input, target_paths=args.target,
+    )
+    _print_json({"authority_sha256": sha256_bytes(authority_raw), "inventory": inventory, "preflight": True, "status": "v6_preflight_valid"})
     return 0
 
 
@@ -1869,22 +1886,21 @@ def build_parser() -> argparse.ArgumentParser:
     validate_proposal_v5.add_argument("--supersession", type=Path, required=True)
     validate_proposal_v5.add_argument("--runtime-closure", type=Path, required=True)
     validate_proposal_v5.set_defaults(handler=command_validate_source_contract_proposal_v5)
-    construction_decision_v5 = commands.add_parser("validate-fixture-construction-decision-v5")
-    for option in ("proposal", "supersession", "runtime_closure", "registry", "repair_manifest", "ontology", "authority_pre_state", "decision"):
-        construction_decision_v5.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
-    construction_decision_v5.add_argument("--preflight", action="store_true")
-    construction_decision_v5.set_defaults(handler=_v5_preflight)
-    candidate_v5 = commands.add_parser("build-fixture-construction-candidate-v5")
-    for option in ("proposal", "supersession", "runtime_closure", "decision", "candidate", "audit"):
-        candidate_v5.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
-    candidate_v5.add_argument("--preflight", action="store_true")
-    candidate_v5.set_defaults(handler=_v5_preflight)
-    validate_candidate_v5 = commands.add_parser("validate-fixture-candidate-v5")
-    for option in ("candidate", "proposal", "audit"):
-        validate_candidate_v5.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
-    validate_candidate_v5.add_argument("--preflight", action="store_true")
-    validate_candidate_v5.set_defaults(handler=_v5_preflight)
+    def add_preflight_surface(command_name: str) -> None:
+        command = commands.add_parser(command_name)
+        command.add_argument("--runtime-closure", type=Path, required=True)
+        command.add_argument("--authority-pre-state", type=Path, required=True)
+        command.add_argument("--input", action="append", required=True)
+        command.add_argument("--target", action="append", required=True)
+        command.add_argument("--preflight", action="store_true")
+        command.set_defaults(handler=_v6_preflight)
+
+    # v5 names remain only as rejected-history validators; they now execute the
+    # same real no-write inventory gate rather than a success-shaped stub.
     for command_name in (
+        "validate-fixture-construction-decision-v5",
+        "build-fixture-construction-candidate-v5",
+        "validate-fixture-candidate-v5",
         "write-local-acceptance-request-v12",
         "validate-local-acceptance-decision-v12",
         "accept-fixture-closure-local-v12",
@@ -1893,9 +1909,20 @@ def build_parser() -> argparse.ArgumentParser:
         "activate-pending-source-cutover-v12",
         "write-accepted-v5-receipts",
     ):
-        v12_command = commands.add_parser(command_name)
-        v12_command.add_argument("--preflight", action="store_true")
-        v12_command.set_defaults(handler=_v5_preflight)
+        add_preflight_surface(command_name)
+    for command_name in (
+        "validate-fixture-construction-decision-v6",
+        "build-fixture-construction-candidate-v6",
+        "validate-fixture-candidate-v6",
+        "write-local-acceptance-request-v13",
+        "validate-local-acceptance-decision-v13",
+        "accept-fixture-closure-local-v13",
+        "prepare-pending-source-cutover-v13",
+        "validate-pending-source-cutover-v13",
+        "activate-pending-source-cutover-v13",
+        "write-accepted-v6-receipts",
+    ):
+        add_preflight_surface(command_name)
     fixture_construction_write_v4 = commands.add_parser("write-fixture-construction-proposal-v4")
     for option in ("proposal", "predecessor", "active_authority", "historical_authority", "revocation", "ontology_decision", "repair_manifest", "registry", "supersession"):
         fixture_construction_write_v4.add_argument("--" + option.replace("_", "-"), type=Path, required=True)

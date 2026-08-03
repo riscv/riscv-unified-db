@@ -71,6 +71,36 @@ def verify_runtime_closure(closure: object, root: Path) -> dict[str, object]:
     return dict(closure)
 
 
+def validate_v6_preflight_inventory(
+    *, root: Path, input_paths: list[str], target_paths: list[str],
+) -> dict[str, object]:
+    """Read every frozen input and prove every future target is absent.
+
+    This is deliberately independent of a proposal's self-declared ``targets``
+    field: callers supply the inventory reconstructed from frozen config/code.
+    It is used by every v6/v13 preflight before a writer is allowed to open a
+    candidate, receipt, authority, or report target.
+    """
+    if not isinstance(input_paths, list) or not input_paths or not isinstance(target_paths, list) or not target_paths:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_INVENTORY_INVALID")
+    try:
+        inputs = sorted(str(require_relative_posix_path(path)) for path in input_paths)
+        targets = sorted(str(require_relative_posix_path(path)) for path in target_paths)
+    except (TypeError, ValueError) as error:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_INVENTORY_INVALID") from error
+    if len(inputs) != len(set(inputs)) or len(targets) != len(set(targets)) or set(inputs) & set(targets):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_INVENTORY_INVALID")
+    # ``closure_entry`` consumes and hashes the current bytes; callers retain
+    # the returned evidence in their decision/proposal validator.
+    evidence = [closure_entry(root, path) for path in inputs]
+    root_real = root.resolve(strict=True)
+    for path in targets:
+        candidate = root_real / path
+        if candidate.exists() or candidate.is_symlink():
+            raise RuntimeClosureError("RUNTIME_CLOSURE_TARGET_OCCUPIED")
+    return {"inputs": evidence, "targets": targets}
+
+
 def no_user_site_environment() -> dict[str, str]:
     """Return the only environment projection accepted by closure preflights."""
     return {

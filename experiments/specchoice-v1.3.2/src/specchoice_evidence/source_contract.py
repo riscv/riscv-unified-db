@@ -453,6 +453,31 @@ def validate_source_contract_proposal_v5(
     return dict(proposal)
 
 
+def render_v5_rejected_pre_authorization_receipt() -> dict[str, object]:
+    """Render, but never write, the v5 non-executable rejection receipt.
+
+    The receipt is historical classification only.  In particular it does not
+    supersede a human authorization because no v5 construction decision or
+    candidate was ever present.
+    """
+    return {
+        "candidate_present": False,
+        "construction_authorized": False,
+        "human_decision_present": False,
+        "known_defects": [
+            "preflight handlers were stubs",
+            "transitive closure did not reconstruct target inventory",
+            "v5 proposal trusted self-declared targets",
+        ],
+        "proposal_commit": "e1d52d8b",
+        "schema_version": "source-contract-construction-proposal-v5-non-executable-supersession-v1",
+        "status": "rejected_pre_authorization_non_executable",
+        "v5_proposal_sha256": "18443f3ef7a305500386ea40186cf7e789d697f9b8ea0cf10e8141f401812405",
+        "v5_supersession_sha256": "3bfaf6015f92bcfa2fdff7c11da1fea50f170b6ed8318f0f69466936948c4a2d",
+        "v5_runtime_closure_sha256": "671fe4e36cfe23ea9f1490279c75ae615e46db60769f54a2edb801fd7c2524fe",
+    }
+
+
 def _validate_v4_supersession(
     receipt: object, receipt_sha256: str, legacy_proposal_sha256: str, legacy_manifest_sha256: str,
     legacy_registry_sha256: str, previous_supersession: object, previous_supersession_sha256: str,
