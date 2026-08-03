@@ -14,7 +14,9 @@ priv_mode: VS
 length: 64
 definedBy:
   extension:
-    name: Smctr
+    allOf:
+      - name: Ssctr
+      - name: H
 description: |
   The `vsctrctl` register is a VS-mode's version of supervisor register `sctrctl` that
   configures the Control Transfer Records capability. When `V=1`, vsctrctl substitutes
