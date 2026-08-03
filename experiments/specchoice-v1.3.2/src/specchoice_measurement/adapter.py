@@ -26,6 +26,27 @@ class AdapterError(ValueError):
         self.diagnostic = diagnostic
 
 
+def validate_v5_outcome_contract(contract: object, golden: object) -> None:
+    """Validate the closed v5 11-case population before scoring may begin."""
+    if not isinstance(contract, dict) or not isinstance(golden, dict):
+        raise AdapterError("V5_OUTCOME_CONTRACT_INVALID")
+    outcomes = golden.get("outcomes")
+    if not isinstance(outcomes, list) or len(outcomes) != 11:
+        raise AdapterError("V5_OUTCOME_CONTRACT_INVALID")
+    indexed = {item.get("fixture_id"): item for item in outcomes if isinstance(item, dict)}
+    surfaced = {key for key, item in indexed.items() if item.get("surfaced") is True}
+    negatives = {key for key, item in indexed.items() if item.get("surfaced") is False}
+    accepted = [item.get("proposed_name") for item in outcomes if item.get("parameter_status") == "accept"]
+    candidates = set(contract.get("candidate_ids", []))
+    if (
+        len(indexed) != 11
+        or surfaced != set(contract.get("surfaced_ids", []))
+        or negatives != set(contract.get("negative_ids", []))
+        or accepted != contract.get("identity_names")
+        or any(indexed.get(candidate, {}).get("parameter_status") != "classify_out" or indexed[candidate].get("proposed_name") is not None for candidate in candidates)
+    ):
+        raise AdapterError("V5_OUTCOME_CONTRACT_INVALID")
+
 EXPECTED_FIELDS = {
     "candidate_or_negative": ["expect_extract", "expect_params", "id"],
     "positive": ["class", "expect_extract", "expect_status", "gold_name", "id", "must_have_excerpt"],
