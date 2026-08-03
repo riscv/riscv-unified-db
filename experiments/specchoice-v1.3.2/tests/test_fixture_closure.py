@@ -85,7 +85,7 @@ class FixtureClosureTests(unittest.TestCase):
         with self.assertRaisesRegex(FixtureRegistryError, "FIXTURE_RAW_SHA256_MISMATCH"):
             verify_fixture_registry_git(invalid, self.repository)
 
-    def _assert_v5_executable_closure_and_candidate_entrypoints(self) -> None:
+    def test_v5_executable_closure_and_candidate_entrypoints(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             tracked = root / "tracked.json"
@@ -113,7 +113,7 @@ class FixtureClosureTests(unittest.TestCase):
             "validate-runtime-executable-closure",
         }.issubset(commands))
 
-    def _assert_runtime_closure_builder_is_sorted_and_rejects_any_one_byte_drift(self) -> None:
+    def test_runtime_closure_builder_is_sorted_and_rejects_any_one_byte_drift(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "a.txt").write_bytes(b"a\n")
@@ -125,7 +125,7 @@ class FixtureClosureTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_ENTRY_MISMATCH"):
                 verify_runtime_closure(closure, root)
 
-    def _assert_v5_construction_decision_rejects_every_transitive_one_byte_drift_before_write(self) -> None:
+    def test_v5_construction_decision_rejects_every_transitive_one_byte_drift_before_write(self) -> None:
         closure_raw = b'{"closure":"frozen"}\n'
         authority_raw = b'{"accepted_identity":"accepted-v3"}\n'
         inputs = {"config/fixture-registry-pr2164-v5.json": b"registry\n"}
@@ -154,7 +154,7 @@ class FixtureClosureTests(unittest.TestCase):
                     bound_inputs={"config/fixture-registry-pr2164-v5.json": changed} if name == "input" else inputs,
                 )
 
-    def _assert_v12_acceptance_and_cutover_entrypoints(self) -> None:
+    def test_v12_acceptance_and_cutover_entrypoints(self) -> None:
         commands = cli_module.build_parser()._subparsers._group_actions[0].choices
         self.assertTrue({
             "write-local-acceptance-request-v12",
@@ -166,7 +166,7 @@ class FixtureClosureTests(unittest.TestCase):
             "write-accepted-v5-receipts",
         }.issubset(commands))
 
-    def _assert_v5_registry_manifest_and_every_repair_payload_are_pre_freeze_committed_inputs(self) -> None:
+    def test_v5_registry_manifest_and_every_repair_payload_are_pre_freeze_committed_inputs(self) -> None:
         registry = json.loads((self.experiment / "config/fixture-registry-pr2164-v5.json").read_text())
         manifest = json.loads((self.experiment / "config/fixture-repairs/pr2164-semantic-gold-v4/repair-manifest.json").read_text())
         self.assertEqual(registry["fixture_count"], 11)
@@ -175,6 +175,29 @@ class FixtureClosureTests(unittest.TestCase):
         self.assertEqual(len(manifest["payload_paths"]), 9)
         for path in manifest["payload_paths"]:
             self.assertTrue((self.experiment / path).is_file(), path)
+
+    def test_v6_preflight_reconstructs_target_inventory_before_any_write(self) -> None:
+        from specchoice_evidence.runtime_closure import validate_v6_preflight_inventory
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = root / "inputs"
+            inputs.mkdir()
+            (inputs / "registry.json").write_bytes(b"registry\n")
+            result = validate_v6_preflight_inventory(
+                root=root,
+                input_paths=["inputs/registry.json"],
+                target_paths=["receipts/proposal.json", "bundles/candidate"],
+            )
+            self.assertEqual(result["targets"], ["bundles/candidate", "receipts/proposal.json"])
+            (root / "receipts").mkdir()
+            (root / "receipts/proposal.json").write_bytes(b"occupied\n")
+            with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_TARGET_OCCUPIED"):
+                validate_v6_preflight_inventory(
+                    root=root,
+                    input_paths=["inputs/registry.json"],
+                    target_paths=["receipts/proposal.json", "bundles/candidate"],
+                )
 
 
 class FixtureClosureCandidateTests(unittest.TestCase):
