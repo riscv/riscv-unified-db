@@ -37,7 +37,7 @@ class MeasurementScoringTests(unittest.TestCase):
         self.assertEqual(payload["adapter_batch_sha256"], self.batch.adapter_batch_sha256)
         return payload
 
-    def _assert_v5_span_population_is_frozen(self) -> None:
+    def test_v5_span_population_is_frozen(self) -> None:
         golden = json.loads((self.experiment_root / "fixtures/measurement/golden-predictions-v3.json").read_text())
         self.assertEqual(validate_v5_span_population(golden), 8)
         golden["score_bearing_span_count"] = 7

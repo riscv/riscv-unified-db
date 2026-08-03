@@ -19,7 +19,7 @@ from specchoice_measurement.h1 import H1Error
 
 
 class H1PublicContractTests(unittest.TestCase):
-    def _assert_v5_h1_question_contract_is_exactly_seven_questions(self) -> None:
+    def test_v5_h1_question_contract_is_exactly_seven_questions(self) -> None:
         value = json.loads((Path(__file__).parents[1] / "config/measurement/h1-semantic-review-questions-v1.json").read_text())
         h1.validate_v5_h1_question_contract(value)
         value["question_ids"] = value["question_ids"][:-1]
@@ -321,12 +321,12 @@ class H1PacketTests(unittest.TestCase):
         self.replay = self.root / "receipts/fixture-closure-offline-replay-v3.json"
         self.cutover = self.root / "receipts/source-cutover-readiness-v10.json"
 
-    def _assert_seven_question_h1_and_four_report_pipeline(self) -> None:
+    def test_seven_question_h1_and_four_report_pipeline(self) -> None:
         value = json.loads((self.root / "config/measurement/h1-semantic-review-questions-v1.json").read_text())
         h1.validate_v5_h1_question_contract(value)
         self.assertEqual(value["question_ids"], list(self.semantic_ids))
 
-    def _assert_report_generation_rejects_one_byte_planning_or_predecessor_report_drift_before_write(self) -> None:
+    def test_report_generation_rejects_one_byte_planning_or_predecessor_report_drift_before_write(self) -> None:
         from specchoice_measurement.final_reports import FinalReportError, validate_final_report_inputs  # noqa: PLC0415
         repository = self.root.parents[1]
         source = repository / ".planning" / "ROADMAP.md"
