@@ -1758,6 +1758,18 @@ def build_parser() -> argparse.ArgumentParser:
         validate_candidate_v5.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
     validate_candidate_v5.add_argument("--preflight", action="store_true")
     validate_candidate_v5.set_defaults(handler=_v5_preflight)
+    for command_name in (
+        "write-local-acceptance-request-v12",
+        "validate-local-acceptance-decision-v12",
+        "accept-fixture-closure-local-v12",
+        "prepare-pending-source-cutover-v12",
+        "validate-pending-source-cutover-v12",
+        "activate-pending-source-cutover-v12",
+        "write-accepted-v5-receipts",
+    ):
+        v12_command = commands.add_parser(command_name)
+        v12_command.add_argument("--preflight", action="store_true")
+        v12_command.set_defaults(handler=_v5_preflight)
     fixture_construction_write_v4 = commands.add_parser("write-fixture-construction-proposal-v4")
     for option in ("proposal", "predecessor", "active_authority", "historical_authority", "revocation", "ontology_decision", "repair_manifest", "registry", "supersession"):
         fixture_construction_write_v4.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
