@@ -10,9 +10,10 @@ import unittest
 from copy import deepcopy
 from pathlib import Path
 
-from specchoice_measurement.adapter import build_pr2164_adapter_batch
+from specchoice_measurement.adapter import build_pr2164_adapter_batch, build_pr2164_v6_adapter_batch
 from specchoice_measurement import preflight
 from specchoice_measurement.preflight import preflight_prediction_batch
+from specchoice_evidence.canonical import canonical_json_bytes
 from specchoice_evidence import filesystem
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 from unittest import mock
@@ -35,6 +36,36 @@ class MeasurementParsingTests(unittest.TestCase):
         self.assertTrue(self.batch.valid)
         golden = json.loads(self.golden_path.read_text(encoding="utf-8"))
         self.assertEqual(golden["adapter_batch_sha256"], self.batch.adapter_batch_sha256)
+
+    def v6_batch(self):
+        return build_pr2164_v6_adapter_batch(
+            registry_path=self.experiment_root / "config/fixture-registry-pr2164-v6.json",
+            rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v3.json",
+            contract_path=self.experiment_root / "config/measurement/pr2164-semantic-gold-contract-v2.json",
+            golden_path=self.experiment_root / "fixtures/measurement/golden-predictions-v4.json",
+            bundle_root=self.bundle,
+        )
+
+    def v6_payload(self, batch) -> dict[str, object]:
+        golden = json.loads((self.experiment_root / "fixtures/measurement/golden-predictions-v4.json").read_text())
+        return {
+            "schema_version": "canonical-adjudication-v3",
+            "adapter_batch_sha256": batch.adapter_batch_sha256,
+            "predictions": [
+                {
+                    "fixture_id": outcome["fixture_id"],
+                    "finding_id": f"{outcome['fixture_id']}:1",
+                    "rationale": outcome["rationale"],
+                    "adjudication": {
+                        "surfaced": outcome["observed"]["surfaced"],
+                        "parameter_status": outcome["observed"]["status"],
+                        "proposed_name": outcome["observed"]["name"],
+                        "evidence_spans": deepcopy(outcome["evidence_spans"]),
+                    },
+                }
+                for outcome in golden["outcomes"]
+            ],
+        }
 
     def _span(self, record) -> dict[str, object]:
         source = next(item for item in record.raw_files if item.role == "fixture_source")
@@ -101,6 +132,48 @@ class MeasurementParsingTests(unittest.TestCase):
             json.dumps(self.payload(), separators=(",", ":")).encode("utf-8")
         ).hexdigest())
         self.assertEqual(result.as_dict()["diagnostics"], [])
+
+    def test_v3_closed_schema_rejects_unknown_keys_at_every_score_bearing_level(self) -> None:
+        batch = self.v6_batch()
+        self.assertTrue(batch.valid)
+        for level in ("payload", "prediction", "adjudication", "span"):
+            payload = self.v6_payload(batch)
+            prediction = next(item for item in payload["predictions"] if item["adjudication"]["surfaced"])
+            target = {
+                "payload": payload,
+                "prediction": prediction,
+                "adjudication": prediction["adjudication"],
+                "span": prediction["adjudication"]["evidence_spans"][0],
+            }[level]
+            target["unknown"] = "must fail closed"
+            with self.subTest(level=level):
+                result = preflight_prediction_batch(
+                    raw=canonical_json_bytes(payload), adapter_batch=batch, ingress="current-v3",
+                )
+                self.assertEqual(result.status, "invalid_preflight")
+                self.assertIn("FIELD_UNKNOWN", {item.code for item in result.diagnostics})
+
+    def test_v3_binds_schema_and_ingress_but_leaves_integrity_to_per_span_scoring(self) -> None:
+        batch = self.v6_batch()
+        payload = self.v6_payload(batch)
+        target = next(item for item in payload["predictions"] if item["fixture_id"] == "POS_DIRECT_NUM_PMP")
+        target["adjudication"]["evidence_spans"][0]["source_path"] = "raw/evaluation_fixtures/OTHER/source.txt"
+        target["adjudication"]["evidence_spans"][0]["text"] = "byte mismatch retained for scoring"
+        integrity = preflight_prediction_batch(
+            raw=canonical_json_bytes(payload), adapter_batch=batch, ingress="current-v3",
+        )
+        self.assertEqual(integrity.status, "valid_preflight")
+        self.assertEqual(len(integrity.parsed_predictions), 11)
+
+        wrong_ingress = preflight_prediction_batch(
+            raw=canonical_json_bytes(payload), adapter_batch=batch, ingress="current-v1",
+        )
+        self.assertIn("INGRESS_INVALID", {item.code for item in wrong_ingress.diagnostics})
+        payload["schema_version"] = "canonical-adjudication-v1"
+        wrong_schema = preflight_prediction_batch(
+            raw=canonical_json_bytes(payload), adapter_batch=batch, ingress="current-v3",
+        )
+        self.assertIn("SCHEMA_VERSION_INVALID", {item.code for item in wrong_schema.diagnostics})
 
     def test_closed_schema_and_complete_batch_collect_all_blockers(self) -> None:
         payload = self.payload()

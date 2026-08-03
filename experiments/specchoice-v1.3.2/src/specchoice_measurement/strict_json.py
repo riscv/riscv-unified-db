@@ -13,13 +13,20 @@ from .diagnostics import Diagnostic
 
 
 SCHEMA_VERSION = "canonical-adjudication-v1"
+SCHEMA_VERSION_V3 = "canonical-adjudication-v3"
 CURRENT_INGRESS = "current-v1"
+CURRENT_INGRESS_V3 = "current-v3"
 LEGACY_INGRESS = "legacy-pr2164-v1"
 _PAYLOAD_KEYS = frozenset({"schema_version", "adapter_batch_sha256", "predictions"})
 _PREDICTION_KEYS = frozenset({"fixture_id", "finding_id", "rationale", "adjudication"})
 _ADJUDICATION_KEYS = frozenset({"surfaced", "parameter_status", "proposed_name", "evidence_spans"})
 _SPAN_KEYS = frozenset({"source_sha256", "start_byte", "end_byte", "text"})
+_SPAN_KEYS_V3 = frozenset({
+    "dimension", "source_path", "source_sha256", "start_byte", "end_byte",
+    "text",
+})
 _SURFACED_STATUSES = frozenset({"accept", "classify_out", "review"})
+_SURFACED_STATUSES_V3 = frozenset({"accept", "classify_out"})
 
 
 class DuplicateKeyError(ValueError):
@@ -87,18 +94,33 @@ def _validate_span(
     source_by_sha256: dict[str, bytes],
     allowed_source_sha256: frozenset[str],
     diagnostics: list[Diagnostic],
+    schema_version: str = SCHEMA_VERSION,
+    allowed_source_paths: dict[str, str] | None = None,
 ) -> dict[str, object] | None:
-    valid = _exact_keys(value, _SPAN_KEYS, field, diagnostics, fixture_id)
+    is_v3 = schema_version == SCHEMA_VERSION_V3
+    valid = _exact_keys(value, _SPAN_KEYS_V3 if is_v3 else _SPAN_KEYS, field, diagnostics, fixture_id)
     if not isinstance(value, dict):
         return None
+    dimension = value.get("dimension")
+    source_path = value.get("source_path")
     source_sha256 = value.get("source_sha256")
     start = value.get("start_byte")
     end = value.get("end_byte")
     text = value.get("text")
-    if not isinstance(source_sha256, str) or source_sha256 not in source_by_sha256:
+    if is_v3:
+        if dimension not in {"surface", "disposition"}:
+            diagnostics.append(Diagnostic("EVIDENCE_DIMENSION_INVALID", "blocker", fixture_id, f"{field}.dimension", expected=["disposition", "surface"], observed=dimension))
+            valid = False
+        if not isinstance(source_path, str) or not source_path:
+            diagnostics.append(Diagnostic("EVIDENCE_SOURCE_PATH_INVALID", "blocker", fixture_id, f"{field}.source_path", expected="non-empty relative path", observed=source_path))
+            valid = False
+        if not isinstance(source_sha256, str) or len(source_sha256) != 64:
+            diagnostics.append(Diagnostic("EVIDENCE_SOURCE_HASH_INVALID", "blocker", fixture_id, f"{field}.source_sha256", source_sha256=source_sha256 if isinstance(source_sha256, str) else None))
+            valid = False
+    elif not isinstance(source_sha256, str) or source_sha256 not in source_by_sha256:
         diagnostics.append(Diagnostic("EVIDENCE_SOURCE_UNKNOWN", "blocker", fixture_id, f"{field}.source_sha256", source_sha256=source_sha256 if isinstance(source_sha256, str) else None))
         valid = False
-    elif source_sha256 not in allowed_source_sha256:
+    elif not is_v3 and source_sha256 not in allowed_source_sha256:
         diagnostics.append(Diagnostic("EVIDENCE_SOURCE_NOT_DECLARED_FOR_FIXTURE", "blocker", fixture_id, f"{field}.source_sha256", source_sha256=source_sha256))
         valid = False
     if not _is_int(start) or not _is_int(end):
@@ -110,6 +132,19 @@ def _validate_span(
     if not valid:
         return None
     assert isinstance(source_sha256, str) and isinstance(start, int) and isinstance(end, int) and isinstance(text, str)
+    if is_v3:
+        assert isinstance(dimension, str) and isinstance(source_path, str)
+        # Integrity is a score-bearing dimension in v3.  Preserve every
+        # structurally valid span, including an invalid hash/range/text, so one
+        # bad span decrements only the numerator while S stays frozen.
+        return {
+            "dimension": dimension,
+            "source_path": source_path,
+            "source_sha256": source_sha256,
+            "start_byte": start,
+            "end_byte": end,
+            "text": text,
+        }
     raw = source_by_sha256[source_sha256]
     if start < 0 or end <= start or end > len(raw):
         diagnostics.append(Diagnostic("EVIDENCE_RANGE_INVALID", "blocker", fixture_id, field, expected=f"[0,{len(raw)}] non-empty", observed=[start, end], source_sha256=source_sha256))
@@ -133,14 +168,17 @@ def validate_current_payload(
 ) -> ParsedPayload:
     """Validate all score-bearing levels while collecting every traversable blocker."""
     diagnostics: list[Diagnostic] = []
-    if ingress not in {CURRENT_INGRESS, LEGACY_INGRESS}:
-        diagnostics.append(Diagnostic("INGRESS_INVALID", "blocker", field="ingress", expected=[CURRENT_INGRESS, LEGACY_INGRESS], observed=ingress))
+    successor = getattr(adapter_batch, "score_bearing_span_count", None) is not None
+    expected_schema = SCHEMA_VERSION_V3 if successor else SCHEMA_VERSION
+    allowed_ingress = {CURRENT_INGRESS_V3} if successor else {CURRENT_INGRESS, LEGACY_INGRESS}
+    if ingress not in allowed_ingress:
+        diagnostics.append(Diagnostic("INGRESS_INVALID", "blocker", field="ingress", expected=sorted(allowed_ingress), observed=ingress))
     _exact_keys(payload, _PAYLOAD_KEYS, "payload", diagnostics)
     if not isinstance(payload, dict):
         return ParsedPayload("", ingress, "", (), b"", tuple(diagnostics))
     schema_version = payload.get("schema_version")
-    if schema_version != SCHEMA_VERSION:
-        diagnostics.append(Diagnostic("SCHEMA_VERSION_INVALID", "blocker", field="payload.schema_version", expected=SCHEMA_VERSION, observed=schema_version))
+    if schema_version != expected_schema:
+        diagnostics.append(Diagnostic("SCHEMA_VERSION_INVALID", "blocker", field="payload.schema_version", expected=expected_schema, observed=schema_version))
     adapter_hash = payload.get("adapter_batch_sha256")
     batch_hash = getattr(adapter_batch, "adapter_batch_sha256", None)
     if not isinstance(adapter_hash, str) or adapter_hash != batch_hash:
@@ -160,6 +198,9 @@ def validate_current_payload(
     source_by_fixture = getattr(adapter_batch, "source_bytes_by_fixture", {})
     if not isinstance(source_by_fixture, dict):
         source_by_fixture = {}
+    source_paths_by_fixture = getattr(adapter_batch, "source_paths_by_fixture", {})
+    if not isinstance(source_paths_by_fixture, dict):
+        source_paths_by_fixture = {}
 
     seen_fixture_ids: dict[str, int] = {}
     seen_finding_ids: dict[str, int] = {}
@@ -201,20 +242,21 @@ def validate_current_payload(
             valid_prediction = False
             spans = []
         normalized_status = status
+        surfaced_statuses = _SURFACED_STATUSES_V3 if successor else _SURFACED_STATUSES
         if status == "reject":
             if ingress == LEGACY_INGRESS:
                 normalized_status = "classify_out"
                 diagnostics.append(Diagnostic("LEGACY_PARAMETER_STATUS_NORMALIZED", "warning", fixture_id, f"{prediction_field}.adjudication.parameter_status", expected="classify_out", observed="reject"))
             else:
-                diagnostics.append(Diagnostic("PARAMETER_STATUS_INVALID", "blocker", fixture_id, f"{prediction_field}.adjudication.parameter_status", expected=sorted(_SURFACED_STATUSES), observed=status))
+                diagnostics.append(Diagnostic("PARAMETER_STATUS_INVALID", "blocker", fixture_id, f"{prediction_field}.adjudication.parameter_status", expected=sorted(surfaced_statuses), observed=status))
                 valid_prediction = False
         if surfaced is False:
             if not (normalized_status is None and name is None and spans == []):
                 diagnostics.append(Diagnostic("NO_FINDING_NONCANONICAL", "blocker", fixture_id, f"{prediction_field}.adjudication", expected={"surfaced": False, "parameter_status": None, "proposed_name": None, "evidence_spans": []}, observed=adjudication))
                 valid_prediction = False
         elif surfaced is True:
-            if normalized_status not in _SURFACED_STATUSES:
-                diagnostics.append(Diagnostic("PARAMETER_STATUS_INVALID", "blocker", fixture_id, f"{prediction_field}.adjudication.parameter_status", expected=sorted(_SURFACED_STATUSES), observed=normalized_status))
+            if normalized_status not in surfaced_statuses:
+                diagnostics.append(Diagnostic("PARAMETER_STATUS_INVALID", "blocker", fixture_id, f"{prediction_field}.adjudication.parameter_status", expected=sorted(surfaced_statuses), observed=normalized_status))
                 valid_prediction = False
             if name is not None and not isinstance(name, str):
                 diagnostics.append(Diagnostic("FIELD_TYPE_INVALID", "blocker", fixture_id, f"{prediction_field}.adjudication.proposed_name", expected="string or null", observed=name))
@@ -227,6 +269,7 @@ def validate_current_payload(
         parsed_spans: list[dict[str, object]] = []
         for span_index, span in enumerate(spans):
             allowed = source_by_fixture.get(fixture_id, {}) if fixture_id is not None else {}
+            allowed_paths = source_paths_by_fixture.get(fixture_id, {}) if fixture_id is not None else {}
             parsed_span = _validate_span(
                 span,
                 fixture_id=fixture_id,
@@ -234,6 +277,8 @@ def validate_current_payload(
                 source_by_sha256=source_by_sha256,
                 allowed_source_sha256=frozenset(allowed) if isinstance(allowed, dict) else frozenset(),
                 diagnostics=diagnostics,
+                schema_version=expected_schema,
+                allowed_source_paths=allowed_paths if isinstance(allowed_paths, dict) else {},
             )
             if parsed_span is None:
                 valid_prediction = False
@@ -241,7 +286,7 @@ def validate_current_payload(
                 parsed_spans.append(parsed_span)
         if valid_prediction:
             parsed.append({
-                "schema_version": SCHEMA_VERSION,
+                "schema_version": expected_schema,
                 "ingress": ingress,
                 "fixture_id": fixture_id,
                 "finding_id": finding_id,
@@ -252,5 +297,5 @@ def validate_current_payload(
     observed_ids = set(seen_fixture_ids)
     for fixture_id in sorted(expected_ids - observed_ids):
         diagnostics.append(Diagnostic("PREDICTION_FIXTURE_MISSING", "blocker", fixture_id, "payload.predictions", expected="one prediction"))
-    projection = {"schema_version": SCHEMA_VERSION, "ingress": ingress, "adapter_batch_sha256": adapter_hash, "predictions": parsed}
-    return ParsedPayload(SCHEMA_VERSION, ingress, adapter_hash if isinstance(adapter_hash, str) else "", tuple(parsed), canonical_json_bytes(projection), tuple(diagnostics))
+    projection = {"schema_version": expected_schema, "ingress": ingress, "adapter_batch_sha256": adapter_hash, "predictions": parsed}
+    return ParsedPayload(expected_schema, ingress, adapter_hash if isinstance(adapter_hash, str) else "", tuple(parsed), canonical_json_bytes(projection), tuple(diagnostics))

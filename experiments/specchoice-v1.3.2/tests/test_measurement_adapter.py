@@ -10,6 +10,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
 from unittest import mock
@@ -19,7 +20,14 @@ from specchoice_evidence import filesystem
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
 from specchoice_evidence.verify import verify_accepted_bundle
 from specchoice_measurement import adapter
-from specchoice_measurement.adapter import AdapterError, build_pr2164_adapter_batch, validate_complete_adapter_batch, validate_v5_outcome_contract
+from specchoice_measurement.adapter import (
+    AdapterError,
+    build_pr2164_adapter_batch,
+    build_pr2164_v6_adapter_batch,
+    validate_complete_adapter_batch,
+    validate_v5_outcome_contract,
+    validate_v6_outcome_contract,
+)
 
 
 class MeasurementAdapterTests(unittest.TestCase):
@@ -58,6 +66,44 @@ class MeasurementAdapterTests(unittest.TestCase):
             rules_path=self.rules,
         )
 
+    def build_v6(self, root: Path | None = None):
+        root = self.experiment_root if root is None else root
+        return build_pr2164_v6_adapter_batch(
+            registry_path=root / "config/fixture-registry-pr2164-v6.json",
+            rules_path=root / "config/measurement/pr2164-adapter-rules-v3.json",
+            contract_path=root / "config/measurement/pr2164-semantic-gold-contract-v2.json",
+            golden_path=root / "fixtures/measurement/golden-predictions-v4.json",
+            bundle_root=self.experiment_root / "bundles/accepted/source-contract-v3-pr2164-fixture-closure-22e84458-verifier-rooted-v3",
+        )
+
+    def copy_v6_controls(self, root: Path) -> None:
+        for relative in (
+            "config/fixture-registry-pr2164-v6.json",
+            "config/measurement/pr2164-semantic-gold-contract-v2.json",
+            "config/measurement/pr2164-adapter-rules-v3.json",
+            "config/measurement/canonical-adjudication-schema-v3.json",
+            "fixtures/measurement/golden-predictions-v4.json",
+            "reviews/h1-source-gold-ontology-decision-v1.json",
+        ):
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(self.experiment_root / relative, target)
+        shutil.copytree(
+            self.experiment_root / "config/fixture-repairs/pr2164-semantic-gold-v5",
+            root / "config/fixture-repairs/pr2164-semantic-gold-v5",
+        )
+
+    @staticmethod
+    def write_canonical(path: Path, payload: object) -> bytes:
+        raw = canonical_json_bytes(payload)
+        path.write_bytes(raw)
+        return raw
+
+    @staticmethod
+    def bind_raw(descriptor: dict[str, object], raw: bytes) -> None:
+        descriptor["byte_length"] = len(raw)
+        descriptor["sha256"] = sha256_bytes(raw)
+
     def test_exact_eleven_case_metric_population_contract(self) -> None:
         contract = json.loads((self.experiment_root / "config/measurement/pr2164-semantic-gold-contract-v1.json").read_text())
         golden = json.loads((self.experiment_root / "fixtures/measurement/golden-predictions-v3.json").read_text())
@@ -84,6 +130,120 @@ class MeasurementAdapterTests(unittest.TestCase):
             if outcome["observed"]["surfaced"]:
                 self.assertTrue(outcome["evidence_spans"])
                 self.assertTrue(all(len(span["text"]) > 1 for span in outcome["evidence_spans"]))
+
+    def test_v6_adapter_closes_the_full_twenty_nine_file_semantic_population(self) -> None:
+        batch = self.build_v6()
+
+        self.assertTrue(batch.valid, [item.as_dict() for item in batch.diagnostics])
+        self.assertEqual((len(batch.records), sum(len(item.raw_files) for item in batch.records)), (11, 29))
+        self.assertEqual(batch.score_bearing_span_count, 10)
+        self.assertEqual(
+            {
+                category: sum(record.category == category for record in batch.records)
+                for category in ("positive", "negative", "candidate")
+            },
+            {"positive": 6, "negative": 3, "candidate": 2},
+        )
+        surfaced = {record.fixture_id for record in batch.records if record.expect_extract}
+        self.assertEqual(len(surfaced), 8)
+        self.assertEqual(
+            [record.expected_parameter_names[0] for record in batch.records if record.category == "positive"],
+            ["MTVEC_ACCESS", "CACHE_BLOCK_SIZE", "NUM_PMP_ENTRIES", "NUM_EXTERNAL_GUEST_INTERRUPTS", "ASID_WIDTH", "MTVEC_MODES"],
+        )
+        pbmte = next(record for record in batch.records if record.fixture_id == "NEG_EXT_GATED_PBMTE")
+        self.assertEqual(pbmte.expected_parameter_names, ())
+        self.assertEqual(pbmte.original_score_bearing["source_gold_name"], "PBMTE")
+
+        registry = json.loads((self.experiment_root / "config/fixture-registry-pr2164-v6.json").read_text())
+        manifest = json.loads((self.experiment_root / registry["repair_manifest"]).read_text())
+        self.assertEqual(len(registry["file_entries"]), 29)
+        self.assertEqual(manifest["payload_count"], 9)
+        self.assertEqual(
+            {entry["path"] for entry in registry["file_entries"] if entry["origin"] == "repair-v5"},
+            {entry["path"] for entry in manifest["payloads"]},
+        )
+
+    def test_v6_golden_spans_are_exact_semantic_bytes_and_candidates_bind_both_dimensions(self) -> None:
+        batch = self.build_v6()
+        self.assertTrue(batch.valid)
+        golden = json.loads((self.experiment_root / "fixtures/measurement/golden-predictions-v4.json").read_text())
+        contract = json.loads((self.experiment_root / "config/measurement/pr2164-semantic-gold-contract-v2.json").read_text())
+        self.assertEqual(validate_v6_outcome_contract(contract, golden), 10)
+        outcomes = {item["fixture_id"]: item for item in golden["outcomes"]}
+        for fixture_id in ("CAND_WARL_FIXED_LEGAL_SET", "NEG_EXT_GATED_PBMTE"):
+            spans = outcomes[fixture_id]["evidence_spans"]
+            self.assertEqual({span["dimension"] for span in spans}, {"surface", "disposition"})
+            self.assertEqual(len(spans), 2)
+            self.assertNotEqual((spans[0]["start_byte"], spans[0]["end_byte"]), (spans[1]["start_byte"], spans[1]["end_byte"]))
+        for outcome in golden["outcomes"]:
+            record = next(record for record in batch.records if record.fixture_id == outcome["fixture_id"])
+            source = next(item for item in record.raw_files if item.role == "fixture_source")
+            raw = (self.bundle.parent / self.bundle.name.replace("v2", "v3") / source.path).read_bytes()
+            for span in outcome["evidence_spans"]:
+                self.assertEqual(span["source_sha256"], source.sha256)
+                self.assertEqual(raw[span["start_byte"]:span["end_byte"]].decode("utf-8"), span["text"])
+
+        placeholder = deepcopy(golden)
+        first = placeholder["outcomes"][0]["evidence_spans"][0]
+        first.update(start_byte=0, end_byte=1, text="#")
+        with self.assertRaisesRegex(AdapterError, "V6_EVIDENCE_PLACEHOLDER_REJECTED"):
+            validate_v6_outcome_contract(contract, placeholder)
+
+    def test_v6_closed_controls_reject_unknown_keys_missing_mapping_and_twenty_ninth_raw_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.copy_v6_controls(root)
+
+            rules_path = root / "config/measurement/pr2164-adapter-rules-v3.json"
+            rules = json.loads(rules_path.read_text())
+            rules["unknown"] = True
+            self.write_canonical(rules_path, rules)
+            rejected = self.build_v6(root)
+            self.assertEqual([item.code for item in rejected.diagnostics], ["V6_ADAPTER_RULES_INVALID"])
+
+        for mutation in ("missing", "extra"):
+            with self.subTest(mapping=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self.copy_v6_controls(root)
+                contract_path = root / "config/measurement/pr2164-semantic-gold-contract-v2.json"
+                golden_path = root / "fixtures/measurement/golden-predictions-v4.json"
+                rules_path = root / "config/measurement/pr2164-adapter-rules-v3.json"
+                contract = json.loads(contract_path.read_text())
+                if mutation == "missing":
+                    contract["fixture_contracts"].pop()
+                else:
+                    contract["fixture_contracts"].append(deepcopy(contract["fixture_contracts"][-1]))
+                    contract["fixture_contracts"][-1]["fixture_id"] = "EXTRA_MAPPING"
+                contract_raw = self.write_canonical(contract_path, contract)
+                golden = json.loads(golden_path.read_text())
+                self.bind_raw(golden["bindings"]["semantic_contract"], contract_raw)
+                golden_raw = self.write_canonical(golden_path, golden)
+                rules = json.loads(rules_path.read_text())
+                self.bind_raw(rules["bindings"]["semantic_contract"], contract_raw)
+                self.bind_raw(rules["bindings"]["golden_predictions"], golden_raw)
+                self.write_canonical(rules_path, rules)
+                rejected = self.build_v6(root)
+                self.assertFalse(rejected.valid)
+                self.assertIn(rejected.diagnostics[0].code, {"V6_SEMANTIC_CONTRACT_INVALID", "V6_SEMANTIC_MAPPING_SET_INVALID"})
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.copy_v6_controls(root)
+            registry_path = root / "config/fixture-registry-pr2164-v6.json"
+            golden_path = root / "fixtures/measurement/golden-predictions-v4.json"
+            rules_path = root / "config/measurement/pr2164-adapter-rules-v3.json"
+            registry = json.loads(registry_path.read_text())
+            registry["file_entries"][-1]["sha256"] = "0" * 64
+            registry_raw = self.write_canonical(registry_path, registry)
+            golden = json.loads(golden_path.read_text())
+            self.bind_raw(golden["bindings"]["fixture_registry"], registry_raw)
+            golden_raw = self.write_canonical(golden_path, golden)
+            rules = json.loads(rules_path.read_text())
+            self.bind_raw(rules["bindings"]["fixture_registry"], registry_raw)
+            self.bind_raw(rules["bindings"]["golden_predictions"], golden_raw)
+            self.write_canonical(rules_path, rules)
+            rejected = self.build_v6(root)
+            self.assertEqual([item.code for item in rejected.diagnostics], ["V6_RAW_IDENTITY_MISMATCH"])
 
     def build_pending(self):
         return build_pr2164_adapter_batch(

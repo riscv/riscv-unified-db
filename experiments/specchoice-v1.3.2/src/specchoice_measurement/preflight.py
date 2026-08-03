@@ -90,6 +90,15 @@ def preflight_prediction_batch(*, raw: bytes, adapter_batch: object, ingress: st
         for values in source_bytes_by_fixture.values()
         for digest, value in values.items()
     }
+    source_paths_by_fixture = {
+        record.fixture_id: {
+            raw_file.path: raw_file.sha256
+            for raw_file in record.raw_files
+            if raw_file.role == "fixture_source"
+            and raw_file.sha256 in source_bytes_by_fixture.get(record.fixture_id, {})
+        }
+        for record in getattr(adapter_batch, "records", ())
+    }
     object.__setattr__(adapter_batch, "source_bytes_by_sha256", source_bytes) if False else None
     # Keep the adapter immutable: a narrow proxy supplies the verified source-byte index.
     class _BatchView:
@@ -97,8 +106,10 @@ def preflight_prediction_batch(*, raw: bytes, adapter_batch: object, ingress: st
             self.adapter_batch_sha256 = getattr(adapter_batch, "adapter_batch_sha256", None)
             self.valid = getattr(adapter_batch, "valid", False)
             self.records = getattr(adapter_batch, "records", ())
+            self.score_bearing_span_count = getattr(adapter_batch, "score_bearing_span_count", None)
             self.source_bytes_by_sha256 = source_bytes
             self.source_bytes_by_fixture = source_bytes_by_fixture
+            self.source_paths_by_fixture = source_paths_by_fixture
 
     parsed = validate_current_payload(payload, adapter_batch=_BatchView(), ingress=ingress)
     diagnostics = ordered_diagnostics(parsed.diagnostics)

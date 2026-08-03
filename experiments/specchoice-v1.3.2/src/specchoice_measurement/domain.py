@@ -77,6 +77,10 @@ class AdapterBatch:
     records: tuple[CanonicalFixtureRecord, ...]
     diagnostics: tuple[Diagnostic, ...]
     adapter_batch_sha256: str
+    # Successor adapters freeze the evidence population from their bound golden
+    # artifact.  It is runtime validation state, not part of the legacy batch
+    # projection (and therefore does not rewrite historical batch identities).
+    score_bearing_span_count: int | None = None
 
     @property
     def valid(self) -> bool:

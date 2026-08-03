@@ -26,14 +26,18 @@ class ScoreMetrics:
     disposition: Metric
     identity: Metric
     evidence_integrity: Metric
+    negative_controls: Metric | None = None
 
     def as_dict(self) -> dict[str, dict[str, int]]:
-        return {
+        value = {
             "disposition": self.disposition.as_dict(),
             "evidence_integrity": self.evidence_integrity.as_dict(),
             "identity": self.identity.as_dict(),
             "surfacing": self.surfacing.as_dict(),
         }
+        if self.negative_controls is not None:
+            value["negative_controls"] = self.negative_controls.as_dict()
+        return value
 
 
 @dataclass(frozen=True)
@@ -84,6 +88,20 @@ def validate_v5_span_population(golden: object) -> int:
     return count
 
 
+def validate_v6_span_population(golden: object) -> int:
+    """Freeze S from actual spans, retaining duplicate and adjacent spans."""
+    if not isinstance(golden, dict) or not isinstance(golden.get("outcomes"), list):
+        raise ValueError("V6_SPAN_POPULATION_INVALID")
+    count = 0
+    for outcome in golden["outcomes"]:
+        if not isinstance(outcome, dict) or not isinstance(outcome.get("evidence_spans"), list):
+            raise ValueError("V6_SPAN_POPULATION_INVALID")
+        count += len(outcome["evidence_spans"])
+    if golden.get("score_bearing_span_count") != count:
+        raise ValueError("V6_SPAN_POPULATION_INVALID")
+    return count
+
+
 def _score_gate_diagnostics(*, adapter_batch: object, preflight: object) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = list(getattr(preflight, "diagnostics", ()))
     if not getattr(adapter_batch, "valid", False):
@@ -120,49 +138,92 @@ def _score_gate_diagnostics(*, adapter_batch: object, preflight: object) -> list
 
 
 def _evidence_integrity(
-    *, prediction: dict[str, object], fixture_id: str, source_bytes_by_sha256: dict[str, bytes], diagnostics: list[Diagnostic]
-) -> bool:
+    *, prediction: dict[str, object], fixture_id: str,
+    source_bytes_by_sha256: dict[str, bytes],
+    allowed_source_paths: dict[str, str], diagnostics: list[Diagnostic]
+) -> tuple[bool, int, int]:
     adjudication = prediction["adjudication"]
     assert isinstance(adjudication, dict)
     if adjudication["surfaced"] is False:
-        return True
+        return True, 0, 0
     spans = adjudication["evidence_spans"]
     assert isinstance(spans, list)
     if not spans:
         diagnostics.append(Diagnostic("EVIDENCE_SPAN_EMPTY", "blocker", fixture_id, "adjudication.evidence_spans", expected="non-empty array", observed=[]))
-        return False
+        return False, 0, 0
+    successor = prediction.get("schema_version") == "canonical-adjudication-v3"
     valid = True
+    valid_count = 0
     for occurrence, span in enumerate(spans, start=1):
         if not isinstance(span, dict):
             diagnostics.append(Diagnostic("EVIDENCE_SPAN_NOT_FOUND", "blocker", fixture_id, "adjudication.evidence_spans", occurrence=occurrence))
             valid = False
             continue
+        source_path = span.get("source_path")
         source_sha256 = span.get("source_sha256")
         start = span.get("start_byte")
         end = span.get("end_byte")
         text = span.get("text")
         raw = source_bytes_by_sha256.get(source_sha256) if isinstance(source_sha256, str) else None
-        if raw is None or not isinstance(start, int) or isinstance(start, bool) or not isinstance(end, int) or isinstance(end, bool) or not isinstance(text, str):
-            diagnostics.append(Diagnostic("EVIDENCE_SPAN_NOT_FOUND", "blocker", fixture_id, "adjudication.evidence_spans", occurrence=occurrence, source_sha256=source_sha256 if isinstance(source_sha256, str) else None))
-            valid = False
+        if not successor:
+            if raw is None or not isinstance(start, int) or isinstance(start, bool) or not isinstance(end, int) or isinstance(end, bool) or not isinstance(text, str):
+                diagnostics.append(Diagnostic("EVIDENCE_SPAN_NOT_FOUND", "blocker", fixture_id, "adjudication.evidence_spans", occurrence=occurrence, source_sha256=source_sha256 if isinstance(source_sha256, str) else None))
+                valid = False
+                continue
+            if start < 0 or end <= start or end > len(raw):
+                diagnostics.append(Diagnostic("EVIDENCE_SPAN_EMPTY", "blocker", fixture_id, "adjudication.evidence_spans", occurrence=occurrence, expected=f"[0,{len(raw)}] non-empty", observed=[start, end], source_sha256=source_sha256))
+                valid = False
+                continue
+            try:
+                observed = raw[start:end].decode("utf-8")
+            except UnicodeDecodeError:
+                observed = None
+            if observed != text:
+                diagnostics.append(Diagnostic("EVIDENCE_SPAN_NOT_FOUND", "blocker", fixture_id, "adjudication.evidence_spans", occurrence=occurrence, expected=observed, observed=text, source_sha256=source_sha256))
+                valid = False
+                continue
+            valid_count += 1
             continue
-        if start < 0 or end <= start or end > len(raw):
-            diagnostics.append(Diagnostic("EVIDENCE_SPAN_EMPTY", "blocker", fixture_id, "adjudication.evidence_spans", occurrence=occurrence, expected=f"[0,{len(raw)}] non-empty", observed=[start, end], source_sha256=source_sha256))
-            valid = False
+
+        span_valid = not (
+            not isinstance(source_path, str)
+            or allowed_source_paths.get(source_path) != source_sha256
+            or raw is None
+            or not isinstance(start, int)
+            or isinstance(start, bool)
+            or not isinstance(end, int)
+            or isinstance(end, bool)
+            or not isinstance(text, str)
+        )
+        if span_valid:
+            assert raw is not None and isinstance(start, int) and isinstance(end, int) and isinstance(text, str)
+            if start < 0 or end <= start or end > len(raw):
+                span_valid = False
+            else:
+                try:
+                    observed = raw[start:end].decode("utf-8")
+                except UnicodeDecodeError:
+                    observed = None
+                if observed != text:
+                    span_valid = False
+        if span_valid:
+            valid_count += 1
             continue
-        try:
-            observed = raw[start:end].decode("utf-8")
-        except UnicodeDecodeError:
-            observed = None
-        if observed != text:
-            diagnostics.append(Diagnostic("EVIDENCE_SPAN_NOT_FOUND", "blocker", fixture_id, "adjudication.evidence_spans", occurrence=occurrence, expected=observed, observed=text, source_sha256=source_sha256))
-            valid = False
-    return valid
+        valid = False
+        diagnostics.append(Diagnostic(
+            "EVIDENCE_SPAN_INTEGRITY_FAILED",
+            "warning",
+            fixture_id,
+            "adjudication.evidence_spans",
+            occurrence=occurrence,
+            source_sha256=source_sha256 if isinstance(source_sha256, str) else None,
+        ))
+    return valid, valid_count, len(spans)
 
 
 def _outcome_for(
     *, record: object, prediction: dict[str, object], source_bytes_by_sha256: dict[str, bytes], diagnostics: list[Diagnostic]
-) -> CaseOutcome:
+) -> tuple[CaseOutcome, int, int]:
     fixture_id = getattr(record, "fixture_id")
     category = getattr(record, "category")
     adjudication = prediction["adjudication"]
@@ -174,8 +235,15 @@ def _outcome_for(
     assert status is None or isinstance(status, str)
     assert name is None or isinstance(name, str)
     finding_id = str(prediction["finding_id"])
-    evidence_integrity = _evidence_integrity(
-        prediction=prediction, fixture_id=fixture_id, source_bytes_by_sha256=source_bytes_by_sha256, diagnostics=diagnostics
+    allowed_source_paths = {
+        raw_file.path: raw_file.sha256
+        for raw_file in getattr(record, "raw_files", ())
+        if raw_file.role == "fixture_source"
+    }
+    evidence_integrity, valid_span_count, total_span_count = _evidence_integrity(
+        prediction=prediction, fixture_id=fixture_id,
+        source_bytes_by_sha256=source_bytes_by_sha256,
+        allowed_source_paths=allowed_source_paths, diagnostics=diagnostics,
     )
     surfacing_correct = (category != "negative") == surfaced
     disposition_correct = False
@@ -222,7 +290,10 @@ def _outcome_for(
         elif status == "review":
             diagnostics.append(Diagnostic("CANDIDATE_LEFT_UNRESOLVED", "blocker", fixture_id, "adjudication.parameter_status", finding_id=finding_id, expected="classify_out", observed=status))
         elif status == "classify_out":
-            disposition_correct = True
+            if name is not None:
+                diagnostics.append(Diagnostic("CANDIDATE_IDENTITY_LEAKAGE", "blocker", fixture_id, "adjudication.proposed_name", finding_id=finding_id, expected=None, observed=name))
+            else:
+                disposition_correct = True
         else:
             diagnostics.append(Diagnostic("CANDIDATE_LEFT_UNRESOLVED", "blocker", fixture_id, "adjudication.parameter_status", finding_id=finding_id, expected="classify_out", observed=status))
     return CaseOutcome(
@@ -236,10 +307,13 @@ def _outcome_for(
         disposition_correct=disposition_correct,
         identity_outcome=identity_outcome,
         evidence_integrity=evidence_integrity,
-    )
+    ), valid_span_count, total_span_count
 
 
-def _metrics(outcomes: tuple[CaseOutcome, ...]) -> ScoreMetrics:
+def _metrics(
+    outcomes: tuple[CaseOutcome, ...], *, valid_span_count: int,
+    total_span_count: int, successor: bool,
+) -> ScoreMetrics:
     expected_surfaced = tuple(item for item in outcomes if item.category != "negative")
     positive_accepts = tuple(item for item in outcomes if item.category == "positive" and item.disposition_correct)
     surfaced = tuple(item for item in outcomes if item.actual_surfaced)
@@ -247,7 +321,14 @@ def _metrics(outcomes: tuple[CaseOutcome, ...]) -> ScoreMetrics:
         surfacing=Metric(sum(item.surfacing_correct for item in expected_surfaced), len(expected_surfaced)),
         disposition=Metric(sum(item.disposition_correct for item in outcomes if item.category != "negative"), len(expected_surfaced)),
         identity=Metric(sum(item.identity_outcome == "exact" for item in positive_accepts), len(positive_accepts)),
-        evidence_integrity=Metric(sum(item.evidence_integrity for item in surfaced), len(surfaced)),
+        evidence_integrity=Metric(valid_span_count, total_span_count),
+        negative_controls=(
+            Metric(
+                sum(item.surfacing_correct for item in outcomes if item.category == "negative"),
+                sum(item.category == "negative" for item in outcomes),
+            )
+            if successor else None
+        ),
     )
 
 
@@ -266,13 +347,40 @@ def score_prediction_batch(*, adapter_batch: object, preflight: object, mode: st
         for prediction in getattr(preflight, "parsed_predictions")
         if isinstance(prediction, dict)
     }
+    successor = getattr(adapter_batch, "score_bearing_span_count", None) is not None
+    actual_span_count = sum(
+        len(prediction["adjudication"]["evidence_spans"])
+        for prediction in predictions.values()
+        if isinstance(prediction.get("adjudication"), dict)
+        and prediction["adjudication"].get("surfaced") is True
+        and isinstance(prediction["adjudication"].get("evidence_spans"), list)
+    )
+    frozen_span_count = getattr(adapter_batch, "score_bearing_span_count", None)
+    if successor and actual_span_count != frozen_span_count:
+        diagnostics.append(Diagnostic(
+            "EVIDENCE_SPAN_POPULATION_MISMATCH", "blocker",
+            field="adjudication.evidence_spans", expected=frozen_span_count,
+            observed=actual_span_count,
+        ))
+        return ScoreResult("invalid_score", (), None, ordered_diagnostics(diagnostics))
     source_bytes_by_sha256 = _source_bytes_by_sha256(adapter_batch)
-    outcomes = tuple(sorted((
+    scored = tuple(
         _outcome_for(record=record, prediction=predictions[record.fixture_id], source_bytes_by_sha256=source_bytes_by_sha256, diagnostics=diagnostics)
         for record in getattr(adapter_batch, "records")
-    ), key=CaseOutcome.sort_key))
+    )
+    outcomes = tuple(sorted((item[0] for item in scored), key=CaseOutcome.sort_key))
+    valid_span_count = sum(item[1] for item in scored)
+    total_span_count = sum(item[2] for item in scored)
     ordered = ordered_diagnostics(diagnostics)
     if any(item.severity == "blocker" for item in ordered):
         return ScoreResult("invalid_score", outcomes, None, ordered)
     status = "completed_with_warnings" if ordered else "completed"
-    return ScoreResult(status, outcomes, _metrics(outcomes), ordered)
+    return ScoreResult(
+        status,
+        outcomes,
+        _metrics(
+            outcomes, valid_span_count=valid_span_count,
+            total_span_count=total_span_count, successor=successor,
+        ),
+        ordered,
+    )

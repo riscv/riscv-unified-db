@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -421,7 +422,10 @@ def _bounded_yaml_fields(raw: bytes, *, source: str) -> dict[str, object]:
             # Nested YAML is provenance-only in this adapter.  Its indented body is
             # deliberately not interpreted, while score-bearing top-level fields stay bounded.
             fields[key] = None
-        elif value and not value.startswith(("[", "{", "-")):
+        elif value.startswith("[") and value.endswith("]"):
+            items = [item.strip() for item in value[1:-1].split(",") if item.strip()]
+            fields[key] = [int(item) if item.isdecimal() else item for item in items]
+        elif value and not value.startswith(("{", "-")):
             fields[key] = value
         else:
             raise AdapterError(f"UNSUPPORTED_YAML_SYNTAX:{source}")
@@ -715,3 +719,589 @@ def build_pr2164_adapter_batch(
         rule_sha256=rule_sha256,
         source_identity=source_identity,
     )
+
+
+_V6_RULE_KEYS = {
+    "adapter_version", "allowed_origins", "bindings", "closed",
+    "expected_partition", "file_entry_fields", "fixture_contract_fields",
+    "fixture_count", "raw_file_count", "schema_version",
+    "score_bearing_allowlist",
+}
+_V6_BINDING_KEYS = {
+    "adjudication_schema", "fixture_registry", "golden_predictions",
+    "repair_manifest", "semantic_contract",
+}
+_V6_REGISTRY_KEYS = {
+    "file_entries", "fixture_count", "fixture_ids",
+    "ontology_decision_sha256", "partition", "raw_file_count",
+    "repair_manifest", "repair_manifest_byte_length",
+    "repair_manifest_sha256", "schema_version",
+}
+_V6_FILE_ENTRY_KEYS = {
+    "byte_length", "fixture_id", "origin", "path", "role", "sha256",
+}
+_V6_CONTRACT_KEYS = {
+    "candidate_ids", "fixture_contracts", "identity_names", "negative_ids",
+    "partition", "schema_version", "surfaced_ids",
+}
+_V6_FIXTURE_CONTRACT_KEYS = {
+    "expected_disposition", "expected_parameter_count",
+    "expected_parameter_names", "expected_surfaced", "fixture_class",
+    "fixture_id", "source_gold_name",
+}
+_V6_GOLDEN_KEYS = {
+    "bindings", "outcomes", "schema_version", "score_bearing_span_count",
+}
+_V6_OUTCOME_KEYS = {
+    "evidence_spans", "expected", "fixture_class", "fixture_id", "observed",
+    "rationale",
+}
+_V6_EXPECTED_KEYS = {"disposition", "names", "parameter_count", "surface"}
+_V6_OBSERVED_KEYS = {"name", "status", "surfaced"}
+_V6_SPAN_KEYS = {
+    "dimension", "end_byte", "source_path", "source_sha256", "start_byte",
+    "text",
+}
+_V6_SCHEMA_KEYS = {
+    "adjudication_fields", "evidence_span_dimensions",
+    "evidence_span_fields", "no_finding", "payload_fields",
+    "prediction_fields", "schema_version", "statuses", "unknown_keys",
+}
+
+
+def _v6_exact_keys(value: object, expected: set[str], code: str) -> dict[str, Any]:
+    if not isinstance(value, dict) or set(value) != expected:
+        raise AdapterError(code)
+    return value
+
+
+def _v6_binding(value: object, code: str) -> dict[str, object]:
+    binding = _v6_exact_keys(value, {"byte_length", "path", "sha256"}, code)
+    try:
+        relative = require_relative_posix_path(binding["path"])
+        byte_length = require_byte_length(binding["byte_length"])
+        digest = require_sha256(binding["sha256"])
+    except (FilesystemPolicyError, TypeError, ValueError) as error:
+        raise AdapterError(code) from error
+    return {
+        "byte_length": byte_length,
+        "path": relative.as_posix(),
+        "sha256": digest,
+    }
+
+
+def _v6_bound_raw(
+    experiment_root: Path, value: object, code: str,
+) -> tuple[dict[str, object], bytes]:
+    binding = _v6_binding(value, code)
+    try:
+        evidence, raw = read_authoritative_file(experiment_root, str(binding["path"]))
+    except (FilesystemPolicyError, OSError) as error:
+        raise AdapterError(code) from error
+    if (
+        evidence.file_kind != "regular_file"
+        or evidence.byte_length != binding["byte_length"]
+        or evidence.sha256 != binding["sha256"]
+        or len(raw) != binding["byte_length"]
+        or sha256_bytes(raw) != binding["sha256"]
+    ):
+        raise AdapterError(code)
+    return binding, raw
+
+
+def _v6_canonical_payload(raw: bytes, code: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise AdapterError(code) from error
+    if not isinstance(payload, dict) or canonical_json_bytes(payload) != raw:
+        raise AdapterError(code)
+    return payload
+
+
+def _v6_read_entry(
+    *, experiment_root: Path, bundle_root: Path, entry: dict[str, Any]
+) -> tuple[RawFileIdentity, bytes]:
+    if set(entry) != _V6_FILE_ENTRY_KEYS:
+        raise AdapterError("V6_REGISTRY_ENTRY_SCHEMA_INVALID")
+    fixture_id = entry.get("fixture_id")
+    origin = entry.get("origin")
+    role = entry.get("role")
+    if (
+        not isinstance(fixture_id, str)
+        or origin not in {"accepted-v3", "repair-v5"}
+        or role not in {"fixture_expected", "fixture_gold", "fixture_source"}
+    ):
+        raise AdapterError("V6_REGISTRY_ENTRY_INVALID")
+    try:
+        relative = require_relative_posix_path(entry.get("path"))
+        expected_length = require_byte_length(entry.get("byte_length"))
+        expected_hash = require_sha256(entry.get("sha256"))
+    except (FilesystemPolicyError, TypeError, ValueError) as error:
+        raise AdapterError("V6_REGISTRY_ENTRY_INVALID") from error
+    path = relative.as_posix()
+    if origin == "accepted-v3":
+        if not path.startswith(f"raw/evaluation_fixtures/{fixture_id}/"):
+            raise AdapterError("V6_REGISTRY_ORIGIN_PATH_INVALID")
+        root = bundle_root
+    else:
+        prefix = f"config/fixture-repairs/pr2164-semantic-gold-v5/{fixture_id}/"
+        if not path.startswith(prefix):
+            raise AdapterError("V6_REGISTRY_ORIGIN_PATH_INVALID")
+        root = experiment_root
+    try:
+        evidence, raw = read_authoritative_file(root, path)
+    except (FilesystemPolicyError, OSError) as error:
+        raise AdapterError("V6_RAW_IDENTITY_INVALID") from error
+    if (
+        evidence.file_kind != "regular_file"
+        or evidence.byte_length != expected_length
+        or evidence.sha256 != expected_hash
+        or len(raw) != expected_length
+        or sha256_bytes(raw) != expected_hash
+    ):
+        raise AdapterError("V6_RAW_IDENTITY_MISMATCH")
+    return RawFileIdentity(path, str(role), expected_length, expected_hash), raw
+
+
+def _v6_parse_source_gold_name(raw: bytes, fixture_id: str) -> str:
+    fields = _bounded_yaml_fields(raw, source=f"{fixture_id}:gold")
+    name = fields.get("name")
+    if not isinstance(name, str) or not name:
+        raise AdapterError("V6_SOURCE_GOLD_NAME_INVALID")
+    return name
+
+
+def _v6_validate_semantic_payloads(contents: dict[str, dict[str, bytes]]) -> None:
+    cache = contents["POS_DIRECT_CACHE_BLOCK"]["fixture_gold"].decode("utf-8")
+    match = re.search(r"(?m)^\s+enum: \[([^\]]+)\]$", cache)
+    if match is None:
+        raise AdapterError("V6_CACHE_DOMAIN_INVALID")
+    try:
+        cache_values = [int(item.strip(), 16) for item in match.group(1).split(",")]
+    except ValueError as error:
+        raise AdapterError("V6_CACHE_DOMAIN_INVALID") from error
+    if cache_values != [1 << exponent for exponent in range(64)]:
+        raise AdapterError("V6_CACHE_DOMAIN_INVALID")
+
+    pmp = contents["POS_DIRECT_NUM_PMP"]["fixture_gold"].decode("utf-8")
+    pmp_match = re.search(r"(?m)^\s+enum: \[([^\]]+)\]$", pmp)
+    if pmp_match is None:
+        raise AdapterError("V6_PMP_DOMAIN_INVALID")
+    try:
+        pmp_values = [int(item.strip()) for item in pmp_match.group(1).split(",")]
+    except ValueError as error:
+        raise AdapterError("V6_PMP_DOMAIN_INVALID") from error
+    if pmp_values != [0, 16, 64]:
+        raise AdapterError("V6_PMP_DOMAIN_INVALID")
+
+    geilen = contents["POS_RECALL_COUNT_GEILEN"]["fixture_gold"].decode("utf-8")
+    minimum = re.search(r"(?m)^\s+minimum: ([0-9]+)$", geilen)
+    maximum = re.search(r"(?m)^\s+maximum: ([0-9]+)$", geilen)
+    if minimum is None or maximum is None or (int(minimum.group(1)), int(maximum.group(1))) != (0, 63):
+        raise AdapterError("V6_GEILEN_DOMAIN_INVALID")
+
+
+def validate_v6_outcome_contract(
+    contract: object,
+    golden: object,
+    *,
+    source_files: dict[str, dict[str, tuple[str, bytes]]] | None = None,
+) -> int:
+    """Validate all 11 successor outcomes and return the frozen span population S."""
+    contract_value = _v6_exact_keys(contract, _V6_CONTRACT_KEYS, "V6_OUTCOME_CONTRACT_INVALID")
+    golden_value = _v6_exact_keys(golden, _V6_GOLDEN_KEYS, "V6_OUTCOME_CONTRACT_INVALID")
+    if (
+        contract_value.get("schema_version") != "pr2164-semantic-gold-contract-v2"
+        or golden_value.get("schema_version") != "golden-predictions-v4"
+    ):
+        raise AdapterError("V6_OUTCOME_CONTRACT_INVALID")
+    fixture_contracts = contract_value.get("fixture_contracts")
+    outcomes = golden_value.get("outcomes")
+    if not isinstance(fixture_contracts, list) or not isinstance(outcomes, list) or len(fixture_contracts) != 11 or len(outcomes) != 11:
+        raise AdapterError("V6_OUTCOME_CONTRACT_INVALID")
+    mapped: dict[str, dict[str, Any]] = {}
+    for item in fixture_contracts:
+        mapping = _v6_exact_keys(item, _V6_FIXTURE_CONTRACT_KEYS, "V6_OUTCOME_CONTRACT_INVALID")
+        fixture_id = mapping.get("fixture_id")
+        if not isinstance(fixture_id, str) or fixture_id in mapped:
+            raise AdapterError("V6_OUTCOME_CONTRACT_INVALID")
+        mapped[fixture_id] = mapping
+    if list(mapped) != sorted(mapped):
+        raise AdapterError("V6_OUTCOME_CONTRACT_INVALID")
+
+    seen: set[str] = set()
+    span_count = 0
+    for value in outcomes:
+        outcome = _v6_exact_keys(value, _V6_OUTCOME_KEYS, "V6_OUTCOME_CONTRACT_INVALID")
+        fixture_id = outcome.get("fixture_id")
+        if not isinstance(fixture_id, str) or fixture_id in seen or fixture_id not in mapped:
+            raise AdapterError("V6_OUTCOME_CONTRACT_INVALID")
+        seen.add(fixture_id)
+        mapping = mapped[fixture_id]
+        expected = _v6_exact_keys(outcome.get("expected"), _V6_EXPECTED_KEYS, "V6_OUTCOME_CONTRACT_INVALID")
+        observed = _v6_exact_keys(outcome.get("observed"), _V6_OBSERVED_KEYS, "V6_OUTCOME_CONTRACT_INVALID")
+        expected_value = {
+            "disposition": mapping["expected_disposition"],
+            "names": mapping["expected_parameter_names"],
+            "parameter_count": mapping["expected_parameter_count"],
+            "surface": mapping["expected_surfaced"],
+        }
+        observed_value = {
+            "name": mapping["expected_parameter_names"][0] if mapping["fixture_class"] == "positive" else None,
+            "status": (
+                "accept" if mapping["fixture_class"] == "positive"
+                else "classify_out" if mapping["fixture_class"] == "candidate"
+                else None
+            ),
+            "surfaced": mapping["expected_surfaced"],
+        }
+        if (
+            outcome.get("fixture_class") != mapping["fixture_class"]
+            or expected != expected_value
+            or observed != observed_value
+            or not isinstance(outcome.get("rationale"), str)
+            or len(str(outcome.get("rationale"))) < 24
+        ):
+            raise AdapterError("V6_OUTCOME_CONTRACT_INVALID")
+        spans = outcome.get("evidence_spans")
+        if not isinstance(spans, list):
+            raise AdapterError("V6_OUTCOME_CONTRACT_INVALID")
+        expected_dimensions = (
+            {"surface", "disposition"} if mapping["fixture_class"] == "candidate"
+            else {"surface"} if mapping["fixture_class"] == "positive"
+            else set()
+        )
+        dimensions: list[str] = []
+        for span_value in spans:
+            span = _v6_exact_keys(span_value, _V6_SPAN_KEYS, "V6_EVIDENCE_SPAN_INVALID")
+            dimension = span.get("dimension")
+            path = span.get("source_path")
+            digest = span.get("source_sha256")
+            start = span.get("start_byte")
+            end = span.get("end_byte")
+            text = span.get("text")
+            if start == 0 and end == 1:
+                raise AdapterError("V6_EVIDENCE_PLACEHOLDER_REJECTED")
+            if (
+                dimension not in {"surface", "disposition"}
+                or not isinstance(path, str)
+                or not isinstance(digest, str)
+                or not isinstance(start, int)
+                or isinstance(start, bool)
+                or not isinstance(end, int)
+                or isinstance(end, bool)
+                or not isinstance(text, str)
+                or end <= start
+                or end - start <= 1
+                or len(text.strip()) < 8
+            ):
+                raise AdapterError("V6_EVIDENCE_SPAN_INVALID")
+            if source_files is not None:
+                declared = source_files.get(fixture_id, {}).get(path)
+                if declared is None or declared[0] != digest:
+                    raise AdapterError("V6_EVIDENCE_SOURCE_INVALID")
+                raw = declared[1]
+                if end > len(raw):
+                    raise AdapterError("V6_EVIDENCE_RANGE_INVALID")
+                try:
+                    exact = raw[start:end].decode("utf-8")
+                except UnicodeDecodeError as error:
+                    raise AdapterError("V6_EVIDENCE_TEXT_INVALID") from error
+                if exact != text:
+                    raise AdapterError("V6_EVIDENCE_TEXT_INVALID")
+            dimensions.append(str(dimension))
+            span_count += 1
+        if set(dimensions) != expected_dimensions or len(dimensions) != len(expected_dimensions):
+            raise AdapterError("V6_EVIDENCE_DIMENSIONS_INVALID")
+    if seen != set(mapped) or list(seen) == []:
+        raise AdapterError("V6_OUTCOME_CONTRACT_INVALID")
+    if golden_value.get("score_bearing_span_count") != span_count:
+        raise AdapterError("V6_SPAN_POPULATION_INVALID")
+    return span_count
+
+
+def build_pr2164_v6_adapter_batch(
+    *,
+    registry_path: Path,
+    rules_path: Path,
+    contract_path: Path,
+    golden_path: Path,
+    bundle_root: Path,
+) -> AdapterBatch:
+    """Build the real 29-file, 6/3/2 successor adapter without rewriting v3."""
+    adapter_version = "pr2164-adapter-v3"
+    rule_sha256 = ""
+    source_identity: dict[str, str] = {}
+    experiment_root = rules_path.parents[2]
+    try:
+        rules, rules_raw = _load_canonical_json(rules_path, "V6_ADAPTER_RULES_INVALID")
+        rule_sha256 = sha256_bytes(rules_raw)
+        if set(rules) != _V6_RULE_KEYS or rules.get("schema_version") != "3" or rules.get("closed") is not True:
+            raise AdapterError("V6_ADAPTER_RULES_INVALID")
+        adapter_version = rules.get("adapter_version")
+        if adapter_version != "pr2164-adapter-v3":
+            raise AdapterError("V6_ADAPTER_RULES_INVALID")
+        if (
+            rules.get("fixture_count") != 11
+            or rules.get("raw_file_count") != 29
+            or rules.get("expected_partition") != {"candidate": 2, "negative": 3, "positive": 6}
+            or rules.get("allowed_origins") != ["accepted-v3", "repair-v5"]
+            or rules.get("file_entry_fields") != sorted(_V6_FILE_ENTRY_KEYS)
+            or rules.get("fixture_contract_fields") != sorted(_V6_FIXTURE_CONTRACT_KEYS)
+            or rules.get("score_bearing_allowlist") != [
+                "fixture_id", "category", "expect_extract",
+                "expected_parameter_count", "expected_parameter_names",
+                "evidence_required",
+            ]
+        ):
+            raise AdapterError("V6_ADAPTER_RULES_INVALID")
+        bindings = _v6_exact_keys(rules.get("bindings"), _V6_BINDING_KEYS, "V6_ADAPTER_BINDINGS_INVALID")
+        payloads: dict[str, dict[str, Any]] = {}
+        raws: dict[str, bytes] = {}
+        for name in sorted(_V6_BINDING_KEYS):
+            binding, raw = _v6_bound_raw(experiment_root, bindings[name], "V6_ADAPTER_BINDING_MISMATCH")
+            payloads[name] = _v6_canonical_payload(raw, "V6_ADAPTER_BINDING_MISMATCH")
+            raws[name] = raw
+            expected_argument = {
+                "fixture_registry": registry_path,
+                "semantic_contract": contract_path,
+                "golden_predictions": golden_path,
+            }.get(name)
+            if expected_argument is not None and expected_argument.absolute() != (experiment_root / str(binding["path"])).absolute():
+                raise AdapterError("V6_ADAPTER_BOUND_PATH_MISMATCH")
+
+        registry = payloads["fixture_registry"]
+        contract = payloads["semantic_contract"]
+        golden = payloads["golden_predictions"]
+        manifest = payloads["repair_manifest"]
+        schema = payloads["adjudication_schema"]
+        if (
+            set(schema) != _V6_SCHEMA_KEYS
+            or schema.get("schema_version") != "canonical-adjudication-v3"
+            or schema.get("unknown_keys") != "reject"
+            or schema.get("payload_fields") != ["adapter_batch_sha256", "predictions", "schema_version"]
+            or schema.get("prediction_fields") != ["adjudication", "finding_id", "fixture_id", "rationale"]
+            or schema.get("adjudication_fields") != ["evidence_spans", "parameter_status", "proposed_name", "surfaced"]
+            or schema.get("evidence_span_fields") != ["dimension", "end_byte", "source_path", "source_sha256", "start_byte", "text"]
+            or schema.get("evidence_span_dimensions") != ["disposition", "surface"]
+            or schema.get("statuses") != ["accept", "classify_out", None]
+            or schema.get("no_finding") != {"evidence_spans": [], "parameter_status": None, "proposed_name": None, "surfaced": False}
+        ):
+            raise AdapterError("V6_ADJUDICATION_SCHEMA_INVALID")
+        if set(registry) != _V6_REGISTRY_KEYS or registry.get("schema_version") != "6":
+            raise AdapterError("V6_REGISTRY_SCHEMA_INVALID")
+        if (
+            registry.get("fixture_count") != 11
+            or registry.get("raw_file_count") != 29
+            or registry.get("partition") != rules["expected_partition"]
+            or registry.get("repair_manifest") != bindings["repair_manifest"]["path"]
+            or registry.get("repair_manifest_byte_length") != bindings["repair_manifest"]["byte_length"]
+            or registry.get("repair_manifest_sha256") != bindings["repair_manifest"]["sha256"]
+        ):
+            raise AdapterError("V6_REGISTRY_SCHEMA_INVALID")
+        fixture_ids = registry.get("fixture_ids")
+        entries = registry.get("file_entries")
+        if (
+            not isinstance(fixture_ids, list)
+            or len(fixture_ids) != 11
+            or fixture_ids != sorted(fixture_ids)
+            or len(set(fixture_ids)) != 11
+            or not isinstance(entries, list)
+            or len(entries) != 29
+        ):
+            raise AdapterError("V6_REGISTRY_INVENTORY_INVALID")
+        if any(not isinstance(entry, dict) or set(entry) != _V6_FILE_ENTRY_KEYS for entry in entries):
+            raise AdapterError("V6_REGISTRY_ENTRY_SCHEMA_INVALID")
+        if entries != sorted(
+            entries,
+            key=lambda item: (
+                str(item["fixture_id"]), str(item["role"]), str(item["path"]),
+            ),
+        ):
+            raise AdapterError("V6_REGISTRY_ORDER_INVALID")
+        if {entry["fixture_id"] for entry in entries} != set(fixture_ids):
+            raise AdapterError("V6_REGISTRY_INVENTORY_INVALID")
+
+        manifest_value = _v6_exact_keys(
+            manifest,
+            {"ontology_decision", "payload_count", "payloads", "predecessor_generation", "schema_version"},
+            "V6_REPAIR_MANIFEST_INVALID",
+        )
+        if (
+            manifest_value.get("schema_version") != "pr2164-semantic-gold-repair-manifest-v5"
+            or manifest_value.get("payload_count") != 9
+            or manifest_value.get("predecessor_generation") != bundle_root.name
+        ):
+            raise AdapterError("V6_REPAIR_MANIFEST_INVALID")
+        ontology_binding, _ = _v6_bound_raw(experiment_root, manifest_value.get("ontology_decision"), "V6_ONTOLOGY_BINDING_INVALID")
+        if ontology_binding["sha256"] != registry.get("ontology_decision_sha256"):
+            raise AdapterError("V6_ONTOLOGY_BINDING_INVALID")
+        manifest_payloads = manifest_value.get("payloads")
+        if not isinstance(manifest_payloads, list) or len(manifest_payloads) != 9:
+            raise AdapterError("V6_REPAIR_MANIFEST_INVALID")
+        manifest_paths: set[str] = set()
+        for value in manifest_payloads:
+            binding, _ = _v6_bound_raw(experiment_root, value, "V6_REPAIR_PAYLOAD_BINDING_INVALID")
+            path = str(binding["path"])
+            if path in manifest_paths:
+                raise AdapterError("V6_REPAIR_PAYLOAD_DUPLICATE")
+            manifest_paths.add(path)
+        repair_entries = {str(entry["path"]) for entry in entries if entry["origin"] == "repair-v5"}
+        if repair_entries != manifest_paths:
+            raise AdapterError("V6_REPAIR_MANIFEST_REGISTRY_MISMATCH")
+
+        if set(contract) != _V6_CONTRACT_KEYS or contract.get("schema_version") != "pr2164-semantic-gold-contract-v2":
+            raise AdapterError("V6_SEMANTIC_CONTRACT_INVALID")
+        mappings = contract.get("fixture_contracts")
+        if not isinstance(mappings, list) or len(mappings) != 11:
+            raise AdapterError("V6_SEMANTIC_CONTRACT_INVALID")
+        if any(not isinstance(mapping, dict) or set(mapping) != _V6_FIXTURE_CONTRACT_KEYS for mapping in mappings):
+            raise AdapterError("V6_SEMANTIC_MAPPING_INVALID")
+        if [mapping["fixture_id"] for mapping in mappings] != fixture_ids:
+            raise AdapterError("V6_SEMANTIC_MAPPING_SET_INVALID")
+        mapping_by_id = {str(mapping["fixture_id"]): mapping for mapping in mappings}
+        if len(mapping_by_id) != 11:
+            raise AdapterError("V6_SEMANTIC_MAPPING_SET_INVALID")
+        partition = {
+            category: sum(mapping["fixture_class"] == category for mapping in mappings)
+            for category in ("candidate", "negative", "positive")
+        }
+        if partition != rules["expected_partition"] or contract.get("partition") != partition:
+            raise AdapterError("V6_SEMANTIC_PARTITION_INVALID")
+        surfaced_ids = [mapping["fixture_id"] for mapping in mappings if mapping["expected_surfaced"] is True]
+        negative_ids = [mapping["fixture_id"] for mapping in mappings if mapping["fixture_class"] == "negative"]
+        candidate_ids = [mapping["fixture_id"] for mapping in mappings if mapping["fixture_class"] == "candidate"]
+        identity_names = [mapping["expected_parameter_names"][0] for mapping in mappings if mapping["fixture_class"] == "positive"]
+        if (
+            contract.get("surfaced_ids") != surfaced_ids
+            or contract.get("negative_ids") != negative_ids
+            or contract.get("candidate_ids") != candidate_ids
+            or contract.get("identity_names") != identity_names
+        ):
+            raise AdapterError("V6_SEMANTIC_CONTRACT_INVALID")
+
+        golden_bindings = _v6_exact_keys(
+            golden.get("bindings") if isinstance(golden, dict) else None,
+            {"adjudication_schema", "fixture_registry", "semantic_contract"},
+            "V6_GOLDEN_BINDINGS_INVALID",
+        )
+        for golden_name, rule_name in {
+            "adjudication_schema": "adjudication_schema",
+            "fixture_registry": "fixture_registry",
+            "semantic_contract": "semantic_contract",
+        }.items():
+            if _v6_binding(golden_bindings[golden_name], "V6_GOLDEN_BINDINGS_INVALID") != _v6_binding(bindings[rule_name], "V6_GOLDEN_BINDINGS_INVALID"):
+                raise AdapterError("V6_GOLDEN_BINDINGS_INVALID")
+
+        identities: dict[str, list[RawFileIdentity]] = {fixture_id: [] for fixture_id in fixture_ids}
+        contents: dict[str, dict[str, bytes]] = {fixture_id: {} for fixture_id in fixture_ids}
+        paths_by_fixture: dict[str, set[str]] = {fixture_id: set() for fixture_id in fixture_ids}
+        for entry in entries:
+            item, raw = _v6_read_entry(
+                experiment_root=experiment_root, bundle_root=bundle_root, entry=entry,
+            )
+            fixture_id = str(entry["fixture_id"])
+            if item.path in paths_by_fixture[fixture_id] or item.role in contents[fixture_id]:
+                raise AdapterError("V6_REGISTRY_DUPLICATE_FILE_OR_ROLE")
+            paths_by_fixture[fixture_id].add(item.path)
+            identities[fixture_id].append(item)
+            contents[fixture_id][item.role] = raw
+        _v6_validate_semantic_payloads(contents)
+
+        records: list[CanonicalFixtureRecord] = []
+        source_identity = {
+            "adjudication_schema_sha256": sha256_bytes(raws["adjudication_schema"]),
+            "generation": bundle_root.name,
+            "golden_predictions_sha256": sha256_bytes(raws["golden_predictions"]),
+            "registry_sha256": sha256_bytes(raws["fixture_registry"]),
+            "repair_manifest_sha256": sha256_bytes(raws["repair_manifest"]),
+            "rule_sha256": rule_sha256,
+            "semantic_contract_sha256": sha256_bytes(raws["semantic_contract"]),
+        }
+        source_files: dict[str, dict[str, tuple[str, bytes]]] = {}
+        for fixture_id in fixture_ids:
+            mapping = mapping_by_id[fixture_id]
+            category = mapping["fixture_class"]
+            expected_raw = contents[fixture_id].get("fixture_expected")
+            source_raw = contents[fixture_id].get("fixture_source")
+            gold_raw = contents[fixture_id].get("fixture_gold")
+            if expected_raw is None or source_raw is None or category not in {"positive", "negative", "candidate"}:
+                raise AdapterError("V6_FIXTURE_PAYLOAD_SET_INVALID")
+            expected = _bounded_yaml_fields(expected_raw, source=f"{fixture_id}:expected")
+            if expected.get("id") != fixture_id or expected.get("expect_extract") is not mapping["expected_surfaced"]:
+                raise AdapterError("V6_EXPECTED_CONTRACT_MISMATCH")
+            expected_names = mapping["expected_parameter_names"]
+            expected_count = mapping["expected_parameter_count"]
+            if (
+                not isinstance(expected_names, list)
+                or not isinstance(expected_count, int)
+                or isinstance(expected_count, bool)
+                or expected_count != len(expected_names)
+            ):
+                raise AdapterError("V6_SEMANTIC_MAPPING_INVALID")
+            source_gold_name = mapping["source_gold_name"]
+            if category == "positive":
+                if gold_raw is None or mapping["expected_disposition"] != "accept" or expected_count != 1:
+                    raise AdapterError("V6_POSITIVE_CONTRACT_INVALID")
+                actual_gold_name = _v6_parse_source_gold_name(gold_raw, fixture_id)
+                aliases = expected.get("versioned_aliases", [])
+                if (
+                    actual_gold_name != source_gold_name
+                    or expected.get("gold_name") != source_gold_name
+                    or (expected_names[0] != source_gold_name and expected_names[0] not in aliases)
+                ):
+                    raise AdapterError("V6_POSITIVE_IDENTITY_INVALID")
+            elif category == "candidate":
+                if mapping["expected_disposition"] != "classify_out" or expected_count != 0 or expected_names:
+                    raise AdapterError("V6_CANDIDATE_CONTRACT_INVALID")
+                if expected.get("expect_params") != 0 or expected.get("final_disposition") != "classify_out":
+                    raise AdapterError("V6_CANDIDATE_CONTRACT_INVALID")
+                if fixture_id == "NEG_EXT_GATED_PBMTE":
+                    if gold_raw is None or _v6_parse_source_gold_name(gold_raw, fixture_id) != "PBMTE" or source_gold_name != "PBMTE":
+                        raise AdapterError("V6_PBMTE_PROVENANCE_INVALID")
+                elif gold_raw is not None or source_gold_name is not None:
+                    raise AdapterError("V6_CANDIDATE_GOLD_INVALID")
+            else:
+                if gold_raw is not None or mapping["expected_disposition"] != "not_surfaced" or expected_count != 0 or expected_names or source_gold_name is not None:
+                    raise AdapterError("V6_NEGATIVE_CONTRACT_INVALID")
+                if expected.get("expect_params") != 0:
+                    raise AdapterError("V6_NEGATIVE_CONTRACT_INVALID")
+            source_item = next(item for item in identities[fixture_id] if item.role == "fixture_source")
+            source_files[fixture_id] = {source_item.path: (source_item.sha256, source_raw)}
+            records.append(CanonicalFixtureRecord(
+                fixture_id=fixture_id,
+                category=str(category),
+                adapter_version=adapter_version,
+                rule_sha256=rule_sha256,
+                source_identity=source_identity,
+                raw_files=tuple(sorted(identities[fixture_id], key=lambda item: (item.path, item.role))),
+                original_score_bearing={
+                    "expected_disposition": mapping["expected_disposition"],
+                    "expected_surfaced": mapping["expected_surfaced"],
+                    "source_gold_name": source_gold_name,
+                },
+                expect_extract=bool(mapping["expected_surfaced"]),
+                expected_parameter_count=expected_count,
+                expected_parameter_names=tuple(str(name) for name in expected_names),
+                evidence_required=bool(mapping["expected_surfaced"]),
+            ))
+
+        span_count = validate_v6_outcome_contract(contract, golden, source_files=source_files)
+        batch = validate_complete_adapter_batch(
+            records=tuple(records),
+            expected_fixture_ids=tuple(fixture_ids),
+            expected_raw_file_count=29,
+            adapter_version=adapter_version,
+            rule_sha256=rule_sha256,
+            source_identity=source_identity,
+        )
+        return replace(batch, score_bearing_span_count=span_count)
+    except (AdapterError, OSError, TypeError, ValueError) as error:
+        return _invalid_batch(
+            adapter_version=adapter_version,
+            rule_sha256=rule_sha256,
+            source_identity=source_identity,
+            code=str(error).split(":", 1)[0],
+            diagnostic=error.diagnostic if isinstance(error, AdapterError) else None,
+        )

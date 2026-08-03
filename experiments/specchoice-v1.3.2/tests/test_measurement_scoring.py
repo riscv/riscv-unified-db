@@ -6,14 +6,19 @@ from __future__ import annotations
 import json
 import unittest
 from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes
-from specchoice_measurement.adapter import build_pr2164_adapter_batch
+from specchoice_measurement.adapter import build_pr2164_adapter_batch, build_pr2164_v6_adapter_batch
 from specchoice_measurement.cli import _fixture_span
 from specchoice_measurement.diagnostics import Diagnostic
 from specchoice_measurement.preflight import preflight_prediction_batch
-from specchoice_measurement.scoring import score_prediction_batch, validate_v5_span_population
+from specchoice_measurement.scoring import (
+    score_prediction_batch,
+    validate_v5_span_population,
+    validate_v6_span_population,
+)
 from specchoice_measurement.strict_json import _validate_span
 
 
@@ -30,6 +35,41 @@ class MeasurementScoringTests(unittest.TestCase):
         self.assertTrue(self.batch.valid)
         self.golden_path = self.experiment_root / "fixtures/measurement/golden-predictions-v2.json"
 
+    def v6_batch(self):
+        return build_pr2164_v6_adapter_batch(
+            registry_path=self.experiment_root / "config/fixture-registry-pr2164-v6.json",
+            rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v3.json",
+            contract_path=self.experiment_root / "config/measurement/pr2164-semantic-gold-contract-v2.json",
+            golden_path=self.experiment_root / "fixtures/measurement/golden-predictions-v4.json",
+            bundle_root=self.bundle,
+        )
+
+    def v6_payload(self, batch) -> dict[str, object]:
+        golden = json.loads((self.experiment_root / "fixtures/measurement/golden-predictions-v4.json").read_text())
+        return {
+            "schema_version": "canonical-adjudication-v3",
+            "adapter_batch_sha256": batch.adapter_batch_sha256,
+            "predictions": [
+                {
+                    "fixture_id": outcome["fixture_id"],
+                    "finding_id": f"{outcome['fixture_id']}:1",
+                    "rationale": outcome["rationale"],
+                    "adjudication": {
+                        "surfaced": outcome["observed"]["surfaced"],
+                        "parameter_status": outcome["observed"]["status"],
+                        "proposed_name": outcome["observed"]["name"],
+                        "evidence_spans": deepcopy(outcome["evidence_spans"]),
+                    },
+                }
+                for outcome in golden["outcomes"]
+            ],
+        }
+
+    def v6_preflight(self, batch, payload):
+        return preflight_prediction_batch(
+            raw=canonical_json_bytes(payload), adapter_batch=batch, ingress="current-v3",
+        )
+
     def golden_payload(self) -> dict[str, object]:
         raw = self.golden_path.read_bytes()
         payload = json.loads(raw.decode("utf-8"))
@@ -43,6 +83,103 @@ class MeasurementScoringTests(unittest.TestCase):
         golden["score_bearing_span_count"] = 7
         with self.assertRaisesRegex(ValueError, "V5_SPAN_POPULATION_INVALID"):
             validate_v5_span_population(golden)
+
+    def test_v6_metrics_are_eight_eight_six_s_and_three(self) -> None:
+        batch = self.v6_batch()
+        self.assertTrue(batch.valid)
+        payload = self.v6_payload(batch)
+        preflight = self.v6_preflight(batch, payload)
+        result = score_prediction_batch(adapter_batch=batch, preflight=preflight, mode="formal")
+
+        self.assertEqual(preflight.status, "valid_preflight")
+        self.assertEqual(result.status, "completed")
+        self.assertEqual(result.metrics.as_dict(), {
+            "disposition": {"denominator": 8, "numerator": 8},
+            "evidence_integrity": {"denominator": 10, "numerator": 10},
+            "identity": {"denominator": 6, "numerator": 6},
+            "negative_controls": {"denominator": 3, "numerator": 3},
+            "surfacing": {"denominator": 8, "numerator": 8},
+        })
+
+    def test_v6_one_invalid_span_decrements_only_the_evidence_numerator(self) -> None:
+        batch = self.v6_batch()
+        payload = self.v6_payload(batch)
+        target = next(item for item in payload["predictions"] if item["fixture_id"] == "POS_DIRECT_CACHE_BLOCK")
+        target["adjudication"]["evidence_spans"][0]["text"] = "semantically plausible but byte-inexact"
+
+        preflight = self.v6_preflight(batch, payload)
+        result = score_prediction_batch(adapter_batch=batch, preflight=preflight, mode="formal")
+
+        self.assertEqual(preflight.status, "valid_preflight")
+        self.assertEqual(result.status, "completed_with_warnings")
+        self.assertEqual(result.metrics.as_dict()["evidence_integrity"], {"numerator": 9, "denominator": 10})
+        self.assertEqual(result.metrics.as_dict()["surfacing"], {"numerator": 8, "denominator": 8})
+        self.assertEqual(result.metrics.as_dict()["disposition"], {"numerator": 8, "denominator": 8})
+        self.assertEqual([item.code for item in result.diagnostics], ["EVIDENCE_SPAN_INTEGRITY_FAILED"])
+
+    def test_v6_duplicate_adjacent_and_multi_spans_each_count_in_s(self) -> None:
+        batch = self.v6_batch()
+        payload = self.v6_payload(batch)
+        target = next(item for item in payload["predictions"] if item["fixture_id"] == "POS_CSR_RW_MTVEC_ACCESS")
+        span = target["adjudication"]["evidence_spans"][0]
+        source = next(
+            raw_file
+            for record in batch.records
+            if record.fixture_id == target["fixture_id"]
+            for raw_file in record.raw_files
+            if raw_file.role == "fixture_source"
+        )
+        raw = (self.bundle / source.path).read_bytes()
+        adjacent = {
+            "dimension": "surface",
+            "source_path": source.path,
+            "source_sha256": source.sha256,
+            "start_byte": span["end_byte"],
+            "end_byte": span["end_byte"] + 1,
+            "text": raw[span["end_byte"]:span["end_byte"] + 1].decode("utf-8"),
+        }
+        target["adjudication"]["evidence_spans"].extend([deepcopy(span), adjacent])
+        alternate_golden = {
+            "score_bearing_span_count": 12,
+            "outcomes": [
+                {"evidence_spans": item["adjudication"]["evidence_spans"]}
+                for item in payload["predictions"]
+            ],
+        }
+        self.assertEqual(validate_v6_span_population(alternate_golden), 12)
+        alternate_batch = replace(batch, score_bearing_span_count=12)
+
+        result = score_prediction_batch(
+            adapter_batch=alternate_batch,
+            preflight=self.v6_preflight(alternate_batch, payload),
+            mode="formal",
+        )
+
+        self.assertEqual(result.status, "completed")
+        self.assertEqual(result.metrics.as_dict()["evidence_integrity"], {"numerator": 12, "denominator": 12})
+
+    def test_v6_span_population_and_candidate_identity_are_tamper_checked(self) -> None:
+        batch = self.v6_batch()
+        payload = self.v6_payload(batch)
+        candidate = next(item for item in payload["predictions"] if item["fixture_id"] == "NEG_EXT_GATED_PBMTE")
+        candidate["adjudication"]["proposed_name"] = "PBMTE"
+        leaked = score_prediction_batch(
+            adapter_batch=batch,
+            preflight=self.v6_preflight(batch, payload),
+            mode="formal",
+        )
+        self.assertEqual(leaked.status, "invalid_score")
+        self.assertIn("CANDIDATE_IDENTITY_LEAKAGE", {item.code for item in leaked.diagnostics})
+
+        payload = self.v6_payload(batch)
+        next(item for item in payload["predictions"] if item["fixture_id"] == "POS_DIRECT_NUM_PMP")["adjudication"]["evidence_spans"].clear()
+        tampered = score_prediction_batch(
+            adapter_batch=batch,
+            preflight=self.v6_preflight(batch, payload),
+            mode="formal",
+        )
+        self.assertEqual(tampered.metrics, None)
+        self.assertIn("EVIDENCE_SPANS_REQUIRED", {item.code for item in tampered.diagnostics})
 
     def required_diagnostic_oracles(self) -> dict[str, object]:
         path = self.experiment_root / "fixtures/measurement/adversarial/required-diagnostics-v2.json"
