@@ -50,7 +50,7 @@ from .verify import BundleVerificationError, _load_canonical, verify_accepted_bu
 from .canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from .environment import default_audit_metadata, write_environment_artifacts
 from .git_proof import GitProofError, audit_snapshots, validate_consumed_file_request
-from .runtime_closure import verify_runtime_closure
+from .runtime_closure import build_runtime_closure, verify_runtime_closure
 from .source_contract import (
     _EXPECTED_FIXTURES,
     SourceContractProposalError,
@@ -59,6 +59,8 @@ from .source_contract import (
     validate_fixture_construction_proposal_v4,
     validate_fixture_construction_decision_v4,
     validate_v4_non_executable_supersession,
+    build_source_contract_proposal_v5,
+    validate_source_contract_proposal_v5,
     validate_local_acceptance_decision_v10,
     validate_local_acceptance_request_v10,
     validate_source_contract_proposal,
@@ -683,13 +685,100 @@ def command_validate_v4_non_executable_supersession(args: argparse.Namespace) ->
 def command_validate_runtime_executable_closure(args: argparse.Namespace) -> int:
     """Validate a frozen runtime closure before any later writer may run."""
     closure, _ = _load_authoritative_canonical_v4(args.receipt, "RUNTIME_CLOSURE_INVALID")
-    verify_runtime_closure(closure, _experiment_root())
+    root = _experiment_root()
+    verify_runtime_closure(closure, root)
+    authority_raw = args.authority_pre_state.read_bytes()
+    if not authority_raw or args.authority_pre_state.resolve() != (root / "phase2/source-authority.json").resolve():
+        raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
+    if args.verify_known_mandatory and not {"src/specchoice_evidence/cli.py", "src/specchoice_evidence/runtime_closure.py"}.issubset(
+        {str(entry["path"]) for entry in closure["entries"]}
+    ):
+        raise SourceContractProposalError("RUNTIME_CLOSURE_MANDATORY_PATH_MISSING")
     _print_json({"preflight": bool(args.preflight_all), "status": "runtime_closure_valid"})
     return 0
 
 
+def _v5_closure_inputs(closure: dict[str, object], root: Path) -> dict[str, bytes]:
+    entries = closure.get("entries")
+    if not isinstance(entries, list):
+        raise SourceContractProposalError("V5_PROPOSAL_INPUT_INVALID")
+    result: dict[str, bytes] = {}
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+            raise SourceContractProposalError("V5_PROPOSAL_INPUT_INVALID")
+        result[entry["path"]] = (root / entry["path"]).read_bytes()
+    return result
+
+
+def _v5_supersession(proposal_raw: bytes, historical_raw: bytes) -> dict[str, object]:
+    return {
+        "historical_v4_non_executable_receipt": {
+            "path": "receipts/source-contract-construction-authorization-v4-non-executable-supersession-v1.json",
+            "sha256": sha256_bytes(historical_raw),
+        },
+        "proposal": {
+            "path": "receipts/source-contract-proposal-v5-pr2164-semantic-gold-executable-closure-verifier-rooted-v5.json",
+            "sha256": sha256_bytes(proposal_raw),
+        },
+        "schema_version": "source-contract-construction-proposal-v5-supersession-v4",
+        "status": "v4_ineligible_v5_pending_human_authorization",
+    }
+
+
+def _validated_v5_proposal(args: argparse.Namespace) -> tuple[dict[str, object], bytes, dict[str, object], bytes]:
+    root = _experiment_root()
+    closure, closure_raw = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_INVALID")
+    verify_runtime_closure(closure, root)
+    proposal, proposal_raw = _load_authoritative_canonical_v4(args.proposal, "V5_PROPOSAL_BINDING_MISMATCH")
+    authority_raw = (root / "phase2/source-authority.json").read_bytes()
+    validate_source_contract_proposal_v5(
+        proposal, runtime_closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+        bound_inputs=_v5_closure_inputs(closure, root),
+    )
+    return proposal, proposal_raw, closure, closure_raw
+
+
+def command_write_source_contract_proposal_v5(args: argparse.Namespace) -> int:
+    """Write the sole v5 proposal from a revalidated, already-frozen closure."""
+    root = _experiment_root()
+    closure, closure_raw = _load_authoritative_canonical_v4(args.runtime_closure, "RUNTIME_CLOSURE_INVALID")
+    verify_runtime_closure(closure, root)
+    authority_raw = args.authority_pre_state.read_bytes()
+    if args.authority_pre_state.resolve() != (root / "phase2/source-authority.json").resolve():
+        raise SourceContractProposalError("RUNTIME_CLOSURE_AUTHORITY_PRESTATE_INVALID")
+    proposal = build_source_contract_proposal_v5(
+        runtime_closure_raw=closure_raw, authority_pre_state_raw=authority_raw,
+        bound_inputs=_v5_closure_inputs(closure, root), targets=args.target,
+    )
+    write_new_descriptor_file(args.proposal.parent, args.proposal.name, canonical_json_bytes(proposal))
+    _print_json({"proposal_sha256": sha256_bytes(args.proposal.read_bytes()), "status": proposal["status"]})
+    return 0
+
+
+def command_write_source_contract_supersession_v5(args: argparse.Namespace) -> int:
+    """Write the append-only v4-ineligible lineage only after proposal validation."""
+    _, proposal_raw, _, _ = _validated_v5_proposal(args)
+    historical = _experiment_root() / "receipts/source-contract-construction-authorization-v4-non-executable-supersession-v1.json"
+    historical_raw = historical.read_bytes()
+    receipt = _v5_supersession(proposal_raw, historical_raw)
+    write_new_descriptor_file(args.supersession.parent, args.supersession.name, canonical_json_bytes(receipt))
+    _print_json({"status": receipt["status"], "supersession_sha256": sha256_bytes(args.supersession.read_bytes())})
+    return 0
+
+
+def command_validate_source_contract_proposal_v5(args: argparse.Namespace) -> int:
+    """Fail closed unless proposal, closure, authority pre-state, and lineage all match."""
+    _, proposal_raw, _, _ = _validated_v5_proposal(args)
+    supersession, _ = _load_authoritative_canonical_v4(args.supersession, "V5_SUPERSESSION_INVALID")
+    historical_raw = (_experiment_root() / "receipts/source-contract-construction-authorization-v4-non-executable-supersession-v1.json").read_bytes()
+    if supersession != _v5_supersession(proposal_raw, historical_raw):
+        raise SourceContractProposalError("V5_SUPERSESSION_INVALID")
+    _print_json({"status": "v5_proposal_valid", "valid": True})
+    return 0
+
+
 def _v5_preflight(args: argparse.Namespace) -> int:
-    """Expose a no-write command surface until the relevant human gate is satisfied."""
+    """Keep post-gate command names observable without permitting a write."""
     if not getattr(args, "preflight", False):
         raise SourceContractProposalError("V5_PRE_GATE_PREFLIGHT_REQUIRED")
     _print_json({"preflight": True, "status": "v5_pre_gate_surface_ready"})
@@ -1735,14 +1824,20 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_closure.set_defaults(handler=command_validate_runtime_executable_closure)
     proposal_v5 = commands.add_parser("write-source-contract-proposal-v5")
     proposal_v5.add_argument("--proposal", type=Path, required=True)
-    proposal_v5.add_argument("--preflight", action="store_true")
-    proposal_v5.set_defaults(handler=_v5_preflight)
+    proposal_v5.add_argument("--runtime-closure", type=Path, required=True)
+    proposal_v5.add_argument("--authority-pre-state", type=Path, required=True)
+    proposal_v5.add_argument("--target", action="append", required=True)
+    proposal_v5.set_defaults(handler=command_write_source_contract_proposal_v5)
+    supersession_v5 = commands.add_parser("write-source-contract-supersession-v5")
+    supersession_v5.add_argument("--proposal", type=Path, required=True)
+    supersession_v5.add_argument("--supersession", type=Path, required=True)
+    supersession_v5.add_argument("--runtime-closure", type=Path, required=True)
+    supersession_v5.set_defaults(handler=command_write_source_contract_supersession_v5)
     validate_proposal_v5 = commands.add_parser("validate-source-contract-proposal-v5")
     validate_proposal_v5.add_argument("--proposal", type=Path, required=True)
     validate_proposal_v5.add_argument("--supersession", type=Path, required=True)
     validate_proposal_v5.add_argument("--runtime-closure", type=Path, required=True)
-    validate_proposal_v5.add_argument("--preflight", action="store_true")
-    validate_proposal_v5.set_defaults(handler=_v5_preflight)
+    validate_proposal_v5.set_defaults(handler=command_validate_source_contract_proposal_v5)
     construction_decision_v5 = commands.add_parser("validate-fixture-construction-decision-v5")
     for option in ("proposal", "supersession", "runtime_closure", "registry", "repair_manifest", "ontology", "authority_pre_state", "decision"):
         construction_decision_v5.add_argument("--" + option.replace("_", "-"), type=Path, required=True)

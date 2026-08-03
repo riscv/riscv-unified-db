@@ -40,7 +40,7 @@ from specchoice_evidence.source_contract import (
     validate_fixture_registry,
     verify_fixture_registry_git,
 )
-from specchoice_evidence.runtime_closure import RuntimeClosureError, verify_runtime_closure
+from specchoice_evidence.runtime_closure import RuntimeClosureError, build_runtime_closure, verify_runtime_closure
 
 
 class FixtureClosureTests(unittest.TestCase):
@@ -112,6 +112,18 @@ class FixtureClosureTests(unittest.TestCase):
             "validate-fixture-candidate-v5",
             "validate-runtime-executable-closure",
         }.issubset(commands))
+
+    def test_runtime_closure_builder_is_sorted_and_rejects_any_one_byte_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "a.txt").write_bytes(b"a\n")
+            (root / "b.txt").write_bytes(b"b\n")
+            closure = build_runtime_closure(root, ["b.txt", "a.txt"])
+            self.assertEqual([item["path"] for item in closure["entries"]], ["a.txt", "b.txt"])
+            verify_runtime_closure(closure, root)
+            (root / "b.txt").write_bytes(b"B\n")
+            with self.assertRaisesRegex(RuntimeClosureError, "RUNTIME_CLOSURE_ENTRY_MISMATCH"):
+                verify_runtime_closure(closure, root)
 
     def test_v5_construction_decision_rejects_every_transitive_one_byte_drift_before_write(self) -> None:
         closure_raw = b'{"closure":"frozen"}\n'

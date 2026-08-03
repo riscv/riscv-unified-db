@@ -18,7 +18,7 @@ class RuntimeClosureError(ValueError):
 def closure_entry(root: Path, relative_path: str) -> dict[str, object]:
     """Capture one existing ordinary file using an experiment-relative path."""
     try:
-        normalized = require_relative_posix_path(relative_path)
+        normalized = str(require_relative_posix_path(relative_path))
         candidate = (root / normalized).resolve(strict=True)
         root_real = root.resolve(strict=True)
     except (OSError, ValueError) as error:
@@ -27,6 +27,22 @@ def closure_entry(root: Path, relative_path: str) -> dict[str, object]:
         raise RuntimeClosureError("RUNTIME_CLOSURE_PATH_INVALID")
     raw = candidate.read_bytes()
     return {"byte_length": len(raw), "path": normalized, "sha256": sha256_bytes(raw)}
+
+
+def build_runtime_closure(root: Path, relative_paths: list[str]) -> dict[str, object]:
+    """Freeze an exact, sorted finite file inventory for later no-write preflight."""
+    if not isinstance(relative_paths, list) or not relative_paths:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_INPUT_INVALID")
+    try:
+        normalized = sorted(str(require_relative_posix_path(path)) for path in relative_paths)
+    except (TypeError, ValueError) as error:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_INPUT_INVALID") from error
+    if len(set(normalized)) != len(normalized):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_INPUT_INVALID")
+    return {
+        "entries": [closure_entry(root, path) for path in normalized],
+        "schema_version": "runtime-executable-closure-v1",
+    }
 
 
 def verify_runtime_closure(closure: object, root: Path) -> dict[str, object]:
