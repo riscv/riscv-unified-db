@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
@@ -1937,7 +1938,20 @@ class H1PacketTests(unittest.TestCase):
             {"id": question_id, "prompt": "prompt", "rationale": "rationale", "structural_rules": ["closed"], "machine_assertions": ["asserted"], "metric_effect": "none", "evidence_bindings": ["bound"]}
             for question_id in h1._V7_H1_QUESTION_IDS
         ]
-        packet = h1.build_h1_review_packet_v7(questions=questions, source_identity={"authority_sha256": "bound"}, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+        fixture_reviews = [
+            {"fixture_id": fixture_id, "fixture_class": "positive", "expected_surfaced": True,
+             "expected_disposition": "accept", "evidence_bindings": ["bound"]}
+            for fixture_id in h1._V7_FIXTURE_IDS
+        ]
+        source_identity = {
+            key: {"path": f"inputs/{key}.json", "byte_length": 1, "sha256": "a" * 64}
+            for key in h1._V7_SOURCE_IDENTITY_KEYS
+        }
+        with mock.patch.object(h1, "_v7_gate", return_value={}):
+            packet = h1.build_h1_review_packet_v7(
+                questions=questions, fixture_reviews=fixture_reviews, source_identity=source_identity, markdown_sha256="b" * 64,
+                runtime_closure=closure, authority_path=root / "phase2/source-authority.json",
+            )
         return packet, closure
 
     def test_h1_v7_binds_complete_seven_question_semantics_and_v4_identity(self) -> None:
@@ -1947,26 +1961,43 @@ class H1PacketTests(unittest.TestCase):
 
     def test_h1_v7_packet_and_readiness_contain_no_human_values(self) -> None:
         packet, closure = self._v7_packet()
-        readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=Path(__file__).parents[1] / "phase2/source-authority.json")
+        with mock.patch.object(h1, "_v7_gate", return_value={}):
+            readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=Path(__file__).parents[1] / "phase2/source-authority.json")
         self.assertNotIn("responses", packet)
         self.assertNotIn("responses", readiness)
 
     def test_h1_v6_decision_distinguishes_missing_payload_from_complete_incomplete_judgment(self) -> None:
         packet, closure = self._v7_packet()
         root = Path(__file__).parents[1]
-        readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
-        with self.assertRaisesRegex(H1Error, "H1_V6_DECISION_INCOMPLETE"):
-            h1.validate_h1_source_gold_decision_v6(decision={}, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
-        decision = {"aggregate_disposition": "incomplete", "items": [{"id": item, "disposition": "incomplete", "rationale": "human judgment"} for item in h1._V7_H1_QUESTION_IDS]}
-        self.assertEqual(h1.validate_h1_source_gold_decision_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json"), decision)
+        with mock.patch.object(h1, "_v7_gate", return_value={}):
+            readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+            with self.assertRaisesRegex(H1Error, "H1_V6_DECISION_INCOMPLETE"):
+                h1.validate_h1_source_gold_decision_v6(decision={}, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+            decision = {
+                "aggregate_disposition": "incomplete", "aggregate_rationale": "human judgment remains incomplete",
+                "attestation": "personally reviewed", "fixture_reviews": [{"fixture_id": item["fixture_id"], "disposition": "incomplete", "rationale": "human judgment"} for item in packet["fixture_reviews"]],
+                "packet_sha256": packet["packet_sha256"], "readiness_sha256": readiness["readiness_sha256"], "reviewer": "reviewer",
+                "schema_version": "h1-source-gold-decision-v6", "semantic_responses": [{"id": item, "disposition": "incomplete", "rationale": "human judgment"} for item in h1._V7_H1_QUESTION_IDS],
+                "signature": "signature", "timestamp_utc": "2026-08-03T00:00:00Z",
+            }
+            decision["decision_sha256"] = sha256_bytes(canonical_json_bytes({key: decision[key] for key in sorted(decision)}))
+            self.assertEqual(h1.validate_h1_source_gold_decision_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json"), decision)
 
     def test_h1_v6_terminal_outputs_require_approved_decision(self) -> None:
         packet, closure = self._v7_packet()
         root = Path(__file__).parents[1]
-        readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
-        decision = {"aggregate_disposition": "disputed", "items": [{"id": item, "disposition": "disputed", "rationale": "human judgment"} for item in h1._V7_H1_QUESTION_IDS]}
-        with self.assertRaisesRegex(H1Error, "H1_V6_TERMINAL_APPROVAL_REQUIRED"):
-            h1.validate_approved_h1_terminal_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+        with mock.patch.object(h1, "_v7_gate", return_value={}):
+            readiness = h1.build_h1_review_readiness_v7(packet=packet, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
+            decision = {
+                "aggregate_disposition": "disputed", "aggregate_rationale": "human judgment disputed", "attestation": "personally reviewed",
+                "fixture_reviews": [{"fixture_id": item["fixture_id"], "disposition": "disputed", "rationale": "human judgment"} for item in packet["fixture_reviews"]],
+                "packet_sha256": packet["packet_sha256"], "readiness_sha256": readiness["readiness_sha256"], "reviewer": "reviewer",
+                "schema_version": "h1-source-gold-decision-v6", "semantic_responses": [{"id": item, "disposition": "disputed", "rationale": "human judgment"} for item in h1._V7_H1_QUESTION_IDS],
+                "signature": "signature", "timestamp_utc": "2026-08-03T00:00:00Z",
+            }
+            decision["decision_sha256"] = sha256_bytes(canonical_json_bytes({key: decision[key] for key in sorted(decision)}))
+            with self.assertRaisesRegex(H1Error, "H1_V6_TERMINAL_APPROVAL_REQUIRED"):
+                h1.validate_approved_h1_terminal_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=root / "phase2/source-authority.json")
 
     def test_validate_h1_review_readiness_v7_cli_is_registered_read_only_and_fail_closed(self) -> None:
         self.assertIn("validate-h1-review-readiness-v7", cli_module.build_parser()._subparsers._group_actions[0].choices)

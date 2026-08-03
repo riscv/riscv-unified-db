@@ -64,6 +64,7 @@ from .runtime_closure import (
     validate_v6_preflight_inventory,
     verify_runtime_closure,
     verify_runtime_closure_v3,
+    verify_runtime_closure_v4,
 )
 from specchoice_measurement.h1 import (
     build_h1_review_readiness_v7,
@@ -996,15 +997,21 @@ def command_write_runtime_executable_closure_v4(args: argparse.Namespace) -> int
     if args.receipt.resolve() != expected.resolve():
         raise ValueError("RUNTIME_CLOSURE_V4_PATH_INVALID")
     closure = build_runtime_closure_v4(repository, freeze_commit=args.freeze_commit)
+    # Repeat the complete bootstrap preflight immediately before the O_EXCL
+    # publication.  A concurrently-created downstream target must fail rather
+    # than becoming an unrecorded input to this receipt.
+    if build_runtime_closure_v4(repository, freeze_commit=args.freeze_commit) != closure:
+        raise ValueError("RUNTIME_CLOSURE_V4_PREWRITE_DRIFT")
     write_new_descriptor_file(args.receipt.parent, args.receipt.name, canonical_json_bytes(closure))
+    verify_runtime_closure_v4(closure, repository)
     _print_json({"status": "runtime_closure_v4_frozen"})
     return 0
 
 
 def command_validate_runtime_executable_closure_v4(args: argparse.Namespace) -> int:
     receipt = _v7_h1_value(args.receipt, "RUNTIME_CLOSURE_V4_INVALID")
-    if receipt.get("schema_version") != "runtime-executable-closure-v4":
-        raise ValueError("RUNTIME_CLOSURE_V4_INVALID")
+    repository = _repository_root(_experiment_root())
+    verify_runtime_closure_v4(receipt, repository)
     _print_json({"status": "runtime_closure_v4_valid"})
     return 0
 
@@ -1057,7 +1064,7 @@ def command_validate_approved_h1_terminal_v6(args: argparse.Namespace) -> int:
     packet = _v7_h1_value(args.packet, "H1_V7_PACKET_INVALID")
     readiness = _v7_h1_value(args.readiness, "H1_V7_READINESS_INVALID")
     closure = _v7_h1_value(args.runtime_closure, "RUNTIME_CLOSURE_V4_INVALID")
-    for path, code in ((args.adapter_config, "ADAPTER_V4_RULES_INVALID"), (args.h1_schema, "H1_V7_SCHEMA_INVALID"), (args.phase1_verification, "H1_V6_REPORT_INPUT_INVALID"), (args.phase1_review, "H1_V6_REPORT_INPUT_INVALID"), (args.phase2_verification, "H1_V6_REPORT_INPUT_INVALID"), (args.phase2_review, "H1_V6_REPORT_INPUT_INVALID"), (args.summary, "H1_V6_REPORT_INPUT_INVALID")):
+    for path, code in ((args.adapter_config, "ADAPTER_V4_RULES_INVALID"), (args.h1_schema, "H1_V7_SCHEMA_INVALID")):
         _v7_h1_value(path, code)
     validate_approved_h1_terminal_v6(decision=decision, packet=packet, readiness=readiness, runtime_closure=closure, authority_path=args.authority)
     _print_json({"status": "approved_h1_terminal_v6_valid"})
@@ -2465,7 +2472,7 @@ def build_parser() -> argparse.ArgumentParser:
         decision_v6_h1.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
     decision_v6_h1.set_defaults(handler=command_validate_h1_source_gold_decision_v6)
     terminal_v6 = commands.add_parser("validate-approved-h1-terminal-v6")
-    for option in ("decision", "packet", "readiness", "runtime_closure", "authority", "adapter_config", "h1_schema", "phase1_verification", "phase1_review", "phase2_verification", "phase2_review", "summary"):
+    for option in ("decision", "packet", "readiness", "runtime_closure", "authority", "adapter_config", "h1_schema"):
         terminal_v6.add_argument("--" + option.replace("_", "-"), type=Path, required=True)
     terminal_v6.set_defaults(handler=command_validate_approved_h1_terminal_v6)
 

@@ -25,6 +25,7 @@ from specchoice_evidence.filesystem import (
 from specchoice_evidence.runtime_closure import (
     RuntimeClosureError,
     verify_runtime_closure_v3,
+    load_runtime_closure_v4,
 )
 from specchoice_evidence.successor import (
     SuccessorProtocolError,
@@ -50,14 +51,31 @@ _V7_H1_QUESTION_IDS = (
     "ts04_unclassified_manual_review", "ts05_adjacency", "ts05_empty_null_single_element",
     "ts05_equal_element_stable_order",
 )
+_V7_FIXTURE_IDS = (
+    "CAND_WARL_FIXED_LEGAL_SET", "NEG_EXT_GATED_PBMTE", "NEG_FIXED_ENCODING",
+    "NEG_SHALL_NO_DELEGATION", "NEG_SOFTWARE_ADVICE", "POS_CSR_RW_MTVEC_ACCESS",
+    "POS_DIRECT_CACHE_BLOCK", "POS_DIRECT_NUM_PMP", "POS_RECALL_COUNT_GEILEN",
+    "POS_WARL_ASID_WIDTH", "POS_WARL_MTVEC_MODES",
+)
 _H1_DISPOSITIONS = frozenset({"approved", "disputed", "incomplete"})
+_V7_SOURCE_IDENTITY_KEYS = frozenset({
+    "adapter", "adapter_config", "adversarial", "authority", "closure",
+    "formal_attempt", "formal_case_outcomes", "formal_diagnostics", "formal_metrics",
+    "formal_parsed_predictions", "formal_report", "h1_schema", "question_contract",
+})
 
 
 def _v7_gate(runtime_closure: object, authority_path: Path) -> dict[str, object]:
     """Require the published closure and the active authority before a v7 write."""
-    if not isinstance(runtime_closure, Mapping) or runtime_closure.get("schema_version") != "runtime-executable-closure-v4":
-        raise H1Error("RUNTIME_CLOSURE_V4_REQUIRED")
-    raw = authority_path.read_bytes()
+    try:
+        canonical = authority_path.resolve(strict=True)
+        repository = canonical.parents[3]
+        if canonical != repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json":
+            raise H1Error("ACTIVE_AUTHORITY_MISMATCH")
+        load_runtime_closure_v4(repository, runtime_closure)
+    except (OSError, RuntimeClosureError) as error:
+        raise H1Error("RUNTIME_CLOSURE_V4_REQUIRED") from error
+    raw = canonical.read_bytes()
     if sha256_bytes(raw) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae":
         raise H1Error("ACTIVE_AUTHORITY_MISMATCH")
     value = json.loads(raw)
@@ -66,7 +84,7 @@ def _v7_gate(runtime_closure: object, authority_path: Path) -> dict[str, object]
     return value
 
 
-def build_h1_review_packet_v7(*, questions: object, source_identity: object, runtime_closure: object, authority_path: Path) -> dict[str, object]:
+def build_h1_review_packet_v7(*, questions: object, fixture_reviews: object, source_identity: object, markdown_sha256: str, runtime_closure: object, authority_path: Path) -> dict[str, object]:
     """Build a decision-free packet with every semantic question fully bound."""
     _v7_gate(runtime_closure, authority_path)
     if not isinstance(questions, list) or [item.get("id") if isinstance(item, dict) else None for item in questions] != list(_V7_H1_QUESTION_IDS):
@@ -74,9 +92,45 @@ def build_h1_review_packet_v7(*, questions: object, source_identity: object, run
     required = {"id", "prompt", "rationale", "structural_rules", "machine_assertions", "metric_effect", "evidence_bindings"}
     if any(not isinstance(item, dict) or set(item) != required or any(not item[key] for key in required - {"id"}) for item in questions):
         raise H1Error("H1_V7_QUESTION_SEMANTICS_INVALID")
-    if not isinstance(source_identity, dict) or not source_identity:
+    if not isinstance(source_identity, dict) or set(source_identity) != _V7_SOURCE_IDENTITY_KEYS:
         raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID")
-    payload = {"questions": questions, "schema_version": "h1-review-packet-v7", "source_identity": source_identity}
+    for value in source_identity.values():
+        if (
+            not isinstance(value, Mapping)
+            or set(value) != {"path", "byte_length", "sha256"}
+            or not isinstance(value["path"], str)
+            or not isinstance(value["byte_length"], int)
+            or value["byte_length"] < 0
+            or not isinstance(value["sha256"], str)
+            or len(value["sha256"]) != 64
+        ):
+            raise H1Error("H1_V7_SOURCE_IDENTITY_INVALID")
+    if (
+        not isinstance(fixture_reviews, list) or len(fixture_reviews) != 11
+        or [item.get("fixture_id") if isinstance(item, dict) else None for item in fixture_reviews]
+        != list(_V7_FIXTURE_IDS)
+        or any(
+            not isinstance(item, dict)
+            or set(item) != {"fixture_id", "fixture_class", "expected_surfaced", "expected_disposition", "evidence_bindings"}
+            or not isinstance(item["fixture_id"], str)
+            or item["fixture_class"] not in {"positive", "negative", "candidate"}
+            or not isinstance(item["expected_surfaced"], bool)
+            or not isinstance(item["expected_disposition"], str)
+            or not isinstance(item["evidence_bindings"], list)
+            or not item["evidence_bindings"]
+            for item in fixture_reviews
+        )
+    ):
+        raise H1Error("H1_V7_FIXTURE_REVIEW_SET_INVALID")
+    if not isinstance(markdown_sha256, str) or len(markdown_sha256) != 64:
+        raise H1Error("H1_V7_MARKDOWN_BINDING_INVALID")
+    payload = {
+        "fixture_reviews": fixture_reviews,
+        "markdown_sha256": markdown_sha256,
+        "questions": questions,
+        "schema_version": "h1-review-packet-v7",
+        "source_identity": source_identity,
+    }
     return {**payload, "packet_sha256": sha256_bytes(canonical_json_bytes(payload))}
 
 
@@ -85,8 +139,17 @@ def build_h1_review_readiness_v7(*, packet: object, runtime_closure: object, aut
     _v7_gate(runtime_closure, authority_path)
     if not isinstance(packet, Mapping) or packet.get("schema_version") != "h1-review-packet-v7" or "responses" in packet:
         raise H1Error("H1_V7_PACKET_INVALID")
-    payload = {"packet_sha256": packet.get("packet_sha256"), "schema_version": "h1-review-readiness-v7", "status": "ready_for_human"}
-    if not isinstance(payload["packet_sha256"], str):
+    expected_packet = {key: packet[key] for key in ("fixture_reviews", "markdown_sha256", "questions", "schema_version", "source_identity") if key in packet}
+    if packet.get("packet_sha256") != sha256_bytes(canonical_json_bytes(expected_packet)):
+        raise H1Error("H1_V7_PACKET_INVALID")
+    payload = {
+        "markdown_sha256": packet.get("markdown_sha256"),
+        "packet_sha256": packet.get("packet_sha256"),
+        "schema_version": "h1-review-readiness-v7",
+        "source_identity_sha256": sha256_bytes(canonical_json_bytes(packet["source_identity"])),
+        "status": "ready_for_human",
+    }
+    if not isinstance(payload["packet_sha256"], str) or not isinstance(payload["markdown_sha256"], str) or len(payload["markdown_sha256"]) != 64:
         raise H1Error("H1_V7_PACKET_INVALID")
     return {**payload, "readiness_sha256": sha256_bytes(canonical_json_bytes(payload))}
 
@@ -98,14 +161,52 @@ def validate_h1_source_gold_decision_v6(*, decision: object, packet: object, rea
         raise H1Error("H1_V6_DECISION_INVALID")
     if readiness.get("packet_sha256") != packet.get("packet_sha256"):
         raise H1Error("H1_V6_PACKET_READINESS_MISMATCH")
-    items = decision.get("items")
+    packet_payload = {key: packet[key] for key in ("fixture_reviews", "markdown_sha256", "questions", "schema_version", "source_identity") if key in packet}
+    readiness_payload = {key: readiness[key] for key in ("markdown_sha256", "packet_sha256", "schema_version", "source_identity_sha256", "status") if key in readiness}
+    if packet.get("packet_sha256") != sha256_bytes(canonical_json_bytes(packet_payload)) or readiness.get("readiness_sha256") != sha256_bytes(canonical_json_bytes(readiness_payload)):
+        raise H1Error("H1_V6_PACKET_READINESS_MISMATCH")
+    required = {
+        "aggregate_disposition", "aggregate_rationale", "attestation", "decision_sha256", "fixture_reviews",
+        "packet_sha256", "readiness_sha256", "reviewer", "schema_version", "semantic_responses", "signature", "timestamp_utc",
+    }
+    if set(decision) != required or decision.get("schema_version") != "h1-source-gold-decision-v6":
+        raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    if decision.get("packet_sha256") != packet.get("packet_sha256") or decision.get("readiness_sha256") != readiness.get("readiness_sha256"):
+        raise H1Error("H1_V6_PACKET_READINESS_MISMATCH")
+    decision_payload = {key: decision[key] for key in sorted(required - {"decision_sha256"})}
+    if decision.get("decision_sha256") != sha256_bytes(canonical_json_bytes(decision_payload)):
+        raise H1Error("H1_V6_DECISION_HASH_INVALID")
+    for field in ("aggregate_rationale", "attestation", "reviewer", "signature", "timestamp_utc"):
+        if not isinstance(decision.get(field), str) or not decision[field].strip():
+            raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    try:
+        datetime.fromisoformat(str(decision["timestamp_utc"]).replace("Z", "+00:00"))
+    except ValueError as error:
+        raise H1Error("H1_V6_DECISION_INCOMPLETE") from error
+    items = decision.get("semantic_responses")
     aggregate = decision.get("aggregate_disposition")
     if not isinstance(items, list) or len(items) != 7 or aggregate not in _H1_DISPOSITIONS:
         raise H1Error("H1_V6_DECISION_INCOMPLETE")
     if [item.get("id") if isinstance(item, dict) else None for item in items] != list(_V7_H1_QUESTION_IDS):
         raise H1Error("H1_V6_DECISION_INCOMPLETE")
-    if any(not isinstance(item, dict) or item.get("disposition") not in _H1_DISPOSITIONS or not isinstance(item.get("rationale"), str) or not item["rationale"].strip() for item in items):
+    if any(not isinstance(item, dict) or set(item) != {"id", "disposition", "rationale"} or item.get("disposition") not in _H1_DISPOSITIONS or not isinstance(item.get("rationale"), str) or not item["rationale"].strip() for item in items):
         raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    fixture_items = decision.get("fixture_reviews")
+    packet_fixtures = packet.get("fixture_reviews")
+    if not isinstance(fixture_items, list) or not isinstance(packet_fixtures, list) or len(fixture_items) != 11:
+        raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    expected_ids = [item["fixture_id"] for item in packet_fixtures]
+    if [item.get("fixture_id") if isinstance(item, dict) else None for item in fixture_items] != expected_ids:
+        raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    if any(not isinstance(item, dict) or set(item) != {"fixture_id", "disposition", "rationale"} or item.get("disposition") not in _H1_DISPOSITIONS or not isinstance(item.get("rationale"), str) or not item["rationale"].strip() for item in fixture_items):
+        raise H1Error("H1_V6_DECISION_INCOMPLETE")
+    all_dispositions = [item["disposition"] for item in items + fixture_items]
+    if aggregate == "approved" and any(value != "approved" for value in all_dispositions):
+        raise H1Error("H1_V6_AGGREGATE_CONFLICT")
+    if aggregate == "disputed" and "disputed" not in all_dispositions:
+        raise H1Error("H1_V6_AGGREGATE_CONFLICT")
+    if aggregate == "incomplete" and "incomplete" not in all_dispositions:
+        raise H1Error("H1_V6_AGGREGATE_CONFLICT")
     return dict(decision)
 
 

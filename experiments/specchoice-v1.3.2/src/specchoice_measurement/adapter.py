@@ -14,6 +14,7 @@ from typing import Any
 
 from specchoice_evidence.canonical import canonical_json_bytes, require_byte_length, require_sha256, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file, require_relative_posix_path
+from specchoice_evidence.runtime_closure import RuntimeClosureError, load_runtime_closure_v4
 from specchoice_evidence.verify import verify_accepted_bundle
 
 from .domain import AdapterBatch, CanonicalFixtureRecord, Diagnostic, RawFileIdentity
@@ -820,7 +821,7 @@ def _v6_canonical_payload(raw: bytes, code: str) -> dict[str, Any]:
 
 
 def _v6_read_entry(
-    *, experiment_root: Path, bundle_root: Path, entry: dict[str, Any]
+    *, experiment_root: Path, bundle_root: Path, entry: dict[str, Any], materialized_only: bool = False,
 ) -> tuple[RawFileIdentity, bytes]:
     if set(entry) != _V6_FILE_ENTRY_KEYS:
         raise AdapterError("V6_REGISTRY_ENTRY_SCHEMA_INVALID")
@@ -840,7 +841,15 @@ def _v6_read_entry(
     except (FilesystemPolicyError, TypeError, ValueError) as error:
         raise AdapterError("V6_REGISTRY_ENTRY_INVALID") from error
     path = relative.as_posix()
-    if origin == "accepted-v3":
+    if materialized_only:
+        filename = {
+            "fixture_source": "source.txt",
+            "fixture_expected": "expected.yaml",
+            "fixture_gold": "gold.yaml",
+        }[str(role)]
+        path = f"raw/evaluation_fixtures/{fixture_id}/{filename}"
+        root = bundle_root
+    elif origin == "accepted-v3":
         if not path.startswith(f"raw/evaluation_fixtures/{fixture_id}/"):
             raise AdapterError("V6_REGISTRY_ORIGIN_PATH_INVALID")
         root = bundle_root
@@ -1028,6 +1037,7 @@ def build_pr2164_v6_adapter_batch(
     contract_path: Path,
     golden_path: Path,
     bundle_root: Path,
+    materialized_only: bool = False,
 ) -> AdapterBatch:
     """Build the real 29-file, 6/3/2 successor adapter without rewriting v3."""
     adapter_version = "pr2164-adapter-v3"
@@ -1199,6 +1209,7 @@ def build_pr2164_v6_adapter_batch(
         for entry in entries:
             item, raw = _v6_read_entry(
                 experiment_root=experiment_root, bundle_root=bundle_root, entry=entry,
+                materialized_only=materialized_only,
             )
             fixture_id = str(entry["fixture_id"])
             if item.path in paths_by_fixture[fixture_id] or item.role in contents[fixture_id]:
@@ -1314,8 +1325,10 @@ def build_pr2164_accepted_v6_adapter_batch_v4(
     repository = repository.resolve(strict=True)
     source_identity: dict[str, str] = {}
     try:
-        if runtime_closure.get("schema_version") != "runtime-executable-closure-v4":
-            raise AdapterError("RUNTIME_CLOSURE_V4_REQUIRED")
+        try:
+            verified_closure = load_runtime_closure_v4(repository, runtime_closure)
+        except RuntimeClosureError as error:
+            raise AdapterError("RUNTIME_CLOSURE_V4_REQUIRED") from error
         canonical_authority = repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json"
         canonical_bundle = repository / (
             "experiments/specchoice-v1.3.2/bundles/accepted/"
@@ -1345,6 +1358,7 @@ def build_pr2164_accepted_v6_adapter_batch_v4(
             contract_path=repository / "experiments/specchoice-v1.3.2/config/measurement/pr2164-semantic-gold-contract-v2.json",
             golden_path=repository / "experiments/specchoice-v1.3.2/fixtures/measurement/golden-predictions-v4.json",
             bundle_root=canonical_bundle,
+            materialized_only=True,
         )
         if not batch.valid or len(batch.records) != 11 or sum(len(record.raw_files) for record in batch.records) != 29:
             raise AdapterError("ACCEPTED_V6_MATERIALIZED_RAW_TREE_INVALID")
@@ -1355,6 +1369,9 @@ def build_pr2164_accepted_v6_adapter_batch_v4(
             "root_sha256": expected["root_sha256"],
             "snapshot_manifest_sha256": expected["snapshot_manifest_sha256"],
             "closure_schema_version": "runtime-executable-closure-v4",
+            "closure_freeze_commit": str(verified_closure["freeze_commit"]),
+            "closure_sha256": sha256_bytes(canonical_json_bytes(verified_closure)),
+            "closure_byte_length": str(len(canonical_json_bytes(verified_closure))),
             "adapter_v4_rules_sha256": sha256_bytes(rules_raw),
         }
         return replace(batch, adapter_version="pr2164-adapter-v4", rule_sha256=sha256_bytes(rules_raw), source_identity=source_identity)

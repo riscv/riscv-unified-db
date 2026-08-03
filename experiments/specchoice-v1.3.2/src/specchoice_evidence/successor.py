@@ -1495,6 +1495,47 @@ def validate_accepted_v6_active_authority(repository: Path) -> dict[str, object]
     )
 
 
+def accepted_v6_active_bound_paths(repository: Path) -> tuple[str, ...]:
+    """Return every fixed leaf consumed by the accepted-v6 authority verifier.
+
+    This inventory is deliberately exposed for downstream closure custody: the
+    authority validator reads both the named lineage receipts and complete
+    candidate/packet trees, so a closure must freeze the same universe.
+    """
+    import stat
+
+    repository = repository.resolve(strict=True)
+    fixed = {
+        _AUTHORITY_RELATIVE,
+        _CLOSURE_V3_RELATIVE,
+        f"{_EXPERIMENT_PREFIX}/phase2/source-authority-v13-historical.json",
+        _AUDIT_RELATIVE,
+        _DECISION_RELATIVE,
+        _REQUEST_RELATIVE,
+        _ACCEPTANCE_DECISION_RELATIVE,
+        f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-revocation-v3-to-v6.json",
+        f"{_EXPERIMENT_PREFIX}/receipts/fixture-closure-offline-replay-v6.json",
+        f"{_EXPERIMENT_PREFIX}/receipts/integrity-receipt-v14.json",
+    }
+    for tree in (_CANDIDATE_RELATIVE, _PACKET_RELATIVE):
+        root = repository / tree
+        try:
+            children = sorted(root.rglob("*"))
+        except OSError as error:
+            raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID") from error
+        for child in children:
+            try:
+                mode = child.lstat().st_mode
+            except OSError as error:
+                raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID") from error
+            if stat.S_ISDIR(mode):
+                continue
+            if not stat.S_ISREG(mode):
+                raise SuccessorProtocolError("ACCEPTED_V6_ACTIVE_AUTHORITY_INPUT_INVALID")
+            fixed.add(child.relative_to(repository).as_posix())
+    return tuple(sorted(fixed))
+
+
 def validate_accepted_v6_for_downstream_v4(repository: Path) -> dict[str, object]:
     """Keep the historical authority chain while exposing the v4 exact identity seam."""
     result = validate_accepted_v6_active_authority(repository)
@@ -1507,4 +1548,4 @@ def validate_accepted_v6_for_downstream_v4(repository: Path) -> dict[str, object
     }
     if not isinstance(identity, Mapping) or {key: identity.get(key) for key in expected} != expected:
         raise SuccessorProtocolError("ACCEPTED_V6_DOWNSTREAM_IDENTITY_MISMATCH")
-    return {**result, **expected}
+    return {**result, **expected, "bound_paths": list(accepted_v6_active_bound_paths(repository))}

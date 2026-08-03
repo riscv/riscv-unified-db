@@ -637,15 +637,16 @@ class MeasurementAttemptTests(unittest.TestCase):
 
 
     def test_fresh_v4_chain_is_deterministic_exact_resume_and_has_expected_metrics(self) -> None:
-        closure = {"schema_version": "runtime-executable-closure-v4"}
+        closure = {"schema_version": "runtime-executable-closure-v4", "freeze_commit": "f" * 40}
         authority = self.experiment_root / "phase2/source-authority.json"
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "attempt.json"
-            self.assertFalse(validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority))
-            target.write_bytes(b"fixed")
-            self.assertTrue(validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority, expected=b"fixed"))
-            with self.assertRaisesRegex(AttemptError, "V4_TARGET_DIVERGED"):
-                validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority, expected=b"other")
+            with patch("specchoice_measurement.attempts.load_runtime_closure_v4", return_value=closure):
+                self.assertFalse(validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority))
+                target.write_bytes(b"fixed")
+                self.assertTrue(validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority, expected=b"fixed"))
+                with self.assertRaisesRegex(AttemptError, "V4_TARGET_DIVERGED"):
+                    validate_fresh_v4_target(target=target, runtime_closure=closure, authority_path=authority, expected=b"other")
 
 
 if __name__ == "__main__":

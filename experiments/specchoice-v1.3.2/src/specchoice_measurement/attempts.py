@@ -15,6 +15,7 @@ from typing import Any
 from specchoice_evidence.bundle import BundleError, _publish_directory_no_replace, _sync_directory, _write_exact
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file
+from specchoice_evidence.runtime_closure import RuntimeClosureError, load_runtime_closure_v4
 
 from .adapter import build_pr2164_adapter_batch, build_pr2164_v6_adapter_batch
 from .preflight import preflight_prediction_batch
@@ -27,9 +28,16 @@ class AttemptError(ValueError):
 
 def require_v4_downstream_gate(*, runtime_closure: object, authority_path: Path) -> None:
     """Shared pre-write gate for every fresh v4 evidence writer."""
-    if not isinstance(runtime_closure, Mapping) or runtime_closure.get("schema_version") != "runtime-executable-closure-v4":
-        raise AttemptError("RUNTIME_CLOSURE_V4_REQUIRED")
-    if sha256_bytes(authority_path.read_bytes()) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae":
+    try:
+        canonical = authority_path.resolve(strict=True)
+        repository = canonical.parents[3]
+        expected = repository / "experiments/specchoice-v1.3.2/phase2/source-authority.json"
+        if canonical != expected:
+            raise AttemptError("ACTIVE_AUTHORITY_MISMATCH")
+        load_runtime_closure_v4(repository, runtime_closure)
+    except (OSError, RuntimeClosureError) as error:
+        raise AttemptError("RUNTIME_CLOSURE_V4_REQUIRED") from error
+    if sha256_bytes(canonical.read_bytes()) != "0ff1bb7c22a11003595e59b6c616400b21218121639835f7529837085f2c6bae":
         raise AttemptError("ACTIVE_AUTHORITY_MISMATCH")
 
 
@@ -172,6 +180,12 @@ def _manifest(*, attempt_id: str, role: str, status: str, raw_predictions: bytes
 def run_measurement_attempt(*, mode: str, attempt_id: str, attempt_root: Path, inputs: object) -> dict[str, object]:
     """Stage, self-validate, and publish exactly one closed terminal attempt."""
     values = _as_dict(inputs, "ATTEMPT_INPUTS_INVALID")
+    if "runtime_closure" in values or "authority_path" in values:
+        closure = values.get("runtime_closure")
+        authority = values.get("authority_path")
+        if not isinstance(authority, Path):
+            raise AttemptError("RUNTIME_CLOSURE_V4_REQUIRED")
+        require_v4_downstream_gate(runtime_closure=closure, authority_path=authority)
     raw_predictions = values.get("raw_predictions")
     if not isinstance(raw_predictions, bytes):
         raise AttemptError("ATTEMPT_RAW_PREDICTIONS_INVALID")

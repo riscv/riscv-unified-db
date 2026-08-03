@@ -116,13 +116,14 @@ class MeasurementAdapterTests(unittest.TestCase):
         self.assertEqual(golden["score_bearing_span_count"], 8)
 
     def test_pr2164_adapter_v4_binds_canonical_authority_and_materialized_raw_tree(self) -> None:
-        batch = build_pr2164_accepted_v6_adapter_batch_v4(
-            repository=self.experiment_root.parents[1],
-            runtime_closure={"schema_version": "runtime-executable-closure-v4"},
-            authority_path=self.experiment_root / "phase2/source-authority.json",
-            bundle_root=self.experiment_root / "bundles/accepted/source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6",
-            rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v4.json",
-        )
+        closure = {"schema_version": "runtime-executable-closure-v4", "freeze_commit": "f" * 40}
+        with mock.patch("specchoice_measurement.adapter.load_runtime_closure_v4", return_value=closure):
+            batch = build_pr2164_accepted_v6_adapter_batch_v4(
+                repository=self.experiment_root.parents[1], runtime_closure=closure,
+                authority_path=self.experiment_root / "phase2/source-authority.json",
+                bundle_root=self.experiment_root / "bundles/accepted/source-contract-v6-pr2164-semantic-gold-executable-closure-verifier-rooted-v6",
+                rules_path=self.experiment_root / "config/measurement/pr2164-adapter-rules-v4.json",
+            )
         self.assertTrue(batch.valid)
         self.assertEqual(len(batch.records), 11)
         self.assertEqual(sum(len(record.raw_files) for record in batch.records), 29)

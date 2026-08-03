@@ -39,6 +39,10 @@ _CLOSURE_V2_SUPERSESSION = (
     f"{_EXPERIMENT_PREFIX}/receipts/"
     "runtime-executable-closure-v2-non-authorizing-supersession-v1.json"
 )
+_CLOSURE_V3_RECEIPT = f"{_EXPERIMENT_PREFIX}/receipts/runtime-executable-closure-v3.json"
+_CLOSURE_V3_FREEZE = "dc87436a1a6e26ae6bd412d1800e39352ac2f811"
+_CLOSURE_V3_BYTE_LENGTH = 90708
+_CLOSURE_V3_SHA256 = "dbc86e53c044910536d9dbd494aa7df286604f3fbf6e4fdf8c4f3c11c943f774"
 
 # This is intentionally code authority, not proposal authority.  A proposal can
 # repeat this inventory but cannot add, remove, reorder, or relabel one target.
@@ -773,7 +777,16 @@ def validate_runtime_closure_v4_bootstrap_targets(repository: Path) -> list[dict
     return future_target_inventory_v7()
 
 
-def _v4_authority_identity(repository: Path) -> dict[str, str]:
+def _v4_authority_identity(repository: Path) -> dict[str, object]:
+    # Do not treat the authority's self-reported identity as custody.  The
+    # successor validator walks the accepted-v6 cutover chain and verifies the
+    # receipts before the v4 closure is allowed to bind it.
+    try:
+        from .successor import SuccessorProtocolError, validate_accepted_v6_for_downstream_v4
+
+        validated = validate_accepted_v6_for_downstream_v4(repository)
+    except (ImportError, SuccessorProtocolError) as error:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_AUTHORITY_INVALID") from error
     authority_path = repository / _AUTHORITY_PRE_STATE
     raw = authority_path.read_bytes()
     if sha256_bytes(raw) != _V4_AUTHORITY_SHA256:
@@ -789,52 +802,154 @@ def _v4_authority_identity(repository: Path) -> dict[str, str]:
         or manifest.get("snapshot_manifest_sha256") != _V4_ACCEPTED_IDENTITY["snapshot_manifest_sha256"]
     ):
         raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_MANIFEST_MISMATCH")
-    return {"authority_sha256": _V4_AUTHORITY_SHA256, **_V4_ACCEPTED_IDENTITY}
+    if {key: validated.get(key) for key in _V4_ACCEPTED_IDENTITY} != _V4_ACCEPTED_IDENTITY:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_IDENTITY_MISMATCH")
+    paths = validated.get("bound_paths")
+    if not isinstance(paths, list) or not paths or any(not isinstance(path, str) for path in paths):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_AUTHORITY_INVALID")
+    return {"authority_sha256": _V4_AUTHORITY_SHA256, **_V4_ACCEPTED_IDENTITY, "bound_paths": paths}
 
 
 def verify_runtime_closure_v3_historical(closure: object, repository: Path) -> dict[str, object]:
     """Verify v3 from its recorded Git tree without consulting mutable v3 inputs."""
     if not isinstance(closure, Mapping) or closure.get("schema_version") != "runtime-executable-closure-v3":
         raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID")
-    freeze_commit = closure.get("freeze_commit")
-    if freeze_commit != "dc87436a1a6e26ae6bd412d1800e39352ac2f811":
+    receipt_path = repository / _CLOSURE_V3_RECEIPT
+    try:
+        raw = receipt_path.read_bytes()
+    except OSError as error:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID") from error
+    if len(raw) != _CLOSURE_V3_BYTE_LENGTH or sha256_bytes(raw) != _CLOSURE_V3_SHA256:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_RECEIPT_INVALID")
+    expected = _canonical_object(receipt_path, "RUNTIME_CLOSURE_V3_HISTORY_INVALID")
+    if dict(closure) != expected:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_MISMATCH")
+    freeze_commit = expected.get("freeze_commit")
+    if freeze_commit != _CLOSURE_V3_FREEZE:
         raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_FREEZE_INVALID")
-    entries = closure.get("entries")
-    if not isinstance(entries, list) or not entries:
+    entries = expected.get("entries")
+    if not isinstance(entries, list) or len(entries) != 103:
         raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID")
+    paths: list[str] = []
     for entry in entries:
         if not isinstance(entry, Mapping) or not isinstance(entry.get("path"), str):
             raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID")
+        paths.append(str(entry["path"]))
         frozen = _git_blob_binding(repository, freeze_commit, str(entry["path"]))
         if any(entry.get(key) != frozen.get(key) for key in ("path", "byte_length", "sha256", "git_blob_oid")):
             raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_MISMATCH")
-    return dict(closure)
+    if paths != sorted(paths) or len(set(paths)) != 103:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V3_HISTORY_INVALID")
+    return expected
+
+
+def _v4_accepted_tree_paths(repository: Path) -> set[str]:
+    """Return every ordinary accepted-v6 leaf, rejecting links and partial raw trees."""
+    root = repository / _ACCEPTED_V6
+    try:
+        files = sorted(root.rglob("*"))
+    except OSError as error:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_TREE_INVALID") from error
+    paths: set[str] = set()
+    raw_paths: set[str] = set()
+    for item in files:
+        try:
+            status = item.lstat()
+        except OSError as error:
+            raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_TREE_INVALID") from error
+        import stat
+        if stat.S_ISLNK(status.st_mode):
+            raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_TREE_INVALID")
+        if stat.S_ISDIR(status.st_mode):
+            continue
+        if not stat.S_ISREG(status.st_mode):
+            raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_TREE_INVALID")
+        if stat.S_ISREG(status.st_mode):
+            relative = _repository_relative(repository, item)
+            paths.add(relative)
+            marker = f"{_ACCEPTED_V6}/raw/evaluation_fixtures/"
+            if relative.startswith(marker):
+                raw_paths.add(relative)
+    if len(raw_paths) != 29 or len(paths) < 30:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_TREE_INVALID")
+    return paths
+
+
+def _v4_classes(repository: Path) -> dict[str, set[str]]:
+    """Bind code, all accepted-v6 bytes, and each fixed active-lineage input."""
+    classes = _referenced_runtime_paths_v3(repository)
+    for path in (
+        f"{_EXPERIMENT_PREFIX}/config/measurement/pr2164-adapter-rules-v4.json",
+        f"{_EXPERIMENT_PREFIX}/config/measurement/h1-review-schema-v5.json",
+    ):
+        classes.setdefault(path, set()).add("v4_control")
+    for path in _v4_accepted_tree_paths(repository):
+        classes.setdefault(path, set()).add("accepted_v6_materialized")
+    try:
+        from .successor import SuccessorProtocolError, accepted_v6_active_bound_paths
+
+        lineage = accepted_v6_active_bound_paths(repository)
+    except (ImportError, SuccessorProtocolError) as error:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_ACCEPTED_AUTHORITY_INVALID") from error
+    for path in lineage:
+        classes.setdefault(path, set()).add("accepted_v6_source_lineage")
+    return classes
+
+
+def _runtime_closure_v4_projection(repository: Path, *, freeze_commit: str | None) -> dict[str, object]:
+    """Rebuild a v4 receipt without inspecting later downstream outputs."""
+    common = _build_versioned_runtime_closure(
+        repository,
+        freeze_commit=freeze_commit,
+        classes=_v4_classes(repository),
+        schema_version="runtime-executable-closure-v4",
+    )
+    historical = _canonical_object(repository / _CLOSURE_V3_RECEIPT, "RUNTIME_CLOSURE_V3_HISTORY_INVALID")
+    verify_runtime_closure_v3_historical(historical, repository)
+    future_targets = future_target_inventory_v7()
+    return {
+        **common,
+        "accepted_v6_identity": _v4_authority_identity(repository),
+        "bootstrap_receipt_path": _CLOSURE_V4_RECEIPT,
+        "bootstrap_target_prestate": [{"path": entry["path"], "state": "absent"} for entry in future_targets],
+        "future_targets": future_targets,
+        "historical_closure_v3": {
+            "byte_length": _CLOSURE_V3_BYTE_LENGTH,
+            "freeze_commit": historical["freeze_commit"],
+            "path": _CLOSURE_V3_RECEIPT,
+            "sha256": _CLOSURE_V3_SHA256,
+        },
+    }
 
 
 def build_runtime_closure_v4(repository: Path, *, freeze_commit: str | None = None) -> dict[str, object]:
     """Build only the absent-receipt bootstrap projection for closure v4."""
     repository = repository.resolve(strict=True)
     targets = validate_runtime_closure_v4_bootstrap_targets(repository)
-    common = _build_versioned_runtime_closure(
-        repository,
-        freeze_commit=freeze_commit,
-        classes={
-            **_referenced_runtime_paths_v3(repository),
-            f"{_EXPERIMENT_PREFIX}/config/measurement/pr2164-adapter-rules-v4.json": {"v4_control"},
-            f"{_EXPERIMENT_PREFIX}/config/measurement/h1-review-schema-v5.json": {"v4_control"},
-        },
-        schema_version="runtime-executable-closure-v4",
-    )
-    historical = _canonical_object(repository / _CLOSURE_V3_RECEIPT, "RUNTIME_CLOSURE_V3_HISTORY_INVALID")
-    verify_runtime_closure_v3_historical(historical, repository)
-    return {
-        **common,
-        "accepted_v6_identity": _v4_authority_identity(repository),
-        "bootstrap_receipt_path": _CLOSURE_V4_RECEIPT,
-        "future_targets": targets,
-        "historical_closure_v3": {
-            "freeze_commit": historical["freeze_commit"],
-            "path": _CLOSURE_V3_RECEIPT,
-            "sha256": sha256_bytes(canonical_json_bytes(historical)),
-        },
-    }
+    closure = _runtime_closure_v4_projection(repository, freeze_commit=freeze_commit)
+    if closure["future_targets"] != targets:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_TARGET_INVENTORY_INVALID")
+    return closure
+
+
+def verify_runtime_closure_v4(closure: object, repository: Path) -> dict[str, object]:
+    """Require the entire closure receipt, not merely its schema marker."""
+    if not isinstance(closure, Mapping) or closure.get("schema_version") != "runtime-executable-closure-v4":
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_INVALID")
+    freeze_commit = closure.get("freeze_commit")
+    if not isinstance(freeze_commit, str):
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_INVALID")
+    rebuilt = _runtime_closure_v4_projection(repository.resolve(strict=True), freeze_commit=freeze_commit)
+    if dict(closure) != rebuilt:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_MISMATCH")
+    return rebuilt
+
+
+def load_runtime_closure_v4(repository: Path, supplied: object) -> dict[str, object]:
+    """Load the one published v4 receipt and reject an unmaterialized mapping."""
+    receipt_path = repository.resolve(strict=True) / _CLOSURE_V4_RECEIPT
+    receipt = _canonical_object(receipt_path, "RUNTIME_CLOSURE_V4_RECEIPT_REQUIRED")
+    verified = verify_runtime_closure_v4(receipt, repository)
+    if not isinstance(supplied, Mapping) or dict(supplied) != verified:
+        raise RuntimeClosureError("RUNTIME_CLOSURE_V4_RECEIPT_MISMATCH")
+    return verified
