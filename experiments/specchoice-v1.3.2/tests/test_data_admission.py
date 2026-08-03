@@ -27,6 +27,7 @@ from specchoice_evidence.runtime_closure import (
     verify_runtime_closure_v4_historical,
 )
 from specchoice_measurement.strict_json import decode_strict_json
+from specchoice_data.worksheet import build_candidate_authoring_worksheet_v1
 
 
 class DataAdmissionTests(unittest.TestCase):
@@ -176,6 +177,32 @@ class DataAdmissionTests(unittest.TestCase):
             RuntimeClosureError, "PHASE2_LIFECYCLE_SUCCESSOR_MISMATCH"
         ):
             verify_phase2_lifecycle_successor_v1(mutated, repository)
+
+    def test_candidate_authoring_worksheet_is_complete_and_decision_free(self) -> None:
+        gate = require_phase2_local_closure()
+        worksheet = build_candidate_authoring_worksheet_v1(
+            accepted_root=gate["accepted_root"],
+            registry_name="fixture-registry-pr2164-v6.json",
+            schema_raw=self.schema_raw,
+            phase2_authority_sha256=gate["authority_sha256"],
+            h1_decision_sha256=gate["decision_sha256"],
+        )
+
+        self.assertEqual(len(worksheet["accepted_files"]), 29)
+        self.assertEqual(
+            len({item["fixture_id"] for item in worksheet["accepted_files"]}), 11
+        )
+        self.assertEqual(
+            sum(item["role"] == "fixture_source" for item in worksheet["accepted_files"]),
+            11,
+        )
+        self.assertTrue(
+            {"reviewer_id", "signature", "aggregate_disposition"}.isdisjoint(worksheet)
+        )
+        self.assertEqual(
+            worksheet["human_action"]["resume_signal"],
+            "FREEZE CANDIDATE INVENTORY V1",
+        )
 
     def test_tracer_freezes_admits_renders_and_validates_explicit_human_decision(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
